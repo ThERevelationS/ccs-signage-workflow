@@ -1864,6 +1864,94 @@ test('pay-period finalization requires audit evidence for request-marked approva
   assert.equal(blockedAudit.details.approval_evidence_missing_count, 1);
 });
 
+test('direct admin correction remains Needs Review and final approval is bound to its confirmed correction audit', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod = [];
+  const original = h.rows.TimeEntry[0];
+  const corrected = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'direct-admin-correction-001', entry_id: original.id,
+    expected_updated_date: original.updated_date,
+    reason: 'Correct verified punch time',
+    correction: {
+      clock_in: '2026-09-20T14:05:00.000Z',
+      clock_out: '2026-09-20T22:05:00.000Z',
+      lunch_minutes: 0,
+      notes: 'Verified by manager',
+      job_allocations: [],
+    },
+  });
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  const saved = h.rows.TimeEntry[0];
+  assert.equal(saved.status, 'clocked_out');
+  assert.equal(saved.clock_source, 'admin_correction');
+  assert.equal(saved.approval_status, 'needs_review');
+  assert.equal(saved.last_correction_request_id, 'direct-admin-correction-001');
+  const correctionAudit = h.rows.TimeClockAudit.find((row) => row.action === 'admin_correction' && row.request_id === 'direct-admin-correction-001');
+  assert.ok(correctionAudit?.id);
+  assert.ok(['confirmed', 'recovered'].includes(correctionAudit.outcome));
+
+  const status = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(status.status, 200, JSON.stringify(status.body));
+  assert.equal(status.body.pending_shift_review.count, 1);
+  assert.equal(status.body.pending_shift_review.direct_admin_correction_count, 1);
+  assert.equal(status.body.pending_shift_review.corrected_shift_count, 0);
+  assert.equal(status.body.pending_shift_review.has_integrity_issue, false);
+  assert.equal(status.body.pending_shift_review.items[0].review_kind, 'direct_admin_correction');
+  assert.equal(status.body.pending_shift_review.items[0].admin_correction_audit_id, correctionAudit.id);
+
+  const approved = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'direct-admin-final-approval-001', entry_id: saved.id,
+    expected_updated_date: saved.updated_date,
+    decision: 'approve', note: 'Reviewed corrected shift',
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
+  const settled = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(settled.body.pending_shift_review, undefined);
+});
+
+test('direct admin correction with mismatched audit evidence fails closed before final shift approval', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod = [];
+  const original = h.rows.TimeEntry[0];
+  const corrected = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'direct-admin-bad-audit-001', entry_id: original.id,
+    expected_updated_date: original.updated_date,
+    reason: 'Correct verified punch time',
+    correction: {
+      clock_in: '2026-09-20T14:10:00.000Z',
+      clock_out: '2026-09-20T22:10:00.000Z',
+      lunch_minutes: 0,
+      notes: 'Verified by manager',
+      job_allocations: [],
+    },
+  });
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  const saved = h.rows.TimeEntry[0];
+  const correctionAudit = h.rows.TimeClockAudit.find((row) => row.action === 'admin_correction' && row.request_id === 'direct-admin-bad-audit-001');
+  correctionAudit.details.corrected.clock_out = '2026-09-20T21:00:00.000Z';
+
+  const status = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(status.status, 200, JSON.stringify(status.body));
+  assert.equal(status.body.pending_shift_review.count, 1);
+  assert.equal(status.body.pending_shift_review.direct_admin_correction_count, 1);
+  assert.equal(status.body.pending_shift_review.has_integrity_issue, true);
+  assert.equal(status.body.pending_shift_review.items[0].review_state, 'needs_manager_investigation');
+
+  const blocked = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'direct-admin-bad-audit-approval-001', entry_id: saved.id,
+    expected_updated_date: saved.updated_date,
+    decision: 'approve', note: 'Must not approve mismatched evidence',
+  });
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.match(blocked.body.error, /correction evidence|applied correction audit|Admin investigation/i);
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'needs_review');
+});
+
 test('final corrected-shift approval is bound to terminal correction evidence', async () => {
   const approvalSlice = source.slice(source.indexOf('const verifyResolvedCorrectionForApproval'), source.indexOf('if (action === \'admin_archive_entry\')'));
   assert.match(approvalSlice, /approved_modified/);
