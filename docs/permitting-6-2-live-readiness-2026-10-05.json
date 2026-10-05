@@ -1,0 +1,131 @@
+{
+  "method": "live-connector-snapshot-shared-loader",
+  "llm_calls": 0,
+  "production_writes": 0,
+  "results": [
+    {
+      "id": "6ac2cd8586ccf99cac0358f0",
+      "jurisdiction": "Campbell County",
+      "status": "ready_for_selected_page",
+      "pages": 1,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac2cd6ac48508a21056b654",
+      "jurisdiction": "Campbell County",
+      "status": "ready_for_selected_page",
+      "pages": 2,
+      "complete_text": true,
+      "authority": "verified"
+    },
+    {
+      "id": "6ac25be4207035a2e5be3827",
+      "jurisdiction": "Campbell County",
+      "status": "ready_for_selected_page",
+      "pages": 2,
+      "complete_text": true,
+      "authority": "historical"
+    },
+    {
+      "id": "6ac27480e3ab333468e8cdf7",
+      "jurisdiction": "Alexandria",
+      "status": "ready_for_selected_page",
+      "pages": 2,
+      "complete_text": true,
+      "authority": "historical"
+    },
+    {
+      "id": "6ac3e5b86c944422b102d089",
+      "jurisdiction": "Cincinnati",
+      "status": "blocked",
+      "reason": "Source text identity or cursor requires review."
+    },
+    {
+      "id": "6ac3c6882c889b4b8871af3a",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 3,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac3c10009f282d29ff53782",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 2,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac3c0ee843e084e1a5f67f6",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 1,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac3c0de3a24919ee7113555",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 2,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac3c0cce920b1cede773e5c",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 1,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac3abe5613df02af1acc4f7",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 3,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac3a54ac1ce2adba5b92cb8",
+      "jurisdiction": "Cincinnati",
+      "status": "blocked",
+      "reason": "Selected pages have extraction gaps requiring review."
+    },
+    {
+      "id": "6ac3a51f33beec629ba497e0",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 2,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac39c24c9f6d0eebf320a13",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 1,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac39c0e6657049fb11cd757",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 3,
+      "complete_text": true,
+      "authority": "needs_verification"
+    },
+    {
+      "id": "6ac2cc6b5063fe274d7c6b61",
+      "jurisdiction": "Cincinnati",
+      "status": "ready_for_selected_page",
+      "pages": 245,
+      "complete_text": false,
+      "authority": "needs_verification"
+    }
+  ]
+}
