@@ -41,7 +41,7 @@ export function mergeJurisdictionResearchDocuments(existingDocuments, researched
 
     const existing = retained[index];
     // A separately maintained manual record must never be replaced by AI output.
-    if (existing.source === 'manual') continue;
+    if (existing.source === 'manual' || existing.pinned === true || existing.archive_pinned === true) continue;
 
     const archived = Boolean(existing.file_url || existing.source_sha256);
     retained[index] = {

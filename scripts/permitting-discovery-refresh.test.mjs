@@ -51,3 +51,10 @@ test('invalid optional AI seed cannot discard the AI document list',async()=>{
   const r=await h.run();assert.equal(h.fetched.length,0);assert.equal(r.discovery_scan.success,false);
   assert(r.jurisdiction.documents.some(d=>d.url.endsWith('/ai.pdf')));
 });
+
+test('broader discovery preserves pinned and archive-pinned records exactly',()=>{
+  for (const flag of ['pinned','archive_pinned']) {
+    const old={id:'protected',url:'https://city.gov/sign.pdf',source:'official_page_harvest',title:'Reviewed title',verification_notes:'Staff evidence',[flag]:true};
+    assert.deepEqual(mergeJurisdictionResearchDocuments([old],[{url:old.url,title:'New harvested title',doc_type:'permit_application'}]),[old]);
+  }
+});

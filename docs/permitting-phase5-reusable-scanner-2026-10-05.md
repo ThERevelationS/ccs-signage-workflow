@@ -25,7 +25,7 @@ The worker does not label a locality complete, infer adopted rules, upload files
 
 ## Verification
 
-48 targeted tests passed, including six tests of the actual refresh function with isolated dependencies and no production writes. Tests cover partial AI results, linked forms/fees, cycles, priority, failed pages, off-host redirects, depth limits, manual collection protection and retained archives. refreshJurisdiction backend bundle passed. Full npm run build returned zero and produced a fresh dist/index.html. git diff --check passed.
+49 targeted tests passed, including six tests of the actual refresh function with isolated dependencies and no production writes. Tests cover partial AI results, linked forms/fees, cycles, priority, failed pages, off-host redirects, depth limits, manual collection protection and retained archives. refreshJurisdiction backend bundle passed. Full npm run build returned zero and produced a fresh dist/index.html. git diff --check passed.
 
 Offline replay used three previously retained original pages: Cincinnati OH, Alexandria KY and Campbell County KY. Replay output is in permitting-phase5-discovery-scanner-replay-2026-10-05.json. This proves parser behavior against retained website markup; it is not a freshness check or a full live end-to-end scanner run. Cincinnati's replay found 56 resource links but zero extension-suffixed downloadable files, exposing the extensionless resource gap. The full source inventories remain incomplete.
 
