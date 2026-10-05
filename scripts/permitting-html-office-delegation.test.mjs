@@ -54,7 +54,8 @@ test('save uses the existing committed immutable review ledger, assessment and r
 });
 test('department-name keywords cannot expand zoning delegation to other roles, counties, cities or PDF proof',async()=>{
  for(const patch of [{role:'building'},{role:'electrical'},{coverage_area:'Other Town'},{source_document_id:'pdf'},
-  {role_proof:{block:2,physical_page:1,excerpt:'Invented'}},{responsibility_confirmed:false},{office_alias:'Invented Office'},{evidence_kind:'invented'}]){
+  {role_proof:{block:2,physical_page:1,excerpt:'Invented'}},{responsibility_confirmed:false},{office_alias:'Invented Office'},{evidence_kind:'invented'},
+  {role_proof:{block:2}},{role_label:'Building permitting authority'},{html_evidence_id:''}]){
   const f=await setup();await assert.rejects(f.review({dryRun:true,input:{...f.input,...patch}}));assert.equal(f.counts.creates,0);
  }
  for(const patch of [{type:'county'},{name:'Other Town'},{state:'OH'},{website_url:'https://other.example'}]){
@@ -148,6 +149,12 @@ test('schema retains immutable review RLS while adding native HTML evidence fiel
  assert.equal(s.rls.update,false);assert.equal(s.rls.delete,false);assert.equal(s.rls.create.user_condition.role,'admin');
  assert.equal(s.properties.html_evidence_id.type,'string');assert.equal(s.properties.publisher_snapshot.type,'object');
 });
+test('simultaneous native HTML deliveries cannot create duplicate review events or overwrite another reservation',async()=>{
+ for(const different of [false,true]){
+  const f=await setup();const outcomes=await Promise.allSettled([f.review(),f.review(different?{requestId:'office-html-review-00002'}:{})]);
+  assert.equal(f.counts.creates,1);assert.equal(f.events.length,1);assert.ok(outcomes.some(r=>r.status==='fulfilled' && r.value.success));
+ }
+});
 let handler;
 const bundled=await build({entryPoints:['base44/functions/permittingOfficeAuthorityReview/entry.ts'],write:false,bundle:true,format:'esm',platform:'neutral',
  plugins:[{name:'mock-sdk',setup(b){b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
@@ -164,4 +171,15 @@ test('compiled HTML review handler authorizes writes before service access and r
   asServiceRole:{entities:{JurisdictionProfile:f.deps.profileEntity,GlobalSettings:f.deps.settingsEntity,PermittingHtmlEvidence:f.deps.htmlEntity}}};
  const r=await handler(new Request('https://app.example',{method:'POST',body:JSON.stringify({action:'context',evidence_kind:'official_html',html_evidence_id:'html'})}));
  assert.equal(r.status,200);assert.equal((await r.json()).publisher.id,'town');assert.equal(f.counts.fetch,0);assert.equal(f.counts.writes,0);
+});
+test('compiled handler previews and commits native HTML evidence using the existing admin review interface',async()=>{
+ const f=await setup();globalThis.htmlOfficeWorker={auth:{me:async()=>({role:'admin',email:'Admin'})},asServiceRole:{entities:{
+  JurisdictionProfile:f.deps.profileEntity,GlobalSettings:f.deps.settingsEntity,PermittingHtmlEvidence:f.deps.htmlEntity,PermittingOfficeAuthorityReview:f.deps.reviewEntity}}};
+ const previous=globalThis.fetch;globalThis.fetch=f.deps.fetchImpl;
+ try{
+  const call=async body=>{const r=await handler(new Request('https://app.example',{method:'POST',body:JSON.stringify(body)}));return{status:r.status,data:await r.json()};};
+  const preview=await call({action:'preview',jurisdiction_id:'town',review:f.input});assert.equal(preview.status,200);assert.equal(f.counts.creates,0);
+  const saved=await call({action:'verify',jurisdiction_id:'town',review:f.input,request_id:f.args.requestId,expected_updated_date:preview.data.expected_updated_date});
+  assert.equal(saved.status,200);assert.equal(saved.data.review.evidence_kind,'official_html');assert.equal(f.counts.creates,1);
+ }finally{globalThis.fetch=previous;}
 });
