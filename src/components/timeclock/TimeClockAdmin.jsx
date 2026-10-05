@@ -747,12 +747,13 @@ export default function TimeClockAdmin() {
         timeEntries={timeEntries}
         correctionRequests={correctionRequests}
         onEntriesChanged={loadData}
-        onInvestigateAudit={({ time_entry_id, evidence = [] }) => {
+        onInvestigateAudit={({ time_entry_id, evidence = [], mode = "conflict" }) => {
           const normalizedId = String(time_entry_id || "").trim();
           if (!normalizedId) return;
           setAuditInvestigation({
             time_entry_id: normalizedId,
             evidence: Array.isArray(evidence) ? evidence : [],
+            mode: mode === "integrity" ? "integrity" : "conflict",
             nonce: Date.now(),
           });
           window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
