@@ -12,8 +12,12 @@ Deno.serve(async req => {
     const body = await req.json().catch(() => ({}));
     const automatic = body.automatic === true;
     const jurisdictionId = String(body.jurisdiction_id || '').trim();
-    if (automatic && (jurisdictionId || body.document_id || body.catalog_only)) return Response.json({ error: 'Automatic archival selects its own bounded backlog.' }, { status: 400 });
+    if (automatic && (jurisdictionId || body.document_id || body.catalog_only || body.known_pdf)) return Response.json({ error: 'Automatic archival selects its own bounded backlog.' }, { status: 400 });
     if (!automatic && !jurisdictionId) return Response.json({ error: 'Manual archival requires a jurisdiction id.' }, { status: 400 });
+    if (body.known_pdf && (body.catalog_only || !body.document_id ||
+        !/^[a-f0-9]{64}$/.test(body.known_pdf.sha256 || '') || !Number.isInteger(body.known_pdf.bytes) ||
+        body.known_pdf.bytes < 5 || body.known_pdf.bytes > 50 * 1024 * 1024))
+      return Response.json({ error: 'Known PDF archival requires a selected document, retained SHA-256 and bounded byte count.' }, { status: 400 });
     const entity = base44.asServiceRole.entities.JurisdictionProfile;
     const options = {
       entity,
@@ -26,7 +30,7 @@ Deno.serve(async req => {
       if (!body.document_id) return Response.json({ error: 'Catalog reconciliation requires a stable document id.' }, { status: 400 });
       return Response.json(await registerJurisdictionArchive({ ...options, jurisdictionId, documentId: String(body.document_id), automatic: false }));
     }
-    if (!automatic) return Response.json(await archiveKnownJurisdictionSource({ ...options, jurisdictionId, documentId: String(body.document_id || '') }));
+    if (!automatic) return Response.json(await archiveKnownJurisdictionSource({ ...options, jurisdictionId, documentId: String(body.document_id || ''), knownPdf: body.known_pdf || null }));
     const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);
     if (configs.length > 1) throw new Error('Duplicate dispatcher settings; automatic archival stopped.');
     if (configs[0]?.setting_value?.enabled === false) return Response.json({ success: true, skipped: true, reason: 'disabled' });
