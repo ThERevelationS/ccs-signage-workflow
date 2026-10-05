@@ -19,7 +19,7 @@ function harness({profile={},ai={},pages={}}={}) {
     archiveKnownJurisdictionSource:async()=>{throw Error('test must defer archive');}};
   const fn=new Function(...Object.keys(deps),compiled+'; return refreshJurisdictionRecord;')(...Object.values(deps));
   const sdk={asServiceRole:{entities:{JurisdictionProfile:{get:async()=>initial}},functions:{invoke:async()=>{researchCalls++;return {data:ai};}}}};
-  return {run:(discovery=false)=>fn(sdk,'fixture',undefined,discovery,false),fetched,get written(){return written;},get researchCalls(){return researchCalls;},initial};
+  return {run:(discovery=false, recoverFetchFailures=false)=>fn(sdk,'fixture',undefined,discovery,false,false,recoverFetchFailures),fetched,get written(){return written;},get researchCalls(){return researchCalls;},initial};
 }
 
 test('actual refresh adds deterministic missing file even when AI already supplied one',async()=>{
@@ -65,4 +65,26 @@ test('actual discovery-only refresh saves and resumes the frontier rather than r
  const first=await h.run(true);assert.equal(first.jurisdiction.discovery_scan_state.pending_pages.length,1);
  const resumed=harness({profile:first.jurisdiction,pages:{'https://city.gov/zoning':'<a href="/code.pdf">Zoning Code</a>'}});const second=await resumed.run(true);
  assert.deepEqual(resumed.fetched,['https://city.gov/zoning']);assert.equal(second.jurisdiction.discovery_scan_state.pending_pages.length,0);assert(second.jurisdiction.documents.some(d=>d.url.endsWith('/code.pdf')));
+});
+
+
+test('actual refresh retry clears successful gap and preserves unrelated pending pages and manual archive',async()=>{
+ const root='https://city.gov/permits', failed='https://city.gov/sign-forms';
+ const state={method:'official-page-frontier-v1',seed_url:root,max_depth:2,visited_urls:[root,failed],pending_pages:[{url:'https://city.gov/fees',depth:1}],gaps:[{url:failed,reason:'page_fetch_failed',depth:1,requires_review:true}],attempted_pages_total:2};
+ const h=harness({profile:{discovery_scan_state:state},pages:{[failed]:'<a href="/sign.pdf">Sign Application</a>'}});
+ const r=await h.run(true,true);
+ assert.deepEqual(h.fetched,[failed]);assert.equal(h.researchCalls,0);
+ assert.deepEqual(r.jurisdiction.documents[0],h.initial.documents[0]);
+ assert.deepEqual(r.jurisdiction.discovery_scan_state.pending_pages,state.pending_pages);
+ assert.equal(r.jurisdiction.discovery_scan_state.gaps.length,0);
+ assert.equal(r.jurisdiction.discovery_scan_state.attempted_pages_total,3);
+ assert.ok(r.jurisdiction.documents.some(d=>d.url.endsWith('/sign.pdf')));
+});
+
+test('failed recovery with empty pending list cannot report a successful scan or write profile',async()=>{
+ const root='https://city.gov/permits';
+ const state={method:'official-page-frontier-v1',seed_url:root,max_depth:2,visited_urls:[root],pending_pages:[],gaps:[{url:root,reason:'page_fetch_failed',depth:0,requires_review:true}],attempted_pages_total:1};
+ const h=harness({profile:{discovery_scan_state:state}});
+ await assert.rejects(h.run(true,true),/could not read/);
+ assert.equal(h.written,undefined);assert.deepEqual(h.initial.discovery_scan_state,state);
 });

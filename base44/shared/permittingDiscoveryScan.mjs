@@ -116,7 +116,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   if (continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||
       JSON.stringify(continuationState).length > CURSOR_MAX_CHARS)
     throw frontierError('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
-  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && !pendingPages.length), documents: [...documents.values()], pages,
+  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && attempted === 0 && !pendingPages.length), documents: [...documents.values()], pages,
     pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume), recovering_link_limits: recoverLinkLimits, recovering_fetch_failures: recoverFetchFailures,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
     jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,

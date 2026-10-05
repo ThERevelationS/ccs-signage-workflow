@@ -2915,7 +2915,9 @@ Deno.serve(async (req) => {
               discoveryEvidence = Number(summary.snapshot_version || 0) >= 22
                 ? canonicalPayrollMembershipEvidence(membershipAudits, Number(summary.snapshot_version || 0) >= 23)
                 : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
-              if (discoveryEvidence?.conflict) return failed({ type: 'payroll_membership_evidence', time_entry_id: candidateId, evidence: discoveryEvidence.conflict_evidence });
+              if (discoveryEvidence?.conflict) return failed(discoveryEvidence.conflict_evidence_invalid
+                ? { type: 'payroll_membership_evidence_invalid', time_entry_id: candidateId, validation: discoveryEvidence.conflict_evidence_validation }
+                : { type: 'payroll_membership_evidence', time_entry_id: candidateId, evidence: discoveryEvidence.conflict_evidence });
               if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
             }
             if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
@@ -4035,12 +4037,20 @@ Deno.serve(async (req) => {
                   : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
                 if (discoveryEvidence?.conflict) return Response.json({
                   success: false,
-                  error: 'Conflicting payroll membership evidence requires administrator investigation before finalization.',
-                  conflict: {
-                    type: 'payroll_membership_evidence',
-                    time_entry_id: candidateId,
-                    evidence: discoveryEvidence.conflict_evidence,
-                  },
+                  error: discoveryEvidence.conflict_evidence_invalid
+                    ? 'Invalid payroll membership provenance was detected. Finalization is blocked until an administrator investigates the immutable audit evidence.'
+                    : 'Conflicting payroll membership evidence requires administrator investigation before finalization.',
+                  conflict: discoveryEvidence.conflict_evidence_invalid
+                    ? {
+                      type: 'payroll_membership_evidence_invalid',
+                      time_entry_id: candidateId,
+                      validation: discoveryEvidence.conflict_evidence_validation,
+                    }
+                    : {
+                      type: 'payroll_membership_evidence',
+                      time_entry_id: candidateId,
+                      evidence: discoveryEvidence.conflict_evidence,
+                    },
                 }, { status: 409 });
                 if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
               }
