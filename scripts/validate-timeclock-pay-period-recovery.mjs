@@ -676,6 +676,176 @@ test('finalization gate wins and a concurrent Clock In cannot create a shift', a
   assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
 });
 
+test('finalization gate wins and a concurrent direct admin correction cannot mutate the shift', async () => {
+  const h = setup();
+  const entry = h.rows.TimeEntry[0];
+  const loadedVersion = entry.updated_date;
+  let releaseGate;
+  let reachedGate;
+  const gateHeld = new Promise((resolve) => { reachedGate = resolve; });
+  const continueFinalization = new Promise((resolve) => { releaseGate = resolve; });
+  let paused = false;
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (!paused && entity === 'TimeClockEmployeeState' && row.user_email === employee.email &&
+        update.$set?.correction_create_time_entry_id === 'pay_period:synthetic-period') {
+      paused = true;
+      reachedGate();
+      await continueFinalization;
+    }
+  });
+
+  const finalizing = h.action('finalize', 'finalize-blocks-admin-correction-001');
+  await gateHeld;
+  const blockedCorrection = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'blocked-by-finalization-correction-001', entry_id: entry.id,
+    expected_updated_date: loadedVersion, reason: 'Concurrent correction must wait',
+    correction: {
+      clock_in: '2026-09-20T14:05:00.000Z', clock_out: '2026-09-20T22:05:00.000Z',
+      lunch_minutes: 0, notes: 'Must not land during finalization', job_allocations: [],
+    },
+  });
+  assert.equal(blockedCorrection.status, 409, JSON.stringify(blockedCorrection.body));
+  assert.match(blockedCorrection.body.error, /Another correction submission or shift approval|being processed/i);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+  releaseGate();
+  const finalized = await finalizing;
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+  assert.equal(h.period().status, 'finalized');
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
+  assert.equal(h.rows.TimeEntry[0].pay_period_id, h.period().id);
+});
+
+test('direct admin correction gate wins and finalization retries into an unapproved-shift block', async () => {
+  const h = setup();
+  const entry = h.rows.TimeEntry[0];
+  const loadedVersion = entry.updated_date;
+  let releaseGate;
+  let reachedGate;
+  const gateHeld = new Promise((resolve) => { reachedGate = resolve; });
+  const continueCorrection = new Promise((resolve) => { releaseGate = resolve; });
+  let paused = false;
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (!paused && entity === 'TimeClockEmployeeState' && row.user_email === employee.email &&
+        update.$set?.correction_create_time_entry_id === entry.id &&
+        update.$set?.correction_create_request_id === 'correction-wins-finalize-race-001') {
+      paused = true;
+      reachedGate();
+      await continueCorrection;
+    }
+  });
+
+  const correcting = h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'correction-wins-finalize-race-001', entry_id: entry.id,
+    expected_updated_date: loadedVersion, reason: 'Correction discovered before payroll commit',
+    correction: {
+      clock_in: '2026-09-20T14:10:00.000Z', clock_out: '2026-09-20T22:10:00.000Z',
+      lunch_minutes: 0, notes: 'Needs fresh manager review', job_allocations: [],
+    },
+  });
+  await gateHeld;
+  const firstFinalize = await h.action('finalize', 'correction-wins-finalize-001');
+  assert.equal(firstFinalize.status, 409, JSON.stringify(firstFinalize.body));
+  assert.match(firstFinalize.body.error, /correction|approval is in progress|action finishes/i);
+  releaseGate();
+  const corrected = await correcting;
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'needs_review');
+  assert.equal(h.rows.TimeEntry[0].pay_period_id, undefined);
+
+  h.setAfterRowUpdate(null);
+  const retry = await h.action('finalize', 'correction-wins-finalize-001');
+  assert.equal(retry.status, 409, JSON.stringify(retry.body));
+  assert.match(retry.body.error, /unapproved shift/i);
+  assert.equal(h.period().status, 'review');
+  assert.equal(h.entryLocks().length, 0);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 1);
+  assert.equal(h.audit('correction-wins-finalize-001')[0].outcome, 'blocked');
+});
+
+test('finalized pay-period lock blocks direct admin correction before audit or mutation gate creation', async () => {
+  const h = setup();
+  const finalized = await h.action('finalize', 'lock-before-correction-finalize-001');
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+  const locked = h.rows.TimeEntry[0];
+  assert.equal(locked.pay_period_id, h.period().id);
+  const correction = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'locked-period-admin-correction-001', entry_id: locked.id,
+    expected_updated_date: locked.updated_date, reason: 'Should require payroll reopen',
+    correction: {
+      clock_in: locked.clock_in, clock_out: locked.clock_out,
+      lunch_minutes: 0, notes: 'Must remain locked', job_allocations: [],
+    },
+  });
+  assert.equal(correction.status, 409, JSON.stringify(correction.body));
+  assert.match(correction.body.error, /locked by a finalized pay period|Reopen/i);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email).correction_create_status, 'idle');
+});
+
+test('pay-period reopen holds mutation gates until payroll snapshot invalidation exists', async () => {
+  const h = setup();
+  const finalized = await h.action('finalize', 'reopen-window-finalize-001');
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+  let releaseUnlock;
+  let reachedUnlockedRow;
+  const unlockedRowVisible = new Promise((resolve) => { reachedUnlockedRow = resolve; });
+  const continueReopen = new Promise((resolve) => { releaseUnlock = resolve; });
+  let paused = false;
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (!paused && entity === 'TimeEntry' && update.$unset?.pay_period_id !== undefined && row.id === 'synthetic-entry-0') {
+      paused = true;
+      reachedUnlockedRow();
+      await continueReopen;
+    }
+  });
+
+  const reopening = h.action('reopen', 'reopen-window-001', 'Correct payroll shift');
+  await unlockedRowVisible;
+  const temporarilyUnlocked = h.rows.TimeEntry[0];
+  assert.equal(temporarilyUnlocked.pay_period_id, undefined);
+  const blockedCorrection = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'reopen-window-blocked-correction-001', entry_id: temporarilyUnlocked.id,
+    expected_updated_date: temporarilyUnlocked.updated_date, reason: 'Must wait for reopen invalidation',
+    correction: {
+      clock_in: '2026-09-20T14:05:00.000Z', clock_out: '2026-09-20T22:05:00.000Z',
+      lunch_minutes: 0, notes: 'Blocked during reopen causal window', job_allocations: [],
+    },
+  });
+  assert.equal(blockedCorrection.status, 409, JSON.stringify(blockedCorrection.body));
+  assert.match(blockedCorrection.body.error, /Another correction submission or shift approval|being processed/i);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+
+  releaseUnlock();
+  const reopened = await reopening;
+  assert.equal(reopened.status, 200, JSON.stringify(reopened.body));
+  assert.equal(h.period().status, 'review');
+  const invalidatedAt = h.period().finalized_summary?.invalidated_at;
+  assert.ok(invalidatedAt);
+  assert.equal(h.period().finalized_summary?.invalidated_by_reopen_request_id, 'reopen-window-001');
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email).correction_create_status, 'idle');
+
+  h.setAfterRowUpdate(null);
+  const freshEntry = h.rows.TimeEntry[0];
+  const correctionAfterReopen = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'reopen-window-after-correction-001', entry_id: freshEntry.id,
+    expected_updated_date: freshEntry.updated_date, reason: 'Correction after audited reopen boundary',
+    correction: {
+      clock_in: '2026-09-20T14:15:00.000Z', clock_out: '2026-09-20T22:15:00.000Z',
+      lunch_minutes: 0, notes: 'Inside next payroll generation causal window', job_allocations: [],
+    },
+  });
+  assert.equal(correctionAfterReopen.status, 200, JSON.stringify(correctionAfterReopen.body));
+  const correctionAudit = h.rows.TimeClockAudit.find((row) => row.action === 'admin_correction' && row.request_id === 'reopen-window-after-correction-001');
+  assert.ok(correctionAudit?.server_timestamp);
+  assert.ok(Date.parse(correctionAudit.server_timestamp) >= Date.parse(invalidatedAt));
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'needs_review');
+});
+
 test('Clock In gate wins and finalization retries into an active-shift block', async () => {
   // Keep the authoritative punch within the period being finalized; a shift
   // starting after its end date is correctly excluded from that period.
