@@ -148,8 +148,9 @@ function loginStatusNotice(status) {
       : report.status === "clocked_out"
         ? "You are currently Clocked Out."
         : "Your current Time Clock state is being restored separately.";
-    const missedClockInOnly = report.missedClockInCount > 0 && report.correctedShiftCount === 0;
-    const correctedOnly = report.correctedShiftCount > 0 && report.missedClockInCount === 0;
+    const missedClockInOnly = report.missedClockInCount > 0 && report.correctedShiftCount === 0 && report.directAdminCorrectionCount === 0;
+    const correctedOnly = report.correctedShiftCount > 0 && report.missedClockInCount === 0 && report.directAdminCorrectionCount === 0;
+    const directAdminOnly = report.directAdminCorrectionCount > 0 && report.missedClockInCount === 0 && report.correctedShiftCount === 0;
     const subject = report.count === 1 ? "one shift" : `${report.count} shifts`;
     if (report.hasIntegrityIssue) {
       return {
@@ -170,6 +171,13 @@ function loginStatusNotice(status) {
         tone: "warning",
         title: "Punch correction applied — shift still needs approval",
         message: `The missed-punch correction is complete, but ${subject} still needs the separate manager shift-approval step before pay-period finalization. ${currentState}`,
+      };
+    }
+    if (directAdminOnly) {
+      return {
+        tone: "warning",
+        title: "Manager correction applied — shift still needs approval",
+        message: `A manager corrected ${subject}, but the correction does not count as final shift approval. A separate manager approval is still required before pay-period finalization. ${currentState}`,
       };
     }
     return {
