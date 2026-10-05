@@ -70,7 +70,7 @@ assert.match(backend, /progress_fraction: Number\.isFinite\(Number\(progress\?\.
 assert.match(backend, /Order sync needs review/);
 console.log('PASS Order backend publishes write, backoff, retry, verification, Base44 confirmation and review stages');
 
-assert.match(widget, /const progressPhaseLabel = orderProgress\.phaseLabel/);
+assert.match(widget, /const progressPhaseLabel = reconnectingStatus \? 'Reconnecting to sync status' : orderProgress\.phaseLabel/);
 assert.match(widget, /progressPhaseLabel \|\| currentStepLabel/);
 assert.match(widget, /isRunning && progressDetail/);
 assert.match(widget, /\{progressDetail\}/);
