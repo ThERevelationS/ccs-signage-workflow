@@ -176,7 +176,11 @@ assert.match(source, /Diagnostic only — not trusted payroll evidence/);
 assert.match(source, /function integrityValidationSummary\(validation\)/);
 assert.match(source, /Company date does not match clock-in in America\/New_York/);
 assert.match(source, /integrityValidationSummary\(integrityDiagnostic\.validation\)/);
-console.log('PASS integrity investigation identifies malformed authoritative membership rows, explains the failed shared-contract rules, and keeps their scoped display explicitly diagnostic and untrusted');
+assert.match(source, /diagnostic_row_index: rowIndex/);
+assert.match(source, /integrityDiagnostics\.filter\(\(item\) => !String\(item\?\.audit_id \|\| ""\)\.trim\(\)\)/);
+assert.match(source, /`diagnostic-row-\$\{sourceRowIndex\}`/);
+assert.match(source, /row\.id \|\| "Missing immutable audit ID"/);
+console.log('PASS integrity investigation identifies malformed authoritative membership rows, explains failed rules, and uses row-local diagnostic identity for blank audit IDs without promoting it to authoritative evidence');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
 assert.match(source, /setSearch\(""\);[\s\S]*setActionFilter\("all"\);[\s\S]*onExitInvestigation/);
