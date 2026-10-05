@@ -78,16 +78,31 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
 
   useEffect(() => {
     mountedRef.current = true;
-    loadRows();
+    const initialTimeEntryId = String(investigation?.time_entry_id || "").trim();
+    if (initialTimeEntryId) {
+      setActionFilter("all");
+      setSearch(initialTimeEntryId);
+      loadRows(initialTimeEntryId);
+    } else {
+      loadRows();
+    }
     return () => {
       mountedRef.current = false;
       requestSequenceRef.current += 1;
     };
   }, []);
 
+  const previousInvestigationRef = useRef({
+    nonce: investigation?.nonce,
+    time_entry_id: String(investigation?.time_entry_id || "").trim(),
+  });
+
   useEffect(() => {
     const timeEntryId = String(investigation?.time_entry_id || "").trim();
-    if (!timeEntryId) return;
+    const previous = previousInvestigationRef.current;
+    const changed = previous.nonce !== investigation?.nonce || previous.time_entry_id !== timeEntryId;
+    previousInvestigationRef.current = { nonce: investigation?.nonce, time_entry_id: timeEntryId };
+    if (!changed || !timeEntryId) return;
     setActionFilter("all");
     setSearch(timeEntryId);
     loadRows(timeEntryId);
