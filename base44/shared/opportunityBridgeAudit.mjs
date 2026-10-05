@@ -4,7 +4,7 @@ import { isLegacyTerminalSmartsheetSalesRecord } from './historicalSalesOutcomeR
 const clean = (value) => String(value ?? '').trim();
 const normalizedAlias = (value) => clean(value).toLowerCase();
 const numericId = (value) => /^\d+$/.test(clean(value));
-const LEGACY_TERMINAL_TASK_PATTERN = /^(lost\b|completed sale\b|closed\b)/i;
+const LEGACY_TERMINAL_TASK_PATTERN = /^(lost\b|completed sales?\b|closed\b)/i;
 
 export const OPPORTUNITY_BRIDGE_DECISIONS = Object.freeze({
   SAFE_AUTO: 'safe_auto_bridge',
@@ -35,7 +35,7 @@ export function classifyWorkOrderSalesScope(workOrder = {}) {
 export function legacyTerminalTaskKind(workOrder = {}) {
   const task = clean(workOrder?.current_task_description).toLowerCase();
   if (/^lost\b/.test(task)) return 'lost';
-  if (/^completed sale\b/.test(task)) return 'won';
+  if (/^completed sales?\b/.test(task)) return 'won';
   if (/^closed\b/.test(task)) return 'closed';
   return '';
 }
