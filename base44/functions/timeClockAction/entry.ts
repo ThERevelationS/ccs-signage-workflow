@@ -2836,7 +2836,7 @@ Deno.serve(async (req) => {
         const expectedMembershipDiscovery = [];
         if (Number(summary.snapshot_version || 0) >= 18) {
           const windowAudits = await auditEntity.filter({ server_timestamp: { $gte: windowStart, $lte: windowEnd } });
-          if (!Array.isArray(windowAudits)) return false;
+          if (!Array.isArray(windowAudits)) return failed();
           const candidateIds = [...new Set(windowAudits.filter((row: any) =>
             relevantActions.includes(String(row.action || '')) &&
             ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
