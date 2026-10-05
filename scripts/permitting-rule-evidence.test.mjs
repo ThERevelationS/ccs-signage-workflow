@@ -171,3 +171,12 @@ test('administrative extraction rejects regulatory categories before staging, wh
   const batch=await validateRuleCandidates(unit,{rules:[f.raw,raw]});assert.equal(batch.candidates.length,1);assert.equal(batch.rejected.length,1);
  }
 });
+
+
+test('extraction readiness rejects missing or malformed archive identity before AI or writes',async()=>{
+ for(const source of [{file_hash_sha256:''},{file_hash_sha256:'bad'},{file_bytes:0},{file_bytes:-1},{file_bytes:1.5},{archived_file_url:''},{archived_file_url:'javascript:alert(1)'},{archived_file_url:'https://user:secret@storage.test/file.pdf'}]){
+  const f=await ruleFixture({source});
+  await assert.rejects(extractEvidenceUnit(f.api),/retained archive/);
+  assert.equal(f.calls.llm,0);assert.equal(f.runs.length,0);assert.equal(f.rules.length,0);
+ }
+});

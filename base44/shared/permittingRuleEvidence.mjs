@@ -22,6 +22,13 @@ export function reviewedAdoptedSource(source) {
 export async function loadRuleEvidence({sourceEntity,segmentEntity,sourceDocumentId,startPage=1,pageCount=1}) {
   const source=await sourceEntity.get(sourceDocumentId);
   if (!source?.id || !source.jurisdiction_id || !source.jurisdiction_name) throw evidenceError('A canonically linked source document is required.',400);
+  let archiveUrl;
+  try { archiveUrl=new URL(source.archived_file_url); } catch {}
+  if (!/^[a-f0-9]{64}$/.test(source.file_hash_sha256 || '') ||
+      !Number.isSafeInteger(source.file_bytes) || source.file_bytes<=0 ||
+      !archiveUrl || !['http:','https:'].includes(archiveUrl.protocol) || archiveUrl.username || archiveUrl.password)
+    throw evidenceError('A retained archive with valid hash, byte count and URL is required before extraction.',400);
+
   const evidence=await readSourceEvidencePages({source,segmentEntity,startPage,pageCount});
   if (evidence.pages.length!==pageCount) throw evidenceError('Selected pages have not all been retained; continue text extraction first.',400);
   if (evidence.pages.some(p=>p.truncated || p.needs_ocr_review)) throw evidenceError('Selected pages have extraction gaps requiring review.',400);
