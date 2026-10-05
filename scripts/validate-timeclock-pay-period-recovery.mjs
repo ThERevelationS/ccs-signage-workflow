@@ -2080,7 +2080,8 @@ test('exact direct admin correction retry releases a stranded shared mutation ga
         query.correction_create_request_id === payload.request_id &&
         update.$set?.correction_create_status === 'idle') {
       failRelease = false;
-      h.rows.TimeClockEmployeeState[0].updated_date = '2026-09-20T00:00:59.999Z';
+      const gateRow = h.rows.TimeClockEmployeeState.find((row) => row.id === query.id);
+      gateRow.updated_date = '2026-09-20T00:00:59.999Z';
     }
   });
   const interrupted = await h.invoke(payload);
@@ -2089,14 +2090,15 @@ test('exact direct admin correction retry releases a stranded shared mutation ga
   assert.equal(h.rows.TimeEntry[0].approval_status, 'needs_review');
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === payload.request_id).length, 1);
   assert.equal(h.rows.TimeClockAudit.find((row) => row.action === 'admin_correction' && row.request_id === payload.request_id)?.outcome, 'confirmed');
-  assert.equal(h.rows.TimeClockEmployeeState[0].correction_create_status, 'creating');
-  assert.equal(h.rows.TimeClockEmployeeState[0].correction_create_request_id, payload.request_id);
+  const heldGate = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  assert.equal(heldGate.correction_create_status, 'creating');
+  assert.equal(heldGate.correction_create_request_id, payload.request_id);
 
   h.setBeforeUpdate(null);
   const recovered = await h.invoke(payload);
   assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
   assert.equal(recovered.body.reused, true);
-  assert.equal(h.rows.TimeClockEmployeeState[0].correction_create_status, 'idle');
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email).correction_create_status, 'idle');
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === payload.request_id).length, 1);
 });
 
