@@ -69,7 +69,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 {wo.title && <p className="text-gray-500 text-sm truncate">{wo.title}</p>}
                 <button type="button" onClick={(event) => { event.stopPropagation(); onOpenDetails?.(wo); }}
                   className="mt-1 inline-flex min-h-11 items-center rounded-md px-1 text-xs font-semibold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                  aria-label={`Open sales details for ${wo.client_name || 'Unnamed opportunity'}`}>
+                  aria-label={`Open sales details for ${opportunityDisplayName}`}>
                   Open details
                 </button>
               </div>
