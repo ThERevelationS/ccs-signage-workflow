@@ -2728,7 +2728,7 @@ Deno.serve(async (req) => {
         if (!provenance) return false;
         const evidence = await auditEntity.get(String(provenance.audit_id || '')).catch(() => null);
         const allowedActions = change.change_type === 'removed'
-          ? ['admin_archive']
+          ? ['admin_archive', 'admin_correction']
           : ['admin_correction', 'clock_in', 'clock_out', 'punch_exception'];
         return Boolean(evidence &&
           allowedActions.includes(String(evidence.action || '')) &&
@@ -2754,6 +2754,32 @@ Deno.serve(async (req) => {
             String(evidence.server_timestamp || '') === String(provenance.semantic_clock_in || '') &&
             String(change.after?.clock_in || '') === String(provenance.semantic_clock_in || '')
           )) &&
+          (String(evidence.action || '') !== 'admin_correction' || (() => {
+            const original = evidence.details?.original || {};
+            const corrected = evidence.details?.corrected || {};
+            if (String(original.clock_in || '') !== String(provenance.semantic_before_clock_in || '') ||
+                String(original.clock_out || '') !== String(provenance.semantic_before_clock_out || '') ||
+                Number(original.total_hours || 0) !== Number(provenance.semantic_before_total_hours || 0) ||
+                String(corrected.clock_in || '') !== String(provenance.semantic_after_clock_in || '') ||
+                String(corrected.clock_out || '') !== String(provenance.semantic_after_clock_out || '') ||
+                Number(corrected.total_hours || 0) !== Number(provenance.semantic_after_total_hours || 0)) return false;
+            const originalDay = dateKeyInCompanyTime(original.clock_in);
+            const correctedDay = dateKeyInCompanyTime(corrected.clock_in);
+            const originalInside = Boolean(originalDay && originalDay >= period.start_date && originalDay <= period.end_date);
+            const correctedInside = Boolean(correctedDay && correctedDay >= period.start_date && correctedDay <= period.end_date);
+            if (change.change_type === 'removed') return originalInside && !correctedInside && !change.after;
+            if (change.change_type === 'added') return !originalInside && correctedInside && !change.before &&
+              String(change.after?.clock_in || '') === String(corrected.clock_in || '') &&
+              String(change.after?.clock_out || '') === String(corrected.clock_out || '') &&
+              Number(change.after?.total_hours || 0) === Number(corrected.total_hours || 0);
+            return change.change_type === 'changed' && originalInside && correctedInside &&
+              String(change.before?.clock_in || '') === String(original.clock_in || '') &&
+              String(change.before?.clock_out || '') === String(original.clock_out || '') &&
+              Number(change.before?.total_hours || 0) === Number(original.total_hours || 0) &&
+              String(change.after?.clock_in || '') === String(corrected.clock_in || '') &&
+              String(change.after?.clock_out || '') === String(corrected.clock_out || '') &&
+              Number(change.after?.total_hours || 0) === Number(corrected.total_hours || 0);
+          })()) &&
           (String(evidence.action || '') !== 'admin_archive' || change.change_type === 'removed'));
       };
       const verifyCausalChain = async (change: any, windowStart = '', windowEnd = '') => {
@@ -3862,7 +3888,7 @@ Deno.serve(async (req) => {
                 const causalAudits = await auditEntity.filter({ time_entry_id: id });
                 if (!Array.isArray(causalAudits)) return Response.json({ success: false, error: 'Payroll change audit lookup failed before finalization.' }, { status: 409 });
                 const allowedActions = change.change_type === 'removed'
-                  ? ['admin_archive']
+                  ? ['admin_archive', 'admin_correction']
                   : ['admin_correction', 'clock_in', 'clock_out', 'punch_exception'];
                 const candidates = causalAudits.filter((row: any) => {
                   const occurredAt = Date.parse(String(row.server_timestamp || ''));
@@ -3870,10 +3896,34 @@ Deno.serve(async (req) => {
                     ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
                     (!supersededGeneration || (Number.isFinite(occurredAt) && occurredAt >= Date.parse(generationCausalWindowStart) && occurredAt <= Date.parse(generationCausalWindowEnd)));
                 }).sort((a: any, b: any) => String(b.server_timestamp || b.updated_date || '').localeCompare(String(a.server_timestamp || a.updated_date || '')));
+                const semanticBefore = change.before || {};
                 const semanticAfter = change.after || {};
                 const semanticallyMatches = (row: any) => {
                   const action = String(row.action || '');
-                  if (change.change_type === 'removed') return action === 'admin_archive';
+                  if (action === 'admin_archive') return change.change_type === 'removed';
+                  if (action === 'admin_correction') {
+                    const original = row.details?.original || {};
+                    const corrected = row.details?.corrected || {};
+                    const originalDay = dateKeyInCompanyTime(original.clock_in);
+                    const correctedDay = dateKeyInCompanyTime(corrected.clock_in);
+                    const originalInside = Boolean(originalDay && originalDay >= startDate && originalDay <= endDate);
+                    const correctedInside = Boolean(correctedDay && correctedDay >= startDate && correctedDay <= endDate);
+                    if (change.change_type === 'removed') return originalInside && !correctedInside &&
+                      String(original.clock_in || '') === String(semanticBefore.clock_in || '') &&
+                      String(original.clock_out || '') === String(semanticBefore.clock_out || '') &&
+                      Number(original.total_hours || 0) === Number(semanticBefore.total_hours || 0);
+                    if (change.change_type === 'added') return !originalInside && correctedInside &&
+                      String(corrected.clock_in || '') === String(semanticAfter.clock_in || '') &&
+                      String(corrected.clock_out || '') === String(semanticAfter.clock_out || '') &&
+                      Number(corrected.total_hours || 0) === Number(semanticAfter.total_hours || 0);
+                    return change.change_type === 'changed' && originalInside && correctedInside &&
+                      String(original.clock_in || '') === String(semanticBefore.clock_in || '') &&
+                      String(original.clock_out || '') === String(semanticBefore.clock_out || '') &&
+                      Number(original.total_hours || 0) === Number(semanticBefore.total_hours || 0) &&
+                      String(corrected.clock_in || '') === String(semanticAfter.clock_in || '') &&
+                      String(corrected.clock_out || '') === String(semanticAfter.clock_out || '') &&
+                      Number(corrected.total_hours || 0) === Number(semanticAfter.total_hours || 0);
+                  }
                   if (action === 'clock_out') return String(row.details?.result_clock_out || '') === String(semanticAfter.clock_out || '') &&
                     Number(row.details?.total_hours || 0) === Number(semanticAfter.total_hours || 0);
                   if (action === 'clock_in') return change.change_type === 'added' &&
@@ -3890,6 +3940,12 @@ Deno.serve(async (req) => {
                   semantic_clock_in: String(change.after?.clock_in || ''),
                   semantic_clock_out: String(change.after?.clock_out || ''),
                   semantic_total_hours: Number(change.after?.total_hours || 0),
+                  semantic_before_clock_in: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_in || '' : change.before?.clock_in || ''),
+                  semantic_before_clock_out: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_out || '' : change.before?.clock_out || ''),
+                  semantic_before_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.original?.total_hours || 0 : change.before?.total_hours || 0),
+                  semantic_after_clock_in: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_in || '' : change.after?.clock_in || ''),
+                  semantic_after_clock_out: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_out || '' : change.after?.clock_out || ''),
+                  semantic_after_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.corrected?.total_hours || 0 : change.after?.total_hours || 0),
                 };
               }
               const chainAudits = await auditEntity.filter({ time_entry_id: id });
