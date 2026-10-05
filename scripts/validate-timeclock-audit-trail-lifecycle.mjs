@@ -1,7 +1,7 @@
 // Source-level regression coverage for Time Clock Audit Trail async lifecycle guarantees.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipCompanyDate, payrollMembershipFromAudit } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipCompanyDate, payrollMembershipFromAudit } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
 
 const source = readFileSync(new URL('../src/components/timeclock/TimeClockAuditTrail.jsx', import.meta.url), 'utf8');
 const backendSource = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
@@ -164,9 +164,7 @@ assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence, investig
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
 
 assert.match(source, /if \(integrityMode\)/);
-assert.match(source, /const membership = payrollMembershipFromAudit\(row\)/);
-assert.match(source, /validatePayrollMembershipConflictEvidence\(evidence\)/);
-assert.match(source, /payrollMembershipConflictEvidenceIsMalformed\(candidateValidation\)/);
+assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
 assert.match(source, /setIntegrityDiagnostics\(authoritativeIntegrityDiagnostics\)/);
 assert.match(source, /setRows\(loadedRows\)/);
