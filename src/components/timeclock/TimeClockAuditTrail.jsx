@@ -109,31 +109,50 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         }
         const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
         if (integrityMode) {
-          const malformedAuthoritativeMembershipRows = loadedRows.map((row, rowIndex) => {
+          const integrityAuditIdList = loadedRows.map((row) => String(row?.id || "").trim());
+          const duplicateIntegrityAuditIds = [...new Set(integrityAuditIdList.filter((id, index) => id && integrityAuditIdList.indexOf(id) !== index))];
+          const duplicateIntegrityAuditIdSet = new Set(duplicateIntegrityAuditIds);
+          const authoritativeIntegrityDiagnostics = loadedRows.map((row, rowIndex) => {
+            const auditId = String(row?.id || "").trim();
             const membership = payrollMembershipFromAudit(row);
-            if (!membership) return null;
-            const evidence = {
-              contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
-              audit_id: String(row?.id || ""),
-              action: String(row?.action || ""),
-              request_id: String(row?.request_id || ""),
-              server_timestamp: String(row?.server_timestamp || ""),
-              company_date: String(membership.company_date || ""),
-              clock_in: String(membership.clock_in || ""),
-              source: String(membership.source || ""),
-            };
-            const validation = validatePayrollMembershipConflictEvidence(evidence);
-            return payrollMembershipConflictEvidenceIsMalformed(validation) ? {
-              audit_id: evidence.audit_id,
+            let validation = null;
+            if (membership) {
+              const evidence = {
+                contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
+                audit_id: auditId,
+                action: String(row?.action || ""),
+                request_id: String(row?.request_id || ""),
+                server_timestamp: String(row?.server_timestamp || ""),
+                company_date: String(membership.company_date || ""),
+                clock_in: String(membership.clock_in || ""),
+                source: String(membership.source || ""),
+              };
+              const candidateValidation = validatePayrollMembershipConflictEvidence(evidence);
+              if (payrollMembershipConflictEvidenceIsMalformed(candidateValidation)) validation = candidateValidation;
+            }
+            const duplicateImmutableAuditId = Boolean(auditId && duplicateIntegrityAuditIdSet.has(auditId));
+            return validation || duplicateImmutableAuditId ? {
+              audit_id: auditId,
               diagnostic_row_index: rowIndex,
               validation,
+              duplicate_immutable_audit_id: duplicateImmutableAuditId,
             } : null;
           }).filter(Boolean);
-          if (malformedAuthoritativeMembershipRows.length > 0) {
-            console.error("Time Clock audit integrity investigation authoritative evidence failure:", { requested_time_entry_id: scopedId, malformed_authoritative_membership_rows: malformedAuthoritativeMembershipRows });
-            setIntegrityDiagnostics(malformedAuthoritativeMembershipRows);
+          if (authoritativeIntegrityDiagnostics.length > 0) {
+            const malformedCount = authoritativeIntegrityDiagnostics.filter((item) => item.validation).length;
+            const duplicateRecordCount = authoritativeIntegrityDiagnostics.filter((item) => item.duplicate_immutable_audit_id).length;
+            console.error("Time Clock audit integrity investigation authoritative evidence failure:", {
+              requested_time_entry_id: scopedId,
+              authoritative_integrity_diagnostics: authoritativeIntegrityDiagnostics,
+              duplicate_immutable_audit_ids: duplicateIntegrityAuditIds,
+            });
+            setIntegrityDiagnostics(authoritativeIntegrityDiagnostics);
             setRows(loadedRows);
-            setError(`Payroll evidence integrity investigation found ${malformedAuthoritativeMembershipRows.length} malformed authoritative membership audit record${malformedAuthoritativeMembershipRows.length === 1 ? "" : "s"}. The scoped records below are diagnostic only and are not being presented as trusted payroll evidence.`);
+            const issueSummary = [
+              malformedCount > 0 ? `${malformedCount} malformed provenance record${malformedCount === 1 ? "" : "s"}` : "",
+              duplicateRecordCount > 0 ? `${duplicateRecordCount} record${duplicateRecordCount === 1 ? "" : "s"} sharing duplicate immutable Audit IDs` : "",
+            ].filter(Boolean).join(" and ");
+            setError(`Payroll evidence integrity investigation found ${issueSummary}. The scoped records below are diagnostic only and are not being presented as trusted payroll evidence.`);
             return;
           }
         }
@@ -283,8 +302,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const conflictAuditIds = useMemo(() => new Set(investigationEvidence.map((item) => String(item?.audit_id || "")).filter(Boolean)), [investigationEvidence]);
   const investigationActive = Boolean(String(investigation?.time_entry_id || "").trim());
   const integrityInvestigation = investigationActive && investigation?.mode === "integrity";
-  const integrityDiagnosticByAuditId = useMemo(() => new Map(integrityDiagnostics.filter((item) => String(item?.audit_id || "").trim()).map((item) => [String(item.audit_id), item])), [integrityDiagnostics]);
-  const integrityDiagnosticByRowIndex = useMemo(() => new Map(integrityDiagnostics.filter((item) => !String(item?.audit_id || "").trim()).map((item) => [Number(item?.diagnostic_row_index), item])), [integrityDiagnostics]);
+  const integrityDiagnosticByRowIndex = useMemo(() => new Map(integrityDiagnostics.map((item) => [Number(item?.diagnostic_row_index), item])), [integrityDiagnostics]);
 
   return (
     <div className="clay-card p-4">
@@ -364,11 +382,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             const sourceRowIndex = rows.indexOf(row);
             const isConflictEvidence = conflictAuditIds.has(String(row.id || ""));
             const claimedEvidence = investigationEvidence.find((item) => String(item?.audit_id || "") === String(row.id || ""));
-            const integrityDiagnostic = String(row.id || "").trim()
-              ? integrityDiagnosticByAuditId.get(String(row.id))
-              : integrityDiagnosticByRowIndex.get(sourceRowIndex);
+            const integrityDiagnostic = integrityDiagnosticByRowIndex.get(sourceRowIndex);
             return (
-              <div key={String(row.id || "").trim() || `diagnostic-row-${sourceRowIndex}`} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
+              <div key={integrityInvestigation ? `diagnostic-row-${sourceRowIndex}` : (String(row.id || "").trim() || `audit-row-${sourceRowIndex}`)} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -376,7 +392,8 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
                       <span className="font-medium text-sm">{ACTION_LABELS[row.action] || row.action || "Time Clock action"}</span>
                       <Badge variant="outline" className={outcomeClass(row.outcome)}>{row.outcome || "unknown"}</Badge>
                       {isConflictEvidence && <Badge variant="outline" className="border-amber-400 bg-amber-100 text-amber-900">Conflicting evidence</Badge>}
-                      {integrityDiagnostic && <Badge variant="outline" className="border-red-400 bg-red-100 text-red-900">Malformed authoritative provenance</Badge>}
+                      {integrityDiagnostic?.validation && <Badge variant="outline" className="border-red-400 bg-red-100 text-red-900">Malformed authoritative provenance</Badge>}
+                      {integrityDiagnostic?.duplicate_immutable_audit_id && <Badge variant="outline" className="border-red-400 bg-red-100 text-red-900">Duplicate immutable Audit ID</Badge>}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{safeTime(row.server_timestamp)}</p>
                   </div>
@@ -391,12 +408,18 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
                   {integrityDiagnostic && (
                     <div className="md:col-span-2 mt-1 rounded border border-red-300 bg-white p-2 text-red-950">
                       <div className="font-semibold">Diagnostic only — not trusted payroll evidence</div>
-                      <div className="mt-1 text-xs">This authoritative audit record failed the shared payroll-membership evidence contract. Audit ID: <span className="font-mono break-all">{row.id || "Missing immutable audit ID"}</span>.</div>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {integrityValidationSummary(integrityDiagnostic.validation).map((failure) => (
-                          <Badge key={failure} variant="outline" className="border-red-300 bg-red-50 text-red-900">{failure}</Badge>
-                        ))}
+                      <div className="mt-1 text-xs">
+                        {integrityDiagnostic.validation ? "This authoritative audit record failed the shared payroll-membership evidence contract. " : ""}
+                        {integrityDiagnostic.duplicate_immutable_audit_id ? "This immutable Audit ID is shared by multiple authoritative records, so none of those records can be treated as uniquely identified payroll evidence. " : ""}
+                        Audit ID: <span className="font-mono break-all">{row.id || "Missing immutable audit ID"}</span>.
                       </div>
+                      {integrityDiagnostic.validation && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {integrityValidationSummary(integrityDiagnostic.validation).map((failure) => (
+                            <Badge key={failure} variant="outline" className="border-red-300 bg-red-50 text-red-900">{failure}</Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                   {isConflictEvidence && claimedEvidence && (
