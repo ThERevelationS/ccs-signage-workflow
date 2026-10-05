@@ -5,6 +5,7 @@ import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipCompanyD
 
 const source = readFileSync(new URL('../src/components/timeclock/TimeClockAuditTrail.jsx', import.meta.url), 'utf8');
 const backendSource = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
+const payPeriodManagerSource = readFileSync(new URL('../src/components/timeclock/PayPeriodManager.jsx', import.meta.url), 'utf8');
 
 assert.equal(PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, 1, 'shared payroll-membership evidence contract version must remain explicit');
 assert.match(backendSource, /from '\.\.\/\.\.\/shared\/timeClockPayrollMembershipEvidence\.mjs'/);
@@ -17,6 +18,12 @@ assert.match(backendSource, /conflict_evidence: \[\]/);
 assert.match(source, /Number\(expected\?\.contract_version \|\| 0\) === PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
 console.log('PASS payroll membership evidence producer and verifier import one shared versioned contract');
 console.log('PASS backend conflict-evidence producer validates the complete shared contract and fails closed before emitting malformed evidence');
+assert.match(backendSource, /type: 'payroll_membership_evidence_invalid'/);
+assert.match(backendSource, /Invalid payroll membership provenance was detected/);
+assert.match(payPeriodManagerSource, /historyResult\?\.conflict\?\.type === "payroll_membership_evidence_invalid"/);
+assert.match(payPeriodManagerSource, /Payroll evidence integrity failure/);
+assert.match(payPeriodManagerSource, /No malformed evidence was returned/);
+console.log('PASS invalid backend payroll-membership provenance is distinguished from valid evidence conflicts through Payroll History');
 
 const COMPANY_TIME_ZONE = 'America/New_York';
 const canonicalPayrollMembership = payrollMembershipFromAudit;
