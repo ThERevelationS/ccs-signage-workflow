@@ -17,6 +17,7 @@ import { getActionableSalesAttentionItems, getSalesAttentionItems } from "@/comp
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
+import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const CellHistory = base44.entities.CellHistory;
@@ -125,6 +126,7 @@ export default function SalesOpportunityDialog({
   const [removeFromPipelineBusy, setRemoveFromPipelineBusy] = useState(false);
   const [removeFromPipelineAction, setRemoveFromPipelineAction] = useState("");
   const [removeFromPipelineError, setRemoveFromPipelineError] = useState("");
+  const opportunityDisplayName = salesOpportunityDisplayName(workOrder);
 
   useEffect(() => {
     let active = true;
@@ -221,7 +223,7 @@ export default function SalesOpportunityDialog({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <DialogTitle className="truncate text-xl">{workOrder.client_name || "Unnamed opportunity"}</DialogTitle>
+                <DialogTitle className="truncate text-xl">{opportunityDisplayName}</DialogTitle>
                 <Badge variant="outline">{statusLabel}</Badge>
                 {recordClassification === "current" && <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Current Pipeline</Badge>}
                 {recordClassification === "outcome" && <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Tracked Outcome</Badge>}
@@ -366,7 +368,7 @@ export default function SalesOpportunityDialog({
                 <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">Task owner</Label>
-                  <TaskAssigneeSelect key={workOrder.id} value={workOrder.current_task_assigned_to || ""} users={users} disabled={!isRegistered || closeout} onChange={(name) => update({ current_task_assigned_to: name })} className="mt-1 h-11 sm:h-9" context={workOrder.client_name || "this opportunity"} />
+                  <TaskAssigneeSelect key={workOrder.id} value={workOrder.current_task_assigned_to || ""} users={users} disabled={!isRegistered || closeout} onChange={(name) => update({ current_task_assigned_to: name })} className="mt-1 h-11 sm:h-9" context={opportunityDisplayName} />
                 </div>
                 <div className="sm:col-span-2"><Label className="text-xs text-gray-500">{closeout ? "Last planned action / task" : "Next action / task"}</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-11 sm:h-9" /></div>
               </div>
@@ -555,7 +557,7 @@ export default function SalesOpportunityDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Remove this record from Current Pipeline?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will set Current Pipeline membership to off for “{workOrder.client_name || "Unnamed opportunity"}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created. Each record requires its own confirmation. “Remove & Next” advances to the next record in the current filtered queue only after this save succeeds.
+            This will set Current Pipeline membership to off for “{opportunityDisplayName}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created. Each record requires its own confirmation. “Remove & Next” advances to the next record in the current filtered queue only after this save succeeds.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {removeFromPipelineError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{removeFromPipelineError}</div>}
