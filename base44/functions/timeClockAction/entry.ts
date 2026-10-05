@@ -5964,6 +5964,10 @@ Deno.serve(async (req) => {
           const convergenceAuditId = correctionRequest.status === 'rejected' ? reviewAuditResult.audit.id : String(correctionRequest.applied_audit_id || '');
           const convergence = await verifyCorrectionReviewConvergence(correctionRequest, convergenceAuditId);
           if (!convergence.ok) return Response.json({ success: false, error: 'The completed correction review has not converged with its TimeEntry and audit evidence. Admin investigation is required.' }, { status: 409 });
+          const completedReviewGateReleased = await releaseCompletedCorrectionCreateLock(
+            stateEntity, state.id, requestId, String(correctionRequest.time_entry_id || ''), reviewHash,
+          );
+          if (!completedReviewGateReleased) return Response.json({ success: false, retry_same_request: true, error: 'The correction review is complete but its shared employee mutation gate could not be released safely. Retry this same review.' }, { status: 409 });
           return Response.json({ success: true, request: correctionRequest, entry: convergence.entry, review_audit_id: reviewAuditResult.audit.id, reused: true });
         }
         return Response.json({ success: false, error: 'This correction request has already been reviewed.' }, { status: 409 });
@@ -6041,6 +6045,7 @@ Deno.serve(async (req) => {
                 details: {
                   original: correctionRequest.original_snapshot,
                   corrected: entryAuditSnapshot(staleEntry),
+                  payroll_membership: payrollMembershipEnvelope(staleEntry.clock_in),
                   correction_request_id: correctionRequest.id,
                   review_payload_hash: previousReviewHash,
                   recovered_after_abandoned_review: true,
@@ -6081,6 +6086,12 @@ Deno.serve(async (req) => {
           }
           if (!punchReconciled.ok) {
             return Response.json({ success: false, recovered: true, error: 'The interrupted manager approval was recovered, but Punch Exception finalization is incomplete. Retry the original review request.' }, { status: 409 });
+          }
+          const recoveredGateReleased = await releaseCompletedCorrectionCreateLock(
+            stateEntity, state.id, previousRequestId, String(correctionRequest.time_entry_id || ''), previousReviewHash,
+          );
+          if (!recoveredGateReleased) {
+            return Response.json({ success: false, recovered: true, retry_same_request: true, error: 'The interrupted manager approval was recovered, but its shared employee mutation gate is still held. Retry the original review request.' }, { status: 409 });
           }
           return Response.json({ success: false, recovered: true, error: 'A previous interrupted manager approval was recovered. Reload the correction queue before taking another action.' }, { status: 409 });
         }
@@ -6131,6 +6142,20 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, request: savedRequest, entry: convergence.entry, review_audit_id: reviewAuditResult.audit.id });
       }
 
+      const reviewGateEntryId = String(correctionRequest.time_entry_id || '');
+      const reviewMutationGate = await claimCorrectionCreateLock(
+        stateEntity, state.id, requestId, reviewGateEntryId, reviewHash,
+      );
+      if (!reviewMutationGate?.acquired) {
+        if (reviewMutationGate?.different_request) await releaseReview();
+        return Response.json({
+          success: false,
+          ...(reviewMutationGate?.retry_same_request === true ? { retry_same_request: true } : {}),
+          error: reviewMutationGate?.error || 'The correction review could not acquire the employee mutation gate.',
+        }, { status: 409 });
+      }
+
+      try {
       let entry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
       const expectedUnderlyingStatus = missedClockOutRecovery ? 'needs_resolution' : 'clocked_out';
       const underlyingEligible = Boolean(
@@ -6170,6 +6195,7 @@ Deno.serve(async (req) => {
               details: {
                 original: correctionRequest.original_snapshot,
                 corrected: entryAuditSnapshot(entry),
+                payroll_membership: payrollMembershipEnvelope(entry.clock_in),
                 correction_request_id: correctionRequest.id,
                 review_payload_hash: reviewHash,
                 recovered_after_interruption: true,
@@ -6214,6 +6240,36 @@ Deno.serve(async (req) => {
           if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
           await releaseReview();
           return Response.json({ success: false, error: 'Approved punch times are invalid.' }, { status: 400 });
+        }
+        const correctedClockInDay = dateKeyInCompanyTime(clockIn.toISOString());
+        if (!correctedClockInDay) {
+          if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          await releaseReview();
+          return Response.json({ success: false, error: 'The approved Clock In cannot be mapped to the company payroll date.' }, { status: 400 });
+        }
+        const finalizedPeriods = await payPeriodEntity.filter({ status: 'finalized' });
+        if (!Array.isArray(finalizedPeriods)) throw new Error('Finalized pay-period lookup did not return a record list.');
+        const invalidFinalizedPeriod = finalizedPeriods.find((period: any) => {
+          const start = validDateKey(period.start_date);
+          const end = validDateKey(period.end_date);
+          return !start || !end || start > end;
+        });
+        if (invalidFinalizedPeriod) {
+          if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          await releaseReview();
+          return Response.json({ success: false, error: 'A finalized pay period has invalid date boundaries. Admin review is required before applying this correction.' }, { status: 409 });
+        }
+        const destinationClosedPeriod = finalizedPeriods.find((period: any) =>
+          correctedClockInDay >= period.start_date && correctedClockInDay <= period.end_date,
+        );
+        if (destinationClosedPeriod) {
+          if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          await releaseReview();
+          return Response.json({
+            success: false,
+            error: `The approved Clock In belongs to finalized pay period ${destinationClosedPeriod.label || 'a closed period'} (${destinationClosedPeriod.start_date} to ${destinationClosedPeriod.end_date}). Reopen that destination period before applying this correction.`,
+            finalized_pay_period_id: destinationClosedPeriod.id,
+          }, { status: 409 });
         }
         const totalMinutes = Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000);
         const trackedWorkPauseMinutes = Math.max(0, Math.round(Number(entry.tracked_work_pause_minutes || 0)));
@@ -6267,6 +6323,7 @@ Deno.serve(async (req) => {
             details: {
               original: correctionRequest.original_snapshot,
               corrected: entryAuditSnapshot(entry),
+              payroll_membership: payrollMembershipEnvelope(entry.clock_in),
               correction_request_id: correctionRequest.id,
               review_payload_hash: reviewHash,
             },
@@ -6294,6 +6351,12 @@ Deno.serve(async (req) => {
       const convergence = await verifyCorrectionReviewConvergence(savedRequest, correctionAuditId);
       if (!convergence.ok) return Response.json({ success: false, error: 'The applied correction has not converged with its TimeEntry and audit evidence. Admin investigation is required.' }, { status: 409 });
       return Response.json({ success: true, request: savedRequest, entry: convergence.entry, audit_id: correctionAuditId, review_audit_id: reviewAuditResult.audit.id });
+      } finally {
+        const released = await releaseCorrectionCreateLock(
+          stateEntity, state.id, requestId, reviewGateEntryId, reviewHash, String(reviewMutationGate.claim_token || ''),
+        );
+        if (!released) throw new Error('The manager correction-review gate could not be released or verified after processing. Retry the same review request to recover its lock.');
+      }
     }
 
     if (action === 'admin_correct_entry') {
