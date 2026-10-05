@@ -846,6 +846,101 @@ test('pay-period reopen holds mutation gates until payroll snapshot invalidation
   assert.equal(h.rows.TimeEntry[0].approval_status, 'needs_review');
 });
 
+test('cross-pay-period direct correction requires both finalized periods reopened and preserves removed/added generation provenance', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod.push({
+    id: 'synthetic-destination-period', label: 'Synthetic Destination Period',
+    start_date: '2026-09-27', end_date: '2026-10-03', status: 'review', last_request_id: '',
+    updated_date: '2026-09-20T00:00:00.000Z',
+  });
+  const periodAction = (pay_period_id, decision, request_id, note = '') => h.invoke({
+    action: 'pay_period_status', pay_period_id, decision, request_id, note,
+  });
+
+  const sourceFinalized = await periodAction('synthetic-period', 'finalize', 'cross-period-source-finalize-001');
+  assert.equal(sourceFinalized.status, 200, JSON.stringify(sourceFinalized.body));
+  const destinationFinalized = await periodAction('synthetic-destination-period', 'finalize', 'cross-period-destination-finalize-001');
+  assert.equal(destinationFinalized.status, 200, JSON.stringify(destinationFinalized.body));
+
+  const sourceReopened = await periodAction('synthetic-period', 'reopen', 'cross-period-source-reopen-001', 'Move corrected shift to adjacent period');
+  assert.equal(sourceReopened.status, 200, JSON.stringify(sourceReopened.body));
+  const unlockedSourceEntry = h.rows.TimeEntry[0];
+  const blockedByDestination = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'cross-period-blocked-destination-001', entry_id: unlockedSourceEntry.id,
+    expected_updated_date: unlockedSourceEntry.updated_date, reason: 'Move shift to corrected company date',
+    correction: {
+      clock_in: '2026-09-27T14:00:00.000Z', clock_out: '2026-09-27T22:00:00.000Z',
+      lunch_minutes: 0, notes: 'Corrected into adjacent payroll period', job_allocations: [],
+    },
+  });
+  assert.equal(blockedByDestination.status, 409, JSON.stringify(blockedByDestination.body));
+  assert.match(blockedByDestination.body.error, /corrected Clock In belongs to finalized pay period|Reopen that destination period/i);
+  assert.equal(blockedByDestination.body.finalized_pay_period_id, 'synthetic-destination-period');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email).correction_create_status, 'idle');
+
+  const destinationReopened = await periodAction('synthetic-destination-period', 'reopen', 'cross-period-destination-reopen-001', 'Accept corrected shift from adjacent period');
+  assert.equal(destinationReopened.status, 200, JSON.stringify(destinationReopened.body));
+  const entryBeforeCorrection = h.rows.TimeEntry[0];
+  const corrected = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'cross-period-correction-001', entry_id: entryBeforeCorrection.id,
+    expected_updated_date: entryBeforeCorrection.updated_date, reason: 'Move shift to corrected company date',
+    correction: {
+      clock_in: '2026-09-27T14:00:00.000Z', clock_out: '2026-09-27T22:00:00.000Z',
+      lunch_minutes: 0, notes: 'Corrected into adjacent payroll period', job_allocations: [],
+    },
+  });
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  const movedEntry = h.rows.TimeEntry[0];
+  assert.equal(movedEntry.clock_in, '2026-09-27T14:00:00.000Z');
+  assert.equal(movedEntry.approval_status, 'needs_review');
+  assert.equal(movedEntry.pay_period_id, undefined);
+  const correctionAudit = h.rows.TimeClockAudit.find((row) => row.action === 'admin_correction' && row.request_id === 'cross-period-correction-001');
+  assert.equal(correctionAudit.details.original.clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(correctionAudit.details.corrected.clock_in, '2026-09-27T14:00:00.000Z');
+  assert.equal(correctionAudit.details.payroll_membership.company_date, '2026-09-27');
+
+  const approved = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'cross-period-approval-001', entry_id: movedEntry.id,
+    expected_updated_date: movedEntry.updated_date, decision: 'approve', note: 'Reviewed after period move',
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
+
+  const sourceRefinalized = await periodAction('synthetic-period', 'finalize', 'cross-period-source-refinalize-001');
+  assert.equal(sourceRefinalized.status, 200, JSON.stringify(sourceRefinalized.body));
+  const sourcePeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period');
+  assert.equal(sourcePeriod.finalized_summary.shift_manifest.length, 0);
+  assert.equal(sourcePeriod.finalized_summary.generation_changes.length, 1);
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].time_entry_id, movedEntry.id);
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].change_type, 'removed');
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].action_provenance.action, 'admin_correction');
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].action_provenance.semantic_before_clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].action_provenance.semantic_after_clock_in, '2026-09-27T14:00:00.000Z');
+
+  const destinationRefinalized = await periodAction('synthetic-destination-period', 'finalize', 'cross-period-destination-refinalize-001');
+  assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
+  const destinationPeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-destination-period');
+  assert.equal(destinationPeriod.finalized_summary.shift_manifest.length, 1);
+  assert.equal(destinationPeriod.finalized_summary.shift_manifest[0].id, movedEntry.id);
+  assert.equal(destinationPeriod.finalized_summary.generation_changes.length, 1);
+  assert.equal(destinationPeriod.finalized_summary.generation_changes[0].change_type, 'added');
+  assert.equal(destinationPeriod.finalized_summary.generation_changes[0].action_provenance.action, 'admin_correction');
+  assert.equal(destinationPeriod.finalized_summary.generation_changes[0].action_provenance.semantic_before_clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(destinationPeriod.finalized_summary.generation_changes[0].action_provenance.semantic_after_clock_in, '2026-09-27T14:00:00.000Z');
+  assert.equal(h.rows.TimeEntry[0].pay_period_id, 'synthetic-destination-period');
+
+  const sourceVerify = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'synthetic-period', request_id: 'cross-period-source-verify-001' });
+  const destinationVerify = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'synthetic-destination-period', request_id: 'cross-period-destination-verify-001' });
+  assert.equal(sourceVerify.status, 200, JSON.stringify(sourceVerify.body));
+  assert.equal(sourceVerify.body.verified, true, JSON.stringify(sourceVerify.body));
+  assert.equal(destinationVerify.status, 200, JSON.stringify(destinationVerify.body));
+  assert.equal(destinationVerify.body.verified, true, JSON.stringify(destinationVerify.body));
+});
+
 test('Clock In gate wins and finalization retries into an active-shift block', async () => {
   // Keep the authoritative punch within the period being finalized; a shift
   // starting after its end date is correctly excluded from that period.
