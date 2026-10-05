@@ -16,8 +16,8 @@ const previousRefStart = source.indexOf('const previousInvestigationRef', mountE
 assert.ok(mountEffectStart >= 0 && previousRefStart > mountEffectStart);
 const mountBlock = source.slice(mountEffectStart, previousRefStart);
 assert.match(mountBlock, /const initialTimeEntryId = String\(investigation\?\.time_entry_id \|\| ""\)\.trim\(\)/);
-assert.match(mountBlock, /const initialExpectedAuditIds = [\s\S]*investigation\?\.evidence[\s\S]*audit_id/);
-assert.match(mountBlock, /if \(initialTimeEntryId\)[\s\S]*loadRows\(initialTimeEntryId, initialExpectedAuditIds\)[\s\S]*else[\s\S]*loadRows\(\)/);
+assert.match(mountBlock, /const initialExpectedEvidence = Array\.isArray\(investigation\?\.evidence\) \? investigation\.evidence : \[\]/);
+assert.match(mountBlock, /if \(initialTimeEntryId\)[\s\S]*loadRows\(initialTimeEntryId, initialExpectedEvidence\)[\s\S]*else[\s\S]*loadRows\(\)/);
 assert.equal((mountBlock.match(/loadRows\(/g) || []).length, 2, 'mount effect should choose exactly one of scoped or recent-history loading');
 console.log('PASS initial scoped mount chooses one deterministic audit request');
 
@@ -28,8 +28,8 @@ const transitionBlock = source.slice(transitionEffectStart, filteredStart);
 assert.match(transitionBlock, /previous\.nonce !== investigation\?\.nonce \|\| previous\.time_entry_id !== timeEntryId/);
 assert.match(transitionBlock, /if \(!changed \|\| !timeEntryId\) return/);
 assert.match(transitionBlock, /setSearch\(timeEntryId\)/);
-assert.match(transitionBlock, /const expectedAuditIds = [\s\S]*investigation\?\.evidence[\s\S]*audit_id/);
-assert.match(transitionBlock, /loadRows\(timeEntryId, expectedAuditIds\)/);
+assert.match(transitionBlock, /const expectedEvidence = Array\.isArray\(investigation\?\.evidence\) \? investigation\.evidence : \[\]/);
+assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence\)/);
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
@@ -77,7 +77,21 @@ assert.ok(loadRowsBlock.indexOf('mismatchedRows.length > 0') < loadRowsBlock.ind
 assert.ok(loadRowsBlock.indexOf('missingAuditIds.length > 0') < loadRowsBlock.lastIndexOf('setRows(loadedRows);'), 'completeness must be established before accepting scoped rows');
 console.log('PASS conflict evidence completeness is verified before scoped rows are presented');
 
-assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\.map\(\(item\) => item\?\.audit_id\)\)/);
-console.log('PASS scoped refresh preserves the expected immutable conflict-audit set');
+assert.match(loadRowsBlock, /const contradictoryEvidence = requiredEvidence\.filter\(\(expected\) => !conflictEvidenceMatchesAudit/);
+assert.match(loadRowsBlock, /if \(contradictoryEvidence\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*evidence-content check failed/);
+assert.ok(loadRowsBlock.indexOf('missingAuditIds.length > 0') < loadRowsBlock.indexOf('contradictoryEvidence.length > 0'), 'completeness must be established before immutable evidence content comparison');
+assert.ok(loadRowsBlock.indexOf('contradictoryEvidence.length > 0') < loadRowsBlock.lastIndexOf('setRows(loadedRows);'), 'content agreement must be established before accepting scoped rows');
+console.log('PASS expected conflict audit IDs must also match immutable evidence content before display');
 
-console.log('PASS 12/12 Time Clock Audit Trail lifecycle, integrity, and completeness scenarios');
+assert.match(source, /String\(row\?\.action \|\| ""\) === String\(expected\?\.action \|\| ""\)/);
+assert.match(source, /String\(row\?\.request_id \|\| ""\) === String\(expected\?\.request_id \|\| ""\)/);
+assert.match(source, /String\(row\?\.server_timestamp \|\| ""\) === String\(expected\?\.server_timestamp \|\| ""\)/);
+assert.match(source, /membership\?\.company_date/);
+assert.match(source, /membership\?\.clock_in/);
+assert.match(source, /membership\?\.source/);
+console.log('PASS conflict evidence comparison binds action, request, server time, company date, clock-in, and source');
+
+assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\)/);
+console.log('PASS scoped refresh preserves the complete expected immutable conflict evidence');
+
+console.log('PASS 14/14 Time Clock Audit Trail lifecycle, integrity, completeness, and evidence-content scenarios');
