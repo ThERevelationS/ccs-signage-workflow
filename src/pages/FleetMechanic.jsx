@@ -77,10 +77,22 @@ export default function FleetMechanic() {
     setData(result || null);
     setError("");
     const all = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])];
-    setSelected(current => {
-      if (!current) return current;
-      return all.find(row => row.id === current.id) || current;
-    });
+    const selectedId = selectedWorkOrderRef.current;
+    const freshSelected = selectedId ? all.find(row => row.id === selectedId) || null : null;
+    if (selectedId && !freshSelected) {
+      selectedWorkOrderRef.current = null;
+      setSelected(null);
+      setPhotos(current => {
+        current.forEach(row => URL.revokeObjectURL(row.preview));
+        return [];
+      });
+      setForm({ actual_hours:"", corrective_action:"", mechanic_note:"" });
+      setEstimateForm(estimateSeed(null));
+      setActionError("");
+      setSavedMessage("");
+      return;
+    }
+    if (freshSelected) setSelected(freshSelected);
   };
 
   const applyWorkOrderSnapshot = workOrder => {
@@ -255,6 +267,11 @@ export default function FleetMechanic() {
       const result = await fetchPortalPayload();
       if (requestId !== portalRequestRef.current) return false;
       applyPortalPayload(result);
+      const visibleWorkOrder = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])].some(row => row.id === workOrderId);
+      if (!visibleWorkOrder) {
+        setEstimateRecovery({workOrderId, reason: recoveryReason});
+        return false;
+      }
       const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === workOrderId) || null;
       const isSameOpenJob = selectedWorkOrderRef.current === workOrderId;
       if (freshEstimate && isSameOpenJob) setEstimateForm(estimateSeed(freshEstimate));
