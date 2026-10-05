@@ -2903,7 +2903,7 @@ Deno.serve(async (req) => {
           const timeOrder = Date.parse(a.server_timestamp) - Date.parse(b.server_timestamp);
           return timeOrder || a.audit_id.localeCompare(b.audit_id);
         });
-        return constantTimeEqual(await payloadHash(expected), await payloadHash(stored));
+        return constantTimeEqual(await payloadHash(expected), await payloadHash(stored)) ? { verified: true, conflict: null } : failed();
       };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
