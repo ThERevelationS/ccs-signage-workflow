@@ -44,8 +44,22 @@ export function mergeJurisdictionResearchDocuments(existingDocuments, researched
     if (existing.source === 'manual' || existing.pinned === true || existing.archive_pinned === true) continue;
 
     const archived = Boolean(existing.file_url || existing.source_sha256);
+    // Keep the page/depth pair together. Only deterministic harvest metadata
+    // can fill a missing pair; an existing observation is never reinterpreted.
+    let discoveryMetadata = {};
+    if (!existing.discovery_page_url && existing.discovery_depth == null &&
+        researched.source === 'official_page_harvest' &&
+        typeof researched.discovery_page_url === 'string' && researched.discovery_page_url.length <= 2000 &&
+        Number.isInteger(researched.discovery_depth) && researched.discovery_depth >= 0 && researched.discovery_depth <= 5) {
+      try {
+        const page = new URL(researched.discovery_page_url);
+        if (['http:', 'https:'].includes(page.protocol) && !page.username && !page.password)
+          discoveryMetadata = { discovery_page_url: page.href, discovery_depth: researched.discovery_depth };
+      } catch {}
+    }
     retained[index] = {
       ...existing,
+      ...discoveryMetadata,
       title: researched.title || existing.title,
       doc_type: researched.doc_type || existing.doc_type,
       ai_summary: researched.ai_summary || existing.ai_summary,

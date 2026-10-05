@@ -277,3 +277,38 @@ test('both server refresh paths use safe merge and individual refresh skips pinn
   assert.match(individual, /replaceJurisdictionFieldsIfUnchanged/);
   assert.match(batch, /replaceJurisdictionFieldsIfUnchanged/);
 });
+
+
+test('deterministic rediscovery fills missing page/depth without replacing archived identity', () => {
+  const existing = booneDocs[0];
+  const harvested = {...updated(existing), source:'official_page_harvest', discovery_page_url:'https://example.gov/forms/', discovery_depth:0};
+  const [result] = mergeJurisdictionResearchDocuments([existing], [harvested]);
+  assert.equal(result.discovery_page_url, harvested.discovery_page_url);
+  assert.equal(result.discovery_depth, 0);
+  for (const field of ['id','file_url','source_sha256','stored_sha256','downloaded_at']) assert.equal(result[field], existing[field]);
+  const [again] = mergeJurisdictionResearchDocuments([result], [{...harvested, discovery_page_url:'https://example.gov/other/', discovery_depth:2}]);
+  assert.equal(again.discovery_page_url, result.discovery_page_url);
+  assert.equal(again.discovery_depth, 0);
+});
+
+test('manual, pinned and archive-pinned records remain unchanged by discovery metadata', () => {
+  for (const protectedFields of [{source:'manual'}, {pinned:true}, {archive_pinned:true}]) {
+    const existing = {...booneDocs[0], ...protectedFields};
+    const [result] = mergeJurisdictionResearchDocuments([existing], [{...updated(existing), source:'official_page_harvest', discovery_page_url:'https://example.gov/forms/', discovery_depth:1}]);
+    assert.deepEqual(result, existing);
+  }
+});
+
+test('AI, malformed and incomplete observations cannot supply recovery depth', () => {
+  for (const observation of [
+    {source:'ai_discovered',discovery_page_url:'https://example.gov/forms/',discovery_depth:1},
+    {source:'official_page_harvest',discovery_page_url:'javascript:alert(1)',discovery_depth:1},
+    {source:'official_page_harvest',discovery_page_url:'https://user:pass@example.gov/forms/',discovery_depth:1},
+    {source:'official_page_harvest',discovery_page_url:'https://example.gov/forms/',discovery_depth:-1},
+    {source:'official_page_harvest',discovery_page_url:'https://example.gov/forms/'},
+  ]) {
+    const [result] = mergeJurisdictionResearchDocuments([booneDocs[0]], [{...updated(booneDocs[0]), ...observation}]);
+    assert.equal(result.discovery_page_url, undefined);
+    assert.equal(result.discovery_depth, undefined);
+  }
+});
