@@ -48,3 +48,7 @@ Phase 5 update: shared scanner now saves and resumes its frontier, commits curso
 ## Phase 5 shared scanner correction
 
 Sign resources now survive crowded alphabetical link caps; saved frontiers use resource-label ranking. Verified 54 tests, backend bundles and app build. Phase 5 remains active. Next: guarded recovery of already-capped pages and live PDF handoff. See `permitting-phase5-sign-resource-selection-2026-10-05.md`.
+
+## Phase 5 capped-page recovery
+
+Admin discovery-only recovery now resumes saved link-limit gaps across requests, preserving completed scans, pending work and documents. Page hashes guard against skipped links after source changes. Verified 58 tests, backend bundles and app build. Next: live Cincinnati recovery and PDF archive handoff. See `permitting-phase5-capped-page-recovery-2026-10-05.md`.
