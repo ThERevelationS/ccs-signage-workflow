@@ -102,6 +102,7 @@ export default function SalesPipeline() {
   const spreadsheetRef = useRef(null);
   const activeFiltersLoadRef = useRef(0);
   const loadActiveFiltersRef = useRef(() => Promise.resolve());
+  const activeSavedDefinitionRef = useRef({ information: null, column: null });
   const preferenceSaveChainRef = useRef(Promise.resolve());
   const preferenceIdentityRef = useRef("");
   const [saveSyncState, setSaveSyncState] = useState({ busy: false, ok: null, message: "" });
@@ -120,6 +121,7 @@ export default function SalesPipeline() {
     setActiveColumnPreset(null);
     setFilterStatus("all");
     setAttentionFilter("all");
+    activeSavedDefinitionRef.current = { information: null, column: null };
     setFilterReconciliationNotice("");
     setSaveSyncState({ busy: false, ok: null, message: "" });
     loadActiveFilters();
@@ -192,6 +194,50 @@ export default function SalesPipeline() {
       : selected.find((filter) => filter.type === "column_preset" && filter.id === savedColumnId) || null;
     const missingColumnReference = savedColumnId !== "default" && !restoredColumn;
 
+    const previousDefinitions = activeSavedDefinitionRef.current;
+    const nextInformationDefinition = savedCustomFilter
+      ? {
+          id: savedCustomFilter.id,
+          name: String(savedCustomFilter.name || ""),
+          conditions: JSON.stringify(savedCustomFilter.conditions || []),
+        }
+      : null;
+    const nextColumnDefinition = restoredColumn
+      ? {
+          id: restoredColumn.id,
+          name: String(restoredColumn.name || ""),
+          layout: JSON.stringify(restoredColumn.column_settings || []),
+        }
+      : null;
+    let liveDefinitionNotice = "";
+    if (
+      previousDefinitions.information?.id &&
+      previousDefinitions.information.id === nextInformationDefinition?.id
+    ) {
+      if (previousDefinitions.information.conditions !== nextInformationDefinition.conditions) {
+        liveDefinitionNotice = "The active saved Information Filter was updated. Rows were re-evaluated.";
+      } else if (previousDefinitions.information.name !== nextInformationDefinition.name) {
+        liveDefinitionNotice = `The active saved Information Filter was renamed to “${nextInformationDefinition.name}”.`;
+      }
+    }
+    if (
+      previousDefinitions.column?.id &&
+      previousDefinitions.column.id === nextColumnDefinition?.id
+    ) {
+      const columnNotice = previousDefinitions.column.layout !== nextColumnDefinition.layout
+        ? "The active saved Column Filter was updated. The table layout was refreshed."
+        : (previousDefinitions.column.name !== nextColumnDefinition.name
+          ? `The active saved Column Filter was renamed to “${nextColumnDefinition.name}”.`
+          : "");
+      if (columnNotice) liveDefinitionNotice = liveDefinitionNotice
+        ? `${liveDefinitionNotice} ${columnNotice}`
+        : columnNotice;
+    }
+    activeSavedDefinitionRef.current = {
+      information: nextInformationDefinition,
+      column: nextColumnDefinition,
+    };
+
     // Before Information/Attention became mutually exclusive, Attention saves
     // always wrote Information=all, while Information saves could leave the
     // previous Attention value behind. Therefore, a legacy record where both
@@ -209,8 +255,8 @@ export default function SalesPipeline() {
       setFilterReconciliationNotice("The active saved Information Filter is no longer available. Showing All Statuses.");
     } else if (missingColumnReference) {
       setFilterReconciliationNotice("The active saved Column Filter is no longer available. Showing Default View.");
-    } else {
-      setFilterReconciliationNotice("");
+    } else if (liveDefinitionNotice) {
+      setFilterReconciliationNotice(liveDefinitionNotice);
     }
 
     if (hasLegacyFilterConflict || missingInformationReference || missingColumnReference) {
