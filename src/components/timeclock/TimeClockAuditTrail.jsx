@@ -103,11 +103,26 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           return;
         }
         const requiredEvidenceFields = ["action", "request_id", "server_timestamp", "company_date", "clock_in", "source"];
+        const supportedEvidenceActions = new Set(["clock_in", "clock_out", "admin_correction", "admin_archive"]);
+        const supportedEvidenceSources = new Set(["verified_normalized_audit_envelope", "immutable_audit"]);
+        const isIsoInstant = (value) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(String(value || "")) && !Number.isNaN(Date.parse(String(value)));
+        const isCompanyDate = (value) => {
+          const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+          if (!match) return false;
+          const [, year, month, day] = match;
+          const date = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+          return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === String(value);
+        };
         const malformedRequiredEvidence = requiredEvidence.map((item) => ({
           audit_id: String(item?.audit_id || "").trim(),
           missing_fields: requiredEvidenceFields.filter((field) => !String(item?.[field] || "").trim()),
           invalid_contract_version: Number(item?.contract_version || 0) !== PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
-        })).filter((item) => item.missing_fields.length > 0 || item.invalid_contract_version);
+          invalid_action: !supportedEvidenceActions.has(String(item?.action || "")),
+          invalid_source: !supportedEvidenceSources.has(String(item?.source || "")),
+          invalid_server_timestamp: !isIsoInstant(item?.server_timestamp),
+          invalid_clock_in: !isIsoInstant(item?.clock_in),
+          invalid_company_date: !isCompanyDate(item?.company_date),
+        })).filter((item) => item.missing_fields.length > 0 || item.invalid_contract_version || item.invalid_action || item.invalid_source || item.invalid_server_timestamp || item.invalid_clock_in || item.invalid_company_date);
         if (malformedRequiredEvidence.length > 0) {
           console.error("Time Clock audit investigation evidence-shape failure:", {
             requested_time_entry_id: scopedId,
