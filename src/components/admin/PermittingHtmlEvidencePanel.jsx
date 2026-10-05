@@ -1,3 +1,4 @@
+import PermittingOfficeAuthorityReview from "./PermittingOfficeAuthorityReview";
 import {useEffect, useRef, useState} from "react";
 import {base44} from "@/api/base44Client";
 import {Button} from "@/components/ui/button";
@@ -128,6 +129,9 @@ export default function PermittingHtmlEvidencePanel({jurisdictionName,disabled,o
    {citation && <pre className="whitespace-pre-wrap break-all max-h-64 overflow-auto text-xs">{JSON.stringify(citation,null,2)}</pre>}
    <p className="text-xs text-gray-600">{view.limitations.join(" ")}</p>
   </div>}
+  {evidenceId && (view?.evidence || items.find(i=>i.id===evidenceId) || result?.evidence) && <PermittingOfficeAuthorityReview key={evidenceId + ":office"}
+   source={{ ...(view?.evidence || items.find(i=>i.id===evidenceId) || result.evidence), evidence_kind: "official_html" }} disabled={locked || frozen}
+   onBusy={onBusy} />}
   {busy && <p role="status">Working…</p>}{error && <p className="text-red-700" role="alert">{error}</p>}
  </details>;
 }
