@@ -4,6 +4,7 @@ import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.
 import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 import { buildMechanicRecoveryPatch, mechanicGrantAllowsAction, mechanicGrantAllowsMutation, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
+import { requireCurrentMechanicGrantForCommittedResponse } from '../../shared/fleetMechanicCommittedResponse.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const MAX_BODY_BYTES = 5_500_000;
@@ -322,19 +323,6 @@ function isMechanicAccessChangedError(error: unknown) {
 async function mechanicWorkOrderResponse(Access:any, grantId:string, action:string, workOrder:any, payload:any, init:ResponseInit = {}) {
   await requireCurrentMechanicGrant(Access,grantId,action,String(workOrder?.equipment_id || ''));
   return json({...payload,work_order:sanitizeWorkOrder(workOrder)},init);
-}
-
-function mechanicCommittedResponseAccessChangedError() {
-  const error:any = new Error('This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying.');
-  error.code = 'FLEET_MECHANIC_ACCESS_REVOKED';
-  return error;
-}
-
-async function requireCurrentMechanicGrantForCommittedResponse(Access:any, grantId:string, action:string, equipmentId:string) {
-  const latest = await Access.get(grantId).catch(()=>null);
-  const check = mechanicGrantAllowsMutation(latest,action,equipmentId,Date.now());
-  if (!check.allowed) throw mechanicCommittedResponseAccessChangedError();
-  return latest;
 }
 
 async function mechanicCommittedWorkOrderResponse(Access:any, grantId:string, action:string, workOrder:any, payload:any) {
