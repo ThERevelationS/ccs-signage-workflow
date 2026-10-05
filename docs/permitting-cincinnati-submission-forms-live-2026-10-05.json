@@ -1,0 +1,69 @@
+{
+  "phase": "4 — Office authority and evidence",
+  "chunk": "Cincinnati submission guidance and missing forms",
+  "completed": true,
+  "verified_at": "2026-10-05T13:26:10.494Z",
+  "llm_calls": 0,
+  "frontend_published": false,
+  "backend_deployed": false,
+  "invocation_environment": "Authenticated Base44 preview tests against production entities",
+  "prior_documents_preserved": 6,
+  "unrelated_profile_fields_preserved": true,
+  "focused_tests_passed": 26,
+  "evidence_manifest": "docs/official-evidence/cincinnati-submission-2026-10-05/manifest.json",
+  "pdfs": [
+    {
+      "id": "cincinnati-building-application-20261005",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+      "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/51dece9a0_building-permit-application-fillable-form.pdf",
+      "sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+      "bytes": 252768,
+      "catalog_id": "6ac3a51f33beec629ba497e0"
+    },
+    {
+      "id": "cincinnati-site-plan-20261005",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+      "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/550d0c6c4_site-plan-information.pdf",
+      "sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+      "bytes": 57368,
+      "catalog_id": "6ac3a54ac1ce2adba5b92cb8"
+    }
+  ],
+  "linked_resources": [
+    {
+      "id": "cincinnati-submission-guidance-20261005",
+      "title": "Cincinnati application and plan submission guidance — scope review pending",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/submit-permit-application-other-required-documents/",
+      "doc_type": "other",
+      "source": "official_retained"
+    },
+    {
+      "id": "cincinnati-electronic-guidelines-20261005",
+      "title": "Cincinnati Electronic Document Submission Guidelines — linked resource",
+      "url": "https://www.cincinnati-oh.gov/buildings/submitting-your-application/electronic-document-submission/",
+      "doc_type": "other",
+      "source": "official_retained"
+    },
+    {
+      "id": "cincinnati-eztrak-home-20261005",
+      "title": "ezTrak portal — official city referral; sign availability unverified",
+      "url": "http://cagis.hamilton-co.org/opal/ezTrakHome.aspx",
+      "doc_type": "other",
+      "source": "official_retained"
+    },
+    {
+      "id": "cincinnati-eztrak-apply-20261005",
+      "title": "ezTrak application instructions — official city referral; sign availability unverified",
+      "url": "http://cagis.hamilton-co.org/opal/apply/ezTrakHowToApply.aspx",
+      "doc_type": "other",
+      "source": "official_retained"
+    }
+  ],
+  "review_gaps": [
+    "Submission guidance describes digital plans and two paper sets at issuance, plus four sets for in-person submission; retain separate routes and stages. Do not merge with older sign-form counts.",
+    "ezTrak links preserved as published; sign permit availability and portal security/currentness are not verified.",
+    "Electronic guidelines destination retained as link; its content requires the next capture.",
+    "Guidance HTML originals retained in Git; app HTML citation capture pending. Forms remain unreviewed."
+  ],
+  "next": "Extract archived building/site-plan pages and retain electronic submission guidelines; review routes before approving instructions."
+}
