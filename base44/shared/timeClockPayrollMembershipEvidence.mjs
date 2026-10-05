@@ -1,5 +1,52 @@
 export const TIME_CLOCK_COMPANY_TIME_ZONE = 'America/New_York';
 export const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = 1;
+export const PAYROLL_MEMBERSHIP_EVIDENCE_ACTIONS = Object.freeze(['clock_in', 'clock_out', 'admin_correction', 'admin_archive']);
+export const PAYROLL_MEMBERSHIP_EVIDENCE_SOURCES = Object.freeze(['verified_normalized_audit_envelope', 'immutable_audit']);
+export const PAYROLL_MEMBERSHIP_EVIDENCE_REQUIRED_FIELDS = Object.freeze(['action', 'request_id', 'server_timestamp', 'company_date', 'clock_in', 'source']);
+
+export function isPayrollMembershipIsoInstant(value) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(String(value || '')) && !Number.isNaN(Date.parse(String(value)));
+}
+
+export function isPayrollMembershipCompanyDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+  if (!match) return false;
+  const [, year, month, day] = match;
+  const date = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === String(value);
+}
+
+export function validatePayrollMembershipConflictEvidence(item) {
+  const action = String(item?.action || '');
+  const source = String(item?.source || '');
+  const clockInValid = isPayrollMembershipIsoInstant(item?.clock_in);
+  const companyDateValid = isPayrollMembershipCompanyDate(item?.company_date);
+  const missingFields = PAYROLL_MEMBERSHIP_EVIDENCE_REQUIRED_FIELDS.filter((field) => !String(item?.[field] || '').trim());
+  return {
+    audit_id: String(item?.audit_id || '').trim(),
+    missing_fields: missingFields,
+    invalid_contract_version: Number(item?.contract_version || 0) !== PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
+    invalid_action: !PAYROLL_MEMBERSHIP_EVIDENCE_ACTIONS.includes(action),
+    invalid_source: !PAYROLL_MEMBERSHIP_EVIDENCE_SOURCES.includes(source),
+    invalid_server_timestamp: !isPayrollMembershipIsoInstant(item?.server_timestamp),
+    invalid_clock_in: !clockInValid,
+    invalid_company_date: !companyDateValid,
+    company_date_clock_in_mismatch: clockInValid && companyDateValid && payrollMembershipCompanyDate(item.clock_in) !== String(item.company_date),
+    invalid_action_source_pair: source === 'verified_normalized_audit_envelope' && !PAYROLL_MEMBERSHIP_EVIDENCE_ACTIONS.includes(action),
+  };
+}
+
+export function payrollMembershipConflictEvidenceIsMalformed(validation) {
+  return validation.missing_fields.length > 0
+    || validation.invalid_contract_version
+    || validation.invalid_action
+    || validation.invalid_source
+    || validation.invalid_server_timestamp
+    || validation.invalid_clock_in
+    || validation.invalid_company_date
+    || validation.company_date_clock_in_mismatch
+    || validation.invalid_action_source_pair;
+}
 
 export function payrollMembershipCompanyDate(value) {
   const date = new Date(String(value || ''));
