@@ -3188,6 +3188,66 @@ Deno.serve(async (req) => {
         return invalidateReopenedFinalizationSnapshot();
       };
 
+      const acquireReopenMutationGates = async () => {
+        const gateEntryId = `pay_period_reopen:${period.id}`;
+        const gates: Array<{ stateId: string; claimToken: string }> = [];
+        const authorizedEmployees = await authorized.filter({});
+        if (!Array.isArray(authorizedEmployees)) throw new Error('Authorized employee lookup did not return a record list.');
+        const employeeEmails = authorizedEmployees.map((employee: any) => asEmail(employee.email));
+        if (employeeEmails.some((email: string) => !email) || new Set(employeeEmails).size !== employeeEmails.length) {
+          return { acquired: false, error: 'Authorized employee identities are incomplete or duplicated. Admin investigation is required before reopening payroll.' };
+        }
+        authorizedEmployees.sort((a: any, b: any) => asEmail(a.email).localeCompare(asEmail(b.email)));
+        for (const employee of authorizedEmployees) {
+          const employeeState = await ensureState(stateEntity, employee);
+          const claimed = await claimCorrectionCreateLock(
+            stateEntity, employeeState.id, requestId, gateEntryId, statusPayloadHash,
+          );
+          if (!claimed?.acquired) {
+            let releaseFailed = false;
+            for (const gate of gates.reverse()) {
+              const released = await releaseCorrectionCreateLock(
+                stateEntity, gate.stateId, requestId, gateEntryId, statusPayloadHash, gate.claimToken,
+              ).catch(() => false);
+              if (!released) releaseFailed = true;
+            }
+            return {
+              acquired: false,
+              retry_same_request: true,
+              error: releaseFailed
+                ? 'A payroll reopen gate conflicted and previously acquired employee gates could not be fully released. Retry this same reopen request or request admin investigation.'
+                : 'An employee correction or manager approval is in progress. Retry this same reopen request after that action finishes.',
+            };
+          }
+          gates.push({ stateId: employeeState.id, claimToken: String(claimed.claim_token || '') });
+        }
+        return { acquired: true, gateEntryId, gates };
+      };
+
+      const releaseReopenMutationGates = async (gateBundle: any) => {
+        if (!gateBundle?.acquired) return true;
+        let releaseFailed = false;
+        for (const gate of [...gateBundle.gates].reverse()) {
+          try {
+            const released = await releaseCorrectionCreateLock(
+              stateEntity, gate.stateId, requestId, gateBundle.gateEntryId, statusPayloadHash, gate.claimToken,
+            );
+            if (!released) {
+              const current = await freshState(stateEntity, gate.stateId).catch(() => null);
+              const gateStatus = String(current?.correction_create_status || '');
+              const safe = current?.id && (
+                gateStatus === 'idle' ||
+                (gateStatus === 'creating' && String(current.correction_create_request_id || '') !== requestId)
+              );
+              if (!safe) releaseFailed = true;
+            }
+          } catch {
+            releaseFailed = true;
+          }
+        }
+        return !releaseFailed;
+      };
+
       const invalidateReopenedFinalizationSnapshot = async () => {
         const summary = period.finalized_summary;
         if (!summary || typeof summary !== 'object') return false;
@@ -3224,7 +3284,13 @@ Deno.serve(async (req) => {
       };
 
       if (decision === 'reopen' && period.status === 'review' && String(period.last_request_id || '') === requestId) {
-        if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen action or request admin investigation.' }, { status: 409 });
+        const reopenGates = await acquireReopenMutationGates();
+        if (!reopenGates?.acquired) return Response.json({ success: false, retry_same_request: true, error: reopenGates?.error || 'Payroll reopen could not acquire employee mutation gates.' }, { status: 409 });
+        try {
+          if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen action or request admin investigation.' }, { status: 409 });
+        } finally {
+          if (!await releaseReopenMutationGates(reopenGates)) throw new Error('A payroll reopen employee gate could not be released safely. Retry this same reopen request for recovery.');
+        }
         if (!await ensureStatusAuditConfirmed(true)) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its audit is still being finalized. Retry the same reopen action.' }, { status: 409 });
         return Response.json({ success: true, period, audit_id: intent.id, reused: true });
       }
@@ -4005,23 +4071,29 @@ Deno.serve(async (req) => {
           if (releaseFailed) throw new Error('A pay-period finalization employee gate could not be released safely. Retry this same finalization request for recovery.');
         }
       } else {
-        const reopened = await payPeriodEntity.updateMany(
-          { id: period.id, updated_date: period.updated_date, status: 'finalized' },
-          { $set: { status: 'review', reopened_at: now, reopened_by: actorEmail, reopen_reason: note, last_request_id: requestId } },
-        );
-        if (!reopened || reopened.updated !== 1) {
-          const latest = await payPeriodEntity.get(period.id);
-          if (latest?.status !== 'review' || String(latest.last_request_id || '') !== requestId) {
-            const blocked = await auditEntity.updateMany(
-              { id: intent.id, outcome: 'pending', request_id: requestId },
-              { $set: { outcome: 'blocked', details: { ...(intent.details || {}), blocked_reason: 'reopen_claim_lost' } } },
-            );
-            if (!blocked || blocked.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The reopen claim conflicted and its audit could not be resolved. Retry the same request.' }, { status: 409 });
-            return Response.json({ success: false, error: 'Another pay-period action won the reopen race. Reload before submitting a new request.' }, { status: 409 });
+        const reopenGates = await acquireReopenMutationGates();
+        if (!reopenGates?.acquired) return Response.json({ success: false, retry_same_request: true, error: reopenGates?.error || 'Payroll reopen could not acquire employee mutation gates.' }, { status: 409 });
+        try {
+          const reopened = await payPeriodEntity.updateMany(
+            { id: period.id, updated_date: period.updated_date, status: 'finalized' },
+            { $set: { status: 'review', reopened_at: now, reopened_by: actorEmail, reopen_reason: note, last_request_id: requestId } },
+          );
+          if (!reopened || reopened.updated !== 1) {
+            const latest = await payPeriodEntity.get(period.id);
+            if (latest?.status !== 'review' || String(latest.last_request_id || '') !== requestId) {
+              const blocked = await auditEntity.updateMany(
+                { id: intent.id, outcome: 'pending', request_id: requestId },
+                { $set: { outcome: 'blocked', details: { ...(intent.details || {}), blocked_reason: 'reopen_claim_lost' } } },
+              );
+              if (!blocked || blocked.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The reopen claim conflicted and its audit could not be resolved. Retry the same request.' }, { status: 409 });
+              return Response.json({ success: false, error: 'Another pay-period action won the reopen race. Reload before submitting a new request.' }, { status: 409 });
+            }
+            period = latest;
           }
-          period = latest;
+          if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen request or request admin investigation.' }, { status: 409 });
+        } finally {
+          if (!await releaseReopenMutationGates(reopenGates)) throw new Error('A payroll reopen employee gate could not be released safely. Retry this same reopen request for recovery.');
         }
-        if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen request or request admin investigation.' }, { status: 409 });
       }
 
       period = await payPeriodEntity.get(period.id);
