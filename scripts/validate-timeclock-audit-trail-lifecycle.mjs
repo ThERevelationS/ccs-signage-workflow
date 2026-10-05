@@ -32,7 +32,8 @@ assert.match(adminSource, /mode = "conflict"/);
 assert.match(adminSource, /mode: mode === "integrity" \? "integrity" : "conflict"/);
 assert.match(source, /const integrityInvestigation = investigationActive && investigation\?\.mode === "integrity"/);
 assert.match(source, /The invalid provenance was not passed into this view or treated as trusted evidence/);
-console.log('PASS invalid-provenance investigation scopes authoritative Audit Trail without forwarding malformed expected evidence');
+assert.match(source, /onClick=\{\(\) => loadRows\(investigation\?\.time_entry_id, investigationEvidence, integrityInvestigation\)\}/);
+console.log('PASS invalid-provenance investigation scopes authoritative Audit Trail without forwarding malformed expected evidence and preserves integrity validation on refresh');
 
 const COMPANY_TIME_ZONE = 'America/New_York';
 const canonicalPayrollMembership = payrollMembershipFromAudit;
