@@ -12,41 +12,6 @@ import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments } fr
 import { RESEARCH_FETCH_TIMEOUT_MS } from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 
-const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
-
-async function readResearchDocumentBytes(response: Response, maxBytes = MAX_RESEARCH_DOCUMENT_BYTES) {
-  const declaredLength = Number(response.headers.get('content-length') || 0);
-  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-    throw Object.assign(new Error('Official resource exceeds its byte safety limit.'), { status: 413 });
-  }
-  const reader = response.body?.getReader();
-  if (!reader) {
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > maxBytes) throw Object.assign(new Error('Official resource exceeds its byte safety limit.'), { status: 413 });
-    return bytes;
-  }
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    if (!value) continue;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel().catch(() => {});
-      throw Object.assign(new Error('Official resource exceeds its byte safety limit.'), { status: 413 });
-    }
-    chunks.push(value);
-  }
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
