@@ -1,0 +1,44 @@
+{
+  "phase": 5,
+  "task": "Cincinnati form applicability and office coverage",
+  "sources": [
+    {
+      "name": "outdoor-advertising-handout",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "retrieved_at": "2026-10-05T15:10:54.800Z",
+      "content_type": "application/pdf;charset=UTF-8",
+      "file_bytes": 57952,
+      "file_hash_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-handout.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "outdoor-advertising-renewal",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-renewal-application/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-renewal-application/",
+      "retrieved_at": "2026-10-05T15:10:55.497Z",
+      "content_type": "application/pdf;charset=UTF-8",
+      "file_bytes": 178196,
+      "file_hash_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-renewal.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "certificate-of-appropriateness",
+      "official_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+      "final_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+      "retrieved_at": "2026-10-05T15:10:57.102Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 62466,
+      "file_hash_sha256": "e21f898f876041ca1df54c0a115052f4fc8494108ea80dfc3987445386087289",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness.html",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    }
+  ],
+  "llm_calls": 0,
+  "authority_approved": false
+}
