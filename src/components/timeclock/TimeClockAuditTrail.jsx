@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from "../../../base44/shared/timeClockPayrollMembershipEvidence.mjs";
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from "../../../base44/shared/timeClockPayrollMembershipEvidence.mjs";
 
 const TimeClockAudit = base44.entities.TimeClockAudit;
 
@@ -109,35 +109,10 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         }
         const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
         if (integrityMode) {
-          const integrityAuditIdList = loadedRows.map((row) => String(row?.id || "").trim());
-          const duplicateIntegrityAuditIds = [...new Set(integrityAuditIdList.filter((id, index) => id && integrityAuditIdList.indexOf(id) !== index))];
-          const duplicateIntegrityAuditIdSet = new Set(duplicateIntegrityAuditIds);
-          const authoritativeIntegrityDiagnostics = loadedRows.map((row, rowIndex) => {
-            const auditId = String(row?.id || "").trim();
-            const membership = payrollMembershipFromAudit(row);
-            let validation = null;
-            if (membership) {
-              const evidence = {
-                contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
-                audit_id: auditId,
-                action: String(row?.action || ""),
-                request_id: String(row?.request_id || ""),
-                server_timestamp: String(row?.server_timestamp || ""),
-                company_date: String(membership.company_date || ""),
-                clock_in: String(membership.clock_in || ""),
-                source: String(membership.source || ""),
-              };
-              const candidateValidation = validatePayrollMembershipConflictEvidence(evidence);
-              if (payrollMembershipConflictEvidenceIsMalformed(candidateValidation)) validation = candidateValidation;
-            }
-            const duplicateImmutableAuditId = Boolean(auditId && duplicateIntegrityAuditIdSet.has(auditId));
-            return validation || duplicateImmutableAuditId ? {
-              audit_id: auditId,
-              diagnostic_row_index: rowIndex,
-              validation,
-              duplicate_immutable_audit_id: duplicateImmutableAuditId,
-            } : null;
-          }).filter(Boolean);
+          const {
+            diagnostics: authoritativeIntegrityDiagnostics,
+            duplicate_audit_ids: duplicateIntegrityAuditIds,
+          } = classifyAuthoritativePayrollAuditIntegrity(loadedRows);
           if (authoritativeIntegrityDiagnostics.length > 0) {
             const malformedCount = authoritativeIntegrityDiagnostics.filter((item) => item.validation).length;
             const duplicateRecordCount = authoritativeIntegrityDiagnostics.filter((item) => item.duplicate_immutable_audit_id).length;
