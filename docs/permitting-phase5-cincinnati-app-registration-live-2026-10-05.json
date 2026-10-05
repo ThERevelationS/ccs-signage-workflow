@@ -1,0 +1,802 @@
+{
+  "phase": 5,
+  "task": "Cincinnati applicability documents app registration",
+  "verified_at": "2026-10-05T15:52:14.142Z",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "before_documents": 13,
+  "after_documents": 19,
+  "appended_links": 6,
+  "preservation_method": "Full fresh document array append under expected updated_date CAS; no original document edits. Original source updated_date/hash compared to saved pre-registration inventory.",
+  "original_source_checks": [
+    {
+      "id": "6ac3abe5613df02af1acc4f7",
+      "unchanged_updated_date": true,
+      "archive_hash_unchanged": true
+    },
+    {
+      "id": "6ac3a54ac1ce2adba5b92cb8",
+      "unchanged_updated_date": true,
+      "archive_hash_unchanged": true
+    },
+    {
+      "id": "6ac3a51f33beec629ba497e0",
+      "unchanged_updated_date": true,
+      "archive_hash_unchanged": true
+    },
+    {
+      "id": "6ac39c24c9f6d0eebf320a13",
+      "unchanged_updated_date": true,
+      "archive_hash_unchanged": true
+    },
+    {
+      "id": "6ac39c0e6657049fb11cd757",
+      "unchanged_updated_date": true,
+      "archive_hash_unchanged": true
+    },
+    {
+      "id": "6ac2cc6b5063fe274d7c6b61",
+      "unchanged_updated_date": true,
+      "archive_hash_unchanged": true
+    }
+  ],
+  "new_archived_pdfs": 5,
+  "new_pdf_pages": 9,
+  "llm_calls": 0,
+  "frontend_published": false,
+  "authority_approved": false,
+  "sources": [
+    {
+      "name": "outdoor-advertising-handout",
+      "document_id": "cincinnati-outdoor-advertising-handout-20261005",
+      "source_document_id": "6ac3c0cce920b1cede773e5c",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/0e54d5f3e_outdoor-advertising-sign-informational-handout.pdf",
+      "file_bytes": 57952,
+      "file_hash_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+      "verification_status": "needs_verification",
+      "authority_classification": "unknown_review_required",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/0e54d5f3e_outdoor-advertising-sign-informational-handout.pdf",
+        "claim_token": "ab7cb305-b7c5-4a0e-a5f6-341946e8d413",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T15:47:59.193Z",
+        "attempts": 1,
+        "next_page": 2,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 1,
+        "pages_extracted": 1,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T15:47:59.580Z",
+        "completed_at": "2026-10-05T15:47:59.580Z",
+        "complete_document_text": true
+      },
+      "pages": [
+        {
+          "page": 1,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\nI. APPLICATION PROCESS\nTo apply for construction of an Outdoor Advertising Sign Permit (OASP), you must submit three (3) sets of\ncomplete drawings with a copy of the replacement permit to be used, completed OASP application and\nbuilding permit application to the Business Development and Permit Center, 805 Central Avenue, Suite\n500, Cincinnati, Ohio 45202, where your plans will be routed to the necessary offices for review. Note:\nPainted wall signs and bench signs regulated by Chapter 895 do not require the completion of a building\npermit application. OASP applications for painted wall signs should be submitted directly to the Zoning\nOffice in the Business Development and Permit Center.\nIt is important to understand a replacement permit is needed to establish an outdoor advertising sign in the\nCity of Cincinnati. A replacement permit is a credit, obtained from a previously dismantled outdoor\nadvertising sign. This credit and the meeting of criteria outlined in Chapter 895 of the Cincinnati Municipal\nCode, in addition to Building and Zoning Code compliance, are necessary to construct an outdoor\nadvertising sign.\nII. REVIEW PROCESS\nYour application is subject to Building Code, Zoning Code, and Cincinnati Municipal Code review. This\nreview will be done simultaneously to help expedite your application. Any deficiencies will be noted and you\nwill be required to revise your plans to comply with local code.\nIII. APPROVAL\nAfter approval of your application, you will be notified by telephone that your permit is ready for issuance\nand the balance of the fees due. When you come to pick up your permit, you will receive a copy of the\napproved application and receipt for OASP along with the building permit and one set of approved\nconstruction plans.\nIV. LET US HELP\nThe Zoning Office will assist you by offering to meet with you in the field or otherwise to help determine the\nfeasibility of the proposed site for your outdoor advertising sign. You can arrange pre-construction\nconsultation by calling 352-3271.\nRev. 5/2017\nOUTDOOR ADVERTISING SIGN\nCONSTRUCTION PERMIT",
+          "source_document_id": "6ac3c0cce920b1cede773e5c",
+          "source_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+          "text_sha256": "f0dfca52a30d76557279f869d19bc3f59feffcd0bc26fac40a8258aca508bfd1",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:47:59.580Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    },
+    {
+      "name": "outdoor-advertising-renewal",
+      "document_id": "cincinnati-outdoor-advertising-renewal-20261005",
+      "source_document_id": "6ac3c0de3a24919ee7113555",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-renewal-application/",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/9c6698e26_outdoor-advertising-sign-renewal-application.pdf",
+      "file_bytes": 178196,
+      "file_hash_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+      "verification_status": "needs_verification",
+      "authority_classification": "application_form",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/9c6698e26_outdoor-advertising-sign-renewal-application.pdf",
+        "claim_token": "6f384ef7-f924-4570-bf62-d921ef46cde7",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T15:48:18.628Z",
+        "attempts": 1,
+        "next_page": 3,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 2,
+        "pages_extracted": 2,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T15:48:19.237Z",
+        "completed_at": "2026-10-05T15:48:19.237Z",
+        "complete_document_text": true
+      },
+      "pages": [
+        {
+          "page": 1,
+          "text": "805 CENTRAL AVE, SUITE 500\nCINCINNATI OHIO 45202\nP 513 352 3271\nF 513 352 2579\nWWW.CINCINNATI - OH.GOV\nCAGIS.HAMILTON - CO.ORG\nSign Location Address (Please print in blue or black ink only) Parcel Number (Required)\nSign Owner - Name (Print) Street Number & Name City / State / Zip Code Phone No / Fax No\nContact Person - Name (Print) Phone No E - mail Address\nDocumentation Type Showing Right to Occupy: Lease Deed\n-\nPart C\nSign Type:\nSign Faces: 3 . Height Width Area in sq ft [ Sign Faces: 4 . Height Width Area : in sq ft\nBUILDINGS &\nINSPECTIONS\nCompleted by\nRequired Si gn Information\nAdditional Location Information / Description\nPart B Certification Type (Please Check One)\nPart A Owner Identification\nCity Permit Number\nCity Plate Number\nSign Lighted? Type\nSign Faces: 1. Height Width Area in sq ft Sign Faces: 2. Height Width Area : in sq ft [\nPermit Processing Fee Date\nReviewed By: Zoning Plan Examiner\nDate\nFOR OFFICE USE ONLY\nApplicant’s Signature\nCity of Cincinnati of the described premises at any time when work on those premises is ongoing and hereby grants their consent.\nbest of their knowledge, true and correct. The undersigned further certifies their authorization to grant consent to the inspection by employees of the\ninspections are to the\nThe owner or agent of this sign and undersigned does hereby certify that the information and statements given on the application, drawings, and\nPayment must be included with the application. (Payable to the City of Cincinnati) Submit two (2) copies of all required materials.\nCertification\nSign Renewal\nOutdoor Advertising",
+          "source_document_id": "6ac3c0de3a24919ee7113555",
+          "source_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+          "text_sha256": "ed148c484f81353c104147b6b004669b36ea146d84afe37c173f773428ad634f",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:19.237Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 2,
+          "text": "City of Cincinnati\nBuildings and Inspections Department\n805 Central Avenue, Suite 500\nCincinnati, Ohio 45202\n(513)352 - 3271 Fax (513)352 - 2579\nCERTIFICATION OF OUTDOOR ADVERTISIN G SIGN DISPLAY IN ACCORDANCE\nWITH CHAPTER 895 OF THE CINCINNATI MUNICIPAL CODE\nI, _______________________________________affirm that I am the authorized agent for the\nsign owner. I attest the signs included in the attached Outdoor Advertising Sign Renewal\nApplication have been inspected by me or my agent, and are in compliance with the requirements\nof Chapter 895 of the Cincinnati Municipal Code.\nBy:\nName:\nTitle:\nSTATE OF OHIO )\n)\nNotary Public\nMy commission expires:\nCOUNTY OF HAMILTON )\nThe foregoing instrument was acknowledged before me this ____ day of _________, 2022,\nby _________________, as _________________ of _____________________.",
+          "source_document_id": "6ac3c0de3a24919ee7113555",
+          "source_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+          "text_sha256": "88e8a54ebf53936f73658576050bb3644bdc9464f3f0ed1d225cdbcd2ff2123d",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:19.237Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    },
+    {
+      "name": "coa-staff-application",
+      "document_id": "cincinnati-coa-staff-application-20261005",
+      "source_document_id": "6ac3c0ee843e084e1a5f67f6",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic%20Web%20Changes%202022/COA-%20staff%20level.pdf",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1772e85ca_COA-stafflevel.pdf",
+      "file_bytes": 158030,
+      "file_hash_sha256": "2fb4743d8862c1d3f90e8542099d86cfbf02259f88b0f98c93e218d1ab208258",
+      "verification_status": "needs_verification",
+      "authority_classification": "application_form",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "2fb4743d8862c1d3f90e8542099d86cfbf02259f88b0f98c93e218d1ab208258",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1772e85ca_COA-stafflevel.pdf",
+        "claim_token": "93aaa731-b0c0-4ff0-8710-f8e3bf01e25e",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T15:48:29.420Z",
+        "attempts": 1,
+        "next_page": 2,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 1,
+        "pages_extracted": 1,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T15:48:29.645Z",
+        "completed_at": "2026-10-05T15:48:29.645Z",
+        "complete_document_text": true
+      },
+      "pages": [
+        {
+          "page": 1,
+          "text": "2/22\nII Centennial Plaza\n805 Central Avenue, Suite 500\nCincinnati, Ohio 45202\nMonday - Friday 7:30 am — 4 pm\n(513) 352 - 4848\nUrban.Conservator@Cincinnati - OH.gov\nCERTIFICATE OF APPROPRIATENESS APPLICATION\nStaff Level Review\nSUBJECT PROPERTY\nSite Address: _____________________________________________ _______________________________\nHamilton Co. Parcel ID No. : _____________________ Zoning District: _________________________\nHistoric District: _______________________________ Overlay District: ___________________________ _\nPRIMARY CONTACT INFO  P RO PERTY O WNER  O THER ______________ __ _ (A GENT , A TTORNEY , ARCHITECT , ETC . )\nName: __________________________________________________________________________ ___ _\nContact Person (if legal entity): _______________________________ _____________________________ _\nAddress: ________________________________________________________________________ ______\nCity: ___________________ ________ State: _______________ Zip Code: ________________ ________ _\nPhone: _________________________________ E - mail: ______________________________ ___ _______ _\nPROPERTY OWNER INFO  S AME A S ABOVE\nName: __________________________________________________ _____________________________ _\nContact Person (if legal entity): _______________________________ _____________________________ _\nAddress: ________________________________________________ ______________________________ _\nCity: ___________________________ State: _______________ Zip C ode: _________________________ _\nPhone: _______________________________ _ _ E - mail: _________ ____________________________ _ _\nCERTIFICATE OF APPROPRIATENESS ( S ELECT ALL THAT APPLY )\n Alteration  Fence  Windows\nProvide a very brief summary of the project :\n________________________________________________________________________________________\n________________________________________________________________________________________\n________________________________________________________________________________ ________\n________________________________________________________________________________________\nSUBMISSION REQUIREMENTS & REQUIRED ATTACHMENTS\nAll persons seeking historic tax credits must provide a copy of their approved part II tax credit application.\nProvide all specifications, plans and or elevations associated with your request\nThe owner or agent of this building and undersigned does hereby certify that the information and statements given on the\napplication, drawings, and inspections ae to the best of their knowledge true and correct. The undersigned further certifies\ntheir auth orization to grant consent to the inspection by employees of the City of Cincinnati of the described premises at\nany time when work on those premises is ongo ing and hereby grants their consent.\nApplicant Signature: Date:\nOffice Use Only\nApplication #: ____________ _________\nDate Accepted : ____________________\n Paid: __________________________",
+          "source_document_id": "6ac3c0ee843e084e1a5f67f6",
+          "source_sha256": "2fb4743d8862c1d3f90e8542099d86cfbf02259f88b0f98c93e218d1ab208258",
+          "text_sha256": "8022f59dd011cc1a4610b014ae7ebff8fea674dd804cd62ec87833a61aa50d46",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:29.645Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    },
+    {
+      "name": "hcb-documents-required",
+      "document_id": "cincinnati-hcb-documents-required-20261005",
+      "source_document_id": "6ac3c10009f282d29ff53782",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic%20Web%20Changes%202022/Documents%20Required%20List-%20updated%20new%203.22.pdf",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/fead8c2fd_DocumentsRequiredList-updatednew322.pdf",
+      "file_bytes": 308135,
+      "file_hash_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+      "verification_status": "needs_verification",
+      "authority_classification": "checklist",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/fead8c2fd_DocumentsRequiredList-updatednew322.pdf",
+        "claim_token": "0551734b-dcee-41b4-8909-f6bda7301620",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T15:48:42.079Z",
+        "attempts": 1,
+        "next_page": 3,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 2,
+        "pages_extracted": 2,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T15:48:42.445Z",
+        "completed_at": "2026-10-05T15:48:42.445Z",
+        "complete_document_text": true
+      },
+      "pages": [
+        {
+          "page": 1,
+          "text": "Page 1 of 2\nUpdated 03 /2 2\nDepartment of Planning and Engagement\nHistoric Conservation Office\nChecklist for Historic Conservation Board Hearing Application\nThe Historic Conservation Office will provide this list with the required items\nchecked off when an Adjudication letter is issued. All items checked must be submitted to the Law Department with\nsubmission or the application will not be accepted.\n☐ 8 business days before the hearing date 10 hard copies and a digital copy in one pdf for the final board packet.\nHard copies must be formatted and retain the proper scale on sheets no larger than 11x17 or 12x18.\n☐ Non - Refundable Application Fee. Checks made payable to the City of Cincinnati. $___________\nAll Drawings and Plans must include the following\n✓ A graphic scale required on all drawings\n✓ North arrows on all site, context and floor plans\n✓ Elevation s labeled with N orth, South, East West , front , side and rear labels\n✓ Street names labeled\n✓ Date and/or revision dates\nArchitectural Drawings and Plans\n☐ An index of drawings located on the first sheet\n☐ Cont ext Map showing the building within at least a block of context\n☐ Existing site plans\n☐ Proposed site plans\nAll site plans must have\n✓ Parcel/boundary lines\n✓ B uilding footprints and dimensions labeled\n✓ S etback dimensions from all property lines labeled\n✓ Existing and proposed principal and accessory buildings, including location, dimensions, and height\nlabeled;\n✓ All properties and their structures immediately adjacent to the site\n✓ Location and placement of exterior utilities and vents\n☐ Existing elevation drawings (At minimum must provide photographs of existing conditions of all elevations )\n☐ P roposed elevation drawings\nAll elevations (existing and proposed) must have\n✓ Total Height from grade to top of the building\n✓ Total height - ASL (Above Sea Level)\n✓ Materials labeled\n✓ Location and placement of exterior utilities and vents\n☐ Existing floor plans and roof plans (with chimney locations)\n☐ Proposed floor plans and roof plans (with chimney locations)\nAll floor (existing and proposed) plans must have\n✓ Residential and Commercial Spaces labeled. Residential Spaces must be numbered.\n✓ Square feet of commercial spaces listed\n✓ Location of trash storage and Utilities\n✓ Location and placement of exterior utilities and vents",
+          "source_document_id": "6ac3c10009f282d29ff53782",
+          "source_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+          "text_sha256": "1baabe7f3118f026da7d31740dfba406e30e85e7c971b7576630738cc2679c09",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:42.445Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 2,
+          "text": "Page 2 of 2\nUpdated 03 /2 2\n☐ Site section and/or Site elevations including any adjacent properties\n☐ D riveways, sidewalks, walkways, ter races, and other paved surfaces\n☐ Existing and proposed a ccessory structures, including walls, fences, porches, lighting, signs, and other site\nimprovements;\n☐ Exist ing and proposed landscape areas and materials, if proposed to be altered;\n☐ Proposed materials, textures, and colors . Include m ake, model and series for proposed materials\n☐ Labeled photos of all sides of the building\n☐ Labeled photos of 1 block streetscape context in all directions\n☐ Site line drawings for any roof additions , roof decks, utilities .\n☐ A color rendering , axonometric drawings and/or perspective of the proposed construction (required on infill\nprojects)\nRequired if applicable to the project\n☐ Historic Sanborn Maps of the site\n☐ Window brochures and cut sheet\n☐ Roof product information (brochure)\n☐ Garage door brochures\n☐ Samp le materials or color samples. _____________________________________________\n☐ Fence drawings of style, fence brochures or photo of a sample fence\n☐ Signs; drawings, photo showing the sign on the building, mounting info, materials, colors and illumination\n☐ Mature tree removal requires a letter from an arborist stating its poor health\n☐ All written correspondence submitted by the applicant and other affected persons\n☐ Tentative project schedule\n☐ Egress Plan/Route to Building Code Compliance (roof decks, multi - family developments)\n☐ _______________________________________________________________________\n☐ _______________________________________________________________________\n☐ _______________________________________________________________________\nDemolition (full or partial) for Historic Conservation Districts and Landmarks\n☐ Demolition Case Sheet and all required information listed on the sheet unless otherwise not required by the\nUrban Conservator in writing and provided with application.\n☐ Statement of plans for the property after demolition.\nHillside Overlay Zone (CZC § 1433)\n☐ A development plan, accompanied by a property survey, showing existing vegetation and proposed\ndevelopment, and where applicable, streets, drives, parking areas, walkways, heights of structure(s), location\nof structures, elevation and setback of proposed buildings, drainage, existing contours and proposed grading\nand new landscaping plans, proposed uses and square footage of uses and recreational facilities;\n☐ A preliminary geotechnical evaluation;\n☐ A determination of the maximum building envelope;\n☐ Average slope/grade of the property; and\n☐ Graphic illustrations demonstrating that the proposed improvement or new structure has not exceeded the\nmaximum building envelope\nFor additional questions about this chec klist contact the Urban Conservator at 513 - 352 - 4848 or\nurb an.conservator @cincinnati - oh.gov\nNote: The aforementioned information is general in nature. Additional information may be required by the Urban\nConservator once the application is submitted. Please use this list to plan for the potential documents that could be require d\nfor a submission.",
+          "source_document_id": "6ac3c10009f282d29ff53782",
+          "source_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+          "text_sha256": "f20aa66d9e4ab1d869472e0494d3e9294758c884897d577f7fb9c7a8ba02edef",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:42.445Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    },
+    {
+      "name": "required-permit-documentation",
+      "document_id": "cincinnati-required-permit-documentation-20261005",
+      "source_document_id": "6ac3c6882c889b4b8871af3a",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/required-permit-documentation/",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/fd9953c41_required-permit-documentation.pdf",
+      "file_bytes": 62913,
+      "file_hash_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+      "verification_status": "needs_verification",
+      "authority_classification": "unknown_review_required",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/fd9953c41_required-permit-documentation.pdf",
+        "claim_token": "f8418ba3-dbef-4908-8dc9-33e893b7a1fe",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T15:48:49.781Z",
+        "attempts": 1,
+        "next_page": 4,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 3,
+        "pages_extracted": 3,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T15:48:50.068Z",
+        "completed_at": "2026-10-05T15:48:50.068Z",
+        "complete_document_text": true
+      },
+      "pages": [
+        {
+          "page": 1,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\nI.\nDOCUMENTS REQUIRED WHEN APPLYING\nFOR A PERMIT\nThe following is a list of some typical projects and the required sets of plans for each. The number of sets\nand specifications may be reduced by one if digital plans are submitted in an approved file format. See\nDigital Document Submission Guidelines. Contact Permit Counter: 352-4306\nNew Buildings\n4 sets of plans and 4 sets of specifications.\n4 sets of surveys with legible stamp of registered surveyor\nForms necessary - Energy Report, Bldg. Permit & HVAC Applications **\nAdditions over 500 Square Feet\n4 sets of plans and 4 sets of specifications\n4 sets of site plans\nForms necessary - Energy Report, Bldg. Permit & HVAC Applications**\nAdditions under 500 Square Feet\n4 sets of plans and 4 sets of specifications\n4 sets of site plans\nForms necessary - Energy Report, Bldg. Permit & HVAC Applications**\nAlterations which include HVAC work\n4 sets of plans which include mechanical plans and 2 sets of specifications\nForms necessary - Bldg. Permit & HVAC Applications\nAlterations not including HVAC work (decks, signs, awnings, walls, sheds, haunted houses, interior\ndemolitions, etc.)\n4 sets of plans and 4 sets of specifications\n4 sets of site plans\nForms necessary - Bldg. Permit Application\nCertificate of Use and Occupancy\n4 sets of floor plans\nForms necessary - Bldg. Permit Application\nHeating, Ventilating, Air Conditioning\n4 sets of plans and 4 sets of specifications\nForms necessary - HVAC Application\nKitchen Hood & Exhaust Systems / Hood Fire Suppression Systems\n4 sets of plans and 4 sets of specifications\nForms necessary - HVAC Application",
+          "source_document_id": "6ac3c6882c889b4b8871af3a",
+          "source_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+          "text_sha256": "6aff543f4cb3a33901fafc7e391add9006460d13bc8eec2f2d603f6594905cb4",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:50.068Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 2,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\nII.\nSprinklers/Fire Alarms\n4 sets of plans and 4 sets of specifications and hydraulic calculations\nForms necessary - Bldg. Permit Application\nSwimming Pools (in-ground and above ground)\n4 sets of plans\n4 sets of site plans\nForms necessary - Bldg. Permit Application\nTents\n4 sets of plans and 4 copies of certificate verifying fabric is flame resistant\n4 sets of site plans\nForms necessary - Bldg. Permit Application\n** NOTE: Environmental Disclosure Form required for Industrial, Storage or Factory use groups\nonly\nParking Lots and Excavation and Fill\n4 sets of plans\n4 sets of site plans\nForms necessary - Bldg. Permit Application\nDemolition\nNo plans are necessary. Applications for demolitions shall not be included on the same form for other work\nto be done on the site. Forms Necessary - Bldg. Permit Application\nMINIMUM PLAN REQUIREMENTS\nA. Plans, when submitted to the Division of Buildings and Inspections for review, shall be drawn to scale\nusing a straight edge on unlined paper sized in standard multiples of 8 ½\" x 11\" or 9\" x 12\".\nB. All plans shall be comprehensive, detailed, legible and shall include but shall not be limited to the\nfollowing information:\n1. An index of drawings located on the first sheet;\n2. A site plan based on an actual survey, showing street location; the location of the proposed building\nor addition and all existing buildings on the site, including setbacks from all property lines to the\nproposed and existing structures, distances between all buildings, number of stories, building height,\nshape and dimensions of the lot, location and sizes of all utility lines, and drainage provisions to\nadequately handle the surface runoff;",
+          "source_document_id": "6ac3c6882c889b4b8871af3a",
+          "source_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+          "text_sha256": "1fcac6f0ec41d47fcd36e8412f4f9d929636d131cc4b8ae4a6d5ed0b4f0d32f8",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:50.068Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 3,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\n3. Floor plans, including plans of full or partial basements or cellars and full or partial attics or\npenthouses. Floor plans must show all relevant information such as door swings, stairs and ramps,\nwindows, shafts, etc., and must be sufficiently dimensioned to describe all relevant space sizes.\nWall materials must be described by cross-hatching (with explanatory key), by notation, or by other\nclearly understandable methods. Spaces must be identified as to their actual use. For alterations,\nprovide a key plan indicating the location of the space within the building;\n4. All elevations necessary to completely describe the exterior of the building, including floor to floor\ndimensions;\n5. Cross sections, wall sections and detail sections, to scale, as may be required to describe the\ngeneral building construction, including wall, ceiling, floor and roof materials and construction, and\ndetails which may be necessary to describe typical connections, etc.;\n6. Complete structural description of the proposed structure on the above drawings or on separate\ndrawings including size and location of all principal structural elements and a table of live loads used\nin the design of the building and computations, stress diagrams and other data sufficient to show\ncorrectness of plans;\n7. Complete description of the mechanical and electrical systems of the building or affected space on\nthe above drawings or on separate drawings, including plumbing schematics and principal plumbing,\nheating, ventilation and air conditioning duct and piping layouts and lighting and power equipment\nlayouts;\n8. Additional graphic or test information as may be reasonably required by the Director of Buildings and\nInspections to allow him to review special or extraordinary construction methods or equipment; and\n9. Plans shall bear the project address and the identification of the person primarily responsible for their\npreparation on each sheet.\n10. Plans, except for 1, 2 and 3 family detached buildings, are required to be prepared and sealed by a\nRegistered Architect or Professional Engineer.\nNote: The aforementioned information is general in nature. Additional information may be required by the\nplans examiners.\nC. Permit application for State of Ohio Industrialized Units (modular buildings) shall be accompanied by 3\nsets of plans stamped approved by the Ohio Board of Building Standards. Foundation plans are\ntypically site specific and are required to be submitted along with the State approved plans. If HVAC\nequipment is not included in the units shipped, a HVAC permit application and corresponding\nconstruction documents shall be submitted. The plans examiner should be consulted for the need for\nthe completion of the appropriate Energy Code Forms.\nRev. 6/2022",
+          "source_document_id": "6ac3c6882c889b4b8871af3a",
+          "source_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+          "text_sha256": "97c387c26be8ccb000f6927e65dbe594d4aa32131a78f918c4d505a9a7c0409c",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T15:48:50.068Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    }
+  ],
+  "html_evidence": {
+    "jurisdiction_name": "Cincinnati",
+    "payload_sha256": "2dfa50e1c92a7b806f06f51e25cf106e370916e97b588d7d0a8b3bb730138416",
+    "title": "Cincinnati COA guidance — automatic referral versus separate application; unreviewed",
+    "text": "Skip to main content (Press Enter).\nCity Planning and Engagement\nConnect With City Planning and Engagement:\nCertificate Of Appropriateness\nCity Planning and Engagement\nHistoric Conservation\nCertificate Of Appropriateness\nCity Planning and Engagement Menu\nAbout Us\nCity Planning Director\nFees and Applications\nAnnual Report & Work Program\nCity Planning Commission\nContact Us\nCity Planning Calendar\nApply & Pay Online\nCity Planning Commission\nAccessory Dwelling Units\nCommunity Engagement\nCommunity Engagement Policy\nUpcoming Community Engagement Meetings\nPast Community Engagement Meetings\nZoning Administration\nNeighborhood Plans\nApproved Plans\nOngoing Processes\nPlan Cincinnati\nGoals and Strategies\nDownload Plan Cincinnati\nPlanning Projects and Studies\nActive\nCompleted\nHistoric Conservation\nLocal Historic Designation\nMajor Architectural Styles\nLocal Historic Landmarks\nLocal Conservation Guidelines\nNational Register of Historic Places\nCertificate Of Appropriateness\nHistoric Conservation Board\nSection 106 Historic Review\nUrban Conservator\nWeb Resources\nSubdivisions and Lot Splits\nCommittee of Names\nResources\nNews\nCertificate Of Appropriateness\nThe Certificate of Appropriateness (COA) application is one-page, single-sided form. This application is required for projects which alter locally designated landmarks and properties located in locally designated historic districts. The COA application should be used to describe the existing conditions of a property and any work being proposed. In those instances where the proposed work is exempt from a Building Permit, a COA application is still required.\nThe COA application is available for printing below:\nCOA - Application Form Staff Level\nDocuments Required List for HCB Applications\nDemolition and Economic Hardship Worksheet\nLINK TO HISTORIC CONSERVATION BOARD - WEBSITE - Including HCB Application for COA and Zoning Relief\nPrint the application, complete the form and submit it along with any supporting plans, photographs or other documentation to the Historic Conservation Office. Please be advised that as of January 1, 2013, new review fees apply for COA applications for minor alterations (generally reviewed by staff) and major alterations (those requiring Historic Conservation Board review). All fees are due with application submission.\nThe fees are payable by check issued to the City of Cincinnati as follows:\nMinor alteration reviews approved by staff: $158.55\nMajor alteration review by the Historic Conservation Board: $658.55 ($500 hearing fee plus COA fee)\nAbout The COA Process\nA Certificate of Appropriateness (COA) is issued by the Historic Conservation Office to approve work to local landmarks or properties located within local historic districts.\nThe Historic Conservation Office generally reviews only exterior work, demolition, new construction and site improvements.\nHowever, select properties, including City Hall, Cuvier Press Club, Music Hall, Union Terminal and St. Francis de Sales Church and Rectory, also have significant interiors that are subject to review.\nA COA is issued either as part of a Building Permit or as a separate document depending on the type of work. A Building Permit is required for major repairs, alterations, new buildings and additions, most excavation, new fill, signs and parking areas, and it is issued by the Department of Buildings & Inspections. A COA is also required if a property is a designated Local Landmark or is located in a Local Historic District, and it is issued by the Historic Conservation Office.\nIf a Building Permit is required for the work, the permit application will automatically be referred to the Historic Conservation Office for review. No additional application form is required.\nMinor repairs and ordinary maintenance work typically do not require a Building Permit, and select construction work and repairs for one-, two- and three-family dwellings are exempt from some permit requirements. Work on the interior of the building does not require a COA application if the interior work has no impact on the exterior of the building.\nIf work is exempt from a Building Permit, it still requires a COA. In these instances, a separate COA Application Form will need to be filled out and submitted to the Historic Conservation Office.\nEach historic district or landmark has its own set of conservation guidelines, which are used to evaluate proposed work. These guidelines are intended to protect the character of an individual building and site as well as the surrounding historic district. The Historic Conservation Office staff can provide technical assistance on a project and advice on the compliance of a project with the guidelines. Staff can also advise an applicant on whether the HCB must review the work and give a preliminary indication of how it will respond to a given application.\nApplicants are encouraged to consult with the Historic Conservation Office staff during the planning stages of a project, prior to formal application for a Building Permit or a COA.\nCity Planning and Engagement Menu\nAbout Us\nCity Planning Director\nFees and Applications\nAnnual Report & Work Program\nCity Planning Commission\nContact Us\nCity Planning Calendar\nApply & Pay Online\nCity Planning Commission\nAccessory Dwelling Units\nCommunity Engagement\nCommunity Engagement Policy\nUpcoming Community Engagement Meetings\nPast Community Engagement Meetings\nZoning Administration\nNeighborhood Plans\nApproved Plans\nOngoing Processes\nPlan Cincinnati\nGoals and Strategies\nDownload Plan Cincinnati\nPlanning Projects and Studies\nActive\nCompleted\nHistoric Conservation\nLocal Historic Designation\nMajor Architectural Styles\nLocal Historic Landmarks\nLocal Conservation Guidelines\nNational Register of Historic Places\nCertificate Of Appropriateness\nHistoric Conservation Board\nSection 106 Historic Review\nUrban Conservator\nWeb Resources\nSubdivisions and Lot Splits\nCommittee of Names\nResources\nNews",
+    "file_hash_sha256": "2710bfd14a4855b6402ea4d6c2743bcc974e6e6046579865e21bf8c292492133",
+    "text_sha256": "2e808f4ab59cda90d4335b8f9f702dade8d5992369fcbadf923b5961d041b0b7",
+    "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+    "request_key": "html-evidence:6ac1a123edda6d8dd942690b:cincinnati-coa-guidance-20261005-v1",
+    "verification_status": "retained_unreviewed",
+    "profile_snapshot": {
+      "id": "6ac1a123edda6d8dd942690b",
+      "name": "Cincinnati",
+      "state": "OH",
+      "type": "city",
+      "website_url": "https://www.cincinnati-oh.gov",
+      "permitting_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/"
+    },
+    "file_bytes": 62466,
+    "evidence_key": "3798fd617309efb86d332063720fab9cc2d13b3e1d04b23981d251f6ed3a7090",
+    "requested_by": "brettheinlein1@gmail.com",
+    "final_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+    "blocks": [
+      {
+        "text": "Skip to main content (Press Enter).",
+        "block": 1
+      },
+      {
+        "text": "City Planning and Engagement",
+        "block": 2
+      },
+      {
+        "text": "Connect With City Planning and Engagement:",
+        "block": 3
+      },
+      {
+        "text": "Certificate Of Appropriateness",
+        "block": 4
+      },
+      {
+        "text": "City Planning and Engagement",
+        "block": 5
+      },
+      {
+        "text": "Historic Conservation",
+        "block": 6
+      },
+      {
+        "text": "Certificate Of Appropriateness",
+        "block": 7
+      },
+      {
+        "text": "City Planning and Engagement Menu",
+        "block": 8
+      },
+      {
+        "text": "About Us",
+        "block": 9
+      },
+      {
+        "text": "City Planning Director",
+        "block": 10
+      },
+      {
+        "text": "Fees and Applications",
+        "block": 11
+      },
+      {
+        "text": "Annual Report & Work Program",
+        "block": 12
+      },
+      {
+        "text": "City Planning Commission",
+        "block": 13
+      },
+      {
+        "text": "Contact Us",
+        "block": 14
+      },
+      {
+        "text": "City Planning Calendar",
+        "block": 15
+      },
+      {
+        "text": "Apply & Pay Online",
+        "block": 16
+      },
+      {
+        "text": "City Planning Commission",
+        "block": 17
+      },
+      {
+        "text": "Accessory Dwelling Units",
+        "block": 18
+      },
+      {
+        "text": "Community Engagement",
+        "block": 19
+      },
+      {
+        "text": "Community Engagement Policy",
+        "block": 20
+      },
+      {
+        "text": "Upcoming Community Engagement Meetings",
+        "block": 21
+      },
+      {
+        "text": "Past Community Engagement Meetings",
+        "block": 22
+      },
+      {
+        "text": "Zoning Administration",
+        "block": 23
+      },
+      {
+        "text": "Neighborhood Plans",
+        "block": 24
+      },
+      {
+        "text": "Approved Plans",
+        "block": 25
+      },
+      {
+        "text": "Ongoing Processes",
+        "block": 26
+      },
+      {
+        "text": "Plan Cincinnati",
+        "block": 27
+      },
+      {
+        "text": "Goals and Strategies",
+        "block": 28
+      },
+      {
+        "text": "Download Plan Cincinnati",
+        "block": 29
+      },
+      {
+        "text": "Planning Projects and Studies",
+        "block": 30
+      },
+      {
+        "text": "Active",
+        "block": 31
+      },
+      {
+        "text": "Completed",
+        "block": 32
+      },
+      {
+        "text": "Historic Conservation",
+        "block": 33
+      },
+      {
+        "text": "Local Historic Designation",
+        "block": 34
+      },
+      {
+        "text": "Major Architectural Styles",
+        "block": 35
+      },
+      {
+        "text": "Local Historic Landmarks",
+        "block": 36
+      },
+      {
+        "text": "Local Conservation Guidelines",
+        "block": 37
+      },
+      {
+        "text": "National Register of Historic Places",
+        "block": 38
+      },
+      {
+        "text": "Certificate Of Appropriateness",
+        "block": 39
+      },
+      {
+        "text": "Historic Conservation Board",
+        "block": 40
+      },
+      {
+        "text": "Section 106 Historic Review",
+        "block": 41
+      },
+      {
+        "text": "Urban Conservator",
+        "block": 42
+      },
+      {
+        "text": "Web Resources",
+        "block": 43
+      },
+      {
+        "text": "Subdivisions and Lot Splits",
+        "block": 44
+      },
+      {
+        "text": "Committee of Names",
+        "block": 45
+      },
+      {
+        "text": "Resources",
+        "block": 46
+      },
+      {
+        "text": "News",
+        "block": 47
+      },
+      {
+        "text": "Certificate Of Appropriateness",
+        "block": 48
+      },
+      {
+        "text": "The Certificate of Appropriateness (COA) application is one-page, single-sided form. This application is required for projects which alter locally designated landmarks and properties located in locally designated historic districts. The COA application should be used to describe the existing conditions of a property and any work being proposed. In those instances where the proposed work is exempt from a Building Permit, a COA application is still required.",
+        "block": 49
+      },
+      {
+        "text": "The COA application is available for printing below:",
+        "block": 50
+      },
+      {
+        "text": "COA - Application Form Staff Level",
+        "block": 51
+      },
+      {
+        "text": "Documents Required List for HCB Applications",
+        "block": 52
+      },
+      {
+        "text": "Demolition and Economic Hardship Worksheet",
+        "block": 53
+      },
+      {
+        "text": "LINK TO HISTORIC CONSERVATION BOARD - WEBSITE - Including HCB Application for COA and Zoning Relief",
+        "block": 54
+      },
+      {
+        "text": "Print the application, complete the form and submit it along with any supporting plans, photographs or other documentation to the Historic Conservation Office. Please be advised that as of January 1, 2013, new review fees apply for COA applications for minor alterations (generally reviewed by staff) and major alterations (those requiring Historic Conservation Board review). All fees are due with application submission.",
+        "block": 55
+      },
+      {
+        "text": "The fees are payable by check issued to the City of Cincinnati as follows:",
+        "block": 56
+      },
+      {
+        "text": "Minor alteration reviews approved by staff: $158.55",
+        "block": 57
+      },
+      {
+        "text": "Major alteration review by the Historic Conservation Board: $658.55 ($500 hearing fee plus COA fee)",
+        "block": 58
+      },
+      {
+        "text": "About The COA Process",
+        "block": 59
+      },
+      {
+        "text": "A Certificate of Appropriateness (COA) is issued by the Historic Conservation Office to approve work to local landmarks or properties located within local historic districts.",
+        "block": 60
+      },
+      {
+        "text": "The Historic Conservation Office generally reviews only exterior work, demolition, new construction and site improvements.",
+        "block": 61
+      },
+      {
+        "text": "However, select properties, including City Hall, Cuvier Press Club, Music Hall, Union Terminal and St. Francis de Sales Church and Rectory, also have significant interiors that are subject to review.",
+        "block": 62
+      },
+      {
+        "text": "A COA is issued either as part of a Building Permit or as a separate document depending on the type of work. A Building Permit is required for major repairs, alterations, new buildings and additions, most excavation, new fill, signs and parking areas, and it is issued by the Department of Buildings & Inspections. A COA is also required if a property is a designated Local Landmark or is located in a Local Historic District, and it is issued by the Historic Conservation Office.",
+        "block": 63
+      },
+      {
+        "text": "If a Building Permit is required for the work, the permit application will automatically be referred to the Historic Conservation Office for review. No additional application form is required.",
+        "block": 64
+      },
+      {
+        "text": "Minor repairs and ordinary maintenance work typically do not require a Building Permit, and select construction work and repairs for one-, two- and three-family dwellings are exempt from some permit requirements. Work on the interior of the building does not require a COA application if the interior work has no impact on the exterior of the building.",
+        "block": 65
+      },
+      {
+        "text": "If work is exempt from a Building Permit, it still requires a COA. In these instances, a separate COA Application Form will need to be filled out and submitted to the Historic Conservation Office.",
+        "block": 66
+      },
+      {
+        "text": "Each historic district or landmark has its own set of conservation guidelines, which are used to evaluate proposed work. These guidelines are intended to protect the character of an individual building and site as well as the surrounding historic district. The Historic Conservation Office staff can provide technical assistance on a project and advice on the compliance of a project with the guidelines. Staff can also advise an applicant on whether the HCB must review the work and give a preliminary indication of how it will respond to a given application.",
+        "block": 67
+      },
+      {
+        "text": "Applicants are encouraged to consult with the Historic Conservation Office staff during the planning stages of a project, prior to formal application for a Building Permit or a COA.",
+        "block": 68
+      },
+      {
+        "text": "City Planning and Engagement Menu",
+        "block": 69
+      },
+      {
+        "text": "About Us",
+        "block": 70
+      },
+      {
+        "text": "City Planning Director",
+        "block": 71
+      },
+      {
+        "text": "Fees and Applications",
+        "block": 72
+      },
+      {
+        "text": "Annual Report & Work Program",
+        "block": 73
+      },
+      {
+        "text": "City Planning Commission",
+        "block": 74
+      },
+      {
+        "text": "Contact Us",
+        "block": 75
+      },
+      {
+        "text": "City Planning Calendar",
+        "block": 76
+      },
+      {
+        "text": "Apply & Pay Online",
+        "block": 77
+      },
+      {
+        "text": "City Planning Commission",
+        "block": 78
+      },
+      {
+        "text": "Accessory Dwelling Units",
+        "block": 79
+      },
+      {
+        "text": "Community Engagement",
+        "block": 80
+      },
+      {
+        "text": "Community Engagement Policy",
+        "block": 81
+      },
+      {
+        "text": "Upcoming Community Engagement Meetings",
+        "block": 82
+      },
+      {
+        "text": "Past Community Engagement Meetings",
+        "block": 83
+      },
+      {
+        "text": "Zoning Administration",
+        "block": 84
+      },
+      {
+        "text": "Neighborhood Plans",
+        "block": 85
+      },
+      {
+        "text": "Approved Plans",
+        "block": 86
+      },
+      {
+        "text": "Ongoing Processes",
+        "block": 87
+      },
+      {
+        "text": "Plan Cincinnati",
+        "block": 88
+      },
+      {
+        "text": "Goals and Strategies",
+        "block": 89
+      },
+      {
+        "text": "Download Plan Cincinnati",
+        "block": 90
+      },
+      {
+        "text": "Planning Projects and Studies",
+        "block": 91
+      },
+      {
+        "text": "Active",
+        "block": 92
+      },
+      {
+        "text": "Completed",
+        "block": 93
+      },
+      {
+        "text": "Historic Conservation",
+        "block": 94
+      },
+      {
+        "text": "Local Historic Designation",
+        "block": 95
+      },
+      {
+        "text": "Major Architectural Styles",
+        "block": 96
+      },
+      {
+        "text": "Local Historic Landmarks",
+        "block": 97
+      },
+      {
+        "text": "Local Conservation Guidelines",
+        "block": 98
+      },
+      {
+        "text": "National Register of Historic Places",
+        "block": 99
+      },
+      {
+        "text": "Certificate Of Appropriateness",
+        "block": 100
+      },
+      {
+        "text": "Historic Conservation Board",
+        "block": 101
+      },
+      {
+        "text": "Section 106 Historic Review",
+        "block": 102
+      },
+      {
+        "text": "Urban Conservator",
+        "block": 103
+      },
+      {
+        "text": "Web Resources",
+        "block": 104
+      },
+      {
+        "text": "Subdivisions and Lot Splits",
+        "block": 105
+      },
+      {
+        "text": "Committee of Names",
+        "block": 106
+      },
+      {
+        "text": "Resources",
+        "block": 107
+      },
+      {
+        "text": "News",
+        "block": 108
+      }
+    ],
+    "official_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+    "retrieved_at": "2026-10-05T15:50:08.115Z",
+    "content_type": "text/html;charset=UTF-8",
+    "method": "official-html-static-text-v1",
+    "id": "6ac3c7309529d9f74653be9c",
+    "created_date": "2026-10-05T15:50:08.657000",
+    "updated_date": "2026-10-05T15:50:08.657000",
+    "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+    "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+    "is_sample": false
+  },
+  "live_citation": {
+    "html_evidence_id": "6ac3c7309529d9f74653be9c",
+    "block": 64,
+    "excerpt": "No additional application form is required.",
+    "success": true
+  },
+  "next": "Retain current zoning administration HTML and collect adopted Cincinnati Chapters 1427/895; resolve applicability and submission conflicts."
+}
