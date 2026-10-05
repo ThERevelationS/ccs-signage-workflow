@@ -35,7 +35,7 @@ function validateCursor(cursor, seedUrl, maxDepth) {
   } catch (error) { throw frontierError(error.message || 'Saved discovery frontier requires review.'); }
 }
 
-export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [] }) {
+export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false }) {
   seedUrl = scopedUrl(seedUrl, seedUrl);
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 30 ||
       !Number.isInteger(maxDepth) || maxDepth < 0 || maxDepth > 5) throw Error('Invalid discovery request size.');
@@ -52,15 +52,22 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   // Apply current resource ranking to a saved frontier as well as new links.
   // The saved URLs/depths remain intact; no pages or review gaps are reset.
   pending.sort((a, b) => permittingResourcePriority(priorDocuments.get(key(b.url)) || {url:b.url}) - permittingResourcePriority(priorDocuments.get(key(a.url)) || {url:a.url}));
+  if (recoverLinkLimits && !resume) throw frontierError('Link recovery requires saved discovery progress.');
   let attempted = 0;
-  while (pending.length && attempted < maxPages) {
-    const next = pending.shift(), nextKey = key(next.url);
-    if (visited.has(nextKey)) continue;
+  while ((recoverLinkLimits ? gaps.some(g => g.reason === 'page_link_limit') : pending.length) && attempted < maxPages) {
+    const recoveryGap = recoverLinkLimits ? gaps.find(g => g.reason === 'page_link_limit') : null;
+    const inferredDepth = recoveryGap && [...priorDocuments.values()].find(d => d.discovery_page_url && key(d.discovery_page_url) === key(recoveryGap.url))?.discovery_depth;
+    const next = recoveryGap ? {url:recoveryGap.url, depth:recoveryGap.depth ?? inferredDepth ?? maxDepth} : pending.shift();
+    const offset = recoveryGap?.link_offset ?? 0;
+    if (!Number.isInteger(offset) || offset < 0 || offset > 5000 || !Number.isInteger(next.depth) || next.depth < 0 || next.depth > maxDepth)
+      throw frontierError('Saved link recovery bounds require review.');
+    const nextKey = key(next.url);
+    if (!recoveryGap && visited.has(nextKey)) continue;
     visited.add(nextKey); attempted++;
     try {
       const response = await fetchPage(next.url);
       const finalUrl = scopedUrl(response.finalUrl || next.url, seedUrl), finalKey = key(finalUrl);
-      if (finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); continue; }
+      if (!recoveryGap && finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); continue; }
       visited.add(finalKey);
       if (response.resource_kind === 'pdf' && response.classification_method === PDF_RESOURCE_METHOD) {
         const existing = documents.get(nextKey) || priorDocuments.get(nextKey) || { title: 'Official PDF resource', url: next.url, doc_type: 'other', source: 'official_page_harvest' };
@@ -71,9 +78,11 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         continue;
       }
       if (typeof response.html !== 'string' || !response.html.trim()) throw Error('Official page returned no usable static HTML.');
-      const found = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100 });
-      pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length });
-      if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', requires_review: true });
+      const batch = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100, offset });
+      const found = batch;
+      if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
+      pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length, ...(recoveryGap ? {recovered_link_offset:offset} : {}) });
+      if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', depth:next.depth, link_offset:offset + found.length, requires_review: true });
       for (const doc of found) {
         if (doc.url.length > 2000) { gaps.push({url:finalUrl,reason:'oversized_resource_url',requires_review:true}); continue; }
         const sourceKey = key(doc.url);
@@ -89,7 +98,9 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
     } catch (error) {
       const reason = String(error?.message || error).slice(0, 300);
       pages.push({ ...next, status: 'failed', error: reason });
-      gaps.push({ url: next.url, reason: 'page_fetch_failed', detail: reason, requires_review: true });
+      if (!recoveryGap) gaps.push({ url: next.url, reason: 'page_fetch_failed', detail: reason, requires_review: true });
+      // Retain the recovery gap and offset after failures; no false completion.
+      if (recoveryGap) break;
     }
   }
   const pendingPages = pending.filter(p => !visited.has(key(p.url)));
@@ -100,7 +111,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       JSON.stringify(continuationState).length > CURSOR_MAX_CHARS)
     throw frontierError('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
   return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && !pendingPages.length), documents: [...documents.values()], pages,
-    pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume),
+    pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume), recovering_link_limits: recoverLinkLimits,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
     jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,
     limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',

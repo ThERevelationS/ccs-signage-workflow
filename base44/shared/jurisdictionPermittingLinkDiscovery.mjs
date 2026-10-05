@@ -49,7 +49,7 @@ export function permittingDocumentType({ title = '', url = '' } = {}) {
   return 'other';
 }
 
-export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 25 } = {}) {
+export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offset = 0 } = {}) {
   let page;
   try { page = new URL(String(pageUrl || '').trim()); } catch { return []; }
   if (!['http:', 'https:'].includes(page.protocol) || page.username || page.password) return [];
@@ -112,5 +112,6 @@ export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 
   candidates.sort((a, b) =>
     Number(permittingResourcePriority(b) === 100) - Number(permittingResourcePriority(a) === 100) ||
     Number(isDownloadableResearchDocument(b)) - Number(isDownloadableResearchDocument(a)));
-  return [...results, ...candidates].slice(0, limit);
+  if (!Number.isInteger(offset) || offset < 0 || offset > 5000) throw Error('Invalid discovery link offset.');
+  return [...results, ...candidates].slice(offset, offset + limit);
 }
