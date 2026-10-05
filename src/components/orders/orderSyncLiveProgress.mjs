@@ -1,16 +1,38 @@
 export const ORDER_SYNC_HEARTBEAT_STALE_MS = 5 * 60 * 1000;
 
+export function orderSyncPhaseLabel(phase) {
+  return ({
+    backup: 'Preparing backup',
+    reading: 'Reading Smartsheet',
+    checking: 'Checking Order',
+    create: 'Creating Order row',
+    writing: 'Writing to Smartsheet',
+    waiting_rate_limit: 'Waiting for Smartsheet',
+    retrying: 'Retrying Smartsheet',
+    verifying: 'Verifying Smartsheet',
+    confirming: 'Confirming Base44',
+    needs_review: 'Needs review',
+    paused: 'Paused safely',
+    finishing: 'Finalizing',
+  })[String(phase || '')] || '';
+}
+
 export function orderSyncLiveProgress(status, { enabled = true, now = Date.now() } = {}) {
   const show = Boolean(enabled && status?.progress_dataset === 'orders');
   const current = show ? Math.max(0, Number(status?.progress_current) || 0) : 0;
   const total = show ? Math.max(0, Number(status?.progress_total) || 0) : 0;
   const itemLabel = show ? String(status?.progress_item_label || '').trim() : '';
   const detail = show ? String(status?.progress_detail || '').trim() : '';
+  const phase = show ? String(status?.progress_phase || '').trim() : '';
+  const phaseLabel = orderSyncPhaseLabel(phase);
 
   const totalSteps = Math.max(0, Number(status?.total_steps) || 0);
   const completedSteps = Math.max(0, Number(status?.completed_steps) || 0);
   const running = status?.status === 'running';
-  const stepFraction = running && total > 0 ? Math.min(0.999, current / total) : 0;
+  const explicitFraction = Number(status?.progress_fraction);
+  const stepFraction = running && Number.isFinite(explicitFraction)
+    ? Math.min(0.999, Math.max(0, explicitFraction))
+    : running && total > 0 ? Math.min(0.999, current / total) : 0;
   const rawPercent = totalSteps > 0
     ? Math.round(((completedSteps + stepFraction) / totalSteps) * 1000) / 10
     : 0;
@@ -24,5 +46,5 @@ export function orderSyncLiveProgress(status, { enabled = true, now = Date.now()
   const stalled = Boolean(show && running &&
     (heartbeatAgeMs === null || heartbeatAgeMs > ORDER_SYNC_HEARTBEAT_STALE_MS));
 
-  return { show, current, total, itemLabel, detail, percent, stalled, heartbeatAgeMs };
+  return { show, current, total, itemLabel, detail, phase, phaseLabel, percent, stalled, heartbeatAgeMs };
 }
