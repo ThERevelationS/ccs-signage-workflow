@@ -1,0 +1,39 @@
+{
+  "llm_calls": 0,
+  "authority_approved": false,
+  "sources": [
+    {
+      "name": "sign-forms",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "retrieved_at": "2026-10-05T13:06:37.535Z",
+      "file_bytes": 67011,
+      "file_hash_sha256": "5fcca5a58c328754a9581c101dc3822a38c9d282c32fc52eb5e732fafa634200",
+      "text_sha256": "1f068931112f3d0a21b5b827310e1c3ab5c631e3924b80f3d100c2e14fceb430",
+      "raw_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/sign-forms.html",
+      "text_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/sign-forms.txt"
+    },
+    {
+      "name": "outdoor-sign-forms",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/outdoor-advertising-sign/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/outdoor-advertising-sign/",
+      "retrieved_at": "2026-10-05T13:06:39.521Z",
+      "file_bytes": 67475,
+      "file_hash_sha256": "8826b44e91aea0e4905d4ca75dab7a4369585fdc1b5c997229ebef54f931f0a3",
+      "text_sha256": "b4f434f994ed2f5dc9c599c3fd2668956a38e839d98cda8b5b37e6f21d0f02f8",
+      "raw_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/outdoor-sign-forms.html",
+      "text_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/outdoor-sign-forms.txt"
+    },
+    {
+      "name": "zoning-administration",
+      "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+      "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+      "retrieved_at": "2026-10-05T13:06:41.008Z",
+      "file_bytes": 68834,
+      "file_hash_sha256": "7d07f94c42b8550a378122a7cdb4dfde099f60ebc9292d1a23a706fb5671db66",
+      "text_sha256": "8939763879f66b3630711d97ae81c7af1cecb15c0cf006229ada9622ac8590a5",
+      "raw_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/zoning-administration.html",
+      "text_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/zoning-administration.txt"
+    }
+  ]
+}
