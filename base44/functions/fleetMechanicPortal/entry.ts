@@ -412,7 +412,10 @@ async function portalPayload(base44: any, grant: any, Access: any) {
   const visible = [...active,...completed];
   const equipmentIds = new Set(visible.map((row:any)=>String(row.equipment_id || '')).filter(Boolean));
   const taskIds = new Set(visible.map((row:any)=>String(row.maintenance_task_id || '')).filter(Boolean));
-  const canEstimate = Array.isArray(currentGrant?.allowed_actions) && currentGrant.allowed_actions.includes('estimate_submit');
+  const currentActions = new Set(Array.isArray(currentGrant?.allowed_actions) && currentGrant.allowed_actions.length ? currentGrant.allowed_actions : ['bootstrap','start','save']);
+  const canStart = currentActions.has('start');
+  const canSave = currentActions.has('save');
+  const canEstimate = currentActions.has('estimate_submit');
   const repairEstimates:any[] = [];
   const approvalBlocks = new Map<string,{blocked:boolean;reason:string}>();
   for (const wo of visible) {
@@ -441,7 +444,7 @@ async function portalPayload(base44: any, grant: any, Access: any) {
   const publicWorkOrder = (row:any) => ({...sanitizeWorkOrder(row),approval_block:approvalBlocks.get(String(row.id)) || {blocked:false,reason:''}});
   return {
     success:true,
-    portal:{name:currentGrant?.name || 'External Mechanic',capabilities:{estimates:canEstimate}},
+    portal:{name:currentGrant?.name || 'External Mechanic',capabilities:{start:canStart,save:canSave,estimates:canEstimate}},
     active_work_orders:active.map(publicWorkOrder),
     recent_completed:completed.map(publicWorkOrder),
     equipment:equipment.filter((row:any)=>equipmentIds.has(String(row.id))).map(sanitizeEquipment),
