@@ -183,6 +183,13 @@ assert.ok(loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0') < loadRo
 console.log('PASS duplicate or contradictory expected conflict audit identities fail closed before completeness');
 
 assert.match(loadRowsBlock, /const returnedAuditIdList = loadedRows\.map/);
+assert.match(loadRowsBlock, /const missingReturnedAuditIdCount = returnedAuditIdList\.filter\(\(id\) => !id\)\.length/);
+assert.match(loadRowsBlock, /if \(missingReturnedAuditIdCount > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*no immutable audit ID/);
+assert.match(loadRowsBlock, /missing_returned_audit_id_count: missingReturnedAuditIdCount/);
+assert.ok(loadRowsBlock.indexOf('missingReturnedAuditIdCount > 0') < loadRowsBlock.indexOf('duplicateReturnedAuditIds.length > 0'), 'returned audit IDs must be present before duplicate detection');
+assert.ok(loadRowsBlock.indexOf('missingReturnedAuditIdCount > 0') < loadRowsBlock.indexOf('const returnedAuditIds = new Set(returnedAuditIdList)'), 'returned audit IDs must be present before set construction');
+console.log('PASS blank or missing returned immutable audit identities fail closed before evidence verification');
+
 assert.match(loadRowsBlock, /const duplicateReturnedAuditIds = \[\.\.\.new Set\(returnedAuditIdList\.filter/);
 assert.match(loadRowsBlock, /if \(duplicateReturnedAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*returned-identity check failed/);
 assert.match(loadRowsBlock, /duplicate_returned_audit_ids: duplicateReturnedAuditIds/);
