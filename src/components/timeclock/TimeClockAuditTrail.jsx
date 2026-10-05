@@ -102,6 +102,20 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           setError(`Audit investigation evidence-identity check failed: ${missingRequiredAuditIdCount} expected conflict evidence record${missingRequiredAuditIdCount === 1 ? " has" : "s have"} no immutable audit ID. No scoped audit records are being displayed.`);
           return;
         }
+        const requiredEvidenceFields = ["action", "request_id", "server_timestamp", "company_date", "clock_in", "source"];
+        const malformedRequiredEvidence = requiredEvidence.map((item) => ({
+          audit_id: String(item?.audit_id || "").trim(),
+          missing_fields: requiredEvidenceFields.filter((field) => !String(item?.[field] || "").trim()),
+        })).filter((item) => item.missing_fields.length > 0);
+        if (malformedRequiredEvidence.length > 0) {
+          console.error("Time Clock audit investigation evidence-shape failure:", {
+            requested_time_entry_id: scopedId,
+            malformed_conflict_evidence: malformedRequiredEvidence,
+          });
+          setRows([]);
+          setError(`Audit investigation evidence-shape check failed: ${malformedRequiredEvidence.length} expected conflict evidence record${malformedRequiredEvidence.length === 1 ? " is" : "s are"} missing required immutable provenance fields. No scoped audit records are being displayed.`);
+          return;
+        }
         const requiredAuditIds = requiredEvidence.map((item) => String(item.audit_id).trim());
         const duplicateRequiredAuditIds = [...new Set(requiredAuditIds.filter((id, index) => requiredAuditIds.indexOf(id) !== index))];
         if (duplicateRequiredAuditIds.length > 0) {
