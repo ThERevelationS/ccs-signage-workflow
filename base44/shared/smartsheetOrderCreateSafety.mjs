@@ -36,6 +36,28 @@ export function orderSmartsheetCreateNeedsReview(record) {
     String(marker.sheet_id ?? '') === String(record.smartsheet_sheet_id ?? ''));
 }
 
+function snapshotsEqual(left, right) {
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object' ||
+      Array.isArray(left) || Array.isArray(right)) return false;
+  const a = Object.keys(left).sort();
+  const b = Object.keys(right).sort();
+  if (a.length !== b.length || a.some((key, index) => key !== b[index])) return false;
+  return a.every((key) => String(left[key] ?? '').trim() === String(right[key] ?? '').trim());
+}
+
+export function recoverableOrderSmartsheetCreate(record, sheetId) {
+  const marker = record?.smartsheet_create_attempt;
+  const targetSheet = numericId(sheetId);
+  const rowId = numericId(marker?.row_id);
+  const snapshot = marker?.expected_snapshot;
+  if (!marker || marker.status !== 'created_unlinked' || !targetSheet || !rowId ||
+      numericId(marker?.sheet_id) !== targetSheet ||
+      numericId(record?.smartsheet_sheet_id) !== targetSheet ||
+      numericId(record?.smartsheet_row_id) ||
+      !snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+  return { rowId, snapshot, marker };
+}
+
 // Prevent simultaneous Order POSTs in one backend runtime. The durable
 // reservation below protects later invocations, including across runtimes.
 const activeOrderCreates = new Set();
@@ -60,6 +82,7 @@ async function performOrderSmartsheetCreate({
   sheetId,
   postRow,
   makeSnapshot,
+  verifyCreatedRow,
   attemptId,
   startedAt,
 }) {
