@@ -16,7 +16,8 @@ const previousRefStart = source.indexOf('const previousInvestigationRef', mountE
 assert.ok(mountEffectStart >= 0 && previousRefStart > mountEffectStart);
 const mountBlock = source.slice(mountEffectStart, previousRefStart);
 assert.match(mountBlock, /const initialTimeEntryId = String\(investigation\?\.time_entry_id \|\| ""\)\.trim\(\)/);
-assert.match(mountBlock, /if \(initialTimeEntryId\)[\s\S]*loadRows\(initialTimeEntryId\)[\s\S]*else[\s\S]*loadRows\(\)/);
+assert.match(mountBlock, /const initialExpectedAuditIds = [\s\S]*investigation\?\.evidence[\s\S]*audit_id/);
+assert.match(mountBlock, /if \(initialTimeEntryId\)[\s\S]*loadRows\(initialTimeEntryId, initialExpectedAuditIds\)[\s\S]*else[\s\S]*loadRows\(\)/);
 assert.equal((mountBlock.match(/loadRows\(/g) || []).length, 2, 'mount effect should choose exactly one of scoped or recent-history loading');
 console.log('PASS initial scoped mount chooses one deterministic audit request');
 
@@ -27,7 +28,8 @@ const transitionBlock = source.slice(transitionEffectStart, filteredStart);
 assert.match(transitionBlock, /previous\.nonce !== investigation\?\.nonce \|\| previous\.time_entry_id !== timeEntryId/);
 assert.match(transitionBlock, /if \(!changed \|\| !timeEntryId\) return/);
 assert.match(transitionBlock, /setSearch\(timeEntryId\)/);
-assert.match(transitionBlock, /loadRows\(timeEntryId\)/);
+assert.match(transitionBlock, /const expectedAuditIds = [\s\S]*investigation\?\.evidence[\s\S]*audit_id/);
+assert.match(transitionBlock, /loadRows\(timeEntryId, expectedAuditIds\)/);
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
@@ -65,4 +67,17 @@ assert.match(loadRowsBlock.slice(integrityGuardStart, integrityGuardEnd), /misma
 assert.match(loadRowsBlock, /scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
 console.log('PASS ordinary unscoped recent-history responses bypass scoped TimeEntry rejection');
 
-console.log('PASS 9/9 Time Clock Audit Trail lifecycle and result-integrity scenarios');
+assert.match(loadRowsBlock, /const requiredAuditIds = \[\.\.\.new Set\(/);
+assert.match(loadRowsBlock, /const returnedAuditIds = new Set\(loadedRows\.map/);
+assert.match(loadRowsBlock, /const missingAuditIds = requiredAuditIds\.filter\(\(id\) => !returnedAuditIds\.has\(id\)\)/);
+assert.match(loadRowsBlock, /if \(missingAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*completeness check failed/);
+console.log('PASS scoped investigation fails closed when any expected conflict audit ID is missing');
+
+assert.ok(loadRowsBlock.indexOf('mismatchedRows.length > 0') < loadRowsBlock.indexOf('missingAuditIds.length > 0'), 'TimeEntry integrity must be established before completeness');
+assert.ok(loadRowsBlock.indexOf('missingAuditIds.length > 0') < loadRowsBlock.lastIndexOf('setRows(loadedRows);'), 'completeness must be established before accepting scoped rows');
+console.log('PASS conflict evidence completeness is verified before scoped rows are presented');
+
+assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\.map\(\(item\) => item\?\.audit_id\)\)/);
+console.log('PASS scoped refresh preserves the expected immutable conflict-audit set');
+
+console.log('PASS 12/12 Time Clock Audit Trail lifecycle, integrity, and completeness scenarios');
