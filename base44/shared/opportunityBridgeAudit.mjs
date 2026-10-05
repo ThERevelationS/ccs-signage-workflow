@@ -34,9 +34,9 @@ export function classifyWorkOrderSalesScope(workOrder = {}) {
 
 export function legacyTerminalTaskKind(workOrder = {}) {
   const task = clean(workOrder?.current_task_description).toLowerCase();
-  if (/^lost\b/.test(task)) return 'lost';
-  if (/^completed sales?\b/.test(task)) return 'won';
-  if (/^closed\b/.test(task)) return 'closed';
+  if (/^lost(?:$|\s*-)/.test(task)) return 'lost';
+  if (/^completed sales?(?:$|\s*-)/.test(task)) return 'won';
+  if (/^closed(?:$|\s*-)/.test(task)) return 'closed';
   return '';
 }
 
