@@ -17,6 +17,25 @@ Establish safe research/import structures, provenance, merge behavior, staff own
 ## Phase 5 — Official-source collection and verified archives
 Collect current official permitting sources, forms, online application links, ordinances, fee schedules, checklists, instructions, and related documents. Preserve exact source URLs, file archives, hashes, byte counts, timestamps, extracted text, and evidence boundaries. Never invent missing documents or promote historical material to current policy without evidence.
 
+### Phase 5 milestone numbering — fixed endpoint 5.10
+
+Use `5.08 of 5.10 (step 8 of 10)` in progress reports. These are ordered milestone identifiers, not decimal arithmetic or percentages. This replaces the earlier whole-number-only reporting convention at the user's request. Add newly found defects to their existing milestone; do not silently extend the endpoint. Phase 5 completion concerns the reusable collection pipeline; statewide inventory coverage remains Phase 10. Historical work in Phases 1–4 still requires its own acceptance and is not automatically declared complete.
+
+| Step | Acceptance milestone | Current status |
+|---|---|---|
+| 5.01 | Shared same-host official resource discovery | Implemented and tested |
+| 5.02 | Sign-form ranking and extensionless PDF routing | Implemented and tested |
+| 5.03 | Durable frontier, atomic merge and continuation | Implemented and tested |
+| 5.04 | Original-byte archive verification and catalog handoff | Live pilot verified |
+| 5.05 | Deterministic PDF text handoff | Pipeline tested; pilot evidence retained |
+| 5.06 | Resumable capped-index pagination | Live verified |
+| 5.07 | Guarded failed-page retry and accurate outcomes | Live verified |
+| 5.08 | Guarded selected-depth recovery and sign-gap acceptance | In progress |
+| 5.09 | Ohio/Kentucky pipeline acceptance across source patterns | Pending |
+| 5.10 | Collection acceptance review, documented gaps and Phase 6 handoff | Pending |
+
+Phase 5 ends only when 5.10 is accepted. Steps 5.01–5.07 have implementation/pilot evidence; the final review must audit their limits rather than interpreting seven milestones as a percentage of statewide data gathered.
+
 ## Phase 6 — Exact-citation AI extraction
 Extract requirements, forms, fees, submission steps, responsible offices, applicability conditions, and conflicts from archived official sources with exact citations and source-version awareness.
 
