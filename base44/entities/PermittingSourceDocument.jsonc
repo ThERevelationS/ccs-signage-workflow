@@ -330,6 +330,88 @@
           }
         }
       }
+    },
+    "ocr_transcriptions": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "Append-only through the evidence handler: visual transcription candidates bound to a retained OCR record, archive hash, physical page and normalized excerpt regions. Always pending staff review. Original OCR and regulatory/source approvals remain unchanged.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "record_key": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "source_document_id": {
+            "type": "string"
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "archived_file_url": {
+            "type": "string"
+          },
+          "file_bytes": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "ocr_record_key": {
+            "type": "string"
+          },
+          "ocr_record_sha256": {
+            "type": "string"
+          },
+          "render": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "spans": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "observation_kind": {
+            "type": "string",
+            "enum": [
+              "agent_visual_transcription"
+            ]
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "selected_excerpts_only"
+            ]
+          },
+          "payload_sha256": {
+            "type": "string"
+          },
+          "record_sha256": {
+            "type": "string"
+          },
+          "submitted_by": {
+            "type": "string"
+          },
+          "retained_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review_status": {
+            "type": "string",
+            "enum": [
+              "pending_staff_review"
+            ]
+          }
+        }
+      }
     }
   },
   "required": [
