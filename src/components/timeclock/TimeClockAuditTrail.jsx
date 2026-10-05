@@ -273,7 +273,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           </h3>
           <p className="text-xs text-gray-500 mt-1">Recent authoritative Time Clock actions. This view is read-only.</p>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={() => loadRows(investigation?.time_entry_id, investigationEvidence)} disabled={loading} className="gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => loadRows(investigation?.time_entry_id, investigationEvidence, integrityInvestigation)} disabled={loading} className="gap-2">
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Refresh
         </Button>
