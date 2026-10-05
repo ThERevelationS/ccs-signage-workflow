@@ -1,0 +1,26 @@
+{
+  "phase": 5,
+  "total_phases": 15,
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "total_attempted": 7,
+  "pending_pages": 95,
+  "documents_before": 19,
+  "documents_after": 125,
+  "original_ids_preserved": true,
+  "archive_identities_preserved": true,
+  "llm_calls": 0,
+  "limitations": [
+    "Live manual resume proven; scheduled advancement and new PDF handoff not yet proven in this acceptance run.",
+    "Alphabetical link cap omits later sign links; navigation forms consume scan priority. Requires shared scanner correction.",
+    "No locality coverage or authority approval established."
+  ],
+  "manual_receipts": {
+    "first_attempted_total": 3,
+    "second_attempted_total": 6,
+    "resumed": true
+  },
+  "concurrent_advancement": {
+    "observed_total": 7,
+    "attribution": "An additional page advanced between the manual receipt and entity read; dispatcher log attribution not yet verified."
+  }
+}
