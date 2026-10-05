@@ -1,0 +1,128 @@
+{
+  "name": "PermittingHtmlEvidence",
+  "type": "object",
+  "description": "Immutable retained official HTML response bytes and conservative static-text blocks. Manual retention and exact quotes do not establish adopted law or office authority. No PDF pages are manufactured.",
+  "properties": {
+    "evidence_key": {
+      "type": "string"
+    },
+    "request_key": {
+      "type": "string"
+    },
+    "payload_sha256": {
+      "type": "string"
+    },
+    "jurisdiction_id": {
+      "type": "string"
+    },
+    "jurisdiction_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "official_url": {
+      "type": "string"
+    },
+    "final_url": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    },
+    "raw_html_base64": {
+      "type": "string"
+    },
+    "file_hash_sha256": {
+      "type": "string"
+    },
+    "text_sha256": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string"
+    },
+    "retrieved_at": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string"
+    },
+    "file_bytes": {
+      "type": "integer"
+    },
+    "profile_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "block",
+          "text"
+        ]
+      }
+    }
+  },
+  "required": [
+    "evidence_key",
+    "request_key",
+    "payload_sha256",
+    "jurisdiction_id",
+    "jurisdiction_name",
+    "title",
+    "official_url",
+    "final_url",
+    "method",
+    "raw_html_base64",
+    "file_hash_sha256",
+    "text_sha256",
+    "content_type",
+    "retrieved_at",
+    "text",
+    "requested_by",
+    "verification_status",
+    "file_bytes",
+    "profile_snapshot",
+    "blocks"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": false,
+    "delete": false
+  }
+}
