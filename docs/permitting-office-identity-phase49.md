@@ -23,6 +23,6 @@ The first narrow nested-array push request returned a field-type rejection. A si
 - No authority relationships, jobs, work orders, automated dispatch settings, permissions or source catalog records were changed.
 - No backend deployment needed. Frontend remains unpublished.
 
-Machine-readable proposal and live verification accompany this document. Final build and diff-check results are recorded separately after completion.
+Machine-readable proposal and live verification accompany this document. One full npm run build passed (exit 0); it reported existing browser-data freshness notices. git diff --check passed for the working tree and this phase's changes. Source catalog readback matched its unchanged baseline.
 
 Next dependency: safely register the retained official Cincinnati sign PDFs in app storage/catalog, extract page evidence, and prepare separate evidence-backed source/office role and scope reviews. Do not infer Cincinnati authority from the copied Hamilton County tracker office.
