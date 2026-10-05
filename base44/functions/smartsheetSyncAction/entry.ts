@@ -1622,7 +1622,16 @@ async function pushDataset(
         }
         const freshRows = new Map(normalizeSheetRows(verificationResult.body)
           .map((row: any) => [String(row.id), row]));
-        for (const [recordId, verification] of remoteChecks) {
+        for (let verifyIndex = 0; verifyIndex < remoteChecks.length; verifyIndex++) {
+          const [recordId, verification] = remoteChecks[verifyIndex];
+          const sourceRecord = pendingRecords.find((candidate: any) => String(candidate.id) === String(recordId));
+          await reportOrderProgress({
+            phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length,
+            fraction: 0.6 + (0.28 * ((verifyIndex + 1) / Math.max(1, remoteChecks.length))),
+            item_label: sourceRecord ? orderProgressItemLabel(sourceRecord) : `Order ${verifyIndex + 1} of ${remoteChecks.length}`,
+            detail: `Verifying Smartsheet row ${verification.rowId} · ${verifyIndex + 1}/${remoteChecks.length}`,
+            record_id: recordId, smartsheet_row_id: verification.rowId,
+          });
           const freshRow: any = freshRows.get(verification.rowId);
           if (freshRow && !detectConflict(freshRow.cells, verification.expectedSnapshot, bindings, 'orders')) {
             orderRemoteVerifiedIds.add(recordId);
