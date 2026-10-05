@@ -1,3 +1,9 @@
+# Current authoritative progression — supersedes historical labels below
+
+Active work: **6.1 of 6.9**, Phase 6 exact-citation extraction. Phase 5 uses **5.1 through 5.9**; 5.8 archive/text reconciliation and 5.9 closeout remain open. Starting Phase 6 is authorized by the user and does not falsely certify Phase 5 complete. Canonical decimal milestones for all 15 phases are in permitting-intelligence-phased-roadmap.md. Earlier 5.01–5.10 references below are dated history, not current numbering.
+
+6.1 progress: enforced administrative source-category eligibility before candidate staging, reusing the existing shared source-purpose policy. Forms/checklists/fee schedules cannot stage unsupported regulatory categories even if AI returns them. Literal submission/procedure candidates remain review-only. 40 focused evidence/compiled-handler tests passed. No real LLM calls, rule imports, approvals, or production record edits for this validation. Next: 6.2 retained-text/source-version readiness; continue carrying Phase 5 closure checks explicitly.
+
 # Permitting Intelligence — numbered progress
 Updated 2026-10-05. The canonical phase numbers are the 15 whole-number phases in permitting-intelligence-phased-roadmap.md. Prior Phase 3.x/4.x labels were implementation chunks using a different sequence, not milestones in that roadmap. Historical receipts remain unchanged.
 Current primary work: **Phase 5 — Official-source collection and verified archives**.

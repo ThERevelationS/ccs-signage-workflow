@@ -110,3 +110,25 @@ Connect approved locality/workflow intelligence into live Work Orders and Permit
 
 ## Phase 15 — Acceptance and rollout
 Run authenticated browser acceptance, permissions/RLS review, concurrency tests, migration checks, source/citation checks, mobile/desktop usability validation, production-data safety review, and controlled rollout. Publishing remains explicit.
+
+## Decimal checkpoints for the remaining major phases
+
+These define each phase endpoint in advance. Phase 5 and Phase 6 use their detailed tables above. Status for other phases must be established from evidence, not presumed complete.
+
+| Phase | First milestone | Second milestone | Final milestone |
+|---|---|---|---|
+| 1 | 1.1 Locality inventory | 1.2 Canonical identities/dedupe | 1.3 Inventory acceptance |
+| 2 | 2.1 Office inventory | 2.2 Authority relationships | 2.3 Authority acceptance |
+| 3 | 3.1 Address matching | 3.2 Boundary/authority ambiguity | 3.3 Resolution acceptance |
+| 4 | 4.1 Provenance/import model | 4.2 Merge/history safeguards | 4.3 Import acceptance |
+| 7 | 7.1 Review/conflict model | 7.2 Approval/history controls | 7.3 Review acceptance |
+| 8 | 8.1 Evidence retrieval | 8.2 Cited answers/uncertainty | 8.3 Search acceptance |
+| 9 | 9.1 Expandable locality interface | 9.2 Forms/rules/office integration | 9.3 Desktop/mobile acceptance |
+| 10 | 10.1 Coverage inventory/gaps | 10.2 OH/KY collection expansion | 10.3 Statewide completeness review |
+| 11 | 11.1 Hash/metadata monitoring | 11.2 Change review/credit controls | 11.3 Monitoring acceptance |
+| 12 | 12.1 Evidence-based workflow model | 12.2 AI proposals/staff overrides | 12.3 Workflow acceptance |
+| 13 | 13.1 Exemption evidence/status | 13.2 Job snapshots/expiry/sync | 13.3 Tax-exempt acceptance |
+| 14 | 14.1 Stable job/permit links | 14.2 Versioned workflow handoff | 14.3 Integration acceptance |
+| 15 | 15.1 Permissions/concurrency checks | 15.2 Browser/mobile/migration checks | 15.3 Explicit rollout acceptance |
+
+Do not add .10 after .9. Break work within a decimal milestone into named tasks and report completed tasks out of the fixed total when useful.
