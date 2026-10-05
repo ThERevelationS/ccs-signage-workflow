@@ -166,7 +166,7 @@ console.log('PASS rapid investigation changes request the newest TimeEntry scope
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /const membership = payrollMembershipFromAudit\(row\)/);
 assert.match(source, /validatePayrollMembershipConflictEvidence\(evidence\)/);
-assert.match(source, /payrollMembershipConflictEvidenceIsMalformed\(validation\)/);
+assert.match(source, /payrollMembershipConflictEvidenceIsMalformed\(candidateValidation\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
 assert.match(source, /setIntegrityDiagnostics\(authoritativeIntegrityDiagnostics\)/);
 assert.match(source, /setRows\(loadedRows\)/);
