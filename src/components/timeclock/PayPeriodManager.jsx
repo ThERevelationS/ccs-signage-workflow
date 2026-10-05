@@ -620,6 +620,25 @@ export default function PayPeriodManager({
                         The server detected malformed immutable payroll-membership provenance for TimeEntry <span className="font-mono break-all">{historyResult.conflict.time_entry_id || "Unknown"}</span>. No malformed evidence was returned and no payroll generation is being trusted. Administrator investigation is required before finalization can proceed.
                       </p>
                       <div className="mt-2 text-xs text-red-800">Use the Time Clock Audit Trail to review the TimeEntry and its immutable audit records. This integrity failure is intentionally not treated as an ordinary evidence conflict.</div>
+                      {historyResult.conflict.time_entry_id && onInvestigateAudit && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-3 bg-white border-red-300 text-red-950"
+                          onClick={() => {
+                            onInvestigateAudit({
+                              time_entry_id: historyResult.conflict.time_entry_id,
+                              evidence: [],
+                              mode: "integrity",
+                            });
+                            setHistoryPeriod(null);
+                            setHistoryResult(null);
+                          }}
+                        >
+                          <ClipboardList className="w-4 h-4 mr-1" />Inspect authoritative Audit Trail
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
