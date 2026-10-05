@@ -182,7 +182,15 @@ assert.match(loadRowsBlock, /duplicate_conflict_audit_ids: duplicateRequiredAudi
 assert.ok(loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0') < loadRowsBlock.indexOf('missingAuditIds.length > 0'), 'expected evidence identity must be unique before completeness');
 console.log('PASS duplicate or contradictory expected conflict audit identities fail closed before completeness');
 
-assert.match(loadRowsBlock, /const returnedAuditIds = new Set\(loadedRows\.map/);
+assert.match(loadRowsBlock, /const returnedAuditIdList = loadedRows\.map/);
+assert.match(loadRowsBlock, /const duplicateReturnedAuditIds = \[\.\.\.new Set\(returnedAuditIdList\.filter/);
+assert.match(loadRowsBlock, /if \(duplicateReturnedAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*returned-identity check failed/);
+assert.match(loadRowsBlock, /duplicate_returned_audit_ids: duplicateReturnedAuditIds/);
+assert.ok(loadRowsBlock.indexOf('duplicateReturnedAuditIds.length > 0') < loadRowsBlock.indexOf('const returnedAuditIds = new Set(returnedAuditIdList)'), 'returned audit identities must be unique before set construction');
+assert.ok(loadRowsBlock.indexOf('duplicateReturnedAuditIds.length > 0') < loadRowsBlock.indexOf('missingAuditIds.length > 0'), 'returned audit identities must be unique before completeness');
+console.log('PASS duplicate returned immutable audit identities fail closed before set collapse or completeness');
+
+assert.match(loadRowsBlock, /const returnedAuditIds = new Set\(returnedAuditIdList\)/);
 assert.match(loadRowsBlock, /const missingAuditIds = requiredAuditIds\.filter\(\(id\) => !returnedAuditIds\.has\(id\)\)/);
 assert.match(loadRowsBlock, /if \(missingAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*completeness check failed/);
 console.log('PASS scoped investigation fails closed when any expected conflict audit ID is missing');
@@ -208,4 +216,4 @@ console.log('PASS conflict evidence comparison binds action, request, server tim
 assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\)/);
 console.log('PASS scoped refresh preserves the complete expected immutable conflict evidence');
 
-console.log('PASS 16/16 Time Clock Audit Trail lifecycle, integrity, identity, completeness, evidence-content, and contract-version scenarios');
+console.log('PASS 17/17 Time Clock Audit Trail lifecycle, integrity, identity, completeness, evidence-content, and contract-version scenarios');
