@@ -1,0 +1,104 @@
+{
+  "phase": 5,
+  "phase_name": "Official-source collection and verified archives",
+  "task": "Cincinnati electronic guide conflict and site-plan OCR evidence",
+  "date": "2026-10-05",
+  "canonical_roadmap": "docs/permitting-intelligence-phased-roadmap.md",
+  "progress_map": "docs/permitting-intelligence-numbered-progress-2026-10-05.md",
+  "numbering_correction": "Prior Phase 4 Office authority/evidence was an implementation sequence, not Phase 4 Research/import in the saved 15-phase roadmap. Use original whole numbers and task names going forward.",
+  "backend_execution": "Signed-in admin editor Test Function on live entities; no frontend publish or deployment claimed",
+  "llm_calls": 0,
+  "guide": {
+    "document_id": "cincinnati-electronic-guide-pdf-20261005",
+    "source_document_id": "6ac3abe5613df02af1acc4f7",
+    "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/electronic-document-submission-guidelines/",
+    "file_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+    "file_bytes": 225549,
+    "archive_status": "complete",
+    "catalog_status": "complete",
+    "text_extraction_state": {
+      "status": "complete",
+      "method": "pdfjs-4.8.69-text-v1",
+      "source_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/073a7b7e6_electronic-document-submission-guidelines.pdf",
+      "claim_token": "f1cf147c-b1d8-42bb-9369-809b7e0817fa",
+      "lease_expires_at": "",
+      "last_attempt_at": "2026-10-05T13:55:30.686Z",
+      "attempts": 1,
+      "next_page": 4,
+      "error": "",
+      "retry_after": "",
+      "failures": 0,
+      "total_pages": 3,
+      "pages_extracted": 3,
+      "needs_ocr_pages": [],
+      "needs_ocr_page_count": 0,
+      "truncated_pages": [],
+      "truncated_page_count": 0,
+      "last_chunk_completed_at": "2026-10-05T13:55:31.100Z",
+      "completed_at": "2026-10-05T13:55:31.100Z",
+      "complete_document_text": true
+    },
+    "page_hashes": [
+      {
+        "page": 1,
+        "text_sha256": "ff0a38f1b9ed650530e78f4ba93db9f07ed61b17217e2a2164551eb7b550aac7"
+      },
+      {
+        "page": 2,
+        "text_sha256": "b2ca09f959157a1e8c0cdf43244f44b525925c88a51cfd810500987edf28e681"
+      },
+      {
+        "page": 3,
+        "text_sha256": "48873a2c7d0e674dd0e91231bbf1283c107309b9a399bf9a2b95930b5c492c69"
+      }
+    ],
+    "unreviewed": true
+  },
+  "conflict": {
+    "type": "upload_window",
+    "status": "unresolved_needs_staff_verification",
+    "pdf": {
+      "source_document_id": "6ac3abe5613df02af1acc4f7",
+      "page": 1,
+      "excerpt": "You will be given 24 hours to submit your documents.",
+      "source_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+      "text_sha256": "ff0a38f1b9ed650530e78f4ba93db9f07ed61b17217e2a2164551eb7b550aac7"
+    },
+    "html": {
+      "html_evidence_id": "6ac3a8f5ba1cd9e4db999cb2",
+      "block": 80,
+      "excerpt": "You will be given 48 hours to submit your documents.",
+      "text_sha256": "af5988146285a92db894539e71df7eb65a71c65f492f0d1d6275dce677b7cc05"
+    },
+    "approved_deadline": null
+  },
+  "site_plan": {
+    "source_document_id": "6ac3a54ac1ce2adba5b92cb8",
+    "source_sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+    "physical_page": 1,
+    "ocr_evidence_path": "docs/official-evidence/cincinnati-submission-2026-10-05/site-plan-ocr-review.json",
+    "ocr_text_sha256": "34409310cee5dba28ea317fde73bf4df26fdf3378996eb0b68695e5e36d2f26e",
+    "visual_review_performed": true,
+    "example_dimensions_are_not_adopted_limits": true,
+    "catalog_status": "needs_ocr",
+    "remaining": "Supported OCR evidence ingestion with method, physical page, source hash and separate review provenance"
+  },
+  "verification": {
+    "tests": 66,
+    "passed": 66,
+    "failed": 0,
+    "source_pdf_and_page_hashes_verified": true,
+    "site_plan_source_and_ocr_hashes_verified": true,
+    "changed_profile_fields": [
+      "documents",
+      "updated_date"
+    ],
+    "prior_document_count": 12,
+    "after_document_count": 13,
+    "prior_document_values_preserved": true,
+    "selected_site_plan_notes_appended_only": true,
+    "unrelated_profile_fields_preserved": true
+  },
+  "next": "Add a supported OCR evidence ingestion/review path, then finish Cincinnati source currency/applicability and authority review; keep deadline conflict unresolved until supported evidence."
+}
