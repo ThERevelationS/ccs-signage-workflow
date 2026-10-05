@@ -102,8 +102,9 @@ const NEAR_CLOSE_DAYS = 14;
 const ARCHIVE_PAGE_SIZE = 250;
 const LEGACY_CLOSED_QUERY = {
   is_rider: false,
-  in_pipeline: { $ne: true },
-  current_task_description: { $regex: "^(lost\\b|completed sale\\b|closed\\b)", $options: "i" },
+  // Query terminal-task candidates regardless of stale in_pipeline state.
+  // isLegacyClosedSalesRecord applies the authoritative client-side scope rule.
+  current_task_description: { $regex: "^(lost\\b|completed sales?\\b|closed\\b)", $options: "i" },
   deleted: { $ne: true },
 };
 const ALL_RECORDS_ACTIVE_QUERY = { is_rider: false, completed: false, deleted: { $ne: true } };
