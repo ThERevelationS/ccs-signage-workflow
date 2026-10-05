@@ -140,7 +140,9 @@ export function buildOpportunityBridgeDryRunPlan({
 
     if (auditRow?.decision === OPPORTUNITY_BRIDGE_DECISIONS.MANUAL_REVIEW) {
       reconciliation = reconcileHistoricalSalesOutcome(workOrder);
-      const nonHistoricalBlockers = reasons.filter((reason) => reason !== 'open_status_terminal_task_conflict');
+      const nonHistoricalBlockers = reasons.filter((reason) =>
+        !['open_status_terminal_task_conflict', 'legacy_smartsheet_terminal_task_requires_review'].includes(reason)
+      );
       if (reconciliation.safe_for_bridge && nonHistoricalBlockers.length === 0) {
         allowed = true;
         reasons = [];
