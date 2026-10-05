@@ -37,8 +37,8 @@ check(ui.includes("stableConfigString(mergeConfig(saved))") &&
   "Unsaved-changes state must use semantic key-order-independent comparison");
 check(ui.includes('checked={Boolean(value[key])}') &&
       ui.includes('onCheckedChange={(checked) => patch({ [key]: checked })}') &&
-      ui.includes('disabled={false}'),
-  "Dataset switches must remain directly editable in the settings UI");
+      ui.includes('disabled={dataset === "orders" && ["push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"].includes(key)}'),
+  "Sales dataset switches remain directly editable while protected Order background-write switches stay locked");
 
 check(persistence.includes('invokeSmartsheet("config_get", sessionToken)') &&
       persistence.includes('invokeSmartsheet("config_save", sessionToken'),
