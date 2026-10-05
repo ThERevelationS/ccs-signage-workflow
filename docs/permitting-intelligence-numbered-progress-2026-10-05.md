@@ -44,3 +44,7 @@ Phase 5 update: priority shifted to the reusable scanner. Shared multi-page dete
 Phase 5 update: extensionless PDF routing now joins discovery to immediate/scheduled byte-verified archival, catalog registration and PDF extraction. MIME + signature classification is a routing hint, not authority. 94 tests passed, including an isolated end-to-end PDF pipeline; three affected backend bundles and build passed. Production records were not used for test mutations. Next: protected durable crawl frontier across requests/cycles, followed by varied OH/KY live pipeline acceptance. See permitting-phase5-extensionless-pdf-pipeline-2026-10-05.md.
 
 Phase 5 update: shared scanner now saves and resumes its frontier, commits cursor/documents atomically, and exposes one-page no-LLM continuation through the existing scheduled dispatcher. 72 checks, both affected backend bundles and build passed. Live read-only query found no pending saved frontier yet; real scheduled advancement remains unverified. Existing automation settings unchanged. Next: supervised varied OH/KY live pipeline acceptance, including resumed discovery and archive/catalog/text handoff. See permitting-phase5-resumable-discovery-2026-10-05.md.
+
+## Phase 5 shared scanner correction
+
+Sign resources now survive crowded alphabetical link caps; saved frontiers use resource-label ranking. Verified 54 tests, backend bundles and app build. Phase 5 remains active. Next: guarded recovery of already-capped pages and live PDF handoff. See `permitting-phase5-sign-resource-selection-2026-10-05.md`.

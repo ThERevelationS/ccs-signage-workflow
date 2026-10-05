@@ -34,6 +34,8 @@ function matches(row, query = {}) {
         if (operator === '$ne') return actual !== operand;
         if (operator === '$in') return operand.some((item) => actual === item || (actual == null && item == null));
         if (operator === '$nin') return !operand.includes(actual);
+        if (operator === '$gte') return actual >= operand;
+        if (operator === '$lte') return actual <= operand;
         throw new Error('Unsupported synthetic operator: ' + operator);
       });
     }
@@ -104,7 +106,7 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
     __payrollMembershipEvidence: { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit },
     Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => key === 'SESSION_SIGNING_SECRET' ? secret : '' } },
     crypto: webcrypto, TextEncoder, TextDecoder, Response, Request, btoa, atob,
-    Date: ServerDate, console,
+    Date: ServerDate, console: { error: () => {} },
   });
   vm.runInContext(compiled, context, { filename: 'synthetic-time-clock-handler.js' });
   assert.equal(typeof handler, 'function');
