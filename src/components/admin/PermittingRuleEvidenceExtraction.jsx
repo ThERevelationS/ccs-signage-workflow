@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import PermittingSourceAuthorityReview from "./PermittingSourceAuthorityReview";
 import PermittingOfficeAuthorityReview from "./PermittingOfficeAuthorityReview";
 import PermittingOfficeCandidate from "./PermittingOfficeCandidate";
+import PermittingHtmlEvidencePanel from "./PermittingHtmlEvidencePanel";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,6 +109,8 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
     const id = crypto.randomUUID(); saveRequest(key, id); setRequestId(id); setResult(null); setReceipts({});
   }
   return <Card><CardContent className="pt-4 space-y-3">
+    <PermittingHtmlEvidencePanel key={jurisdictionName + ":html-evidence"} jurisdictionName={jurisdictionName} disabled={Boolean(busy)}
+      onBusy={value => setBusy(previous => value ? "html_evidence" : previous === "html_evidence" ? "" : previous)} />
     <div className="font-semibold">Extract requirements from retained pages</div>
     <p className="text-sm text-gray-600">Select a document and preview its physical PDF pages. Manual analysis is outside automated queue limits. Each action analyzes only these selected pages. Candidates remain pending staff review.</p>
     <div className="grid gap-2 md:grid-cols-3">
