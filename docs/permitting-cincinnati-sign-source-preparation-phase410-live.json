@@ -1,0 +1,26 @@
+{
+  "profile_id": "6ac1a123edda6d8dd942690b",
+  "updated_date": "2026-10-05T12:17:36.402000",
+  "original_documents_preserved": 4,
+  "added_sources": [
+    {
+      "id": "cincinnati-official-sign-handout-20261005",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/"
+    },
+    {
+      "id": "cincinnati-official-outdoor-advertising-application-20261005",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/"
+    }
+  ],
+  "unrelated_fields_preserved": true,
+  "uploads": 0,
+  "llm_calls": 0,
+  "storage_pending": true,
+  "phase": "4.10",
+  "verified_at": "2026-10-05T12:18:23.189Z",
+  "focused_tests_passed": 30,
+  "frontend_published": false,
+  "backend_deployed": false,
+  "dispatch_modified": false,
+  "authority_approved": false
+}
