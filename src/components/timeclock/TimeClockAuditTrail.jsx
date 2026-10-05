@@ -260,8 +260,14 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             <div className="flex items-start gap-2 min-w-0">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <div className="font-semibold">Payroll membership conflict investigation</div>
-                <div className="mt-1 text-xs">Showing authoritative audit history specifically for TimeEntry <span className="font-mono break-all">{investigation.time_entry_id}</span>. Rows labeled <strong>Conflicting evidence</strong> are the immutable audits that triggered the payroll verification block.</div>
+                <div className="font-semibold">{integrityInvestigation ? "Payroll evidence integrity investigation" : "Payroll membership conflict investigation"}</div>
+                <div className="mt-1 text-xs">
+                  {integrityInvestigation ? (
+                    <>Showing authoritative audit history specifically for TimeEntry <span className="font-mono break-all">{investigation.time_entry_id}</span>. The invalid provenance was not passed into this view or treated as trusted evidence; inspect these authoritative records directly.</>
+                  ) : (
+                    <>Showing authoritative audit history specifically for TimeEntry <span className="font-mono break-all">{investigation.time_entry_id}</span>. Rows labeled <strong>Conflicting evidence</strong> are the immutable audits that triggered the payroll verification block.</>
+                  )}
+                </div>
               </div>
             </div>
             {onExitInvestigation && (
