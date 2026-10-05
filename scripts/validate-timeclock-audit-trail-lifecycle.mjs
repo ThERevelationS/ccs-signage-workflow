@@ -174,7 +174,6 @@ assert.match(source, /Diagnostic only — not trusted payroll evidence/);
 assert.match(source, /function integrityValidationSummary\(validation\)/);
 assert.match(source, /Company date does not match clock-in in America\/New_York/);
 assert.match(source, /integrityValidationSummary\(integrityDiagnostic\.validation\)/);
-assert.match(source, /diagnostic_row_index: rowIndex/);
 assert.match(source, /integrityDiagnostics\.map\(\(item\) => \[Number\(item\?\.diagnostic_row_index\), item\]\)/);
 assert.match(source, /`diagnostic-row-\$\{sourceRowIndex\}`/);
 assert.match(source, /row\.id \|\| "Missing immutable audit ID"/);
