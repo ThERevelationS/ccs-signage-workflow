@@ -1670,6 +1670,13 @@ async function pushDataset(
         if (!verification || !orderRemoteVerifiedIds.has(recordId) || orderFailedRecordIds.has(recordId)) continue;
         const { id: _id, ...fields } = update;
         try {
+          await reportOrderProgress({
+            phase: 'confirming', current: orderProcessedCount, total: pendingRecords.length,
+            fraction: 0.9 + (0.06 * ((commitAcks.length + 1) / Math.max(1, deferredBase44Updates.length))),
+            item_label: `Confirming Order ${commitAcks.length + 1}`,
+            detail: 'Saving verified sync metadata in Base44 with version protection',
+            record_id: recordId, smartsheet_row_id: verification.rowId,
+          });
           const committed = await base44.asServiceRole.entities.Order.updateMany(
             { id: recordId, updated_date: verification.originalUpdatedDate, smartsheet_pending_local_sync: true },
             { $set: fields },
