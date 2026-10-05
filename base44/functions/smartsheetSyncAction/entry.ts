@@ -2663,6 +2663,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                   progress_phase: progress?.phase || '',
                   progress_current: Number(progress?.current) || 0,
                   progress_total: Number(progress?.total) || 0,
+                  progress_fraction: Number.isFinite(Number(progress?.fraction)) ? Number(progress.fraction) : null,
                   progress_item_label: cleanText(progress?.item_label, 220),
                   progress_detail: cleanText(progress?.detail, 260),
                   progress_record_id: cleanText(progress?.record_id, 100),
