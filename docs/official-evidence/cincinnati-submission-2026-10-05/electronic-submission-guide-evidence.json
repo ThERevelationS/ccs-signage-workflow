@@ -1,0 +1,48 @@
+{
+  "phase": 5,
+  "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/electronic-document-submission-guidelines/",
+  "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/electronic-document-submission-guidelines/",
+  "retrieved_at": "2026-10-05T13:50:58.760Z",
+  "file_bytes": 225549,
+  "file_hash_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+  "pdf_path": "docs/official-evidence/cincinnati-submission-2026-10-05/electronic-submission-guide.pdf",
+  "linked_from_html_evidence_id": "6ac3a8f5ba1cd9e4db999cb2",
+  "llm_calls": 0,
+  "authority_established": false,
+  "total_pages": 3,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Permit Center • 805 Central Avenue, Suite 500 • Cincinnati, Ohio 45202\nP 513 - 352 - 3271 • F 513 - 352 - 2579 • www.cincinnati - oh.gov\nDue to COVID - 19 we are now requesting all customers to submit their plans digitally.\nI. HOW DO I APPLY FOR MY PERMIT ?\n1. Email application to CCPBPERMITCENTER@Cincinnati - oh.gov . All applications and forms can be found by\ngoing to https://www.cincinnati - oh.gov/buildi ngs/application - forms/ .\n• The application must be filled out completely and MUST include an accurate email address for\nthe primary contact. The primary contact listed on the application will be the person contacted to\nsubmit digital files.\n2. Once your applica tion is received, you will be sent a link to upload your documents into OneDrive.\n• You will be able to either drag and drop or upload the files into the folder.\n• You will be given 24 hours to submit your documents. Please Note: Your permission to the\nfolder will be restricted once you have submitted your documents.\nII. HOW TO SUBMIT DIGITAL DOCUMENTS?\nDigital Document Submittal Assistant is a program that can be downloaded to your PC and allows you\nto tag each file/drawi ng with the 4 pieces of information that is required by the Permit Center.\n• Download the Digital Document Submittal Assistant by going to the following address:\no http://cagisperm.hamilton - co.org/docimport/ and install it on your computer.\no Accepted file types are PDF, JPG, and TIFF.\n▪ EXE and ZIP files are not accepted\n• Each page with a drawing must be repres ented by a single digital file.\no No layered drawing or hyperlinks\nThe Digital Document Submittal Assistant will ask for the location of the drawings on your computer, it is\nbest to have a single folder containing all the drawings saved on your desktop. O nce you point the\nprogram to the folder with the correct set of drawings, the following details will need to be filled in:\n• Document Status – for new documents use only APPLIED\n1\nELECTRONIC DOCUMENT SUBMISSION GUIDELINES",
+      "source_document_id": "retained-cincinnati-electronic-submission-guide-20261005",
+      "source_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+      "text_sha256": "ff0a38f1b9ed650530e78f4ba93db9f07ed61b17217e2a2164551eb7b550aac7",
+      "method": "pdfjs-4.8.69-text-v1",
+      "extracted_at": "2026-10-05T13:50:58.712Z",
+      "truncated": false,
+      "needs_ocr_review": false
+    },
+    {
+      "page": 2,
+      "text": "Permit Center • 805 Central Avenue, Suite 500 • Cincinnati, Ohio 45202\nP 513 - 352 - 3271 • F 513 - 352 - 2579 • www.cincinnati - oh.gov\n• Document Type - a general Architectural Type, a drop - down box is provide d for you to choose\nfrom.\n• Index - Identify each sheet, typically with a number/letter combination in the title block. (Example\nG001, or M203)\no Index field should be unique and is important to submit revisions.\no You must keep inventory of this index tag for future use.\no DO NOT use the quick change all feature here.\n• Document Description - Identify the description of each sheet.\no Typically this would be title block.\no Please note that only “Specifications” can be multiple page documents but need to\nrepresent a single physical book.\nOnce all the tagging is complete and the submittal file i s accepted, please upload all files including the\nsubmittal.xml to the OneDrive Folder .\nAnother option is to mail a disc with your files to 805 Central Avenue, Suite 500, Cincinnati, Ohio 45202.\nPlace the disk in a protective cover and label the disk wit h the following information\n• Project Address\n• Contact Information – Company Name, Address, Phone and Contact Person’s name\nIII. MAKING ELECTRONIC REVISIONS & ENGINEERING CHANGE S\nWhen you are ready to submit a revision, please email CCPBPERMITCENTER@Cincinnati - oh.gov\nto request a link to the OneDrive folder.\nRevi sions - The index field is the computer’s way of identifying which drawing to replace.\n• The original drawing and the replacement drawing must have the same number/letter combination\no Revised submittals must consist of c omplete sets containing re vised sheets and any\nadditional sheets\nEngineering Changes – Engineering Changes are considered n ew drawings\n• The index must indicate this by adding a “ - EC” to the end of the index and description\n• Revisions to Engineering Changes follow the same procedures as the Revisions process\nOnce you have filled in the information based on the appropriate pro cedure, click the “Create\nsubmittal.xml” button. When the submittal file is accepted, please upload all files including the\nsubmittal.xml file to the On e Drive Folder .",
+      "source_document_id": "retained-cincinnati-electronic-submission-guide-20261005",
+      "source_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+      "text_sha256": "b2ca09f959157a1e8c0cdf43244f44b525925c88a51cfd810500987edf28e681",
+      "method": "pdfjs-4.8.69-text-v1",
+      "extracted_at": "2026-10-05T13:50:58.754Z",
+      "truncated": false,
+      "needs_ocr_review": false
+    },
+    {
+      "page": 3,
+      "text": "Permit Center • 805 Central Avenue, Suite 500 • Cincinnati, Ohio 45202\nP 513 - 352 - 3271 • F 513 - 352 - 2579 • www.cincinnati - oh.gov\nIV. HOW TO TRACK YOUR PROJECT ONLINE\nEzTrak is an online service that can be used to track the status of your B uilding Permits , including agency\nreview status and comments. You can also track c omplaints and a pply o nline for a limited set of permits.\nCheck it out at:\n• https://cagis.hamilton - co.org/opal/\n• Use the Quick Search option in the Review Records section to review the status of a permit\nV. WHAT DO I DO WHEN IT IS TIME TO PICK UP MY PERMIT?\nWhen your permit is ready to be issued, you will receive a call from Permit Center staff to collect payment over\nthe phone via check ing account or by credit card. After the payment has been made the primary contact will\nreceive an email invite to review and download the appro ved plans from ProjectDox.\nIf you do not already have a ProjectDox account, the invitation will also contain a temporary password to use\nwhen you login the first time.\nFor additional assistance, please call 513 - 352 - 3271 and select OPTION 1 to speak to a customer service\nrepresentative.",
+      "source_document_id": "retained-cincinnati-electronic-submission-guide-20261005",
+      "source_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+      "text_sha256": "48873a2c7d0e674dd0e91231bbf1283c107309b9a399bf9a2b95930b5c492c69",
+      "method": "pdfjs-4.8.69-text-v1",
+      "extracted_at": "2026-10-05T13:50:58.759Z",
+      "truncated": false,
+      "needs_ocr_review": false
+    }
+  ]
+}
