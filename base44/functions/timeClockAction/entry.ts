@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
-import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -2849,7 +2849,12 @@ Deno.serve(async (req) => {
             company_date: String(candidate.membership.company_date || ''),
             clock_in: String(candidate.membership.clock_in || ''),
             source: String(candidate.membership.source || ''),
-          })).sort((a: any, b: any) =>
+          }));
+          const malformedConflictEvidence = conflictEvidence.map((item: any) => validatePayrollMembershipConflictEvidence(item)).filter((validation: any) => payrollMembershipConflictEvidenceIsMalformed(validation));
+          if (malformedConflictEvidence.length > 0) {
+            return { conflict: true, conflict_evidence: [], conflict_evidence_invalid: true, conflict_evidence_validation: malformedConflictEvidence.slice(0, 20) };
+          }
+          conflictEvidence.sort((a: any, b: any) =>
             a.company_date.localeCompare(b.company_date) || a.clock_in.localeCompare(b.clock_in) ||
             a.server_timestamp.localeCompare(b.server_timestamp) || a.audit_id.localeCompare(b.audit_id)
           );
