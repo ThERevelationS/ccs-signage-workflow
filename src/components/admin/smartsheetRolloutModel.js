@@ -10,7 +10,7 @@ function normalizeTerminalTask(value) {
     .replace(/\s+/g, " ");
 }
 
-const SALES_TERMINAL_TASK_PATTERN = /^(lost\b|completed sales?\b|closed\b)/;
+const SALES_TERMINAL_TASK_PATTERN = /^(lost(?:$|\s*-)|completed sales?(?:$|\s*-)|closed(?:$|\s*-))/;
 
 function rowLabel(row, dataset) {
   if (dataset === "sales") {
