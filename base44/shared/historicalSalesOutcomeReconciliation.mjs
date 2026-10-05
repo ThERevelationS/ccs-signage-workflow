@@ -42,6 +42,31 @@ export function isHistoricalSalesStatusConflict(workOrder = {}) {
     Boolean(family);
 }
 
+export function hasModernSalesWorkflowEvidence(workOrder = {}) {
+  const modernTextFields = [
+    'opportunity_id',
+    'sales_stage_changed_at',
+    'sales_last_activity_at',
+    'sales_last_follow_up_completed_at',
+    'sales_last_follow_up_outcome',
+    'close_date',
+    'lost_reason',
+    'follow_up_date',
+    'expected_close_date',
+  ];
+  if (modernTextFields.some((field) => clean(workOrder?.[field]))) return true;
+  const probability = workOrder?.probability;
+  return probability !== undefined && probability !== null && clean(probability) !== '';
+}
+
+export function isLegacyTerminalSmartsheetSalesRecord(workOrder = {}) {
+  if (!isHistoricalSalesStatusConflict(workOrder)) return false;
+  const sheetId = clean(workOrder?.smartsheet_sheet_id);
+  const rowId = clean(workOrder?.smartsheet_row_id);
+  if (!/^\d+$/.test(sheetId) || !/^\d+$/.test(rowId)) return false;
+  return !hasModernSalesWorkflowEvidence(workOrder);
+}
+
 export function historicalSalesOutcomeEvidence(workOrder = {}) {
   const rawOrderDate = clean(workOrder?.date_order_created);
   const validOrderDate = isValidHistoricalDate(rawOrderDate);
