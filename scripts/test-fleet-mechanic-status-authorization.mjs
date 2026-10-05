@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../base44/functions/fleetMechanicPortal/entry.ts", import.meta.url), "utf8");
+const committedGuardSource = await readFile(new URL("../base44/shared/fleetMechanicCommittedResponse.ts", import.meta.url), "utf8");
 const handlerStart = source.indexOf("Deno.serve(async (req) => {");
 assert.ok(handlerStart >= 0, "fleetMechanicPortal request handler must be present");
 
@@ -62,10 +63,10 @@ test("repair-estimate Save/Submit revalidate after commit before returning finan
 });
 
 test("post-commit authorization failures warn against blind replay", () => {
-  const helperStart = source.indexOf("function mechanicCommittedResponseAccessChangedError()");
-  const helperEnd = source.indexOf("\n\nasync function requireCurrentMechanicGrantForCommittedResponse", helperStart);
+  const helperStart = committedGuardSource.indexOf("function mechanicCommittedResponseAccessChangedError()");
+  const helperEnd = committedGuardSource.indexOf("\n\nexport async function requireCurrentMechanicGrantForCommittedResponse", helperStart);
   assert.ok(helperStart >= 0 && helperEnd > helperStart);
-  const helper = source.slice(helperStart, helperEnd);
+  const helper = committedGuardSource.slice(helperStart, helperEnd);
   assert.match(helper, /may have been committed/);
   assert.match(helper, /Check current server state with CCS before retrying/);
   assert.match(helper, /FLEET_MECHANIC_ACCESS_REVOKED/);
