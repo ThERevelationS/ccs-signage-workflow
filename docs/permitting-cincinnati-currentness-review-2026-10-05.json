@@ -1,0 +1,25 @@
+{
+  "phase": "4 — Office authority and evidence",
+  "chunk": "Cincinnati source currentness and applicability",
+  "outcome": "Review gaps documented; authority and requirements remain unapproved",
+  "verified_at": "2026-10-05T13:08:21.518Z",
+  "retained_evidence_manifest": "docs/official-evidence/cincinnati-currentness-2026-10-05/manifest.json",
+  "llm_calls": 0,
+  "frontend_published": false,
+  "backend_deployed": false,
+  "authority_approved": false,
+  "protected_fields_preserved": true,
+  "changes": [
+    {
+      "id": "6ac39c0e6657049fb11cd757",
+      "document_revision_date": "2017-05 (printed: Rev. 5/2017)",
+      "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review.\n\nCurrentness/applicability check 2026-10-05 (not authority approval): Current official Signs page still links this handout. Page 1 zoning contact 352-3313 differs from current official Zoning Administration contact (513) 352-2430 and City Planning and Engagement responsibility. The handout requests three plan copies; current submission method, permit exemptions and inspection instructions require separate verification against current adopted code and submission guidance. Old revision alone does not establish supersession.\nEvidence: docs/official-evidence/cincinnati-currentness-2026-10-05/manifest.json; official pages https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/ ; https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/outdoor-advertising-sign/ ; https://www.cincinnati-oh.gov/planning/zoning-administration/ . Archive and extracted page hashes retained; verification remains needs_verification."
+    },
+    {
+      "id": "6ac39c24c9f6d0eebf320a13",
+      "document_revision_date": "2018-03 (printed: CEG REVISED 03/18)",
+      "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review.\n\nCurrentness/applicability check 2026-10-05 (not authority approval): Current official Signs and Outdoor Advertising Sign pages both link this exact application. Its retained title and fields address outdoor advertising; its general business-sign applicability is unresolved despite the general Signs listing. It requests two copies, whereas the general signs handout requests three; these may apply to different submission types and must not be merged into a single requirement. Currentness, electronic submission and applicable sign category require separate confirmation.\nEvidence: docs/official-evidence/cincinnati-currentness-2026-10-05/manifest.json; official pages https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/ ; https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/outdoor-advertising-sign/ ; https://www.cincinnati-oh.gov/planning/zoning-administration/ . Archive and extracted page hashes retained; verification remains needs_verification."
+    }
+  ],
+  "next": "Retain current submission guidance and missing building/site-plan forms; resolve scope before approval"
+}
