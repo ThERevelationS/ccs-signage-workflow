@@ -48,7 +48,7 @@ function safeTime(value) {
   }
 }
 
-export default function TimeClockAuditTrail({ investigation = null }) {
+export default function TimeClockAuditTrail({ investigation = null, onExitInvestigation }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -123,12 +123,31 @@ export default function TimeClockAuditTrail({ investigation = null }) {
 
       {investigationActive && (
         <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <div className="font-semibold">Payroll membership conflict investigation</div>
-              <div className="mt-1 text-xs">Showing authoritative audit history specifically for TimeEntry <span className="font-mono break-all">{investigation.time_entry_id}</span>. Rows labeled <strong>Conflicting evidence</strong> are the immutable audits that triggered the payroll verification block.</div>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-start gap-2 min-w-0">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <div className="font-semibold">Payroll membership conflict investigation</div>
+                <div className="mt-1 text-xs">Showing authoritative audit history specifically for TimeEntry <span className="font-mono break-all">{investigation.time_entry_id}</span>. Rows labeled <strong>Conflicting evidence</strong> are the immutable audits that triggered the payroll verification block.</div>
+              </div>
             </div>
+            {onExitInvestigation && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={loading}
+                className="shrink-0 bg-white border-amber-300 text-amber-950"
+                onClick={() => {
+                  setSearch("");
+                  setActionFilter("all");
+                  onExitInvestigation();
+                  loadRows();
+                }}
+              >
+                Show Recent Audit History
+              </Button>
+            )}
           </div>
         </div>
       )}
