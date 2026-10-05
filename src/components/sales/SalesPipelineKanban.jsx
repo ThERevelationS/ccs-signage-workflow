@@ -7,6 +7,7 @@ import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
+import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -95,6 +96,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const attentionItems = getActionableSalesAttentionItems(workOrder, today);
                   const attentionKeys = new Set(attentionItems.map((item) => item.key));
                   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
+                  const opportunityDisplayName = salesOpportunityDisplayName(workOrder);
                   return (
                     <article
                       key={workOrder.id}
@@ -112,7 +114,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                         aria-label={`Open sales details for ${workOrder.client_name || 'Unnamed opportunity'}`}
                         className="block min-h-11 w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                         <div className="flex min-w-0 items-center gap-1.5">
-                          <div className="min-w-0 flex-1 truncate text-sm font-semibold text-blue-700">{workOrder.client_name || "Unnamed opportunity"}</div>
+                          <div className="min-w-0 flex-1 truncate text-sm font-semibold text-blue-700">{opportunityDisplayName}</div>
                           {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-semibold text-rose-800">TEST</span>}
                         </div>
                         {(workOrder.description || workOrder.title) && (
