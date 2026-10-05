@@ -149,6 +149,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     // requests follow linked official pages without spending research credits.
     let discoveryScan: any = null;
     if (researchData.permitting_url && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
+      try {
       discoveryScan = await scanOfficialPermittingPages({
         seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1,
         fetchPage: async (url: string) => {
@@ -165,6 +166,12 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       });
       if (discoveryOnly && !discoveryScan.success) throw new Error('Official-page discovery could not read the selected source.');
       researchData.documents = combineResearchAndDiscoveredDocuments(researchData.documents, discoveryScan.documents);
+      } catch (error) {
+        if (discoveryOnly) throw error;
+        discoveryScan = { success: false, documents: [], gaps: [{ reason: 'discovery_failed', requires_review: true }],
+          jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0 };
+        console.warn(`Official-page discovery failed for ${jurisdiction.name || id}: ${error?.message || error}`);
+      }
     }
 
     // Build update object — replace with new data, keep manual overrides
