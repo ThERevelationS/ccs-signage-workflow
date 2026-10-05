@@ -1284,6 +1284,7 @@ async function pushDataset(
   const updated: string[] = [];
   const conflicts: string[] = [];
   const errors: string[] = [];
+  const salesFailedRecordIds = new Set<string>();
   const orderFailedRecordIds = new Set<string>();
   let requestorContactsSkippedNoEmail = 0;
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
@@ -1321,6 +1322,11 @@ async function pushDataset(
   const deferredConflictRecordIds: string[] = [];
   const deferredConflictDecisions: string[] = [];
   const deferredOrderConflictDecisions = new Map<string, string[]>();
+  const deferredSalesVerification = new Map<string, {
+    rowId: string;
+    expectedSnapshot: Record<string, any>;
+    requiresRemoteWrite: boolean;
+  }>();
   const deferredOrderVerification = new Map<string, {
     rowId: string;
     expectedSnapshot: Record<string, any>;
@@ -1434,6 +1440,13 @@ async function pushDataset(
           ...(dataset === 'orders' ? { smartsheet_pending_local_sync: fieldPlan.unresolved.length > 0 } : {}),
         };
         deferredBase44Updates.push(deferredUpdate);
+        if (dataset === 'sales') {
+          deferredSalesVerification.set(String(record.id), {
+            rowId: existingRowId,
+            expectedSnapshot: batchSnapshot,
+            requiresRemoteWrite: fieldPlan.outgoing.length > 0,
+          });
+        }
         if (dataset === 'orders') {
           deferredOrderVerification.set(String(record.id), {
             rowId: existingRowId,
