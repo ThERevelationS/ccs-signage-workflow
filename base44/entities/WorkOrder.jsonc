@@ -468,6 +468,11 @@
       "type": "string",
       "format": "date"
     },
+    "sales_quote_sent_verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp proving the current date_estimate_sent was explicitly confirmed by a verified Base44 Sales/Estimator action. Blank means the stored date is legacy or otherwise unverified and must not drive quote-aging analytics."
+    },
     "date_order_created": {
       "type": "string",
       "format": "date"
