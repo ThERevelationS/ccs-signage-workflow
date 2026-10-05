@@ -236,6 +236,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const investigationEvidence = Array.isArray(investigation?.evidence) ? investigation.evidence : [];
   const conflictAuditIds = useMemo(() => new Set(investigationEvidence.map((item) => String(item?.audit_id || "")).filter(Boolean)), [investigationEvidence]);
   const investigationActive = Boolean(String(investigation?.time_entry_id || "").trim());
+  const integrityInvestigation = investigationActive && investigation?.mode === "integrity";
 
   return (
     <div className="clay-card p-4">
@@ -254,7 +255,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
       </div>
 
       {investigationActive && (
-        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+        <div className={`mb-4 rounded-lg border p-3 text-sm ${integrityInvestigation ? "border-red-300 bg-red-50 text-red-950" : "border-amber-300 bg-amber-50 text-amber-950"}`}>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex items-start gap-2 min-w-0">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
