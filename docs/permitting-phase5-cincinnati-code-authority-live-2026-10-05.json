@@ -1,0 +1,46 @@
+{
+  "phase": 5,
+  "task": "Cincinnati code authority and zoning evidence",
+  "html_evidence": [
+    {
+      "id": "6ac3cc66435e92f113ca0ba2",
+      "text_sha256": "8939763879f66b3630711d97ae81c7af1cecb15c0cf006229ada9622ac8590a5",
+      "raw_sha256": "4421d13e76b677a186784fb1ec2769a0d9a41f7dd6b12ae8b503065ee2ff04c4",
+      "bytes": 68834,
+      "blocks": 137,
+      "citation": {
+        "block": 51,
+        "excerpt": "The City of Cincinnati’s zoning laws are administered by the Department of City Planning and Engagement.",
+        "block_text_sha256": "1753f81966f8cb6dafab9774ac05e0c4d5e8b2fc2696cf868252174ae7853bfd",
+        "literal_verified": true
+      }
+    },
+    {
+      "id": "6ac3cdb024a83b370d3e0b3c",
+      "text_sha256": "986eadcf0953ab59ce4e144eea98ac5f576ba779d380049c3795ce4adcc9331e",
+      "raw_sha256": "000e697490e8f5a79dde222c8bb9e55699757478f8a5391e05ca6b4d1282bffe",
+      "bytes": 53175,
+      "blocks": 48,
+      "citation": {
+        "block": 28,
+        "excerpt": "This on-line version of the Cincinnati Municipal Code, related legislation, and regulations is not the official version.",
+        "block_text_sha256": "7ac707889c97281f9e803f172b72b88f38ae01eee2a0960363abf3df65eaedeb",
+        "literal_verified": true
+      }
+    }
+  ],
+  "verification_status": "retained_unreviewed",
+  "authority_established": false,
+  "profile_preservation": {
+    "changed_keys": [
+      "html_evidence_state",
+      "updated_date"
+    ],
+    "documents_before": 19,
+    "documents_after": 19,
+    "documents_unchanged": true
+  },
+  "repo_manifest": "docs/official-evidence/cincinnati-code-authority-2026-10-05/manifest.json",
+  "current_compiled_chapters_captured": false,
+  "llm_calls": 0
+}
