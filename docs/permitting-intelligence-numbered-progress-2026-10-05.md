@@ -28,3 +28,5 @@ Related Phases 6–7 work: bounded source/page extraction, segmented evidence, l
 Phase 5 exit gate: target-source inventory reconciled; official bytes/hash archives verified; PDF text/OCR coverage accounted for; conflicts and missing/currentness evidence explicitly recorded. This is a gate for a locality baseline, not automatic completion of every locality in Ohio and Kentucky.
 Next gate: use complete retained evidence for exact-citation extraction (Phase 6), then authorized staff decisions (Phase 7); do not advance unreviewed evidence into live job instructions.
 Every update uses a whole-number phase plus a named task and one verified checkpoint. No decimal phases.
+
+Phase 5 update: supported OCR retention and explicit staff read/citation path implemented. Cincinnati site-plan page 1 is retained unreviewed in the app; source PDF extraction remains needs_ocr. Next: version-bound visual transcription/review evidence, then applicability and authority review. Upload deadline conflict remains unresolved. See permitting-phase5-ocr-evidence.md and its live verification JSON.
