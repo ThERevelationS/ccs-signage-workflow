@@ -56,8 +56,8 @@ check(page.includes("preferenceSaveChainRef.current = preferenceSaveChainRef.cur
 check(page.includes("if (preferenceIdentityRef.current !== repairIdentity) return undefined;"),
   "Queued repair is discarded if browser identity/session changes before it begins.");
 check(page.includes("expectedPreferences,") &&
-  page.includes('label: "Sales Pipeline legacy filter preference repair"'),
-  "Legacy repair sends the exact preference snapshot it originally read.");
+  page.includes('label: "Sales Pipeline filter preference repair"'),
+  "Preference repair sends the exact preference snapshot it originally read.");
 
 check(persistence.includes("expectedPreferences !== undefined") &&
   persistence.includes("payload.expected_preferences = expectedPreferences"),
