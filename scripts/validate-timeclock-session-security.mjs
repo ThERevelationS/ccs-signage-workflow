@@ -52,6 +52,7 @@ const pendingShiftReview = classifyTimeClockLoginStatus({
     count: 1,
     missed_clock_in_count: 1,
     corrected_shift_count: 0,
+    direct_admin_correction_count: 1,
     has_integrity_issue: false,
     items: [{ time_entry_id: 'corrected-entry', review_kind: 'missed_clock_in', review_state: 'awaiting_shift_approval' }],
   },
@@ -60,6 +61,7 @@ assert.equal(pendingShiftReview.kind, 'pending_shift_review');
 assert.equal(pendingShiftReview.count, 1);
 assert.equal(pendingShiftReview.missedClockInCount, 1);
 assert.equal(pendingShiftReview.correctedShiftCount, 0);
+assert.equal(pendingShiftReview.directAdminCorrectionCount, 1);
 assert.equal(pendingShiftReview.item.review_kind, 'missed_clock_in');
 assert.equal(pendingShiftReview.item.time_entry_id, 'corrected-entry');
 
@@ -111,6 +113,8 @@ assert.match(source, /Previous punch report is awaiting manager review/);
 assert.match(source, /can still start a new shift normally/);
 assert.match(source, /Punch correction applied — shift still needs approval/);
 assert.match(source, /Missed Clock In recorded — shift still needs approval/);
+assert.match(source, /Manager correction applied — shift still needs approval/);
+assert.match(source, /correction does not count as final shift approval/);
 assert.match(source, /employee-reported Clock In is recorded/);
 assert.match(source, /separate manager shift-approval step/);
 const quickClockSource = readFileSync(new URL('../src/components/timeclock/QuickClockSection.jsx', import.meta.url), 'utf8');
