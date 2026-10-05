@@ -61,3 +61,19 @@ test('sign application pages are followed before generic department navigation',
   assert.deepEqual(fetched,['https://county.gov/permits','https://county.gov/sign-forms']);
   assert(r.documents.some(d=>d.url.endsWith('/sign.pdf')));assert.equal(r.traversal_complete,false);
 });
+
+test('saved frontier ranks destination labels without inherited forms-directory bias', async () => {
+  const seed = 'https://county.gov/forms/';
+  const generic = 'https://county.gov/forms/department-information/';
+  const fee = 'https://county.gov/forms/permit-costs/';
+  const sign = 'https://county.gov/forms/sign/';
+  const seen = [];
+  const result = await scanOfficialPermittingPages({seedUrl:seed,maxPages:2,
+    resume:{method:'official-page-frontier-v1',seed_url:seed,max_depth:2,visited_urls:[seed],
+      pending_pages:[{url:generic,depth:1},{url:fee,depth:1},{url:sign,depth:1}],gaps:[],attempted_pages_total:1},
+    existingDocuments:[{url:generic,title:'Department information'},{url:fee,title:'Permit costs'},{url:sign,title:'Sign application'}],
+    fetchPage:async url => {seen.push(url);return {html:'<p>Official resource</p>',finalUrl:url};}});
+  assert.deepEqual(seen,[sign,fee]);
+  assert.deepEqual(result.pending_pages,[{url:generic,depth:1}]);
+  assert.equal(result.continuation_state.attempted_pages_total,3);
+});
