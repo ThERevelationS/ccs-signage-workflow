@@ -1386,6 +1386,13 @@ async function pushDataset(
       if (dataset === 'orders') {
         errors.push(`${record.id}: No mapped Order values were available to verify or push. The Order remains queued.`);
         orderFailedRecordIds.add(String(record.id));
+        await reportOrderProgress({
+          phase: 'needs_review', current: orderProcessedCount, total: pendingRecords.length,
+          fraction: 0.1 + (0.35 * (orderProcessedCount / Math.max(1, pendingRecords.length))),
+          item_label: orderProgressItemLabel(record),
+          detail: 'No mapped Order values are available to verify or push; this Order stays queued for review',
+          record_id: record.id, smartsheet_row_id: cleanText(record?.smartsheet_row_id, 40),
+        });
       }
       continue;
     }
