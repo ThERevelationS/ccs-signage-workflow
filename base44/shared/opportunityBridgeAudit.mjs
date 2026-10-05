@@ -1,4 +1,5 @@
 import { isSmartsheetSalesImportShell } from './smartsheetSalesImportEligibility.mjs';
+import { isLegacyTerminalSmartsheetSalesRecord } from './historicalSalesOutcomeReconciliation.mjs';
 
 const clean = (value) => String(value ?? '').trim();
 const normalizedAlias = (value) => clean(value).toLowerCase();
@@ -18,6 +19,9 @@ export function classifyWorkOrderSalesScope(workOrder = {}) {
   const modern = workOrder?.in_pipeline === true;
   if (modern && !['won', 'lost'].includes(workOrder?.sales_status) && isSmartsheetSalesImportShell(workOrder)) {
     return 'smartsheet_shell';
+  }
+  if (modern && !['won', 'lost'].includes(workOrder?.sales_status) && isLegacyTerminalSmartsheetSalesRecord(workOrder)) {
+    return 'legacy_history';
   }
   if (modern && !['won', 'lost'].includes(workOrder?.sales_status)) return 'current';
   if (modern && ['won', 'lost'].includes(workOrder?.sales_status)) return 'outcome';
