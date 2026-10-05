@@ -87,7 +87,7 @@ export default function PermittingHtmlEvidencePanel({jurisdictionName,disabled,o
     a.href=objectUrl;a.download="official-html-"+d.evidence.id+".html.txt";a.click();
     setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
    }
-  }catch(e){if(mounted.current)setError(message(e));}
+  }catch(e){if(mounted.current){if(e?.response?.data?.retry_safe===true)clearPending();setError(message(e));}}
   finally{flight.current=false;if(mounted.current){setBusy(false);onBusy(false);}}
  }
  return <details className="border rounded p-3 text-sm space-y-3">
