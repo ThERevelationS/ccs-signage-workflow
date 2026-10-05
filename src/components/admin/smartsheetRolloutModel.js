@@ -2,14 +2,6 @@ function cleanText(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
 }
 
-function normalizeTerminalTask(value) {
-  return cleanText(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
 const SALES_TERMINAL_TASK_PATTERN = /^(lost(?:$|\s*-)|completed sales?(?:$|\s*-)|closed(?:$|\s*-))/;
 
 function rowLabel(row, dataset) {
@@ -98,8 +90,7 @@ export function classifySmartsheetRolloutRow(row, dataset, { baseline = null, sh
 
   if (dataset === "sales") {
     const taskText = cleanText(row?.values?.current_task_description);
-    const normalizedTask = normalizeTerminalTask(taskText);
-    if (SALES_TERMINAL_TASK_PATTERN.test(normalizedTask)) {
+    if (SALES_TERMINAL_TASK_PATTERN.test(taskText.toLowerCase())) {
       return {
         ...base,
         outcome: "legacy_terminal",
