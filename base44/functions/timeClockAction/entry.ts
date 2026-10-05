@@ -3860,29 +3860,31 @@ Deno.serve(async (req) => {
               const correctionRequestId = String(currentEntry?.last_correction_request_id || '');
               if (correctionRequestId) {
                 const correction = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
-                const appliedAudit = correction?.applied_audit_id ? await auditEntity.get(correction.applied_audit_id).catch(() => null) : null;
-                if (!correction || String(correction.time_entry_id || '') !== id || !['approved', 'approved_modified'].includes(String(correction.status || '')) ||
-                    !appliedAudit || !['confirmed', 'recovered'].includes(String(appliedAudit.outcome || '')) || String(appliedAudit.time_entry_id || '') !== id ||
-                    String(appliedAudit.details?.correction_request_id || '') !== correctionRequestId) {
-                  return Response.json({ success: false, error: 'Payroll correction evidence could not be verified before finalization.' }, { status: 409 });
+                if (correction?.id) {
+                  const appliedAudit = correction.applied_audit_id ? await auditEntity.get(correction.applied_audit_id).catch(() => null) : null;
+                  if (String(correction.time_entry_id || '') !== id || !['approved', 'approved_modified'].includes(String(correction.status || '')) ||
+                      !appliedAudit || !['confirmed', 'recovered'].includes(String(appliedAudit.outcome || '')) || String(appliedAudit.time_entry_id || '') !== id ||
+                      String(appliedAudit.details?.correction_request_id || '') !== correctionRequestId) {
+                    return Response.json({ success: false, error: 'Payroll correction evidence could not be verified before finalization.' }, { status: 409 });
+                  }
+                  const correctionAppliedAt = String(appliedAudit.server_timestamp || '');
+                  if (supersededGeneration && (!Number.isFinite(Date.parse(correctionAppliedAt)) || Date.parse(correctionAppliedAt) < Date.parse(generationCausalWindowStart) || Date.parse(correctionAppliedAt) > Date.parse(generationCausalWindowEnd))) {
+                    return Response.json({ success: false, error: `Payroll correction for shift ${id} falls outside the authorized reopen-to-finalization window.` }, { status: 409 });
+                  }
+                  const corrected = appliedAudit.details?.corrected || {};
+                  const semanticAfter = change.after || {};
+                  if (change.change_type === 'removed' || String(corrected.clock_in || '') !== String(semanticAfter.clock_in || '') || String(corrected.clock_out || '') !== String(semanticAfter.clock_out || '') || Number(corrected.total_hours || 0) !== Number(semanticAfter.total_hours || 0)) return Response.json({ success: false, error: 'Correction evidence does not match resulting payroll values.' }, { status: 409 });
+                  change.correction_provenance = {
+                    correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
+                    requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
+                    review_request_id: String(correction.review_request_id || ''), review_decision: String(correction.review_decision || ''),
+                    reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
+                    applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
+                    applied_at: correctionAppliedAt,
+                    corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
+                    corrected_total_hours: Number(corrected.total_hours || 0),
+                  };
                 }
-                const correctionAppliedAt = String(appliedAudit.server_timestamp || '');
-                if (supersededGeneration && (!Number.isFinite(Date.parse(correctionAppliedAt)) || Date.parse(correctionAppliedAt) < Date.parse(generationCausalWindowStart) || Date.parse(correctionAppliedAt) > Date.parse(generationCausalWindowEnd))) {
-                  return Response.json({ success: false, error: `Payroll correction for shift ${id} falls outside the authorized reopen-to-finalization window.` }, { status: 409 });
-                }
-                const corrected = appliedAudit.details?.corrected || {};
-                const semanticAfter = change.after || {};
-                if (change.change_type === 'removed' || String(corrected.clock_in || '') !== String(semanticAfter.clock_in || '') || String(corrected.clock_out || '') !== String(semanticAfter.clock_out || '') || Number(corrected.total_hours || 0) !== Number(semanticAfter.total_hours || 0)) return Response.json({ success: false, error: 'Correction evidence does not match resulting payroll values.' }, { status: 409 });
-                change.correction_provenance = {
-                  correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
-                  requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
-                  review_request_id: String(correction.review_request_id || ''), review_decision: String(correction.review_decision || ''),
-                  reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
-                  applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
-                  applied_at: correctionAppliedAt,
-                  corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
-                  corrected_total_hours: Number(corrected.total_hours || 0),
-                };
               }
               if (!change.correction_provenance) {
                 const causalAudits = await auditEntity.filter({ time_entry_id: id });
