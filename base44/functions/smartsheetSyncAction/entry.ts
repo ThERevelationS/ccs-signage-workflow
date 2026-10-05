@@ -1808,11 +1808,32 @@ async function pushDataset(
         }
       }
     } else {
-      try {
-        await base44.asServiceRole.entities[entityName].bulkUpdate(deferredBase44Updates);
-        for (const update of deferredBase44Updates) updated.push(update.id);
-      } catch (err: any) {
-        errors.push('Batch Base44 update (' + deferredBase44Updates.length + ' records): ' + (err?.message || 'unknown error'));
+      const verifiedSalesUpdates = deferredBase44Updates.filter((update: any) =>
+        salesRemoteVerifiedIds.has(String(update.id)) && !salesFailedRecordIds.has(String(update.id))
+      );
+      if (verifiedSalesUpdates.length) {
+        try {
+          await base44.asServiceRole.entities[entityName].bulkUpdate(verifiedSalesUpdates);
+          const verifiedRecords = await loadAllEntityRows({
+            entity: base44.asServiceRole.entities.WorkOrder,
+            query: { id: { $in: verifiedSalesUpdates.map((update: any) => update.id) } },
+            sort: 'id',
+            label: 'Sales push sync metadata verification',
+          });
+          const metadataFailures = findUnverifiedSyncMetadata(verifiedSalesUpdates, verifiedRecords);
+          const failedMetadataIds = new Set(metadataFailures.map((failure: any) => String(failure.id)));
+          for (const update of verifiedSalesUpdates) {
+            const recordId = String(update.id);
+            if (failedMetadataIds.has(recordId)) {
+              salesFailedRecordIds.add(recordId);
+              errors.push(recordId + ': Sales Base44 sync metadata could not be verified after the Smartsheet write.');
+            } else {
+              updated.push(recordId);
+            }
+          }
+        } catch (err: any) {
+          errors.push('Batch Base44 update (' + verifiedSalesUpdates.length + ' records): ' + (err?.message || 'unknown error'));
+        }
       }
     }
   }
