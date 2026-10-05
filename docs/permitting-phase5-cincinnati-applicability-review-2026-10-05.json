@@ -1,0 +1,455 @@
+{
+  "phase": 5,
+  "task": "Cincinnati sign/application applicability and office coverage",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "reviewed_at": "2026-10-05T15:14:47.925Z",
+  "review_kind": "agent_evidence_mapping",
+  "staff_approved": false,
+  "authority_relationships_created": 0,
+  "production_records_modified": 0,
+  "llm_calls": 0,
+  "new_downloads": 5,
+  "new_pdf_pages": 9,
+  "retained_html_pages": 1,
+  "branches": [
+    {
+      "branch": "General business sign / building application",
+      "candidate_office_id": "1776693091752-0.8897164525624395",
+      "coverage": "City of Cincinnati; parcel and sign category unresolved",
+      "evidence": [
+        "proof-1"
+      ],
+      "finding": "General sign handout supports building permit application and sign/site drawings; retained building application contains Sign and Ground Sign fields. General Signs listing also links outdoor advertising application; listing alone does not make it mandatory for every business sign.",
+      "open": [
+        "Adopted Chapter 1427 and permit exemptions",
+        "Current submission quantities and method",
+        "On-premise versus outdoor-advertising classification"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Outdoor advertising construction",
+      "candidate_office_id": "1776693091752-0.8897164525624395",
+      "coverage": "Outdoor advertising within City of Cincinnati; no blanket ordinary-business-sign coverage",
+      "evidence": [
+        "proof-2",
+        "proof-3"
+      ],
+      "finding": "Distinct OASP/Chapter 895 branch; handout describes replacement credit, OASP and building applications, with a painted-wall/bench exception.",
+      "open": [
+        "Current Chapter 895 definition and replacement-credit rules",
+        "May 2017 handout currentness",
+        "Submission copy-count conflict"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Outdoor advertising renewal",
+      "candidate_office_id": "1776693091752-0.8897164525624395",
+      "coverage": "Existing outdoor advertising signs; not an initial ordinary business-sign permit",
+      "evidence": [
+        "proof-4"
+      ],
+      "finding": "Two-page renewal/certification form retained, including notary section. The acknowledgement template prints 2022.",
+      "open": [
+        "Current renewal interval, fees and accepted certification form",
+        "Printed 2022 acknowledgement and current template suitability"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Zoning compliance and overlay review",
+      "candidate_office_id": "office-cincinnati-planning-engagement-oh",
+      "coverage": "Land within City of Cincinnati; base and overlay district must be resolved by address",
+      "evidence": [
+        "proof-5",
+        "proof-6"
+      ],
+      "finding": "Planning and Engagement is the zoning administrator; Permit Center intake location does not collapse zoning into the building department.",
+      "open": [
+        "Retain live HTML evidence through supported app endpoint for authority review",
+        "Property boundary, base district and overlays",
+        "Zoning verification application and applicable code sections"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Illuminated / wired sign electrical review",
+      "candidate_office_id": "1776692961965-0.8021021998915965",
+      "coverage": "Cincinnati sign electrical work; provider coverage not yet verified",
+      "evidence": [
+        "proof-7",
+        "proof-8"
+      ],
+      "finding": "2017 handout points to IBI for separate electrical permitting/inspection. Existing catalog identity is a candidate match, not verified current delegation.",
+      "open": [
+        "Current city/provider electrical delegation and coverage",
+        "Current provider application, fees, inspection guidance",
+        "Verify existing catalog identity and contacts"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Public right-of-way",
+      "candidate_office_id": null,
+      "candidate_office_name": "City of Cincinnati Department of Transportation and Engineering",
+      "coverage": "Signs in public right-of-way; address/site applicability unresolved",
+      "evidence": [
+        "proof-9"
+      ],
+      "finding": "Right-of-way work has a separate referral branch; no catalog office or approved role created.",
+      "open": [
+        "Current DOTE identity, contact and sign encroachment process",
+        "Official application and current authorization conditions"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Historic conservation / staff COA",
+      "candidate_office_id": "office-cincinnati-planning-engagement-oh",
+      "candidate_service": "Historic Conservation Office",
+      "coverage": "Locally designated landmarks and local historic districts; parcel applicability unresolved",
+      "evidence": [
+        "proof-10",
+        "proof-11"
+      ],
+      "finding": "City COA page distinguishes automatic building-permit referral from separate COA application for building-permit-exempt work. Staff form archived. Do not always add a duplicate COA application.",
+      "open": [
+        "Historic designation and district conservation guidelines",
+        "Current staff versus HCB review criteria",
+        "Service identity and current fees/submission method"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Historic Conservation Board document checklist",
+      "candidate_office_id": "office-cincinnati-planning-engagement-oh",
+      "candidate_service": "Historic Conservation Board / Historic Conservation Office",
+      "coverage": "HCB hearing applications; not every sign or every staff COA",
+      "evidence": [
+        "proof-12"
+      ],
+      "finding": "HCB checklist contains sign-specific supporting materials and checked-item conditions. These are a hearing branch, not a universal sign submission checklist.",
+      "open": [
+        "Current HCB application, hearing process and checklist currentness",
+        "Which checked items apply to the actual project",
+        "Current deadlines and copy quantities"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    },
+    {
+      "branch": "Permit Center intake and submission",
+      "candidate_office_id": "1776693091752-0.8897164525624395",
+      "coverage": "Cincinnati building-permit intake; no countywide authority inferred",
+      "evidence": [
+        "proof-13",
+        "proof-14"
+      ],
+      "finding": "Currently linked June 2022 generic documentation adds a fourth plan-copy quantity alongside two/three-copy form instructions. Retain all source contexts; do not normalize to one quantity.",
+      "open": [
+        "Two/three/four plan-copy context and digital submission resolution",
+        "24-hour PDF versus 48-hour HTML upload conflict",
+        "Sign-specific ezTrak availability; portal referral is not proof of sign application support"
+      ],
+      "status": "evidence_mapped_review_pending",
+      "responsibility_confirmed": false,
+      "address_authority_resolved": false,
+      "authority_approved": false
+    }
+  ],
+  "proofs": [
+    {
+      "id": "proof-1",
+      "evidence_kind": "pdf_page",
+      "name": "sign-handout",
+      "page": 1,
+      "excerpt": "Complete an application for a permit and submit three copies of plans for review to the Permit Center",
+      "char_start": 1522,
+      "text_sha256": "660dc5820e4e3e9fc56f0e70d810fdd39bbd23e62c5c522233141a7e508ca0ab",
+      "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/sign-handout.pdf",
+      "catalog_source_id": "6ac39c0e6657049fb11cd757",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-2",
+      "evidence_kind": "pdf_page",
+      "name": "outdoor-advertising-handout",
+      "page": 1,
+      "excerpt": "a replacement permit is needed to establish an outdoor advertising sign",
+      "char_start": 852,
+      "text_sha256": "f0dfca52a30d76557279f869d19bc3f59feffcd0bc26fac40a8258aca508bfd1",
+      "source_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-handout.pdf",
+      "catalog_source_id": null,
+      "authority_approved": false
+    },
+    {
+      "id": "proof-3",
+      "evidence_kind": "pdf_page",
+      "name": "outdoor-advertising-handout",
+      "page": 1,
+      "excerpt": "Painted wall signs and bench signs regulated by Chapter 895 do not require the completion of a building",
+      "char_start": 560,
+      "text_sha256": "f0dfca52a30d76557279f869d19bc3f59feffcd0bc26fac40a8258aca508bfd1",
+      "source_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-handout.pdf",
+      "catalog_source_id": null,
+      "authority_approved": false
+    },
+    {
+      "id": "proof-4",
+      "evidence_kind": "pdf_page",
+      "name": "outdoor-advertising-renewal",
+      "page": 2,
+      "excerpt": "sign owner. I attest the signs included in the attached Outdoor Advertising Sign Renewal",
+      "char_start": 348,
+      "text_sha256": "88e8a54ebf53936f73658576050bb3644bdc9464f3f0ed1d225cdbcd2ff2123d",
+      "source_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-renewal-application/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-renewal.pdf",
+      "catalog_source_id": null,
+      "authority_approved": false
+    },
+    {
+      "id": "proof-5",
+      "evidence_kind": "retained_html_text",
+      "excerpt": "The City of Cincinnati’s zoning laws are administered by the Department of City Planning and Engagement.",
+      "char_start": 1732,
+      "text_sha256": "8939763879f66b3630711d97ae81c7af1cecb15c0cf006229ada9622ac8590a5",
+      "source_sha256": "7d07f94c42b8550a378122a7cdb4dfde099f60ebc9292d1a23a706fb5671db66",
+      "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+      "text_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/zoning-administration.txt",
+      "archived_repo_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/zoning-administration.html",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-6",
+      "evidence_kind": "retained_html_text",
+      "excerpt": "Compliance with these laws is a prerequisite for all building permits, but they apply even if a building permit is not required.",
+      "char_start": 1227,
+      "text_sha256": "8939763879f66b3630711d97ae81c7af1cecb15c0cf006229ada9622ac8590a5",
+      "source_sha256": "7d07f94c42b8550a378122a7cdb4dfde099f60ebc9292d1a23a706fb5671db66",
+      "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+      "text_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/zoning-administration.txt",
+      "archived_repo_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/zoning-administration.html",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-7",
+      "evidence_kind": "pdf_page",
+      "name": "sign-handout",
+      "page": 2,
+      "excerpt": "A separate electrical permit is required",
+      "char_start": 552,
+      "text_sha256": "3332e42bc5f3e729df67815a00ee503b3e408cdfc0f087527cae87f2f2c47f92",
+      "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/sign-handout.pdf",
+      "catalog_source_id": "6ac39c0e6657049fb11cd757",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-8",
+      "evidence_kind": "pdf_page",
+      "name": "sign-handout",
+      "page": 2,
+      "excerpt": "contact IBI at 381-6080.",
+      "char_start": 1613,
+      "text_sha256": "3332e42bc5f3e729df67815a00ee503b3e408cdfc0f087527cae87f2f2c47f92",
+      "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/sign-handout.pdf",
+      "catalog_source_id": "6ac39c0e6657049fb11cd757",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-9",
+      "evidence_kind": "pdf_page",
+      "name": "sign-handout",
+      "page": 2,
+      "excerpt": "CONTACT THE DEPARTMENT OF TRANSPORTATION AND ENGINEERING (352-3463) FOR SIGNS IN",
+      "char_start": 2038,
+      "text_sha256": "3332e42bc5f3e729df67815a00ee503b3e408cdfc0f087527cae87f2f2c47f92",
+      "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/sign-handout.pdf",
+      "catalog_source_id": "6ac39c0e6657049fb11cd757",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-10",
+      "evidence_kind": "retained_html_text",
+      "excerpt": "If a Building Permit is required for the work, the permit application will automatically be referred to the Historic Conservation Office for review. No additional application form is required.",
+      "char_start": 3540,
+      "text_sha256": "2e808f4ab59cda90d4335b8f9f702dade8d5992369fcbadf923b5961d041b0b7",
+      "source_sha256": "e21f898f876041ca1df54c0a115052f4fc8494108ea80dfc3987445386087289",
+      "official_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+      "text_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness-text.json",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness.html",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-11",
+      "evidence_kind": "retained_html_text",
+      "excerpt": "If work is exempt from a Building Permit, it still requires a COA.",
+      "char_start": 4086,
+      "text_sha256": "2e808f4ab59cda90d4335b8f9f702dade8d5992369fcbadf923b5961d041b0b7",
+      "source_sha256": "e21f898f876041ca1df54c0a115052f4fc8494108ea80dfc3987445386087289",
+      "official_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+      "text_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness-text.json",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness.html",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-12",
+      "evidence_kind": "pdf_page",
+      "name": "hcb-documents-required",
+      "page": 2,
+      "excerpt": "Signs; drawings, photo showing the sign on the building, mounting info, materials, colors and illumination",
+      "char_start": 1109,
+      "text_sha256": "f20aa66d9e4ab1d869472e0494d3e9294758c884897d577f7fb9c7a8ba02edef",
+      "source_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic Web Changes 2022/Documents Required List- updated new 3.22.pdf",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/hcb-documents-required.pdf",
+      "catalog_source_id": null,
+      "authority_approved": false
+    },
+    {
+      "id": "proof-13",
+      "evidence_kind": "retained_html_text",
+      "excerpt": "The Permit Center offers single point-of-contact service for Cincinnati homeowners",
+      "char_start": 2215,
+      "text_sha256": "5a934435858484e3b712dbe1cc39c9c3b49165c2749ae0288be7f6cfba50b03e",
+      "source_sha256": "9919254a2bbb984e1267a7777fad68bbf9c6099831b75b8bd5e9b13257ef139e",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+      "text_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.txt",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.html",
+      "authority_approved": false
+    },
+    {
+      "id": "proof-14",
+      "evidence_kind": "pdf_page",
+      "name": "required-permit-documentation",
+      "page": 1,
+      "excerpt": "Alterations not including HVAC work (decks, signs, awnings, walls, sheds, haunted houses, interior",
+      "char_start": 1145,
+      "text_sha256": "6aff543f4cb3a33901fafc7e391add9006460d13bc8eec2f2d603f6594905cb4",
+      "source_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/required-permit-documentation/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/required-permit-documentation.pdf",
+      "catalog_source_id": null,
+      "authority_approved": false
+    }
+  ],
+  "archives": [
+    {
+      "name": "outdoor-advertising-handout",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-informational-handout/",
+      "retrieved_at": "2026-10-05T15:10:54.800Z",
+      "content_type": "application/pdf;charset=UTF-8",
+      "file_bytes": 57952,
+      "file_hash_sha256": "cee132d3f4c56c31f716d22949d1604cee7dd72a244dacd93e6769f0aa482d0b",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-handout.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "outdoor-advertising-renewal",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-renewal-application/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-renewal-application/",
+      "retrieved_at": "2026-10-05T15:10:55.497Z",
+      "content_type": "application/pdf;charset=UTF-8",
+      "file_bytes": 178196,
+      "file_hash_sha256": "02f7507b78604069b61f9a7e3e349cdfebb4722e0381aac6076d9dbdc9a16bb1",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/outdoor-advertising-renewal.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "certificate-of-appropriateness",
+      "official_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+      "final_url": "https://www.cincinnati-oh.gov/planning/historic-conservation/certificate-of-appropriateness/",
+      "retrieved_at": "2026-10-05T15:10:57.102Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 62466,
+      "file_hash_sha256": "e21f898f876041ca1df54c0a115052f4fc8494108ea80dfc3987445386087289",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness.html",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "coa-staff-application",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic Web Changes 2022/COA- staff level.pdf",
+      "final_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic%20Web%20Changes%202022/COA-%20staff%20level.pdf",
+      "retrieved_at": "2026-10-05T15:12:04.807Z",
+      "content_type": "application/pdf",
+      "file_bytes": 158030,
+      "file_hash_sha256": "2fb4743d8862c1d3f90e8542099d86cfbf02259f88b0f98c93e218d1ab208258",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/coa-staff-application.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "hcb-documents-required",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic Web Changes 2022/Documents Required List- updated new 3.22.pdf",
+      "final_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic%20Web%20Changes%202022/Documents%20Required%20List-%20updated%20new%203.22.pdf",
+      "retrieved_at": "2026-10-05T15:12:05.066Z",
+      "content_type": "application/pdf",
+      "file_bytes": 308135,
+      "file_hash_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/hcb-documents-required.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "required-permit-documentation",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/required-permit-documentation/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/required-permit-documentation/",
+      "retrieved_at": "2026-10-05T15:12:05.284Z",
+      "content_type": "application/pdf;charset=UTF-8",
+      "file_bytes": 62913,
+      "file_hash_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/required-permit-documentation.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    }
+  ],
+  "live_inventory_snapshot": "docs/official-evidence/cincinnati-applicability-2026-10-05/live-inventory-snapshot.json",
+  "limits": [
+    "Evidence mapping is not staff authority approval or job instructions.",
+    "New originals are retained in Git; application storage/catalog registration remains pending.",
+    "Current adopted Chapter 1427/895 text and address authority remain unresolved.",
+    "Existing Form-Based Code Final Draft and generated profile dimensional summaries remain preserved and unapproved."
+  ],
+  "next": "Register the five newly retained PDFs and COA guidance in the app; retain current zoning/COA HTML evidence and collect adopted code evidence."
+}
