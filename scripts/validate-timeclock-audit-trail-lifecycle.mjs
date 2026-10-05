@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('../src/components/timeclock/TimeClockAuditTrail.jsx', import.meta.url), 'utf8');
+const backendSource = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
+
+const frontendContractVersion = source.match(/const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = (\d+);/)?.[1];
+const backendContractVersion = backendSource.match(/const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = (\d+);/)?.[1];
+assert.ok(frontendContractVersion, 'frontend payroll-membership evidence contract version must exist');
+assert.equal(frontendContractVersion, backendContractVersion, 'frontend/backend payroll-membership evidence contract versions must remain identical');
+assert.match(backendSource, /contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
+assert.match(source, /Number\(expected\?\.contract_version \|\| 0\) === PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
+console.log('PASS payroll membership evidence producer and verifier share one explicit contract version');
 
 assert.match(source, /const requestSequenceRef = useRef\(0\)/);
 assert.match(source, /const mountedRef = useRef\(true\)/);
