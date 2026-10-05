@@ -30,3 +30,5 @@ Next gate: use complete retained evidence for exact-citation extraction (Phase 6
 Every update uses a whole-number phase plus a named task and one verified checkpoint. No decimal phases.
 
 Phase 5 update: supported OCR retention and explicit staff read/citation path implemented. Cincinnati site-plan page 1 is retained unreviewed in the app; source PDF extraction remains needs_ocr. Next: version-bound visual transcription/review evidence, then applicability and authority review. Upload deadline conflict remains unresolved. See permitting-phase5-ocr-evidence.md and its live verification JSON.
+
+Phase 5 update: visual transcription candidates now retain corrected instruction excerpts with PDF/OCR snapshot identity and page regions. Cincinnati site-plan has two retained instruction spans pending staff review; original OCR and extraction gaps remain intact. Next: Cincinnati sign/application applicability and office coverage review. See permitting-phase5-visual-transcription.md.
