@@ -31,7 +31,7 @@ const sales = [
   { field: "current_task_assigned_to", label: "Next Action Owner", direction: "two_way", transform: "text", suggestedNames: ["Current Task Assigned to", "Task Owner"] },
   { field: "date_initial_contact", label: "Initial Contact", direction: "two_way", transform: "date", suggestedNames: ["Date Est. Requested/Initial Contact", "Date Est. Requested/ Initial Contact", "Initial Contact"] },
   { field: "site_survey_date", label: "Site Survey", direction: "two_way", transform: "date", suggestedNames: ["Site Survey"] },
-  { field: "date_estimate_sent", label: "Estimate Sent", direction: "two_way", transform: "date", suggestedNames: ["Date Estimate Sent to Customer", "Quote Sent Date"] },
+  { field: "date_estimate_sent", label: "Estimate Sent", direction: "base44_only", transform: "internal_history", suggestedNames: [] },
   { field: "designer", label: "Designer", direction: "two_way", transform: "text", suggestedNames: ["Designer"] },
   { field: "project_manager", label: "Project Manager", direction: "two_way", transform: "text", suggestedNames: ["Project Manager"] },
   { field: "estimator", label: "Estimator", direction: "two_way", transform: "text", suggestedNames: ["Estimator"] },
