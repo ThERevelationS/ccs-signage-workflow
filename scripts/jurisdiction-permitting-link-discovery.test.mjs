@@ -69,7 +69,7 @@ test('files precede navigation when bounded links fill up; zero budget stays emp
   const html = '<a href="/zoning">Zoning Department</a><a href="/permit.pdf">Permit Application</a><a href="/signs.pdf">Signs Ordinance</a>';
   const docs = discoverOfficialPermittingResources(html, 'https://county.gov/forms', { maxLinks: 2 });
   assert.equal(docs.length, 2);
-  assert.equal(docs[1].url, 'https://county.gov/permit.pdf');
+  assert.equal(docs[1].url, 'https://county.gov/signs.pdf');
   assert.deepEqual(discoverOfficialPermittingResources(html, 'https://county.gov/forms', { maxLinks: 0 }), []);
 });
 
@@ -82,4 +82,20 @@ test('employment and sign-up navigation are not permitting resources', () => {
   const docs = discoverOfficialPermittingResources('<a href="/how_do_i_/apply_for___obtain/employment_opportunities.php">Employment Opportunities</a><a href="/enotify/index.php">E-Alert Sign-up</a><a href="/signs_application.pdf">Signs Application</a>', 'https://county.gov/forms');
   assert.equal(docs.length, 2);
   assert.equal(docs[1].title, 'Signs Application');
+});
+
+
+test('late extensionless sign links survive a crowded alphabetical forms index', () => {
+  const html = Array.from({length:150}, (_,i) => `<a href="/forms/application-${i}/">Building Application ${i}</a>`).join('') +
+    '<a href="/forms/sign/">Sign Application</a><a href="/forms/outdoor-advertising/">Outdoor Advertising Handout</a>';
+  const docs = discoverOfficialPermittingResources(html, 'https://county.gov/forms', {maxLinks:100});
+  assert.equal(docs.length,100);
+  assert.equal(docs[1].title,'Sign Application');
+  assert.equal(docs[2].title,'Outdoor Advertising Handout');
+});
+
+test('fraud reporting form is excluded from permitting discovery', () => {
+  const docs = discoverOfficialPermittingResources('<a href="/manager/fraud-form/">Fraud Waste and Abuse Online Form</a><a href="/sign/">Sign Form</a>', 'https://county.gov/forms');
+  assert.equal(docs.length,2);
+  assert.equal(docs[1].title,'Sign Form');
 });

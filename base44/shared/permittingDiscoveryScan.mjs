@@ -1,5 +1,5 @@
 import { PDF_RESOURCE_METHOD } from './permittingResourceResponse.mjs';
-import { discoverOfficialPermittingResources, isDownloadableResearchDocument } from './jurisdictionPermittingLinkDiscovery.mjs';
+import { discoverOfficialPermittingResources, isDownloadableResearchDocument, permittingResourcePriority } from './jurisdictionPermittingLinkDiscovery.mjs';
 
 const key = value => { const u = new URL(value); u.hash = ''; u.hostname = u.hostname.replace(/^www\./, ''); return u.href; };
 function scopedUrl(value, seed) {
@@ -9,16 +9,6 @@ function scopedUrl(value, seed) {
       u.hostname.replace(/^www\./, '') !== root.hostname.replace(/^www\./, '') || u.port !== root.port)
     throw Error('Discovery URL is outside the selected official host.');
   u.hash = ''; return u.href;
-}
-
-function pagePriority(doc = {}) {
-  let words = String(doc.title || '') + ' ' + String(doc.url || '');
-  try { words = decodeURIComponent(words); } catch {}
-  words = words.replace(/[_-]+/g, ' ');
-  if (/\b(signs?|outdoor advertising)\b/i.test(words)) return 100;
-  if (/\b(forms?|applications?|checklists?|submittals?)\b/i.test(words)) return 60;
-  if (/\b(fees?)\b/i.test(words)) return 40;
-  return 10;
 }
 
 // No LLM, uploads, entity writes, or rule promotion. The caller supplies the
@@ -59,6 +49,9 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   // pending URL; it is not copied into the new scan's write set.
   const priorDocuments = new Map();
   for (const doc of existingDocuments || []) { try { priorDocuments.set(key(doc.url), doc); } catch {} }
+  // Apply current resource ranking to a saved frontier as well as new links.
+  // The saved URLs/depths remain intact; no pages or review gaps are reset.
+  pending.sort((a, b) => permittingResourcePriority(priorDocuments.get(key(b.url)) || {url:b.url}) - permittingResourcePriority(priorDocuments.get(key(a.url)) || {url:a.url}));
   let attempted = 0;
   while (pending.length && attempted < maxPages) {
     const next = pending.shift(), nextKey = key(next.url);
@@ -91,7 +84,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         queued.add(sourceKey);
         if (next.depth >= maxDepth) { gaps.push({ url: doc.url, reason: 'depth_frontier', requires_review: true }); continue; }
         pending.push({ url: doc.url, depth: next.depth + 1 });
-        pending.sort((a, b) => pagePriority(documents.get(key(b.url)) || priorDocuments.get(key(b.url))) - pagePriority(documents.get(key(a.url)) || priorDocuments.get(key(a.url))));
+        pending.sort((a, b) => permittingResourcePriority(documents.get(key(b.url)) || priorDocuments.get(key(b.url))) - permittingResourcePriority(documents.get(key(a.url)) || priorDocuments.get(key(a.url))));
       }
     } catch (error) {
       const reason = String(error?.message || error).slice(0, 300);

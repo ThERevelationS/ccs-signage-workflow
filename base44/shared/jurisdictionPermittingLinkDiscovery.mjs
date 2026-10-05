@@ -26,6 +26,18 @@ export function isDownloadableResearchDocument(document = {}) {
   return DOWNLOADABLE_RE.test(String(document?.url || '')) || hasClassifiedPdfResource(document);
 }
 
+// Labels and the destination leaf describe the resource; ancestor forms/sign
+// directories must not promote every unrelated child to the same priority.
+export function permittingResourcePriority(doc = {}) {
+  let leaf = '';
+  try { const u = new URL(doc.url); leaf = u.pathname.split('/').filter(Boolean).pop() || ''; } catch {}
+  const words = linkWords(String(doc.title || '') + ' ' + leaf);
+  if (/\b(signs?|outdoor advertising)\b/i.test(words)) return 100;
+  if (/\b(forms?|applications?|checklists?|submittals?)\b/i.test(words)) return 60;
+  if (/\b(fees?|costs?)\b/i.test(words)) return 40;
+  return 10;
+}
+
 export function permittingDocumentType({ title = '', url = '' } = {}) {
   const haystack = linkWords(String(title) + ' ' + String(url)).toLowerCase();
   if (/\b(fees?|costs?|prices?)\b/.test(haystack)) return 'fee_schedule';
@@ -84,7 +96,7 @@ export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 
     // schools, calendar, language selectors, or other navigation relevant.
     const relevance = linkWords(title + ' ' + rawHref.split('#')[0]);
     if (!RELEVANT_LINK_RE.test(relevance) || /^(home|skip to|login|read more)\b/i.test(title)) continue;
-    if (/\b(house number|house numbering|address assignment|nondiscrimination|employment|careers?|jobs?|newsletters?|e alerts?|subscribe|sign up)\b/i.test(relevance)) continue;
+    if (/\b(house number|house numbering|address assignment|nondiscrimination|fraud|waste and abuse|employment|careers?|jobs?|newsletters?|e alerts?|subscribe|sign up)\b/i.test(relevance)) continue;
     if (seen.has(target.href)) continue;
     seen.add(target.href);
     candidates.push({
@@ -95,7 +107,10 @@ export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 
       verification_notes: 'Discovered from the retained official permitting/forms page; authority not inferred.',
     });
   }
-  // Prioritize actual files before navigation can exhaust the bounded link cap.
-  candidates.sort((a, b) => Number(isDownloadableResearchDocument(b)) - Number(isDownloadableResearchDocument(a)));
+  // Rank sign resources before slicing: extensionless government downloads
+  // otherwise disappear behind alphabetically earlier forms and navigation.
+  candidates.sort((a, b) =>
+    Number(permittingResourcePriority(b) === 100) - Number(permittingResourcePriority(a) === 100) ||
+    Number(isDownloadableResearchDocument(b)) - Number(isDownloadableResearchDocument(a)));
   return [...results, ...candidates].slice(0, limit);
 }
