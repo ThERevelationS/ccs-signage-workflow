@@ -1,0 +1,23 @@
+{
+  "source_document_id": "6ac3a54ac1ce2adba5b92cb8",
+  "source_sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+  "page": 1,
+  "method": "tesseract-5.3.4-eng-psm3-200dpi",
+  "ocr_text": "SITE PLAN INFORMATION\n\nPlease refer to the illustrations below to comply with the requirements\n\nfor the submission of a site plan. All site plans must be drawn to scale!\n\nBUSINESS ' RESIDENTIAL\nEXAMPLE ONLY ! N EXAMPLE ONLY\nI\ni ALLEY\nH 48.00'\nN 1 \\ nee x\n| i\nI\nI\nI\n1\n' a 1 H i 7 =\nH |\nProperty Nh H |\nLine = | I\nik H ic va\ni ; Parking Lot-Concrete 5 H |\nXo, ! | ' Proposed |;\nz 2 ! | 18' X 22\nwk ! i Grass Garage\n= S | | @ 12' Height\n- k P| :\n. =| | - i |i\n2 yw 1 ; os & =\n5 (1 3 I iS Brick | cn\n5 47 zg 4} oe Patio iS\nEl] a 1 aan Mw =\n: Retail Aut =) 1\nz S Parts Store £ I\n= |e\na Wall Sign. |\nram : A H Existing 7\nBrot: Siza ze H 2-Story House\n= 1 | : .\n= my, ! a #3435 10\".\n|\nPerfection Avenue ! Property\nH _ Line\ni] = al\n| =\nI =\nI =\na E\nPlease illustrate all buildings, 1 &\nstructures, streets and alleys on H . >\nthe lot. Indicate any ! a 3\nbuildings or structures that are I Z/e\nadjacent to the lot. H S\nI\na Sidewalk 45.00\"\nH Treelawn W4 X\nI\n\nSycamore Avenue\n\nK—40'R/W\n\n",
+  "visual_review": "Single raster page inspected. Business and residential drawings labelled EXAMPLE ONLY. Dimensions are illustrative, not adopted limits.",
+  "verified_transcriptions": [
+    {
+      "region": "top heading paragraph",
+      "text": "All site plans must be drawn to scale!"
+    },
+    {
+      "region": "bottom left instruction",
+      "text": "Please illustrate all buildings, structures, streets and alleys on the lot. Indicate any buildings or structures that are adjacent to the lot."
+    }
+  ],
+  "review_status": "unapproved_evidence",
+  "limitations": [
+    "OCR contains noisy diagram labels and numbers; do not cite OCR diagram dimensions as regulatory limits.",
+    "Catalog PDF operator extraction remains needs_ocr; supported OCR ingestion is not implemented in this chunk."
+  ]
+}
