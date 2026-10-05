@@ -166,6 +166,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     estimateStatus: estimate.status,
     previousEstimateStatus,
     existingDateEstimateSent: existing?.date_estimate_sent,
+    existingQuoteSentVerifiedAt: existing?.sales_quote_sent_verified_at,
     today: localDateStamp(),
     issuedQuoteDate: estimate.quote_issue_date || "",
     issuedQuoteVersion: estimate.quote_version || 0,
@@ -218,6 +219,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
 
   const createFields = {
     ...fields,
+    ...(fields.date_estimate_sent ? { sales_quote_sent_verified_at: new Date().toISOString() } : {}),
     current_stage: "estimating",
     date_initial_contact: new Date().toISOString().slice(0, 10),
   };
