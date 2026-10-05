@@ -1,0 +1,157 @@
+{
+  "phase": "4.7",
+  "local_date": "2026-10-04",
+  "recorded_at": "2026-10-05T01:02:58.372Z",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "previous_checkpoint": "6ac2ed62694e0bdba1f657d4",
+  "previous_git": "bcd9c2b3b7546ca8067aacc3d3778a1b058edbff",
+  "initial_git": "98a0148eb29f84b58ad75c32037f875e0778c4ec",
+  "last_verified_git": "be4ecd36800fe90d91e139eeccee876fd67a7322",
+  "scope": "Immutable manual official HTML retention, original response bytes, conservative static-text blocks and native literal citations. No office/source authority promotion.",
+  "implementation": {
+    "entity": "PermittingHtmlEvidence",
+    "function": "permittingHtmlEvidence",
+    "method": "official-html-static-text-v1",
+    "update_and_delete_rls": false,
+    "manual_only": true,
+    "fetch_timeout_seconds": 12,
+    "max_response_bytes": 512000,
+    "max_text_characters": 80000,
+    "max_read_blocks": 5,
+    "max_redirects": 3,
+    "max_quote_characters": 1000,
+    "profile_receipt": "html_evidence_state",
+    "pdf_pages_manufactured": false,
+    "original_format": "base64 of exact UTF-8 response bytes",
+    "download_format": ".html.txt; never rendered or executed"
+  },
+  "live_evidence": {
+    "id": "6ac2f628a5e8d3e42019f3d7",
+    "title": "Alexandria official zoning department service page",
+    "official_url": "https://alexandriaky.gov/zoning-department/",
+    "file_hash_sha256": "5d3a32d3214b0b3e573f176bbd1fedbccfb782141001367fae26c245e640b904",
+    "text_sha256": "ec9498d7eeae84a675d02c00a656683d33be9309934cfae71bfa9d9a97668b2b",
+    "file_bytes": 165415,
+    "retrieved_at": "2026-10-05T00:58:15.712Z",
+    "verification_status": "retained_unreviewed",
+    "requested_by": "brettheinlein1@gmail.com",
+    "request_key": "html-evidence:6ac19ef89c23eb7c0fdbf6f1:ccs_alexandria_html_phase47_v1",
+    "jurisdiction_id": "6ac19ef89c23eb7c0fdbf6f1"
+  },
+  "receipt": {
+    "request_key": "html-evidence:6ac19ef89c23eb7c0fdbf6f1:ccs_alexandria_html_phase47_v1",
+    "request_id": "ccs_alexandria_html_phase47_v1",
+    "payload_sha256": "d9a705d8ebd8c119b4fdc7eb3d92f1df44a3f3d2476697859aa18bd0bf5b4752",
+    "requested_by": "brettheinlein1@gmail.com",
+    "status": "complete",
+    "operation_id": "3fc0b785-983c-4f29-a0ea-bf6c61041a08",
+    "evidence_key": "3f23e141af1f6f7a395134d97bccf17263903d3ea858df0346cb1ca38e42c006",
+    "profile_snapshot": {
+      "id": "6ac19ef89c23eb7c0fdbf6f1",
+      "name": "Alexandria",
+      "state": "KY",
+      "type": "city",
+      "website_url": "https://alexandriaky.gov/",
+      "permitting_url": "https://alexandriaky.gov/zoning-department/"
+    },
+    "official_url": "https://alexandriaky.gov/zoning-department/",
+    "file_hash_sha256": "5d3a32d3214b0b3e573f176bbd1fedbccfb782141001367fae26c245e640b904",
+    "text_sha256": "ec9498d7eeae84a675d02c00a656683d33be9309934cfae71bfa9d9a97668b2b",
+    "file_bytes": 165415,
+    "html_evidence_id": "6ac2f628a5e8d3e42019f3d7"
+  },
+  "live_citation": {
+    "evidence_kind": "official_html",
+    "html_evidence_id": "6ac2f628a5e8d3e42019f3d7",
+    "official_url": "https://alexandriaky.gov/zoning-department/",
+    "source_sha256": "5d3a32d3214b0b3e573f176bbd1fedbccfb782141001367fae26c245e640b904",
+    "text_sha256": "ec9498d7eeae84a675d02c00a656683d33be9309934cfae71bfa9d9a97668b2b",
+    "block": 7,
+    "block_text_sha256": "0fb3ce7d03cf806807ba530e40ea35340e1d985f8eea8a830e4eb775eecb01e6",
+    "excerpt": "The City of Alexandria Zoning Department is now being managed and reviewed by Campbell County Planning, Zoning & Building Department.",
+    "authority_established": false
+  },
+  "live_verification": {
+    "surface": "Authenticated Base44 editor preview-version function tester against production entities",
+    "preview_success": true,
+    "capture_requests_submitted": 1,
+    "committed_receipt": true,
+    "persisted_read_and_literal_citation_success": true,
+    "evidence_count_before": 0,
+    "evidence_count_after": 1,
+    "raw_byte_hash_matches_retained_phase46_html": true,
+    "authority_reviews_created": 0
+  },
+  "preservation": {
+    "profiles": [
+      {
+        "id": "6ac19dcc184935c1391ee468",
+        "name": "Campbell County",
+        "changed_keys": [],
+        "documents_exact": true,
+        "authority_receipt_exact": true
+      },
+      {
+        "id": "6ac19ef89c23eb7c0fdbf6f1",
+        "name": "Alexandria",
+        "changed_keys": [
+          "updated_date",
+          "html_evidence_state"
+        ],
+        "documents_exact": true,
+        "authority_receipt_exact": true
+      }
+    ],
+    "settings": [
+      {
+        "key": "permitOfficeCatalog",
+        "exact": true
+      },
+      {
+        "key": "permitting_research_dispatch_config",
+        "exact": true
+      },
+      {
+        "key": "permitting_research_dispatch_state",
+        "exact": true
+      }
+    ]
+  },
+  "validation": {
+    "focused_tests": 91,
+    "new_html_tests": 27,
+    "existing_authority_archive_tests": 64,
+    "focused_result": {
+      "stdout": "✔ new scoped reviews create distinct candidate identities and preserve prior evidence (2.467394ms)\n✔ rule recheck validates instruction profile/scope even if source bytes are unchanged (2.771169ms)\nℹ tests 91\nℹ suites 0\nℹ pass 91\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 523.860559\n",
+      "stderr": "\n  ../tmp/phase47-html-backend.js  28.9kb\n\n⚡ Done in 10ms\n",
+      "exit_code": 0,
+      "truncated": false,
+      "duration_ms": 3889
+    },
+    "affected_frontend_lint": "passed",
+    "affected_backend_bundle": "passed (28.9kb)",
+    "git_diff_check": "passed",
+    "full_build": {
+      "stdout": "\n> base44-app@0.0.0 build\n> vite build\n\n",
+      "stderr": "[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`\nBrowserslist: browsers data (caniuse-lite) is 13 months old. Please run:\n  npx update-browserslist-db@latest\n  Why you should do it regularly: https://github.com/browserslist/update-db#readme\n",
+      "exit_code": 0,
+      "truncated": false,
+      "duration_ms": 31586
+    }
+  },
+  "resources": "New backend function and HTML entity, plus additive profile receipt field, synchronized through sandbox resource writes. No project-wide deploy command or frontend publish.",
+  "production_jobs_or_work_orders_modified": false,
+  "new_llm_calls": 0,
+  "new_binary_uploads": 0,
+  "automatic_dispatch_paused": false,
+  "frontend_published": false,
+  "limitations": [
+    "Successful capture or literal quote does not establish office role, geographic coverage or adopted law.",
+    "Static response text does not evaluate linked pages, external CSS or JavaScript.",
+    "Existing PDF authority and rule-extraction routes continue to require physical PDF pages.",
+    "Office review integration must distinguish website publisher from a delegated responsible office.",
+    "Preview-version live verification does not claim a separate production-version backend deployment or frontend publication."
+  ],
+  "next": "Explicit HTML-backed office responsibility/scope review with delegated office identity, immutable history and current-evidence rechecks."
+}
