@@ -712,6 +712,20 @@ export default function TimeClockAdmin() {
         </div>
       )}
 
+      {pendingApprovalRecovery && !approvalEntry && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="font-semibold">Interrupted manager shift review needs recovery</div>
+            <div className="mt-1 text-xs">
+              {pendingApprovalRecovery.decision === "approve" ? "Approve Shift" : "Mark Needs Review"} for {pendingApprovalRecovery.entry_snapshot?.user_name || pendingApprovalRecovery.target_email}. Resume the exact saved request before starting another review for this shift.
+            </div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-amber-400 bg-white text-amber-900" onClick={() => resumeApprovalRecovery(pendingApprovalRecovery)}>
+            Resume interrupted review
+          </Button>
+        </div>
+      )}
+
       <TimeClockManagementDashboard
         timeEntries={timeEntries}
         employeeStates={employeeStates}
@@ -1397,6 +1411,7 @@ export default function TimeClockAdmin() {
             setApprovalEntry(null);
             setApprovalNote("");
             setApprovalRequestId("");
+            setApprovalRetryPayload(null);
             setApprovalError("");
           }
         }}
@@ -1413,8 +1428,8 @@ export default function TimeClockAdmin() {
               <div className="rounded-lg bg-gray-50 p-3 text-sm">
                 <p className="font-medium">{approvalEntry.user_name || approvalEntry.user_email}</p>
                 <p className="text-gray-500 mt-1">
-                  {approvalEntry.clock_in ? format(parseISO(approvalEntry.clock_in), "MMM d, yyyy h:mm a") : "Unknown start"}
-                  {approvalEntry.clock_out ? ` – ${format(parseISO(approvalEntry.clock_out), "h:mm a")}` : ""}
+                  {approvalEntry.clock_in ? `${formatCompanyDateTime(approvalEntry.clock_in)} (${TIME_CLOCK_COMPANY_TIME_LABEL})` : "Unknown start"}
+                  {approvalEntry.clock_out ? ` – ${formatCompanyDateTime(approvalEntry.clock_out)}` : ""}
                 </p>
                 <p className="text-gray-600 mt-1">{Number(approvalEntry.total_hours || 0).toFixed(2)} hours</p>
               </div>
@@ -1424,6 +1439,12 @@ export default function TimeClockAdmin() {
                   ? "This records manager review of the completed shift. It does not finalize or lock a payroll period. Any later time correction automatically returns the shift to Needs Review."
                   : "This removes the current approval and marks the shift Needs Review. The prior approval remains preserved in the audit history."}
               </div>
+
+              {approvalRetryPayload && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                  <strong>Exact retry mode.</strong> The original shift version, decision, note, and request ID are frozen. This prevents a reload or second manager change from silently changing an interrupted request.
+                </div>
+              )}
 
               <div>
                 <Label className="text-sm font-medium">
@@ -1455,6 +1476,7 @@ export default function TimeClockAdmin() {
                     setApprovalEntry(null);
                     setApprovalNote("");
                     setApprovalRequestId("");
+                    setApprovalRetryPayload(null);
                     setApprovalError("");
                   }}
                 >
