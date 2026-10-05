@@ -1,4 +1,5 @@
 import { registerJurisdictionArchive, continueJurisdictionCatalogBacklog } from './jurisdictionArchiveCatalog.mjs';
+import { authorizedHtmlUrl } from './permittingHtmlEvidence.mjs';
 import { isDownloadableResearchDocument } from './jurisdictionPermittingLinkDiscovery.mjs';
 import { jurisdictionDocumentSourceKey } from './jurisdictionResearchDocumentMerge.mjs';
 import { RESEARCH_FETCH_TIMEOUT_MS, RESEARCH_UPLOAD_TIMEOUT_MS, withResearchArchiveTimeout } from './jurisdictionResearchArchiveBudget.mjs';
@@ -8,8 +9,8 @@ export const AUTOMATIC_ARCHIVE_RETRY_LIMIT = 3;
 const MAX_BYTES = 50 * 1024 * 1024;
 const protectedDoc = doc => doc?.source === 'manual' || doc?.pinned === true || doc?.archive_pinned === true || Boolean(doc?.file_url || doc?.source_sha256);
 
-export function archiveDocumentEligible(doc, { manual = false, now = Date.now() } = {}) {
-  if (!doc?.id || !isDownloadableResearchDocument(doc) || protectedDoc(doc)) return false;
+export function archiveDocumentEligible(doc, { manual = false, selectedPdf = false, now = Date.now() } = {}) {
+  if (!doc?.id || !(isDownloadableResearchDocument(doc) || (manual && selectedPdf)) || protectedDoc(doc)) return false;
   const state = doc.archive_state || {};
   if (['complete', 'uploading', 'upload_uncertain'].includes(state.status)) return false;
   if (Date.parse(state.lease_expires_at || '') > now) return false;
@@ -103,43 +104,55 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
   throw new Error('Archive write repeatedly conflicted; newer work was preserved.');
 }
 
-export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, token = crypto.randomUUID(), now = () => Date.now() }) {
+export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, knownPdf = null, token = crypto.randomUUID(), now = () => Date.now() }) {
+  if (knownPdf && (!manual || !documentId || !/^[a-f0-9]{64}$/.test(knownPdf.sha256 || '') ||
+      !Number.isInteger(knownPdf.bytes) || knownPdf.bytes < 5 || knownPdf.bytes > MAX_BYTES)) {
+    throw new Error('A selected manual PDF requires its retained SHA-256 and bounded byte count.');
+  }
   const initial = await entity.get(jurisdictionId);
   if (!initial?.id) throw new Error('Jurisdiction not found.');
   if (!manual && initial.auto_refresh === false) return { success: true, skipped: true, reason: 'auto_refresh_disabled', jurisdiction: initial };
   if (initial._manual_documents) return { success: true, skipped: true, reason: 'manual_collection', jurisdiction: initial };
   const docs = initial.documents || [];
-  const doc = docs.find(d => (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, now: now() }) &&
+  const doc = docs.find(d => (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, selectedPdf: Boolean(knownPdf && documentId === d.id), now: now() }) &&
     !docs.some(other => other !== d && jurisdictionDocumentSourceKey(other) === jurisdictionDocumentSourceKey(d)));
   if (!doc) return { success: true, skipped: true, reason: 'no_eligible_file', jurisdiction: initial };
+  if (knownPdf) authorizedHtmlUrl(initial, doc.url);
   let state = doc.archive_state || {};
+  if (state.known_pdf && (!knownPdf || state.known_pdf.sha256 !== knownPdf.sha256 || state.known_pdf.bytes !== knownPdf.bytes))
+    throw new Error('Retained PDF expectation changed; reconcile the existing receipt.');
   const resumeUpload = ['uploaded', 'verification_blocked'].includes(state.status) && Boolean(state.file_url);
   const attempts = resumeUpload ? Math.max(1, Number(state.attempts) || 1) : (Number(state.attempts) || 0) + 1;
   const stamp = () => new Date(now()).toISOString();
-  const claimed = { ...state, status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
+  const claimed = { ...state, ...(knownPdf ? { known_pdf: { sha256: knownPdf.sha256, bytes: knownPdf.bytes } } : {}), status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
     lease_expires_at: new Date(now() + ARCHIVE_LEASE_MS).toISOString(), last_attempt_at: stamp(), error: '' };
   await transition(entity, jurisdictionId, doc, state, claimed);
   state = claimed;
   let uploads = 0;
   let stage = resumeUpload ? 'verify' : 'download';
-  const fetchBytes = async url => withResearchArchiveTimeout((async () => {
+  const fetchBytes = async (url, requirePdf = false) => withResearchArchiveTimeout((async () => {
     const response = await fetchSource(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS) });
+    if (requirePdf && !/^application\/pdf(?:\s*;|$)/i.test(response.headers.get('content-type') || ''))
+      throw new Error('Selected official resource did not return PDF content.');
     return readBytes(response);
   })(), RESEARCH_FETCH_TIMEOUT_MS, 'Archive fetch/read');
   try {
     if (!resumeUpload) {
-      const bytes = await fetchBytes(doc.url);
-      const ext = new URL(doc.url).pathname.split('.').pop().toLowerCase();
+      const bytes = await fetchBytes(doc.url, Boolean(knownPdf));
+      const ext = knownPdf ? 'pdf' : new URL(doc.url).pathname.split('.').pop().toLowerCase();
       if (ext === 'pdf' && new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-') throw new Error('Source is not a valid PDF.');
       const sha = await digest(bytes);
+      if (knownPdf && (bytes.length !== knownPdf.bytes || sha !== knownPdf.sha256))
+        throw new Error('Official PDF changed from the retained expectation; review before upload.');
       const uploading = { ...state, status: 'uploading', source_sha256: sha, source_bytes: bytes.length };
       await transition(entity, jurisdictionId, doc, state, uploading);
       state = uploading;
       stage = 'upload';
       const types = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', txt: 'text/plain' };
-      let name = new URL(doc.url).pathname.split('/').pop() || 'official-resource.' + ext;
+      let name = new URL(doc.url).pathname.split('/').filter(Boolean).pop() || 'official-resource.' + ext;
       try { name = decodeURIComponent(name); } catch {}
+      if (knownPdf && !/\.pdf$/i.test(name)) name += '.pdf';
       uploads++;
       const result = await withResearchArchiveTimeout(uploadFile({ file: new File([bytes], name, { type: types[ext] || 'application/octet-stream' }) }), RESEARCH_UPLOAD_TIMEOUT_MS, 'Archive upload');
       if (!result?.file_url) throw new Error('Upload returned no usable file URL; outcome is uncertain.');
