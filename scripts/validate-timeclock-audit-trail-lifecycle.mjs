@@ -173,7 +173,10 @@ assert.match(source, /setRows\(loadedRows\)/);
 assert.match(source, /diagnostic only and are not being presented as trusted payroll evidence/);
 assert.match(source, /Malformed authoritative provenance/);
 assert.match(source, /Diagnostic only — not trusted payroll evidence/);
-console.log('PASS integrity investigation identifies malformed authoritative membership rows while keeping their scoped display explicitly diagnostic and untrusted');
+assert.match(source, /function integrityValidationSummary\(validation\)/);
+assert.match(source, /Company date does not match clock-in in America\/New_York/);
+assert.match(source, /integrityValidationSummary\(integrityDiagnostic\.validation\)/);
+console.log('PASS integrity investigation identifies malformed authoritative membership rows, explains the failed shared-contract rules, and keeps their scoped display explicitly diagnostic and untrusted');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
 assert.match(source, /setSearch\(""\);[\s\S]*setActionFilter\("all"\);[\s\S]*onExitInvestigation/);
