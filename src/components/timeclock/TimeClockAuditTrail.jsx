@@ -103,7 +103,17 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           setError(`Audit investigation evidence-identity check failed: ${duplicateRequiredAuditIds.length} conflict audit ID${duplicateRequiredAuditIds.length === 1 ? " is" : "s are"} duplicated in the expected evidence. No scoped audit records are being displayed.`);
           return;
         }
-        const returnedAuditIdList = loadedRows.map((row) => String(row?.id || "").trim()).filter(Boolean);
+        const returnedAuditIdList = loadedRows.map((row) => String(row?.id || "").trim());
+        const missingReturnedAuditIdCount = returnedAuditIdList.filter((id) => !id).length;
+        if (missingReturnedAuditIdCount > 0) {
+          console.error("Time Clock audit investigation returned-identity failure:", {
+            requested_time_entry_id: scopedId,
+            missing_returned_audit_id_count: missingReturnedAuditIdCount,
+          });
+          setRows([]);
+          setError(`Audit investigation returned-identity check failed: ${missingReturnedAuditIdCount} returned audit record${missingReturnedAuditIdCount === 1 ? " has" : "s have"} no immutable audit ID. No scoped audit records are being displayed.`);
+          return;
+        }
         const duplicateReturnedAuditIds = [...new Set(returnedAuditIdList.filter((id, index) => returnedAuditIdList.indexOf(id) !== index))];
         if (duplicateReturnedAuditIds.length > 0) {
           console.error("Time Clock audit investigation returned-identity failure:", {
