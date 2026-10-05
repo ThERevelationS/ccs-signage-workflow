@@ -41,3 +41,13 @@ test('two writers cannot discard one another’s distinct saved frontier',async(
 test('concurrent source URL, manual protection or document changes block stale progress writes',async()=>{
  for(const patch of [{permitting_url:'https://city.example/new-forms'},{_manual_documents:true},{documents:[{id:'staff',url:'https://city.example/manual.pdf'}]}]){const f=fixture(),snapshot=structuredClone(f.get()),a=await run();f.patch(patch);await assert.rejects(persist(f,snapshot,a));for(const [k,v]of Object.entries(patch))assert.deepEqual(f.get()[k],v);assert.equal(f.get().discovery_scan_state,null);}
 });
+
+test('oversized stored frontier and URL are review-blocked before network access',async()=>{
+ const a=await run();let fetches=0;for(const patch of [{notes:'x'.repeat(1024*1024)},{visited_urls:['https://city.example/'+ 'x'.repeat(2001)]}]){
+  await assert.rejects(run({resume:{...a.continuation_state,...patch},fetchPage:async()=>{fetches++;}}),error=>error.frontier_review_required===true);
+ }assert.equal(fetches,0);
+});
+test('oversized discovered URL remains an explicit gap rather than an oversized pending receipt',async()=>{
+ const r=await run({fetchPage:async url=>({html:'<a href="/sign-'+ 'x'.repeat(2001)+'">Sign Application</a>',finalUrl:url})});
+ assert(r.gaps.some(g=>g.reason==='oversized_resource_url'));assert.equal(r.pending_pages.length,0);assert.equal(r.traversal_complete,false);
+});
