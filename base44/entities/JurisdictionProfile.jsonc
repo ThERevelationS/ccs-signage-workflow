@@ -136,7 +136,8 @@
             "type": "string",
             "enum": [
               "manual",
-              "ai_discovered"
+              "ai_discovered",
+              "official_page_harvest"
             ]
           },
           "catalog_state": {
