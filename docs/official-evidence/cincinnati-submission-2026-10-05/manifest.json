@@ -1,0 +1,38 @@
+{
+  "llm_calls": 0,
+  "authority_approved": false,
+  "sources": [
+    {
+      "name": "submission-guidance",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/submit-permit-application-other-required-documents/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/submit-permit-application-other-required-documents/",
+      "retrieved_at": "2026-10-05T13:21:49.928Z",
+      "file_bytes": 70160,
+      "sha256": "34ff867db605bf062bc5c87ac7e629911dee7e110572cfd561f061a1beb2438b",
+      "path": "docs/official-evidence/cincinnati-submission-2026-10-05/submission-guidance.html",
+      "text_path": "docs/official-evidence/cincinnati-submission-2026-10-05/submission-guidance.txt",
+      "text_sha256": "a68cf94c9cc87ffa4db0f4a3f5551a52802f50e816defdc5bd025912bc615a4e",
+      "kind": "html"
+    },
+    {
+      "name": "building-application",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+      "retrieved_at": "2026-10-05T13:21:50.630Z",
+      "file_bytes": 252768,
+      "sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+      "path": "docs/official-evidence/cincinnati-submission-2026-10-05/building-application.pdf",
+      "kind": "pdf"
+    },
+    {
+      "name": "site-plan",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+      "retrieved_at": "2026-10-05T13:21:50.977Z",
+      "file_bytes": 57368,
+      "sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+      "path": "docs/official-evidence/cincinnati-submission-2026-10-05/site-plan.pdf",
+      "kind": "pdf"
+    }
+  ]
+}
