@@ -9,6 +9,16 @@ function scopedUrl(value, seed) {
   u.hash = ''; return u.href;
 }
 
+function pagePriority(doc = {}) {
+  let words = String(doc.title || '') + ' ' + String(doc.url || '');
+  try { words = decodeURIComponent(words); } catch {}
+  words = words.replace(/[_-]+/g, ' ');
+  if (/\b(signs?|outdoor advertising)\b/i.test(words)) return 100;
+  if (/\b(forms?|applications?|checklists?|submittals?)\b/i.test(words)) return 60;
+  if (/\b(fees?)\b/i.test(words)) return 40;
+  return 10;
+}
+
 // No LLM, uploads, entity writes, or rule promotion. The caller supplies the
 // SSRF-safe, size/time-limited HTML fetcher. Pending pages are explicit rather
 // than silently claiming that a bounded traversal covered the jurisdiction.
@@ -41,6 +51,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         queued.add(sourceKey);
         if (next.depth >= maxDepth) { gaps.push({ url: doc.url, reason: 'depth_frontier', requires_review: true }); continue; }
         pending.push({ url: doc.url, depth: next.depth + 1 });
+        pending.sort((a, b) => pagePriority(documents.get(key(b.url))) - pagePriority(documents.get(key(a.url))));
       }
     } catch (error) {
       const reason = String(error?.message || error).slice(0, 300);
@@ -51,7 +62,10 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   return { success: pages.some(p => p.status === 'scanned'), documents: [...documents.values()], pages,
     pending_pages: pending.filter(p => !visited.has(key(p.url))), gaps, attempted_pages: attempted,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
-    jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0 };
+    jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,
+    limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',
+      'Extensionless files require content-type classification before automatic archival.',
+      'Pending pages and failures are returned; a durable cross-run frontier is not yet implemented.'] };
 }
 
 // A partial AI answer cannot suppress deterministic official-page discovery.

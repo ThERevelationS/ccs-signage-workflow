@@ -52,3 +52,12 @@ test('oversized per-page discovery and invalid request sizes cannot imply comple
   assert(r.gaps.some(g=>g.reason==='page_link_limit'));assert.equal(r.traversal_complete,false);
   await assert.rejects(scan({}, {maxPages:0}),/request size/);
 });
+
+test('sign application pages are followed before generic department navigation', async () => {
+  const fetched=[];
+  const r=await scanOfficialPermittingPages({seedUrl:'https://county.gov/permits',maxPages:2,fetchPage:async url=>{
+    fetched.push(url);return {html:url.endsWith('/permits')?'<a href="/building">Building Department</a><a href="/sign-forms">Sign Forms</a>':'<a href="/sign.pdf">Sign Application</a>',finalUrl:url};
+  }});
+  assert.deepEqual(fetched,['https://county.gov/permits','https://county.gov/sign-forms']);
+  assert(r.documents.some(d=>d.url.endsWith('/sign.pdf')));assert.equal(r.traversal_complete,false);
+});
