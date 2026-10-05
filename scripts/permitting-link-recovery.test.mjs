@@ -40,3 +40,30 @@ test('changing unrelated page markup does not block resource pagination',async()
  const second=await scanOfficialPermittingPages({seedUrl:seed,resume:first.continuation_state,maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html:html+'<p>dynamic nonce</p>',finalUrl:index})});
  assert.equal(second.pages[0].status,'scanned');assert.equal(second.gaps.find(g=>g.reason==='page_link_limit').link_offset,200);
 });
+
+
+test('failed-page recovery preserves unrelated pending work and clears only successful gap', async()=>{
+ const c=cursor();c.gaps=[{url:index,reason:'page_fetch_failed',depth:1,detail:'timeout',requires_review:true}];
+ const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,maxPages:1,recoverFetchFailures:true,fetchPage:async url=>{assert.equal(url,index);return {html:'<a href="/sign/form/">Sign form</a>',finalUrl:index};}});
+ assert.equal(r.gaps.length,0);assert.ok(r.pending_pages.some(p=>p.url===c.pending_pages[0].url));
+ assert.ok(r.pending_pages.some(p=>p.url==='https://county.gov/sign/form/'&&p.depth===2));
+ assert.equal(r.llm_calls,0);assert.equal(r.continuation_state.attempted_pages_total,3);
+});
+
+test('failed retry retains gap and attempts once without consuming pending work',async()=>{
+ const c=cursor();c.gaps=[{url:index,reason:'page_fetch_failed',depth:1,requires_review:true}];
+ const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverFetchFailures:true,fetchPage:async()=>{throw Error('timeout');}});
+ assert.deepEqual(r.gaps,c.gaps);assert.deepEqual(r.pending_pages,c.pending_pages);assert.equal(r.attempted_pages,1);
+});
+
+test('PDF recovery clears fetch gap while legacy unknown depth stays conservative',async()=>{
+ const c=cursor();c.gaps=[{url:index,reason:'page_fetch_failed',requires_review:true}];
+ const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverFetchFailures:true,fetchPage:async()=>({resource_kind:'pdf',classification_method:'http-mime-signature-v1',finalUrl:index})});
+ assert.equal(r.gaps.length,0);assert.equal(r.pages[0].depth,2);assert.equal(r.pages[0].status,'classified_pdf');
+});
+
+test('recovery modes cannot combine or run without saved state',async()=>{
+ let reads=0;const fetchPage=async()=>{reads++;};
+ await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,resume:cursor(),recoverFetchFailures:true,recoverLinkLimits:true,fetchPage}));
+ await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,recoverFetchFailures:true,fetchPage}));assert.equal(reads,0);
+});
