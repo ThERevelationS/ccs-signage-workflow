@@ -25,18 +25,21 @@ function pagePriority(doc = {}) {
 // than silently claiming that a bounded traversal covered the jurisdiction.
 export const DISCOVERY_CURSOR_METHOD = 'official-page-frontier-v1';
 const CURSOR_MAX_ITEMS = 5000;
+const frontierError = message => Object.assign(Error(message), { frontier_review_required: true });
 function validateCursor(cursor, seedUrl, maxDepth) {
-  if (!cursor || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||
+  try {
+  if (!cursor || cursor.blocked || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||
       !Number.isInteger(cursor.attempted_pages_total) || cursor.attempted_pages_total < 0 ||
       !Array.isArray(cursor.pending_pages) || !Array.isArray(cursor.visited_urls) || !Array.isArray(cursor.gaps) ||
       cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS)
-    throw Error('Saved discovery frontier requires review; source, format or bounds changed.');
+    throw frontierError('Saved discovery frontier requires review; source, format or bounds changed.');
   for (const url of cursor.visited_urls) scopedUrl(url, seedUrl);
   for (const page of cursor.pending_pages) {
     scopedUrl(page.url, seedUrl);
     if (!Number.isInteger(page.depth) || page.depth < 0 || page.depth > maxDepth) throw Error('Saved discovery page depth requires review.');
   }
   for (const gap of cursor.gaps) { scopedUrl(gap.url, seedUrl); if (typeof gap.reason !== 'string') throw Error('Saved discovery gap requires review.'); }
+  } catch (error) { throw frontierError(error.message || 'Saved discovery frontier requires review.'); }
 }
 
 export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [] }) {
@@ -97,7 +100,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
     visited_urls: [...visited], pending_pages: pendingPages, gaps,
     attempted_pages_total: (Number(resume?.attempted_pages_total) || 0) + attempted };
   if (continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS)
-    throw Error('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
+    throw frontierError('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
   return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && !pendingPages.length), documents: [...documents.values()], pages,
     pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume),
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,

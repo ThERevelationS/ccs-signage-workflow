@@ -1,3 +1,7 @@
+import {continueDiscoveryBacklog} from '../../shared/permittingDiscoveryContinuation.mjs';
+import {readPermittingResourceResponse} from '../../shared/permittingResourceResponse.mjs';
+import {invalidateVerifiedJurisdictionAfterResearch} from '../../shared/jurisdictionVerification.ts';
+import {RESEARCH_FETCH_TIMEOUT_MS} from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
 import {
   classifyBacklogRows,
@@ -124,10 +128,22 @@ Deno.serve(async (req) => {
 
     // Known-file archival needs no research credits and continues after the
     // daily research allowance is exhausted. One file per scheduled cycle.
+    let discoveryContinuation: any = null;
     let archiveContinuation: any = null;
     let textContinuation: any = null;
     const elapsedArchiveCycle = now.getTime() - Date.parse(stateRecord?.setting_value?.last_cycle_at || "");
     if (!manual && config.enabled && (!Number.isFinite(elapsedArchiveCycle) || elapsedArchiveCycle >= config.interval_minutes * 60000)) {
+      // One saved official page per cycle; no new AI discovery or research debit.
+      // Failure cannot suppress independent archive/text/research work.
+      try {
+        discoveryContinuation = await continueDiscoveryBacklog({entity: Profiles,
+          invalidateProfile: invalidateVerifiedJurisdictionAfterResearch,
+          fetchPage: async url => {
+            const response = await safeExternalFetch(url, {signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS)});
+            return {...await readPermittingResourceResponse(response),finalUrl: response.url || url};
+          },
+        });
+      } catch(error) { discoveryContinuation = {success:false,status:'discovery_continuation_failed',llm_calls:0}; }
       archiveContinuation = await continueJurisdictionArchiveBacklog({
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
@@ -152,6 +168,7 @@ Deno.serve(async (req) => {
         reason: decision.reason,
         archive_continuation: archiveContinuation,
         text_continuation: textContinuation,
+        discovery_continuation: discoveryContinuation,
         config,
         dispatched_today: decision.state.dispatched_today,
         daily_remaining: decision.dailyRemaining,
@@ -378,6 +395,7 @@ Deno.serve(async (req) => {
       success: failures.length === 0,
       archive_continuation: archiveContinuation,
         text_continuation: textContinuation,
+        discovery_continuation: discoveryContinuation,
       config,
       state: nextState,
       in_flight_before: inFlightCount,
