@@ -5,7 +5,7 @@ const clean = (value) => String(value ?? '').trim();
 export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
   VERSION: '0R-v1',
   APPLY_ENABLED: false,
-  FIRST_BATCH_SIZE: 5,
+  FIRST_BATCH_SIZE: 1,
   MAX_BATCH_SIZE: 5,
   PLAN_MAX_AGE_MS: 5 * 60 * 1000,
   STOP_ON_FIRST_NON_SUCCESS: true,
