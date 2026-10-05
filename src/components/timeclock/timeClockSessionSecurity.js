@@ -43,6 +43,7 @@ export function classifyTimeClockLoginStatus(status) {
       count: pendingShiftCount,
       missedClockInCount: Math.max(0, Number(pendingShiftReview?.missed_clock_in_count || 0)),
       correctedShiftCount: Math.max(0, Number(pendingShiftReview?.corrected_shift_count || 0)),
+      directAdminCorrectionCount: Math.max(0, Number(pendingShiftReview?.direct_admin_correction_count || 0)),
       hasIntegrityIssue: pendingShiftReview?.has_integrity_issue === true,
       item: Array.isArray(pendingShiftReview?.items) ? pendingShiftReview.items[0] || null : null,
       clockIn: status?.entry?.clock_in || null,
