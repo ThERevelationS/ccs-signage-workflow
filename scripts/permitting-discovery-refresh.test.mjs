@@ -59,3 +59,10 @@ test('broader discovery preserves pinned and archive-pinned records exactly',()=
     assert.deepEqual(mergeJurisdictionResearchDocuments([old],[{url:old.url,title:'New harvested title',doc_type:'permit_application'}]),[old]);
   }
 });
+
+test('actual discovery-only refresh saves and resumes the frontier rather than rereading root',async()=>{
+ const root='https://city.gov/permits';const h=harness({pages:{[root]:'<a href="/sign-forms">Sign Forms</a><a href="/fees">Fees</a><a href="/zoning">Zoning</a>','https://city.gov/sign-forms':'<a href="/sign.pdf">Sign Application</a>','https://city.gov/fees':'<a href="/fees.pdf">Permit Fees</a>'}});
+ const first=await h.run(true);assert.equal(first.jurisdiction.discovery_scan_state.pending_pages.length,1);
+ const resumed=harness({profile:first.jurisdiction,pages:{'https://city.gov/zoning':'<a href="/code.pdf">Zoning Code</a>'}});const second=await resumed.run(true);
+ assert.deepEqual(resumed.fetched,['https://city.gov/zoning']);assert.equal(second.jurisdiction.discovery_scan_state.pending_pages.length,0);assert(second.jurisdiction.documents.some(d=>d.url.endsWith('/code.pdf')));
+});
