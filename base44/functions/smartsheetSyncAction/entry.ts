@@ -1566,8 +1566,27 @@ async function pushDataset(
   if (deferredSmartsheetWrites.length) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     try {
+      if (dataset === 'orders') {
+        await reportOrderProgress({
+          phase: 'writing', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.52,
+          item_label: `Writing ${deferredSmartsheetWrites.length} changed Order${deferredSmartsheetWrites.length === 1 ? '' : 's'}`,
+          detail: 'Submitting the verified permanent-row updates to Smartsheet',
+        });
+      }
       await (dataset === 'orders' ? smartsheetWriteNoTimeoutRetry : smartsheetWrite)(
-        'PUT', '/sheets/' + sheetId + '/rows', token, deferredSmartsheetWrites);
+        'PUT', '/sheets/' + sheetId + '/rows', token, deferredSmartsheetWrites,
+        ...(dataset === 'orders' ? [{
+          onRateLimitWait: async ({ attempt, waitSeconds }: any) => reportOrderProgress({
+            phase: 'waiting_rate_limit', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.54,
+            item_label: 'Waiting for Smartsheet',
+            detail: `Rate limited: waiting ${waitSeconds}s before write retry ${attempt}/3`,
+          }),
+          onRateLimitRetry: async ({ attempt }: any) => reportOrderProgress({
+            phase: 'retrying', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.56,
+            item_label: 'Retrying Smartsheet write',
+            detail: `Retrying the verified Order batch after rate limit (${attempt}/3)`,
+          }),
+        }] : []));
     } catch (err: any) {
       if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
       else errors.push('Batch Smartsheet write (' + deferredSmartsheetWrites.length + ' rows): ' + (err?.message || 'unknown error'));
