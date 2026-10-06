@@ -218,7 +218,30 @@ async function pullDataset(
       label: 'Order Form Smartsheet pull linked Orders',
     });
   }
+  const deletedOrderLinkedRowIds = new Set<string>();
+  if (dataset === 'orders') {
+    for (const record of Array.isArray(existingRecords) ? existingRecords : []) {
+      if (record?.deleted !== true) continue;
+      const rowId = cleanText(record?.smartsheet_row_id, 40);
+      const recordSheetId = cleanText(record?.smartsheet_sheet_id, 40);
+      if (recordSheetId === sheetId && /^\d+$/.test(rowId)) deletedOrderLinkedRowIds.add(rowId);
+    }
+  }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
+  if (dataset === 'orders' && deletedOrderLinkedRowIds.size) {
+    const activeLinkedIds = new Set(existingRecords
+      .map((record: any) => cleanText(record?.smartsheet_row_id, 40))
+      .filter((rowId: string) => /^\d+$/.test(rowId)));
+    const collisions = [...deletedOrderLinkedRowIds].filter(rowId => activeLinkedIds.has(rowId));
+    if (collisions.length) {
+      return {
+        dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+        reason: 'A permanent Smartsheet row is linked to both an active and a deleted Base44 Order. No Orders were changed.',
+        active_deleted_row_link_collisions: collisions.length,
+        collision_row_ids: collisions.slice(0, 20),
+      };
+    }
+  }
   const targetedIds = new Set(options.recordIds || []);
   if (dataset === 'sales' && targetedIds.size) existingRecords = existingRecords.filter(r => targetedIds.has(r.id));
   const salesAssigneeUsers = dataset === 'sales' && /^\d+$/.test(String(bindings?.current_task_assigned_to ?? '').trim())
@@ -235,7 +258,10 @@ async function pullDataset(
   // an untranslatable date or a duplicate permanent Base44 row link.
   // A received text choice is valid; an impossible date is not.
   if (dataset === 'orders') {
-    const audit = auditOrderDateParity(existingRecords, allRows, bindings, sheetId);
+    const activeAuditRows = deletedOrderLinkedRowIds.size
+      ? allRows.filter((row: any) => !deletedOrderLinkedRowIds.has(String(row?.id || '')))
+      : allRows;
+    const audit = auditOrderDateParity(existingRecords, activeAuditRows, bindings, sheetId);
     orderUnlinkedRowCount = audit.counts.unlinked_smartsheet_rows;
     orderUnlinkedRowIds = audit.samples.unlinked_rows.map((sample: any) => sample.row_id);
     if (audit.counts.invalid_date_values || audit.counts.duplicate_base44_links) {
@@ -297,12 +323,20 @@ async function pullDataset(
   const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
   const orderLocalPendingConflicts: string[] = [];
+  let orderDeletedLinkTombstonesPreserved = 0;
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
 
   for (const row of allRows) {
     const rowId = row.id;
     if (!rowId || !/^\d+$/.test(rowId)) continue;
+    if (dataset === 'orders' && deletedOrderLinkedRowIds.has(rowId)) {
+      // A soft-deleted Order keeps its permanent Smartsheet identity as a
+      // tombstone. Never update it from pull and never treat its remote row as
+      // a candidate for a new Base44 Order, even if auto-create is enabled later.
+      orderDeletedLinkTombstonesPreserved++;
+      continue;
+    }
     if (dataset === 'orders' && duplicateOrderRowIds.has(rowId)) continue;
 
     if (dataset === 'sales' && targetedIds.size && !recordsByRowId[rowId]) continue;
@@ -717,6 +751,7 @@ async function pullDataset(
       // or recreate them merely to make the row counts agree.
       unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
       unlinked_row_ids: orderUnlinkedRowIds,
+      deleted_order_link_tombstones_preserved: orderDeletedLinkTombstonesPreserved,
     } : {}),
     created: createdCount,
     updated: updatedCount,
