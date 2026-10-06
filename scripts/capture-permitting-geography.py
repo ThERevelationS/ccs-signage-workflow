@@ -25,21 +25,22 @@ class Links(HTMLParser):
   if tag=='a' and d.get('href'):self.urls.append(d['href'])
 def parse(raw,state,family):
  text=raw.decode('utf-8-sig');assert 'Data as of January 1, 2026' in text,'Unexpected source vintage'
- p=Table();p.feed(text);headers=None;records=[]
+ p=Table();p.feed(text);headers=None;records=[];empty_marker=False
  for row in p.rows:
   if 'GEOID' in row and 'MTFCC' in row:
    assert headers is None,'Multiple geographic tables';headers=row;continue
   if headers is None or not row:continue
   if row==['No data available']:
    assert family=='concity','Unexpected empty geographic source'
-   continue
+   empty_marker=True;continue
   assert len(row)==len(headers),f'Unexpected column count: {row[:3]}'
   record=dict(zip(headers,row));assert record['STATE']==STATES[state],'Wrong state'
   assert re.fullmatch(r'\d+',record['GEOID']) and record['GEOID'].startswith(STATES[state]),'Invalid GEOID'
   assert record['NAME'] and record['BASENAME'],'Missing name'
   records.append(record)
  assert headers is not None,'No geographic table'
- assert records or family=='concity','Unexpected empty inventory'
+ assert records or (family=='concity' and empty_marker),'Unexpected empty inventory'
+ assert not (records and empty_marker),'Conflicting empty marker'
  assert len({r['GEOID'] for r in records})==len(records),'Duplicate GEOIDs within source'
  return records
 def fetch(url):
