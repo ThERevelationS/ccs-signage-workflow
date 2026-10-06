@@ -318,6 +318,94 @@ assert.throws(() => validateAuthoritativeAuditPage({
 }), /continuation cursor on a terminal authoritative page/);
 console.log('PASS pure authoritative pagination validator accepts valid candidate state and directly rejects non-progressing, repeated, out-of-order, and contradictory pages');
 
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: null,
+  scopedId: 'entry-1',
+}), /malformed authoritative page/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { items: {}, has_more: false, next_cursor: null },
+  scopedId: 'entry-1',
+}), /page items in an invalid format/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { items: [], has_more: 'false', next_cursor: null },
+  scopedId: 'entry-1',
+}), /invalid has_more completeness flag/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { items: [], has_more: false, next_cursor: 42 },
+  scopedId: 'entry-1',
+}), /continuation cursor in an invalid format/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { items: [null], has_more: false, next_cursor: null },
+  scopedId: 'entry-1',
+}), /malformed authoritative audit record/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: {
+    items: [{ id: 'audit-wrong-scope', time_entry_id: 'entry-2', server_timestamp: '2026-10-06T15:00:00.000Z' }],
+    has_more: false,
+    next_cursor: null,
+  },
+  scopedId: 'entry-1',
+}), /outside the requested TimeEntry scope/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: {
+    items: [{ id: 'audit-invalid-time', time_entry_id: 'entry-1', server_timestamp: 'not-a-time' }],
+    has_more: false,
+    next_cursor: null,
+  },
+  scopedId: 'entry-1',
+}), /without a valid server timestamp/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: {
+    items: [
+      { id: 'audit-old', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T14:00:00.000Z' },
+      { id: 'audit-new', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T15:00:00.000Z' },
+    ],
+    has_more: false,
+    next_cursor: null,
+  },
+  scopedId: 'entry-1',
+}), /outside newest-to-oldest server timestamp order/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: {
+    items: [{ id: '', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T15:00:00.000Z' }],
+    has_more: false,
+    next_cursor: null,
+  },
+  scopedId: 'entry-1',
+}), /without an immutable Audit ID/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: {
+    items: [
+      { id: 'audit-duplicate', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T15:00:00.000Z' },
+      { id: 'audit-duplicate', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T14:00:00.000Z' },
+    ],
+    has_more: false,
+    next_cursor: null,
+  },
+  scopedId: 'entry-1',
+}), /duplicate immutable Audit ID.*inside one authoritative page/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { ...directPage, next_cursor: '   ' },
+  scopedId: 'entry-1',
+}), /without a continuation cursor/);
+const equalBoundaryResult = validateAuthoritativeAuditPage({
+  page: {
+    items: [
+      { id: 'audit-tie-2', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T14:00:00.000Z' },
+      { id: 'audit-tie-1', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T13:00:00.000Z' },
+    ],
+    has_more: false,
+    next_cursor: null,
+  },
+  scopedId: 'entry-1',
+  previousPageOldestTimestampMs: Date.parse('2026-10-06T14:00:00.000Z'),
+  seenPageAuditIds: new Set(['prior-page-id']),
+});
+assert.equal(equalBoundaryResult.hasMore, false);
+assert.equal(equalBoundaryResult.nextCursor, '');
+assert.equal(equalBoundaryResult.acceptedPageOldestTimestampMs, Date.parse('2026-10-06T13:00:00.000Z'));
+console.log('PASS pure pagination validator directly covers malformed metadata/rows, TimeEntry scope, timestamp ordering, immutable IDs, missing cursors, and legitimate equal-timestamp boundaries');
+
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
