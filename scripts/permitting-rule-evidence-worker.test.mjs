@@ -244,3 +244,12 @@ test('conflict resolution cannot bypass draft or historical evidence',async()=>{
   assert.equal(result.status,409);assert.deepEqual(t.f.rules,before);
  }
 });
+
+test('conflict resolution preserves conflicts when source authority changed',async()=>{
+ const t=await setup(),rule=await t.importRule();t.f.rules[0].conflict_state='conflicting_sources';
+ t.f.patchSource({verification_status:'needs_verification'});
+ const before=structuredClone(t.f.rules);
+ const result=await t.review({action:'resolve_conflict',rule_id:rule.id,expected_version:rule.version,
+  rationale:'Reviewed every retained citation and its relationship to the disputed requirement.',reviewed_all_citations:true});
+ assert.equal(result.status,409);assert.deepEqual(t.f.rules,before);
+});
