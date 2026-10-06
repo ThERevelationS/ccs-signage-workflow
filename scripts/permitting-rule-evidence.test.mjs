@@ -255,3 +255,9 @@ test('replay reconciles uncertain AI receipt but never clears its retry guard',a
  await assert.rejects(extractEvidenceUnit({...f.api,requestId:'manual-request-00000002'}),/Reconcile/);
  assert.equal(f.calls.llm,1);
 });
+
+test('conflicting sources cannot be cleared by ordinary approval even with valid literal evidence',async()=>{
+ const f=await ruleFixture(),r=await extractEvidenceUnit(f.api),rule=r.candidates[0];
+ await assert.rejects(verifyRuleForApproval({...rule,conflict_state:'conflicting_sources'},f.api),/Conflicting source/);
+ assert.equal(rule.conflict_state,'under_review');
+});

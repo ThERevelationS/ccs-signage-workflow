@@ -145,6 +145,7 @@ export const EXTRACTION_RESPONSE_SCHEMA={type:'object',properties:{rules:{type:'
 
 export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity,profileEntity,settingsEntity}) {
   if (rule.draft_context || ['historical','superseded'].includes(rule.status) || rule.superseded_by) throw evidenceError('Draft, historical or superseded rules cannot be approved.');
+  if (rule.conflict_state==='conflicting_sources') throw evidenceError('Conflicting source evidence must be resolved before approval.');
   assertRuleApplicabilityEvidence(rule);
   const citations=rule.citations;
   if (!Array.isArray(citations) || !citations.length || citations.length>10) throw evidenceError('Approval requires bounded current-authority citations.');

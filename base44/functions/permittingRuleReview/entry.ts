@@ -73,7 +73,8 @@ Deno.serve(async req => {
         'unit','sign_type','sign_type_normalized','rule_category','notes','citations'];
       for (const key of allowed) if (Object.hasOwn(edits,key)) fields[key]=edits[key];
       const material=allowed.some(key=>key!=='notes' && Object.hasOwn(edits,key) && !evidenceEqual(edits[key],rule[key]));
-      if (material) fields={...fields,status:'needs_review',is_operational:false,is_workflow_instruction:false,conflict_state:'under_review'};
+      if (material) fields={...fields,status:rule.status==='historical'?'historical':'needs_review',is_operational:false,is_workflow_instruction:false,
+        conflict_state:rule.conflict_state==='conflicting_sources'?'conflicting_sources':'under_review'};
     }
     return Response.json({success:true,rule:await commitRule(Rules,rule,fields)});
   } catch(error) {
