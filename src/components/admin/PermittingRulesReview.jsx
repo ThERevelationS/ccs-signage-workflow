@@ -254,7 +254,7 @@ export default function PermittingRulesReview() {
         <div className="space-y-2">
           {rules.map((rule) => (
             <RuleCard
-              key={rule.id}
+              key={rule.id + ":" + (rule.version ?? "unversioned")}
               rule={rule}
               expanded={expandedId === rule.id}
               onToggle={() => setExpandedId(expandedId === rule.id ? null : rule.id)}
