@@ -168,10 +168,19 @@ async function performOrderSmartsheetCreate({
     ? attemptId.trim() : crypto.randomUUID();
   const started = typeof startedAt === 'string' && startedAt.trim()
     ? startedAt.trim() : new Date().toISOString();
-  const marker = { sheet_id: targetSheet, attempt_id: token, started_at: started, status: 'reserved' };
+  const expectedSnapshot = makeSnapshot(current);
+  const marker = {
+    sheet_id: targetSheet,
+    attempt_id: token,
+    started_at: started,
+    status: 'reserved',
+    expected_snapshot: expectedSnapshot,
+  };
 
-  // Write BEFORE POST. Any ambiguous error at or after this point leaves a
-  // durable marker; subsequent runs are not allowed to repeat the POST.
+  // Write BEFORE POST, including the exact mapped values we intend to create.
+  // If the POST later times out without returning a row ID, the snapshot is
+  // durable evidence for manual reconciliation only; it is never sufficient to
+  // infer or auto-link a row without a permanent Smartsheet row ID.
   await entity.update(id, {
     smartsheet_sheet_id: targetSheet,
     smartsheet_create_attempt: marker,
@@ -180,7 +189,8 @@ async function performOrderSmartsheetCreate({
   const reserved = await entity.get(id);
   if (reserved?.deleted || reserved?.smartsheet_create_attempt?.attempt_id !== token ||
       String(reserved?.smartsheet_sheet_id ?? '').trim() !== targetSheet ||
-      String(reserved?.smartsheet_row_id ?? '').trim()) {
+      String(reserved?.smartsheet_row_id ?? '').trim() ||
+      !snapshotsEqual(reserved?.smartsheet_create_attempt?.expected_snapshot, expectedSnapshot)) {
     throw new Error('Order creation reservation could not be verified. No Smartsheet POST was sent.');
   }
 
@@ -194,7 +204,7 @@ async function performOrderSmartsheetCreate({
   // Smartsheet Add Rows normally returns result: [{id: ...}], not result.id.
   // Requiring one confirmed ID avoids marking an unlinked POST as successful.
   const rowId = createdOrderSmartsheetRowId(body);
-  const snapshot = makeSnapshot(current);
+  const snapshot = expectedSnapshot;
   const createdAt = new Date().toISOString();
   const createdMarker = {
     ...marker,
