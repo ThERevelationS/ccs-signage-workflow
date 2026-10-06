@@ -173,7 +173,9 @@ export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity,pro
     if (rule.evidence_validation===RULE_EVIDENCE_METHOD) {
       if (!RULE_CATEGORIES.includes(rule.rule_category) || !evidenceEqual(rule.evidence_context?.jurisdiction_scope,source.jurisdiction_scope || null) ||
           citation.archived_file_url!==source.archived_file_url) throw evidenceError('Rule category, authority scope or retained archive requires review.');
-      for (const value of [rule.sign_type,rule.zoning_district_applicability,rule.trigger,rule.exceptions]) optionalLiteral(citation.excerpt,value);
+      for (const value of [rule.sign_type,rule.zoning_district_applicability,rule.trigger,rule.exceptions]) {
+        if (value && optionalLiteral(citation.excerpt,value)!==value) throw evidenceError('Stored structured field must retain the exact source whitespace.');
+      }
       const evidence=await readSourceEvidencePages({source,segmentEntity,startPage:citation.physical_page,pageCount:1});
       const page=evidence.pages[0];
       if (!page || !evidence.complete_document_text || evidence.needs_ocr_page_count || evidence.truncated_page_count ||
