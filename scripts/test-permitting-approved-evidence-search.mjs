@@ -44,6 +44,17 @@ try {
  assert.equal(calls[1].cursor,'25');
  await act(async()=>pending.shift().resolve({...page,evidence:[{...row,rule_id:'r2',rule_kind:'administrative_instruction'}],blocked:[],has_more:false,next_cursor:null}));
  assert.match(full(),/Reviewed submission instruction/);assert.match(full(),/2 loaded verified records/);
+ // A later blocked record must remove any earlier displayed quote; a
+ // subsequently verified record must remove its obsolete blocker.
+ await act(async()=>{button('Refresh approved evidence').props.onClick();});
+ await act(async()=>pending.shift().resolve(page));
+ await act(async()=>{button('Load next evidence page').props.onClick();});
+ await act(async()=>pending.shift().resolve({...page,evidence:[],blocked:[{rule_id:'r1',blocker:'Approval revoked during paging'}]}));
+ assert.doesNotMatch(full(),/Maximum area is 50/);assert.match(full(),/Approval revoked during paging/);
+ await act(async()=>{button('Load next evidence page').props.onClick();});
+ await act(async()=>pending.shift().resolve({...page,blocked:[],has_more:false,next_cursor:null}));
+ assert.match(full(),/Maximum area is 50/);assert.doesNotMatch(full(),/Approval revoked during paging/);
+ assert.match(full(),/Records can change between loads/);
  // A request begun for A may not paint evidence over B.
  await act(async()=>{button('Refresh approved evidence').props.onClick();});
  const stale=pending.shift();
