@@ -972,7 +972,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
     if (!skipHistory) {
       const trackedFields = new Set(pendingHistoryFieldsRef.current[orderId] || []);
-      changedFields.filter((changedField) => !INTERNAL_SALES_TRACKING_FIELDS.has(changedField)).forEach((changedField) => trackedFields.add(changedField));
+      changedFields
+        .filter((changedField) => (
+          !INTERNAL_SALES_TRACKING_FIELDS.has(changedField)
+          && JSON.stringify(currentWo[changedField]) !== JSON.stringify(mergedUpdates[changedField])
+        ))
+        .forEach((changedField) => trackedFields.add(changedField));
       pendingHistoryFieldsRef.current[orderId] = trackedFields;
     }
     setQuickEditError("");
