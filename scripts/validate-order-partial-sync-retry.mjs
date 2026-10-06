@@ -23,7 +23,8 @@ const phase2 = backend.slice(
 );
 assert.match(phase2, /if \(dataset === 'orders'\) orderBatchWriteError/);
 assert.match(phase2, /if \(dataset === 'orders'\) \{/);
-assert.match(phase2, /else \{[\s\S]*?const verifiedSalesUpdates = deferredBase44Updates\.filter/[\s\S]*?await base44\.asServiceRole\.entities\[entityName\]\.bulkUpdate\(verifiedSalesUpdates\)/);
+assert.match(phase2, /const verifiedSalesUpdates = deferredBase44Updates\.filter/);
+assert.match(phase2, /await base44\.asServiceRole\.entities\[entityName\]\.bulkUpdate\(verifiedSalesUpdates\)/);
 assert.doesNotMatch(
   phase2.slice(phase2.indexOf("if (dataset === 'orders')"), phase2.indexOf('} else {', phase2.indexOf("if (dataset === 'orders')"))),
   /bulkUpdate\(deferredBase44Updates\)/
