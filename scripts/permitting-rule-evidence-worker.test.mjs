@@ -161,3 +161,13 @@ test('admin UI uses selected-source previews, stable manual ids, and separate on
  assert.match(child,/Check saved result/);assert.match(child,/!preview/);assert.doesNotMatch(parent,/Run Extraction \(Boone\)/);
  assert.match(parent,/PermittingRuleEvidenceExtraction/);
 });
+test('review edits preserve conflicting source flags and historical classification',async()=>{
+ for(const status of ['needs_review','historical']) {
+  const t=await setup(),rule=await t.importRule();
+  t.f.rules[0].status=status;t.f.rules[0].conflict_state='conflicting_sources';
+  const changed=await t.review({action:'edit',rule_id:rule.id,expected_version:1,edits:{requirement:'Maximum area is 50 square feet. Changed'}});
+  assert.equal(changed.status,200);assert.equal(changed.data.rule.status,status);
+  assert.equal(changed.data.rule.conflict_state,'conflicting_sources');assert.equal(changed.data.rule.is_operational,false);
+  assert.equal((await t.review({action:'approve',rule_id:rule.id,expected_version:2})).status,409);
+ }
+});
