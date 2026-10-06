@@ -1,0 +1,14 @@
+{
+  "diagnostic_run": "6ac475b4c46d30ce6d546fbf",
+  "diagnostic_request": "5e8d140f-a0bc-4b14-b9e3-0d58feef11af",
+  "diagnostic_rejection_field": "exceptions",
+  "post_repair_run": "6ac476324340f3f557896348",
+  "post_repair_request": "dca26a1f-2fe8-4a19-88c9-2d8cad6ba71e",
+  "post_repair_candidates": 4,
+  "post_repair_rejected": 0,
+  "exception": "painted wall signs\nand sign face changes",
+  "repair_method": "unique-whitespace-span-v1",
+  "new_ai_attempts": 2,
+  "imports": 0,
+  "approvals": 0
+}

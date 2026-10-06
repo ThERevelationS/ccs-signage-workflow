@@ -11,10 +11,10 @@ Active: 6.9 of 6.9. Phase 7 has not started. Phase 5 archive/text reconciliation
 | Conflict form gates and version reset | Passed isolated React interaction | Rationale plus acknowledgement required; busy controls disabled; version remount clears inputs |
 | Conflict form keyboard/focus and browser interaction | Open | No production conflicting rules; isolated fixture URL blocked by client. Use permitted nonproduction browser fixture; do not create fake live rules |
 | Missing text, draft, historical and changed evidence | Passed tests; exceptions retained | Existing safeguards remain; do not infer statewide coverage |
-| Category, numeric and physical-page validation | Passed compiled tests | 60 focused tests overall |
+| Category, numeric and physical-page validation | Passed compiled tests | 61 focused tests overall |
 | Frontend helper parity, lint, production build | Passed | Eight browser helpers match backend originals |
 | All nine categories through staging/import | Passed in-memory acceptance | Forms, fees, procedures, applicability, sign types, dimensions, electronic timing, exemptions and other requirements retain literal evidence and stay nonoperational |
-| Expanded live fee/exception/office examples | Fee/office pilot passed; exception open | Improved prompt captured Campbell literal fee timing/nonrefundability and source office. Cincinnati staged two other requirements but rejected two structured-field proposals; no exception survived. Both remain authority-blocked. |
+| Expanded live fee/exception/office examples | Fee/office/exception pilots passed | Campbell literal fee timing/nonrefundability and office preserved. Cincinnati post-repair run staged four candidates including exact quoted exception with whitespace restoration; source authority remains unverified. |
 | Production import and approval | Not performed | Staff-reviewed operation; staging is not approval |
 
 6.9 must retain evidence and unresolved limitations. Completion of a pilot does not mean all Ohio/Kentucky localities are populated, applicable to a given address, or approved for workflow use.
