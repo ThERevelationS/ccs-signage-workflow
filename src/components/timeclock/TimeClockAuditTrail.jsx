@@ -138,8 +138,14 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (pageOrderingReversalIndex >= 0) {
             throw new Error("Integrity investigation pagination returned an authoritative page outside newest-to-oldest server timestamp order.");
           }
-          if (previousPageOldestTimestampMs !== null && pageTimestampMs.length > 0 && pageTimestampMs[0] > previousPageOldestTimestampMs) {
-            throw new Error("Integrity investigation pagination crossed the prior page timestamp boundary and cannot prove newest-to-oldest cursor ordering.");
+          if (previousPageOldestTimestampMs !== null && pageTimestampMs.length > 0) {
+            const currentPageNewestTimestampMs = pageTimestampMs[0];
+            if (currentPageNewestTimestampMs > previousPageOldestTimestampMs) {
+              throw new Error("Integrity investigation pagination crossed the prior page timestamp boundary and cannot prove newest-to-oldest cursor ordering.");
+            }
+            // Base44 cursor pagination preserves the requested single-field sort across pages.
+            // Equal server timestamps are therefore a legitimate boundary tie; immutable Audit ID
+            // uniqueness above/below this boundary prevents a tied record from being accepted twice.
           }
           if (pageTimestampMs.length > 0) {
             previousPageOldestTimestampMs = pageTimestampMs[pageTimestampMs.length - 1];
