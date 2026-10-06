@@ -1,3 +1,4 @@
+import PermittingApprovedEvidenceSearch from "./PermittingApprovedEvidenceSearch";
 import { useEffect, useRef, useState } from "react";
 import PermittingSourceAuthorityReview from "./PermittingSourceAuthorityReview";
 import PermittingOfficeAuthorityReview from "./PermittingOfficeAuthorityReview";
@@ -143,6 +144,8 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
         {!source.text_extraction_state?.method && " This source needs retained PDF page evidence before this extraction route can be used."}</div>
       {source.official_url && <a className="underline" href={source.official_url} target="_blank" rel="noopener noreferrer">Open official source</a>}
     </div>}
+    {source?.jurisdiction_id && <PermittingApprovedEvidenceSearch key={source.jurisdiction_id} jurisdictionId={source.jurisdiction_id}
+      jurisdictionName={source.jurisdiction_name || jurisdictionName} disabled={Boolean(busy)} />}
     {source && <PermittingOfficeCandidate key={source.id + ":office-candidate"} source={source} disabled={Boolean(busy)}
       onBusy={value => setBusy(previous => value ? "office_candidate" : previous === "office_candidate" ? "" : previous)} />}
     {source && <PermittingSourceAuthorityReview key={source.id} source={source} disabled={Boolean(busy)}
