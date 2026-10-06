@@ -60,7 +60,7 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
   return <section className="rounded border p-3 space-y-3" aria-label="Approved permitting evidence">
     <h3 className="font-semibold">Search approved requirements — {jurisdictionName}</h3>
     <p className="text-sm text-gray-600">Answers below quote staff-approved evidence for this jurisdiction. Confirm the property, zoning district, sign type and exceptions before using a requirement for a job.</p>
-    <Button size="sm" variant="outline" disabled={busy || disabled || !jurisdictionId} onClick={() => load(false)}>
+    <Button size="sm" variant="outline" className="min-h-11 h-auto max-w-full whitespace-normal py-2 text-left" disabled={busy || disabled || !jurisdictionId} onClick={() => load(false)}>
       {busy ? "Checking evidence…" : visibleResult ? "Refresh approved evidence" : "Load approved evidence"}
     </Button>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
@@ -87,11 +87,11 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
           </div>
         </blockquote>)}
       </article>)}
-      {visibleResult.blocked.length > 0 && <details><summary>{visibleResult.blocked.length} approved records blocked by current evidence checks</summary>
+      {visibleResult.blocked.length > 0 && <details><summary className="min-h-11 cursor-pointer py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600">{visibleResult.blocked.length} approved records blocked by current evidence checks</summary>
         <p className="text-sm">These records cannot support answers until their evidence is reviewed.</p>
         {visibleResult.blocked.map(row => <p key={row.rule_id} className="text-sm">{row.rule_id}: {row.blocker}</p>)}
       </details>}
-      {visibleResult.has_more && <Button size="sm" variant="outline" disabled={busy || disabled} onClick={() => load(true)}>Load next evidence page</Button>}
+      {visibleResult.has_more && <Button size="sm" variant="outline" className="min-h-11 h-auto max-w-full whitespace-normal py-2 text-left" disabled={busy || disabled} onClick={() => load(true)}>Load next evidence page</Button>}
     </>}
   </section>;
 }
