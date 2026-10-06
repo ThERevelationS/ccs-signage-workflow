@@ -16,4 +16,17 @@ class OhioReference(unittest.TestCase):
   with self.assertRaises(AssertionError):classify([self.county,self.county])
  def test_same_township_name_keeps_distinct_counties(self):
   other=row('county','39063','Other County',lsad='06',county='063');result=classify([self.county,other,row('county_subdivision','3906132000','Green township'),row('county_subdivision','3906332000','Green township',county='063')]);self.assertNotEqual(result['candidates'][2]['reference_key'],result['candidates'][3]['reference_key'])
+class ElectricalResearchRequirements(unittest.TestCase):
+ def test_every_candidate_has_separate_unknown_roles(self):
+  county=row('county','39061','Hamilton County',lsad='06')
+  result=classify([county,row('county_subdivision','3906132000','Green township')])
+  for candidate in result['candidates']:
+   research=candidate['office_research'];self.assertFalse(research['coverage_complete'])
+   for key in ['electrical_permit','electrical_inspection']:
+    role=research['roles'][key];self.assertEqual(role['applicability'],'unknown');self.assertEqual(role['research_status'],'pending');self.assertFalse(role['authority_verified']);self.assertEqual(role['government_office_ids'],[])
+   self.assertIsNot(research['roles']['electrical_permit'],research['roles']['electrical_inspection'])
+ def test_inspection_details_and_delegation_are_explicit(self):
+  result=classify([row('county','39061','Hamilton County',lsad='06')]);requirements=result['office_research_requirements']
+  inspection=next(r for r in requirements['roles'] if r['key']=='electrical_inspection')
+  self.assertIn('scheduling_contact_or_portal',inspection['research_fields']);self.assertIn('required_inspection_stages',inspection['research_fields']);self.assertIn('delegation_or_contract_provider',requirements['common_research_fields'])
 unittest.main()

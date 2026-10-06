@@ -1,0 +1,15 @@
+{
+  "version": "office-research-requirements-v1",
+  "purpose": "Research and applicability checklist; not an assertion every permit is required.",
+  "roles": [
+    {"key":"sign_permit","label":"Sign permit issuer"},
+    {"key":"zoning","label":"Zoning authority"},
+    {"key":"building","label":"Building permit and inspection authority"},
+    {"key":"electrical_permit","label":"Electrical permit issuer","research_fields":["illuminated_sign_applicability","new_circuit_and_connection_scope","permit_application","online_application_portal","fees","contractor_registration_or_licensing","required_submittals"]},
+    {"key":"electrical_inspection","label":"Electrical inspection office","research_fields":["inspection_provider","scheduling_contact_or_portal","required_inspection_stages","booking_lead_time","permit_number_or_prerequisites","access_and_concealment_conditions","reinspection_procedure_and_fees","utility_release_if_applicable"]},
+    {"key":"right_of_way","label":"Right-of-way authority"},
+    {"key":"historic_review","label":"Historic/design review authority"}
+  ],
+  "common_research_fields":["canonical_office_identity","official_role_evidence","explicit_service_area","commercial_sign_scope","delegation_or_contract_provider","phone_email_address","official_source_url","source_date_and_version","document_archives_or_online_form_links"],
+  "completion_rules":["Review applicability separately for every role; unknown is unresolved.","The same office can fulfill multiple roles only with evidence for each responsibility.","County membership alone does not prove county office responsibility for a city or township.","Shared or third-party inspection providers require explicit delegation and service-area evidence.","A generic electrical authority review does not automatically establish issuance or inspection responsibility.","A not-applicable conclusion requires supporting evidence and review; no invented office or approval.","Downloaded forms and official online submission links must be retained when available."]
+}

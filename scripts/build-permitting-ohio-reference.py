@@ -2,6 +2,7 @@
 import collections,json,pathlib,runpy
 SOURCE=pathlib.Path('docs/official-evidence/oh-ky-geography-2026')
 OUTPUT=pathlib.Path('docs/official-evidence/ohio-reference-2026')
+REQUIREMENTS=pathlib.Path('base44/shared/permittingOfficeResearchRequirements.json')
 DEFINITIONS={'functional_status':'https://www.census.gov/library/reference/code-lists/functional-status-codes.html','legal_status':'https://www.census.gov/library/reference/code-lists/legal-status-codes.html'}
 def classify(records):
  rows=[r for r in records if r['state']=='OH'];counties={r['GEOID']:r for r in rows if r['geography_kind']=='county'}
@@ -22,9 +23,14 @@ def classify(records):
    record['reason']='Census hierarchy entity; not a separate government';hierarchy.append(record)
   else:
    record['reason']='Explicit status/authority relationship review required';review.append(record)
+ requirements=json.loads(REQUIREMENTS.read_text())
+ keys=[r['key'] for r in requirements['roles']];assert len(set(keys))==len(keys),'Duplicate research role'
+ for record in candidates:
+  record['office_research']={'requirements_version':requirements['version'],'coverage_complete':False,
+   'roles':{key:{'applicability':'unknown','research_status':'pending','government_office_ids':[],'authority_verified':False} for key in keys}}
  assert len(candidates)+len(review)+len(hierarchy)==len(rows),'Unaccounted Ohio rows'
  assert len({r['reference_key'] for r in candidates+review+hierarchy})==len(rows),'Duplicate source identity'
- return {'source_vintage':'2026-01-01','definitions':DEFINITIONS,'authority_verified':False,'inventory_complete_for_permitting':False,'notes':['Candidates are geographic research targets, not confirmed sign-permitting offices.','Active government status does not establish zoning or sign jurisdiction.','Place county membership remains pending; never infer from centroid or name.','Consolidated, inactive and nonfunctioning entities retained for review.','No production records created or changed.'],'candidates':candidates,'status_review':review,'hierarchy_reference':hierarchy}
+ return {'source_vintage':'2026-01-01','definitions':DEFINITIONS,'office_research_requirements':requirements,'authority_verified':False,'inventory_complete_for_permitting':False,'notes':['Candidates are geographic research targets, not confirmed sign-permitting offices.','Active government status does not establish zoning or sign jurisdiction.','Place county membership remains pending; never infer from centroid or name.','Consolidated, inactive and nonfunctioning entities retained for review.','No production records created or changed.'],'candidates':candidates,'status_review':review,'hierarchy_reference':hierarchy}
 if __name__=='__main__':
  runpy.run_path('scripts/capture-permitting-geography.py')['verify']()
  result=classify(json.loads((SOURCE/'inventory.json').read_text())['records']);OUTPUT.mkdir(exist_ok=True)
