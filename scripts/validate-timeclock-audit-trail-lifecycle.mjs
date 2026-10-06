@@ -186,6 +186,12 @@ assert.doesNotMatch(source, /integrityDiagnosticByAuditId/);
 assert.match(source, /integrityInvestigation \? `diagnostic-row-\$\{sourceRowIndex\}`/);
 console.log('PASS integrity mode preserves every duplicate immutable Audit-ID row as a separate diagnostic and never collapses duplicate identity through an ID-keyed map');
 
+assert.match(source, /rows\.map\(\(row, sourceRowIndex\) => \(\{ row, diagnostic_row_index: sourceRowIndex \}\)\)\.filter\(\(\{ row \}\) =>/);
+assert.match(source, /filtered\.map\(\(\{ row, diagnostic_row_index: sourceRowIndex \}\) =>/);
+assert.doesNotMatch(source, /rows\.indexOf\(row\)/);
+assert.match(source, /integrityDiagnosticByRowIndex\.get\(sourceRowIndex\)/);
+console.log('PASS search/action filtering carries the original diagnostic locator with each row so filtering or future display reordering cannot re-associate integrity diagnostics');
+
 const mixedDuplicateRows = [
   { id: 'audit-duplicate', action: 'clock_in', request_id: 'request-valid', server_timestamp: '2026-10-05T13:00:00.000Z', details: { employee_attested_clock_in: '2026-10-05T13:00:00.000Z' } },
   { id: 'audit-duplicate', action: 'clock_in', request_id: '', server_timestamp: '2026-10-05T14:00:00.000Z', details: { employee_attested_clock_in: '2026-10-05T14:00:00.000Z' } },
