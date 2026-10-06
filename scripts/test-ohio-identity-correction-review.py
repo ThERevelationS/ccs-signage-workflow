@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(r["review_action"],"missing_or_placeholder_parent_county")
 
     def test_county_does_not_need_parent_county(self):
-        r=m.review(row(kind="county",county=None,name="Adams County"),[c("a","Adams","county","Adams County")],{})
+        r=m.review(row(kind="county",county=None,name="Adams County"),[c("a","Adams","county","Adams County"),c("b","Adams","township","Adams County")],{})
         self.assertEqual(r["review_action"],"name_type_county_candidate_supported")
 
     def test_multi_county_support(self):
