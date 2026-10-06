@@ -14,7 +14,8 @@ def county_key(value):
 def review(row, candidates, county_lookup):
     exact=[c for c in candidates if identity.name_key(c["base_name"])==identity.name_key(row["name"])]
     hits=exact or [c for c in candidates if identity.name_key(c["base_name"])==identity.normalize(row["name"])]
-    county=county_key(row.get("county"))
+    # A county is its own geographic level; it needs no parent-county field.
+    county=county_key(row["name"]) if row["type"]=="county" else county_key(row.get("county"))
     supported=[]
     evidence=[]
     for c in hits:
