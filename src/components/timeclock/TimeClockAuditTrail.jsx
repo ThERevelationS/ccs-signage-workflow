@@ -113,7 +113,13 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             throw new Error("Integrity investigation pagination returned a continuation cursor in an invalid format.");
           }
           const pageItems = page.items;
-          const pageAuditIds = pageItems.map((row) => String(row?.id || "").trim()).filter(Boolean);
+          const malformedPageItemIndexes = pageItems
+            .map((row, rowIndex) => (!row || typeof row !== "object" || Array.isArray(row) ? rowIndex : -1))
+            .filter((rowIndex) => rowIndex >= 0);
+          if (malformedPageItemIndexes.length > 0) {
+            throw new Error(`Integrity investigation pagination returned ${malformedPageItemIndexes.length} malformed authoritative audit record${malformedPageItemIndexes.length === 1 ? "" : "s"} inside a valid page.`);
+          }
+          const pageAuditIds = pageItems.map((row) => String(row.id || "").trim()).filter(Boolean);
           const repeatedPageAuditIds = [...new Set(pageAuditIds.filter((id) => seenPageAuditIds.has(id)))];
           if (repeatedPageAuditIds.length > 0) {
             throw new Error(`Integrity investigation pagination repeated ${repeatedPageAuditIds.length} immutable audit record${repeatedPageAuditIds.length === 1 ? "" : "s"} across authoritative pages.`);
