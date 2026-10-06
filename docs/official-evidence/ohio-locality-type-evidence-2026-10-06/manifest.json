@@ -1,0 +1,32 @@
+[
+  {
+    "url": "https://www.clevesoh.gov/",
+    "final_url": "https://www.clevesoh.gov/",
+    "file": "cleves.html",
+    "sha256": "02cf46a4e7416ef2667282aa276da8df1084659229c6f0612399ad8defa5b33d",
+    "bytes": 1470010,
+    "reported_locality_type": "village",
+    "retrieved_at": "2026-10-06T23:58:47.982676+00:00",
+    "authority_verified": false
+  },
+  {
+    "url": "https://norwoodohio.gov/",
+    "final_url": "https://norwoodohio.gov/",
+    "file": "norwood.html",
+    "sha256": "980006ade95520a83d4ae870a4e11327bbc310157c8106ce48d64fe83c091eb4",
+    "bytes": 101804,
+    "reported_locality_type": "city",
+    "retrieved_at": "2026-10-06T23:58:48.761783+00:00",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.deerpark-oh.gov/about/",
+    "final_url": "https://www.deerpark-oh.gov/about/",
+    "file": "deer-park.html",
+    "sha256": "2417251d3643846e29917fbe0338fa04056719f3d77eb249f7b0e1cf818fa605",
+    "bytes": 34907,
+    "reported_locality_type": "city",
+    "retrieved_at": "2026-10-06T23:58:48.856591+00:00",
+    "authority_verified": false
+  }
+]
