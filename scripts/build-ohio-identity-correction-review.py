@@ -57,6 +57,8 @@ def main():
     grf=json.loads((ROOT/"docs/official-evidence/ohio-grfc-2026/relationships.json").read_text())
     live=json.loads((folder/"live-snapshot.json").read_text())
     lookup={r["reference_key"]:r["county_names"] for r in grf["active_municipal_reference_relationships"]}
+    schema_types={"queue":json.loads((ROOT/"base44/entities/SourceCollectionQueue.jsonc").read_text())["properties"]["jurisdiction_type"]["enum"],
+                  "profiles":json.loads((ROOT/"base44/entities/JurisdictionProfile.jsonc").read_text())["properties"]["type"]["enum"]}
     report={"source_snapshot_retrieved_at":live["retrieved_at"],"production_records_changed":False,
             "notes":["A unique alternative type is a proposal only; a community and township may share a name.",
                      "Fresh record identity, updated_date and relationship reads are required before any mutation.",
@@ -73,6 +75,14 @@ def main():
             row={"id":r["id"],"name":name,"type":kind,"county":county,"snapshot_updated_date":r.get("updated_date"),
                  "expected_identity_fields":{"name":name,"type":kind,"county":county}}
             rows.append(review(row,ref["candidates"],lookup))
+        counts=Counter(r["suggested_reference_key"] for r in rows if r["suggested_reference_key"])
+        for r in rows:
+            r["schema_supports_suggested_type"]=bool(r["suggested_type"] and r["suggested_type"] in schema_types[source])
+            r["schema_supports_current_type"]=r["type"] in schema_types[source]
+            r["multiple_rows_suggest_same_reference"]=bool(r["suggested_reference_key"] and counts[r["suggested_reference_key"]]>1)
+            r["correction_blockers"]=["official_identity_review_required","fresh_version_guard_required"]
+            if r["suggested_type"] and not r["schema_supports_suggested_type"]:r["correction_blockers"].append("suggested_type_not_supported_by_entity_schema")
+            if r["multiple_rows_suggest_same_reference"]:r["correction_blockers"].append("multiple_existing_rows_require_relationship_and_history_review")
         report[source]={"review_action_counts":dict(Counter(r["review_action"] for r in rows)),"rows":rows}
         print(source,json.dumps(report[source]["review_action_counts"]))
     (folder/"identity-correction-review.json").write_text(json.dumps(report,indent=2)+"\n")
