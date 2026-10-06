@@ -109,6 +109,16 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           return;
         }
         const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
+        if (integrityMode && loadedRows.length >= 100) {
+          console.error("Time Clock audit integrity investigation completeness failure:", {
+            requested_time_entry_id: scopedId,
+            returned_audit_record_count: loadedRows.length,
+            query_limit: 100,
+          });
+          setRows([]);
+          setError(`Payroll evidence integrity investigation cannot prove the authoritative audit history is complete because the scoped query reached its 100-record safety limit for TimeEntry ${scopedId}. No diagnostic audit records are being displayed or treated as trusted payroll evidence. Narrowing the display locally would not make this evidence complete.`);
+          return;
+        }
         if (integrityMode) {
           const {
             diagnostics: authoritativeIntegrityDiagnostics,
