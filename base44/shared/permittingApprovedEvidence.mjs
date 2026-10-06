@@ -38,7 +38,7 @@ export async function retrieveApprovedEvidence({entities,jurisdictionId,limit=25
         jurisdiction_scope:rule.evidence_context?.jurisdiction_scope ?? null,
         address_applicability:'requires_review'});
     } catch(error) {
-      if(!error?.status)throw error;
+      if(error?.status!==409)throw error;
       blocked.push({rule_id:rule.id,blocker:String(error.message).slice(0,500)});
     }
   }

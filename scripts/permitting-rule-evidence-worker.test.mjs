@@ -363,3 +363,13 @@ test('approved retrieval has explicit pagination and rejects invalid scope/range
  for(const invalid of [{jurisdiction_id:''},{limit:0},{limit:101},{cursor:-1},{cursor:0.5}])
   assert.equal((await t.review({...action,...invalid})).status,400);
 });
+
+test('retrieval excludes disabled approvals and fails the request on infrastructure errors',async()=>{
+ const t=await setup(),rule=await t.importRule(),action={action:'retrieve_evidence',jurisdiction_id:'profile'};
+ await t.review({action:'approve',rule_id:rule.id,expected_version:1});
+ t.f.rules[0].is_operational=false;
+ assert.equal((await t.review(action)).data.evidence.length,0);
+ t.f.rules[0].is_operational=true;
+ t.f.api.sourceEntity.get=async()=>{throw Object.assign(Error('source unavailable'),{status:503});};
+ assert.equal((await t.review(action)).status,503);
+});
