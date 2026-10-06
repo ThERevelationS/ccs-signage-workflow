@@ -1,3 +1,11 @@
+### 2026-10-06 — 10.1 of 10.3: live discovery electrical/inspection link gap fixed
+
+Confirmed reusable discovery relevance omitted electrical/inspection-only labels. Added electrical/electric/inspection/inspector terms to official same-host link eligibility. Existing document type, sign priority, host/credential filters, budgets and staff authority gates unchanged. Electrical pages remain research resources, not automatic permit-issuer or inspection approvals. External inspection-provider links still require separate authorized official delegation work; this does not broaden network scope.
+
+30 discovery/link/continuation tests passed, including actual three-page traversal from Electrical to Inspections to downloadable checklist with no AI or authority promotion. Dispatcher and refreshJurisdiction bundles compiled; diff check passed. Archived two actual City of Cincinnati pages with URLs, timestamps, byte counts and SHA-256 under docs/official-evidence/ohio-electrical-discovery-2026-10-06. City source names Inspection Bureau, Inc. for electrical permits, plan review and inspections. Retained unapproved research candidate with separate roles and explicit missing current portals/forms, sign applicability, fees and service-area review. Both archives verified against manifest. No production entity changes or paid batch invoked; no frontend publish.
+
+State board directory URL returned 404 through web retrieval; provider homepage timed out. These blocks remain recorded, not replaced with guessed portals. Fresh concurrent Smartsheet changes observed and preserved. 10.1 tasks 1/3 complete; task 2 Ohio reference/office mapping partial; task 4 live acceptance pending. Next: statewide official office directory retrieval and Ohio place-county reconciliation, then integrate separate electrical responsibility gaps into live coverage. Earlier Phase 5/8/9 acceptance remains open.
+
 ### 2026-10-06 — 10.1 of 10.3: electrical permitting and inspection research checklist
 
 Audited existing catalog/locality office model and verified-authority pipeline. The authority role is currently generic electrical; explicit permit issuance versus inspection responsibility is not separately established by that role alone. No role enum, staff approval, existing reviewed evidence or production entity changed.

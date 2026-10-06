@@ -11,7 +11,7 @@ const order = (id, marker = {}, overrides = {}) => ({
   ...overrides,
 });
 const linked = order('linked', { status: 'linked', row_id: '111', linked_at: '2026-09-24T12:01:00Z' }, { smartsheet_row_id: '111' });
-const reserved = order('timeout', { status: 'reserved' });
+const reserved = order('timeout', { status: 'reserved', expected_snapshot: { '1': 'Test customer' } });
 const existing = order('existing', { status: 'created_unlinked', row_id: '222', expected_snapshot: { '1': 'Test customer' } }, { smartsheet_pending_local_sync: true });
 const deletedRecoverableShape = order('deleted-recoverable-shape', { status: 'created_unlinked', row_id: '223', expected_snapshot: { '1': 'Test customer' } }, { smartsheet_pending_local_sync: true, deleted: true });
 const missing = order('missing', { status: 'reserved', row_id: '333' });
@@ -36,7 +36,9 @@ const reasons = Object.fromEntries(result.records_by_category.ambiguous.map(r =>
 for (const id of ['timeout', 'existing', 'conflict', 'other-sheet', 'duplicate', 'deleted', 'deleted-recoverable-shape']) {
   assert.equal(typeof reasons[id], 'string');
 }
-assert.match(reasons.timeout, /cannot be ruled out/i);
+assert.match(reasons.timeout, /intended create snapshot is preserved/i);
+const timeoutReview = result.records_by_category.ambiguous.find(r => r.base44_record_id === 'timeout');
+assert.equal(timeoutReview.expected_snapshot_recorded, true);
 assert.match(reasons.conflict, /different permanent row IDs/i);
 assert.match(reasons['other-sheet'], /does not match/i);
 assert.match(reasons.duplicate, /multiple active/i);
@@ -95,6 +97,8 @@ assert.match(ui, /Retry Sync can safely attempt recovery/);
 assert.match(ui, /Manual Smartsheet investigation required/);
 assert.match(ui, /no recovery runs automatically/);
 assert.match(ui, /durable created_unlinked marker/);
+assert.match(ui, /Expected create snapshot:/);
+assert.match(ui, /Recorded before POST/);
 console.log('PASS admin review explains exactly when Retry Sync recovery is eligible and when manual investigation is required');
 
 const source = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts', import.meta.url), 'utf8');

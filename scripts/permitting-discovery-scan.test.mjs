@@ -77,3 +77,11 @@ test('saved frontier ranks destination labels without inherited forms-directory 
   assert.deepEqual(result.pending_pages,[{url:generic,depth:1}]);
   assert.equal(result.continuation_state.attempted_pages_total,3);
 });
+
+test('electrical-only department link is followed to inspection checklist without AI or authority promotion', async () => {
+ const r=await scan({'https://county.gov/permits':'<a href="/trade">Electrical</a>',
+  'https://county.gov/trade':'<a href="/booking">Inspections</a>',
+  'https://county.gov/booking':'<a href="/rough.pdf">Electrical inspection checklist</a>'});
+ assert.equal(r.attempted_pages,3);assert(r.documents.some(d=>d.url==='https://county.gov/rough.pdf'));
+ assert.equal(r.authority_established,false);assert.equal(r.jurisdiction_coverage_complete,false);assert.equal(r.llm_calls,0);
+});
