@@ -1,5 +1,6 @@
 import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
 import { assertOrderPermanentDeleteSafe, orderHasSmartsheetRelationship } from "./orderDeletionSmartsheetSafety.mjs";
+import { assertOrderRestoreSmartsheetSafe, orderRestoreSmartsheetIdentity } from "./orderRestoreSmartsheetSafety.mjs";
 import {
   deleteEntityIfUnchanged,
   expectedEntityFields,
@@ -170,13 +171,25 @@ export async function softDeleteOrderFromLoadedSnapshot({
 export async function restoreOrderFromLoadedTrashSnapshot({
   entity,
   order,
+  readActiveLinkedOrders,
   label = "Order recovery",
 } = {}) {
-  requireLoadedOrderVersion(order, label);
+  const { id } = requireLoadedOrderVersion(order, label);
   if (order?.deleted !== true) {
     throw new Error(`${label} was blocked because the loaded Order is no longer a verified trash item.`);
   }
-  return replaceOrderFieldsIfUnchanged({
+
+  const identity = orderRestoreSmartsheetIdentity(order);
+  let restoreSafety = { ...identity, pendingLocalSync: order?.smartsheet_pending_local_sync === true };
+  if (identity.hasRelationship) {
+    if (typeof readActiveLinkedOrders !== "function") {
+      throw new Error(`${label} cannot restore a Smartsheet-linked Order without verifying the current permanent row owner.`);
+    }
+    const activeLinkedOrders = await readActiveLinkedOrders({ sheetId: identity.sheetId, rowId: identity.rowId });
+    restoreSafety = assertOrderRestoreSmartsheetSafe(order, activeLinkedOrders, label);
+  }
+
+  const result = await replaceOrderFieldsIfUnchanged({
     entity,
     order,
     expectedFields: expectedOrderFields(order, {
@@ -193,6 +206,20 @@ export async function restoreOrderFromLoadedTrashSnapshot({
     fullVersion: true,
     label,
   });
+
+  if (restoreSafety.hasRelationship) {
+    if (typeof entity?.get !== "function") {
+      throw new Error(`${label} restored the Order but could not verify its permanent Smartsheet identity. Reload Order Trash before taking another action.`);
+    }
+    const verified = await entity.get(id);
+    if (!verified || verified.deleted === true ||
+        String(verified.smartsheet_sheet_id || "").trim() !== restoreSafety.sheetId ||
+        String(verified.smartsheet_row_id || "").trim() !== restoreSafety.rowId ||
+        (verified.smartsheet_pending_local_sync === true) !== restoreSafety.pendingLocalSync) {
+      throw new Error(`${label} could not verify that the original permanent Smartsheet row and pending-sync state survived recovery. Reload before continuing.`);
+    }
+  }
+  return result;
 }
 
 function mapDeleteResult(result = {}) {
