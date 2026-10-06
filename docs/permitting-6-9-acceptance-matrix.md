@@ -14,7 +14,7 @@ Active: 6.9 of 6.9. Phase 7 has not started. Phase 5 archive/text reconciliation
 | Category, numeric and physical-page validation | Passed compiled tests | 59 focused tests overall |
 | Frontend helper parity, lint, production build | Passed | Eight browser helpers match backend originals |
 | All nine categories through staging/import | Passed in-memory acceptance | Forms, fees, procedures, applicability, sign types, dimensions, electronic timing, exemptions and other requirements retain literal evidence and stay nonoperational |
-| Expanded live fee/exception/office examples | Open | Current live AI pilots exercise submission requirements; category fixtures do not establish real locality coverage |
+| Expanded live fee/exception/office examples | Open; real fee attempt incomplete | Campbell page 2 fresh run staged two submissions and rejected one nonliteral requirement; no fee_timing candidate. Prompt coverage/line-break guidance strengthened; no retry yet. Cincinnati exception extraction remains pending |
 | Production import and approval | Not performed | Staff-reviewed operation; staging is not approval |
 
 6.9 must retain evidence and unresolved limitations. Completion of a pilot does not mean all Ohio/Kentucky localities are populated, applicable to a given address, or approved for workflow use.
