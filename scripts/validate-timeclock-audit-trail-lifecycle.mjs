@@ -166,9 +166,17 @@ console.log('PASS rapid investigation changes request the newest TimeEntry scope
 assert.match(source, /if \(scopedId && integrityMode\)/);
 assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ sort: "-server_timestamp", limit: 5000 \}\)/);
 assert.match(source, /while \(true\)/);
-assert.match(source, /const pageItems = Array\.isArray\(page\?\.items\) \? page\.items : \[\]/);
+assert.match(source, /if \(!page \|\| typeof page !== "object" \|\| Array\.isArray\(page\)\)/);
+assert.match(source, /pagination returned a malformed authoritative page/);
+assert.match(source, /if \(!Array\.isArray\(page\.items\)\)/);
+assert.match(source, /authoritative page items in an invalid format/);
+assert.match(source, /if \(typeof page\.has_more !== "boolean"\)/);
+assert.match(source, /invalid has_more completeness flag/);
+assert.match(source, /page\.next_cursor !== null && page\.next_cursor !== undefined && typeof page\.next_cursor !== "string"/);
+assert.match(source, /continuation cursor in an invalid format/);
+assert.match(source, /const pageItems = page\.items/);
 assert.match(source, /loadedRows\.push\(\.\.\.pageItems\)/);
-assert.match(source, /if \(!page\?\.has_more\) break/);
+assert.match(source, /if \(!page\.has_more\)[\s\S]*if \(nextCursor\)[\s\S]*continuation cursor on a terminal authoritative page/);
 assert.match(source, /if \(!nextCursor\)/);
 assert.match(source, /pagination reported more authoritative audit records without a continuation cursor/);
 assert.match(source, /const seenCursors = new Set\(\)/);
@@ -184,7 +192,7 @@ assert.doesNotMatch(source, /integrityMode && loadedRows\.length >= 100/);
 const integrityPaginationStart = source.indexOf('if (scopedId && integrityMode)');
 const integrityClassification = source.indexOf('classifyAuthoritativePayrollAuditIntegrity(loadedRows)');
 assert.ok(integrityPaginationStart >= 0 && integrityClassification > integrityPaginationStart, 'integrity classification must occur only after the cursor walk completes');
-console.log('PASS integrity investigation walks every scoped authoritative audit page and fails closed on missing/repeated cursors or records repeated across pages');
+console.log('PASS integrity investigation walks every scoped authoritative audit page and fails closed on malformed page structure, contradictory terminal cursors, missing/repeated cursors, or records repeated across pages');
 
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
