@@ -169,20 +169,20 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (pageItems.length > 0 && newPageAuditIds.length === 0) {
             throw new Error("Integrity investigation pagination returned a nonempty authoritative page without any new immutable Audit IDs, so cursor evidence progress cannot be proven.");
           }
-          newPageAuditIds.forEach((id) => seenPageAuditIds.add(id));
-          loadedRows.push(...pageItems);
           const nextCursor = String(page.next_cursor || "").trim();
-          if (!page.has_more) {
-            if (nextCursor) {
-              throw new Error("Integrity investigation pagination returned a continuation cursor on a terminal authoritative page.");
-            }
-            break;
+          if (!page.has_more && nextCursor) {
+            throw new Error("Integrity investigation pagination returned a continuation cursor on a terminal authoritative page.");
           }
-          if (!nextCursor) {
+          if (page.has_more && !nextCursor) {
             throw new Error("Integrity investigation pagination reported more authoritative audit records without a continuation cursor.");
           }
-          if (seenCursors.has(nextCursor)) {
+          if (page.has_more && seenCursors.has(nextCursor)) {
             throw new Error("Integrity investigation pagination repeated a continuation cursor and was stopped before it could loop indefinitely.");
+          }
+          newPageAuditIds.forEach((id) => seenPageAuditIds.add(id));
+          loadedRows.push(...pageItems);
+          if (!page.has_more) {
+            break;
           }
           seenCursors.add(nextCursor);
           page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 });
