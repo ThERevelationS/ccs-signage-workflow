@@ -1206,6 +1206,86 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(sourceVerify.body.verified, true, JSON.stringify(sourceVerify.body));
   assert.equal(destinationVerify.status, 200, JSON.stringify(destinationVerify.body));
   assert.equal(destinationVerify.body.verified, true, JSON.stringify(destinationVerify.body));
+
+  let tamperSequence = 0;
+  const expectHistoryTamperFailure = async (payPeriodId, label) => {
+    tamperSequence += 1;
+    const verified = await h.invoke({
+      action: 'pay_period_history_verify', pay_period_id: payPeriodId,
+      request_id: `modified-cross-tamper-${tamperSequence}`,
+    });
+    assert.equal(verified.status, 200, `${label}: ${JSON.stringify(verified.body)}`);
+    assert.equal(verified.body.verified, false, `${label} was not detected: ${JSON.stringify(verified.body)}`);
+  };
+  const tamperField = async (target, field, tamperedValue, payPeriodId, label) => {
+    const originalValue = clone(target[field]);
+    target[field] = clone(tamperedValue);
+    try { await expectHistoryTamperFailure(payPeriodId, label); }
+    finally { target[field] = originalValue; }
+  };
+
+  for (const [field, value] of [
+    ['clock_in', '2026-09-20T15:05:00.000Z'],
+    ['clock_out', '2026-09-20T23:05:00.000Z'],
+    ['lunch_minutes', 16],
+    ['notes', 'tampered employee request'],
+  ]) {
+    await tamperField(request.requested_changes, field, value, 'synthetic-period', `CorrectionRequest requested_changes.${field}`);
+  }
+  for (const [field, value] of [
+    ['review_decision', 'approve'],
+    ['review_request_id', 'tampered-review-request-id'],
+    ['reviewer_email', 'other-admin@synthetic.invalid'],
+    ['reviewed_at', '2026-09-25T12:34:56.000Z'],
+    ['reviewer_reason', 'tampered reviewer reason'],
+  ]) {
+    await tamperField(request, field, value, 'synthetic-period', `CorrectionRequest ${field}`);
+  }
+  await tamperField(request, 'status', 'approved', 'synthetic-period', 'CorrectionRequest decision/status binding');
+  await tamperField(request, 'applied_audit_id', 'tampered-audit-id', 'synthetic-period', 'CorrectionRequest applied audit ID');
+
+  for (const [field, value] of [
+    ['clock_in', '2026-09-27T16:35:00.000Z'],
+    ['clock_out', '2026-09-28T00:35:00.000Z'],
+    ['lunch_minutes', 31],
+    ['notes', 'tampered applied correction'],
+  ]) {
+    await tamperField(appliedAudit.details.corrected, field, value, 'synthetic-period', `admin_correction corrected.${field}`);
+  }
+  await tamperField(appliedAudit, 'request_id', 'tampered-applied-request-id', 'synthetic-period', 'admin_correction request ID');
+  await tamperField(appliedAudit, 'actor_email', 'other-admin@synthetic.invalid', 'synthetic-period', 'admin_correction reviewer identity binding');
+  await tamperField(appliedAudit.details, 'review_payload_hash', 'tampered-review-payload-hash', 'synthetic-period', 'admin_correction review payload binding');
+
+  const provenanceTamperCases = [
+    ['requested_clock_in', '2026-09-20T15:05:00.000Z'],
+    ['requested_clock_out', '2026-09-20T23:05:00.000Z'],
+    ['requested_lunch_minutes', 16],
+    ['requested_notes', 'tampered frozen request'],
+    ['corrected_clock_in', '2026-09-27T16:35:00.000Z'],
+    ['corrected_clock_out', '2026-09-28T00:35:00.000Z'],
+    ['corrected_lunch_minutes', 31],
+    ['corrected_notes', 'tampered frozen applied result'],
+    ['applied_audit_id', 'tampered-frozen-audit-id'],
+    ['applied_audit_request_id', 'tampered-frozen-audit-request-id'],
+  ];
+  for (const [payPeriodId, change, side] of [
+    ['synthetic-period', sourceChange, 'source removed'],
+    ['modified-destination-period', destinationChange, 'destination added'],
+  ]) {
+    for (const [field, value] of provenanceTamperCases) {
+      await tamperField(change.correction_provenance, field, value, payPeriodId, `${side} correction_provenance.${field}`);
+    }
+    const requiredField = 'reviewed_by';
+    const originalValue = change.correction_provenance[requiredField];
+    delete change.correction_provenance[requiredField];
+    try { await expectHistoryTamperFailure(payPeriodId, `${side} missing v24 correction_provenance.${requiredField}`); }
+    finally { change.correction_provenance[requiredField] = originalValue; }
+  }
+
+  const sourceVerifyAfterTamperChecks = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'synthetic-period', request_id: 'modified-cross-source-verify-after-tamper-001' });
+  const destinationVerifyAfterTamperChecks = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'modified-destination-period', request_id: 'modified-cross-destination-verify-after-tamper-001' });
+  assert.equal(sourceVerifyAfterTamperChecks.body.verified, true, JSON.stringify(sourceVerifyAfterTamperChecks.body));
+  assert.equal(destinationVerifyAfterTamperChecks.body.verified, true, JSON.stringify(destinationVerifyAfterTamperChecks.body));
 });
 
 test('destination finalization gate wins over a simultaneous employee correction review', async () => {
