@@ -62,10 +62,19 @@ export function assertRuleApplicabilityEvidence(rule) {
   if (saved && !evidenceEqual(saved,ruleApplicabilityEvidence(rule)))
     throw evidenceError('Applicability evidence differs from the stored literal fields; review is required.');
 }
+function completeNumericLiteral(text,value) {
+  let offset=text.indexOf(value);
+  while(offset>=0) {
+    const before=text[offset-1] || '',after=text[offset+value.length] || '';
+    if(!/[\w.,$%+\-/]/.test(before) && !/[\w]/.test(after))return true;
+    offset=text.indexOf(value,offset+1);
+  }
+  return false;
+}
 function numericEvidence(excerpt,requirement,value) {
   if (!value) return {numeric_value:null,unit:'',numeric_literal:''};
-  if (!literal(excerpt,value,80) || !requirement.includes(value)) throw evidenceError('Numeric evidence is not literal in the requirement.');
-  const match=/^(\$)?(\d+(?:,\d{3})*(?:\.\d+)?)(?:\s*)(%|feet|foot|ft|square feet|sq ft|sf|inches|inch|days|working days|business days|seconds|dollars)?$/i.exec(value);
+  if (!literal(excerpt,value,80) || !completeNumericLiteral(requirement,value)) throw evidenceError('Numeric evidence is not literal in the requirement.');
+  const match=/^(\$)?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)(?:\s*)(%|feet|foot|ft|square feet|sq ft|sf|inches|inch|days|working days|business days|seconds|dollars)?$/i.exec(value);
   if (!match || (!match[1] && !match[3]) || (match[1] && match[3] && match[3].toLowerCase()!=='dollars')) throw evidenceError('Numeric literal has no supported explicit unit.');
   const number=Number(match[2].replace(/,/g,''));
   if (!Number.isFinite(number)) throw evidenceError('Numeric literal is invalid.');
@@ -73,7 +82,7 @@ function numericEvidence(excerpt,requirement,value) {
 }
 export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSignType=()=>null}={}) {
   const source=unit.source,page=unit.evidence.pages.find(p=>p.page===raw.physical_page);
-  if (!page || !RULE_CATEGORIES.includes(raw.rule_category)) throw evidenceError('Candidate page or category is outside the selected evidence.');
+  if (!Number.isSafeInteger(raw.physical_page) || raw.physical_page<1 || !page || !RULE_CATEGORIES.includes(raw.rule_category)) throw evidenceError('Candidate page or category is outside the selected evidence.');
   const allowedCategories=ADMIN_SOURCE_CATEGORIES[source.authority_classification];
   if (allowedCategories && !allowedCategories.includes(raw.rule_category))
     throw evidenceError('Candidate category is outside this administrative source purpose.');

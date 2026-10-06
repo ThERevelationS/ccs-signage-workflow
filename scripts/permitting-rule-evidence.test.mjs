@@ -203,3 +203,26 @@ test('quoted applicability stays literal without granting address applicability;
  await assert.rejects(prepareRuleCandidate(unit,{...raw,zoning_district_applicability:'all districts'}),/literal/);
  assertRuleApplicabilityEvidence({evidence_context:{}});
 });
+
+test('numeric substrings cannot silently change quoted amounts or units',async()=>{
+ const f=await ruleFixture(),unit=await loadRuleEvidence(f.api);
+ for(const [requirement,numeric_literal] of [
+  ['Maximum area is 150 square feet.','50 square feet'],
+  ['Maximum area is 1.50 square feet.','50 square feet'],
+  ['Maximum fee is $150 dollars.','150 dollars'],
+  ['Maximum area is 50 square feetwide.','50 square feet'],
+  ['Maximum area is 1234,567 square feet.','1234,567 square feet'],
+  ['Maximum area is -50 square feet.','50 square feet']]) {
+  const selected=structuredClone(unit);selected.evidence.pages[0].text=requirement;
+  await assert.rejects(prepareRuleCandidate(selected,{...f.raw,section_reference:'',excerpt:requirement,requirement,numeric_literal}),/Numeric/);
+ }
+ for(const numeric_literal of ['150 square feet','1,500 square feet','50 square feet']) {
+  const requirement='Maximum area is '+numeric_literal+'.',selected=structuredClone(unit);selected.evidence.pages[0].text=requirement;
+  const c=await prepareRuleCandidate(selected,{...f.raw,section_reference:'',excerpt:requirement,requirement,numeric_literal});
+  assert.equal(c.numeric_value,Number(numeric_literal.split(' ')[0].replace(/,/g,'')));
+ }
+});
+test('physical page identifiers must be positive integers',async()=>{
+ const f=await ruleFixture(),unit=await loadRuleEvidence(f.api);
+ for(const physical_page of ['1',0,-1,1.5,null])await assert.rejects(prepareRuleCandidate(unit,{...f.raw,physical_page}),/page or category/);
+});
