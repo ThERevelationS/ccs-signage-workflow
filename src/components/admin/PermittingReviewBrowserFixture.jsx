@@ -2,6 +2,7 @@ import { useState } from "react";
 import RuleCard from "./PermittingRuleCard";
 import PermittingApprovedEvidenceSearch from "./PermittingApprovedEvidenceSearch";
 import { Button } from "@/components/ui/button";
+import LocalityApprovedEvidence from "@/components/permitting/LocalityApprovedEvidence";
 
 const rationale = "Reviewed both retained citations and confirmed their recorded authority scope.";
 const evidence = { rule_id: "browser-evidence", rule_kind: "regulatory_rule", requirement: "Maximum area is 50 square feet.",
@@ -15,6 +16,13 @@ export default function PermittingReviewBrowserFixture() {
   const [version, setVersion] = useState(1);
   const [scope, setScope] = useState("fixture-A");
   const [fail, setFail] = useState(false);
+  const [narrow, setNarrow] = useState(false);
+  const [admin, setAdmin] = useState(true);
+  const locality = { id: scope, name: scope, contact_info: { department: "Fixture planning department", email: "fixture-long-contact-address@example.test" }, documents: [{ id: "fixture-form", title: "Fixture application — " + "LongDocumentTitle".repeat(12), doc_type: "permit_application", url: "https://example.test/application.pdf" }] };
+  async function retrieveOfficeEvidence({ jurisdiction_id, cursor }) {
+    if (fail) throw Error("Fixture office evidence unavailable");
+    return { success: true, jurisdiction_id, profile_updated_date: "fixture-version", checked_at: new Date().toISOString(), has_more: !cursor, next_cursor: cursor ? null : "fixture-office-next", items: [{ id: cursor ? "fixture-revoked" : "fixture-office", action: cursor ? "revoke" : "verify", role: "sign_permitting", verified: !cursor, is_current_review: !cursor, state: cursor ? "revoked" : "staff_verified", coverage_area: "Fixture county", coverage_kind: "unincorporated", office_snapshot: { name: "Fixture planning office" }, role_proof: { excerpt: "Fixture office reviews signs in the unincorporated county area.", physical_page: 3 }, requested_by: "Fixture reviewer", requested_at: "2026-10-06" }] };
+  }
   const rule = { id: "fixture-conflict", version, status: "needs_review", confidence: "high", conflict_state: "conflicting_sources",
     rule_category: "submittal_requirement", requirement: "Fixture only — review both retained sources", is_operational: false,
     citations: [{ section_or_page: "PDF page 1", excerpt: "First fixture citation" }, { section_or_page: "PDF page 2", excerpt: "Second fixture citation" }],
@@ -36,6 +44,13 @@ export default function PermittingReviewBrowserFixture() {
       <Button onClick={() => setScope(value => value === "fixture-A" ? "fixture-B" : "fixture-A")}>Switch fixture jurisdiction</Button>
       <Button onClick={() => setFail(value => !value)}>Toggle fixture retrieval failure</Button>
     </div>
+    <section aria-label="Combined locality acceptance" className="min-w-0 space-y-3">
+      <h2 className="font-semibold">Combined locality disclosure — fixture only</h2>
+      <div className="flex flex-wrap gap-2"><Button onClick={() => setNarrow(value => !value)}>Toggle 320px locality width</Button><Button onClick={() => setAdmin(value => !value)}>Toggle locality admin role</Button></div>
+      <div data-testid="locality-width" style={{ width: narrow ? 320 : "100%", maxWidth: "100%" }}>
+        <LocalityApprovedEvidence jurisdiction={locality} isAdmin={admin} retrieveOfficeEvidence={retrieveOfficeEvidence} retrieveApprovedEvidence={retrieveEvidence} />
+      </div>
+    </section>
     <RuleCard key={version} rule={rule} expanded={expanded} onToggle={() => setExpanded(value => !value)}
       onApprove={() => setReceipt("Unexpected approval")} onReject={reason => setReceipt("Local rejection: " + reason)}
       onEdit={() => setReceipt("Local edit")} onResolveConflict={reason => setReceipt("Local resolution: " + reason)} actionLoading={busy} />
