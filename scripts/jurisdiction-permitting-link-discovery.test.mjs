@@ -99,3 +99,13 @@ test('fraud reporting form is excluded from permitting discovery', () => {
   assert.equal(docs.length,2);
   assert.equal(docs[1].title,'Sign Form');
 });
+
+test('electrical and inspection-only links are retained without inventing permit authority', () => {
+ const docs=discoverOfficialPermittingResources('<a href="/trade">Electrical</a><a href="/booking">Inspections</a><a href="/inspectors">Inspectors</a><a href="/files/rough.pdf">Electrical rough inspection checklist</a><a href="https://provider.example/">Electrical inspections</a><a href="/jobs">Electrical inspector careers</a>','https://county.gov/department');
+ assert.deepEqual(new Set(docs.map(d=>d.title)),new Set(['Electrical','Inspections','Inspectors','Electrical rough inspection checklist']));
+ assert.equal(docs.find(d=>d.title==='Electrical').doc_type,'other');
+ assert.equal(docs.find(d=>d.title==='Electrical rough inspection checklist').doc_type,'checklist');
+ assert.equal(docs.some(d=>d.url.includes('provider.example')),false);
+ assert.equal(docs.some(d=>d.title.includes('careers')),false);
+ assert.equal(docs.some(d=>d.authority_verified===true),false);
+});

@@ -1,5 +1,5 @@
 import { hasClassifiedPdfResource } from './permittingResourceResponse.mjs';
-const RELEVANT_LINK_RE = /\b(signs?|zoning|permits?|applications?|apply|forms?|fees?|checklists?|submittals?|building|development|ordinances?|codes?|regulations?|resolutions?|variances?|conditional use)\b/i;
+const RELEVANT_LINK_RE = /\b(signs?|zoning|permits?|applications?|apply|forms?|fees?|checklists?|submittals?|building|electrical|electric|inspections?|inspectors?|development|ordinances?|codes?|regulations?|resolutions?|variances?|conditional use)\b/i;
 const DOWNLOADABLE_RE = /\.(pdf|doc|docx|xls|xlsx|csv|txt)(?:$|[?#])/i;
 
 function decodeHtmlText(value = '') {

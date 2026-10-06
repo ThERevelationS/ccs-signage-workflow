@@ -110,7 +110,7 @@
     },
     "smartsheet_create_attempt": {
       "type": "object",
-      "description": "Order Form-only write-ahead marker for an uncertain Smartsheet row creation. Preserve until permanent row-link reconciliation; never retry an unresolved attempt."
+      "description": "Order Form-only write-ahead marker for Smartsheet row creation. Stores the intended mapped snapshot before POST and, when returned, the permanent row ID before final link completion. Preserve unresolved attempts; never infer identity from values or retry an ambiguous POST."
     },
     "deleted": {
       "type": "boolean",
