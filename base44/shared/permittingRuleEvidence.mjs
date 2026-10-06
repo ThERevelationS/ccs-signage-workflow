@@ -45,9 +45,9 @@ export async function assertEvidenceCurrent(options,expected) {
   return current;
 }
 const literal=(text,value,max=1000)=>typeof value==='string' && value.trim().length>0 && value.length<=max && text.includes(value);
-function optionalLiteral(excerpt,value,max=500) {
+function optionalLiteral(excerpt,value,max=500,field='unspecified') {
   if (value==null || value==='') return '';
-  if (!literal(excerpt,value,max)) throw evidenceError('A structured field is not a literal part of its citation.');
+  if (!literal(excerpt,value,max)) throw evidenceError('A structured field is not a literal part of its citation: '+field+'.');
   return value;
 }
 // A quote proves the retained wording, never applicability to every sign/address.
@@ -90,10 +90,10 @@ export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSig
   if (!literal(raw.excerpt,raw.requirement) || raw.requirement.trim().length<10) throw evidenceError('Requirement must be a literal part of its cited excerpt.');
   const section=raw.section_reference || '';
   if (section && !literal(page.text,section,150)) throw evidenceError('Section reference is not present on the cited physical page.');
-  const sign=optionalLiteral(raw.excerpt,raw.sign_type,150);
-  const district=optionalLiteral(raw.excerpt,raw.zoning_district_applicability,300);
-  const trigger=optionalLiteral(raw.excerpt,raw.trigger);
-  const exceptions=optionalLiteral(raw.excerpt,raw.exceptions);
+  const sign=optionalLiteral(raw.excerpt,raw.sign_type,150,'sign_type');
+  const district=optionalLiteral(raw.excerpt,raw.zoning_district_applicability,300,'zoning_district_applicability');
+  const trigger=optionalLiteral(raw.excerpt,raw.trigger,500,'trigger');
+  const exceptions=optionalLiteral(raw.excerpt,raw.exceptions,500,'exceptions');
   const numeric=numericEvidence(raw.excerpt,raw.requirement,raw.numeric_literal || '');
   const draft=['draft','proposed'].includes(source.content_status) || ['draft_proposed','comprehensive_rewrite'].includes(source.authority_classification);
   const historical=['historical','superseded'].includes(source.content_status) || ['historical','superseded'].includes(source.authority_classification);

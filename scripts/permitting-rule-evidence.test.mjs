@@ -301,3 +301,13 @@ test('category acceptance stages and imports literal forms, fees, procedures and
   if(category==='fee_timing'){assert.equal(imported.rule.numeric_value,125.5);assert.equal(imported.rule.unit,'dollars');}
  }
 });
+
+
+test('structured rejection identifies the field without exposing its unsupported value',async()=>{
+ const f=await ruleFixture(),unit=await loadRuleEvidence(f.api);
+ for(const field of ['sign_type','zoning_district_applicability','trigger','exceptions']){
+  const result=await validateRuleCandidates(unit,{rules:[{...f.raw,[field]:'unsupported-private-value'}]});
+  assert.equal(result.candidates.length,0);assert.match(result.rejected[0].reason,new RegExp(field));
+  assert.doesNotMatch(result.rejected[0].reason,/unsupported-private-value/);
+ }
+});
