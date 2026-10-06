@@ -100,7 +100,19 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         let page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { sort: "-server_timestamp", limit: 5000 });
         while (true) {
           if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
-          const pageItems = Array.isArray(page?.items) ? page.items : [];
+          if (!page || typeof page !== "object" || Array.isArray(page)) {
+            throw new Error("Integrity investigation pagination returned a malformed authoritative page.");
+          }
+          if (!Array.isArray(page.items)) {
+            throw new Error("Integrity investigation pagination returned authoritative page items in an invalid format.");
+          }
+          if (typeof page.has_more !== "boolean") {
+            throw new Error("Integrity investigation pagination returned an invalid has_more completeness flag.");
+          }
+          if (page.next_cursor !== null && page.next_cursor !== undefined && typeof page.next_cursor !== "string") {
+            throw new Error("Integrity investigation pagination returned a continuation cursor in an invalid format.");
+          }
+          const pageItems = page.items;
           const pageAuditIds = pageItems.map((row) => String(row?.id || "").trim()).filter(Boolean);
           const repeatedPageAuditIds = [...new Set(pageAuditIds.filter((id) => seenPageAuditIds.has(id)))];
           if (repeatedPageAuditIds.length > 0) {
@@ -108,8 +120,13 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           }
           pageAuditIds.forEach((id) => seenPageAuditIds.add(id));
           loadedRows.push(...pageItems);
-          if (!page?.has_more) break;
-          const nextCursor = String(page?.next_cursor || "").trim();
+          const nextCursor = String(page.next_cursor || "").trim();
+          if (!page.has_more) {
+            if (nextCursor) {
+              throw new Error("Integrity investigation pagination returned a continuation cursor on a terminal authoritative page.");
+            }
+            break;
+          }
           if (!nextCursor) {
             throw new Error("Integrity investigation pagination reported more authoritative audit records without a continuation cursor.");
           }
