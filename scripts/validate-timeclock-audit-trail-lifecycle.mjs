@@ -2,8 +2,11 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipCompanyDate, payrollMembershipFromAudit } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
+import { validateAuthoritativeAuditPage } from '../src/shared/timeClockAuditPagination.mjs';
 
-const source = readFileSync(new URL('../src/components/timeclock/TimeClockAuditTrail.jsx', import.meta.url), 'utf8');
+const componentSource = readFileSync(new URL('../src/components/timeclock/TimeClockAuditTrail.jsx', import.meta.url), 'utf8');
+const paginationSource = readFileSync(new URL('../src/shared/timeClockAuditPagination.mjs', import.meta.url), 'utf8');
+const source = `${paginationSource}\n${componentSource}`;
 const backendSource = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
 const payPeriodManagerSource = readFileSync(new URL('../src/components/timeclock/PayPeriodManager.jsx', import.meta.url), 'utf8');
 const adminSource = readFileSync(new URL('../src/components/timeclock/TimeClockAdmin.jsx', import.meta.url), 'utf8');
@@ -236,7 +239,7 @@ const immutableEvidenceProgressGuard = source.indexOf('if (pageItems.length > 0 
 const terminalCursorContradictionGuard = source.indexOf('if (!page.has_more && nextCursor)');
 const missingCursorGuard = source.indexOf('if (page.has_more && !nextCursor)');
 const repeatedCursorGuard = source.indexOf('if (page.has_more && seenCursors.has(nextCursor))');
-const terminalCompletenessGuard = source.indexOf('if (!page.has_more) {', pageAccumulation);
+const terminalCompletenessGuard = source.indexOf('if (!hasMore) {', pageAccumulation);
 const cursorContinuationRequest = source.indexOf('TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 })');
 assert.ok(terminalCursorContradictionGuard > immutableEvidenceProgressGuard && pageAccumulation > terminalCursorContradictionGuard, 'contradictory terminal cursor metadata must fail closed before the terminal page enters authoritative accumulation');
 assert.ok(missingCursorGuard > terminalCursorContradictionGuard && repeatedCursorGuard > missingCursorGuard && pageAccumulation > repeatedCursorGuard, 'non-terminal cursor completeness and continuity must be proven before authoritative page accumulation');
@@ -247,9 +250,8 @@ assert.match(source, /const seenPageAuditIds = new Set\(\)/);
 const initialIntegrityRequest = source.indexOf('let page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { sort: "-server_timestamp", limit: 5000 })');
 const integrityLoopStart = source.indexOf('while (true)', initialIntegrityRequest);
 const initialIntegrityFreshnessGuard = source.indexOf('if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;', integrityLoopStart);
-const firstPageStructureValidation = source.indexOf('if (!page || typeof page !== "object" || Array.isArray(page))', integrityLoopStart);
-const firstPageItemsRead = source.indexOf('const pageItems = page.items;', integrityLoopStart);
-assert.ok(initialIntegrityRequest >= 0 && integrityLoopStart > initialIntegrityRequest && initialIntegrityFreshnessGuard > integrityLoopStart && firstPageStructureValidation > initialIntegrityFreshnessGuard && firstPageItemsRead > firstPageStructureValidation, 'initial authoritative response must prove request freshness before page parsing or pagination-state mutation');
+const firstPageValidationCall = source.indexOf('validateAuthoritativeAuditPage({', integrityLoopStart);
+assert.ok(initialIntegrityRequest >= 0 && integrityLoopStart > initialIntegrityRequest && initialIntegrityFreshnessGuard > integrityLoopStart && firstPageValidationCall > initialIntegrityFreshnessGuard, 'initial authoritative response must prove request freshness before pure page validation or pagination-state mutation');
 assert.match(source, /const repeatedPageAuditIds = \[\.\.\.new Set\(pageAuditIds\.filter\(\(id\) => seenPageAuditIds\.has\(id\)\)\)\]/);
 assert.match(source, /pagination repeated .* immutable audit record/);
 assert.match(source, /const newPageAuditIds = pageAuditIds\.filter\(\(id\) => !seenPageAuditIds\.has\(id\)\)/);
