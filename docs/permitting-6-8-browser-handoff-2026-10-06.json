@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-10-06T03:55:44Z",
+  "kind": "authenticated_preview_saved_lookup_and_readiness",
+  "kentucky": {
+    "request_id": "manual-acceptance-ky-json-20261006-001",
+    "candidates": 2,
+    "current_checks_passed": 2,
+    "staff_approval_required": true,
+    "scope": "Unincorporated Campbell County; Alexandria"
+  },
+  "ohio": {
+    "request_id": "manual-acceptance-oh-json-20261006-001",
+    "candidates": 1,
+    "approval_blocked": true,
+    "message": "Citation source is unverified, changed, or belongs to another authority."
+  },
+  "actions": [
+    "open_saved",
+    "candidate_handoff"
+  ],
+  "new_ai_calls": 0,
+  "imports": 0,
+  "approvals": 0,
+  "conflict_resolutions": 0,
+  "remaining": "Conflict-resolution browser control acceptance; final 6.9 broader acceptance"
+}
