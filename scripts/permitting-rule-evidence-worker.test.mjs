@@ -253,3 +253,19 @@ test('conflict resolution preserves conflicts when source authority changed',asy
   rationale:'Reviewed every retained citation and its relationship to the disputed requirement.',reviewed_all_citations:true});
  assert.equal(result.status,409);assert.deepEqual(t.f.rules,before);
 });
+
+
+test('saved request lookup reopens the same run and readiness detects changed evidence without writes',async()=>{
+ const t=await setup(),extracted=await t.extract();
+ const before=structuredClone(t.f.calls),runs=structuredClone(t.f.runs);
+ const saved=await t.extract({action:'get_run'});
+ assert.equal(saved.status,200);assert.equal(saved.data.success,true);
+ assert.equal(saved.data.run.id,extracted.data.run_id);assert.equal(saved.data.llm_calls,0);
+ const ready=await t.review({action:'candidate_handoff',run_id:saved.data.run.id});
+ assert.equal(ready.status,200);assert.equal(ready.data.candidates[0].evidence_ready,true);
+ t.f.runs[0].candidates[0].requirement='Changed after saved lookup';
+ assert.equal((await t.review({action:'candidate_handoff',run_id:saved.data.run.id})).status,409);
+ assert.deepEqual(t.f.calls,before);assert.equal(t.f.rules.length,0);
+ t.f.runs[0].candidates[0].requirement=runs[0].candidates[0].requirement;
+ assert.deepEqual(t.f.runs,runs);
+});
