@@ -131,6 +131,8 @@ check(sheet.includes('changedField === "date_estimate_sent" && quoteDateVerifica
 check(sheet.includes('"sales_quote_sent_verified_at"') &&
       sheet.includes("saved.sales_quote_sent_verified_at"),
   "Sales UI treats quote verification as internal state returned by the server.");
+check(sheet.includes("JSON.stringify(currentWo[changedField]) !== JSON.stringify(mergedUpdates[changedField])"),
+  "Confirming an unchanged legacy date does not create a fake old-value-to-same-value CellHistory row.");
 
 const dialog = readFileSync("src/components/sales/SalesOpportunityDialog.jsx", "utf8");
 check(dialog.includes("Stored legacy quote date is not verified for aging.") &&
