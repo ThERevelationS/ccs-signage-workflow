@@ -123,6 +123,10 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             throw new Error(`Integrity investigation pagination returned ${malformedPageItemIndexes.length} malformed authoritative audit record${malformedPageItemIndexes.length === 1 ? "" : "s"} inside a valid page.`);
           }
           const pageAuditIds = pageItems.map((row) => String(row.id || "").trim()).filter(Boolean);
+          const duplicateAuditIdsWithinPage = [...new Set(pageAuditIds.filter((id, index) => pageAuditIds.indexOf(id) !== index))];
+          if (duplicateAuditIdsWithinPage.length > 0) {
+            throw new Error(`Integrity investigation pagination returned ${duplicateAuditIdsWithinPage.length} duplicate immutable Audit ID${duplicateAuditIdsWithinPage.length === 1 ? "" : "s"} inside one authoritative page.`);
+          }
           const repeatedPageAuditIds = [...new Set(pageAuditIds.filter((id) => seenPageAuditIds.has(id)))];
           if (repeatedPageAuditIds.length > 0) {
             throw new Error(`Integrity investigation pagination repeated ${repeatedPageAuditIds.length} immutable audit record${repeatedPageAuditIds.length === 1 ? "" : "s"} across authoritative pages.`);
