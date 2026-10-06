@@ -1,5 +1,5 @@
 """Manual exhaustive read of Ohio government public directory; no entity writes."""
-import argparse,datetime,hashlib,json,pathlib,urllib.parse,urllib.request
+import argparse,datetime,gzip,hashlib,json,pathlib,urllib.parse,urllib.request
 URL='https://maps.ohio.gov/arcgis/rest/services/Hosted/BBS_Jurisdictions/FeatureServer/0'
 ROOT=pathlib.Path('docs/official-evidence/ohio-building-directory-2026-10-06')
 def validate_ids(data,expected):
@@ -26,12 +26,12 @@ def fetch(path='',params=None):
 def verify():
  manifest=json.loads((ROOT/'manifest.json').read_text());files={}
  for item in manifest['files']:
-  raw=(ROOT/item['file']).read_bytes();assert hashlib.sha256(raw).hexdigest()==item['sha256'];files[item['file']]=json.loads(raw)
+  raw=(ROOT/item['file']).read_bytes();raw=gzip.decompress(raw) if item['file'].endswith('.gz') else raw;assert hashlib.sha256(raw).hexdigest()==item['sha256'];files[item['file'].removesuffix('.gz')]=json.loads(raw)
  metadata=files['layer.json'];oid=metadata['objectIdField'];expected=files['count-before.json']['count']
  ids=validate_ids(files['ids-before.json'],expected);assert validate_ids(files['ids-after.json'],expected)==ids
  assert files['count-after.json']['count']==expected
  batches=iter(manifest['batch_files']);rows=collect(ids,lambda _:files[next(batches)],oid)
- assert rows==json.loads((ROOT/'records.json').read_text())['records']
+ assert rows==json.loads(gzip.decompress((ROOT/'records.json.gz').read_bytes()))['records']
  print(json.dumps({'verified':True,'directory_records':len(rows),'batches':len(manifest['batch_files']),'has_dedicated_electrical_fields':any('electric' in f['name'].lower() for f in metadata['fields'])},indent=2))
 def capture():
  assert not ROOT.exists(),'Do not overwrite a dated source snapshot'
@@ -48,9 +48,10 @@ def capture():
  assert keep('count-after.json','/query',{'where':'1=1','returnCountOnly':'true'})['count']==count,'Directory membership changed'
  assert validate_ids(keep('ids-after.json','/query',{'where':'1=1','returnIdsOnly':'true'}),count)==ids,'Directory membership changed'
  ROOT.mkdir(parents=True)
- for name,raw in blobs.items():(ROOT/name).write_bytes(raw)
+ for name,raw in blobs.items():(ROOT/(name+'.gz')).write_bytes(gzip.compress(raw,mtime=0))
+ for item in files:item['file'] += '.gz'
  (ROOT/'manifest.json').write_text(json.dumps({'source_url':URL,'retrieved_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'files':files,'batch_files':batch_files,'not_atomic_snapshot':True,'membership_verified_before_after':True},indent=2)+'\n')
- (ROOT/'records.json').write_text(json.dumps({'source_url':URL,'authority_verified':False,'inventory_complete_for_permitting':False,'geometry_captured':False,'notes':['Complete membership read of this directory layer, not complete statewide office coverage.','Rows are jurisdictions and service listings; do not count them as unique offices.','Before/after ID and count checks do not rule out in-place edits during reads.','Electrical issuance/inspection responsibility and sign applicability require separate official evidence.','Retain certification distinctions, exceptions and source edit timestamps.'],'records':rows},indent=2)+'\n')
+ (ROOT/'records.json.gz').write_bytes(gzip.compress((json.dumps({'source_url':URL,'authority_verified':False,'inventory_complete_for_permitting':False,'geometry_captured':False,'notes':['Complete membership read of this directory layer, not complete statewide office coverage.','Rows are jurisdictions and service listings; do not count them as unique offices.','Before/after ID and count checks do not rule out in-place edits during reads.','Electrical issuance/inspection responsibility and sign applicability require separate official evidence.','Retain certification distinctions, exceptions and source edit timestamps.'],'records':rows},indent=2)+'\n').encode(),mtime=0))
  verify()
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--capture',action='store_true');args=p.parse_args();capture() if args.capture else verify()
