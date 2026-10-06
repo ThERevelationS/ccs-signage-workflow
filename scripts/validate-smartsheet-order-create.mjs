@@ -4,6 +4,7 @@ import {
   createdOrderSmartsheetRowId,
   createOrderSmartsheetRowWithGuard,
   orderSmartsheetCreateNeedsReview,
+  recoverableOrderSmartsheetCreate,
 } from '../base44/shared/smartsheetOrderCreateSafety.mjs';
 
 const success = (id = 987654321) => ({ message: 'SUCCESS', resultCode: 0, result: [{ id }] });
@@ -156,24 +157,31 @@ function fixture(initial = {}) {
 
 {
   const state = fixture();
-  const originalUpdate = state.entity.update;
-  state.entity.update = async (id, patch) => {
-    if (patch.smartsheet_row_id) throw new Error('Base44 link write failed');
-    return originalUpdate(id, patch);
-  };
+  const originalUpdateMany = state.entity.updateMany;
+  state.entity.updateMany = async () => { throw new Error('Base44 final link write failed'); };
   let posts = 0;
   await assert.rejects(
     createOrderSmartsheetRowWithGuard(state.args(async () => { posts++; return success(5678); })),
-    /created Order row 5678.*never POST again/,
+    /row 5678 exists.*never POST again/i,
   );
   assert.equal(posts, 1);
-  assert.equal(state.getStored().smartsheet_create_attempt.status, 'reserved');
-  await assert.rejects(
-    createOrderSmartsheetRowWithGuard(state.args(async () => { posts++; return success(); })),
-    /unresolved Smartsheet create attempt/,
-  );
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'created_unlinked');
+  assert.equal(state.getStored().smartsheet_create_attempt.row_id, '5678');
+  assert.deepEqual(state.getStored().smartsheet_create_attempt.expected_snapshot, { '111': 'Example' });
+  assert.equal(recoverableOrderSmartsheetCreate(state.getStored(), '123456').rowId, '5678');
+
+  state.entity.updateMany = originalUpdateMany;
+  const recovered = await createOrderSmartsheetRowWithGuard(state.args(async () => {
+    posts++;
+    throw new Error('SECOND POST MUST NOT BE SENT');
+  }));
   assert.equal(posts, 1);
-  console.log('PASS Base44 linking failure retains durable marker and blocks another Smartsheet row');
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.rowId, '5678');
+  assert.equal(state.getStored().smartsheet_row_id, '5678');
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'linked');
+  assert.equal(state.getStored().smartsheet_pending_local_sync, false);
+  console.log('PASS failed final Base44 link recovers from the durable permanent row ID without a second POST');
 }
 
 for (const initial of [
