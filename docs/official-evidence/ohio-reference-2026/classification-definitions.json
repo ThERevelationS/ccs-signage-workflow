@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-10-06",
+  "retrieval_method": "Web search primary-source pages",
+  "raw_html_archived": false,
+  "raw_download_status": "Direct download returned HTTP 403; source snapshot not claimed",
+  "sources": [
+    "https://www.census.gov/library/reference/code-lists/functional-status-codes.html",
+    "https://www.census.gov/library/reference/code-lists/legal-status-codes.html"
+  ],
+  "paraphrased_classification": {
+    "FUNCSTAT": {
+      "A": "Government active in general-purpose functions",
+      "C": "Government consolidated with another under common officials",
+      "F": "Hierarchy placeholder rather than separate government",
+      "I": "Inactive government with retained special-purpose powers",
+      "N": "Legal entity without governmental functioning",
+      "S": "Statistical area"
+    },
+    "LSADC": {
+      "25": "City",
+      "44": "Township",
+      "47": "Village"
+    }
+  },
+  "authority_verified": false
+}

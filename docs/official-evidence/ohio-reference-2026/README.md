@@ -1,6 +1,6 @@
 # Ohio geographic research candidates
 
-Generated offline from the complete hash-verified January 1, 2026 Census TIGERweb snapshot in ../oh-ky-geography-2026. Official functional-status and legal-status definitions are retained here with hashes and source URLs. Rebuild with `python3 scripts/build-permitting-ohio-reference.py`; validate classification using `python3 scripts/test-permitting-ohio-reference.py`.
+Generated offline from the complete hash-verified January 1, 2026 Census TIGERweb snapshot in ../oh-ky-geography-2026. Official functional-status and legal-status definitions were checked through primary-source web retrieval. classification-definitions.json retains paraphrased codes and source URLs. Direct HTML download returned HTTP 403; raw definition pages and hashes are not archived. Rebuild with `python3 scripts/build-permitting-ohio-reference.py`; validate classification using `python3 scripts/test-permitting-ohio-reference.py`.
 
 | Geographic candidate | Count |
 | --- | ---: |
