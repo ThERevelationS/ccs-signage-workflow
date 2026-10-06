@@ -1082,11 +1082,17 @@ async function pushDataset(
 
   if (dataset === 'orders') {
     const unresolved = records.filter(orderSmartsheetCreateNeedsReview);
-    if (unresolved.length) return {
+    const safelyRecoverable = options?.allowExplicitOrderCreate === true
+      ? unresolved.filter((record: any) => Boolean(recoverableOrderSmartsheetCreate(record, sheetId)))
+      : [];
+    const recoverableIds = new Set(safelyRecoverable.map((record: any) => String(record.id)));
+    const blocked = unresolved.filter((record: any) => !recoverableIds.has(String(record.id)));
+    if (blocked.length) return {
       dataset, direction: 'push', sheet_id: sheetId, skipped: true,
-      reason: `${unresolved.length} Order Smartsheet create attempts require review before retry. No rows were written.`,
-      create_attempts_need_review: unresolved.length,
-      review_order_ids: unresolved.slice(0, 10).map((record: any) => record.id),
+      reason: `${blocked.length} Order Smartsheet create attempts require review before retry. No rows were written.`,
+      create_attempts_need_review: blocked.length,
+      recoverable_create_attempts: safelyRecoverable.length,
+      review_order_ids: blocked.slice(0, 10).map((record: any) => record.id),
     };
   }
 
