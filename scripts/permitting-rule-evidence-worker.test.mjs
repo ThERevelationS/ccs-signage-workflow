@@ -385,3 +385,35 @@ test('evidence cursor survives earlier approval removal and refuses cross-jurisd
  assert.equal(next.status,200);assert.equal(next.data.evidence[0].rule_id,'zz-next');
  assert.equal((await t.review({...action,jurisdiction_id:'other',cursor:first.data.next_cursor})).status,400);
 });
+
+// Exercise the real session signature verifier through the actual review handler.
+const sessionModuleBuild=await build({entryPoints:['base44/shared/signShopSession.ts'],bundle:true,write:false,format:'esm',platform:'neutral'});
+const {signShopSessionPayload}=await import('data:text/javascript;base64,'+Buffer.from(sessionModuleBuild.outputFiles[0].text).toString('base64'));
+test('review accepts a verified current app administrator without a Base44 login',async()=>{
+ const t=await setup({role:null});
+ globalThis.Deno.env={get:()=> 'isolated-test-signing-secret'};
+ const entities=globalThis.ruleWorkerFixture.asServiceRole.entities;
+ entities.AuthorizedEmail={filter:async()=>[{id:'app-admin',email:'admin@example.test',role:'admin'}]};
+ Object.defineProperty(globalThis.ruleWorkerFixture,'asServiceRole',{value:{entities},configurable:true});
+ const token=await signShopSessionPayload({email:'admin@example.test',iat:Date.now()-1000,exp:Date.now()+60000});
+ const result=await t.review({action:'retrieve_evidence',jurisdiction_id:'profile',session_token:token});
+ assert.equal(result.status,200);assert.equal(result.data.evidence.length,0);
+ assert.equal(t.f.calls.llm,0);assert.equal(t.f.rules.length,0);
+});
+test('review denies expired, revoked, ambiguous, non-admin and tampered app sessions without SDK fallback',async()=>{
+ for(const variant of ['expired','revoked','ambiguous','staff','tampered']) {
+  const t=await setup(); // SDK administrator must not override a supplied invalid app session.
+  globalThis.Deno.env={get:()=> 'isolated-test-signing-secret'};
+  const entities=globalThis.ruleWorkerFixture.asServiceRole.entities;
+  let ruleReads=0;entities.PermittingRule.filter=async()=>{ruleReads++;return [];};
+  const now=Date.now(),actor={id:'app-admin',email:'admin@example.test',role:variant==='staff'?'user':'admin',
+   ...(variant==='revoked'?{session_not_before:new Date(now).toISOString()}: {})};
+  entities.AuthorizedEmail={filter:async()=>variant==='ambiguous'?[actor,actor]:[actor]};
+  Object.defineProperty(globalThis.ruleWorkerFixture,'asServiceRole',{value:{entities},configurable:true});
+  let token=await signShopSessionPayload({email:actor.email,iat:now-1000,exp:variant==='expired'?now-1:now+60000});
+  if(variant==='tampered')token+='x';
+  const result=await t.review({action:'retrieve_evidence',jurisdiction_id:'profile',session_token:token});
+  assert.equal(result.status,variant==='ambiguous'?409:variant==='staff'?403:401,variant);
+  assert.equal(ruleReads,0);assert.equal(t.f.calls.llm,0);assert.equal(t.f.rules.length,0);
+ }
+});
