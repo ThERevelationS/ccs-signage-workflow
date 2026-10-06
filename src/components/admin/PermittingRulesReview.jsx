@@ -1,3 +1,4 @@
+import { isPermittingPreviewHost } from "./permittingPreviewQa";
 import PermittingReviewBrowserFixture from "./PermittingReviewBrowserFixture";
 import RuleCard from "./PermittingRuleCard";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -205,7 +206,7 @@ export default function PermittingRulesReview() {
         </div>
       </div>
 
-      {(import.meta.env.DEV || /^preview(?:-sandbox)?--[a-zA-Z0-9-]+\.base44\.app$/.test(window.location.hostname)) && <div>
+      {isPermittingPreviewHost(window.location.hostname, import.meta.env.DEV) && <div>
         <Button variant="outline" onClick={() => setShowBrowserFixture(value => !value)}>
           {showBrowserFixture ? "Close isolated browser acceptance" : "Open isolated browser acceptance"}
         </Button>
