@@ -169,7 +169,7 @@ assert.match(source, /while \(true\)/);
 assert.match(source, /const pageItems = Array\.isArray\(page\?\.items\) \? page\.items : \[\]/);
 assert.match(source, /loadedRows\.push\(\.\.\.pageItems\)/);
 assert.match(source, /if \(!page\?\.has_more\) break/);
-assert.match(source, /if \(!String\(page\?\.next_cursor \|\| ""\)\.trim\(\)\)/);
+assert.match(source, /if \(!nextCursor\)/);
 assert.match(source, /pagination reported more authoritative audit records without a continuation cursor/);
 assert.match(source, /const seenCursors = new Set\(\)/);
 assert.match(source, /const seenPageAuditIds = new Set\(\)/);
