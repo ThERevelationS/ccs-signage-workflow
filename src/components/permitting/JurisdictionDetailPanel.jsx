@@ -1,3 +1,5 @@
+import LocalityApprovedEvidence from "./LocalityApprovedEvidence";
+import { useAuth } from "@/components/auth/EmailGate";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,7 @@ const DOC_TYPE_LABELS = {
 };
 
 export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onSetVerification, onClose, onUpdate }) {
+  const { currentUser } = useAuth();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
@@ -836,6 +839,8 @@ Answer only from the provided excerpts and cite the document title and official 
       )}
 
       {activeTab === "overview" && <><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
+        <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
+
         {/* CAGIS Location Search */}
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
           <p className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
