@@ -47,8 +47,15 @@ export async function assertEvidenceCurrent(options,expected) {
 const literal=(text,value,max=1000)=>typeof value==='string' && value.trim().length>0 && value.length<=max && text.includes(value);
 function optionalLiteral(excerpt,value,max=500,field='unspecified') {
   if (value==null || value==='') return '';
-  if (!literal(excerpt,value,max)) throw evidenceError('A structured field is not a literal part of its citation: '+field+'.');
-  return value;
+  if (literal(excerpt,value,max)) return value;
+  // Recover only whitespace differences by storing the unique exact source span.
+  // Wording, capitalization and punctuation remain unchanged; ambiguity fails closed.
+  if (typeof value==='string' && value.length<=max && value.trim()) {
+    const words=value.trim().split(/\s+/).map(word=>word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+    const matches=[...excerpt.matchAll(new RegExp(words.join('\\s+'),'g'))];
+    if (matches.length===1 && matches[0][0].length<=max) return matches[0][0];
+  }
+  throw evidenceError('A structured field is not a literal part of its citation: '+field+'.');
 }
 // A quote proves the retained wording, never applicability to every sign/address.
 export function ruleApplicabilityEvidence(rule) {
@@ -115,7 +122,7 @@ export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSig
     evidence_validation:RULE_EVIDENCE_METHOD,extraction_key:key,
     evidence_context:{start_page:unit.start_page,page_count:unit.page_count,total_pages:unit.evidence.total_pages,
       complete_document_text:unit.evidence.complete_document_text,
-      applicability:ruleApplicabilityEvidence({sign_type:sign,zoning_district_applicability:district,trigger,exceptions}),jurisdiction_scope:source.jurisdiction_scope || null,
+      applicability:ruleApplicabilityEvidence({sign_type:sign,zoning_district_applicability:district,trigger,exceptions}),structured_literal_repairs:Object.entries({sign_type:sign,zoning_district_applicability:district,trigger,exceptions}).filter(([field,value])=>value && value!==raw[field]).map(([field])=>({field,method:'unique-whitespace-span-v1'})),jurisdiction_scope:source.jurisdiction_scope || null,
       authority_review_id:source.authority_review?.review_id || null,
       evidence_scope:'selected_pdf_pages',full_code_review:false},
     notes:'Literal quoted evidence from selected physical PDF pages. Staff review and current authority verification are required.'};

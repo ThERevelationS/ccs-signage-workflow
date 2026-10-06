@@ -311,3 +311,18 @@ test('structured rejection identifies the field without exposing its unsupported
   assert.doesNotMatch(result.rejected[0].reason,/unsupported-private-value/);
  }
 });
+
+
+test('optional whitespace repair stores exact source exception and refuses changed wording or ambiguous spans',async()=>{
+ const f=await ruleFixture(),unit=await loadRuleEvidence(f.api);
+ const text='A permit is required except for painted wall signs\nand sign face changes.';
+ const selected=structuredClone(unit);selected.evidence.pages[0].text=text;
+ const raw={physical_page:1,rule_category:'exemption',excerpt:text,requirement:text,exceptions:'except for painted wall signs and sign face changes',confidence:'high'};
+ const candidate=await prepareRuleCandidate(selected,raw);
+ assert.equal(candidate.exceptions,'except for painted wall signs\nand sign face changes');
+ assert.deepEqual(candidate.evidence_context.structured_literal_repairs,[{field:'exceptions',method:'unique-whitespace-span-v1'}]);
+ assert.equal(candidate.is_operational,false);
+ await assert.rejects(prepareRuleCandidate(selected,{...raw,exceptions:'except for all wall signs and sign face changes'}),/exceptions/);
+ const repeated=text+' '+text;selected.evidence.pages[0].text=repeated;
+ await assert.rejects(prepareRuleCandidate(selected,{...raw,excerpt:repeated,requirement:repeated}),/exceptions/);
+});
