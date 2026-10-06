@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   classifyBacklogRows,
+  ohioFirstResearchRows,
   jurisdictionProfileTypeForQueueRow,
   profileHasResearchEvidence,
   profileMatchesQueueRow,
@@ -105,4 +106,10 @@ test("Ohio first still preserves capacity and stable identity deduplication", ()
   const row={id:'a',state:'OH',jurisdiction_name:'Ohio County',jurisdiction_type:'county'};
   const plan=classifyBacklogRows({queueRows:[{...row,id:'ky',state:'KY'},row,{...row,id:'duplicate'}],inFlightCount:19,inFlightTarget:20,maxDispatchPerRun:5});
   assert.deepEqual(plan.dispatch.map(r=>r.id),['a']);assert.equal(plan.room,1);
+});
+
+test("claimed execution rows are reordered Ohio first with stable state order", () => {
+ const rows=[{id:'k1',state:'KY'},{id:'o1',state:'OH'},{id:'o2',state:'oh'},{id:'k2',state:'KY'}];
+ assert.deepEqual(ohioFirstResearchRows(rows).map(r=>r.id),['o1','o2','k1','k2']);
+ assert.deepEqual(rows.map(r=>r.id),['k1','o1','o2','k2']);
 });
