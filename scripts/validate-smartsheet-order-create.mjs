@@ -70,6 +70,7 @@ function fixture(initial = {}) {
     assert.equal(state.getStored().smartsheet_sheet_id, '123456');
     assert.equal(state.getStored().smartsheet_create_attempt.status, 'reserved');
     assert.equal(state.getStored().smartsheet_create_attempt.attempt_id, 'attempt-test');
+    assert.deepEqual(state.getStored().smartsheet_create_attempt.expected_snapshot, { '111': 'Example' });
     return success();
   }));
   assert.deepEqual(result, { rowId: '987654321', recordId: 'order-123', recovered: false, newerLocalEditsRemain: false });
@@ -126,6 +127,7 @@ function fixture(initial = {}) {
   );
   assert.equal(posts, 1);
   assert.equal(state.getStored().smartsheet_create_attempt.status, 'reserved');
+  assert.deepEqual(state.getStored().smartsheet_create_attempt.expected_snapshot, { '111': 'Example' });
   assert.equal(orderSmartsheetCreateNeedsReview(state.getStored()), true);
   await assert.rejects(
     createOrderSmartsheetRowWithGuard(state.args(async () => { posts++; return success(); })),
