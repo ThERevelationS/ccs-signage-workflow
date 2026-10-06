@@ -1470,7 +1470,7 @@ async function pushDataset(
       } else if (dataset === 'orders') {
         // Reserve the permanent Order before POST; never automatically retry an
         // uncertain create or silently create a second row for an existing link.
-        await createOrderSmartsheetRowWithGuard({
+        const createResult = await createOrderSmartsheetRowWithGuard({
           entity: base44.asServiceRole.entities.Order,
           record,
           sheetId,
@@ -1500,8 +1500,36 @@ async function pushDataset(
             return result.body;
           },
           makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
+          verifyCreatedRow: async ({ rowId, expectedSnapshot, record: verifyRecord, recovered }: any) => {
+            await reportOrderProgress({
+              phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length,
+              fraction: 0.58,
+              item_label: orderProgressItemLabel(verifyRecord),
+              detail: recovered
+                ? `Recovering previously created Smartsheet row ${rowId} without sending another POST`
+                : `Verifying newly created Smartsheet row ${rowId} before saving its permanent Base44 link`,
+              record_id: verifyRecord.id, smartsheet_row_id: rowId,
+            });
+            const columnIds = [...new Set(Object.values(bindings)
+              .map((value: any) => cleanText(value, 40)).filter((value: string) => /^\d+$/.test(value)))];
+            const params = new URLSearchParams({
+              rowIds: String(rowId),
+              columnIds: columnIds.join(','),
+              exclude: 'nonexistentCells',
+            });
+            const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+            if (String(result.body?.id ?? '') !== sheetId) return false;
+            const rows = normalizeSheetRows(result.body);
+            if (rows.length !== 1 || String(rows[0]?.id ?? '') !== String(rowId)) return false;
+            return !detectConflict(rows[0].cells, expectedSnapshot, bindings, 'orders');
+          },
         });
-        created.push(record.id); // helper already stored and verified link + snapshot atomically
+        if (createResult?.newerLocalEditsRemain) {
+          orderFailedRecordIds.add(String(record.id));
+          errors.push(`${record.id}: Smartsheet row ${createResult.rowId} is permanently linked, but newer local Order edits remain queued for Retry Sync.`);
+        } else {
+          created.push(record.id);
+        }
         continue;
       } else {
         // Sales create must produce one usable permanent row ID before Base44
