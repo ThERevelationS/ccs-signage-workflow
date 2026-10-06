@@ -16,11 +16,11 @@ def index_reference(ref):
             rows.append({**c, "reference_bucket": bucket, "identity_type": kind})
     result = {}
     for row in rows:
-        result.setdefault(identity.normalize(row["base_name"]), []).append(row)
+        result.setdefault(identity.name_key(row["base_name"]), []).append(row)
     return result
 
 def classify(row, index):
-    hits = index.get(identity.normalize(row["name"]), [])
+    hits = index.get(identity.name_key(row["name"]), []) or index.get(identity.normalize(row["name"]), [])
     county = identity.normalize(row.get("county"))
     # Incorporated-place records lack county membership; do not invent one.
     scoped = [c for c in hits if not county or not c.get("county_name") or identity.normalize(c["county_name"]) == county]
@@ -35,7 +35,7 @@ def classify(row, index):
     elif scoped:
         reason = "hierarchy_only_reference"
     elif hits:
-        reason = "county_conflict"
+        reason = "same_name_only_in_other_explicit_counties"
     else:
         reason = "no_exact_name_in_full_reference"
     return {**row, "gap_reason": reason,

@@ -16,7 +16,7 @@ class Tests(unittest.TestCase):
 
     def test_explicit_wrong_county(self):
         r=m.classify(dict(name="Green", type="township", county="Allen"), {"green":[ref("township", county="Adams")]})
-        self.assertEqual(r["gap_reason"], "county_conflict")
+        self.assertEqual(r["gap_reason"], "same_name_only_in_other_explicit_counties")
         self.assertEqual(r["possible_references"], [])
 
     def test_missing_municipal_county_is_not_rejected(self):

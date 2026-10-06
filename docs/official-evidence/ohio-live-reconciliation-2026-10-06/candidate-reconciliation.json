@@ -13,9 +13,9 @@
   "directory": {
     "row_count": 3346,
     "status_counts": {
-      "unique_candidate": 2280,
+      "unique_candidate": 2282,
       "unmatched": 1063,
-      "ambiguous": 3
+      "ambiguous": 1
     },
     "rows_with_review_flags": 921,
     "duplicate_identity_groups": [],
@@ -51502,10 +51502,9 @@
         "source_objectids": [
           168850
         ],
-        "status": "ambiguous",
+        "status": "unique_candidate",
         "candidate_reference_keys": [
-          "incorporated_place:3978470",
-          "incorporated_place:3978624"
+          "incorporated_place:3978470"
         ],
         "review_flags": [
           "official_county_relationship_pending"
@@ -51521,9 +51520,8 @@
         "source_objectids": [
           168851
         ],
-        "status": "ambiguous",
+        "status": "unique_candidate",
         "candidate_reference_keys": [
-          "incorporated_place:3978470",
           "incorporated_place:3978624"
         ],
         "review_flags": [
@@ -53319,8 +53317,8 @@
   "queue": {
     "row_count": 1274,
     "status_counts": {
-      "unique_candidate": 865,
-      "unmatched": 408,
+      "unique_candidate": 862,
+      "unmatched": 411,
       "ambiguous": 1
     },
     "rows_with_review_flags": 1185,
@@ -64837,10 +64835,8 @@
         "name": "Quaker",
         "type": "village",
         "county": "Lawrence County",
-        "status": "unique_candidate",
-        "candidate_reference_keys": [
-          "incorporated_place:3965116"
-        ],
+        "status": "unmatched",
+        "candidate_reference_keys": [],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -68058,10 +68054,8 @@
         "name": "Union",
         "type": "village",
         "county": "Montgomery County",
-        "status": "unique_candidate",
-        "candidate_reference_keys": [
-          "incorporated_place:3978624"
-        ],
+        "status": "unmatched",
+        "candidate_reference_keys": [],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -70110,10 +70104,8 @@
         "name": "Pleasant",
         "type": "village",
         "county": "Putnam County",
-        "status": "unique_candidate",
-        "candidate_reference_keys": [
-          "incorporated_place:3963436"
-        ],
+        "status": "unmatched",
+        "candidate_reference_keys": [],
         "review_flags": [
           "official_county_relationship_pending"
         ],

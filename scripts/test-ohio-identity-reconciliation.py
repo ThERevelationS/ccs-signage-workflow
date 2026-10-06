@@ -9,6 +9,11 @@ def candidate(key, name, kind, county=None):
     return dict(reference_key=key, base_name=name, queue_type=kind, county_name=county)
 
 class Tests(unittest.TestCase):
+    def test_village_is_part_of_actual_name(self):
+        refs = [candidate("a", "Lincoln Village", "village")]
+        self.assertEqual(m.match(dict(name="Lincoln Village", type="village"), refs)["candidate_reference_keys"], ["a"])
+        self.assertEqual(m.match(dict(name="Lincoln Village village", type="village"), refs)["candidate_reference_keys"], ["a"])
+
     def test_legal_name_prefix(self):
         self.assertEqual(m.normalize("City of Milford"), "milford")
         self.assertEqual(m.normalize("Village of Maineville"), "maineville")

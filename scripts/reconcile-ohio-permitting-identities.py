@@ -7,6 +7,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs/official-evidence/ohio-live-reconciliation-2026-10-06"
 
+def name_key(value):
+    return re.sub(r"\s+", " ", str(value or "").strip().casefold())
+
 def normalize(value):
     value = re.sub(r"\s+", " ", str(value or "").strip().casefold())
     value = re.sub(r"^(city|village|township|county) of\s+", "", value)
@@ -15,7 +18,9 @@ def normalize(value):
 def match(row, candidates):
     kind = row["type"]
     allowed = {"municipal": {"city", "village"}, "municipality": {"city", "village"}}.get(kind, {kind})
-    hits = [c for c in candidates if c["queue_type"] in allowed and normalize(c["base_name"]) == normalize(row["name"])]
+    typed = [c for c in candidates if c["queue_type"] in allowed]
+    exact = [c for c in typed if name_key(c["base_name"]) == name_key(row["name"])]
+    hits = exact or [c for c in typed if name_key(c["base_name"]) == normalize(row["name"])]
     county = normalize(row.get("county"))
     if kind in {"county", "township"} and county:
         hits = [c for c in hits if normalize(c.get("county_name")) == county]
