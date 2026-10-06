@@ -12,7 +12,7 @@ const order = (id, marker = {}, overrides = {}) => ({
 });
 const linked = order('linked', { status: 'linked', row_id: '111', linked_at: '2026-09-24T12:01:00Z' }, { smartsheet_row_id: '111' });
 const reserved = order('timeout', { status: 'reserved' });
-const existing = order('existing', { status: 'reserved', row_id: '222' });
+const existing = order('existing', { status: 'created_unlinked', row_id: '222', expected_snapshot: { '1': 'Test customer' } }, { smartsheet_pending_local_sync: true });
 const missing = order('missing', { status: 'reserved', row_id: '333' });
 const conflicted = order('conflict', { status: 'linked', row_id: '444' }, { smartsheet_row_id: '555' });
 const differentSheet = order('other-sheet', { sheet_id: '999', status: 'reserved', row_id: '666' });
@@ -25,6 +25,8 @@ const result = auditOrderCreateAttempts(orders, rows.slice().reverse(), SHEET);
 assert.equal(result.read_only, true);
 assert.equal(result.total_markers, 8);
 assert.equal(result.unresolved_markers, 5);
+assert.equal(result.retry_sync_recoverable, 1);
+assert.equal(result.manual_investigation_required, 6);
 assert.deepEqual(result.counts, { verified_link: 1, ambiguous: 6, missing_row: 1 });
 assert.equal(result.records_by_category.verified_link[0].base44_record_id, 'linked');
 assert.equal(result.records_by_category.missing_row[0].base44_record_id, 'missing');
@@ -38,8 +40,16 @@ assert.match(reasons.conflict, /different permanent row IDs/i);
 assert.match(reasons['other-sheet'], /does not match/i);
 assert.match(reasons.duplicate, /multiple active/i);
 assert.match(reasons.deleted, /not fully verified/i);
-assert.equal(result.records_by_category.ambiguous.find(r => r.base44_record_id === 'existing').remote_row_present, true);
-console.log('PASS verified permanent links, unknown POST outcomes, known missing rows, conflicting IDs, other sheets, duplicates and deleted Orders');
+const recoverable = result.records_by_category.ambiguous.find(r => r.base44_record_id === 'existing');
+assert.equal(recoverable.remote_row_present, true);
+assert.equal(recoverable.retry_sync_recoverable, true);
+assert.equal(recoverable.recovery_state, 'retry_sync_recoverable');
+assert.match(recoverable.recommended_action, /Retry Sync can safely attempt recovery/);
+const reservedReview = result.records_by_category.ambiguous.find(r => r.base44_record_id === 'timeout');
+assert.equal(reservedReview.retry_sync_recoverable, false);
+assert.equal(reservedReview.recovery_state, 'manual_investigation');
+assert.match(reservedReview.recommended_action, /Manual Smartsheet investigation required/);
+console.log('PASS create-attempt review distinguishes safe Retry Sync recovery from manual permanent-ID investigation');
 
 assert.throws(() => auditOrderCreateAttempts(orders, [{ id: '111' }, { id: '111' }], SHEET), /repeated permanent/);
 assert.throws(() => auditOrderCreateAttempts(orders, [{ id: 'unsafe-id' }], SHEET), /invalid or repeated/);
@@ -50,6 +60,8 @@ console.log('PASS invalid identifiers, duplicate remote rows, and missing requir
 const noMarkers = auditOrderCreateAttempts([{ id: 'plain' }], [], SHEET);
 assert.equal(noMarkers.total_markers, 0);
 assert.deepEqual(noMarkers.counts, { verified_link: 0, ambiguous: 0, missing_row: 0 });
+assert.equal(noMarkers.retry_sync_recoverable, 0);
+assert.equal(noMarkers.manual_investigation_required, 0);
 const many = Array.from({ length: 102 }, (_, index) => order('unknown-' + index, { status: 'reserved' }));
 const capped = auditOrderCreateAttempts(many, rows, SHEET);
 assert.equal(capped.counts.ambiguous, 102);
@@ -70,6 +82,15 @@ for (const response of [null, {}, { id: null }, { id: '999' }, { id: 'bad-id' }]
 }
 assert.throws(() => verifyOrderCreateAuditSheetIdentity({ id: SHEET }, ''), /permanent Order Request sheet ID/);
 console.log('PASS each evidence page requires the exact configured permanent sheet ID');
+
+const ui = readFileSync(new URL('../src/components/orders/OrderCreateAttemptReview.jsx', import.meta.url), 'utf8');
+assert.match(ui, /Retry Sync recoverable/);
+assert.match(ui, /Manual investigation/);
+assert.match(ui, /Retry Sync can safely attempt recovery/);
+assert.match(ui, /Manual Smartsheet investigation required/);
+assert.match(ui, /no recovery runs automatically/);
+assert.match(ui, /durable created_unlinked marker/);
+console.log('PASS admin review explains exactly when Retry Sync recovery is eligible and when manual investigation is required');
 
 const source = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts', import.meta.url), 'utf8');
 const action = source.slice(source.indexOf("if (action === 'audit_order_create_attempts')"), source.indexOf("if (action === 'audit_order_requestor_emails')"));
