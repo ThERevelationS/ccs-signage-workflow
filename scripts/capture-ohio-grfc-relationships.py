@@ -101,6 +101,25 @@ def verify():
         raise ValueError("Source hash or length mismatch")
     with gzip.open(FOLDER / "public_grfc_cur26_39.txt.gz","rt",encoding="utf-8-sig",newline="") as f:
         result=reconcile(derive(f))
+    # Live names remain candidate identities; use code crosswalk only after that distinction.
+    import importlib.util
+    spec=importlib.util.spec_from_file_location("identity", ROOT / "scripts/reconcile-ohio-permitting-identities.py")
+    identity=importlib.util.module_from_spec(spec);spec.loader.exec_module(identity)
+    audit=json.loads((ROOT / "docs/official-evidence/ohio-live-reconciliation-2026-10-06/candidate-reconciliation.json").read_text())
+    lookup={r["reference_key"]:r for r in result["active_municipal_reference_relationships"]}
+    for source in ["queue","profiles","directory"]:
+        assessed=[]
+        for row in audit[source]["rows"]:
+            matches=[lookup[k] for k in row["candidate_reference_keys"] if k in lookup]
+            if not matches: continue
+            county=identity.normalize(row.get("county"))
+            supported=[m["reference_key"] for m in matches if county in {identity.normalize(n) for n in m["county_names"]}]
+            status="parent_county_missing" if not county else "county_supported_for_candidate_identity" if supported else "county_not_in_grfc_relationships_for_candidate_identity"
+            assessed.append({"id":row["id"],"name":row["name"],"type":row["type"],"county":row.get("county"),"status":status,
+                             "supported_candidate_keys":supported,"candidate_reference_keys":row["candidate_reference_keys"],
+                             "live_record_identity_verified":False,"authority_verified":False,"vintage_review_pending":True})
+        result[source]={"status_counts":dict(collections.Counter(r["status"] for r in assessed)),"rows":assessed}
+        print(source,json.dumps(result[source]["status_counts"]))
     (FOLDER / "relationships.json").write_text(json.dumps(result,indent=2)+"\n")
     rows=result["active_municipal_reference_relationships"]
     print(json.dumps({"source_rows":result["source_row_count"],"source_bytes":size,
