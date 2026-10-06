@@ -1,0 +1,78 @@
+{
+  "retrieved_at": "2026-10-06T22:50:19.016734+00:00",
+  "source_vintage": "2026-01-01",
+  "sources": [
+    {
+      "state": "oh",
+      "family": "counties",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_counties_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_county_oh.html",
+      "file": "oh-counties.html",
+      "sha256": "aceeeda4a515131c690c4088f5cb6dfe318b50284d8b1f27ec24ac8626a7b9fe",
+      "record_count": 88
+    },
+    {
+      "state": "ky",
+      "family": "counties",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_counties_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_county_ky.html",
+      "file": "ky-counties.html",
+      "sha256": "70b84a0bc32dcf932af6f9d8bb6f31c508641c6ab61b3fee4cc757d8b5e175bb",
+      "record_count": 120
+    },
+    {
+      "state": "oh",
+      "family": "incplace",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_incplace_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_incplace_oh.html",
+      "file": "oh-incplace.html",
+      "sha256": "e1e961c10cb7513360d0dd4514d4735ff784cabcdb09070c29da88f829d03b27",
+      "record_count": 923
+    },
+    {
+      "state": "ky",
+      "family": "incplace",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_incplace_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_incplace_ky.html",
+      "file": "ky-incplace.html",
+      "sha256": "8a1068becd7aaccc0c895dc27eb306e7ba7936dbf22752e7f21438e64329494a",
+      "record_count": 415
+    },
+    {
+      "state": "oh",
+      "family": "cousub",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_cousub_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_cousub_oh.html",
+      "file": "oh-cousub.html",
+      "sha256": "68a51d76950329393e6264d220e4f4eedf0711b87f1fc6f72728e89053260a41",
+      "record_count": 1607
+    },
+    {
+      "state": "ky",
+      "family": "cousub",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_cousub_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_cousub_ky.html",
+      "file": "ky-cousub.html",
+      "sha256": "71a0007301895131ec790992c8b47368c36373f8cd9b7ba302123a71f493e072",
+      "record_count": 493
+    },
+    {
+      "state": "oh",
+      "family": "concity",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_concity_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_concity_oh.html",
+      "file": "oh-concity.html",
+      "sha256": "51d90746dac14cde9305e6d068e7f8c0bd4995ad47901a9b5079a37224ffd119",
+      "record_count": 0
+    },
+    {
+      "state": "ky",
+      "family": "concity",
+      "index_url": "https://tigerweb.geo.census.gov/tigerwebmain/TIGERweb_concity_current.html",
+      "url": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_concity_ky.html",
+      "file": "ky-concity.html",
+      "sha256": "cfa3115061c23746e9d060b06888bcf4e62d7fd6dcb6e4ea122483f263cdeb4d",
+      "record_count": 1
+    }
+  ]
+}
