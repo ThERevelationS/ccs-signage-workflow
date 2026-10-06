@@ -13,26 +13,27 @@ const order = (id, marker = {}, overrides = {}) => ({
 const linked = order('linked', { status: 'linked', row_id: '111', linked_at: '2026-09-24T12:01:00Z' }, { smartsheet_row_id: '111' });
 const reserved = order('timeout', { status: 'reserved' });
 const existing = order('existing', { status: 'created_unlinked', row_id: '222', expected_snapshot: { '1': 'Test customer' } }, { smartsheet_pending_local_sync: true });
+const deletedRecoverableShape = order('deleted-recoverable-shape', { status: 'created_unlinked', row_id: '223', expected_snapshot: { '1': 'Test customer' } }, { smartsheet_pending_local_sync: true, deleted: true });
 const missing = order('missing', { status: 'reserved', row_id: '333' });
 const conflicted = order('conflict', { status: 'linked', row_id: '444' }, { smartsheet_row_id: '555' });
 const differentSheet = order('other-sheet', { sheet_id: '999', status: 'reserved', row_id: '666' });
 const duplicate = order('duplicate', { status: 'linked', row_id: '777' }, { smartsheet_row_id: '777' });
 const unmarked = { id: 'unmarked', smartsheet_sheet_id: SHEET, smartsheet_row_id: '777' };
 const deleted = order('deleted', { status: 'linked', row_id: '888' }, { deleted: true, smartsheet_row_id: '888' });
-const orders = [linked, reserved, existing, missing, conflicted, differentSheet, duplicate, unmarked, deleted];
-const rows = [111, 222, 444, 555, 666, 777, 888].map(id => ({ id: String(id) }));
+const orders = [linked, reserved, existing, missing, conflicted, differentSheet, duplicate, unmarked, deleted, deletedRecoverableShape];
+const rows = [111, 222, 223, 444, 555, 666, 777, 888].map(id => ({ id: String(id) }));
 const result = auditOrderCreateAttempts(orders, rows.slice().reverse(), SHEET);
 assert.equal(result.read_only, true);
-assert.equal(result.total_markers, 8);
-assert.equal(result.unresolved_markers, 5);
+assert.equal(result.total_markers, 9);
+assert.equal(result.unresolved_markers, 6);
 assert.equal(result.retry_sync_recoverable, 1);
-assert.equal(result.manual_investigation_required, 6);
-assert.deepEqual(result.counts, { verified_link: 1, ambiguous: 6, missing_row: 1 });
+assert.equal(result.manual_investigation_required, 7);
+assert.deepEqual(result.counts, { verified_link: 1, ambiguous: 7, missing_row: 1 });
 assert.equal(result.records_by_category.verified_link[0].base44_record_id, 'linked');
 assert.equal(result.records_by_category.missing_row[0].base44_record_id, 'missing');
 assert.equal(result.records_by_category.missing_row[0].remote_row_present, false);
 const reasons = Object.fromEntries(result.records_by_category.ambiguous.map(r => [r.base44_record_id, r.reason]));
-for (const id of ['timeout', 'existing', 'conflict', 'other-sheet', 'duplicate', 'deleted']) {
+for (const id of ['timeout', 'existing', 'conflict', 'other-sheet', 'duplicate', 'deleted', 'deleted-recoverable-shape']) {
   assert.equal(typeof reasons[id], 'string');
 }
 assert.match(reasons.timeout, /cannot be ruled out/i);
@@ -40,6 +41,7 @@ assert.match(reasons.conflict, /different permanent row IDs/i);
 assert.match(reasons['other-sheet'], /does not match/i);
 assert.match(reasons.duplicate, /multiple active/i);
 assert.match(reasons.deleted, /not fully verified/i);
+assert.match(reasons['deleted-recoverable-shape'], /not fully verified/i);
 const recoverable = result.records_by_category.ambiguous.find(r => r.base44_record_id === 'existing');
 assert.equal(recoverable.remote_row_present, true);
 assert.equal(recoverable.retry_sync_recoverable, true);
@@ -49,6 +51,9 @@ const reservedReview = result.records_by_category.ambiguous.find(r => r.base44_r
 assert.equal(reservedReview.retry_sync_recoverable, false);
 assert.equal(reservedReview.recovery_state, 'manual_investigation');
 assert.match(reservedReview.recommended_action, /Manual Smartsheet investigation required/);
+const deletedShape = result.records_by_category.ambiguous.find(r => r.base44_record_id === 'deleted-recoverable-shape');
+assert.equal(deletedShape.retry_sync_recoverable, false);
+assert.equal(deletedShape.recovery_state, 'manual_investigation');
 console.log('PASS create-attempt review distinguishes safe Retry Sync recovery from manual permanent-ID investigation');
 
 assert.throws(() => auditOrderCreateAttempts(orders, [{ id: '111' }, { id: '111' }], SHEET), /repeated permanent/);
