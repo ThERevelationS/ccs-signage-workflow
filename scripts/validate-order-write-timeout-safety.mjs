@@ -79,7 +79,8 @@ assert.match(
 );
 console.log('PASS Order POST/PUT use no-timeout-retry transport while Sales create remains unchanged');
 
-assert.match(createSafety, /durable marker; subsequent runs are not allowed to repeat the POST/);
+assert.match(createSafety, /snapshot is[\s\S]*durable evidence for manual reconciliation only/);
+assert.match(createSafety, /never sufficient to[\s\S]*auto-link a row without a permanent Smartsheet row ID/);
 assert.match(createSafety, /outcome is uncertain\. The Order is held for review; do not retry automatically/);
 assert.match(backend, /orderBatchWriteError/);
 assert.match(backend, /Only rows independently read back as correct can complete/);
