@@ -4,8 +4,8 @@ import Renderer,{act} from 'react-test-renderer';
 import {build} from 'esbuild';
 import {mkdir,rm} from 'node:fs/promises';
 const dir='node_modules/.cache/metrics-lifecycle';await mkdir(dir,{recursive:true});
-const pending=[];let count=0;
-globalThis.__metricsApi={entities:new Proxy({}, {get:()=>({aggregate:()=>Promise.resolve({rows:[]}),filter:()=>Promise.resolve({items:[],has_more:false}),count:()=>{const index=count++;if(index%15===0)return new Promise((resolve,reject)=>pending.push({resolve,reject}));return Promise.resolve(0);}})})};
+const pending=[];
+globalThis.__metricsApi={entities:new Proxy({}, {get:()=>({aggregate:()=>Promise.resolve({rows:[]}),filter:()=>Promise.resolve({items:[],has_more:false}),count:q=>{if(q.last_checked)return new Promise((resolve,reject)=>pending.push({resolve,reject}));return Promise.resolve(0);}})})};
 try {
 await build({entryPoints:['src/components/permitting/PermittingCompletenessDashboard.jsx'],outfile:dir+'/dashboard.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',external:['react','react/jsx-runtime'],plugins:[{name:'fixtures',setup(b){b.onResolve({filter:/^(lucide-react|@\/|\.\/usePermittingQueueBrowse$|\.\/PermittingRecordedCoverage$)/},a=>({path:a.path,namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},a=>{
 if(a.path.includes('base44Client'))return {contents:'export const base44=globalThis.__metricsApi;'};
