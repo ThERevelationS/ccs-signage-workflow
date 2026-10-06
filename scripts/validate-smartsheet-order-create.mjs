@@ -184,6 +184,57 @@ function fixture(initial = {}) {
   console.log('PASS failed final Base44 link recovers from the durable permanent row ID without a second POST');
 }
 
+{
+  const state = fixture({
+    smartsheet_sheet_id: '123456',
+    smartsheet_pending_local_sync: true,
+    smartsheet_create_attempt: {
+      sheet_id: '123456', attempt_id: 'attempt-test', started_at: '2026-09-24T18:00:00.000Z',
+      status: 'created_unlinked', row_id: '445566', created_at: '2026-09-24T18:00:10.000Z',
+      expected_snapshot: { '111': 'Example' },
+    },
+  });
+  let posts = 0;
+  await assert.rejects(
+    createOrderSmartsheetRowWithGuard(state.args(async () => {
+      posts++;
+      throw new Error('SECOND POST MUST NOT BE SENT');
+    }, async () => false)),
+    /could not be verified against the durable create snapshot/,
+  );
+  assert.equal(posts, 0);
+  assert.equal(state.getStored().smartsheet_row_id ?? '', '');
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'created_unlinked');
+  assert.equal(state.getStored().smartsheet_pending_local_sync, true);
+  console.log('PASS recovery refuses to link when the exact permanent Smartsheet row does not verify');
+}
+
+{
+  const state = fixture({
+    customer_name: 'Example changed after create',
+    smartsheet_sheet_id: '123456',
+    smartsheet_pending_local_sync: true,
+    smartsheet_create_attempt: {
+      sheet_id: '123456', attempt_id: 'attempt-test', started_at: '2026-09-24T18:00:00.000Z',
+      status: 'created_unlinked', row_id: '778899', created_at: '2026-09-24T18:00:10.000Z',
+      expected_snapshot: { '111': 'Example' },
+    },
+  });
+  let posts = 0;
+  const recovered = await createOrderSmartsheetRowWithGuard(state.args(async () => {
+    posts++;
+    throw new Error('SECOND POST MUST NOT BE SENT');
+  }));
+  assert.equal(posts, 0);
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.newerLocalEditsRemain, true);
+  assert.equal(state.getStored().smartsheet_row_id, '778899');
+  assert.deepEqual(state.getStored().smartsheet_sync_snapshot, { '111': 'Example' });
+  assert.equal(state.getStored().smartsheet_pending_local_sync, true);
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'linked');
+  console.log('PASS recovery links the permanent row but preserves newer local edits for the next Retry Sync');
+}
+
 for (const initial of [
   { smartsheet_sheet_id: '123456', smartsheet_row_id: '98765' },
   { smartsheet_sheet_id: '654321', smartsheet_row_id: '' },
