@@ -100,6 +100,8 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
     if (
       category === 'ambiguous' &&
       structurallyRecoverable &&
+      !duplicate &&
+      order?.deleted !== true &&
       order?.smartsheet_pending_local_sync === true &&
       remoteIds.has(markerRowId)
     ) {
