@@ -1,3 +1,13 @@
+### 2026-10-06 — 10.1 of 10.3: metric and county lifecycle safeguards implemented
+
+Metric refresh now uses current stale-day scope, request generation, single-flight for the same threshold and unmount invalidation. Older threshold replies cannot replace current metrics or errors. Old-threshold metric cards are synchronously hidden until a current read completes; failed current reads clear metrics. Aggregate/count operations and existing permissions are unchanged.
+
+County choices now traverse the SDK distinct-value cursor sequence without a total cap. Empty strings are excluded, whitespace trimmed and duplicate names merged. Malformed pages/values and repeated cursors fail rather than present partial completeness. Component effect cleanup cancels late replies; failure is visible with an explicit retry button instead of silently appearing as an empty county inventory. OH/KY filtering is explicit.
+
+County reader tests pass with 1500 values across three pages (test size, not cap), duplicate/blank handling, repeated-cursor rejection and stale-read cancellation. Queue, exhaustive coverage reader and actual coverage panel tests pass. Targeted lint has no errors (existing unused bar parameter warning), build and diff check pass. Metric generation was inspected in source and compiled; dedicated out-of-order metric component/browser acceptance remains pending and is not claimed. No production records, AI calls or frontend publish.
+
+10.1 task 3 implementation complete, with dedicated metrics interaction acceptance still to verify. Task 2 official locality denominator remains pending; task 4 read-only live OH/KY acceptance pending. Phase 9 phone acceptance and Phase 8 populated approved live example remain open. Next: verify metrics interaction and begin independent official locality inventory reconciliation.
+
 ### 2026-10-06 — 10.1 of 10.3, task 3 queue/filter safety implemented and tested
 
 Replaced the legacy queue browse request lifecycle with usePermittingQueueBrowse. Scope derives from all query filters and literal escaped search text; staleDays does not unnecessarily change the queue query. Old rows are hidden synchronously on scope changes, and generation/current-scope checks discard late replies. Unmount invalidates replies. Duplicate page clicks are single-flight. Pages deduplicate by stable record ID; invalid rows/missing/repeated continuation fail explicitly. Reset and failed reads clear old results. A scoped error and Refresh queue control distinguish unavailable data from a real empty match. Paging continues without a total record cap.
