@@ -90,15 +90,69 @@ async function performOrderSmartsheetCreate({
   const targetSheet = String(sheetId ?? '').trim();
   if (!id || !/^\d+$/.test(targetSheet) ||
       typeof entity?.get !== 'function' || typeof entity?.update !== 'function' ||
-      typeof postRow !== 'function' || typeof makeSnapshot !== 'function') {
+      typeof entity?.updateMany !== 'function' || typeof postRow !== 'function' ||
+      typeof makeSnapshot !== 'function' || typeof verifyCreatedRow !== 'function') {
     throw new Error('Order Smartsheet create protection could not initialize.');
   }
+
+  const finalizePermanentLink = async ({ latest, marker, rowId, snapshot, recovered }) => {
+    const actualVerified = await verifyCreatedRow({ rowId, expectedSnapshot: snapshot, record: latest, recovered });
+    if (actualVerified !== true) {
+      throw new Error(`Smartsheet row ${rowId} could not be verified against the durable create snapshot. The Order remains held for review; never POST again.`);
+    }
+
+    const beforeCommit = await entity.get(id);
+    if (!beforeCommit || beforeCommit.deleted ||
+        beforeCommit?.smartsheet_create_attempt?.attempt_id !== marker.attempt_id ||
+        numericId(beforeCommit?.smartsheet_create_attempt?.row_id) !== rowId ||
+        numericId(beforeCommit?.smartsheet_sheet_id) !== targetSheet ||
+        numericId(beforeCommit?.smartsheet_row_id)) {
+      throw new Error(`Smartsheet row ${rowId} exists, but the Base44 create marker changed before link finalization. Review manually; never POST again.`);
+    }
+
+    const currentLocalSnapshot = makeSnapshot(beforeCommit);
+    const newerLocalEditsRemain = !snapshotsEqual(currentLocalSnapshot, snapshot);
+    const syncedAt = new Date().toISOString();
+    const linkedMarker = { ...marker, status: 'linked', row_id: rowId, linked_at: syncedAt };
+    const committed = await entity.updateMany(
+      { id, updated_date: beforeCommit.updated_date },
+      { $set: {
+        smartsheet_row_id: rowId,
+        smartsheet_sheet_id: targetSheet,
+        smartsheet_sync_snapshot: snapshot,
+        smartsheet_last_synced_at: syncedAt,
+        smartsheet_pending_local_sync: newerLocalEditsRemain,
+        smartsheet_create_attempt: linkedMarker,
+      } },
+    );
+    if (!committed || committed.updated !== 1) {
+      throw new Error(`Smartsheet row ${rowId} exists, but the Base44 Order changed before its permanent link could be finalized. The Order remains held for review; never POST again.`);
+    }
+    const verified = await entity.get(id);
+    if (String(verified?.smartsheet_row_id ?? '') !== rowId ||
+        String(verified?.smartsheet_sheet_id ?? '') !== targetSheet ||
+        verified?.smartsheet_pending_local_sync !== newerLocalEditsRemain ||
+        orderSmartsheetCreateNeedsReview(verified)) {
+      throw new Error(`Smartsheet row ${rowId} exists, but Base44 could not verify its permanent Order link. Review manually; never POST again.`);
+    }
+    return { rowId, recordId: id, recovered: Boolean(recovered), newerLocalEditsRemain };
+  };
 
   // Check authoritative current state, not the paginated snapshot.
   const current = await entity.get(id);
   if (!current || current.deleted) throw new Error('Order no longer exists or is deleted. Creation blocked.');
+  const recoverable = recoverableOrderSmartsheetCreate(current, targetSheet);
+  if (recoverable) {
+    return finalizePermanentLink({
+      latest: current,
+      marker: recoverable.marker,
+      rowId: recoverable.rowId,
+      snapshot: recoverable.snapshot,
+      recovered: true,
+    });
+  }
   if (orderSmartsheetCreateNeedsReview(current)) {
-    throw new Error('Order has an unresolved Smartsheet create attempt. Review its row before retrying.');
+    throw new Error('Order has an unresolved Smartsheet create attempt without a safely recoverable permanent row ID. Review its row before retrying.');
   }
   if (String(current.smartsheet_row_id ?? '').trim() ||
       String(current.smartsheet_sheet_id ?? '').trim()) {
@@ -136,26 +190,37 @@ async function performOrderSmartsheetCreate({
   // Requiring one confirmed ID avoids marking an unlinked POST as successful.
   const rowId = createdOrderSmartsheetRowId(body);
   const snapshot = makeSnapshot(current);
-  const syncedAt = new Date().toISOString();
+  const createdAt = new Date().toISOString();
+  const createdMarker = {
+    ...marker,
+    status: 'created_unlinked',
+    row_id: rowId,
+    created_at: createdAt,
+    expected_snapshot: snapshot,
+  };
+
+  // Persist the permanent row ID immediately after the POST response, before
+  // attempting the broader Base44 link/snapshot update. If the browser closes
+  // or the backend later fails, the next Save & Sync can verify this exact row
+  // and finish linking without issuing a second POST.
   try {
-    await entity.update(id, {
-      smartsheet_row_id: rowId,
-      smartsheet_sheet_id: targetSheet,
-      smartsheet_sync_snapshot: snapshot,
-      smartsheet_last_synced_at: syncedAt,
-      smartsheet_pending_local_sync: false,
-      smartsheet_create_attempt: { ...marker, status: 'linked', row_id: rowId, linked_at: syncedAt },
-    });
-    const verified = await entity.get(id);
-    if (String(verified?.smartsheet_row_id ?? '') !== rowId ||
-        String(verified?.smartsheet_sheet_id ?? '') !== targetSheet ||
-        verified?.smartsheet_pending_local_sync === true ||
-        orderSmartsheetCreateNeedsReview(verified)) {
-      throw new Error('Base44 did not verify its permanent Order row link.');
+    await entity.update(id, { smartsheet_create_attempt: createdMarker });
+    const recorded = await entity.get(id);
+    if (recorded?.smartsheet_create_attempt?.attempt_id !== token ||
+        recorded?.smartsheet_create_attempt?.status !== 'created_unlinked' ||
+        numericId(recorded?.smartsheet_create_attempt?.row_id) !== rowId ||
+        !snapshotsEqual(recorded?.smartsheet_create_attempt?.expected_snapshot, snapshot)) {
+      throw new Error('Base44 did not verify the permanent row ID create marker.');
     }
   } catch {
-    throw new Error(`Smartsheet created Order row ${rowId}, but Base44 could not confirm its permanent link. Review and link manually; never POST again.`);
+    throw new Error(`Smartsheet created Order row ${rowId}, but Base44 could not durably record that permanent row ID. Review manually; never POST again.`);
   }
 
-  return { rowId, recordId: id };
+  return finalizePermanentLink({
+    latest: await entity.get(id),
+    marker: createdMarker,
+    rowId,
+    snapshot,
+    recovered: false,
+  });
 }
