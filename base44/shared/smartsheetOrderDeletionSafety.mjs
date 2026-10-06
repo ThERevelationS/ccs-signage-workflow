@@ -17,6 +17,7 @@ export function classifyOrderDeletedLinkTombstones(records, configuredSheetId) {
     if (record?.deleted === true) deletedRowIds.add(rowId);
     else activeRowIds.add(rowId);
   }
-  const collisions = [...deletedRowIds].filter(rowId => activeRowIds.has(rowId)).sort();
-  return { sheetId, deletedRowIds, activeRowIds, collisions };
+  const shadowedDeletedRowIds = [...deletedRowIds].filter(rowId => activeRowIds.has(rowId)).sort();
+  const tombstoneRowIds = new Set([...deletedRowIds].filter(rowId => !activeRowIds.has(rowId)));
+  return { sheetId, deletedRowIds, activeRowIds, tombstoneRowIds, shadowedDeletedRowIds };
 }
