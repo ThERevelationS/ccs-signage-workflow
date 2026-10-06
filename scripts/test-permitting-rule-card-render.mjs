@@ -10,7 +10,9 @@ await mkdir(dir,{recursive:true});
 const outfile=resolve(dir,'card.mjs');
 try {
  await build({entryPoints:['src/components/admin/PermittingRuleCard.jsx'],outfile,bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react-dom','react/jsx-runtime']});
+ globalThis.window={self:null,top:null}; // Existing UI utility reads iframe status during module initialization.
  const {default:RuleCard}=await import(pathToFileURL(outfile));
+ delete globalThis.window;
  const rule={id:'fixture',status:'needs_review',confidence:'high',conflict_state:'conflicting_sources',rule_category:'submittal_requirement',requirement:'Fixture requirement',citations:[{section_or_page:'PDF page 1',excerpt:'First retained source'},{section_or_page:'PDF page 2',excerpt:'Second retained source'}]};
  const render=(extra={})=>renderToStaticMarkup(React.createElement(RuleCard,{rule,expanded:true,onToggle(){},onApprove(){},onReject(){},onEdit(){},onResolveConflict(){},actionLoading:false,...extra}));
  const html=render();
