@@ -1,3 +1,4 @@
+import PermittingReviewBrowserFixture from "./PermittingReviewBrowserFixture";
 import RuleCard from "./PermittingRuleCard";
 import { useEffect, useState, useCallback, useRef } from "react";
 import PermittingRuleEvidenceExtraction from "./PermittingRuleEvidenceExtraction";
@@ -57,6 +58,7 @@ const CONFLICT_STATES = [
 
 export default function PermittingRulesReview() {
   const [rules, setRules] = useState([]);
+  const [showBrowserFixture, setShowBrowserFixture] = useState(false);
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -202,6 +204,13 @@ export default function PermittingRulesReview() {
           <h2 className="text-xl font-bold">Permitting Rules Engine</h2>
         </div>
       </div>
+
+      {import.meta.env.DEV && <div>
+        <Button variant="outline" onClick={() => setShowBrowserFixture(value => !value)}>
+          {showBrowserFixture ? "Close isolated browser acceptance" : "Open isolated browser acceptance"}
+        </Button>
+        {showBrowserFixture && <PermittingReviewBrowserFixture />}
+      </div>}
 
       <PermittingRuleEvidenceExtraction key={filters.jurisdiction_name} jurisdictionName={filters.jurisdiction_name} onImported={() => { loadRules(true); loadCounts(); }} />
 
