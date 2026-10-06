@@ -2,7 +2,7 @@ export function validateAuthoritativeAuditPage({
   page,
   scopedId,
   previousPageOldestTimestampMs = null,
-  seenAuditIds = new Set(),
+  seenPageAuditIds = new Set(),
   seenCursors = new Set(),
 }) {
   if (!page || typeof page !== "object" || Array.isArray(page)) {
@@ -30,8 +30,8 @@ export function validateAuthoritativeAuditPage({
     throw new Error(`Integrity investigation pagination returned ${malformedPageItemIndexes.length} malformed authoritative audit record${malformedPageItemIndexes.length === 1 ? "" : "s"} inside a valid page.`);
   }
 
-  const normalizedScopedId = String(scopedId || "").trim();
-  const mismatchedPageRows = pageItems.filter((row) => String(row.time_entry_id || "").trim() !== normalizedScopedId);
+  const scopedIdNormalized = String(scopedId || "").trim();
+  const mismatchedPageRows = pageItems.filter((row) => String(row.time_entry_id || "").trim() !== scopedIdNormalized);
   if (mismatchedPageRows.length > 0) {
     throw new Error(`Integrity investigation pagination returned ${mismatchedPageRows.length} authoritative audit record${mismatchedPageRows.length === 1 ? "" : "s"} outside the requested TimeEntry scope.`);
   }
@@ -48,8 +48,13 @@ export function validateAuthoritativeAuditPage({
   if (pageOrderingReversalIndex >= 0) {
     throw new Error("Integrity investigation pagination returned an authoritative page outside newest-to-oldest server timestamp order.");
   }
-  if (previousPageOldestTimestampMs !== null && pageTimestampMs.length > 0 && pageTimestampMs[0] > previousPageOldestTimestampMs) {
-    throw new Error("Integrity investigation pagination crossed the prior page timestamp boundary and cannot prove newest-to-oldest cursor ordering.");
+  if (previousPageOldestTimestampMs !== null && pageTimestampMs.length > 0) {
+    const currentPageNewestTimestampMs = pageTimestampMs[0];
+    if (currentPageNewestTimestampMs > previousPageOldestTimestampMs) {
+      throw new Error("Integrity investigation pagination crossed the prior page timestamp boundary and cannot prove newest-to-oldest cursor ordering.");
+    }
+    // Equal server timestamps are therefore a legitimate boundary tie; immutable Audit ID
+    // uniqueness across pages prevents a tied record from being accepted twice.
   }
 
   const acceptedPageOldestTimestampMs = pageTimestampMs.length > 0
@@ -67,12 +72,12 @@ export function validateAuthoritativeAuditPage({
   if (duplicateAuditIdsWithinPage.length > 0) {
     throw new Error(`Integrity investigation pagination returned ${duplicateAuditIdsWithinPage.length} duplicate immutable Audit ID${duplicateAuditIdsWithinPage.length === 1 ? "" : "s"} inside one authoritative page.`);
   }
-  const repeatedPageAuditIds = [...new Set(pageAuditIds.filter((id) => seenAuditIds.has(id)))];
+  const repeatedPageAuditIds = [...new Set(pageAuditIds.filter((id) => seenPageAuditIds.has(id)))];
   if (repeatedPageAuditIds.length > 0) {
     throw new Error(`Integrity investigation pagination repeated ${repeatedPageAuditIds.length} immutable audit record${repeatedPageAuditIds.length === 1 ? "" : "s"} across authoritative pages.`);
   }
 
-  const newPageAuditIds = pageAuditIds.filter((id) => !seenAuditIds.has(id));
+  const newPageAuditIds = pageAuditIds.filter((id) => !seenPageAuditIds.has(id));
   if (pageItems.length > 0 && newPageAuditIds.length === 0) {
     throw new Error("Integrity investigation pagination returned a nonempty authoritative page without any new immutable Audit IDs, so cursor evidence progress cannot be proven.");
   }
