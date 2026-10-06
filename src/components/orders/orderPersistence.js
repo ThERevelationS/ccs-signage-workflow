@@ -221,6 +221,47 @@ export async function restoreOrderFromLoadedTrashSnapshot({
         (verified.smartsheet_pending_local_sync === true) !== restoreSafety.pendingLocalSync) {
       throw new Error(`${label} could not verify that the original permanent Smartsheet row and pending-sync state survived recovery. Reload before continuing.`);
     }
+
+    try {
+      const postRestoreOwners = await readActiveLinkedOrders({
+        sheetId: restoreSafety.sheetId,
+        rowId: restoreSafety.rowId,
+      });
+      assertOrderRestoreSmartsheetSafe(verified, postRestoreOwners, `${label} post-restore ownership check`);
+    } catch (ownershipError) {
+      // If ownership changed during the restore window, put this exact restored
+      // revision back in trash instead of leaving two active Base44 owners for
+      // one permanent Smartsheet row.
+      try {
+        await replaceOrderFieldsIfUnchanged({
+          entity,
+          order: verified,
+          expectedFields: expectedOrderFields(verified, {
+            deleted: true,
+            deleted_at: order.deleted_at || null,
+            deleted_by: order.deleted_by || null,
+          }),
+          nextFields: {
+            deleted: true,
+            deleted_at: order.deleted_at || new Date().toISOString(),
+            deleted_by: order.deleted_by || "restore-conflict",
+          },
+          guardFields: { deleted: false },
+          fullVersion: true,
+          label: `${label} duplicate-owner rollback`,
+        });
+      } catch (rollbackError) {
+        throw new Error(
+          `${label} detected a competing active Order for permanent Smartsheet row ${restoreSafety.rowId}, ` +
+          `but could not verify returning this restored copy to trash. Reload Order Trash immediately before taking another action. ` +
+          `${rollbackError?.message || ""}`.trim()
+        );
+      }
+      throw new Error(
+        `${label} was stopped because another active Order claimed permanent Smartsheet row ${restoreSafety.rowId} during recovery. ` +
+        `This Order was safely returned to trash. ${ownershipError?.message || ""}`.trim()
+      );
+    }
   }
   return result;
 }
