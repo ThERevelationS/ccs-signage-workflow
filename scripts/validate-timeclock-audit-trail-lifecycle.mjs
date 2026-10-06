@@ -225,7 +225,7 @@ assert.match(loadRowsBlock, /const scopedId = String\(timeEntryId \|\| ""\)\.tri
 assert.match(loadRowsBlock, /TimeClockAudit\.filter\(scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
 assert.match(loadRowsBlock, /const mismatchedRows = loadedRows\.filter\(\(row\) => String\(row\?\.time_entry_id \|\| ""\)\.trim\(\) !== scopedId\)/);
 assert.match(loadRowsBlock, /if \(mismatchedRows\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*setError\(`/);
-assert.ok(loadRowsBlock.indexOf('setRows([]);') < loadRowsBlock.indexOf('setRows(loadedRows);'), 'scoped integrity rejection must occur before accepting returned rows');
+assert.ok(loadRowsBlock.indexOf('setRows([]);') < loadRowsBlock.indexOf('setRows(loadedRowLocators);'), 'scoped integrity rejection must occur before accepting returned rows');
 console.log('PASS exact scoped audit rows are accepted only after TimeEntry integrity validation');
 
 assert.match(loadRowsBlock, /mismatchedRows\.length > 0/);
