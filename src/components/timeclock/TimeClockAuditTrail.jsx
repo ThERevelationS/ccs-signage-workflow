@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from "@/shared/timeClockPayrollMembershipEvidence.mjs";
+import { validateAuthoritativeAuditPage } from "@/shared/timeClockAuditPagination.mjs";
 
 const TimeClockAudit = base44.entities.TimeClockAudit;
 
