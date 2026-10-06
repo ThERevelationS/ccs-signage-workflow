@@ -53319,8 +53319,8 @@
   "queue": {
     "row_count": 1274,
     "status_counts": {
-      "unique_candidate": 864,
-      "unmatched": 409,
+      "unique_candidate": 865,
+      "unmatched": 408,
       "ambiguous": 1
     },
     "rows_with_review_flags": 1185,
@@ -62586,8 +62586,10 @@
         "name": "Village of Woodlawn",
         "type": "village",
         "county": "Hamilton County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3986366"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -72914,11 +72916,29 @@
   "profiles": {
     "row_count": 217,
     "status_counts": {
-      "unique_candidate": 185,
-      "unmatched": 32
+      "unique_candidate": 200,
+      "unmatched": 17
     },
     "rows_with_review_flags": 120,
     "duplicate_identity_groups": [
+      {
+        "type": "city",
+        "name": "cheviot",
+        "county": "hamilton",
+        "row_count": 2
+      },
+      {
+        "type": "city",
+        "name": "cincinnati",
+        "county": "hamilton",
+        "row_count": 2
+      },
+      {
+        "type": "city",
+        "name": "cleves",
+        "county": "hamilton",
+        "row_count": 2
+      },
       {
         "type": "township",
         "name": "miami",
@@ -74239,7 +74259,6 @@
       "county_subdivision:3917578141",
       "incorporated_place:3900198",
       "incorporated_place:3900380",
-      "incorporated_place:3900436",
       "incorporated_place:3900450",
       "incorporated_place:3900464",
       "incorporated_place:3901000",
@@ -74400,7 +74419,6 @@
       "incorporated_place:3916434",
       "incorporated_place:3916532",
       "incorporated_place:3917036",
-      "incorporated_place:3918000",
       "incorporated_place:3918014",
       "incorporated_place:3918070",
       "incorporated_place:3918266",
@@ -74445,7 +74463,6 @@
       "incorporated_place:3922456",
       "incorporated_place:3922568",
       "incorporated_place:3922610",
-      "incorporated_place:3922694",
       "incorporated_place:3922946",
       "incorporated_place:3922974",
       "incorporated_place:3923324",
@@ -74465,7 +74482,6 @@
       "incorporated_place:3925396",
       "incorporated_place:3925452",
       "incorporated_place:3925704",
-      "incorporated_place:3925942",
       "incorporated_place:3926166",
       "incorporated_place:3926306",
       "incorporated_place:3926446",
@@ -74481,7 +74497,6 @@
       "incorporated_place:3927902",
       "incorporated_place:3928014",
       "incorporated_place:3928182",
-      "incorporated_place:3928476",
       "incorporated_place:3928574",
       "incorporated_place:3928616",
       "incorporated_place:3928658",
@@ -74536,7 +74551,6 @@
       "incorporated_place:3933376",
       "incorporated_place:3933656",
       "incorporated_place:3933740",
-      "incorporated_place:3933838",
       "incorporated_place:3934090",
       "incorporated_place:3934118",
       "incorporated_place:3934202",
@@ -74587,7 +74601,6 @@
       "incorporated_place:3939662",
       "incorporated_place:3939872",
       "incorporated_place:3939886",
-      "incorporated_place:3940040",
       "incorporated_place:3940054",
       "incorporated_place:3940180",
       "incorporated_place:3940376",
@@ -74647,7 +74660,6 @@
       "incorporated_place:3946480",
       "incorporated_place:3946830",
       "incorporated_place:3946844",
-      "incorporated_place:3946872",
       "incorporated_place:3946942",
       "incorporated_place:3946970",
       "incorporated_place:3946998",
@@ -74658,7 +74670,6 @@
       "incorporated_place:3947474",
       "incorporated_place:3947502",
       "incorporated_place:3947558",
-      "incorporated_place:3947600",
       "incorporated_place:3947628",
       "incorporated_place:3947754",
       "incorporated_place:3947992",
@@ -74666,7 +74677,6 @@
       "incorporated_place:3948090",
       "incorporated_place:3948104",
       "incorporated_place:3948160",
-      "incorporated_place:3948188",
       "incorporated_place:3948244",
       "incorporated_place:3948286",
       "incorporated_place:3948342",
@@ -74685,12 +74695,10 @@
       "incorporated_place:3949700",
       "incorporated_place:3949728",
       "incorporated_place:3949756",
-      "incorporated_place:3949840",
       "incorporated_place:3949966",
       "incorporated_place:3950008",
       "incorporated_place:3950036",
       "incorporated_place:3950134",
-      "incorporated_place:3950176",
       "incorporated_place:3950218",
       "incorporated_place:3950260",
       "incorporated_place:3950316",
@@ -75095,8 +75103,10 @@
         "name": "City of Milford",
         "type": "city",
         "county": "Clermont County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3950176"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75121,8 +75131,10 @@
         "name": "City of Mason",
         "type": "city",
         "county": "Warren County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3948188"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75147,8 +75159,10 @@
         "name": "Village of Maineville",
         "type": "municipality",
         "county": "Warren County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3946872"
+        ],
         "review_flags": [
           "profile_municipality_type_unresolved",
           "official_county_relationship_pending"
@@ -75161,8 +75175,10 @@
         "name": "City of Middletown",
         "type": "city",
         "county": "Butler County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3949840"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75174,8 +75190,10 @@
         "name": "City of Dublin",
         "type": "city",
         "county": "Franklin County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3922694"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75187,8 +75205,10 @@
         "name": "City of Harrison",
         "type": "city",
         "county": "INFORMATION NOT FOUND",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3933838"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75200,8 +75220,10 @@
         "name": "City of Columbus",
         "type": "city",
         "county": "Franklin County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3918000"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75213,8 +75235,10 @@
         "name": "City of Cheviot",
         "type": "city",
         "county": "Hamilton County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3914128"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75226,8 +75250,10 @@
         "name": "City of Kettering",
         "type": "city",
         "county": "Montgomery County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3940040"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75252,8 +75278,10 @@
         "name": "City of Cincinnati",
         "type": "city",
         "county": "Hamilton County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3915000"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75609,8 +75637,10 @@
         "name": "Village of Mariemont",
         "type": "village",
         "county": "Hamilton County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3947600"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75740,8 +75770,10 @@
         "name": "Village of Addyston",
         "type": "village",
         "county": "Hamilton County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3900436"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75766,8 +75798,10 @@
         "name": "City of Franklin",
         "type": "city",
         "county": "Warren County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3928476"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -75824,8 +75858,10 @@
         "name": "Village of Maineville",
         "type": "village",
         "county": "Warren County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3946872"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],
@@ -76045,8 +76081,10 @@
         "name": "Village of Fairfax",
         "type": "village",
         "county": "Hamilton County",
-        "status": "unmatched",
-        "candidate_reference_keys": [],
+        "status": "unique_candidate",
+        "candidate_reference_keys": [
+          "incorporated_place:3925942"
+        ],
         "review_flags": [
           "official_county_relationship_pending"
         ],

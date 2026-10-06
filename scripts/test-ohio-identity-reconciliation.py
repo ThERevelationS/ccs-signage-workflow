@@ -9,6 +9,10 @@ def candidate(key, name, kind, county=None):
     return dict(reference_key=key, base_name=name, queue_type=kind, county_name=county)
 
 class Tests(unittest.TestCase):
+    def test_legal_name_prefix(self):
+        self.assertEqual(m.normalize("City of Milford"), "milford")
+        self.assertEqual(m.normalize("Village of Maineville"), "maineville")
+
     def test_same_named_townships_use_county(self):
         refs = [candidate("a", "Green", "township", "Adams County"), candidate("b", "Green", "township", "Allen County")]
         r = m.match(dict(name="Green Township", type="township", county="Adams"), refs)

@@ -9,6 +9,7 @@ OUT = ROOT / "docs/official-evidence/ohio-live-reconciliation-2026-10-06"
 
 def normalize(value):
     value = re.sub(r"\s+", " ", str(value or "").strip().casefold())
+    value = re.sub(r"^(city|village|township|county) of\s+", "", value)
     return re.sub(r"\s+(county|township|city|village)$", "", value)
 
 def match(row, candidates):
