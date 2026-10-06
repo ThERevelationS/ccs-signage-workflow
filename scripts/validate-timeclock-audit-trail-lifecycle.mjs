@@ -166,6 +166,7 @@ console.log('PASS rapid investigation changes request the newest TimeEntry scope
 assert.match(source, /if \(scopedId && integrityMode\)/);
 assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ sort: "-server_timestamp", limit: 5000 \}\)/);
 assert.match(source, /const maxIntegrityPageRequests = 100/);
+assert.match(source, /const maxIntegrityAuditRows = 500000/);
 assert.match(source, /let integrityPageRequestCount = 1/);
 assert.match(source, /while \(true\)/);
 assert.match(source, /if \(integrityPageRequestCount > maxIntegrityPageRequests\)/);
@@ -220,6 +221,10 @@ assert.match(source, /if \(duplicateAuditIdsWithinPage\.length > 0\)/);
 assert.match(source, /duplicate immutable Audit ID.*inside one authoritative page/);
 const withinPageDuplicateGuard = source.indexOf('if (duplicateAuditIdsWithinPage.length > 0)');
 assert.ok(withinPageDuplicateGuard >= 0 && pageAccumulation > withinPageDuplicateGuard, 'same-page duplicate immutable Audit IDs must fail closed before the page is accumulated');
+assert.match(source, /if \(loadedRows\.length \+ pageItems\.length > maxIntegrityAuditRows\)/);
+assert.match(source, /exceeded its .*record accumulation safety budget before authoritative history completeness could be proven/);
+const rowAccumulationBudgetGuard = source.indexOf('if (loadedRows.length + pageItems.length > maxIntegrityAuditRows)');
+assert.ok(rowAccumulationBudgetGuard >= 0 && pageAccumulation > rowAccumulationBudgetGuard, 'integrity pagination row budget must fail closed before an oversized authoritative page is accumulated');
 assert.match(source, /loadedRows\.push\(\.\.\.pageItems\)/);
 assert.match(source, /if \(!page\.has_more\)[\s\S]*if \(nextCursor\)[\s\S]*continuation cursor on a terminal authoritative page/);
 assert.match(source, /if \(!nextCursor\)/);
