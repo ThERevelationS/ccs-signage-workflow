@@ -33,9 +33,10 @@ export default function LocalityOfficeEvidence({ jurisdictionId, retrieveEvidenc
       } : {}) });
       if (!current()) return;
       if (!data?.success || data.jurisdiction_id !== currentScope) throw Error(data?.error || "Office evidence could not be verified for this locality.");
+      const rows = data.items.map(row => ({ ...row, checked_at: data.checked_at }));
       setResult(previous => ({ ...data, items: more
-        ? [...new Map([...(previous?.items || []), ...data.items].map(row => [row.id, row])).values()]
-        : data.items }));
+        ? [...new Map([...(previous?.items || []), ...rows].map(row => [row.id, row])).values()]
+        : rows }));
     } catch (e) {
       if (current()) { setResult(null); setError(e?.response?.data?.error || e.message || "Office verification failed."); }
     } finally { if (current()) { inFlight.current = false; setBusy(false); } }
@@ -46,7 +47,7 @@ export default function LocalityOfficeEvidence({ jurisdictionId, retrieveEvidenc
     <Button size="sm" variant="outline" disabled={busy || !jurisdictionId} onClick={() => load()}>{busy ? "Checking office evidence…" : visible ? "Refresh office evidence" : "Load reviewed office evidence"}</Button>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     {visible && <>
-      <p className="text-xs text-gray-600">Checked {visible.checked_at}. {visible.items.length} loaded review records.</p>
+      <p className="text-xs text-gray-600">Latest page checked {visible.checked_at}. {visible.items.length} loaded review records.</p>
       {!visible.items.length && <p className="text-sm text-amber-800">No committed office relationship reviews are recorded. A department contact alone does not establish responsibility.</p>}
       {visible.items.map(row => {
         const verified = row.verified === true && row.is_current_review === true && row.state === "staff_verified" && row.action === "verify";
@@ -56,6 +57,7 @@ export default function LocalityOfficeEvidence({ jurisdictionId, retrieveEvidenc
           <p>Covered area: {row.coverage_area || "Not established"}{row.coverage_kind === "unincorporated" ? " (unincorporated area only)" : ""}</p>
           <p>{row.reason}</p>
           <p className="text-xs text-gray-600">Reviewed by {row.requested_by || "Unknown reviewer"} · {row.requested_at || "Date unavailable"}</p>
+          <p className="text-xs text-gray-600">Evidence checked {row.checked_at}. Refresh before use.</p>
           {verified && <>
             <blockquote className="whitespace-pre-wrap border-l-2 pl-2">{row.role_proof?.excerpt}</blockquote>
             <p className="text-xs">{row.role_proof?.physical_page ? `Physical PDF page ${row.role_proof.physical_page}` : `Retained HTML block ${row.role_proof?.block ?? "unknown"}`}</p>
