@@ -1,0 +1,26 @@
+{
+  "fee": {
+    "request_id": "782bdfdf-0e8c-4b52-a12f-95a49d2c8722",
+    "run_id": "6ac474726de60fe435a949ca",
+    "status": "complete",
+    "attempts": 1,
+    "candidates": 2,
+    "fee_timing_candidates": 1,
+    "rejected": 0,
+    "office": "Campbell County Planning, Zoning and Building Inspection"
+  },
+  "exception": {
+    "request_id": "7bd8f78a-a265-4375-b407-dad9b2433559",
+    "run_id": "6ac47491e7eb62f9e816b278",
+    "status": "complete",
+    "attempts": 1,
+    "candidates": 2,
+    "structured_exceptions": 0,
+    "rejected": 2,
+    "both_approval_blocked_in_ui": true
+  },
+  "imports": 0,
+  "approvals": 0,
+  "new_ai_attempts": 2,
+  "remaining": "Structured exception extraction and browser keyboard acceptance"
+}
