@@ -133,6 +133,7 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
         remote_row_present: markerSheetId === sheetId && knownRowId
           ? remoteIds.has(knownRowId) : null,
         marker_needs_review: orderSmartsheetCreateNeedsReview(order),
+        expected_snapshot_recorded: Boolean(marker?.expected_snapshot && typeof marker.expected_snapshot === 'object' && !Array.isArray(marker.expected_snapshot)),
         recovery_state: recoveryState,
         recommended_action: recommendedAction,
         retry_sync_recoverable: recoveryState === 'retry_sync_recoverable',
