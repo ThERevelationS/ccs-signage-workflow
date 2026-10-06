@@ -29,7 +29,7 @@ export default function PermittingReviewBrowserFixture() {
   }
   return <main className="p-4 max-w-4xl mx-auto space-y-4">
     <h1 className="text-xl font-bold">Isolated permitting browser acceptance</h1>
-    <p>Authenticated preview only. Fixture records and local callbacks; no backend writes, approvals or AI calls.</p>
+    <p>Isolated preview. Fixture records and local callbacks; no backend writes, approvals or AI calls. The optional live check below reads approved evidence only.</p>
     <div className="flex flex-wrap gap-2">
       <Button onClick={() => setBusy(value => !value)}>Toggle fixture busy</Button>
       <Button onClick={() => setVersion(value => value + 1)}>Advance fixture version</Button>
@@ -42,5 +42,8 @@ export default function PermittingReviewBrowserFixture() {
     <output aria-label="Local callback receipt">{receipt}</output>
     <p className="text-xs">Example rationale: {rationale}</p>
     <PermittingApprovedEvidenceSearch jurisdictionId={scope} jurisdictionName={scope} retrieveEvidence={retrieveEvidence} />
+    <details><summary>Live read-only check — Campbell County</summary>
+      <PermittingApprovedEvidenceSearch jurisdictionId="6ac19dcc184935c1391ee468" jurisdictionName="Campbell County (live read-only)" />
+    </details>
   </main>;
 }

@@ -39,7 +39,7 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
       setResult(previous => {
         const blockedIds = new Set((data.blocked || []).map(row => row.rule_id));
         const verifiedIds = new Set(rows.map(row => row.rule_id));
-        return { ...data,
+        return { ...data, evidence_scope: scope,
           evidence: more ? [...new Map([...(previous?.evidence || []).filter(row => !blockedIds.has(row.rule_id)), ...rows].map(row => [row.rule_id, row])).values()] : rows,
           blocked: more ? [...new Map([...(previous?.blocked || []).filter(row => !verifiedIds.has(row.rule_id)), ...(data.blocked || [])].map(row => [row.rule_id, row])).values()] : data.blocked || [],
         };
@@ -51,8 +51,9 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
     }
   }
 
+  const visibleResult = result?.evidence_scope === jurisdictionId ? result : null;
   const needle = query.trim().toLowerCase();
-  const matching = (result?.evidence || []).filter(row => !needle ||
+  const matching = (visibleResult?.evidence || []).filter(row => !needle ||
     [row.requirement, row.trigger, row.exceptions, row.sign_type, row.zoning_district_applicability, row.rule_category,
       ...(row.citations || []).map(citation => citation.excerpt)].some(value => String(value || "").toLowerCase().includes(needle)));
 
@@ -60,14 +61,14 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
     <h3 className="font-semibold">Search approved requirements — {jurisdictionName}</h3>
     <p className="text-sm text-gray-600">Answers below quote staff-approved evidence for this jurisdiction. Confirm the property, zoning district, sign type and exceptions before using a requirement for a job.</p>
     <Button size="sm" variant="outline" disabled={busy || disabled || !jurisdictionId} onClick={() => load(false)}>
-      {busy ? "Checking evidence…" : result ? "Refresh approved evidence" : "Load approved evidence"}
+      {busy ? "Checking evidence…" : visibleResult ? "Refresh approved evidence" : "Load approved evidence"}
     </Button>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-    {result && <>
+    {visibleResult && <>
       <div><Label htmlFor={"approved-query-" + jurisdictionId}>Search loaded verified evidence</Label>
         <Input id={"approved-query-" + jurisdictionId} value={query} placeholder="Enter words from a requirement or citation" onChange={event => setQuery(event.target.value)} /></div>
-      <p className="text-sm" role="status">{matching.length} matching requirements in {result.evidence.length} loaded verified records.
-        {result.has_more ? " More approved records remain; load the next page to broaden this search." : " End of this page sequence. Records can change between loads; refresh before use."}
+      <p className="text-sm" role="status">{matching.length} matching requirements in {visibleResult.evidence.length} loaded verified records.
+        {visibleResult.has_more ? " More approved records remain; load the next page to broaden this search." : " End of this page sequence. Records can change between loads; refresh before use."}
         {" "}No match does not establish that a permit is unnecessary. Address applicability still requires review.</p>
       {matching.map(row => <article key={row.rule_id} className="rounded border p-3 space-y-2 text-sm">
         <p className="font-semibold">{row.rule_kind === "administrative_instruction" ? "Reviewed submission instruction" : "Reviewed regulatory requirement"}</p>
@@ -86,11 +87,11 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
           </div>
         </blockquote>)}
       </article>)}
-      {result.blocked.length > 0 && <details><summary>{result.blocked.length} approved records blocked by current evidence checks</summary>
+      {visibleResult.blocked.length > 0 && <details><summary>{visibleResult.blocked.length} approved records blocked by current evidence checks</summary>
         <p className="text-sm">These records cannot support answers until their evidence is reviewed.</p>
-        {result.blocked.map(row => <p key={row.rule_id} className="text-sm">{row.rule_id}: {row.blocker}</p>)}
+        {visibleResult.blocked.map(row => <p key={row.rule_id} className="text-sm">{row.rule_id}: {row.blocker}</p>)}
       </details>}
-      {result.has_more && <Button size="sm" variant="outline" disabled={busy || disabled} onClick={() => load(true)}>Load next evidence page</Button>}
+      {visibleResult.has_more && <Button size="sm" variant="outline" disabled={busy || disabled} onClick={() => load(true)}>Load next evidence page</Button>}
     </>}
   </section>;
 }
