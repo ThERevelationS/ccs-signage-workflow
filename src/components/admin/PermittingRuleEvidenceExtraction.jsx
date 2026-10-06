@@ -30,6 +30,7 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
   const [requestId, setRequestId] = useState("");
+  const [savedRequestInput, setSavedRequestInput] = useState("");
   const [handoff, setHandoff] = useState(null);
   const [receipts, setReceipts] = useState({});
   const generation = useRef(0);
@@ -53,7 +54,7 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
 
   useEffect(() => {
     setPreview(null); setResult(null); setReceipts({}); setHandoff(null); setError("");
-    setRequestId(readRequest(key));
+    setRequestId(readRequest(key)); setSavedRequestInput("");
   }, [key]);
 
   async function act(action, payload = {}) {
@@ -78,20 +79,24 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
         if (generation.current === current) { setReceipts(rows => ({ ...rows, [payload.candidate_index]: data.rule.id })); onImported(); }
         return;
       }
-      let id = requestId;
+      let id = action === "open_saved" ? savedRequestInput.trim() : requestId;
+      if (action === "open_saved" && !/^[a-zA-Z0-9_-]{16,100}$/.test(id)) throw Error("Enter a valid saved manual request ID.");
       if (action === "extract" && !id) {
         id = crypto.randomUUID(); saveRequest(key, id); setRequestId(id);
       }
-      const data = await invoke("permittingRuleExtraction", { action, source_document_id: sourceId,
+      const data = await invoke("permittingRuleExtraction", { action: action === "open_saved" ? "get_run" : action, source_document_id: sourceId,
         start_page: page, page_count: count, ...(id ? { request_id: id } : {}) });
       if (generation.current !== current) return;
       if (action === "preview") {
         if (!data.success) throw Error(data.error || "Preview failed.");
         setPreview(data);
-      } else if (action === "get_run") {
+      } else if (action === "get_run" || action === "open_saved") {
         const run = data.run;
         if (run && (run.source_document_id !== sourceId || run.start_page !== page || run.page_count !== count))
           throw Error("Stored request belongs to another evidence selection.");
+        if (action === "open_saved" && !run) throw Error("No saved analysis matches this request ID.");
+        if (run && run.method !== "literal-page-v1") throw Error("This request is a diagnostic receipt, not a page analysis.");
+        if (run && action === "open_saved") { saveRequest(key, id); setRequestId(id); setHandoff(null); }
         setResult(run ? { ...run, run_id: run.id } : { status: "not_found", candidates: [],
           error: "No run is visible. Keep this request id; an uncertain create must be reconciled before another analysis." });
         if (run) setReceipts(Object.fromEntries(Object.entries(run.import_receipts || {}).map(([index, receipt]) => [index, receipt.rule_id])));
@@ -147,6 +152,12 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
       <Button size="sm" disabled={Boolean(busy) || !preview || Boolean(result)} onClick={() => act("extract")}>Analyze selected pages</Button>
       {requestId && <Button size="sm" variant="outline" disabled={Boolean(busy)} onClick={() => act("get_run")}>Check saved result</Button>}
       {["complete", "failed"].includes(result?.status) && <Button size="sm" variant="outline" disabled={Boolean(busy)} onClick={newAnalysis}>Start another manual analysis</Button>}
+    </div>
+    <div className="space-y-1">
+      <Label htmlFor="saved-rule-request">Open a saved analysis</Label>
+      <div className="flex flex-wrap gap-2"><Input id="saved-rule-request" className="flex-1 min-w-48" placeholder="Saved manual request ID" value={savedRequestInput} disabled={Boolean(busy)} onChange={e => setSavedRequestInput(e.target.value)} />
+        <Button size="sm" variant="outline" disabled={Boolean(busy) || !selectedRange || !/^[a-zA-Z0-9_-]{16,100}$/.test(savedRequestInput.trim())} onClick={() => act("open_saved")}>Open saved analysis</Button></div>
+      <p className="text-xs text-gray-600">Select the original document and page range, then enter its saved request ID. This lookup uses no AI credits.</p>
     </div>
     {busy && <p className="text-sm" role="status">Working…</p>}
     {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
