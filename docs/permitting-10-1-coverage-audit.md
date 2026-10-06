@@ -1,3 +1,13 @@
+### 2026-10-06 — 10.1 of 10.3: task 2 of 4 reader foundation implemented; integration pending
+
+Added permittingCoverageReader.mjs: read-only exhaustive cursor traversal with stable-ID dedupe, malformed-page/row and repeated-cursor rejection, progress callback and superseded-read cancellation. No total cap. Reconciliation separates missing profiles, single name/type/county candidates, duplicate queue identities, ambiguous profiles, incomplete identities, unsupported profile types and unmatched profile records. Single candidates are explicitly not canonical authority verification; inventory_complete and authority_verified remain false. No implicit city/village/municipality coercion.
+
+Installed SDK types confirm options-object cursor paging is supported. Existing localityQueueSeed explicitly omits Ohio townships and contains a partial recalled incorporated-place list, so it cannot be treated as an authoritative statewide denominator. Independent official inventory reconciliation remains necessary.
+
+New meaningful tests pass for 6000 records over 12 pages (6000 is a test size, not a cap), stuck cursors, invalid IDs, superseded reads, duplicates/ambiguity/missing parent county, same-name county isolation and unsupported municipality type. Targeted lint and diff check pass. No UI integration or live data acceptance is claimed; utility is not connected to the dashboard yet. No production records changed, AI calls or frontend publish.
+
+10.1 task 1 complete; task 2 partial (reader foundation tested, live adapter/official denominator pending); task 3 UI/lifecycle pending; task 4 live OH/KY acceptance pending. Phase 9 mobile acceptance and Phase 8 populated approved example remain open. Next: integrate the SDK reader under current permissions, then replace misleading dashboard percentages with recorded identity coverage and explicit inventory gaps.
+
 ### 2026-10-06 — Phase 10: 10.1 of 10.3, coverage audit task 1 of 4 complete
 
 Phase 9 remains open at 9.3 for actual phone viewport/scroll/touch acceptance. The browser inventory contained only about:blank after another runtime reset; no further login loop was started. Phase 8 authenticated empty-result retrieval remains verified; populated approved evidence acceptance remains open. Phase 5 archival reconciliation remains open.
