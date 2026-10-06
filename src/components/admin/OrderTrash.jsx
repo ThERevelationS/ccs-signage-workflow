@@ -22,10 +22,10 @@ import {
   assertOrderSystemResetCatalogStable,
   assertOrderSystemResetComplete,
   deleteVerifiedOrderSnapshots,
-  orderHasSmartsheetRelationship,
   permanentlyDeleteTrashOrderFromLoadedSnapshot,
   restoreOrderFromLoadedTrashSnapshot,
 } from "@/components/orders/orderPersistence";
+import { orderHasSmartsheetRelationship } from "@/components/orders/orderDeletionSmartsheetSafety.mjs";
 
 const Order = base44.entities.Order;
 const SYSTEM_RESET_CONFIRMATION = "DELETE ALL ORDERS";
