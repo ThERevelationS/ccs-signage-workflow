@@ -70,12 +70,30 @@ Deno.serve(async req => {
     if (!id) throw evidenceError('Select a rule.',400);
     const rule=await Rules.get(id);
     if (action==='get') return Response.json({success:true,rule});
-    if (!['approve','reject','edit'].includes(action)) throw evidenceError('Unknown review action.',400);
+    if (!['approve','reject','edit','resolve_conflict'].includes(action)) throw evidenceError('Unknown review action.',400);
     const expected=Number(body.expected_version);
     if (!Number.isInteger(expected) || expected<1 || rule.version!==expected) throw evidenceError('Another reviewer changed this rule; refresh before saving.');
     const reviewer={reviewer:user.full_name || user.email,reviewer_email:user.email,reviewed_at:new Date().toISOString()};
     let fields:any={...reviewer};
-    if (action==='approve') {
+    if (action==='resolve_conflict') {
+      if (rule.conflict_state!=='conflicting_sources') throw evidenceError('This rule has no unresolved source conflict.');
+      const rationale=String(body.rationale || '').trim();
+      if (rationale.length<30 || rationale.length>2000 || body.reviewed_all_citations!==true)
+        throw evidenceError('Review every citation and provide a resolution rationale of 30 to 2000 characters.',400);
+      // This explicit staff action alone may clear the conflict flag. Every
+      // retained citation must pass current authority and literal evidence gates.
+      const snapshots=await verifyRuleForApproval({...rule,conflict_state:'under_review'},
+        {sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
+        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
+      await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,
+        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
+      const prior=rule.evidence_context?.conflict_resolutions || [];
+      if (!Array.isArray(prior)) throw evidenceError('Existing conflict history requires reconciliation.');
+      fields={...fields,status:'needs_review',conflict_state:'under_review',is_operational:false,is_workflow_instruction:false,
+        evidence_context:{...(rule.evidence_context || {}),conflict_resolutions:[...prior,{...reviewer,rationale,
+          rule_version:rule.version,previous_conflict_state:rule.conflict_state,citations:rule.citations,
+          checked_sources:snapshots.map(s=>({id:s.id,snapshot:s.snapshot}))}]}};
+    } else if (action==='approve') {
       const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
         profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
       await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,

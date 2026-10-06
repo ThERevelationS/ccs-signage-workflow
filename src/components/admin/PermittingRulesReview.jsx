@@ -164,6 +164,22 @@ export default function PermittingRulesReview() {
     }
   };
 
+  const handleResolveConflict = async (rule, rationale) => {
+    if (actionLoading) return;
+    setActionLoading(rule.id); setError(null);
+    try {
+      const res = await base44.functions.invoke("permittingRuleReview", {
+        action: "resolve_conflict", rule_id: rule.id, expected_version: rule.version,
+        rationale, reviewed_all_citations: true,
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "Conflict resolution failed");
+      setRules(prev => prev.map(r => r.id === rule.id ? data.rule : r));
+      loadCounts();
+    } catch (e) { setError(e?.response?.data?.error || e.message || String(e)); }
+    finally { setActionLoading(null); }
+  };
+
   const handleReject = async (rule, reason = "") => {
     setActionLoading(rule.id);
     try {
@@ -273,9 +289,10 @@ export default function PermittingRulesReview() {
               expanded={expandedId === rule.id}
               onToggle={() => setExpandedId(expandedId === rule.id ? null : rule.id)}
               onApprove={() => handleApprove(rule)}
+              onResolveConflict={rationale => handleResolveConflict(rule, rationale)}
               onReject={(reason) => handleReject(rule, reason)}
               onEdit={() => setEditDialog({ rule, edits: { requirement: rule.requirement, trigger: rule.trigger, exceptions: rule.exceptions, notes: rule.notes } })}
-              actionLoading={actionLoading === rule.id}
+              actionLoading={Boolean(actionLoading)}
             />
           ))}
           {hasMore && (
@@ -323,9 +340,11 @@ export default function PermittingRulesReview() {
   );
 }
 
-function RuleCard({ rule, expanded, onToggle, onApprove, onReject, onEdit, actionLoading }) {
+function RuleCard({ rule, expanded, onToggle, onApprove, onReject, onEdit, onResolveConflict, actionLoading }) {
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [resolutionReason, setResolutionReason] = useState("");
+  const [citationsReviewed, setCitationsReviewed] = useState(false);
 
   return (
     <Card className={rule.is_operational ? "border-green-300" : rule.draft_context ? "border-purple-200" : ""}>
@@ -348,7 +367,7 @@ function RuleCard({ rule, expanded, onToggle, onApprove, onReject, onEdit, actio
           </div>
           <div className="flex items-center gap-1">
             {rule.status !== "staff_approved" && rule.status !== "superseded" && !rule.draft_context && rule.status !== "historical" && (
-              <Button size="sm" variant="outline" onClick={onApprove} disabled={actionLoading} className="text-green-600 border-green-300 hover:bg-green-50">
+              <Button size="sm" variant="outline" onClick={onApprove} disabled={actionLoading || rule.conflict_state === "conflicting_sources"} className="text-green-600 border-green-300 hover:bg-green-50">
                 {actionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3 mr-1" />}
                 Approve
               </Button>
@@ -372,6 +391,15 @@ function RuleCard({ rule, expanded, onToggle, onApprove, onReject, onEdit, actio
 
         {expanded && (
           <div className="mt-3 pt-3 border-t space-y-2 text-sm">
+            {rule.conflict_state === "conflicting_sources" && <div className="rounded border border-orange-200 p-3 space-y-2">
+              <p className="font-semibold">Resolve conflicting evidence</p>
+              <p>Review every citation below and explain why this requirement is supported. Missing or outdated authority must be corrected first. Recording a resolution returns this rule to staff review.</p>
+              <Label htmlFor={"conflict-reason-" + rule.id}>Resolution rationale</Label>
+              <Textarea id={"conflict-reason-" + rule.id} value={resolutionReason} maxLength={2000} disabled={actionLoading} onChange={e => setResolutionReason(e.target.value)} />
+              <label className="flex items-start gap-2"><input type="checkbox" checked={citationsReviewed} disabled={actionLoading} onChange={e => setCitationsReviewed(e.target.checked)} />I reviewed every cited source and its applicability to this requirement.</label>
+              <Button size="sm" variant="outline" disabled={actionLoading || !citationsReviewed || resolutionReason.trim().length < 30} onClick={() => onResolveConflict(resolutionReason)}>Record resolution for staff review</Button>
+            </div>}
+            {(rule.evidence_context?.conflict_resolutions || []).length > 0 && <details><summary>Conflict resolution history</summary>{rule.evidence_context.conflict_resolutions.map((row, index) => <div key={index} className="border rounded p-2 mt-1"><p>{row.rationale}</p><p className="text-xs">{row.reviewer} · {row.reviewed_at ? new Date(row.reviewed_at).toLocaleString() : ""} · Rule version {row.rule_version}</p></div>)}</details>}
             {rule.trigger && <div><span className="font-semibold">Trigger:</span> {rule.trigger}</div>}
             {rule.exceptions && <div><span className="font-semibold">Exceptions:</span> {rule.exceptions}</div>}
             {rule.effective_date && <div><span className="font-semibold">Effective:</span> {rule.effective_date}</div>}

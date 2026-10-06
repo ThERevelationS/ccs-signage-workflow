@@ -220,3 +220,27 @@ test('candidate handoff refuses provider diagnostic receipts',async()=>{
  assert.equal((await t.review({action:'candidate_handoff',run_id:r.data.run_id})).status,409);
  assert.equal(t.f.rules.length,0);
 });
+
+test('explicit conflict resolution verifies evidence, preserves history and does not approve',async()=>{
+ const t=await setup(),rule=await t.importRule();
+ const stored=t.f.rules[0];stored.conflict_state='conflicting_sources';
+ const payload={action:'resolve_conflict',rule_id:rule.id,expected_version:stored.version,rationale:'Every retained source supports this literal requirement within the recorded authority scope.',reviewed_all_citations:true};
+ assert.equal((await t.review({...payload,reviewed_all_citations:false})).status,400);
+ const result=await t.review(payload);assert.equal(result.status,200);
+ assert.equal(result.data.rule.conflict_state,'under_review');assert.equal(result.data.rule.status,'needs_review');
+ assert.equal(result.data.rule.is_operational,false);assert.equal(result.data.rule.is_workflow_instruction,false);
+ assert.deepEqual(result.data.rule.citations,rule.citations);
+ assert.equal(result.data.rule.evidence_context.conflict_resolutions.length,1);
+ assert.equal(result.data.rule.evidence_context.conflict_resolutions[0].previous_conflict_state,'conflicting_sources');
+ assert.equal((await t.review(payload)).status,409);
+});
+test('conflict resolution cannot bypass draft or historical evidence',async()=>{
+ for(const field of ['draft_context','status']) {
+  const t=await setup(),rule=await t.importRule();t.f.rules[0].conflict_state='conflicting_sources';
+  t.f.rules[0][field]=field==='status'?'historical':true;
+  const before=structuredClone(t.f.rules);
+  const result=await t.review({action:'resolve_conflict',rule_id:rule.id,expected_version:rule.version,
+   rationale:'Reviewed all cited sources and recorded the scope of the apparent conflict.',reviewed_all_citations:true});
+  assert.equal(result.status,409);assert.deepEqual(t.f.rules,before);
+ }
+});
