@@ -260,7 +260,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return rows.map((row, sourceRowIndex) => ({ row, diagnostic_row_index: sourceRowIndex })).filter(({ row }) => {
+    return rows.filter(({ row }) => {
       if (actionFilter !== "all" && row.action !== actionFilter) return false;
       if (!needle) return true;
       return [
@@ -276,12 +276,12 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
     });
   }, [rows, search, actionFilter]);
 
-  const actions = useMemo(() => [...new Set(rows.map((row) => row.action).filter(Boolean))].sort(), [rows]);
+  const actions = useMemo(() => [...new Set(rows.map(({ row }) => row.action).filter(Boolean))].sort(), [rows]);
   const investigationEvidence = Array.isArray(investigation?.evidence) ? investigation.evidence : [];
   const conflictAuditIds = useMemo(() => new Set(investigationEvidence.map((item) => String(item?.audit_id || "")).filter(Boolean)), [investigationEvidence]);
   const investigationActive = Boolean(String(investigation?.time_entry_id || "").trim());
   const integrityInvestigation = investigationActive && investigation?.mode === "integrity";
-  const integrityDiagnosticByRowIndex = useMemo(() => new Map(integrityDiagnostics.map((item) => [Number(item?.diagnostic_row_index), item])), [integrityDiagnostics]);
+  const integrityDiagnosticByLocator = useMemo(() => new Map(integrityDiagnostics.map((item) => [String(item?.diagnostic_locator || ""), item]).filter(([locator]) => locator)), [integrityDiagnostics]);
 
   return (
     <div className="clay-card p-4">
@@ -357,12 +357,12 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         <div className="rounded-lg bg-gray-50 p-5 text-sm text-gray-500 text-center">No audit records match the current filters.</div>
       ) : (
         <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-          {filtered.map(({ row, diagnostic_row_index: sourceRowIndex }) => {
+          {filtered.map(({ row, diagnostic_locator: diagnosticLocator }) => {
             const isConflictEvidence = conflictAuditIds.has(String(row.id || ""));
             const claimedEvidence = investigationEvidence.find((item) => String(item?.audit_id || "") === String(row.id || ""));
-            const integrityDiagnostic = integrityDiagnosticByRowIndex.get(sourceRowIndex);
+            const integrityDiagnostic = integrityDiagnosticByLocator.get(diagnosticLocator);
             return (
-              <div key={integrityInvestigation ? `diagnostic-row-${sourceRowIndex}` : (String(row.id || "").trim() || `audit-row-${sourceRowIndex}`)} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
+              <div key={integrityInvestigation ? diagnosticLocator : (String(row.id || "").trim() || diagnosticLocator)} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
