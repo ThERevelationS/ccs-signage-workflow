@@ -1,3 +1,17 @@
+## Ohio county relationship candidate audit — 2026-10-06
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 canonical identity and office-role reconciliation is partial; task 4 full read-only live acceptance remains pending.
+
+Added scripts/build-ohio-county-relationship-candidates.py and county-relationship-candidates.json. The deterministic offline join compares exact literal base names and LSADC types from incorporated places to saved official county subdivision hierarchy evidence. It preserves every matching county portion and its source reference key. It never infers exhaustive county membership or permitting jurisdiction.
+
+Of 922 active municipal reference candidates: 257 have unique name/type relationship candidates, 2 have ambiguous same-name/type place identities, and 663 have no matching hierarchy relationship evidence. Sixteen have multiple county portions in this partial evidence. Even a unique name/type join is not a stable-ID crosswalk; place_identity_link_verified, county_list_exhaustive, and authority_verified remain false.
+
+Existing matched municipal rows assessed: queue 178 county-supported candidates, 581 without relationship evidence, 5 listed counties absent from partial evidence, 10 missing parent county. Profiles 43 county-supported candidates, 68 without evidence, 1 listed county absent from partial evidence. Directory 205 county-supported candidates, 653 without evidence, 50 listed counties absent from partial evidence. County absence here must not be treated as a conflict or used to change/delete records.
+
+Verification: five new relationship tests pass, including multi-county preservation, ambiguous names, legal-name/type distinctions, absent evidence, and non-authoritative county support. Seven identity and five classification tests also pass (17 total); git diff --check passes. Production records unchanged; nothing published.
+
+Next: obtain stable place-ID/county relationship evidence for Ohio, then review locality type discrepancies and separate electrical permit issuer versus inspection provider evidence. Kentucky remains after Ohio.
+
 ## Ohio gap classification and name correction — 2026-10-06
 
 10.1 of 10.3: 2 of 4 tasks complete. Task 2 remains partial; classification does not complete canonical identity or office authority reconciliation. Task 4 live acceptance remains pending.
