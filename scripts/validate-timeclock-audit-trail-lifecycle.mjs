@@ -165,7 +165,11 @@ console.log('PASS rapid investigation changes request the newest TimeEntry scope
 
 assert.match(source, /if \(scopedId && integrityMode\)/);
 assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ sort: "-server_timestamp", limit: 5000 \}\)/);
+assert.match(source, /const maxIntegrityPageRequests = 100/);
+assert.match(source, /let integrityPageRequestCount = 1/);
 assert.match(source, /while \(true\)/);
+assert.match(source, /if \(integrityPageRequestCount > maxIntegrityPageRequests\)/);
+assert.match(source, /exceeded its .*request safety budget before authoritative history completeness could be proven/);
 assert.match(source, /if \(!page \|\| typeof page !== "object" \|\| Array\.isArray\(page\)\)/);
 assert.match(source, /pagination returned a malformed authoritative page/);
 assert.match(source, /if \(!Array\.isArray\(page\.items\)\)/);
@@ -228,6 +232,12 @@ assert.match(source, /const nextCursor = String\(page\.next_cursor \|\| ""\)\.tr
 assert.match(source, /if \(seenCursors\.has\(nextCursor\)\)/);
 assert.match(source, /pagination repeated a continuation cursor and was stopped before it could loop indefinitely/);
 assert.match(source, /seenCursors\.add\(nextCursor\)/);
+assert.match(source, /if \(integrityPageRequestCount >= maxIntegrityPageRequests\)/);
+assert.match(source, /reached its .*request safety budget while additional authoritative audit records still remained/);
+assert.match(source, /integrityPageRequestCount \+= 1/);
+const requestBudgetGuard = source.indexOf('if (integrityPageRequestCount >= maxIntegrityPageRequests)');
+const continuationRequest = source.indexOf('TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 })');
+assert.ok(requestBudgetGuard >= 0 && continuationRequest > requestBudgetGuard, 'integrity pagination request budget must fail closed before issuing a continuation request beyond the bounded safety threshold');
 assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ cursor: nextCursor, limit: 5000 \}\)/);
 assert.doesNotMatch(source, /integrityMode && loadedRows\.length >= 100/);
 const integrityPaginationStart = source.indexOf('if (scopedId && integrityMode)');
