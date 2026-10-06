@@ -3,12 +3,23 @@ import {verifyRuleForApproval,assertApprovalSourcesCurrent,evidenceEqual,evidenc
 
 // A read-only page, not an answer or an address applicability decision.
 // The caller can continue paging; there is no total catalog record cap.
-export async function retrieveApprovedEvidence({entities,jurisdictionId,limit=25,cursor=0}) {
+export async function retrieveApprovedEvidence({entities,jurisdictionId,limit=25,cursor=null}) {
   if(typeof jurisdictionId!=='string' || !jurisdictionId.trim() || jurisdictionId.length>200)
     throw evidenceError('Select one jurisdiction for evidence retrieval.',400);
-  if(!Number.isInteger(limit) || limit<1 || limit>100 || !Number.isSafeInteger(cursor) || cursor<0)
+  if(!Number.isInteger(limit) || limit<1 || limit>100)
     throw evidenceError('Invalid evidence page range.',400);
-  const rows=await entities.PermittingRule.filter({jurisdiction_id:jurisdictionId,status:'staff_approved'},'id',limit+1,cursor);
+  const query={jurisdiction_id:jurisdictionId,status:'staff_approved'};
+  if(cursor!==null && cursor!==undefined) {
+    let position;
+    try {
+      if(typeof cursor!=='string' || cursor.length>1000)throw Error();
+      position=JSON.parse(cursor);
+      if(position.jurisdiction_id!==jurisdictionId || typeof position.last_rule_id!=='string' ||
+        !/^[a-zA-Z0-9_-]{1,200}$/.test(position.last_rule_id))throw Error();
+    } catch {throw evidenceError('Evidence cursor belongs to another scope or is invalid; refresh evidence.',400);}
+    query.id={$gt:position.last_rule_id};
+  }
+  const rows=await entities.PermittingRule.filter(query,'id',limit+1,0);
   if(!Array.isArray(rows))throw Error('Evidence page could not be read.');
   const evidence=[],blocked=[];
   for(const rule of rows.slice(0,limit)) {
@@ -43,6 +54,6 @@ export async function retrieveApprovedEvidence({entities,jurisdictionId,limit=25
     }
   }
   return {success:true,evidence,blocked,has_more:rows.length>limit,
-    next_cursor:rows.length>limit?String(cursor+limit):null,checked_at:new Date().toISOString(),
+    next_cursor:rows.length>limit?JSON.stringify({jurisdiction_id:jurisdictionId,last_rule_id:rows[limit-1].id}):null,checked_at:new Date().toISOString(),
     address_applicability:'requires_review',llm_calls:0,rules_created:0};
 }

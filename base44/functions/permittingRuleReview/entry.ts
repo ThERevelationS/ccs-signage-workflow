@@ -45,7 +45,7 @@ Deno.serve(async req => {
     const action=String(body.action || '');
     if (action==='retrieve_evidence') {
       return Response.json(await retrieveApprovedEvidence({entities,jurisdictionId:body.jurisdiction_id,
-        limit:body.limit===undefined?25:Number(body.limit),cursor:body.cursor===undefined?0:Number(body.cursor)}));
+        limit:body.limit===undefined?25:Number(body.limit),cursor:body.cursor===undefined?null:body.cursor}));
     }
     if (action==='list') {
       const query:any={};

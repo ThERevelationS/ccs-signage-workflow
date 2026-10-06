@@ -36,10 +36,14 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
       if (!current()) return;
       if (!data?.success) throw Error(data?.error || "Could not verify approved evidence.");
       const rows = (data.evidence || []).map(row => ({ ...row, checked_at: data.checked_at }));
-      setResult(previous => ({ ...data,
-        evidence: more ? [...new Map([...(previous?.evidence || []), ...rows].map(row => [row.rule_id, row])).values()] : rows,
-        blocked: more ? [...new Map([...(previous?.blocked || []), ...(data.blocked || [])].map(row => [row.rule_id, row])).values()] : data.blocked || [],
-      }));
+      setResult(previous => {
+        const blockedIds = new Set((data.blocked || []).map(row => row.rule_id));
+        const verifiedIds = new Set(rows.map(row => row.rule_id));
+        return { ...data,
+          evidence: more ? [...new Map([...(previous?.evidence || []).filter(row => !blockedIds.has(row.rule_id)), ...rows].map(row => [row.rule_id, row])).values()] : rows,
+          blocked: more ? [...new Map([...(previous?.blocked || []).filter(row => !verifiedIds.has(row.rule_id)), ...(data.blocked || [])].map(row => [row.rule_id, row])).values()] : data.blocked || [],
+        };
+      });
     } catch (e) {
       if (current()) { setResult(null); setError(e?.response?.data?.error || e.message || "Evidence retrieval failed."); }
     } finally {
@@ -63,7 +67,7 @@ export default function PermittingApprovedEvidenceSearch({ jurisdictionId, juris
       <div><Label htmlFor={"approved-query-" + jurisdictionId}>Search loaded verified evidence</Label>
         <Input id={"approved-query-" + jurisdictionId} value={query} placeholder="Enter words from a requirement or citation" onChange={event => setQuery(event.target.value)} /></div>
       <p className="text-sm" role="status">{matching.length} matching requirements in {result.evidence.length} loaded verified records.
-        {result.has_more ? " More approved records remain; load the next page to broaden this search." : " All approved records in this retrieval have been checked."}
+        {result.has_more ? " More approved records remain; load the next page to broaden this search." : " End of this page sequence. Records can change between loads; refresh before use."}
         {" "}No match does not establish that a permit is unnecessary. Address applicability still requires review.</p>
       {matching.map(row => <article key={row.rule_id} className="rounded border p-3 space-y-2 text-sm">
         <p className="font-semibold">{row.rule_kind === "administrative_instruction" ? "Reviewed submission instruction" : "Reviewed regulatory requirement"}</p>
