@@ -2697,6 +2697,38 @@ Deno.serve(async (req) => {
         if (!provenance) return true;
         const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
         const appliedAudit = provenance.applied_audit_id ? await auditEntity.get(provenance.applied_audit_id).catch(() => null) : null;
+        const requested = correction?.requested_changes || {};
+        const original = appliedAudit?.details?.original || {};
+        const corrected = appliedAudit?.details?.corrected || {};
+        const requestedMatches = !Object.prototype.hasOwnProperty.call(provenance, 'requested_clock_in') || (
+          String(requested.clock_in || '') === String(provenance.requested_clock_in || '') &&
+          String(requested.clock_out || '') === String(provenance.requested_clock_out || '') &&
+          Number(requested.lunch_minutes || 0) === Number(provenance.requested_lunch_minutes || 0) &&
+          String(requested.notes || '') === String(provenance.requested_notes || '')
+        );
+        const appliedMatches = !provenance.corrected_clock_in || (
+          String(corrected.clock_in || '') === String(provenance.corrected_clock_in || '') &&
+          String(corrected.clock_out || '') === String(provenance.corrected_clock_out || '') &&
+          Number(corrected.lunch_minutes || 0) === Number(provenance.corrected_lunch_minutes || 0) &&
+          String(corrected.notes || '') === String(provenance.corrected_notes || '') &&
+          Number(corrected.total_hours || 0) === Number(provenance.corrected_total_hours || 0)
+        );
+        const deltaMatches = change.change_type === 'removed'
+          ? !change.after &&
+            String(change.before?.clock_in || '') === String(original.clock_in || '') &&
+            String(change.before?.clock_out || '') === String(original.clock_out || '') &&
+            Number(change.before?.total_hours || 0) === Number(original.total_hours || 0)
+          : change.change_type === 'added'
+            ? !change.before &&
+              String(change.after?.clock_in || '') === String(corrected.clock_in || '') &&
+              String(change.after?.clock_out || '') === String(corrected.clock_out || '') &&
+              Number(change.after?.total_hours || 0) === Number(corrected.total_hours || 0)
+            : String(change.before?.clock_in || '') === String(original.clock_in || '') &&
+              String(change.before?.clock_out || '') === String(original.clock_out || '') &&
+              Number(change.before?.total_hours || 0) === Number(original.total_hours || 0) &&
+              String(change.after?.clock_in || '') === String(corrected.clock_in || '') &&
+              String(change.after?.clock_out || '') === String(corrected.clock_out || '') &&
+              Number(change.after?.total_hours || 0) === Number(corrected.total_hours || 0);
         return Boolean(correction && appliedAudit &&
           String(correction.time_entry_id || '') === String(change.time_entry_id || '') &&
           ['approved', 'approved_modified'].includes(String(correction.status || '')) &&
@@ -2715,14 +2747,7 @@ Deno.serve(async (req) => {
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
           (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))) &&
-          (!provenance.corrected_clock_in || (
-            String(appliedAudit.details?.corrected?.clock_in || '') === String(provenance.corrected_clock_in || '') &&
-            String(appliedAudit.details?.corrected?.clock_out || '') === String(provenance.corrected_clock_out || '') &&
-            Number(appliedAudit.details?.corrected?.total_hours || 0) === Number(provenance.corrected_total_hours || 0) &&
-            String(change.after?.clock_in || '') === String(provenance.corrected_clock_in || '') &&
-            String(change.after?.clock_out || '') === String(provenance.corrected_clock_out || '') &&
-            Number(change.after?.total_hours || 0) === Number(provenance.corrected_total_hours || 0)
-          )));
+          requestedMatches && appliedMatches && deltaMatches);
       };
       const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
@@ -3832,7 +3857,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 23 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 24 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
