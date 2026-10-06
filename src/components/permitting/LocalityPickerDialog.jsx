@@ -25,7 +25,7 @@ import {
   jurisdictionToDraftPermitLocality,
 } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
-import { summarizeMatchedLocalityAuthority } from "../../../base44/shared/permittingAddressLocality.js";
+import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
 
 const AUTHORITY_ROLE_LABELS = {
   sign_permit: "Sign permit",

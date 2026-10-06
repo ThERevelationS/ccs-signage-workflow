@@ -17,7 +17,7 @@ import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
 import { getPermitGroupProgress, PERMIT_QUEUE_META } from "./permitQueue";
-import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions } from "../../../base44/shared/permittingAddressLocality.js";
+import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions } from "@/shared/permittingAddressLocality.js";
 
 const LIFECYCLE_PROGRESS_TONES = {
   neutral: "border-slate-200 bg-white text-slate-600",

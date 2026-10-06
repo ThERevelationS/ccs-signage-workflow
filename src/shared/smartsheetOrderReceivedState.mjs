@@ -1,0 +1,48 @@
+// Order Form only: Date Received is the authoritative receipt flag in the
+// configured Order Request sheet. Keep historical records without deleting them.
+export function isFulfilledOrder(order) {
+  // The Smartsheet Date Received column supports a date or a text choice.
+  // Preserve the existing rule: any nonempty entry marks the row received.
+  return Boolean(order?.date_received) || Boolean(String(order?.receipt_option ?? '').trim());
+}
+
+export function effectiveOrderStatus(order) {
+  if (isFulfilledOrder(order)) return 'received';
+  if (order?.status === 'cancelled') return 'cancelled';
+  if (order?.date_ordered) return 'ordered';
+  // Historical imports defaulted to pending even when receipt dates existed.
+  // An unverified status alone must not hide an item from the open-items view.
+  return order?.status === 'received' ? 'pending' : (order?.status || 'pending');
+}
+
+// Order Form Date Ordered edits must not demote a received Order or reopen a
+// cancelled Order. Clearing an ordered date without a receipt restores Pending.
+export function orderStatusAfterOrderedDateChange(order, nextOrderedDate) {
+  if (isFulfilledOrder(order)) return 'received';
+  if (order?.status === 'cancelled') return 'cancelled';
+  return nextOrderedDate ? 'ordered' : 'pending';
+}
+
+export function orderMatchesReceivedFilter(order, filter) {
+  if (filter === 'not_received' || filter === 'open_only') return !isFulfilledOrder(order);
+  if (filter === 'received') return isFulfilledOrder(order);
+  if (filter === 'pending' || filter === 'ordered' || filter === 'cancelled') {
+    return !isFulfilledOrder(order) && effectiveOrderStatus(order) === filter;
+  }
+  return true; // Existing unfiltered consumers and explicit Order history view.
+}
+
+// Derive the Base44 status when the Order Request sheet has no Status column
+// binding. Never interpret a missing Date Received cell as permission to erase
+// an existing receipt date or a locally cancelled Order.
+export function orderStatusFromPulledDates(fields, existing, hasStatusBinding) {
+  if (hasStatusBinding) return fields;
+  // A verified nonempty Smartsheet Date Received choice replaces a prior date;
+  // every nonempty choice is a received marker, not just "In Stock".
+  if (fields?.receipt_option && fields?.date_received === '') {
+    return { ...fields, status: 'received' };
+  }
+  if (isFulfilledOrder(fields)) return { ...fields, status: 'received' };
+  if (existing?.status === 'cancelled' || isFulfilledOrder(existing)) return fields;
+  return { ...fields, status: (fields?.date_ordered || existing?.date_ordered) ? 'ordered' : 'pending' };
+}

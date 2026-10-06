@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
-import { canUseOrderExport } from "../../base44/shared/orderExportAccess.mjs";
+import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { orderSaveSyncStatus } from "@/components/orders/orderSaveSyncStatus.mjs";
 
 export default function OrderForm() {

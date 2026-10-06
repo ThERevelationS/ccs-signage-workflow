@@ -1,8 +1,8 @@
-import { isSmartsheetSalesImportShell } from "../../../base44/shared/smartsheetSalesImportEligibility.mjs";
+import { isSmartsheetSalesImportShell } from "@/shared/smartsheetSalesImportEligibility.mjs";
 import {
   historicalTerminalTaskFamily,
   isLegacyTerminalSmartsheetSalesRecord,
-} from "../../../base44/shared/historicalSalesOutcomeReconciliation.mjs";
+} from "@/shared/historicalSalesOutcomeReconciliation.mjs";
 
 export const isModernSalesRecord = (workOrder) => workOrder?.in_pipeline === true;
 

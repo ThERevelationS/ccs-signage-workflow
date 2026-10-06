@@ -1,4 +1,4 @@
-import { isSmartsheetSalesImportShell } from "../../../base44/shared/smartsheetSalesImportEligibility.mjs";
+import { isSmartsheetSalesImportShell } from "@/shared/smartsheetSalesImportEligibility.mjs";
 
 export function salesOpportunityDisplayName(workOrder, fallback = "Unnamed opportunity") {
   const clientName = String(workOrder?.client_name || "").trim();

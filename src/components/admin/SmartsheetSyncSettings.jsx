@@ -28,7 +28,7 @@ import {
   smartsheetWriteControlsLocked,
 } from "@/components/admin/smartsheetSyncSafetyModel";
 import { stableConfigString } from "@/components/admin/smartsheetConfigState.mjs";
-import { enforceOrderBackgroundSyncPolicy } from "../../../base44/shared/smartsheetOrderBackgroundPolicy.mjs";
+import { enforceOrderBackgroundSyncPolicy } from "@/shared/smartsheetOrderBackgroundPolicy.mjs";
 
 function normalizeForMatch(value) {
   return String(value || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();

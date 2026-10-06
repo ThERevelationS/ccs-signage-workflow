@@ -1,4 +1,4 @@
-import { isFulfilledOrder } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
+import { isFulfilledOrder } from "@/shared/smartsheetOrderReceivedState.mjs";
 
 // The spreadsheet keeps real Order indexes stable for keyboard navigation and
 // export. Only the virtual display gains one non-data History heading row.

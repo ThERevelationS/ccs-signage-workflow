@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Archive, ChevronDown } from "lucide-react";
-import { effectiveOrderStatus } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
+import { effectiveOrderStatus } from "@/shared/smartsheetOrderReceivedState.mjs";
 
 const STATUS_COLORS = {
   pending: "bg-yellow-100 text-yellow-700",
