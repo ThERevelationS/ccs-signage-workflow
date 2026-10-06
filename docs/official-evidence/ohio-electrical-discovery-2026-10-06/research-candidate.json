@@ -1,0 +1,52 @@
+{
+  "state": "OH",
+  "locality": "Cincinnati",
+  "office_name": "Inspection Bureau, Inc.",
+  "phone": "513-381-6080",
+  "provider_url": "https://www.inspectionbureau.com/",
+  "roles_to_review": [
+    "electrical_permit",
+    "electrical_inspection"
+  ],
+  "government_office_id": null,
+  "authority_verified": false,
+  "staff_approved": false,
+  "evidence_source_urls": [
+    "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/working-with-other-departments/",
+    "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/construction-inspections/"
+  ],
+  "research_summary": "City pages identify this provider for electrical plan review, permitting and inspections, with online submission and scheduling mentioned. Confirm current portals, sign-specific applicability, fees and service boundaries before project use.",
+  "unresolved": [
+    "Canonical catalog identity and staff review",
+    "Current permit and inspection portal URLs and downloadable forms",
+    "Illuminated sign applicability and specific inspection stages",
+    "Current fees and booking lead times",
+    "Coverage outside Cincinnati requires separate official evidence"
+  ],
+  "retrieval_limits": [
+    "State board directory link returned 404 via web lookup",
+    "Provider homepage timed out via web lookup; not certified as current portal"
+  ],
+  "source_archives": [
+    {
+      "name": "cincinnati-electrical-process",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/working-with-other-departments/",
+      "retrieved_at": "2026-10-06T23:04:38.071678+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/working-with-other-departments/",
+      "status": "archived",
+      "file": "cincinnati-electrical-process.html",
+      "sha256": "4e7441fcc089394505356a76f32c38fb3e926ac2ab236eddb0d2fc002a94de5d",
+      "bytes": 75048
+    },
+    {
+      "name": "cincinnati-inspections",
+      "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/construction-inspections/",
+      "retrieved_at": "2026-10-06T23:04:40.359275+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/construction-inspections/",
+      "status": "archived",
+      "file": "cincinnati-inspections.html",
+      "sha256": "dd43e27e0fa2445e623c540cea7fcf08b6cc6fd607926f3e09771e65713f1f0e",
+      "bytes": 70147
+    }
+  ]
+}
