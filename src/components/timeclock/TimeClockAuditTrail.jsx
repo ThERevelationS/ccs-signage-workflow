@@ -122,6 +122,10 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (malformedPageItemIndexes.length > 0) {
             throw new Error(`Integrity investigation pagination returned ${malformedPageItemIndexes.length} malformed authoritative audit record${malformedPageItemIndexes.length === 1 ? "" : "s"} inside a valid page.`);
           }
+          const mismatchedPageRows = pageItems.filter((row) => String(row.time_entry_id || "").trim() !== scopedId);
+          if (mismatchedPageRows.length > 0) {
+            throw new Error(`Integrity investigation pagination returned ${mismatchedPageRows.length} authoritative audit record${mismatchedPageRows.length === 1 ? "" : "s"} outside the requested TimeEntry scope.`);
+          }
           const pageAuditIds = pageItems.map((row) => String(row.id || "").trim());
           const missingAuditIdIndexes = pageAuditIds
             .map((auditId, rowIndex) => (!auditId ? rowIndex : -1))
