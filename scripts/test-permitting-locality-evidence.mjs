@@ -26,17 +26,17 @@ try {
  const button=label=>tree.root.findAllByType('button').find(b=>text(b.props.children)===label);
  assert.equal(tree.root.findByType('details').props.open,false);assert.equal(calls.length,0);
  await toggle(true);assert.equal(calls.length,0); // Opening a locality never spends AI credits or retrieves automatically.
- await act(async()=>button('Load approved evidence').props.onClick());
+ await act(async()=>{button('Load approved evidence').props.onClick();});
  assert.equal(calls[0].name,'permittingRuleReview');assert.equal(calls[0].payload.jurisdiction_id,A.id);
  assert.equal(calls[0].payload.action,'retrieve_evidence');assert.equal(calls[0].payload.session_token,'isolated-fixture-session');
  const response={data:{success:true,evidence:[{rule_id:'r1',rule_kind:'regulatory_rule',requirement:'Pilot A approved quotation',citations:[]}],blocked:[],has_more:false,checked_at:'2026-10-06T14:00:00Z'}};
  await act(async()=>pending.shift()(response));assert.match(full(),/Pilot A approved quotation/);
  await act(async()=>tree.update(React.createElement(Panel,{jurisdiction:B,isAdmin:true})));
  assert.equal(tree.root.findByType('details').props.open,false);assert.doesNotMatch(full(),/Pilot A approved quotation/);
- await toggle(true);await act(async()=>button('Load approved evidence').props.onClick());assert.equal(calls.at(-1).payload.jurisdiction_id,B.id);
+ await toggle(true);await act(async()=>{button('Load approved evidence').props.onClick();});assert.equal(calls.at(-1).payload.jurisdiction_id,B.id);
  await toggle(false);await act(async()=>pending.shift()(response));await toggle(true);
  assert.doesNotMatch(full(),/Pilot A approved quotation/);assert.ok(button('Load approved evidence'));
- await act(async()=>button('Load approved evidence').props.onClick());
+ await act(async()=>{button('Load approved evidence').props.onClick();});
  await act(async()=>tree.update(React.createElement(Panel,{jurisdiction:B,isAdmin:false})));
  await act(async()=>pending.shift()(response));await toggle(true);
  assert.match(full(),/An administrator must load and verify/);assert.equal(tree.root.findAllByType('button').length,0);
