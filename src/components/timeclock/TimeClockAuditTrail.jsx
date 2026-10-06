@@ -147,9 +147,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             // Equal server timestamps are therefore a legitimate boundary tie; immutable Audit ID
             // uniqueness above/below this boundary prevents a tied record from being accepted twice.
           }
-          if (pageTimestampMs.length > 0) {
-            previousPageOldestTimestampMs = pageTimestampMs[pageTimestampMs.length - 1];
-          }
+          const acceptedPageOldestTimestampMs = pageTimestampMs.length > 0
+            ? pageTimestampMs[pageTimestampMs.length - 1]
+            : previousPageOldestTimestampMs;
           const pageAuditIds = pageItems.map((row) => String(row.id || "").trim());
           const missingAuditIdIndexes = pageAuditIds
             .map((auditId, rowIndex) => (!auditId ? rowIndex : -1))
@@ -179,6 +179,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (page.has_more && seenCursors.has(nextCursor)) {
             throw new Error("Integrity investigation pagination repeated a continuation cursor and was stopped before it could loop indefinitely.");
           }
+          previousPageOldestTimestampMs = acceptedPageOldestTimestampMs;
           newPageAuditIds.forEach((id) => seenPageAuditIds.add(id));
           loadedRows.push(...pageItems);
           if (!page.has_more) {
