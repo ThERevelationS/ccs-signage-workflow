@@ -3,9 +3,29 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { importEvidenceCandidate } from '../../shared/permittingRuleEvidenceRun.mjs';
 import { verifyRuleForApproval, ruleApplicabilityEvidence, assertApprovalSourcesCurrent, evidenceEqual, evidenceError, evidenceDigest, RULE_EVIDENCE_METHOD } from '../../shared/permittingRuleEvidence.mjs';
 
-async function commitRule(entity:any,rule:any,fields:any) {
+async function commitRule(entity:any,rule:any,fields:any,action:string,reviewer:any) {
   if (!rule.updated_date) throw evidenceError('Rule has no persistence version.');
-  const patch={...fields,version:rule.version+1,review_operation_id:crypto.randomUUID()};
+  const context=rule.evidence_context || {};
+  const history=context.review_history ?? [];
+  if (!Array.isArray(history)) throw evidenceError('Existing review history requires reconciliation.');
+  const operationId=crypto.randomUUID();
+  const snapshot=(value:any)=>Object.fromEntries([
+    'version','status','conflict_state','is_operational','is_workflow_instruction',
+    'reviewer','reviewer_email','reviewed_at','requirement','trigger','exceptions',
+    'zoning_district_applicability','numeric_value','numeric_literal','unit','sign_type',
+    'sign_type_normalized','rule_category','notes','citations'
+  ].filter(key=>Object.hasOwn(value,key)).map(key=>[key,value[key]]));
+  const next={...rule,...fields,version:rule.version+1};
+  const event={operation_id:operationId,action,...reviewer,
+    changed_fields:Object.keys(fields).filter(key=>key!=='evidence_context' && !evidenceEqual(rule[key],fields[key])),
+    before:snapshot(rule),after:snapshot(next),
+    previous_approved_sources:context.approved_sources ?? null,
+    approved_sources:(fields.evidence_context || context).approved_sources ?? null};
+  // History and the decision share one version-conditional write; no separate
+  // append can lose attribution or duplicate an event after a lost response.
+  const patch={...fields,version:next.version,review_operation_id:operationId,
+    evidence_context:{...context,...(fields.evidence_context || {}),review_history:[...history,event]}};
+
   try {
     const result=await entity.updateMany({id:rule.id,updated_date:rule.updated_date,version:rule.version},{$set:patch});
     if (result?.updated!==1) throw evidenceError('Another reviewer changed this rule; refresh before saving.');
@@ -74,7 +94,7 @@ Deno.serve(async req => {
     const expected=Number(body.expected_version);
     if (!Number.isInteger(expected) || expected<1 || rule.version!==expected) throw evidenceError('Another reviewer changed this rule; refresh before saving.');
     const reviewer={reviewer:user.full_name || user.email,reviewer_email:user.email,reviewed_at:new Date().toISOString()};
-    let fields:any={...reviewer};
+    let fields:any=action==='edit'?{}:{...reviewer};
     if (action==='resolve_conflict') {
       if (rule.conflict_state!=='conflicting_sources') throw evidenceError('This rule has no unresolved source conflict.');
       const rationale=String(body.rationale || '').trim();
@@ -116,7 +136,7 @@ Deno.serve(async req => {
         conflict_state:rule.conflict_state==='conflicting_sources'?'conflicting_sources':'under_review',
         evidence_context:{...(rule.evidence_context || {}),applicability:ruleApplicabilityEvidence({...rule,...fields})}};
     }
-    return Response.json({success:true,rule:await commitRule(Rules,rule,fields)});
+    return Response.json({success:true,rule:await commitRule(Rules,rule,fields,action,reviewer)});
   } catch(error) {
     console.error('permittingRuleReview:',error?.message || error);
     return Response.json({error:error?.message || 'Rule review could not complete safely.'},{status:error?.status || 500});

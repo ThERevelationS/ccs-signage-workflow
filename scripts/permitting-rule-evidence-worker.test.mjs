@@ -285,3 +285,42 @@ test('material applicability edits refresh metadata, preserve history and still 
  assert.equal(cleared.status,200);assert.equal(cleared.data.rule.evidence_context.applicability.fields.exceptions.status,'not_established_in_excerpt');
  assert.equal((await t.review({action:'approve',rule_id:rule.id,expected_version:cleared.data.rule.version})).status,200);
 });
+
+test('review history retains approval attribution across another staff notes edit and rejection',async()=>{
+ const t=await setup(),rule=await t.importRule();
+ const approved=await t.review({action:'approve',rule_id:rule.id,expected_version:1});
+ assert.equal(approved.status,200);
+ const decision=approved.data.rule;
+ globalThis.ruleWorkerFixture.auth.me=async()=>({role:'admin',email:'editor@example.test',full_name:'Second reviewer'});
+ const notes=await t.review({action:'edit',rule_id:rule.id,expected_version:2,edits:{notes:'Second staff note'}});
+ assert.equal(notes.status,200);
+ for(const key of ['reviewer','reviewer_email','reviewed_at'])assert.equal(notes.data.rule[key],decision[key]);
+ const h=notes.data.rule.evidence_context.review_history;
+ assert.deepEqual(h.map(e=>e.action),['approve','edit']);
+ assert.equal(h[1].reviewer_email,'editor@example.test');
+ assert.equal(h[1].before.notes,decision.notes);
+ assert.equal(h[1].after.notes,'Second staff note');
+ assert.equal(h[0].after.status,'staff_approved');
+ assert.deepEqual(h[0].approved_sources,decision.evidence_context.approved_sources);
+ const rejected=await t.review({action:'reject',rule_id:rule.id,expected_version:3,reason:'Needs updated source'});
+ assert.equal(rejected.status,200);
+ assert.equal(rejected.data.rule.reviewer_email,'editor@example.test');
+ assert.deepEqual(rejected.data.rule.evidence_context.review_history.slice(0,2),h);
+ assert.equal(rejected.data.rule.evidence_context.review_history[2].before.reviewer_email,'admin@example.test');
+});
+test('malformed history blocks writes and lost acknowledgement appends exactly one event',async()=>{
+ const t=await setup(),rule=await t.importRule();
+ t.f.rules[0].evidence_context.review_history={legacy:'requires reconciliation'};
+ const before=structuredClone(t.f.rules);
+ assert.equal((await t.review({action:'reject',rule_id:rule.id,expected_version:1})).status,409);
+ assert.deepEqual(t.f.rules,before);
+ t.f.rules[0].evidence_context.review_history=[];
+ const update=t.f.api.ruleEntity.updateMany;
+ t.f.api.ruleEntity.updateMany=async(q,p)=>{await update(q,p);throw Error('lost response');};
+ const saved=await t.review({action:'reject',rule_id:rule.id,expected_version:1});
+ assert.equal(saved.status,200);
+ assert.equal(saved.data.rule.evidence_context.review_history.length,1);
+ assert.equal(saved.data.rule.evidence_context.review_history[0].operation_id,saved.data.rule.review_operation_id);
+ assert.equal((await t.review({action:'reject',rule_id:rule.id,expected_version:1})).status,409);
+ assert.equal(t.f.rules[0].evidence_context.review_history.length,1);
+});
