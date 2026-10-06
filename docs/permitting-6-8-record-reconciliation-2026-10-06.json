@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "run_id": "6ac45dc593b16e452bf8fac9",
+      "status": "complete",
+      "candidates": 2,
+      "attempts": 1,
+      "imported": false,
+      "source_hash_matches": true,
+      "nonoperational": true
+    },
+    {
+      "run_id": "6ac45dd59d76e99ba61d4c40",
+      "status": "complete",
+      "candidates": 1,
+      "attempts": 1,
+      "imported": false,
+      "source_hash_matches": true,
+      "nonoperational": true
+    }
+  ],
+  "kind": "read_only_record_reconciliation",
+  "llm_calls": 0,
+  "production_writes": 0
+}
