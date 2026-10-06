@@ -1160,6 +1160,15 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(movedEntry.notes, managerCorrection.notes);
   assert.equal(movedEntry.approval_status, 'needs_review');
   const appliedAudit = h.rows.TimeClockAudit.find((row) => row.id === request.applied_audit_id);
+  const correctionReviewAudit = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'correction_review' && row.request_id === request.review_request_id && row.time_entry_id === request.time_entry_id,
+  );
+  assert.ok(correctionReviewAudit?.id);
+  assert.equal(correctionReviewAudit.outcome, 'confirmed');
+  assert.equal(correctionReviewAudit.details.correction_request_id, request.id);
+  assert.equal(correctionReviewAudit.details.decision, 'approved_modified');
+  assert.equal(correctionReviewAudit.details.applied_audit_id, request.applied_audit_id);
+  assert.equal(correctionReviewAudit.details.review_payload_hash, request.review_payload_hash);
   assert.equal(appliedAudit.details.original.clock_in, '2026-09-20T14:00:00.000Z');
   assert.equal(appliedAudit.details.corrected.clock_in, managerCorrection.clock_in);
   assert.equal(appliedAudit.details.corrected.clock_out, managerCorrection.clock_out);
@@ -1223,6 +1232,10 @@ test('approve_modified cross-period correction uses manager-edited destination a
     try { await expectHistoryTamperFailure(payPeriodId, label); }
     finally { target[field] = originalValue; }
   };
+  const expectBothHistoriesTamperFailure = async (label) => {
+    await expectHistoryTamperFailure('synthetic-period', `${label} (source removed)`);
+    await expectHistoryTamperFailure('modified-destination-period', `${label} (destination added)`);
+  };
 
   for (const [field, value] of [
     ['clock_in', '2026-09-20T15:05:00.000Z'],
@@ -1255,6 +1268,40 @@ test('approve_modified cross-period correction uses manager-edited destination a
   await tamperField(appliedAudit, 'request_id', 'tampered-applied-request-id', 'synthetic-period', 'admin_correction request ID');
   await tamperField(appliedAudit, 'actor_email', 'other-admin@synthetic.invalid', 'synthetic-period', 'admin_correction reviewer identity binding');
   await tamperField(appliedAudit.details, 'review_payload_hash', 'tampered-review-payload-hash', 'synthetic-period', 'admin_correction review payload binding');
+
+  const tamperCorrectionReviewField = async (target, field, tamperedValue, label) => {
+    const originalValue = clone(target[field]);
+    target[field] = clone(tamperedValue);
+    try { await expectBothHistoriesTamperFailure(label); }
+    finally { target[field] = originalValue; }
+  };
+  for (const [field, value] of [
+    ['outcome', 'blocked'],
+    ['request_id', 'tampered-review-audit-request-id'],
+    ['user_email', 'other-worker@synthetic.invalid'],
+    ['actor_email', 'other-admin@synthetic.invalid'],
+    ['actor_role', 'employee'],
+    ['authentication_method', 'badge'],
+    ['server_timestamp', '2026-09-25T12:34:56.000Z'],
+    ['reason', 'tampered correction review reason'],
+  ]) {
+    await tamperCorrectionReviewField(correctionReviewAudit, field, value, `correction_review audit ${field}`);
+  }
+  for (const [field, value] of [
+    ['correction_request_id', 'tampered-correction-request-id'],
+    ['decision', 'approved'],
+    ['applied_audit_id', 'tampered-applied-audit-id'],
+    ['review_payload_hash', 'tampered-review-payload-hash'],
+  ]) {
+    await tamperCorrectionReviewField(correctionReviewAudit.details, field, value, `correction_review audit details.${field}`);
+  }
+  const reviewAuditIndex = h.rows.TimeClockAudit.findIndex((row) => row.id === correctionReviewAudit.id);
+  const [removedReviewAudit] = h.rows.TimeClockAudit.splice(reviewAuditIndex, 1);
+  try { await expectBothHistoriesTamperFailure('missing correction_review audit'); }
+  finally { h.rows.TimeClockAudit.splice(reviewAuditIndex, 0, removedReviewAudit); }
+  h.rows.TimeClockAudit.push({ ...clone(correctionReviewAudit), id: 'synthetic-duplicate-correction-review-audit' });
+  try { await expectBothHistoriesTamperFailure('duplicate correction_review audit'); }
+  finally { h.rows.TimeClockAudit.pop(); }
 
   const provenanceTamperCases = [
     ['requested_clock_in', '2026-09-20T15:05:00.000Z'],
