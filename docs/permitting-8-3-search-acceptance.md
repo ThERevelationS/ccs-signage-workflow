@@ -28,3 +28,14 @@ Independent Phase 9 work may proceed while full 8.3 acceptance and 7.3 browser Q
 2026-10-06 browser access update: authenticated app/admin UI renders, but backend Base44 admin identity is absent in the standalone hosted preview. Builder authentication handoff required. Both actual components are now in one development-only in-panel fixture; production bundle exclusion verified. No populated live approvals or browser search acceptance claimed.
 
 2026-10-06 final: 7.3 browser QA resolved; 8.3 actual browser UI passed and fixed synchronous scope visibility. Full Phase 8 remains open only for live handler/data acceptance and legitimate populated approved-rule example. Preview host gate tests exclude ordinary production/lookalike domains. Earlier DEV-only bundle exclusion superseded by guarded compiled-preview support.
+
+
+### 2026-10-06 — 8.3 app-session authentication repair
+
+Phase 7: 7.3 of 7.3 complete. Phase 8: 8.3 of 8.3 remains active; this repair is not a claim of live acceptance.
+
+The main app uses a signed Sign Shop session, while permittingRuleReview previously accepted only Base44 SDK administrators. Review now validates supplied app sessions with the existing authenticateSignShopSession helper and requires the canonical AuthorizedEmail role to be admin. Invalid supplied sessions cannot fall back to SDK administrators. Existing SDK admin access remains supported when no app session is supplied. Review, candidate handoff and evidence search callers now pass the existing app session via a shared invocation helper. No credentials were inspected or copied; no records, approvals, roles or permissions were changed.
+
+Validation: 71 backend tests pass, including actual HMAC-verifier handler acceptance and expired/revoked/ambiguous/non-admin/tampered rejection; both component acceptance scripts pass; targeted ESLint, eight frontend/backend helper mirrors, git diff check and frontend build pass.
+
+Live verification remains blocked: retained tab 9 and fresh builder tab 10 both returned retained_data_restricted after native credential delivery. The fresh document did not restore observable browser access. No further login request or repeated recovery was attempted. The prior browser UI acceptance remains valid; the actual live retrieval must still be observed under a valid main app admin session. No populated production-approved example exists in the last verified data. Frontend changes are preview-only; no frontend publish was performed. Extraction and other permitting endpoints still use their existing SDK admin authentication and were not changed by this scoped repair.
