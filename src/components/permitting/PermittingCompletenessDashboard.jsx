@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { readAllCountyChoices } from "./permittingCountyChoices.mjs";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,15 @@ export default function PermittingCompletenessDashboard() {
   const [queueSearch, setQueueSearch] = useState("");
   const { queuePage, loadingQueue, queueError, loadQueue } = usePermittingQueueBrowse(readQueuePage, filters, queueSearch);
 
+  const metricsGeneration = useRef(0), metricsPending = useRef(null), currentDays = useRef(filters.staleDays);
+  currentDays.current = filters.staleDays;
+  useEffect(() => () => { metricsGeneration.current++; }, []);
+
   const loadMetrics = useCallback(async () => {
+    const days = filters.staleDays;
+    if (metricsPending.current?.days === days) return;
+    const request = ++metricsGeneration.current; metricsPending.current = {days, request};
+    const current = () => metricsGeneration.current === request && currentDays.current === days;
     setLoading(true);
     setError("");
     try {
@@ -138,7 +147,9 @@ export default function PermittingCompletenessDashboard() {
       const totalQueue = Object.values(queueByStateMap).reduce((a, b) => a + b, 0);
       const totalProfiles = Object.values(profilesByStateMap).reduce((a, b) => a + b, 0);
 
+      if (!current()) return;
       setMetrics({
+        staleDays: days,
         queueByState: queueByStateMap,
         profilesByState: profilesByStateMap,
         statusMap,
@@ -164,30 +175,27 @@ export default function PermittingCompletenessDashboard() {
       });
     } catch (e) {
       console.error("Completeness dashboard load error:", e);
-      setError(e?.message || "Failed to load completeness metrics.");
+      if (current()) { setMetrics(null); setError(e?.message || "Failed to load completeness metrics."); }
     } finally {
-      setLoading(false);
+      if (current()) { metricsPending.current = null; setLoading(false); }
     }
   }, [filters.staleDays]);
 
   useEffect(() => { loadMetrics(); }, [loadMetrics]);
 
-  // Distinct parent counties for the county filter (derived from loaded queue type aggregate is not enough;
-  // we use a distinct call lazily — but to keep it simple and within rate limits, derive from a one-time load).
-  const [counties, setCounties] = useState([]);
+  const [counties, setCounties] = useState([]), [countyError, setCountyError] = useState("");
+  const [countyAttempt, setCountyAttempt] = useState(0);
   useEffect(() => {
-    (async () => {
-      try {
-        const page = await base44.entities.SourceCollectionQueue.filter(
-          { parent_county_name: { $exists: true } },
-          { distinct: "parent_county_name", limit: 500 }
-        );
-        setCounties((page.items || []).sort());
-      } catch { /* non-fatal */ }
-    })();
-  }, []);
+    let active = true; setCounties([]); setCountyError("");
+    readAllCountyChoices(cursor => base44.entities.SourceCollectionQueue.filter(
+      { state: { $in: ["OH", "KY"] }, parent_county_name: { $exists: true } },
+      { distinct: "parent_county_name", limit: 500, ...(cursor ? { cursor } : {}) }
+    ), () => active).then(values => { if (active) setCounties(values); })
+      .catch(e => { if (active) setCountyError(e.message || "County choices unavailable."); });
+    return () => { active = false; };
+  }, [countyAttempt]);
 
-  if (loading && !metrics) {
+  if ((loading && !metrics) || (metrics && metrics.staleDays !== filters.staleDays)) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -272,6 +280,7 @@ export default function PermittingCompletenessDashboard() {
         </div>
       </div>
 
+      {countyError && <div role="alert" className="text-red-700">County filter unavailable: {countyError} <Button variant="outline" onClick={() => setCountyAttempt(value => value + 1)}>Retry county choices</Button></div>}
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={Database} label="Recorded queue rows" value={m.totalQueue} accent="#D4E9F7" />
