@@ -105,7 +105,7 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
     if (run.status!=='reserved' || run.llm_attempts!==0) throw evidenceError('This request already reserved an LLM attempt.');
     run=await writeExtractionRun(runEntity,run,{status:'llm_started',claim_token:token,llm_attempts:1,llm_started_at:new Date(now()).toISOString()});
     let response;
-    try {response=await boundedLlm(invokeLlm,providerControl==='schema'?{prompt:'Return an object with an empty rules array.',response_json_schema:EXTRACTION_RESPONSE_SCHEMA}:providerControl?{prompt:'Reply with the word OK.'}:{prompt:extractionPrompt(unit),response_json_schema:EXTRACTION_RESPONSE_SCHEMA,add_context_from_internet:false});}
+    try {response=await boundedLlm(invokeLlm,providerControl==='schema'?{prompt:'Return an object with an empty rules array.',response_json_schema:EXTRACTION_RESPONSE_SCHEMA}:providerControl?{prompt:'Reply with the word OK.'}:{prompt:extractionPrompt(unit)+'\nReturn ONLY a JSON object matching this schema (no markdown): '+JSON.stringify(EXTRACTION_RESPONSE_SCHEMA)});}
     catch(error) {
       // Never log the SDK error object: it may include credentials/request text.
       const providerCode=/\b(INVALID_ARGUMENT|RESOURCE_EXHAUSTED|UNAVAILABLE|PERMISSION_DENIED|UNAUTHENTICATED|DEADLINE_EXCEEDED)\b/.exec(String(error?.message || ''))?.[1] || 'unknown';
@@ -116,6 +116,10 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
       run=await writeExtractionRun(runEntity,run,{status:error.uncertain?'llm_uncertain':'failed',error:String(error.message || error).slice(0,500),lease_expires_at:''});
       await writeSourceLedger(sourceEntity,unit.source,ledger,{...ledger,status:run.status,lease_expires_at:''});
       return {...summarize(run),llm_calls:1};
+    }
+    if (!providerControl && typeof response==='string') {
+      if (response.length>100_000) throw evidenceError('AI response exceeds the bounded JSON size.');
+      try {response=JSON.parse(response);} catch {throw evidenceError('AI response is not a JSON object; no candidates staged.');}
     }
     const validated=providerControl?{candidates:[],rejected:[]}:await validateRuleCandidates(unit,response,{extractionDate:new Date(now()).toISOString(),normalizeSignType});
     await assertEvidenceCurrent(options,unit);
