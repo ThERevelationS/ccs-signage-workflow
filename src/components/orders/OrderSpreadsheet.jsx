@@ -693,6 +693,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setOrders((current) => current.filter(o => o.id !== target.id));
       delete pendingChangesRef.current[target.id];
       delete originalOrdersRef.current[target.id];
+      pendingSyncIdsRef.current.delete(target.id);
+      pendingSyncVersionRef.current.delete(target.id);
+      setPendingSyncCount(pendingSyncIdsRef.current.size);
       setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
       setDeleteConfirm(null);
     } catch (error) {
