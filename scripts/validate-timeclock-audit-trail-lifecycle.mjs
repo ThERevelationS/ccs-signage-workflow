@@ -163,16 +163,20 @@ assert.match(transitionBlock, /const expectedEvidence = Array\.isArray\(investig
 assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence, investigation\?\.mode === "integrity"\)/);
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
 
-assert.match(source, /if \(integrityMode && loadedRows\.length >= 100\)/);
-assert.match(source, /Time Clock audit integrity investigation completeness failure/);
-assert.match(source, /returned_audit_record_count: loadedRows\.length/);
-assert.match(source, /query_limit: 100/);
-assert.match(source, /cannot prove the authoritative audit history is complete/);
-assert.match(source, /No diagnostic audit records are being displayed or treated as trusted payroll evidence/);
-const integrityCompletenessGuard = source.indexOf('if (integrityMode && loadedRows.length >= 100)');
+assert.match(source, /if \(scopedId && integrityMode\)/);
+assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ sort: "-server_timestamp", limit: 5000 \}\)/);
+assert.match(source, /while \(true\)/);
+assert.match(source, /const pageItems = Array\.isArray\(page\?\.items\) \? page\.items : \[\]/);
+assert.match(source, /loadedRows\.push\(\.\.\.pageItems\)/);
+assert.match(source, /if \(!page\?\.has_more\) break/);
+assert.match(source, /if \(!String\(page\?\.next_cursor \|\| ""\)\.trim\(\)\)/);
+assert.match(source, /pagination reported more authoritative audit records without a continuation cursor/);
+assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ cursor: page\.next_cursor, limit: 5000 \}\)/);
+assert.doesNotMatch(source, /integrityMode && loadedRows\.length >= 100/);
+const integrityPaginationStart = source.indexOf('if (scopedId && integrityMode)');
 const integrityClassification = source.indexOf('classifyAuthoritativePayrollAuditIntegrity(loadedRows)');
-assert.ok(integrityCompletenessGuard >= 0 && integrityClassification > integrityCompletenessGuard, 'integrity completeness must fail closed before classifying a potentially truncated authoritative set');
-console.log('PASS integrity investigation fails closed when the scoped 100-record query reaches its limit instead of presenting a potentially truncated diagnostic set as complete');
+assert.ok(integrityPaginationStart >= 0 && integrityClassification > integrityPaginationStart, 'integrity classification must occur only after the cursor walk completes');
+console.log('PASS integrity investigation walks every scoped authoritative audit page with a stable cursor instead of treating the recent-history 100-record display limit as completeness');
 
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);

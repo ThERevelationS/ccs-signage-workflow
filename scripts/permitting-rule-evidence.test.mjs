@@ -261,3 +261,14 @@ test('conflicting sources cannot be cleared by ordinary approval even with valid
  await assert.rejects(verifyRuleForApproval({...rule,conflict_state:'conflicting_sources'},f.api),/Conflicting source/);
  assert.equal(rule.conflict_state,'under_review');
 });
+test('handled provider diagnostics exclude request credentials and source prompt',async()=>{
+ const f=await ruleFixture(),originalWarn=console.warn,logs=[];
+ console.warn=(...args)=>logs.push(args.join(' '));
+ try {
+  f.api.invokeLlm=async()=>{throw Object.assign(Error('INVALID_ARGUMENT private-source-prompt'),{response:{status:400,config:{headers:{Authorization:'secret-token'},data:'private-source-prompt'}}});};
+  const result=await extractEvidenceUnit(f.api);
+  assert.equal(result.status,'failed');assert.equal(result.llm_attempts,1);
+  assert.equal(logs.length,1);assert.match(logs[0],/INVALID_ARGUMENT/);assert.match(logs[0],/400/);
+  assert.equal(logs[0].includes('secret-token'),false);assert.equal(logs[0].includes('private-source-prompt'),false);
+ }finally{console.warn=originalWarn;}
+});
