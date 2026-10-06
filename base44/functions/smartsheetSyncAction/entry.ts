@@ -221,17 +221,9 @@ async function pullDataset(
   }
   const deletedOrderTombstones = dataset === 'orders'
     ? classifyOrderDeletedLinkTombstones(Array.isArray(existingRecords) ? existingRecords : [], sheetId)
-    : { deletedRowIds: new Set<string>(), collisions: [] as string[] };
-  const deletedOrderLinkedRowIds = deletedOrderTombstones.deletedRowIds;
+    : { tombstoneRowIds: new Set<string>(), shadowedDeletedRowIds: [] as string[] };
+  const deletedOrderLinkedRowIds = deletedOrderTombstones.tombstoneRowIds;
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
-  if (dataset === 'orders' && deletedOrderTombstones.collisions.length) {
-    return {
-      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
-      reason: 'A permanent Smartsheet row is linked to both an active and a deleted Base44 Order. No Orders were changed.',
-      active_deleted_row_link_collisions: deletedOrderTombstones.collisions.length,
-      collision_row_ids: deletedOrderTombstones.collisions.slice(0, 20),
-    };
-  }
   const targetedIds = new Set(options.recordIds || []);
   if (dataset === 'sales' && targetedIds.size) existingRecords = existingRecords.filter(r => targetedIds.has(r.id));
   const salesAssigneeUsers = dataset === 'sales' && /^\d+$/.test(String(bindings?.current_task_assigned_to ?? '').trim())
