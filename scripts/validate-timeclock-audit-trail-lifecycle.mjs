@@ -166,7 +166,7 @@ console.log('PASS rapid investigation changes request the newest TimeEntry scope
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
-assert.match(source, /setIntegrityDiagnostics\(authoritativeIntegrityDiagnostics\)/);
+assert.match(source, /setIntegrityDiagnostics\(authoritativeIntegrityDiagnostics\.map/);
 assert.match(source, /setRows\(loadedRowLocators\)/);
 assert.match(source, /diagnostic only and are not being presented as trusted payroll evidence/);
 assert.match(source, /Malformed authoritative provenance/);
