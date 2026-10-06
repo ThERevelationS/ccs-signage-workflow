@@ -163,6 +163,17 @@ assert.match(transitionBlock, /const expectedEvidence = Array\.isArray\(investig
 assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence, investigation\?\.mode === "integrity"\)/);
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
 
+assert.match(source, /if \(integrityMode && loadedRows\.length >= 100\)/);
+assert.match(source, /Time Clock audit integrity investigation completeness failure/);
+assert.match(source, /returned_audit_record_count: loadedRows\.length/);
+assert.match(source, /query_limit: 100/);
+assert.match(source, /cannot prove the authoritative audit history is complete/);
+assert.match(source, /No diagnostic audit records are being displayed or treated as trusted payroll evidence/);
+const integrityCompletenessGuard = source.indexOf('if (integrityMode && loadedRows.length >= 100)');
+const integrityClassification = source.indexOf('classifyAuthoritativePayrollAuditIntegrity(loadedRows)');
+assert.ok(integrityCompletenessGuard >= 0 && integrityClassification > integrityCompletenessGuard, 'integrity completeness must fail closed before classifying a potentially truncated authoritative set');
+console.log('PASS integrity investigation fails closed when the scoped 100-record query reaches its limit instead of presenting a potentially truncated diagnostic set as complete');
+
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
