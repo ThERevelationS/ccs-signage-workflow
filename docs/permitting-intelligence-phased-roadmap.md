@@ -10,6 +10,9 @@ This roadmap records the current implementation sequence for CCS Signage Workflo
 Build the complete Ohio/Kentucky locality inventory and stable canonical locality identities needed by permitting.
 
 ## Phase 2 — Government offices and authority
+
+Electrical permit issuance and electrical inspection responsibility require separate coverage checks for each locality/service area. Collect provider identity, delegation, official scope, commercial signage applicability, applications/portals, fees, contractor requirements, inspection stages and scheduling/prerequisites. Preserve downloadable forms and online links. Shared offices may cover multiple roles only with evidence for each. Unknown applicability and missing offices remain gaps; a generic electrical role/contact is insufficient. The reusable office checklist is base44/shared/permittingOfficeResearchRequirements.json; offline Ohio inventory consumes it, while live scanner/dashboard integration remains pending.
+
 Model distinct permitting, zoning, building, engineering/right-of-way, electrical, planning, and related government offices with verified authority and stable locality-office relationships.
 
 ## Phase 3 — Address resolution

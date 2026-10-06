@@ -1,3 +1,13 @@
+### 2026-10-06 — 10.1 of 10.3: electrical permitting and inspection research checklist
+
+Audited existing catalog/locality office model and verified-authority pipeline. The authority role is currently generic electrical; explicit permit issuance versus inspection responsibility is not separately established by that role alone. No role enum, staff approval, existing reviewed evidence or production entity changed.
+
+Added reusable base44/shared/permittingOfficeResearchRequirements.json and consumed it in the Ohio reference generator. All 2,318 geographic candidates now carry separate pending electrical_permit and electrical_inspection research slots, alongside sign/zoning/building/right-of-way/historic review. Unknown applicability and empty office assignments are explicit, and coverage_complete/authority_verified remain false. These are research obligations, not a claim every project requires every permit. The checklist covers official role/service-area and delegation evidence, commercial sign scope, contacts, forms/portals/archives, fees, contractor requirements, inspection scheduling/stages/prerequisites and utility release where applicable.
+
+Seven Ohio reference tests passed, including distinct electrical responsibility slots for every generated candidate and required inspection/delegation fields. Source integrity verification, deterministic rebuild and diff check passed. This checklist is consumed by the offline inventory generator; it is not yet integrated into the live discovery scanner or dashboard and contains no collected electrical office assignments. No scans/AI, production writes or frontend publish. Direct official-directory search did not yield usable Ohio evidence; no office coverage was inferred from unrelated search results.
+
+Progress remains 10.1 of 10.3, tasks 1/3 complete, task 2 identity/office inventory partial, task 4 live acceptance pending. Next: Ohio official place-to-county relationships and electrical permit/inspection service-area inventory, then read-only app reconciliation. State sequencing remains Ohio first. Earlier Phase 5/8/9 acceptance gaps remain open.
+
 ### 2026-10-06 — 10.1 of 10.3: Ohio geographic candidates classified
 
 Ohio-first offline inventory now accounts for every one of 2,618 Ohio source rows: 2,318 geographic research candidates (88 counties, 253 cities, 669 villages, 1,308 townships), 19 explicit status-review rows and 281 Census hierarchy subdivision references. Official Census FUNCSTAT and LSADC definitions were checked through primary-source web retrieval; paraphrased codes and URLs are retained. Direct raw HTML download returned HTTP 403, so definition-page snapshots/hashes are not claimed. A status of active government is not sign-permitting authority verification.
