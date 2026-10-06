@@ -237,7 +237,7 @@ assert.match(loadRowsBlock, /String\(row\?\.time_entry_id \|\| ""\)\.trim\(\) !=
 console.log('PASS scoped rows missing a TimeEntry ID are treated as integrity failures');
 
 const integrityGuardStart = loadRowsBlock.indexOf('if (scopedId) {');
-const integrityGuardEnd = loadRowsBlock.indexOf('setRows(loadedRows);', integrityGuardStart);
+const integrityGuardEnd = loadRowsBlock.indexOf('setRows(loadedRowLocators);', integrityGuardStart);
 assert.ok(integrityGuardStart >= 0 && integrityGuardEnd > integrityGuardStart);
 assert.match(loadRowsBlock.slice(integrityGuardStart, integrityGuardEnd), /mismatchedRows/);
 assert.match(loadRowsBlock, /scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
