@@ -165,7 +165,11 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (repeatedPageAuditIds.length > 0) {
             throw new Error(`Integrity investigation pagination repeated ${repeatedPageAuditIds.length} immutable audit record${repeatedPageAuditIds.length === 1 ? "" : "s"} across authoritative pages.`);
           }
-          pageAuditIds.forEach((id) => seenPageAuditIds.add(id));
+          const newPageAuditIds = pageAuditIds.filter((id) => !seenPageAuditIds.has(id));
+          if (pageItems.length > 0 && newPageAuditIds.length === 0) {
+            throw new Error("Integrity investigation pagination returned a nonempty authoritative page without any new immutable Audit IDs, so cursor evidence progress cannot be proven.");
+          }
+          newPageAuditIds.forEach((id) => seenPageAuditIds.add(id));
           loadedRows.push(...pageItems);
           const nextCursor = String(page.next_cursor || "").trim();
           if (!page.has_more) {
