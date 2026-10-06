@@ -10,7 +10,7 @@ const adminSource = readFileSync(new URL('../src/components/timeclock/TimeClockA
 
 assert.equal(PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, 1, 'shared payroll-membership evidence contract version must remain explicit');
 assert.match(backendSource, /from '\.\.\/\.\.\/shared\/timeClockPayrollMembershipEvidence\.mjs'/);
-assert.match(source, /from "\.\.\/\.\.\/\.\.\/base44\/shared\/timeClockPayrollMembershipEvidence\.mjs"/);
+assert.match(source, /from "@\/shared\/timeClockPayrollMembershipEvidence\.mjs"/);
 assert.match(backendSource, /contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
 assert.match(backendSource, /validatePayrollMembershipConflictEvidence/);
 assert.match(backendSource, /payrollMembershipConflictEvidenceIsMalformed/);
