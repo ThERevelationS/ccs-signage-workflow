@@ -22,6 +22,8 @@ try {
  assert.match(html,/Resolution rationale/);assert.match(html,/maxLength="2000"/i);
  assert.match(html,/First retained source/);assert.match(html,/Second retained source/);
  assert.match(html,/I reviewed every cited source/);
+ const history=render({rule:{...rule,evidence_context:{review_history:[{operation_id:'event',action:'approve',reviewer:'Original approver',before:{version:1,status:'needs_review'},after:{version:2,status:'staff_approved'},changed_fields:['status']}]}}});
+ assert.match(history,/Staff review history \(1\)/);assert.match(history,/Original approver/);assert.match(history,/Changed: status/);
  const busy=render({actionLoading:true});assert.match(busy,/<textarea[^>]*disabled=""/);assert.match(busy,/<input[^>]*type="checkbox"[^>]*disabled=""/);
  const historical=render({rule:{...rule,status:'historical'}});assert.doesNotMatch(historical,/>Approve<\/button>/);
  assert.doesNotMatch(render({expanded:false}),/Resolution rationale/);

@@ -93,6 +93,14 @@ export default function RuleCard({ rule, expanded, onToggle, onApprove, onReject
             {rule.trigger && <div><span className="font-semibold">Trigger:</span> {rule.trigger}</div>}
             {rule.exceptions && <div><span className="font-semibold">Exceptions:</span> {rule.exceptions}</div>}
             {rule.effective_date && <div><span className="font-semibold">Effective:</span> {rule.effective_date}</div>}
+            {Array.isArray(rule.evidence_context?.review_history) && rule.evidence_context.review_history.length > 0 && <details>
+              <summary>Staff review history ({rule.evidence_context.review_history.length})</summary>
+              {rule.evidence_context.review_history.map((event, index) => <div key={event.operation_id || index} className="border rounded p-2 mt-1 text-xs">
+                <p>{event.action} · {event.reviewer || event.reviewer_email} · {event.reviewed_at ? new Date(event.reviewed_at).toLocaleString() : "—"}</p>
+                <p>Version {event.before?.version} → {event.after?.version} · {event.before?.status} → {event.after?.status}</p>
+                {event.changed_fields?.length > 0 && <p>Changed: {event.changed_fields.join(", ")}</p>}
+              </div>)}
+            </details>}
             {rule.reviewer && <div className="text-xs text-gray-500"><Clock className="w-3 h-3 inline mr-1" />Reviewed by {rule.reviewer} on {rule.reviewed_at ? new Date(rule.reviewed_at).toLocaleDateString() : "—"}</div>}
             <div>
               <span className="font-semibold">Citations:</span>
