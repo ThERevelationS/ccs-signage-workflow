@@ -112,7 +112,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             page,
             scopedId,
             previousPageOldestTimestampMs,
-            seenAuditIds: seenPageAuditIds,
+            seenPageAuditIds,
             seenCursors,
           });
           previousPageOldestTimestampMs = acceptedPageOldestTimestampMs;
