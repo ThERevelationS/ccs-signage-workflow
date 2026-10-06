@@ -185,6 +185,11 @@ assert.match(source, /!row \|\| typeof row !== "object" \|\| Array\.isArray\(row
 assert.match(source, /if \(malformedPageItemIndexes\.length > 0\)/);
 assert.match(source, /malformed authoritative audit record.*inside a valid page/);
 assert.match(source, /const pageAuditIds = pageItems\.map\(\(row\) => String\(row\.id \|\| ""\)\.trim\(\)\)\.filter\(Boolean\)/);
+assert.match(source, /const duplicateAuditIdsWithinPage = \[\.\.\.new Set\(pageAuditIds\.filter\(\(id, index\) => pageAuditIds\.indexOf\(id\) !== index\)\)\]/);
+assert.match(source, /if \(duplicateAuditIdsWithinPage\.length > 0\)/);
+assert.match(source, /duplicate immutable Audit ID.*inside one authoritative page/);
+const withinPageDuplicateGuard = source.indexOf('if (duplicateAuditIdsWithinPage.length > 0)');
+assert.ok(withinPageDuplicateGuard >= 0 && pageAccumulation > withinPageDuplicateGuard, 'same-page duplicate immutable Audit IDs must fail closed before the page is accumulated');
 assert.match(source, /loadedRows\.push\(\.\.\.pageItems\)/);
 assert.match(source, /if \(!page\.has_more\)[\s\S]*if \(nextCursor\)[\s\S]*continuation cursor on a terminal authoritative page/);
 assert.match(source, /if \(!nextCursor\)/);
@@ -202,7 +207,7 @@ assert.doesNotMatch(source, /integrityMode && loadedRows\.length >= 100/);
 const integrityPaginationStart = source.indexOf('if (scopedId && integrityMode)');
 const integrityClassification = source.indexOf('classifyAuthoritativePayrollAuditIntegrity(loadedRows)');
 assert.ok(integrityPaginationStart >= 0 && integrityClassification > integrityPaginationStart, 'integrity classification must occur only after the cursor walk completes');
-console.log('PASS integrity investigation walks every scoped authoritative audit page and fails closed on malformed page structure, empty non-terminal pages without evidence progress, malformed records, contradictory terminal cursors, missing/repeated cursors, or records repeated across pages');
+console.log('PASS integrity investigation walks every scoped authoritative audit page and fails closed on malformed page structure, empty non-terminal pages without evidence progress, malformed records, same-page duplicate Audit IDs, contradictory terminal cursors, missing/repeated cursors, or records repeated across pages');
 
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
