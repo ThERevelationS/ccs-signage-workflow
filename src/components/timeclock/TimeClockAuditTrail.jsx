@@ -256,7 +256,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return rows.filter((row) => {
+    return rows.map((row, sourceRowIndex) => ({ row, diagnostic_row_index: sourceRowIndex })).filter(({ row }) => {
       if (actionFilter !== "all" && row.action !== actionFilter) return false;
       if (!needle) return true;
       return [
@@ -353,8 +353,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         <div className="rounded-lg bg-gray-50 p-5 text-sm text-gray-500 text-center">No audit records match the current filters.</div>
       ) : (
         <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-          {filtered.map((row) => {
-            const sourceRowIndex = rows.indexOf(row);
+          {filtered.map(({ row, diagnostic_row_index: sourceRowIndex }) => {
             const isConflictEvidence = conflictAuditIds.has(String(row.id || ""));
             const claimedEvidence = investigationEvidence.find((item) => String(item?.audit_id || "") === String(row.id || ""));
             const integrityDiagnostic = integrityDiagnosticByRowIndex.get(sourceRowIndex);
