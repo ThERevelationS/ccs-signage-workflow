@@ -22,14 +22,13 @@ export default function usePermittingQueueBrowse(readPage, filters, search) {
       if (!current()) return;
       if (!Array.isArray(page?.items) || typeof page.has_more !== 'boolean' || page.items.some(row => !row?.id) || (page.has_more && (!page.next_cursor || (!reset && page.next_cursor === visible.next_cursor)))) throw Error('Invalid queue continuation. Refresh the queue.');
       setResult({ scope, page: { ...page, items: reset ? page.items : [...new Map([...visible.items, ...page.items].map(row => [row.id,row])).values()] } });
-    } catch (e) { if (current()) { setResult(null); setError(e.message || 'Queue read failed.'); } }
+    } catch (e) { if (current()) { setResult(null); setError({scope, message: e.message || 'Queue read failed.'}); } }
     finally { if (current()) { pending.current = null; setBusy(false); } }
   }
   useEffect(() => {
     generation.current++; pending.current = null; setResult(null); setError(''); load(true);
     return () => { generation.current++; };
     // Scope contains all query fields; pagination must not restart this effect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope, readPage]);
-  return { queuePage: visible, loadingQueue: busy, queueError: error, loadQueue: load };
+  return { queuePage: visible, loadingQueue: busy, queueError: error?.scope === scope ? error.message : '', loadQueue: load };
 }
