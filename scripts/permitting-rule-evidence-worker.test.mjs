@@ -171,3 +171,19 @@ test('review edits preserve conflicting source flags and historical classificati
   assert.equal((await t.review({action:'approve',rule_id:rule.id,expected_version:2})).status,409);
  }
 });
+
+test('provider controls are tracked, replayable and never importable as extraction',async()=>{
+ for(const action of ['provider_control','provider_schema_control']) {
+  const t=await setup();let args;
+  globalThis.ruleWorkerFixture.asServiceRole.integrations.Core.InvokeLLM=async value=>{args=value;t.f.calls.llm++;return 'OK';};
+  const r=await t.extract({action});
+  assert.equal(r.data.success,true);assert.equal(r.data.provider_control,true);assert.equal(r.data.candidates.length,0);
+  assert.equal(r.data.method,action==='provider_control'?'provider-control-v1':'provider-schema-control-v1');
+  assert.equal(args.prompt.includes('EVIDENCE'),false);
+  assert.equal(Boolean(args.response_json_schema),action==='provider_schema_control');
+  const replay=await t.extract({action});assert.equal(replay.data.llm_calls,0);assert.equal(t.f.calls.llm,1);
+  assert.equal((await t.extract()).status,409);
+  const imported=await t.review({action:'import_candidate',run_id:r.data.run_id,candidate_index:0});
+  assert.notEqual(imported.status,200);assert.equal(t.f.rules.length,0);
+ }
+});
