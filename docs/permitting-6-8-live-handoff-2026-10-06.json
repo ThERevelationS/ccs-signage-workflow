@@ -1,0 +1,28 @@
+{
+  "phase": "6.8",
+  "checked_at": "2026-10-06T03:07:19Z",
+  "authenticated_editor": true,
+  "kentucky": {
+    "run_id": "6ac45dc593b16e452bf8fac9",
+    "candidate_count": 2,
+    "evidence_ready": [
+      true,
+      true
+    ],
+    "scope": "Unincorporated Campbell County; Alexandria",
+    "address_applicability": "requires_review"
+  },
+  "ohio": {
+    "run_id": "6ac45dd59d76e99ba61d4c40",
+    "candidate_count": 1,
+    "evidence_ready": [
+      false
+    ],
+    "blocker": "Citation source is unverified, changed, or belongs to another authority."
+  },
+  "llm_calls": 0,
+  "rules_created": 0,
+  "imports": 0,
+  "approvals": 0,
+  "browser_ui_acceptance": "Blocked by separate Sign Shop username/password login in app preview; editor authentication remains active."
+}
