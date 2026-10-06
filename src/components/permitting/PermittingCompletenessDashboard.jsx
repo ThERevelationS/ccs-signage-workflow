@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import PermittingRecordedCoverage from "./PermittingRecordedCoverage";
 import {
   Collapsible,
   CollapsibleContent,
@@ -301,11 +301,13 @@ export default function PermittingCompletenessDashboard() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={Database} label="Queue rows (expected)" value={m.totalQueue} accent="#D4E9F7" />
-        <StatCard icon={MapPin} label="Jurisdiction profiles created" value={m.totalProfiles} sub={`${Math.round((m.totalProfiles / m.totalQueue) * 100)}% of queue`} accent="#C8F4E9" />
+        <StatCard icon={Database} label="Recorded queue rows" value={m.totalQueue} accent="#D4E9F7" />
+        <StatCard icon={MapPin} label="Jurisdiction profiles created" value={m.totalProfiles} sub="Record count; identity coverage checked below" accent="#C8F4E9" />
         <StatCard icon={FileText} label="Sources archived" value={m.sourcesTotal} sub={`${m.sourcesStale} stale (> ${filters.staleDays}d)`} accent="#FFE4D6" />
         <StatCard icon={ShieldCheck} label="Rewrite authority verified" value={m.rewriteVerified} sub={`${m.rewriteAdoptionOnly} adoption · ${m.rewriteEffectiveOnly} effective`} accent="#FFD6E8" />
       </div>
+
+      <PermittingRecordedCoverage />
 
       {/* Queue vs Profiles by State */}
       <Section title="Queue vs. profiles by state" icon={MapPin} defaultOpen badge={`${states.length} states`}>
@@ -313,11 +315,10 @@ export default function PermittingCompletenessDashboard() {
           {states.map(s => {
             const q = m.queueByState[s] || 0;
             const p = m.profilesByState[s] || 0;
-            const pct = q > 0 ? Math.round((p / q) * 100) : 0;
             return (
               <div key={s}>
                 <Row label={s} value={`${p} / ${q} profiles`} />
-                <Progress value={pct} className="h-1.5 mt-1" />
+                <p className="text-xs text-gray-500">Record counts only; not matched locality coverage.</p>
               </div>
             );
           })}
