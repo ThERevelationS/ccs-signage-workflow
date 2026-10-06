@@ -1,3 +1,11 @@
+### 2026-10-06 — 10.1 of 10.3: Ohio-first research priority
+
+User direction: concentrate on Ohio before Kentucky for scans. New research release now stably orders eligible Ohio rows before Kentucky rows, retaining existing within-state backlog order. Claimed execution rows are also reordered Ohio first so the database created-date sort cannot reverse that preference. Kentucky fills remaining cycle capacity after eligible Ohio rows. Reconciliation, reserved/active work, retry limits, daily/cycle caps, dedupe and manual retrieval remain unchanged. Existing saved-page discovery, archive and text continuations still drain safely across both states; their separate selection has not yet been changed to statewide priority. No paid batch was invoked for verification.
+
+55 targeted backlog/config/discovery/archive/text tests passed, including Ohio priority, researched Ohio reconciliation, stable ordering, nonmutation, dedupe and capacity. Backend dispatcher esbuild bundle and diff check passed. Backend source auto-syncs from sandbox; no frontend publish, production test records or config writes.
+
+Phase remains 10.1 of 10.3: tasks 1 and 3 complete; task 2 official identity/county/authority reconciliation partial; task 4 live acceptance pending. Next inventory and manual scanning work is Ohio first, Kentucky afterward. Next: Ohio classification and county relationship reconciliation, then read-only Ohio app coverage acceptance. Earlier open acceptance/archive gaps remain open.
+
 ### 2026-10-06 — 10.1 of 10.3: task 2 official geographic source snapshot captured
 
 Captured and hash-verified eight January 1, 2026 Census TIGERweb state tables: counties, incorporated places, county subdivisions and consolidated cities for OH/KY. Preserved all 3,647 rows and source classification codes, leading-zero geographic IDs, exact source URLs, retrieval timestamp, raw HTML and hashes under docs/official-evidence/oh-ky-geography-2026. Added explicit manual capture/offline verification script; no total record cap and no Base44 entity/AI calls. Snapshot refuses overwrite.

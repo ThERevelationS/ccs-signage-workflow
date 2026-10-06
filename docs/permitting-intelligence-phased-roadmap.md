@@ -1,3 +1,7 @@
+## State sequencing — updated October 6, 2026
+
+Prioritize Ohio for new scans, geographic inventory reconciliation and manual acceptance; follow with Kentucky. The scheduled research dispatcher releases eligible Ohio rows first, then Kentucky if capacity remains. This is priority, not cancellation of existing Kentucky work. Known-page/archive/text continuations currently preserve existing safe behavior across both states. Automated cost limits remain intact; manual retrieval has no total record cap. Do not claim statewide Ohio completion based on queue exhaustion; compare against the independent official inventory and authority/office/document gaps.
+
 # Permitting Intelligence — Phased Roadmap
 
 This roadmap records the current implementation sequence for CCS Signage Workflow — Permitting Intelligence. Work should continue in one verified small/medium chunk at a time. Do not publish without explicit approval.
