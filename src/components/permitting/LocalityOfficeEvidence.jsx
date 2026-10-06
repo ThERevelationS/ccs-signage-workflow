@@ -44,7 +44,7 @@ export default function LocalityOfficeEvidence({ jurisdictionId, retrieveEvidenc
   return <section aria-label="Reviewed office responsibility" className="min-w-0 space-y-3 rounded border bg-white p-3">
     <h3 className="font-semibold">Reviewed office roles and coverage</h3>
     <p className="text-sm text-gray-600">Checks the office identity, responsibility quote and explicitly covered area. Confirm the property separately; this does not resolve address authority or create job steps.</p>
-    <Button size="sm" variant="outline" disabled={busy || !jurisdictionId} onClick={() => load()}>{busy ? "Checking office evidence…" : visible ? "Refresh office evidence" : "Load reviewed office evidence"}</Button>
+    <Button size="sm" variant="outline" className="min-h-11 h-auto max-w-full whitespace-normal py-2 text-left" disabled={busy || !jurisdictionId} onClick={() => load()}>{busy ? "Checking office evidence…" : visible ? "Refresh office evidence" : "Load reviewed office evidence"}</Button>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     {visible && <>
       <p className="text-xs text-gray-600">Latest page checked {visible.checked_at}. {visible.items.length} loaded review records.</p>
@@ -65,7 +65,7 @@ export default function LocalityOfficeEvidence({ jurisdictionId, retrieveEvidenc
           </>}
         </article>;
       })}
-      {visible.has_more ? <Button size="sm" variant="outline" disabled={busy} onClick={() => load(true)}>Load more office reviews</Button>
+      {visible.has_more ? <Button size="sm" variant="outline" className="min-h-11 h-auto max-w-full whitespace-normal py-2 text-left" disabled={busy} onClick={() => load(true)}>Load more office reviews</Button>
         : <p className="text-xs text-gray-600">End of this review sequence. Sources can change; refresh before use.</p>}
     </>}
   </section>;
