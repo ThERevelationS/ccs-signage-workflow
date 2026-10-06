@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import usePermittingQueueBrowse from "./usePermittingQueueBrowse";
 import PermittingRecordedCoverage from "./PermittingRecordedCoverage";
 import {
   Collapsible,
@@ -21,6 +22,8 @@ import {
   Database, FileCheck2, ShieldCheck, AlertTriangle, Clock,
   ChevronDown, Search, Loader2, Layers, MapPin, FileText, Activity,
 } from "lucide-react";
+
+const readQueuePage = (query, options) => base44.entities.SourceCollectionQueue.filter(query, options);
 
 const STATUS_OPTIONS = [
   "not_started", "source_discovery", "sources_found", "archive_incomplete",
@@ -82,9 +85,8 @@ export default function PermittingCompletenessDashboard() {
     staleDays: 90,
   });
   const [metrics, setMetrics] = useState(null);
-  const [queuePage, setQueuePage] = useState({ items: [], has_more: false, next_cursor: null });
   const [queueSearch, setQueueSearch] = useState("");
-  const [loadingQueue, setLoadingQueue] = useState(false);
+  const { queuePage, loadingQueue, queueError, loadQueue } = usePermittingQueueBrowse(readQueuePage, filters, queueSearch);
 
   const loadMetrics = useCallback(async () => {
     setLoading(true);
@@ -168,36 +170,7 @@ export default function PermittingCompletenessDashboard() {
     }
   }, [filters.staleDays]);
 
-  const loadQueue = useCallback(async (reset = true) => {
-    setLoadingQueue(true);
-    try {
-      const query = {};
-      if (filters.state !== "all") query.state = filters.state;
-      if (filters.jurisdiction_type !== "all") query.jurisdiction_type = filters.jurisdiction_type;
-      if (filters.status !== "all") query.status = filters.status;
-      if (filters.parent_county_name !== "all") query.parent_county_name = filters.parent_county_name;
-      if (queueSearch.trim()) {
-        query.jurisdiction_name = { $regex: queueSearch.trim(), $options: "i" };
-      }
-      const page = await base44.entities.SourceCollectionQueue.filter(query, {
-        sort: "jurisdiction_name",
-        limit: 50,
-        cursor: reset ? undefined : queuePage.next_cursor,
-      });
-      setQueuePage((prev) => ({
-        items: reset ? page.items : [...prev.items, ...page.items],
-        has_more: page.has_more,
-        next_cursor: page.next_cursor,
-      }));
-    } catch (e) {
-      console.error("Queue browse load error:", e);
-    } finally {
-      setLoadingQueue(false);
-    }
-  }, [filters, queueSearch, queuePage.next_cursor]);
-
   useEffect(() => { loadMetrics(); }, [loadMetrics]);
-  useEffect(() => { loadQueue(true); }, [filters, queueSearch]);
 
   // Distinct parent counties for the county filter (derived from loaded queue type aggregate is not enough;
   // we use a distinct call lazily — but to keep it simple and within rate limits, derive from a one-time load).
@@ -428,12 +401,14 @@ export default function PermittingCompletenessDashboard() {
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh"}
             </Button>
           </div>
+          {queueError && <p role="alert" className="text-red-700">{queueError}</p>}
+          <Button variant="outline" size="sm" onClick={() => loadQueue(true)} disabled={loadingQueue}>Refresh queue</Button>
           {loadingQueue && queuePage.items.length === 0 ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
             </div>
           ) : queuePage.items.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">No queue rows match the current filters.</p>
+            <p className="text-sm text-gray-400 py-4 text-center">{queueError ? "Queue results unavailable. Refresh to retry." : "No queue rows match the current filters."}</p>
           ) : (
             <div className="space-y-2">
               {queuePage.items.map((row) => (
