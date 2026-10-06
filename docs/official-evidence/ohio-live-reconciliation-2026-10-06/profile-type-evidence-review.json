@@ -1,0 +1,71 @@
+{
+  "fresh_read_timestamp": "2026-10-06T23:58:25.756Z",
+  "official_evidence_manifest": "../ohio-locality-type-evidence-2026-10-06/manifest.json",
+  "checks": [
+    {
+      "record_id": "69b30b6e1e5a58b2a3379aa1",
+      "record_name": "Village of Cleves",
+      "snapshot_identity_and_version_unchanged": true,
+      "current_type": "city",
+      "official_type_evidence": "village",
+      "suggested_reference_key": "incorporated_place:3916028",
+      "schema_supports_suggested_type": false,
+      "multiple_rows_suggest_same_reference": true,
+      "correction_blockers": [
+        "official_identity_review_required",
+        "fresh_version_guard_required",
+        "suggested_type_not_supported_by_entity_schema",
+        "multiple_existing_rows_require_relationship_and_history_review"
+      ],
+      "production_record_changed": false
+    },
+    {
+      "record_id": "6ac19f0cd3b3f47e53ac0596",
+      "record_name": "Norwood",
+      "snapshot_identity_and_version_unchanged": true,
+      "current_type": "village",
+      "official_type_evidence": "city",
+      "suggested_reference_key": "incorporated_place:3957386",
+      "schema_supports_suggested_type": true,
+      "multiple_rows_suggest_same_reference": false,
+      "correction_blockers": [
+        "official_identity_review_required",
+        "fresh_version_guard_required"
+      ],
+      "production_record_changed": false
+    },
+    {
+      "record_id": "6ac19f1a3d1976f72bf908a7",
+      "record_name": "Deer Park",
+      "snapshot_identity_and_version_unchanged": true,
+      "current_type": "village",
+      "official_type_evidence": "city",
+      "suggested_reference_key": "incorporated_place:3921266",
+      "schema_supports_suggested_type": true,
+      "multiple_rows_suggest_same_reference": false,
+      "correction_blockers": [
+        "official_identity_review_required",
+        "fresh_version_guard_required"
+      ],
+      "production_record_changed": false
+    },
+    {
+      "record_id": "6ac1a161934312388bd3ca04",
+      "record_name": "Cleves",
+      "snapshot_identity_and_version_unchanged": true,
+      "current_type": "city",
+      "official_type_evidence": "village",
+      "suggested_reference_key": "incorporated_place:3916028",
+      "schema_supports_suggested_type": false,
+      "multiple_rows_suggest_same_reference": true,
+      "correction_blockers": [
+        "official_identity_review_required",
+        "fresh_version_guard_required",
+        "suggested_type_not_supported_by_entity_schema",
+        "multiple_existing_rows_require_relationship_and_history_review"
+      ],
+      "production_record_changed": false
+    }
+  ],
+  "staff_authority_approved": false
+}
