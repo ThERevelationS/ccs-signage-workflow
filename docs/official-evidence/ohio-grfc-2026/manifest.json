@@ -1,0 +1,8 @@
+{
+  "url": "https://www2.census.gov/geo/docs/maps-data/data/grf/2026/public_grfc_cur26_39.txt",
+  "layout_url": "https://www.census.gov/programs-surveys/geography/technical-documentation/records-layout/grf-record-layouts.html",
+  "retrieved_at": "2026-10-06T23:52:07.785504+00:00",
+  "raw_bytes": 98249511,
+  "raw_sha256": "d2c1ae422d966cbe7f756758223abeee5524c2506e7fdd8b735c321c5bc748c5",
+  "lossless_compression": "gzip"
+}
