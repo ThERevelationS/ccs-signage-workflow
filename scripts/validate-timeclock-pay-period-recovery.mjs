@@ -1056,9 +1056,9 @@ test('cross-pay-period employee correction approval requires destination reopen 
   assert.equal(sourcePeriod.finalized_summary.shift_manifest.length, 0);
   assert.equal(sourcePeriod.finalized_summary.generation_changes.length, 1);
   assert.equal(sourcePeriod.finalized_summary.generation_changes[0].change_type, 'removed');
-  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].action_provenance.action, 'admin_correction');
-  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].action_provenance.semantic_before_clock_in, '2026-09-20T14:00:00.000Z');
-  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].action_provenance.semantic_after_clock_in, '2026-09-27T14:00:00.000Z');
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].correction_provenance.correction_request_id, request.id);
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].correction_provenance.requested_clock_in, '2026-09-27T14:00:00.000Z');
+  assert.equal(sourcePeriod.finalized_summary.generation_changes[0].correction_provenance.corrected_clock_in, '2026-09-27T14:00:00.000Z');
 
   const destinationRefinalized = await periodAction('employee-destination-period', 'finalize', 'employee-cross-destination-refinalize-001');
   assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
@@ -1068,6 +1068,7 @@ test('cross-pay-period employee correction approval requires destination reopen 
   assert.equal(destinationPeriod.finalized_summary.generation_changes.length, 1);
   assert.equal(destinationPeriod.finalized_summary.generation_changes[0].change_type, 'added');
   assert.equal(destinationPeriod.finalized_summary.generation_changes[0].correction_provenance.correction_request_id, request.id);
+  assert.equal(destinationPeriod.finalized_summary.generation_changes[0].correction_provenance.requested_clock_in, '2026-09-27T14:00:00.000Z');
   assert.equal(destinationPeriod.finalized_summary.generation_changes[0].correction_provenance.corrected_clock_in, '2026-09-27T14:00:00.000Z');
   assert.equal(h.rows.TimeEntry[0].pay_period_id, 'employee-destination-period');
 
