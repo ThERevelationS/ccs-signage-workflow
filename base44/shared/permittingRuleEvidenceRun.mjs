@@ -106,6 +106,12 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
     let response;
     try {response=await boundedLlm(invokeLlm,{prompt:extractionPrompt(unit),response_json_schema:EXTRACTION_RESPONSE_SCHEMA,add_context_from_internet:false});}
     catch(error) {
+      // Never log the SDK error object: it may include credentials/request text.
+      const providerCode=/\b(INVALID_ARGUMENT|RESOURCE_EXHAUSTED|UNAVAILABLE|PERMISSION_DENIED|UNAUTHENTICATED|DEADLINE_EXCEEDED)\b/.exec(String(error?.message || ''))?.[1] || 'unknown';
+      const httpStatus=Number(error?.response?.status ?? error?.status);
+      console.warn('permittingRuleExtraction provider failure',JSON.stringify({stage:'invoke_llm',run_id:run.id,
+        llm_attempts:run.llm_attempts,uncertain:Boolean(error.uncertain),
+        http_status:Number.isInteger(httpStatus) && httpStatus>=100 && httpStatus<=599?httpStatus:null,provider_code:providerCode}));
       run=await writeExtractionRun(runEntity,run,{status:error.uncertain?'llm_uncertain':'failed',error:String(error.message || error).slice(0,500),lease_expires_at:''});
       await writeSourceLedger(sourceEntity,unit.source,ledger,{...ledger,status:run.status,lease_expires_at:''});
       return {...summarize(run),llm_calls:1};
