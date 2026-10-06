@@ -1,0 +1,17 @@
+{
+  "milestone": "6.7 of 6.9",
+  "observed_at": "2026-10-05T22:24:00-04:00",
+  "source": "authenticated Base44 app usage and integrations UI",
+  "workspace_integration_credits_remaining": 15264,
+  "workspace_integration_credits_total": 20000,
+  "workspace_message_credits_remaining": 0,
+  "ai_provider_settings_visible": false,
+  "connected_services": [
+    "Gmail",
+    "Google Drive"
+  ],
+  "actual_ai_attempts_this_chunk": 0,
+  "production_record_writes": 0,
+  "conclusion": "Integration credit exhaustion is not indicated. Provider root cause unresolved.",
+  "next": "Minimal tracked AI control request to separate general integration failure from extraction-specific failure"
+}
