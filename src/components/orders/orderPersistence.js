@@ -182,6 +182,9 @@ export async function restoreOrderFromLoadedTrashSnapshot({
   const identity = orderRestoreSmartsheetIdentity(order);
   let restoreSafety = { ...identity, pendingLocalSync: order?.smartsheet_pending_local_sync === true };
   if (identity.hasRelationship) {
+    // Fail before any lookup when the trash record has only partial/ambiguous
+    // Smartsheet identity evidence.
+    assertOrderRestoreSmartsheetSafe(order, [], label);
     if (typeof readActiveLinkedOrders !== "function") {
       throw new Error(`${label} cannot restore a Smartsheet-linked Order without verifying the current permanent row owner.`);
     }
