@@ -1,3 +1,9 @@
+### 2026-10-06 — 8.3 of 8.3: live authentication and empty-result retrieval verified
+
+The user restored Google login. The builder identified Brett Heinlein and the main app showed Logout Brett plus admin settings. In the actual main app, Permitting Rules loaded the current catalog (101 rules: 92 extracted, 9 historical; zero reviewed regulatory rules/instructions). Selecting the adopted Boone County Article 34 source and clicking Load approved evidence executed the real read-only lookup. The result displayed Refresh approved evidence and “0 matching requirements in 0 loaded verified records” with end-of-sequence and no-permit-inference warnings. The earlier Admin access required failure did not occur. No credentials or session tokens were inspected.
+
+The live authentication/empty-result blocker is resolved. Full Phase 8 closeout still awaits a legitimate populated staff-approved live example; none was manufactured or approved for testing. Phase 9 remains at 9.3 with actual mobile/touch acceptance open. No production records changed, AI calls made or frontend publish occurred. Next: verify a legitimate populated approved-rule example when available, and complete 9.3 mobile acceptance using the preserved signed-in browser.
+
 # Phase 8.3 search acceptance
 
 Technical acceptance passed. Full Phase 8 closeout remains open.
@@ -14,7 +20,7 @@ Technical acceptance passed. Full Phase 8 closeout remains open.
 | Exact requirement/citation, retained/official links, reviewer dates | Passed actual component | Direct quotes, not AI-generated legal conclusions |
 | Live record reconciliation | Passed read-only query | 2026-10-06: zero staff_approved rules; Campbell/Cincinnati source jurisdiction identities confirmed |
 | Search keyboard/focus and actual browser UI | PASSED actual browser fixture | Quotes, Tab focus, Enter paging, uncertainty, blocker disclosure, failed refresh and immediate scope clear verified |
-| Authenticated live handler/data UI | NOT PASSED | Standalone read-only request returned Admin access required; builder frame switches and credential protection prevented stable live verification |
+| Authenticated live handler/data UI | PASSED empty-result live check | 2026-10-06: restored Google/main-app Brett session; real Boone County Load approved evidence returned zero loaded verified records and Refresh control, without admin-access error |
 | Legitimate populated approved-rule live example | NOT PERFORMED | No live staff_approved records; do not manufacture production approvals for testing |
 | Natural-language AI synthesis / job-specific answer | Not implemented | Present foundation searches loaded verified words and quotes evidence |
 
