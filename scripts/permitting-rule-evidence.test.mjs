@@ -272,3 +272,32 @@ test('handled provider diagnostics exclude request credentials and source prompt
   assert.equal(logs[0].includes('secret-token'),false);assert.equal(logs[0].includes('private-source-prompt'),false);
  }finally{console.warn=originalWarn;}
 });
+
+test('category acceptance stages and imports literal forms, fees, procedures and regulatory exceptions without activating them',async()=>{
+ const {textSha256,assembledSourceText}=await import('../base44/shared/jurisdictionSourcePdfText.mjs');
+ const matrix=[
+  ['submittal_requirement','application_form','Submit two sign drawings to the Planning office.','',{}],
+  ['fee_timing','fee_schedule','The sign application fee is $125.50.','$125.50',{}],
+  ['procedure','administrative_guidance','Submit the application to the Planning office before installation.','',{trigger:'before installation'}],
+  ['permit_applicability','current_adopted','A permit is required before installation of a wall sign.','',{sign_type:'wall sign',trigger:'before installation'}],
+  ['sign_type_rule','current_adopted','A wall sign must be attached to the building facade.','',{sign_type:'wall sign'}],
+  ['dimensional','current_adopted','Maximum wall sign area is 50 square feet.','50 square feet',{sign_type:'wall sign'}],
+  ['illumination_electronic','current_adopted','Electronic signs must hold each image for 8 seconds.','8 seconds',{sign_type:'Electronic signs'}],
+  ['exemption','current_adopted','A permit is required for signs except temporary event signs.','',{exceptions:'except temporary event signs'}],
+  ['other','current_adopted','Every sign must be maintained in good repair.','',{}]
+ ];
+ for(const [category,classification,text,numeric_literal,terms] of matrix){
+  const f=await ruleFixture({source:{authority_classification:classification}});
+  const page={...f.page,text,text_sha256:await textSha256(new TextEncoder().encode(text))};
+  f.patchSource({extracted_pages:[page],extracted_text:assembledSourceText(f.source(),[page])});
+  const raw={physical_page:1,rule_category:category,excerpt:text,requirement:text,numeric_literal,confidence:'high',...terms};
+  const run=await extractEvidenceUnit({...f.api,invokeLlm:async()=>({rules:[raw]})});
+  assert.equal(run.candidates.length,1,category);assert.equal(run.candidates[0].rule_category,category);
+  const imported=await importEvidenceCandidate({...f.api,runId:run.run_id,candidateIndex:0});
+  assert.equal(imported.rule.status,'needs_review');assert.equal(imported.rule.is_operational,false);
+  assert.equal(imported.rule.is_workflow_instruction,false);assert.equal(imported.rule.issuing_office,'Planning');
+  assert.equal(imported.rule.citations[0].excerpt,text);assert.equal(imported.rule.evidence_context.applicability.address_applicability,'requires_review');
+  for(const [field,literal] of Object.entries(terms))assert.equal(imported.rule.evidence_context.applicability.fields[field].literal,literal);
+  if(category==='fee_timing'){assert.equal(imported.rule.numeric_value,125.5);assert.equal(imported.rule.unit,'dollars');}
+ }
+});
