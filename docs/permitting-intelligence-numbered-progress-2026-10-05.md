@@ -1,3 +1,13 @@
+### 2026-10-06 — 10.1 of 10.3: task 2 official geographic source snapshot captured
+
+Captured and hash-verified eight January 1, 2026 Census TIGERweb state tables: counties, incorporated places, county subdivisions and consolidated cities for OH/KY. Preserved all 3,647 rows and source classification codes, leading-zero geographic IDs, exact source URLs, retrieval timestamp, raw HTML and hashes under docs/official-evidence/oh-ky-geography-2026. Added explicit manual capture/offline verification script; no total record cap and no Base44 entity/AI calls. Snapshot refuses overwrite.
+
+Counts by table OH/KY: counties 88/120; incorporated places 923/415; subdivisions 1607/493; consolidated cities 0/1. These are geographic reference rows, not additive government or office totals. Kentucky CCDs remain statistical reference rows; Ohio township statuses and city/village subdivision overlap remain explicit. Lexington-Fayette and Louisville consolidated/balance records need relationship mapping. Incorporated-place county membership is not supplied by these tables.
+
+Offline source-hash/count/output verification and six parser acceptance tests passed; diff check passed. Initial parser rejected the official Ohio consolidated-city empty marker; fresh state inspected, explicit empty marker support added solely for that category, and capture rerun successfully. No application runtime code changed, so no redundant frontend build. No production records or frontend publish.
+
+Task 1 complete; task 2 remains partial (official geographic baseline obtained, authority identity and county membership reconciliation pending); task 3 automated implementation acceptance complete; task 4 live OH/KY acceptance pending. 10.1 remains open. Next: official classification and place-to-county relationship mapping, then read-only app-record reconciliation. Earlier Phase 5 archival, Phase 8 populated approval and Phase 9 phone acceptance remain open.
+
 ### 2026-10-06 — 10.1 of 10.3: dedicated metric lifecycle verification
 
 Added scripts/test-permitting-metrics-lifecycle.mjs, rendering the actual dashboard with mocked API and UI boundaries. Passed out-of-order threshold responses, an obsolete request failure, and response after unmount. No live API calls or production data changes. The first fixture deferred the wrong metric; corrected it to select the last_checked count query, then all assertions passed.
