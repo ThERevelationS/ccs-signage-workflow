@@ -1080,6 +1080,134 @@ test('cross-pay-period employee correction approval requires destination reopen 
   assert.equal(destinationVerify.body.verified, true, JSON.stringify(destinationVerify.body));
 });
 
+test('approve_modified cross-period correction uses manager-edited destination and freezes employee-versus-manager provenance', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod.push({
+    id: 'modified-destination-period', label: 'Modified Destination Period',
+    start_date: '2026-09-27', end_date: '2026-10-03', status: 'review', last_request_id: '',
+    updated_date: '2026-09-20T00:00:00.000Z',
+  });
+  const periodAction = (pay_period_id, decision, request_id, note = '') => h.invoke({
+    action: 'pay_period_status', pay_period_id, decision, request_id, note,
+  });
+
+  h.rows.TimeEntry[0].approval_status = 'needs_review';
+  const initialEntry = h.rows.TimeEntry[0];
+  const initialApproval = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'modified-cross-initial-approval-001', entry_id: initialEntry.id,
+    expected_updated_date: initialEntry.updated_date, decision: 'approve', note: 'Initial independent manager review',
+  });
+  assert.equal(initialApproval.status, 200, JSON.stringify(initialApproval.body));
+  assert.equal((await periodAction('synthetic-period', 'finalize', 'modified-cross-source-finalize-001')).status, 200);
+  assert.equal((await periodAction('modified-destination-period', 'finalize', 'modified-cross-destination-finalize-001')).status, 200);
+  const sourceReopened = await periodAction('synthetic-period', 'reopen', 'modified-cross-source-reopen-001', 'Review employee correction with manager edits');
+  assert.equal(sourceReopened.status, 200, JSON.stringify(sourceReopened.body));
+
+  const unlockedEntry = h.rows.TimeEntry[0];
+  const submitted = await h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'modified-cross-submit-001', entry_id: unlockedEntry.id,
+    expected_updated_date: unlockedEntry.updated_date, reason: 'Employee thinks the start should be one hour later',
+    requested_changes: {
+      clock_in: '2026-09-20T15:00:00.000Z', clock_out: '2026-09-20T23:00:00.000Z',
+      lunch_minutes: 15, notes: 'Employee proposal remains in the source pay period',
+    },
+  });
+  assert.equal(submitted.status, 200, JSON.stringify(submitted.body));
+  let request = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === 'modified-cross-submit-001');
+  assert.ok(request?.id);
+  assert.equal(request.status, 'pending');
+  assert.equal(request.requested_changes.clock_in, '2026-09-20T15:00:00.000Z');
+
+  const managerCorrection = {
+    clock_in: '2026-09-27T16:30:00.000Z',
+    clock_out: '2026-09-28T00:30:00.000Z',
+    lunch_minutes: 30,
+    notes: 'Manager applied corrected date and lunch after review',
+  };
+  const blockedModified = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'modified-cross-review-blocked-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date, decision: 'approve_modified',
+    reason: 'Manager verified a different company date', correction: managerCorrection,
+  });
+  assert.equal(blockedModified.status, 409, JSON.stringify(blockedModified.body));
+  assert.equal(blockedModified.body.finalized_pay_period_id, 'modified-destination-period');
+  assert.match(blockedModified.body.error, /approved Clock In belongs to finalized pay period|Reopen that destination period/i);
+  request = h.rows.TimeClockCorrectionRequest.find((row) => row.id === request.id);
+  assert.equal(request.status, 'pending');
+  assert.equal(h.rows.TimeEntry[0].clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === 'modified-cross-review-blocked-001').length, 0);
+
+  const destinationReopened = await periodAction('modified-destination-period', 'reopen', 'modified-cross-destination-reopen-001', 'Accept manager-adjusted employee correction');
+  assert.equal(destinationReopened.status, 200, JSON.stringify(destinationReopened.body));
+  request = h.rows.TimeClockCorrectionRequest.find((row) => row.id === request.id);
+  const approvedModified = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'modified-cross-review-approved-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date, decision: 'approve_modified',
+    reason: 'Manager verified a different company date', correction: managerCorrection,
+  });
+  assert.equal(approvedModified.status, 200, JSON.stringify(approvedModified.body));
+  request = h.rows.TimeClockCorrectionRequest.find((row) => row.id === request.id);
+  const movedEntry = h.rows.TimeEntry[0];
+  assert.equal(request.status, 'approved_modified');
+  assert.equal(request.review_decision, 'approve_modified');
+  assert.equal(movedEntry.clock_in, managerCorrection.clock_in);
+  assert.equal(movedEntry.clock_out, managerCorrection.clock_out);
+  assert.equal(movedEntry.lunch_minutes, 30);
+  assert.equal(movedEntry.notes, managerCorrection.notes);
+  assert.equal(movedEntry.approval_status, 'needs_review');
+  const appliedAudit = h.rows.TimeClockAudit.find((row) => row.id === request.applied_audit_id);
+  assert.equal(appliedAudit.details.original.clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(appliedAudit.details.corrected.clock_in, managerCorrection.clock_in);
+  assert.equal(appliedAudit.details.corrected.clock_out, managerCorrection.clock_out);
+  assert.equal(appliedAudit.details.corrected.lunch_minutes, 30);
+  assert.equal(appliedAudit.details.corrected.notes, managerCorrection.notes);
+  assert.equal(appliedAudit.details.payroll_membership.company_date, '2026-09-27');
+
+  const finalApproval = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'modified-cross-final-approval-001', entry_id: movedEntry.id,
+    expected_updated_date: movedEntry.updated_date, decision: 'approve', note: 'Reviewed manager-adjusted correction',
+  });
+  assert.equal(finalApproval.status, 200, JSON.stringify(finalApproval.body));
+
+  const sourceRefinalized = await periodAction('synthetic-period', 'finalize', 'modified-cross-source-refinalize-001');
+  assert.equal(sourceRefinalized.status, 200, JSON.stringify(sourceRefinalized.body));
+  const destinationRefinalized = await periodAction('modified-destination-period', 'finalize', 'modified-cross-destination-refinalize-001');
+  assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
+  const sourcePeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period');
+  const destinationPeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'modified-destination-period');
+  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 24);
+  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 24);
+  const sourceChange = sourcePeriod.finalized_summary.generation_changes[0];
+  const destinationChange = destinationPeriod.finalized_summary.generation_changes[0];
+  assert.equal(sourceChange.change_type, 'removed');
+  assert.equal(destinationChange.change_type, 'added');
+  for (const change of [sourceChange, destinationChange]) {
+    assert.equal(change.correction_provenance.correction_request_id, request.id);
+    assert.equal(change.correction_provenance.review_decision, 'approve_modified');
+    assert.equal(change.correction_provenance.requested_clock_in, '2026-09-20T15:00:00.000Z');
+    assert.equal(change.correction_provenance.requested_clock_out, '2026-09-20T23:00:00.000Z');
+    assert.equal(change.correction_provenance.requested_lunch_minutes, 15);
+    assert.equal(change.correction_provenance.requested_notes, 'Employee proposal remains in the source pay period');
+    assert.equal(change.correction_provenance.corrected_clock_in, managerCorrection.clock_in);
+    assert.equal(change.correction_provenance.corrected_clock_out, managerCorrection.clock_out);
+    assert.equal(change.correction_provenance.corrected_lunch_minutes, 30);
+    assert.equal(change.correction_provenance.corrected_notes, managerCorrection.notes);
+  }
+  assert.equal(h.rows.TimeEntry[0].pay_period_id, 'modified-destination-period');
+
+  const sourceVerify = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'synthetic-period', request_id: 'modified-cross-source-verify-001' });
+  const destinationVerify = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'modified-destination-period', request_id: 'modified-cross-destination-verify-001' });
+  assert.equal(sourceVerify.status, 200, JSON.stringify(sourceVerify.body));
+  assert.equal(sourceVerify.body.verified, true, JSON.stringify(sourceVerify.body));
+  assert.equal(destinationVerify.status, 200, JSON.stringify(destinationVerify.body));
+  assert.equal(destinationVerify.body.verified, true, JSON.stringify(destinationVerify.body));
+});
+
 test('destination finalization gate wins over a simultaneous employee correction review', async () => {
   const h = setup();
   h.rows.TimeClockPayPeriod.push({
