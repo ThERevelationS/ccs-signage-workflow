@@ -1,6 +1,6 @@
 # Phase 7.3 staff-review acceptance
 
-Status: open. Phase 7 endpoint is 7.3; being at that milestone does not mean it is complete.
+Status: complete as of 2026-10-06. Phase 7 endpoint is 7.3.
 
 | Criterion | Result | Evidence |
 |---|---|---|
@@ -12,7 +12,7 @@ Status: open. Phase 7 endpoint is 7.3; being at that milestone does not mean it 
 | Material edits revoke operational status | Passed compiled handlers | Applicability regenerated; existing conflict/history preserved |
 | Open rejection form during another save | Passed real component interactions | Reason and confirmation disabled; direct callback guarded; reenabling permits one callback |
 | Icon control labels and superseded Edit | Passed component checks | Edit/expand/collapse accessible names; superseded Edit disabled |
-| Browser focus/keyboard, conflict form and review history | NOT PASSED | 2026-10-06 preview opened as guest; prior authenticated editor absent. Existing fixture URL had previously returned ERR_BLOCKED_BY_CLIENT. Component tests do not substitute for browser QA |
+| Browser focus/keyboard, conflict form and review history | PASSED actual browser fixture | Enter/Space disclosure, Tab traversal, acknowledgement, local resolution, busy rejection, version reset and keyboard history expansion verified; receipt permitting-7-3-8-3-browser-acceptance-2026-10-06.json |
 | Production import/approval | Not performed | No fake production rules created for acceptance |
 | OH/KY coverage and Phase 5 closeout | Separately open | Selected-page pilot is not statewide completion |
 
@@ -22,3 +22,5 @@ Required browser acceptance: use the existing isolated actual-component fixture 
 
 
 2026-10-06 browser access update: Sign Shop and Admin Settings unlocks verified, but standalone hosted preview's permitting backend says Admin access required. Base44 builder sign-in is still required. Credential protection prevented builder observation after one documented recovery; manual secure handoff requested. In-panel development fixture is available in the Vite preview only and removed from production bundles. Browser QA remains open.
+
+Final browser acceptance: actual sandbox-hosted RuleCard fixture passed. Earlier blocked-access notes are historical. No fake production rules or staff approvals created.

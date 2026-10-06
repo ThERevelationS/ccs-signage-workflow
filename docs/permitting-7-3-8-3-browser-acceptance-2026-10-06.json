@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-06",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "browser_fixture": "https://preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app/?permittingReviewQa=1",
+  "fixture_data_only": true,
+  "production_rule_writes": 0,
+  "llm_calls": 0,
+  "phase_7_browser": "passed",
+  "phase_7_checks": [
+    "Enter collapses and Space expands real RuleCard",
+    "rationale Tab focuses checkbox",
+    "Space acknowledgement and Tab focus resolution",
+    "Enter invokes local resolution callback",
+    "history summary Enter expands reviewer/version/changed-field content",
+    "busy disables reason/Confirm Reject/resolution",
+    "new rule version clears rationale and acknowledgement",
+    "Approve remains disabled for conflicting evidence"
+  ],
+  "phase_8_browser_ui": "passed",
+  "phase_8_checks": [
+    "Enter loads quoted evidence",
+    "Tab focuses word-search input",
+    "no-match leaves permit/address uncertainty explicit",
+    "blocker summary keyboard expansion",
+    "next-page Enter distinguishes instructions from regulations",
+    "new scope clears previous evidence immediately after scope guard correction",
+    "failed refresh clears quotes and displays error"
+  ],
+  "phase_8_live_backend": "not passed",
+  "phase_8_live_result": "Admin access required on standalone fixture read-only Campbell request",
+  "remaining": [
+    "Builder preview frame replacement and credential protection prevented stable authenticated handler/UI check",
+    "No legitimate production staff-approved example exists; do not manufacture one"
+  ],
+  "screenshot": "Capture blocked by browser credential protection; no screenshot file claimed"
+}
