@@ -1174,7 +1174,8 @@ async function pushDataset(
       unlinked_record_ids: unlinked.slice(0, 10).map((record: any) => record.id),
     };
     if (unlinked.length && options?.allowExplicitOrderCreate === true) {
-      const noMappedCells = unlinked.filter((record: any) => buildCells(record, bindings, 'orders').length === 0);
+      const noMappedCells = unlinked.filter((record: any) =>
+        !recoverableOrderSmartsheetCreate(record, sheetId) && buildCells(record, bindings, 'orders').length === 0);
       if (noMappedCells.length) return {
         dataset, direction: 'push', sheet_id: sheetId, skipped: true,
         reason: `${noMappedCells.length} new Order${noMappedCells.length === 1 ? '' : 's'} have no mapped Smartsheet values. No Smartsheet rows were written.`,
