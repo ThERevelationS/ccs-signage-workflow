@@ -85,6 +85,16 @@ export default function OrderTrash() {
       await restoreOrderFromLoadedTrashSnapshot({
         entity: Order,
         order: target,
+        readActiveLinkedOrders: ({ sheetId, rowId }) => loadAllEntityRows({
+          entity: Order,
+          query: {
+            smartsheet_sheet_id: sheetId,
+            smartsheet_row_id: rowId,
+            deleted: { $ne: true },
+          },
+          sort: "id",
+          label: "Order Trash restore permanent-row ownership",
+        }),
         label: "Order Trash recovery",
       });
       setDeletedOrders((current) => current.filter(o => o.id !== target.id));
@@ -350,6 +360,9 @@ export default function OrderTrash() {
             <AlertDialogTitle>Recover Order?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to recover this order for "{recoverConfirm?.customer_name}"? It will be restored to the system.
+              {orderHasSmartsheetRelationship(recoverConfirm) && (
+                <><br /><br /><span className="font-semibold text-amber-800">Its original permanent Smartsheet row will be preserved. Recovery is blocked if another active Order already owns that row.</span></>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
