@@ -205,3 +205,18 @@ test('JSON text transport retains literal validation and fails closed on invalid
   assert.equal(t.f.calls.llm,1);assert.equal(t.f.rules.length,0);
  }
 });
+
+test('candidate handoff checks current evidence without importing or making AI calls',async()=>{
+ const t=await setup(),extracted=await t.extract(),before=structuredClone(t.f.runs);
+ const result=await t.review({action:'candidate_handoff',run_id:extracted.data.run_id});
+ assert.equal(result.status,200);assert.equal(result.data.candidates.length,1);
+ assert.equal(result.data.staff_approval_required,true);assert.equal(result.data.llm_calls,0);
+ assert.equal(t.f.calls.llm,1);assert.equal(t.f.rules.length,0);assert.deepEqual(t.f.runs,before);
+ t.f.runs[0].candidates[0].requirement='altered';
+ assert.equal((await t.review({action:'candidate_handoff',run_id:extracted.data.run_id})).status,409);
+});
+test('candidate handoff refuses provider diagnostic receipts',async()=>{
+ const t=await setup(),r=await t.extract({action:'provider_control'});
+ assert.equal((await t.review({action:'candidate_handoff',run_id:r.data.run_id})).status,409);
+ assert.equal(t.f.rules.length,0);
+});
