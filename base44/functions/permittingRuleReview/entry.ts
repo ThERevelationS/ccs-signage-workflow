@@ -1,3 +1,4 @@
+import { listOfficeAuthorityReviews } from '../../shared/permittingOfficeAuthority.mjs';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import {retrieveApprovedEvidence} from '../../shared/permittingApprovedEvidence.mjs';
 import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
@@ -48,6 +49,26 @@ Deno.serve(async req => {
     if (!user || user.role!=='admin') return Response.json({error:'Admin access required'},{status:403});
     const entities=base44.asServiceRole.entities,Rules=entities.PermittingRule;
     const action=String(body.action || '');
+    if (action==='retrieve_office_authority') {
+      const jurisdictionId=body.jurisdiction_id;
+      if (typeof jurisdictionId!=='string' || !jurisdictionId.trim() || jurisdictionId.length>200)
+        throw evidenceError('Select a canonical jurisdiction.',400);
+      const profile=await entities.JurisdictionProfile.get(jurisdictionId);
+      if (!profile.updated_date) throw evidenceError('Jurisdiction persistence version is unavailable.');
+      if (body.expected_profile_updated_date && body.expected_profile_updated_date!==profile.updated_date)
+        throw evidenceError('Jurisdiction review history changed; refresh office evidence.');
+      const data=await listOfficeAuthorityReviews({profileEntity:entities.JurisdictionProfile,
+        sourceEntity:entities.PermittingSourceDocument,settingsEntity:entities.GlobalSettings,
+        segmentEntity:entities.PermittingSourceTextSegment,reviewEntity:entities.PermittingOfficeAuthorityReview,
+        htmlEntity:entities.PermittingHtmlEvidence},{jurisdictionId,cursor:body.cursor});
+      const after=await entities.JurisdictionProfile.get(jurisdictionId);
+      if (after.updated_date!==profile.updated_date) throw evidenceError('Jurisdiction changed during verification; refresh office evidence.');
+      const fields=['id','relation_key','sequence','action','role','role_label','coverage_area','coverage_kind',
+        'office_snapshot','source_document_id','html_evidence_id','role_proof','requested_by','requested_at',
+        'verified','state','reason','is_current_review'];
+      return Response.json({...data,items:data.items.map(item=>Object.fromEntries(fields.filter(key=>Object.hasOwn(item,key)).map(key=>[key,item[key]]))),
+        profile_updated_date:after.updated_date,checked_at:new Date().toISOString(),rules_created:0});
+    }
     if (action==='retrieve_evidence') {
       return Response.json(await retrieveApprovedEvidence({entities,jurisdictionId:body.jurisdiction_id,
         limit:body.limit===undefined?25:Number(body.limit),cursor:body.cursor===undefined?null:body.cursor}));
