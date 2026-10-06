@@ -108,6 +108,30 @@ export async function createOrderWithRecovery({
   throw new Error(`${label} could not verify whether it was created. Reload Orders before retrying.`);
 }
 
+export function orderHasSmartsheetRelationship(order = {}) {
+  const hasSnapshot = order?.smartsheet_sync_snapshot &&
+    typeof order.smartsheet_sync_snapshot === "object" &&
+    !Array.isArray(order.smartsheet_sync_snapshot) &&
+    Object.keys(order.smartsheet_sync_snapshot).length > 0;
+  return Boolean(
+    String(order?.smartsheet_sheet_id || "").trim() ||
+    String(order?.smartsheet_row_id || "").trim() ||
+    String(order?.smartsheet_last_synced_at || "").trim() ||
+    order?.smartsheet_create_attempt ||
+    hasSnapshot
+  );
+}
+
+export function assertOrderPermanentDeleteSafe(order, label = "Order permanent delete") {
+  if (orderHasSmartsheetRelationship(order)) {
+    throw new Error(
+      `${label} is blocked because this Order preserves a Smartsheet relationship or create history. ` +
+      `Keep it in Order Trash or recover it; permanently deleting it would erase the permanent row identity needed to prevent orphan/recreated Orders.`
+    );
+  }
+  return true;
+}
+
 function requireLoadedOrderVersion(order, label) {
   const id = String(order?.id || "").trim();
   const updatedDate = String(order?.updated_date || "").trim();
@@ -210,6 +234,7 @@ export async function permanentlyDeleteTrashOrderFromLoadedSnapshot({
   if (order?.deleted !== true) {
     throw new Error(`${label} was blocked because the loaded Order is no longer a verified trash item.`);
   }
+  assertOrderPermanentDeleteSafe(order, label);
   const result = await deleteEntityIfUnchanged({
     entity,
     record: order,
@@ -225,6 +250,7 @@ export async function permanentlyDeleteOrderFromLoadedSnapshot({
   label = "Order System Reset permanent delete",
 } = {}) {
   requireLoadedOrderVersion(order, label);
+  assertOrderPermanentDeleteSafe(order, label);
   const guardFields = typeof order?.deleted === "boolean" ? { deleted: order.deleted } : {};
   const result = await deleteEntityIfUnchanged({
     entity,
@@ -258,6 +284,13 @@ export function assertOrderSystemResetCatalogStable({
   verified,
   label = "Order System Reset preflight",
 } = {}) {
+  const protectedOrders = Array.isArray(loaded) ? loaded.filter(orderHasSmartsheetRelationship) : [];
+  if (protectedOrders.length > 0) {
+    throw new Error(
+      `${label} found ${protectedOrders.length} Order${protectedOrders.length === 1 ? "" : "s"} with preserved Smartsheet relationship evidence. ` +
+      `Nothing was permanently deleted. Linked Order history must remain available as a permanent-ID tombstone.`
+    );
+  }
   const loadedVersions = catalogVersions(loaded, label);
   const verifiedVersions = catalogVersions(verified, label);
   if (loadedVersions.size !== verifiedVersions.size) {
