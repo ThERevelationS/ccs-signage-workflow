@@ -179,6 +179,11 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
         <div className="font-medium">{candidate.requirement}</div>
         <div>{candidate.rule_category.replaceAll("_", " ")} · {candidate.citations?.[0]?.section_or_page} · {candidate.citations?.[0]?.verification_status.replaceAll("_", " ")}</div>
         <div>Purpose: {candidate.rule_kind?.replaceAll("_", " ") || "Requires review"}. Authority scope: {candidate.evidence_context?.jurisdiction_scope || "Not established"}.</div>
+        {candidate.sign_type && <div>Quoted sign type: {candidate.sign_type}</div>}
+        {candidate.zoning_district_applicability && <div>Quoted district: {candidate.zoning_district_applicability}</div>}
+        {candidate.trigger && <div className="whitespace-pre-wrap">Quoted condition: {candidate.trigger}</div>}
+        {candidate.exceptions && <div className="whitespace-pre-wrap">Quoted exception: {candidate.exceptions}</div>}
+        {(candidate.evidence_context?.structured_literal_repairs || []).length > 0 && <p className="text-xs text-gray-500">Source line breaks restored in quoted fields: {candidate.evidence_context.structured_literal_repairs.map(row => row.field.replaceAll("_", " ")).join(", ")}.</p>}
         <p className="text-xs text-gray-600">Address applicability requires separate review. Missing sign, district, trigger or exception information remains unknown.</p>
         {handoff?.candidates?.find(row => row.candidate_index === index) && <p className="text-sm text-amber-800">{handoff.candidates.find(row => row.candidate_index === index).evidence_ready ? "Current evidence checks passed. Pending staff decision." : "Approval blocked: " + handoff.candidates.find(row => row.candidate_index === index).blocker}</p>}
         <blockquote className="text-gray-600">{candidate.citations?.[0]?.excerpt}</blockquote>
