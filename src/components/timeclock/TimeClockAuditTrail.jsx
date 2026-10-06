@@ -122,7 +122,13 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (malformedPageItemIndexes.length > 0) {
             throw new Error(`Integrity investigation pagination returned ${malformedPageItemIndexes.length} malformed authoritative audit record${malformedPageItemIndexes.length === 1 ? "" : "s"} inside a valid page.`);
           }
-          const pageAuditIds = pageItems.map((row) => String(row.id || "").trim()).filter(Boolean);
+          const pageAuditIds = pageItems.map((row) => String(row.id || "").trim());
+          const missingAuditIdIndexes = pageAuditIds
+            .map((auditId, rowIndex) => (!auditId ? rowIndex : -1))
+            .filter((rowIndex) => rowIndex >= 0);
+          if (missingAuditIdIndexes.length > 0) {
+            throw new Error(`Integrity investigation pagination returned ${missingAuditIdIndexes.length} authoritative audit record${missingAuditIdIndexes.length === 1 ? "" : "s"} without an immutable Audit ID.`);
+          }
           const duplicateAuditIdsWithinPage = [...new Set(pageAuditIds.filter((id, index) => pageAuditIds.indexOf(id) !== index))];
           if (duplicateAuditIdsWithinPage.length > 0) {
             throw new Error(`Integrity investigation pagination returned ${duplicateAuditIdsWithinPage.length} duplicate immutable Audit ID${duplicateAuditIdsWithinPage.length === 1 ? "" : "s"} inside one authoritative page.`);
