@@ -95,16 +95,29 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
       const scopedId = String(timeEntryId || "").trim();
       let loadedRows = [];
       if (scopedId && integrityMode) {
+        const seenCursors = new Set();
+        const seenPageAuditIds = new Set();
         let page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { sort: "-server_timestamp", limit: 5000 });
         while (true) {
           if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
           const pageItems = Array.isArray(page?.items) ? page.items : [];
+          const pageAuditIds = pageItems.map((row) => String(row?.id || "").trim()).filter(Boolean);
+          const repeatedPageAuditIds = [...new Set(pageAuditIds.filter((id) => seenPageAuditIds.has(id)))];
+          if (repeatedPageAuditIds.length > 0) {
+            throw new Error(`Integrity investigation pagination repeated ${repeatedPageAuditIds.length} immutable audit record${repeatedPageAuditIds.length === 1 ? "" : "s"} across authoritative pages.`);
+          }
+          pageAuditIds.forEach((id) => seenPageAuditIds.add(id));
           loadedRows.push(...pageItems);
           if (!page?.has_more) break;
-          if (!String(page?.next_cursor || "").trim()) {
+          const nextCursor = String(page?.next_cursor || "").trim();
+          if (!nextCursor) {
             throw new Error("Integrity investigation pagination reported more authoritative audit records without a continuation cursor.");
           }
-          page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: page.next_cursor, limit: 5000 });
+          if (seenCursors.has(nextCursor)) {
+            throw new Error("Integrity investigation pagination repeated a continuation cursor and was stopped before it could loop indefinitely.");
+          }
+          seenCursors.add(nextCursor);
+          page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 });
         }
       } else {
         const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
