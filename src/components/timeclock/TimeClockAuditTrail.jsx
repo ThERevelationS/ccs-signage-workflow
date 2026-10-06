@@ -98,6 +98,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         const seenCursors = new Set();
         const seenPageAuditIds = new Set();
         const maxIntegrityPageRequests = 100;
+        const maxIntegrityAuditRows = 500000;
         let integrityPageRequestCount = 1;
         let previousPageOldestTimestampMs = null;
         let page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { sort: "-server_timestamp", limit: 5000 });
@@ -171,6 +172,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
             throw new Error(`Integrity investigation pagination repeated ${repeatedPageAuditIds.length} immutable audit record${repeatedPageAuditIds.length === 1 ? "" : "s"} across authoritative pages.`);
           }
           pageAuditIds.forEach((id) => seenPageAuditIds.add(id));
+          if (loadedRows.length + pageItems.length > maxIntegrityAuditRows) {
+            throw new Error(`Integrity investigation pagination exceeded its ${maxIntegrityAuditRows}-record accumulation safety budget before authoritative history completeness could be proven.`);
+          }
           loadedRows.push(...pageItems);
           const nextCursor = String(page.next_cursor || "").trim();
           if (!page.has_more) {
