@@ -208,10 +208,13 @@ assert.match(source, /if \(currentPageNewestTimestampMs > previousPageOldestTime
 assert.match(source, /crossed the prior page timestamp boundary/);
 assert.match(source, /Equal server timestamps are therefore a legitimate boundary tie/);
 assert.doesNotMatch(source, /currentPageNewestTimestampMs >= previousPageOldestTimestampMs/);
-assert.match(source, /previousPageOldestTimestampMs = pageTimestampMs\[pageTimestampMs\.length - 1\]/);
+assert.match(source, /const acceptedPageOldestTimestampMs = pageTimestampMs\.length > 0[\s\S]*pageTimestampMs\[pageTimestampMs\.length - 1\][\s\S]*previousPageOldestTimestampMs/);
+assert.match(source, /previousPageOldestTimestampMs = acceptedPageOldestTimestampMs/);
 const pageOrderingGuard = source.indexOf('if (pageOrderingReversalIndex >= 0)');
 const crossPageOrderingGuard = source.indexOf('if (previousPageOldestTimestampMs !== null');
+const timestampBoundaryCommit = source.indexOf('previousPageOldestTimestampMs = acceptedPageOldestTimestampMs');
 assert.ok(pageOrderingGuard >= 0 && crossPageOrderingGuard > pageOrderingGuard && pageAccumulation > crossPageOrderingGuard, 'page-local and cross-page timestamp ordering must be proven before authoritative accumulation');
+assert.ok(timestampBoundaryCommit > repeatedCursorGuard && pageAccumulation > timestampBoundaryCommit, 'a page must pass Audit-ID and cursor validation before it can commit the next timestamp boundary');
 assert.match(source, /const pageAuditIds = pageItems\.map\(\(row\) => String\(row\.id \|\| ""\)\.trim\(\)\)/);
 assert.match(source, /const missingAuditIdIndexes = pageAuditIds/);
 assert.match(source, /!auditId \? rowIndex : -1/);
