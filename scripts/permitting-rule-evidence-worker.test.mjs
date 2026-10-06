@@ -370,6 +370,6 @@ test('retrieval excludes disabled approvals and fails the request on infrastruct
  t.f.rules[0].is_operational=false;
  assert.equal((await t.review(action)).data.evidence.length,0);
  t.f.rules[0].is_operational=true;
- t.f.api.sourceEntity.get=async()=>{throw Object.assign(Error('source unavailable'),{status:503});};
+ t.f.api.ruleEntity.get=async()=>{throw Object.assign(Error('rule unavailable'),{status:503});};
  assert.equal((await t.review(action)).status,503);
 });
