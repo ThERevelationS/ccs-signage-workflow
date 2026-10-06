@@ -77,7 +77,10 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
       reason = 'Multiple active Base44 Orders link to this permanent Smartsheet row.';
     } else if (!knownRowId) {
       category = 'ambiguous';
-      reason = 'No permanent row ID was recorded. A successful POST cannot be ruled out by searching names or row positions.';
+      const hasExpectedSnapshot = marker?.expected_snapshot && typeof marker.expected_snapshot === 'object' && !Array.isArray(marker.expected_snapshot);
+      reason = hasExpectedSnapshot
+        ? 'No permanent row ID was recorded. The intended create snapshot is preserved for manual evidence, but a successful POST cannot be ruled out and matching values cannot prove row identity.'
+        : 'No permanent row ID was recorded. A successful POST cannot be ruled out by searching names or row positions.';
     } else if (!remoteIds.has(knownRowId)) {
       category = 'missing_row';
       reason = 'The known permanent row ID was absent from the verified complete Order Request sheet download.';
