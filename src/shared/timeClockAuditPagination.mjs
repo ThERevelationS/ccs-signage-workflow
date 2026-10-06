@@ -30,8 +30,7 @@ export function validateAuthoritativeAuditPage({
     throw new Error(`Integrity investigation pagination returned ${malformedPageItemIndexes.length} malformed authoritative audit record${malformedPageItemIndexes.length === 1 ? "" : "s"} inside a valid page.`);
   }
 
-  const scopedIdNormalized = String(scopedId || "").trim();
-  const mismatchedPageRows = pageItems.filter((row) => String(row.time_entry_id || "").trim() !== scopedIdNormalized);
+  const mismatchedPageRows = pageItems.filter((row) => String(row.time_entry_id || "").trim() !== scopedId);
   if (mismatchedPageRows.length > 0) {
     throw new Error(`Integrity investigation pagination returned ${mismatchedPageRows.length} authoritative audit record${mismatchedPageRows.length === 1 ? "" : "s"} outside the requested TimeEntry scope.`);
   }
