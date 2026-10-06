@@ -46,6 +46,12 @@ export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProf
   return sameNameStateProfiles.length === 1;
 }
 
+// Ohio-first release policy; stable order within each state and no queue mutation.
+export function ohioFirstResearchRows(rows = []) {
+  const rank = row => norm(row?.state) === 'oh' ? 0 : norm(row?.state) === 'ky' ? 1 : 2;
+  return [...rows].sort((a, b) => rank(a) - rank(b));
+}
+
 export function classifyBacklogRows({ queueRows = [], profiles = [], inFlightCount = 0, inFlightTarget = 250, maxDispatchPerRun = 50 } = {}) {
   const target = Math.max(1, Number(inFlightTarget) || 250);
   const perRun = Math.max(1, Number(maxDispatchPerRun) || 50);
@@ -62,7 +68,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], inFlightCou
   const dispatch = [];
   const seen = new Set();
 
-  for (const row of queueRows) {
+  for (const row of ohioFirstResearchRows(queueRows)) {
     const identity = queueResearchIdentity(row);
     if (!identity || seen.has(identity)) continue;
     seen.add(identity);

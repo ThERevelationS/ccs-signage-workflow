@@ -84,3 +84,25 @@ test("research payload supports profile-less expansion requests", () => {
     requested_by: "continuous_backlog_dispatcher",
   });
 });
+
+test("Ohio takes release priority over older Kentucky rows without mutating queue order", () => {
+  const rows = ['KY','OH','KY','OH'].map((state,i)=>({id:`p${i}`,state,jurisdiction_name:`Place ${i}`,jurisdiction_type:'county'}));
+  const before=JSON.stringify(rows);
+  const plan=classifyBacklogRows({queueRows:rows,profiles:[],inFlightCount:0,inFlightTarget:20,maxDispatchPerRun:2});
+  assert.deepEqual(plan.dispatch.map(r=>r.id),['p1','p3']);
+  assert.equal(JSON.stringify(rows),before);
+});
+
+test("Kentucky follows remaining eligible Ohio; researched Ohio does not stall backlog", () => {
+  const rows=[{id:'ky',state:'KY',jurisdiction_name:'Kentucky County',jurisdiction_type:'county'},
+    {id:'done',state:'OH',jurisdiction_name:'Done County',jurisdiction_type:'county'},
+    {id:'oh',state:' oh ',jurisdiction_name:'Ohio County',jurisdiction_type:'county'}];
+  const plan=classifyBacklogRows({queueRows:rows,profiles:[{name:'Done County',state:'OH',type:'county'}],maxDispatchPerRun:5,inFlightTarget:20});
+  assert.deepEqual(plan.dispatch.map(r=>r.id),['oh','ky']);assert.deepEqual(plan.reconcile.map(r=>r.id),['done']);
+});
+
+test("Ohio first still preserves capacity and stable identity deduplication", () => {
+  const row={id:'a',state:'OH',jurisdiction_name:'Ohio County',jurisdiction_type:'county'};
+  const plan=classifyBacklogRows({queueRows:[{...row,id:'ky',state:'KY'},row,{...row,id:'duplicate'}],inFlightCount:19,inFlightTarget:20,maxDispatchPerRun:5});
+  assert.deepEqual(plan.dispatch.map(r=>r.id),['a']);assert.equal(plan.room,1);
+});

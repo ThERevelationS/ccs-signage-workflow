@@ -5,6 +5,7 @@ import {RESEARCH_FETCH_TIMEOUT_MS} from '../../shared/jurisdictionResearchArchiv
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
 import {
   classifyBacklogRows,
+  ohioFirstResearchRows,
   jurisdictionProfileTypeForQueueRow,
   profileHasResearchEvidence,
   profileMatchesQueueRow,
@@ -302,7 +303,7 @@ Deno.serve(async (req) => {
     let dispatched = 0;
     const failures: Array<{ id: string; jurisdiction_name: string; error: string }> = [];
 
-    for (const row of reserved) {
+    for (const row of ohioFirstResearchRows(reserved)) {
       attempted += 1;
       try {
         const { profile } = await ensureProfileForQueueRow(row, profiles, Profiles);
