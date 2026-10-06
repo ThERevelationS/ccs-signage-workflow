@@ -1,3 +1,13 @@
+### 2026-10-06 — 10.1 of 10.3: complete Ohio public building-directory capture
+
+Located accessible State of Ohio BBS_Jurisdictions public FeatureServer after the board/news page URLs returned 404. Verified the primary government service metadata directly; secondary pages were used only to find its URL. Captured all 38,944 records in 195 ID batches without a total cap. Before/after counts and complete IDs match; every batch validated exact IDs and no transfer truncation. Preserved metadata, raw response bytes, hashes, contacts, certification distinctions, exceptions and source edit timestamps. Lossless gzip retains original bytes with about 8 MB footprint. No geometry or atomic historical snapshot is claimed.
+
+Classifications: 88 County, 921 Municipal, 2340 Township, 35595 State Owned Property. Built reconciliation index of 3349 non-property rows across 3346 publisher identity/name/county/type groups. Full property data remains retained; it is not promoted into a locality/office count. Repeated groups and non-Census publisher IDs remain explicit, with canonical_geoid unresolved. Directory has no dedicated electrical fields; no electrical role, sign authority, unique-office count or statewide permitting completeness inferred.
+
+Five exhaustive-reader tests pass (1200 test rows over six batches, duplicate/count/invalid-ID rejection, missing/wrong batch identity and transfer-truncation rejection). Actual offline SHA-256/count/ID/exact normalized-output verification and diff check passed. No runtime app code changed, so no unnecessary build. No production entity writes, scans/AI/paid batches or frontend publish. Concurrent CCS changes were preserved.
+
+10.1 tasks 1/3 complete, task 2 official identity/office reconciliation remains partial, task 4 live acceptance pending. Next: reconcile Ohio directory governmental groups to official locality identities and read-only live app records, then obtain separate electrical delegation/form/portal evidence. Ohio remains first; earlier Phase 5/8/9 open acceptance remains pending.
+
 ### 2026-10-06 — 10.1 of 10.3: live discovery electrical/inspection link gap fixed
 
 Confirmed reusable discovery relevance omitted electrical/inspection-only labels. Added electrical/electric/inspection/inspector terms to official same-host link eligibility. Existing document type, sign priority, host/credential filters, budgets and staff authority gates unchanged. Electrical pages remain research resources, not automatic permit-issuer or inspection approvals. External inspection-provider links still require separate authorized official delegation work; this does not broaden network scope.
