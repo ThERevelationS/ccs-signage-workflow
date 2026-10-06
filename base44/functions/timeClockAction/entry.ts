@@ -3927,14 +3927,18 @@ Deno.serve(async (req) => {
                   const corrected = appliedAudit.details?.corrected || {};
                   const semanticAfter = change.after || {};
                   if (change.change_type === 'removed' || String(corrected.clock_in || '') !== String(semanticAfter.clock_in || '') || String(corrected.clock_out || '') !== String(semanticAfter.clock_out || '') || Number(corrected.total_hours || 0) !== Number(semanticAfter.total_hours || 0)) return Response.json({ success: false, error: 'Correction evidence does not match resulting payroll values.' }, { status: 409 });
+                  const employeeRequested = correction.requested_changes || {};
                   change.correction_provenance = {
                     correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
                     requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
+                    requested_clock_in: String(employeeRequested.clock_in || ''), requested_clock_out: String(employeeRequested.clock_out || ''),
+                    requested_lunch_minutes: Number(employeeRequested.lunch_minutes || 0), requested_notes: String(employeeRequested.notes || ''),
                     review_request_id: String(correction.review_request_id || ''), review_decision: String(correction.review_decision || ''),
                     reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
                     applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
                     applied_at: correctionAppliedAt,
                     corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
+                    corrected_lunch_minutes: Number(corrected.lunch_minutes || 0), corrected_notes: String(corrected.notes || ''),
                     corrected_total_hours: Number(corrected.total_hours || 0),
                   };
                 }
@@ -3987,21 +3991,46 @@ Deno.serve(async (req) => {
                 };
                 const cause = candidates.find(semanticallyMatches);
                 if (!cause?.id) return Response.json({ success: false, error: `Payroll ${change.change_type} shift ${id} has no authoritative Time Clock audit whose result matches the payroll delta. Admin investigation is required before finalization.` }, { status: 409 });
-                change.action_provenance = {
-                  audit_id: String(cause.id || ''), action: String(cause.action || ''), request_id: String(cause.request_id || ''),
-                  outcome: String(cause.outcome || ''), actor_email: asEmail(cause.actor_email), actor_role: String(cause.actor_role || ''),
-                  authentication_method: String(cause.authentication_method || ''), server_timestamp: String(cause.server_timestamp || ''),
-                  reason: String(cause.reason || ''),
-                  semantic_clock_in: String(change.after?.clock_in || ''),
-                  semantic_clock_out: String(change.after?.clock_out || ''),
-                  semantic_total_hours: Number(change.after?.total_hours || 0),
-                  semantic_before_clock_in: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_in || '' : change.before?.clock_in || ''),
-                  semantic_before_clock_out: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_out || '' : change.before?.clock_out || ''),
-                  semantic_before_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.original?.total_hours || 0 : change.before?.total_hours || 0),
-                  semantic_after_clock_in: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_in || '' : change.after?.clock_in || ''),
-                  semantic_after_clock_out: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_out || '' : change.after?.clock_out || ''),
-                  semantic_after_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.corrected?.total_hours || 0 : change.after?.total_hours || 0),
-                };
+                const linkedCorrectionRequestId = String(cause.action === 'admin_correction' ? cause.details?.correction_request_id || '' : '');
+                if (linkedCorrectionRequestId) {
+                  const linkedCorrection = await correctionRequestEntity.get(linkedCorrectionRequestId).catch(() => null);
+                  if (linkedCorrection?.id &&
+                      String(linkedCorrection.time_entry_id || '') === id &&
+                      ['approved', 'approved_modified'].includes(String(linkedCorrection.status || '')) &&
+                      String(linkedCorrection.applied_audit_id || '') === String(cause.id || '')) {
+                    const employeeRequested = linkedCorrection.requested_changes || {};
+                    const corrected = cause.details?.corrected || {};
+                    change.correction_provenance = {
+                      correction_request_id: linkedCorrectionRequestId, submission_request_id: String(linkedCorrection.request_id || ''),
+                      requested_by: asEmail(linkedCorrection.user_email), requested_at: linkedCorrection.requested_at || '', employee_reason: String(linkedCorrection.employee_reason || ''),
+                      requested_clock_in: String(employeeRequested.clock_in || ''), requested_clock_out: String(employeeRequested.clock_out || ''),
+                      requested_lunch_minutes: Number(employeeRequested.lunch_minutes || 0), requested_notes: String(employeeRequested.notes || ''),
+                      review_request_id: String(linkedCorrection.review_request_id || ''), review_decision: String(linkedCorrection.review_decision || ''),
+                      reviewed_by: asEmail(linkedCorrection.reviewer_email), reviewed_at: linkedCorrection.reviewed_at || '', reviewer_reason: String(linkedCorrection.reviewer_reason || ''),
+                      applied_audit_id: String(cause.id || ''), applied_audit_request_id: String(cause.request_id || ''), applied_at: String(cause.server_timestamp || ''),
+                      corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
+                      corrected_lunch_minutes: Number(corrected.lunch_minutes || 0), corrected_notes: String(corrected.notes || ''),
+                      corrected_total_hours: Number(corrected.total_hours || 0),
+                    };
+                  }
+                }
+                if (!change.correction_provenance) {
+                  change.action_provenance = {
+                    audit_id: String(cause.id || ''), action: String(cause.action || ''), request_id: String(cause.request_id || ''),
+                    outcome: String(cause.outcome || ''), actor_email: asEmail(cause.actor_email), actor_role: String(cause.actor_role || ''),
+                    authentication_method: String(cause.authentication_method || ''), server_timestamp: String(cause.server_timestamp || ''),
+                    reason: String(cause.reason || ''),
+                    semantic_clock_in: String(change.after?.clock_in || ''),
+                    semantic_clock_out: String(change.after?.clock_out || ''),
+                    semantic_total_hours: Number(change.after?.total_hours || 0),
+                    semantic_before_clock_in: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_in || '' : change.before?.clock_in || ''),
+                    semantic_before_clock_out: String(cause.action === 'admin_correction' ? cause.details?.original?.clock_out || '' : change.before?.clock_out || ''),
+                    semantic_before_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.original?.total_hours || 0 : change.before?.total_hours || 0),
+                    semantic_after_clock_in: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_in || '' : change.after?.clock_in || ''),
+                    semantic_after_clock_out: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_out || '' : change.after?.clock_out || ''),
+                    semantic_after_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.corrected?.total_hours || 0 : change.after?.total_hours || 0),
+                  };
+                }
               }
               const chainAudits = await auditEntity.filter({ time_entry_id: id });
               if (!Array.isArray(chainAudits)) return Response.json({ success: false, error: 'Payroll causal-chain audit lookup failed before finalization.' }, { status: 409 });
