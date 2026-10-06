@@ -1,0 +1,36 @@
+{
+  "milestone": "6.7 of 6.9",
+  "method": "fresh-live-record-snapshot-manual-literal-candidate-validation",
+  "actual_ai_calls": 0,
+  "production_record_writes": 0,
+  "authenticated_endpoint_acceptance": "not_verified",
+  "actual_ai_extraction": "not_verified",
+  "results": [
+    {
+      "source_document_id": "6ac2cd6ac48508a21056b654",
+      "jurisdiction": "Campbell County",
+      "pages_validated": 2,
+      "complete_text": true,
+      "authority_classification": "application_form",
+      "candidate_kind": "administrative_instruction",
+      "literal_page_validation": "passed",
+      "wrong_page_rejected": true,
+      "administrative_category_guard": "passed",
+      "approval_gate": "Canonical profile verification is required.",
+      "is_operational": false
+    },
+    {
+      "source_document_id": "6ac39c0e6657049fb11cd757",
+      "jurisdiction": "Cincinnati",
+      "pages_validated": 3,
+      "complete_text": true,
+      "authority_classification": "unknown_review_required",
+      "candidate_kind": "regulatory_rule",
+      "literal_page_validation": "passed",
+      "wrong_page_rejected": true,
+      "administrative_category_guard": "not_administrative",
+      "approval_gate": "Citation source is unverified, changed, or belongs to another authority.",
+      "is_operational": false
+    }
+  ]
+}
