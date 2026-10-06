@@ -2716,6 +2716,12 @@ Deno.serve(async (req) => {
         if (!v24ShapeComplete) return false;
         const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
         const appliedAudit = provenance.applied_audit_id ? await auditEntity.get(provenance.applied_audit_id).catch(() => null) : null;
+        const reviewAudits = strictV24 ? await auditEntity.filter({
+          action: 'correction_review',
+          request_id: String(provenance.review_request_id || ''),
+          time_entry_id: String(change.time_entry_id || ''),
+        }).catch(() => null) : null;
+        const reviewAudit = Array.isArray(reviewAudits) && reviewAudits.length === 1 ? reviewAudits[0] : null;
         const requested = correction?.requested_changes || {};
         const original = appliedAudit?.details?.original || {};
         const corrected = appliedAudit?.details?.corrected || {};
@@ -2732,14 +2738,30 @@ Deno.serve(async (req) => {
           String(corrected.notes || '') === String(provenance.corrected_notes || '') &&
           Number(corrected.total_hours || 0) === Number(provenance.corrected_total_hours || 0)
         ) : true;
-        const v24ReviewAuditMatches = !strictV24 || Boolean(correction && appliedAudit &&
+        const expectedReviewStatus = String(provenance.review_decision || '') === 'approve_modified' ? 'approved_modified' : 'approved';
+        const v24AppliedAuditMatches = !strictV24 || Boolean(correction && appliedAudit &&
           String(appliedAudit.action || '') === 'admin_correction' &&
           asEmail(appliedAudit.actor_email) === asEmail(provenance.reviewed_by) &&
           String(appliedAudit.actor_role || '') === 'admin' &&
           ['session', 'admin_kiosk'].includes(String(appliedAudit.authentication_method || '')) &&
           String(appliedAudit.reason || '') === String(provenance.reviewer_reason || '') &&
           String(appliedAudit.details?.review_payload_hash || '') === String(correction.review_payload_hash || '') &&
-          String(correction.status || '') === (String(provenance.review_decision || '') === 'approve_modified' ? 'approved_modified' : 'approved'));
+          String(correction.status || '') === expectedReviewStatus);
+        const v24CorrectionReviewAuditMatches = !strictV24 || Boolean(correction && reviewAudit &&
+          ['confirmed', 'recovered'].includes(String(reviewAudit.outcome || '')) &&
+          asEmail(reviewAudit.user_email) === asEmail(provenance.requested_by) &&
+          String(reviewAudit.time_entry_id || '') === String(change.time_entry_id || '') &&
+          String(reviewAudit.request_id || '') === String(provenance.review_request_id || '') &&
+          asEmail(reviewAudit.actor_email) === asEmail(provenance.reviewed_by) &&
+          String(reviewAudit.actor_role || '') === 'admin' &&
+          ['session', 'admin_kiosk'].includes(String(reviewAudit.authentication_method || '')) &&
+          String(reviewAudit.server_timestamp || '') === String(provenance.reviewed_at || '') &&
+          String(reviewAudit.reason || '') === String(provenance.reviewer_reason || '') &&
+          String(reviewAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
+          String(reviewAudit.details?.decision || '') === expectedReviewStatus &&
+          String(reviewAudit.details?.applied_audit_id || '') === String(provenance.applied_audit_id || '') &&
+          String(correction.review_payload_hash || '') &&
+          constantTimeEqual(String(reviewAudit.details?.review_payload_hash || ''), String(correction.review_payload_hash || '')));
         const deltaMatches = change.change_type === 'removed'
           ? !change.after &&
             String(change.before?.clock_in || '') === String(original.clock_in || '') &&
@@ -2774,7 +2796,7 @@ Deno.serve(async (req) => {
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
           (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))) &&
-          requestedMatches && appliedMatches && v24ReviewAuditMatches && deltaMatches);
+          requestedMatches && appliedMatches && v24AppliedAuditMatches && v24CorrectionReviewAuditMatches && deltaMatches);
       };
       const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
