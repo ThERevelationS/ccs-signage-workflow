@@ -219,29 +219,18 @@ async function pullDataset(
       label: 'Order Form Smartsheet pull linked Orders',
     });
   }
-  const deletedOrderLinkedRowIds = new Set<string>();
-  if (dataset === 'orders') {
-    for (const record of Array.isArray(existingRecords) ? existingRecords : []) {
-      if (record?.deleted !== true) continue;
-      const rowId = cleanText(record?.smartsheet_row_id, 40);
-      const recordSheetId = cleanText(record?.smartsheet_sheet_id, 40);
-      if (recordSheetId === sheetId && /^\d+$/.test(rowId)) deletedOrderLinkedRowIds.add(rowId);
-    }
-  }
+  const deletedOrderTombstones = dataset === 'orders'
+    ? classifyOrderDeletedLinkTombstones(Array.isArray(existingRecords) ? existingRecords : [], sheetId)
+    : { deletedRowIds: new Set<string>(), collisions: [] as string[] };
+  const deletedOrderLinkedRowIds = deletedOrderTombstones.deletedRowIds;
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
-  if (dataset === 'orders' && deletedOrderLinkedRowIds.size) {
-    const activeLinkedIds = new Set(existingRecords
-      .map((record: any) => cleanText(record?.smartsheet_row_id, 40))
-      .filter((rowId: string) => /^\d+$/.test(rowId)));
-    const collisions = [...deletedOrderLinkedRowIds].filter(rowId => activeLinkedIds.has(rowId));
-    if (collisions.length) {
-      return {
-        dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
-        reason: 'A permanent Smartsheet row is linked to both an active and a deleted Base44 Order. No Orders were changed.',
-        active_deleted_row_link_collisions: collisions.length,
-        collision_row_ids: collisions.slice(0, 20),
-      };
-    }
+  if (dataset === 'orders' && deletedOrderTombstones.collisions.length) {
+    return {
+      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+      reason: 'A permanent Smartsheet row is linked to both an active and a deleted Base44 Order. No Orders were changed.',
+      active_deleted_row_link_collisions: deletedOrderTombstones.collisions.length,
+      collision_row_ids: deletedOrderTombstones.collisions.slice(0, 20),
+    };
   }
   const targetedIds = new Set(options.recordIds || []);
   if (dataset === 'sales' && targetedIds.size) existingRecords = existingRecords.filter(r => targetedIds.has(r.id));
