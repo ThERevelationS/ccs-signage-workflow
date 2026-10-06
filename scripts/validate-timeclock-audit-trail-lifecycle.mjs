@@ -167,15 +167,15 @@ assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
 assert.match(source, /setIntegrityDiagnostics\(authoritativeIntegrityDiagnostics\)/);
-assert.match(source, /setRows\(loadedRows\)/);
+assert.match(source, /setRows\(loadedRowLocators\)/);
 assert.match(source, /diagnostic only and are not being presented as trusted payroll evidence/);
 assert.match(source, /Malformed authoritative provenance/);
 assert.match(source, /Diagnostic only — not trusted payroll evidence/);
 assert.match(source, /function integrityValidationSummary\(validation\)/);
 assert.match(source, /Company date does not match clock-in in America\/New_York/);
 assert.match(source, /integrityValidationSummary\(integrityDiagnostic\.validation\)/);
-assert.match(source, /integrityDiagnostics\.map\(\(item\) => \[Number\(item\?\.diagnostic_row_index\), item\]\)/);
-assert.match(source, /`diagnostic-row-\$\{sourceRowIndex\}`/);
+assert.match(source, /diagnostic_locator: loadedRowLocators\[item\.diagnostic_row_index\]\?\.diagnostic_locator/);
+assert.match(source, /diagnostic_locator: `request-\$\{requestSequence\}-row-\$\{rowIndex\}`/);
 assert.match(source, /row\.id \|\| "Missing immutable audit ID"/);
 console.log('PASS integrity investigation identifies malformed authoritative membership rows, explains failed rules, and uses row-local diagnostic identity for every diagnostic row without promoting it to authoritative evidence');
 
@@ -183,14 +183,16 @@ assert.match(source, /duplicate_audit_ids: duplicateIntegrityAuditIds/);
 assert.match(source, /Duplicate immutable Audit ID/);
 assert.match(source, /shared by multiple authoritative records/);
 assert.doesNotMatch(source, /integrityDiagnosticByAuditId/);
-assert.match(source, /integrityInvestigation \? `diagnostic-row-\$\{sourceRowIndex\}`/);
+assert.match(source, /integrityInvestigation \? diagnosticLocator/);
 console.log('PASS integrity mode preserves every duplicate immutable Audit-ID row as a separate diagnostic and never collapses duplicate identity through an ID-keyed map');
 
-assert.match(source, /rows\.map\(\(row, sourceRowIndex\) => \(\{ row, diagnostic_row_index: sourceRowIndex \}\)\)\.filter\(\(\{ row \}\) =>/);
-assert.match(source, /filtered\.map\(\(\{ row, diagnostic_row_index: sourceRowIndex \}\) =>/);
+assert.match(source, /return rows\.filter\(\(\{ row \}\) =>/);
+assert.match(source, /filtered\.map\(\(\{ row, diagnostic_locator: diagnosticLocator \}\) =>/);
 assert.doesNotMatch(source, /rows\.indexOf\(row\)/);
-assert.match(source, /integrityDiagnosticByRowIndex\.get\(sourceRowIndex\)/);
-console.log('PASS search/action filtering carries the original diagnostic locator with each row so filtering or future display reordering cannot re-associate integrity diagnostics');
+assert.match(source, /integrityDiagnosticByLocator\.get\(diagnosticLocator\)/);
+assert.match(source, /const loadedRowLocators = loadedRows\.map/);
+assert.doesNotMatch(source, /integrityDiagnosticByRowIndex/);
+console.log('PASS refresh-local opaque locators stay attached through filtering/rendering and prevent fresh response reordering from transferring integrity diagnostics');
 
 const mixedDuplicateRows = [
   { id: 'audit-duplicate', action: 'clock_in', request_id: 'request-valid', server_timestamp: '2026-10-05T13:00:00.000Z', details: { employee_attested_clock_in: '2026-10-05T13:00:00.000Z' } },
