@@ -1,3 +1,9 @@
+### 2026-10-06 — 10.1 of 10.3: dedicated metric lifecycle verification
+
+Added scripts/test-permitting-metrics-lifecycle.mjs, rendering the actual dashboard with mocked API and UI boundaries. Passed out-of-order threshold responses, an obsolete request failure, and response after unmount. No live API calls or production data changes. The first fixture deferred the wrong metric; corrected it to select the last_checked count query, then all assertions passed.
+
+Task 3 dashboard lifecycle implementation and automated interaction verification are complete. Live acceptance remains task 4; task 2 official OH/KY locality denominator reconciliation remains open. Phase 10.1 is not closed. Next: authoritative locality inventory reconciliation, followed by read-only live OH/KY acceptance. Phase 8 populated approved example and Phase 9 phone acceptance remain open.
+
 ### 2026-10-06 — 10.1 of 10.3: metric and county lifecycle safeguards implemented
 
 Metric refresh now uses current stale-day scope, request generation, single-flight for the same threshold and unmount invalidation. Older threshold replies cannot replace current metrics or errors. Old-threshold metric cards are synchronously hidden until a current read completes; failed current reads clear metrics. Aggregate/count operations and existing permissions are unchanged.
