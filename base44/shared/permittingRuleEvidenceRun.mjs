@@ -65,8 +65,11 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
   let run=await findRun(runEntity,key,unit);
   const old=unit.source.rule_extraction_state || {};
   if (run && run.status!=='reserved') {
-    if (run.status==='complete' && old.request_key===key && old.status!=='complete') {
-      await writeSourceLedger(sourceEntity,unit.source,old,{...old,status:'complete',run_id:run.id,lease_expires_at:''});
+    if (['complete','failed','llm_uncertain'].includes(run.status) && old.request_key===key && old.status!==run.status) {
+      // A durable terminal receipt outranks a stale source lease. Repair only the
+      // same request; uncertain AI outcomes remain blocked from implicit retry.
+      await writeSourceLedger(sourceEntity,unit.source,old,{...old,status:run.status,run_id:run.id,lease_expires_at:'',
+        error:run.error || ''});
     }
     return {...summarize(run),replayed:true,llm_calls:0};
   }

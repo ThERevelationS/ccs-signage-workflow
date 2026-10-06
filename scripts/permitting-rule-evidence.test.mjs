@@ -226,3 +226,32 @@ test('physical page identifiers must be positive integers',async()=>{
  const f=await ruleFixture(),unit=await loadRuleEvidence(f.api);
  for(const physical_page of ['1',0,-1,1.5,null])await assert.rejects(prepareRuleCandidate(unit,{...f.raw,physical_page}),/page or category/);
 });
+
+test('replay repairs a failed run stale source lease without another AI attempt',async()=>{
+ const f=await ruleFixture({failLlm:true}),update=f.api.sourceEntity.updateMany;
+ let block=true;
+ f.api.sourceEntity.updateMany=async(q,p)=>{
+  if(block && p.$set.rule_extraction_state?.status==='failed')throw Error('Source receipt unavailable');
+  return update(q,p);
+ };
+ await assert.rejects(extractEvidenceUnit(f.api),/Source receipt unavailable/);
+ assert.equal(f.runs[0].status,'failed');assert.equal(f.runs[0].llm_attempts,1);
+ assert.equal(f.source().rule_extraction_state.status,'running');
+ block=false;
+ const replay=await extractEvidenceUnit(f.api);
+ assert.equal(replay.replayed,true);assert.equal(replay.llm_calls,0);assert.equal(f.calls.llm,1);
+ assert.equal(f.source().rule_extraction_state.status,'failed');assert.equal(f.source().rule_extraction_state.lease_expires_at,'');
+ f.api.invokeLlm=async()=>{f.calls.llm++;return{rules:[f.raw]};};
+ const fresh=await extractEvidenceUnit({...f.api,requestId:'manual-request-00000002'});
+ assert.equal(fresh.status,'complete');assert.equal(f.calls.llm,2);
+});
+test('replay reconciles uncertain AI receipt but never clears its retry guard',async()=>{
+ const f=await ruleFixture();await extractEvidenceUnit(f.api);
+ f.runs[0].status='llm_uncertain';f.runs[0].error='Unknown AI outcome';
+ f.patchSource({rule_extraction_state:{...f.source().rule_extraction_state,status:'running'}});
+ const replay=await extractEvidenceUnit(f.api);
+ assert.equal(replay.status,'llm_uncertain');assert.equal(replay.llm_calls,0);assert.equal(f.calls.llm,1);
+ assert.equal(f.source().rule_extraction_state.status,'llm_uncertain');
+ await assert.rejects(extractEvidenceUnit({...f.api,requestId:'manual-request-00000002'}),/Reconcile/);
+ assert.equal(f.calls.llm,1);
+});
