@@ -1,3 +1,13 @@
+### 2026-10-06 — 10.1 of 10.3: Ohio geographic candidates classified
+
+Ohio-first offline inventory now accounts for every one of 2,618 Ohio source rows: 2,318 geographic research candidates (88 counties, 253 cities, 669 villages, 1,308 townships), 19 explicit status-review rows and 281 Census hierarchy subdivision references. Official Census FUNCSTAT and LSADC definitions were retrieved and preserved with hashes/URLs. A status of active government is not sign-permitting authority verification.
+
+Township/county membership joins explicit STATE+COUNTY to the official county table; repeated township names retain distinct geographic IDs. Consolidated, inactive and nonfunctioning township/village rows remain review items. No fictitious city/village subdivisions are promoted into duplicate governments. All 922 active incorporated-place candidates remain flagged official_relationship_pending; no centroid/name/seed inference or cross-vintage membership claim. Population-estimates 2025 reference located but not substituted for 2026 current membership.
+
+Five classification tests passed (qualified county joins, no place-county inference, status separation, unknown-county rejection, duplicate-ID rejection, same-name township isolation). Offline source integrity/rebuild and diff check passed. No application runtime change, no production entity writes, no scans/AI invoked and no frontend publish.
+
+10.1 tasks 1 and 3 complete; task 2 partial, now official Ohio classification and township county references obtained; task 4 live acceptance pending. Next: resolve Ohio incorporated-place county relationships, then read-only live queue/profile reconciliation. 10.1 is not closed; Kentucky follows Ohio. Earlier open Phase 5/8/9 acceptance remains pending.
+
 ### 2026-10-06 — 10.1 of 10.3: Ohio-first research priority
 
 User direction: concentrate on Ohio before Kentucky for scans. New research release now stably orders eligible Ohio rows before Kentucky rows, retaining existing within-state backlog order. Claimed execution rows are also reordered Ohio first so the database created-date sort cannot reverse that preference. Kentucky fills remaining cycle capacity after eligible Ohio rows. Reconciliation, reserved/active work, retry limits, daily/cycle caps, dedupe and manual retrieval remain unchanged. Existing saved-page discovery, archive and text continuations still drain safely across both states; their separate selection has not yet been changed to statewide priority. No paid batch was invoked for verification.
