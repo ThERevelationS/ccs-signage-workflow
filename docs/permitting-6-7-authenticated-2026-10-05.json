@@ -1,0 +1,26 @@
+{
+  "milestone": "6.7 of 6.9",
+  "authenticated_preview": {
+    "source_document_id": "6ac2cd6ac48508a21056b654",
+    "physical_page": 2,
+    "passed": true,
+    "llm_calls": 0
+  },
+  "extraction": {
+    "request_id": "manual-acceptance-ky-20261005-2215",
+    "run_id": "6ac45a044aa03583060f4401",
+    "status": "failed",
+    "llm_attempts": 1,
+    "error": "Provider 400 INVALID_ARGUMENT: Request contains an invalid argument",
+    "candidates_staged": 0,
+    "rules_created": 0
+  },
+  "replay": {
+    "status": "failed",
+    "replayed": true,
+    "llm_calls": 0,
+    "llm_attempts": 1
+  },
+  "acceptance": "open; provider request compatibility requires diagnosis",
+  "writes": "one extraction run and source reservation/receipt; no rule imports or approvals"
+}
