@@ -734,6 +734,7 @@ async function pullDataset(
       unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
       unlinked_row_ids: orderUnlinkedRowIds,
       deleted_order_link_tombstones_preserved: orderDeletedLinkTombstonesPreserved,
+      deleted_order_links_shadowed_by_active: deletedOrderTombstones.shadowedDeletedRowIds.length,
     } : {}),
     created: createdCount,
     updated: updatedCount,
