@@ -96,6 +96,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
       const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
       if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
       const loadedRows = Array.isArray(loaded) ? loaded : [];
+      const loadedRowLocators = loadedRows.map((row, rowIndex) => ({ row, diagnostic_locator: `request-${requestSequence}-row-${rowIndex}` }));
       if (scopedId) {
         const mismatchedRows = loadedRows.filter((row) => String(row?.time_entry_id || "").trim() !== scopedId);
         if (mismatchedRows.length > 0) {
@@ -121,8 +122,11 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
               authoritative_integrity_diagnostics: authoritativeIntegrityDiagnostics,
               duplicate_immutable_audit_ids: duplicateIntegrityAuditIds,
             });
-            setIntegrityDiagnostics(authoritativeIntegrityDiagnostics);
-            setRows(loadedRows);
+            setIntegrityDiagnostics(authoritativeIntegrityDiagnostics.map((item) => ({
+              ...item,
+              diagnostic_locator: loadedRowLocators[item.diagnostic_row_index]?.diagnostic_locator || "",
+            })));
+            setRows(loadedRowLocators);
             const issueSummary = [
               malformedCount > 0 ? `${malformedCount} malformed provenance record${malformedCount === 1 ? "" : "s"}` : "",
               duplicateRecordCount > 0 ? `${duplicateRecordCount} record${duplicateRecordCount === 1 ? "" : "s"} sharing duplicate immutable Audit IDs` : "",
@@ -209,7 +213,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           return;
         }
       }
-      setRows(loadedRows);
+      setRows(loadedRowLocators);
     } catch (err) {
       if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
       console.error("Time Clock audit load failed:", err);
