@@ -29,7 +29,7 @@ export default function PermittingReviewBrowserFixture() {
   }
   return <main className="p-4 max-w-4xl mx-auto space-y-4">
     <h1 className="text-xl font-bold">Isolated permitting browser acceptance</h1>
-    <p>Development preview only. Fixture records and local callbacks; no backend writes, approvals or AI calls.</p>
+    <p>Authenticated preview only. Fixture records and local callbacks; no backend writes, approvals or AI calls.</p>
     <div className="flex flex-wrap gap-2">
       <Button onClick={() => setBusy(value => !value)}>Toggle fixture busy</Button>
       <Button onClick={() => setVersion(value => value + 1)}>Advance fixture version</Button>

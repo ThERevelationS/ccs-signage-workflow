@@ -205,7 +205,7 @@ export default function PermittingRulesReview() {
         </div>
       </div>
 
-      {import.meta.env.DEV && <div>
+      {(import.meta.env.DEV || /^preview(?:-sandbox)?--[a-zA-Z0-9-]+\.base44\.app$/.test(window.location.hostname)) && <div>
         <Button variant="outline" onClick={() => setShowBrowserFixture(value => !value)}>
           {showBrowserFixture ? "Close isolated browser acceptance" : "Open isolated browser acceptance"}
         </Button>
