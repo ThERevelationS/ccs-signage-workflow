@@ -423,6 +423,7 @@ test('office retrieval route is read-only and reports empty committed history wi
  let reads=0;
  entities.JurisdictionProfile={get:async()=>{reads++;return {id:'profile',updated_date:'p1',office_authority_review_state:{committed_sequence:0}};}};
  entities.PermittingOfficeAuthorityReview={filter:async()=>[]};
+  Object.defineProperty(globalThis.ruleWorkerFixture,'asServiceRole',{value:{entities},configurable:true});
  const response=await t.review({action:'retrieve_office_authority',jurisdiction_id:'profile'});
  assert.equal(response.status,200);assert.deepEqual(response.data.items,[]);assert.equal(response.data.profile_updated_date,'p1');
  assert.equal(response.data.address_authority_resolved,false);assert.equal(response.data.rules_created,0);assert.equal(response.data.llm_calls,0);
@@ -433,6 +434,7 @@ test('office retrieval refuses a changed review version before paging and during
   const t=await setup(),entities=globalThis.ruleWorkerFixture.asServiceRole.entities;let reads=0;
   entities.JurisdictionProfile={get:async()=>({id:'profile',updated_date:++reads===3?'p2':'p1',office_authority_review_state:{committed_sequence:0}})};
   entities.PermittingOfficeAuthorityReview={filter:async()=>[]};
+  Object.defineProperty(globalThis.ruleWorkerFixture,'asServiceRole',{value:{entities},configurable:true});
   const response=await t.review({action:'retrieve_office_authority',jurisdiction_id:'profile',...(during?{}:{expected_profile_updated_date:'old'})});
   assert.equal(response.status,409);assert.match(response.data.error,/changed/);assert.equal(t.f.calls.llm,0);assert.equal(t.f.rules.length,0);
  }
