@@ -1,9 +1,9 @@
+import { invokePermittingReview } from "@/api/permittingReviewClient";
 import { isPermittingPreviewHost } from "./permittingPreviewQa";
 import PermittingReviewBrowserFixture from "./PermittingReviewBrowserFixture";
 import RuleCard from "./PermittingRuleCard";
 import { useEffect, useState, useCallback, useRef } from "react";
 import PermittingRuleEvidenceExtraction from "./PermittingRuleEvidenceExtraction";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -83,7 +83,7 @@ export default function PermittingRulesReview() {
         if (v) filterPayload[k] = v;
       }
       if (!reset && cursor) filterPayload.cursor = cursor;
-      const res = await base44.functions.invoke("permittingRuleReview", filterPayload);
+      const res = await invokePermittingReview(filterPayload);
       const data = res?.data || res;
       if (!current()) return;
       if (!data?.success) throw new Error(data?.error || "Failed to load rules");
@@ -104,7 +104,7 @@ export default function PermittingRulesReview() {
   const loadCounts = useCallback(async () => {
     const jurisdiction = filters.jurisdiction_name, request = ++countRequest.current;
     try {
-      const res = await base44.functions.invoke("permittingRuleReview", {
+      const res = await invokePermittingReview({
         action: "counts",
         jurisdiction_name: filters.jurisdiction_name || undefined,
       });
@@ -121,7 +121,7 @@ export default function PermittingRulesReview() {
   const handleApprove = async (rule) => {
     setActionLoading(rule.id);
     try {
-      const res = await base44.functions.invoke("permittingRuleReview", {
+      const res = await invokePermittingReview({
         action: "approve",
         rule_id: rule.id,
         expected_version: rule.version,
@@ -141,7 +141,7 @@ export default function PermittingRulesReview() {
     if (actionLoading) return;
     setActionLoading(rule.id); setError(null);
     try {
-      const res = await base44.functions.invoke("permittingRuleReview", {
+      const res = await invokePermittingReview({
         action: "resolve_conflict", rule_id: rule.id, expected_version: rule.version,
         rationale, reviewed_all_citations: true,
       });
@@ -156,7 +156,7 @@ export default function PermittingRulesReview() {
   const handleReject = async (rule, reason = "") => {
     setActionLoading(rule.id);
     try {
-      const res = await base44.functions.invoke("permittingRuleReview", {
+      const res = await invokePermittingReview({
         action: "reject",
         rule_id: rule.id,
         expected_version: rule.version,
@@ -177,7 +177,7 @@ export default function PermittingRulesReview() {
     if (!editDialog) return;
     setActionLoading("edit");
     try {
-      const res = await base44.functions.invoke("permittingRuleReview", {
+      const res = await invokePermittingReview({
         action: "edit",
         rule_id: editDialog.rule.id,
         expected_version: editDialog.rule.version,

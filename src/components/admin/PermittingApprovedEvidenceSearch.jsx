@@ -1,11 +1,11 @@
+import { invokePermittingReview } from "@/api/permittingReviewClient";
 import { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 async function retrieve(payload) {
-  const response = await base44.functions.invoke("permittingRuleReview", { action: "retrieve_evidence", ...payload });
+  const response = await invokePermittingReview({ action: "retrieve_evidence", ...payload });
   return response?.data || response;
 }
 

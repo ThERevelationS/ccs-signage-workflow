@@ -1,3 +1,4 @@
+import { invokePermittingReview } from "@/api/permittingReviewClient";
 import PermittingApprovedEvidenceSearch from "./PermittingApprovedEvidenceSearch";
 import { useEffect, useRef, useState } from "react";
 import PermittingSourceAuthorityReview from "./PermittingSourceAuthorityReview";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const message = error => error?.response?.data?.error || error?.message || String(error);
 async function invoke(name, body) {
-  const response = await base44.functions.invoke(name, body);
+  const response = await (name === "permittingRuleReview" ? invokePermittingReview(body) : base44.functions.invoke(name, body));
   return response?.data || response;
 }
 const unitKey = (jurisdiction, source, page, count) => ["ccs-rule-evidence", jurisdiction, source, page, count].join(":");

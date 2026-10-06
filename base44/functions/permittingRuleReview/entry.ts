@@ -1,3 +1,4 @@
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import {retrieveApprovedEvidence} from '../../shared/permittingApprovedEvidence.mjs';
 import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
@@ -39,9 +40,13 @@ async function commitRule(entity:any,rule:any,fields:any,action:string,reviewer:
 }
 Deno.serve(async req => {
   try {
-    const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
+    const base44=createClientFromRequest(req),body=await req.json().catch(()=>({}));
+    // A supplied app session must verify successfully; never fall back after an invalid session.
+    const user=body.session_token
+      ? await authenticateSignShopSession(base44,body.session_token)
+      : await base44.auth.me().catch(()=>null);
     if (!user || user.role!=='admin') return Response.json({error:'Admin access required'},{status:403});
-    const body=await req.json().catch(()=>({})),entities=base44.asServiceRole.entities,Rules=entities.PermittingRule;
+    const entities=base44.asServiceRole.entities,Rules=entities.PermittingRule;
     const action=String(body.action || '');
     if (action==='retrieve_evidence') {
       return Response.json(await retrieveApprovedEvidence({entities,jurisdictionId:body.jurisdiction_id,

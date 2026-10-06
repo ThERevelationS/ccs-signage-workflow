@@ -275,6 +275,49 @@ const integrityClassification = source.indexOf('classifyAuthoritativePayrollAudi
 assert.ok(integrityPaginationStart >= 0 && integrityClassification > integrityPaginationStart, 'integrity classification must occur only after the cursor walk completes');
 console.log('PASS integrity investigation walks every scoped authoritative audit page without a record/page-count ceiling, treats 5000 only as request batch size, and uses has_more/cursor state for completeness while failing closed on malformed or non-progressing pagination');
 
+const directPage = {
+  items: [
+    { id: 'audit-2', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T15:00:00.000Z' },
+    { id: 'audit-1', time_entry_id: 'entry-1', server_timestamp: '2026-10-06T14:00:00.000Z' },
+  ],
+  has_more: true,
+  next_cursor: 'cursor-2',
+};
+const directPageResult = validateAuthoritativeAuditPage({
+  page: directPage,
+  scopedId: 'entry-1',
+  seenPageAuditIds: new Set(),
+  seenCursors: new Set(),
+});
+assert.deepEqual(directPageResult.newPageAuditIds, ['audit-2', 'audit-1']);
+assert.equal(directPageResult.nextCursor, 'cursor-2');
+assert.equal(directPageResult.hasMore, true);
+assert.equal(directPageResult.acceptedPageOldestTimestampMs, Date.parse('2026-10-06T14:00:00.000Z'));
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { items: [], has_more: true, next_cursor: 'cursor-empty' },
+  scopedId: 'entry-1',
+}), /empty non-terminal page/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: directPage,
+  scopedId: 'entry-1',
+  seenPageAuditIds: new Set(['audit-1']),
+}), /repeated .* immutable audit record/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: directPage,
+  scopedId: 'entry-1',
+  previousPageOldestTimestampMs: Date.parse('2026-10-06T13:00:00.000Z'),
+}), /crossed the prior page timestamp boundary/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: directPage,
+  scopedId: 'entry-1',
+  seenCursors: new Set(['cursor-2']),
+}), /repeated a continuation cursor/);
+assert.throws(() => validateAuthoritativeAuditPage({
+  page: { ...directPage, has_more: false },
+  scopedId: 'entry-1',
+}), /continuation cursor on a terminal authoritative page/);
+console.log('PASS pure authoritative pagination validator accepts valid candidate state and directly rejects non-progressing, repeated, out-of-order, and contradictory pages');
+
 assert.match(source, /if \(integrityMode\)/);
 assert.match(source, /classifyAuthoritativePayrollAuditIntegrity\(loadedRows\)/);
 assert.match(source, /authoritative_integrity_diagnostics/);
