@@ -1,7 +1,7 @@
 import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { importEvidenceCandidate } from '../../shared/permittingRuleEvidenceRun.mjs';
-import { verifyRuleForApproval, assertApprovalSourcesCurrent, evidenceEqual, evidenceError, evidenceDigest, RULE_EVIDENCE_METHOD } from '../../shared/permittingRuleEvidence.mjs';
+import { verifyRuleForApproval, ruleApplicabilityEvidence, assertApprovalSourcesCurrent, evidenceEqual, evidenceError, evidenceDigest, RULE_EVIDENCE_METHOD } from '../../shared/permittingRuleEvidence.mjs';
 
 async function commitRule(entity:any,rule:any,fields:any) {
   if (!rule.updated_date) throw evidenceError('Rule has no persistence version.');
@@ -113,7 +113,8 @@ Deno.serve(async req => {
       for (const key of allowed) if (Object.hasOwn(edits,key)) fields[key]=edits[key];
       const material=allowed.some(key=>key!=='notes' && Object.hasOwn(edits,key) && !evidenceEqual(edits[key],rule[key]));
       if (material) fields={...fields,status:rule.status==='historical'?'historical':'needs_review',is_operational:false,is_workflow_instruction:false,
-        conflict_state:rule.conflict_state==='conflicting_sources'?'conflicting_sources':'under_review'};
+        conflict_state:rule.conflict_state==='conflicting_sources'?'conflicting_sources':'under_review',
+        evidence_context:{...(rule.evidence_context || {}),applicability:ruleApplicabilityEvidence({...rule,...fields})}};
     }
     return Response.json({success:true,rule:await commitRule(Rules,rule,fields)});
   } catch(error) {

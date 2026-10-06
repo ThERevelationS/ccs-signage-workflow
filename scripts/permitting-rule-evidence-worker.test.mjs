@@ -269,3 +269,19 @@ test('saved request lookup reopens the same run and readiness detects changed ev
  t.f.runs[0].candidates[0].requirement=runs[0].candidates[0].requirement;
  assert.deepEqual(t.f.runs,runs);
 });
+
+
+test('material applicability edits refresh metadata, preserve history and still require literal approval',async()=>{
+ const t=await setup(),rule=await t.importRule();
+ t.f.rules[0].evidence_context.conflict_resolutions=[{rationale:'Preserved prior review'}];
+ const edited=await t.review({action:'edit',rule_id:rule.id,expected_version:rule.version,edits:{exceptions:'unsupported exception'}});
+ assert.equal(edited.status,200);assert.equal(edited.data.rule.status,'needs_review');
+ assert.equal(edited.data.rule.is_operational,false);assert.equal(edited.data.rule.is_workflow_instruction,false);
+ assert.equal(edited.data.rule.evidence_context.applicability.fields.exceptions.literal,'unsupported exception');
+ assert.equal(edited.data.rule.evidence_context.applicability.address_applicability,'requires_review');
+ assert.equal(edited.data.rule.evidence_context.conflict_resolutions[0].rationale,'Preserved prior review');
+ assert.equal((await t.review({action:'approve',rule_id:rule.id,expected_version:edited.data.rule.version})).status,409);
+ const cleared=await t.review({action:'edit',rule_id:rule.id,expected_version:edited.data.rule.version,edits:{exceptions:''}});
+ assert.equal(cleared.status,200);assert.equal(cleared.data.rule.evidence_context.applicability.fields.exceptions.status,'not_established_in_excerpt');
+ assert.equal((await t.review({action:'approve',rule_id:rule.id,expected_version:cleared.data.rule.version})).status,200);
+});
