@@ -324,3 +324,42 @@ test('malformed history blocks writes and lost acknowledgement appends exactly o
  assert.equal((await t.review({action:'reject',rule_id:rule.id,expected_version:1})).status,409);
  assert.equal(t.f.rules[0].evidence_context.review_history.length,1);
 });
+
+test('approved evidence retrieval is jurisdiction-scoped, cited, read-only and blocked after source changes',async()=>{
+ const t=await setup(),rule=await t.importRule();
+ const action={action:'retrieve_evidence',jurisdiction_id:'profile',limit:1};
+ assert.equal((await t.review(action)).data.evidence.length,0);
+ assert.equal((await t.review({action:'approve',rule_id:rule.id,expected_version:1})).status,200);
+ const before=structuredClone(t.f.rules),llm=t.f.calls.llm;
+ const result=await t.review(action);
+ assert.equal(result.status,200);assert.equal(result.data.evidence.length,1);
+ assert.equal(result.data.evidence[0].address_applicability,'requires_review');
+ assert.deepEqual(result.data.evidence[0].citations,t.f.rules[0].citations);
+ assert.equal(result.data.llm_calls,0);assert.equal(t.f.calls.llm,llm);assert.deepEqual(t.f.rules,before);
+ assert.equal((await t.review({...action,jurisdiction_id:'other'})).data.evidence.length,0);
+ t.f.patchSource({file_hash_sha256:'changed'});
+ const changed=await t.review(action);
+ assert.equal(changed.status,200);assert.equal(changed.data.evidence.length,0);assert.equal(changed.data.blocked.length,1);
+});
+test('approved retrieval requires saved approval context and detects rule changes during a read',async()=>{
+ const t=await setup(),rule=await t.importRule(),action={action:'retrieve_evidence',jurisdiction_id:'profile'};
+ await t.review({action:'approve',rule_id:rule.id,expected_version:1});
+ const sources=structuredClone(t.f.rules[0].evidence_context.approved_sources);
+ delete t.f.rules[0].evidence_context.approved_sources;
+ assert.match((await t.review(action)).data.blocked[0].blocker,/recorded staff approval/);
+ t.f.rules[0].evidence_context.approved_sources=sources;
+ const get=t.f.api.ruleEntity.get;
+ t.f.api.ruleEntity.get=async id=>({...await get(id),version:99});
+ assert.match((await t.review(action)).data.blocked[0].blocker,/changed during retrieval/);
+});
+test('approved retrieval has explicit pagination and rejects invalid scope/ranges',async()=>{
+ const t=await setup(),rule=await t.importRule();
+ await t.review({action:'approve',rule_id:rule.id,expected_version:1});
+ t.f.rules.push({...structuredClone(t.f.rules[0]),id:'zz-second'});
+ const action={action:'retrieve_evidence',jurisdiction_id:'profile',limit:1};
+ const first=await t.review(action);assert.equal(first.data.has_more,true);assert.equal(first.data.next_cursor,'1');
+ const second=await t.review({...action,cursor:first.data.next_cursor});
+ assert.equal(second.data.has_more,false);assert.equal(second.data.evidence[0].rule_id,'zz-second');
+ for(const invalid of [{jurisdiction_id:''},{limit:0},{limit:101},{cursor:-1},{cursor:0.5}])
+  assert.equal((await t.review({...action,...invalid})).status,400);
+});

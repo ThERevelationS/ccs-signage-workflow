@@ -1,3 +1,4 @@
+import {retrieveApprovedEvidence} from '../../shared/permittingApprovedEvidence.mjs';
 import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { importEvidenceCandidate } from '../../shared/permittingRuleEvidenceRun.mjs';
@@ -42,6 +43,10 @@ Deno.serve(async req => {
     if (!user || user.role!=='admin') return Response.json({error:'Admin access required'},{status:403});
     const body=await req.json().catch(()=>({})),entities=base44.asServiceRole.entities,Rules=entities.PermittingRule;
     const action=String(body.action || '');
+    if (action==='retrieve_evidence') {
+      return Response.json(await retrieveApprovedEvidence({entities,jurisdictionId:body.jurisdiction_id,
+        limit:body.limit===undefined?25:Number(body.limit),cursor:body.cursor===undefined?0:Number(body.cursor)}));
+    }
     if (action==='list') {
       const query:any={};
       for (const key of ['jurisdiction_id','jurisdiction_name','rule_category','status','confidence','conflict_state','sign_type_normalized'])
