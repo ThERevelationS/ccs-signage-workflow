@@ -1,6 +1,6 @@
 # Phase 6.9 final extraction acceptance
 
-Active: 6.9 of 6.9. Phase 7 has not started. Phase 5 archive/text reconciliation remains separately open.
+Phase 6 technical extraction acceptance complete. Active: 7.1 of 7.3 staff review/conflict model. Phase 5 archive/text reconciliation remains separately open.
 
 | Check | Result | Evidence / remaining work |
 |---|---|---|
@@ -9,7 +9,7 @@ Active: 6.9 of 6.9. Phase 7 has not started. Phase 5 archive/text reconciliation
 | Saved lookup and readiness presentation | Passed live UI | Campbell passes current checks; Cincinnati authority blocker displayed |
 | Conflict resolution validation/history/version race | Passed compiled handlers | All retained citations checked; separate staff approval; stale version refused |
 | Conflict form gates and version reset | Passed isolated React interaction | Rationale plus acknowledgement required; busy controls disabled; version remount clears inputs |
-| Conflict form keyboard/focus and browser interaction | Open | No production conflicting rules; isolated fixture URL blocked by client. Use permitted nonproduction browser fixture; do not create fake live rules |
+| Conflict form keyboard/focus and browser interaction | Carried explicitly to 7.3; not passed | Rule-card Enter/Space disclosure verified in isolated component; saved lookup Tab/Enter verified live. Real conflict browser/focus QA still needs permitted nonproduction fixture; do not create fake production rules |
 | Missing text, draft, historical and changed evidence | Passed tests; exceptions retained | Existing safeguards remain; do not infer statewide coverage |
 | Category, numeric and physical-page validation | Passed compiled tests | 61 focused tests overall |
 | Frontend helper parity, lint, production build | Passed | Eight browser helpers match backend originals |

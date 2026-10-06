@@ -50,7 +50,7 @@ Extract requirements, forms, fees, submission steps, responsible offices, applic
 | 6.6 | Conflicts, missing evidence and historical source handling | Safeguards tested; explicit resolution at 6.8 |
 | 6.7 | Ohio/Kentucky supervised extraction acceptance | Selected-page pilots passed; 3 candidates staged, 4 rejected; none approved |
 | 6.8 | Review-ready candidate presentation and handoff | Complete: live OH/KY handoff and isolated conflict component interaction checks; browser keyboard check carried to 6.9 |
-| 6.9 | Final extraction acceptance before Phase 7 | Active: acceptance matrix and residual browser checks |
+| 6.9 | Final extraction acceptance before Phase 7 | Technical extraction acceptance passed; conflict browser QA carried explicitly to 7.3, not marked passed |
 
 ## Phase 7 — Staff-approved regulations
 Provide staff review/approval workflows for extracted requirements, conflicts, applicability, superseded material, exceptions, and local knowledge. Preserve review history and source lineage.
