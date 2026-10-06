@@ -27,8 +27,8 @@ try {
  const busy=render({actionLoading:true});assert.match(busy,/<textarea[^>]*disabled=""/);assert.match(busy,/<input[^>]*type="checkbox"[^>]*disabled=""/);
  const historical=render({rule:{...rule,status:'historical'}});assert.doesNotMatch(historical,/>Approve<\/button>/);
  assert.doesNotMatch(render({expanded:false}),/Resolution rationale/);
- let callbackCount=0, recordedReason="", toggles=0;
- const props={rule:{...rule,version:1},expanded:true,onToggle(){toggles++;},onApprove(){throw Error("Approval must stay disabled");},onReject(){},onEdit(){},onResolveConflict(reason){callbackCount++;recordedReason=reason;},actionLoading:false};
+ let callbackCount=0, recordedReason="", toggles=0, rejections=0;
+ const props={rule:{...rule,version:1},expanded:true,onToggle(){toggles++;},onApprove(){throw Error("Approval must stay disabled");},onReject(){rejections++;},onEdit(){},onResolveConflict(reason){callbackCount++;recordedReason=reason;},actionLoading:false};
  let tree;
  const element=(p=props)=>React.createElement(RuleCard,{...p,key:p.rule.id+":"+p.rule.version});
  act(()=>{tree=TestRenderer.create(element());});
@@ -60,6 +60,24 @@ try {
  assert.equal(button('Record resolution for staff review').props.disabled,true);
  act(()=>{textarea().props.onChange({target:{value:'short'}});checkbox().props.onChange({target:{checked:true}});});
  assert.equal(button('Record resolution for staff review').props.disabled,true);
+
+ act(()=>tree.update(element(props)));
+ act(()=>button('Reject').props.onClick());
+ const reason=tree.root.findAllByType('input').find(i=>i.props['aria-label']==='Rejection reason (optional)');
+ assert.equal(reason.props.maxLength,2000);
+ act(()=>reason.props.onChange({target:{value:'Review source scope first'}}));
+ act(()=>tree.update(element({...props,actionLoading:true})));
+ assert.equal(button('Confirm Reject').props.disabled,true);
+ assert.equal(tree.root.findAllByType('input').find(i=>i.props['aria-label']==='Rejection reason (optional)').props.disabled,true);
+ act(()=>button('Confirm Reject').props.onClick());
+ assert.equal(rejections,0);
+ act(()=>tree.update(element(props)));
+ act(()=>button('Confirm Reject').props.onClick());
+ assert.equal(rejections,1);
+ assert.equal(tree.root.findAllByType('button').find(b=>b.props['aria-label']==='Edit rule').props.disabled,false);
+ act(()=>tree.update(element({...props,rule:{...rule,status:'superseded',version:2}})));
+ assert.equal(tree.root.findAllByType('button').find(b=>b.props['aria-label']==='Edit rule').props.disabled,true);
+ assert.equal(tree.root.findAllByType('button').find(b=>b.props['aria-label']==='Collapse rule evidence').props['aria-expanded'],true);
  act(()=>tree.unmount());
  console.log('Conflict form interaction acceptance passed: acknowledgement and rationale gates, local callback, busy controls, version reset. No browser or API calls.');
  console.log('Conflict card render acceptance passed: disabled approval/resolution, rationale and acknowledgement, both citations, busy and historical safeguards. No browser interaction or API calls.');

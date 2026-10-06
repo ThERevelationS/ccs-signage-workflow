@@ -67,15 +67,15 @@ export default function RuleCard({ rule, expanded, onToggle, onApprove, onReject
                 <XCircle className="w-3 h-3 mr-1" />Reject
               </Button>
             )}
-            <Button size="sm" variant="ghost" onClick={onEdit} disabled={actionLoading}><Edit className="w-3 h-3" /></Button>
-            <Button size="sm" variant="ghost" onClick={onToggle}>{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</Button>
+            <Button size="sm" variant="ghost" aria-label="Edit rule" onClick={onEdit} disabled={actionLoading || rule.status === "superseded"}><Edit className="w-3 h-3" /></Button>
+            <Button size="sm" variant="ghost" aria-label={expanded ? "Collapse rule evidence" : "Expand rule evidence"} aria-expanded={expanded} aria-controls={"rule-evidence-" + rule.id} onClick={onToggle}>{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</Button>
           </div>
         </div>
 
         {rejectMode && (
           <div className="mt-2 flex gap-2">
-            <Input placeholder="Rejection reason (optional)" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
-            <Button size="sm" variant="destructive" onClick={() => { onReject(rejectReason); setRejectMode(false); }}>Confirm Reject</Button>
+            <Input aria-label="Rejection reason (optional)" placeholder="Rejection reason (optional)" maxLength={2000} disabled={actionLoading} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
+            <Button size="sm" variant="destructive" disabled={actionLoading || rule.status === "superseded"} onClick={() => { if (actionLoading || rule.status === "superseded") return; onReject(rejectReason); setRejectMode(false); }}>Confirm Reject</Button>
           </div>
         )}
 
