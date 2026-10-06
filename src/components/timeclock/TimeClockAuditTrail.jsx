@@ -93,9 +93,24 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
     setIntegrityDiagnostics([]);
     try {
       const scopedId = String(timeEntryId || "").trim();
-      const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
+      let loadedRows = [];
+      if (scopedId && integrityMode) {
+        let page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { sort: "-server_timestamp", limit: 5000 });
+        while (true) {
+          if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
+          const pageItems = Array.isArray(page?.items) ? page.items : [];
+          loadedRows.push(...pageItems);
+          if (!page?.has_more) break;
+          if (!String(page?.next_cursor || "").trim()) {
+            throw new Error("Integrity investigation pagination reported more authoritative audit records without a continuation cursor.");
+          }
+          page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: page.next_cursor, limit: 5000 });
+        }
+      } else {
+        const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
+        loadedRows = Array.isArray(loaded) ? loaded : [];
+      }
       if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
-      const loadedRows = Array.isArray(loaded) ? loaded : [];
       const loadedRowLocators = loadedRows.map((row, rowIndex) => ({ row, diagnostic_locator: `request-${requestSequence}-row-${rowIndex}` }));
       if (scopedId) {
         const mismatchedRows = loadedRows.filter((row) => String(row?.time_entry_id || "").trim() !== scopedId);
@@ -109,16 +124,6 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           return;
         }
         const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
-        if (integrityMode && loadedRows.length >= 100) {
-          console.error("Time Clock audit integrity investigation completeness failure:", {
-            requested_time_entry_id: scopedId,
-            returned_audit_record_count: loadedRows.length,
-            query_limit: 100,
-          });
-          setRows([]);
-          setError(`Payroll evidence integrity investigation cannot prove the authoritative audit history is complete because the scoped query reached its 100-record safety limit for TimeEntry ${scopedId}. No diagnostic audit records are being displayed or treated as trusted payroll evidence. Narrowing the display locally would not make this evidence complete.`);
-          return;
-        }
         if (integrityMode) {
           const {
             diagnostics: authoritativeIntegrityDiagnostics,
