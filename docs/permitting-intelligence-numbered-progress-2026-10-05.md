@@ -1,3 +1,13 @@
+### 2026-10-06 — Phase 9: 9.3 of 9.3, touch controls technically verified
+
+Fresh state after the prior transport timeouts: clean working tree at 5e30849df41a7765d08da2d88f8e94f712536299. Both the office evidence and approved rule evidence edits landed. Their load/refresh and pagination buttons now override the shared 32px small-button size with minimum 44px height, automatic height, bounded width and wrapping labels. The blocked-evidence native summary also has a minimum 44px target and visible keyboard focus ring. The shared button component and unrelated app controls were not modified.
+
+Verification completed against the saved code: locality evidence acceptance, office evidence acceptance and approved evidence search acceptance all pass, including scoped requests, single-flight, collapse/admin-loss cleanup, pagination, revoked evidence exclusion, failed-refresh clearing, forms and archive link safeguards. Targeted ESLint, production build and git diff check pass. Only existing stale browser-data warnings appeared. These tests do not establish actual phone or touch-browser acceptance.
+
+Phase 9 remains open at 9.3 for live mobile viewport/scroll/touch acceptance. Phase 8 remains open at 8.3 only for a legitimate populated approved-rule live example; authenticated Boone County empty-result retrieval passed earlier and is preserved. Phase 5 archival reconciliation remains open. No production records changed, AI calls made or frontend publish occurred.
+
+Next: verify the combined locality disclosure in the builder phone preview when the browser session is available, including scroll, target geometry and wrapped labels, then close 9.3 if acceptance passes.
+
 ### 2026-10-06 — 8.3 of 8.3: live authentication and empty-result retrieval verified
 
 The user restored Google login. The builder identified Brett Heinlein and the main app showed Logout Brett plus admin settings. In the actual main app, Permitting Rules loaded the current catalog (101 rules: 92 extracted, 9 historical; zero reviewed regulatory rules/instructions). Selecting the adopted Boone County Article 34 source and clicking Load approved evidence executed the real read-only lookup. The result displayed Refresh approved evidence and “0 matching requirements in 0 loaded verified records” with end-of-sequence and no-permit-inference warnings. The earlier Admin access required failure did not occur. No credentials or session tokens were inspected.
