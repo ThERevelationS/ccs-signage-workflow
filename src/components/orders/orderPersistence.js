@@ -258,7 +258,7 @@ export async function restoreOrderFromLoadedTrashSnapshot({
         );
       }
       throw new Error(
-        `${label} was stopped because another active Order claimed permanent Smartsheet row ${restoreSafety.rowId} during recovery. ` +
+        `${label} could not verify exclusive ownership of permanent Smartsheet row ${restoreSafety.rowId} after recovery. ` +
         `This Order was safely returned to trash. ${ownershipError?.message || ""}`.trim()
       );
     }
