@@ -40,20 +40,20 @@ try {
  await act(async()=>tree.root.findByType('input').props.onChange({target:{value:'nonexistent'}}));
  assert.match(full(),/0 matching requirements/);assert.match(full(),/does not establish that a permit is unnecessary/);
  await act(async()=>tree.root.findByType('input').props.onChange({target:{value:''}}));
- await act(async()=>button('Load next evidence page').props.onClick());
+ await act(async()=>{button('Load next evidence page').props.onClick();});
  assert.equal(calls[1].cursor,'25');
  await act(async()=>pending.shift().resolve({...page,evidence:[{...row,rule_id:'r2',rule_kind:'administrative_instruction'}],blocked:[],has_more:false,next_cursor:null}));
  assert.match(full(),/Reviewed submission instruction/);assert.match(full(),/2 loaded verified records/);
  // A request begun for A may not paint evidence over B.
- await act(async()=>button('Refresh approved evidence').props.onClick());
+ await act(async()=>{button('Refresh approved evidence').props.onClick();});
  const stale=pending.shift();
  await act(async()=>tree.update(React.createElement(Panel,{...props,jurisdictionId:'B',jurisdictionName:'Pilot B'})));
  await act(async()=>stale.resolve(page));
  assert.doesNotMatch(full(),/Maximum area/);assert.match(full(),/Pilot B/);
- await act(async()=>button('Load approved evidence').props.onClick());
+ await act(async()=>{button('Load approved evidence').props.onClick();});
  assert.equal(calls.at(-1).jurisdiction_id,'B');
  await act(async()=>pending.shift().resolve({...page,has_more:false,next_cursor:null}));
- await act(async()=>button('Refresh approved evidence').props.onClick());
+ await act(async()=>{button('Refresh approved evidence').props.onClick();});
  await act(async()=>pending.shift().reject(Error('Current evidence unavailable')));
  assert.match(full(),/Current evidence unavailable/);assert.doesNotMatch(full(),/Maximum area/);
  await act(async()=>tree.update(React.createElement(Panel,{...props,jurisdictionId:'B',disabled:true})));
