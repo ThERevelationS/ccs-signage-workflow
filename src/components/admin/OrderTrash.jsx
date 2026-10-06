@@ -22,6 +22,7 @@ import {
   assertOrderSystemResetCatalogStable,
   assertOrderSystemResetComplete,
   deleteVerifiedOrderSnapshots,
+  orderHasSmartsheetRelationship,
   permanentlyDeleteTrashOrderFromLoadedSnapshot,
   restoreOrderFromLoadedTrashSnapshot,
 } from "@/components/orders/orderPersistence";
@@ -299,6 +300,11 @@ export default function OrderTrash() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-gray-800">{order.customer_name}</span>
                   <Badge variant="outline">{order.request_type}</Badge>
+                  {orderHasSmartsheetRelationship(order) && (
+                    <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                      Smartsheet identity preserved
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600 truncate">{order.description}</p>
                 <div className="text-xs text-gray-500 mt-1">
@@ -322,8 +328,11 @@ export default function OrderTrash() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setPermanentDeleteConfirm(order)}
-                  disabled={bulkDeleteBusy || recoverBusy || permanentDeleteBusy}
-                  className="text-red-600 hover:text-red-700"
+                  disabled={bulkDeleteBusy || recoverBusy || permanentDeleteBusy || orderHasSmartsheetRelationship(order)}
+                  title={orderHasSmartsheetRelationship(order)
+                    ? "Permanent delete is blocked because this Order preserves a Smartsheet relationship. Recover it or leave it in trash."
+                    : "Permanently delete this unlinked Order"}
+                  className="text-red-600 hover:text-red-700 disabled:text-gray-400"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
                   Permanent
@@ -386,7 +395,8 @@ export default function OrderTrash() {
               System Reset - Delete ALL Orders
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
-              <p>This will <span className="font-bold text-red-600">permanently delete ALL orders</span> from the system, not just items in trash.</p>
+              <p>This will <span className="font-bold text-red-600">permanently delete ALL eligible orders</span> from the system, not just items in trash.</p>
+              <p className="font-semibold text-amber-800">Safety rule: any Order that preserves a Smartsheet sheet/row identity, sync snapshot, prior sync timestamp, or create-attempt marker blocks the reset before deletion begins.</p>
               <p className="text-red-600 font-bold">This action cannot be undone!</p>
               <div className="space-y-2 pt-2">
                 <Label htmlFor="bulk-delete-confirmation">Type <span className="font-mono font-bold">{SYSTEM_RESET_CONFIRMATION}</span> to confirm:</Label>
