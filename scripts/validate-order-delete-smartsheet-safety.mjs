@@ -34,14 +34,16 @@ const tombstones = classifyOrderDeletedLinkTombstones([
 ], sheetId);
 assert.deepEqual([...tombstones.deletedRowIds], ['101']);
 assert.deepEqual([...tombstones.activeRowIds], ['102']);
-assert.deepEqual(tombstones.collisions, []);
+assert.deepEqual([...tombstones.tombstoneRowIds], ['101']);
+assert.deepEqual(tombstones.shadowedDeletedRowIds, []);
 const collision = classifyOrderDeletedLinkTombstones([
   { deleted: true, smartsheet_sheet_id: sheetId, smartsheet_row_id: '777' },
   { deleted: false, smartsheet_sheet_id: sheetId, smartsheet_row_id: '777' },
 ], sheetId);
-assert.deepEqual(collision.collisions, ['777']);
+assert.deepEqual(collision.shadowedDeletedRowIds, ['777']);
+assert.deepEqual([...collision.tombstoneRowIds], []);
 assert.throws(() => classifyOrderDeletedLinkTombstones([], ''), /permanent sheet ID/);
-console.log('PASS deleted linked Orders reserve exact permanent row IDs and active/deleted collisions fail closed');
+console.log('PASS deleted linked Orders reserve only row IDs without an active owner; historical deleted duplicates defer to the active permanent link');
 
 assert.deepEqual(orderStatusFromPulledDates({}, { status: 'cancelled' }, false), {});
 assert.equal(orderStatusAfterOrderedDateChange({ status: 'cancelled' }, '2026-10-10'), 'cancelled');
@@ -57,7 +59,7 @@ assert.match(backend, /classifyOrderDeletedLinkTombstones/);
 assert.match(backend, /activeAuditRows = deletedOrderLinkedRowIds\.size[\s\S]*allRows\.filter/);
 assert.match(backend, /if \(dataset === 'orders' && deletedOrderLinkedRowIds\.has\(rowId\)\)[\s\S]*orderDeletedLinkTombstonesPreserved\+\+[\s\S]*continue/);
 assert.match(backend, /deleted_order_link_tombstones_preserved: orderDeletedLinkTombstonesPreserved/);
-assert.match(backend, /active_deleted_row_link_collisions/);
+assert.match(backend, /deleted_order_links_shadowed_by_active: deletedOrderTombstones\.shadowedDeletedRowIds\.length/);
 assert.ok(
   backend.indexOf("deletedOrderLinkedRowIds.has(rowId)") < backend.indexOf("profile?.create_base44_from_smartsheet"),
   'Deleted Order tombstones must be checked before any remote-row create path.'
