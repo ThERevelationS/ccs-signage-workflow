@@ -38,7 +38,9 @@ export default function RuleCard({ rule, expanded, onToggle, onApprove, onReject
     <Card className={rule.is_operational ? "border-green-300" : rule.draft_context ? "border-purple-200" : ""}>
       <CardContent className="pt-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0 cursor-pointer" onClick={onToggle}>
+          <div className="flex-1 min-w-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500" role="button" tabIndex={0}
+            aria-expanded={expanded} aria-controls={"rule-evidence-" + rule.id} aria-label={"Review evidence: " + rule.requirement}
+            onClick={onToggle} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle(); } }}>
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <Badge className={STATUS_COLORS[rule.status] || "bg-gray-100"} variant="secondary">{rule.status.replace(/_/g, " ")}</Badge>
               <Badge className={CONFIDENCE_COLORS[rule.confidence] || ""} variant="secondary">{rule.confidence}</Badge>
@@ -78,7 +80,7 @@ export default function RuleCard({ rule, expanded, onToggle, onApprove, onReject
         )}
 
         {expanded && (
-          <div className="mt-3 pt-3 border-t space-y-2 text-sm">
+          <div id={"rule-evidence-" + rule.id} className="mt-3 pt-3 border-t space-y-2 text-sm">
             {rule.conflict_state === "conflicting_sources" && <div className="rounded border border-orange-200 p-3 space-y-2">
               <p className="font-semibold">Resolve conflicting evidence</p>
               <p>Review every citation below and explain why this requirement is supported. Missing or outdated authority must be corrected first. Recording a resolution returns this rule to staff review.</p>

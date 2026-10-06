@@ -25,8 +25,8 @@ try {
  const busy=render({actionLoading:true});assert.match(busy,/<textarea[^>]*disabled=""/);assert.match(busy,/<input[^>]*type="checkbox"[^>]*disabled=""/);
  const historical=render({rule:{...rule,status:'historical'}});assert.doesNotMatch(historical,/>Approve<\/button>/);
  assert.doesNotMatch(render({expanded:false}),/Resolution rationale/);
- let callbackCount=0, recordedReason="";
- const props={rule:{...rule,version:1},expanded:true,onToggle(){},onApprove(){throw Error("Approval must stay disabled");},onReject(){},onEdit(){},onResolveConflict(reason){callbackCount++;recordedReason=reason;},actionLoading:false};
+ let callbackCount=0, recordedReason="", toggles=0;
+ const props={rule:{...rule,version:1},expanded:true,onToggle(){toggles++;},onApprove(){throw Error("Approval must stay disabled");},onReject(){},onEdit(){},onResolveConflict(reason){callbackCount++;recordedReason=reason;},actionLoading:false};
  let tree;
  const element=(p=props)=>React.createElement(RuleCard,{...p,key:p.rule.id+":"+p.rule.version});
  act(()=>{tree=TestRenderer.create(element());});
@@ -34,6 +34,14 @@ try {
  const button=label=>tree.root.findAllByType('button').find(b=>text(b.props.children)===label);
  const textarea=()=>tree.root.findByType('textarea');
  const checkbox=()=>tree.root.findAllByType('input').find(i=>i.props.type==='checkbox');
+ const disclosure=tree.root.find(node=>node.props.role==='button');
+ assert.equal(disclosure.props.tabIndex,0);assert.equal(disclosure.props['aria-expanded'],true);
+ assert.equal(disclosure.props['aria-controls'],'rule-evidence-fixture');
+ let prevented=0;
+ act(()=>disclosure.props.onKeyDown({key:'Enter',preventDefault(){prevented++;}}));
+ act(()=>disclosure.props.onKeyDown({key:' ',preventDefault(){prevented++;}}));
+ act(()=>disclosure.props.onKeyDown({key:'Escape',preventDefault(){prevented++;}}));
+ assert.equal(toggles,2);assert.equal(prevented,2);
  assert.equal(button('Approve').props.disabled,true);
  assert.equal(button('Record resolution for staff review').props.disabled,true);
  act(()=>textarea().props.onChange({target:{value:'This rationale has sufficient evidence detail.'}}));
