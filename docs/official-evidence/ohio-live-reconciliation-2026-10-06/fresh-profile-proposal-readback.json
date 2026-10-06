@@ -1,0 +1,46 @@
+{
+  "retrieved_at": "2026-10-06T23:58:25.756Z",
+  "read_only": true,
+  "profiles": [
+    {
+      "id": "69b30b6e1e5a58b2a3379aa1",
+      "name": "Village of Cleves",
+      "state": "OH",
+      "type": "city",
+      "parent_county_name": "Hamilton County",
+      "website_url": "https://www.clevesoh.gov",
+      "permitting_url": "https://www.clevesoh.gov/zoning",
+      "updated_date": "2026-09-21T06:03:41.815000"
+    },
+    {
+      "id": "6ac19f0cd3b3f47e53ac0596",
+      "name": "Norwood",
+      "state": "OH",
+      "type": "village",
+      "parent_county_name": "Hamilton County",
+      "website_url": "https://www.norwoodohio.gov/",
+      "permitting_url": "https://www.norwood-ohio.com/DocumentCenter/View/1209",
+      "updated_date": "2026-10-04T16:45:08.120000"
+    },
+    {
+      "id": "6ac19f1a3d1976f72bf908a7",
+      "name": "Deer Park",
+      "state": "OH",
+      "type": "village",
+      "parent_county_name": "Hamilton County",
+      "website_url": "https://www.deerpark-oh.gov/",
+      "permitting_url": "https://www.deerpark-oh.gov/residents/building-permits/",
+      "updated_date": "2026-10-04T00:37:52.717000"
+    },
+    {
+      "id": "6ac1a161934312388bd3ca04",
+      "name": "Cleves",
+      "state": "OH",
+      "type": "city",
+      "parent_county_name": "Hamilton County",
+      "website_url": "https://www.clevesoh.gov",
+      "permitting_url": "https://www.clevesoh.gov/zoning",
+      "updated_date": "2026-10-04T00:44:17.339000"
+    }
+  ]
+}
