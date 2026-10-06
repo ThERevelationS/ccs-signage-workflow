@@ -19,3 +19,6 @@ Status: open. Phase 7 endpoint is 7.3; being at that milestone does not mean it 
 Verification: 64 backend tests, actual RuleCard rendering/interactions, targeted ESLint, mirror parity, frontend production build and diff check. Build has existing stale browser-data warnings.
 
 Required browser acceptance: use the existing isolated actual-component fixture in a permitted nonproduction preview, verify Enter/Space disclosure and focus, Tab traversal through rationale/acknowledgement/resolution, disabled approval, busy rejection, version reset and staff-history disclosure. Callbacks must remain local; do not seed fake live rules. Record the browser result before Phase 7 closeout.
+
+
+2026-10-06 browser access update: Sign Shop and Admin Settings unlocks verified, but standalone hosted preview's permitting backend says Admin access required. Base44 builder sign-in is still required. Credential protection prevented builder observation after one documented recovery; manual secure handoff requested. In-panel development fixture is available in the Vite preview only and removed from production bundles. Browser QA remains open.
