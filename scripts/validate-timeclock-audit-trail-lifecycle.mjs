@@ -183,7 +183,7 @@ assert.match(source, /const seenCursors = new Set\(\)/);
 assert.match(source, /const seenPageAuditIds = new Set\(\)/);
 assert.match(source, /const repeatedPageAuditIds = \[\.\.\.new Set\(pageAuditIds\.filter\(\(id\) => seenPageAuditIds\.has\(id\)\)\)\]/);
 assert.match(source, /pagination repeated .* immutable audit record/);
-assert.match(source, /const nextCursor = String\(page\?\.next_cursor \|\| ""\)\.trim\(\)/);
+assert.match(source, /const nextCursor = String\(page\.next_cursor \|\| ""\)\.trim\(\)/);
 assert.match(source, /if \(seenCursors\.has\(nextCursor\)\)/);
 assert.match(source, /pagination repeated a continuation cursor and was stopped before it could loop indefinitely/);
 assert.match(source, /seenCursors\.add\(nextCursor\)/);
