@@ -2692,27 +2692,54 @@ Deno.serve(async (req) => {
         const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005 && approvalComplete;
         return { verified, approval_complete: approvalComplete, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
       };
-      const verifyCorrectionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
+      const verifyCorrectionProvenance = async (change: any, windowStart = '', windowEnd = '', snapshotVersion = 0) => {
         const provenance = change?.correction_provenance;
         if (!provenance) return true;
+        const strictV24 = Number(snapshotVersion || 0) >= 24;
+        const hasOwn = (key: string) => Object.prototype.hasOwnProperty.call(provenance, key);
+        const v24RequiredFields = [
+          'correction_request_id', 'submission_request_id', 'requested_by', 'requested_at', 'employee_reason',
+          'requested_clock_in', 'requested_clock_out', 'requested_lunch_minutes', 'requested_notes',
+          'review_request_id', 'review_decision', 'reviewed_by', 'reviewed_at', 'reviewer_reason',
+          'applied_audit_id', 'applied_audit_request_id', 'applied_at',
+          'corrected_clock_in', 'corrected_clock_out', 'corrected_lunch_minutes', 'corrected_notes', 'corrected_total_hours',
+        ];
+        const v24ShapeComplete = !strictV24 || (
+          v24RequiredFields.every(hasOwn) &&
+          String(provenance.correction_request_id || '') && String(provenance.submission_request_id || '') &&
+          asEmail(provenance.requested_by) && String(provenance.requested_at || '') &&
+          String(provenance.review_request_id || '') && ['approve', 'approve_modified'].includes(String(provenance.review_decision || '')) &&
+          asEmail(provenance.reviewed_by) && String(provenance.reviewed_at || '') &&
+          String(provenance.applied_audit_id || '') && String(provenance.applied_audit_request_id || '') && String(provenance.applied_at || '') &&
+          String(provenance.corrected_clock_in || '') && String(provenance.corrected_clock_out || '')
+        );
+        if (!v24ShapeComplete) return false;
         const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
         const appliedAudit = provenance.applied_audit_id ? await auditEntity.get(provenance.applied_audit_id).catch(() => null) : null;
         const requested = correction?.requested_changes || {};
         const original = appliedAudit?.details?.original || {};
         const corrected = appliedAudit?.details?.corrected || {};
-        const requestedMatches = !Object.prototype.hasOwnProperty.call(provenance, 'requested_clock_in') || (
+        const requestedMatches = strictV24 || hasOwn('requested_clock_in') ? (
           String(requested.clock_in || '') === String(provenance.requested_clock_in || '') &&
           String(requested.clock_out || '') === String(provenance.requested_clock_out || '') &&
           Number(requested.lunch_minutes || 0) === Number(provenance.requested_lunch_minutes || 0) &&
           String(requested.notes || '') === String(provenance.requested_notes || '')
-        );
-        const appliedMatches = !provenance.corrected_clock_in || (
+        ) : true;
+        const appliedMatches = strictV24 || provenance.corrected_clock_in ? (
           String(corrected.clock_in || '') === String(provenance.corrected_clock_in || '') &&
           String(corrected.clock_out || '') === String(provenance.corrected_clock_out || '') &&
           Number(corrected.lunch_minutes || 0) === Number(provenance.corrected_lunch_minutes || 0) &&
           String(corrected.notes || '') === String(provenance.corrected_notes || '') &&
           Number(corrected.total_hours || 0) === Number(provenance.corrected_total_hours || 0)
-        );
+        ) : true;
+        const v24ReviewAuditMatches = !strictV24 || Boolean(correction && appliedAudit &&
+          String(appliedAudit.action || '') === 'admin_correction' &&
+          asEmail(appliedAudit.actor_email) === asEmail(provenance.reviewed_by) &&
+          String(appliedAudit.actor_role || '') === 'admin' &&
+          ['session', 'admin_kiosk'].includes(String(appliedAudit.authentication_method || '')) &&
+          String(appliedAudit.reason || '') === String(provenance.reviewer_reason || '') &&
+          String(appliedAudit.details?.review_payload_hash || '') === String(correction.review_payload_hash || '') &&
+          String(correction.status || '') === (String(provenance.review_decision || '') === 'approve_modified' ? 'approved_modified' : 'approved'));
         const deltaMatches = change.change_type === 'removed'
           ? !change.after &&
             String(change.before?.clock_in || '') === String(original.clock_in || '') &&
@@ -2747,7 +2774,7 @@ Deno.serve(async (req) => {
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
           (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))) &&
-          requestedMatches && appliedMatches && deltaMatches);
+          requestedMatches && appliedMatches && v24ReviewAuditMatches && deltaMatches);
       };
       const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
@@ -3056,7 +3083,7 @@ Deno.serve(async (req) => {
           const windowStart = Number(summary.snapshot_version || 0) >= 12 ? String(summary.generation_causal_window_start || '') : '';
           const windowEnd = Number(summary.snapshot_version || 0) >= 12 ? String(summary.generation_causal_window_end || '') : '';
           for (const change of summary.generation_changes || []) {
-            if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
+            if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd, Number(summary.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} non-correction change provenance failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 15 && !await verifyCausalChain(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} ordered causal chain failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} causal chain is incomplete against authoritative audit history.`, pay_period_id: period.id, generations: [] });
@@ -3115,7 +3142,7 @@ Deno.serve(async (req) => {
           const windowStart = Number(current.snapshot_version || 0) >= 12 ? String(current.generation_causal_window_start || '') : '';
           const windowEnd = Number(current.snapshot_version || 0) >= 12 ? String(current.generation_causal_window_end || '') : '';
           for (const change of current.generation_changes || []) {
-            if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
+            if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd, Number(current.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll non-correction change provenance failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 15 && !await verifyCausalChain(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll ordered causal chain failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll causal chain is incomplete against authoritative audit history.', pay_period_id: period.id, generations: [] });
