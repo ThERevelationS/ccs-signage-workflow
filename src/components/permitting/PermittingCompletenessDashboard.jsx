@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import {
   Database, FileCheck2, ShieldCheck, AlertTriangle, Clock,
-  ChevronDown, Search, Loader2, CircleSlash, Layers, MapPin, FileText, Activity,
+  ChevronDown, Search, Loader2, Layers, MapPin, FileText, Activity,
 } from "lucide-react";
 
 const STATUS_OPTIONS = [
