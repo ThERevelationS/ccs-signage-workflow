@@ -254,8 +254,13 @@ assert.ok(immutableEvidenceProgressGuard > withinPageDuplicateGuard && pageAccum
 assert.match(source, /const nextCursor = String\(page\.next_cursor \|\| ""\)\.trim\(\)/);
 assert.match(source, /if \(page\.has_more && seenCursors\.has\(nextCursor\)\)/);
 assert.match(source, /pagination repeated a continuation cursor and was stopped before it could loop indefinitely/);
-assert.match(source, /seenCursors\.add\(nextCursor\)/);
-assert.match(source, /TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ cursor: nextCursor, limit: 5000 \}\)/);
+assert.match(source, /const continuationPage = await TimeClockAudit\.filter\(\{ time_entry_id: scopedId \}, \{ cursor: nextCursor, limit: 5000 \}\)/);
+assert.match(source, /if \(!mountedRef\.current \|\| requestSequence !== requestSequenceRef\.current\) return;[\s\S]*seenCursors\.add\(nextCursor\);[\s\S]*page = continuationPage/);
+const continuationResponse = source.indexOf('const continuationPage = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 })');
+const continuationFreshnessGuard = source.indexOf('if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;', continuationResponse);
+const cursorCommit = source.indexOf('seenCursors.add(nextCursor)', continuationResponse);
+const continuationPageCommit = source.indexOf('page = continuationPage', continuationResponse);
+assert.ok(continuationResponse > pageAccumulation && continuationFreshnessGuard > continuationResponse && cursorCommit > continuationFreshnessGuard && continuationPageCommit > cursorCommit, 'continuation cursor/page state must commit only after a successful still-current response returns');
 assert.doesNotMatch(source, /integrityMode && loadedRows\.length >= 100/);
 const integrityPaginationStart = source.indexOf('if (scopedId && integrityMode)');
 const integrityClassification = source.indexOf('classifyAuthoritativePayrollAuditIntegrity(loadedRows)');
