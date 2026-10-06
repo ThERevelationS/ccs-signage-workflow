@@ -189,3 +189,19 @@ test('provider controls are tracked, replayable and never importable as extracti
   assert.notEqual(imported.status,200);assert.equal(t.f.rules.length,0);
  }
 });
+
+test('JSON text transport retains literal validation and fails closed on invalid JSON',async()=>{
+ for(const invalid of [false,true]) {
+  const t=await setup(),service=globalThis.ruleWorkerFixture.asServiceRole;
+  const original=service.integrations.Core.InvokeLLM;
+  service.integrations.Core.InvokeLLM=async args=>{
+   assert.equal(args.response_json_schema,undefined);assert.match(args.prompt,/Return ONLY a JSON object/);
+   const result=await original(args);return invalid?'not JSON':JSON.stringify(result);
+  };
+  globalThis.ruleWorkerFixture={auth:globalThis.ruleWorkerFixture.auth,asServiceRole:service};
+  const r=await t.extract();
+  if(invalid){assert.equal(r.status,409);assert.equal(t.f.runs[0].status,'failed');}
+  else {assert.equal(r.data.success,true);assert.equal(r.data.candidates.length,1);}
+  assert.equal(t.f.calls.llm,1);assert.equal(t.f.rules.length,0);
+ }
+});
