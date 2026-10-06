@@ -226,6 +226,7 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
                           <div className="grid gap-x-4 gap-y-1 text-xs text-gray-600 sm:grid-cols-2">
                             <p className="break-all">Attempt ID: {item.attempt_id || "Not recorded"}</p>
                             <p>Marker status: <strong>{item.marker_status}</strong>{item.marker_needs_review ? " · unresolved" : ""}{item.deleted ? " · Order soft-deleted" : ""}</p>
+                            <p>Expected create snapshot: {item.expected_snapshot_recorded ? "Recorded before POST" : "Not recorded"}</p>
                             <p>Started: {item.started_at || "Unknown"}</p>
                             <p>Linked: {item.linked_at || "Not recorded"}</p>
                             <p className="break-all">Marker sheet / row: {item.marker_sheet_id || "—"} / {item.marker_row_id || "—"}</p>
