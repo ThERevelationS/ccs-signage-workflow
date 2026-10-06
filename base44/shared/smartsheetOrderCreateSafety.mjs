@@ -114,17 +114,22 @@ async function performOrderSmartsheetCreate({
     const newerLocalEditsRemain = !snapshotsEqual(currentLocalSnapshot, snapshot);
     const syncedAt = new Date().toISOString();
     const linkedMarker = { ...marker, status: 'linked', row_id: rowId, linked_at: syncedAt };
-    const committed = await entity.updateMany(
-      { id, updated_date: beforeCommit.updated_date },
-      { $set: {
-        smartsheet_row_id: rowId,
-        smartsheet_sheet_id: targetSheet,
-        smartsheet_sync_snapshot: snapshot,
-        smartsheet_last_synced_at: syncedAt,
-        smartsheet_pending_local_sync: newerLocalEditsRemain,
-        smartsheet_create_attempt: linkedMarker,
-      } },
-    );
+    let committed;
+    try {
+      committed = await entity.updateMany(
+        { id, updated_date: beforeCommit.updated_date },
+        { $set: {
+          smartsheet_row_id: rowId,
+          smartsheet_sheet_id: targetSheet,
+          smartsheet_sync_snapshot: snapshot,
+          smartsheet_last_synced_at: syncedAt,
+          smartsheet_pending_local_sync: newerLocalEditsRemain,
+          smartsheet_create_attempt: linkedMarker,
+        } },
+      );
+    } catch {
+      throw new Error(`Smartsheet row ${rowId} exists, but Base44 could not finalize its permanent Order link. The Order remains held for review; never POST again.`);
+    }
     if (!committed || committed.updated !== 1) {
       throw new Error(`Smartsheet row ${rowId} exists, but the Base44 Order changed before its permanent link could be finalized. The Order remains held for review; never POST again.`);
     }
