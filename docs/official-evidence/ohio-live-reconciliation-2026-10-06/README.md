@@ -1,3 +1,17 @@
+## Ohio concrete identity correction review — 2026-10-06
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 has a reusable, per-record review proposal artifact, but official live identity and separate office-role reconciliation remain open; task 4 full live acceptance remains pending.
+
+Added scripts/build-ohio-identity-correction-review.py and identity-correction-review.json. Review checks every saved Ohio queue/profile row against active reference names across types, explicit township counties and GRF-C municipal county IDs. Exact literal names take precedence; county-level identities do not require parent counties or become ambiguous because of a same-named township. Unknown county placeholders are missing evidence. Alternatives remain visible: city and township matches in the same county require identity review.
+
+Queue 1,274: 711 name/type/county candidates supported; 115 ambiguous identities; 56 listed counties requiring review; 171 possible type corrections requiring official identity evidence; 211 without active exact-name candidates; 10 missing/placeholder counties. Profiles 217: 192 supported candidates; 11 ambiguous; 4 possible type corrections; 8 without active exact-name candidates; 1 generic municipality type; 1 missing/placeholder county. This broader all-type review differs intentionally from the earlier type-restricted matching report. No percentage is a completeness measure.
+
+Every proposal retains source record ID, snapshot updated_date and expected identity fields. Fresh record reads and official identity evidence are mandatory before any write. Automatic correction, identity verification and authority verification remain false. A unique township alternative does not prove an existing village/community record refers to that township. Do not merge duplicates, delete communities, or change relationships from a name match.
+
+Six new tests pass: city/township ambiguity, county narrowing without automatic approval, placeholder counties, county-level identity, multi-county support, generic municipality and no-match cases. Full review regeneration and git diff --check pass. No production entity mutations, scans, or frontend publishing.
+
+Next: verify the identified Ohio locality-type proposals against original research evidence and live versions, and map separate electrical permit issuer versus inspection provider evidence. Retain unresolved communities for geographic expansion rather than deleting them. Kentucky follows Ohio.
+
 ## Ohio county relationship candidate audit — 2026-10-06
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 canonical identity and office-role reconciliation is partial; task 4 full read-only live acceptance remains pending.
