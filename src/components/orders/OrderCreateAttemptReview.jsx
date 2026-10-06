@@ -115,7 +115,7 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
         </DialogHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
-            Evidence only — automatic retries remain blocked
+            Evidence only — no recovery runs automatically
           </span>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="outline" onClick={checkBackup} disabled={backupChecking || !sessionToken}>
@@ -166,10 +166,12 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
           )}
           {report && (
             <>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3" aria-label="Smartsheet creation attempt totals">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6 sm:gap-3" aria-label="Smartsheet creation attempt totals">
                 {[
                   ["Recorded attempts", report.total_markers],
                   ["Unresolved markers", report.unresolved_markers],
+                  ["Retry Sync recoverable", report.retry_sync_recoverable],
+                  ["Manual investigation", report.manual_investigation_required],
                   ["Ambiguous outcomes", report.counts?.ambiguous],
                   ["Known rows missing", report.counts?.missing_row],
                 ].map(([label, value]) => (
@@ -209,6 +211,18 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
                             <span className="break-all text-xs text-gray-500">Order ID: {item.base44_record_id}</span>
                           </div>
                           <p className="rounded-lg bg-amber-50 p-2 text-sm text-amber-900">{item.reason}</p>
+                          <div className={`rounded-lg border p-2 text-sm ${item.retry_sync_recoverable
+                            ? "border-green-200 bg-green-50 text-green-900"
+                            : item.recovery_state === "none"
+                              ? "border-blue-200 bg-blue-50 text-blue-900"
+                              : "border-red-200 bg-red-50 text-red-900"}`}>
+                            <p className="font-semibold">{item.retry_sync_recoverable
+                              ? "Retry Sync can safely attempt recovery"
+                              : item.recovery_state === "none"
+                                ? "No recovery action required"
+                                : "Manual Smartsheet investigation required"}</p>
+                            <p className="mt-1 text-xs">{item.recommended_action}</p>
+                          </div>
                           <div className="grid gap-x-4 gap-y-1 text-xs text-gray-600 sm:grid-cols-2">
                             <p className="break-all">Attempt ID: {item.attempt_id || "Not recorded"}</p>
                             <p>Marker status: <strong>{item.marker_status}</strong>{item.marker_needs_review ? " · unresolved" : ""}{item.deleted ? " · Order soft-deleted" : ""}</p>
@@ -230,7 +244,7 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
                 </>
               )}
               <p className="text-xs text-gray-500">
-                A missing row ID cannot prove a POST failed. Never retry an uncertain creation or clear its marker without reviewing permanent-ID evidence.
+                A missing row ID cannot prove a POST failed. Only a durable created_unlinked marker with an existing permanent row, expected snapshot, matching sheet, no Base44 row link, and a pending Save & Sync marker is eligible for Retry Sync recovery. All other unresolved creates require manual permanent-ID investigation.
               </p>
             </>
           )}

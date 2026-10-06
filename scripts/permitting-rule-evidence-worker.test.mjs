@@ -175,7 +175,9 @@ test('review edits preserve conflicting source flags and historical classificati
 test('provider controls are tracked, replayable and never importable as extraction',async()=>{
  for(const action of ['provider_control','provider_schema_control']) {
   const t=await setup();let args;
-  globalThis.ruleWorkerFixture.asServiceRole.integrations.Core.InvokeLLM=async value=>{args=value;t.f.calls.llm++;return 'OK';};
+  const service=globalThis.ruleWorkerFixture.asServiceRole;
+  service.integrations.Core.InvokeLLM=async value=>{args=value;t.f.calls.llm++;return 'OK';};
+  globalThis.ruleWorkerFixture={auth:globalThis.ruleWorkerFixture.auth,asServiceRole:service};
   const r=await t.extract({action});
   assert.equal(r.data.success,true);assert.equal(r.data.provider_control,true);assert.equal(r.data.candidates.length,0);
   assert.equal(r.data.method,action==='provider_control'?'provider-control-v1':'provider-schema-control-v1');
