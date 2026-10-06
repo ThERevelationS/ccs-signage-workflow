@@ -185,8 +185,10 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           if (!page.has_more) {
             break;
           }
+          const continuationPage = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 });
+          if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
           seenCursors.add(nextCursor);
-          page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { cursor: nextCursor, limit: 5000 });
+          page = continuationPage;
         }
       } else {
         const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
