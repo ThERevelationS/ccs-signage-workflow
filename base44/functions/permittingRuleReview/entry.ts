@@ -1,7 +1,7 @@
 import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { importEvidenceCandidate } from '../../shared/permittingRuleEvidenceRun.mjs';
-import { verifyRuleForApproval, assertApprovalSourcesCurrent, evidenceEqual, evidenceError } from '../../shared/permittingRuleEvidence.mjs';
+import { verifyRuleForApproval, assertApprovalSourcesCurrent, evidenceEqual, evidenceError, evidenceDigest, RULE_EVIDENCE_METHOD } from '../../shared/permittingRuleEvidence.mjs';
 
 async function commitRule(entity:any,rule:any,fields:any) {
   if (!rule.updated_date) throw evidenceError('Rule has no persistence version.');
@@ -39,6 +39,27 @@ Deno.serve(async req => {
         Rules.count(query),Rules.aggregate({query,groupBy:'status',count:true}),Rules.aggregate({query,groupBy:'rule_category',count:true}),
         Rules.count({...query,is_operational:true}),Rules.count({...query,status:'needs_review'}),Rules.count({...query,draft_context:true}),Rules.count({...query,is_workflow_instruction:true,status:'staff_approved'})]);
       return Response.json({success:true,total,operational,needs_review:needsReview,draft_context:draft,reviewed_instructions:instructions,by_status:status.rows,by_category:category.rows});
+    }
+    if (action==='candidate_handoff') {
+      const run=await entities.PermittingRuleExtractionRun.get(String(body.run_id || ''));
+      if (run?.status!=='complete' || run.method!==RULE_EVIDENCE_METHOD ||
+          run.candidates_sha256!==await evidenceDigest(run.candidates || []))
+        throw evidenceError('A completed unchanged extraction run is required.');
+      const candidates=[];
+      for (const [index,candidate] of (run.candidates || []).entries()) {
+        let blocker='';
+        try {
+          const snapshots=await verifyRuleForApproval(candidate,{sourceEntity:entities.PermittingSourceDocument,
+            segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
+          await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,
+            profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
+        } catch(error) {blocker=String(error?.message || 'Current evidence requires review.').slice(0,500);}
+        candidates.push({candidate_index:index,extraction_key:candidate.extraction_key,rule_kind:ruleKind(candidate),
+          evidence_ready:!blocker,blocker,applicability:candidate.evidence_context?.applicability || null,
+          jurisdiction_scope:candidate.evidence_context?.jurisdiction_scope || null,imported_rule_id:run.import_receipts?.[index]?.rule_id || null});
+      }
+      return Response.json({success:true,run_id:run.id,candidates,checked_at:new Date().toISOString(),
+        staff_approval_required:true,rules_created:0,llm_calls:0});
     }
     if (action==='import_candidate') {
       return Response.json(await importEvidenceCandidate({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,

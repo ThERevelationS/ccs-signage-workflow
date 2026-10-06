@@ -30,6 +30,7 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
   const [requestId, setRequestId] = useState("");
+  const [handoff, setHandoff] = useState(null);
   const [receipts, setReceipts] = useState({});
   const generation = useRef(0);
   const source = sources.find(row => row.id === sourceId);
@@ -51,7 +52,7 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
   }, [jurisdictionName]);
 
   useEffect(() => {
-    setPreview(null); setResult(null); setReceipts({}); setError("");
+    setPreview(null); setResult(null); setReceipts({}); setHandoff(null); setError("");
     setRequestId(readRequest(key));
   }, [key]);
 
@@ -59,6 +60,12 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
     const current = generation.current;
     setBusy(action); setError("");
     try {
+      if (action === "candidate_handoff") {
+        const data = await invoke("permittingRuleReview", { action, run_id: result.run_id });
+        if (!data.success) throw Error(data.error || "Readiness check failed.");
+        if (generation.current === current) setHandoff(data);
+        return;
+      }
       if (action === "more_sources") {
         const data = await invoke("permittingRuleExtraction", { action: "sources", jurisdiction_name: jurisdictionName.trim(), cursor: sourceCursor });
         if (!data.success) throw Error(data.error || "Could not load sources.");
@@ -99,14 +106,14 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
       setSources(rows => rows.map(row => row.id === sourceId ? { ...row, authority_review: review,
         authority_review_state: data.receipt || null, issuing_office: review.publisher_name,
         jurisdiction_scope: review.scope_label, verification_status: review.status === "active" ? "verified" : "needs_verification" } : row));
-      setPreview(null); setResult(null); setReceipts({}); setRequestId("");
+      setPreview(null); setResult(null); setReceipts({}); setHandoff(null); setRequestId("");
       try { sessionStorage.removeItem(key); } catch { /* Prior analyses remain retained in the backend. */ }
     }
     onImported();
   }
 
   function newAnalysis() {
-    const id = crypto.randomUUID(); saveRequest(key, id); setRequestId(id); setResult(null); setReceipts({});
+    const id = crypto.randomUUID(); saveRequest(key, id); setRequestId(id); setResult(null); setReceipts({}); setHandoff(null);
   }
   return <Card><CardContent className="pt-4 space-y-3">
     <PermittingHtmlEvidencePanel key={jurisdictionName + ":html-evidence"} jurisdictionName={jurisdictionName} disabled={Boolean(busy)}
@@ -149,12 +156,17 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
     {requestId && <div className="text-xs text-gray-500 break-all">Saved manual request: {requestId}</div>}
     {result && <div className="space-y-2">
       <p className="text-sm">Analysis status: {result.status}. {(result.candidates || []).length} candidates staged; {result.llm_attempts || 0} research attempts recorded.</p>
+      {result.status === "complete" && !result.provider_control && <Button size="sm" variant="outline" disabled={Boolean(busy)} onClick={() => act("candidate_handoff")}>Check current review readiness</Button>}
+      {handoff && <p className="text-xs text-gray-600">Evidence checked {new Date(handoff.checked_at).toLocaleString()}. Staff approval is still required; current evidence is checked again when approving.</p>}
       {result.error && <p className="text-sm text-amber-800">{result.error}</p>}
       {["llm_started", "llm_uncertain", "run_uncertain", "not_found"].includes(result.status) && <p className="text-sm text-amber-800">Check this saved result to reconcile the request. Another AI attempt is not started automatically.</p>}
       {(result.rejected || []).length > 0 && <details className="text-sm"><summary>Rejected unsupported candidates ({result.rejected.length})</summary>{result.rejected.map((row, i) => <div key={i}>{row.index}: {row.reason}</div>)}</details>}
       {result.status === "complete" && (result.candidates || []).map((candidate, index) => <div key={candidate.extraction_key || index} className="border rounded p-3 text-sm space-y-1">
         <div className="font-medium">{candidate.requirement}</div>
         <div>{candidate.rule_category.replaceAll("_", " ")} · {candidate.citations?.[0]?.section_or_page} · {candidate.citations?.[0]?.verification_status.replaceAll("_", " ")}</div>
+        <div>Purpose: {candidate.rule_kind?.replaceAll("_", " ") || "Requires review"}. Authority scope: {candidate.evidence_context?.jurisdiction_scope || "Not established"}.</div>
+        <p className="text-xs text-gray-600">Address applicability requires separate review. Missing sign, district, trigger or exception information remains unknown.</p>
+        {handoff?.candidates?.find(row => row.candidate_index === index) && <p className="text-sm text-amber-800">{handoff.candidates.find(row => row.candidate_index === index).evidence_ready ? "Current evidence checks passed. Pending staff decision." : "Approval blocked: " + handoff.candidates.find(row => row.candidate_index === index).blocker}</p>}
         <blockquote className="text-gray-600">{candidate.citations?.[0]?.excerpt}</blockquote>
         <div className="text-xs text-gray-500">Selected-page evidence. This is not a full-code review.</div>
         <Button size="sm" variant="outline" disabled={Boolean(busy) || Boolean(receipts[index])} onClick={() => act("import_candidate", { candidate_index: index })}>{receipts[index] ? "Imported for staff review" : "Import for staff review"}</Button>
