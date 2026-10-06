@@ -44,12 +44,12 @@ Extract requirements, forms, fees, submission steps, responsible offices, applic
 |---|---|---|
 | 6.1 | Audit and enforce source-purpose/citation eligibility | Category validation tested; broader acceptance at 6.9 |
 | 6.2 | Retained text and source-version readiness | Tested; 16 live snapshots checked, 2 source exceptions retained |
-| 6.3 | Structured candidate schema and explicit applicability | Next active work |
-| 6.4 | Literal citations, numeric units and page validation | Pending |
-| 6.5 | Idempotent extraction, continuation and credit accounting | Pending |
-| 6.6 | Conflicts, missing evidence and historical source handling | Pending |
-| 6.7 | Ohio/Kentucky supervised extraction acceptance | Pending |
-| 6.8 | Review-ready candidate presentation and handoff | Pending |
+| 6.3 | Structured candidate schema and explicit applicability | Implemented and tested |
+| 6.4 | Literal citations, numeric units and page validation | Implemented and tested |
+| 6.5 | Idempotent extraction, continuation and credit accounting | Tested; live OH/KY replay verified |
+| 6.6 | Conflicts, missing evidence and historical source handling | Safeguards tested; explicit resolution at 6.8 |
+| 6.7 | Ohio/Kentucky supervised extraction acceptance | Selected-page pilots passed; 3 candidates staged, 4 rejected; none approved |
+| 6.8 | Review-ready candidate presentation and handoff | Active |
 | 6.9 | Final extraction acceptance before Phase 7 | Pending |
 
 ## Phase 7 — Staff-approved regulations

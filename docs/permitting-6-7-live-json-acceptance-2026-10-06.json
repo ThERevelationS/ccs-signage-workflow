@@ -1,0 +1,328 @@
+{
+  "entities": [
+    {
+      "id": "6ac45dc593b16e452bf8fac9",
+      "request_id": "manual-acceptance-ky-json-20261006-001",
+      "method": "literal-page-v1",
+      "status": "complete",
+      "source_document_id": "6ac2cd6ac48508a21056b654",
+      "snapshot_sha256": "aacc701525b0633c709c4a85452271c1ef26833cafaaf9996f3dbec8277a9e72",
+      "llm_attempts": 1,
+      "candidates": [
+        {
+          "jurisdiction_name": "Campbell County",
+          "jurisdiction_id": "6ac19dcc184935c1391ee468",
+          "issuing_office": "Campbell County Planning, Zoning and Building Inspection",
+          "rule_kind": "administrative_instruction",
+          "is_workflow_instruction": false,
+          "rule_category": "submittal_requirement",
+          "sign_type": "",
+          "sign_type_normalized": null,
+          "zoning_district_applicability": "",
+          "trigger": "",
+          "requirement": "Digital submittals accepted at pzadmin@campbellcountyky.gov\n1 digital of Sign Plans\n1 digital copy of Site Plan\n1 digital list of Subcontractors (names and\naddresses)",
+          "numeric_value": null,
+          "unit": "",
+          "numeric_literal": "",
+          "exceptions": "",
+          "effective_date": "",
+          "status": "needs_review",
+          "confidence": "high",
+          "conflict_state": "under_review",
+          "citations": [
+            {
+              "source_document_id": "6ac2cd6ac48508a21056b654",
+              "jurisdiction": "Campbell County",
+              "section_or_page": "PDF page 2",
+              "physical_page": 2,
+              "section_reference": "",
+              "official_url": "https://campbellcountyky.gov/egov/documents/1721136718_69637.pdf",
+              "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/6fb7361ff_1721136718_69637.pdf",
+              "source_sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+              "text_sha256": "1aa33d87ffec026eb5698774adc38135424aad9fa8badf165db4330fc8a30d7b",
+              "excerpt": "Attachments: Digital submittals accepted at pzadmin@campbellcountyky.gov\n1 digital of Sign Plans\n1 digital copy of Site Plan\n1 digital list of Subcontractors (names and\naddresses)",
+              "extraction_date": "2026-10-06T02:32:39.391Z",
+              "evidence_scope": "selected_pdf_page",
+              "verification_status": "needs_verification"
+            }
+          ],
+          "source_snapshot_sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+          "is_operational": false,
+          "draft_context": false,
+          "version": 1,
+          "evidence_validation": "literal-page-v1",
+          "extraction_key": "9ebb811a2589a0d5860440b2c0db3c239e7e0a131fd9e1a3b9673e2104764819",
+          "evidence_context": {
+            "start_page": 2,
+            "page_count": 1,
+            "total_pages": 2,
+            "complete_document_text": true,
+            "applicability": {
+              "method": "quoted-applicability-v1",
+              "address_applicability": "requires_review",
+              "fields": {
+                "sign_type": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "zoning_district_applicability": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "trigger": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "exceptions": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                }
+              }
+            },
+            "jurisdiction_scope": "Listed areas: Unincorporated Campbell County; Alexandria",
+            "authority_review_id": "ccs_campbell_form_202407_alex_scope_v1",
+            "evidence_scope": "selected_pdf_pages",
+            "full_code_review": false
+          },
+          "notes": "Literal quoted evidence from selected physical PDF pages. Staff review and current authority verification are required."
+        },
+        {
+          "jurisdiction_name": "Campbell County",
+          "jurisdiction_id": "6ac19dcc184935c1391ee468",
+          "issuing_office": "Campbell County Planning, Zoning and Building Inspection",
+          "rule_kind": "administrative_instruction",
+          "is_workflow_instruction": false,
+          "rule_category": "submittal_requirement",
+          "sign_type": "",
+          "sign_type_normalized": null,
+          "zoning_district_applicability": "",
+          "trigger": "",
+          "requirement": "Building permit application\nElectrical permit application",
+          "numeric_value": null,
+          "unit": "",
+          "numeric_literal": "",
+          "exceptions": "",
+          "effective_date": "",
+          "status": "needs_review",
+          "confidence": "high",
+          "conflict_state": "under_review",
+          "citations": [
+            {
+              "source_document_id": "6ac2cd6ac48508a21056b654",
+              "jurisdiction": "Campbell County",
+              "section_or_page": "PDF page 2",
+              "physical_page": 2,
+              "section_reference": "",
+              "official_url": "https://campbellcountyky.gov/egov/documents/1721136718_69637.pdf",
+              "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/6fb7361ff_1721136718_69637.pdf",
+              "source_sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+              "text_sha256": "1aa33d87ffec026eb5698774adc38135424aad9fa8badf165db4330fc8a30d7b",
+              "excerpt": "If applicable:\nBuilding permit application\nElectrical permit application",
+              "extraction_date": "2026-10-06T02:32:39.391Z",
+              "evidence_scope": "selected_pdf_page",
+              "verification_status": "needs_verification"
+            }
+          ],
+          "source_snapshot_sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+          "is_operational": false,
+          "draft_context": false,
+          "version": 1,
+          "evidence_validation": "literal-page-v1",
+          "extraction_key": "82ff3b437a53ece1e97dfde1c68cf8457ea87666cfe317d4f6f4aff844dab955",
+          "evidence_context": {
+            "start_page": 2,
+            "page_count": 1,
+            "total_pages": 2,
+            "complete_document_text": true,
+            "applicability": {
+              "method": "quoted-applicability-v1",
+              "address_applicability": "requires_review",
+              "fields": {
+                "sign_type": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "zoning_district_applicability": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "trigger": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "exceptions": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                }
+              }
+            },
+            "jurisdiction_scope": "Listed areas: Unincorporated Campbell County; Alexandria",
+            "authority_review_id": "ccs_campbell_form_202407_alex_scope_v1",
+            "evidence_scope": "selected_pdf_pages",
+            "full_code_review": false
+          },
+          "notes": "Literal quoted evidence from selected physical PDF pages. Staff review and current authority verification are required."
+        }
+      ],
+      "rejected": [
+        {
+          "index": 0,
+          "reason": "Citation excerpt is not an exact contiguous page quote."
+        }
+      ],
+      "error": ""
+    },
+    {
+      "id": "6ac45dd59d76e99ba61d4c40",
+      "request_id": "manual-acceptance-oh-json-20261006-001",
+      "method": "literal-page-v1",
+      "status": "complete",
+      "source_document_id": "6ac39c0e6657049fb11cd757",
+      "snapshot_sha256": "288a23ebb3965c14d16886a1d486d15f5258e59499b81dbb1ff36f15eace6b38",
+      "llm_attempts": 1,
+      "candidates": [
+        {
+          "jurisdiction_name": "Cincinnati",
+          "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+          "issuing_office": "",
+          "rule_kind": "regulatory_rule",
+          "is_workflow_instruction": false,
+          "rule_category": "submittal_requirement",
+          "sign_type": "",
+          "sign_type_normalized": null,
+          "zoning_district_applicability": "",
+          "trigger": "",
+          "requirement": "submit three copies of plans for review",
+          "numeric_value": null,
+          "unit": "",
+          "numeric_literal": "",
+          "exceptions": "",
+          "effective_date": "",
+          "status": "needs_review",
+          "confidence": "high",
+          "conflict_state": "under_review",
+          "citations": [
+            {
+              "source_document_id": "6ac39c0e6657049fb11cd757",
+              "jurisdiction": "Cincinnati",
+              "section_or_page": "PDF page 1",
+              "physical_page": 1,
+              "section_reference": "",
+              "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+              "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/427b15b63_signs-informational-handout.pdf",
+              "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+              "text_sha256": "660dc5820e4e3e9fc56f0e70d810fdd39bbd23e62c5c522233141a7e508ca0ab",
+              "excerpt": "Complete an application for a permit and submit three copies of plans for review to the Permit Center",
+              "extraction_date": "2026-10-06T02:32:55.615Z",
+              "evidence_scope": "selected_pdf_page",
+              "verification_status": "needs_verification"
+            }
+          ],
+          "source_snapshot_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+          "is_operational": false,
+          "draft_context": false,
+          "version": 1,
+          "evidence_validation": "literal-page-v1",
+          "extraction_key": "46a0e6989f2f127cbd0c01c69af75fd947f5192b2ed7a9842ed092c36d03fa68",
+          "evidence_context": {
+            "start_page": 1,
+            "page_count": 1,
+            "total_pages": 3,
+            "complete_document_text": true,
+            "applicability": {
+              "method": "quoted-applicability-v1",
+              "address_applicability": "requires_review",
+              "fields": {
+                "sign_type": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "zoning_district_applicability": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "trigger": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                },
+                "exceptions": {
+                  "status": "not_established_in_excerpt",
+                  "literal": ""
+                }
+              }
+            },
+            "jurisdiction_scope": null,
+            "authority_review_id": null,
+            "evidence_scope": "selected_pdf_pages",
+            "full_code_review": false
+          },
+          "notes": "Literal quoted evidence from selected physical PDF pages. Staff review and current authority verification are required."
+        }
+      ],
+      "rejected": [
+        {
+          "index": 0,
+          "reason": "Citation excerpt is not an exact contiguous page quote."
+        },
+        {
+          "index": 1,
+          "reason": "Citation excerpt is not an exact contiguous page quote."
+        },
+        {
+          "index": 3,
+          "reason": "Citation excerpt is not an exact contiguous page quote."
+        }
+      ],
+      "error": ""
+    },
+    {
+      "id": "6ac45ce2ac52882617f10dac",
+      "request_id": "manual-provider-control-20261006-001",
+      "method": "provider-control-v1",
+      "status": "complete",
+      "source_document_id": "6ac2cd6ac48508a21056b654",
+      "snapshot_sha256": "aacc701525b0633c709c4a85452271c1ef26833cafaaf9996f3dbec8277a9e72",
+      "llm_attempts": 1,
+      "candidates": [],
+      "rejected": [],
+      "error": ""
+    },
+    {
+      "id": "6ac45d422c62d70a7c632364",
+      "request_id": "manual-provider-schema-control-20261006-001",
+      "method": "provider-schema-control-v1",
+      "status": "failed",
+      "source_document_id": "6ac2cd6ac48508a21056b654",
+      "snapshot_sha256": "aacc701525b0633c709c4a85452271c1ef26833cafaaf9996f3dbec8277a9e72",
+      "llm_attempts": 1,
+      "candidates": [],
+      "rejected": [],
+      "error": "Invalid request to LLM: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Request contains an invalid argument.', 'status': 'INVALID_ARGUMENT'}}"
+    }
+  ],
+  "count": 4,
+  "entityName": "PermittingRuleExtractionRun",
+  "milestone": "6.7",
+  "acceptance": "selected-page Ohio/Kentucky supervised extraction passed; broader final acceptance remains 6.9",
+  "replays": {
+    "oh": {
+      "run_id": "6ac45dd59d76e99ba61d4c40",
+      "replayed": true,
+      "llm_calls": 0,
+      "llm_attempts": 1
+    },
+    "ky": {
+      "run_id": "6ac45dc593b16e452bf8fac9",
+      "replayed": true,
+      "llm_calls": 0,
+      "llm_attempts": 1
+    }
+  },
+  "rules_created": 0,
+  "approved": 0,
+  "checks": {
+    "tests_passed": 52,
+    "backend_bundle": "passed",
+    "build_exit_code": 0
+  }
+}
