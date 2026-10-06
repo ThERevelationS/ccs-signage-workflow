@@ -106,7 +106,7 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
       recoveryState = 'retry_sync_recoverable';
       recommendedAction = 'Retry Sync can safely attempt recovery. It will re-read this exact permanent Smartsheet row and verify the durable create snapshot before linking; it will not send another POST.';
       retrySyncRecoverable++;
-    } else if (category !== 'verified_link' && orderSmartsheetCreateNeedsReview(order)) {
+    } else if (category !== 'verified_link') {
       manualInvestigationRequired++;
     }
 
