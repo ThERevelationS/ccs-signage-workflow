@@ -36,14 +36,14 @@ Deno.serve(async req => {
       }
       return Response.json({success:true,run:run || null,not_found:!run,llm_calls:0});
     }
-    if (!['extract','preview','provider_control'].includes(action)) return Response.json({error:'Unknown extraction action.'},{status:400});
+    if (!['extract','preview','provider_control','provider_schema_control'].includes(action)) return Response.json({error:'Unknown extraction action.'},{status:400});
     const sourceDocumentId=String(body.source_document_id || '').trim(),startPage=body.start_page ?? 1,pageCount=body.page_count ?? 1;
     if (!sourceDocumentId || !Number.isInteger(startPage) || startPage<1 || !Number.isInteger(pageCount) || pageCount<1 || pageCount>5)
       return Response.json({error:'Select one source document and one to five retained physical PDF pages.'},{status:400});
     const result=await extractEvidenceUnit({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
       runEntity:entities.PermittingRuleExtractionRun,invokeLlm:data=>base44.asServiceRole.integrations.Core.InvokeLLM(data),
       sourceDocumentId,startPage,pageCount,requestId:String(body.request_id || ''),dryRun:action==='preview',
-      requestedBy:user.email,normalizeSignType,providerControl:action==='provider_control'});
+      requestedBy:user.email,normalizeSignType,providerControl:action==='provider_schema_control'?'schema':action==='provider_control'});
     return Response.json(result);
   } catch(error) {
     console.error('permittingRuleExtraction:',error?.message || error);

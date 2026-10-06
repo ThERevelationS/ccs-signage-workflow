@@ -1,4 +1,4 @@
-import { orderSmartsheetCreateNeedsReview } from './smartsheetOrderCreateSafety.mjs';
+import { orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from './smartsheetOrderCreateSafety.mjs';
 
 // Order Form only. Call with a fully verified, single-version Smartsheet sheet download.
 // Row existence is evidence, never proof of which unlinked POST created a row.
@@ -45,6 +45,8 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
   const records = Object.fromEntries(categories.map((category) => [category, []]));
   let unresolvedMarkers = 0;
   let totalMarkers = 0;
+  let retrySyncRecoverable = 0;
+  let manualInvestigationRequired = 0;
 
   for (const order of orders) {
     const marker = order?.smartsheet_create_attempt;
@@ -61,6 +63,8 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
       || (orderRowId && (linkCounts.get(orderRowId) || 0) > 1);
     let category;
     let reason;
+    let recoveryState = 'manual_investigation';
+    let recommendedAction = 'Manual Smartsheet investigation required. Do not retry creation until permanent-ID evidence is reconciled.';
 
     if (markerSheetId !== sheetId || (orderSheetId && orderSheetId !== sheetId)) {
       category = 'ambiguous';
@@ -85,9 +89,25 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
     ) {
       category = 'verified_link';
       reason = 'The marker, active Base44 Order and existing Smartsheet row share the same permanent sheet and row IDs.';
+      recoveryState = 'none';
+      recommendedAction = 'No recovery action is required.';
     } else {
       category = 'ambiguous';
       reason = 'A row with the recorded permanent ID exists, but the creation marker or Base44 link is not fully verified.';
+    }
+
+    const structurallyRecoverable = Boolean(recoverableOrderSmartsheetCreate(order, sheetId));
+    if (
+      category === 'ambiguous' &&
+      structurallyRecoverable &&
+      order?.smartsheet_pending_local_sync === true &&
+      remoteIds.has(markerRowId)
+    ) {
+      recoveryState = 'retry_sync_recoverable';
+      recommendedAction = 'Retry Sync can safely attempt recovery. It will re-read this exact permanent Smartsheet row and verify the durable create snapshot before linking; it will not send another POST.';
+      retrySyncRecoverable++;
+    } else if (category !== 'verified_link' && orderSmartsheetCreateNeedsReview(order)) {
+      manualInvestigationRequired++;
     }
 
     counts[category]++;
@@ -108,6 +128,9 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
         remote_row_present: markerSheetId === sheetId && knownRowId
           ? remoteIds.has(knownRowId) : null,
         marker_needs_review: orderSmartsheetCreateNeedsReview(order),
+        recovery_state: recoveryState,
+        recommended_action: recommendedAction,
+        retry_sync_recoverable: recoveryState === 'retry_sync_recoverable',
         reason,
       });
     }
@@ -119,6 +142,8 @@ export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
     total_orders_examined: orders.length,
     total_markers: totalMarkers,
     unresolved_markers: unresolvedMarkers,
+    retry_sync_recoverable: retrySyncRecoverable,
+    manual_investigation_required: manualInvestigationRequired,
     smartsheet_rows_examined: sheetRows.length,
     counts,
     records_by_category: records,

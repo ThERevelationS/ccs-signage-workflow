@@ -2,7 +2,7 @@ import { loadRuleEvidence, assertEvidenceCurrent, validateRuleCandidates, extrac
   RULE_EVIDENCE_METHOD, evidenceDigest, evidenceEqual, evidenceError } from './permittingRuleEvidence.mjs';
 
 const archiveIdentity=row=>JSON.stringify([row.id,row.archived_file_url,row.file_hash_sha256,row.file_bytes,row.jurisdiction_id]);
-const summarize=run=>({method:run.method,provider_control:run.method==='provider-control-v1',success:run.status==='complete',run_id:run.id,status:run.status,source_document_id:run.source_document_id,
+const summarize=run=>({method:run.method,provider_control:run.method.startsWith('provider-'),success:run.status==='complete',run_id:run.id,status:run.status,source_document_id:run.source_document_id,
   candidates:run.candidates || [],candidates_staged:(run.candidates || []).length,rejected:run.rejected || [],error:run.error || '',
   rules_created:0,docs_processed:1,llm_attempts:run.llm_attempts || 0});
 
@@ -61,7 +61,7 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
   const unit=await loadRuleEvidence(options);
   if (dryRun) return {success:true,dry_run:true,source_document_id:unit.source.id,start_page:startPage,page_count:pageCount,
     snapshot:unit.snapshot,snapshot_sha256:unit.snapshot_sha256,evidence:unit.evidence.pages,context_characters:unit.text.length,llm_calls:0,rules_created:0};
-  const method=providerControl?'provider-control-v1':RULE_EVIDENCE_METHOD;
+  const method=providerControl==='schema'?'provider-schema-control-v1':providerControl?'provider-control-v1':RULE_EVIDENCE_METHOD;
   const key='manual-rule-evidence:'+requestId;
   let run=await findRun(runEntity,key,unit,method);
   const old=unit.source.rule_extraction_state || {};
@@ -105,7 +105,7 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
     if (run.status!=='reserved' || run.llm_attempts!==0) throw evidenceError('This request already reserved an LLM attempt.');
     run=await writeExtractionRun(runEntity,run,{status:'llm_started',claim_token:token,llm_attempts:1,llm_started_at:new Date(now()).toISOString()});
     let response;
-    try {response=await boundedLlm(invokeLlm,providerControl?{prompt:'Reply with the word OK.'}:{prompt:extractionPrompt(unit),response_json_schema:EXTRACTION_RESPONSE_SCHEMA,add_context_from_internet:false});}
+    try {response=await boundedLlm(invokeLlm,providerControl==='schema'?{prompt:'Return an object with an empty rules array.',response_json_schema:EXTRACTION_RESPONSE_SCHEMA}:providerControl?{prompt:'Reply with the word OK.'}:{prompt:extractionPrompt(unit),response_json_schema:EXTRACTION_RESPONSE_SCHEMA,add_context_from_internet:false});}
     catch(error) {
       // Never log the SDK error object: it may include credentials/request text.
       const providerCode=/\b(INVALID_ARGUMENT|RESOURCE_EXHAUSTED|UNAVAILABLE|PERMISSION_DENIED|UNAUTHENTICATED|DEADLINE_EXCEEDED)\b/.exec(String(error?.message || ''))?.[1] || 'unknown';
