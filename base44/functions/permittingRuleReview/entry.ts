@@ -66,7 +66,8 @@ Deno.serve(async req => {
       const fields=['id','relation_key','sequence','action','role','role_label','coverage_area','coverage_kind',
         'office_snapshot','source_document_id','html_evidence_id','role_proof','requested_by','requested_at',
         'verified','state','reason','is_current_review'];
-      return Response.json({...data,items:data.items.map(item=>Object.fromEntries(fields.filter(key=>Object.hasOwn(item,key)).map(key=>[key,item[key]]))),
+      return Response.json({...data,items:data.items.map(item=>({...Object.fromEntries(fields.filter(key=>Object.hasOwn(item,key)).map(key=>[key,item[key]])),
+          official_url:item.source_snapshot?.official_url || null,archived_file_url:item.source_snapshot?.archived_file_url || null})),
         profile_updated_date:after.updated_date,checked_at:new Date().toISOString(),rules_created:0});
     }
     if (action==='retrieve_evidence') {

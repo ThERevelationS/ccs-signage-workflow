@@ -1,3 +1,4 @@
+import LocalityOfficeEvidence from "./LocalityOfficeEvidence";
 import LocalitySubmissionContext from "./LocalitySubmissionContext";
 import { useState } from "react";
 import PermittingApprovedEvidenceSearch from "@/components/admin/PermittingApprovedEvidenceSearch";
@@ -12,6 +13,7 @@ function EvidenceDisclosure({ jurisdiction, isAdmin }) {
     <div className="min-w-0 space-y-3 p-3 pt-0 [overflow-wrap:anywhere]">
       <p className="text-sm text-gray-700">Check cited sign rules and reviewed submission instructions separately from research summaries. A locality match alone does not establish which rules apply to the job address.</p>
       {expanded && <LocalitySubmissionContext jurisdiction={jurisdiction} />}
+      {expanded && isAdmin && <LocalityOfficeEvidence jurisdictionId={jurisdiction.id} />}
       {expanded && (isAdmin
         ? <PermittingApprovedEvidenceSearch jurisdictionId={jurisdiction.id} jurisdictionName={jurisdiction.name} />
         : <p className="text-sm text-gray-700">An administrator must load and verify approved evidence. Use the official documents below and confirm the requirements with the responsible office.</p>)}
