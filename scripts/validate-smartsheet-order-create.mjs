@@ -19,8 +19,15 @@ for (const body of [
 console.log('PASS Smartsheet result array/object parsed only when exactly one safe ID is confirmed');
 
 function fixture(initial = {}) {
-  let stored = { id: 'order-123', customer_name: 'Example', ...initial };
+  let revision = 0;
+  const stamp = () => `2026-09-24T18:00:${String(revision).padStart(2, '0')}.000Z`;
+  let stored = { id: 'order-123', customer_name: 'Example', updated_date: stamp(), ...initial };
   const calls = [];
+  const applyPatch = (patch) => {
+    revision++;
+    stored = { ...stored, ...structuredClone(patch), updated_date: stamp() };
+    return structuredClone(stored);
+  };
   const entity = {
     async get(id) {
       assert.equal(id, 'order-123');
@@ -29,21 +36,28 @@ function fixture(initial = {}) {
     },
     async update(id, patch) {
       assert.equal(id, 'order-123');
-      calls.push(patch.smartsheet_row_id ? 'LINK' : 'RESERVE');
-      stored = { ...stored, ...structuredClone(patch) };
-      return structuredClone(stored);
+      calls.push(patch?.smartsheet_create_attempt?.status === 'created_unlinked' ? 'RECORD_ROW_ID' : 'RESERVE');
+      return applyPatch(patch);
+    },
+    async updateMany(query, update) {
+      assert.equal(query.id, 'order-123');
+      calls.push('LINK_CAS');
+      if (query.updated_date && query.updated_date !== stored.updated_date) return { updated: 0 };
+      applyPatch(update?.$set || {});
+      return { updated: 1 };
     },
   };
-  const args = (postRow) => ({
+  const args = (postRow, verifyCreatedRow = async () => true) => ({
     entity,
     record: { id: 'order-123' },
     sheetId: '123456',
     postRow,
     makeSnapshot: (record) => ({ '111': record.customer_name }),
+    verifyCreatedRow,
     attemptId: 'attempt-test',
     startedAt: '2026-09-24T18:00:00.000Z',
   });
-  return { entity, args, calls, getStored: () => stored };
+  return { entity, args, calls, getStored: () => stored, setStored: (patch) => applyPatch(patch) };
 }
 
 {
@@ -57,20 +71,21 @@ function fixture(initial = {}) {
     assert.equal(state.getStored().smartsheet_create_attempt.attempt_id, 'attempt-test');
     return success();
   }));
-  assert.deepEqual(result, { rowId: '987654321', recordId: 'order-123' });
+  assert.deepEqual(result, { rowId: '987654321', recordId: 'order-123', recovered: false, newerLocalEditsRemain: false });
   assert.equal(posts, 1);
   assert.equal(state.getStored().smartsheet_row_id, '987654321');
   assert.deepEqual(state.getStored().smartsheet_sync_snapshot, { '111': 'Example' });
   assert.equal(state.getStored().smartsheet_pending_local_sync, false);
   assert.equal(state.getStored().smartsheet_create_attempt.status, 'linked');
   assert.equal(orderSmartsheetCreateNeedsReview(state.getStored()), false);
-  assert.deepEqual(state.calls.slice(0, 4), ['GET', 'RESERVE', 'GET', 'LINK']);
+  assert.equal(state.calls.includes('RECORD_ROW_ID'), true);
+  assert.equal(state.calls.includes('LINK_CAS'), true);
   await assert.rejects(
     createOrderSmartsheetRowWithGuard(state.args(async () => { posts++; return success(); })),
     /already has a Smartsheet identity/,
   );
   assert.equal(posts, 1);
-  console.log('PASS explicit new-Order create clears durable pending marker only after verified permanent link and snapshot');
+  console.log('PASS explicit new-Order create durably records the permanent row ID before verified CAS link finalization');
 }
 
 {
