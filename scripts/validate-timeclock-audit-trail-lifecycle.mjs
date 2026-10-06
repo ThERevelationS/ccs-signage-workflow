@@ -244,6 +244,12 @@ assert.ok(timestampBoundaryCommit > repeatedCursorGuard && pageAccumulation > ti
 assert.ok(terminalCompletenessGuard > pageAccumulation && cursorContinuationRequest > terminalCompletenessGuard, 'authoritative pagination completion must be controlled by has_more/cursor state rather than page length');
 assert.match(source, /const seenCursors = new Set\(\)/);
 assert.match(source, /const seenPageAuditIds = new Set\(\)/);
+const initialIntegrityRequest = source.indexOf('let page = await TimeClockAudit.filter({ time_entry_id: scopedId }, { sort: "-server_timestamp", limit: 5000 })');
+const integrityLoopStart = source.indexOf('while (true)', initialIntegrityRequest);
+const initialIntegrityFreshnessGuard = source.indexOf('if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;', integrityLoopStart);
+const firstPageStructureValidation = source.indexOf('if (!page || typeof page !== "object" || Array.isArray(page))', integrityLoopStart);
+const firstPageItemsRead = source.indexOf('const pageItems = page.items;', integrityLoopStart);
+assert.ok(initialIntegrityRequest >= 0 && integrityLoopStart > initialIntegrityRequest && initialIntegrityFreshnessGuard > integrityLoopStart && firstPageStructureValidation > initialIntegrityFreshnessGuard && firstPageItemsRead > firstPageStructureValidation, 'initial authoritative response must prove request freshness before page parsing or pagination-state mutation');
 assert.match(source, /const repeatedPageAuditIds = \[\.\.\.new Set\(pageAuditIds\.filter\(\(id\) => seenPageAuditIds\.has\(id\)\)\)\]/);
 assert.match(source, /pagination repeated .* immutable audit record/);
 assert.match(source, /const newPageAuditIds = pageAuditIds\.filter\(\(id\) => !seenPageAuditIds\.has\(id\)\)/);
