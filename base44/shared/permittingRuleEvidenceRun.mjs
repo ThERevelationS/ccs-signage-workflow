@@ -2,7 +2,7 @@ import { loadRuleEvidence, assertEvidenceCurrent, validateRuleCandidates, extrac
   RULE_EVIDENCE_METHOD, evidenceDigest, evidenceEqual, evidenceError } from './permittingRuleEvidence.mjs';
 
 const archiveIdentity=row=>JSON.stringify([row.id,row.archived_file_url,row.file_hash_sha256,row.file_bytes,row.jurisdiction_id]);
-const summarize=run=>({success:run.status==='complete',run_id:run.id,status:run.status,source_document_id:run.source_document_id,
+const summarize=run=>({method:run.method,provider_control:run.method==='provider-control-v1',success:run.status==='complete',run_id:run.id,status:run.status,source_document_id:run.source_document_id,
   candidates:run.candidates || [],candidates_staged:(run.candidates || []).length,rejected:run.rejected || [],error:run.error || '',
   rules_created:0,docs_processed:1,llm_attempts:run.llm_attempts || 0});
 
@@ -36,13 +36,13 @@ export async function writeExtractionRun(entity,snapshot,fields) {
     throw error;
   }
 }
-async function findRun(entity,key,unit) {
+async function findRun(entity,key,unit,method=RULE_EVIDENCE_METHOD) {
   const rows=await entity.filter({request_key:key},'created_date',2,0);
   if (!Array.isArray(rows) || rows.length>1) throw evidenceError('Extraction request identity is ambiguous.');
   const run=rows[0];
   if (run && (run.source_document_id!==unit.source.id || run.snapshot_sha256!==unit.snapshot_sha256 ||
       run.start_page!==unit.start_page || run.page_count!==unit.page_count || !evidenceEqual(run.snapshot,unit.snapshot) ||
-      run.method!==RULE_EVIDENCE_METHOD)) throw evidenceError('Request id already belongs to different source/page evidence.');
+      run.method!==method)) throw evidenceError('Request id already belongs to different source/page evidence.');
   if (run?.status==='complete' && run.candidates_sha256!==await evidenceDigest(run.candidates || []))
     throw evidenceError('Staged candidate evidence changed and requires review.');
   return run;
@@ -55,14 +55,15 @@ async function boundedLlm(invoke,args) {
 }
 
 export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,invokeLlm,sourceDocumentId,startPage=1,pageCount=1,
-    requestId,dryRun=false,requestedBy,normalizeSignType,token=crypto.randomUUID(),now=()=>Date.now()}) {
+    requestId,dryRun=false,requestedBy,normalizeSignType,providerControl=false,token=crypto.randomUUID(),now=()=>Date.now()}) {
   if (!dryRun && !/^[a-zA-Z0-9_-]{16,100}$/.test(requestId || '')) throw evidenceError('A stable manual request id is required.',400);
   const options={sourceEntity,segmentEntity,sourceDocumentId,startPage,pageCount};
   const unit=await loadRuleEvidence(options);
   if (dryRun) return {success:true,dry_run:true,source_document_id:unit.source.id,start_page:startPage,page_count:pageCount,
     snapshot:unit.snapshot,snapshot_sha256:unit.snapshot_sha256,evidence:unit.evidence.pages,context_characters:unit.text.length,llm_calls:0,rules_created:0};
+  const method=providerControl?'provider-control-v1':RULE_EVIDENCE_METHOD;
   const key='manual-rule-evidence:'+requestId;
-  let run=await findRun(runEntity,key,unit);
+  let run=await findRun(runEntity,key,unit,method);
   const old=unit.source.rule_extraction_state || {};
   if (run && run.status!=='reserved') {
     if (['complete','failed','llm_uncertain'].includes(run.status) && old.request_key===key && old.status!==run.status) {
@@ -88,10 +89,10 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
         return {success:false,status:'run_uncertain',request_id:requestId,llm_calls:0,error:'No matching run is visible; the prior create is not repeated.'};
       }
       const data={request_key:key,request_id:requestId,source_document_id:unit.source.id,jurisdiction_id:unit.source.jurisdiction_id,
-        start_page:startPage,page_count:pageCount,method:RULE_EVIDENCE_METHOD,snapshot:unit.snapshot,snapshot_sha256:unit.snapshot_sha256,
+        start_page:startPage,page_count:pageCount,method,snapshot:unit.snapshot,snapshot_sha256:unit.snapshot_sha256,
         status:'reserved',claim_token:token,lease_expires_at:ledger.lease_expires_at,llm_attempts:0,requested_by:requestedBy || '',candidates:[],rejected:[]};
       try {await runEntity.create(data);} catch { /* Inspect exact identity once; never repeat create. */ }
-      run=await findRun(runEntity,key,unit);
+      run=await findRun(runEntity,key,unit,method);
       if (!run) {
         const uncertain={...ledger,status:'run_uncertain',lease_expires_at:''};
         await writeSourceLedger(sourceEntity,unit.source,ledger,uncertain);
@@ -104,7 +105,7 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
     if (run.status!=='reserved' || run.llm_attempts!==0) throw evidenceError('This request already reserved an LLM attempt.');
     run=await writeExtractionRun(runEntity,run,{status:'llm_started',claim_token:token,llm_attempts:1,llm_started_at:new Date(now()).toISOString()});
     let response;
-    try {response=await boundedLlm(invokeLlm,{prompt:extractionPrompt(unit),response_json_schema:EXTRACTION_RESPONSE_SCHEMA,add_context_from_internet:false});}
+    try {response=await boundedLlm(invokeLlm,providerControl?{prompt:'Reply with the word OK.'}:{prompt:extractionPrompt(unit),response_json_schema:EXTRACTION_RESPONSE_SCHEMA,add_context_from_internet:false});}
     catch(error) {
       // Never log the SDK error object: it may include credentials/request text.
       const providerCode=/\b(INVALID_ARGUMENT|RESOURCE_EXHAUSTED|UNAVAILABLE|PERMISSION_DENIED|UNAUTHENTICATED|DEADLINE_EXCEEDED)\b/.exec(String(error?.message || ''))?.[1] || 'unknown';
@@ -116,7 +117,7 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
       await writeSourceLedger(sourceEntity,unit.source,ledger,{...ledger,status:run.status,lease_expires_at:''});
       return {...summarize(run),llm_calls:1};
     }
-    const validated=await validateRuleCandidates(unit,response,{extractionDate:new Date(now()).toISOString(),normalizeSignType});
+    const validated=providerControl?{candidates:[],rejected:[]}:await validateRuleCandidates(unit,response,{extractionDate:new Date(now()).toISOString(),normalizeSignType});
     await assertEvidenceCurrent(options,unit);
     run=await writeExtractionRun(runEntity,run,{status:'complete',...validated,candidates_sha256:await evidenceDigest(validated.candidates),
       error:'',completed_at:new Date(now()).toISOString(),lease_expires_at:''});
