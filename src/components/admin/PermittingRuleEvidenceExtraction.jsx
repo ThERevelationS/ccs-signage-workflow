@@ -91,12 +91,15 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
         if (!data.success) throw Error(data.error || "Preview failed.");
         setPreview(data);
       } else if (action === "get_run" || action === "open_saved") {
+        if (!data.success) throw Error(data.error || "Could not load the saved analysis.");
         const run = data.run;
         if (run && (run.source_document_id !== sourceId || run.start_page !== page || run.page_count !== count))
           throw Error("Stored request belongs to another evidence selection.");
         if (action === "open_saved" && !run) throw Error("No saved analysis matches this request ID.");
         if (run && run.method !== "literal-page-v1") throw Error("This request is a diagnostic receipt, not a page analysis.");
-        if (run && action === "open_saved") { saveRequest(key, id); setRequestId(id); setHandoff(null); }
+        if (run && action === "open_saved") { saveRequest(key, id); setRequestId(id); }
+        setHandoff(null);
+        setReceipts({});
         setResult(run ? { ...run, run_id: run.id } : { status: "not_found", candidates: [],
           error: "No run is visible. Keep this request id; an uncertain create must be reconciled before another analysis." });
         if (run) setReceipts(Object.fromEntries(Object.entries(run.import_receipts || {}).map(([index, receipt]) => [index, receipt.rule_id])));
