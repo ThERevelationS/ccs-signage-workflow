@@ -10,12 +10,12 @@
   ],
   "queue": {
     "review_action_counts": {
-      "missing_or_placeholder_parent_county": 98,
-      "name_type_county_candidate_supported": 623,
-      "ambiguous_identity_requires_review": 115,
+      "name_type_county_candidate_supported": 682,
+      "ambiguous_identity_requires_review": 144,
       "listed_county_requires_review": 56,
       "possible_type_correction_requires_identity_evidence": 171,
-      "no_active_exact_name_candidate": 211
+      "no_active_exact_name_candidate": 211,
+      "missing_or_placeholder_parent_county": 10
     },
     "rows": [
       {
@@ -29,7 +29,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39001",
@@ -38,7 +38,7 @@
             "county_names": [
               "Adams County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3902100212",
@@ -131,8 +131,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39001",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -150,7 +150,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39003",
@@ -159,7 +159,7 @@
             "county_names": [
               "Allen County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903701294",
@@ -198,8 +198,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39003",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -217,7 +217,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39005",
@@ -226,7 +226,7 @@
             "county_names": [
               "Ashland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3902568",
@@ -235,7 +235,7 @@
             "county_names": [
               "Ashland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -257,7 +257,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39007",
@@ -266,7 +266,7 @@
             "county_names": [
               "Ashtabula County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3902638",
@@ -275,7 +275,7 @@
             "county_names": [
               "Ashtabula County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900702652",
@@ -284,7 +284,7 @@
             "county_names": [
               "Ashtabula County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -306,7 +306,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39009",
@@ -315,7 +315,7 @@
             "county_names": [
               "Athens County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3902736",
@@ -324,7 +324,7 @@
             "county_names": [
               "Athens County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900902750",
@@ -333,7 +333,7 @@
             "county_names": [
               "Athens County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3906702764",
@@ -364,7 +364,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39011",
@@ -373,7 +373,7 @@
             "county_names": [
               "Auglaize County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900302988",
@@ -394,8 +394,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39011",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -413,7 +413,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39013",
@@ -422,7 +422,7 @@
             "county_names": [
               "Belmont County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3905312",
@@ -431,7 +431,7 @@
             "county_names": [
               "Belmont County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -453,7 +453,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39015",
@@ -462,7 +462,7 @@
             "county_names": [
               "Brown County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901909400",
@@ -537,8 +537,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39015",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -556,7 +556,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39017",
@@ -565,7 +565,7 @@
             "county_names": [
               "Butler County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3910632",
@@ -631,8 +631,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39017",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -650,7 +650,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39019",
@@ -659,7 +659,7 @@
             "county_names": [
               "Carroll County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3912252",
@@ -680,8 +680,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39019",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -699,7 +699,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39021",
@@ -708,11 +708,11 @@
             "county_names": [
               "Champaign County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39021",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -730,7 +730,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39023",
@@ -739,7 +739,7 @@
             "county_names": [
               "Clark County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901515224",
@@ -778,8 +778,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39023",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -797,7 +797,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39025",
@@ -806,11 +806,11 @@
             "county_names": [
               "Clermont County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39025",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -828,7 +828,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39027",
@@ -837,7 +837,7 @@
             "county_names": [
               "Clinton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3916182",
@@ -912,8 +912,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39027",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -931,7 +931,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39029",
@@ -940,7 +940,7 @@
             "county_names": [
               "Columbiana County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3917036",
@@ -950,7 +950,7 @@
               "Columbiana County",
               "Mahoning County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -972,7 +972,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39031",
@@ -981,7 +981,7 @@
             "county_names": [
               "Coshocton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3918868",
@@ -990,7 +990,7 @@
             "county_names": [
               "Coshocton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -1012,7 +1012,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39033",
@@ -1021,7 +1021,7 @@
             "county_names": [
               "Crawford County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903119218",
@@ -1042,8 +1042,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39033",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1061,7 +1061,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39035",
@@ -1070,11 +1070,11 @@
             "county_names": [
               "Cuyahoga County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39035",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1092,7 +1092,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39037",
@@ -1101,11 +1101,11 @@
             "county_names": [
               "Darke County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39037",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1123,7 +1123,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39039",
@@ -1132,7 +1132,7 @@
             "county_names": [
               "Defiance County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3921308",
@@ -1141,7 +1141,7 @@
             "county_names": [
               "Defiance County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903921322",
@@ -1150,7 +1150,7 @@
             "county_names": [
               "Defiance County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -1172,7 +1172,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39041",
@@ -1181,7 +1181,7 @@
             "county_names": [
               "Delaware County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3921434",
@@ -1190,7 +1190,7 @@
             "county_names": [
               "Delaware County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903921420",
@@ -1208,7 +1208,7 @@
             "county_names": [
               "Delaware County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3906321462",
@@ -1239,7 +1239,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39043",
@@ -1248,7 +1248,7 @@
             "county_names": [
               "Erie County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3912325578",
@@ -1260,8 +1260,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39043",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1279,7 +1279,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39045",
@@ -1288,7 +1288,7 @@
             "county_names": [
               "Fairfield County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3925970",
@@ -1364,8 +1364,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39045",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1383,7 +1383,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39047",
@@ -1392,7 +1392,7 @@
             "county_names": [
               "Fayette County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3926768",
@@ -1413,8 +1413,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39047",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1432,7 +1432,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39049",
@@ -1441,7 +1441,7 @@
             "county_names": [
               "Franklin County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3928476",
@@ -1513,7 +1513,7 @@
             "county_names": [
               "Franklin County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3905128294",
@@ -1661,7 +1661,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39051",
@@ -1670,7 +1670,7 @@
             "county_names": [
               "Fulton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3929050",
@@ -1688,7 +1688,7 @@
             "county_names": [
               "Fulton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -1710,7 +1710,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39053",
@@ -1719,11 +1719,11 @@
             "county_names": [
               "Gallia County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39053",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1741,7 +1741,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39055",
@@ -1750,11 +1750,11 @@
             "county_names": [
               "Geauga County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39055",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1772,7 +1772,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39057",
@@ -1781,7 +1781,7 @@
             "county_names": [
               "Greene County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3915532046",
@@ -1793,8 +1793,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39057",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1812,7 +1812,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39059",
@@ -1821,11 +1821,11 @@
             "county_names": [
               "Guernsey County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39059",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1843,7 +1843,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39061",
@@ -1852,7 +1852,7 @@
             "county_names": [
               "Hamilton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3933012",
@@ -1900,8 +1900,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39061",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1919,7 +1919,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39063",
@@ -1928,11 +1928,11 @@
             "county_names": [
               "Hancock County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39063",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1950,7 +1950,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39065",
@@ -1959,11 +1959,11 @@
             "county_names": [
               "Hardin County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39065",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -1981,7 +1981,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39067",
@@ -1990,7 +1990,7 @@
             "county_names": [
               "Harrison County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3933838",
@@ -2173,8 +2173,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39067",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -2192,7 +2192,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39069",
@@ -2201,7 +2201,7 @@
             "county_names": [
               "Henry County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3917334986",
@@ -2213,8 +2213,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39069",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -2232,7 +2232,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39071",
@@ -2241,7 +2241,7 @@
             "county_names": [
               "Highland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3935210",
@@ -2250,7 +2250,7 @@
             "county_names": [
               "Highland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903935196",
@@ -2290,7 +2290,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39073",
@@ -2299,7 +2299,7 @@
             "county_names": [
               "Hocking County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3904535812",
@@ -2311,8 +2311,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39073",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -2330,7 +2330,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39075",
@@ -2339,7 +2339,7 @@
             "county_names": [
               "Holmes County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903335980",
@@ -2351,8 +2351,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39075",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -2370,7 +2370,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39077",
@@ -2379,7 +2379,7 @@
             "county_names": [
               "Huron County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3937016",
@@ -2400,8 +2400,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39077",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -2419,7 +2419,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39079",
@@ -2428,7 +2428,7 @@
             "county_names": [
               "Jackson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3937842",
@@ -2437,7 +2437,7 @@
             "county_names": [
               "Jackson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900337646",
@@ -2572,7 +2572,7 @@
             "county_names": [
               "Jackson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3908337870",
@@ -2792,7 +2792,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39081",
@@ -2801,7 +2801,7 @@
             "county_names": [
               "Jefferson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3938500",
@@ -3029,8 +3029,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39081",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3048,7 +3048,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39083",
@@ -3057,7 +3057,7 @@
             "county_names": [
               "Knox County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3902940824",
@@ -3105,8 +3105,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39083",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3124,7 +3124,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39085",
@@ -3133,7 +3133,7 @@
             "county_names": [
               "Lake County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900541272",
@@ -3172,8 +3172,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39085",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3191,7 +3191,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39087",
@@ -3200,7 +3200,7 @@
             "county_names": [
               "Lawrence County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3908742154",
@@ -3209,7 +3209,7 @@
             "county_names": [
               "Lawrence County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3915142168",
@@ -3258,7 +3258,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39089",
@@ -3267,7 +3267,7 @@
             "county_names": [
               "Licking County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3908943456",
@@ -3276,7 +3276,7 @@
             "county_names": [
               "Licking County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911943470",
@@ -3307,7 +3307,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39091",
@@ -3316,7 +3316,7 @@
             "county_names": [
               "Logan County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3944632",
@@ -3337,8 +3337,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39091",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3356,7 +3356,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39093",
@@ -3365,7 +3365,7 @@
             "county_names": [
               "Lorain County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3944856",
@@ -3374,7 +3374,7 @@
             "county_names": [
               "Lorain County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -3396,7 +3396,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39095",
@@ -3405,7 +3405,7 @@
             "county_names": [
               "Lucas County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3945276",
@@ -3417,8 +3417,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39095",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3436,7 +3436,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39097",
@@ -3445,7 +3445,7 @@
             "county_names": [
               "Madison County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3946480",
@@ -3637,8 +3637,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39097",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3656,7 +3656,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39099",
@@ -3665,11 +3665,11 @@
             "county_names": [
               "Mahoning County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39099",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3687,7 +3687,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39101",
@@ -3696,7 +3696,7 @@
             "county_names": [
               "Marion County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3947754",
@@ -3705,7 +3705,7 @@
             "county_names": [
               "Marion County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900347656",
@@ -3777,7 +3777,7 @@
             "county_names": [
               "Marion County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3910747782",
@@ -3835,7 +3835,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39103",
@@ -3844,7 +3844,7 @@
             "county_names": [
               "Medina County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3948790",
@@ -3853,7 +3853,7 @@
             "county_names": [
               "Medina County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3910348804",
@@ -3862,7 +3862,7 @@
             "county_names": [
               "Medina County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -3884,7 +3884,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39105",
@@ -3893,7 +3893,7 @@
             "county_names": [
               "Meigs County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900148888",
@@ -3914,8 +3914,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39105",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3933,7 +3933,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39107",
@@ -3942,11 +3942,11 @@
             "county_names": [
               "Mercer County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39107",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -3964,7 +3964,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39109",
@@ -3973,7 +3973,7 @@
             "county_names": [
               "Miami County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3902549322",
@@ -4021,8 +4021,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39109",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -4040,7 +4040,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39111",
@@ -4049,7 +4049,7 @@
             "county_names": [
               "Monroe County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3951310",
@@ -4260,8 +4260,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39111",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -4279,7 +4279,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39113",
@@ -4288,7 +4288,7 @@
             "county_names": [
               "Montgomery County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3951716",
@@ -4327,8 +4327,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39113",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -4346,7 +4346,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39115",
@@ -4355,7 +4355,7 @@
             "county_names": [
               "Morgan County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900752066",
@@ -4400,7 +4400,7 @@
             "county_names": [
               "Morgan County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3914552150",
@@ -4431,7 +4431,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39117",
@@ -4440,7 +4440,7 @@
             "county_names": [
               "Morrow County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3952374",
@@ -4452,8 +4452,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39117",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -4471,7 +4471,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39119",
@@ -4480,7 +4480,7 @@
             "county_names": [
               "Muskingum County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911953438",
@@ -4489,7 +4489,7 @@
             "county_names": [
               "Muskingum County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3916753452",
@@ -4520,7 +4520,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39121",
@@ -4529,7 +4529,7 @@
             "county_names": [
               "Noble County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901155986",
@@ -4556,7 +4556,7 @@
             "county_names": [
               "Noble County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -4578,7 +4578,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39123",
@@ -4587,7 +4587,7 @@
             "county_names": [
               "Ottawa County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3958982",
@@ -4608,8 +4608,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39123",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -4627,7 +4627,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39125",
@@ -4636,7 +4636,7 @@
             "county_names": [
               "Paulding County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3961252",
@@ -4645,7 +4645,7 @@
             "county_names": [
               "Paulding County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3912561266",
@@ -4654,7 +4654,7 @@
             "county_names": [
               "Paulding County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -4676,7 +4676,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39127",
@@ -4685,7 +4685,7 @@
             "county_names": [
               "Perry County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3961882",
@@ -4931,8 +4931,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39127",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -4950,7 +4950,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39129",
@@ -4959,7 +4959,7 @@
             "county_names": [
               "Pickaway County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3912962484",
@@ -4968,7 +4968,7 @@
             "county_names": [
               "Pickaway County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -4990,7 +4990,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39131",
@@ -4999,7 +4999,7 @@
             "county_names": [
               "Pike County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901562596",
@@ -5074,8 +5074,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39131",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5093,7 +5093,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39133",
@@ -5102,7 +5102,7 @@
             "county_names": [
               "Portage County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3964108",
@@ -5141,8 +5141,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39133",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5160,7 +5160,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39135",
@@ -5169,11 +5169,11 @@
             "county_names": [
               "Preble County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39135",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5191,7 +5191,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39137",
@@ -5200,11 +5200,11 @@
             "county_names": [
               "Putnam County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39137",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5222,7 +5222,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39139",
@@ -5231,7 +5231,7 @@
             "county_names": [
               "Richland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900366614",
@@ -5342,8 +5342,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39139",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5361,7 +5361,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39141",
@@ -5370,7 +5370,7 @@
             "county_names": [
               "Ross County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901768616",
@@ -5400,8 +5400,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39141",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5419,7 +5419,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39143",
@@ -5428,7 +5428,7 @@
             "county_names": [
               "Sandusky County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3970380",
@@ -5464,7 +5464,7 @@
             "county_names": [
               "Sandusky County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -5486,7 +5486,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39145",
@@ -5495,7 +5495,7 @@
             "county_names": [
               "Scioto County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3904170842",
@@ -5543,8 +5543,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39145",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5562,7 +5562,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39147",
@@ -5571,7 +5571,7 @@
             "county_names": [
               "Seneca County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911171349",
@@ -5598,7 +5598,7 @@
             "county_names": [
               "Seneca County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -5620,7 +5620,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39149",
@@ -5629,7 +5629,7 @@
             "county_names": [
               "Shelby County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3972102",
@@ -5641,8 +5641,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39149",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5660,7 +5660,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39151",
@@ -5669,11 +5669,11 @@
             "county_names": [
               "Stark County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39151",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5691,7 +5691,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39153",
@@ -5700,7 +5700,7 @@
             "county_names": [
               "Summit County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911175497",
@@ -5712,8 +5712,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39153",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5731,7 +5731,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39155",
@@ -5740,7 +5740,7 @@
             "county_names": [
               "Trumbull County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900777686",
@@ -5752,8 +5752,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39155",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -5771,7 +5771,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39157",
@@ -5780,7 +5780,7 @@
             "county_names": [
               "Tuscarawas County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3977924",
@@ -5789,7 +5789,7 @@
             "county_names": [
               "Tuscarawas County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903177896",
@@ -5829,7 +5829,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39159",
@@ -5838,7 +5838,7 @@
             "county_names": [
               "Union County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3978470",
@@ -6073,7 +6073,7 @@
             "county_names": [
               "Union County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3916178596",
@@ -6113,7 +6113,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39161",
@@ -6122,7 +6122,7 @@
             "county_names": [
               "Van Wert County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3979562",
@@ -6131,7 +6131,7 @@
             "county_names": [
               "Van Wert County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -6153,7 +6153,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39163",
@@ -6162,7 +6162,7 @@
             "county_names": [
               "Vinton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3980178",
@@ -6180,7 +6180,7 @@
             "county_names": [
               "Vinton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -6202,7 +6202,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39165",
@@ -6211,7 +6211,7 @@
             "county_names": [
               "Warren County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3980892",
@@ -6268,8 +6268,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39165",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -6287,7 +6287,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39167",
@@ -6296,7 +6296,7 @@
             "county_names": [
               "Washington County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901181074",
@@ -6686,8 +6686,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39167",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -6705,7 +6705,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39169",
@@ -6714,7 +6714,7 @@
             "county_names": [
               "Wayne County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3982334",
@@ -6903,7 +6903,7 @@
             "county_names": [
               "Wayne County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -6925,7 +6925,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39171",
@@ -6934,11 +6934,11 @@
             "county_names": [
               "Williams County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39171",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -6956,7 +6956,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39173",
@@ -6965,11 +6965,11 @@
             "county_names": [
               "Wood County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39173",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -6987,7 +6987,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39175",
@@ -6996,11 +6996,11 @@
             "county_names": [
               "Wyandot County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39175",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -47953,13 +47953,12 @@
   },
   "profiles": {
     "review_action_counts": {
-      "missing_or_placeholder_parent_county": 87,
-      "name_type_county_candidate_supported": 105,
+      "name_type_county_candidate_supported": 163,
       "generic_municipality_type_requires_review": 1,
+      "missing_or_placeholder_parent_county": 1,
       "possible_type_correction_requires_identity_evidence": 4,
-      "ambiguous_identity_requires_review": 11,
-      "no_active_exact_name_candidate": 8,
-      "listed_county_requires_review": 1
+      "ambiguous_identity_requires_review": 40,
+      "no_active_exact_name_candidate": 8
     },
     "rows": [
       {
@@ -47973,7 +47972,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39025",
@@ -47982,11 +47981,11 @@
             "county_names": [
               "Clermont County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39025",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -48139,7 +48138,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39061",
@@ -48148,7 +48147,7 @@
             "county_names": [
               "Hamilton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3933012",
@@ -48196,8 +48195,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39061",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -48957,7 +48956,7 @@
           "type": "county",
           "county": "INFORMATION NOT FOUND"
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39017",
@@ -48966,7 +48965,7 @@
             "county_names": [
               "Butler County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3910632",
@@ -49032,8 +49031,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39017",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -49051,7 +49050,7 @@
           "type": "county",
           "county": "INFORMATION NOT FOUND"
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39165",
@@ -49060,7 +49059,7 @@
             "county_names": [
               "Warren County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3980892",
@@ -49117,8 +49116,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39165",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -53379,7 +53378,7 @@
           "type": "county",
           "county": "INFORMATION NOT FOUND"
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39007",
@@ -53388,7 +53387,7 @@
             "county_names": [
               "Ashtabula County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3902638",
@@ -53397,7 +53396,7 @@
             "county_names": [
               "Ashtabula County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900702652",
@@ -53406,7 +53405,7 @@
             "county_names": [
               "Ashtabula County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -53428,7 +53427,7 @@
           "type": "county",
           "county": "N/A (this is the county)"
         },
-        "review_action": "listed_county_requires_review",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39005",
@@ -53437,7 +53436,7 @@
             "county_names": [
               "Ashland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3902568",
@@ -53446,7 +53445,7 @@
             "county_names": [
               "Ashland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -53468,7 +53467,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39011",
@@ -53477,7 +53476,7 @@
             "county_names": [
               "Auglaize County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900302988",
@@ -53498,8 +53497,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39011",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -53638,7 +53637,7 @@
           "type": "county",
           "county": "INFORMATION NOT FOUND"
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39009",
@@ -53647,7 +53646,7 @@
             "county_names": [
               "Athens County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3902736",
@@ -53656,7 +53655,7 @@
             "county_names": [
               "Athens County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900902750",
@@ -53665,7 +53664,7 @@
             "county_names": [
               "Athens County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3906702764",
@@ -53902,7 +53901,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39117",
@@ -53911,7 +53910,7 @@
             "county_names": [
               "Morrow County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3952374",
@@ -53923,8 +53922,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39117",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -53942,7 +53941,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39115",
@@ -53951,7 +53950,7 @@
             "county_names": [
               "Morgan County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900752066",
@@ -53996,7 +53995,7 @@
             "county_names": [
               "Morgan County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3914552150",
@@ -54027,7 +54026,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39113",
@@ -54036,7 +54035,7 @@
             "county_names": [
               "Montgomery County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3951716",
@@ -54075,8 +54074,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39113",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -54094,7 +54093,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39111",
@@ -54103,7 +54102,7 @@
             "county_names": [
               "Monroe County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3951310",
@@ -54314,8 +54313,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39111",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -54333,7 +54332,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39093",
@@ -54342,7 +54341,7 @@
             "county_names": [
               "Lorain County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3944856",
@@ -54351,7 +54350,7 @@
             "county_names": [
               "Lorain County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -54373,7 +54372,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39079",
@@ -54382,7 +54381,7 @@
             "county_names": [
               "Jackson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3937842",
@@ -54391,7 +54390,7 @@
             "county_names": [
               "Jackson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900337646",
@@ -54526,7 +54525,7 @@
             "county_names": [
               "Jackson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3908337870",
@@ -54746,7 +54745,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39071",
@@ -54755,7 +54754,7 @@
             "county_names": [
               "Highland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3935210",
@@ -54764,7 +54763,7 @@
             "county_names": [
               "Highland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903935196",
@@ -54804,7 +54803,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39069",
@@ -54813,7 +54812,7 @@
             "county_names": [
               "Henry County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3917334986",
@@ -54825,8 +54824,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39069",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -54844,7 +54843,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39015",
@@ -54853,7 +54852,7 @@
             "county_names": [
               "Brown County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901909400",
@@ -54928,8 +54927,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39015",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -54947,7 +54946,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39095",
@@ -54956,7 +54955,7 @@
             "county_names": [
               "Lucas County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3945276",
@@ -54968,8 +54967,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39095",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -54987,7 +54986,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39083",
@@ -54996,7 +54995,7 @@
             "county_names": [
               "Knox County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3902940824",
@@ -55044,8 +55043,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39083",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55063,7 +55062,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39077",
@@ -55072,7 +55071,7 @@
             "county_names": [
               "Huron County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3937016",
@@ -55093,8 +55092,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39077",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55112,7 +55111,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39075",
@@ -55121,7 +55120,7 @@
             "county_names": [
               "Holmes County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903335980",
@@ -55133,8 +55132,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39075",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55152,7 +55151,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39055",
@@ -55161,11 +55160,11 @@
             "county_names": [
               "Geauga County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39055",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55183,7 +55182,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39109",
@@ -55192,7 +55191,7 @@
             "county_names": [
               "Miami County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3902549322",
@@ -55240,8 +55239,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39109",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55259,7 +55258,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39107",
@@ -55268,11 +55267,11 @@
             "county_names": [
               "Mercer County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39107",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55290,7 +55289,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39105",
@@ -55299,7 +55298,7 @@
             "county_names": [
               "Meigs County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900148888",
@@ -55320,8 +55319,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39105",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55339,7 +55338,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39103",
@@ -55348,7 +55347,7 @@
             "county_names": [
               "Medina County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3948790",
@@ -55357,7 +55356,7 @@
             "county_names": [
               "Medina County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3910348804",
@@ -55366,7 +55365,7 @@
             "county_names": [
               "Medina County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -55388,7 +55387,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39101",
@@ -55397,7 +55396,7 @@
             "county_names": [
               "Marion County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3947754",
@@ -55406,7 +55405,7 @@
             "county_names": [
               "Marion County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900347656",
@@ -55478,7 +55477,7 @@
             "county_names": [
               "Marion County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3910747782",
@@ -55536,7 +55535,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39099",
@@ -55545,11 +55544,11 @@
             "county_names": [
               "Mahoning County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39099",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55567,7 +55566,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39097",
@@ -55576,7 +55575,7 @@
             "county_names": [
               "Madison County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3946480",
@@ -55768,8 +55767,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39097",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55787,7 +55786,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39091",
@@ -55796,7 +55795,7 @@
             "county_names": [
               "Logan County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3944632",
@@ -55817,8 +55816,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39091",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -55836,7 +55835,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39089",
@@ -55845,7 +55844,7 @@
             "county_names": [
               "Licking County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3908943456",
@@ -55854,7 +55853,7 @@
             "county_names": [
               "Licking County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911943470",
@@ -55885,7 +55884,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39087",
@@ -55894,7 +55893,7 @@
             "county_names": [
               "Lawrence County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3908742154",
@@ -55903,7 +55902,7 @@
             "county_names": [
               "Lawrence County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3915142168",
@@ -55952,7 +55951,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39085",
@@ -55961,7 +55960,7 @@
             "county_names": [
               "Lake County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900541272",
@@ -56000,8 +55999,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39085",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56019,7 +56018,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39081",
@@ -56028,7 +56027,7 @@
             "county_names": [
               "Jefferson County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3938500",
@@ -56256,8 +56255,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39081",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56275,7 +56274,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39073",
@@ -56284,7 +56283,7 @@
             "county_names": [
               "Hocking County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3904535812",
@@ -56296,8 +56295,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39073",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56315,7 +56314,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39067",
@@ -56324,7 +56323,7 @@
             "county_names": [
               "Harrison County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3933838",
@@ -56507,8 +56506,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39067",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56526,7 +56525,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39065",
@@ -56535,11 +56534,11 @@
             "county_names": [
               "Hardin County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39065",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56557,7 +56556,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39063",
@@ -56566,11 +56565,11 @@
             "county_names": [
               "Hancock County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39063",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56588,7 +56587,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39059",
@@ -56597,11 +56596,11 @@
             "county_names": [
               "Guernsey County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39059",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56619,7 +56618,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39057",
@@ -56628,7 +56627,7 @@
             "county_names": [
               "Greene County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3915532046",
@@ -56640,8 +56639,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39057",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56659,7 +56658,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39053",
@@ -56668,11 +56667,11 @@
             "county_names": [
               "Gallia County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39053",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -56690,7 +56689,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39051",
@@ -56699,7 +56698,7 @@
             "county_names": [
               "Fulton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3929050",
@@ -56717,7 +56716,7 @@
             "county_names": [
               "Fulton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -56739,7 +56738,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39049",
@@ -56748,7 +56747,7 @@
             "county_names": [
               "Franklin County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3928476",
@@ -56820,7 +56819,7 @@
             "county_names": [
               "Franklin County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3905128294",
@@ -56968,7 +56967,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39047",
@@ -56977,7 +56976,7 @@
             "county_names": [
               "Fayette County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3926768",
@@ -56998,8 +56997,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39047",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57017,7 +57016,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39045",
@@ -57026,7 +57025,7 @@
             "county_names": [
               "Fairfield County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3925970",
@@ -57102,8 +57101,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39045",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57121,7 +57120,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39043",
@@ -57130,7 +57129,7 @@
             "county_names": [
               "Erie County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3912325578",
@@ -57142,8 +57141,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39043",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57161,7 +57160,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39041",
@@ -57170,7 +57169,7 @@
             "county_names": [
               "Delaware County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3921434",
@@ -57179,7 +57178,7 @@
             "county_names": [
               "Delaware County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903921420",
@@ -57197,7 +57196,7 @@
             "county_names": [
               "Delaware County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3906321462",
@@ -57228,7 +57227,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39039",
@@ -57237,7 +57236,7 @@
             "county_names": [
               "Defiance County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3921308",
@@ -57246,7 +57245,7 @@
             "county_names": [
               "Defiance County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903921322",
@@ -57255,7 +57254,7 @@
             "county_names": [
               "Defiance County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -57277,7 +57276,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39037",
@@ -57286,11 +57285,11 @@
             "county_names": [
               "Darke County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39037",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57308,7 +57307,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39035",
@@ -57317,11 +57316,11 @@
             "county_names": [
               "Cuyahoga County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39035",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57339,7 +57338,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39033",
@@ -57348,7 +57347,7 @@
             "county_names": [
               "Crawford County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903119218",
@@ -57369,8 +57368,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39033",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57388,7 +57387,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39031",
@@ -57397,7 +57396,7 @@
             "county_names": [
               "Coshocton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3918868",
@@ -57406,7 +57405,7 @@
             "county_names": [
               "Coshocton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -57428,7 +57427,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39029",
@@ -57437,7 +57436,7 @@
             "county_names": [
               "Columbiana County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3917036",
@@ -57447,7 +57446,7 @@
               "Columbiana County",
               "Mahoning County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -57469,7 +57468,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39027",
@@ -57478,7 +57477,7 @@
             "county_names": [
               "Clinton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3916182",
@@ -57553,8 +57552,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39027",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57572,7 +57571,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39023",
@@ -57581,7 +57580,7 @@
             "county_names": [
               "Clark County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901515224",
@@ -57620,8 +57619,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39023",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57639,7 +57638,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39021",
@@ -57648,11 +57647,11 @@
             "county_names": [
               "Champaign County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39021",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57670,7 +57669,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39019",
@@ -57679,7 +57678,7 @@
             "county_names": [
               "Carroll County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3912252",
@@ -57700,8 +57699,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39019",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57719,7 +57718,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39013",
@@ -57728,7 +57727,7 @@
             "county_names": [
               "Belmont County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3905312",
@@ -57737,7 +57736,7 @@
             "county_names": [
               "Belmont County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -57759,7 +57758,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39003",
@@ -57768,7 +57767,7 @@
             "county_names": [
               "Allen County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903701294",
@@ -57807,8 +57806,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39003",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57826,7 +57825,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39175",
@@ -57835,11 +57834,11 @@
             "county_names": [
               "Wyandot County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39175",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57857,7 +57856,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39173",
@@ -57866,11 +57865,11 @@
             "county_names": [
               "Wood County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39173",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57888,7 +57887,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39171",
@@ -57897,11 +57896,11 @@
             "county_names": [
               "Williams County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39171",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -57919,7 +57918,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39169",
@@ -57928,7 +57927,7 @@
             "county_names": [
               "Wayne County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3982334",
@@ -58117,7 +58116,7 @@
             "county_names": [
               "Wayne County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -58139,7 +58138,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39167",
@@ -58148,7 +58147,7 @@
             "county_names": [
               "Washington County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901181074",
@@ -58538,8 +58537,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39167",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -58557,7 +58556,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39163",
@@ -58566,7 +58565,7 @@
             "county_names": [
               "Vinton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3980178",
@@ -58584,7 +58583,7 @@
             "county_names": [
               "Vinton County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -58606,7 +58605,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39161",
@@ -58615,7 +58614,7 @@
             "county_names": [
               "Van Wert County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3979562",
@@ -58624,7 +58623,7 @@
             "county_names": [
               "Van Wert County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -58646,7 +58645,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39159",
@@ -58655,7 +58654,7 @@
             "county_names": [
               "Union County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3978470",
@@ -58890,7 +58889,7 @@
             "county_names": [
               "Union County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3916178596",
@@ -58930,7 +58929,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39157",
@@ -58939,7 +58938,7 @@
             "county_names": [
               "Tuscarawas County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3977924",
@@ -58948,7 +58947,7 @@
             "county_names": [
               "Tuscarawas County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3903177896",
@@ -58988,7 +58987,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39155",
@@ -58997,7 +58996,7 @@
             "county_names": [
               "Trumbull County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900777686",
@@ -59009,8 +59008,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39155",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59028,7 +59027,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39153",
@@ -59037,7 +59036,7 @@
             "county_names": [
               "Summit County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911175497",
@@ -59049,8 +59048,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39153",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59068,7 +59067,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39151",
@@ -59077,11 +59076,11 @@
             "county_names": [
               "Stark County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39151",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59099,7 +59098,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39149",
@@ -59108,7 +59107,7 @@
             "county_names": [
               "Shelby County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3972102",
@@ -59120,8 +59119,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39149",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59139,7 +59138,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39147",
@@ -59148,7 +59147,7 @@
             "county_names": [
               "Seneca County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911171349",
@@ -59175,7 +59174,7 @@
             "county_names": [
               "Seneca County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -59197,7 +59196,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39145",
@@ -59206,7 +59205,7 @@
             "county_names": [
               "Scioto County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3904170842",
@@ -59254,8 +59253,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39145",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59273,7 +59272,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39143",
@@ -59282,7 +59281,7 @@
             "county_names": [
               "Sandusky County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3970380",
@@ -59318,7 +59317,7 @@
             "county_names": [
               "Sandusky County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -59340,7 +59339,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39141",
@@ -59349,7 +59348,7 @@
             "county_names": [
               "Ross County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901768616",
@@ -59379,8 +59378,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39141",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59398,7 +59397,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39139",
@@ -59407,7 +59406,7 @@
             "county_names": [
               "Richland County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3900366614",
@@ -59518,8 +59517,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39139",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59537,7 +59536,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39137",
@@ -59546,11 +59545,11 @@
             "county_names": [
               "Putnam County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39137",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59568,7 +59567,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39135",
@@ -59577,11 +59576,11 @@
             "county_names": [
               "Preble County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39135",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59599,7 +59598,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39133",
@@ -59608,7 +59607,7 @@
             "county_names": [
               "Portage County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3964108",
@@ -59647,8 +59646,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39133",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59666,7 +59665,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39131",
@@ -59675,7 +59674,7 @@
             "county_names": [
               "Pike County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901562596",
@@ -59750,8 +59749,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39131",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -59769,7 +59768,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39129",
@@ -59778,7 +59777,7 @@
             "county_names": [
               "Pickaway County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3912962484",
@@ -59787,7 +59786,7 @@
             "county_names": [
               "Pickaway County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -59809,7 +59808,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39127",
@@ -59818,7 +59817,7 @@
             "county_names": [
               "Perry County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3961882",
@@ -60064,8 +60063,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39127",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -60083,7 +60082,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39125",
@@ -60092,7 +60091,7 @@
             "county_names": [
               "Paulding County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3961252",
@@ -60101,7 +60100,7 @@
             "county_names": [
               "Paulding County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3912561266",
@@ -60110,7 +60109,7 @@
             "county_names": [
               "Paulding County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -60132,7 +60131,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "name_type_county_candidate_supported",
         "all_name_candidates": [
           {
             "reference_key": "county:39123",
@@ -60141,7 +60140,7 @@
             "county_names": [
               "Ottawa County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "incorporated_place:3958982",
@@ -60162,8 +60161,8 @@
             "listed_county_supported": false
           }
         ],
-        "suggested_reference_key": null,
-        "suggested_type": null,
+        "suggested_reference_key": "county:39123",
+        "suggested_type": "county",
         "automatic_correction_allowed": false,
         "identity_verified": false,
         "authority_verified": false,
@@ -60181,7 +60180,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39121",
@@ -60190,7 +60189,7 @@
             "county_names": [
               "Noble County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3901155986",
@@ -60217,7 +60216,7 @@
             "county_names": [
               "Noble County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           }
         ],
         "suggested_reference_key": null,
@@ -60239,7 +60238,7 @@
           "type": "county",
           "county": null
         },
-        "review_action": "missing_or_placeholder_parent_county",
+        "review_action": "ambiguous_identity_requires_review",
         "all_name_candidates": [
           {
             "reference_key": "county:39119",
@@ -60248,7 +60247,7 @@
             "county_names": [
               "Muskingum County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3911953438",
@@ -60257,7 +60256,7 @@
             "county_names": [
               "Muskingum County"
             ],
-            "listed_county_supported": false
+            "listed_county_supported": true
           },
           {
             "reference_key": "county_subdivision:3916753452",
