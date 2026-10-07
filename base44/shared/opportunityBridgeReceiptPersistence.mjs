@@ -93,9 +93,17 @@ export async function fingerprintOpportunityBridgePlanRow(planRow = {}) {
   };
 }
 
+function sameReceiptProposal(receipt, fingerprints) {
+  return clean(receipt?.proposal_fingerprint) === fingerprints.proposal_fingerprint;
+}
+
 function sameReceiptPlan(receipt, planRow, fingerprints) {
-  return clean(receipt?.proposal_fingerprint) === fingerprints.proposal_fingerprint &&
+  return sameReceiptProposal(receipt, fingerprints) &&
     stableCanonicalJson(receipt?.source_snapshot || {}) === stableCanonicalJson(planRow?.source_snapshot || {});
+}
+
+function terminalReceiptStatus(receipt = {}) {
+  return ['linked','already_linked'].includes(clean(receipt?.status));
 }
 
 function duplicateAttempt(receipt, attemptId) {
@@ -134,6 +142,9 @@ export async function claimOpportunityBridgeReceipt({
     const existing = before[0];
     const identityErrors = validateOpportunityBridgeReceiptIdentity(existing);
     if (identityErrors.length) return { ok:false, state:'held', reason:'receipt_identity_invalid', identity_errors:identityErrors, receipt:existing };
+    if (terminalReceiptStatus(existing) && sameReceiptProposal(existing, fingerprints)) {
+      return { ok:true, state:'terminal_existing', ownership:false, receipt:existing, fingerprints };
+    }
     if (!sameReceiptPlan(existing, planRow, fingerprints)) {
       return { ok:false, state:'held', reason:'receipt_plan_mismatch', receipt:existing };
     }
