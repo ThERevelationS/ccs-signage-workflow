@@ -185,7 +185,7 @@ export default function SalesPipeline() {
     const missingInformationReference = Boolean(savedCustomFilterId && !savedCustomFilter);
     const restoredInformation = savedCustomFilterId
       ? (savedCustomFilter ? savedInformation : "all")
-      : (["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation) ? savedInformation : "all");
+      : (["all", "needs_stage", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation) ? savedInformation : "all");
     const savedAttention = String(preferences?.attention_filter || "all");
     const restoredAttention = salesAttentionOption(savedAttention) ? savedAttention : "all";
     const savedColumnId = String(preferences?.column_preset_id || "default");
@@ -653,6 +653,7 @@ export default function SalesPipeline() {
                 </SelectTrigger>
               <SelectContent>
                 {isStandardFilterEnabled("all") && <SelectItem value="all">{recordScope === "outcomes" ? "All Outcomes" : "All Statuses"}</SelectItem>}
+                {recordScope === "current" && isStandardFilterEnabled("needs_stage") && <SelectItem value="needs_stage">Needs Stage</SelectItem>}
                 {recordScope !== "outcomes" && isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
                 {recordScope !== "outcomes" && isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
                 {recordScope !== "outcomes" && isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
