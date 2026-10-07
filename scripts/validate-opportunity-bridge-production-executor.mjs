@@ -182,7 +182,7 @@ assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.PRODUCTION_APPLY_WIRED, true
   assert.equal(String(state.workOrder.opportunity_id || ''), '');
 }
 
-for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_anomaly','wrong_actor']) {
+for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_anomaly','unresolved_receipt','wrong_actor']) {
   const state = makeState();
   const plan = currentPlan(state);
   const binding = await bindingFor(plan, `run-${variation}`);
@@ -203,6 +203,7 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
   if (variation === 'wrong_phrase') input.confirmationPhrase = 'WRONG';
   if (variation === 'stale_plan') input.now = '2026-10-07T20:06:00.001Z';
   if (variation === 'receipt_anomaly') input.receiptLedgerSummary = { total:2, anomaly_count:1, unresolved_count:0 };
+  if (variation === 'unresolved_receipt') input.receiptLedgerSummary = { total:1, anomaly_count:0, unresolved_count:1 };
   if (variation === 'wrong_actor') input.actor = { id:'admin-2', email:'other@example.com', role:'admin' };
 
   const result = await executeGuardedOpportunityBridgePilot(input);
