@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "file": "fees.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36811",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "application.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36814",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "conditions.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36832",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "insurance.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36848",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Web-derived paraphrased observations; not archived originals.",
+  "sources": [
+    {
+      "section": "1186.04",
+      "file": "fees.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36811",
+      "version": "2026-02",
+      "observation": "Annual fee refers to Village website fee schedule for sandwich boards and cafe use, due with initial application and annual renewal. Amount not provided here; do not substitute zoning certificate $50."
+    },
+    {
+      "section": "1186.05",
+      "file": "application.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36814",
+      "version": "2026-01",
+      "observation": "Cafe application includes supplied form, dimensioned scale site plan, insurance certificate/endorsement, and descriptions/locations of right-of-way items. Cafe-specific language does not prove all requirements apply to standalone sandwich boards. Actual current supplied form/intake not located."
+    },
+    {
+      "section": "1186.07",
+      "file": "conditions.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36832",
+      "version": "2026-02",
+      "observation": "Cafe permit is calendar-year, nontransferable, approval-area limited; renewal after January 1 is discretionary. Includes public-use suspension, maintenance, supervision and prohibition on signs attached to furniture/umbrellas/awnings/other structure. Preserve cafe scope; no automatic standalone-board transfer of conditions."
+    },
+    {
+      "section": "1186.08",
+      "file": "insurance.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36848",
+      "version": "2026-02",
+      "observation": "Preissuance signed indemnity statement and cafe liability insurance candidate: $500,000 occurrence/$1,000,000 aggregate, Village additional insured. Current applicability, endorsement form and standalone-board scope unapproved."
+    }
+  ],
+  "fee_amount_verified": false,
+  "current_application_form_retained": false,
+  "standalone_sandwich_board_requirements_approved": false,
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "next": "Locate current sidewalk fee schedule/form and current electrical delegation; finish remaining Chapter 711 and denial/revocation provisions.",
+  "retained_originals": 0
+}
