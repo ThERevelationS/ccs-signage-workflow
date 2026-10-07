@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 — Nearby Ohio source-catalog reconciliation (2026-10-07)
+
+Read the current Norwood and Deer Park profiles and source catalog. One older Norwood zoning PDF catalog record exists; none of the six newly retained originals have matching catalog rows or profile-document entries. Preserved the existing record and saved a compact versioned readback plus a per-document reconciliation report. No upload or production record was created.
+
+Added a reusable read-only archive/duplicate check that distinguishes exact URL/hash/byte identities, legacy name-only rows, other-locality hash matches, conflicting versions, duplicate rows and uncertain upload/catalog receipts. It validates all six retained originals against their public copies. A snapshot never authorizes creation. Existing automatic registration requires a completed, byte-verified app-storage archive; repository copies alone do not satisfy that process. DOC and DOCX originals remain intact.
+
+Validation: five reconciliation tests and four municipal resource tests passed (nine total); git diff check passed. No application UI or runtime change, so no new production build was required. Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Storage/catalog registration remains an explicit gap. Next: continue Cheviot and Cleves official forms and electrical-office research; keep the retained-document registration gap visible without repeating blocked upload/login attempts. Ohio remains first.
+
 ## Phase 10 — Milestone 1 — Norwood and Deer Park original documents and office reconciliation (2026-10-07)
 
 Retained two official department pages and six original documents with hashes and byte counts. Norwood includes its signage application, business checklist and 2026 fee schedule. Deer Park includes its building-process DOCX, building/zoning application DOC and linked 2026 Hamilton County fee PDF. Original Word formats are preserved. Exact-locality admin research panels offer the retained downloads separately from approved evidence.
