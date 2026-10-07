@@ -26,7 +26,8 @@ try{
    b.onResolve({filter:/base44Client/},()=>({path:'client',namespace:'mock'}));
    b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const base44={functions:{invoke:(...args)=>globalThis.delegationUiInvoke(...args)}};'}));
   }}]});
- const {default:Panel}=await import(pathToFileURL(file));
+ globalThis.window={self:null,top:null};
+ const {default:Panel}=await import(pathToFileURL(file));delete globalThis.window;
  const source={id:'source',jurisdiction_id:'profile',jurisdiction_name:'Pilot'};
  const props={source,disabled:false,onBusy:()=>{}};
  let tree;await act(async()=>{tree=TestRenderer.create(React.createElement(Panel,props));});
@@ -79,5 +80,5 @@ try{
  await act(async()=>tree.unmount());
  console.log('PDF delegation UI acceptance passed: explicit mode payloads, scoped roles/target, separate identities, preview invalidation, frozen recovery/replay, context reset, legacy PDF and HTML routing. Mock API only.');
 }finally{
- delete globalThis.delegationUiInvoke;delete globalThis.sessionStorage;await rm(dir,{recursive:true,force:true});
+ delete globalThis.window;delete globalThis.delegationUiInvoke;delete globalThis.sessionStorage;await rm(dir,{recursive:true,force:true});
 }
