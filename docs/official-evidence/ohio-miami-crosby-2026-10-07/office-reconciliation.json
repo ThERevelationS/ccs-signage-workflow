@@ -1,0 +1,52 @@
+{
+  "observed_on": "2026-10-07",
+  "profiles": [
+    {
+      "name": "Miami Township",
+      "state": "OH",
+      "type": "township",
+      "county": "Hamilton",
+      "canonical_id": null,
+      "conflicting_records": [
+        {
+          "id": "69b1ff3561c6ae0615974020",
+          "permitting_url": "https://www.miamitownship.com/390/Zoning-Applications"
+        },
+        {
+          "id": "69a5ee8c2648963bf4fde2d6",
+          "permitting_url": "https://www.miamitownship.com/390/Zoning-Applications"
+        }
+      ],
+      "review": "Both same-name records reference the Montgomery County site. Do not map Hamilton research or merge records by name."
+    },
+    {
+      "name": "Crosby Township",
+      "state": "OH",
+      "type": "township",
+      "county": "Hamilton",
+      "canonical_id": null,
+      "identity_status": "No matching OH canonical profile in name readback"
+    }
+  ],
+  "notes": [
+    "Hamilton Miami official zoning page describes county routing for unincorporated territory; its North Bend mailing address is not Village of North Bend identity or coverage approval.",
+    "Crosby page labels Permit Application as Building Permits, but the linked original is a zoning certificate application. Link label does not identify a building permit issuer.",
+    "Crosby page labels Property Maintenance Code with BZA Application text. Retain label and file identity without treating the scan as a BZA application.",
+    "Crosby zoning office email is printed with two @ characters; preserve as a discrepancy, do not silently repair or promote contact.",
+    "Crosby resolution states revisions through 2021 despite a 2026 upload path; upload year does not prove current amendment status."
+  ],
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "coverage_approved": false,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0,
+  "gaps": [
+    "Hamilton Miami canonical reconciliation",
+    "Crosby canonical identity",
+    "Miami sign/building forms",
+    "Township-specific electrical permit and inspection offices",
+    "Crosby maintenance-code OCR",
+    "Verified app-storage/catalog registration"
+  ]
+}
