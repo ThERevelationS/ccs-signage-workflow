@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { readAllCoveragePages, reconcileRecordedCoverage } from './permittingCoverageReader.mjs';
+import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory } from './permittingCoverageReader.mjs';
+
+import officialInventory from './officialGeographicInventory.json';
 
 async function readRecordedCoverage(isCurrent, onProgress) {
   const queue = await readAllCoveragePages(cursor => base44.entities.SourceCollectionQueue.filter(
@@ -10,7 +12,7 @@ async function readRecordedCoverage(isCurrent, onProgress) {
   const profiles = await readAllCoveragePages(cursor => base44.entities.JurisdictionProfile.filter(
     { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} profile records`) });
-  return { ...reconcileRecordedCoverage(queue, profiles), checked_at: new Date().toISOString() };
+  return { ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
 export default function PermittingRecordedCoverage({ readCoverage = readRecordedCoverage }) {
@@ -37,6 +39,15 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
       <dl className="space-y-2">{Object.entries(labels).map(([state, label]) => <div key={state} className="flex justify-between gap-3"><dt>{label}</dt><dd>{result.items.filter(row => row.state === state).length}</dd></div>)}
         <div>Profiles with incomplete/unsupported identities: {result.invalid_profile_ids.length}</div>
         <div>Profiles without a recorded queue identity: {result.unmatched_profile_ids.length}</div>
-      </dl><p className="text-amber-800 text-sm">Official inventory denominator not reconciled. Ohio townships and missing incorporated places require independent inventory verification. No completeness percentage is asserted.</p></>}
+      </dl><p className="text-amber-800 text-sm">Recorded identity matches do not establish official county relationships or permitting completeness. No completeness percentage is asserted.</p>
+      {result.official && <div className="space-y-2 border-t pt-3">
+        <h4 className="font-semibold">Official geographic inventory — {result.official.source_vintage}</h4>
+        <p className="text-sm">All {result.official.source_rows} saved source rows accounted for: Ohio {result.official.candidate_counts.OH} and Kentucky {result.official.candidate_counts.KY} research candidates, {result.official.status_review_count} status/relationship reviews, and {result.official.statistical_reference_count} statistical/hierarchy references.</p>
+        <p className="text-sm">Queue candidates missing: {result.official.queue.missing.length}. Profile candidates missing: {result.official.profiles.missing.length}. These counts describe geographic name/type candidates within your read permissions.</p>
+        {['queue','profiles'].map(group => <details key={group}><summary className="cursor-pointer min-h-11">View missing {group} geographic candidates</summary>
+          <p className="text-sm break-words">{result.official[group].missing.map(r => r.state + ' ' + r.type + ' ' + r.name + (r.county_name ? ' (' + r.county_name + ' County)' : '')).join('; ') || 'No missing name/type candidates in this read.'}</p></details>)}
+        <p className="text-amber-800 text-sm">{result.official.notice} County relationships, consolidated entities, forms, archives, separate electrical offices and approvals remain review gaps. This is not permitting completeness.</p>
+      </div>}
+</>}
   </section>;
 }

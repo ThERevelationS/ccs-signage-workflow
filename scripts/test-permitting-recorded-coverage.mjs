@@ -14,7 +14,7 @@ try{
  assert.equal(calls,0);const click=()=>tree.root.findByType('button').props.onClick();
  await act(async()=>{click();click();});assert.equal(calls,1);
  await act(async()=>resolveRead({items:[{state:'profile_missing'}],invalid_profile_ids:[],unmatched_profile_ids:[],checked_at:'fixture'}));
- assert.match(JSON.stringify(tree.toJSON()),/Official inventory denominator not reconciled/);
+ assert.match(JSON.stringify(tree.toJSON()),/Recorded identity matches do not establish/);
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:async()=>{throw Error('Fixture failure');}})));
  await act(async()=>click());assert.match(JSON.stringify(tree.toJSON()),/Fixture failure/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
  await act(async()=>tree.unmount());console.log('Coverage panel passed: manual only, duplicate-click guard, explicit uncertainty and failed-refresh clearing. No live API calls.');
