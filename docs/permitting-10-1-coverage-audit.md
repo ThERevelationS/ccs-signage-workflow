@@ -1,3 +1,9 @@
+## Phase 10 → Milestone 1 of 3 — Woodlawn identity and source-retention gaps (2026-10-07)
+
+Task 2 remains partial. Fresh canonical OH query found Woodlawn village 6ac1a111ea485c76e4c8f201. Located official county zoning reference, linked ezTrak, code publisher, legacy zoning/application/variance PDFs and two map URLs. Attempted eight original downloads; all returned HTTP 403 and no original was retained. No search snippet or web-derived summary substituted for original bytes. Recorded county zoning administration candidate separately from electrical issuance and inspection, which remain unverified. Legacy 2019/2024 provenance and current 2026 schedules require reconciliation. Extraction manifest truthfully contains zero documents. No UI attachment, authority approval, live record changes or publication.
+
+Validation: 29 tests passed; git diff --check passed. Next: inspect current Woodlawn county document links for valid original paths; do not retry identical blocked URLs. Ohio before Kentucky.
+
 ## Phase 10 → Milestone 1 of 3 — Symmes attachment search and route reconciliation (2026-10-07)
 
 Task 2 remains partial. Retained and verified five official index HTML originals: DocumentCenter, AgendaCenter, sitemap, Agendas & Minutes, and 2026 Resolutions. Recorded original-retention HTTP 403 for township Zoning Permits route; separate web retrieval observes redirect to county buildings_and_inspections applications/forms page. Do not promote that label to zoning sign acceptance or electrical authority. Public search/index review did not locate Appendix 1 fees or Exhibit A contract. Dynamic inventory/all meeting packets were not exhaustively searched, so absence is not asserted. Preserve both gaps and avoid identical blocked retries. No live records changed or publication.
