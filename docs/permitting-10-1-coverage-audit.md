@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — Crosby sign/application page review (2026-10-07)
+
+Fresh clean HEAD c3d4e2775ea3191938f9e2717940cc40740ad4fd preserved. Prepared nine findings tied to unchanged original PDF/source and physical-page text hashes. Application page 1 offers wall/freestanding/temporary sign choices and requests site-plan/public-street/building-frontage dimensions. Article 31 review covers zoning triggers and face changes, maintenance exemptions, illumination/heights/setbacks, sign area, prohibitions, district/portable/message-sign provisions and billboard/state permit review.
+
+Retained the printed Article 13 cross-reference in Section 31.1.1 as a discrepancy requiring interpretation, without editing the source or silently substituting Article 31. Zoning exemptions mentioning electrical components do not establish electrical permit/inspection exemptions. Printed numeric restrictions remain pending document candidates; code edition, offices, job coverage and current amendments are unapproved. Sign-area diagrams on subsequent pages need visual review before calculation approval. Cover revisions through 2021 remain separate from the 2026 upload path.
+
+Validation: 23 archive/UI/page/role/cross-reference tests and diff check passed. Research packet only: no frontend or production records changed, no publication or approval. Crosby canonical identity, electrical offices, scanned maintenance-code OCR and verified app-storage/catalog registration remain open. Task 2 partial. Next: continue Ohio nearby coverage with Harrison Township and Symmes Township official forms and sign/code references, carrying forward the explicit Crosby review gaps. Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 of 3 — Hamilton Miami and Crosby source collection (2026-10-07)
 
 Fresh clean HEAD 44a29024a31ed637b575a3867a2b95c889985ee2 preserved. Live OH canonical query returned two Miami Township records (69b1ff3561c6ae0615974020 and 69a5ee8c2648963bf4fde2d6), both pointing to Montgomery County's miamitownship.com site. Hamilton County's official site is miamitownship.org. No Hamilton research attached to these same-name records and no merges or identity approvals performed. Crosby had no matching canonical profile.
