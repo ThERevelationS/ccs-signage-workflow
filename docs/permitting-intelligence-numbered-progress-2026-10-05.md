@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 — Cheviot and Cleves originals and research panels (2026-10-07)
+
+Checked fresh clean repository HEAD b299ebbe5d08a8fa76c90484837b82189ef5ffa5 and live exact profile identities. Retained four official HTML pages and eight original PDFs with SHA-256, byte counts, retrieval URLs, redirects and timestamps. Cheviot resources: building application (Sign type), variance, resubmittal and City-linked 2026 county fees. Cleves resources: scanned general/mechanical applications, Village-linked zoning manual and separately labeled DRAFT manual. No searchable-text completeness is claimed for the scanned forms or legal currentness for either manual.
+
+Extended the exact-identity admin research panels to Cheviot city and Cleves village. Kept Cheviot City intake/NIC review/payment guidance separate from unresolved electrical roles; recorded Cleves's conflicting Forms/Directory delivery addresses. Draft material cannot establish approved law/workflows. The preparation scripts now preserve the other locality dossiers when regenerated. App-storage/catalog registration remains outstanding; no live records, approvals or frontend publication.
+
+Validation: 17 UI/archive/reconciliation tests passed, targeted ESLint and production build passed; diff check passed. Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Next: deepen Cheviot/Cleves electrical-office routing using official provider/local-code references, then continue Ohio locality coverage. Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 — Nearby Ohio source-catalog reconciliation (2026-10-07)
 
 Read the current Norwood and Deer Park profiles and source catalog. One older Norwood zoning PDF catalog record exists; none of the six newly retained originals have matching catalog rows or profile-document entries. Preserved the existing record and saved a compact versioned readback plus a per-document reconciliation report. No upload or production record was created.
