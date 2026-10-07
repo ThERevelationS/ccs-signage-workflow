@@ -20,11 +20,13 @@ const safeRow = (id, overrides = {}) => ({
   ...overrides,
 });
 
-assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.VERSION, '0T-v1');
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.VERSION, '0U-v1');
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED, false);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_PERSISTENCE_ACTIVE, true);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED, true);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.GUARDED_PRODUCTION_EXECUTOR_WIRED, true);
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.EXPLICIT_PILOT_AUTHORIZATION_REQUIRED, true);
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT, '');
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE, 1);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.MAX_BATCH_SIZE, 5);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.STOP_ON_FIRST_NON_SUCCESS, true);
@@ -110,6 +112,7 @@ assert.equal(historicalBridgeRuleContractPasses(), true);
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_reconciled').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='secondary_confirmation_configured').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='guarded_production_executor_wired').pass, true);
+  assert.equal(readiness.checks.find((check)=>check.key==='explicit_pilot_authorization_present').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='production_apply_enabled').pass, false);
 }
 
