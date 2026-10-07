@@ -1,3 +1,15 @@
+## Separate electrical role completeness checks — 2026-10-07
+
+Phase 10 — Ohio/Kentucky coverage. Milestone 1 of 3 — Identity and office reconciliation. Tasks complete: 2 of 4. Task 2 remains partial; Task 4 live acceptance pending.
+
+Fresh clean HEAD 7f46d7c924318b71d0a7d894fe0f652f412daa4c. Found address/locality authority consumer still recognized only legacy electrical despite new role support elsewhere. Added the two specific roles to its recognized vocabulary and additive electrical_coverage output. Each role reports staff_verified, needs_review or missing, with explicit missing_roles and legacy_broad_role_present. Existing configured-office coverage status is preserved.
+
+Broad electrical roles, descriptive office types and unsupported/unreviewed roles cannot satisfy specific issuer/inspector checks. Separate reviewed roles may share an office or use independent offices. Specific-role review never implies applicability or complete legal coverage: those flags remain false. No role migration, history mutation, authority approval or workflow generation added.
+
+Validation: six new coverage tests and 25 locality authority selection checks pass (31 total), affected findLocalityByAddress bundle, full build and git diff --check pass. Saved frontend consumers remain unpublished. No production records or live address/LLM invocation; backend live acceptance remains pending.
+
+Next: expose separate electrical role gaps in the locality interface using the new summary, then connect retained Cincinnati resources through supported current evidence/staff review. Ohio remains before Kentucky; Task 2 denominator unchanged.
+
 ## Clear phase, milestone and task reporting — 2026-10-07
 
 Phase 10 — Ohio/Kentucky coverage. Milestone 1 of 3 — Identity and office reconciliation. Tasks complete: 2 of 4. Current task: Task 2, partial. Current work: separate electrical permit issuer and inspection provider completeness acceptance.
