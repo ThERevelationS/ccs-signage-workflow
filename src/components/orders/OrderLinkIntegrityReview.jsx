@@ -7,7 +7,7 @@ import { AlertTriangle, Link2, Loader2, RefreshCw, ShieldCheck } from "lucide-re
 const CATEGORIES = [
   { key: "base44_unlinked", label: "Base44 Orders without a row link", note: "Active Base44 Orders with no permanent Smartsheet row ID. They are never matched by customer name, description or row position." },
   { key: "unlinked_smartsheet_row", label: "Smartsheet rows without an active Order link", note: "Permanent Smartsheet rows with no active Base44 Order linked to that row ID. Display fields are evidence only; no automatic match is proposed." },
-  { key: "linked_row_missing_remote", label: "Linked rows missing from Smartsheet", note: "Base44 has a permanent link, but that row ID was absent from the complete verified Order Request sheet download." },
+  { key: "linked_row_missing_remote", label: "Linked rows missing from Smartsheet", note: "Base44 has a permanent link, but that exact row ID was absent from the complete verified Order Request sheet download. Sorting or moving a row does not change its ID; deleting and recreating it does. Never relink by customer, description or visual row position." },
   { key: "duplicate_base44_row_link", label: "Duplicate Base44 row links", note: "Multiple active Base44 Orders point to the same permanent Smartsheet row. Sync must fail closed until reviewed." },
   { key: "wrong_sheet_link", label: "Wrong-sheet links", note: "The Order has a row ID but its stored sheet ID is not the configured Order Request sheet." },
   { key: "invalid_base44_row_id", label: "Malformed Base44 row IDs", note: "The stored row identity is not a valid permanent numeric Smartsheet row ID." },
@@ -64,6 +64,12 @@ function RecordCard({ item, category }) {
     <p className="mt-1 break-all">Base44 Order ID: {item.base44_order_id}</p>
     <p className="break-all">Stored sheet / row: {item.smartsheet_sheet_id || "—"} / {item.smartsheet_row_id || "—"}</p>
     {item.status && <p>Status: {item.status}</p>}
+    {category === "linked_row_missing_remote" && (
+      <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-red-900">
+        <p className="font-semibold">Permanent row ID missing</p>
+        <p>The Base44 link must stay unchanged until permanent-ID evidence is reviewed. A replacement row with matching visible values is a different Smartsheet row.</p>
+      </div>
+    )}
     {item.review_hint === "likely_historical_test_artifact" && (
       <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-900">
         <p className="font-semibold">Likely historical test artifact</p>
