@@ -1,3 +1,9 @@
+## Phase 10 → Milestone 1 of 3 — Symmes resolution recovery (2026-10-07)
+
+Task 2 remains partial. Investigated three root-relative county document recovery candidates; all failed original retention and are recorded without archive hashes. Township /238 redirects to the same county page, not an independent mirror. Recovered three official originals from the township: 2025 resolution index HTML (131730 bytes), G2025-100 fee-amendment PDF (786622 bytes), and G2025-104 county planning/zoning contract authorization PDF (746814 bytes). Verified archive and unchanged public PDF bytes. Parsed all four physical PDF pages; zero embedded text, OCR and visual review pending. Index labels establish research provenance only, not fee amounts, effective dates, contract scope or electrical authority. No canonical locality invented, live records changed, approval or publication.
+
+Validation: 26 tests passed; git diff --check passed. Next: OCR/visual review of recovered Symmes resolutions and fee/currentness reconciliation, then remaining Ohio locality coverage before Kentucky.
+
 ## Phase 10 → Milestone 1 of 3 — Symmes sign provisions and county forms review (2026-10-07)
 
 Task 2 remains partial. Added 14 findings bound to unchanged October 2024 code archive and physical-page text hashes. Preserved conditional district allowances, illumination reference, nonconforming signs, temporary signs, fee/certificate distinctions, scaled drawings and surveyor-signed site plan candidates. Routine lamp/ballast/component maintenance requires a zoning certificate but no zoning fee in the retained code; no electrical exemption inferred. County web retrieval lists ezTrak, customer guide and two 2026 fee schedules; original retention and link/portal failures recorded separately. No invented locality identity, current law approval, live record writes or publication. App-storage/catalog registration remains pending.
