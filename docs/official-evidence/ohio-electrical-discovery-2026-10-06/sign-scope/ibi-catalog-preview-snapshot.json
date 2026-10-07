@@ -1,0 +1,58 @@
+{
+  "id": "69e14b004e01bf082f0f8c75",
+  "setting_key": "permitOfficeCatalog",
+  "updated_date": "2026-10-05T02:29:45.065000",
+  "office": {
+    "id": "1776692961965-0.8021021998915965",
+    "name": "(IBI) Inspection Bureau, Inc.",
+    "office_type": "Electrical Inspectors",
+    "contact_phone": "513-381-6080",
+    "contact_email": "ibi@inspectionbureau.com",
+    "contact_website": "https://www.inspectionbureau.com",
+    "contact_address": "250 West Court Street, Suite 125W, Cincinnati, OH 45202",
+    "contact_notes": "Provides electrical inspection and plan review services for Cincinnati, Hamilton County, and surrounding jurisdictions in Southwest Ohio and Northern Kentucky.",
+    "workflow_steps": [
+      {
+        "id": "1776692961965-0-0.06983472357641696",
+        "name": "Application Submitted",
+        "type": "submitted_date",
+        "order": 0
+      },
+      {
+        "id": "1776692961965-1-0.2962842377966136",
+        "name": "Electrical Plan Review",
+        "type": "checkbox",
+        "order": 1
+      },
+      {
+        "id": "1776692961965-2-0.30684770059585786",
+        "name": "Follow-up",
+        "type": "followup_date",
+        "followup_interval_days": 14,
+        "order": 2
+      },
+      {
+        "id": "1776692961965-3-0.736460375622549",
+        "name": "Inspection Scheduled",
+        "type": "checkbox",
+        "order": 3
+      },
+      {
+        "id": "1776692961965-4-0.34415124816406817",
+        "name": "Permit Received",
+        "type": "permit_received_date",
+        "order": 4
+      }
+    ]
+  },
+  "other_office_ids": [
+    "1776714570547-0.6037507435062587",
+    "1776693736739-0.07577123705348354",
+    "1776693091752-0.8897164525624395",
+    "1776692992927-0.21800261198141846",
+    "1776692918997-0.5701002861427644",
+    "1776692851618-0.6899052686783941",
+    "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+    "office-cincinnati-planning-engagement-oh"
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "method": "ibi-existing-office-identity-preview-v1",
+  "dry_run": true,
+  "applied": false,
+  "expected_catalog": {
+    "id": "69e14b004e01bf082f0f8c75",
+    "setting_key": "permitOfficeCatalog",
+    "updated_date": "2026-10-05T02:29:45.065000"
+  },
+  "expected_office_sha256": "2be55399389572a9b72a3666c5b76714c51b21f31dce319998f51cd8e446492f",
+  "catalog_office_id": "1776692961965-0.8021021998915965",
+  "proposed_office": {
+    "id": "1776692961965-0.8021021998915965",
+    "name": "(IBI) Inspection Bureau, Inc.",
+    "office_type": "Electrical Inspectors",
+    "contact_phone": "513-381-6080",
+    "contact_email": "ibi@inspectionbureau.com",
+    "contact_website": "https://www.inspectionbureau.com",
+    "contact_address": "250 West Court Street, Suite 125W, Cincinnati, OH 45202",
+    "contact_notes": "Provides electrical inspection and plan review services for Cincinnati, Hamilton County, and surrounding jurisdictions in Southwest Ohio and Northern Kentucky.",
+    "workflow_steps": [
+      {
+        "id": "1776692961965-0-0.06983472357641696",
+        "name": "Application Submitted",
+        "type": "submitted_date",
+        "order": 0
+      },
+      {
+        "id": "1776692961965-1-0.2962842377966136",
+        "name": "Electrical Plan Review",
+        "type": "checkbox",
+        "order": 1
+      },
+      {
+        "id": "1776692961965-2-0.30684770059585786",
+        "name": "Follow-up",
+        "type": "followup_date",
+        "followup_interval_days": 14,
+        "order": 2
+      },
+      {
+        "id": "1776692961965-3-0.736460375622549",
+        "name": "Inspection Scheduled",
+        "type": "checkbox",
+        "order": 3
+      },
+      {
+        "id": "1776692961965-4-0.34415124816406817",
+        "name": "Permit Received",
+        "type": "permit_received_date",
+        "order": 4
+      }
+    ],
+    "government_office_id": "1776692961965-0.8021021998915965",
+    "government_office": {
+      "name": "The Inspection Bureau, Inc.",
+      "state": "OH",
+      "phone": "513-381-6080",
+      "website": "https://www.inspectionbureau.com/",
+      "address": "250 W Court St #125W, Cincinnati, OH 45202",
+      "email": "",
+      "verification_status": "needs_verification",
+      "verified_by": "",
+      "verified_at": "",
+      "source_url": "https://www.inspectionbureau.com/",
+      "verification_notes": "Regional provider identity candidate. Address differs from City FAQ. No statewide or locality coverage approval. Legacy email is not independently confirmed."
+    }
+  },
+  "evidence": {
+    "identity": {
+      "provider_url": "https://www.inspectionbureau.com/",
+      "original_html_archived": false,
+      "corroboration": "City electrical inspection contract page links provider domain; matching phone supports identity research.",
+      "conflict": "City FAQ address 205 W Court Street differs from provider address 250 W Court Street #125W."
+    },
+    "electrical_permit": {
+      "status": "needs_review",
+      "archive": "cincinnati-signs-handout.pdf",
+      "physical_page": 2,
+      "sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "limitation": "May 2017 guidance identifies a separate electrical permit and IBI contact; it does not independently prove present permit issuance authority. September 2026 provider migration changes submission routing."
+    },
+    "electrical_inspection": {
+      "status": "needs_review",
+      "archive": "cincinnati-signs-handout.pdf",
+      "physical_page": 2,
+      "sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "limitation": "City guidance directs illuminated/wired signs to IBI, but staff review and current project scope are unresolved."
+    }
+  },
+  "authority_verified": false,
+  "staff_approved": false,
+  "locality_links_changed": false,
+  "blockers": [
+    "Canonical identity staff review",
+    "Official source archive/catalog/page registration before role review",
+    "Permit issuer evidence distinguished from submission portal",
+    "Inspection applicability and current scheduling"
+  ],
+  "apply_requirements": [
+    "Re-read exactly one versioned catalog row",
+    "Match catalog id, key and updated_date",
+    "Match exact office snapshot hash and unique canonical IDs",
+    "Preserve every other catalog entry and existing workflow",
+    "Use atomic guarded catalog update and readback; never retry an uncertain write blindly"
+  ]
+}
