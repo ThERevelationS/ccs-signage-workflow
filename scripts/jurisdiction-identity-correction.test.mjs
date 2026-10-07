@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildIdentityTypeCorrection as build, applyIdentityTypeCorrection as apply} from '../base44/shared/jurisdictionIdentityCorrection.mjs';
 const fixture=()=>{
- const profile={id:'p1',name:'Norwood',state:'OH',type:'village',parent_county_name:'Hamilton',website_url:'https://norwoodohio.gov/',permitting_url:null,updated_date:'v1',documents:[{url:'archive.pdf'}],activity_log:[{id:'old',action:'created'}]};
+ const profile={id:'p1',name:'Norwood',state:'OH',type:'village',parent_county:{name:'Hamilton County',website_url:'https://county.example.test/',documents:[{url:'county-form.pdf'}]},website_url:'https://norwoodohio.gov/',permitting_url:null,updated_date:'v1',documents:[{url:'archive.pdf'}],activity_log:[{id:'old',action:'created'}]};
  return {profile,expected:structuredClone(profile),newType:'city',actor:'admin@example.test',requestId:'correction_test_01',timestamp:'2026-10-07T00:00:00Z',
  evidence:{profile_id:'p1',state:'OH',new_type:'city',official_identity_reviewed:true,county_relationship_reviewed:true,reference_key:'incorporated_place:3957386',notes:'Official City of Norwood wording and county reference reviewed.',source_url:'https://norwoodohio.gov/',sha256:'a'.repeat(64),retrieved_at:'2026-10-06T23:58:00Z'}};
 };
@@ -13,7 +13,7 @@ test('type and provenance commit together without mutating documents/history/ide
  assert.equal(next.activity_log[1].changes.before.type,'village');assert.equal(next.activity_log[1].changes.after.type,'city');
 });
 test('stale or incomplete expected identities fail',()=>{
- for(const key of ['updated_date','id','name','state','type','parent_county_name','website_url','permitting_url']){
+ for(const key of ['updated_date','id','name','state','type','parent_county','website_url','permitting_url']){
   const x=fixture();delete x.expected[key];assert.throws(()=>build(x));
  }
  const x=fixture();x.profile.updated_date='v2';assert.throws(()=>build(x),/version/);

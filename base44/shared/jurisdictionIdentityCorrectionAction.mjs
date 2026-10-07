@@ -12,7 +12,7 @@ export async function handleIdentityCorrection(req,client) {
   if(!['preview','apply'].includes(body.action))return Response.json({error:'Explicit preview or apply action required.'},{status:400});
   const entity=client.asServiceRole.entities.JurisdictionProfile,profile=await entity.get(id);
   if(profile?.id!==id || profile.name!==proposal.name || profile.state!=='OH' || profile.type!==proposal.old_type ||
-     profile.parent_county_name!==proposal.parent_county_name || profile.website_url!==proposal.website_url || profile.permitting_url!==proposal.permitting_url)
+     profile.parent_county?.name!==proposal.parent_county_name || profile.website_url!==proposal.website_url || profile.permitting_url!==proposal.permitting_url)
    return Response.json({error:'Profile differs from retained proposal. Reconcile identity before correction.'},{status:409});
   const input={profile,expected:body.expected,newType:proposal.new_type,evidence:proposal.evidence,
    actor:user.email,requestId:body.request_id,timestamp:new Date().toISOString()};

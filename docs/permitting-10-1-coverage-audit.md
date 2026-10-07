@@ -1,3 +1,13 @@
+## Live nested county guard correction — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Fresh read-only entity queries reconfirm all four unchanged locality type errors. CLI whoami returned transport HTTP 504; required follow-up confirmed clean HEAD 5b701f9be9097e0b478a7d349d22b9f2b882d118. No live correction invocation or production mutation occurred.
+
+This entry supersedes the preceding claim that parent_county_name is the profile schema field. That name is a flattened review/queue field. Live JurisdictionProfile and schema use parent_county as an object, with its name plus contacts/URLs/documents. The correction helper now requires and guards the complete nested parent_county snapshot; endpoint checks its name against the retained Hamilton County proposal. Missing/flattened-only counties reject safely. Corrections preserve the whole parent county object.
+
+Added realistic nested-county tests, including county document changes between expected snapshot and live read, missing nested county, and successful apply preserving county documents. Fifteen focused tests, affected backend bundle and git diff --check pass. No frontend publishing, scans, live backend acceptance or record corrections claimed.
+
+Next: verify authenticated invocation availability without repeated login attempts; preview/apply four profiles with current nested identity snapshots. If invocation remains blocked, report it explicitly. Keep both Cleves records separate and reconcile any identity-bound reviews before mutation.
+
 ## Authenticated four-profile correction path — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 now has an authenticated admin correction endpoint and retained four-profile evidence proposals. Actual live corrections and office reconciliation remain pending; task 4 live acceptance remains pending.
