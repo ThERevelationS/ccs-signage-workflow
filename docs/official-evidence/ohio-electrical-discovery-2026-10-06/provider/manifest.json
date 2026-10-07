@@ -1,0 +1,22 @@
+[
+  {
+    "url": "https://www.inspectionbureau.com/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.inspectionbureau.com/online-inspection-application/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.inspectionbureau.com/ibi-cash-customer/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.inspectionbureau.com/ibi-charge-account-customers/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  }
+]
