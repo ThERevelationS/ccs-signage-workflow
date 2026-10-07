@@ -1,4 +1,3 @@
-import React from 'react';
 import { summarizeElectricalRoleCoverage } from '../../../base44/shared/permittingAddressLocality.js';
 
 export default function ElectricalAuthorityCoverage({ authority }) {

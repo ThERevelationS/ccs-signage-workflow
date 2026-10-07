@@ -4,7 +4,7 @@ import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {build} from 'esbuild';
 import {readFileSync} from 'node:fs';
-const b=await build({entryPoints:['src/components/permitting/ElectricalAuthorityCoverage.jsx'],bundle:true,write:false,format:'esm',platform:'node'});
+const b=await build({entryPoints:['src/components/permitting/ElectricalAuthorityCoverage.jsx'],bundle:true,write:false,format:'esm',platform:'node',jsx:'automatic'});
 const Component=(await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'))).default;
 const render=authority=>renderToStaticMarkup(React.createElement(Component,{authority}));
 test('missing/older response shows two explicit unestablished roles',()=>{const html=render(null);assert.equal((html.match(/Not established/g)||[]).length,2);assert.match(html,/aria-label="Electrical authority coverage"/);});
