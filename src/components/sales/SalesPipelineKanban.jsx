@@ -8,6 +8,7 @@ import { getActionableSalesAttentionItems } from "@/components/sales/salesAttent
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -16,6 +17,11 @@ const STATUS_COLUMNS = [
   { value: "on_hold", label: "On Hold", header: "border-gray-300 bg-gray-100", badge: "bg-gray-200 text-gray-700" },
   { value: "won", label: "Won", header: "border-green-200 bg-green-50", badge: "bg-green-100 text-green-700" },
   { value: "lost", label: "Lost", header: "border-red-200 bg-red-50", badge: "bg-red-100 text-red-700" },
+];
+
+const BOARD_COLUMNS = [
+  { value: "needs_stage", label: "Needs Stage", header: "border-violet-200 bg-violet-50", badge: "bg-violet-100 text-violet-800", virtual: true },
+  ...STATUS_COLUMNS,
 ];
 
 const money = (value) => new Intl.NumberFormat("en-US", {
@@ -49,25 +55,27 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
   const nearClose = localDate(futureDateStamp(14));
 
   const requestStatusChange = (workOrder, nextStatus) => {
-    if (!isRegistered || !workOrder?.id || !nextStatus || workOrder.sales_status === nextStatus) return;
+    const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
+    if (!isRegistered || !workOrder?.id || !nextStatus || nextStatus === "needs_stage") return;
+    if (workOrder.sales_status === nextStatus && !unverifiedStage) return;
     onRequestStatusChange?.(workOrder, nextStatus);
   };
 
   return (
       <div className="flex h-full min-h-0 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-2">
-        {STATUS_COLUMNS.map((status) => {
-          const items = workOrders.filter((workOrder) => (workOrder.sales_status || "lead") === status.value);
+        {BOARD_COLUMNS.map((status) => {
+          const items = workOrders.filter((workOrder) => salesStageDisplayValue(workOrder) === status.value);
           const value = items.reduce((sum, workOrder) => sum + (Number(workOrder.estimate_amount ?? 0) || 0), 0);
           return (
             <section
               key={status.value}
               className="flex min-h-0 w-[285px] min-w-[285px] flex-col rounded-xl border border-gray-200 bg-gray-50/70"
               onDragOver={(event) => {
-                if (!isRegistered) return;
+                if (!isRegistered || status.virtual) return;
                 event.preventDefault();
               }}
               onDrop={(event) => {
-                if (!isRegistered) return;
+                if (!isRegistered || status.virtual) return;
                 event.preventDefault();
                 const id = event.dataTransfer.getData("text/plain") || draggedId;
                 const workOrder = workOrders.find((item) => item.id === id);
@@ -97,6 +105,8 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const attentionKeys = new Set(attentionItems.map((item) => item.key));
                   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
                   const opportunityDisplayName = salesOpportunityDisplayName(workOrder);
+                  const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
+                  const stageDisplayValue = salesStageDisplayValue(workOrder);
                   return (
                     <article
                       key={workOrder.id}
@@ -225,11 +235,12 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
 
                       <div className="mt-2 flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Move stage</span>
-                        <Select value={workOrder.sales_status || "lead"} onValueChange={(value) => requestStatusChange(workOrder, value)} disabled={!isRegistered}>
-                          <SelectTrigger aria-label={`Move ${opportunityDisplayName} to another sales stage`} className="h-11 flex-1 text-xs sm:h-8">
+                        <Select value={stageDisplayValue} onValueChange={(value) => requestStatusChange(workOrder, value)} disabled={!isRegistered}>
+                          <SelectTrigger aria-label={`Move ${opportunityDisplayName} to another sales stage`} className={`h-11 flex-1 text-xs sm:h-8 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : ""}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
                             {STATUS_COLUMNS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                           </SelectContent>
                         </Select>
