@@ -1,0 +1,105 @@
+{
+  "sources": [
+    {
+      "file": "norwood-building.html",
+      "city": "Norwood",
+      "official_url": "https://www.norwoodohio.gov/162/Building-Department",
+      "retrieved_at": "2026-10-07T13:09:08.402978+00:00",
+      "final_url": "https://www.norwoodohio.gov/162/Building-Department",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "status": "archived",
+      "sha256": "3ecc231c674d76328ae3215537f8789f1f6ff9de8931c1b47741e526699f45d9",
+      "bytes": 110639,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-building.html"
+    },
+    {
+      "file": "deer-park-building.html",
+      "city": "Deer Park",
+      "official_url": "https://www.deerpark-oh.gov/departments/building-permits-and-inspections/",
+      "retrieved_at": "2026-10-07T13:09:08.724991+00:00",
+      "final_url": "https://www.deerpark-oh.gov/departments/building-permits-and-inspections/",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "status": "archived",
+      "sha256": "31592aab87974561e0951675a4a9acb09a229901b2c2898d5170af2507cfdaab",
+      "bytes": 52782,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-building.html"
+    },
+    {
+      "file": "norwood-sign-application.pdf",
+      "city": "Norwood",
+      "official_url": "https://www.norwoodohio.gov/DocumentCenter/View/3256/Signage-Permit-Application",
+      "retrieved_at": "2026-10-07T13:09:08.922497+00:00",
+      "final_url": "https://www.norwoodohio.gov/DocumentCenter/View/3256/Signage-Permit-Application",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "status": "archived",
+      "sha256": "c09e620b478f5e50a2b2c8b74f4dd46675e687076275ba273b87d0678f2bfa47",
+      "bytes": 142153,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-sign-application.pdf"
+    },
+    {
+      "file": "norwood-business-checklist.pdf",
+      "city": "Norwood",
+      "official_url": "https://www.norwoodohio.gov/DocumentCenter/View/140",
+      "retrieved_at": "2026-10-07T13:09:09.059664+00:00",
+      "final_url": "https://www.norwoodohio.gov/DocumentCenter/View/140/Business-Preliminary-Checklist-PDF?bidId=",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "status": "archived",
+      "sha256": "f9a76f867aef8de446cd49b76c5060c23052162af4b9bb9a90ecc8046d907d91",
+      "bytes": 335939,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-business-checklist.pdf"
+    },
+    {
+      "file": "norwood-fees-2026.pdf",
+      "city": "Norwood",
+      "official_url": "https://www.norwoodohio.gov/DocumentCenter/View/2889",
+      "retrieved_at": "2026-10-07T13:09:09.366107+00:00",
+      "final_url": "https://www.norwoodohio.gov/DocumentCenter/View/2889/Fees_2026?bidId=",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "status": "archived",
+      "sha256": "467aaf54cfc6ccef8d93a672f5800ee53cf46921092383108f5e7394f269c728",
+      "bytes": 190509,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-fees-2026.pdf"
+    },
+    {
+      "file": "deer-park-building-process.docx",
+      "city": "Deer Park",
+      "official_url": "https://www.deerpark-oh.gov/media/user/documents/Building%20Permit%20Process%208-2025.docx",
+      "retrieved_at": "2026-10-07T13:09:09.604545+00:00",
+      "final_url": "https://www.deerpark-oh.gov/media/user/documents/Building%20Permit%20Process%208-2025.docx",
+      "http_status": 200,
+      "content_type": "application/vnd.openxmlformats",
+      "status": "archived",
+      "sha256": "935d92933a9b5449835d46034b9291534ade141d69ea539078b50b52750c812b",
+      "bytes": 41083,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-building-process.docx"
+    },
+    {
+      "file": "deer-park-building-zoning-application.doc",
+      "city": "Deer Park",
+      "official_url": "https://www.deerpark-oh.gov/media/user/documents/City%20of%20Deer%20Park%20%20Building%20%20Zoning%20Application%20revised%20April%202022.doc",
+      "retrieved_at": "2026-10-07T13:09:09.734214+00:00",
+      "final_url": "https://www.deerpark-oh.gov/media/user/documents/City%20of%20Deer%20Park%20%20Building%20%20Zoning%20Application%20revised%20April%202022.doc",
+      "http_status": 200,
+      "content_type": "application/msword",
+      "status": "archived",
+      "sha256": "bfccede4ebae71ba1a7ef337b29c9f682ccb0aa9ff16de3861408e7a3f040b39",
+      "bytes": 44032,
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-building-zoning-application.doc"
+    },
+    {
+      "file": "deer-park-fees-2026.pdf",
+      "city": "Deer Park",
+      "official_url": "https://www.deerpark-oh.gov/media/user/departments/2026 HAMILTON COUNTY BUILDING PERMIT FEE SCHEDULE.pdf",
+      "retrieved_at": "2026-10-07T13:09:09.864920+00:00",
+      "status": "not_archived",
+      "error": "URL can't contain control characters. '/media/user/departments/2026 HAMILTON COUNTY BUILDING PERMIT FEE SCHEDULE.pdf' (found at least ' ')"
+    }
+  ],
+  "staff_approved": false,
+  "electrical_roles_approved": false
+}
