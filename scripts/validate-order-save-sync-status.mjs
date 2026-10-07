@@ -39,7 +39,7 @@ assert.match(page, /max-w-full items-center/);
 assert.match(page, /Loader2 className="w-4 h-4 mr-1 animate-spin"/);
 assert.doesNotMatch(page, /Save & Sync"\}\s*\(\$\{saveStatus\.pendingSyncCount\}/);
 assert.match(sheet, /isSyncing, pendingSyncCount, lastSynced, syncMessage, saveError/);
-assert.match(sheet, /smartsheet_pending_local_sync === true/);
+assert.match(sheet, /const durablePendingIds = new Set\(durablePendingOrderIds\(ordersData\)\)/);
 assert.match(sheet, /pendingSyncIdsRef\.current\.add\(orderId\)/);
 assert.match(sheet, /pendingSyncVersionRef\.current\.set\(orderId, 0\)/);
 assert.match(sheet, /pendingSyncIdsRef\.current\.delete\(orderId\)/);
