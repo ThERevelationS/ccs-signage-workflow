@@ -1,0 +1,22 @@
+[
+  {
+    "source_url": "https://www.inspectionbureau.com/wp-content/uploads/2025/01/Fee-Schedule-Eff.-1-1-2025.pdf",
+    "final_url": "https://www.inspectionbureau.com/wp-content/uploads/2025/01/Fee-Schedule-Eff.-1-1-2025.pdf",
+    "file": "fee-schedule-effective-2025-01-01.pdf",
+    "bytes": 2362479,
+    "sha256": "847339b30c74420bd84c989f06664b5586bb8bfeeb8339239b139d9827484b3b",
+    "retrieved_at": "2026-10-07T01:01:03.744925+00:00",
+    "scope": "currently linked provider fee schedule; applicability requires review",
+    "authority_verified": false
+  },
+  {
+    "source_url": "https://www.inspectionbureau.com/wp-content/uploads/2020/06/Web-2020-Link-Updated-Electrical-Plan-Review.pdf",
+    "final_url": "https://www.inspectionbureau.com/wp-content/uploads/2020/06/Web-2020-Link-Updated-Electrical-Plan-Review.pdf",
+    "file": "plan-review-routing-2020.pdf",
+    "bytes": 16303,
+    "sha256": "802e71369f1b85dfa2a1ebafea485ce38c0aea318f165fb8991f50075dba12fb",
+    "retrieved_at": "2026-10-07T01:01:04.048532+00:00",
+    "scope": "historical reference; submission routing may be superseded by 2026 ezTrak migration",
+    "authority_verified": false
+  }
+]
