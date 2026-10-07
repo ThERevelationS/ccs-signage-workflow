@@ -18,6 +18,7 @@ import { getSalesRecordClassification } from "@/components/sales/salesRecordScop
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const CellHistory = base44.entities.CellHistory;
@@ -156,7 +157,9 @@ export default function SalesOpportunityDialog({
   }, [workOrder?.id, workOrder?.updated_date]);
 
   const value = Number(workOrder?.estimate_amount ?? 0) || 0;
-  const statusLabel = SALES_STATUSES.find((status) => status.value === workOrder?.sales_status)?.label || "Lead";
+  const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
+  const stageDisplayValue = salesStageDisplayValue(workOrder);
+  const statusLabel = salesStageDisplayLabel(workOrder);
   const closeout = ["won", "lost"].includes(workOrder?.sales_status);
   const stageAging = getStageAgingState(workOrder);
   const quoteAging = getQuoteAgingState(workOrder);
@@ -319,14 +322,17 @@ export default function SalesOpportunityDialog({
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
-              <Select value={workOrder.sales_status || "lead"} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered}>
-                <SelectTrigger className="mt-2 h-11 sm:h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>{SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
+              <Select value={stageDisplayValue} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered}>
+                <SelectTrigger className={`mt-2 h-11 sm:h-9 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : ""}`}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
+                  {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
+                </SelectContent>
               </Select>
               {stageAging.tracked ? (
                 <div className={`mt-2 text-xs ${stageAging.aged ? "font-semibold text-rose-700" : "text-gray-500"}`}>{stageAging.ageDays} day{stageAging.ageDays === 1 ? "" : "s"} in this stage{workOrder.sales_status === "on_hold" ? " · On Hold is not flagged as stalled" : stageAging.aged ? " · review for stage movement" : ""}</div>
               ) : recordClassification === "current" ? (
-                <div className="mt-2 text-xs text-gray-400">Stage age begins tracking after the next verified stage change.</div>
+                <div className="mt-2 text-xs text-gray-400">{unverifiedStage ? "Choose the actual Sales stage to establish the first verified stage baseline." : "Stage age begins tracking after the next verified stage change."}</div>
               ) : (
                 <div className="mt-2 text-xs text-gray-400">Stage timing is not treated as authoritative for this non-current record.</div>
               )}
