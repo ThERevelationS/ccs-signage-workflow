@@ -5,12 +5,12 @@ import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInven
 
 import officialInventory from './officialGeographicInventory.json';
 
-async function readRecordedCoverage(isCurrent, onProgress) {
-  const queue = await readAllCoveragePages(cursor => base44.entities.SourceCollectionQueue.filter(
-    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, ...(cursor ? { cursor } : {}) }
+export async function readRecordedCoverage(isCurrent, onProgress, api = base44) {
+  const queue = await readAllCoveragePages(cursor => api.entities.SourceCollectionQueue.filter(
+    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','jurisdiction_name','jurisdiction_type','parent_county_name'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} queue records`) });
-  const profiles = await readAllCoveragePages(cursor => base44.entities.JurisdictionProfile.filter(
-    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, ...(cursor ? { cursor } : {}) }
+  const profiles = await readAllCoveragePages(cursor => api.entities.JurisdictionProfile.filter(
+    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','type','parent_county'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} profile records`) });
   return { ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
