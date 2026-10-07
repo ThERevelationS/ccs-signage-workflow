@@ -9,11 +9,10 @@ async function fixture(text='Pilot Department is also known as Pilot Dept.'){
  f.patchSource({official_url:'https://gov.test/identity.pdf',extracted_pages:[page],extracted_text:assembledSourceText({...f.source(),official_url:'https://gov.test/identity.pdf'},[page])});
  const office={id:'catalog',government_office_id:'office',government_office:{name:'Pilot Department',state:'OH',verification_status:'staff_verified',source_url:'https://gov.test/office'}};
  const profile={id:f.source().jurisdiction_id,name:f.source().jurisdiction_name,state:'OH',type:'city',website_url:'https://gov.test/'};
- const deps={sourceEntity:f.entities.source,segmentEntity:f.entities.segment,getOffice:async()=>office};
+ const deps={sourceEntity:f.api.sourceEntity,segmentEntity:f.api.segmentEntity,getOffice:async()=>office};
  const input={government_office_id:'office',printed_name:'Pilot Dept',source_document_id:f.source().id,physical_page:1,text_sha256:page.text_sha256,excerpt:'Pilot Department is also known as Pilot Dept.'};
  return {f,office,profile,deps,input};
 }
-test('fixture contract',async()=>{const f=await ruleFixture(); assert.ok(f.entities);});
 test('literal mapping returns candidate without approvals',async()=>{const x=await fixture();const result=await verifyPublisherAliasCandidate(x.deps,x.profile,x.input);assert.equal(result.status,'candidate_only');assert.equal(result.publisher_approved,false);});
 for(const [name,mutate] of [
  ['withdrawn office',x=>x.office.government_office.verification_status='needs_verification'],
