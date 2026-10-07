@@ -181,3 +181,15 @@ test('Ohio electrical legacy form is not promoted to current submission or cover
  assert.equal(row.references.filter(r=>r.url===p.observations[2].url).length,1);
  assert.equal(row.online_form_url,undefined);}
 });
+
+test('Hamilton Miami and Crosby sources preserve county identity and scanned-original gaps',()=>{
+ const root='docs/official-evidence/ohio-miami-crosby-2026-10-07/',m=JSON.parse(readFileSync(root+'manifest.json')),e=JSON.parse(readFileSync(root+'pdf-text-extraction.json')),p=JSON.parse(readFileSync(root+'office-reconciliation.json'));
+ assert.equal(m.sources.filter(s=>s.status==='archived').length,6);
+ for(const s of m.sources){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);if(s.file.endsWith('.pdf'))assert.deepEqual(b,readFileSync('public/permitting-evidence/miami-crosby/'+s.file));}
+ assert.equal(e.documents.reduce((n,d)=>n+d.total_pages,0),174);
+ const scan=e.documents.find(d=>d.file.includes('maintenance'));assert.equal(scan.pages_with_embedded_text,0);assert.ok(scan.pages.every(p=>p.needs_ocr_review));assert.equal(scan.ocr_performed,false);
+ for(const d of e.documents)for(const[i,page]of d.pages.entries()){assert.equal(page.page,i+1);assert.equal(page.source_sha256,d.source_sha256);assert.equal(createHash('sha256').update(page.text).digest('hex'),page.text_sha256);}
+ assert.equal(p.profiles[0].county,'Hamilton');assert.equal(p.profiles[0].canonical_id,null);assert.equal(p.profiles[0].conflicting_records.length,2);assert.equal(p.profiles[1].canonical_id,null);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
+ assert.equal(dossiers.some(d=>p.profiles[0].conflicting_records.some(r=>r.id===d.id)),false);
+ assert.match(readFileSync(root+'crosby-zoning.txt','utf8'),/dcarter@cvennemeier@/);
+});
