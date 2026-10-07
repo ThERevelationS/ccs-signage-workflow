@@ -1,3 +1,15 @@
+## 2026-10-07 — Cincinnati live electrical evidence readiness audit
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Confirmed the exact City sign handout is already linked to the live profile and source catalog (source 6ac39c0e6657049fb11cd757). Profile/source URLs, archived file, byte counts, SHA-256 and catalog receipt agree. All three physical pages are complete, untruncated, OCR-clear and match retained text hashes. No duplicate upload or catalog record is needed.
+
+Saved reproducible read-only readiness audit and distinct role prerequisites. Both short role excerpts match retained page 2; neither establishes the explicit responsibility required by the current lexical gate. Source administrative publisher/scope review and IBI staff identity verification are still absent. Identified a concrete architecture gap: PDF role review currently equates source publisher with responsible office; municipal delegation to a regional provider needs a separate evidence path. Existing HTML delegation remains zoning-only. City publisher must never be relabeled IBI to bypass that gap.
+
+Verification: 3 checks passed (live archive/page integrity, blocked unreviewed/contact-only roles, tamper/replacement/incomplete extraction detection); diff check passed. No production entities, source reviews, authority records, frontend or automated queue changed.
+
+Next: Implement a bounded municipal PDF delegation evidence path, preserving distinct verified publisher and responsible-office identities, exact retained quotes, current scope review, and separate permit/inspection roles.
+
 ## 2026-10-07 — Live unverified IBI canonical identity staged
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
