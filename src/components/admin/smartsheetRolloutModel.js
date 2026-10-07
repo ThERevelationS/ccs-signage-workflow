@@ -1,3 +1,5 @@
+import { hasDownstreamOperationalSmartsheetEvidence } from "../../../base44/shared/smartsheetSalesSafety.mjs";
+
 function cleanText(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
 }
@@ -70,13 +72,22 @@ export function classifySmartsheetRolloutRow(row, dataset, { baseline = null, sh
   };
 
   if (safeBaseline && !existedAtBaseline) {
+    const downstreamOperational = dataset === "sales" &&
+      hasDownstreamOperationalSmartsheetEvidence(row?.values || {});
     return {
       ...base,
       outcome: "post_baseline_new",
       creation_review_eligible: true,
+      pipeline_route: downstreamOperational
+        ? "operational_non_pipeline"
+        : dataset === "sales"
+          ? "current_pipeline_candidate"
+          : "",
       reason: dataset === "orders"
         ? "Row was not present in the captured Order Request baseline. It may enter controlled Base44 Order creation review after Customer resolution and rollout gates pass."
-        : "Row was not present in the captured Workflow baseline. Treat it as a new post-rollout Sales candidate, still subject to Customer resolution and explicit creation review.",
+        : downstreamOperational
+          ? "Row was not present in the captured Workflow baseline, but objective downstream order/install/permit evidence means Base44 should preserve it outside Current Pipeline."
+          : "Row was not present in the captured Workflow baseline. Treat it as a new post-rollout Sales candidate, still subject to Customer resolution and explicit creation review.",
     };
   }
 
