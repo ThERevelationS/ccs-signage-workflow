@@ -8,6 +8,7 @@ import { getActionableSalesAttentionItems } from "@/components/sales/salesAttent
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -35,7 +36,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
   return (
     <div className="space-y-2 p-1.5">
       {workOrders.map((wo) => {
-        const status = SALES_STATUSES.find(s => s.value === wo.sales_status);
+        const unverifiedStage = isUnverifiedSmartsheetSalesStage(wo);
+        const stageDisplayValue = salesStageDisplayValue(wo);
+        const status = unverifiedStage
+          ? { value: "needs_stage", label: "Needs Stage", color: "bg-violet-100 text-violet-800" }
+          : SALES_STATUSES.find(s => s.value === stageDisplayValue);
         const deadline = wo.current_task_deadline ? safeDate(wo.current_task_deadline) : null;
         const followUp = wo.follow_up_date ? safeDate(wo.follow_up_date) : null;
         const expectedClose = wo.expected_close_date ? safeDate(wo.expected_close_date) : null;
@@ -75,11 +80,12 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               </div>
               {status && (
                 <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-                  <Select value={wo.sales_status || "lead"} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered}>
+                  <Select value={stageDisplayValue} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered}>
                     <SelectTrigger className={`h-11 w-[112px] border-0 text-xs font-medium ${status.color}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
                       {SALES_STATUSES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
