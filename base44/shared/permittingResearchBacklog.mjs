@@ -7,7 +7,7 @@ export const normalizeResearchJurisdictionType = (value) => {
 
 export const jurisdictionProfileTypeForQueueRow = (row = {}) => {
   const type = normalizeResearchJurisdictionType(row?.jurisdiction_type);
-  return ['county', 'city', 'township'].includes(type) ? type : 'municipality';
+  return ['county', 'city', 'village', 'township'].includes(type) ? type : 'municipality';
 };
 
 export const profileHasResearchEvidence = (profile = {}) => {

@@ -15,6 +15,7 @@
       "enum": [
         "county",
         "city",
+        "village",
         "township",
         "municipality"
       ],

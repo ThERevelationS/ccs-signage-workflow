@@ -53,7 +53,7 @@ test("existing profile reconciles a stale not-started row instead of creating du
 test("placeholder profiles are not treated as researched evidence", () => {
   const row = { id: "1", jurisdiction_name: "Example Village", state: "OH", jurisdiction_type: "village", parent_county_name: "Example County" };
   const placeholder = { id: "p1", name: "Example Village", state: "OH", type: "municipality", parent_county: { name: "Example County" } };
-  assert.equal(jurisdictionProfileTypeForQueueRow(row), "municipality");
+  assert.equal(jurisdictionProfileTypeForQueueRow(row), "village");
   assert.equal(profileHasResearchEvidence(placeholder), false);
   const researchedProfiles = [placeholder].filter(profileHasResearchEvidence);
   const plan = classifyBacklogRows({ queueRows: [row], profiles: researchedProfiles, inFlightCount: 0 });

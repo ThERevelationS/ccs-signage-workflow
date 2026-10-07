@@ -45,7 +45,7 @@ async function verifyEvidence(deps,profile,input){
  if(scope.profile.state!==profile.state || !scope.named_areas.includes(area))throw evidenceError('Coverage must be explicitly quoted in a current source review for the same state.');
  if(profile.type==='county'){
   if(!/unincorporated/i.test(area) || !area.includes(profile.name))throw evidenceError('County relationships must be limited to the quoted unincorporated area; cities are reviewed separately.');
- }else if(!['city','municipality','township'].includes(profile.type) || area!==profile.name)
+ }else if(!['city','village','municipality','township'].includes(profile.type) || area!==profile.name)
   throw evidenceError('The quoted named service area must exactly match the target canonical jurisdiction.');
  const office=await canonicalAuthorityOffice(settingsEntity,officeId,scope.publisher_name);
  if(scope.office_reference && scope.office_reference.government_office_id!==officeId)throw evidenceError('The source publisher references another canonical office.');

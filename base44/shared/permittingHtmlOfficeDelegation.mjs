@@ -7,7 +7,7 @@ const destination=value=>{const u=new URL(value);u.hash='';return u.href;};
 // This first native HTML path is deliberately confined to an explicit municipal zoning-department delegation.
 // The responsible office and publishing jurisdiction are separate identities. It never establishes adopted law.
 export async function verifyHtmlOfficeDelegation(deps,profile,input,getOffice){
- if(input.source_document_id || input.role!=='zoning' || !['city','municipality'].includes(profile.type) ||
+ if(input.source_document_id || input.role!=='zoning' || !['city','village','municipality'].includes(profile.type) ||
   !['OH','KY'].includes(profile.state) || input.coverage_area!==profile.name || input.responsibility_confirmed!==true)
   throw evidenceError('HTML delegation requires the publishing city, its exact named coverage and the zoning role.',400);
  if(typeof input.review_notes!=='string' || !input.review_notes.trim() || input.review_notes.length>2000 ||
@@ -24,7 +24,8 @@ export async function verifyHtmlOfficeDelegation(deps,profile,input,getOffice){
  authorizedHtmlUrl(profile,row.official_url);authorizedHtmlUrl(profile,row.final_url);
  const alias=input.office_alias.trim(),quote=citation.excerpt;
  // Role appears before the delegating "by", so incidental roles in the recipient department name cannot qualify.
- const clause=new RegExp('(?:The )?City of '+escaped(profile.name)+' Zoning Department is (?:now )?being managed and reviewed by '+escaped(alias)+'(?:[.]|$)');
+ const localityLabel=profile.type==='village'?'Village':'City';
+ const clause=new RegExp('(?:The )?'+localityLabel+' of '+escaped(profile.name)+' Zoning Department is (?:now )?being managed and reviewed by '+escaped(alias)+'(?:[.]|$)');
  if(!clause.test(quote))throw evidenceError('Quote an explicit city zoning-department management and review delegation to the named office.');
  const office=await getOffice(deps.settingsEntity,input.government_office_id,undefined,profile.state);
  const url=destination(office.source_url),projection=projectHtmlText(rawText(row),{includeLinks:true});

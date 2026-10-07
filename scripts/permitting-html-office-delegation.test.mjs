@@ -10,8 +10,8 @@ const officeUrl='https://county.example/department?structureid=37',alias='County
 const html='<html><body><nav><a href="'+officeUrl+'">Navigation</a></nav><main><h1>Zoning Department</h1><p>The City of Town Zoning Department is now being managed and reviewed by County Planning, Zoning &amp; Building Department. Please click <a href="'+officeUrl+'">here</a> to be directed to their website.</p></main></body></html>';
 function match(row,q){return Object.entries(q).every(([k,v])=>v && typeof v==='object'?
  (!Object.hasOwn(v,'$lte') || row[k]<=v.$lte) && (!Object.hasOwn(v,'$lt') || row[k]<v.$lt):row[k]===v);}
-async function setup({createMode='ok',retained=html}={}){
- const profile={id:'town',name:'Town',state:'KY',type:'city',website_url:'https://city.example/',permitting_url:'https://city.example/zoning',
+async function setup({createMode='ok',retained=html,profileType='city'}={}){
+ const profile={id:'town',name:'Town',state:'KY',type:profileType,website_url:'https://city.example/',permitting_url:'https://city.example/zoning',
   updated_date:'p1',documents:[{id:'manual',archive_pinned:true}],notes:'Preserve staff notes'};
  const office={id:'catalog',government_office_id:'office',government_office:{name:'County Planning, Zoning and Building Inspection',state:'KY',
   verification_status:'staff_verified',verified_by:'Reviewer',verified_at:'2026-10-04T18:00:00Z',source_url:officeUrl}};
@@ -182,4 +182,12 @@ test('compiled handler previews and commits native HTML evidence using the exist
   const saved=await call({action:'verify',jurisdiction_id:'town',review:f.input,request_id:f.args.requestId,expected_updated_date:preview.data.expected_updated_date});
   assert.equal(saved.status,200);assert.equal(saved.data.review.evidence_kind,'official_html');assert.equal(f.counts.creates,1);
  }finally{globalThis.fetch=previous;}
+});
+
+test('village HTML delegation requires explicit Village wording and retains review gates',async()=>{
+ const f=await setup({profileType:'village',retained:html.replace('City of Town','Village of Town')});
+ const r=await f.review({dryRun:true});assert.equal(r.proposal.profile_snapshot.type,'village');
+ assert.equal(r.proposal.address_authority_resolved,false);assert.equal(f.counts.creates,0);
+ const wrong=await setup({profileType:'village'});await assert.rejects(wrong.review({dryRun:true}),/explicit city zoning/);
+ assert.equal(wrong.counts.creates,0);assert.equal(wrong.counts.writes,0);
 });

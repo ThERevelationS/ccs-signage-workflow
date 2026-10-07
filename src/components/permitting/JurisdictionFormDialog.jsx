@@ -249,7 +249,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
               <Select value={form.type} onValueChange={v => set("type", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["county","city","township","municipality"].map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}
+                  {["county","city","village","township","municipality"].map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
