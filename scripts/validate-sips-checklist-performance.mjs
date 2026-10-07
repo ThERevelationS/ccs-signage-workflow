@@ -161,4 +161,9 @@ check("inline editors reserve a full phone row for text and actions", () => {
   assert.equal(source.includes('className="flex-1 flex gap-1 min-w-0"'), false);
 });
 
+check("task assignment actions use a dedicated phone row", () => {
+  assert.equal((source.match(/className="basis-full sm:basis-auto flex flex-wrap items-center justify-end sm:justify-start gap-1"/g) || []).length, 3);
+  assert.equal((source.match(/<MultiUserSelectInline/g) || []).length, 3);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
