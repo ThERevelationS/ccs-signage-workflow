@@ -1,0 +1,55 @@
+{
+  "locality": {
+    "name": "Symmes Township",
+    "state": "OH",
+    "county": "Hamilton",
+    "type": "township",
+    "canonical_id": null
+  },
+  "candidates": [
+    {
+      "file": "symmes-fee-amendment-g2025-100.pdf",
+      "official_url": "https://www.symmestownship.org/DocumentCenter/View/3444/G2025-100-to-amend-fees-for-applications-under-Symmes-Township-Zoning-Resolution",
+      "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+      "bytes": 786622,
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf",
+      "listing_candidate": "G2025-100: official index labels amendment of zoning application fees",
+      "physical_pages": 2,
+      "embedded_text_pages": 0,
+      "observation_method": "Official HTML index label; scanned PDF original retained, content transcription pending",
+      "needs_ocr_review": true,
+      "fee_values_extracted": false,
+      "office_roles_approved": false
+    },
+    {
+      "file": "symmes-county-contract-g2025-104.pdf",
+      "official_url": "https://www.symmestownship.org/DocumentCenter/View/3443/G2025-104-Authorizing-contract-with-Hamilton-County-for-Planning-and-Zoning-Services",
+      "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+      "bytes": 746814,
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf",
+      "listing_candidate": "G2025-104: official index labels authorization of county planning/zoning services contract",
+      "physical_pages": 2,
+      "embedded_text_pages": 0,
+      "observation_method": "Official HTML index label; scanned PDF original retained, content transcription pending",
+      "needs_ocr_review": true,
+      "fee_values_extracted": false,
+      "office_roles_approved": false
+    }
+  ],
+  "retained_pdf_pages": 4,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "county_link_recovery": "Three root-relative candidate paths failed; preserve original linked URLs and failed attempts. Township /238 redirects to same county page; not an independent forms mirror.",
+  "gaps": [
+    "OCR and visual review of four scanned pages",
+    "Resolution effective dates and complete attachments",
+    "Reconcile county 2026 fee originals",
+    "Application guide original",
+    "Current amendments and job coverage",
+    "Electrical issuance and inspection",
+    "App-storage/catalog registration"
+  ]
+}

@@ -227,3 +227,11 @@ assert.equal(p.maintenance_zoning_certificate_required_in_retained_code,true);as
 assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
 assert.match(p.findings.find(f=>f.title==='Application documents').summary,/registered surveyor/);
 });
+
+test('Symmes resolution recovery preserves scans and failed paths without inferred fee or authority',()=>{
+const root='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/',m=JSON.parse(readFileSync(root+'resolution-recovery/manifest.json')),p=JSON.parse(readFileSync(root+'resolution-recovery/review-packet.json')),e=JSON.parse(readFileSync(root+'resolution-recovery/pdf-text-extraction.json')),a=JSON.parse(readFileSync(root+'county-forms/link-recovery-attempts.json'));
+assert.equal(m.sources.length,3);for(const s of m.sources){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);if(s.file.endsWith('.pdf'))assert.deepEqual(b,readFileSync('public/permitting-evidence/harrison-symmes-townships/'+s.file));}
+assert.equal(p.retained_pdf_pages,4);for(const d of e.documents){assert.equal(d.total_pages,2);assert.equal(d.pages_with_embedded_text,0);assert.equal(d.ocr_performed,false);assert.ok(d.pages.every(x=>x.needs_ocr_review));}
+assert.equal(p.locality.canonical_id,null);assert.ok(p.candidates.every(c=>c.needs_ocr_review&&!c.fee_values_extracted&&!c.office_roles_approved));assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);
+assert.equal(a.attempts.length,3);assert.ok(a.attempts.every(x=>x.status==='original_retention_gap'&&!x.sha256&&!x.retained_path));assert.equal(p.live_records_changed,0);
+});
