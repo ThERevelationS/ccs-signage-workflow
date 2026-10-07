@@ -19,7 +19,7 @@ finding('addyston-linked-zoning-ordinance.pdf',25,'Illumination and sign applica
 'Retained page covers illumination, permit exceptions, drawings, construction details and a printed application fee. Current exemptions and fees remain unverified.','15 - 801.7 Permits'),
 finding('addyston-linked-zoning-ordinance.pdf',39,'Illuminated-sign electrical permit candidate',
 'The retained clause calls for separate electrical permits and fees for illuminated signs/billboards and prints an IBI-like name. Canonical provider identity, currentness, permit issuer and inspection responsibility remain unapproved. The nearby building-code exemption must not be treated as a zoning-sign exemption.','separate electrical permits and feesare')];
-addyston.notes=addyston.notes.map(note=>note.startsWith('Separate electrical permit issuance')?'The retained ordinance now supplies an illuminated-sign electrical permit candidate on physical page 39. Currentness, canonical electrical-office identity, permit issuance and electrical inspection remain separately unresolved.':note);
+addyston.notes=addyston.notes.map(note=>note.startsWith('Separate electrical permit issuance')?'The retained ordinance now supplies an illuminated-sign electrical permit candidate on physical page 39. Currentness, canonical electrical-office identity, permit issuance and electrical inspection remain separately unresolved. Building-inspector contact alone does not establish electrical responsibility.':note);
 const harrison=rows.find(r=>r.id==='69a7043e496af8043b9e4f00');
 harrison.document_findings=[
 finding('harrison-zoning-application.pdf',1,'Zoning application: sign options and site plan',

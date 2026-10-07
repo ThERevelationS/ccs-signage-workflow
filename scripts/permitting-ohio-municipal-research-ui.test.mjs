@@ -76,3 +76,23 @@ test('Harrison and Addyston originals, online portal and duplicate bytes remain 
  assert.equal(render({...h,id:'6ac1ebd2b2a2ba1a032a8985',name:'Harrison County',type:'county'}),'');
  assert.match(render(a),/recorded collection gap/);assert.match(render(a),/does not establish electrical responsibility/);
 });
+
+test('PDF page extraction preserves physical numbering, hashes and OCR gaps',()=>{
+ const root='docs/official-evidence/ohio-harrison-addyston-2026-10-07/';
+ const extraction=JSON.parse(readFileSync(root+'pdf-text-extraction.json'));
+ assert.equal(extraction.distinct_archives_parsed,5);
+ for(const doc of extraction.documents){
+ assert.equal(doc.pages.length,doc.total_pages);assert.equal(doc.searchable_content_complete,false);assert.equal(doc.ocr_performed,false);
+ for(const [index,page] of doc.pages.entries()){assert.equal(page.page,index+1);assert.equal(page.source_sha256,doc.source_sha256);assert.equal(page.text_sha256,createHash('sha256').update(page.text).digest('hex'));}
+ }
+ for(const doc of extraction.documents.filter(d=>d.file.includes('sign-instructions'))){assert.equal(doc.pages_with_embedded_text,0);assert.ok(doc.pages.every(p=>p.needs_ocr_review));}
+ const add=dossiers.find(d=>d.name==='Village of Addyston');
+ assert.equal(add.document_findings.length,4);
+ for(const row of dossiers.filter(d=>d.document_findings))for(const finding of row.document_findings){
+ const doc=extraction.documents.find(d=>finding.archive.includes(d.file)),page=doc.pages[finding.physical_page-1];
+ assert.equal(finding.text_sha256,page.text_sha256);assert.equal(finding.source_sha256,doc.source_sha256);
+ assert.equal(finding.authority_approved,false);assert.match(finding.archive,new RegExp('#page='+finding.physical_page+'$'));
+ }
+ assert.match(render(add),/must not be treated as a zoning-sign exemption/);
+ assert.match(render(dossiers.find(d=>d.name==='City of Harrison')),/OCR\/visual transcription is still required/);
+});
