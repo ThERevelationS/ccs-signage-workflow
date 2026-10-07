@@ -2697,6 +2697,7 @@ Deno.serve(async (req) => {
         if (!provenance) return true;
         const strictV24 = Number(snapshotVersion || 0) >= 24;
         const strictV25 = Number(snapshotVersion || 0) >= 25;
+        const strictV26 = Number(snapshotVersion || 0) >= 26;
         const hasOwn = (key: string) => Object.prototype.hasOwnProperty.call(provenance, key);
         const v24RequiredFields = [
           'correction_request_id', 'submission_request_id', 'requested_by', 'requested_at', 'employee_reason',
@@ -2729,6 +2730,25 @@ Deno.serve(async (req) => {
           String(provenance.submission_payload_hash || '')
         );
         if (!v25ShapeComplete) return false;
+        const v26RequestKind = String(provenance.request_kind || '');
+        if (strictV26 && !['standard', 'missed_clock_out'].includes(v26RequestKind)) return false;
+        const v26PunchRequiredFields = [
+          'punch_exception_id', 'punch_case_key', 'punch_exception_status', 'punch_employee_response',
+          'punch_claimed_clock_out', 'punch_resolution_audit_id', 'punch_response_audit_id',
+          'punch_response_audit_outcome', 'punch_response_audit_at', 'punch_response_actor_role',
+          'punch_response_authentication_method', 'punch_response_payload_hash', 'punch_original_snapshot_hash',
+        ];
+        if (strictV26 && v26RequestKind === 'missed_clock_out' && !(
+          v26PunchRequiredFields.every(hasOwn) && String(provenance.punch_exception_id || '') &&
+          String(provenance.punch_case_key || '') && String(provenance.punch_exception_status || '') === 'resolved' &&
+          String(provenance.punch_employee_response || '') === 'missed_clock_out' && String(provenance.punch_claimed_clock_out || '') &&
+          String(provenance.punch_resolution_audit_id || '') && String(provenance.punch_response_audit_id || '') &&
+          ['confirmed', 'recovered'].includes(String(provenance.punch_response_audit_outcome || '')) &&
+          String(provenance.punch_response_audit_at || '') && String(provenance.punch_response_actor_role || '') &&
+          ['session', 'badge'].includes(String(provenance.punch_response_authentication_method || '')) &&
+          (String(provenance.punch_response_actor_role || '') === 'badge') === (String(provenance.punch_response_authentication_method || '') === 'badge') &&
+          String(provenance.punch_response_payload_hash || '') && String(provenance.punch_original_snapshot_hash || '')
+        )) return false;
         const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
         const appliedAudit = provenance.applied_audit_id ? await auditEntity.get(provenance.applied_audit_id).catch(() => null) : null;
         const reviewAudits = strictV24 ? await auditEntity.filter({
@@ -2743,6 +2763,15 @@ Deno.serve(async (req) => {
           time_entry_id: String(change.time_entry_id || ''),
         }).catch(() => null) : null;
         const submissionAudit = Array.isArray(submissionAudits) && submissionAudits.length === 1 ? submissionAudits[0] : null;
+        const punchCase = strictV26 && v26RequestKind === 'missed_clock_out'
+          ? await punchExceptionEntity.get(String(provenance.punch_exception_id || '')).catch(() => null)
+          : null;
+        const punchResponseAudits = strictV26 && v26RequestKind === 'missed_clock_out' ? await auditEntity.filter({
+          action: 'punch_exception',
+          request_id: String(provenance.submission_request_id || ''),
+          time_entry_id: String(change.time_entry_id || ''),
+        }).catch(() => null) : null;
+        const punchResponseAudit = Array.isArray(punchResponseAudits) && punchResponseAudits.length === 1 ? punchResponseAudits[0] : null;
         const requested = correction?.requested_changes || {};
         const original = appliedAudit?.details?.original || {};
         const corrected = appliedAudit?.details?.corrected || {};
@@ -2793,6 +2822,59 @@ Deno.serve(async (req) => {
           String(submissionAudit.details?.requested_changes?.clock_out || '') === String(provenance.requested_clock_out || '') &&
           Number(submissionAudit.details?.requested_changes?.lunch_minutes || 0) === Number(provenance.requested_lunch_minutes || 0) &&
           String(submissionAudit.details?.requested_changes?.notes || '') === String(provenance.requested_notes || ''));
+        const correctionRequestKind = String(correction?.request_kind || 'standard');
+        const punchOriginalSnapshotHash = correction ? await payloadHash(correction.original_snapshot || {}) : '';
+        const expectedPunchResponseHash = correction && correctionRequestKind === 'missed_clock_out' ? await payloadHash({
+          action: 'resolve_punch_exception',
+          user_email: asEmail(correction.user_email),
+          time_entry_id: correction.time_entry_id,
+          response: 'missed_clock_out',
+          claimed_clock_out: String(requested.clock_out || '') || null,
+        }) : '';
+        const punchResponseAuditTime = Date.parse(String(punchResponseAudit?.server_timestamp || ''));
+        const v26MissedClockOutMatches = !strictV26 || correctionRequestKind !== 'missed_clock_out' || Boolean(
+          v26RequestKind === 'missed_clock_out' && punchCase && punchResponseAudit && expectedPunchResponseHash &&
+          String(correction.punch_exception_id || '') === String(provenance.punch_exception_id || '') &&
+          String(punchCase.id || '') === String(provenance.punch_exception_id || '') &&
+          String(punchCase.case_key || '') === String(provenance.punch_case_key || '') &&
+          String(punchCase.case_key || '') === `missed_clock_out:${change.time_entry_id}` &&
+          asEmail(punchCase.user_email) === asEmail(provenance.requested_by) &&
+          String(punchCase.time_entry_id || '') === String(change.time_entry_id || '') &&
+          String(punchCase.exception_type || '') === 'missed_clock_out' &&
+          String(punchCase.status || '') === String(provenance.punch_exception_status || '') &&
+          String(punchCase.status || '') === 'resolved' &&
+          String(punchCase.employee_response || '') === String(provenance.punch_employee_response || '') &&
+          String(punchCase.employee_response || '') === 'missed_clock_out' &&
+          String(punchCase.claimed_clock_out || '') === String(provenance.punch_claimed_clock_out || '') &&
+          String(punchCase.claimed_clock_out || '') === String(requested.clock_out || '') &&
+          String(punchCase.request_id || '') === String(provenance.submission_request_id || '') &&
+          String(punchCase.correction_request_id || '') === String(provenance.correction_request_id || '') &&
+          String(punchCase.resolution_audit_id || '') === String(provenance.punch_resolution_audit_id || '') &&
+          String(punchCase.resolution_audit_id || '') === String(provenance.applied_audit_id || '') &&
+          constantTimeEqual(await payloadHash(punchCase.original_snapshot || {}), punchOriginalSnapshotHash) &&
+          constantTimeEqual(punchOriginalSnapshotHash, String(provenance.punch_original_snapshot_hash || '')) &&
+          String(punchResponseAudit.id || '') === String(provenance.punch_response_audit_id || '') &&
+          ['confirmed', 'recovered'].includes(String(punchResponseAudit.outcome || '')) &&
+          String(punchResponseAudit.outcome || '') === String(provenance.punch_response_audit_outcome || '') &&
+          asEmail(punchResponseAudit.user_email) === asEmail(provenance.requested_by) &&
+          asEmail(punchResponseAudit.actor_email) === asEmail(provenance.requested_by) &&
+          String(punchResponseAudit.actor_role || '') === String(provenance.punch_response_actor_role || '') &&
+          String(punchResponseAudit.authentication_method || '') === String(provenance.punch_response_authentication_method || '') &&
+          ['session', 'badge'].includes(String(punchResponseAudit.authentication_method || '')) &&
+          String(punchResponseAudit.server_timestamp || '') === String(provenance.punch_response_audit_at || '') &&
+          Number.isFinite(punchResponseAuditTime) && Number.isFinite(requestedAtTime) && Number.isFinite(reviewedAtTime) &&
+          punchResponseAuditTime >= requestedAtTime && punchResponseAuditTime <= reviewedAtTime &&
+          String(punchResponseAudit.reason || '') === String(provenance.employee_reason || '') &&
+          String(punchResponseAudit.details?.punch_exception_id || '') === String(provenance.punch_exception_id || '') &&
+          String(punchResponseAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
+          String(punchResponseAudit.details?.response || '') === 'missed_clock_out' &&
+          String(punchResponseAudit.details?.claimed_clock_out || '') === String(provenance.punch_claimed_clock_out || '') &&
+          String(punchResponseAudit.details?.payload_hash || '') === String(provenance.punch_response_payload_hash || '') &&
+          constantTimeEqual(String(punchResponseAudit.details?.payload_hash || ''), expectedPunchResponseHash) &&
+          constantTimeEqual(await payloadHash(punchResponseAudit.details?.original_snapshot || {}), punchOriginalSnapshotHash) &&
+          String(submissionAudit?.details?.punch_exception_id || '') === String(provenance.punch_exception_id || '') &&
+          String(submissionAudit?.details?.request_kind || '') === 'missed_clock_out'
+        );
         const expectedReviewStatus = String(provenance.review_decision || '') === 'approve_modified' ? 'approved_modified' : 'approved';
         const v24AppliedAuditMatches = !strictV24 || Boolean(correction && appliedAudit &&
           String(appliedAudit.action || '') === 'admin_correction' &&
@@ -2836,6 +2918,7 @@ Deno.serve(async (req) => {
         return Boolean(correction && appliedAudit &&
           String(correction.time_entry_id || '') === String(change.time_entry_id || '') &&
           ['approved', 'approved_modified'].includes(String(correction.status || '')) &&
+          (!strictV26 || correctionRequestKind === v26RequestKind) &&
           String(correction.request_id || '') === String(provenance.submission_request_id || '') &&
           asEmail(correction.user_email) === asEmail(provenance.requested_by) &&
           String(correction.requested_at || '') === String(provenance.requested_at || '') &&
@@ -2851,7 +2934,7 @@ Deno.serve(async (req) => {
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
           (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))) &&
-          requestedMatches && appliedMatches && v25SubmissionAuditMatches && v24AppliedAuditMatches && v24CorrectionReviewAuditMatches && deltaMatches);
+          requestedMatches && appliedMatches && v25SubmissionAuditMatches && v26MissedClockOutMatches && v24AppliedAuditMatches && v24CorrectionReviewAuditMatches && deltaMatches);
       };
       const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
@@ -3961,7 +4044,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 25 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 26 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
