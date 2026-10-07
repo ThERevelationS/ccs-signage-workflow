@@ -1,0 +1,190 @@
+Skip to main content (Press Enter).
+Buildings
+Connect With Buildings:
+Electronic Document Submission
+Buildings
+Submitting Your Application
+Electronic Document Submission
+Buildings Menu
+About Buildings & Inspections
+Office of the Director
+Permit Center
+Accessibility Requirements
+Building Permit Forms & Applications
+Applications & Forms
+Electronic Plan Submission
+Permit Costs
+Permit Guide
+Submitting Your Application
+Contractor Registration
+Find A Registered Contractor
+Working With Other Departments
+Building Plan Examination
+Tier 1: Same Day Plan Review
+Targeted Plan Review Times
+Relevant Codes
+Premium Services
+Business Development Services
+Development Services Manager
+Commercial Courtesy Inspection Program
+Coordinated Site Review
+Tier 2: Review by Appointment
+OPENCINCY
+Consumer Affairs Assistance
+Manage Residential Construction Project
+Building Residential Construction Project
+Flood Damage Assessment
+Hearings & Appeals
+Historic Conservation
+Inspections Related To Building Permits, And Construction
+Elevator Registration
+Certificate of Occupancy
+Construction Inspections
+Elevator Inspections
+Mechanical Inspections
+Plumbing Inspections
+Private Lot Abatement Program (PLAP)
+Graffiti Abatement
+Litter Amnesty
+Property Maintenance Code Enforcement
+At-Risk Historic Buildings
+Building Demolition Hearings
+Code Enforcement Quarterly Abatement Fee
+Code Enforcement Appeals
+Deck Safety Check Program
+Essential Services
+Facade and Fire Escape Inspection Programs
+Housing Resources
+Landlord Education Program Registration
+Landlord Responsibility
+Relocation Assistance
+Residential Rental Inspection
+Residential Rental Registration
+Vacated & Condemned Buildings (VBML)
+Vacant Building Registration
+Vacant Foreclosed Property Registration (VFPR)
+Recruitment & Career Opportunities
+Building Inspector Training Academy
+Reports & Data
+Tenants Guide
+Zoning Administration
+FAQ
+Contact Us
+Electronic Document Submission
+How do I apply for my permit?
+Email application to CCPBPERMITCENTER@Cincinnati-oh.gov. All applications and forms can be found by going to https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/.
+The application must be filled out completely and MUST include an accurate email address for the primary contact. The primary contact listed on the application will be the person contacted to submit digital files.
+Please allow up to 2 business days for a response back from the Permit Center confirming the receipt of your application and further instructions.
+Once your application is received, you will be sent a link to upload your documents into OneDrive.
+You will be able to either drag and drop or upload the files into the folder.
+You will be given 48 hours to submit your documents. Please Note: Your permission to the folder will be restricted once you have submitted your documents.
+Effective November 1, 2020, incomplete electronic plan submittals will be expired 30 days after the process was initiated.
+How To Submit Digital Plans
+The Digital Document Submittal Assistant helps you streamline document submittals.
+Install Document Submittal Assistant
+Accepted File Types: PDF, JPG & TIFF
+Not Accepted: EXE and ZIP
+Each page with a drawing must be represented by a single digital file (no layered drawing and no hyperlinking).
+The Digital Document Submittal Assistant will ask for the location of the drawings on your computer. Once you point the program to the folder with the correct set of drawings, four details will need to be filled in:
+Document Status: Either "Applied" (default) or "Applied - Engineering Change" if you are submitting an Engineering Change.
+Document Type: A general Architectural Type, a dropdown box is provided for you to choose from or type the information.
+Index: Identify each sheet, typically with a number or number/letter combination (ex: G001, or M203). The index field should be unique and is important to submit revisions.
+Document Description: Identify the description of each sheet.
+Please note that "Specifications" can be multiple page documents but need to represent a physical book of specifications.
+Electronic Document Submission Guide
+Text Example:
+Applied
+Architectural
+A000
+Floor Plan - 1st Floor
+Applied
+Site Survey
+G001
+Civic Drawing
+Once all the tagging is complete and the submittal file is accepted, please upload all files including the submittal.xml to the OneDrive Folder.
+Another option is to mail a disc with your files to 805 Central Avenue, Suite 500, Cincinnati, Ohio 45202. Place the disk in a protective cover and label the disk with the following information
+Project Address
+Contact Information – Company Name, Address, Phone and Contact Person’s name
+Making Digital Revisions & Engineering Changes
+When you are ready to submit a revision, please email CCPBPERMITCENTER@Cincinnati-oh.gov to request a link to the OneDrive folder.
+Revisions - The index field is the computer’s way of identifying which drawing to replace.
+The original drawing and the replacement drawing must have the same number/letter combination
+Revised submittals must consist of complete sets containing revised sheets and any additional sheets
+Engineering Changes – Engineering Changes are considered new drawings
+The index must indicate this by adding a “-EC” to the end of the index and description
+Revisions to Engineering Changes follow the same procedures as the Revisions process
+Once you have filled in the information based on the appropriate procedure, click the “Create submittal.xml” button. When the submittal file is accepted, please upload all files including the submittal.xml file to the OneDrive Folder.
+How to track your project online
+EzTrak is an online service that can be used to track the status of your Building Permits, including agency review status and comments. You can also track complaints and apply online for a limited set of permits. Check it out at:
+https://cagis.hamilton-co.org/opal/
+Use the Quick Search option in the Review Records section to review the status of a permit
+What do I do when it is time to pick up my permit?
+When your permit is ready to be issued, you will receive a call from Permit Center staff to collect payment over the phone via checking account or by credit card. After the payment has been made the primary contact will receive an email invite to review and download the approved plans from ProjectDox.
+If you do not already have a ProjectDox account, the invitation will also contain a temporary password to use when you login the first time.
+For additional assistance, please call 513-352-3271 and select OPTION 1 to speak to a customer service representative.
+Electronic Document Submission Guidelines
+Buildings Menu
+About Buildings & Inspections
+Office of the Director
+Permit Center
+Accessibility Requirements
+Building Permit Forms & Applications
+Applications & Forms
+Electronic Plan Submission
+Permit Costs
+Permit Guide
+Submitting Your Application
+Contractor Registration
+Find A Registered Contractor
+Working With Other Departments
+Building Plan Examination
+Tier 1: Same Day Plan Review
+Targeted Plan Review Times
+Relevant Codes
+Premium Services
+Business Development Services
+Development Services Manager
+Commercial Courtesy Inspection Program
+Coordinated Site Review
+Tier 2: Review by Appointment
+OPENCINCY
+Consumer Affairs Assistance
+Manage Residential Construction Project
+Building Residential Construction Project
+Flood Damage Assessment
+Hearings & Appeals
+Historic Conservation
+Inspections Related To Building Permits, And Construction
+Elevator Registration
+Certificate of Occupancy
+Construction Inspections
+Elevator Inspections
+Mechanical Inspections
+Plumbing Inspections
+Private Lot Abatement Program (PLAP)
+Graffiti Abatement
+Litter Amnesty
+Property Maintenance Code Enforcement
+At-Risk Historic Buildings
+Building Demolition Hearings
+Code Enforcement Quarterly Abatement Fee
+Code Enforcement Appeals
+Deck Safety Check Program
+Essential Services
+Facade and Fire Escape Inspection Programs
+Housing Resources
+Landlord Education Program Registration
+Landlord Responsibility
+Relocation Assistance
+Residential Rental Inspection
+Residential Rental Registration
+Vacated & Condemned Buildings (VBML)
+Vacant Building Registration
+Vacant Foreclosed Property Registration (VFPR)
+Recruitment & Career Opportunities
+Building Inspector Training Academy
+Reports & Data
+Tenants Guide
+Zoning Administration
+FAQ
+Contact Us

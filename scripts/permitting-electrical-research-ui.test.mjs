@@ -20,6 +20,8 @@ test('candidate references remain visibly unapproved with routing limits',()=>{
  assert.match(html,/awaiting staff review/);
  assert.match(html,/unapproved candidate/);
  assert.match(html,/Historical reference/);
+ assert.match(html,/email intake and digital uploads/);
+ assert.match(html,/City process is separate from IBI electrical submissions/);
  assert.match(html,/May 2017/);
  assert.match(html,/operational availability has not been verified/);
  assert.match(html,/Ohio applicability after the migration remains unresolved/);

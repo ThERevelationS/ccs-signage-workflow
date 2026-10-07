@@ -141,7 +141,10 @@ const describeSalesColumnHeaderFilter = (sortConfig) => {
   if (filter.filterType === "selected") {
     const selected = (filter.selectedValues || []).filter((value) => value != null && String(value).trim() !== "");
     if (!selected.length) return null;
-    const preview = selected.slice(0, 2).join(", ");
+    const displaySelected = key === "sales_status"
+      ? selected.map((value) => value === "needs_stage" ? "Needs Stage" : SALES_STATUSES.find((status) => status.value === value)?.label || value)
+      : selected;
+    const preview = displaySelected.slice(0, 2).join(", ");
     return {
       key,
       label,
@@ -1767,7 +1770,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     
     // Check grouped "is" conditions - ANY value matching = pass (OR logic within same field)
     for (const [field, values] of Object.entries(conditionsByField)) {
-      const fieldValue = wo[field];
+      const fieldValue = field === "sales_status" ? salesStageDisplayValue(wo) : wo[field];
       // If ANY of the values match, this field passes. Date-typed filters
       // compare calendar days so timestamp-backed fields can match date-only cutoffs.
       const fieldPasses = isSalesDateFilterField(field)
@@ -1780,7 +1783,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     
     // Check other conditions with AND logic
     return otherConditions.every(condition => {
-      const fieldValue = wo[condition.field];
+      const fieldValue = condition.field === "sales_status" ? salesStageDisplayValue(wo) : wo[condition.field];
       const condValue = condition.value;
       
       switch (condition.operator) {
@@ -2309,7 +2312,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (filter.filterType === 'selected' && filter.selectedValues?.length > 0) {
         result = result.filter(item => {
           const viewItem = viewRowFor(item);
-          const value = viewItem[sortConfig.key];
+          const value = sortConfig.key === "sales_status" ? salesStageDisplayValue(viewItem) : viewItem[sortConfig.key];
           if (value == null) return false;
           if (isSalesUserFilterField(sortConfig.key)) {
             const roleUsers = salesFilterUsersForField(sortConfig.key, users);
@@ -3250,7 +3253,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         headerContextMenu={headerContextMenu} setHeaderContextMenu={setHeaderContextMenu}
         handleColumnSort={handleColumnSort} handleCustomSort={handleCustomSort}
         clearSort={clearSort} sortConfig={sortConfig}
-        workOrders={workOrders} currentUser={currentUser}
+        workOrders={headerContextMenu?.fieldName === "sales_status"
+          ? workOrders.map((row) => ({ ...row, sales_status: salesStageDisplayValue(row) }))
+          : workOrders} currentUser={currentUser}
         handleHeaderContextMenuAction={handleHeaderContextMenuAction}
         showGradientDialog={showGradientDialog} setShowGradientDialog={setShowGradientDialog}
         deadlineGradientSettings={deadlineGradientSettings} saveGradientSettings={saveGradientSettings}

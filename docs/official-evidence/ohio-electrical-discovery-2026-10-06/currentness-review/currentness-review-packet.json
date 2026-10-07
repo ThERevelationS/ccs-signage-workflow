@@ -1,0 +1,76 @@
+{
+  "method": "cincinnati-currentness-review-preparation-v1",
+  "status": "review_pending",
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "source_document_id": "6ac39c0e6657049fb11cd757",
+  "source_archive_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+  "publisher_name": "Cincinnati Buildings & Inspections",
+  "canonical_office_reference": null,
+  "document_revision": "May 2017",
+  "publication_index_verified": true,
+  "fresh_form_checks": [
+    {
+      "title": "Outdoor Advertising Sign Application",
+      "source_document_id": "6ac39c24c9f6d0eebf320a13",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/",
+      "archive_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/2116473d8_outdoor-advertising-sign-application.pdf",
+      "sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+      "bytes": 63094,
+      "retrieved_at": "2026-10-07T12:12:05.034946+00:00",
+      "matches_existing_archive": true
+    },
+    {
+      "title": "Building Permit Application (fillable form)",
+      "source_document_id": "6ac3a51f33beec629ba497e0",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+      "archive_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/51dece9a0_building-permit-application-fillable-form.pdf",
+      "sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+      "bytes": 252768,
+      "retrieved_at": "2026-10-07T12:12:05.674037+00:00",
+      "matches_existing_archive": true
+    },
+    {
+      "title": "Site Plan Information",
+      "source_document_id": "6ac3a54ac1ce2adba5b92cb8",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+      "archive_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/550d0c6c4_site-plan-information.pdf",
+      "sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+      "bytes": 57368,
+      "retrieved_at": "2026-10-07T12:12:06.324370+00:00",
+      "matches_existing_archive": true
+    }
+  ],
+  "evidence": {
+    "printed_submission": {
+      "physical_page": 1,
+      "text_sha256": "660dc5820e4e3e9fc56f0e70d810fdd39bbd23e62c5c522233141a7e508ca0ab",
+      "excerpt": "Complete an application for a permit and submit three copies of plans for review to the Permit Center"
+    },
+    "electronic_submission": {
+      "official_url": "https://www.cincinnati-oh.gov/buildings/submitting-your-application/electronic-document-submission/",
+      "retained_path": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/currentness-review/electronic-submission.html",
+      "raw_html_sha256": "f57892e1e92c229bff9143cd7b08196ad82ba4c75bc8c0b3f01ac987a8cac661",
+      "normalized_text_sha256": "af5988146285a92db894539e71df7eb65a71c65f492f0d1d6275dce677b7cc05",
+      "block": 75,
+      "excerpt": "Email application to CCPBPERMITCENTER@Cincinnati-oh.gov."
+    }
+  },
+  "findings": [
+    "Official forms remain linked and newly downloaded bytes match all three existing live archives.",
+    "The printed handout describes paper copies while the separately published City page describes email intake and digital uploads. Neither source by itself establishes which route applies to a particular sign project.",
+    "The handout remains listed, but current listing does not verify every exemption, fee, workflow or legal requirement.",
+    "A Cincinnati address or publisher logo alone does not independently establish geographic authority over a job site.",
+    "City building/sign submission guidance is separate from IBI electrical submission and scheduling."
+  ],
+  "approval_blockers": [
+    "Confirm applicable sign submission route and reconcile the dated paper instructions.",
+    "Establish explicit geographic applicability from current official coverage evidence.",
+    "Review exemptions and repair scope against current adopted sign regulations.",
+    "Verify electrical-office identity and responsibility independently."
+  ],
+  "source_currentness_approved": false,
+  "coverage_approved": false,
+  "electrical_roles_approved": false,
+  "production_review_applied": false,
+  "automated_workflow_ready": false
+}

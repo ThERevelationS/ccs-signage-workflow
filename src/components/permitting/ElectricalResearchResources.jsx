@@ -11,13 +11,14 @@ export default function ElectricalResearchResources({ jurisdiction, isAdmin = fa
     <section className="min-w-0 space-y-3 p-3 pt-0 text-sm [overflow-wrap:anywhere]" aria-label="Unapproved electrical research">
       <p>Inspection Bureau, Inc. is an unapproved candidate for permit and inspection responsibilities. These references do not establish either role, service coverage, or sign-specific requirements.</p>
       <p>City sign guidance supports researching both roles, but the retained handout is dated May 2017. References observed {research.observed_on}. Confirm current submission routing, fees, contractor requirements, and inspection stages with the responsible office.</p>
+      <p>The 2017 handout describes submitting paper plan copies. The <a className="underline" href="https://www.cincinnati-oh.gov/buildings/submitting-your-application/electronic-document-submission/" target="_blank" rel="noopener noreferrer">City electronic submission page</a> describes email intake and digital uploads. Confirm the applicable sign submission route; the City process is separate from IBI electrical submissions.</p>
       <ul className="space-y-3">
         {research.resources.map(resource => <li key={resource.file}>
           <p className="font-medium">{resource.label}</p>
           <p>{resource.note}</p>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             <a className="min-h-11 inline-flex items-center underline" href={resource.archive} target="_blank" rel="noopener noreferrer">Retained PDF</a>
-            <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Provider source</a>
+            <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official source</a>
           </div>
         </li>)}
       </ul>
