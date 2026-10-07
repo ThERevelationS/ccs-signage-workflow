@@ -45,3 +45,25 @@ test('research disclosure is a sibling of approved evidence',()=>{
  const s=readFileSync('src/components/permitting/LocalityApprovedEvidence.jsx','utf8');
  assert.match(s,/\/><ElectricalResearchResources jurisdiction=\{jurisdiction\} isAdmin=\{isAdmin\}/);
 });
+test('zoning research preserves boundary, overlay and electrical coverage limits',()=>{
+ const html=render();
+ assert.match(html,/Related City zoning scope — awaiting review/);
+ assert.match(html,/base zoning district, and applicable overlays/);
+ assert.match(html,/mailing address alone does not resolve jurisdiction/);
+ assert.match(html,/does not establish IBI electrical service coverage/);
+ assert.match(html,/Current sign exemptions.*remain unresolved/);
+ assert.match(html,/current fee before submitting/);
+});
+test('zoning request download matches retained original and official page link',()=>{
+ const research=JSON.parse(readFileSync('src/components/permitting/cincinnatiElectricalResearch.json'));
+ const packet=JSON.parse(readFileSync('docs/official-evidence/ohio-electrical-discovery-2026-10-06/scope-review/scope-review-packet.json'));
+ const bytes=readFileSync('public'+research.scope_review.form_archive);
+ assert.deepEqual(bytes,readFileSync(packet.request_form.retained_path));
+ assert.equal(bytes.length,packet.request_form.bytes);
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),research.scope_review.form_sha256);
+ assert.equal(research.scope_review.form_sha256,packet.request_form.sha256);
+ assert.equal(research.scope_review.form_source,packet.request_form.official_url);
+ assert.equal(packet.request_form.fee_verified,false);
+ assert.equal(packet.locality_coverage_approved,false);
+ assert.equal(packet.compiled_code_status.current_exemptions_established,false);
+});
