@@ -1,0 +1,38 @@
+{
+  "sources": [
+    {
+      "file": "current-zoning-guide.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310",
+      "provenance": "Exact document link from current official county Woodlawn page",
+      "observed_at": "2026-10-07T18:41:08.545526+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "current-woodlawn-code.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/Woodlawn_Zoning_Code_2024.pdf?t=202502261002460",
+      "provenance": "Exact document link from current official county Woodlawn page",
+      "observed_at": "2026-10-07T18:41:09.118431+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-fee-schedule-2026.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/2026/Woodlawn_Fee_Schedule_2026.pdf?t=202512311151410",
+      "provenance": "Exact document link from current official county Woodlawn page",
+      "observed_at": "2026-10-07T18:41:09.658438+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-zoning-fees-2026.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/2026/Woodlawn_Zoning_Fees_2026.pdf?t=202512311152240",
+      "provenance": "Exact document link from current official county Woodlawn page",
+      "observed_at": "2026-10-07T18:41:10.201301+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false,
+  "live_records_changed": 0
+}
