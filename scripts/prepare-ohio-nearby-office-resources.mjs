@@ -23,7 +23,9 @@ for(const profile of profiles){profile.observed_on='2026-10-07';profile.resource
  copyFileSync(s.retained_path,'public/permitting-evidence/ohio-nearby/'+s.file);
  return{file:s.file,label:labels[s.file],source:s.request_url || s.official_url,archive:'/permitting-evidence/ohio-nearby/'+s.file,format:s.file.split('.').at(-1).toUpperCase(),sha256:s.sha256,bytes:s.bytes};
  });}
-writeFileSync('src/components/permitting/ohioMunicipalResearch.json',JSON.stringify(profiles,null,2)+'\n');
+const configPath='src/components/permitting/ohioMunicipalResearch.json';
+const otherProfiles=JSON.parse(readFileSync(configPath)).filter(row=>!profiles.some(profile=>profile.id===row.id));
+writeFileSync(configPath,JSON.stringify([...profiles,...otherProfiles],null,2)+'\n');
 writeFileSync(root+'office-reconciliation.json',JSON.stringify({profiles,staff_approved:false,role_approvals_created:false,
  canonical_offices_changed:false,locality_links_changed:false,fees_verified:false,
  gaps:['Canonical electrical-office identities','Independent permit issuer and inspection evidence','Sign-specific applicability and district standards','Current fee calculation and submission acceptance'],

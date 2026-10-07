@@ -82,5 +82,110 @@
         "bytes": 2048710
       }
     ]
+  },
+  {
+    "id": "6ac1a0ff78ee7a352ad77367",
+    "name": "Cheviot",
+    "state": "OH",
+    "type": "city",
+    "source": "https://cheviot.org/departments/building-zoning/",
+    "notes": [
+      "The City page directs applications to City Hall by drop-off, mail or email to egassett@cheviot.org; City Hall forwards them to National Inspection Corporation and payment is made to the City.",
+      "The building application includes a Sign checkbox. The resubmittal form and variance form list different paper-copy requirements; confirm the applicable route before submission.",
+      "National Inspection Corporation is a building-review reference. Separate electrical permit issuance and electrical inspection responsibilities remain unresolved.",
+      "The City-linked Hamilton County fee document is retained without approving its sign fees or county authority."
+    ],
+    "observed_on": "2026-10-07",
+    "resources": [
+      {
+        "file": "cheviot-building-application.pdf",
+        "label": "Building application — includes Sign permit type",
+        "source": "https://cheviot.org/wp-content/uploads/2025/10/CHEVIOT-BUILDING-PERMIT-APPLICATION.pdf",
+        "archive": "/permitting-evidence/ohio-west/cheviot-building-application.pdf",
+        "format": "PDF",
+        "sha256": "9b144149b57bc1e45fc28573c4a784f7b4cdbd23fb2d03ac4b70f1bc24154367",
+        "bytes": 486444
+      },
+      {
+        "file": "cheviot-variance-application.pdf",
+        "label": "Variance application",
+        "source": "https://cheviot.org/wp-content/uploads/2025/10/CHEVIOT-VARIANCE-APPLICATION.pdf",
+        "archive": "/permitting-evidence/ohio-west/cheviot-variance-application.pdf",
+        "format": "PDF",
+        "sha256": "c2d8158588fae3fbcd7bde0f6b1254950ba3f807bebc898b80a333d5a392e9da",
+        "bytes": 148352
+      },
+      {
+        "file": "cheviot-resubmittal-application.pdf",
+        "label": "Resubmittal application",
+        "source": "https://cheviot.org/wp-content/uploads/2026/02/Cheviot-RESUBMITTAL-Application.pdf",
+        "archive": "/permitting-evidence/ohio-west/cheviot-resubmittal-application.pdf",
+        "format": "PDF",
+        "sha256": "9639264af086e698ed2a75497ea2c75137b9f682ce0081fbc891650ac6c69cf0",
+        "bytes": 126830
+      },
+      {
+        "file": "cheviot-fees-2026.pdf",
+        "label": "City-linked Hamilton County fees (2026; applicability unreviewed)",
+        "source": "https://cheviot.org/wp-content/uploads/2026/01/2026-Hamilton-County-Fees.pdf",
+        "archive": "/permitting-evidence/ohio-west/cheviot-fees-2026.pdf",
+        "format": "PDF",
+        "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
+        "bytes": 229928
+      }
+    ]
+  },
+  {
+    "id": "6ac1a161934312388bd3ca04",
+    "name": "Cleves",
+    "state": "OH",
+    "type": "village",
+    "source": "https://www.clevesoh.gov/zoning",
+    "notes": [
+      "The Village lists general and mechanical building applications on its Forms page. These scanned originals are retained; complete searchable text is not claimed.",
+      "The zoning page says the linked manual and map are provided as a convenience and asks applicants to contact the Zoning Official for official designations.",
+      "The separately linked DRAFT zoning manual is retained as proposed research only. It must not replace adopted requirements or generate an approved workflow.",
+      "The directory identifies building and zoning contacts; it does not establish separate electrical permit issuance or inspection responsibility.",
+      "Village Hall addresses differ between the Forms footer and the Directory/zoning page. Confirm the current delivery address before submitting."
+    ],
+    "observed_on": "2026-10-07",
+    "resources": [
+      {
+        "file": "cleves-general-building-application.pdf",
+        "label": "General building application — scanned original",
+        "source": "https://www.clevesoh.gov/_files/ugd/db9e63_437bc327f9a247d582def69adbe338a0.pdf",
+        "archive": "/permitting-evidence/ohio-west/cleves-general-building-application.pdf",
+        "format": "PDF",
+        "sha256": "f484ee6f7050a05b19b31409b6f7e1d58a0a4257b335d8692e33c00f89557012",
+        "bytes": 61757
+      },
+      {
+        "file": "cleves-mechanical-application.pdf",
+        "label": "Mechanical application — scanned original",
+        "source": "https://www.clevesoh.gov/_files/ugd/db9e63_769e1319cecf46b38920155c7fa0966e.pdf",
+        "archive": "/permitting-evidence/ohio-west/cleves-mechanical-application.pdf",
+        "format": "PDF",
+        "sha256": "a5004bf8aa20005917c99536f8417c596cb78355e36494937ecae99ed9246c5a",
+        "bytes": 52311
+      },
+      {
+        "file": "cleves-linked-zoning-manual.pdf",
+        "label": "Village-linked zoning manual — currentness unreviewed",
+        "source": "https://www.clevesoh.gov/_files/ugd/db9e63_703c8f2d8c4c4a1d91fc3a5b54f92e33.pdf",
+        "archive": "/permitting-evidence/ohio-west/cleves-linked-zoning-manual.pdf",
+        "format": "PDF",
+        "sha256": "5e8bcb739d1a8925d67fd352c3646bdda6360679f723d6aede6c723e21cdbb1b",
+        "bytes": 853919
+      },
+      {
+        "file": "cleves-draft-zoning-manual.pdf",
+        "label": "DRAFT zoning manual — not approved law",
+        "source": "https://www.clevesoh.gov/_files/ugd/c8a414_ffa0fc0aa616460abe9cce88d3a6dbbc.pdf",
+        "archive": "/permitting-evidence/ohio-west/cleves-draft-zoning-manual.pdf",
+        "format": "PDF",
+        "sha256": "170589a92b31a90564388a5715308f6887038a23da3c08f1baf829a26633e6ce",
+        "bytes": 5622810
+      }
+    ]
   }
 ]

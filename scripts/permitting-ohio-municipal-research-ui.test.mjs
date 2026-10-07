@@ -7,13 +7,14 @@ const dossiers=JSON.parse(readFileSync('src/components/permitting/ohioMunicipalR
 const render=(jurisdiction,isAdmin=true)=>renderToStaticMarkup(React.createElement(Component,{jurisdiction,isAdmin}));
 test('exact Ohio locality identity and admin access are required for both dossiers',()=>{
  for(const row of dossiers){assert.equal(render(row,false),'');assert.ok(render(row).includes(row.name));
- for(const [key,value] of Object.entries({id:'different',name:'Cincinnati',state:'KY',type:'village'}))assert.equal(render({...row,[key]:value}),'');}
+ for(const [key,value] of Object.entries({id:'different',name:'Cincinnati',state:'KY',type:row.type==='village'?'city':'village'}))assert.equal(render({...row,[key]:value}),'');}
  assert.equal(render(null),'');
 });
 test('all six original downloads match retained bytes, manifest hashes and formats',()=>{
  const manifest=JSON.parse(readFileSync('docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json'));
- assert.equal(dossiers.flatMap(d=>d.resources).length,6);
- for(const row of dossiers)for(const resource of row.resources){const source=manifest.sources.find(s=>s.file===resource.file),bytes=readFileSync('public'+resource.archive);
+ const nearby=dossiers.filter(d=>['Norwood','Deer Park'].includes(d.name));
+ assert.equal(nearby.flatMap(d=>d.resources).length,6);
+ for(const row of nearby)for(const resource of row.resources){const source=manifest.sources.find(s=>s.file===resource.file),bytes=readFileSync('public'+resource.archive);
  assert.deepEqual(bytes,readFileSync(source.retained_path));assert.equal(bytes.length,resource.bytes);
  assert.equal(createHash('sha256').update(bytes).digest('hex'),resource.sha256);assert.equal(resource.sha256,source.sha256);
  assert.equal(resource.source,source.request_url||source.official_url);assert.equal(resource.format,resource.file.split('.').at(-1).toUpperCase());}
