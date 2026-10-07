@@ -20,10 +20,8 @@ for(const source of manifest.sources.filter(s=>s.file.endsWith('.pdf'))){
  }
  await pdf.destroy();cache.set(source.sha256,pages);
  }
- const record={file:source.file,official_url:source.official_url,source_sha256:source.sha256,source_bytes:source.bytes,total_pages:pages.length,pages_with_embedded_text:pages.filter(p=>p.text.length).length,extraction_covers_all_physical_pages:true,searchable_content_complete:pages.every(p=>p.text.length>0),ocr_performed:false,pages};
+ const record={file:source.file,official_url:source.official_url,source_sha256:source.sha256,source_bytes:source.bytes,total_pages:pages.length,pages_with_embedded_text:pages.filter(p=>p.text.length).length,extraction_covers_all_physical_pages:true,embedded_text_present_on_all_pages:pages.every(p=>p.text.length>0),searchable_content_complete:false,ocr_performed:false,pages};
  documents.push(record);writeFileSync(root+source.file.replace('.pdf','.pages.json'),JSON.stringify(record,null,2)+'\n');
  console.log(JSON.stringify({file:source.file,pages:record.total_pages,text_pages:record.pages_with_embedded_text,ocr_needed:pages.some(p=>p.needs_ocr_review)}));
 }
 writeFileSync(root+'pdf-text-extraction.json',JSON.stringify({documents,staff_approved:false,currentness_approved:false,authority_approved:false,distinct_archives_parsed:cache.size},null,2)+'\n');
-const ordinance=documents.find(d=>d.file.startsWith('addyston'));
-for(const page of ordinance.pages)if(/sign/i.test(page.text))console.log(JSON.stringify({file:ordinance.file,page:page.page,preview:page.text.slice(0,1100)}));

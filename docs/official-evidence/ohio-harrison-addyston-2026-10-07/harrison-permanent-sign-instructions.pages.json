@@ -6,6 +6,7 @@
   "total_pages": 2,
   "pages_with_embedded_text": 0,
   "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": false,
   "searchable_content_complete": false,
   "ocr_performed": false,
   "pages": [

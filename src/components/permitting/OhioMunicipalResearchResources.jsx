@@ -20,6 +20,14 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
           <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official document</a>
         </div>
       </li>)}</ul>
+      {(dossier.document_findings || dossier.extraction_note) && <section className="space-y-3 rounded border border-amber-200 p-3" aria-label="Retained document findings">
+        <p className="font-medium">Document findings — currentness and applicability unreviewed</p>
+        {dossier.extraction_note && <p>{dossier.extraction_note}</p>}
+        <ul className="space-y-3">{dossier.document_findings?.map(finding => <li key={finding.label}>
+          <p className="font-medium">{finding.label}</p><p>{finding.text}</p>
+          <a className="min-h-11 inline-flex items-center underline" href={finding.archive} target="_blank" rel="noopener noreferrer">Original PDF — physical page {finding.physical_page}</a>
+        </li>)}</ul>
+      </section>}
       {dossier.electrical_research && <section className="space-y-2 rounded border border-amber-200 p-3" aria-label="Electrical provider routing research">
         <p className="font-medium">Electrical provider routing — municipal coverage unresolved</p>
         <p>{dossier.electrical_research.note}</p>

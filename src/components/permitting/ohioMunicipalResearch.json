@@ -288,7 +288,30 @@
         "sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b",
         "bytes": 597140
       }
-    ]
+    ],
+    "document_findings": [
+      {
+        "label": "Zoning application: sign options and site plan",
+        "text": "Retained application includes permanent/temporary sign choices, display dates and a scaled site plan. Confirm current portal/paper route before using this older printed form.",
+        "physical_page": 1,
+        "archive": "/permitting-evidence/harrison-addyston/harrison-zoning-application.pdf#page=1",
+        "source_sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0",
+        "text_sha256": "6a5b01169a37d2c15ac6bba5575bef6129048f4f3aaac21856d44eed3fe2c1fb",
+        "verification_status": "needs_verification",
+        "authority_approved": false
+      },
+      {
+        "label": "Commercial application: sign and illumination fields",
+        "text": "Retained application asks about illumination and ground-sign status. This form is separate from electrical approval.",
+        "physical_page": 1,
+        "archive": "/permitting-evidence/harrison-addyston/harrison-commercial-application.pdf#page=1",
+        "source_sha256": "354946505142da0cb1b922df167519b6081089878216510a5e93e0a4895cceb5",
+        "text_sha256": "8eae8e26b2ea4ffebf5ee468de2aa573b7ddc5351158814ccb812bf7639db053",
+        "verification_status": "needs_verification",
+        "authority_approved": false
+      }
+    ],
+    "extraction_note": "Both byte-identical sign-instruction PDFs have two physical pages and no embedded text. OCR/visual transcription is still required; no searchable instruction text is claimed."
   },
   {
     "id": "6ac1a0de30219cc619d6e7d3",
@@ -299,7 +322,7 @@
     "notes": [
       "The Village zoning page publishes building-inspector and code-enforcement contacts and links a zoning ordinance. Retention does not establish current adopted sign requirements.",
       "A signage/building permit application and an online application portal were not located on the reviewed zoning page. This is a recorded collection gap, not a claim that the Village has no form or permit requirement.",
-      "Separate electrical permit issuance and electrical inspection offices remain unresolved. Building-inspector contact alone does not establish electrical responsibility."
+      "The retained ordinance now supplies an illuminated-sign electrical permit candidate on physical page 39. Currentness, canonical electrical-office identity, permit issuance and electrical inspection remain separately unresolved."
     ],
     "observed_on": "2026-10-07",
     "resources": [
@@ -311,6 +334,48 @@
         "format": "PDF",
         "sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
         "bytes": 951077
+      }
+    ],
+    "document_findings": [
+      {
+        "label": "General sign provisions",
+        "text": "Retained page covers real-estate, home-occupation, institutional, nonconforming and temporary signs plus public right-of-way restrictions. Review sign type and current district applicability.",
+        "physical_page": 23,
+        "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf#page=23",
+        "source_sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+        "text_sha256": "bf84dc9a68d911f68315850b976bb4b5bf5507e1becf7e519a4cb4b611df9c32",
+        "verification_status": "needs_verification",
+        "authority_approved": false
+      },
+      {
+        "label": "Business/industrial dimensions and setbacks",
+        "text": "Retained page covers wall projections, sign area related to frontage, freestanding/pole signs, district exceptions and setbacks. This is a candidate reference; no dimensions are approved for a job.",
+        "physical_page": 24,
+        "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf#page=24",
+        "source_sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+        "text_sha256": "6ceee7099102b756912343fef02e68572c56f13447f1ae503a81f4d04ce749e1",
+        "verification_status": "needs_verification",
+        "authority_approved": false
+      },
+      {
+        "label": "Illumination and sign application package",
+        "text": "Retained page covers illumination, permit exceptions, drawings, construction details and a printed application fee. Current exemptions and fees remain unverified.",
+        "physical_page": 25,
+        "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf#page=25",
+        "source_sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+        "text_sha256": "68138f2b5f31f1257f9f75844f56d257c25063b06c01a88a564341f29a761c79",
+        "verification_status": "needs_verification",
+        "authority_approved": false
+      },
+      {
+        "label": "Illuminated-sign electrical permit candidate",
+        "text": "The retained clause calls for separate electrical permits and fees for illuminated signs/billboards and prints an IBI-like name. Canonical provider identity, currentness, permit issuer and inspection responsibility remain unapproved. The nearby building-code exemption must not be treated as a zoning-sign exemption.",
+        "physical_page": 39,
+        "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf#page=39",
+        "source_sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+        "text_sha256": "f82b23c1b984a54d0eafe0aa5dbee93d395f8a106d0207e2722b0172ae5c398e",
+        "verification_status": "needs_verification",
+        "authority_approved": false
       }
     ]
   }
