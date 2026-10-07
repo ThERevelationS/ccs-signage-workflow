@@ -574,6 +574,155 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
   }, 'Clock In audit');
 }
 
+async function canonicalLateClockInPayrollProvenance({
+  entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution = true,
+}: any) {
+  if (String(entry?.clock_source || '') !== 'employee_attested_missed_clock_in') {
+    return { applicable: false, provenance: null };
+  }
+  const entryId = String(entry?.id || '');
+  const userEmail = asEmail(entry?.user_email);
+  const requestId = String(entry?.clock_in_request_id || '');
+  const reportedAt = String(entry?.missed_clock_in_reported_at || '');
+  const clockIn = String(entry?.clock_in || '');
+  const punchExceptionId = String(entry?.punch_exception_id || '');
+  const approvalRequestId = String(entry?.approval_request_id || '');
+  const approvalAuditId = String(approvalEvidence?.id || '');
+  const companyDate = dateKeyInCompanyTime(clockIn);
+  if (!entryId || !userEmail || !requestId || !reportedAt || !clockIn || !punchExceptionId ||
+      !approvalRequestId || !approvalAuditId || !companyDate) {
+    return { applicable: true, provenance: null };
+  }
+
+  const clockInRows = await auditEntity.filter({
+    action: 'clock_in', request_id: requestId, time_entry_id: entryId,
+  }).catch(() => null);
+  const punchRows = await auditEntity.filter({
+    action: 'punch_exception', request_id: requestId, time_entry_id: entryId,
+  }).catch(() => null);
+  const approvalRows = await auditEntity.filter({
+    action: 'time_approval', request_id: approvalRequestId,
+  }).catch(() => null);
+  if (!Array.isArray(clockInRows) || clockInRows.length !== 1 ||
+      !Array.isArray(punchRows) || punchRows.length !== 1 ||
+      !Array.isArray(approvalRows) || approvalRows.length !== 1) {
+    return { applicable: true, provenance: null };
+  }
+
+  const clockInAudit = clockInRows[0];
+  const punchAudit = punchRows[0];
+  const approvalAudit = approvalRows[0];
+  const punchCase = await punchExceptionEntity.get(punchExceptionId).catch(() => null);
+  if (!punchCase?.id) return { applicable: true, provenance: null };
+
+  const expectedRecoveryHash = await payloadHash({
+    action: 'recover_missed_clock_in',
+    user_email: userEmail,
+    claimed_clock_in: clockIn,
+    company_date: companyDate,
+  });
+  const originalSnapshotHash = await payloadHash(punchCase.original_snapshot || {});
+  const clockMembership = payrollMembershipFromAudit(clockInAudit);
+  const actorPairValid = (row: any) => (
+    asEmail(row?.actor_email) === userEmail &&
+    ['employee', 'badge'].includes(String(row?.actor_role || '')) &&
+    ['session', 'badge'].includes(String(row?.authentication_method || '')) &&
+    (String(row?.actor_role || '') === 'badge') === (String(row?.authentication_method || '') === 'badge')
+  );
+  const approvalMatches = Boolean(
+    String(approvalAudit.id || '') === approvalAuditId &&
+    ['confirmed', 'recovered'].includes(String(approvalAudit.outcome || '')) &&
+    String(approvalAudit.time_entry_id || '') === entryId &&
+    String(approvalAudit.request_id || '') === approvalRequestId &&
+    asEmail(approvalAudit.user_email) === userEmail &&
+    String(approvalAudit.actor_role || '') === 'admin' &&
+    ['session', 'admin_kiosk'].includes(String(approvalAudit.authentication_method || '')) &&
+    asEmail(approvalAudit.actor_email) === asEmail(approvalEvidence?.approved_by) &&
+    String(approvalAudit.server_timestamp || '') === String(approvalEvidence?.approved_at || '') &&
+    String(approvalAudit.details?.decision || '') === 'approve'
+  );
+  const caseMatches = Boolean(
+    String(punchCase.id || '') === punchExceptionId &&
+    String(punchCase.case_key || '') === `late_clock_in:${entryId}` &&
+    asEmail(punchCase.user_email) === userEmail &&
+    String(punchCase.time_entry_id || '') === entryId &&
+    String(punchCase.exception_type || '') === 'late_clock_in' &&
+    String(punchCase.employee_response || '') === 'missed_clock_in' &&
+    String(punchCase.claimed_clock_in || '') === clockIn &&
+    String(punchCase.request_id || '') === requestId &&
+    String(punchCase.detected_clock_in || '') === clockIn &&
+    String(punchCase.detected_at || '') === reportedAt &&
+    String(punchCase.submitted_at || '') === reportedAt &&
+    punchCase.original_snapshot?.missing_clock_in === true &&
+    String(punchCase.original_snapshot?.detected_at || '') === reportedAt &&
+    String(punchCase.original_snapshot?.company_date || '') === companyDate &&
+    (!requireCurrentResolution || (
+      String(punchCase.status || '') === 'resolved' &&
+      String(punchCase.resolution_audit_id || '') === approvalAuditId
+    ))
+  );
+  const clockInMatches = Boolean(
+    String(clockInAudit.id || '') &&
+    ['confirmed', 'recovered'].includes(String(clockInAudit.outcome || '')) &&
+    asEmail(clockInAudit.user_email) === userEmail &&
+    actorPairValid(clockInAudit) &&
+    String(clockInAudit.server_timestamp || '') === reportedAt &&
+    String(clockInAudit.reason || '') === 'Employee-attested missed Clock In reconstruction' &&
+    String(clockInAudit.details?.clock_source || '') === 'employee_attested_missed_clock_in' &&
+    String(clockInAudit.details?.employee_attested_clock_in || '') === clockIn &&
+    String(clockInAudit.details?.reported_at || '') === reportedAt &&
+    String(clockMembership?.company_date || '') === companyDate &&
+    String(clockMembership?.clock_in || '') === clockIn
+  );
+  const punchMatches = Boolean(
+    String(punchAudit.id || '') &&
+    ['confirmed', 'recovered'].includes(String(punchAudit.outcome || '')) &&
+    asEmail(punchAudit.user_email) === userEmail &&
+    actorPairValid(punchAudit) &&
+    String(punchAudit.server_timestamp || '') === reportedAt &&
+    String(punchAudit.reason || '') === 'Employee reported a missing Clock In during the late-day pre-clockout review' &&
+    String(punchAudit.details?.punch_exception_id || '') === punchExceptionId &&
+    String(punchAudit.details?.response || '') === 'missed_clock_in' &&
+    String(punchAudit.details?.claimed_clock_in || '') === clockIn &&
+    String(punchAudit.details?.company_date || '') === companyDate &&
+    constantTimeEqual(String(punchAudit.details?.payload_hash || ''), expectedRecoveryHash)
+  );
+  if (!approvalMatches || !caseMatches || !clockInMatches || !punchMatches) {
+    return { applicable: true, provenance: null };
+  }
+
+  return {
+    applicable: true,
+    provenance: {
+      source: 'employee_attested_missed_clock_in',
+      request_id: requestId,
+      reported_at: reportedAt,
+      claimed_clock_in: clockIn,
+      company_date: companyDate,
+      punch_exception_id: punchExceptionId,
+      punch_case_key: String(punchCase.case_key || ''),
+      punch_case_status_at_finalization: 'resolved',
+      punch_employee_response: 'missed_clock_in',
+      punch_original_snapshot_hash: originalSnapshotHash,
+      clock_in_audit_id: String(clockInAudit.id || ''),
+      clock_in_audit_outcome: String(clockInAudit.outcome || ''),
+      clock_in_actor_email: asEmail(clockInAudit.actor_email),
+      clock_in_actor_role: String(clockInAudit.actor_role || ''),
+      clock_in_authentication_method: String(clockInAudit.authentication_method || ''),
+      punch_audit_id: String(punchAudit.id || ''),
+      punch_audit_outcome: String(punchAudit.outcome || ''),
+      punch_actor_email: asEmail(punchAudit.actor_email),
+      punch_actor_role: String(punchAudit.actor_role || ''),
+      punch_authentication_method: String(punchAudit.authentication_method || ''),
+      punch_payload_hash: expectedRecoveryHash,
+      manager_approval_audit_id: approvalAuditId,
+      manager_approval_request_id: approvalRequestId,
+      manager_approved_by: asEmail(approvalAudit.actor_email),
+      manager_approved_at: String(approvalAudit.server_timestamp || ''),
+    },
+  };
+}
+
 async function ensureState(stateEntity: any, target: any) {
   const email = asEmail(target?.email);
   let rows = await stateEntity.filter({ user_email: email });
