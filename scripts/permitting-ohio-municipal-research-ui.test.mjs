@@ -96,3 +96,18 @@ test('PDF page extraction preserves physical numbering, hashes and OCR gaps',()=
  assert.match(render(add),/must not be treated as a zoning-sign exemption/);
  assert.match(render(dossiers.find(d=>d.name==='City of Harrison')),/visual-transcription candidates pending staff review/);
 });
+
+test('Harrison OCR and visual transcription keep separate immutable source identities',()=>{
+ const root='docs/official-evidence/ohio-harrison-addyston-2026-10-07/ocr/';
+ const manifest=JSON.parse(readFileSync(root+'render-ocr-manifest.json'));
+ const receipt=JSON.parse(readFileSync(root+'visual-transcription-candidates.json'));
+ assert.equal(receipt.raw_ocr_preserved,true);assert.equal(receipt.original_embedded_text_unchanged,true);assert.equal(receipt.findings.length,4);
+ for(const p of manifest.pages){
+ for(const [ext,key] of [['png','png_sha256'],['txt','raw_ocr_sha256'],['tsv','tsv_sha256']])assert.equal(createHash('sha256').update(readFileSync(root+'page-'+p.page+'.'+ext)).digest('hex'),p[key]);
+ assert.deepEqual(readFileSync('public/permitting-evidence/harrison-addyston/harrison-sign-instructions-page-'+p.page+'-raw-ocr.txt'),readFileSync(root+'page-'+p.page+'.txt'));
+ }
+ assert.match(readFileSync(root+'page-2.txt','utf8'),/IB!/);
+ for(const f of receipt.findings){const p=manifest.pages.find(p=>p.page===f.physical_page);assert.equal(f.render_sha256,p.png_sha256);assert.equal(f.raw_ocr_sha256,p.raw_ocr_sha256);assert.equal(f.excerpt_sha256,createHash('sha256').update(f.excerpt).digest('hex'));assert.equal(f.currentness_approved,false);assert.equal(f.verification_status,'pending_staff_review');}
+ const h=dossiers.find(r=>r.name==='City of Harrison'),html=render(h);
+ assert.match(html,/four plan copies/);assert.match(html,/separately directs illuminated/);assert.match(html,/Raw OCR — physical page 2/);assert.match(html,/unapproved transcription candidates/);
+});
