@@ -1,0 +1,139 @@
+{
+  "locality": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city"
+  },
+  "method": "Findings bound to retained PDF originals and physical-page embedded-text hashes; currentness and job applicability require staff review.",
+  "routing": {
+    "department": "Community Development",
+    "address": "10900 Reading Road, Sharonville OH 45241",
+    "phone": "513-563-0033",
+    "email": "permits@cityofsharonville.com",
+    "sign_application": "https://www.sharonville.org/394/Sign-Application",
+    "building_electrical_application": "https://www.sharonville.org/392/Building-Permit-Application",
+    "submission_candidate": "Guide and city FAQ describe email or office delivery. No standalone online sign-submission form verified; document URLs are downloadable PDFs, not online submissions.",
+    "county_review": "Live parent_county says Butler County. Do not treat this single parent field as exhaustive city boundary or permit/inspection coverage."
+  },
+  "electrical": {
+    "permit_intake_candidate": "City Community Development receives plans, contacts applicant for payment, and issues the approved permit per guide physical page 7.",
+    "plan_review_approval_candidate": "National Inspection Corporation (NIC) per guide physical page 7.",
+    "inspection_candidate": "NIC directly handles all electrical inspections per guide physical page 7.",
+    "administrative_phone": "513-563-0033",
+    "technical_phone": "888-433-4642",
+    "scope_review": "2026 residential guide explicitly mentions residents and businesses; verify commercial sign electrical scope, current contract and scheduling before authority approval. Duke Energy appears as a utility contact, not electrical permit issuer or inspector."
+  },
+  "retained_originals": 6,
+  "retained_pdfs": 5,
+  "pdf_physical_pages": 279,
+  "pages_with_embedded_text": 278,
+  "needs_ocr_physical_pages": [
+    {
+      "file": "planning-zoning-code.pdf",
+      "page": 97
+    }
+  ],
+  "code_version_review": "Retained code prints effective June 9, 2022; 2026 retrieval is not proof amendments are current.",
+  "fee_version_review": "Fee schedule lacks a reconciled effective/adoption cutoff; amounts remain document candidates.",
+  "guide_scope": "Residential guide is supporting electrical routing evidence and not automatic commercial-sign submission authority.",
+  "app_storage_catalog_registration": "pending; unchanged public repository PDF copies are not app-storage/catalog registration",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "findings": [
+    {
+      "file": "sign-application.pdf",
+      "physical_page": 1,
+      "title": "Scaled sign drawing",
+      "matched_needle": "a drawing of the sign",
+      "summary": "Form requests dimensions and scaled color rendering with message.",
+      "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+      "text_sha256": "28706109d49f7d487ab16c10754de36a35bd40be003fe1b7fc9c679912688ce8",
+      "archive": "/permitting-evidence/sharonville/sign-application.pdf#page=1",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "file": "sign-application.pdf",
+      "physical_page": 1,
+      "title": "Freestanding site plan",
+      "matched_needle": "a site plan of the property",
+      "summary": "Form requests sign locations and distances to property lines and street right of way.",
+      "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+      "text_sha256": "28706109d49f7d487ab16c10754de36a35bd40be003fe1b7fc9c679912688ce8",
+      "archive": "/permitting-evidence/sharonville/sign-application.pdf#page=1",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "file": "sign-application.pdf",
+      "physical_page": 1,
+      "title": "Sealed foundation details",
+      "matched_needle": "foundation drawings, stamped and sealed",
+      "summary": "Freestanding signs require architect/engineer sealed foundation details in this form.",
+      "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+      "text_sha256": "28706109d49f7d487ab16c10754de36a35bd40be003fe1b7fc9c679912688ce8",
+      "archive": "/permitting-evidence/sharonville/sign-application.pdf#page=1",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "file": "sign-application.pdf",
+      "physical_page": 1,
+      "title": "Wall attachment details",
+      "matched_needle": "details of how the sign will be attached",
+      "summary": "Form requests structural wall mounting details.",
+      "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+      "text_sha256": "28706109d49f7d487ab16c10754de36a35bd40be003fe1b7fc9c679912688ce8",
+      "archive": "/permitting-evidence/sharonville/sign-application.pdf#page=1",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "file": "planning-zoning-code.pdf",
+      "physical_page": 130,
+      "title": "Sign and face-change zoning approval",
+      "matched_needle": "A certificate of zoning approval is required for sign face changes",
+      "summary": "Retained 2022 code covers permanent signs and face changes; zoning exemptions do not prove building/electrical exemptions.",
+      "source_sha256": "c0be28272a4e380ea8609b237215cbee6555f5e26ffc8446cc1495eb2b29ba06",
+      "text_sha256": "b2680d14d2f67ab478646a268cfc175498b25c91bf39591c1a6dc0d760729080",
+      "archive": "/permitting-evidence/sharonville/planning-zoning-code.pdf#page=130",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "file": "fee-schedule.pdf",
+      "physical_page": 2,
+      "title": "Sign fee categories",
+      "matched_needle": "Signs (face change, painted on structure)",
+      "summary": "Temporary, residential and face-change/painted sign fee categories differ. Verify adoption and applicable category before fee calculation.",
+      "source_sha256": "e201fb4fa2a9c8fefc8fcd63fcbef05add84180f5b8c5bff5d55cf241c4b5a93",
+      "text_sha256": "8f5626b967c3ac6a6565d808fd111f906adb66811a84590bae0c5e2bfa315751",
+      "archive": "/permitting-evidence/sharonville/fee-schedule.pdf#page=2",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "file": "residential-guide-2026.pdf",
+      "physical_page": 7,
+      "title": "Electrical intake and NIC inspection",
+      "matched_needle": "All electrical inspections are handled directly by NIC.",
+      "summary": "City receives applications and issues approved permits after fee payment; NIC handles electrical review, approvals and inspections. Commercial-sign scope and currentness remain pending.",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "text_sha256": "1cc9f1b15503ba2b01b46c966c8fa41f24d8ea7f77d2de705953adac60ca38d5",
+      "archive": "/permitting-evidence/sharonville/residential-guide-2026.pdf#page=7",
+      "applicability_approved": false,
+      "authority_approved": false,
+      "currentness_approved": false
+    }
+  ]
+}
