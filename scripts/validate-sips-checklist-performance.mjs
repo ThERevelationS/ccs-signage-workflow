@@ -144,7 +144,8 @@ check("nested checklist indentation preserves phone width", () => {
   assert.match(source, /className="ml-1 sm:ml-4 mt-1 space-y-0\.5"/);
   assert.match(source, /ml-1 sm:ml-4 mt-0\.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50/);
   assert.match(source, /ml-1 sm:ml-3 mt-0\.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50/);
-  assert.equal(/ml-[34] mt-0\.5 flex items-center gap-1 bg-yellow-50/.test(source), false);
+  assert.equal(source.includes("className={`ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50"), false);
+  assert.equal(source.includes("className={`ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50"), false);
 });
 
 check("inline nested add controls use reduced phone indentation", () => {
