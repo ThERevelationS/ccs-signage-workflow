@@ -1,0 +1,41 @@
+{
+  "observed_at": "2026-10-07T11:25:00Z",
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "existing_source_document_id": "6ac39c0e6657049fb11cd757",
+  "archive_registered": true,
+  "extraction_integrity_verified": true,
+  "duplicate_upload_needed": false,
+  "source_scope_review_passes": false,
+  "office_identity_status": "needs_verification",
+  "roles": {
+    "electrical_permit": {
+      "source_document_id": "6ac39c0e6657049fb11cd757",
+      "physical_page": 2,
+      "text_sha256": "3332e42bc5f3e729df67815a00ee503b3e408cdfc0f087527cae87f2f2c47f92",
+      "retained_quote_matches": true,
+      "existing_role_gate_accepts": false,
+      "ready_for_approval": false,
+      "followup": "Obtain explicit current permit issuer responsibility evidence."
+    },
+    "electrical_inspection": {
+      "source_document_id": "6ac39c0e6657049fb11cd757",
+      "physical_page": 2,
+      "text_sha256": "3332e42bc5f3e729df67815a00ee503b3e408cdfc0f087527cae87f2f2c47f92",
+      "retained_quote_matches": true,
+      "existing_role_gate_accepts": false,
+      "ready_for_approval": false,
+      "followup": "Support city-to-IBI delegation separately from source publisher; confirm current inspection scope."
+    }
+  },
+  "publisher_responsible_office_separation_required": true,
+  "source_review_needed": true,
+  "staff_approved": false,
+  "authority_verified": false,
+  "implementation_gap": "PDF responsibility review currently requires target office to match source publisher. HTML delegation path is zoning-only. Do not rename City publisher to IBI or weaken current review gates.",
+  "next_steps": [
+    "Review current City administrative source publisher/scope",
+    "Verify IBI canonical office identity independently",
+    "Implement explicit municipal PDF delegation evidence with separate publisher and responsible office",
+    "Review inspection and permit issuance separately; a contact instruction does not prove issuer responsibility"
+  ]
+}
