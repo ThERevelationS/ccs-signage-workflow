@@ -1,0 +1,942 @@
+{
+  "items": [
+    {
+      "id": "1776714570547-0.6037507435062587",
+      "name": "Deerfield Township Planning & Zoning Department",
+      "office_types": [
+        "Zoning",
+        "Township"
+      ],
+      "office_type": "Zoning",
+      "contact_phone": "513-701-6958",
+      "contact_email": "pginty@deerfieldtwp.com",
+      "contact_website": "https://www.choosedeerfield.com/government/planning-zoning/",
+      "contact_address": "4900 Parkway Dr., Suite 150, Mason, OH 45040",
+      "contact_notes": "The Planning & Zoning Department handles zoning certificates and sign permits. Building, electrical, and mechanical permits for Deerfield Township (Warren County, OH) are managed by the Warren County Building Department.",
+      "workflow_steps": [
+        {
+          "id": "1776714570547-0-0.5444765273141065",
+          "name": "Zoning/Sign Permit Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776714570547-1-0.3977464687598965",
+          "name": "Site Plan & Sign Specs Reviewed",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776714570547-2-0.36567085618592576",
+          "name": "Application Fee Paid",
+          "type": "checkbox",
+          "order": 2
+        },
+        {
+          "id": "1776714570547-3-0.1940296002976245",
+          "name": "Township Review Follow-up",
+          "type": "followup_date",
+          "followup_interval_days": 14,
+          "order": 3
+        },
+        {
+          "id": "1776714570547-4-0.6001866862943788",
+          "name": "Zoning Certificate Received",
+          "type": "permit_received_date",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "1776693736739-0.07577123705348354",
+      "name": "Butler County Department of Building and Zoning",
+      "office_type": "Building",
+      "contact_phone": "513-887-3205",
+      "contact_email": "building@bcohio.gov",
+      "contact_website": "https://building.bcohio.gov/",
+      "contact_address": "130 High St, Hamilton, OH 45011",
+      "contact_notes": "Office Hours: Monday - Friday 8:00 AM - 4:00 PM. Inspectors available for questions 8:00 AM - 9:00 AM and 3:30 PM - 4:00 PM.",
+      "workflow_steps": [
+        {
+          "id": "1776693736739-0-0.5058877189229865",
+          "name": "Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776693736739-1-0.5992013685593511",
+          "name": "Township Zoning Stamp/Approval",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776693736739-2-0.4130995561669494",
+          "name": "Structural & Electrical Review",
+          "type": "checkbox",
+          "order": 2
+        },
+        {
+          "id": "1776693736739-3-0.9780015619374963",
+          "name": "Follow-up on Review Status",
+          "type": "followup_date",
+          "followup_interval_days": 14,
+          "order": 3
+        },
+        {
+          "id": "1776693736739-4-0.7234453970642396",
+          "name": "Permit Issued/Received",
+          "type": "permit_received_date",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "1776693091752-0.8897164525624395",
+      "name": "City of Cincinnati Department of Buildings & Inspections",
+      "office_type": "Building",
+      "contact_phone": "513-352-3271",
+      "contact_email": "ccpbpermitcenter@cincinnati-oh.gov",
+      "contact_website": "https://www.cincinnati-oh.gov/buildings/",
+      "contact_address": "805 Central Ave, Suite 500, Cincinnati, OH 45202",
+      "contact_notes": "The Permit Center is open Monday through Friday, 7:30 AM to 4:00 PM. Tier 1 same-day plan review is available for qualifying projects until 2:30 PM.",
+      "workflow_steps": [
+        {
+          "id": "1776693091752-0-0.12907604018770624",
+          "name": "Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776693091752-1-0.26872710349703344",
+          "name": "Zoning Compliance Review",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776693091752-2-0.4495996456691891",
+          "name": "Building/Structural Review",
+          "type": "checkbox",
+          "order": 2
+        },
+        {
+          "id": "1776693091752-3-0.1390322394620156",
+          "name": "Status Follow-up",
+          "type": "followup_date",
+          "followup_interval_days": 14,
+          "order": 3
+        },
+        {
+          "id": "1776693091752-4-0.4788803151265587",
+          "name": "Permit Received",
+          "type": "permit_received_date",
+          "order": 4
+        }
+      ],
+      "government_office_id": "1776693091752-0.8897164525624395",
+      "government_office": {
+        "name": "City of Cincinnati Department of Buildings & Inspections",
+        "phone": "513-352-3271",
+        "email": "ccpbpermitcenter@cincinnati-oh.gov",
+        "website": "https://www.cincinnati-oh.gov/buildings/",
+        "address": "805 Central Ave, Suite 500, Cincinnati, OH 45202",
+        "notes": "The Permit Center is open Monday through Friday, 7:30 AM to 4:00 PM. Tier 1 same-day plan review is available for qualifying projects until 2:30 PM.",
+        "state": "OH",
+        "verification_status": "staff_verified",
+        "verified_at": "2026-10-05T02:28:04.918Z",
+        "verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+        "source_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+        "verification_notes": "Official department identity and contact information reviewed against retained original pages. Identity only: permit roles, geographic coverage, source-currentness/adoption and address authority remain unapproved.",
+        "retained_identity_evidence": {
+          "method": "manual-official-office-identity-v1",
+          "official_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+          "observed_at": "2026-10-05T02:26:26.047Z",
+          "http_status": 200,
+          "raw_html_sha256": "36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c",
+          "raw_html_bytes": 79023,
+          "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.html",
+          "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.txt",
+          "normalized_text_sha256": "36426432182ef7e466f33d190a97670f76a0b7457b6ae9d389ec7deeb8240a5b",
+          "supporting_sources": [
+            {
+              "name": "buildings-about",
+              "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+              "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+              "retrieved_at": "2026-10-05T02:26:23.909Z",
+              "content_type": "text/html;charset=UTF-8",
+              "file_bytes": 69598,
+              "file_hash_sha256": "59857eb9abb1822738b13bacea187401b3fa4c57e690b13a3babc43664a6ca90",
+              "text_sha256": "a5a188637e83f8f935cc8fc7fd1ef545e5a0a5337a8562cff2624af95de830ed",
+              "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.html",
+              "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.txt"
+            },
+            {
+              "name": "permit-center",
+              "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+              "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+              "retrieved_at": "2026-10-05T02:26:27.947Z",
+              "content_type": "text/html;charset=UTF-8",
+              "file_bytes": 69551,
+              "file_hash_sha256": "9919254a2bbb984e1267a7777fad68bbf9c6099831b75b8bd5e9b13257ef139e",
+              "text_sha256": "5a934435858484e3b712dbe1cc39c9c3b49165c2749ae0288be7f6cfba50b03e",
+              "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.html",
+              "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.txt"
+            }
+          ],
+          "proofs": {
+            "identity": {
+              "source": "buildings-about",
+              "quote": "The Department of Buildings & Inspections (B&I)"
+            },
+            "email": {
+              "source": "buildings-contact",
+              "quote": "ccpbpermitcenter@cincinnati-oh.gov"
+            },
+            "phone": {
+              "source": "buildings-contact",
+              "quote": "352-3271 (opt. 9)",
+              "area_code_quote": "Note: All telephone numbers are area code 513."
+            },
+            "address": {
+              "source": "permit-center",
+              "quote": "805 Central Ave., Suite 500\nCincinnati, OH 45202"
+            }
+          }
+        }
+      },
+      "office_identity_reviews": [
+        {
+          "review_id": "office-identity-36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c",
+          "reviewed_at": "2026-10-05T02:28:04.918Z",
+          "reviewed_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+          "evidence": {
+            "method": "manual-official-office-identity-v1",
+            "official_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+            "observed_at": "2026-10-05T02:26:26.047Z",
+            "http_status": 200,
+            "raw_html_sha256": "36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c",
+            "raw_html_bytes": 79023,
+            "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.html",
+            "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.txt",
+            "normalized_text_sha256": "36426432182ef7e466f33d190a97670f76a0b7457b6ae9d389ec7deeb8240a5b",
+            "supporting_sources": [
+              {
+                "name": "buildings-about",
+                "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+                "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+                "retrieved_at": "2026-10-05T02:26:23.909Z",
+                "content_type": "text/html;charset=UTF-8",
+                "file_bytes": 69598,
+                "file_hash_sha256": "59857eb9abb1822738b13bacea187401b3fa4c57e690b13a3babc43664a6ca90",
+                "text_sha256": "a5a188637e83f8f935cc8fc7fd1ef545e5a0a5337a8562cff2624af95de830ed",
+                "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.html",
+                "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.txt"
+              },
+              {
+                "name": "permit-center",
+                "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+                "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+                "retrieved_at": "2026-10-05T02:26:27.947Z",
+                "content_type": "text/html;charset=UTF-8",
+                "file_bytes": 69551,
+                "file_hash_sha256": "9919254a2bbb984e1267a7777fad68bbf9c6099831b75b8bd5e9b13257ef139e",
+                "text_sha256": "5a934435858484e3b712dbe1cc39c9c3b49165c2749ae0288be7f6cfba50b03e",
+                "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.html",
+                "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.txt"
+              }
+            ],
+            "proofs": {
+              "identity": {
+                "source": "buildings-about",
+                "quote": "The Department of Buildings & Inspections (B&I)"
+              },
+              "email": {
+                "source": "buildings-contact",
+                "quote": "ccpbpermitcenter@cincinnati-oh.gov"
+              },
+              "phone": {
+                "source": "buildings-contact",
+                "quote": "352-3271 (opt. 9)",
+                "area_code_quote": "Note: All telephone numbers are area code 513."
+              },
+              "address": {
+                "source": "permit-center",
+                "quote": "805 Central Ave., Suite 500\nCincinnati, OH 45202"
+              }
+            }
+          },
+          "original_identity": {
+            "id": "1776693091752-0.8897164525624395",
+            "name": "City of Cincinnati Department of Buildings & Inspections",
+            "office_type": "Building",
+            "contact_phone": "513-352-3271",
+            "contact_email": "ZoningInfo@cincinnati-oh.gov",
+            "contact_website": "https://www.cincinnati-oh.gov/buildings/",
+            "contact_address": "805 Central Ave, Suite 500, Cincinnati, OH 45202",
+            "contact_notes": "The Permit Center is open Monday through Friday, 7:30 AM to 4:00 PM. Tier 1 same-day plan review is available for qualifying projects until 2:30 PM.",
+            "workflow_steps": [
+              {
+                "id": "1776693091752-0-0.12907604018770624",
+                "name": "Application Submitted",
+                "type": "submitted_date",
+                "order": 0
+              },
+              {
+                "id": "1776693091752-1-0.26872710349703344",
+                "name": "Zoning Compliance Review",
+                "type": "checkbox",
+                "order": 1
+              },
+              {
+                "id": "1776693091752-2-0.4495996456691891",
+                "name": "Building/Structural Review",
+                "type": "checkbox",
+                "order": 2
+              },
+              {
+                "id": "1776693091752-3-0.1390322394620156",
+                "name": "Status Follow-up",
+                "type": "followup_date",
+                "followup_interval_days": 14,
+                "order": 3
+              },
+              {
+                "id": "1776693091752-4-0.4788803151265587",
+                "name": "Permit Received",
+                "type": "permit_received_date",
+                "order": 4
+              }
+            ]
+          },
+          "verified_identity": {
+            "name": "City of Cincinnati Department of Buildings & Inspections",
+            "phone": "513-352-3271",
+            "email": "ccpbpermitcenter@cincinnati-oh.gov",
+            "website": "https://www.cincinnati-oh.gov/buildings/",
+            "address": "805 Central Ave, Suite 500, Cincinnati, OH 45202",
+            "notes": "The Permit Center is open Monday through Friday, 7:30 AM to 4:00 PM. Tier 1 same-day plan review is available for qualifying projects until 2:30 PM.",
+            "state": "OH",
+            "verification_status": "staff_verified",
+            "verified_at": "2026-10-05T02:28:04.918Z",
+            "verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+            "source_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+            "verification_notes": "Official department identity and contact information reviewed against retained original pages. Identity only: permit roles, geographic coverage, source-currentness/adoption and address authority remain unapproved.",
+            "retained_identity_evidence": {
+              "method": "manual-official-office-identity-v1",
+              "official_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+              "observed_at": "2026-10-05T02:26:26.047Z",
+              "http_status": 200,
+              "raw_html_sha256": "36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c",
+              "raw_html_bytes": 79023,
+              "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.html",
+              "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.txt",
+              "normalized_text_sha256": "36426432182ef7e466f33d190a97670f76a0b7457b6ae9d389ec7deeb8240a5b",
+              "supporting_sources": [
+                {
+                  "name": "buildings-about",
+                  "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+                  "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+                  "retrieved_at": "2026-10-05T02:26:23.909Z",
+                  "content_type": "text/html;charset=UTF-8",
+                  "file_bytes": 69598,
+                  "file_hash_sha256": "59857eb9abb1822738b13bacea187401b3fa4c57e690b13a3babc43664a6ca90",
+                  "text_sha256": "a5a188637e83f8f935cc8fc7fd1ef545e5a0a5337a8562cff2624af95de830ed",
+                  "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.html",
+                  "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.txt"
+                },
+                {
+                  "name": "permit-center",
+                  "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+                  "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+                  "retrieved_at": "2026-10-05T02:26:27.947Z",
+                  "content_type": "text/html;charset=UTF-8",
+                  "file_bytes": 69551,
+                  "file_hash_sha256": "9919254a2bbb984e1267a7777fad68bbf9c6099831b75b8bd5e9b13257ef139e",
+                  "text_sha256": "5a934435858484e3b712dbe1cc39c9c3b49165c2749ae0288be7f6cfba50b03e",
+                  "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.html",
+                  "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.txt"
+                }
+              ],
+              "proofs": {
+                "identity": {
+                  "source": "buildings-about",
+                  "quote": "The Department of Buildings & Inspections (B&I)"
+                },
+                "email": {
+                  "source": "buildings-contact",
+                  "quote": "ccpbpermitcenter@cincinnati-oh.gov"
+                },
+                "phone": {
+                  "source": "buildings-contact",
+                  "quote": "352-3271 (opt. 9)",
+                  "area_code_quote": "Note: All telephone numbers are area code 513."
+                },
+                "address": {
+                  "source": "permit-center",
+                  "quote": "805 Central Ave., Suite 500\nCincinnati, OH 45202"
+                }
+              }
+            }
+          },
+          "authority_verified": false,
+          "address_authority_resolved": false,
+          "source_currentness_verified": false,
+          "llm_calls": 0
+        }
+      ]
+    },
+    {
+      "id": "1776692992927-0.21800261198141846",
+      "name": "(NIC) National Inspection Corporation",
+      "office_type": "Electrical Inspectors",
+      "contact_phone": "888-433-4642",
+      "contact_email": "info@natinspect.com",
+      "contact_website": "https://natinspect.com/",
+      "contact_address": "11100 Ashburn Rd, Cincinnati, OH 45240",
+      "contact_notes": "NIC provides contracted building and electrical inspection services for various municipalities across Ohio, Kentucky, and Indiana. Hours are typically Monday-Friday, 8:00 AM - 5:00 PM.",
+      "workflow_steps": [
+        {
+          "id": "1776692992927-0-0.4899769971105622",
+          "name": "Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776692992927-1-0.3184762445438427",
+          "name": "Electrical Plan Review",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776692992927-2-0.8872209885316266",
+          "name": "Permit Status Follow-up",
+          "type": "followup_date",
+          "followup_interval_days": 10,
+          "order": 2
+        },
+        {
+          "id": "1776692992927-3-0.11216940875947401",
+          "name": "Permit Received",
+          "type": "permit_received_date",
+          "order": 3
+        },
+        {
+          "id": "1776692992927-4-0.15200222856086254",
+          "name": "Final Inspection Scheduled",
+          "type": "checkbox",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "1776692961965-0.8021021998915965",
+      "name": "(IBI) Inspection Bureau, Inc.",
+      "office_type": "Electrical Inspectors",
+      "contact_phone": "513-381-6080",
+      "contact_email": "ibi@inspectionbureau.com",
+      "contact_website": "https://www.inspectionbureau.com",
+      "contact_address": "250 West Court Street, Suite 125W, Cincinnati, OH 45202",
+      "contact_notes": "Provides electrical inspection and plan review services for Cincinnati, Hamilton County, and surrounding jurisdictions in Southwest Ohio and Northern Kentucky.",
+      "workflow_steps": [
+        {
+          "id": "1776692961965-0-0.06983472357641696",
+          "name": "Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776692961965-1-0.2962842377966136",
+          "name": "Electrical Plan Review",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776692961965-2-0.30684770059585786",
+          "name": "Follow-up",
+          "type": "followup_date",
+          "followup_interval_days": 14,
+          "order": 2
+        },
+        {
+          "id": "1776692961965-3-0.736460375622549",
+          "name": "Inspection Scheduled",
+          "type": "checkbox",
+          "order": 3
+        },
+        {
+          "id": "1776692961965-4-0.34415124816406817",
+          "name": "Permit Received",
+          "type": "permit_received_date",
+          "order": 4
+        }
+      ],
+      "government_office_id": "1776692961965-0.8021021998915965",
+      "government_office": {
+        "name": "The Inspection Bureau, Inc.",
+        "state": "OH",
+        "phone": "513-381-6080",
+        "website": "https://www.inspectionbureau.com/",
+        "address": "250 W Court St #125W, Cincinnati, OH 45202",
+        "email": "",
+        "verification_status": "needs_verification",
+        "verified_by": "",
+        "verified_at": "",
+        "source_url": "https://www.inspectionbureau.com/",
+        "verification_notes": "Regional provider identity candidate. Address differs from City FAQ. No statewide or locality coverage approval. Legacy email is not independently confirmed."
+      }
+    },
+    {
+      "id": "1776692918997-0.5701002861427644",
+      "name": "City of Forest Park Building Department",
+      "office_type": "Building",
+      "contact_phone": "(513) 595-5264",
+      "contact_email": "bldgdept@forestpark.org",
+      "contact_website": "https://www.forestpark.org/government/building/index.php",
+      "contact_address": "1201 W Kemper Rd, Forest Park, OH 45240",
+      "contact_notes": "Office Hours: Monday - Friday, 8:00 AM - 4:30 PM. Sign permits (wall, ground, pylon) are administered through the Building Department, though zoning review is often coordinated with the Community Development Department.",
+      "workflow_steps": [
+        {
+          "id": "1776692918997-0-0.4614372853996197",
+          "name": "Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776692918997-1-0.14349676895865915",
+          "name": "Zoning & Technical Review",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776692918997-2-0.7378493786242887",
+          "name": "Follow-up",
+          "type": "followup_date",
+          "followup_interval_days": 14,
+          "order": 2
+        },
+        {
+          "id": "1776692918997-3-0.37884173225663564",
+          "name": "Permit Received",
+          "type": "permit_received_date",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "id": "1776692851618-0.6899052686783941",
+      "name": "Hamilton County Planning + Development - Division of Buildings + Inspections",
+      "office_type": "Building",
+      "contact_phone": "513-946-4550",
+      "contact_email": "michael.stehlin@hamiltoncountyohio.gov",
+      "contact_website": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections",
+      "contact_address": "138 East Court Street, Room 801, Cincinnati, OH 45202",
+      "contact_notes": "Jurisdiction covers unincorporated townships and specific contract jurisdictions (e.g., North Bend, Symmes Township, Woodlawn). Office hours: Monday - Friday, 7:30 AM - 4:00 PM.",
+      "workflow_steps": [
+        {
+          "id": "1776692851618-0-0.2610811648389705",
+          "name": "Application Submitted",
+          "type": "submitted_date",
+          "order": 0
+        },
+        {
+          "id": "1776692851618-1-0.36062723614934555",
+          "name": "Zoning Certificate Verified",
+          "type": "checkbox",
+          "order": 1
+        },
+        {
+          "id": "1776692851618-2-0.13251710342440104",
+          "name": "Plan Review Completed",
+          "type": "checkbox",
+          "order": 2
+        },
+        {
+          "id": "1776692851618-3-0.657244072140612",
+          "name": "Follow-up",
+          "type": "followup_date",
+          "followup_interval_days": 14,
+          "order": 3
+        },
+        {
+          "id": "1776692851618-4-0.7654782840375377",
+          "name": "Permit Received",
+          "type": "permit_received_date",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+      "government_office_id": "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+      "name": "Campbell County Planning, Zoning and Building Inspection",
+      "office_type": "",
+      "office_types": [],
+      "workflow_steps": [],
+      "contact_phone": "(859) 292-3880",
+      "contact_email": "pzadmin@campbellcountyky.gov",
+      "contact_website": "https://campbellcountyky.gov/department/index.php?structureid=37",
+      "contact_address": "1098 Monmouth St, Suite 343, Newport, KY 41071",
+      "contact_notes": "",
+      "government_office": {
+        "name": "Campbell County Planning, Zoning and Building Inspection",
+        "phone": "(859) 292-3880",
+        "email": "pzadmin@campbellcountyky.gov",
+        "website": "https://campbellcountyky.gov/department/index.php?structureid=37",
+        "address": "1098 Monmouth St, Suite 343, Newport, KY 41071",
+        "notes": "",
+        "state": "KY",
+        "verification_status": "staff_verified",
+        "verified_at": "2026-10-04T21:54:36.486Z",
+        "verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+        "source_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+        "verification_notes": "Current official department page confirms the candidate department identity and contacts. Printed publisher naming variants were explicitly reviewed against the same official host, phone and Suite 343 address. Office identity only; no source-currentness, adopted law, role, city coverage or address authority approval. Retained raw page: docs/official-evidence/campbell-office-2026-10-04.html (SHA-256 dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549).",
+        "retained_identity_evidence": {
+          "method": "manual-official-office-identity-v1",
+          "official_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+          "observed_at": "2026-10-04T21:50:57.167Z",
+          "http_status": 200,
+          "raw_html_sha256": "dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549",
+          "raw_html_bytes": 28739,
+          "archived_repo_path": "docs/official-evidence/campbell-office-2026-10-04.html",
+          "normalized_text_path": "docs/official-evidence/campbell-office-2026-10-04.txt",
+          "normalized_text_sha256": "6e2dee753e137195cfb6f07e108fb6940e37be118dd7551cefca4a02c875c422",
+          "proofs": {
+            "identity": "The Planning, Zoning and Building Inspections Department of Campbell County KY",
+            "email": "pzadmin@campbellcountyky.gov",
+            "phone": "(859) 292-3880",
+            "address": "1098 Monmouth St Suite 343 Newport, KY 41071",
+            "heading": "Planning & Zoning & Building Inspections"
+          }
+        }
+      },
+      "office_candidate_registration": {
+        "method": "retained-office-candidate-v1",
+        "registration_key": "e5bd258834fa7ae6d9e32ebc8120c30c18c8be1c36b9a669f7e9c574e5e26b99",
+        "snapshot": {
+          "source": {
+            "id": "6ac25be4207035a2e5be3827",
+            "jurisdiction_id": "6ac19dcc184935c1391ee468",
+            "jurisdiction_name": "Campbell County",
+            "issuing_office": null,
+            "jurisdiction_scope": null,
+            "title": "Campbell County Sign Permit Application",
+            "official_url": "https://campbellcountyky.gov/egov/documents/1648823956_93665.pdf",
+            "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1dae12daf_1648823956_93665.pdf",
+            "file_hash_sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+            "file_bytes": 47262,
+            "authority_classification": "application_form",
+            "content_status": "unknown",
+            "verification_status": "needs_verification",
+            "authority_confidence": "unverified",
+            "reviewer": null,
+            "effective_or_adopted_date": null,
+            "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review.",
+            "authority_review": null
+          },
+          "profile": {
+            "id": "6ac19dcc184935c1391ee468",
+            "name": "Campbell County",
+            "state": "KY",
+            "type": "county"
+          },
+          "proof": {
+            "physical_page": 1,
+            "text_sha256": "23511f8c83722f13bcbd550bd2282f3a0a140e8d3453762954235c9c3dde4e6b",
+            "excerpt": "Campbell County Planning, Zoning and Building Inspection"
+          },
+          "archive_document_id": "ai_2026-10-04T00:29:00Z_1"
+        },
+        "registered_by": "brettheinlein1@gmail.com",
+        "registered_at": "2026-10-04T21:36:53.647Z"
+      },
+      "office_identity_reviews": [
+        {
+          "review_id": "office-identity-dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549",
+          "reviewed_at": "2026-10-04T21:54:36.486Z",
+          "reviewed_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+          "evidence": {
+            "method": "manual-official-office-identity-v1",
+            "official_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+            "observed_at": "2026-10-04T21:50:57.167Z",
+            "http_status": 200,
+            "raw_html_sha256": "dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549",
+            "raw_html_bytes": 28739,
+            "archived_repo_path": "docs/official-evidence/campbell-office-2026-10-04.html",
+            "normalized_text_path": "docs/official-evidence/campbell-office-2026-10-04.txt",
+            "normalized_text_sha256": "6e2dee753e137195cfb6f07e108fb6940e37be118dd7551cefca4a02c875c422",
+            "proofs": {
+              "identity": "The Planning, Zoning and Building Inspections Department of Campbell County KY",
+              "email": "pzadmin@campbellcountyky.gov",
+              "phone": "(859) 292-3880",
+              "address": "1098 Monmouth St Suite 343 Newport, KY 41071",
+              "heading": "Planning & Zoning & Building Inspections"
+            }
+          },
+          "candidate_registration_key": "e5bd258834fa7ae6d9e32ebc8120c30c18c8be1c36b9a669f7e9c574e5e26b99",
+          "identity_match_basis": "Existing retained sign form and current official department page share publisher department, official county host, phone and Suite 343 address. Keep literal retained publisher name for source ownership; current heading is a reviewed naming variant.",
+          "original_identity": {
+            "name": "Campbell County Planning, Zoning and Building Inspection",
+            "phone": "",
+            "email": "",
+            "website": "",
+            "address": "",
+            "notes": "",
+            "state": "KY",
+            "verification_status": "needs_verification",
+            "verified_at": "",
+            "verified_by": "",
+            "source_url": "https://campbellcountyky.gov/egov/documents/1648823956_93665.pdf",
+            "verification_notes": "Candidate from a retained publisher quote. Current office identity, contacts, roles and coverage require separate review."
+          },
+          "verified_identity": {
+            "name": "Campbell County Planning, Zoning and Building Inspection",
+            "phone": "(859) 292-3880",
+            "email": "pzadmin@campbellcountyky.gov",
+            "website": "https://campbellcountyky.gov/department/index.php?structureid=37",
+            "address": "1098 Monmouth St, Suite 343, Newport, KY 41071",
+            "notes": "",
+            "state": "KY",
+            "verification_status": "staff_verified",
+            "verified_at": "2026-10-04T21:54:36.486Z",
+            "verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+            "source_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+            "verification_notes": "Current official department page confirms the candidate department identity and contacts. Printed publisher naming variants were explicitly reviewed against the same official host, phone and Suite 343 address. Office identity only; no source-currentness, adopted law, role, city coverage or address authority approval. Retained raw page: docs/official-evidence/campbell-office-2026-10-04.html (SHA-256 dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549)."
+          },
+          "authority_verified": false,
+          "address_authority_resolved": false,
+          "source_currentness_verified": false,
+          "llm_calls": 0
+        }
+      ]
+    },
+    {
+      "id": "office-cincinnati-planning-engagement-oh",
+      "government_office_id": "office-cincinnati-planning-engagement-oh",
+      "name": "City of Cincinnati Department of City Planning and Engagement",
+      "office_type": "",
+      "office_types": [],
+      "workflow_steps": [],
+      "contact_phone": "(513) 352-4845",
+      "contact_email": "planning@cincinnati-oh.gov",
+      "contact_website": "https://www.cincinnati-oh.gov/planning/",
+      "contact_address": "805 Central Avenue, Suite 720, Cincinnati, OH 45202",
+      "contact_notes": "Official department contact. The same retained contact page separately lists Zoning: (513) 352-2430, zoninginfo@cincinnati-oh.gov. This identity review does not assign permit roles or geographic authority.",
+      "government_office": {
+        "name": "City of Cincinnati Department of City Planning and Engagement",
+        "phone": "(513) 352-4845",
+        "email": "planning@cincinnati-oh.gov",
+        "website": "https://www.cincinnati-oh.gov/planning/",
+        "address": "805 Central Avenue, Suite 720, Cincinnati, OH 45202",
+        "notes": "Official department contact. The same retained contact page separately lists Zoning: (513) 352-2430, zoninginfo@cincinnati-oh.gov. This identity review does not assign permit roles or geographic authority.",
+        "state": "OH",
+        "verification_status": "staff_verified",
+        "verified_at": "2026-10-05T02:28:04.918Z",
+        "verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+        "source_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+        "verification_notes": "Official department identity and contact information reviewed against retained original pages. Identity only: permit roles, geographic coverage, source-currentness/adoption and address authority remain unapproved.",
+        "retained_identity_evidence": {
+          "method": "manual-official-office-identity-v1",
+          "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+          "observed_at": "2026-10-05T02:26:31.514Z",
+          "http_status": 200,
+          "raw_html_sha256": "feab4e75cd2ead0cf6cea51fd87b51110370e590a4a16e4272e90f4368b1aa3a",
+          "raw_html_bytes": 59937,
+          "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.html",
+          "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.txt",
+          "normalized_text_sha256": "0fdbe7a63f54aa39f3f354eeca893eb0e33c9bf5261aeccef9a1499169701260",
+          "supporting_sources": [
+            {
+              "name": "planning-about",
+              "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+              "final_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+              "retrieved_at": "2026-10-05T02:26:29.696Z",
+              "content_type": "text/html;charset=UTF-8",
+              "file_bytes": 60034,
+              "file_hash_sha256": "163a2f8b956770c58c097dd68ada6adc55e192ed4fd66b37f51b3ca8c1ed0b78",
+              "text_sha256": "1a66b9e613dc41c98706d22bcab09f1987de36d06ebc20faa0b8b83ec3e7090e",
+              "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.html",
+              "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.txt"
+            },
+            {
+              "name": "zoning-relocation",
+              "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+              "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+              "retrieved_at": "2026-10-05T02:26:33.059Z",
+              "content_type": "text/html;charset=UTF-8",
+              "file_bytes": 62359,
+              "file_hash_sha256": "d8968e83b33a50ebf6795e3b040eeedf81dc1181e1a264e8471084b76f5eb3e0",
+              "text_sha256": "feab57a1ffa782fc34b588585c3bd364f261d498501bc475168df29ced219f87",
+              "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.html",
+              "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.txt"
+            }
+          ],
+          "proofs": {
+            "identity": {
+              "source": "planning-about",
+              "quote": "The Department of City Planning and Engagement"
+            },
+            "email": {
+              "source": "planning-contact",
+              "quote": "planning@cincinnati-oh.gov"
+            },
+            "phone": {
+              "source": "planning-contact",
+              "quote": "P: (513) 352-4845"
+            },
+            "address": {
+              "source": "planning-contact",
+              "quote": "805 Central Avenue, Suite 720\nCincinnati, OH 45202"
+            },
+            "zoning_service_contact": {
+              "source": "planning-contact",
+              "quote": "Zoning\n(513) 352-2430\nzoninginfo@cincinnati-oh.gov"
+            }
+          }
+        }
+      },
+      "office_identity_reviews": [
+        {
+          "review_id": "office-identity-feab4e75cd2ead0cf6cea51fd87b51110370e590a4a16e4272e90f4368b1aa3a",
+          "reviewed_at": "2026-10-05T02:28:04.918Z",
+          "reviewed_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+          "evidence": {
+            "method": "manual-official-office-identity-v1",
+            "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+            "observed_at": "2026-10-05T02:26:31.514Z",
+            "http_status": 200,
+            "raw_html_sha256": "feab4e75cd2ead0cf6cea51fd87b51110370e590a4a16e4272e90f4368b1aa3a",
+            "raw_html_bytes": 59937,
+            "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.html",
+            "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.txt",
+            "normalized_text_sha256": "0fdbe7a63f54aa39f3f354eeca893eb0e33c9bf5261aeccef9a1499169701260",
+            "supporting_sources": [
+              {
+                "name": "planning-about",
+                "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+                "final_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+                "retrieved_at": "2026-10-05T02:26:29.696Z",
+                "content_type": "text/html;charset=UTF-8",
+                "file_bytes": 60034,
+                "file_hash_sha256": "163a2f8b956770c58c097dd68ada6adc55e192ed4fd66b37f51b3ca8c1ed0b78",
+                "text_sha256": "1a66b9e613dc41c98706d22bcab09f1987de36d06ebc20faa0b8b83ec3e7090e",
+                "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.html",
+                "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.txt"
+              },
+              {
+                "name": "zoning-relocation",
+                "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+                "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+                "retrieved_at": "2026-10-05T02:26:33.059Z",
+                "content_type": "text/html;charset=UTF-8",
+                "file_bytes": 62359,
+                "file_hash_sha256": "d8968e83b33a50ebf6795e3b040eeedf81dc1181e1a264e8471084b76f5eb3e0",
+                "text_sha256": "feab57a1ffa782fc34b588585c3bd364f261d498501bc475168df29ced219f87",
+                "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.html",
+                "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.txt"
+              }
+            ],
+            "proofs": {
+              "identity": {
+                "source": "planning-about",
+                "quote": "The Department of City Planning and Engagement"
+              },
+              "email": {
+                "source": "planning-contact",
+                "quote": "planning@cincinnati-oh.gov"
+              },
+              "phone": {
+                "source": "planning-contact",
+                "quote": "P: (513) 352-4845"
+              },
+              "address": {
+                "source": "planning-contact",
+                "quote": "805 Central Avenue, Suite 720\nCincinnati, OH 45202"
+              },
+              "zoning_service_contact": {
+                "source": "planning-contact",
+                "quote": "Zoning\n(513) 352-2430\nzoninginfo@cincinnati-oh.gov"
+              }
+            }
+          },
+          "original_identity": null,
+          "verified_identity": {
+            "name": "City of Cincinnati Department of City Planning and Engagement",
+            "phone": "(513) 352-4845",
+            "email": "planning@cincinnati-oh.gov",
+            "website": "https://www.cincinnati-oh.gov/planning/",
+            "address": "805 Central Avenue, Suite 720, Cincinnati, OH 45202",
+            "notes": "Official department contact. The same retained contact page separately lists Zoning: (513) 352-2430, zoninginfo@cincinnati-oh.gov. This identity review does not assign permit roles or geographic authority.",
+            "state": "OH",
+            "verification_status": "staff_verified",
+            "verified_at": "2026-10-05T02:28:04.918Z",
+            "verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+            "source_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+            "verification_notes": "Official department identity and contact information reviewed against retained original pages. Identity only: permit roles, geographic coverage, source-currentness/adoption and address authority remain unapproved.",
+            "retained_identity_evidence": {
+              "method": "manual-official-office-identity-v1",
+              "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+              "observed_at": "2026-10-05T02:26:31.514Z",
+              "http_status": 200,
+              "raw_html_sha256": "feab4e75cd2ead0cf6cea51fd87b51110370e590a4a16e4272e90f4368b1aa3a",
+              "raw_html_bytes": 59937,
+              "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.html",
+              "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.txt",
+              "normalized_text_sha256": "0fdbe7a63f54aa39f3f354eeca893eb0e33c9bf5261aeccef9a1499169701260",
+              "supporting_sources": [
+                {
+                  "name": "planning-about",
+                  "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+                  "final_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+                  "retrieved_at": "2026-10-05T02:26:29.696Z",
+                  "content_type": "text/html;charset=UTF-8",
+                  "file_bytes": 60034,
+                  "file_hash_sha256": "163a2f8b956770c58c097dd68ada6adc55e192ed4fd66b37f51b3ca8c1ed0b78",
+                  "text_sha256": "1a66b9e613dc41c98706d22bcab09f1987de36d06ebc20faa0b8b83ec3e7090e",
+                  "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.html",
+                  "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.txt"
+                },
+                {
+                  "name": "zoning-relocation",
+                  "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+                  "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+                  "retrieved_at": "2026-10-05T02:26:33.059Z",
+                  "content_type": "text/html;charset=UTF-8",
+                  "file_bytes": 62359,
+                  "file_hash_sha256": "d8968e83b33a50ebf6795e3b040eeedf81dc1181e1a264e8471084b76f5eb3e0",
+                  "text_sha256": "feab57a1ffa782fc34b588585c3bd364f261d498501bc475168df29ced219f87",
+                  "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.html",
+                  "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.txt"
+                }
+              ],
+              "proofs": {
+                "identity": {
+                  "source": "planning-about",
+                  "quote": "The Department of City Planning and Engagement"
+                },
+                "email": {
+                  "source": "planning-contact",
+                  "quote": "planning@cincinnati-oh.gov"
+                },
+                "phone": {
+                  "source": "planning-contact",
+                  "quote": "P: (513) 352-4845"
+                },
+                "address": {
+                  "source": "planning-contact",
+                  "quote": "805 Central Avenue, Suite 720\nCincinnati, OH 45202"
+                },
+                "zoning_service_contact": {
+                  "source": "planning-contact",
+                  "quote": "Zoning\n(513) 352-2430\nzoninginfo@cincinnati-oh.gov"
+                }
+              }
+            }
+          },
+          "authority_verified": false,
+          "address_authority_resolved": false,
+          "source_currentness_verified": false,
+          "llm_calls": 0
+        }
+      ]
+    }
+  ]
+}
