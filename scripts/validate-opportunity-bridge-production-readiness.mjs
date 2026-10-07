@@ -86,6 +86,7 @@ assert.equal(historicalBridgeRuleContractPasses(), true);
   assert.equal(readiness.first_batch.length, 1);
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_schema_activated').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_identity_clean').pass, false);
+  assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_reconciled').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='secondary_confirmation_configured').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='production_apply_enabled').pass, false);
 }
@@ -106,6 +107,7 @@ assert.equal(historicalBridgeRuleContractPasses(), true);
   assert.equal(readiness.decision, 'NO_GO');
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_schema_activated').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_identity_clean').pass, true);
+  assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_reconciled').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='secondary_confirmation_configured').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='guarded_production_executor_wired').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='production_apply_enabled').pass, false);
