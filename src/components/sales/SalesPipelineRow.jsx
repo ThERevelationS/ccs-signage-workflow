@@ -15,6 +15,7 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -99,6 +100,8 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const attentionItems = getActionableSalesAttentionItems(wo);
   const likelyPlaceholder = isLikelySalesPlaceholder(wo);
   const opportunityDisplayName = salesOpportunityDisplayName(wo, "Unnamed customer");
+  const unverifiedStage = isUnverifiedSmartsheetSalesStage(wo);
+  const stageDisplayValue = salesStageDisplayValue(wo);
   const coreBridgeUrl = safeExternalHttpUrl(wo.corbridge_link);
   const expectedCloseStamp = String(wo.expected_close_date || "").slice(0, 10);
   const isOpen = !["won", "lost"].includes(wo.sales_status);
@@ -130,11 +133,12 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               );
               case "sales_status": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
-            <Select value={wo.sales_status || "lead"} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered}>
-              <SelectTrigger className={`h-7 text-xs border-0 px-1 ${SALES_STATUSES.find((status) => status.value === (wo.sales_status || "lead"))?.className || "bg-transparent"}`}>
+            <Select value={stageDisplayValue} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered}>
+              <SelectTrigger className={`h-7 text-xs border-0 px-1 ${unverifiedStage ? "bg-violet-50 text-violet-800" : SALES_STATUSES.find((status) => status.value === stageDisplayValue)?.className || "bg-transparent"}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
                 {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
               </SelectContent>
             </Select>
