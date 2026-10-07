@@ -1,0 +1,59 @@
+{
+  "observed_on": "2026-10-07",
+  "observations": [
+    {
+      "topic": "Ohio submission route",
+      "url": "https://www.inspectionbureau.com/",
+      "retrieval_method": "web extracted page; original homepage retention gap previously recorded",
+      "summary": "Provider homepage directs Ohio electrical permit and plan-review applications in its jurisdictions to ezTrak from September 14, 2026. This statement does not enumerate township/address coverage.",
+      "portal": "https://eztrak.cagis.org/",
+      "coverage_approved": false
+    },
+    {
+      "topic": "Legacy application coexistence",
+      "url": "https://www.inspectionbureau.com/online-inspection-application/",
+      "retrieval_method": "web extracted page; original HTTP 406",
+      "summary": "Provider form remains accessible with Ohio/Kentucky choices, signs/neon and billboard categories, building-permit reference, job/owner/applicant details and sign electrical quantities. Homepage Ohio migration guidance conflicts with treating this form as the current Ohio submission route.",
+      "current_submission_route_approved": false,
+      "original_archived": false
+    },
+    {
+      "topic": "Plan-review requirements",
+      "url": "https://www.inspectionbureau.com/electrical-plan-review/",
+      "retrieval_method": "web extracted page; original HTTP 406",
+      "summary": "Provider page dated effective February 2019 lists one combined PDF, affected-system diagrams, schedules/load summaries and equipment identification. It retains front-counter wording while linking ezTrak. Confirm current sign-specific scope and acceptance; printed code references are not approved current editions.",
+      "original_archived": false
+    }
+  ],
+  "localities": [
+    {
+      "name": "Green Township",
+      "canonical_id": "6ac1aae70e3a16c893d4e506"
+    },
+    {
+      "name": "North Bend",
+      "canonical_id": "6ac19f1c2fbbf3b8bb27397c"
+    },
+    {
+      "name": "Delhi Township",
+      "canonical_id": null
+    },
+    {
+      "name": "Whitewater Township",
+      "canonical_id": null
+    }
+  ],
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "service_area_approved": false,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0,
+  "gaps": [
+    "Original provider HTML HTTP 406",
+    "Inspection area XLS retention gap from earlier review",
+    "Township and job-address-specific service coverage",
+    "Canonical provider identity and separate office responsibilities",
+    "Current applicability of 2019 plan-review requirements"
+  ]
+}
