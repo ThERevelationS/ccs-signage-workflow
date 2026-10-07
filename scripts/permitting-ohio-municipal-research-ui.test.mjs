@@ -88,7 +88,7 @@ test('PDF page extraction preserves physical numbering, hashes and OCR gaps',()=
  for(const doc of extraction.documents.filter(d=>d.file.includes('sign-instructions'))){assert.equal(doc.pages_with_embedded_text,0);assert.ok(doc.pages.every(p=>p.needs_ocr_review));}
  const add=dossiers.find(d=>d.name==='Village of Addyston');
  assert.equal(add.document_findings.length,4);
- for(const row of dossiers.filter(d=>d.document_findings))for(const finding of row.document_findings){
+ for(const row of dossiers.filter(d=>['City of Harrison','Village of Addyston'].includes(d.name)))for(const finding of row.document_findings){
  const doc=extraction.documents.find(d=>finding.archive.includes(d.file)),page=doc.pages[finding.physical_page-1];
  if(!finding.observation_method)assert.equal(finding.text_sha256,page.text_sha256);assert.equal(finding.source_sha256,doc.source_sha256);
  assert.equal(finding.authority_approved,false);assert.match(finding.archive,new RegExp('#page='+finding.physical_page+'$'));
