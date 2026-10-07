@@ -1160,9 +1160,22 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(movedEntry.notes, managerCorrection.notes);
   assert.equal(movedEntry.approval_status, 'needs_review');
   const appliedAudit = h.rows.TimeClockAudit.find((row) => row.id === request.applied_audit_id);
+  const correctionRequestAudit = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'correction_request' && row.request_id === request.request_id && row.time_entry_id === request.time_entry_id,
+  );
   const correctionReviewAudit = h.rows.TimeClockAudit.find((row) =>
     row.action === 'correction_review' && row.request_id === request.review_request_id && row.time_entry_id === request.time_entry_id,
   );
+  assert.ok(correctionRequestAudit?.id);
+  assert.equal(correctionRequestAudit.outcome, 'confirmed');
+  assert.equal(correctionRequestAudit.user_email, employee.email);
+  assert.equal(correctionRequestAudit.actor_email, employee.email);
+  assert.equal(correctionRequestAudit.authentication_method, 'session');
+  assert.equal(correctionRequestAudit.reason, request.employee_reason);
+  assert.equal(correctionRequestAudit.details.correction_request_id, request.id);
+  assert.equal(correctionRequestAudit.details.requested_changes.clock_in, request.requested_changes.clock_in);
+  assert.equal(correctionRequestAudit.details.requested_changes.clock_out, request.requested_changes.clock_out);
+  assert.ok(correctionRequestAudit.details.payload_hash);
   assert.ok(correctionReviewAudit?.id);
   assert.equal(correctionReviewAudit.outcome, 'confirmed');
   assert.equal(correctionReviewAudit.details.correction_request_id, request.id);
@@ -1189,14 +1202,20 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
   const sourcePeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period');
   const destinationPeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'modified-destination-period');
-  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 24);
-  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 24);
+  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 25);
+  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 25);
   const sourceChange = sourcePeriod.finalized_summary.generation_changes[0];
   const destinationChange = destinationPeriod.finalized_summary.generation_changes[0];
   assert.equal(sourceChange.change_type, 'removed');
   assert.equal(destinationChange.change_type, 'added');
   for (const change of [sourceChange, destinationChange]) {
     assert.equal(change.correction_provenance.correction_request_id, request.id);
+    assert.equal(change.correction_provenance.submission_audit_id, correctionRequestAudit.id);
+    assert.equal(change.correction_provenance.submission_audit_outcome, correctionRequestAudit.outcome);
+    assert.equal(change.correction_provenance.submission_audit_at, correctionRequestAudit.server_timestamp);
+    assert.equal(change.correction_provenance.submission_actor_role, correctionRequestAudit.actor_role);
+    assert.equal(change.correction_provenance.submission_authentication_method, correctionRequestAudit.authentication_method);
+    assert.equal(change.correction_provenance.submission_payload_hash, correctionRequestAudit.details.payload_hash);
     assert.equal(change.correction_provenance.review_decision, 'approve_modified');
     assert.equal(change.correction_provenance.requested_clock_in, '2026-09-20T15:00:00.000Z');
     assert.equal(change.correction_provenance.requested_clock_out, '2026-09-20T23:00:00.000Z');
@@ -1256,6 +1275,7 @@ test('approve_modified cross-period correction uses manager-edited destination a
   }
   await tamperField(request, 'status', 'approved', 'synthetic-period', 'CorrectionRequest decision/status binding');
   await tamperField(request, 'applied_audit_id', 'tampered-audit-id', 'synthetic-period', 'CorrectionRequest applied audit ID');
+  await tamperField(request.original_snapshot, 'updated_date', '2026-09-20T13:59:59.000Z', 'synthetic-period', 'CorrectionRequest original submission TimeEntry version');
 
   for (const [field, value] of [
     ['clock_in', '2026-09-27T16:35:00.000Z'],
@@ -1268,6 +1288,46 @@ test('approve_modified cross-period correction uses manager-edited destination a
   await tamperField(appliedAudit, 'request_id', 'tampered-applied-request-id', 'synthetic-period', 'admin_correction request ID');
   await tamperField(appliedAudit, 'actor_email', 'other-admin@synthetic.invalid', 'synthetic-period', 'admin_correction reviewer identity binding');
   await tamperField(appliedAudit.details, 'review_payload_hash', 'tampered-review-payload-hash', 'synthetic-period', 'admin_correction review payload binding');
+
+  const tamperSubmissionAuditField = async (target, field, tamperedValue, label) => {
+    const originalValue = clone(target[field]);
+    target[field] = clone(tamperedValue);
+    try { await expectBothHistoriesTamperFailure(label); }
+    finally { target[field] = originalValue; }
+  };
+  for (const [field, value] of [
+    ['outcome', 'blocked'],
+    ['request_id', 'tampered-submission-request-id'],
+    ['user_email', 'other-worker@synthetic.invalid'],
+    ['actor_email', 'other-worker@synthetic.invalid'],
+    ['actor_role', 'badge'],
+    ['authentication_method', 'badge'],
+    ['server_timestamp', '2026-09-29T12:34:56.000Z'],
+    ['reason', 'tampered employee submission reason'],
+  ]) {
+    await tamperSubmissionAuditField(correctionRequestAudit, field, value, `correction_request audit ${field}`);
+  }
+  for (const [field, value] of [
+    ['correction_request_id', 'tampered-correction-request-id'],
+    ['payload_hash', 'tampered-submission-payload-hash'],
+  ]) {
+    await tamperSubmissionAuditField(correctionRequestAudit.details, field, value, `correction_request audit details.${field}`);
+  }
+  for (const [field, value] of [
+    ['clock_in', '2026-09-20T15:05:00.000Z'],
+    ['clock_out', '2026-09-20T23:05:00.000Z'],
+    ['lunch_minutes', 16],
+    ['notes', 'tampered submission audit request'],
+  ]) {
+    await tamperSubmissionAuditField(correctionRequestAudit.details.requested_changes, field, value, `correction_request audit requested_changes.${field}`);
+  }
+  const submissionAuditIndex = h.rows.TimeClockAudit.findIndex((row) => row.id === correctionRequestAudit.id);
+  const [removedSubmissionAudit] = h.rows.TimeClockAudit.splice(submissionAuditIndex, 1);
+  try { await expectBothHistoriesTamperFailure('missing correction_request audit'); }
+  finally { h.rows.TimeClockAudit.splice(submissionAuditIndex, 0, removedSubmissionAudit); }
+  h.rows.TimeClockAudit.push({ ...clone(correctionRequestAudit), id: 'synthetic-duplicate-correction-request-audit' });
+  try { await expectBothHistoriesTamperFailure('duplicate correction_request audit'); }
+  finally { h.rows.TimeClockAudit.pop(); }
 
   const tamperCorrectionReviewField = async (target, field, tamperedValue, label) => {
     const originalValue = clone(target[field]);
@@ -1304,6 +1364,12 @@ test('approve_modified cross-period correction uses manager-edited destination a
   finally { h.rows.TimeClockAudit.pop(); }
 
   const provenanceTamperCases = [
+    ['submission_audit_id', 'tampered-frozen-submission-audit-id'],
+    ['submission_audit_outcome', 'recovered'],
+    ['submission_audit_at', '2026-09-29T12:34:56.000Z'],
+    ['submission_actor_role', 'badge'],
+    ['submission_authentication_method', 'badge'],
+    ['submission_payload_hash', 'tampered-frozen-submission-payload-hash'],
     ['requested_clock_in', '2026-09-20T15:05:00.000Z'],
     ['requested_clock_out', '2026-09-20T23:05:00.000Z'],
     ['requested_lunch_minutes', 16],
@@ -1322,11 +1388,12 @@ test('approve_modified cross-period correction uses manager-edited destination a
     for (const [field, value] of provenanceTamperCases) {
       await tamperField(change.correction_provenance, field, value, payPeriodId, `${side} correction_provenance.${field}`);
     }
-    const requiredField = 'reviewed_by';
-    const originalValue = change.correction_provenance[requiredField];
-    delete change.correction_provenance[requiredField];
-    try { await expectHistoryTamperFailure(payPeriodId, `${side} missing v24 correction_provenance.${requiredField}`); }
-    finally { change.correction_provenance[requiredField] = originalValue; }
+    for (const [requiredField, versionLabel] of [['reviewed_by', 'v24'], ['submission_audit_id', 'v25']]) {
+      const originalValue = change.correction_provenance[requiredField];
+      delete change.correction_provenance[requiredField];
+      try { await expectHistoryTamperFailure(payPeriodId, `${side} missing ${versionLabel} correction_provenance.${requiredField}`); }
+      finally { change.correction_provenance[requiredField] = originalValue; }
+    }
   }
 
   const sourceVerifyAfterTamperChecks = await h.invoke({ action: 'pay_period_history_verify', pay_period_id: 'synthetic-period', request_id: 'modified-cross-source-verify-after-tamper-001' });
