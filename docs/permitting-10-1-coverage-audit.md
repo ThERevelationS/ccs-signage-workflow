@@ -1,3 +1,17 @@
+## Explicit village profile support — 2026-10-06
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Village schema/pipeline support is implemented and verified; task 2 still has actual identity corrections, duplicate/history review and separate office-role reconciliation outstanding. Task 4 full live acceptance remains pending.
+
+Fresh initial HEAD d0d9c79809abe92c464554364e72e49097f799f9 was clean; concurrent CCS work preserved. JurisdictionProfile now explicitly allows village alongside existing county/city/township/municipality types. Live schema readback confirms the additive enum. New village queue research creates village profiles instead of erasing type into municipality; legacy municipality matches remain compatible. Locality form includes the explicit village option. Frontend source is saved and built, not published.
+
+PDF office-authority review accepts named village coverage with unchanged canonical office, exact role/scope, staff review, version and immutable-history gates. Native HTML zoning delegation accepts village profiles only with explicit Village of wording matching their identity; a City of clause cannot qualify a village. Existing city and legacy municipality paths remain supported. No new authority roles, approvals, geographic assumptions or cost settings added.
+
+Verification: 63 affected tests pass including village HTML wording rejection and named village PDF coverage review. Both affected backend bundles pass; full npm build passes with existing browser-data warnings. Targeted locality-form ESLint and git diff --check pass. Correction report regenerated: both Cleves proposals now have schema-supported village type, but their multiple-existing-row history/relationship blockers remain. No production identity corrections or live test batch invoked.
+
+One final validation transport returned HTTP 504; fresh clean HEAD/status was read before retry, and the direct local ESLint command then passed. No timed-out mutation was blindly repeated.
+
+Next: apply the evidence-supported Ohio identity corrections with fresh versions and preserved history, while keeping the two Cleves records separate pending relationship review. Then continue separate electrical permit issuer/inspection provider coverage. Kentucky follows Ohio.
+
 ## Dispatcher locality-type and duplicate identity guard — 2026-10-06
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 now has an implemented dispatcher identity guard, but village profile-schema support, verified record corrections and office-role reconciliation remain open; task 4 full live acceptance remains pending.
