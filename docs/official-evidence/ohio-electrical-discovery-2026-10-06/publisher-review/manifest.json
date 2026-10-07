@@ -1,0 +1,36 @@
+{
+  "sources": [
+    {
+      "source_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+      "retrieved_at": "2026-10-07T11:47:15.585692+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+      "content_type": "text/html;charset=UTF-8",
+      "status": "archived",
+      "bytes": 69551,
+      "sha256": "2e64e7c6a40779f4ccf545871255782f65c6d1c1cb9d1bda018b7f6027a102cd",
+      "file": "permit-center.html"
+    },
+    {
+      "source_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "retrieved_at": "2026-10-07T11:47:17.350637+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "content_type": "text/html;charset=UTF-8",
+      "status": "archived",
+      "bytes": 67011,
+      "sha256": "046619034e266a34c8b7031060519b8a6f866db439b564eface4ab7af196c7c2",
+      "file": "signs-index.html"
+    },
+    {
+      "source_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "retrieved_at": "2026-10-07T11:47:19.552618+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "content_type": "application/pdf;charset=UTF-8",
+      "status": "fetched",
+      "bytes": 282256,
+      "sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "matches_retained_archive": true,
+      "retained_file": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/sign-scope/cincinnati-signs-handout.pdf"
+    }
+  ],
+  "staff_approved": false
+}
