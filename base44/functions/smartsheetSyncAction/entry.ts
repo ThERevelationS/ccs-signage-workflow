@@ -447,7 +447,7 @@ async function pullDataset(
             : {}),
         ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
         ...fieldValues });
-    } else if (profile?.create_base44_from_smartsheet) {
+    } else if (dataset === 'sales' && profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
         if (!hasMeaningfulSmartsheetSalesCustomer(newRecord)) {
@@ -690,10 +690,20 @@ async function pullDataset(
   // A missing row can be caused by deletion, movement, API visibility, or a partial read;
   // flag it for review instead of mutating production data automatically.
   const smartsheetRowIds = new Set(allRows.map((r: any) => String(r.id)));
-  const orphans = existingRecords.filter((r: any) => {
-    const rowId = cleanText(r?.smartsheet_row_id, 40);
-    return rowId && /^\d+$/.test(rowId) && !smartsheetRowIds.has(rowId) && !r.deleted;
-  });
+  const orderMissingPermanentRows = dataset === 'orders'
+    ? existingRecords
+        .map((record: any) => ({
+          record,
+          identity: classifyOrderPermanentRowIdentity(record, sheetId, smartsheetRowIds),
+        }))
+        .filter((item: any) => item.identity.state === 'missing_permanent_row')
+    : [];
+  const orphans = dataset === 'orders'
+    ? orderMissingPermanentRows.map((item: any) => item.record)
+    : existingRecords.filter((r: any) => {
+        const rowId = cleanText(r?.smartsheet_row_id, 40);
+        return rowId && /^\d+$/.test(rowId) && !smartsheetRowIds.has(rowId) && !r.deleted;
+      });
   const debugCounts = {
     existing_records: existingRecords.length,
     records_by_row_id: Object.keys(recordsByRowId).length,
@@ -734,6 +744,12 @@ async function pullDataset(
       // or recreate them merely to make the row counts agree.
       unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
       unlinked_row_ids: orderUnlinkedRowIds,
+      missing_permanent_row_links: orderMissingPermanentRows.length,
+      missing_permanent_row_record_ids: orderMissingPermanentRows.slice(0, 20).map((item: any) => item.record.id),
+      missing_permanent_smartsheet_row_ids: orderMissingPermanentRows.slice(0, 20).map((item: any) => item.identity.row_id),
+      permanent_row_matching_strategy: 'configured_sheet_and_permanent_row_id_only',
+      automatic_relink_attempted: false,
+      automatic_smartsheet_to_base44_create_allowed: false,
       deleted_order_link_tombstones_preserved: orderDeletedLinkTombstonesPreserved,
       deleted_order_links_shadowed_by_active: deletedOrderTombstones.shadowedDeletedRowIds.length,
     } : {}),
