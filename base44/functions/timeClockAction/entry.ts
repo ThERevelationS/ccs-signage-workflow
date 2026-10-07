@@ -696,9 +696,45 @@ async function canonicalLateClockInPayrollProvenance({
     return { applicable: true, provenance: null };
   }
 
+  let payrollCorrectionEvidence = null;
+  if (payrollClockIn !== claimedClockIn) {
+    const corrections = await auditEntity.filter({
+      action: 'admin_correction', time_entry_id: entryId,
+    }).catch(() => null);
+    if (!Array.isArray(corrections)) return { applicable: true, provenance: null };
+    const matching = corrections.filter((row: any) =>
+      ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
+      asEmail(row.user_email) === userEmail &&
+      String(row.actor_role || '') === 'admin' &&
+      ['session', 'admin_kiosk'].includes(String(row.authentication_method || '')) &&
+      Boolean(asEmail(row.actor_email)) &&
+      String(row.details?.corrected?.clock_in || '') === payrollClockIn &&
+      String(row.details?.corrected?.clock_out || '') === String(entry.clock_out || '') &&
+      Number(row.details?.corrected?.total_hours || 0) === Number(entry.total_hours || 0) &&
+      Number.isFinite(Date.parse(String(row.server_timestamp || ''))) &&
+      Date.parse(String(row.server_timestamp)) <= Date.parse(String(approvalAudit.server_timestamp))
+    );
+    if (!matching.length) return { applicable: true, provenance: null };
+    const terminal = matching.sort((a: any, b: any) =>
+      String(b.server_timestamp).localeCompare(String(a.server_timestamp)) ||
+      String(b.id).localeCompare(String(a.id))
+    )[0];
+    payrollCorrectionEvidence = {
+      audit_id: String(terminal.id || ''),
+      request_id: String(terminal.request_id || ''),
+      evidence_hash: await payloadHash({
+        id: terminal.id, request_id: terminal.request_id, time_entry_id: terminal.time_entry_id,
+        user_email: asEmail(terminal.user_email), actor_email: asEmail(terminal.actor_email),
+        actor_role: terminal.actor_role, authentication_method: terminal.authentication_method,
+        server_timestamp: terminal.server_timestamp, outcome: terminal.outcome, details: terminal.details,
+      }),
+    };
+  }
+
   return {
     applicable: true,
     provenance: {
+      ...(payrollCorrectionEvidence ? { payroll_correction_evidence: payrollCorrectionEvidence } : {}),
       source: 'employee_attested_missed_clock_in',
       request_id: requestId,
       reported_at: reportedAt,
