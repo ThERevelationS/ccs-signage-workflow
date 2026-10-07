@@ -2775,7 +2775,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         const profile = config?.[dataset] || {};
         if (!profile.mirror_enabled) continue;
         const wantPull = action === 'pull_dataset' || (action === 'run_sync' && profile.pull_enabled);
-        const wantPush = action === 'push_dataset' || (action === 'run_sync' && profile.push_enabled);
+        const wantPush = action === 'push_dataset' || (action === 'run_sync' && dataset !== 'orders' && profile.push_enabled);
         if (wantPull) steps.push({ dataset, direction: 'pull', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ← Smartsheet` });
         if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} → Smartsheet` });
       }
@@ -2801,7 +2801,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         }
 
         const wantPull = action === 'pull_dataset' || (action === 'run_sync' && profile.pull_enabled);
-        const wantPush = action === 'push_dataset' || (action === 'run_sync' && profile.push_enabled);
+        const wantPush = action === 'push_dataset' || (action === 'run_sync' && dataset !== 'orders' && profile.push_enabled);
 
         if (!wantPull && !wantPush) {
           results.push({ dataset, skipped: true, reason: 'Neither push nor pull enabled for this dataset.' });
