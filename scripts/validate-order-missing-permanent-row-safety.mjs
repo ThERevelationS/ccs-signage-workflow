@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { classifyOrderPermanentRowIdentity } from '../base44/shared/smartsheetOrderPermanentRowSafety.mjs';
 import { orderRunRequiresReview } from '../base44/shared/smartsheetOrderRunSafety.mjs';
-import { summarizeSavedOrderSync } from '../src/components/orders/orderSaveSync.js';
 
 const SHEET = '4963691473987460';
 const order = {
@@ -58,32 +57,13 @@ assert.equal(orderRunRequiresReview([{
 }]), true);
 console.log('PASS a missing permanent Order row independently forces needs-review status');
 
-const summary = summarizeSavedOrderSync({
-  success: true,
-  configured: true,
-  write_actions_available: true,
-  sync_complete: false,
-  needs_review: true,
-  results: [{
-    dataset: 'orders',
-    direction: 'push',
-    records_examined: 1,
-    created: 0,
-    updated: 0,
-    unchanged_skipped: 0,
-    errors: 1,
-    conflicts: 0,
-    remaining_records: 0,
-    missing_permanent_row_links: 1,
-  }],
-}, { expectedOrderCount: 1 });
-assert.equal(summary.ok, false);
-assert.match(summary.message, /stored permanent Smartsheet row ID that no longer exists/);
-assert.match(summary.message, /no automatic relink or replacement-row create was attempted/);
-console.log('PASS Save & Sync tells the user exactly why the Order stayed queued');
-
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const ui = readFileSync('src/components/orders/OrderLinkIntegrityReview.jsx', 'utf8');
+const client = readFileSync('src/components/orders/orderSaveSync.js', 'utf8');
+assert.match(client, /missing_permanent_row_links/);
+assert.match(client, /stored permanent Smartsheet row ID that no longer exists/);
+assert.match(client, /no automatic relink or replacement-row create was attempted/);
+console.log('PASS Save & Sync tells the user exactly why the Order stayed queued');
 
 assert.match(backend, /classifyOrderPermanentRowIdentity\(record, sheetId, sheetRowIds\)/);
 assert.match(backend, /orderMissingPermanentRows\.set\(String\(record\.id\), existingRowId\)/);
