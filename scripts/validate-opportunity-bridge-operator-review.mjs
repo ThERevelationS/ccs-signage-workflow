@@ -17,6 +17,7 @@ assert(review.includes('source_snapshot'), 'Review UI must expose the source sna
 assert(review.includes('proposed_opportunity'), 'Review UI must expose the proposed Opportunity.');
 assert(review.includes('receipt_key'), 'Review UI must expose the immutable receipt identity.');
 assert(review.includes('Production Apply Readiness'), 'Review UI must expose the read-only production readiness gate.');
+assert(review.includes('Reviewing or refreshing this screen is not production authorization.'), 'Review UI must make the explicit authorization boundary visible.');
 assert(review.includes('readiness.checks'), 'Review UI must display each readiness check.');
 assert(review.includes('Durable receipt foundation'), 'Review UI must expose durable receipt foundation state.');
 assert(review.includes('Secondary confirmation contract'), 'Review UI must expose secondary-confirmation configuration.');
