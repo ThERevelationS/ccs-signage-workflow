@@ -1,3 +1,17 @@
+## Dispatcher locality-type and duplicate identity guard — 2026-10-06
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 now has an implemented dispatcher identity guard, but village profile-schema support, verified record corrections and office-role reconciliation remain open; task 4 full live acceptance remains pending.
+
+Fresh clean HEAD at start was 61aadcdc948b6d4de2f2b76305dd0ff9067a2851; newer concurrent CCS work preserved. Modified only permitting dispatcher/shared identity logic and its tests.
+
+profileMatchesQueueRow now requires compatible explicit types before county/name matching. City/township/county do not accept generic, unknown or mismatched profile types. Village queues retain legacy village and current schema municipality compatibility. resolveResearchProfile prevents arbitrary selection among duplicate compatible profiles and returns a conflict for nearby same-name/type discrepancies or missing county evidence; explicitly different counties retain independent research eligibility. Placeholder county text cannot disguise a conflict.
+
+Backlog classification checks all existing profiles for identity conflicts, including profiles without research evidence, while retaining evidence-only reconciliation. Conflicting rows are excluded from automatic dispatch without increasing attempts. The profile creation path also checks the resolver and throws before creating a duplicate on conflicts. Active source-discovery reconciliation uses the same resolver, preventing false sources_found transitions. Existing automatic credit limits, Ohio-first order, queue dedupe, RLS and authority review are preserved. Conflict counts are included in persisted dispatcher last_result.
+
+Validation: 22 tests pass, including eight new identity guard cases and the compiled production ensureProfileForQueueRow path with zero creates on mismatched/duplicate identities. Affected backend esbuild bundle and git diff --check pass. No live dispatch invocation, test production records, identity corrections or frontend publishing. Resource-file synchronization is handled by Base44.
+
+Next: add village identity support consistently across profile schema and downstream type consumers, then apply evidence-supported Ohio corrections with version guards and duplicate/history protection. Continue separate electrical permitting/inspection office coverage afterward; Kentucky follows Ohio.
+
 ## Ohio profile type evidence and schema blockers — 2026-10-06
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Four proposed profile corrections now have fresh live identity/version checks and archived official-site type evidence. Task 2 still requires safe correction implementation and office-role reconciliation; task 4 full live acceptance remains pending.
