@@ -136,12 +136,17 @@
       "The Village zoning page identifies Hamilton County zoning assistance and county building-permit issuance. Office identity, current responsibility and job-address coverage still require approval.",
       "The reviewed Village forms page links a right-of-way application. This form does not replace sign zoning or building approval. A separate sign application/online submission route was not located on that page.",
       "The county zoning page and 2024 zoning application originals returned HTTP 403. They remain retention gaps.",
-      "Electrical permit issuance and electrical inspection remain independently unresolved. Sign-lighting standards do not establish either office."
+      "Electrical permit issuance and electrical inspection remain independently unresolved. Sign-lighting standards do not establish either office.",
+      "The county digital-permitting reference describes ezTrak with partner-agency paper exceptions. Its original HTML download is blocked (HTTP 403); North Bend sign-specific portal applicability remains unconfirmed. This reference does not resolve electrical permit issuance or inspection."
     ],
     "references": [
       {
         "label": "Official Village forms page",
         "url": "https://www.northbendohio.org/forms"
+      },
+      {
+        "label": "County digital permitting reference — original retention gap; sign route unconfirmed",
+        "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/learn_about.php"
       }
     ],
     "extraction_note": "Embedded text was extracted across 181 code pages and two right-of-way pages. Page findings remain pending review; extraction does not verify tables, current amendments or complete searchable content."

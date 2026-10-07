@@ -1,4 +1,4 @@
-import{readFileSync,writeFileSync,mkdirSync,copyFileSync}from'node:fs';
+import{readFileSync,writeFileSync,mkdirSync,copyFileSync,existsSync}from'node:fs';
 import{createHash}from'node:crypto';
 const root='docs/official-evidence/ohio-northbend-whitewater-2026-10-07/';
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -34,6 +34,11 @@ notes:['The Village zoning page identifies Hamilton County zoning assistance and
 'Electrical permit issuance and electrical inspection remain independently unresolved. Sign-lighting standards do not establish either office.'],
 references:[{label:'Official Village forms page',url:'https://www.northbendohio.org/forms'}],
 extraction_note:'Embedded text was extracted across 181 code pages and two right-of-way pages. Page findings remain pending review; extraction does not verify tables, current amendments or complete searchable content.'};
+if(existsSync(root+'county-routing/routing-review.json')){
+ const routing=JSON.parse(readFileSync(root+'county-routing/routing-review.json'));
+ row.references.push({label:'County digital permitting reference — original retention gap; sign route unconfirmed',url:routing.observations[0].url});
+ row.notes.push('The county digital-permitting reference describes ezTrak with partner-agency paper exceptions. Its original HTML download is blocked (HTTP 403); North Bend sign-specific portal applicability remains unconfirmed. This reference does not resolve electrical permit issuance or inspection.');
+}
 const path='src/components/permitting/ohioMunicipalResearch.json',prior=JSON.parse(readFileSync(path));
 writeFileSync(path,JSON.stringify([...prior.filter(p=>p.id!==row.id),row],null,2)+'\n');
 writeFileSync(root+'sign-content-review-packet.json',JSON.stringify({profile:row,findings,staff_approved:false,currentness_approved:false,electrical_roles_approved:false,live_records_changed:0},null,2)+'\n');
