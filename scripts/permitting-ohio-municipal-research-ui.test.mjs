@@ -60,3 +60,19 @@ test('electrical provider guide retains identity while XLS and municipal roles s
  assert.equal(render(row,false),'');
  }
 });
+
+test('Harrison and Addyston originals, online portal and duplicate bytes remain explicit',()=>{
+ const manifest=JSON.parse(readFileSync('docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json'));
+ const rows=dossiers.filter(d=>['City of Harrison','Village of Addyston'].includes(d.name));
+ assert.equal(rows.length,2);assert.equal(rows.flatMap(d=>d.resources).length,6);
+ for(const row of rows)for(const resource of row.resources){
+ const source=manifest.sources.find(s=>s.file===resource.file),bytes=readFileSync('public'+resource.archive);
+ assert.deepEqual(bytes,readFileSync(source.retained_path));assert.equal(bytes.length,resource.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),resource.sha256);
+ }
+ const h=rows.find(d=>d.name==='City of Harrison'),a=rows.find(d=>d.name==='Village of Addyston');
+ assert.equal(h.resources[0].sha256,h.resources[1].sha256);assert.equal(new Set(rows.flatMap(d=>d.resources).map(r=>r.sha256)).size,5);
+ const html=render(h);assert.match(html,/byte-identical/);assert.ok(html.includes('https://us.cloudpermit.com/login'));assert.ok(html.includes('https://www.harrisonohio.gov/157/Inspections'));
+ assert.match(html,/permit issuance and canonical provider identity remain separately unapproved/);
+ assert.equal(render({...h,id:'6ac1ebd2b2a2ba1a032a8985',name:'Harrison County',type:'county'}),'');
+ assert.match(render(a),/recorded collection gap/);assert.match(render(a),/does not establish electrical responsibility/);
+});
