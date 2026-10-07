@@ -1,0 +1,10 @@
+import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
+import {reconcileOfficialInventory,reconcileRecordedCoverage} from '../src/components/permitting/permittingCoverageReader.mjs';
+const root='docs/official-evidence/task2-inventory-closeout-2026-10-07/';
+const read=prefix=>readdirSync(root).filter(f=>f.startsWith(prefix+'-')&&f.endsWith('.json')).sort((a,b)=>parseInt(a.split('-')[1])-parseInt(b.split('-')[1])).flatMap(f=>JSON.parse(readFileSync(root+f)));
+const queue=read('queue'),profiles=read('profiles');
+for(const rows of [queue,profiles])if(new Set(rows.map(r=>r.id)).size!==rows.length)throw Error('Duplicate snapshot identity');
+const reference=JSON.parse(readFileSync('src/components/permitting/officialGeographicInventory.json'));
+const report={observed_at:"2026-10-07T19:00:57.654Z",read_only:true,not_atomic_snapshot:true,production_records_changed:0,queue_rows:queue.length,profile_rows:profiles.length,recorded:reconcileRecordedCoverage(queue,profiles),official:reconcileOfficialInventory(queue,profiles,reference)};
+writeFileSync(root+'reconciliation.json',JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify({queue_rows:queue.length,profile_rows:profiles.length,queue_missing:report.official.queue.missing.length,profiles_missing:report.official.profiles.missing.length,candidates_by_state:report.official.candidate_counts}));

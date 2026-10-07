@@ -13,8 +13,8 @@ try{
  await act(async()=>{tree=Renderer.create(React.createElement(Panel,{readCoverage}));});
  assert.equal(calls,0);const click=()=>tree.root.findByType('button').props.onClick();
  await act(async()=>{click();click();});assert.equal(calls,1);
- await act(async()=>resolveRead({items:[{state:'profile_missing'}],invalid_profile_ids:[],unmatched_profile_ids:[],checked_at:'fixture'}));
- assert.match(JSON.stringify(tree.toJSON()),/Recorded identity matches do not establish/);
+ await act(async()=>resolveRead({items:[{state:'profile_missing'}],invalid_profile_ids:[],unmatched_profile_ids:[],checked_at:'fixture',official:{source_vintage:'fixture',source_rows:3647,candidate_counts:{OH:2318,KY:530},status_review_count:25,statistical_reference_count:774,queue:{missing:[{state:'OH',type:'township',name:'Miami',county_name:'Hamilton'}]},profiles:{missing:[]},notice:'Permission-scoped candidates only.'}}));
+ assert.match(JSON.stringify(tree.toJSON()),/Recorded identity matches do not establish/);assert.match(JSON.stringify(tree.toJSON()),/Official geographic inventory/);assert.match(JSON.stringify(tree.toJSON()),/Miami/);assert.match(JSON.stringify(tree.toJSON()),/Hamilton County/);
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:async()=>{throw Error('Fixture failure');}})));
  await act(async()=>click());assert.match(JSON.stringify(tree.toJSON()),/Fixture failure/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
  await act(async()=>tree.unmount());console.log('Coverage panel passed: manual only, duplicate-click guard, explicit uncertainty and failed-refresh clearing. No live API calls.');
