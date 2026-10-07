@@ -12,7 +12,7 @@ import {
 const clean = (value) => String(value ?? '').trim();
 
 export const OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR = Object.freeze({
-  VERSION:'0T-v1',
+  VERSION:'0U-v1',
   PILOT_BATCH_SIZE:1,
   REQUIRE_EXACT_FIRST_BATCH:true,
   REQUIRE_CLEAN_RECEIPT_LEDGER:true,
@@ -40,6 +40,9 @@ export async function evaluateOpportunityBridgePilotAuthorization({
   confirmationBinding = null,
   confirmationPhrase = '',
   receiptLedgerSummary = null,
+  pilotReviewFingerprint = '',
+  requestedReviewFingerprint = '',
+  approvedPilotReviewFingerprint = '',
   applyEnabled = false,
 } = {}) {
   const firstBatch = selectOpportunityBridgeFirstBatch(plan?.rows || []);
@@ -48,6 +51,9 @@ export async function evaluateOpportunityBridgePilotAuthorization({
   const ageMs = planAgeMs(planGeneratedAt, now);
   const receiptSummary = receiptLedgerSummary || {};
   const actorIsAdmin = clean(actor?.role).toLowerCase() === 'admin' && clean(actor?.id) && clean(actor?.email);
+  const freshReviewFingerprint = clean(pilotReviewFingerprint);
+  const requestedReview = clean(requestedReviewFingerprint);
+  const approvedReview = clean(approvedPilotReviewFingerprint);
   const exactCandidate = Boolean(
     expected &&
     requested &&
@@ -104,6 +110,20 @@ export async function evaluateOpportunityBridgePilotAuthorization({
         : `${Number(receiptSummary?.anomaly_count || 0)} durable receipt identity anomalies; ${Number(receiptSummary?.unresolved_count || 0)} unresolved receipts.`
     ),
     check(
+      'requested_review_matches_fresh_candidate',
+      Boolean(freshReviewFingerprint) && requestedReview === freshReviewFingerprint,
+      freshReviewFingerprint
+        ? `Requested review fingerprint ${requestedReview || 'none'}; fresh review fingerprint ${freshReviewFingerprint}.`
+        : 'Fresh exact pilot review fingerprint is unavailable.'
+    ),
+    check(
+      'explicit_user_authorization_source_bound',
+      Boolean(freshReviewFingerprint) && approvedReview === freshReviewFingerprint,
+      approvedReview
+        ? `Source-authorized review fingerprint ${approvedReview}.`
+        : 'No exact pilot review fingerprint is explicitly authorized in source.'
+    ),
+    check(
       'secondary_confirmation_exact',
       confirmation?.ok === true,
       confirmation?.ok === true
@@ -135,6 +155,9 @@ export async function evaluateOpportunityBridgePilotAuthorization({
       batch_fingerprint:clean(confirmation?.batch_fingerprint),
     },
     plan_age_ms:Number.isFinite(ageMs) ? ageMs : null,
+    pilot_review_fingerprint:freshReviewFingerprint,
+    requested_review_fingerprint:requestedReview,
+    approved_pilot_review_fingerprint:approvedReview,
     apply_enabled:applyEnabled === true,
   };
 }
@@ -190,6 +213,9 @@ export async function executeGuardedOpportunityBridgePilot({
   confirmationBinding = null,
   confirmationPhrase = '',
   receiptLedgerSummary = null,
+  pilotReviewFingerprint = '',
+  requestedReviewFingerprint = '',
+  approvedPilotReviewFingerprint = '',
   applyEnabled = false,
   applyAdapter,
   receiptAdapter,
@@ -204,6 +230,9 @@ export async function executeGuardedOpportunityBridgePilot({
     confirmationBinding,
     confirmationPhrase,
     receiptLedgerSummary,
+    pilotReviewFingerprint,
+    requestedReviewFingerprint,
+    approvedPilotReviewFingerprint,
     applyEnabled,
   });
 
