@@ -56,6 +56,7 @@ import {
   reconcileSalesLiveEditPinWithRemote,
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
+import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -68,6 +69,7 @@ const SALES_STATUSES = [
   { value: "lost", label: "Lost", color: "bg-red-100" },
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
+const SALES_STAGE_DISPLAY_ORDER = ["needs_stage", ...SALES_STATUSES.map((status) => status.value)];
 
 const SALES_ACTIVITY_FIELDS = new Set([
   "sales_status",
@@ -1072,12 +1074,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const requestSalesStatusChange = (workOrder, nextStatus) => {
-    if (!isRegistered || !workOrder?.id || !nextStatus || workOrder.sales_status === nextStatus) return;
+    const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
+    if (!isRegistered || !workOrder?.id || !nextStatus || nextStatus === "needs_stage") return;
+    if (workOrder.sales_status === nextStatus && !unverifiedStage) return;
     const currentStatus = workOrder.sales_status || "lead";
     const terminalChange = ["won", "lost"].includes(nextStatus);
     const reopening = ["won", "lost"].includes(currentStatus) && !terminalChange;
     if (terminalChange || reopening) {
       setStatusTransition({ workOrder, nextStatus });
+      return;
+    }
+    if (unverifiedStage && currentStatus === nextStatus) {
+      const classificationStamp = new Date().toISOString();
+      updateWorkOrderFields(workOrder.id, {
+        sales_status: nextStatus,
+        sales_stage_changed_at: classificationStamp,
+        sales_last_activity_at: classificationStamp,
+      });
       return;
     }
     updateWorkOrderFields(workOrder.id, { sales_status: nextStatus });
@@ -2143,8 +2156,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         quoteOwnerMix.set(quoteOwnerKey, quoteRow);
       }
 
-      const stageKey = wo.sales_status || "lead";
-      const stageLabel = SALES_STATUSES.find((status) => status.value === stageKey)?.label || stageKey;
+      const stageKey = salesStageDisplayValue(wo);
+      const stageLabel = stageKey === "needs_stage"
+        ? "Needs Stage"
+        : SALES_STATUSES.find((status) => status.value === stageKey)?.label || stageKey;
       const stageRow = stageMix.get(stageKey) || { stage: stageKey, label: stageLabel, count: 0, value: 0, trackedCount: 0, ageDaysTotal: 0, agedCount: 0 };
       stageRow.count += 1;
       stageRow.value += value;
@@ -2166,7 +2181,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     summary.stageBreakdown = [...stageMix.values()].map((row) => ({
       ...row,
       averageDays: row.trackedCount > 0 ? Math.round(row.ageDaysTotal / row.trackedCount) : null,
-    })).sort((a, b) => SALES_STATUSES.findIndex((status) => status.value === a.stage) - SALES_STATUSES.findIndex((status) => status.value === b.stage));
+    })).sort((a, b) => SALES_STAGE_DISPLAY_ORDER.indexOf(a.stage) - SALES_STAGE_DISPLAY_ORDER.indexOf(b.stage));
 
     const allTrustedOutcomes = workOrders.filter(isTrustedSalesOutcome);
     // Outcome Period is a control of the dedicated Outcomes workspace only.
@@ -2245,7 +2260,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (!matchesAttentionFilter(viewWo, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities)) return false;
 
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
-        if (viewWo.sales_status !== filterStatus) return false;
+        if (salesStageDisplayValue(viewWo) !== filterStatus) return false;
       }
       
       if (filterStatus.startsWith("custom_")) {
@@ -2363,8 +2378,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return result.sort((a, b) => {
       const viewA = viewRowFor(a);
       const viewB = viewRowFor(b);
-      let aVal = viewA[key] ?? '';
-      let bVal = viewB[key] ?? '';
+      let aVal = key === "sales_status" ? salesStageDisplayValue(viewA) : viewA[key] ?? '';
+      let bVal = key === "sales_status" ? salesStageDisplayValue(viewB) : viewB[key] ?? '';
 
       if (isPersonField) {
         const role = personRoleByField[key];
