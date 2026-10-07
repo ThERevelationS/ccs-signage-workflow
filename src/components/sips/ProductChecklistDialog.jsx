@@ -1816,12 +1816,12 @@ export default function ProductChecklistDialog({
                                 ))}
                                 {/* Inline add subtask */}
                                 {newItemInput.show && newItemInput.parentId === task.id && newItemInput.type === 'subtask' && (
-                                  <div className="ml-1 sm:ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded">
+                                  <div className="ml-1 sm:ml-4 mt-0.5 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-yellow-50 p-0.5 rounded">
                                     <Input
                                       value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New subtask..."
-                                      className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                      className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                       aria-label={`New subtask under ${task.text || "task"}`}
                                       autoFocus
                                       onKeyDown={(e) => {
@@ -2086,12 +2086,12 @@ export default function ProductChecklistDialog({
                                           ))}
                                           {/* Inline add subtask for detail task */}
                                           {newItemInput.show && newItemInput.parentId === task.id && newItemInput.type === 'subtask' && (
-                                            <div className="ml-1 sm:ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded">
+                                            <div className="ml-1 sm:ml-3 mt-0.5 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-yellow-50 p-0.5 rounded">
                                               <Input
                                                 value={newItemText}
                                                 onChange={(e) => setNewItemText(e.target.value)}
                                                 placeholder="New subtask..."
-                                                className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                                className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                                 aria-label={`New subtask under ${task.text || "task"}`}
                                                 autoFocus
                                                 onKeyDown={(e) => {
