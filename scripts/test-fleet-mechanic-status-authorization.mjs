@@ -23,6 +23,16 @@ test("mutation status revalidates the live Start/Save grant before receipt reads
   assert.match(preReceipt, /if \(action === 'mutation_status'\)[\s\S]*requireCurrentMechanicGrant\(Access,String\(grant\.id \|\| ''\),statusMutationAction,String\(current\.equipment_id \|\| ''\)\)/);
 });
 
+test("mutation status denies removed Start or Save permission before reading receipts", () => {
+  const grantValidation = source.indexOf("const grant = await validateGrant(Access,body?.token);",handlerStart);
+  const receiptRead = source.indexOf("const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;",grantValidation);
+  assert.ok(grantValidation >= 0 && receiptRead > grantValidation);
+  const beforeReceipt = source.slice(grantValidation,receiptRead);
+  assert.match(beforeReceipt,/if \(action === 'mutation_status'\)[\s\S]*!allowed\.has\(statusMutationAction\)[\s\S]*status:403/);
+  assert.match(beforeReceipt,/else if \(!allowed\.has\(action\)\)/);
+  assert.ok(beforeReceipt.indexOf("!allowed.has(statusMutationAction)") < beforeReceipt.indexOf("const WorkOrder ="),"revoked action must fail before Fleet record access");
+});
+
 test("every mutation-status work-order payload is protected by a final live grant recheck", () => {
   const block = between("if (action === 'mutation_status') {\n      const requestId", "\n\n    let mechanicMutation");
   assert.equal(block.includes("work_order:sanitizeWorkOrder("), false, "mutation_status must not directly emit work-order state");
