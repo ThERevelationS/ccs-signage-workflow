@@ -264,3 +264,11 @@ assert.equal(p.locality.id,'6ac19f0f0d8345e06e51a703');assert.equal(p.locality.s
 assert.match(p.application_candidate,/except accessory applications including signs/);assert.match(p.electrical_comparison.historical,/2011/);assert.match(p.electrical_comparison.review,/differs from 2025/);assert.match(p.open_text_anomaly,/do not infer/);
 assert.equal(p.retained_originals,0);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
 });
+
+test('Springdale sign routing followup preserves code conflict and separates contacts from authority',()=>{
+const r='docs/official-evidence/ohio-springdale-2026-10-07/sign-routing-followup/',p=JSON.parse(readFileSync(r+'review.json')),m=JSON.parse(readFileSync(r+'manifest.json'));
+assert.equal(p.locality.id,'6ac19f0f0d8345e06e51a703');assert.equal(m.sources.length,4);assert.equal(p.retained_originals,0);
+for(const s of m.sources){assert.equal(s.status,'original_retention_gap');assert.equal(s.sha256,undefined);assert.equal(s.retained_path,undefined);}
+assert.match(p.sources[1].observation,/supersedes Chapter 153/);assert.match(p.sources[3].observation,/unresolved version conflict/);assert.match(p.sources[2].observation,/accessory application exceptions/);
+for(const k of ['currentness_approved','sign_application_route_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(p[k],false);assert.equal(p.live_records_changed,0);
+});
