@@ -1,3 +1,13 @@
+## Phase 10 — Milestone 1 — Explicit Cincinnati zoning scope and request form (2026-10-07)
+
+Fresh repository inspection preserved newer concurrent CCS changes. Retrieved the current official City Planning zoning-administration HTML and the linked Zoning Verification & Rebuild Request PDF. Retained originals, hashes, byte counts and redirects. Scope packet ties the municipal land-coverage excerpt and base/overlay context to retained static HTML blocks and verifies the exact outgoing form link. The form is 89,204 bytes, SHA-256 9974564b6e8dc047153278f4456d5c0a911849e429eeffa346c4e0b6f49bfbab. It is available as a retained download in the exact-Cincinnati admin-only research panel; its printed fee has not been verified as current.
+
+Geographic zoning evidence now explicitly names land within Cincinnati. This supports a candidate municipal scope; it does not resolve any job address, approve electrical provider coverage, or approve current sign exemptions. Added property-boundary/base-district/overlay guidance with these limits. No live database review, office-role approval or frontend publication.
+
+Current compiled Chapters 1427/895 remain an explicit gap. The current Municode page and public code endpoint returned HTTP 403 on direct retrieval; the search reader returned no chapter text and could not retrieve the legacy chapter link. Prior passed ordinance fragments and proposed legislation are not substitutes for a complete current compilation. Do not repeatedly retry identical blocked routes or derive exemptions from third-party summaries. Existing Clerk notice and legislative archive remain preserved.
+
+Validation: six UI/archive integrity tests passed, retained evidence preparation passed, targeted ESLint and production build passed. Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Next: advance the independently reviewable electrical-office identity/responsibility evidence. Keep compiled chapter acquisition parked as an explicit Cincinnati gap while continuing Ohio coverage work.
+
 ## Phase 10 — Milestone 1 — Cincinnati currentness review packet (2026-10-07)
 
 Checked fresh live profile and source versions. Source 6ac39c0e6657049fb11cd757 remains administrative_guidance, unknown/needs_verification with no authority review. Retrieved and retained the City's Electronic Document Submission HTML, plus fresh official outdoor-advertising application, fillable building application, and site-plan PDF originals. All three fresh PDFs match the corresponding existing app archive hashes and sizes. No duplicate storage uploads or source records were created.
