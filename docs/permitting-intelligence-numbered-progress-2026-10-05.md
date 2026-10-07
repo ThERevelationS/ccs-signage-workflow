@@ -1,3 +1,13 @@
+## Phase 10 — Milestone 1 of 3 — Hamilton Miami and Crosby source collection (2026-10-07)
+
+Fresh clean HEAD 44a29024a31ed637b575a3867a2b95c889985ee2 preserved. Live OH canonical query returned two Miami Township records (69b1ff3561c6ae0615974020 and 69a5ee8c2648963bf4fde2d6), both pointing to Montgomery County's miamitownship.com site. Hamilton County's official site is miamitownship.org. No Hamilton research attached to these same-name records and no merges or identity approvals performed. Crosby had no matching canonical profile.
+
+Retained six originals with retrieval URLs/times, bytes and hashes: Hamilton Miami zoning HTML, Crosby zoning/documents HTML, zoning resolution, zoning certificate application and property-maintenance code. Public copies preserve the three PDF originals. Extraction covers 174 physical pages: 157 contain embedded text; all 17 maintenance-code pages lack embedded text and require OCR. No full searchable-content claim. Crosby resolution reports revisions through 2021 despite 2026 upload path.
+
+Recorded Crosby link-label mismatches (Building Permits opens zoning certificate, maintenance-code link accompanied by BZA Application text) and malformed zoning-office email with two @ characters. Hamilton Miami county routing remains a candidate for unincorporated areas, not approved job coverage or electrical responsibility. No standalone Miami sign form located on reviewed page.
+
+Validation: 22 archive/UI/page/identity/role tests and diff check passed. No frontend or production entity changes, publication or authority approval. Task 2 remains partial. Next: review Crosby Article 31 sign provisions and application requirements; render/OCR maintenance code if relevant sign/electrical content remains inaccessible. Canonical identity, electrical offices and app-storage/catalog registration gaps remain explicit. Ohio before Kentucky.
+
 ## Phase 10 — Milestone 1 of 3 — Ohio electrical application coexistence review (2026-10-07)
 
 Fresh clean HEAD ed846c72bdf8d0665a710874da54ebc1ca309b2a preserved. Reviewed provider plan-review requirements, online inspection application and contractor notice. All three new original HTML retrievals returned HTTP 406; manifest records gaps without claiming archived originals. Web-derived observations remain explicitly labeled.
