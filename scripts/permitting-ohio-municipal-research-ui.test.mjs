@@ -272,3 +272,13 @@ for(const s of m.sources){assert.equal(s.status,'original_retention_gap');assert
 assert.match(p.sources[1].observation,/supersedes Chapter 153/);assert.match(p.sources[3].observation,/unresolved version conflict/);assert.match(p.sources[2].observation,/accessory application exceptions/);
 for(const k of ['currentness_approved','sign_application_route_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(p[k],false);assert.equal(p.live_records_changed,0);
 });
+
+test('Sharonville originals preserve all pages and separate city electrical issuance from NIC inspection',()=>{
+const root='docs/official-evidence/ohio-sharonville-2026-10-07/',m=JSON.parse(readFileSync(root+'manifest.json')),p=JSON.parse(readFileSync(root+'review-packet.json')),e=JSON.parse(readFileSync(root+'pdf-text-extraction.json'));
+assert.equal(m.sources.length,6);for(const s of m.sources){const b=readFileSync(s.retained_path);assert.equal(s.status,'archived');assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);if(s.file.endsWith('.pdf'))assert.deepEqual(b,readFileSync('public/permitting-evidence/sharonville/'+s.file));}
+assert.equal(e.documents.length,5);assert.equal(e.documents.reduce((n,d)=>n+d.total_pages,0),279);assert.equal(e.documents.reduce((n,d)=>n+d.pages_with_embedded_text,0),278);
+for(const d of e.documents){assert.equal(d.pages.length,d.total_pages);assert.equal(d.searchable_content_complete,false);for(const page of d.pages){assert.equal(createHash('sha256').update(page.text).digest('hex'),page.text_sha256);assert.equal(page.source_sha256,d.source_sha256);}}
+assert.equal(p.locality.id,'6ac19f0e23bd8a65822f6d51');assert.equal(p.findings.length,7);for(const f of p.findings){const d=e.documents.find(x=>x.file===f.file),page=d.pages[f.physical_page-1];assert.ok(page.text.includes(f.matched_needle));assert.equal(f.source_sha256,d.source_sha256);assert.equal(f.text_sha256,page.text_sha256);assert.equal(f.applicability_approved,false);}
+assert.match(p.electrical.permit_intake_candidate,/issues the approved permit/);assert.match(p.electrical.inspection_candidate,/NIC directly/);assert.match(p.electrical.scope_review,/Duke Energy.*utility/);assert.match(p.routing.county_review,/not.*exhaustive/);
+assert.equal(p.currentness_approved,false);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
+});

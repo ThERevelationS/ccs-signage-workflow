@@ -1,3 +1,13 @@
+### Phase 10 → Milestone 2 of 3 — independent Ohio expansion: Sharonville originals (2026-10-07)
+
+Milestone 1 Task 2 complete; Task 4 live browser acceptance remains open. Continued independent Ohio collection without repeating blank preview or blocked earlier sources. Fresh canonical Sharonville OH city query identified 6ac19f0e23bd8a65822f6d51. Live parent_county Butler is not an exhaustive boundary/service-area determination.
+
+Retained six hash/byte-verified originals: department HTML, sign application (1 PDF page), building/electrical application (3), fee schedule (4), zoning code (243), and 2026 residential guide (28). Five unchanged public repository PDF copies retained. Extracted all 279 physical pages; 278 contain embedded text. Zoning-code physical page 97 needs visual/OCR assessment. No full searchable-content or current-law claim.
+
+Seven source/page/text-hash-bound findings cover scaled color sign drawing, freestanding site plan, sealed foundation, wall attachment, permanent/face-change zoning approval, fee categories and separate electrical responsibilities. Guide physical page 7 describes city Community Development intake/payment/issuance and National Inspection Corporation electrical review/approvals/direct inspections; technical phone 888-433-4642, city administrative phone 513-563-0033. Residential guide mentions residents/businesses but commercial-sign scope/current contract/scheduling remain review gaps. Duke Energy utility contact not promoted to permit/inspection office. 2022 code and undated fee schedule currentness remain pending. PDF download routes are not online submission forms.
+
+Validation: 32 original/page/identity/research tests and git diff --check passed. No runtime UI changes, production records, authority approvals or publication. App-storage/catalog registration remains pending and has not been bypassed. Next: review Sharonville sign tables/illumination/temporary provisions, reconcile current amendments and fees, and inspect page 97 before further Ohio coverage. Kentucky collection follows Ohio.
+
 ### Phase 10 → Milestone 1 of 3 → Task 4 partial — browser attempt and SDK adapter acceptance (2026-10-07)
 
 Preserved fresh concurrent HEADs. Opened established sandbox preview AdminSettings URL in browser: accessibility tree and screenshot both blank; one reload remained blank. No sign-in screen or site-served bot challenge observed, so no bot-block diagnosis or login loop. Live authenticated app acceptance is not passed; Task 4 and Milestone 1 remain open. Task 2 implementation/reconciliation closeout preserved.
