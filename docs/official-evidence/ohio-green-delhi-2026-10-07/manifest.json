@@ -1,0 +1,57 @@
+{
+  "sources": [
+    {
+      "file": "green-zoning.html",
+      "official_url": "https://www.greentwp.org/1201/Development-Zoning",
+      "observed_at": "2026-10-07T17:16:49.169052+00:00",
+      "final_url": "https://www.greentwp.org/1201/Development-Zoning",
+      "http_status": 200,
+      "status": "archived",
+      "bytes": 71859,
+      "sha256": "cbbcc1e5d288950291ef70a411556be8f486e5f079e8dcc36ce204cae5a8e7b7",
+      "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/green-zoning.html"
+    },
+    {
+      "file": "green-online-applications.html",
+      "official_url": "https://greentownship_permit.portal.iworq.net/portalhome/greentownship_permit",
+      "observed_at": "2026-10-07T17:16:50.002577+00:00",
+      "status": "retention_gap",
+      "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'greentownship_permit.portal.iworq.net'. (_ssl.c:1016)>"
+    },
+    {
+      "file": "green-street-directory.html",
+      "official_url": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId=",
+      "observed_at": "2026-10-07T17:16:50.344090+00:00",
+      "final_url": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId=",
+      "http_status": 200,
+      "status": "archived",
+      "bytes": 58097,
+      "sha256": "bce825e0dc57d6a25fa77605895f122c05e4be313af899b38bb626c29b5512f7",
+      "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/green-street-directory.html"
+    },
+    {
+      "file": "delhi-zoning.html",
+      "official_url": "https://www.delhi.oh.us/177/Planning-Zoning",
+      "observed_at": "2026-10-07T17:16:50.846600+00:00",
+      "final_url": "https://www.delhi.oh.us/177/Planning-Zoning",
+      "http_status": 200,
+      "status": "archived",
+      "bytes": 102048,
+      "sha256": "8a30230c2520db15e6a60ffa8a1a5a80679b647f6e94262dafc9715beca8b0eb",
+      "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-zoning.html"
+    },
+    {
+      "file": "delhi-form-center.html",
+      "official_url": "https://www.delhi.oh.us/FormCenter",
+      "observed_at": "2026-10-07T17:16:51.649535+00:00",
+      "final_url": "https://www.delhi.oh.us/FormCenter",
+      "http_status": 200,
+      "status": "archived",
+      "bytes": 98805,
+      "sha256": "d42b5622df37463b94891b9180f2ef7da7313c1394ee5d15f33b90a9d7c19621",
+      "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-form-center.html"
+    }
+  ],
+  "staff_approved": false,
+  "live_records_changed": 0
+}
