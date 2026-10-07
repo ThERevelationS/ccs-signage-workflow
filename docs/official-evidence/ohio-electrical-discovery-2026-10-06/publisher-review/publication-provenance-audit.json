@@ -1,0 +1,38 @@
+{
+  "method": "retained-official-publisher-provenance-audit-v1",
+  "status": "publication_chain_supported",
+  "errors": [],
+  "evidence_observed_at": "2026-10-07T11:47:17.350637+00:00",
+  "source_document_id": "6ac39c0e6657049fb11cd757",
+  "canonical_office": {
+    "government_office_id": "1776693091752-0.8897164525624395",
+    "name": "City of Cincinnati Department of Buildings & Inspections",
+    "source_url": "https://www.cincinnati-oh.gov/buildings/contact-us/"
+  },
+  "printed_publisher": {
+    "name": "Cincinnati Buildings & Inspections",
+    "physical_page": 1,
+    "text_sha256": "660dc5820e4e3e9fc56f0e70d810fdd39bbd23e62c5c522233141a7e508ca0ab"
+  },
+  "publication_chain": {
+    "index_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+    "index_sha256": "046619034e266a34c8b7031060519b8a6f866db439b564eface4ab7af196c7c2",
+    "literal_link": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+    "retained_pdf_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+    "office_identity_sha256": "36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c"
+  },
+  "conclusions": {
+    "retained_publication_chain_verified": true,
+    "canonical_name_literal_in_handout": false,
+    "exact_alias_mapping_established": false,
+    "source_currentness_approved": false,
+    "office_authority_approved": false,
+    "http_redirect_verified": false
+  },
+  "review_route": {
+    "printed_publisher_review_available": true,
+    "canonical_office_reference_optional": true,
+    "canonical_office_link_requires_separate_evidence": true,
+    "instruction": "Review the literal printed publisher and explicit source scope using the existing administrative route without a canonical office link. This does not satisfy delegated-office review. Do not require or invent an alias sentence to collect the source evidence."
+  }
+}
