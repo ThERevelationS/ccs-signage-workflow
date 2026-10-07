@@ -12,7 +12,8 @@ export function orderRunRequiresReview(results = []) {
       Number(result?.orphans_flagged_for_review || 0) > 0 ||
       Number(result?.duplicate_groups_flagged_for_review || 0) > 0 ||
       Number(result?.create_attempts_need_review || 0) > 0 ||
-      Number(result?.duplicate_order_row_links || 0) > 0
+      Number(result?.duplicate_order_row_links || 0) > 0 ||
+      Number(result?.missing_permanent_row_links || 0) > 0
     )
   );
 }
