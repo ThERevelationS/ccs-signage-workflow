@@ -1,3 +1,15 @@
+## 2026-10-07 — Cincinnati sign electrical scope and office identity audit
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Archived the official City signs handout (May 2017 revision) and current city electrical-contract HTML with SHA-256 provenance. Added the sign PDF to the administrator research disclosure, explicitly dated and unapproved. Retained a sign-scope reconciliation separating electrical permitting from inspection, current ezTrak routing from older guidance, and unresolved project applicability. Provider FAQ HTML returned 406; public web text reviewed but original HTML not archived.
+
+Read-only live audit found one legacy IBI catalog candidate and one City of Cincinnati locality copy. Neither has reviewed canonical office identity; locality has no canonical profile link or reviewed authority roles. City FAQ's 205 W Court Street differs from provider's 250 W Court Street #125W. Preserve all workflows and require identity reconciliation before authority approval. No production records or approvals changed; frontend unpublished.
+
+Verification: 4 focused UI/archive checks, targeted lint, full production build, diff check, retained-source hashes and built PDF equality passed. Initial test fixture used the wrong relative archive directory; corrected and rerun successfully.
+
+Next: Prepare the canonical IBI office identity proposal with exact current catalog/version guards and independent role-review evidence. Keep the legacy Cincinnati county-zoning association flagged for its own scope review.
+
 ## 2026-10-07 — Cincinnati electrical research references in locality UI
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
