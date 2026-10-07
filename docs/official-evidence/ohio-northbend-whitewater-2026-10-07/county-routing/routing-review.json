@@ -1,0 +1,64 @@
+{
+  "observed_on": "2026-10-07",
+  "identity_readback": {
+    "PermitLocality": {
+      "query": {
+        "name": {
+          "$regex": "Whitewater",
+          "$options": "i"
+        }
+      },
+      "count": 0
+    },
+    "JurisdictionProfile": {
+      "previous_state_name_query_count": 0
+    },
+    "identity_approved": false
+  },
+  "observations": [
+    {
+      "topic": "County digital submission",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/learn_about.php",
+      "retrieval_method": "web extracted page; original download HTTP 403",
+      "summary": "County describes ezTrak submission, payment and inspection scheduling, with partner-agency paper exceptions.",
+      "portal": "https://eztrak.cagis.org/",
+      "original_archived": false,
+      "locality_coverage_approved": false
+    },
+    {
+      "topic": "County development services",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/",
+      "summary": "General unincorporated development-services description is not Whitewater-specific zoning coverage evidence.",
+      "original_archived": false
+    },
+    {
+      "topic": "County applications",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/applications_and_forms.php",
+      "summary": "Canonical department path was reachable through web retrieval; literal relative link from the department page produced a duplicated-path 404.",
+      "original_archived": false
+    }
+  ],
+  "broken_link_observations": [
+    {
+      "kind": "forms",
+      "resolved_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/government/departments/planning_and_development/development_services/applications_and_forms.php",
+      "http_status": 404
+    },
+    {
+      "kind": "zoning jurisdiction map",
+      "resolved_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Hamilton_County_Zoning_Jurisdiction_Map.pdf",
+      "http_status": 404
+    }
+  ],
+  "rejected_inferences": [
+    "Cleves mailing address does not map Whitewater to Village of Cleves",
+    "Third-party no-zoning claim is not approved zoning status",
+    "County digital portal does not identify electrical permit issuer or inspector",
+    "No tracker record does not authorize an invented canonical ID"
+  ],
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0
+}
