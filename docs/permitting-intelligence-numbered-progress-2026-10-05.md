@@ -1,3 +1,9 @@
+## Phase 10 → Milestone 1 of 3 — Springdale identity and application/electrical reconciliation (2026-10-07)
+
+Task 2 remains partial. Fresh OH query matched Springdale city 6ac19f0f0d8345e06e51a703. Official web retrieval describes combined building/mechanical/electrical/fire/zoning application with sign accessory exception, iWorQ citizen portal, and inspection scheduling. Preserved ambiguous 'No new Signs Approved.' text without inferring moratorium. Historical 2011 sign permit reproduced in 2025 packet references separate IBI electrical inspection permit; current electrical issuer/inspector and sign intake remain unapproved. Six original-download attempts failed; no retained bytes or archive substitutes, no UI attachment or live record writes. Fee schedule webpage effective-date label not current fee approval. Nothing published.
+
+Validation: 30 tests passed; git diff --check passed. Next: Springdale sign-specific application and current electrical-office clarification through official references; change original retrieval method only when new evidence supports it. Ohio before Kentucky.
+
 ## Phase 10 → Milestone 1 of 3 — Woodlawn current document-link review (2026-10-07)
 
 Task 2 remains partial. Preserved newer concurrent repository HEAD. Resolved exact current official county links for revised 2025 guide, Woodlawn zoning code and two 2026 fee schedules. Four new exact-URL downloads returned HTTP 403; zero originals recovered. Recorded web click nested Documents/CMS path behavior as candidate link defect, not proven diagnosis. No fee amounts, current paper intake, code scope or electrical authority inferred. Earlier eight gaps remain historical. No UI or live record changes, publication or repeated identical download attempts.
