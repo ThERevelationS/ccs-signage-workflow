@@ -1,3 +1,13 @@
+## Cincinnati electrical fee and submittal archives — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete; task 2 office reconciliation remains partial. Fresh clean HEAD a02eb1416b31aa2a10c688dd2529f04fe85173f3. Provider fee page currently links Fee-Schedule-Eff.-1-1-2025.pdf (seven pages). Downloaded original bytes (2,362,479) with PDF signature, SHA-256, URL, date and byte-count retention. No numeric fee extraction or sign applicability approved.
+
+Archived Web-2020-Link-Updated-Electrical-Plan-Review.pdf (16,303 bytes) as historical reference. Its older routing must not override the September 2026 Ohio ezTrak migration. Provider homepage also links Inspection-Areas-2026-1.xls: saved original OLE spreadsheet bytes, hash and source in the manifest; unparsed and unapproved for service-area authority. Online portal/scheduling links retained from prior chunk; none submitted.
+
+Updated separate-role dossier with fee/submittal/archive resources and explicit unverified flags. Every successful download has byte/hash/signature checks; relevant historical documents retained rather than removed. No production entities, staff approvals, backend code, frontend publishing, automated scans or LLM credits changed. git diff --check passes.
+
+Next: implement distinct electrical_permit versus electrical_inspection authority-review roles across schema, proof validation and callers, retaining legacy electrical history without counting it as separate verified coverage. Then parse/review fee and area documents with source-specific sign applicability and date gates. Ohio remains before Kentucky.
+
 ## Cincinnati electrical migration and separate role resources — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete; task 2 office reconciliation remains partial. Initial clean HEAD b6b6506dd9cae191104651a286781d8b43d74e3f; concurrent work preserved. Existing City archives and research candidate retained.

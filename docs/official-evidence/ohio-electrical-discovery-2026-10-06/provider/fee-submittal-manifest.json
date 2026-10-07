@@ -18,5 +18,10 @@
     "retrieved_at": "2026-10-07T01:01:04.048532+00:00",
     "scope": "historical reference; submission routing may be superseded by 2026 ezTrak migration",
     "authority_verified": false
+  },
+  {
+    "source_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/09/Inspection-Areas-2026-1.xls",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
   }
 ]
