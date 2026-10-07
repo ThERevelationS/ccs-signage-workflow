@@ -2804,11 +2804,13 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
     start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '',
   });
 
+  if (!managerCorrected) {
   const initialFinalized = await h.action('finalize', 'v27-late-initial-finalize-001');
   assert.equal(initialFinalized.status, 200, JSON.stringify(initialFinalized.body));
   const reopened = await h.action('reopen', 'v27-late-payroll-reopen-001', 'Reconcile employee-reported missed Clock In');
   assert.equal(reopened.status, 200, JSON.stringify(reopened.body));
 
+  }
   const recoveryRequestId = 'v27-late-source-001';
   const recovered = await h.invokeAs(employee, {
     action: 'recover_missed_clock_in', target_email: employee.email,
