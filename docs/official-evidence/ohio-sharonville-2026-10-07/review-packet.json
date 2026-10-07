@@ -14,7 +14,7 @@
     "sign_application": "https://www.sharonville.org/394/Sign-Application",
     "building_electrical_application": "https://www.sharonville.org/392/Building-Permit-Application",
     "submission_candidate": "Guide and city FAQ describe email or office delivery. No standalone online sign-submission form verified; document URLs are downloadable PDFs, not online submissions.",
-    "county_review": "Live parent_county says Butler County. Do not treat this single parent field as exhaustive city boundary or permit/inspection coverage."
+    "county_review": "Live parent_county Butler is incomplete as a geographic description: retained code page 7 expressly names Hamilton and Butler city boundaries. Job address/service-area review remains required."
   },
   "electrical": {
     "permit_intake_candidate": "City Community Development receives plans, contacts applicant for payment, and issues the approved permit per guide physical page 7.",
@@ -34,7 +34,7 @@
       "page": 97
     }
   ],
-  "code_version_review": "Retained code prints effective June 9, 2022; 2026 retrieval is not proof amendments are current.",
+  "code_version_review": "Effective June 9, 2022; cover amendments through May 27, 2025. Current adoption cutoff unresolved.",
   "fee_version_review": "Fee schedule lacks a reconciled effective/adoption cutoff; amounts remain document candidates.",
   "guide_scope": "Residential guide is supporting electrical routing evidence and not automatic commercial-sign submission authority.",
   "app_storage_catalog_registration": "pending; unchanged public repository PDF copies are not app-storage/catalog registration",
