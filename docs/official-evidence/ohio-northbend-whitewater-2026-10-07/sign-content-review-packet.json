@@ -137,7 +137,8 @@
       "The reviewed Village forms page links a right-of-way application. This form does not replace sign zoning or building approval. A separate sign application/online submission route was not located on that page.",
       "The county zoning page and 2024 zoning application originals returned HTTP 403. They remain retention gaps.",
       "Electrical permit issuance and electrical inspection remain independently unresolved. Sign-lighting standards do not establish either office.",
-      "The county digital-permitting reference describes ezTrak with partner-agency paper exceptions. Its original HTML download is blocked (HTTP 403); North Bend sign-specific portal applicability remains unconfirmed. This reference does not resolve electrical permit issuance or inspection."
+      "The county digital-permitting reference describes ezTrak with partner-agency paper exceptions. Its original HTML download is blocked (HTTP 403); North Bend sign-specific portal applicability remains unconfirmed. This reference does not resolve electrical permit issuance or inspection.",
+      "The electrical provider homepage routes Ohio work in its jurisdictions to ezTrak, while an older online form still shows Ohio/Kentucky and signs/billboard choices. The older form is not a confirmed current Ohio route. Provider page originals returned HTTP 406; township/address coverage, issuer and inspector remain unapproved."
     ],
     "references": [
       {
@@ -147,6 +148,10 @@
       {
         "label": "County digital permitting reference — original retention gap; sign route unconfirmed",
         "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/learn_about.php"
+      },
+      {
+        "label": "Electrical plan-review reference — original retention gap; applicability pending",
+        "url": "https://www.inspectionbureau.com/electrical-plan-review/"
       }
     ],
     "extraction_note": "Embedded text was extracted across 181 code pages and two right-of-way pages. Page findings remain pending review; extraction does not verify tables, current amendments or complete searchable content."

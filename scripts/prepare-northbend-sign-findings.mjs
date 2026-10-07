@@ -40,6 +40,9 @@ if(existsSync(root+'county-routing/routing-review.json')){
  row.notes.push('The county digital-permitting reference describes ezTrak with partner-agency paper exceptions. Its original HTML download is blocked (HTTP 403); North Bend sign-specific portal applicability remains unconfirmed. This reference does not resolve electrical permit issuance or inspection.');
 }
 const path='src/components/permitting/ohioMunicipalResearch.json',prior=JSON.parse(readFileSync(path));
+const previous=prior.find(p=>p.id===row.id);
+for(const note of previous?.notes||[])if(note.startsWith('The electrical provider homepage')&&!row.notes.includes(note))row.notes.push(note);
+for(const ref of previous?.references||[])if(ref.url==='https://www.inspectionbureau.com/electrical-plan-review/'&&!row.references.some(r=>r.url===ref.url))row.references.push(ref);
 writeFileSync(path,JSON.stringify([...prior.filter(p=>p.id!==row.id),row],null,2)+'\n');
 writeFileSync(root+'sign-content-review-packet.json',JSON.stringify({profile:row,findings,staff_approved:false,currentness_approved:false,electrical_roles_approved:false,live_records_changed:0},null,2)+'\n');
 console.log('North Bend two original downloads and eight physical-page candidates prepared; no role or law approvals.');

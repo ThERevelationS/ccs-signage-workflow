@@ -11,7 +11,8 @@
         "The official Township page describes two zoning jurisdictions: Northeast Green Township and Hamilton County elsewhere. Check the street/address range before choosing a route; township name alone does not approve job-address coverage.",
         "The Township links iWorQ zoning applications for its northeast jurisdiction and county ezTrak outside that area. The iWorQ original download failed hostname certificate verification; its content is not retained. No application was submitted.",
         "A standalone sign PDF application was not located on the reviewed Township page. Online commercial/residential zoning applications are linked, with sign applicability still requiring review.",
-        "Electrical permit issuance and electrical inspection offices remain separately unresolved. A zoning portal or building route does not establish electrical responsibility."
+        "Electrical permit issuance and electrical inspection offices remain separately unresolved. A zoning portal or building route does not establish electrical responsibility.",
+        "The electrical provider homepage routes Ohio work in its jurisdictions to ezTrak, while an older online form still shows Ohio/Kentucky and signs/billboard choices. The older form is not a confirmed current Ohio route. Provider page originals returned HTTP 406; township/address coverage, issuer and inspector remain unapproved."
       ],
       "references": [
         {
@@ -25,6 +26,10 @@
         {
           "label": "Official northeast street directory",
           "url": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId="
+        },
+        {
+          "label": "Electrical plan-review reference — original retention gap; applicability pending",
+          "url": "https://www.inspectionbureau.com/electrical-plan-review/"
         }
       ],
       "resources": [
