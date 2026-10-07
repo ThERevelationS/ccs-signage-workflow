@@ -3347,6 +3347,22 @@ Deno.serve(async (req) => {
           if (!String(summary.shift_manifest_hash || '') || !constantTimeEqual(String(summary.shift_manifest_hash), manifestHash) || !constantTimeEqual(String(summary.entry_snapshot_hash || ''), manifestHash)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} shift manifest failed verification.`, pay_period_id: period.id, generations: [] });
           retiredShifts = summary.shift_manifest;
           retiredEvidenceVerified = true;
+          if (Number(summary.snapshot_version || 0) >= 27) {
+            for (const row of retiredShifts) {
+              const lateClockIn = await canonicalLateClockInPayrollProvenance({
+                entry: row, approvalEvidence: row.approval_evidence,
+                auditEntity, punchExceptionEntity, requireCurrentResolution: false,
+              });
+              if (lateClockIn.applicable) {
+                if (!lateClockIn.provenance || !row.late_clock_in_provenance ||
+                    !constantTimeEqual(await payloadHash(lateClockIn.provenance), await payloadHash(row.late_clock_in_provenance))) {
+                  return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} missed Clock In provenance failed verification.`, pay_period_id: period.id, generations: [] });
+                }
+              } else if (row.late_clock_in_provenance) {
+                return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} contains unexpected missed Clock In provenance.`, pay_period_id: period.id, generations: [] });
+              }
+            }
+          }
         }
         const retiredReconciliation = retiredEvidenceVerified ? reconcileShiftEvidence(retiredShifts, summary) : undefined;
         if (retiredReconciliation && !retiredReconciliation.verified) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} employee reconciliation failed.`, pay_period_id: period.id, generations: [] });
@@ -3487,7 +3503,20 @@ Deno.serve(async (req) => {
               if (!approvalEvidence.independent_review) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift does not prove independent manager approval.', pay_period_id: period.id, generations: [] });
             }
           }
-          const snapshotRow = { id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status, approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence };
+          const snapshotRow: any = { id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status, approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence };
+          if (Number(current.snapshot_version || 0) >= 27) {
+            snapshotRow.clock_source = String(entry.clock_source || 'server');
+            snapshotRow.clock_in_request_id = String(entry.clock_in_request_id || '');
+            snapshotRow.punch_exception_id = String(entry.punch_exception_id || '');
+            snapshotRow.missed_clock_in_reported_at = String(entry.missed_clock_in_reported_at || '');
+            const lateClockIn = await canonicalLateClockInPayrollProvenance({
+              entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution: true,
+            });
+            if (lateClockIn.applicable && !lateClockIn.provenance) {
+              return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll missed Clock In provenance no longer matches authoritative evidence.', pay_period_id: period.id, generations: [] });
+            }
+            snapshotRow.late_clock_in_provenance = lateClockIn.provenance;
+          }
           snapshotRows.push(snapshotRow);
           shiftEvidence.push({ ...snapshotRow, lunch_minutes: Number(entry.lunch_minutes || 0), notes: entry.notes || '', pay_period_locked_at: entry.pay_period_locked_at || '', pay_period_locked_by: asEmail(entry.pay_period_locked_by) });
         }
@@ -4197,7 +4226,26 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 26 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 27 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        if (snapshotVersion >= 27) {
+          const confirmedEntryById = new Map(confirmedLocks.map((entry: any) => [String(entry.id || ''), entry]));
+          for (const row of snapshotRows) {
+            const sourceEntry = confirmedEntryById.get(String(row.id || ''));
+            if (!sourceEntry?.id) return Response.json({ success: false, error: 'Final payroll shift provenance could not be reconstructed from its locked TimeEntry.' }, { status: 409 });
+            row.clock_source = String(sourceEntry.clock_source || 'server');
+            row.clock_in_request_id = String(sourceEntry.clock_in_request_id || '');
+            row.punch_exception_id = String(sourceEntry.punch_exception_id || '');
+            row.missed_clock_in_reported_at = String(sourceEntry.missed_clock_in_reported_at || '');
+            const lateClockIn = await canonicalLateClockInPayrollProvenance({
+              entry: sourceEntry, approvalEvidence: row.approval_evidence,
+              auditEntity, punchExceptionEntity, requireCurrentResolution: true,
+            });
+            if (lateClockIn.applicable && !lateClockIn.provenance) {
+              return Response.json({ success: false, error: 'Employee-attested missed Clock In evidence could not be verified before payroll finalization.' }, { status: 409 });
+            }
+            row.late_clock_in_provenance = lateClockIn.provenance;
+          }
+        }
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
