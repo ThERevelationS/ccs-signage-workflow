@@ -2213,6 +2213,199 @@ test('manager approval completes the unresolved shift while rejection leaves it 
   assert.equal(rejected.body.entry.status, 'needs_resolution');
 });
 
+test('v26 missed Clock Out payroll provenance binds Punch Exception and employee punch-response evidence', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-29T12:00:00.000Z' });
+  const period = h.period();
+  Object.assign(period, {
+    start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '',
+  });
+
+  const initialFinalized = await h.action('finalize', 'v26-missed-initial-finalize-001');
+  assert.equal(initialFinalized.status, 200, JSON.stringify(initialFinalized.body));
+  const reopened = await h.action('reopen', 'v26-missed-reopen-001', 'Investigate missed Clock Out before payroll');
+  assert.equal(reopened.status, 200, JSON.stringify(reopened.body));
+
+  const staleEntry = {
+    id: 'v26-missed-entry', user_email: employee.email, user_name: employee.full_name,
+    status: 'clocked_in', clock_in: '2026-09-28T10:00:00.000Z', approval_status: 'unreviewed',
+    lunch_minutes: 0, job_allocations: [], clock_source: 'server',
+    updated_date: '2026-09-28T10:00:00.000Z',
+  };
+  h.rows.TimeEntry.push(staleEntry);
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  Object.assign(state, {
+    status: 'clocked_in', active_entry_id: staleEntry.id,
+    break_status: 'working', active_break_id: null,
+    work_pause_status: 'working', active_work_pause_id: null,
+    labor_status: 'idle',
+  });
+
+  const sourceRequestId = 'v26-missed-source-001';
+  const resolved = await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: sourceRequestId, response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  assert.equal(resolved.status, 200, JSON.stringify(resolved.body));
+  const correction = h.rows.TimeClockCorrectionRequest[0];
+  const punchCase = h.rows.TimeClockPunchException[0];
+  const punchAudit = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'punch_exception' && row.request_id === sourceRequestId && row.time_entry_id === staleEntry.id,
+  );
+  assert.ok(correction?.id);
+  assert.ok(punchCase?.id);
+  assert.ok(punchAudit?.id);
+  assert.equal(correction.request_kind, 'missed_clock_out');
+  assert.equal(punchCase.status, 'pending_manager_review');
+  assert.equal(punchAudit.details.response, 'missed_clock_out');
+  assert.equal(punchAudit.details.claimed_clock_out, '2026-09-28T22:00:00.000Z');
+
+  const correctionApproved = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'v26-missed-review-001', correction_request_id: correction.id,
+    expected_request_updated_date: correction.updated_date,
+    decision: 'approve', reason: 'Verified reported missed Clock Out',
+  });
+  assert.equal(correctionApproved.status, 200, JSON.stringify(correctionApproved.body));
+  assert.equal(punchCase.status, 'resolved');
+  assert.equal(punchCase.resolution_audit_id, correction.applied_audit_id);
+
+  const correctedEntry = h.rows.TimeEntry.find((row) => row.id === staleEntry.id);
+  const shiftApproved = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v26-missed-shift-approval-001', entry_id: correctedEntry.id,
+    expected_updated_date: correctedEntry.updated_date,
+    decision: 'approve', note: 'Final shift approval after missed Clock Out correction',
+  });
+  assert.equal(shiftApproved.status, 200, JSON.stringify(shiftApproved.body));
+
+  const originalPunchHash = punchAudit.details.payload_hash;
+  punchAudit.details.payload_hash = 'tampered-before-v26-finalization';
+  const blockedFinalize = await h.action('finalize', 'v26-missed-refinalize-001');
+  assert.equal(blockedFinalize.status, 409, JSON.stringify(blockedFinalize.body));
+  assert.match(blockedFinalize.body.error, /origin evidence/i);
+  punchAudit.details.payload_hash = originalPunchHash;
+
+  const refinalized = await h.action('finalize', 'v26-missed-refinalize-001');
+  assert.equal(refinalized.status, 200, JSON.stringify(refinalized.body));
+  assert.equal(period.finalized_summary.snapshot_version, 26);
+  assert.equal(period.finalized_summary.generation_changes.length, 1);
+  const change = period.finalized_summary.generation_changes[0];
+  assert.equal(change.change_type, 'added');
+  const provenance = change.correction_provenance;
+  assert.equal(provenance.request_kind, 'missed_clock_out');
+  assert.equal(provenance.punch_exception_id, punchCase.id);
+  assert.equal(provenance.punch_case_key, punchCase.case_key);
+  assert.equal(provenance.punch_exception_status, 'resolved');
+  assert.equal(provenance.punch_employee_response, 'missed_clock_out');
+  assert.equal(provenance.punch_claimed_clock_out, '2026-09-28T22:00:00.000Z');
+  assert.equal(provenance.punch_resolution_audit_id, correction.applied_audit_id);
+  assert.equal(provenance.punch_response_audit_id, punchAudit.id);
+  assert.equal(provenance.punch_response_audit_outcome, punchAudit.outcome);
+  assert.equal(provenance.punch_response_audit_at, punchAudit.server_timestamp);
+  assert.equal(provenance.punch_response_actor_role, punchAudit.actor_role);
+  assert.equal(provenance.punch_response_authentication_method, punchAudit.authentication_method);
+  assert.equal(provenance.punch_response_payload_hash, punchAudit.details.payload_hash);
+  assert.ok(provenance.punch_original_snapshot_hash);
+
+  const verified = await h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id: 'v26-missed-verify-001',
+  });
+  assert.equal(verified.status, 200, JSON.stringify(verified.body));
+  assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
+
+  let tamperSequence = 0;
+  const expectTamperFailure = async (label) => {
+    tamperSequence += 1;
+    const result = await h.invoke({
+      action: 'pay_period_history_verify', pay_period_id: period.id,
+      request_id: `v26-missed-tamper-${tamperSequence}`,
+    });
+    assert.equal(result.status, 200, `${label}: ${JSON.stringify(result.body)}`);
+    assert.equal(result.body.verified, false, `${label} was not detected: ${JSON.stringify(result.body)}`);
+  };
+  const tamperField = async (target, field, value, label) => {
+    const original = clone(target[field]);
+    target[field] = clone(value);
+    try { await expectTamperFailure(label); }
+    finally { target[field] = original; }
+  };
+
+  for (const [field, value] of [
+    ['case_key', 'missed_clock_out:other-entry'],
+    ['status', 'pending_manager_review'],
+    ['employee_response', 'worked_through'],
+    ['claimed_clock_out', '2026-09-28T22:05:00.000Z'],
+    ['request_id', 'tampered-punch-request-id'],
+    ['correction_request_id', 'tampered-correction-id'],
+    ['resolution_audit_id', 'tampered-resolution-audit-id'],
+    ['detected_clock_in', '2026-09-28T10:05:00.000Z'],
+  ]) {
+    await tamperField(punchCase, field, value, `PunchException ${field}`);
+  }
+  await tamperField(punchCase.original_snapshot, 'clock_in', '2026-09-28T10:05:00.000Z', 'PunchException original snapshot');
+
+  for (const [field, value] of [
+    ['outcome', 'blocked'],
+    ['user_email', 'other-worker@synthetic.invalid'],
+    ['actor_email', 'other-worker@synthetic.invalid'],
+    ['actor_role', 'badge'],
+    ['authentication_method', 'badge'],
+    ['server_timestamp', '2026-09-30T12:00:00.000Z'],
+    ['reason', 'tampered missed punch reason'],
+  ]) {
+    await tamperField(punchAudit, field, value, `punch_exception audit ${field}`);
+  }
+  for (const [field, value] of [
+    ['payload_hash', 'tampered-punch-payload-hash'],
+    ['punch_exception_id', 'tampered-punch-exception-id'],
+    ['correction_request_id', 'tampered-correction-id'],
+    ['response', 'worked_through'],
+    ['claimed_clock_out', '2026-09-28T22:05:00.000Z'],
+  ]) {
+    await tamperField(punchAudit.details, field, value, `punch_exception audit details.${field}`);
+  }
+  await tamperField(punchAudit.details.original_snapshot, 'clock_in', '2026-09-28T10:05:00.000Z', 'punch_exception audit original snapshot');
+  await tamperField(correction, 'request_kind', 'standard', 'CorrectionRequest request_kind');
+  await tamperField(correction, 'punch_exception_id', 'tampered-punch-exception-id', 'CorrectionRequest punch_exception_id');
+
+  const punchAuditIndex = h.rows.TimeClockAudit.findIndex((row) => row.id === punchAudit.id);
+  const [removedPunchAudit] = h.rows.TimeClockAudit.splice(punchAuditIndex, 1);
+  try { await expectTamperFailure('missing employee punch-response audit'); }
+  finally { h.rows.TimeClockAudit.splice(punchAuditIndex, 0, removedPunchAudit); }
+  h.rows.TimeClockAudit.push({ ...clone(punchAudit), id: 'synthetic-duplicate-v26-punch-response-audit' });
+  try { await expectTamperFailure('duplicate employee punch-response audit'); }
+  finally { h.rows.TimeClockAudit.pop(); }
+
+  for (const [field, value] of [
+    ['request_kind', 'standard'],
+    ['punch_exception_id', 'tampered-frozen-punch-exception-id'],
+    ['punch_case_key', 'missed_clock_out:other-entry'],
+    ['punch_exception_status', 'pending_manager_review'],
+    ['punch_employee_response', 'worked_through'],
+    ['punch_claimed_clock_out', '2026-09-28T22:05:00.000Z'],
+    ['punch_resolution_audit_id', 'tampered-frozen-resolution-audit-id'],
+    ['punch_response_audit_id', 'tampered-frozen-punch-audit-id'],
+    ['punch_response_audit_outcome', 'recovered'],
+    ['punch_response_audit_at', '2026-09-30T12:00:00.000Z'],
+    ['punch_response_actor_role', 'badge'],
+    ['punch_response_authentication_method', 'badge'],
+    ['punch_response_payload_hash', 'tampered-frozen-punch-hash'],
+    ['punch_original_snapshot_hash', 'tampered-frozen-original-snapshot-hash'],
+  ]) {
+    await tamperField(provenance, field, value, `v26 correction_provenance.${field}`);
+  }
+  const originalRequired = provenance.punch_response_audit_id;
+  delete provenance.punch_response_audit_id;
+  try { await expectTamperFailure('missing v26 punch_response_audit_id'); }
+  finally { provenance.punch_response_audit_id = originalRequired; }
+
+  const verifiedAfterTamper = await h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id: 'v26-missed-verify-after-tamper-001',
+  });
+  assert.equal(verifiedAfterTamper.body.verified, true, JSON.stringify(verifiedAfterTamper.body));
+});
+
 test('missed Clock Out review fails closed before mutation when correction and Punch Exception linkage disagree', async () => {
   const h = setupStaleMissedPunch();
   await h.invoke({
