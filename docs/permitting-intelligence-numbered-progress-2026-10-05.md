@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 — Norwood and Deer Park original documents and office reconciliation (2026-10-07)
+
+Retained two official department pages and six original documents with hashes and byte counts. Norwood includes its signage application, business checklist and 2026 fee schedule. Deer Park includes its building-process DOCX, building/zoning application DOC and linked 2026 Hamilton County fee PDF. Original Word formats are preserved. Exact-locality admin research panels offer the retained downloads separately from approved evidence.
+
+Recorded source-specific submission guidance, Norwood's checklist/provider phone discrepancy, and Deer Park's county-linked fee caveat. Electrical permit routing, inspection responsibility, geographic coverage, sign applicability and fees remain separate unapproved findings. The county fee link does not establish county authority. No live database mutations, office approvals or frontend publication.
+
+Validation: all 11 municipal/Cincinnati UI and archive tests passed, targeted ESLint and production build passed. Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Next: reconcile retained originals with existing source-catalog entries without duplicate uploads, then continue nearby Ohio coverage. Cincinnati's recorded gaps remain open; Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 — Electrical responsibility findings and explicit blockers (2026-10-07)
 
 Retained a fresh official City construction-inspection response and exact block naming IBI for electrical review/inspection. Live catalog readback confirms IBI's canonical identity remains needs_verification (catalog version 2026-10-07T11:14:42.435000). The provider's distinct contact-page raw retrieval returned HTTP 406; it was web-readable but no original archive is claimed. Saved manifest, normalized City text, current identity readback and electrical-office-review-packet.json.
