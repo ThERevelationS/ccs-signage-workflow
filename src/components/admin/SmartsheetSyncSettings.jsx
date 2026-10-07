@@ -802,10 +802,27 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                   {r.errors > 0 && <span className="text-red-700">Errors: <strong>{r.errors}</strong></span>}
                 </div>
               )}
+              {r.dataset === "orders" && Number(r.missing_permanent_row_links) > 0 && (
+                <div className="mt-2 rounded-lg border border-red-300 bg-red-50 p-2 text-red-950" role="alert">
+                  <strong>{r.missing_permanent_row_links} linked Base44 Order{Number(r.missing_permanent_row_links) === 1 ? "" : "s"} point to permanent Smartsheet row IDs that are missing.</strong>
+                  <p className="mt-1">
+                    The original Base44 Order data and stored row link were preserved. Sorting or moving a Smartsheet row does not change its permanent ID; deleting and recreating a row does. No automatic relink or Smartsheet → Base44 Order creation was attempted.
+                  </p>
+                  {r.missing_permanent_row_record_ids?.length > 0 && (
+                    <p className="mt-1 break-words font-mono">Base44 Order IDs: {r.missing_permanent_row_record_ids.join(', ')}</p>
+                  )}
+                  {r.missing_permanent_smartsheet_row_ids?.length > 0 && (
+                    <p className="mt-1 break-words font-mono">Missing permanent Smartsheet row IDs: {r.missing_permanent_smartsheet_row_ids.join(', ')}</p>
+                  )}
+                  <p className="mt-1 text-red-900">
+                    Matching remains configured sheet + permanent row ID only. Open Order Form diagnostics → Review links above for the read-only integrity audit.
+                  </p>
+                </div>
+              )}
               {r.dataset === "orders" && Number(r.unlinked_smartsheet_rows_flagged_for_review) > 0 && (
                 <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-amber-900" role="alert">
                   <strong>{r.unlinked_smartsheet_rows_flagged_for_review} Smartsheet rows have no confirmed Base44 Order link.</strong>
-                  <p>Existing linked Orders may have been updated. Review these permanent row IDs before enabling record creation; no unmatched rows were deleted.</p>
+                  <p>They remain review-only evidence. Order automatic creation from Smartsheet is locked off, and no unmatched rows were deleted.</p>
                   {r.unlinked_row_ids?.length > 0 && <p className="mt-1 break-words font-mono">Row IDs: {r.unlinked_row_ids.join(', ')}</p>}
                 </div>
               )}
