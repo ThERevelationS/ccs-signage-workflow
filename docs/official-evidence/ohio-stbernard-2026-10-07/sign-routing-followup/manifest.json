@@ -1,0 +1,53 @@
+{
+  "sources": [
+    {
+      "file": "sign-chapter.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-26655",
+      "retrieved_at": "2026-10-07T21:08:27.542221+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "sign-permits.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21716",
+      "retrieved_at": "2026-10-07T21:08:27.630023+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "business-signs.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21730",
+      "retrieved_at": "2026-10-07T21:08:27.730319+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "temporary-signs.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21755",
+      "retrieved_at": "2026-10-07T21:08:27.802807+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "sandwich-boards.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36776",
+      "retrieved_at": "2026-10-07T21:08:27.866263+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "expressway-advertising.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16843",
+      "retrieved_at": "2026-10-07T21:08:28.329697+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "ibi-eztrak.html",
+      "url": "https://www.inspectionbureau.com/eztrack-applications/",
+      "retrieved_at": "2026-10-07T21:08:28.400235+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    }
+  ]
+}
