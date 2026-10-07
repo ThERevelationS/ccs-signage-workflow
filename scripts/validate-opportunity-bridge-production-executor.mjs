@@ -9,6 +9,9 @@ import {
 import {
   buildOpportunityBridgeSecondaryConfirmationBinding,
 } from '../base44/shared/opportunityBridgeSecondaryConfirmation.mjs';
+import {
+  claimOpportunityBridgeReceipt,
+} from '../base44/shared/opportunityBridgeReceiptPersistence.mjs';
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const actor = { id:'admin-1', email:'admin@example.com', role:'admin' };
@@ -243,6 +246,23 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
   assert.deepEqual(state.receipts[0].attempt_history.map((item) => item.status), ['started','linked']);
   assert.equal(state.receipts[0].secondary_confirmation_fingerprint, binding.confirmation_fingerprint);
   assert.equal(JSON.stringify(state.receipts[0]).includes(binding.required_phrase), false, 'Confirmation phrase must never be persisted.');
+
+  const terminalClaim = await claimOpportunityBridgeReceipt({
+    adapter:receiptAdapter,
+    planRow:{
+      ...plan.rows.find((item) => item.work_order_id === 'wo-pilot'),
+      source_snapshot:{
+        ...plan.rows.find((item) => item.work_order_id === 'wo-pilot').source_snapshot,
+        opportunity_id:state.workOrder.opportunity_id,
+        updated_date:state.workOrder.updated_date,
+      },
+    },
+    runId:'run-terminal-retry',
+    actor,
+    secondaryConfirmationFingerprint:binding.confirmation_fingerprint,
+  });
+  assert.equal(terminalClaim.ok, true);
+  assert.equal(terminalClaim.state, 'terminal_existing', 'Terminal receipt must converge despite the expected post-link source snapshot change.');
 
   const replanned = currentPlan(state);
   const replayRow = replanned.rows.find((item) => item.work_order_id === 'wo-pilot');
