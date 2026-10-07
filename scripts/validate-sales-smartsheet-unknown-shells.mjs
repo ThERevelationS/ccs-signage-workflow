@@ -60,7 +60,7 @@ check(!shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Acme Signs", 
   "Legacy terminal task text still blocks modern pipeline creation");
 
 const backend = readFileSync("base44/functions/smartsheetSyncAction/entry.ts", "utf8");
-const createBlock = backend.split("} else if (profile?.create_base44_from_smartsheet) {")[1]?.split("toCreate.push(newRecord);")[0] ?? "";
+const createBlock = backend.split("} else if (dataset === 'sales' && profile?.create_base44_from_smartsheet) {")[1]?.split("toCreate.push(newRecord);")[0] ?? "";
 check(createBlock.includes("if (!hasMeaningfulSmartsheetSalesCustomer(newRecord))") &&
       createBlock.includes("salesMissingCustomerRowsSkipped++") &&
       createBlock.includes("continue;"),
