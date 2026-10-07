@@ -99,7 +99,7 @@
     "resources": [
       {
         "file": "cheviot-building-application.pdf",
-        "label": "Building application \u2014 includes Sign permit type",
+        "label": "Building application — includes Sign permit type",
         "source": "https://cheviot.org/wp-content/uploads/2025/10/CHEVIOT-BUILDING-PERMIT-APPLICATION.pdf",
         "archive": "/permitting-evidence/ohio-west/cheviot-building-application.pdf",
         "format": "PDF",
@@ -169,7 +169,7 @@
     "resources": [
       {
         "file": "cleves-general-building-application.pdf",
-        "label": "General building application \u2014 scanned original",
+        "label": "General building application — scanned original",
         "source": "https://www.clevesoh.gov/_files/ugd/db9e63_437bc327f9a247d582def69adbe338a0.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-general-building-application.pdf",
         "format": "PDF",
@@ -178,7 +178,7 @@
       },
       {
         "file": "cleves-mechanical-application.pdf",
-        "label": "Mechanical application \u2014 scanned original",
+        "label": "Mechanical application — scanned original",
         "source": "https://www.clevesoh.gov/_files/ugd/db9e63_769e1319cecf46b38920155c7fa0966e.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-mechanical-application.pdf",
         "format": "PDF",
@@ -187,7 +187,7 @@
       },
       {
         "file": "cleves-linked-zoning-manual.pdf",
-        "label": "Village-linked zoning manual \u2014 currentness unreviewed",
+        "label": "Village-linked zoning manual — currentness unreviewed",
         "source": "https://www.clevesoh.gov/_files/ugd/db9e63_703c8f2d8c4c4a1d91fc3a5b54f92e33.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-linked-zoning-manual.pdf",
         "format": "PDF",
@@ -196,7 +196,7 @@
       },
       {
         "file": "cleves-draft-zoning-manual.pdf",
-        "label": "DRAFT zoning manual \u2014 not approved law",
+        "label": "DRAFT zoning manual — not approved law",
         "source": "https://www.clevesoh.gov/_files/ugd/c8a414_ffa0fc0aa616460abe9cce88d3a6dbbc.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-draft-zoning-manual.pdf",
         "format": "PDF",
@@ -245,7 +245,7 @@
     "resources": [
       {
         "file": "harrison-temporary-sign-instructions.pdf",
-        "label": "Temporary-sign instructions link \u2014 same bytes as permanent link",
+        "label": "Temporary-sign instructions link — same bytes as permanent link",
         "source": "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
         "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf",
         "format": "PDF",
@@ -254,7 +254,7 @@
       },
       {
         "file": "harrison-permanent-sign-instructions.pdf",
-        "label": "Permanent-sign instructions link \u2014 same bytes as temporary link",
+        "label": "Permanent-sign instructions link — same bytes as temporary link",
         "source": "https://www.harrisonohio.gov/DocumentCenter/View/356/Permanent-Signs-Instructions-PDF",
         "archive": "/permitting-evidence/harrison-addyston/harrison-permanent-sign-instructions.pdf",
         "format": "PDF",
@@ -272,7 +272,7 @@
       },
       {
         "file": "harrison-zoning-application.pdf",
-        "label": "Zoning application \u2014 permanent/temporary signs",
+        "label": "Zoning application — permanent/temporary signs",
         "source": "https://www.harrisonohio.gov/DocumentCenter/View/3063/APP-ZONING",
         "archive": "/permitting-evidence/harrison-addyston/harrison-zoning-application.pdf",
         "format": "PDF",
@@ -309,9 +309,103 @@
         "text_sha256": "8eae8e26b2ea4ffebf5ee468de2aa573b7ddc5351158814ccb812bf7639db053",
         "verification_status": "needs_verification",
         "authority_approved": false
+      },
+      {
+        "label": "Scanned instructions: paper plan package",
+        "text": "The scanned guide calls for four plan copies, including a scaled plot plan, sign illustrations, attachment/foundation details and lighting information. Reconcile this paper route with the City’s current Cloudpermit guidance.",
+        "physical_page": 1,
+        "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=1",
+        "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+        "render_sha256": "7d49594ec85b6a72c80856222acc7afca327710c6c69385c437275caa5e5178a",
+        "raw_ocr_sha256": "615449d84cf222431c0127c0b3c7fa83404669b8ef1ef0c9ea381ea257068610",
+        "excerpt": "Complete an application for a permit and submit four copies of plans for review to the Building Department",
+        "excerpt_sha256": "96a87b6395cc59a6effb70bc728743edbf8b37605c800434854770282258c49f",
+        "observation_method": "agent visual transcription from retained 150 DPI physical-page render",
+        "region": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        },
+        "verification_status": "pending_staff_review",
+        "authority_approved": false,
+        "currentness_approved": false
+      },
+      {
+        "label": "Scanned instructions: separate electrical permit",
+        "text": "The printed guide names Inspection Bureau Incorporated (IBI) in its separate electrical-permit line. Its unusual printed wording is preserved; provider identity and permit-issuer approval remain pending.",
+        "physical_page": 2,
+        "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=2",
+        "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+        "render_sha256": "50b07a87a6e9e9596e6739a2a5df5607055fbfa2d9d9775a33063e62f1f1967f",
+        "raw_ocr_sha256": "f2c0ebffc3197c219be5d86dd8513fbe920b08510d2c90cc41bc0bafc97e6142",
+        "excerpt": "A separate electrical permit is Inspection Bureau Incorporated (IBI) at 381-6080.",
+        "excerpt_sha256": "432ff5faeba75b55d00f1b29d24268f76978d51bb6386c92ebc6c510e159f089",
+        "observation_method": "agent visual transcription from retained 150 DPI physical-page render",
+        "region": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        },
+        "verification_status": "pending_staff_review",
+        "authority_approved": false,
+        "currentness_approved": false
+      },
+      {
+        "label": "Scanned instructions: electrical inspections",
+        "text": "The guide separately directs illuminated/wired signs to IBI for electrical inspection. Foundation, mounting and final inspections have separate City contact lines. Current scheduling/contact details require review.",
+        "physical_page": 2,
+        "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=2",
+        "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+        "render_sha256": "50b07a87a6e9e9596e6739a2a5df5607055fbfa2d9d9775a33063e62f1f1967f",
+        "raw_ocr_sha256": "f2c0ebffc3197c219be5d86dd8513fbe920b08510d2c90cc41bc0bafc97e6142",
+        "excerpt": "If the sign is illuminated or wired for electricity, contact IBI at 513-381-6080.",
+        "excerpt_sha256": "c2066672f92d6d63e5b5d8c02105bad40f100138888ddd9a8956cf604bda5aa5",
+        "observation_method": "agent visual transcription from retained 150 DPI physical-page render",
+        "region": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        },
+        "verification_status": "pending_staff_review",
+        "authority_approved": false,
+        "currentness_approved": false
+      },
+      {
+        "label": "Scanned instructions: temporary and portable signs",
+        "text": "The guide has temporary-sign limits and a portable-sign prohibition. These are unapproved transcription candidates; current sign-code exceptions, district applicability and restrictions are not established.",
+        "physical_page": 2,
+        "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=2",
+        "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+        "render_sha256": "50b07a87a6e9e9596e6739a2a5df5607055fbfa2d9d9775a33063e62f1f1967f",
+        "raw_ocr_sha256": "f2c0ebffc3197c219be5d86dd8513fbe920b08510d2c90cc41bc0bafc97e6142",
+        "excerpt": "Portable signs are not permitted.",
+        "excerpt_sha256": "fafafb7e5e16bb2001afdff654bb17e53e8c50c9ec9985add13bea1f8a407615",
+        "observation_method": "agent visual transcription from retained 150 DPI physical-page render",
+        "region": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        },
+        "verification_status": "pending_staff_review",
+        "authority_approved": false,
+        "currentness_approved": false
       }
     ],
-    "extraction_note": "Both byte-identical sign-instruction PDFs have two physical pages and no embedded text. OCR/visual transcription is still required; no searchable instruction text is claimed."
+    "extraction_note": "Both byte-identical sign-instruction PDFs still have no embedded text. Both physical pages now have retained renders, raw OCR/TSV and separate visual-transcription candidates pending staff review. OCR does not establish current requirements.",
+    "ocr_references": [
+      {
+        "label": "Raw OCR — physical page 1 (uncorrected)",
+        "url": "/permitting-evidence/harrison-addyston/harrison-sign-instructions-page-1-raw-ocr.txt"
+      },
+      {
+        "label": "Raw OCR — physical page 2 (uncorrected)",
+        "url": "/permitting-evidence/harrison-addyston/harrison-sign-instructions-page-2-raw-ocr.txt"
+      }
+    ]
   },
   {
     "id": "6ac1a0de30219cc619d6e7d3",
@@ -328,7 +422,7 @@
     "resources": [
       {
         "file": "addyston-linked-zoning-ordinance.pdf",
-        "label": "Village-linked zoning ordinance \u2014 currentness unreviewed",
+        "label": "Village-linked zoning ordinance — currentness unreviewed",
         "source": "https://www.addystonohio.org/_files/ugd/c8a414_844b617e348e42c4bab3d6d2b064f310.pdf",
         "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf",
         "format": "PDF",

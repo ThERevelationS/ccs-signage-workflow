@@ -12,7 +12,7 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
       <ul className="list-disc space-y-2 pl-5">{dossier.notes.map(note => <li key={note}>{note}</li>)}</ul>
       <p><a className="underline" href={dossier.source} target="_blank" rel="noopener noreferrer">Official City department page</a></p>
       {dossier.online_form_url && <p><a className="min-h-11 inline-flex items-center underline" href={dossier.online_form_url} target="_blank" rel="noopener noreferrer">Officially linked online application portal</a></p>}
-      {dossier.references?.map(reference => <p key={reference.url}><a className="min-h-11 inline-flex items-center underline" href={reference.url} target="_blank" rel="noopener noreferrer">{reference.label}</a></p>)}
+      {[...(dossier.references || []), ...(dossier.ocr_references || [])].map(reference => <p key={reference.url}><a className="min-h-11 inline-flex items-center underline" href={reference.url} target="_blank" rel="noopener noreferrer">{reference.label}</a></p>)}
       <ul className="space-y-3">{dossier.resources.map(resource => <li key={resource.file}>
         <p className="font-medium">{resource.label}</p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">

@@ -90,9 +90,9 @@ test('PDF page extraction preserves physical numbering, hashes and OCR gaps',()=
  assert.equal(add.document_findings.length,4);
  for(const row of dossiers.filter(d=>d.document_findings))for(const finding of row.document_findings){
  const doc=extraction.documents.find(d=>finding.archive.includes(d.file)),page=doc.pages[finding.physical_page-1];
- assert.equal(finding.text_sha256,page.text_sha256);assert.equal(finding.source_sha256,doc.source_sha256);
+ if(!finding.observation_method)assert.equal(finding.text_sha256,page.text_sha256);assert.equal(finding.source_sha256,doc.source_sha256);
  assert.equal(finding.authority_approved,false);assert.match(finding.archive,new RegExp('#page='+finding.physical_page+'$'));
  }
  assert.match(render(add),/must not be treated as a zoning-sign exemption/);
- assert.match(render(dossiers.find(d=>d.name==='City of Harrison')),/OCR\/visual transcription is still required/);
+ assert.match(render(dossiers.find(d=>d.name==='City of Harrison')),/visual-transcription candidates pending staff review/);
 });
