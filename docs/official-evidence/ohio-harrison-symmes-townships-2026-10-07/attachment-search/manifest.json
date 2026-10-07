@@ -29,6 +29,33 @@
       "bytes": 127691,
       "sha256": "5330a86652ea8ad78f703158f40a2a064667fb85b9b0ccac68cb5641c20e5d22",
       "observed_at": "2026-10-07T18:15:11.692561+00:00"
+    },
+    {
+      "file": "agendas-minutes.html",
+      "official_url": "https://www.symmestownship.org/129/Agendas-Minutes",
+      "observed_at": "2026-10-07T18:15:31.121863+00:00",
+      "final_url": "https://www.symmestownship.org/129/Agendas-Minutes",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/attachment-search/agendas-minutes.html",
+      "bytes": 83200,
+      "sha256": "2e52af822b65f0125cbcc392c0621a0e5b01fab5a59af5a5581daee10d02fbae"
+    },
+    {
+      "file": "2026-resolutions.html",
+      "official_url": "https://www.symmestownship.org/269/2026-Resolutions",
+      "observed_at": "2026-10-07T18:15:32.231535+00:00",
+      "final_url": "https://www.symmestownship.org/269/2026-Resolutions",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/attachment-search/2026-resolutions.html",
+      "bytes": 117749,
+      "sha256": "217035ac89ff6a18f798d12f247d8b0e7ee2ab307bfe3e5abb3cbdbb072be7a2"
+    },
+    {
+      "file": "zoning-permits-route.html",
+      "official_url": "https://www.symmestownship.org/233/Zoning-Permits",
+      "observed_at": "2026-10-07T18:15:33.367806+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
     }
   ],
   "staff_approved": false
