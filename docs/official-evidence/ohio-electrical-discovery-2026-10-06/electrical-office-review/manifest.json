@@ -1,0 +1,24 @@
+{
+  "sources": [
+    {
+      "file": "ibi-contact.html",
+      "official_url": "https://www.inspectionbureau.com/contact-us/",
+      "retrieved_at": "2026-10-07T12:51:47.370011+00:00",
+      "status": "not_archived",
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "file": "city-electrical-contract.html",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+      "retrieved_at": "2026-10-07T12:51:47.584364+00:00",
+      "http_status": 200,
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+      "content_type": "text/html;charset=UTF-8",
+      "status": "archived",
+      "sha256": "2997c0f849f057ca0937ff6da3214a7a0ee6a6970a1bc6d1d292a826c2850fc8",
+      "bytes": 68541,
+      "retained_path": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/electrical-office-review/city-electrical-contract.html"
+    }
+  ],
+  "staff_approved": false
+}
