@@ -140,7 +140,7 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
       <div><Label>Official evidence that this version is current</Label><Input type="url" value={form.current_evidence_url} onChange={e => change("current_evidence_url", e.target.value)} /></div>
       <div><Label>Current-version evidence reference</Label><Input value={form.current_evidence_reference} onChange={e => change("current_evidence_reference", e.target.value)} placeholder="Official forms index, effective date, or office confirmation" /></div>
       <div><Label>Review notes</Label><Textarea rows={2} value={form.review_notes} onChange={e => change("review_notes", e.target.value)} /></div>
-      <div><Label>Verified shared publisher office ID (optional)</Label><Input value={form.government_office_id} onChange={e => change("government_office_id", e.target.value)} /></div>
+      <div><Label>Verified shared publisher office ID (optional)</Label><Input aria-describedby="source-publisher-office-help" value={form.government_office_id} onChange={e => change("government_office_id", e.target.value)} /><p id="source-publisher-office-help" className="text-xs text-slate-600 mt-1">Link an office only when its verified name exactly matches the printed publisher. If the document uses a shortened name, keep that name and review the source without an office link. Electrical office responsibility requires a separate review.</p></div>
       <label className="flex gap-2 items-start"><input type="checkbox" checked={form.current_source_confirmed} onChange={e => change("current_source_confirmed", e.target.checked)} />
         <span>I verified this archived version is the office's current form for the quoted coverage.</span></label>
       <div className="flex gap-2 flex-wrap">
