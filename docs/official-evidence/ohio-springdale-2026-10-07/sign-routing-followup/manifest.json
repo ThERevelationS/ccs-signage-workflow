@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "url": "https://www.springdaleohio.gov/departments/building_inspection/index.php",
+      "file": "1.html",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "url": "https://www.springdaleohio.gov/departments/building_inspection/development_regulations/zoning_code/index.php",
+      "file": "2.html",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "url": "https://www.springdaleohio.gov/departments/building_inspection/development_regulations/building_codes/index.php",
+      "file": "3.html",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/springdale/latest/spring_oh/0-0-0-56568",
+      "file": "4.html",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}

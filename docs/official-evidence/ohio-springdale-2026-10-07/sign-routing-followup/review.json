@@ -1,0 +1,45 @@
+{
+  "phase": 10,
+  "milestone": "1 of 3",
+  "task_2_status": "partial",
+  "locality": {
+    "id": "6ac19f0f0d8345e06e51a703",
+    "name": "Springdale",
+    "state": "OH",
+    "type": "city"
+  },
+  "method": "Web-derived observations only; no retrieved snippets are retained original archives.",
+  "sources": [
+    {
+      "url": "https://www.springdaleohio.gov/departments/building_inspection/index.php",
+      "observation": "Building Department contact: 11700 Springfield Pike, Springdale OH 45246; 513-346-5730. General contact does not prove electrical issuer or inspector."
+    },
+    {
+      "url": "https://www.springdaleohio.gov/departments/building_inspection/development_regulations/zoning_code/index.php",
+      "observation": "City page says revised zoning code supersedes Chapter 153 on American Legal. Signs regulate area, number, type and placement. Application process is under review."
+    },
+    {
+      "url": "https://www.springdaleohio.gov/departments/building_inspection/development_regulations/building_codes/index.php",
+      "observation": "Combined general construction application includes electric work; signs are accessory application exceptions. City links iWorQ. Separate sign submission details and electrical office remain unverified."
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/springdale/latest/spring_oh/0-0-0-56568",
+      "observation": "Publisher labels Chapter 153 as 2026 S-30 current; city supersession statement creates unresolved version conflict. Do not approve sign limits from this listing alone."
+    }
+  ],
+  "link_review": {
+    "scope": "Three department navigation links were followed. Returned URLs repeat departments/building_inspection and yielded 404; corrected zoning/building page paths were retrieved through web. Other Permits remained unavailable. This is not an exhaustive inventory.",
+    "navigation_errors": [
+      "building_codes",
+      "zoning_code",
+      "other_permits"
+    ]
+  },
+  "retained_originals": 0,
+  "currentness_approved": false,
+  "sign_application_route_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Continue Ohio coverage with these Springdale gaps preserved; resolve revised code and sign-specific application before approval."
+}
