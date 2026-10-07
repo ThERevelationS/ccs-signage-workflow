@@ -1,0 +1,34 @@
+{
+  "sources": [
+    {
+      "file": "woodlawn-zoning-code.pdf",
+      "official_url": "https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Woodlawn/Woodlawn_Zoning_Code_2024.pdf",
+      "observed_at": "2026-10-07T18:17:33.564473+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-zoning-guide.pdf",
+      "official_url": "https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Woodlawn/how_to_woodlawn_zoning_certification_application.pdf",
+      "observed_at": "2026-10-07T18:17:33.713967+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "county-zoning-application-2024.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2024/ZoningApplicationForm.pdf",
+      "observed_at": "2026-10-07T18:17:33.785518+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-variance-guide-2024.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Woodlawn/2024/BZA_Variance_User_Guide.pdf",
+      "observed_at": "2026-10-07T18:17:34.335913+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false,
+  "live_records_changed": 0
+}
