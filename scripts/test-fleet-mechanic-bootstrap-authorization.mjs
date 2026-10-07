@@ -13,12 +13,14 @@ test("mechanic bootstrap revalidates the live grant after Fleet data loads and b
   const loadBoundary = block.indexOf("await Promise.all([");
   const currentGrantRead = block.indexOf("requireCurrentMechanicActionGrant(Access,String(grant?.id || ''),'bootstrap')");
   const freshScope = block.indexOf("scopeForGrant(currentGrant)");
-  const freshEstimateCapability = block.indexOf("currentGrant.allowed_actions.includes('estimate_submit')");
+  const freshActions = block.indexOf("const currentActions = new Set(Array.isArray(currentGrant?.allowed_actions)");
+  const freshEstimateCapability = block.indexOf("const canEstimate = currentActions.has('estimate_submit')");
 
   assert.ok(loadBoundary >= 0, "bootstrap must load Fleet data");
   assert.ok(currentGrantRead > loadBoundary, "live grant must be re-read after the asynchronous Fleet data load");
   assert.ok(freshScope > currentGrantRead, "scope projection must use the revalidated grant");
-  assert.ok(freshEstimateCapability > currentGrantRead, "estimate capability must use the revalidated grant");
+  assert.ok(freshActions > currentGrantRead, "capabilities must derive from the revalidated grant actions");
+  assert.ok(freshEstimateCapability > freshActions, "estimate capability must use the current grant action set");
   assert.equal(block.includes("scopeForGrant(grant)"), false, "stale grant scope must not shape the bootstrap response");
   assert.match(block, /if \(ownedByGrant && canEstimate\) repairEstimates\.push\(\{\.\.\.sanitizeEstimate\(estimate\),visibility:'mechanic'\}\)/, "full mechanic estimate details must require the fresh estimate permission");
   assert.match(block, /ownedByGrant \? 'permission_removed' : 'other_mechanic'/, "permission removal must downgrade estimate data to a non-financial placeholder");
