@@ -1,3 +1,13 @@
+## Phase 10 — Milestone 1 — Electrical responsibility findings and explicit blockers (2026-10-07)
+
+Retained a fresh official City construction-inspection response and exact block naming IBI for electrical review/inspection. Live catalog readback confirms IBI's canonical identity remains needs_verification (catalog version 2026-10-07T11:14:42.435000). The provider's distinct contact-page raw retrieval returned HTTP 406; it was web-readable but no original archive is claimed. Saved manifest, normalized City text, current identity readback and electrical-office-review-packet.json.
+
+The municipal inspection clause is independent evidence of a candidate inspection responsibility; it does not establish permit issuance. The original provider href is HTTP. Existing native HTML authority verification requires HTTPS identity links and supports zoning only; the PDF path cannot consume an HTML block. These three separate identity/link/route blockers are explicit. No aliases were approved, original links upgraded, redirects inferred, or live role/source reviews applied. A submission portal is not evidence of permit issuance.
+
+The admin-only exact-Cincinnati research panel now presents inspection and permit issuance separately, links the municipal responsibility source, and leaves both unapproved. Seven UI/evidence checks, targeted ESLint and production build passed. No production database mutations or frontend publication.
+
+Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Cincinnati's open items are recorded and parked rather than requiring repeated identical retrieval attempts. Next: expand electrical-office reconciliation to additional Ohio localities (starting with nearby municipal profiles) while preserving the Cincinnati compiled-code, identity, link and authority-route gaps. Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 — Explicit Cincinnati zoning scope and request form (2026-10-07)
 
 Fresh repository inspection preserved newer concurrent CCS changes. Retrieved the current official City Planning zoning-administration HTML and the linked Zoning Verification & Rebuild Request PDF. Retained originals, hashes, byte counts and redirects. Scope packet ties the municipal land-coverage excerpt and base/overlay context to retained static HTML blocks and verifies the exact outgoing form link. The form is 89,204 bytes, SHA-256 9974564b6e8dc047153278f4456d5c0a911849e429eeffa346c4e0b6f49bfbab. It is available as a retained download in the exact-Cincinnati admin-only research panel; its printed fee has not been verified as current.

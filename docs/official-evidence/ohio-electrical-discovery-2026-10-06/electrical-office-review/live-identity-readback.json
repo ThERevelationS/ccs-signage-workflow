@@ -1,0 +1,18 @@
+{
+  "catalog_id": "69e14b004e01bf082f0f8c75",
+  "updated_date": "2026-10-07T11:14:42.435000",
+  "office_id": "1776692961965-0.8021021998915965",
+  "government_office": {
+    "name": "The Inspection Bureau, Inc.",
+    "state": "OH",
+    "phone": "513-381-6080",
+    "website": "https://www.inspectionbureau.com/",
+    "address": "250 W Court St #125W, Cincinnati, OH 45202",
+    "email": "",
+    "verification_status": "needs_verification",
+    "verified_by": "",
+    "verified_at": "",
+    "source_url": "https://www.inspectionbureau.com/",
+    "verification_notes": "Regional provider identity candidate. Address differs from City FAQ. No statewide or locality coverage approval. Legacy email is not independently confirmed."
+  }
+}
