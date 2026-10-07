@@ -1,0 +1,26 @@
+{
+  "id": "6ac39c0e6657049fb11cd757",
+  "updated_date": "2026-10-06T04:16:53.188000",
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+  "title": "Cincinnati Signs Informational Handout — official PDF; authority unreviewed",
+  "file_hash_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+  "authority_classification": "unknown_review_required",
+  "matched_signals": [],
+  "classified_at": "2026-10-05T12:46:06.861Z",
+  "content_status": "unknown",
+  "verification_status": "needs_verification",
+  "authority_review": null,
+  "authority_review_state": null,
+  "rule_import_state": null,
+  "rule_extraction_state": {
+    "request_key": "manual-rule-evidence:dca26a1f-2fe8-4a19-88c9-2d8cad6ba71e",
+    "request_id": "dca26a1f-2fe8-4a19-88c9-2d8cad6ba71e",
+    "snapshot_sha256": "288a23ebb3965c14d16886a1d486d15f5258e59499b81dbb1ff36f15eace6b38",
+    "status": "complete",
+    "claim_token": "4858d13d-91b5-4374-a9f6-6bb02b97d185",
+    "lease_expires_at": "",
+    "requested_at": "2026-10-06T04:16:49.986Z",
+    "run_id": "6ac476324340f3f557896348"
+  }
+}
