@@ -1,6 +1,14 @@
-import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { buildOpportunityBridgeDryRunPlan } from "../../shared/opportunityBridgeDryRunPlanner.mjs";
-import { evaluateOpportunityBridgeProductionReadiness } from "../../shared/opportunityBridgeProductionReadiness.mjs";
+import {
+  evaluateOpportunityBridgeProductionReadiness,
+  selectOpportunityBridgeFirstBatch,
+} from "../../shared/opportunityBridgeProductionReadiness.mjs";
+import { summarizeOpportunityBridgeReceiptLedger } from "../../shared/opportunityBridgeReceiptPersistence.mjs";
+import {
+  buildOpportunityBridgeSecondaryConfirmationBinding,
+  describeOpportunityBridgeSecondaryConfirmationContract,
+} from "../../shared/opportunityBridgeSecondaryConfirmation.mjs";
 import {
   OpportunityBridgeSimulationRequestError,
   OPPORTUNITY_BRIDGE_SIMULATION,
@@ -69,12 +77,14 @@ Deno.serve(async (req) => {
     const Customer = base44.asServiceRole.entities.Customer;
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
     const Opportunity = base44.asServiceRole.entities.Opportunity;
+    const Receipt = base44.asServiceRole.entities.OpportunityBridgeOperationReceipt;
 
-    const [workOrders, customers, estimates, opportunities] = await Promise.all([
+    const [workOrders, customers, estimates, opportunities, receipts] = await Promise.all([
       loadAll(WorkOrder, { is_rider:false, deleted:{ $ne:true } }),
       loadAll(Customer, {}),
       loadAll(Estimate, {}),
       loadAll(Opportunity, {}),
+      loadAll(Receipt, {}),
     ]);
 
     const plan = buildOpportunityBridgeDryRunPlan({
@@ -85,12 +95,26 @@ Deno.serve(async (req) => {
     });
 
     const generatedAt = new Date().toISOString();
+    const rolloutRunId = crypto.randomUUID();
+    const receiptLedger = summarizeOpportunityBridgeReceiptLedger(receipts);
+    const confirmationContract = describeOpportunityBridgeSecondaryConfirmationContract();
+    const firstBatchRows = selectOpportunityBridgeFirstBatch(plan.rows);
+    const confirmationBinding = firstBatchRows.length
+      ? await buildOpportunityBridgeSecondaryConfirmationBinding({
+          runId:rolloutRunId,
+          planGeneratedAt:generatedAt,
+          batchRows:firstBatchRows,
+          actor,
+        })
+      : null;
     const readiness = evaluateOpportunityBridgeProductionReadiness({
       plan,
       generatedAt,
       now:generatedAt,
-      receiptSchemaActivated:false,
-      secondaryConfirmationConfigured:false,
+      receiptSchemaActivated:true,
+      receiptLedgerSummary:receiptLedger,
+      secondaryConfirmationConfigured:confirmationContract.configured === true,
+      secondaryConfirmationContract:confirmationContract,
     });
     const selected = selectOpportunityBridgeSimulationRows(plan.rows, request).map(responseRow);
     return Response.json({
@@ -106,9 +130,21 @@ Deno.serve(async (req) => {
         customers:customers.length,
         estimates:estimates.length,
         opportunities:opportunities.length,
+        opportunity_bridge_receipts:receipts.length,
       },
       summary:plan.summary,
       source_audit:plan.source_audit,
+      receipt_ledger:receiptLedger,
+      secondary_confirmation_contract:confirmationContract,
+      secondary_confirmation_binding:confirmationBinding ? {
+        run_id:confirmationBinding.run_id,
+        plan_generated_at:confirmationBinding.plan_generated_at,
+        batch_fingerprint:confirmationBinding.batch_fingerprint,
+        confirmation_fingerprint:confirmationBinding.confirmation_fingerprint,
+        batch_size:confirmationBinding.batch_size,
+        expires_at:confirmationBinding.expires_at,
+      } : null,
+      rollout_run_id:rolloutRunId,
       readiness,
       generated_at:generatedAt,
       selected_count:selected.length,
