@@ -300,6 +300,36 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       (config.orders.mirror_enabled && (config.orders.pull_enabled || config.orders.push_enabled)))
   ), [config]);
 
+  const scheduledSalesEnabled = Boolean(
+    config.sales.mirror_enabled && (config.sales.pull_enabled || config.sales.push_enabled)
+  );
+  const scheduledOrderPullEnabled = Boolean(
+    config.orders.mirror_enabled && config.orders.pull_enabled
+  );
+  const automaticSyncBanner = !config.global_enabled
+    ? {
+        className: "border-gray-200 bg-gray-50 text-gray-800",
+        title: "Automatic sync is off.",
+        detail: "The global kill switch is OFF, so scheduled sync runs are blocked server-side. No Sales or Order pull/push stage will run until Global sync is enabled.",
+      }
+    : config.observation_mode
+      ? {
+          className: "border-blue-200 bg-blue-50 text-blue-900",
+          title: "Automatic sync is paused.",
+          detail: "Observation mode is ON, so scheduled and manual sync runs are blocked before any dataset pull or push begins. Turn Observation mode OFF to resume configured automatic directions.",
+        }
+      : !(scheduledSalesEnabled || scheduledOrderPullEnabled)
+        ? {
+            className: "border-amber-200 bg-amber-50 text-amber-900",
+            title: "Automatic sync has no enabled directions.",
+            detail: "The server scheduler still checks every 15 minutes, but no Sales pull/push direction or Order pull is enabled, so no dataset sync stage will run.",
+          }
+        : {
+            className: "border-emerald-200 bg-emerald-50 text-emerald-900",
+            title: "Automatic sync is active.",
+            detail: "The scheduler runs every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled; background push and automatic record creation are locked OFF, so Order writes use Save & Sync. A live status indicator appears at the bottom-right corner of every page.",
+          };
+
   const dirty = useMemo(() => {
     const saved = record?.setting_value;
     if (!saved) return true;
@@ -669,10 +699,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           )}
         </div>
 
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 flex items-start gap-2">
-          <RefreshCw className="h-4 w-4 mt-0.5 flex-shrink-0" />
+        <div className={`rounded-lg border p-3 text-sm flex items-start gap-2 ${automaticSyncBanner.className}`}>
+          {config.global_enabled && !config.observation_mode
+            ? <RefreshCw className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            : <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />}
           <div>
-            <strong>Automatic sync is active.</strong> The scheduler runs every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled; background push and automatic record creation are locked OFF, so Order writes use Save & Sync. A live status indicator appears at the bottom-right corner of every page.
+            <strong>{automaticSyncBanner.title}</strong> {automaticSyncBanner.detail}
           </div>
         </div>
 
@@ -690,7 +722,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
             <div>
               <div className="text-sm font-medium">Observation mode</div>
-              <div className="text-[11px] text-gray-500">Preview changes; perform no sync writes.</div>
+              <div className="text-[11px] text-gray-500">Blocks scheduled and manual sync execution for configuration review.</div>
             </div>
             <Switch
             checked={config.observation_mode}
