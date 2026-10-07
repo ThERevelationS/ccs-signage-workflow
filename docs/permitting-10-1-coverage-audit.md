@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — Ohio electrical application coexistence review (2026-10-07)
+
+Fresh clean HEAD ed846c72bdf8d0665a710874da54ebc1ca309b2a preserved. Reviewed provider plan-review requirements, online inspection application and contractor notice. All three new original HTML retrievals returned HTTP 406; manifest records gaps without claiming archived originals. Web-derived observations remain explicitly labeled.
+
+The provider online form still includes Ohio/Kentucky, signs/neon and billboard categories while its homepage directs Ohio applications within provider jurisdictions to ezTrak from September 14, 2026. This coexistence is recorded as a current-route conflict; the old form is not promoted as the current Ohio application. The plan-review page carries February 2019 effective wording and front-counter instructions plus a portal link, requiring currentness and sign-scope reconciliation. Added a pending electrical-plan-review reference/conflict note to Green and North Bend exact-identity admin dossiers. Locality preparation scripts preserve this research without duplicates.
+
+Validation: 21 UI/archive/routing tests, repeat-preparation verification and diff check passed. No production records, publication, current route, code edition, service-area or electrical role approvals. Delhi/Whitewater canonical identities remain unresolved. Task 2 partial. Next: continue Ohio locality collection with Miami and Crosby Township official forms and sign/code references; retain these electrical/provider collection gaps rather than repeating blocked routes. Verified app-storage/catalog registration remains open; Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 of 3 — Delhi permanent-sign submission and code review (2026-10-07)
 
 Fresh clean HEAD 5d3d7306a2eb079928eb3eabe67a7825b06ea6be preserved. Prepared eight hash-verified physical-page findings from the unchanged Delhi original PDFs. The April 2021 permanent-sign application includes county building routing, drawings/site plans, existing-sign photographs, lit-sign photometric drawings and printed fee candidates. Current submission method, fee formulas and deadlines remain unapproved.
