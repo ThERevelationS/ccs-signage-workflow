@@ -1,0 +1,39 @@
+{
+  "sources": [
+    {
+      "file": "symmes-2025-resolutions.html",
+      "official_url": "https://www.symmestownship.org/262/2025-Resolutions",
+      "final_url": "https://www.symmestownship.org/262/2025-Resolutions",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/symmes-2025-resolutions.html",
+      "bytes": 131730,
+      "sha256": "776a2552490251b08f9e240c9070941ed96f988519bca70f757d9726353cb446",
+      "observed_at": "2026-10-07T17:51:10.975808+00:00"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100.pdf",
+      "official_url": "https://www.symmestownship.org/DocumentCenter/View/3444/G2025-100-to-amend-fees-for-applications-under-Symmes-Township-Zoning-Resolution",
+      "final_url": "https://www.symmestownship.org/DocumentCenter/View/3444/G2025-100-to-amend-fees-for-applications-under-Symmes-Township-Zoning-Resolution",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/symmes-fee-amendment-g2025-100.pdf",
+      "bytes": 786622,
+      "sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+      "observed_at": "2026-10-07T17:51:12.068320+00:00"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104.pdf",
+      "official_url": "https://www.symmestownship.org/DocumentCenter/View/3443/G2025-104-Authorizing-contract-with-Hamilton-County-for-Planning-and-Zoning-Services",
+      "final_url": "https://www.symmestownship.org/DocumentCenter/View/3443/G2025-104-Authorizing-contract-with-Hamilton-County-for-Planning-and-Zoning-Services",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/symmes-county-contract-g2025-104.pdf",
+      "bytes": 746814,
+      "sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+      "observed_at": "2026-10-07T17:51:13.249475+00:00"
+    }
+  ],
+  "staff_approved": false,
+  "live_records_changed": 0
+}

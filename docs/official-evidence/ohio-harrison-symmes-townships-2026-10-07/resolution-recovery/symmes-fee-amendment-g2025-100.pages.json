@@ -1,0 +1,32 @@
+{
+  "file": "symmes-fee-amendment-g2025-100.pdf",
+  "official_url": "https://www.symmestownship.org/DocumentCenter/View/3444/G2025-100-to-amend-fees-for-applications-under-Symmes-Township-Zoning-Resolution",
+  "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+  "source_bytes": 786622,
+  "total_pages": 2,
+  "pages_with_embedded_text": 0,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": false,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965"
+    },
+    {
+      "page": 2,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965"
+    }
+  ]
+}

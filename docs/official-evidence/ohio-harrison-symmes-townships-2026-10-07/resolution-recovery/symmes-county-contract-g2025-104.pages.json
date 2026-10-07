@@ -1,0 +1,32 @@
+{
+  "file": "symmes-county-contract-g2025-104.pdf",
+  "official_url": "https://www.symmestownship.org/DocumentCenter/View/3443/G2025-104-Authorizing-contract-with-Hamilton-County-for-Planning-and-Zoning-Services",
+  "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+  "source_bytes": 746814,
+  "total_pages": 2,
+  "pages_with_embedded_text": 0,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": false,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60"
+    },
+    {
+      "page": 2,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60"
+    }
+  ]
+}
