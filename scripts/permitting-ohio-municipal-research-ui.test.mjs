@@ -156,3 +156,15 @@ test('Green split zoning and Delhi original forms preserve locality and role gap
  assert.equal(dossiers.some(d=>d.name==='Delhi Township'),false);
  const packet=JSON.parse(readFileSync(root+'office-reconciliation.json'));assert.equal(packet.profiles[1].id,null);assert.equal(packet.electrical_roles_approved,false);assert.equal(packet.live_records_changed,0);
 });
+
+test('Delhi sign packet preserves page evidence, anomalies and separate pending roles',()=>{
+ const root='docs/official-evidence/ohio-green-delhi-2026-10-07/',p=JSON.parse(readFileSync(root+'delhi-sign-review-packet.json'));
+ assert.equal(p.findings.length,8);assert.equal(p.locality.canonical_id,null);assert.equal(p.live_records_changed,0);
+ assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);
+ for(const f of p.findings){const d=JSON.parse(readFileSync(root+f.file.replace('.pdf','.pages.json'))),page=d.pages[f.physical_page-1];
+ assert.equal(f.source_sha256,d.source_sha256);assert.equal(f.text_sha256,page.text_sha256);
+ assert.ok(page.text.includes(f.matched_text));assert.equal(f.currentness_approved,false);assert.equal(f.authority_approved,false);}
+ assert.equal(p.address_comparison.application_address,'697 Neeb Road');assert.equal(p.address_comparison.township_page_address,'5031 Delhi Road');
+ assert.equal(p.address_comparison.approved,false);
+ assert.ok(p.findings.some(f=>f.matched_text==='MONROE COUNTY, INDIANA'));
+});
