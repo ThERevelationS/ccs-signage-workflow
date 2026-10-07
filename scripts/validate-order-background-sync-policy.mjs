@@ -50,6 +50,9 @@ const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', '
 const settings = readFileSync('src/components/admin/SmartsheetSyncSettings.jsx', 'utf8');
 
 assert.match(backend, /assertOrderBackgroundSyncPolicy\(nextValue\?\.orders \|\| \{\}\)/);
+const scheduledOrderPushGuards = backend.match(/action === 'run_sync' && dataset !== 'orders' && profile\.push_enabled/g) || [];
+assert.equal(scheduledOrderPushGuards.length, 2);
+assert.doesNotMatch(backend, /action === 'run_sync' && profile\.push_enabled/);
 assert.match(settings, /merged\.orders = enforceOrderBackgroundSyncPolicy\(merged\.orders\)/);
 assert.match(settings, /Order Form background push is locked OFF\. Use Save & Sync for explicit writes/);
 assert.match(settings, /Order Form automatic creation is locked OFF; unlinked rows are flagged for review/);
