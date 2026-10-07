@@ -1,0 +1,45 @@
+{
+  "sources": [
+    {
+      "file": "ibi-home.html",
+      "official_url": "https://www.inspectionbureau.com/",
+      "retrieved_at": "2026-10-07T13:22:39.840689+00:00",
+      "status": "retrieval_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "file": "ibi-introduction.html",
+      "official_url": "https://www.inspectionbureau.com/what-is-the-ibi/",
+      "retrieved_at": "2026-10-07T13:22:40.086566+00:00",
+      "status": "retrieval_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "file": "ibi-inspection-areas-2026.xls",
+      "official_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/09/Inspection-Areas-2026-1.xls",
+      "retrieved_at": "2026-10-07T13:22:40.261515+00:00",
+      "status": "retrieval_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "file": "ibi-eztrak-new-user.pdf",
+      "official_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+      "retrieved_at": "2026-10-07T13:22:40.429539+00:00",
+      "status": "archived",
+      "http_status": 200,
+      "final_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+      "content_type": "application/pdf",
+      "bytes": 47398,
+      "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+      "retained_path": "docs/official-evidence/ohio-west-offices-2026-10-07/electrical-routing/ibi-eztrak-new-user.pdf"
+    },
+    {
+      "file": "cheviot-electric-code.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/cheviot/latest/cheviot_oh/0-0-0-46287",
+      "retrieved_at": "2026-10-07T13:22:40.694901+00:00",
+      "status": "retrieval_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false
+}
