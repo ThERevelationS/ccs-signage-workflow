@@ -9,6 +9,7 @@ import {
   jurisdictionProfileTypeForQueueRow,
   profileHasResearchEvidence,
   profileMatchesQueueRow,
+  resolveResearchProfile,
 } from "../../shared/permittingResearchBacklog.mjs";
 import {
   PERMITTING_RESEARCH_CONFIG_KEY,
@@ -74,7 +75,9 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
 
 async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any) {
   const matches = matchingProfilesForRow(row, profiles);
-  const existing = matches.find((profile) => profileMatchesQueueRow(row, profile, matches));
+  const resolution = resolveResearchProfile(row, profiles);
+  if (resolution.conflict) throw new Error("Existing locality identity is conflicting or duplicated; admin review required before research or profile creation.");
+  const existing = resolution.profile;
   if (existing) return { profile: existing, created: false };
 
   const now = new Date().toISOString();
@@ -189,7 +192,8 @@ Deno.serve(async (req) => {
 
     for (const row of sourceDiscovery) {
       const matches = matchingProfilesForRow(row, profiles);
-      const matchingProfile = matches.find((profile) => profileMatchesQueueRow(row, profile, matches));
+      const resolution = resolveResearchProfile(row, profiles);
+      const matchingProfile = resolution.profile;
       if (matchingProfile && profileHasResearchEvidence(matchingProfile)) {
         await Queue.updateMany(
           { id: row.id, status: "source_discovery" },
@@ -253,6 +257,7 @@ Deno.serve(async (req) => {
     const plan = classifyBacklogRows({
       queueRows: backlog,
       profiles: researchedProfiles,
+      identityProfiles: profiles,
       inFlightCount,
       inFlightTarget: config.max_in_flight,
       maxDispatchPerRun: dispatchLimit,
@@ -381,6 +386,7 @@ Deno.serve(async (req) => {
         manual,
         in_flight_before: inFlightCount,
         backlog_before: backlog.length,
+        identity_conflicts: plan.conflicts.length,
         reconciled_existing_profiles: plan.reconcile.length,
         reconciled_completed: reconciledCompleted,
         reconciled_failed: reconciledFailed,

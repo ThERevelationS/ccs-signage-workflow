@@ -33,8 +33,10 @@ function profileParent(profile = {}) {
 export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProfiles = []) {
   if (norm(row.jurisdiction_name) !== norm(profile.name) || norm(row.state) !== norm(profile.state)) return false;
 
-  const queueType = normalizeResearchJurisdictionType(row.jurisdiction_type);
-  const profileType = normalizeResearchJurisdictionType(profile.type);
+  const queueType = norm(row.jurisdiction_type);
+  const profileType = norm(profile.type);
+  const compatible = { county: ["county"], city: ["city"], township: ["township"], village: ["village", "municipality"], planning_unit: ["municipality"] };
+  if (!compatible[queueType]?.includes(profileType)) return false;
   if (queueType === 'county') return profileType === 'county';
 
   const queueParent = norm(row.parent_county_name);
@@ -46,13 +48,23 @@ export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProf
   return sameNameStateProfiles.length === 1;
 }
 
+// Resolve identity before reconciliation or creation; ambiguous existing rows require review.
+export function resolveResearchProfile(row = {}, profiles = []) {
+  const matches = profiles.filter(p => norm(p.name) === norm(row.jurisdiction_name) && norm(p.state) === norm(row.state));
+  const eligible = matches.filter(p => profileMatchesQueueRow(row, p, matches));
+  if (eligible.length === 1) return { profile: eligible[0], conflict: false };
+  const parent = norm(row.parent_county_name);
+  const nearby = matches.filter(p => !parent || !profileParent(p) || parent === profileParent(p));
+  return { profile: null, conflict: eligible.length > 1 || nearby.length > 0 };
+}
+
 // Ohio-first release policy; stable order within each state and no queue mutation.
 export function ohioFirstResearchRows(rows = []) {
   const rank = row => norm(row?.state) === 'oh' ? 0 : norm(row?.state) === 'ky' ? 1 : 2;
   return [...rows].sort((a, b) => rank(a) - rank(b));
 }
 
-export function classifyBacklogRows({ queueRows = [], profiles = [], inFlightCount = 0, inFlightTarget = 250, maxDispatchPerRun = 50 } = {}) {
+export function classifyBacklogRows({ queueRows = [], profiles = [], identityProfiles = profiles, inFlightCount = 0, inFlightTarget = 250, maxDispatchPerRun = 50 } = {}) {
   const target = Math.max(1, Number(inFlightTarget) || 250);
   const perRun = Math.max(1, Number(maxDispatchPerRun) || 50);
   const room = Math.max(0, target - Math.max(0, Number(inFlightCount) || 0));
@@ -64,6 +76,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], inFlightCou
     byNameState.get(key).push(profile);
   }
 
+  const conflicts = [];
   const reconcile = [];
   const dispatch = [];
   const seen = new Set();
@@ -73,6 +86,8 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], inFlightCou
     if (!identity || seen.has(identity)) continue;
     seen.add(identity);
 
+    const resolution = resolveResearchProfile(row, identityProfiles);
+    if (resolution.conflict) { conflicts.push(row); continue; }
     const nameState = `${norm(row?.jurisdiction_name)}|${norm(row?.state)}`;
     const matchingProfiles = byNameState.get(nameState) || [];
     if (matchingProfiles.some((profile) => profileMatchesQueueRow(row, profile, matchingProfiles))) {
@@ -85,6 +100,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], inFlightCou
 
   return {
     room,
+    conflicts,
     reconcile,
     dispatch,
     atCapacity: room === 0,
