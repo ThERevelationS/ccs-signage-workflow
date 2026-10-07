@@ -1,0 +1,34 @@
+{
+  "sources": [
+    {
+      "file": "cincinnati-signs-handout.pdf",
+      "source_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "retrieved_at": "2026-10-07T10:32:13.856816+00:00",
+      "staff_approved": false,
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "content_type": "application/pdf;charset=UTF-8",
+      "status": "archived",
+      "bytes": 282256,
+      "sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb"
+    },
+    {
+      "file": "cincinnati-electrical-contract.html",
+      "source_url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+      "retrieved_at": "2026-10-07T10:32:14.568055+00:00",
+      "staff_approved": false,
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+      "content_type": "text/html;charset=UTF-8",
+      "status": "archived",
+      "bytes": 68541,
+      "sha256": "94129120571502f20af6bc1cba746572f5a3ddbbe1e3c9e8aff25ed932b31c27"
+    },
+    {
+      "source_url": "https://www.inspectionbureau.com/faq/",
+      "retrieved_at": "2026-10-07T10:32:16.871182+00:00",
+      "staff_approved": false,
+      "status": "not_archived",
+      "error": "HTTP Error 406: Not Acceptable"
+    }
+  ],
+  "authority_verified": false
+}
