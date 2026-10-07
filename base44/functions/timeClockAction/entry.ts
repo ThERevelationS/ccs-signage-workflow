@@ -3833,11 +3833,25 @@ Deno.serve(async (req) => {
                   if (!approvalEvidence.independent_review) return Response.json({ success: false, error: 'A finalized shift no longer proves independent manager approval. Admin investigation is required.' }, { status: 409 });
                 }
               }
-              recoverySnapshotRows.push({
+              const recoverySnapshotRow: any = {
                 id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out,
                 total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status,
                 approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence,
-              });
+              };
+              if (Number(period.finalized_summary?.snapshot_version || 0) >= 27) {
+                recoverySnapshotRow.clock_source = String(entry.clock_source || 'server');
+                recoverySnapshotRow.clock_in_request_id = String(entry.clock_in_request_id || '');
+                recoverySnapshotRow.punch_exception_id = String(entry.punch_exception_id || '');
+                recoverySnapshotRow.missed_clock_in_reported_at = String(entry.missed_clock_in_reported_at || '');
+                const lateClockIn = await canonicalLateClockInPayrollProvenance({
+                  entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution: true,
+                });
+                if (lateClockIn.applicable && !lateClockIn.provenance) {
+                  return Response.json({ success: false, error: 'The finalized payroll missed Clock In evidence is invalid. Admin investigation is required.' }, { status: 409 });
+                }
+                recoverySnapshotRow.late_clock_in_provenance = lateClockIn.provenance;
+              }
+              recoverySnapshotRows.push(recoverySnapshotRow);
             }
             const recoverySnapshotHash = await payloadHash(recoverySnapshotRows);
             if (!String(period.finalized_summary?.entry_snapshot_hash || '') ||
