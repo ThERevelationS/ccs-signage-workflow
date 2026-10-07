@@ -164,6 +164,13 @@ export function evaluateOpportunityBridgeProductionReadiness({
         : `${Number(receiptLedgerSummary?.anomaly_count || 0)} durable receipt identity anomalies; ${Number(receiptLedgerSummary?.unresolved_count || 0)} unresolved receipts`,
     },
     {
+      key:'durable_receipt_ledger_reconciled',
+      pass:receiptSchemaActivated === true && receiptLedgerSummary != null && Number(receiptLedgerSummary?.unresolved_count || 0) === 0,
+      detail:receiptLedgerSummary == null
+        ? 'Receipt ledger reconciliation summary unavailable'
+        : `${Number(receiptLedgerSummary?.unresolved_count || 0)} unresolved receipts require reconciliation before retry/apply`,
+    },
+    {
       key:'secondary_confirmation_configured',
       pass:secondaryConfirmationConfigured === true &&
         OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED === true &&
@@ -187,7 +194,7 @@ export function evaluateOpportunityBridgeProductionReadiness({
   ];
 
   const technicalChecks = checks.filter((check) =>
-    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','secondary_confirmation_configured','guarded_production_executor_wired','production_apply_enabled'].includes(check.key)
+    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','durable_receipt_ledger_reconciled','secondary_confirmation_configured','guarded_production_executor_wired','production_apply_enabled'].includes(check.key)
   );
   const rolloutChecks = checks.filter((check) => !technicalChecks.includes(check));
 
