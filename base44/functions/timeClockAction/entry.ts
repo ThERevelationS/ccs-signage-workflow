@@ -584,13 +584,12 @@ async function canonicalLateClockInPayrollProvenance({
   const userEmail = asEmail(entry?.user_email);
   const requestId = String(entry?.clock_in_request_id || '');
   const reportedAt = String(entry?.missed_clock_in_reported_at || '');
-  const clockIn = String(entry?.clock_in || '');
+  const payrollClockIn = String(entry?.clock_in || '');
   const punchExceptionId = String(entry?.punch_exception_id || '');
   const approvalRequestId = String(entry?.approval_request_id || '');
   const approvalAuditId = String(approvalEvidence?.id || '');
-  const companyDate = dateKeyInCompanyTime(clockIn);
-  if (!entryId || !userEmail || !requestId || !reportedAt || !clockIn || !punchExceptionId ||
-      !approvalRequestId || !approvalAuditId || !companyDate) {
+  if (!entryId || !userEmail || !requestId || !reportedAt || !payrollClockIn || !punchExceptionId ||
+      !approvalRequestId || !approvalAuditId) {
     return { applicable: true, provenance: null };
   }
 
@@ -614,11 +613,14 @@ async function canonicalLateClockInPayrollProvenance({
   const approvalAudit = approvalRows[0];
   const punchCase = await punchExceptionEntity.get(punchExceptionId).catch(() => null);
   if (!punchCase?.id) return { applicable: true, provenance: null };
+  const claimedClockIn = String(punchCase.claimed_clock_in || '');
+  const companyDate = dateKeyInCompanyTime(claimedClockIn);
+  if (!claimedClockIn || !companyDate) return { applicable: true, provenance: null };
 
   const expectedRecoveryHash = await payloadHash({
     action: 'recover_missed_clock_in',
     user_email: userEmail,
-    claimed_clock_in: clockIn,
+    claimed_clock_in: claimedClockIn,
     company_date: companyDate,
   });
   const originalSnapshotHash = await payloadHash(punchCase.original_snapshot || {});
@@ -648,9 +650,9 @@ async function canonicalLateClockInPayrollProvenance({
     String(punchCase.time_entry_id || '') === entryId &&
     String(punchCase.exception_type || '') === 'late_clock_in' &&
     String(punchCase.employee_response || '') === 'missed_clock_in' &&
-    String(punchCase.claimed_clock_in || '') === clockIn &&
+    String(punchCase.claimed_clock_in || '') === claimedClockIn &&
     String(punchCase.request_id || '') === requestId &&
-    String(punchCase.detected_clock_in || '') === clockIn &&
+    String(punchCase.detected_clock_in || '') === claimedClockIn &&
     String(punchCase.detected_at || '') === reportedAt &&
     String(punchCase.submitted_at || '') === reportedAt &&
     punchCase.original_snapshot?.missing_clock_in === true &&
@@ -669,10 +671,10 @@ async function canonicalLateClockInPayrollProvenance({
     String(clockInAudit.server_timestamp || '') === reportedAt &&
     String(clockInAudit.reason || '') === 'Employee-attested missed Clock In reconstruction' &&
     String(clockInAudit.details?.clock_source || '') === 'employee_attested_missed_clock_in' &&
-    String(clockInAudit.details?.employee_attested_clock_in || '') === clockIn &&
+    String(clockInAudit.details?.employee_attested_clock_in || '') === claimedClockIn &&
     String(clockInAudit.details?.reported_at || '') === reportedAt &&
     String(clockMembership?.company_date || '') === companyDate &&
-    String(clockMembership?.clock_in || '') === clockIn
+    String(clockMembership?.clock_in || '') === claimedClockIn
   );
   const punchMatches = Boolean(
     String(punchAudit.id || '') &&
@@ -683,7 +685,7 @@ async function canonicalLateClockInPayrollProvenance({
     String(punchAudit.reason || '') === 'Employee reported a missing Clock In during the late-day pre-clockout review' &&
     String(punchAudit.details?.punch_exception_id || '') === punchExceptionId &&
     String(punchAudit.details?.response || '') === 'missed_clock_in' &&
-    String(punchAudit.details?.claimed_clock_in || '') === clockIn &&
+    String(punchAudit.details?.claimed_clock_in || '') === claimedClockIn &&
     String(punchAudit.details?.company_date || '') === companyDate &&
     constantTimeEqual(String(punchAudit.details?.payload_hash || ''), expectedRecoveryHash)
   );
@@ -697,7 +699,8 @@ async function canonicalLateClockInPayrollProvenance({
       source: 'employee_attested_missed_clock_in',
       request_id: requestId,
       reported_at: reportedAt,
-      claimed_clock_in: clockIn,
+      claimed_clock_in: claimedClockIn,
+      payroll_clock_in_at_finalization: payrollClockIn,
       company_date: companyDate,
       punch_exception_id: punchExceptionId,
       punch_case_key: String(punchCase.case_key || ''),
