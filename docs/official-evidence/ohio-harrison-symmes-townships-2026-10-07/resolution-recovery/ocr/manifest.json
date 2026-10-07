@@ -1,0 +1,68 @@
+{
+  "assets": [
+    {
+      "file": "symmes-county-contract-g2025-104-1.jpg",
+      "bytes": 249449,
+      "sha256": "946c967304d98ed6ea418672a6b35744df69833244fe779cb4a1b1cde437c2a2"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104-1.tsv",
+      "bytes": 15561,
+      "sha256": "d238c6d99400915f3462efdc2789b65ba60da63481bdedcefdcef09d43bfeb03"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104-1.txt",
+      "bytes": 2017,
+      "sha256": "87f8e64525e9d9e357e233f26b23486dfc52d5ff33b4731954325cfc9badf3c6"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104-2.jpg",
+      "bytes": 132374,
+      "sha256": "f576a12d83cdb40abfb943ac0c93e51e643a0be2cc38edc35e5fe09a559c848d"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104-2.tsv",
+      "bytes": 7106,
+      "sha256": "8daa0ef267b822226aa63beb7fc7075852f492511639b41300723fa4e23bd15a"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104-2.txt",
+      "bytes": 757,
+      "sha256": "643b8bc4580dd2b8e147462dc645704a4c361de07e208f562193ec6c5101f06e"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100-1.jpg",
+      "bytes": 262197,
+      "sha256": "6a4e83dd31907a0afb2536010a16141d95e4a9202ef90c0ab9f5ae8999717d8c"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100-1.tsv",
+      "bytes": 17166,
+      "sha256": "d12958aeef0eb8bbf9cf6f2b4abd451d23d93dbd45b9a35c69984e65eaec2e30"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100-1.txt",
+      "bytes": 2221,
+      "sha256": "4a6d8aa52f3a5c4474ad53a2bc441cbb860f54cd9a49ff43020b7ab1c5f375f2"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100-2.jpg",
+      "bytes": 132907,
+      "sha256": "8089e82c4bb0fea7baccc6c5b1c904349195f1bb85a11d805d4a8c8771d87b79"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100-2.tsv",
+      "bytes": 6973,
+      "sha256": "c972d47cb460a87b7fb7f809deca7f149e01e0441520cba267d444fb34ca2bf6"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100-2.txt",
+      "bytes": 764,
+      "sha256": "2aae2887f8b0b2b860eeb6efd4540f512c9b5d462a4074b54a9e196477b67752"
+    }
+  ],
+  "render_method": "Poppler pdftoppm 150 DPI PNG; retained JPEG derivatives quality 75",
+  "ocr_method": "Tesseract default English on original PNG renders; raw TXT and TSV preserved",
+  "visual_review": "All four original PNG renders reviewed; handwriting/OCR errors not silently corrected",
+  "staff_approved": false
+}
