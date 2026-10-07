@@ -79,3 +79,40 @@ test('delegation role proof detects OCR/truncation and changed responsible ident
   await assert.rejects(verifyPdfOfficeDelegation(s.deps,s.profile(),s.input,canonicalAuthorityOffice));
  }
 });
+test('permit issuance preview records only issuer role and no inspection approval',async()=>{
+ const s=await setup();s.input.role='electrical_permit';
+ s.input.role_proof.excerpt='Electrical permits are issued by Regional Agency.';
+ const p=await reviewOfficeAuthority(s.deps,{jurisdictionId:'profile',input:s.input,dryRun:true,action:'verify',actor:'Admin'});
+ assert.equal(p.proposal.role,'electrical_permit');assert.equal(s.events.length,0);
+});
+test('responsible identity replacement after reservation releases without creating an event',async()=>{
+ const s=await setup(),write=s.deps.profileEntity.updateMany;
+ s.deps.profileEntity.updateMany=async(q,p)=>{
+  const result=await write(q,p);
+  if(p.$set.office_authority_review_state.status==='creating')s.offices[1].government_office.name='Changed Agency';
+  return result;
+ };
+ const result=await reviewOfficeAuthority(s.deps,{jurisdictionId:'profile',input:s.input,actor:'Admin',action:'verify',
+  requestId:'delegation-review-000002',expectedUpdatedDate:s.profile().updated_date});
+ assert.equal(result.status,'not_recorded');assert.equal(result.retry_safe,true);assert.equal(s.events.length,0);
+});
+test('compiled delegation context offers only separately verified same-state responsible offices',async()=>{
+ const {build}=await import('esbuild');
+ let handler;globalThis.Deno={serve:fn=>{handler=fn;}};
+ const b=await build({entryPoints:['base44/functions/permittingOfficeAuthorityReview/entry.ts'],bundle:true,write:false,
+  format:'esm',platform:'neutral',plugins:[{name:'sdk',setup(build){
+   build.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
+   build.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const createClientFromRequest=()=>globalThis.pdfDelegationClient;',loader:'js'}));
+  }}]});
+ await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'));
+ const s=await setup();s.deps.profileEntity.filter=async()=>[];
+ globalThis.pdfDelegationClient={auth:{me:async()=>({role:'admin',email:'admin@test'})},asServiceRole:{entities:{
+  JurisdictionProfile:s.deps.profileEntity,PermittingSourceDocument:s.deps.sourceEntity,GlobalSettings:s.deps.settingsEntity,
+  PermittingSourceTextSegment:s.deps.segmentEntity,PermittingOfficeAuthorityReview:s.deps.reviewEntity}}};
+ const request=()=>new Request('https://test/',{method:'POST',body:JSON.stringify({action:'context',evidence_kind:'pdf_delegation',source_document_id:'source'})});
+ let result=await (await handler(request())).json();
+ assert.deepEqual(result.offices.map(o=>o.id),['office1']);
+ s.offices[1].government_office.verification_status='needs_verification';
+ result=await (await handler(request())).json();assert.deepEqual(result.offices,[]);
+ assert.equal(s.writes(),0);assert.equal(s.events.length,0);
+});
