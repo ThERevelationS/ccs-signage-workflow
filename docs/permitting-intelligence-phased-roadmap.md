@@ -60,19 +60,19 @@ Phase 6 development may proceed on retained evidence while Phase 5 Milestones 8 
 ## Phase 6 — Exact-citation AI extraction
 Extract requirements, forms, fees, submission steps, responsible offices, applicability conditions, and conflicts from archived official sources with exact citations and source-version awareness.
 
-### Phase 6 milestones — endpoint 6.9
+### Phase 6 — 9 milestones
 
 | Milestone | Description | Status |
 |---|---|---|
-| Milestone 1 | Audit and enforce source-purpose/citation eligibility | Category validation tested; broader acceptance at 6.9 |
-| Milestone 2 | Retained text and source-version readiness | Tested; 16 live snapshots checked, 2 source exceptions retained |
-| Milestone 3 | Structured candidate schema and explicit applicability | Implemented and tested |
-| Milestone 4 | Literal citations, numeric units and page validation | Implemented and tested |
-| Milestone 5 | Idempotent extraction, continuation and credit accounting | Tested; live OH/KY replay verified |
-| Milestone 6 | Conflicts, missing evidence and historical source handling | Safeguards tested; explicit resolution at 6.8 |
-| Milestone 7 | Ohio/Kentucky supervised extraction acceptance | Selected-page pilots passed; 3 candidates staged, 4 rejected; none approved |
-| Milestone 8 | Review-ready candidate presentation and handoff | Complete: live OH/KY handoff and isolated conflict component interaction checks; browser keyboard check carried to 6.9 |
-| Milestone 9 | Final extraction acceptance before Phase 7 | Technical extraction acceptance passed; conflict browser QA carried explicitly to 7.3, not marked passed |
+| 1 of 9 | Audit and enforce source-purpose/citation eligibility | Category validation tested; broader acceptance at Phase 6 Milestone 9 of 9 |
+| 2 of 9 | Retained text and source-version readiness | Tested; 16 live snapshots checked, 2 source exceptions retained |
+| 3 of 9 | Structured candidate schema and explicit applicability | Implemented and tested |
+| 4 of 9 | Literal citations, numeric units and page validation | Implemented and tested |
+| 5 of 9 | Idempotent extraction, continuation and credit accounting | Tested; live OH/KY replay verified |
+| 6 of 9 | Conflicts, missing evidence and historical source handling | Safeguards tested; explicit resolution at Phase 6 Milestone 8 of 9 |
+| 7 of 9 | Ohio/Kentucky supervised extraction acceptance | Selected-page pilots passed; 3 candidates staged, 4 rejected; none approved |
+| 8 of 9 | Review-ready candidate presentation and handoff | Complete: live OH/KY handoff and isolated conflict component interaction checks; browser keyboard check carried to Phase 6 Milestone 9 of 9 |
+| 9 of 9 | Final extraction acceptance before Phase 7 | Technical extraction acceptance passed; conflict browser QA carried explicitly to Phase 7 Milestone 3 of 3, not marked passed |
 
 ## Phase 7 — Staff-approved regulations
 Provide staff review/approval workflows for extracted requirements, conflicts, applicability, superseded material, exceptions, and local knowledge. Preserve review history and source lineage.
