@@ -7,6 +7,7 @@ import React from 'react';
 import TestRenderer,{act} from 'react-test-renderer';
 const dir=resolve('node_modules/.cache/permitting-pdf-delegation-ui');await mkdir(dir,{recursive:true});
 const memory=new Map();globalThis.sessionStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
+let committed=false;
 const calls=[];globalThis.delegationUiInvoke=async(_name,body)=>{
  calls.push(structuredClone(body));
  if(body.action==='context')return {data:{success:true,source_review:{status:'active',publisher_name:'City Permit Center',named_areas:['Pilot','Other']},
@@ -16,7 +17,7 @@ const calls=[];globalThis.delegationUiInvoke=async(_name,body)=>{
   publisher_snapshot:{name:'City Permit Center'},office_snapshot:{name:'Regional Agency'},role_label:body.review.role,
   coverage_area:body.review.coverage_area,role_proof:body.review.role_proof}}};
  if(body.action==='verify')return {data:{success:false,status:'review_uncertain',error:'Unknown response'}};
- if(body.action==='get_request')return {data:{success:true,committed:false}};
+ if(body.action==='get_request')return {data:{success:true,committed}};
  throw Error('Unexpected request');
 };
 try{
@@ -41,6 +42,7 @@ try{
  let selects=tree.root.findAllByType('select');
  assert.deepEqual(selects[1].findAllByType('option').map(o=>o.props.value),['profile']);
  assert.deepEqual(selects[3].findAllByType('option').map(o=>o.props.value),['electrical_permit','electrical_inspection']);
+ assert.deepEqual(selects[4].findAllByType('option').map(o=>o.props.value),['','Pilot']);
  assert.match(full(),/Source publisher: City Permit Center/);
  await change(selects[2],'regional');
  await change(selects[3],'electrical_permit');
@@ -65,6 +67,10 @@ try{
  assert.equal(tree.root.findByProps({id:'office-responsibility-mode'}).props.disabled,true);
  await act(async()=>button('Resume same relationship decision').props.onClick());
  assert.deepEqual(calls.at(-1),saved);
+ committed=true;
+ await act(async()=>button('Check saved relationship review').props.onClick());
+ await act(async()=>button('Load source and office options').props.onClick());
+ assert.equal(tree.root.findAllByType('select')[3].props.value,'electrical_inspection');
  await act(async()=>tree.unmount());memory.clear();
  await act(async()=>{tree=TestRenderer.create(React.createElement(Panel,props));});
  await act(async()=>button('Load source and office options').props.onClick());

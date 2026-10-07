@@ -18,7 +18,7 @@ export default function PermittingOfficeAuthorityReview({ source, disabled, onBu
   const isDelegated = !isHtml && pdfMode === "pdf_delegation";
   const [context, setContext] = useState(null), [targetId, setTargetId] = useState(() => readPending(source.id)?.body?.jurisdiction_id || source.jurisdiction_id || "");
   const [form, setForm] = useState({ government_office_id: source.authority_review?.office_reference?.government_office_id || "",
-    role: isHtml ? "zoning" : "sign_permit", coverage_area: isHtml ? source.jurisdiction_name : "", office_alias: "", page: 1, excerpt: "", review_notes: "", role_label: "", responsibility_confirmed: false });
+    role: isHtml ? "zoning" : isDelegated ? "electrical_inspection" : "sign_permit", coverage_area: isHtml || isDelegated ? source.jurisdiction_name : "", office_alias: "", page: 1, excerpt: "", review_notes: "", role_label: "", responsibility_confirmed: false });
   const [preview, setPreview] = useState(null), [pending, setPending] = useState(() => readPending(source.id));
   const [reviews, setReviews] = useState([]), [cursor, setCursor] = useState(null), [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
@@ -126,7 +126,7 @@ export default function PermittingOfficeAuthorityReview({ source, disabled, onBu
           {LOCALITY_AUTHORITY_ROLES.filter(([role]) => isHtml ? role === "zoning" : !isDelegated || ["electrical_permit", "electrical_inspection"].includes(role)).map(([role, name]) => <option key={role} value={role}>{name}</option>)}
         </select></div>
         <div><Label>Explicit quoted coverage</Label><select className="w-full border rounded p-2" value={form.coverage_area} onChange={e => change("coverage_area", e.target.value)}>
-          <option value="">Select covered area</option>{(context.source_review?.named_areas || []).map(area => <option key={area} value={area}>{area}</option>)}
+          <option value="">Select covered area</option>{(context.source_review?.named_areas || []).filter(area => !isDelegated || area === source.jurisdiction_name).map(area => <option key={area} value={area}>{area}</option>)}
         </select></div>
       </div>
       {form.role === "other" && <div><Label>Other role, exactly as quoted</Label><Input value={form.role_label} onChange={e => change("role_label", e.target.value)} /></div>}
