@@ -1,3 +1,17 @@
+## 2026-10-07 — Cincinnati publisher reused; handout guidance classified
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Read-only catalog reconciliation confirmed Buildings & Inspections already has independently reviewed canonical identity from October 5. Reused it and verified its retained identity archive hash. Archived current Permit Center and Signs index HTML. The index links the handout using HTTP; hostname/path match the independently fetched HTTPS variant. HTTP redirect was not tested. Fresh HTTPS original PDF matches the retained 282,256-byte SHA-256 exactly. No duplicate office, upload or identity approval.
+
+Applied an exact-version/hash-guarded classification update to the existing sign source: unknown_review_required to administrative_guidance, preserving signal history and recording classification time. Full readback confirmed only classification/signals/time/updated_date changed. Currentness remains unknown, verification remains needs_verification, and archive/extraction/review histories remain unchanged. This is source routing metadata, not source approval or adopted law.
+
+Remaining publisher prerequisite: PDF page 1 prints Cincinnati Buildings & Inspections; the verified catalog name is City of Cincinnati Department of Buildings & Inspections. The source-review literal-name rule cannot accept that difference. Retained a publisher reconciliation packet; do not rewrite quotes or rename the canonical office to bypass review. Separate electrical role proof limitations remain.
+
+Verification: 2 classification/guard tests passed, complete allowed-field readback, existing/raw source hashes, index link hostname/path and fresh identical HTTPS PDF passed. Initial exact HTTPS index-link assertion exposed the retained HTTP link and was replaced with explicit scheme-aware evidence. No role approval, job workflow or frontend publication changed. Entity classification is live; the code checkpoint retains its receipt rather than restoring database state.
+
+Next: Add independently evidenced publisher alias review support for abbreviated municipal PDF department names, with exact retained alias/canonical identity provenance and fresh verification checks.
+
 ## 2026-10-07 — Admin PDF delegated-provider review interface
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.

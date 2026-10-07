@@ -72,5 +72,11 @@
   "source_publisher_alias_review_needed": true,
   "source_currentness_approved": false,
   "authority_verified": false,
-  "notes": "Reuse existing independently reviewed office. The PDF prints a shortened department label, not the full canonical catalog name. Current source review requires a literal name match; prepare independently evidenced alias support rather than altering the PDF quote or the canonical name."
+  "notes": "Reuse existing independently reviewed office. The PDF prints a shortened department label, not the full canonical catalog name. Current source review requires a literal name match; prepare independently evidenced alias support rather than altering the PDF quote or the canonical name.",
+  "current_official_index_link": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+  "current_index_host_and_path_verified": true,
+  "fetched_https_variant": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+  "http_link_redirect_verified": false,
+  "fresh_https_bytes_match_archive": true,
+  "existing_identity_archive_hash_verified": true
 }
