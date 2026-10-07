@@ -3,7 +3,7 @@ import { reconcileHistoricalSalesOutcome } from './historicalSalesOutcomeReconci
 const clean = (value) => String(value ?? '').trim();
 
 export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
-  VERSION: '0S-v1',
+  VERSION: '0T-v1',
   APPLY_ENABLED: false,
   FIRST_BATCH_SIZE: 1,
   MAX_BATCH_SIZE: 5,
@@ -17,6 +17,7 @@ export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
   RECEIPT_SCHEMA_NAME: 'OpportunityBridgeOperationReceipt',
   RECEIPT_PERSISTENCE_ACTIVE: true,
   SECONDARY_CONFIRMATION_CONFIGURED: true,
+  GUARDED_PRODUCTION_EXECUTOR_WIRED: true,
 });
 
 const RECEIPT_ANOMALY_STATES = new Set([
@@ -172,6 +173,13 @@ export function evaluateOpportunityBridgeProductionReadiness({
         : 'Secondary confirmation not configured',
     },
     {
+      key:'guarded_production_executor_wired',
+      pass:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.GUARDED_PRODUCTION_EXECUTOR_WIRED === true,
+      detail:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.GUARDED_PRODUCTION_EXECUTOR_WIRED
+        ? 'Guarded executor and exact one-record pre-pilot authorization path are wired'
+        : 'Guarded executor is not wired',
+    },
+    {
       key:'production_apply_enabled',
       pass:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED === true,
       detail:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED ? 'Production apply enabled' : 'Production apply is hard-disabled in source',
@@ -179,7 +187,7 @@ export function evaluateOpportunityBridgeProductionReadiness({
   ];
 
   const technicalChecks = checks.filter((check) =>
-    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','secondary_confirmation_configured','production_apply_enabled'].includes(check.key)
+    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','secondary_confirmation_configured','guarded_production_executor_wired','production_apply_enabled'].includes(check.key)
   );
   const rolloutChecks = checks.filter((check) => !technicalChecks.includes(check));
 
@@ -209,6 +217,7 @@ export function evaluateOpportunityBridgeProductionReadiness({
       receipt_schema_name:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_SCHEMA_NAME,
       receipt_persistence_active:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_PERSISTENCE_ACTIVE,
       secondary_confirmation_configured:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED,
+      guarded_production_executor_wired:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.GUARDED_PRODUCTION_EXECUTOR_WIRED,
       apply_enabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED,
     },
   };
