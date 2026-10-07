@@ -229,7 +229,7 @@ export default function OpportunityBridgeReview() {
                 <h3 className="font-bold text-amber-950 dark:text-amber-100">Production Apply Readiness: {readiness.decision || "NO_GO"}</h3>
               </div>
               <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                Technical checks and rollout gates are evaluated separately. Production apply remains hard-disabled in source.
+                Technical checks and rollout gates are evaluated separately. Production apply remains hard-disabled in source. Reviewing or refreshing this screen is not production authorization.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-semibold">
