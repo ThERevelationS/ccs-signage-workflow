@@ -250,6 +250,22 @@ Added:
 - authorized phrase preparation is separately gated behind both exact source authorization and `APPLY_ENABLED=true`;
 - Admin review UI explicitly states that reviewing/refreshing is not production authorization.
 
+## Final pre-checkpoint reread
+
+A final live recomputation after validators/build found:
+
+- extra-conservative eligible pilot cohort: **1**
+- deterministic first candidate: `6ab44487de80f1e43484b7cb`
+- candidate `updated_date`: `2026-10-01T23:06:04.523000`
+- matching durable receipts: **0**
+- matching Opportunities: **0**
+- WorkOrder opportunity_id: blank
+- canonical Customer alias evidence unchanged
+
+A prior read during the phase briefly observed two eligible rows while production data was changing. The deterministic first candidate did not change, and the full bound fields for this candidate still match the 0U review manifest. The review fingerprint therefore remains:
+
+`bca66b326527a614f77e05590d14d4171bfb3233af1e9159a6a089bca5425969`
+
 ## Result
 
 Phase 0U decision:
