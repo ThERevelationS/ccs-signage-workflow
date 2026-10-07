@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ruleFixture} from './permitting-rule-evidence-fixture.mjs';
-import {textSha256} from '../base44/shared/jurisdictionSourcePdfText.mjs';
+import {textSha256,assembledSourceText} from '../base44/shared/jurisdictionSourcePdfText.mjs';
 import {reviewSourceAuthority} from '../base44/shared/permittingSourceAuthorityReview.mjs';
 import {canonicalAuthorityOffice,reviewOfficeAuthority,assessOfficeAuthorityReview} from '../base44/shared/permittingOfficeAuthority.mjs';
 import {verifyPdfOfficeDelegation,explicitElectricalDelegation} from '../base44/shared/permittingPdfOfficeDelegation.mjs';
@@ -10,7 +10,7 @@ async function setup(){
  const f=await ruleFixture({source:{authority_classification:'administrative_guidance',verification_status:'needs_verification'}});
  const text='Pilot Permit Center\nCity of Pilot\nElectrical inspections are performed by Regional Agency.\nElectrical permits are issued by Regional Agency.';
  const page={...f.page,text,text_sha256:await textSha256(new TextEncoder().encode(text))};
- f.patchSource({extracted_pages:[page],jurisdiction_profile_doc_id:'doc'});
+ f.patchSource({extracted_pages:[page],extracted_text:assembledSourceText(f.source(),[page]),jurisdiction_profile_doc_id:'doc'});
  let profile={id:'profile',name:'Pilot',state:'OH',type:'city',updated_date:'p1',website_url:'https://gov.test/',
   documents:[{id:'doc',url:f.source().official_url,file_url:f.source().archived_file_url,
    source_sha256:f.source().file_hash_sha256,stored_sha256:f.source().file_hash_sha256,source_bytes:100,stored_bytes:100}]};
