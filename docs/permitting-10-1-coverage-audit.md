@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 — Cincinnati publisher publication trail (2026-10-07)
+
+Verified the retained official Signs index's exact link, handout bytes/hash, physical-page publisher text/hash, and reviewed department identity archives together. Saved publication-provenance-audit.json and a reproducible read-only audit. Eight acceptance/tamper checks pass, plus 26 source-authority regressions; targeted ESLint and production build pass. No new live source review, currentness decision, office authority approval, or publication.
+
+Route correction: the existing administrative source review already permits the exact printed publisher without an optional canonical office reference. The prior alias candidate verifier's synthetic sentence requirement is not a prerequisite for collecting/reviewing this real handout. Keep canonical office linking blocked until separately established. Updated admin help to explain the exact-name requirement and separate electrical responsibility review. The retained publication chain supports provenance only; it does not demonstrate current legal applicability or establish an alias mapping. The HTTP index link's host/path is verified; its redirect remains untested.
+
+Progress: Phase 10, Milestone 1 of 3; Task 2 remains partial. Next: prepare the handout's current-version and explicit coverage review through the existing printed-publisher route, then resolve electrical responsibility from separately retained official delegation evidence. Stop iterating on an invented alias sentence.
+
 ## Phase 10 — Milestone 1 — Publisher alias candidate evidence (2026-10-07)
 
 Added a standalone, read-only candidate verifier for shortened PDF publisher labels. It reloads the source and canonical office; requires same-state verified identity, exact profile and official host, retained archive identity, a clear physical page and matching text hash. A standalone literal identity-mapping sentence is required; name co-occurrence, qualification and paraphrase fail. Output explicitly remains candidate_only and establishes neither publisher approval, source currentness nor locality authority.
