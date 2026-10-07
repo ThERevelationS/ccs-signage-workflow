@@ -135,6 +135,7 @@ assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED, false);
 const endpoint = fs.readFileSync(new URL('../base44/functions/opportunityBridgeProductionApply/entry.ts', import.meta.url), 'utf8');
 assert(endpoint.includes('buildOpportunityBridgePilotReview'));
 assert(endpoint.includes('source_authorization_matches_fresh_review:sourceAuthorized'));
+assert(endpoint.includes('success:action === "prepare_pilot" || authorizedPreparation'));
 assert(endpoint.includes('review_response_is_not_execution_authorization:action === "prepare_pilot"'));
 assert(endpoint.includes('confirmation_phrase:authorizedPreparation ? binding?.required_phrase || "" : ""'));
 assert(endpoint.includes('action === "prepare_authorized_pilot"'));
