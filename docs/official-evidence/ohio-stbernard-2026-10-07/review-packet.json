@@ -1,0 +1,91 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "retained_originals": 3,
+  "retained_pdfs": 2,
+  "transition": {
+    "effective_date": "2026-01-01",
+    "building_candidate": "Hamilton County Building Department via ezTrak",
+    "building_phone": "513-946-4550",
+    "legacy_permits": "Village portal for permits completed before January 1, 2026",
+    "legacy_phone": "513-242-7770",
+    "zoning_candidate": "Village zoning administrator; iWorQ certificate before county building review when applicable",
+    "zoning_phone": "513-482-5684",
+    "zoning_portal": "https://stbernardoh.portal.iworq.net/",
+    "county_portal": "https://eztrak.cagis.org/"
+  },
+  "electrical_comparison": {
+    "current_page": "Contact-first table places plumbing/electrical under Hamilton County; not separate issuer/inspector proof.",
+    "publisher": "2026-02 labeled Section 1305.01(e), originating in Ord.15-2011, directs electrical plans/applications to Inspection Bureau Inc.",
+    "publisher_method": "Web-derived observation; original HTML download 403.",
+    "resolution": "Reconcile county transfer with current IBI contract/service area and intake; no automatic replacement or historical routing approval."
+  },
+  "map_review": "Visual/currentness/parcel review pending; embedded map text not parcel zoning proof.",
+  "app_storage_catalog_registration": "pending; public repository copies do not replace verified app-storage registration",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "findings": [
+    {
+      "title": "Portal application",
+      "physical_page": 1,
+      "file": "zoning-information.pdf",
+      "matched_needle": "Visit our web portal",
+      "summary": "Online zoning form route; not legacy building application.",
+      "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+      "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+      "applicability_approved": false
+    },
+    {
+      "title": "Site plan",
+      "physical_page": 1,
+      "file": "zoning-information.pdf",
+      "matched_needle": "A Site Plan must be uploaded",
+      "summary": "Scaled north-oriented plan with parcel, building and setback details.",
+      "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+      "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+      "applicability_approved": false
+    },
+    {
+      "title": "Fee and issuance",
+      "physical_page": 1,
+      "file": "zoning-information.pdf",
+      "matched_needle": "Certificates will not be issued unless fee is paid.",
+      "summary": "Sheet states $50 fee and payment before issuance; currentness pending.",
+      "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+      "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+      "applicability_approved": false
+    },
+    {
+      "title": "Review timing",
+      "physical_page": 1,
+      "file": "zoning-information.pdf",
+      "matched_needle": "five business day s",
+      "summary": "Normal review timing, not guaranteed approval deadline; raw extraction spacing preserved.",
+      "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+      "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+      "applicability_approved": false
+    },
+    {
+      "title": "Signs and county review",
+      "physical_page": 1,
+      "file": "zoning-information.pdf",
+      "matched_needle": "Signs, Temporary or Permanent",
+      "summary": "Temporary/permanent signs included; county building approval may also be needed.",
+      "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+      "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+      "applicability_approved": false
+    }
+  ]
+}
