@@ -95,9 +95,16 @@
       "file": "deer-park-fees-2026.pdf",
       "city": "Deer Park",
       "official_url": "https://www.deerpark-oh.gov/media/user/departments/2026 HAMILTON COUNTY BUILDING PERMIT FEE SCHEDULE.pdf",
-      "retrieved_at": "2026-10-07T13:09:09.864920+00:00",
-      "status": "not_archived",
-      "error": "URL can't contain control characters. '/media/user/departments/2026 HAMILTON COUNTY BUILDING PERMIT FEE SCHEDULE.pdf' (found at least ' ')"
+      "retrieved_at": "2026-10-07T13:09:23.524968+00:00",
+      "status": "archived",
+      "initial_retrieval_error": "URL can't contain control characters. '/media/user/departments/2026 HAMILTON COUNTY BUILDING PERMIT FEE SCHEDULE.pdf' (found at least ' ')",
+      "request_url": "https://www.deerpark-oh.gov/media/user/departments/2026%20HAMILTON%20COUNTY%20BUILDING%20PERMIT%20FEE%20SCHEDULE.pdf",
+      "final_url": "https://www.deerpark-oh.gov/media/user/departments/2026%20HAMILTON%20COUNTY%20BUILDING%20PERMIT%20FEE%20SCHEDULE.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "bytes": 2048710,
+      "sha256": "5fe9f8c76c869a14f04e977f2e6c1f88caf1b84ca43d221294ea014e894cb23b",
+      "retained_path": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-fees-2026.pdf"
     }
   ],
   "staff_approved": false,
