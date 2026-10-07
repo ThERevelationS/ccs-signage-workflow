@@ -1,0 +1,54 @@
+{
+  "sources": [
+    {
+      "file": "general-permits.html",
+      "official_url": "https://www.springdaleohio.gov/departments/building_inspection/general_permits/index.php",
+      "provenance": "Official department page or exact linked document",
+      "observed_at": "2026-10-07T18:45:33.856146+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "other-permits.html",
+      "official_url": "https://www.springdaleohio.gov/departments/building_inspection/general_permits/other_permits.php",
+      "provenance": "Official department page or exact linked document",
+      "observed_at": "2026-10-07T18:45:34.500280+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "online-application-guide.pdf",
+      "official_url": "https://www.springdaleohio.gov/departments/building_inspection/general_permits/Documents/Department/Development%20Regulations/Building%20Codes/Permit%20Process/10691.pdf?t=202503041035070",
+      "provenance": "Official department page or exact linked document",
+      "observed_at": "2026-10-07T18:45:35.091021+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "fee-schedule.pdf",
+      "official_url": "https://www.springdaleohio.gov/departments/building_inspection/general_permits/Documents/Department/Building%20and%20Zoning/development_fee_schedule.pdf?t=202505021102420",
+      "provenance": "Official department page or exact linked document",
+      "observed_at": "2026-10-07T18:45:35.638569+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "guide-root-candidate.pdf",
+      "official_url": "https://cms2.revize.com/revize/springdaleoh/Documents/Department/Development%20Regulations/Building%20Codes/Permit%20Process/10691.pdf?t=202503041035070",
+      "provenance": "Root CMS path candidate derived from broken official link; identity not presumed",
+      "observed_at": "2026-10-07T18:45:36.180063+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "fees-root-candidate.pdf",
+      "official_url": "https://cms2.revize.com/revize/springdaleoh/Documents/Department/Building%20and%20Zoning/development_fee_schedule.pdf?t=202505021102420",
+      "provenance": "Root CMS path candidate derived from broken official link; identity not presumed",
+      "observed_at": "2026-10-07T18:45:36.234222+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false,
+  "live_records_changed": 0
+}
