@@ -1,0 +1,20 @@
+{
+  "applied": true,
+  "updated": 1,
+  "actor": "ChatGPT via Base44 connector (user-authorized unverified identity staging)",
+  "before_version": "2026-10-05T02:29:45.065000",
+  "after_version": "2026-10-07T11:14:42.435000",
+  "catalog_id": "69e14b004e01bf082f0f8c75",
+  "catalog_office_id": "1776692961965-0.8021021998915965",
+  "changed_fields": [
+    "setting_value",
+    "updated_date"
+  ],
+  "office_count": 9,
+  "all_other_offices_preserved": true,
+  "ibi_workflow_preserved": true,
+  "canonical_identity_status": "needs_verification",
+  "authority_verified": false,
+  "locality_links_changed": false,
+  "readback_verified": true
+}

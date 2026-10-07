@@ -1,3 +1,15 @@
+## 2026-10-07 — Live unverified IBI canonical identity staged
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Applied the retained IBI identity proposal to the existing live permitOfficeCatalog with exact id/key/updated_date guard after matching its exact office snapshot SHA-256. Exactly one GlobalSettings record updated. Added only government_office_id and needs_verification government_office metadata to the existing IBI entry, reusing its original ID. No reviewer/date or authority approval was fabricated. Full readback equals the intended catalog; all nine entries and five IBI workflow steps preserved. Locality copies, links, roles, production permitting jobs and frontend publication untouched.
+
+Retained before/staged snapshots and a readback receipt. Database change is live; code checkpoint records its evidence and does not itself restore entity data. Any later reversal must guard the then-current catalog and preserve subsequent changes.
+
+Verification: exact version/hash/unique ID guards, complete catalog equality readback, allowed-field diff, per-office preservation and proposal tests passed. Frontend build not repeated for receipt-only repository changes.
+
+Next: Inspect source catalog/archive registration for the retained Cincinnati sign handout, and prepare separate electrical inspection/permit role review prerequisites. Staff identity verification remains open.
+
 ## 2026-10-07 — Guarded IBI office identity proposal
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
