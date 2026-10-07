@@ -96,7 +96,9 @@ export async function evaluateOpportunityBridgePilotAuthorization({
     ),
     check(
       'durable_receipt_ledger_clean',
-      receiptLedgerSummary != null && Number(receiptSummary?.anomaly_count || 0) === 0,
+      receiptLedgerSummary != null &&
+        Number(receiptSummary?.anomaly_count || 0) === 0 &&
+        Number(receiptSummary?.unresolved_count || 0) === 0,
       receiptLedgerSummary == null
         ? 'Durable receipt ledger summary unavailable.'
         : `${Number(receiptSummary?.anomaly_count || 0)} durable receipt identity anomalies; ${Number(receiptSummary?.unresolved_count || 0)} unresolved receipts.`
