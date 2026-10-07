@@ -1,0 +1,26 @@
+{
+  "sources": [
+    {
+      "file": "development-services.html",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/",
+      "observed_at": "2026-10-07T17:14:02.714771+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "digital-permitting.html",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/learn_about.php",
+      "observed_at": "2026-10-07T17:14:03.406875+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "applications.html",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/applications_and_forms.php",
+      "observed_at": "2026-10-07T17:14:03.943339+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "live_records_changed": 0
+}
