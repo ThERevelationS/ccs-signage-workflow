@@ -161,6 +161,9 @@ export default function OpportunityBridgeReview() {
 
   const summary = result?.summary || {};
   const readiness = result?.readiness || null;
+  const receiptLedger = result?.receipt_ledger || null;
+  const confirmationContract = result?.secondary_confirmation_contract || null;
+  const confirmationBinding = result?.secondary_confirmation_binding || null;
   const previousSummary = previous?.summary || null;
   const safeTotal = number(summary.proposed_create) + number(summary.proposed_recover_link) + number(summary.already_linked);
   const previousSafe = previousSummary
@@ -251,6 +254,27 @@ export default function OpportunityBridgeReview() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            <div className="rounded-xl border border-amber-200 bg-white/80 p-3 text-xs dark:border-amber-900 dark:bg-slate-900/70">
+              <div className="font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">Durable receipt foundation</div>
+              <div className="mt-1 text-slate-700 dark:text-slate-300">
+                Active · {number(receiptLedger?.total).toLocaleString()} records · {number(receiptLedger?.anomaly_count).toLocaleString()} identity anomalies · {number(receiptLedger?.unresolved_count).toLocaleString()} unresolved
+              </div>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-white/80 p-3 text-xs dark:border-amber-900 dark:bg-slate-900/70">
+              <div className="font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">Secondary confirmation contract</div>
+              <div className="mt-1 text-slate-700 dark:text-slate-300">
+                {confirmationContract?.configured ? "Configured" : "Not configured"} · {confirmationContract?.mode || "unknown"} · exact admin actor + exact run + exact batch
+              </div>
+              {confirmationBinding && (
+                <div className="mt-1 break-all font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                  Run {confirmationBinding.run_id} · batch {String(confirmationBinding.batch_fingerprint || "").slice(0, 12)}… · expires {confirmationBinding.expires_at}
+                </div>
+              )}
+              <div className="mt-1 text-slate-500 dark:text-slate-400">Confirmation phrase/token is not stored or exposed by this review screen.</div>
+            </div>
           </div>
 
           {(readiness.first_batch || []).length > 0 && (
