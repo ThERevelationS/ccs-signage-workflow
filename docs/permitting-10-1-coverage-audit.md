@@ -1,3 +1,15 @@
+## Cincinnati electrical migration and separate role resources — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete; task 2 office reconciliation remains partial. Initial clean HEAD b6b6506dd9cae191104651a286781d8b43d74e3f; concurrent work preserved. Existing City archives and research candidate retained.
+
+Provider homepage currently directs Ohio electrical permit and plan-review applications to CAGIS ezTrak effective September 14, 2026; its older cash/account electronic permit center is labeled Kentucky only. Downloaded official ezTrack-NewUser.pdf: 47,398 bytes with signature, SHA-256, source URL and timestamp verified. Public PDF text identifies Cincinnati/Hamilton County and IBI-PMT versus IBI-RVW. Original PDF is retained; not a reconstructed document.
+
+New provider/role-resource-reconciliation.json records separate unapproved permit issuer and inspection provider resource slots. Retains current submission and commercial plan-review links, distinct inspection scheduling link and observed required form inputs. No form submitted. Example inspection types are not promoted into mandatory sign stages. Canonical identity/staff authority, fees, sign/new-circuit scope, contractor requirements, scheduling applicability after migration, access, reinspection and utility release remain gaps.
+
+Raw provider HTML downloads returned HTTP 406; retained manifests report errors rather than fake archives. Web extraction exposed page content; portal public fetch returned 502, so operational/authenticated acceptance remains unverified. Remote PDF text tools unavailable; original PDF signature/hash checked, contents read through public PDF extraction. No production data, authority approval, frontend publish, backend resources or LLM-credit changes.
+
+Validation: PDF bytes/hash and distinct unapproved role slots pass; git diff --check passes. Next: capture fee/submittal files and extend reviewed authority vocabulary to separate electrical issuance and inspection with evidence gates. Ohio remains before Kentucky.
+
 ## Four Ohio locality type corrections applied — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 has now completed the four evidence-supported profile type corrections; exhaustive identity/duplicate/history and office reconciliation remain partial. Task 4 full read-only live acceptance remains pending.

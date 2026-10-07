@@ -1,0 +1,70 @@
+{
+  "state": "OH",
+  "locality": "Cincinnati",
+  "provider": "Inspection Bureau, Inc.",
+  "authority_verified": false,
+  "staff_approved": false,
+  "observation_date": "2026-10-07",
+  "roles": {
+    "electrical_permit": {
+      "status": "unapproved_candidate",
+      "submission_url": "https://eztrak.cagis.org/CitizenAccess/Default.aspx",
+      "provider_published_migration_effective": "2026-09-14T07:30:00-04:00",
+      "migration_notice_url": "https://www.inspectionbureau.com/",
+      "account_instructions_archive": {
+        "url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+        "final_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+        "file": "eztrak-new-user.pdf",
+        "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+        "bytes": 47398,
+        "retrieved_at": "2026-10-07T00:58:56.097468+00:00",
+        "authority_verified": false
+      },
+      "record_prefixes": {
+        "permit": "IBI-PMT",
+        "plan_review": "IBI-RVW"
+      },
+      "commercial_plan_review_url": "https://www.inspectionbureau.com/electrical-plan-review/",
+      "old_cash_account_pages": "Homepage labels electronic permit center Kentucky only; not current Ohio submission paths",
+      "unresolved": [
+        "current fees and forms",
+        "sign-specific applicability",
+        "contractor registration/licensing",
+        "new-circuit/connection scope",
+        "canonical identity and staff authority review"
+      ]
+    },
+    "electrical_inspection": {
+      "status": "unapproved_candidate",
+      "scheduling_url": "https://www.inspectionbureau.com/online-inspection-scheduling/",
+      "observed_required_inputs": [
+        "contractor name",
+        "email",
+        "phone",
+        "IBI permit number",
+        "job address",
+        "residential/commercial selection",
+        "inspection type",
+        "exact area"
+      ],
+      "submission_tested": false,
+      "example_types_are_mandatory_stages": false,
+      "unresolved": [
+        "Ohio scheduling applicability after migration",
+        "required sign inspection stages",
+        "lead times",
+        "access/concealment rules",
+        "reinspection fees",
+        "utility release",
+        "canonical identity and staff authority review"
+      ]
+    }
+  },
+  "limitations": [
+    "Public web extraction shows provider notice, scheduling fields and PDF text; original HTML downloads returned 406.",
+    "Portal linked by provider but public fetch returned 502; operational availability not verified.",
+    "PDF references Cincinnati/Hamilton County; does not prove every local government service area.",
+    "Older 2019 plan guidance requires current applicability review.",
+    "Generic electrical authority is not two verified roles."
+  ]
+}
