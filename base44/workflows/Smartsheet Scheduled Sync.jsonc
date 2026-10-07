@@ -19,8 +19,8 @@
           },
           "then": "end",
           "x-base44": {
-            "title": "Run Smartsheet bidirectional sync",
-            "description": "Pulls Smartsheet \u2192 Base44 and pushes Base44 \u2192 Smartsheet for both Sales Pipeline and Order Form datasets."
+            "title": "Run scheduled Smartsheet sync",
+            "description": "Runs configured Sales Pipeline pull/push directions and Order Form pull only. Order Form background push is locked OFF; use explicit Save & Sync for Base44 \u2192 Smartsheet Order writes."
           }
         }
       }
@@ -44,5 +44,5 @@
       "ends_after_count": null
     }
   },
-  "description": "Automatically syncs Base44 \u2194 Smartsheet every 15 minutes, both directions (push and pull) for Sales Pipeline and Order Form. Runs server-side \u2014 continues even when no one has the app open. Only runs when global sync is enabled and observation mode is off."
+  "description": "Runs every 15 minutes server-side. Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled, but background push and automatic record creation are locked OFF; Order writes use explicit Save & Sync. Only runs when global sync is enabled and observation mode is off."
 }
