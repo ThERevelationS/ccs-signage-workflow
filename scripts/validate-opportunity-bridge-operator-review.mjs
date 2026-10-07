@@ -18,6 +18,10 @@ assert(review.includes('proposed_opportunity'), 'Review UI must expose the propo
 assert(review.includes('receipt_key'), 'Review UI must expose the immutable receipt identity.');
 assert(review.includes('Production Apply Readiness'), 'Review UI must expose the read-only production readiness gate.');
 assert(review.includes('readiness.checks'), 'Review UI must display each readiness check.');
+assert(review.includes('Durable receipt foundation'), 'Review UI must expose durable receipt foundation state.');
+assert(review.includes('Secondary confirmation contract'), 'Review UI must expose secondary-confirmation configuration.');
+assert(review.includes('exact admin actor + exact run + exact batch'), 'Review UI must explain exact binding requirements.');
+assert(review.includes('Confirmation phrase/token is not stored or exposed'), 'Review UI must state that confirmation secret material is not exposed.');
 assert(review.includes('Proposed first batch — planning only'), 'Review UI must label the first batch as planning-only.');
 assert(review.includes('localStorage'), 'Review UI must support client-local drift comparison without production writes.');
 
