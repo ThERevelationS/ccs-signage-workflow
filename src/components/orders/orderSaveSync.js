@@ -105,6 +105,17 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       message: `Smartsheet accounted for ${accounted} of ${expected} requested Orders. Unaccounted Orders will stay queued.`,
     };
   }
+  const missingPermanentRows = item?.missing_permanent_row_links === undefined
+    ? 0 : readCount(item.missing_permanent_row_links);
+  if (missingPermanentRows === null) {
+    return { ok: false, message: "Smartsheet returned an invalid missing-row review count. The requested Orders will stay queued." };
+  }
+  if (missingPermanentRows > 0) {
+    return {
+      ok: false,
+      message: `${missingPermanentRows} Order${missingPermanentRows === 1 ? " has" : "s have"} a stored permanent Smartsheet row ID that no longer exists. Base44 preserved the original link and local data. Review permanent IDs; no automatic relink or replacement-row create was attempted.`,
+    };
+  }
   const remainingRecords = item?.remaining_records === undefined ? 0 : readCount(item.remaining_records);
   if (remainingRecords === null || remainingRecords > 0) {
     return {
