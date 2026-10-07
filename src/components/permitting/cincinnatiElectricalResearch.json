@@ -1,0 +1,30 @@
+{
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "name": "Cincinnati",
+  "state": "OH",
+  "type": "city",
+  "observed_on": "2026-10-07",
+  "resources": [
+    {
+      "label": "Ohio ezTrak account instructions",
+      "source": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+      "file": "eztrak-new-user.pdf",
+      "note": "Account instructions; portal operation and sign applicability remain unverified.",
+      "archive": "/permitting-evidence/cincinnati-electrical/eztrak-new-user.pdf"
+    },
+    {
+      "label": "Provider fee schedule effective January 2025",
+      "source": "https://www.inspectionbureau.com/wp-content/uploads/2025/01/Fee-Schedule-Eff.-1-1-2025.pdf",
+      "file": "fee-schedule-effective-2025-01-01.pdf",
+      "note": "Confirm current fees and applicability before use.",
+      "archive": "/permitting-evidence/cincinnati-electrical/fee-schedule-effective-2025-01-01.pdf"
+    },
+    {
+      "label": "Historical electrical plan routing (2020)",
+      "source": "https://www.inspectionbureau.com/wp-content/uploads/2020/06/Web-2020-Link-Updated-Electrical-Plan-Review.pdf",
+      "file": "plan-review-routing-2020.pdf",
+      "note": "Historical reference; routing may be superseded by the 2026 ezTrak migration.",
+      "archive": "/permitting-evidence/cincinnati-electrical/plan-review-routing-2020.pdf"
+    }
+  ]
+}
