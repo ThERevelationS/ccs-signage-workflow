@@ -168,3 +168,16 @@ test('Delhi sign packet preserves page evidence, anomalies and separate pending 
  assert.equal(p.address_comparison.approved,false);
  assert.ok(p.findings.some(f=>f.matched_text==='MONROE COUNTY, INDIANA'));
 });
+
+test('Ohio electrical legacy form is not promoted to current submission or coverage authority',()=>{
+ const root='docs/official-evidence/ohio-electrical-application-review-2026-10-07/',p=JSON.parse(readFileSync(root+'routing-review.json')),m=JSON.parse(readFileSync(root+'manifest.json'));
+ assert.equal(m.sources.length,3);assert.ok(m.sources.every(s=>s.status==='retention_gap'&&!s.sha256));
+ assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.service_area_approved,false);
+ assert.equal(p.observations[1].current_submission_route_approved,false);
+ for(const id of ['6ac1aae70e3a16c893d4e506','6ac19f1c2fbbf3b8bb27397c']){
+ const row=dossiers.find(r=>r.id===id),html=render(row);
+ assert.match(html,/older form is not a confirmed current Ohio route/);
+ assert.equal(row.notes.filter(n=>n.startsWith('The electrical provider homepage')).length,1);
+ assert.equal(row.references.filter(r=>r.url===p.observations[2].url).length,1);
+ assert.equal(row.online_form_url,undefined);}
+});
