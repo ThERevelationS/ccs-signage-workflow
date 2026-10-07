@@ -1,0 +1,41 @@
+{
+  "file": "delhi-permanent-sign-application.pdf",
+  "official_url": "https://delhi.oh.us/DocumentCenter/View/729/Application-for-Zoning-Certificate---Permanent-Signs-PDF",
+  "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915",
+  "source_bytes": 200789,
+  "total_pages": 3,
+  "pages_with_embedded_text": 3,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Updated 0 4 /2021 Page 1 of 3 \nApplication # \nDEPARTMENT OF COMMUNITY DEVELOPMENT \n697 Neeb Road, Cincinnati, Ohio 45233 \nPhone: (513) 922 - 2705 Email: zoning@delhi.oh.us \n** PLEASE READ BEFORE COMPLETING THE APPLICATION ** \n• Signs also require a building permit from Hamilton County Building s & Inspections. For \ndetails, please contact: \no Hamilton County Building s & Inspections (513) 946 - 45 50 . \n▪ It is the responsibility of the applicant to file all necessary application \nmaterials with the previously listed agenc y , if required. \n▪ The listed agency is notified of all approved Zoning Certificates. \n• All projects related to this zoning certificate shall be conditional upon the commencement of \nwork within six (6) months, and may be revoked if work has not been substantially \ncompleted within eighteen (18) mon ths. \n• The applicant agrees to properly restore all disturbed surfaces to their original condition . \n• Applicant shall call for inspection once the project(s) complete. Minimum 24 - hour notice is \nrequired. \n• Failure to submit a complete application , including fees, may result in the delay or denial of \nthe application. \n• Applicant /property owner are responsible for property line verification prior to \nconstruction. \n• Delhi Township is not responsible for structures placed within any easement. \n• Applications s hall be either approve d or d en ied within three (3) to five (5) business days \nafter receipt of a complete application. \nApplicant Information (Please print clearly) \nApplicant: Owner Agent Tenant Other \nCompany: \nApplicants Street Address: \nCity, State, and Zip Code: \nTelephone Number: Email: \nProject Site Inf ormation (Please print clearly) \nAddress for Permit: Property Zoning District: \nOwner of Property: \nOwner’s Street Address: \nCity, State, and Zip Code: \nTelephone Number: Email: \nDescription of Project: \nWork to begin on or about and will require approximately ____ days. \nApplication for Zoning Certificate – Permanent Signs",
+      "text_sha256": "39fa5643de4f668d6b230ba96622894e314dba88958e3c850cc8cfc3c425e5fd",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915"
+    },
+    {
+      "page": 2,
+      "text": "Updated 0 4 /2021 Page 2 of 3 \nIn addition to completing the inf ormation on page one (1) of this application, you are required to \nsubmit the following are planned, please complete each applicable section: \nPermanent Signs: (Residential/Non - Residential) \n• Four ( 4 ) or six ( 6 ) complete sets of drawings (th e number required by Hamilton County, plus one \nset for the Township), including site plans and construction drawings. \n• Site plans shall include the actual dimensions and shape of the lot, and show the location and \nsetbacks from all property lines for existing and proposed structures. \n• Construction drawings shall indicate , for each proposed sign , elevations showing the signs’ \ndesign & layout / square footage /height, description of proposed illumination (interior/exterior) , \nand gradi ng plan (as warranted) . \n• For all lit signs, a p hotometric drawing showing the proposed footcandle measurement at all \nproperty lines. \n• Photographs, dimensions and square footage of all existing signage located on the property \nincluding wall, window and freest anding signs. \nTotal Cost of Improvements : $ \nApplicants Notes : \nThe applicant agrees to comply with: \n• The information contained on the approved permit. \n• The plans submitted in accordance with the approved permit. \n• All modifications, restrictions and/or regulations as assigned by the Delhi Township \nDepartment of Community Development, and Hamilton County Buildings & Inspections. \n• Making request for a Final Inspection o f approved improvements toward the issuance of \nCertificate of Compliance and grants to the Township permission to access the subject \nproperty so as to make inspections. \nApplicant understands that any violation of the Delhi Township Zoning Resolution, any false \ninformation on this application, and any occupancy before final inspection has been made and a \nCertificate of Compliance is issued will result in penalties as provided in the Delhi Township \nZoning Resolution. \nI hereby attest to the truth and exactne ss of all information supplied on and with this application. \nSignature of Applicant: Date: \nSignature of Tenant/Occupant: Date: \nSignature of Owner: Date:",
+      "text_sha256": "a2d3d749f4aae1309972090d1d79d41441283e26caa6edd2b1a94bfbcd35f613",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915"
+    },
+    {
+      "page": 3,
+      "text": "Updated 0 4 /2021 Page 3 of 3 \nFOR OFFICE USE ONLY \nReceived Stamp: Fees: \nNew Sign : $ 100 + Sq . Ft. x $ 1.50 \nFace Change : $ 100 + Sq . Ft. x $ 1.00 \nFees Doubled (per Section 22.6, G) □ \nTotal Fees Due: __________ \nZoning Reviewer Notes : \nPermit Approved: Permit Denied: \nReason for Denial (if applicable): \nPermit Issued By: Date:",
+      "text_sha256": "a96752a05a76446526cbfce281f750cf4ac46ad5c5ce37cc412ce754b2a629ee",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915"
+    }
+  ]
+}

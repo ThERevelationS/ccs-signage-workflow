@@ -50,6 +50,28 @@
       "bytes": 98805,
       "sha256": "d42b5622df37463b94891b9180f2ef7da7313c1394ee5d15f33b90a9d7c19621",
       "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-form-center.html"
+    },
+    {
+      "file": "delhi-permanent-sign-application.pdf",
+      "official_url": "https://delhi.oh.us/DocumentCenter/View/729/Application-for-Zoning-Certificate---Permanent-Signs-PDF",
+      "observed_at": "2026-10-07T17:17:09.128790+00:00",
+      "final_url": "https://delhi.oh.us/DocumentCenter/View/729/Application-for-Zoning-Certificate---Permanent-Signs-PDF",
+      "http_status": 200,
+      "status": "archived",
+      "bytes": 200789,
+      "sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915",
+      "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-permanent-sign-application.pdf"
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "official_url": "https://delhi.oh.us/DocumentCenter/View/737/Delhi-Zoning-Resolution-PDF",
+      "observed_at": "2026-10-07T17:17:10.181771+00:00",
+      "final_url": "https://delhi.oh.us/DocumentCenter/View/737/Delhi-Zoning-Resolution-PDF",
+      "http_status": 200,
+      "status": "archived",
+      "bytes": 5837587,
+      "sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "retained_path": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-zoning-resolution.pdf"
     }
   ],
   "staff_approved": false,
