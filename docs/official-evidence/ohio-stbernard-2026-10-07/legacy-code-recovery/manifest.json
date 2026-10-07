@@ -1,0 +1,10 @@
+{
+  "sources": [
+    {
+      "file": "legacy-zoning-code.pdf",
+      "official_url": "https://www.stbernardpolice.org/pdfs/City%20Ord/G-ZONING.pdf",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}
