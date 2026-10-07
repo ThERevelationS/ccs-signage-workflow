@@ -1312,6 +1312,7 @@ async function pushDataset(
   const errors: string[] = [];
   const salesFailedRecordIds = new Set<string>();
   const orderFailedRecordIds = new Set<string>();
+  const orderMissingPermanentRows = new Map<string, string>();
   let requestorContactsSkippedNoEmail = 0;
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
   const salesReviews = dataset === 'sales' ? await loadAllEntityRows({entity:base44.asServiceRole.entities.SyncConflict,query:{dataset:'sales',sheet_id:sheetId,status:{$in:['open','approved']}},sort:'id',label:'Sales review evidence'}) : [];
