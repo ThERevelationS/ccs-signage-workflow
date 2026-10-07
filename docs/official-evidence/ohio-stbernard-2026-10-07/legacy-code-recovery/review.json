@@ -1,0 +1,61 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Web-derived paraphrased observations, not retained original content.",
+  "sections": [
+    {
+      "section": "1185.001",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21707",
+      "version": "2026-01",
+      "observation": "Definitions distinguish on-premises business and off-premises advertising; area depends on exposed faces. Content-based exclusions and billboard wording require current legal review, not automatic permit exemption."
+    },
+    {
+      "section": "1185.01",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21723",
+      "version": "2026-01",
+      "observation": "Advertising sign setback depends on district front yard; facing restrictions address residential lots and listed civic/institutional sites. Expressway advertising expressly cross-references Chapter 711."
+    },
+    {
+      "section": "1185.03",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21739",
+      "version": "2026-01",
+      "observation": "Real-estate sign provisions distinguish individual and aggregate area, yard-relative setback and flat wall placement; these are category-specific candidates, not universal sign limits."
+    },
+    {
+      "section": "1185.04",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21746",
+      "version": "2024-04",
+      "observation": "Home-occupation/dwelling professional or announcement signs and institutional bulletin boards have distinct size/placement provisions."
+    },
+    {
+      "section": "1185.05",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21750",
+      "version": "2026-02",
+      "observation": "General flashing and freestanding prohibitions coexist with service-station freestanding allowance in 1185.02(c) and institutional placement in 1185.04. Exception hierarchy unresolved; no blanket freestanding ban or permission."
+    },
+    {
+      "section": "1185.07",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21758",
+      "version": "2026-02",
+      "observation": "Variance requests are directed to Zoning Board of Appeals; no granted variance or current filing route inferred."
+    }
+  ],
+  "chapter_1185_web_section_observations_complete": true,
+  "official_original_chapter_retained": false,
+  "legacy_pdf": {
+    "url": "https://www.stbernardpolice.org/pdfs/City%20Ord/G-ZONING.pdf",
+    "web_reported_pages": 154,
+    "observation": "Legacy index lists South Vine Development District and Hearing Examiner; publisher index lists Heritage Hill and repealed Hearing Examiner. Legacy PDF cannot establish current rules; date/cutoff unknown.",
+    "original_retained": false
+  },
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Review Chapter 711 and 1186, then current county/IBI delegation; original downloads/catalog registration remain gaps."
+}
