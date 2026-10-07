@@ -3,6 +3,7 @@ import {
   SALES_SYNC_ALLOWED_FIELDS,
   filterSalesColumnBindings,
   isLegacyTerminalSalesTask,
+  hasDownstreamOperationalSmartsheetEvidence,
   salesPulledFieldsUnchanged,
   salesPullSnapshotAligned,
   salesPushRecordUnchanged,
@@ -79,7 +80,42 @@ assert(
 );
 assert(
   shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Example Client", current_task_description: "Prospect Initiation" }) === true,
-  "Active Smartsheet rows with a real customer should still create as modern pipeline opportunities."
+  "Pre-order Smartsheet rows with a real customer should still create as current Sales candidates."
+);
+for (const [field, value] of [
+  ["date_order_created", "2026-10-07"],
+  ["project_install_date", "2026-10-21"],
+  ["permit_receipt_confirmed_date", "2026-10-08"],
+  ["permit_approved_date", "2026-10-09"],
+  ["permit_number", "P-12345"],
+]) {
+  assert(
+    hasDownstreamOperationalSmartsheetEvidence({ [field]: value }) === true,
+    `${field} must count as objective downstream operational evidence.`
+  );
+  assert(
+    shouldCreateSmartsheetSalesRecordInPipeline({
+      client_name: "Example Client",
+      current_task_description: "Follow up with Customer - Post-Estimate",
+      [field]: value,
+    }) === false,
+    `${field} must keep a new Smartsheet WorkOrder out of Current Pipeline without inferring Won/Lost.`
+  );
+}
+assert(
+  hasDownstreamOperationalSmartsheetEvidence({
+    site_survey_date: "2026-10-08",
+    estimate_amount: 2500,
+    lead_source: "Web",
+  }) === false &&
+  shouldCreateSmartsheetSalesRecordInPipeline({
+    client_name: "Example Client",
+    current_task_description: "Conduct Site Survey",
+    site_survey_date: "2026-10-08",
+    estimate_amount: 2500,
+    lead_source: "Web",
+  }) === true,
+  "Pre-sale survey/estimate/source evidence must not be mistaken for downstream operations."
 );
 assert(
   shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "", current_task_description: "Prospect Initiation" }) === false &&
