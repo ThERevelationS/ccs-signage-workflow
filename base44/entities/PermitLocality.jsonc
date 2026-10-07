@@ -77,6 +77,8 @@
                 "zoning",
                 "building",
                 "electrical",
+                "electrical_permit",
+                "electrical_inspection",
                 "right_of_way",
                 "historic_review",
                 "planning",

@@ -8,7 +8,7 @@ const evidenceFields=['profile_snapshot','office_snapshot','source_snapshot','so
  'evidence_kind','html_evidence_id','publisher_snapshot','office_link_proof','role','role_label','coverage_kind','coverage_basis','source_profile_id'];
 
 export const OFFICE_AUTHORITY_METHOD='office-authority-v1';
-export const OFFICE_AUTHORITY_ROLES=['sign_permit','zoning','building','electrical','right_of_way','historic_review','planning','transportation','other'];
+export const OFFICE_AUTHORITY_ROLES=['sign_permit','zoning','building','electrical','electrical_permit','electrical_inspection','right_of_way','historic_review','planning','transportation','other'];
 const profileIdentity=p=>Object.fromEntries(['id','name','state','type'].map(k=>[k,p[k] ?? null]));
 const clean=(value,max=1000)=>{if(typeof value!=='string')return '';const v=value.trim();if(v.length>max)throw evidenceError('Review field exceeds its processing bound.',400);return v;};
 const requestKey=(profile,id)=>'office-authority:'+profile+':'+id;
@@ -16,6 +16,19 @@ const validRequest=id=>/^[a-zA-Z0-9_-]{16,100}$/.test(id || '');
 const roleSignals={sign_permit:/sign[\s-]*(?:permit|application)|(?:permit|application)[\s-]*sign/i,
  zoning:/zoning/i,building:/building/i,electrical:/electric(?:al)?/i,right_of_way:/right[ -]of[ -]way|public works/i,
  historic_review:/historic|design review/i,planning:/planning/i,transportation:/transportation|department of transportation/i};
+// Separate electrical responsibilities require their own explicit affirmative quote.
+// These lexical gates supplement retained-page, canonical-office and staff scope review.
+export function officeRoleProofMatches(role,excerpt,label='') {
+ if(typeof excerpt!=='string')return false;
+ if(role==='other')return Boolean(label && excerpt.includes(label));
+ if(['electrical_permit','electrical_inspection'].includes(role)){
+  if(/\b(?:not|never|no|cannot|can't|doesn't|don't|without)\b/i.test(excerpt))return false;
+  if(!/\belectric(?:al)?\b/i.test(excerpt))return false;
+  if(role==='electrical_permit')return /\bpermits?\b/i.test(excerpt) && /\b(?:issu(?:e|es|ed|ing)|permitting|process(?:es|ed|ing)?|handl(?:e|es|ed|ing))\b/i.test(excerpt);
+  return /\binspections?\b/i.test(excerpt) && /\b(?:perform(?:s|ed|ing)?|conduct(?:s|ed|ing)?|provid(?:e|es|ed|ing)|inspect(?:s|ed|ing)|responsib(?:le|ility))\b/i.test(excerpt);
+ }
+ return Boolean(roleSignals[role]?.test(excerpt));
+}
 export async function canonicalAuthorityOffice(settingsEntity,id,publisher,state){
  const rows=await settingsEntity.filter({setting_key:'permitOfficeCatalog'},'id',2,0);
  if(!Array.isArray(rows) || rows.length!==1 || !Array.isArray(rows[0].setting_value?.items))throw evidenceError('Shared office catalog is missing or ambiguous.');
@@ -54,7 +67,7 @@ async function verifyEvidence(deps,profile,input){
   raw.excerpt.trim().length<10 || raw.excerpt.length>1000)throw evidenceError('Role evidence requires an exact retained physical-page quote.',400);
  const pages=await readSourceEvidencePages({source,segmentEntity,startPage:raw.physical_page,pageCount:1}),page=pages.pages[0];
  if(!page || page.truncated || page.needs_ocr_review || !page.text.includes(raw.excerpt))throw evidenceError('Role quote is not exact retained page evidence.');
- if(role==='other' ? !label || !raw.excerpt.includes(label) : !roleSignals[role].test(raw.excerpt))
+ if(!officeRoleProofMatches(role,raw.excerpt,label))
   throw evidenceError('The quote must explicitly identify the selected role; an unrelated form attachment does not automatically establish office responsibility.');
  return {profile_snapshot:profileIdentity(profile),office_snapshot:office,source_document_id:source.id,
   source_snapshot:sourceAuthoritySnapshot(source),source_review_id:scope.review_id,role,role_label:label || role,

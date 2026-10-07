@@ -4,7 +4,7 @@ import {build} from 'esbuild';
 import {ruleFixture} from './permitting-rule-evidence-fixture.mjs';
 import {textSha256,assembledSourceText} from '../base44/shared/jurisdictionSourcePdfText.mjs';
 import {reviewSourceAuthority} from '../base44/shared/permittingSourceAuthorityReview.mjs';
-import {reviewOfficeAuthority,assessOfficeAuthorityReview,listOfficeAuthorityReviews,getOfficeAuthorityRequest,OFFICE_AUTHORITY_ROLES} from '../base44/shared/permittingOfficeAuthority.mjs';
+import {reviewOfficeAuthority,assessOfficeAuthorityReview,listOfficeAuthorityReviews,getOfficeAuthorityRequest,OFFICE_AUTHORITY_ROLES,officeRoleProofMatches} from '../base44/shared/permittingOfficeAuthority.mjs';
 import {LOCALITY_AUTHORITY_ROLES} from '../src/components/permitting/localityAuthorityVerification.js';
 let authorityHandler;
 const bundle=await build({entryPoints:['base44/functions/permittingOfficeAuthorityReview/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',
@@ -227,4 +227,18 @@ test('named village PDF office review preserves exact area and stale identity gu
  assert.equal(r.proposal.address_authority_resolved,false);assert.equal(t.counts.creates,0);
  await assert.rejects(t.review({jurisdictionId:'town',expectedUpdatedDate:t.profiles.town.updated_date,input:{...t.input,coverage_area:'Other village'},dryRun:true}));
  assert.equal(t.counts.creates,0);
+});
+
+test('separate electrical proof requires affirmative responsibility, not generic contact or opposite role',()=>{
+ assert.equal(officeRoleProofMatches('electrical_permit','Electrical permits are issued by the Inspection Bureau.'),true);
+ assert.equal(officeRoleProofMatches('electrical_inspection','The Inspection Bureau performs electrical inspections.'),true);
+ for(const quote of ['Electrical department contact','Electrical permits are issued by the Inspection Bureau.','The office does not perform electrical inspections.'])assert.equal(officeRoleProofMatches('electrical_inspection',quote),false);
+ for(const quote of ['Electrical department contact','The Inspection Bureau performs electrical inspections.','The office does not issue electrical permits.'])assert.equal(officeRoleProofMatches('electrical_permit',quote),false);
+});
+test('specific issuer review records only that role and preserves legacy broad vocabulary',async()=>{
+ const t=await setup();const input={...t.input,role:'electrical_permit',role_proof:{physical_page:1,excerpt:'Electrical permit applications are handled by Pilot Planning Department.'}};
+ const result=await t.review({input});assert.equal(t.events[0].role,'electrical_permit');assert.equal(t.counts.creates,1);assert.equal(OFFICE_AUTHORITY_ROLES.includes('electrical'),true);
+});
+test('inspection review rejects issuer-only retained quote before event creation',async()=>{
+ const t=await setup();await assert.rejects(()=>t.review({input:{...t.input,role:'electrical_inspection',role_proof:{physical_page:1,excerpt:'Electrical permit applications are handled by Pilot Planning Department.'}}}),/selected role/);assert.equal(t.counts.creates,0);
 });
