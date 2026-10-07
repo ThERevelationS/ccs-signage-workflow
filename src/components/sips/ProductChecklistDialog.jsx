@@ -1781,7 +1781,7 @@ export default function ProductChecklistDialog({
                                 </div>
                                 {/* Subtasks */}
                                 {(checklistChildrenByParentType.get(task.id)?.subtask || []).map(subtask => (
-                                  <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                  <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-1 sm:ml-4 mt-0.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
                                       <Checkbox 
                                         id={`sips-complete-${subtask.id}`}
@@ -2051,7 +2051,7 @@ export default function ProductChecklistDialog({
                                           </div>
                                           {/* Subtasks under detail task */}
                                           {(checklistChildrenByParentType.get(task.id)?.subtask || []).map(subtask => (
-                                            <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                            <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-1 sm:ml-3 mt-0.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                               <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
                                                 <Checkbox 
                                                   id={`sips-complete-${subtask.id}`}
