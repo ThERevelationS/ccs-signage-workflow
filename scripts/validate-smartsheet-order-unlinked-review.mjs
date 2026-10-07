@@ -47,7 +47,7 @@ assert.match(engine, /orderUnlinkedRowCount = audit\.counts\.unlinked_smartsheet
 assert.match(engine, /orderUnlinkedRowIds = audit\.samples\.unlinked_rows/);
 assert.match(engine, /unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount/);
 assert.match(engine, /records_examined: dataset === 'orders' \? existingRecords\.length : allRows\.length/);
-assert.match(engine, /else if \(profile\?\.create_base44_from_smartsheet\)/);
+assert.match(engine, /else if \(dataset === 'sales' && profile\?\.create_base44_from_smartsheet\)/);
 assert.match(reviewUI, /key: "unlinked_rows"/);
 assert.match(reviewUI, /No matching active Base44 Order/i);
 assert.match(adminUI, /r\.unlinked_smartsheet_rows_flagged_for_review/);
