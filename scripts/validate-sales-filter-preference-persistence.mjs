@@ -60,8 +60,8 @@ check(page.includes('selected.find((filter) => filter.type === "column_preset"')
   "A saved Column Filter must restore only while still available to that user");
 check(page.includes("salesAttentionOption(savedAttention) ? savedAttention : \"all\""),
   "Unknown/stale attention preferences must fail closed to All");
-check(page.includes('["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation)'),
-  "Current Pipeline login must not restore an outcome-only Won/Lost status into the active workspace");
+check(page.includes('["all", "needs_stage", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation)'),
+  "Current Pipeline login must restore Needs Stage but not outcome-only Won/Lost statuses into the active workspace");
 
 check(page.includes('persistFilterPreferences({ informationFilter: value, attention: "all" })'),
   "Explicit Information Filter selections must persist while clearing the alternate attention mode");
