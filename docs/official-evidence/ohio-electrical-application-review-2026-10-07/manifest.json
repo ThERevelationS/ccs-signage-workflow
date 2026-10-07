@@ -1,0 +1,26 @@
+{
+  "sources": [
+    {
+      "file": "plan-review.html",
+      "official_url": "https://www.inspectionbureau.com/electrical-plan-review/",
+      "observed_at": "2026-10-07T17:24:51.668501+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "file": "online-inspection-application.html",
+      "official_url": "https://www.inspectionbureau.com/online-inspection-application/",
+      "observed_at": "2026-10-07T17:24:52.126995+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "file": "contractor-notice.html",
+      "official_url": "https://www.inspectionbureau.com/notice-to-contractors/",
+      "observed_at": "2026-10-07T17:24:52.552558+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    }
+  ],
+  "live_records_changed": 0
+}
