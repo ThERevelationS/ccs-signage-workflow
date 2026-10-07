@@ -30,3 +30,18 @@ test('new research remains outside the approved evidence disclosure',()=>{
  const code=readFileSync('src/components/permitting/LocalityApprovedEvidence.jsx','utf8');
  assert.match(code,/<ElectricalResearchResources[^>]*\/><OhioMunicipalResearchResources/);
 });
+
+test('Cheviot and Cleves original PDFs preserve archive identities and draft labels',()=>{
+ const manifest=JSON.parse(readFileSync('docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json'));
+ const west=dossiers.filter(d=>['Cheviot','Cleves'].includes(d.name));
+ assert.equal(west.length,2);assert.equal(west.flatMap(d=>d.resources).length,8);
+ for(const row of west)for(const resource of row.resources){
+ const source=manifest.sources.find(s=>s.file===resource.file),bytes=readFileSync('public'+resource.archive);
+ assert.ok(bytes.subarray(0,5).equals(Buffer.from('%PDF-')));assert.deepEqual(bytes,readFileSync(source.retained_path));
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),resource.sha256);assert.equal(bytes.length,resource.bytes);
+ }
+ const cleves=render(west.find(d=>d.name==='Cleves')),cheviot=render(west.find(d=>d.name==='Cheviot'));
+ assert.match(cleves,/DRAFT zoning manual — not approved law/);assert.match(cleves,/complete searchable text is not claimed/);
+ assert.match(cleves,/addresses differ/);assert.match(cheviot,/National Inspection Corporation/);
+ for(const html of [cleves,cheviot])assert.match(html,/responsibilities remain unresolved|does not establish separate electrical/);
+});
