@@ -1,0 +1,35 @@
+{
+  "profiles": [
+    {
+      "id": "6ac19f1c2fbbf3b8bb27397c",
+      "name": "North Bend",
+      "state": "OH",
+      "type": "village"
+    },
+    {
+      "id": null,
+      "name": "Whitewater Township",
+      "state": "OH",
+      "type": "township",
+      "identity_status": "no matching JurisdictionProfile in state/name readback"
+    }
+  ],
+  "notes": [
+    "Village zoning page identifies Hamilton County zoning assistance and building permit issuance. This is a retained candidate, not approved responsibility or address coverage.",
+    "Whitewater official homepage identifies Hamilton County, Ohio; its Cleves mailing address must not map this township to Village of Cleves.",
+    "Right-of-way work and sign zoning/building review are separate.",
+    "Electrical permit issuance and electrical inspection remain independently unresolved."
+  ],
+  "gaps": [
+    "County zoning page and 2024 application originals HTTP 403",
+    "Whitewater canonical profile reconciliation and permit forms",
+    "Current adopted zoning code and sign applicability review",
+    "Electrical office evidence",
+    "Verified app-storage archive and source-catalog registration"
+  ],
+  "staff_approved": false,
+  "currentness_approved": false,
+  "coverage_approved": false,
+  "electrical_roles_approved": false,
+  "live_records_changed": 0
+}

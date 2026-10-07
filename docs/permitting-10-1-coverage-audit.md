@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — North Bend and Whitewater original-source collection (2026-10-07)
+
+Preserved fresh clean HEAD d977da397aeb9b667359ed1708b0323c0f372906 and unrelated concurrent CCS work. Retained five originals with retrieval URLs, redirect URLs, times, byte counts and SHA-256: North Bend forms/zoning HTML, Whitewater Hamilton County Ohio homepage, Village right-of-way PDF, and linked zoning-code PDF. The county zoning page and 2024 zoning certificate application returned HTTP 403 and remain explicit retention gaps.
+
+Embedded text extraction covers 183 physical PDF pages: two right-of-way pages and 181 zoning-code pages. Every page contains some embedded text; searchable-content completeness, current adoption and sign applicability remain unapproved. No OCR/rendering claim. The Village page identifies county zoning assistance and county building-permit issuance as candidates. Electrical permit issuance and inspection remain separately unresolved. Whitewater has no matching canonical jurisdiction profile in the current state/name readback; its Cleves mailing address is not locality authority.
+
+Validation: archive identity, PDF page/text hashes, Ohio identity separation and pending-review checks passed; existing UI tests and diff check passed. Research-only changes; no live record changes, frontend publication or authority approvals. Task 2 remains partial. Next: review North Bend sign-code pages and resolve Whitewater canonical identity, forms and separate electrical offices. Verified app-storage/catalog registration remains outstanding; Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 — Harrison guide/current-page routing reconciliation (2026-10-07)
 
 Inspected fresh clean HEAD 195f815be7f694fe043ac944bd969afa43d7437f and preserved newer concurrent CCS work. Retained two fresh official City HTML originals with retrieval times, hashes and normalized text. Added a three-row admin comparison tied to retained City page hashes and guide/OCR physical-page identities.
