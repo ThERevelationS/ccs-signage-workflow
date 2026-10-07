@@ -2241,7 +2241,7 @@ test('v26 missed Clock Out payroll provenance binds Punch Exception and employee
   });
 
   const sourceRequestId = 'v26-missed-source-001';
-  const resolved = await h.invoke({
+  const resolved = await h.invokeAs(employee, {
     action: 'resolve_punch_exception', target_email: employee.email,
     request_id: sourceRequestId, response: 'missed_clock_out',
     claimed_clock_out: '2026-09-28T22:00:00.000Z',
