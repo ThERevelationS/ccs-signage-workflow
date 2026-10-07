@@ -22,6 +22,8 @@ console.log('PASS Order-only relevance filter preserves concurrent shared Sales 
 
 assert.match(widget, /hasMissingOrderPermanentRows/);
 assert.match(widget, /Order link needs review/);
+assert.match(widget, />Link review<\/span>/);
+assert.match(widget, /!r\.created && !r\.updated && !r\.errors &&\s*!\(r\.dataset === 'orders' && Number\(r\.missing_permanent_row_links\) > 0\)/);
 assert.match(widget, /Retry Sync cannot choose a replacement row/);
 assert.match(widget, /Order Form diagnostics → Review links/);
 assert.match(details, /result\?\.dataset === 'orders'/);
