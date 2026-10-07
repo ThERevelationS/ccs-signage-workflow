@@ -218,3 +218,12 @@ test('Harrison and Symmes township archives retain 199 physical pages without id
  for(const k of ['staff_approved','currentness_approved','coverage_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(r[k],false);
  assert.equal(r.live_records_changed,0);assert.match(r.map_version_review,/2017/);
 });
+
+test('Symmes sign packet keeps fee exemption distinct from certificate and electrical requirements',()=>{
+const root='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/',p=JSON.parse(readFileSync(root+'symmes-sign-review-packet.json')),d=JSON.parse(readFileSync(root+'symmes-zoning-code.pages.json'));
+assert.equal(p.findings.length,14);assert.equal(p.locality.canonical_id,null);
+for(const f of p.findings){const page=d.pages[f.physical_page-1];assert.equal(f.source_sha256,d.source_sha256);assert.equal(f.text_sha256,page.text_sha256);assert.ok(page.text.includes(f.matched_needle));assert.equal(f.printed_page,f.physical_page-6);assert.equal(f.applicability_approved,false);}
+assert.equal(p.maintenance_zoning_certificate_required_in_retained_code,true);assert.equal(p.maintenance_zoning_fee_exempt_in_retained_code,true);assert.equal(p.maintenance_electrical_exemption_inferred,false);
+assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
+assert.match(p.findings.find(f=>f.title==='Application documents').summary,/registered surveyor/);
+});
