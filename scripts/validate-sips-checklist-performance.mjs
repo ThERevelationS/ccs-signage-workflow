@@ -137,4 +137,18 @@ check("active search index is built during active/completed classification", () 
   assert.equal(/const checklistSearchIndexData = useMemo\(/.test(source), false);
 });
 
+check("nested checklist indentation preserves phone width", () => {
+  assert.match(source, /className="ml-0 sm:ml-4 mt-2 border-l-2 border-blue-300 pl-2 sm:pl-3"/);
+  assert.match(source, /className="ml-2 sm:ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2"/);
+  assert.match(source, /className="ml-1 sm:ml-4 mt-1 space-y-0\.5 border-l border-orange-200 pl-1\.5"/);
+  assert.match(source, /className="ml-1 sm:ml-4 mt-1 space-y-0\.5"/);
+});
+
+check("inline nested add controls use reduced phone indentation", () => {
+  assert.match(source, /className="ml-1 sm:ml-4 mt-0\.5 flex items-center gap-1 bg-yellow-50/);
+  assert.match(source, /className="ml-1 sm:ml-4 mt-2 flex items-center gap-2 bg-orange-50/);
+  assert.match(source, /className="ml-1 sm:ml-3 mt-0\.5 flex items-center gap-1 bg-yellow-50/);
+  assert.match(source, /className="ml-1 sm:ml-4 mt-1 flex items-center gap-1 bg-orange-50/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
