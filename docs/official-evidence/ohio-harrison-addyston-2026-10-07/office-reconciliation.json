@@ -1,0 +1,107 @@
+{
+  "profiles": [
+    {
+      "id": "69a7043e496af8043b9e4f00",
+      "name": "City of Harrison",
+      "state": "OH",
+      "type": "city",
+      "source": "https://www.harrisonohio.gov/158/Permits",
+      "online_form_url": "https://us.cloudpermit.com/login",
+      "notes": [
+        "The City describes Cloudpermit for building permits and inspections since January 2025. The retained paper applications remain linked; confirm which submission route applies to the proposed sign.",
+        "The Permits page routes electrical inquiries to IBI. The separate Inspections page explicitly lists Inspection Bureau Incorporated for electric inspections and final electrical inspection in its Sign checklist. These support inspection/routing candidates; permit issuance and canonical provider identity remain separately unapproved.",
+        "The links labeled Temporary Signs Instructions and Permanent Signs Instructions currently return byte-identical PDFs. Both original link identities are preserved; do not assume they contain distinct instructions.",
+        "The zoning application includes permanent and temporary sign options. Current district standards, exemptions, fees and paper/portal applicability still require review."
+      ],
+      "references": [
+        {
+          "label": "Official City inspection page",
+          "url": "https://www.harrisonohio.gov/157/Inspections"
+        }
+      ],
+      "observed_on": "2026-10-07",
+      "resources": [
+        {
+          "file": "harrison-temporary-sign-instructions.pdf",
+          "label": "Temporary-sign instructions link — same bytes as permanent link",
+          "source": "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
+          "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf",
+          "format": "PDF",
+          "sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+          "bytes": 549689
+        },
+        {
+          "file": "harrison-permanent-sign-instructions.pdf",
+          "label": "Permanent-sign instructions link — same bytes as temporary link",
+          "source": "https://www.harrisonohio.gov/DocumentCenter/View/356/Permanent-Signs-Instructions-PDF",
+          "archive": "/permitting-evidence/harrison-addyston/harrison-permanent-sign-instructions.pdf",
+          "format": "PDF",
+          "sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+          "bytes": 549689
+        },
+        {
+          "file": "harrison-commercial-application.pdf",
+          "label": "Commercial building application",
+          "source": "https://www.harrisonohio.gov/DocumentCenter/View/3057/APP-COMMERCIAL-BUILDING",
+          "archive": "/permitting-evidence/harrison-addyston/harrison-commercial-application.pdf",
+          "format": "PDF",
+          "sha256": "354946505142da0cb1b922df167519b6081089878216510a5e93e0a4895cceb5",
+          "bytes": 336030
+        },
+        {
+          "file": "harrison-zoning-application.pdf",
+          "label": "Zoning application — permanent/temporary signs",
+          "source": "https://www.harrisonohio.gov/DocumentCenter/View/3063/APP-ZONING",
+          "archive": "/permitting-evidence/harrison-addyston/harrison-zoning-application.pdf",
+          "format": "PDF",
+          "sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0",
+          "bytes": 265146
+        },
+        {
+          "file": "harrison-variance-application.pdf",
+          "label": "Variance application",
+          "source": "https://www.harrisonohio.gov/DocumentCenter/View/3470/APP-VARIANCE",
+          "archive": "/permitting-evidence/harrison-addyston/harrison-variance-application.pdf",
+          "format": "PDF",
+          "sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b",
+          "bytes": 597140
+        }
+      ]
+    },
+    {
+      "id": "6ac1a0de30219cc619d6e7d3",
+      "name": "Village of Addyston",
+      "state": "OH",
+      "type": "village",
+      "source": "https://www.addystonohio.org/zoning",
+      "notes": [
+        "The Village zoning page publishes building-inspector and code-enforcement contacts and links a zoning ordinance. Retention does not establish current adopted sign requirements.",
+        "A signage/building permit application and an online application portal were not located on the reviewed zoning page. This is a recorded collection gap, not a claim that the Village has no form or permit requirement.",
+        "Separate electrical permit issuance and electrical inspection offices remain unresolved. Building-inspector contact alone does not establish electrical responsibility."
+      ],
+      "observed_on": "2026-10-07",
+      "resources": [
+        {
+          "file": "addyston-linked-zoning-ordinance.pdf",
+          "label": "Village-linked zoning ordinance — currentness unreviewed",
+          "source": "https://www.addystonohio.org/_files/ugd/c8a414_844b617e348e42c4bab3d6d2b064f310.pdf",
+          "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf",
+          "format": "PDF",
+          "sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+          "bytes": 951077
+        }
+      ]
+    }
+  ],
+  "staff_approved": false,
+  "electrical_roles_approved": false,
+  "live_records_changed": 0,
+  "retained_downloads": 6,
+  "distinct_pdf_hashes": 5,
+  "gaps": [
+    "Addyston permit applications and electrical offices",
+    "Harrison permit issuer/canonical inspection provider approval",
+    "Current sign-code applicability and fees",
+    "App-storage/source-catalog registration"
+  ]
+}
