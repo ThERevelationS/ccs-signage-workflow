@@ -1,0 +1,24 @@
+import dossiers from "./ohioMunicipalResearch.json";
+
+export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin = false }) {
+  const dossier = isAdmin && dossiers.find(row => ["id", "name", "state", "type"].every(key => row[key] === jurisdiction?.[key]));
+  if (!dossier) return null;
+  return <details className="min-w-0 rounded-lg border border-amber-200 bg-amber-50">
+    <summary className="min-h-11 cursor-pointer p-3 text-sm font-semibold text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600">
+      {dossier.name} permit and electrical research — awaiting staff review
+    </summary>
+    <section className="min-w-0 space-y-3 p-3 pt-0 text-sm [overflow-wrap:anywhere]" aria-label={`${dossier.name} unapproved permitting research`}>
+      <p>Official references observed {dossier.observed_on}. These documents remain unreviewed for current fees, sign applicability, office responsibility, and geographic coverage.</p>
+      <ul className="list-disc space-y-2 pl-5">{dossier.notes.map(note => <li key={note}>{note}</li>)}</ul>
+      <p><a className="underline" href={dossier.source} target="_blank" rel="noopener noreferrer">Official City department page</a></p>
+      <ul className="space-y-3">{dossier.resources.map(resource => <li key={resource.file}>
+        <p className="font-medium">{resource.label}</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <a className="min-h-11 inline-flex items-center underline" href={resource.archive} target="_blank" rel="noopener noreferrer">Retained {resource.format}</a>
+          <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official document</a>
+        </div>
+      </li>)}</ul>
+      <p>Electrical permit issuance and electrical inspection are separate pending reviews. These research references do not create an approved workflow.</p>
+    </section>
+  </details>;
+}

@@ -1,3 +1,4 @@
+import OhioMunicipalResearchResources from "./OhioMunicipalResearchResources";
 import ElectricalResearchResources from "./ElectricalResearchResources";
 import LocalityOfficeEvidence from "./LocalityOfficeEvidence";
 import LocalitySubmissionContext from "./LocalitySubmissionContext";
@@ -24,5 +25,5 @@ function EvidenceDisclosure({ jurisdiction, isAdmin, retrieveOfficeEvidence, ret
 
 export default function LocalityApprovedEvidence({ jurisdiction, isAdmin = false, retrieveOfficeEvidence, retrieveApprovedEvidence }) {
   // Switching locality or losing admin status removes pending requests and prior quotes immediately.
-  return <div className="min-w-0 space-y-3"><EvidenceDisclosure key={`${jurisdiction.id}:${isAdmin ? "admin" : "staff"}`} jurisdiction={jurisdiction} isAdmin={isAdmin} retrieveOfficeEvidence={retrieveOfficeEvidence} retrieveApprovedEvidence={retrieveApprovedEvidence} /><ElectricalResearchResources jurisdiction={jurisdiction} isAdmin={isAdmin} /></div>;
+  return <div className="min-w-0 space-y-3"><EvidenceDisclosure key={`${jurisdiction.id}:${isAdmin ? "admin" : "staff"}`} jurisdiction={jurisdiction} isAdmin={isAdmin} retrieveOfficeEvidence={retrieveOfficeEvidence} retrieveApprovedEvidence={retrieveApprovedEvidence} /><ElectricalResearchResources jurisdiction={jurisdiction} isAdmin={isAdmin} /><OhioMunicipalResearchResources jurisdiction={jurisdiction} isAdmin={isAdmin} /></div>;
 }
