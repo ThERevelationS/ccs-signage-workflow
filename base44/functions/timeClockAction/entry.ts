@@ -577,7 +577,10 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
 async function canonicalLateClockInPayrollProvenance({
   entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution = true,
 }: any) {
-  if (String(entry?.clock_source || '') !== 'employee_attested_missed_clock_in') {
+  // Audited manager corrections change clock_source; the original missed-punch
+  // report marker still requires independent employee-attestation verification.
+  if (String(entry?.clock_source || '') !== 'employee_attested_missed_clock_in' &&
+      !String(entry?.missed_clock_in_reported_at || '')) {
     return { applicable: false, provenance: null };
   }
   const entryId = String(entry?.id || '');
