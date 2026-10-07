@@ -1,0 +1,11 @@
+{
+  "sources": [
+    {
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/symmes_township_zoning.php",
+      "observed_at": "2026-10-07T17:42:58.132576+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false
+}
