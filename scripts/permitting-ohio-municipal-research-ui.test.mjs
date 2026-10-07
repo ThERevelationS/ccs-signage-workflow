@@ -121,3 +121,22 @@ test('Harrison routing comparison keeps discrepancies and matched inspection con
  assert.match(html,/513-202-8488/);assert.match(html,/513-202-8494/);assert.match(html,/supersession is not established/);assert.match(html,/Permit issuance is separate/);
  assert.match(html,/<table/);assert.equal(render(h,false),'');
 });
+
+test('North Bend originals and page findings remain research-only for exact village identity',()=>{
+ const row=dossiers.find(d=>d.id==='6ac19f1c2fbbf3b8bb27397c');
+ assert.equal(row.resources.length,2);assert.equal(row.document_findings.length,8);
+ const root='docs/official-evidence/ohio-northbend-whitewater-2026-10-07/';
+ const manifest=JSON.parse(readFileSync(root+'manifest.json'));
+ const pdf=JSON.parse(readFileSync(root+'northbend-linked-zoning-code.pages.json'));
+ for(const r of row.resources){const original=manifest.sources.find(s=>s.file===r.file),bytes=readFileSync('public'+r.archive);
+ assert.deepEqual(bytes,readFileSync(original.retained_path));assert.equal(bytes.length,r.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),r.sha256);}
+ for(const f of row.document_findings){const p=pdf.pages.find(p=>p.page===f.physical_page);
+ assert.equal(f.source_sha256,pdf.source_sha256);assert.equal(f.text_sha256,p.text_sha256);
+ assert.ok(p.text.includes(f.matched_text));assert.equal(f.staff_approved,false);assert.equal(f.currentness_approved,false);assert.equal(f.applicability_approved,false);
+ assert.ok(f.archive.endsWith('#page='+f.physical_page));}
+ const html=render(row);assert.match(html,/April 28, 2025/);assert.match(html,/4,000K/);assert.match(html,/independently unresolved/);
+ assert.equal(render({...row,type:'township'}),'');assert.equal(render({...row,name:'Whitewater Township'}),'');
+ assert.equal(dossiers.some(d=>d.name==='Whitewater Township'),false);
+ const reconciliation=JSON.parse(readFileSync(root+'office-reconciliation.json'));
+ assert.equal(reconciliation.profiles.find(p=>p.name==='Whitewater Township').id,null);
+});
