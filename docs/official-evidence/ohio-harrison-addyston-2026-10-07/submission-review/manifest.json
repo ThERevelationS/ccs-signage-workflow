@@ -1,0 +1,25 @@
+{
+  "sources": [
+    {
+      "file": "permits.html",
+      "official_url": "https://www.harrisonohio.gov/158/Permits",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/submission-review/permits.html",
+      "sha256": "7ff1e917cab214753c20a99c26e9243b98daae19d90a611ea23c726df06e3056",
+      "bytes": 205230,
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/158/Permits",
+      "retrieved_at": "2026-10-07T16:44:31.539462+00:00"
+    },
+    {
+      "file": "inspections.html",
+      "official_url": "https://www.harrisonohio.gov/157/Inspections",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/submission-review/inspections.html",
+      "sha256": "001482497ec5a93707667837954ab6232d0a6044941c4be4f436c45fe38019fd",
+      "bytes": 103157,
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/157/Inspections",
+      "retrieved_at": "2026-10-07T16:44:32.601289+00:00"
+    }
+  ],
+  "staff_approved": false
+}
