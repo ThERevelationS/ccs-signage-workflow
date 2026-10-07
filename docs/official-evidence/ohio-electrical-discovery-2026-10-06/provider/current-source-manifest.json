@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+    "final_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+    "file": "eztrak-new-user.pdf",
+    "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+    "bytes": 47398,
+    "retrieved_at": "2026-10-07T00:58:56.097468+00:00",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.inspectionbureau.com/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.inspectionbureau.com/online-inspection-scheduling/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  },
+  {
+    "url": "https://www.inspectionbureau.com/electrical-plan-review/",
+    "error": "HTTP Error 406: Not Acceptable",
+    "authority_verified": false
+  }
+]
