@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 — Harrison guide/current-page routing reconciliation (2026-10-07)
+
+Inspected fresh clean HEAD 195f815be7f694fe043ac944bd969afa43d7437f and preserved newer concurrent CCS work. Retained two fresh official City HTML originals with retrieval times, hashes and normalized text. Added a three-row admin comparison tied to retained City page hashes and guide/OCR physical-page identities.
+
+The guide requests four paper plan copies; the current Permits page describes Cloudpermit from January 2025 while retaining paper versions. Sign-specific acceptance and supersession remain unapproved. The guide's City inspection number is 513-202-8488, while the current Inspections page publishes 513-202-8494. Electrical inspection contact 513-381-6080 agrees between the guide and current inspection page; canonical identity and role approval remain separate from that contact agreement. Permit issuance is not inferred.
+
+Validation: 17 UI/archive/routing tests, targeted ESLint and production build passed; diff check passed. No live database mutation, authority/currentness approval or frontend publication. Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Next: expand nearby Ohio coverage to North Bend and Whitewater Township official forms and electrical-office references, preserving Harrison's recorded review gaps and outstanding app-storage/catalog registration. Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 — Harrison scanned sign instructions rendered and OCRed (2026-10-07)
 
 Verified the retained shared sign-instruction PDF hash, rendered both physical pages with Poppler 26.05.0 at 150 DPI and visually inspected them. Retained both PNGs, Tesseract 5.3.4 raw text and word-position/confidence TSV files, and byte/hash receipts. The PDF remains unchanged and still has no embedded text. Raw OCR errors are preserved rather than overwritten.
