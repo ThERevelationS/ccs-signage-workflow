@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — North Bend sign findings and original downloads (2026-10-07)
+
+Inspected fresh clean HEAD c0a3d22b8b6d7d95ad6134079f1db36073db5d25 and preserved unrelated concurrent CCS changes. Confirmed live North Bend identity 6ac19f1c2fbbf3b8bb27397c, OH village; state/name readback still has no Whitewater profile. Added exact-identity admin research with two hash-verified original PDF downloads and eight physical-page findings tied to source and embedded-text hashes.
+
+Findings cover the printed April 28, 2025 adoption statement, permit trigger/exemptions, freestanding and wall district tables, window/wayfinding/lighting provisions, temporary signs, electronic displays/murals and billboard/state permit review. Printed adoption is evidence, not verification of the current amended compilation. Numeric allowances remain document candidates rather than approved job constraints. Noted the entrance-wall lighting cross-reference for review; no silent correction. Separate electrical permit issuance and inspection offices remain unresolved, and zoning maintenance exemptions do not establish electrical exemptions.
+
+Validation: 18 archive/UI/page/gating tests, targeted ESLint, production build and diff check passed. Scoped the existing Harrison/Addyston extraction test to its own archives; North Bend receives separate source/page validation. No production entity changes, authority/currentness approval or frontend publication. Task 2 remains partial. Next: resolve Whitewater canonical identity and official forms; establish North Bend/Whitewater electrical permit and inspection office evidence independently. Verified app-storage/source-catalog registration remains outstanding. Ohio precedes Kentucky.
+
 ## Phase 10 — Milestone 1 of 3 — North Bend and Whitewater original-source collection (2026-10-07)
 
 Preserved fresh clean HEAD d977da397aeb9b667359ed1708b0323c0f372906 and unrelated concurrent CCS work. Retained five originals with retrieval URLs, redirect URLs, times, byte counts and SHA-256: North Bend forms/zoning HTML, Whitewater Hamilton County Ohio homepage, Village right-of-way PDF, and linked zoning-code PDF. The county zoning page and 2024 zoning certificate application returned HTTP 403 and remain explicit retention gaps.
