@@ -18,6 +18,16 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
           <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official document</a>
         </div>
       </li>)}</ul>
+      {dossier.electrical_research && <section className="space-y-2 rounded border border-amber-200 p-3" aria-label="Electrical provider routing research">
+        <p className="font-medium">Electrical provider routing — municipal coverage unresolved</p>
+        <p>{dossier.electrical_research.note}</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.guide_archive} target="_blank" rel="noopener noreferrer">Retained ezTrak guide PDF</a>
+          <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.guide_source} target="_blank" rel="noopener noreferrer">Official guide</a>
+          <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.portal} target="_blank" rel="noopener noreferrer">CAGIS ezTrak portal</a>
+          <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.schedule_source} target="_blank" rel="noopener noreferrer">Official inspection-area XLS — retention gap</a>
+        </div>
+      </section>}
       <p>Electrical permit issuance and electrical inspection are separate pending reviews. These research references do not create an approved workflow.</p>
     </section>
   </details>;

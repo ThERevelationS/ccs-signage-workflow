@@ -133,7 +133,24 @@
         "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
         "bytes": 229928
       }
-    ]
+    ],
+    "electrical_research": {
+      "observed_on": "2026-10-07",
+      "provider": "The Inspection Bureau, Inc.",
+      "source": "https://www.inspectionbureau.com/",
+      "guide_source": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+      "guide_archive": "/permitting-evidence/ohio-west/ibi-eztrak-new-user.pdf",
+      "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+      "bytes": 47398,
+      "portal": "https://eztrak.cagis.org/",
+      "schedule_source": "https://www.inspectionbureau.com/wp-content/uploads/2026/09/Inspection-Areas-2026-1.xls",
+      "schedule_status": "retrieval_gap",
+      "schedule_http_outcome": "406",
+      "coverage_approved": false,
+      "permit_issuer_approved": false,
+      "inspection_role_approved": false,
+      "note": "The provider publishes Ohio electrical permit/plan-review routing through CAGIS ezTrak. Its retained guide distinguishes electrical permit and plan-review records. This is provider routing research; Cheviot and Cleves coverage, permit issuance and inspection roles are not established. The inspection-area XLS original returned HTTP 406 and has not been inspected."
+    }
   },
   {
     "id": "6ac1a161934312388bd3ca04",
@@ -186,6 +203,23 @@
         "sha256": "170589a92b31a90564388a5715308f6887038a23da3c08f1baf829a26633e6ce",
         "bytes": 5622810
       }
-    ]
+    ],
+    "electrical_research": {
+      "observed_on": "2026-10-07",
+      "provider": "The Inspection Bureau, Inc.",
+      "source": "https://www.inspectionbureau.com/",
+      "guide_source": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+      "guide_archive": "/permitting-evidence/ohio-west/ibi-eztrak-new-user.pdf",
+      "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+      "bytes": 47398,
+      "portal": "https://eztrak.cagis.org/",
+      "schedule_source": "https://www.inspectionbureau.com/wp-content/uploads/2026/09/Inspection-Areas-2026-1.xls",
+      "schedule_status": "retrieval_gap",
+      "schedule_http_outcome": "406",
+      "coverage_approved": false,
+      "permit_issuer_approved": false,
+      "inspection_role_approved": false,
+      "note": "The provider publishes Ohio electrical permit/plan-review routing through CAGIS ezTrak. Its retained guide distinguishes electrical permit and plan-review records. This is provider routing research; Cheviot and Cleves coverage, permit issuance and inspection roles are not established. The inspection-area XLS original returned HTTP 406 and has not been inspected."
+    }
   }
 ]

@@ -28,6 +28,7 @@ for(const row of rows){row.observed_on='2026-10-07';row.resources=manifest.sourc
 });}
 const path='src/components/permitting/ohioMunicipalResearch.json';
 const prior=JSON.parse(readFileSync(path));
+for(const row of rows){const old=prior.find(p=>p.id===row.id);if(old?.electrical_research)row.electrical_research=old.electrical_research;}
 writeFileSync(path,JSON.stringify([...prior.filter(p=>!rows.some(r=>r.id===p.id)),...rows],null,2)+'\n');
 writeFileSync(root+'office-reconciliation.json',JSON.stringify({profiles:rows,staff_approved:false,electrical_roles_approved:false,source_currentness_approved:false,live_records_changed:0,retained_document_count:8,
 gaps:['Separate electrical offices and roles','Current adopted sign rules and zoning district applicability','Confirmed submission address and fee applicability','App-storage and source-catalog registration']},null,2)+'\n');
