@@ -1,3 +1,13 @@
+## Separate electrical authority review roles — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete; task 2 office reconciliation remains partial. Fresh clean HEAD dcc7f14602eee521b4fd2251a1d10535f780ffb2. Added electrical_permit and electrical_inspection to reviewed backend roles, PermitLocality authority_roles enum, locality editor role vocabulary and locality picker labels. Legacy electrical remains accepted and visibly labeled broad; existing history is not migrated or expanded into either specific role.
+
+PDF proof validation now requires separate affirmative electrical permit issuance/processing/handling wording versus electrical inspection performance/provision/responsibility wording. Generic contact text, opposite-role proof and explicitly negative wording reject. These lexical gates supplement exact retained-page matching, current source review, canonical staff-verified office identity, explicit coverage and durable version/reservation/history protections. HTML delegation remains intentionally zoning-only: no unsupported electrical HTML approval path introduced.
+
+Validation: 48 office/HTML authority tests and 25 locality authority-selection checks pass (73 total), affected backend bundle, full build and git diff --check pass. Build retains existing browser-data age warnings. No production approvals, office events, live test records, LLM calls or frontend publication. Saved resource changes use Base44 synchronization; live backend review acceptance remains pending.
+
+Next: add explicit separate-role completeness acceptance for legacy versus reviewed electrical authority, then connect retained Cincinnati evidence through supported evidence review rather than claiming provider links are approved. Fee/inspection-area applicability and complete live acceptance remain open. Ohio remains before Kentucky.
+
 ## Cincinnati electrical fee and submittal archives — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete; task 2 office reconciliation remains partial. Fresh clean HEAD a02eb1416b31aa2a10c688dd2529f04fe85173f3. Provider fee page currently links Fee-Schedule-Eff.-1-1-2025.pdf (seven pages). Downloaded original bytes (2,362,479) with PDF signature, SHA-256, URL, date and byte-count retention. No numeric fee extraction or sign applicability approved.
