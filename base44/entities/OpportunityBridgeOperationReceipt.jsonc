@@ -1,0 +1,161 @@
+{
+  "name": "OpportunityBridgeOperationReceipt",
+  "type": "object",
+  "description": "Durable idempotency, recovery and audit ledger for one logical WorkOrder-to-Opportunity compatibility bridge. Server functions are the only intended writers; admins may read for review.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "operation_key": {
+      "type": "string",
+      "description": "Permanent logical bridge identity. Must equal workorder:<WorkOrder.id>:opportunity:v1 and is never derived from customer/company name."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Operator/server rollout run containing the most recent attempt. Does not replace operation_key as idempotency identity."
+    },
+    "work_order_id": {
+      "type": "string"
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "opportunity_creation_request_key": {
+      "type": "string",
+      "description": "Expected to equal operation_key."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "started",
+        "opportunity_ready",
+        "linked",
+        "already_linked",
+        "held",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "source_snapshot": {
+      "type": "object",
+      "description": "Exact pre-apply WorkOrder bridge source snapshot used by the compare-and-set gate."
+    },
+    "proposal_fingerprint": {
+      "type": "string",
+      "description": "SHA-256 stable fingerprint of the canonical proposed Opportunity payload. Never a password/authentication secret."
+    },
+    "proposal_summary": {
+      "type": "object",
+      "description": "Compact auditable proposal facts. Does not store payment secrets or unrelated customer data."
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "secondary_confirmation_fingerprint": {
+      "type": "string",
+      "description": "Non-reversible fingerprint/reference proving the server accepted the required confirmation bound to the exact rollout run and batch. Never store the confirmation phrase/token itself."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_attempt_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "applied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "held_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "result_code": {
+      "type": "string"
+    },
+    "result_summary": {
+      "type": "object"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "attempt_history": {
+      "type": "array",
+      "description": "Append-preserving logical history maintained with compare-and-set updates. Never delete older attempts to hide an uncertain outcome.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "attempt_id": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "result_code": {
+            "type": "string"
+          },
+          "opportunity_id": {
+            "type": "string"
+          },
+          "source_snapshot_fingerprint": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "operation_key",
+    "work_order_id",
+    "opportunity_creation_request_key",
+    "status",
+    "source_snapshot",
+    "proposal_fingerprint"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__opportunity_bridge_server_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__opportunity_bridge_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__opportunity_bridge_server_only__"
+      }
+    }
+  }
+}
