@@ -246,6 +246,23 @@ export async function executeGuardedOpportunityBridgePilot({
     };
   }
 
+  if (claim.state === 'terminal_existing') {
+    const verified = await executeOpportunityBridgePlanRow({ planRow, adapter:applyAdapter });
+    const converged = [OPPORTUNITY_BRIDGE_APPLY_STATUS.LINKED, OPPORTUNITY_BRIDGE_APPLY_STATUS.ALREADY_LINKED]
+      .includes(verified?.status);
+    return {
+      success:converged,
+      status:converged ? OPPORTUNITY_BRIDGE_APPLY_STATUS.ALREADY_LINKED : 'held',
+      write_attempted:false,
+      authorization,
+      receipt_claim:claim,
+      receipt_started:null,
+      receipt_finished:null,
+      result:verified,
+      replay_converged:converged,
+    };
+  }
+
   const startedAt = now;
   const started = await appendAttempt({
     receiptAdapter,
