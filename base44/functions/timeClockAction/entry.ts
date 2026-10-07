@@ -2725,6 +2725,7 @@ Deno.serve(async (req) => {
           ['confirmed', 'recovered'].includes(String(provenance.submission_audit_outcome || '')) &&
           String(provenance.submission_audit_at || '') && String(provenance.submission_actor_role || '') &&
           ['session', 'badge'].includes(String(provenance.submission_authentication_method || '')) &&
+          (String(provenance.submission_actor_role || '') === 'badge') === (String(provenance.submission_authentication_method || '') === 'badge') &&
           String(provenance.submission_payload_hash || '')
         );
         if (!v25ShapeComplete) return false;
@@ -3960,7 +3961,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 24 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 25 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3994,6 +3995,49 @@ Deno.serve(async (req) => {
           const priorById = new Map(priorRows.map((row: any) => [String(row.id || ''), row]));
           const currentById = new Map(snapshotRows.map((row: any) => [String(row.id || ''), row]));
           const currentEntryById = new Map(confirmedLocks.map((row: any) => [String(row.id || ''), row]));
+          const correctionSubmissionEvidence = async (correction: any, timeEntryId: string) => {
+            const submissionRequestId = String(correction?.request_id || '');
+            if (!correction?.id || !submissionRequestId) return null;
+            const submissionRows = await auditEntity.filter({
+              action: 'correction_request', request_id: submissionRequestId, time_entry_id: timeEntryId,
+            });
+            if (!Array.isArray(submissionRows) || submissionRows.length !== 1) return null;
+            const submissionAudit = submissionRows[0];
+            const requested = correction.requested_changes || {};
+            const submissionVersion = String(
+              String(correction.request_kind || '') === 'missed_clock_out'
+                ? correction.time_entry_updated_date || ''
+                : correction.original_snapshot?.updated_date || correction.time_entry_updated_date || ''
+            );
+            if (!submissionVersion) return null;
+            const expectedHash = await payloadHash({
+              entry_id: correction.time_entry_id,
+              expected_updated_date: submissionVersion,
+              reason: correction.employee_reason,
+              requested_changes: requested,
+            });
+            const auditRequested = submissionAudit.details?.requested_changes || {};
+            const submittedAt = Date.parse(String(submissionAudit.server_timestamp || ''));
+            const requestedAt = Date.parse(String(correction.requested_at || ''));
+            const reviewedAt = Date.parse(String(correction.reviewed_at || ''));
+            const actorRole = String(submissionAudit.actor_role || '');
+            const authenticationMethod = String(submissionAudit.authentication_method || '');
+            if (!submissionAudit?.id || !['confirmed', 'recovered'].includes(String(submissionAudit.outcome || '')) ||
+                asEmail(submissionAudit.user_email) !== asEmail(correction.user_email) ||
+                asEmail(submissionAudit.actor_email) !== asEmail(correction.user_email) ||
+                !actorRole || !['session', 'badge'].includes(authenticationMethod) ||
+                (actorRole === 'badge') !== (authenticationMethod === 'badge') ||
+                String(submissionAudit.reason || '') !== String(correction.employee_reason || '') ||
+                String(submissionAudit.details?.correction_request_id || '') !== String(correction.id || '') ||
+                !constantTimeEqual(String(submissionAudit.details?.payload_hash || ''), expectedHash) ||
+                String(auditRequested.clock_in || '') !== String(requested.clock_in || '') ||
+                String(auditRequested.clock_out || '') !== String(requested.clock_out || '') ||
+                Number(auditRequested.lunch_minutes || 0) !== Number(requested.lunch_minutes || 0) ||
+                String(auditRequested.notes || '') !== String(requested.notes || '') ||
+                !Number.isFinite(submittedAt) || !Number.isFinite(requestedAt) || !Number.isFinite(reviewedAt) ||
+                submittedAt < requestedAt || submittedAt > reviewedAt) return null;
+            return { audit: submissionAudit, payload_hash: expectedHash };
+          };
           const comparable = (row: any) => ({
             user_email: asEmail(row?.user_email), clock_in: row?.clock_in || '', clock_out: row?.clock_out || '',
             total_hours: Number(row?.total_hours || 0), approval_status: row?.approval_status || '',
@@ -4027,12 +4071,19 @@ Deno.serve(async (req) => {
                   if (supersededGeneration && (!Number.isFinite(Date.parse(correctionAppliedAt)) || Date.parse(correctionAppliedAt) < Date.parse(generationCausalWindowStart) || Date.parse(correctionAppliedAt) > Date.parse(generationCausalWindowEnd))) {
                     return Response.json({ success: false, error: `Payroll correction for shift ${id} falls outside the authorized reopen-to-finalization window.` }, { status: 409 });
                   }
+                  const submissionEvidence = await correctionSubmissionEvidence(correction, id);
+                  if (!submissionEvidence) {
+                    return Response.json({ success: false, error: 'Employee correction submission evidence could not be verified before payroll finalization.' }, { status: 409 });
+                  }
                   const corrected = appliedAudit.details?.corrected || {};
                   const semanticAfter = change.after || {};
                   if (change.change_type === 'removed' || String(corrected.clock_in || '') !== String(semanticAfter.clock_in || '') || String(corrected.clock_out || '') !== String(semanticAfter.clock_out || '') || Number(corrected.total_hours || 0) !== Number(semanticAfter.total_hours || 0)) return Response.json({ success: false, error: 'Correction evidence does not match resulting payroll values.' }, { status: 409 });
                   const employeeRequested = correction.requested_changes || {};
                   change.correction_provenance = {
                     correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
+                    submission_audit_id: String(submissionEvidence.audit.id || ''), submission_audit_outcome: String(submissionEvidence.audit.outcome || ''),
+                    submission_audit_at: String(submissionEvidence.audit.server_timestamp || ''), submission_actor_role: String(submissionEvidence.audit.actor_role || ''),
+                    submission_authentication_method: String(submissionEvidence.audit.authentication_method || ''), submission_payload_hash: String(submissionEvidence.payload_hash || ''),
                     requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
                     requested_clock_in: String(employeeRequested.clock_in || ''), requested_clock_out: String(employeeRequested.clock_out || ''),
                     requested_lunch_minutes: Number(employeeRequested.lunch_minutes || 0), requested_notes: String(employeeRequested.notes || ''),
@@ -4101,10 +4152,17 @@ Deno.serve(async (req) => {
                       String(linkedCorrection.time_entry_id || '') === id &&
                       ['approved', 'approved_modified'].includes(String(linkedCorrection.status || '')) &&
                       String(linkedCorrection.applied_audit_id || '') === String(cause.id || '')) {
+                    const submissionEvidence = await correctionSubmissionEvidence(linkedCorrection, id);
+                    if (!submissionEvidence) {
+                      return Response.json({ success: false, error: 'Linked employee correction submission evidence could not be verified before payroll finalization.' }, { status: 409 });
+                    }
                     const employeeRequested = linkedCorrection.requested_changes || {};
                     const corrected = cause.details?.corrected || {};
                     change.correction_provenance = {
                       correction_request_id: linkedCorrectionRequestId, submission_request_id: String(linkedCorrection.request_id || ''),
+                      submission_audit_id: String(submissionEvidence.audit.id || ''), submission_audit_outcome: String(submissionEvidence.audit.outcome || ''),
+                      submission_audit_at: String(submissionEvidence.audit.server_timestamp || ''), submission_actor_role: String(submissionEvidence.audit.actor_role || ''),
+                      submission_authentication_method: String(submissionEvidence.audit.authentication_method || ''), submission_payload_hash: String(submissionEvidence.payload_hash || ''),
                       requested_by: asEmail(linkedCorrection.user_email), requested_at: linkedCorrection.requested_at || '', employee_reason: String(linkedCorrection.employee_reason || ''),
                       requested_clock_in: String(employeeRequested.clock_in || ''), requested_clock_out: String(employeeRequested.clock_out || ''),
                       requested_lunch_minutes: Number(employeeRequested.lunch_minutes || 0), requested_notes: String(employeeRequested.notes || ''),
