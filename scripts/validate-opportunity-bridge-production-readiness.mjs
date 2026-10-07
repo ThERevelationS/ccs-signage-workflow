@@ -20,7 +20,10 @@ const safeRow = (id, overrides = {}) => ({
   ...overrides,
 });
 
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.VERSION, '0S-v1');
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED, false);
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_PERSISTENCE_ACTIVE, true);
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED, true);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE, 1);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.MAX_BATCH_SIZE, 5);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.STOP_ON_FIRST_NON_SUCCESS, true);
@@ -81,7 +84,28 @@ assert.equal(historicalBridgeRuleContractPasses(), true);
   assert.equal(readiness.decision, 'NO_GO');
   assert.equal(readiness.first_batch.length, 1);
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_schema_activated').pass, false);
+  assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_identity_clean').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='secondary_confirmation_configured').pass, false);
+  assert.equal(readiness.checks.find((check)=>check.key==='production_apply_enabled').pass, false);
+}
+
+{
+  const rows = Array.from({length:5}, (_,i) => safeRow(`wo-${i+1}`));
+  const readiness = evaluateOpportunityBridgeProductionReadiness({
+    plan:{ rows, summary:{ held:0 } },
+    generatedAt:'2026-10-07T18:00:00.000Z',
+    now:'2026-10-07T18:01:00.000Z',
+    receiptSchemaActivated:true,
+    receiptLedgerSummary:{ total:0, anomaly_count:0, unresolved_count:0 },
+    secondaryConfirmationConfigured:true,
+    secondaryConfirmationContract:{ configured:true, mode:'typed_exact_batch_phrase' },
+  });
+  assert.equal(readiness.technical_ready, true);
+  assert.equal(readiness.rollout_ready, false, 'Production apply must remain the final locked rollout gate.');
+  assert.equal(readiness.decision, 'NO_GO');
+  assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_schema_activated').pass, true);
+  assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_ledger_identity_clean').pass, true);
+  assert.equal(readiness.checks.find((check)=>check.key==='secondary_confirmation_configured').pass, true);
   assert.equal(readiness.checks.find((check)=>check.key==='production_apply_enabled').pass, false);
 }
 
@@ -144,6 +168,15 @@ assert.equal(proposedSchema.rls.update.user_condition.role, '__opportunity_bridg
 assert.equal(proposedSchema.rls.delete.user_condition.role, '__opportunity_bridge_server_only__');
 
 const activeEntityPath = new URL('../base44/entities/OpportunityBridgeOperationReceipt.jsonc', import.meta.url);
-assert.equal(fs.existsSync(activeEntityPath), false, '0R must not activate the proposed receipt entity.');
+assert.equal(fs.existsSync(activeEntityPath), true, '0S must activate the durable receipt entity.');
+const activeSchema = JSON.parse(fs.readFileSync(activeEntityPath, 'utf8'));
+assert.equal(activeSchema.name, 'OpportunityBridgeOperationReceipt');
+assert(!activeSchema.description.includes('PROPOSED 0R CONTRACT ONLY'));
+assert.equal(activeSchema.properties.operation_key.type, 'string');
+assert.equal(activeSchema.properties.attempt_history.type, 'array');
+assert.equal(activeSchema.rls.create.user_condition.role, '__opportunity_bridge_server_only__');
+assert.equal(activeSchema.rls.read.user_condition.role, 'admin');
+assert.equal(activeSchema.rls.update.user_condition.role, '__opportunity_bridge_server_only__');
+assert.equal(activeSchema.rls.delete.user_condition.role, '__opportunity_bridge_server_only__');
 
 console.log('Opportunity bridge production readiness gate validation: PASS');
