@@ -257,3 +257,10 @@ assert.equal(p.locality.id,'6ac1a111ea485c76e4c8f201');assert.equal(p.locality.n
 for(const s of m.sources){assert.equal(s.status,'original_retention_gap');assert.match(s.error,/403/);assert.equal(s.sha256,undefined);assert.equal(s.retained_path,undefined);}
 assert.equal(e.documents.length,0);assert.equal(p.retained_originals,0);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.currentness_approved,false);assert.equal(p.live_records_changed,0);assert.match(p.method,/No retrieved snippets/);
 });
+
+test('Springdale preserves combined application and historical electrical routing as unapproved candidates',()=>{
+const r='docs/official-evidence/ohio-springdale-2026-10-07/',m=JSON.parse(readFileSync(r+'manifest.json')),p=JSON.parse(readFileSync(r+'office-reconciliation.json'));
+assert.equal(p.locality.id,'6ac19f0f0d8345e06e51a703');assert.equal(p.locality.state,'OH');assert.equal(m.sources.length,6);for(const s of m.sources){assert.equal(s.status,'original_retention_gap');assert.equal(s.sha256,undefined);assert.equal(s.retained_path,undefined);}
+assert.match(p.application_candidate,/except accessory applications including signs/);assert.match(p.electrical_comparison.historical,/2011/);assert.match(p.electrical_comparison.review,/differs from 2025/);assert.match(p.open_text_anomaly,/do not infer/);
+assert.equal(p.retained_originals,0);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
+});

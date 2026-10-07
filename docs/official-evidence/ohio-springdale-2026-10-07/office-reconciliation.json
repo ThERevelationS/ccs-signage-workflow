@@ -1,0 +1,38 @@
+{
+  "locality": {
+    "id": "6ac19f0f0d8345e06e51a703",
+    "name": "Springdale",
+    "state": "OH",
+    "type": "city",
+    "county": "Hamilton"
+  },
+  "observed_on": "2026-10-07",
+  "method": "Official department web retrieval summary; original HTML/PDF retention failed, no original bytes substituted from snippets.",
+  "source": "https://www.springdaleohio.gov/departments/building_inspection/general_permits/index.php",
+  "online_form_url": "https://springdaleoh.portal.iworq.net/",
+  "application_candidate": "Current department page describes one construction application for building/mechanical/electrical/fire/zoning, except accessory applications including signs. Sign-specific application type and acceptance remain unverified.",
+  "inspection_candidate": "Department page routes inspection scheduling through citizen portal and says requests are due the preceding day; does not separately confirm electrical inspection office.",
+  "open_text_anomaly": "General plan review paragraph includes 'No new Signs Approved.' Preserve as unresolved context; do not infer a citywide sign moratorium.",
+  "electrical_comparison": {
+    "current": "Combined application webpage includes electrical discipline and city permit/inspection process.",
+    "historical": "2011 sign permit reproduced in a 2025 BZA packet references separate electrical inspection permit by Inspection Bureau, Inc.",
+    "historical_source": "https://cms2.revize.com/revize/springdaleoh/Documents/Government/Agendas%20And%20Minutes/Board%20Of%20Zoning%20Appeals/2025/Packets/284_northland_blvd_-_full_packet_1-28-25.pdf.pdf",
+    "review": "2011 permit date differs from 2025 packet publication. Do not assign current electrical issuer or inspector from either source alone."
+  },
+  "fee_version_candidate": "Webpage labels fee schedule effective January 1, 2023 under Ordinance 40-2022; current amounts and amendments not verified.",
+  "retained_originals": 0,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "gaps": [
+    "Six original-retention gaps",
+    "Separate sign/accessory form and current submission requirements",
+    "Current zoning sign provisions and amendments",
+    "Electrical issuer and inspector reconciliation",
+    "Ambiguous no-new-signs webpage sentence",
+    "Fee amounts/currentness",
+    "App-storage archive/catalog registration"
+  ]
+}
