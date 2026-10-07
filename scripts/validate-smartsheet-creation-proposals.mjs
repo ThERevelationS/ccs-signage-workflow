@@ -166,6 +166,9 @@ for (const forbidden of [
 }
 assert.equal(existing.relationships.estimate.action, "unlinked_no_authoritative_estimate_match");
 
+const operationalRollout = sales.rolloutPreview.classifications.find((item) => item.row_id === "s-operational");
+assert.equal(operationalRollout?.pipeline_route, "operational_non_pipeline",
+  "Rollout preview must identify objective downstream Workflow rows as non-pipeline operational records.");
 const operational = row(sales, "s-operational");
 assert.equal(operational.proposal_ready, true,
   "Objective downstream evidence should not discard the WorkOrder from controlled creation review.");
