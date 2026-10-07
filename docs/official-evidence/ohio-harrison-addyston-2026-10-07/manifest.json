@@ -1,0 +1,122 @@
+{
+  "sources": [
+    {
+      "city": "City of Harrison",
+      "file": "harrison-permits.html",
+      "official_url": "https://www.harrisonohio.gov/158/Permits",
+      "retrieved_at": "2026-10-07T13:26:40.732502+00:00",
+      "status": "archived",
+      "bytes": 205230,
+      "sha256": "7ff1e917cab214753c20a99c26e9243b98daae19d90a611ea23c726df06e3056",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-permits.html",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/158/Permits",
+      "content_type": "text/html; charset=utf-8"
+    },
+    {
+      "city": "City of Harrison",
+      "file": "harrison-inspections.html",
+      "official_url": "https://www.harrisonohio.gov/157/Inspections",
+      "retrieved_at": "2026-10-07T13:26:41.178867+00:00",
+      "status": "archived",
+      "bytes": 103157,
+      "sha256": "001482497ec5a93707667837954ab6232d0a6044941c4be4f436c45fe38019fd",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-inspections.html",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/157/Inspections",
+      "content_type": "text/html; charset=utf-8"
+    },
+    {
+      "city": "Village of Addyston",
+      "file": "addyston-zoning.html",
+      "official_url": "https://www.addystonohio.org/zoning",
+      "retrieved_at": "2026-10-07T13:26:41.520664+00:00",
+      "status": "archived",
+      "bytes": 635389,
+      "sha256": "ba660ec4caaafb47ac0ed668aa911c0e1cefa4ef0fc563dd8bb9693c256d6e24",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/addyston-zoning.html",
+      "http_status": 200,
+      "final_url": "https://www.addystonohio.org/zoning",
+      "content_type": "text/html; charset=UTF-8"
+    },
+    {
+      "city": "City of Harrison",
+      "file": "harrison-temporary-sign-instructions.pdf",
+      "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
+      "retrieved_at": "2026-10-07T13:26:41.874181+00:00",
+      "status": "archived",
+      "bytes": 549689,
+      "sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-temporary-sign-instructions.pdf",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
+      "content_type": "application/pdf"
+    },
+    {
+      "city": "City of Harrison",
+      "file": "harrison-permanent-sign-instructions.pdf",
+      "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/356/Permanent-Signs-Instructions-PDF",
+      "retrieved_at": "2026-10-07T13:26:42.066820+00:00",
+      "status": "archived",
+      "bytes": 549689,
+      "sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-permanent-sign-instructions.pdf",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/DocumentCenter/View/356/Permanent-Signs-Instructions-PDF",
+      "content_type": "application/pdf"
+    },
+    {
+      "city": "City of Harrison",
+      "file": "harrison-commercial-application.pdf",
+      "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/3057/APP-COMMERCIAL-BUILDING",
+      "retrieved_at": "2026-10-07T13:26:42.230111+00:00",
+      "status": "archived",
+      "bytes": 336030,
+      "sha256": "354946505142da0cb1b922df167519b6081089878216510a5e93e0a4895cceb5",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-commercial-application.pdf",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/DocumentCenter/View/3057/APP-COMMERCIAL-BUILDING",
+      "content_type": "application/pdf"
+    },
+    {
+      "city": "City of Harrison",
+      "file": "harrison-zoning-application.pdf",
+      "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/3063/APP-ZONING",
+      "retrieved_at": "2026-10-07T13:26:42.381442+00:00",
+      "status": "archived",
+      "bytes": 265146,
+      "sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-zoning-application.pdf",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/DocumentCenter/View/3063/APP-ZONING",
+      "content_type": "application/pdf"
+    },
+    {
+      "city": "City of Harrison",
+      "file": "harrison-variance-application.pdf",
+      "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/3470/APP-VARIANCE",
+      "retrieved_at": "2026-10-07T13:26:42.608382+00:00",
+      "status": "archived",
+      "bytes": 597140,
+      "sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-variance-application.pdf",
+      "http_status": 200,
+      "final_url": "https://www.harrisonohio.gov/DocumentCenter/View/3470/APP-VARIANCE",
+      "content_type": "application/pdf"
+    },
+    {
+      "city": "Village of Addyston",
+      "file": "addyston-linked-zoning-ordinance.pdf",
+      "official_url": "https://www.addystonohio.org/_files/ugd/c8a414_844b617e348e42c4bab3d6d2b064f310.pdf",
+      "retrieved_at": "2026-10-07T13:26:42.778333+00:00",
+      "status": "archived",
+      "bytes": 951077,
+      "sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+      "retained_path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/addyston-linked-zoning-ordinance.pdf",
+      "http_status": 200,
+      "final_url": "https://www.addystonohio.org/_files/ugd/c8a414_844b617e348e42c4bab3d6d2b064f310.pdf",
+      "content_type": "application/pdf"
+    }
+  ],
+  "staff_approved": false
+}
