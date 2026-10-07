@@ -1,7 +1,7 @@
 // Type-only corrections. Caller must authenticate an administrator and verify the
 // retained official bytes/reference relationship before supplying this evidence.
 const types = new Set(['county', 'city', 'village', 'township', 'municipality']);
-const identityFields = ['id', 'name', 'state', 'type', 'parent_county', 'website_url', 'permitting_url'];
+const identityFields = ['id', 'name', 'state', 'type', 'parent_county_name', 'website_url', 'permitting_url'];
 const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 const fail = message => { throw new Error(message); };
 export function buildIdentityTypeCorrection({profile, expected, newType, evidence, actor, requestId, timestamp}) {
