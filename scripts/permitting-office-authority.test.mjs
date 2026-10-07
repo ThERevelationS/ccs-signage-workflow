@@ -219,3 +219,12 @@ test('malformed stored review and invalid cursors fail closed',async()=>{
  const t=await setup();assert.equal((await assessOfficeAuthorityReview(t.deps,{action:'verify'},t.profiles.profile)).verified,false);
  await assert.rejects(listOfficeAuthorityReviews(t.deps,{jurisdictionId:'profile',cursor:'bad'}),/cursor/);
 });
+
+test('named village PDF office review preserves exact area and stale identity guards',async()=>{
+ const t=await setup();t.patchProfile('town',{type:'village'});
+ const r=await t.review({jurisdictionId:'town',expectedUpdatedDate:t.profiles.town.updated_date,input:{...t.input,coverage_area:'Town'},dryRun:true});
+ assert.equal(r.proposal.profile_snapshot.type,'village');assert.equal(r.proposal.coverage_kind,'named_jurisdiction');
+ assert.equal(r.proposal.address_authority_resolved,false);assert.equal(t.counts.creates,0);
+ await assert.rejects(t.review({jurisdictionId:'town',expectedUpdatedDate:t.profiles.town.updated_date,input:{...t.input,coverage_area:'Other village'},dryRun:true}));
+ assert.equal(t.counts.creates,0);
+});
