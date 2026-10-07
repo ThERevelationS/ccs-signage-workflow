@@ -1336,6 +1336,7 @@ async function pushDataset(
       if (preFetchPage >= totalPages) break;
     }
   }
+  const sheetRowIds = new Set<string>([...sheetRowsMap.keys()].map((value: any) => String(value)));
   const orderPushStartedAt = Date.now();
   const orderPushTimeBudgetMs = dataset === 'orders'
     ? Math.max(0, Number(options?.orderPushTimeBudgetMs) || 0) : 0;
