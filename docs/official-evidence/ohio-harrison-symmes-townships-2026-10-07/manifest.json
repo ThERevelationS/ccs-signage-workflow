@@ -1,0 +1,50 @@
+{
+  "sources": [
+    {
+      "file": "harrison-township-zoning.html",
+      "official_url": "https://www.harrisontownshipohio.com/zoning",
+      "observed_at": "2026-10-07T17:33:42.694195+00:00",
+      "final_url": "https://www.harrisontownshipohio.com/zoning",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/harrison-township-zoning.html",
+      "bytes": 571704,
+      "sha256": "9f02d7ebfdc2bda9b896276f46268e92bd16933ac3f8bb44a869e5c14da80836"
+    },
+    {
+      "file": "symmes-zoning.html",
+      "official_url": "https://symmestownship.org/243/Zoning-Resolution",
+      "observed_at": "2026-10-07T17:33:42.864121+00:00",
+      "final_url": "https://symmestownship.org/243/Zoning-Resolution",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/symmes-zoning.html",
+      "bytes": 95521,
+      "sha256": "0819de20d424d3fed6afca4855403741e39aaa4cfc749d1dd73aae9acf88588e"
+    },
+    {
+      "file": "symmes-zoning-map.pdf",
+      "official_url": "https://symmestownship.org/DocumentCenter/View/2633/Symmes-Township-Zoning-Map-PDF",
+      "observed_at": "2026-10-07T17:33:43.992094+00:00",
+      "final_url": "https://symmestownship.org/DocumentCenter/View/2633/Symmes-Township-Zoning-Map-PDF",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/symmes-zoning-map.pdf",
+      "bytes": 845922,
+      "sha256": "19501fb3729ccb031547c54f06d2be564b11bda238baf84848d68e65e475c8f5"
+    },
+    {
+      "file": "symmes-zoning-code.pdf",
+      "official_url": "https://symmestownship.org/DocumentCenter/View/2848/SymmesZoningCode_10-8-24PDF",
+      "observed_at": "2026-10-07T17:33:45.181677+00:00",
+      "final_url": "https://symmestownship.org/DocumentCenter/View/2848/SymmesZoningCode_10-8-24PDF",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/symmes-zoning-code.pdf",
+      "bytes": 2853736,
+      "sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5"
+    }
+  ],
+  "live_records_changed": 0,
+  "staff_approved": false
+}
