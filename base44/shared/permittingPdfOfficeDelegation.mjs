@@ -6,7 +6,7 @@ export function explicitElectricalDelegation(role,excerpt,officeName){
  if(typeof excerpt!=='string' || typeof officeName!=='string' || !officeName) return false;
  const prefix=role==='electrical_permit'?'Electrical permits are issued by ':
   role==='electrical_inspection'?'Electrical inspections are performed by ':null;
- return Boolean(prefix && excerpt===prefix+officeName+'.' &&
+ return Boolean(prefix && excerpt===prefix+officeName+(officeName.endsWith('.')?'':'.') &&
   !/\b(?:not|never|no|cannot|without)\b/i.test(excerpt));
 }
 export async function verifyPdfOfficeDelegation(deps,profile,input,getOffice){

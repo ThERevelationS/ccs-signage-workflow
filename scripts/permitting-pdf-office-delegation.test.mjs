@@ -50,6 +50,7 @@ test('delegation records distinct publisher and responsible office through exist
 test('issuer and inspection clauses remain separate; contact and negated text fail',()=>{
  assert.equal(explicitElectricalDelegation('electrical_permit','Electrical permits are issued by Regional Agency.','Regional Agency'),true);
  assert.equal(explicitElectricalDelegation('electrical_inspection','Electrical inspections are performed by Regional Agency.','Regional Agency'),true);
+ assert.equal(explicitElectricalDelegation('electrical_inspection','Electrical inspections are performed by The Inspection Bureau, Inc.','The Inspection Bureau, Inc.'),true);
  for(const quote of ['Contact Regional Agency for electrical inspections.','Electrical inspections are not performed by Regional Agency.',
   'Electrical inspections are performed by Other Agency.','Electrical permits are issued by Regional Agency.'])
   assert.equal(explicitElectricalDelegation('electrical_inspection',quote,'Regional Agency'),false);

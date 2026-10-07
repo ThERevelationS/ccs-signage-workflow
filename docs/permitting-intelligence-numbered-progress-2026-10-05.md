@@ -1,3 +1,15 @@
+## 2026-10-07 — Separate municipal PDF publisher and electrical provider review path
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Added explicit pdf_delegation evidence kind to the backend relationship review and event schema. Municipality-only, same-profile named scope, municipal official host, exact byte-verified profile archive, current reviewed source and canonical publisher reference are mandatory. Publisher and responsible office must be separate staff-verified same-state identities. Distinct exact retained sentences are supported initially: electrical permits issued by the named office; electrical inspections performed by the named office. Contact-only instructions, aliases, generic electrical role, unsupported phrasing and negation remain blocked. No City source is relabeled IBI.
+
+The new evidence uses existing immutable events, exact profile version reservations, second-read comparison, replay recovery, revocation and fresh assessments. Publisher snapshot is retained separately and included in evidence comparison. Context can expose eligible separately verified same-state offices for this explicit evidence kind. Existing PDF publisher and zoning-only HTML routes remain intact. UI selection for this kind is still pending; actual Cincinnati contact-only handout does not satisfy the new grammar and remains unapproved.
+
+Verification: 55 focused PDF/HTML/ledger/backend-handler tests passed, including publisher and responsible identity withdrawal, mismatched state/scope/host/archive, inexact/negated/contact-only proof, issuer/inspection separation and replacement after reservation causing no event creation. Compiled backend handler bundling and diff checks passed. Initial fixture text assembly mismatch corrected before successful tests. No live source or role approval created; frontend unpublished.
+
+Next: Add the explicit delegated-provider mode to the admin PDF review interface with previewed publisher/provider distinctions and current evidence limitations. Staff canonical identity and source reviews remain required before any live approval.
+
 ## 2026-10-07 — Cincinnati live electrical evidence readiness audit
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
