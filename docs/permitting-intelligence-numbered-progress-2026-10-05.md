@@ -1,3 +1,15 @@
+## 2026-10-07 — Guarded IBI office identity proposal
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Prepared a reproducible read-only proposal for the existing IBI catalog office. Saved exact catalog id/version and office snapshot SHA-256. Proposed canonical metadata reuses the existing office ID with needs_verification, blank reviewer/date, provider phone/site/address and unconfirmed email left blank. All legacy fields and five workflow steps are preserved. No duplicate regional provider registration or locality link is created.
+
+Separate permit/inspection evidence packets reference the retained City sign PDF and page/hash, and state currentness, issuance-versus-submission, identity, and project-scope gaps. The existing candidate-registration endpoint is intentionally unchanged: its jurisdiction-specific printed-name path is unsuitable for regional IBI identity. No production data, staff review, authority, automation or frontend changed.
+
+Verification: 3 proposal checks passed (immutability/preservation, invalid or previously reviewed identities blocked, workflow-sensitive hash and retained PDF provenance); diff check passed. Frontend build not repeated because only offline scripts/research receipts changed.
+
+Next: Stage the existing IBI catalog entry as an unverified canonical identity candidate with an atomic exact-version guard, preserved workflows and readback; keep locality links and electrical role approvals separate.
+
 ## 2026-10-07 — Cincinnati sign electrical scope and office identity audit
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
