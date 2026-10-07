@@ -1,0 +1,23 @@
+{
+  "file": "sign-application.pdf",
+  "official_url": "https://www.sharonville.org/394/Sign-Application",
+  "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+  "source_bytes": 733645,
+  "total_pages": 1,
+  "pages_with_embedded_text": 1,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Application for Sign Approval \nPROJECT ADDRESS: \nNAME ADDRESS INCLUDE CITY & ZIP PHONE \nBusiness Owner \nContractor/Erector \nApplicant (print) \nEmail Signature Date \nWhat is the TOTAL frontal width of your: A) Building B) Space \nIs the proposed sign located within the property limits of your development? YES / NO \nSIGN TYPE HEIGHT HEIGHT SIZE SETBACK EST. COST \nDirectional, Ground, High - \nrise, Pole, Projecting, Temp., \nWall, Other (Indicate for \neach sign proposed) \nOf sign with \nmounting \nstructure \nAbove grade to \nthe bottom of \nsign (Pole or \nProjecting) \nOf sign: width and \nheight \nFrom street/ right - of - \nway (Pole, Ground, \nand Directional only) \nFor each sign \nlisted \nBELOW IS FOR OFFICE USE ONLY \nApproval Fee \nIssue Date Plan Review Fee \nUse Group Sub Total \nApproval by 1% (ORC) / 3% (OBC) \nZoning District TOTAL DUE \n10900 Reading Road - Sharonville, OH - 45241 Office: (513) 563-0033 permits@cityofsharonville.com \nPROJECT # (office use) \nREQUIRED SUBMISSION ATTACHMENTS FOR PERMANENT SIGN PERMITS: \n1. For all signs, a drawing of the sign, colored rendering including the message, drawn to scale, showing the dimensions of the sign. \n2. For all free-standing signs, a site plan of the property showing the location of each proposed sign and distance to property lines and street right-\nof-way. \n3. For all free-standing signs, foundation drawings, stamped and sealed by an architect or engineer, detailing footer depth & width and structural\nloads as required by the Ohio Building Code. \n4. For all wall mounted signs, details of how the sign will be attached to the wall of the structure where proposed.",
+      "text_sha256": "28706109d49f7d487ab16c10754de36a35bd40be003fe1b7fc9c679912688ce8",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6"
+    }
+  ]
+}

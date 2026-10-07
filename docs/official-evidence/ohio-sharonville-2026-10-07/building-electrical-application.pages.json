@@ -1,0 +1,41 @@
+{
+  "file": "building-electrical-application.pdf",
+  "official_url": "https://www.sharonville.org/392/Building-Permit-Application",
+  "source_sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211",
+  "source_bytes": 390469,
+  "total_pages": 3,
+  "pages_with_embedded_text": 3,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "10900 Reading Road ∙ Sharonville, OH 45241\n513 ∙ 563 ∙ 0033\npermits@cityofsharonville.com \nApplication for Building/ Electrical/ Zoning Approval \nTO AVOID UNNECCESARY DELAY IN THE PROCCESSING OF YOUR APPLICATION PLEASE SUBMIT YOUR BUILDING PROJECT TO CINCINNATI\nMETROPOLITAN SEWER DISTRICT (MSD) USING THE ONLINE SUBMISSION PORTAL FOR A REQUEST FOR AVAILABILITY OF SEWER SERVICES\n(RASS) ON THEIR DEVELOPMENT SERVICES PAGE. PLEASE VISIT https://msdgc.org/doing-business-with-us/development-services/ \nPROJECT ADDRESS: \nBUSINESS/TENANT NAME ( If applicable ): \nNew Construction Interior Alteration Fire Alarm Reroof / Siding Deck Driveway \nAddition Exterior Alteration Suppression Accessory Structure Fence Shed \nElectrical HVAC Kitchen Hood Tent Pool Other (describe) \nElectrical Service Size (Line Drawing Required over 400 AMP) \nDESCRIBE PROPOSED WORK: \nDESCRIBE TYPE OF BUSINESS (If applicable): \nApplicant / Contractor Address (Include city, state, and zip) Phone \nOwner / Lessee Address (Include city, state, and zip) Phone \nApplicant Name (Print) (Sign) \nApplicant Email \nESTIMATED COST & SQUARE FOOTAGE \nBuilding Structure Suppression/Fire Alarm \nHVAC TOTAL PROJECT COST \nMiscellaneous SQUARE FOOTAGE \nBELOW IS FOR OFFICE USE ONLY \nApproval Fee \nIssue Date Plan Review Fee \nUse Group Fire Dept. Review Fee \nConst. Type Sub Total \nApproval B y 1% (ORC) / 3% (OBC) \nZoning District TOTAL FEES DUE \n** SEE NEXT PAGE FOR COMMERCIAL CONSTRUCTION DOCUMENTATION CERTIFICATION ** \nPROJECT # (office use)",
+      "text_sha256": "d6ca312cbc5eaee32f7b999dd05f493d93da49307f8882247b3741fa65ffd274",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211"
+    },
+    {
+      "page": 2,
+      "text": "BldgPermit.Review@gcww.cincinnati-oh.gov (513)-591-7924 NAME EMAIL ADDRESS",
+      "text_sha256": "9a83ab9525634665dab9e9d674044f696ed565756925822598f8b17ddf33ead9",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211"
+    },
+    {
+      "page": 3,
+      "text": "10900 Reading Road ∙ Sharonville, OH 45241\n513 ∙ 563 ∙ 0033\npermits@cityofsharonville.com \nApplication for Building/ Electrical/ Zoning Approval \nCONSTRUCTION DOCUMENTATION \nWhere the Ohio Building Code (OBC), as amended, applicable under Code Sections 104.2.1.1 and Code \nSection 105.1 o OBC – Approvals Required – any owner or authorized agent who intends to construction,\nenlarge, alter, repair, move, or change the occupancy of a building or structure, or portion thereof, or to \nerect, install, enlarge, alter, repair, remove, convert or replace any electrical, gas, mechanical or \nplumbing system, the installation of which is regulated by this code, or to cause any such work to be \ndone, shall first make application to the building official and obtain the required approval. \nThe plans and specifications for the above reference project are submitted herewith for examination and\napproval. The signature and stamp below certifies that I have prepared the plans and specifications to \nconform with the requirements of the Ohio Building Code (OBC) and Chapters 3781 and 3791 of the Ohio\nRevised Code. \nName:_____________________________________________________________________ \nOhio Registration No.:________________________________________________________ \nCompany:__________________________________________________________________ \nSignature:__________________________________________________________________ \nStamp/Seal",
+      "text_sha256": "b21f281279b83bfbada38c2a0ee7e01aec1c01cbf6ca5ff4d0985d8972b06fba",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211"
+    }
+  ]
+}

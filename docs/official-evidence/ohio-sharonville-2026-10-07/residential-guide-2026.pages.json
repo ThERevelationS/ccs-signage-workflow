@@ -1,0 +1,266 @@
+{
+  "file": "residential-guide-2026.pdf",
+  "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+  "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+  "source_bytes": 11002258,
+  "total_pages": 28,
+  "pages_with_embedded_text": 28,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "RESIDENTIAL\nPERMITTING\nGUIDE \nCOMMUNITY DEVELOPMENT",
+      "text_sha256": "e420f374c9187a8186b0ba3ed5041a288fdcdbb2223c9971864b1edf2f186a78",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 2,
+      "text": "“The Community Development Department\nis committed to providing outstanding\ncustomer service and maintaining a safe,\nvibrant, and well maintained community for\nboth residents and businesses.” \nCOMMUNITYDEVELOPMENT \nThe Community Development Department\nstaff is happy to assist you with any of your\npermitting questions. \n513-563-0033\npermits@cityofsharonville.com",
+      "text_sha256": "26c9a8aa78415caa0c554c67f27fe1a3fb1065dae420b33f8d999687ba1fbe9c",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 3,
+      "text": "TABLE OF\nCONTENTS \n1. Guide to Residential Permitting in Sharonville \n2. Sharonville Building Services \n3. Permit Information \na. How to Fill Out and Submit a Permit \nb . Projects Requiring a Building/ Zoning Permit \n4. Electric Permits \n5. Inspections \n6. Current Zoning Map \n7. Residential District Requirements \na . Building Setback Table \nb . Building Setback Examples \n8. Construction Plans and Details \n9. Zoning Code Regulations \na. Accessory Structures \nb. Swimming Pools \nc. Fences & Walls \nd. Fence and Wall Requirements \ne. Parking and Storage Regulations \n10. Residential Storm Water Information \na. Important Information About Gutters & Downspouts \nb. Information Regarding Storm Drainage Systems and Sump Pumps \nc. Construction Figure Examples of Drainage Systems \n11. Trees & Landscaping on Residential Property \n12. Excavations \n13. Residential Driveways \n14. Floodplain Development \n15. Code Enforcement and Property Maintenace \n16. Residential Home Improvement & Assistance Programs \na. Hamilton County Home Improvement Program (HIP) \nb. People Working Cooperatively (PWC) \n17. FAQS COMMUNITYDEVELOPMENT \npg. 2\npg. 2\npg. 3-4\npg. 3\npg. 4\npg. 5\npg. 6\npg. 7\npg. 8-9\npg. 8\npg. 9\npg. 10-11\npg. 12-15\npg. 12\npg. 13\npg. 13-14\npg. 14\npg. 15\npg. 16-18\npg. 16\npg. 17\npg. 18\npg. 19\npg. 20\npg. 20\npg. 21\npg. 22\npg. 23-24\npg. 23\npg. 24\npg. 25",
+      "text_sha256": "d69a1fc9ac0f3512ccab0c1d8e3503403393490802e4b99e1121619c86a8c9d7",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 4,
+      "text": "A GUIDE TO RESIDENTIAL PERMITTING IN\nSHARONVILLE \n1. \nCOMMUNITYDEVELOPMENT \nSHARONVILLE BUILDING AND ZONING\nSERVICES \n2. \nThe Community Development Department is the City of\nSharonville's resource for all aspects of building and planning,\nfrom strategic planning initiatives to construction approvals,\ninspections and property maintenance / zoning code\nenforcement. Effective and proactive Community\nDevelopment benefits and improves the quality of life for\nSharonville residents and businesses. We conduct our daily\nactivities as partners and advocates for all Sharonville\nresidents, businesses, and visitors.\n• Residential Building Permit Review\n• Zoning Code Review\n• General Code Consultation\n• Issue Building and Zoning Permits\n• Conduct Building and Site Inspections\n• Process Variance, Zone Change, and Conditional Use Applications\n• Strategic and Comprehensive Planning Initiatives\n• Zoning and Property Maintenance Code Enforcement\n• Site Development Review and Approvals\n• Storm Water Review Information and Approval Coordination\n• FEMA and Floodplain management \n2",
+      "text_sha256": "d21df8c62ccfc6b34bbfa607e3d1b64e3baaa75a544f22897ffa0071a88565b6",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 5,
+      "text": "COMMUNITYDEVELOPMENT \n3 \nPERMIT INFORMATION 3. \nHow to Fill Out & Submit a Permit: \n10900 Reading Road ∙ Sharonville, OH 45241\n513 ∙ 563 ∙ 0033\npermits@cityofsharonville.com \nApplication for Building/ Electrical/ Zoning Approval \nPROJECT ADDRESS: \nBUSINESS/TENANT NAME ( If applicable ): \nNew Construction Interior Alteration Fire Alarm Reroof / Siding Deck Driveway \nAddition Exterior Alteration Suppression Accessory Structure Fence Shed\nElectrical HVAC Kitchen Hood Tent Pool Other (describe)\nElectrical Service Size (Line Drawing Required over 400 AMP) \nDESCRIBE PROPOSED WORK: \nDESCRIBE TYPE OF BUSINESS (If applicable): \nNAME ADDRESS (INCLUDE CITY, STATE, & ZIP) PHONE \nApplicant / Contractor \nOwner / Lessee \nApplicant Name (Print ) (Sign) \nApplicant Email \nESTIMATED COST & SQUARE FOOTAGE \nBuilding Structure Suppression/Fire Alarm \nHVAC TOTAL PROJECT COST \nMiscellaneous SQUARE FOOTAGE \nBELOW IS FOR OFFICE USE ONLY \nApproval Fee \nIssue Date Plan Review Fee \nUse Group Fire Dept. Review Fee \nConst. Type Sub Total \nApproval B y 1% (ORC) / 3% (OBC) \nZoning District TOTAL FEES DUE \n** SEE NEXT PAGE FOR COMMERCIAL CONSTRUCTION DOCUMENTATION CERTIFICATION ** \nPROJECT # (office use) \n1. Go onto the City of Sharonville website \n(https://www.sharonville.org/) \n2. Hold Cursor over City Office \n3. Click on Community Development under\nDepartments\n4. Click on Online Documents on the left side of the\nscreen\n5. Fill out the form called “Application for Plan\nApproval”\nhttps://www.sharonville.org/documentcenter/\nview/4006/application-for-plan-approval \n6. Submit the completed application, along with two\n(2) sets of construction plans/drawings\nrequired for your project \n7. Once this is completed, EMAIL TO\npermits@cityofsharonville.com \nPlease call the Community\nDevelopment Department\nwith any questions at \n(513)-563-0033 \na. \nScan the QR Code to take you\nto our document page which\nincludes all of our building\npermit applications.",
+      "text_sha256": "fef9a650b6afdaf71dedfebe87547a6fd60b6e9bda411a79019d281d1e762f68",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 6,
+      "text": "COMMUNITYDEVELOPMENT \n4 \nPERMIT INFORMATION 3. \nProjects Requiring a Building\nand/ or Zoning Permit:\nb. \n• Above ground and In-Ground Swimming Pools\n• Attached or Detached Garages\n• Building Additions\n• Building Remodeling\n• Carports\n• Decks/Porches\n• Demolitions\n• Driveways (A street opening permit from Public Works may be required)\n• Electric\n• Fences\n• Downspouts\n• Heating, Ventilation and Air Conditioning (HVAC)\n• New residential construction\n• Roof Replacement and Repair\n• Portable Storage Units / Construction Dumpsters\n• Retaining Walls (If over 4 feet in height)\n• Sheds or other Accessory Structures\n• Window or Door Replacements (If structural altercations are made)\nIf you’re not sure if a permit is required for the work you\nintend to do, just give us a call at (513)-563-0033\nTypical Projects:",
+      "text_sha256": "0ebf10c9ee8a55ae9df5ea56338a3ce90d0aa88cc3ec98b4523b9b6b67bc184b",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 7,
+      "text": "COMMUNITYDEVELOPMENT \n5 \nELECTRIC PERMITS 4. \nIn early 2020, the City of Sharonville partnered with National\nInspection Corporation (NIC) to perform electric plan review,\napprovals and inspections in an effort to improve the convenience to\nresidents and businesses.\nAll electric permits and plans can be emailed or dropped off at the\nCity of Sharonville Community Development Department Office to\nstart the electric permit approval process.\nOnce the permit is approved, you will be contacted for payment of\nthe electric permit fee, and the permit will be issued. \nAll electrical inspections are handled directly by NIC.\nIf you have any general\nadministrative questions\nabout electric permitting,\nplease contact us at\n513-563-0033\nFor specific electric\npermitting questions\nplease call NIC at\n888-433-4642",
+      "text_sha256": "1cc9f1b15503ba2b01b46c966c8fa41f24d8ea7f77d2de705953adac60ca38d5",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 8,
+      "text": "6 \nINSPECTIONS 5. \nList of Typical Residential Building Inspections \n• Soil / Footing Inspection\n• Site / Erosion Controls\n• Foundation / Steel Reinforcement\n• Under Slab / Vapor Barrier\n• Framing / Shear Wall\n• Above Ceiling HVAC / Duct Seal\n• HVAC\n• Insulation\n• Gas and Pressure piping test\n• Temporary structures (tents, special events)\n• Temporary Certificate of Occupancy\n• Site inspection, elevation certificate if in\nFlood zone\n• Special Inspection final report (if required)\n• Final inspection, Certificate of Complaince/\nor Certification of Occupancy \nPlumbing Permits are\nissed and inspected by\nthe\nHamilton County\nHealth Department \nElectric permits are\nissued by the City of\nSharonville. The plan\nreview and inspection\nare performed by the\nNational Inspection\nCorporation (NIC) \n888-433-4642",
+      "text_sha256": "b49d5d24229aadd72ed1fb28babe2fd6b8db5dd4c78fa73a6505ed55ee21f3c5",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 9,
+      "text": "7 \nCURRENT ZONING MAP 6. \n1. Go onto the City of Sharonville website sharonville.org \n2. Hold Cursor over City Office \n3. Click on Community Development under “Departments”\n4. Click on Zoning Map on the left side of the screen\n5. To find the legend , in the top left, click on the two arrows ( >> )\n6. To see individual layers and legends , click on the preffered layer arrow ( > ) to\nthe right of the name of the layer \nPlease call the Community\nDevelopment Department\nwith any questions \n(513) 563-0033\nHow to Access The Sharonville Zoning Map",
+      "text_sha256": "d7f6614c6d125fc24c3aac0490e840688a3cc68d224a6ad8d7390c3f83057aa1",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 10,
+      "text": "COMMUNITYDEVELOPMENT \n8 \nRESIDENTIAL DISTRICT REQUIREMENTS 7. \nBuilding Setback Table \nZONING\nDISTRICTS\nMINIMUM LOT\nAREA\nMINIMUM LOT\nWIDTH\nFRONT\nYARD\nSETBACK\nSIDEYARD\nSETBACK\nREAR\nYARD\nSETBACK\nMINIMUM\nHEIGHT\nMAXIMUM\nLOT\nCOVERAGE\nR1-A 12,000’ 100’ 40’ 15’ 35’ 35 feet 35% \nR1-B 9,600’ 80’ 30’ 10’ 35’ 35 feet 35% \nR2-C \n9.600’ per each\nsingle family\ndwelling\n80’ for lots with\na single family\ndwelling\n30’\n10’ for\nsingle\nfamily\ndwellings\n35’ 35 feet 35% 8,500’ per each\ndwelling unit in a\ntwo family house\n100’ for lots with\na two family\ndwelling\n12’ for\nall other\ndwellings\n150’ for lots with\na rowhouse\ndwelling\n5,445’ per each\ndwelling unit in a\nrowhouse dwelling \nRM-D \n9,600’ per each\nsingke family\ndwelling\n80’ for lots with\na single family\ndwelling\n30’\n10’ for\nsingle\nfamily\ndwellings\n35’ 40 feet 35% 8,500’ per each\ndwelling unit in a\ntwo family house\n100’ for lots with\na single family\ndwelling\n12’ for\nall other\ndwellings\nthat are 2\nstories in\nheight or\nshorter\n4,000 per each\ndwelling unit in a\nrowhouse or multi\n- family dwelling\n200’ for lots\nwith rowhouse\ndwelling\n15’ for\nall other\ndwellings \na.",
+      "text_sha256": "b27a0be02e271e2b9d2edb779ce813121bcd6524e38803435ae28fdb7fdccc26",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 11,
+      "text": "9 \nRESIDENTIAL DISTRICT REQUIREMENTS 7. \nBuilding Setback Examples b. \nINTERIOR LOT CORNER LOT\nRear Lot Line\nSide Lot Line\nSide Lot Line\nRear yard\nsetback\nFront yard\nsetback\nFront Lot line\nSide yard\nsetback\nSide yard\nsetback\nPrincipal Building \nPublic Street \nRear Lot Line\nFront Lot line\nSide Lot Line\nFront of Lot line\nSide\nyard\nsetback\nRear yard\nsetback\nFront yard\nsetback\nFront yard\nsetback \nPublic Street \n*Corner Lots have\ntwo front yards\nPrincipal Building",
+      "text_sha256": "16b2db64981036d9158833f530ab0281dc1c2e8b78f1fee99a910ae9212be2dd",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 12,
+      "text": "COMMUNITYDEVELOPMENT \n10 \nCONSTRUCTION PLANS AND DETAILS 8. \nWhen Submitting a Permit, you must include: \n1. Permit Application \n10900 Reading Road ∙ Sharonville, OH 45241\n513 ∙ 563 ∙ 0033\npermits@cityofsharonville.com \nApplication for Building/ Electrical/ Zoning Approval \nPROJECT ADDRESS: \nBUSINESS/TENANT NAME ( If applicable ): \nNew Construction Interior Alteration Fire Alarm Reroof / Siding Deck Driveway \nAddition Exterior Alteration Suppression Accessory Structure Fence Shed\nElectrical HVAC Kitchen Hood Tent Pool Other (describe)\nElectrical Service Size (Line Drawing Required over 400 AMP) \nDESCRIBE PROPOSED WORK: \nDESCRIBE TYPE OF BUSINESS (If applicable): \nNAME ADDRESS (INCLUDE CITY, STATE, & ZIP) PHONE \nApplicant / Contractor \nOwner / Lessee \nApplicant Name (Print ) (Sign) \nApplicant Email \nESTIMATED COST & SQUARE FOOTAGE \nBuilding Structure Suppression/Fire Alarm \nHVAC TOTAL PROJECT COST \nMiscellaneous SQUARE FOOTAGE \nBELOW IS FOR OFFICE USE ONLY \nApproval Fee \nIssue Date Plan Review Fee \nUse Group Fire Dept. Review Fee \nConst. Type Sub Total \nApproval B y 1% (ORC) / 3% (OBC) \nZoning District TOTAL FEES DUE \n** SEE NEXT PAGE FOR COMMERCIAL CONSTRUCTION DOCUMENTATION CERTIFICATION ** \nPROJECT # (office use) \nThe application can be found in\nthis document, the application then\nmust be emailed or dropped off.\nPlease email the required information to \npermits@cityofsharonville.com \n2. Site or Plot Plan\nExample of Site Plan \nUsing the CAGIS website to find an\naerial, please make sure to add the\nchanges in their proper location. The\npicture should show the property lines\nalone with the aerial image. These are\nboth layers included within the website.\nThe Community Development Office\ncan also help in the creation of site\nplans.\nTo visit CAGIS: \nhttps://cagis.hamilton-co.org/cagisonline/",
+      "text_sha256": "d53fc7f77644a80375bb591bd4ed65efe243ca72890871b46521975dabdce13c",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 13,
+      "text": "11 \nCONSTRUCTION DETAILS 8. \nWhen Submitting a Permit, you must include: \n3. Construction Plans \nYou may submit the application\nand construction plans in paper\nformat, (drawn to scale,) providing\nbuilding details, inclusive of\npurposed work, floor plans, and\nany structural details of the\nresidential building project. You\nmay submit via email at the email\naddress below. \nSend all plans and applications to:\npermits@cityofsharonville.com",
+      "text_sha256": "b9a3020203364a2234b8bd342a86edb2b749b455d4208b641931a3a2a1947e0c",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 14,
+      "text": "12 \nZONING CODE REGULATIONS 9. \nAccessory Structures a. \nStructures Less Than 200 Sq. Ft \n• $40 Zoning permit required\n• Electric Permit may also be required.\n• Minimum of 5 foot setback from side and rear property lines\n• Minimum of 5 foot setback from principal building (House)\n• Must be connected by a paved driveway if intended to be\nused as a garage or for vehicle storage.\n• Structures of a temporary nature (tarpaulin, canvas, plastic,\netc.) are prohibited.\n• Maximum height of 14 feet. \nStructures Greater Than 200 Sq. Ft \n• Zoning AND Building Permits required.\n• Electric permit may be required\n• Minimum of 5 feet from rear and side property lines\n• Minimum of 10 feet from principal building (House)\n• Must be connected by a paved driveway if intended to be\nused as garage\n• Structures of temporary nature (tarpaulin, canvas, plastic,\netc.) are prohibited\n• Maximum of 600 square feet.\n• Permitted in the rear of the yard only.\n• Maximum height of 14 ft.\n• Building permit fees apply. \nTemporary Portable Storage Units \n• Zoning permit required - $40.00\n• Must be placed on a paved surface\n• Permitted up to 7 days an no more than 14 days in a\n180 day period (6 months).\n• Cannot store hazardous or explosive materials.\n• Cannot be used for human habitation\n• Inflatable garages or storage structures shall also be\nprohibited.\n• Portable containers, shipping containers, and\nsemi-tractor trailers used for storage (with or without\nwheels) shall not be used as permanent accessory\nstructures in any residential zoning districts.",
+      "text_sha256": "902e2954dede7f0ae301ea8c421ccb20af7ea53be85d7b5900c38ddba67b0b96",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 15,
+      "text": "13 \nZONING CODE REGULATIONS 9. \nSwimming Pools b. \nFences & Walls c. \n• Zoning permit required - $40.00.\n• Permitted in the side and rear yard only.\n• Shall not encroach into abutting properties. (Property owners with written permission from neighbors\nmay connect to fences or walls on abutting properties)\n• Must not encroach into any utility or storm water easements. (The City of Sharonville is not responsible\nfor determining or locating any private easements)\n• Must be maintained and replaced as necessary. Kept clear from brush and vegetation.\n• Only one fence is allowed on the property line. New fences are required to be 2.5 feet from existing\nfence.\n• The smooth side of the fence must face outside properties.\n• Poles, posts and other mechanisms must be on the interior of the property.\n• Diagonal members and other supporting mechanisms must be on the interior of the property.\n• Replacement of fences removed by the City of Sharonville or utility company shall be at the property\nowner’s expense.\n• Temporary construction fencing is permitted only over the duration of the work.\n• Zoning permit required - $40.00.\n• Not to exceed 54 inches in height above ground.\n• Every swimming pool shell be completely enclosed by a fence and/or\nstructure of sturdy construction at least 48 inches in height.\n• Enclosure may surround the pool or entire yard\n• Access gates into the enclosure shall be self-closing and have a\nself-latching device.\n• Where an above-ground pool structure is used as a barrier or where\nthe barrier is mounted on top of the pool structure and the means of\naccess is a ladder or steps, the ladder or steps shall be capable of\nbeing secured, locked, or removed to prevent access.\n• Swimming pools must be a setback a minimum of 10 feet from all\nproperty lines, measured from edge of water.\n• Patios surrounding a pool must be setback a minmum of 5 feet from\nall property lines.\n• All equipment and pumps must be a setback a minimum of 10 feel\nfrom all property lines.\n• Electric permit may be required.",
+      "text_sha256": "6d496944bf266a585867ef24d6c92c2cc377c08e10fd5d09dfb2529684542eb8",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 16,
+      "text": "14 \nZONING CODE REGULATIONS 9. \nFences & Walls Continued c. \nMaterials and Prohibited Fence Types \n• Must be Weatherproof or Resistant.\n• Fences from rope, string, fabric, netting, or other similar materials, unless approved as\n• temporary construction fencing\n• Chain link fencing greater than 4 feet in height in residential districts.\n• Snow and deer fencing.\n• Non decorative concrete or masonry walls.\n• Chicken, hog, rabbit, mesh or woven wire fences, unless mounted on the interior of\nanother approved fence.\n• Slats or other materials woven into chain link fencing.\n• Electrified wire, barbed wire, unfinished nondurable, sharp edge, broken glass or other\nmaterials intended to inflict harm.\n• Plywood, particle board, fiberglass, corrugated or galvanized sheet metal panels, or\nother materials deemed unacceptable. \nFence and Wall Requirements d. \n• Maximum Height of chain link fence to\nbe 4 feet in any side or rear yard.\n• Maximum Height of all other fences to\nbe 6 feet in any side or rear yard.\n• Fences and Walls shall follow natural\ncontour of the land on which it is built.\n• Solid (Privacy) fences to have 3.5\ninches of clearance under the fence to\nnot obstruct movement of storm water\nthrough the property.\n• Barbed wire and barbed wire fencing\nis not permitted in residential zoning\ndistricts",
+      "text_sha256": "98526576d08a55afe14f7d7c6da6ce61dcc3e5c621dc6214f19016c619a700ae",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 17,
+      "text": "15 \nZONING CODE REGULATIONS 9. \nParking and Storage of Recreational and\nOther Vehicles on Residential Property \nRecreational Vehicles (A vehicle designed and\nconstructed to be primarily used for\nrecreational purposes or for the purpose of a\ntemporary dwelling used for travel or vacation) \nmay only be parked in front of a house\non a hard surface driveway (asphalt or\nconcrete) for a period not to exceed 72\nhours and may not exceed 24 feet in\nlength or 14 feet in height. \nRecreational Vehicles stored (parked for more\nthan 72 hours) on a residential property must\nbe located on a hard surface driveway \n(asphalt or concrete) in the side or rear yard \nand may not exceed 24 feet in length or\n14 feet in height .\nNo temporary or permanent human\noccupancy shall occur within a\nRecreational Vehicle parked or\nstored on a residential property.\nRecreational Vehicles stored on a\ndesigned transport trailer are\nconsidered a single unit. More than\none recreational vehicle per\nresidential lot, or recreational\nvehicles larger than 24 feet in\nlength, shall require a Conditional\nUse Permit issued by the Planning\nCommission.\nOther vehicles such as open and\nenclosed utility and hauling trailers\nare Not Permitted to be parked or\nstored on residential properties\nFor questions regarding parking of\nRecreational Vehicles and other vehicles\non Public Streets please contact the \nSharonville Police Department at\n513-563-1147\ne. \nGenerally a 72 Hour Limit!",
+      "text_sha256": "9c0df5300cd30fba91eb5cb93b6fb1e758e2aa9a57fba77190b3d89bc5157f96",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 18,
+      "text": "16 \nRESIDENTIAL STORM WATER INFORMATION 10. \nImportant Storm Water Information for Property\nOwners Regarding Gutters and Downspouts \nQuestions and complaints often arise regarding storm water being\ndirected onto neighboring properties in single-family residential\nareas of Sharonville. \nSharonville construction regulations require that all\nnew residential buildings and residential accessory\nbuildings over 600 square feet be equipped with\ngutters and downspouts . \na. \nIn addition, there is a tiered system for all drains, gutters and\ndownspouts to be connected to a storm water storm sewer.\nFirst, all gutters and downspouts are required to be connected\nto storm sewers, if they are available. Second, if storm sewers\nare not available, they should be connected to street gutters\n(Page 18). New and replacement downspout connections to\nstreet gutters require a permit from the Sharonville Public Works\nDepartment. Third, if storm sewer or street gutter connections\nare not possible, the gutters and downspouts may be connected\nto the natural drainage of the lot where the residential building is\nlocated. Natural drainage areas of single-family residential lots,\nreferred to as drainage swales (Figure 2), typically run along side\nand rear property lines and measure 10 feet in width, typically\nmeasuring 5 feet on each side of the property line. In no case\nshould the downspout discharge any closer than 5 feet from a\nproperty line. \nHere are the rules, in order, regarding gutters and downspouts \n1 . Gutters and downspouts should be connected to storm sewers \n2. If storm sewer is not avalible, gutters and downspouts should be connected to the\nstreet gutter in accordance with Figure 1 (Permit is required from Public Works\nDepartment). \n3. If connection to the street gutter is not possible, the gutters and downspouts may\ndischarge into the natrual drainage area of the lot but may not be closer than 5 feet of any\nproperty line. \nSee page 18 for Diagrams (Figures 1& 2) \nThis Third option is the most prominent in the City of Sharonville.",
+      "text_sha256": "2f2c0499b15a5f16a054ff41be6203038718b38d730f1600219efd435a44df61",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 19,
+      "text": "17 \nRESIDENTIAL STORM WATER INFORMATION 10. \nIf you live in a platted residential subdivision, there is a chance your property is associated with permanent storm\nwater drainage facilities. These facilities may include storm water detention basins, channels, and drainage swales\nthat must be maintained by the property owner or Home Owners Associations (HOA). The purpose is to effectively\ntransmit storm water away from home foundations towards approved storm water drainage areas.\nDrainage Swales are typically located along common side or rear property lines.\nStorm water drainage issues are a common complaint received by the City from private land owners. Property\nowners may not be aware that the installation of detached garages, sheds, walkways, driveways, swimming pools,\nand even landscaping can change the approved permanent storm drainage facility design on a property and create\na headache for neighbors. These approved drainage facilities are private and must be maintained by the property\nowner or HOA.\nIt’s important that property owners be conscious of these approved drainage facilities. If you modify or block a\ndrainage swale or change the direction of natural flow, you may be responsible and liable for damage caused on\nanother property.\nNo mechanical (sump) pumps are allowed to be tied to the downspout lines that discharge through an underground\npipe to the public street, curb, or within 15 feet of a property line. Permits are required for the installation of sump\npump drainage lines and are issued by the Plumbing Division of the Hamilton County Public Health Department at\n513-946-7800.\nDo not enclose existing drainage swales into a pipe. Drainage swales are designed to be open. By concentrating the\nstorm water flow in a pipe, you could damage neighboring properties. It is better to work with your neighbors to find\na solution for any water problems. Open swales are the best environmental solution to storm water when the storm\nwater infiltrates or drains away within 24 hours.\nAll drains, gutters and downspouts shall be connected to storm sewers; if they are unavailable, they should be\nconnected to street gutters. If neither is available, then they shall be connected to the natural drainage of the lot.\nKeep the drainage swale clear of brush and logs. Never put leaves, mulch, or grass clippings in or near a stream or\ndrainage swale. Never plant trees or install landscaping in an approved storm water drainage swale. \nOpen Drainage Swale Blocked Drainage Swale\nInformation Regarding Storm Drainage Systems and Sump Pumps b.",
+      "text_sha256": "c0ad3b8bc1fafc7f6e161e79106f9b4ef2f291f16083806403aeeadeec4178a4",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 20,
+      "text": "18 \nRESIDENTIAL STORM WATER INFORMATION 10. \nFigure 1\nFigure 2 \nConstruction detail\nof downspout through\ncurb into street gutter.\nCross section of typical\nresidential drainage\nswale along a common \nConstruction Figure Examples of Drainage Systems c.",
+      "text_sha256": "fbbe9f2a2f8779a458e075baf50bad86c2b870f4abdb6a3ea5e1aee029b4ecc8",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 21,
+      "text": "19 TREES AND LANDSCAPING ON RESIDENTIAL\nPROPERTY \n11. \nThe City frequently receives questions from\nconcerned residents about trees on privately\nowned residential properties, particularly trees along\nor near property lines that over-hang property lines\nand buildings. The City of Sharonville has no\nenforceable regulations that compel a property\nowner to trim or remove trees except in cases where\nthe trees were required to be planted as part of an\nofficial city approval of a site plan. The city does\nenforce tree trimming or removal when trees or\nlimbs block public roadways, sidewalks, or public\nrights-ofway. Therefore, all issues involving trees\nstrictly on private property should be resolved by\nthe affected owners.\nProperty owners have the right to trim branches and\nlimbs that extend past a property line onto their\nproperty. However, the law only allows tree trimming and\ntree cutting up to the property line. You are not allowed\nto go onto a neighboring property to cut or destroy\na tree, unless you have permission to do so from the\nproperty owner. However, if cutting or removing limbs\nthat cross a property line onto your property damages\nor destroys a tree, you could also potentially be liable to\nreplace or compensate the owner for the tree.\nIt is encouraged that you consult your neighbor\ndirectly about any concerns regarding trees. Residents\nare encouraged to resolve tree-related questions or\ndisputes without involving the city. This resolution usually\ncan be accomplished, or at least initiated, by simply\nmaking a polite inquiry or request of the other party.\nIf the parties are unable to agree on tree ownership or\nmaintenance, the conflict remains a private civil issue and\neither party may want to consider consulting an attorney.\nResidents interested in undertaking tree maintenance\nor removal that goes beyond the scope of ordinary yard\nwork are encouraged to contact and get estimates from a\nqualified tree service. Make sure you ask to see proof of\nthe service’s insurance. \nThe City of Sharonville is\nfortunate to have an abundance\nof large and mature trees\nthroughout the many residential\nareas. But as a developed\ncommunity, many homes are in\nclose proximity to one another —\nthis combined with the age and\nsize of many trees often results\nin confusion or conflict\nsurrounding the care and\nresponsibility for those trees.",
+      "text_sha256": "57cbe76c6283b2ea4566ee2839b93fbc4f5ea92b01d3b5d6796c865aa82aecaf",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 22,
+      "text": "20 \nEXCAVATIONS 12. \n1113.05 Removal of Soil Protection and Drainage Course \nNo building or structure shall be erected within any areas described by the City\nEngineer as a drainage course. For the purpose of this code, a drainage course\nincluded any area such as drainage ways, channels, stream and creeks\ndesignated as such on geodetic or city topographic maps, and further included\nany area designed or intended for use in drainage purpose as shown on a\nrecorded subdivision.\nNo filling of land or excavation of land shall be permitted within a drainage\ncourse, or on any lands within 100 feet or more than 100 feet when designated\non the zoning map, of the center line of such drainage course except upon\nissuance of a certificate by the City Engineer that such filling shall not obstruct\nthe flow of the water or otherwise reduce the water carrying capacity of such\ndrainage course, or impair the design and character of such drainage course. \nRESIDENTIAL DRIVEWAYS 13. \nThe construction or expansion of private residential driveways are regulated by\nChapter 1121.03 of the Sharonville Zoning Ordinance. \n• Driveways shall be set back a minimum of one foot from all lot lines except from the street lot\nline.\n• Certificate of Zoning Approval and Zoning Permit required ($40.00 fee).\n• Driveways shall maintain proper drainage.\n• Driveways shall be a minimum of eight feet wide.\n• The angle of intersection between the driveway and the street shall be between 70 and 90\ndegrees.\n• The surface of the driveway shall be paved with a hard, durable, dust free surface such as\nasphalt or concrete (compact gravel prohibited).\n• A street opening permit issued by Public Works department is required for work within the\npublic right of way. Please contact 513-563-1177.",
+      "text_sha256": "e75b7a79f92fabb29da953c02be3ad7e666442b8497968f31581e3407c19aaf9",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 23,
+      "text": "21 \nFLOODPLAIN DEVELOPMENT 14. \nFEMA Floodplain \nThe City of Sharonville administers the Flood Damage Reduction Ordinance, which applies\nto all properties in the City of Sharonville that are located in the FEMA 100-year\ndesignated floodplain. Approximately 20% or more of properties in Sharonville are located\nin the FEMA designated floodplain. This city also assists and advise property owners with\nElevation Certificates, processes and approves Special Flood Hazard Area (SFHA) permits\nfor work in the designated floodplain. The City also partners with the Mill Creek Alliance\n(MCA) to highlight the Mill Creek corridor and the creek as a natural assets for the region.\nThe National Flood Insurance Program (NFIP) is managed by FEMA and is delivered to the\npublic by a network of more than 47 insurance companies and the NFIP Direct.\nFloods can happen anywhere. Most homeowners insurance does not cover flood damage.\nFlood insurance is a separate policy that can cover buildings, the contents in a building, or\nboth, so it is important to protect your most important assets — your home, your business,\nyour possessions.\nThe NFIP provides flood insurance to property owners, renters and businesses, and having\nthis coverage helps them recover faster when floodwaters recede. The NFIP works with\ncommunities required to adopt and enforce floodplain management regulations that help\nmitigate flooding effects.\nFlood insurance is available to anyone living in one of the 22,600 participating NFIP com-\nmunities. Homes and businesses in high-risk flood areas with mortgages from govern-\nment-backed lenders are required to have flood insurance. \nTo search for properties located within the FEMA 100 - year floodplain, visit: \nhttps://msc.fema.gov/portal/home \nTo get more information on Flood Insurance, visit: \nhttps://www.fema.gov/flood-insurance and https://www.floodsmart.gov/",
+      "text_sha256": "2121de5bf486592c52d4dcaea14532728fb62f8ec86066fcc99900b6150882d5",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 24,
+      "text": "22 \nCODE ENFORCEMENT AND PROPERTY MAINTANECE 15. \nCode Enforcement Action! \nNoncompliance with Code\nEnforcement may result in\nMayor’s Court action. \nReporting Potential Violations: \nWhen reporting a potential violation, please\nhave the address if possible, or other\ndescriptive information if the violation will\nnot be visually obvious from the public\nstreet.\nCall: 513-563-0033 to report a\npotential violation.\nEmail:\ncodeenforcement@cityofsharonville.com\nOnline:\nhttps://www.sharonville.org/420/Report\nTo Find the Expected Compliance Times:\nhttps://www.sharonville.org/Document-\nCenter/View/4087/Expected-Com-\nOnce a potential violation is reported, it is added to the list for upcoming inspection to\ndetermine if any potential code violations exist. If a violation is found, a written Courtesy\nLetter or Zoning/Property Maintenance Violation Enforcement Notice is issued to the\nowner of the property with a time limit to remedy the situation. After the time limit has\npassed, a follow up inspection is performed to determine if the initial violation still exists.\nIf on the compliance date the violation is addressed the case is closed. The case is also\nclosed if the owner is found to have addressed the violation prior to the compliance date.",
+      "text_sha256": "cf60113b470ed4ab7f7f289a02ee027e91f4abd6ef9ececa878d360f0f024717",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 25,
+      "text": "23 RESIDENTIAL HOME IMPROVEMENT & ASSISTANCE\nPROGRAMS 16. \nThe Hamilton County Home Improvement Program (HIP) is an\ninitiative of the Hamilton County Commissioners and the Hamilton\nCounty Treasurer. The \"HIP\" loan allows homeowners in Hamilton\nCounty communities to borrow money to repair or remodel their\nhomes at interest rates 3% below the lowest rate a bank would\nnormally offer. \nLoans may be used for:\n• Bathrooms\n• Decks\n• Kitchen Remodeling\n• Plumbing\n• Ceilings & Walls\n• Garages\n• Landscaping\n• Room Additions\n• Central Air & Furnaces\n• Gutters & Roofs\n• Paint & Carpeting\n• Siding, Windows & Doors \n... and much more!\n• Loans at 3% below market rate, 5 year term - only one\noutstanding loan at any given time\n• All Hamilton County communities eligible\n• No Income Restrictions or limits (must be able to meet bank's\ncredit requirements)\n• Loans capped at $50,000\n• For one-family, or two-family properties valued up to $350,000\n(based on Hamilton County Auditor's appraisal)\n• Owner-occupied dwellings\n• No property value limit on multi-family dwellings (three or more\nunits)\n• Loans can be used for alteration, repair, maintenance, or\nimprovement\n• Can also be used for code violation compliance and property\nupgrades \nFor more information on the\nHamilton County HIP, please visit:\nhttps://www.hamiltoncountyohio.gov/com-\nmunity/home_improvement_program_hip.\nphp#collapselinks-472-20b0\nor call: (513) 946-4487 \nHamilton County Home Improvement Program (HIP) a.",
+      "text_sha256": "12e88d64cc60c439ad6850d4ec501bc8d765e156ea3bee1cf4d8db309e787911",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 26,
+      "text": "24 RESIDENTIAL HOME IMPROVEMENT AND ASSISTANCE\nPROGRAMS 16. \nNeed Help With Exterior Home Repairs? We’re Here for You. \nThe City of Sharonville has partnered with People Working Cooperatively (PWC) to offer the\nSharonville Home Improvement Program, designed to help eligible homeowners make important\nexterior repairs to their homes. With more than 50 years of construction experience, PWC\nprovides over 9,000 home repair services each year throughout the Greater Cincinnati area.\nTheir trusted team works alongside the city to help homeowners maintain safe, weather-resistant,\nand well-kept homes. \nWhat Types of Repairs Are Covered? \nThis program focuses on exterior home\nrepairs, including (but not limited to):\n• Exterior walls (repairing holes, breaks,\nloose or rotting materials, and maintaining\nweatherproofing such as painting)\n• Roofs and roof drainage (including gutters\nand downspouts)\n• Roof flashing and roof overhang extensions\n• Walking surfaces that provide primary\naccess to the home, such as stairs,\nporches, and decks\n• Handrails and ADA ramps\n• Exterior doors and door frames\n• Windows and window frames \nWho Is Eligible? \nIf you’re a Sharonville homeowner, you may qualify!\nTo get started, you’ll need to apply to PWC, and the\ngood news is they can begin the application process\nright over the phone. \nGeneral program guidelines include: \n• You must be a resident homeowner within the\nCity of Sharonville\n• Your household income must meet program\nguidelines based on HUD income requirements\n• The home must be owner-occupied\n• The home must be your primary residence\n• City funding covers up to $2,500 in exterior\nrepairs (exceptions may be considered)\n• Funding is limited to exterior repairs only\n• If you’re unsure whether you qualify, we\nencourage you to apply! PWC is happy to walk \nyou through the process and answer your\nquestions.\nThe City of Sharonville Home\nImprovement Program is FREE to\nthose that qualify, but funds are\nlimited. If you meet the general\nprogram guidelines you may be\neligible for home improvements! \nCall PWC today: 513-351-7921\nto see if you qualify!\nPeople Working Cooperatively (PWC) b.",
+      "text_sha256": "8132a34f9db248a38c866008945e8149eb7ceb039386a38e45740cfde285d02f",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 27,
+      "text": "25 \nFAQ’S!! 16. \nHow do I file property maintenance or other complaints? \nPlease fill out the online form with as much detail as possible.\nhttps://www.sharonville.org/500/Code-Enforcement---Property-Maintenance- \nHow do I report tall grass and weeds? \nPlease contact the Community Development department at 513-563-0033 and the\ncomplaint will be taken and assigned. An inspector will contact the property owner to\ncut grass of over 8 inches. \nReporting a concern: Who can I contact regarding the Utility\nAggregation Program? \nQuestions regarding the Utility Aggregation Program may be directed to:\nJen Kist |The Utilities Group | 513-481-7954 \nHow much will my Building Permit cost? \nGenerally, Fees for Building Permits are assessed as follows: \nResidential: Approval fee: 1% of project cost ($50.00 minimum) + Plan Review fee:\n$75.00 / Hour + 1% State of Ohio surcharge\nPermit fees are assessed following approval of the submitted plans. Fees can be paid\nwith cash, check or credit card (3.5% admin fee applies to card payments).\nThe Community Development Department's complete fee schedule:\nhttps://www.sharonville.org/DocumentCenter/View/1964/Fee-Schedule \nHow does the City of Sharonville regulate parking/storage of\nRecreational Vehicles on residential properties? \nRegulations regarding the parking and storage of Recreational Vehicles:\nhttps://www.sharonville.org/DocumentCenter/View/3412/Parking-and-Storage-of-Vehi-\ncles-in-Residential-Districts \nHow does the City of Sharonville regulate Short Term Rentals? \nOn July 16, 2019, Sharonville City Council enacted an ordinance to prohibit short term\nrentals (rentals of less than 30 days) of single-family homes, located in any single\nfamily zoning district. View Short Term Rental Ordinance:\nhttps://www.sharonville.org/DocumentCenter/View/3347/Short-Term-Rental-Ordinance",
+      "text_sha256": "3b4afd1009ef22bc31aaf41dac8c116a8c95f326343637aab2fa8a7c90cb8497",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    },
+    {
+      "page": 28,
+      "text": "COMMUNITY DEVELOPMENT \nContact Us! \nCity Administration Building\n10900 Reading Road Sharonville, OH 45241\nCommunity Development Team\nPhone: (513)-563-0033",
+      "text_sha256": "91d018dbc1d7e82d9cf5346a921166a9a791a9f90ae76938a596c89ff7516513",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    }
+  ]
+}
