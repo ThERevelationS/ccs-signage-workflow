@@ -332,7 +332,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
                       {r.created > 0 && <span className="text-green-600">+{r.created}</span>}
                       {r.updated > 0 && <span className="text-blue-600">↑{r.updated}</span>}
                       {r.errors > 0 && <span className="text-red-600">!{r.errors}</span>}
-                      {!r.created && !r.updated && !r.errors && <span>No changes</span>}
+                      {r.dataset === 'orders' && Number(r.missing_permanent_row_links) > 0 && (
+                        <span className="font-medium text-red-700 dark:text-red-300">Link review</span>
+                      )}
+                      {!r.created && !r.updated && !r.errors &&
+                        !(r.dataset === 'orders' && Number(r.missing_permanent_row_links) > 0) &&
+                        <span>No changes</span>}
                     </span>
                   )}
                 </div>
