@@ -243,3 +243,10 @@ assert.equal(p.findings.length,6);for(const f of p.findings){const stem=f.file.r
 assert.equal(p.physical_pages_reviewed,4);for(const k of ['fee_appendix_present','contract_exhibit_present','fee_amounts_extracted','executed_contract_verified','electrical_permit_issuer_approved','electrical_inspector_approved','currentness_approved'])assert.equal(p[k],false);
 assert.equal(p.canonical_locality_id,null);assert.equal(p.live_records_changed,0);
 });
+
+test('Symmes attachment search preserves limited scope and building-route distinction',()=>{
+const r='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/attachment-search/',m=JSON.parse(readFileSync(r+'manifest.json')),p=JSON.parse(readFileSync(r+'review.json'));
+assert.equal(m.sources.filter(s=>s.status==='archived').length,5);for(const s of m.sources.filter(s=>s.status==='archived')){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);}
+assert.equal(p.fee_appendix_located,false);assert.equal(p.contract_exhibit_located,false);assert.match(p.scope,/not exhaustively searched/);assert.match(p.routing_observation.final_url,/buildings_and_inspections/);
+assert.equal(m.sources.find(s=>s.file==='zoning-permits-route.html').status,'original_retention_gap');assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
+});

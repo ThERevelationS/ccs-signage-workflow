@@ -1,0 +1,22 @@
+{
+  "observed_on": "2026-10-07",
+  "scope": "Official DocumentCenter, AgendaCenter, sitemap, Agendas & Minutes and 2026 resolution index pages; public web search for fee/contract attachments. Dynamic document inventory and all meeting packets not exhaustively searched.",
+  "retained_index_originals": 5,
+  "fee_appendix_located": false,
+  "contract_exhibit_located": false,
+  "executed_contract_verified": false,
+  "absence_claim": "Not located in this review; do not infer the attachments do not exist.",
+  "routing_observation": {
+    "method": "Web retrieval redirect observation; raw retention failed HTTP 403",
+    "label": "Zoning Permits",
+    "linked_url": "https://www.symmestownship.org/233/Zoning-Permits",
+    "final_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/applications_and_forms.php",
+    "review": "Building/inspection forms destination must not be silently promoted to sign zoning application acceptance or electrical office authority."
+  },
+  "staff_approved": false,
+  "currentness_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Continue Woodlawn Ohio official zoning/forms dossier; retain Symmes missing attachments as unresolved coverage gaps rather than retry identical blocked URLs."
+}
