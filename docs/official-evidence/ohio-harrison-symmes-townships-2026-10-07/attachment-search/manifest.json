@@ -1,0 +1,35 @@
+{
+  "sources": [
+    {
+      "file": "document-center.html",
+      "official_url": "https://www.symmestownship.org/DocumentCenter",
+      "final_url": "https://www.symmestownship.org/DocumentCenter",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/attachment-search/document-center.html",
+      "bytes": 88692,
+      "sha256": "5b90a90d650b87a0f9af774f36fc1396f472bb9df6a757dfa734a2229f8b5005",
+      "observed_at": "2026-10-07T18:15:09.677371+00:00"
+    },
+    {
+      "file": "agenda-center.html",
+      "official_url": "https://www.symmestownship.org/AgendaCenter",
+      "final_url": "https://www.symmestownship.org/AgendaCenter",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/attachment-search/agenda-center.html",
+      "bytes": 149589,
+      "sha256": "3607c6fd5cbf48c20681a5cf5cf32e38ff648651ee33e118d7c4bb5000f5de25",
+      "observed_at": "2026-10-07T18:15:10.679488+00:00"
+    },
+    {
+      "file": "site-map.html",
+      "official_url": "https://www.symmestownship.org/sitemap",
+      "final_url": "https://www.symmestownship.org/sitemap",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/attachment-search/site-map.html",
+      "bytes": 127691,
+      "sha256": "5330a86652ea8ad78f703158f40a2a064667fb85b9b0ccac68cb5641c20e5d22",
+      "observed_at": "2026-10-07T18:15:11.692561+00:00"
+    }
+  ],
+  "staff_approved": false
+}
