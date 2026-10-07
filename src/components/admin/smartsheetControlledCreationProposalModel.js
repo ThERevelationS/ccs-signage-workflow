@@ -1,6 +1,7 @@
 import { normalizeCustomerText } from "./smartsheetCustomerResolutionModel.js";
 import { serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
 import { resolveSmartsheetTaskAssignee } from "./smartsheetTaskAssigneeModel.js";
+import { shouldCreateSmartsheetSalesRecordInPipeline } from "../../../base44/shared/smartsheetSalesSafety.mjs";
 
 // Observation-only. This module has no Base44 client, Smartsheet transport, or write path.
 const ORDER_TYPES = Object.freeze({
@@ -217,7 +218,7 @@ export function buildSmartsheetControlledCreationProposals({
       : null;
 
     const payload = dataset === "sales"
-      ? { current_stage: "sales", sales_status: "lead", in_pipeline: true }
+      ? {}
       : { status: "pending" };
     const fieldAudit = [];
 
@@ -309,8 +310,16 @@ export function buildSmartsheetControlledCreationProposals({
       }
     }
 
-    // A post-baseline terminal task is not evidence of an authoritative modern outcome.
+    // Route only genuine pre-order Sales candidates into Current Pipeline.
+    // Downstream operational fields preserve the WorkOrder but keep it out of
+    // the active Sales workspace. This never infers Won/Lost from task text.
     if (dataset === "sales") {
+      const routesToSalesPipeline = shouldCreateSmartsheetSalesRecordInPipeline(payload);
+      payload.in_pipeline = routesToSalesPipeline;
+      if (routesToSalesPipeline) {
+        payload.current_stage = "sales";
+        payload.sales_status = "lead";
+      }
       const task = text(originalValues.current_task_description).toLowerCase();
       if (TERMINAL_TASK_PATTERN.test(task)) {
         blockers.push(problem("terminal_task_review", "Terminal task text needs manual review", "Do not turn legacy-like task text into a modern Lead, Won, or Lost outcome."));
