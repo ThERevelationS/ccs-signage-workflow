@@ -27,6 +27,34 @@
       "observed_at": "2026-10-07T18:17:34.335913+00:00",
       "status": "original_retention_gap",
       "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-zoning-map.pdf",
+      "official_url": "https://cms8.revize.com/revize/woodlawnoh/Woodlawn%20Zoning%20Map_21.pdf",
+      "observed_at": "2026-10-07T18:18:04.297111+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "county-woodlawn-map.pdf",
+      "official_url": "https://cms2.revize.com/revize/hamiltoncountyoh/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/Woodlawn_Zoning_Map.pdf",
+      "observed_at": "2026-10-07T18:18:04.387520+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "village-home.html",
+      "official_url": "https://www.beautifulwoodlawn.us/",
+      "observed_at": "2026-10-07T18:18:04.448823+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "county-woodlawn-zoning.html",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/woodlawn_zoning.php",
+      "observed_at": "2026-10-07T18:18:04.991582+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
     }
   ],
   "staff_approved": false,
