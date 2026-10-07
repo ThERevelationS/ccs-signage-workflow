@@ -111,3 +111,13 @@ test('Harrison OCR and visual transcription keep separate immutable source ident
  const h=dossiers.find(r=>r.name==='City of Harrison'),html=render(h);
  assert.match(html,/four plan copies/);assert.match(html,/separately directs illuminated/);assert.match(html,/Raw OCR — physical page 2/);assert.match(html,/unapproved transcription candidates/);
 });
+
+test('Harrison routing comparison keeps discrepancies and matched inspection contact separate',()=>{
+ const root='docs/official-evidence/ohio-harrison-addyston-2026-10-07/submission-review/';
+ const packet=JSON.parse(readFileSync(root+'routing-comparison.json')),manifest=JSON.parse(readFileSync(root+'manifest.json'));
+ assert.equal(packet.rows.length,3);assert.equal(packet.supersession_approved,false);
+ for(const row of packet.rows){const s=manifest.sources.find(s=>s.official_url===row.url);assert.equal(row.html_sha256,createHash('sha256').update(readFileSync(s.retained_path)).digest('hex'));assert.equal(row.currentness_approved,false);assert.equal(row.staff_approved,false);assert.match(row.guide_url,new RegExp('#page='+row.page+'$'));}
+ const h=dossiers.find(d=>d.name==='City of Harrison'),html=render(h);
+ assert.match(html,/513-202-8488/);assert.match(html,/513-202-8494/);assert.match(html,/supersession is not established/);assert.match(html,/Permit issuance is separate/);
+ assert.match(html,/<table/);assert.equal(render(h,false),'');
+});
