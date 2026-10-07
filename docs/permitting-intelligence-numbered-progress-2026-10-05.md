@@ -1,3 +1,17 @@
+## Four Ohio locality type corrections applied — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 has now completed the four evidence-supported profile type corrections; exhaustive identity/duplicate/history and office reconciliation remain partial. Task 4 full read-only live acceptance remains pending.
+
+Fresh clean HEAD 99c40a033037a3827a792ef22ff8f199472ac76b. Fresh live full-profile reads confirmed exact retained proposal identities/versions, Hamilton County, no staff verification and no HTML/office/rewrite review reservations. Connector has no function-invocation capability exposed; used its dedicated update_entities instead of another CLI login attempt. Every patch was built by the tested helper with server-retained proposal evidence. Each write used exact id AND expected updated_date, setting only type plus activity_log atomically; all four returned updated=1 and has_more=false.
+
+Norwood 6ac19f0cd3b3f47e53ac0596 and Deer Park 6ac19f1a3d1976f72bf908a7 changed village to city. Village of Cleves 69b30b6e1e5a58b2a3379aa1 and Cleves 6ac1a161934312388bd3ca04 changed city to village. Both Cleves records remain independent: no merging/deletion. Geographic type correction is not staff verification, office authority or regulatory approval. History explicitly identifies ChatGPT via Base44 connector as a user-authorized correction; no authenticated staff identity was fabricated.
+
+Fresh full-record live readback matched all four types and exact history events. Field-by-field comparison confirmed only type, activity_log and updated_date changed. All documents/archive metadata, county objects, IDs, manual fields, requirements and other fields were preserved. Recorded versions and provenance in docs/official-evidence/ohio-live-reconciliation-2026-10-06/applied-profile-type-corrections.json. Backend endpoint invocation/deployment remains unverified; no frontend publishing, queue batch or LLM spend.
+
+Validation: four conditional update receipts and four full-field preservation/readback checks pass; git diff --check passes. This data change is retained in entity history; code checkpoints do not roll back production entity corrections.
+
+Next: separate electrical permit issuer versus electrical inspection provider reconciliation for Ohio, beginning with retained Cincinnati evidence and current official application/scheduling resources. Broader locality identity/duplicate gaps and full live acceptance remain open. Ohio remains before Kentucky.
+
 ## Live nested county guard correction — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Fresh read-only entity queries reconfirm all four unchanged locality type errors. CLI whoami returned transport HTTP 504; required follow-up confirmed clean HEAD 5b701f9be9097e0b478a7d349d22b9f2b882d118. No live correction invocation or production mutation occurred.
