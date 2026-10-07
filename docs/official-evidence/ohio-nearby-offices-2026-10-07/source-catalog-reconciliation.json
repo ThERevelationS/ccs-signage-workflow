@@ -1,0 +1,105 @@
+{
+  "observed_at": "2026-10-07T13:16:36.054Z",
+  "read_only": true,
+  "live_catalog_records_changed": 0,
+  "uploads_created": 0,
+  "snapshot_is_not_live_creation_authorization": true,
+  "results": [
+    {
+      "file": "norwood-sign-application.pdf",
+      "jurisdiction_id": "6ac19f0cd3b3f47e53ac0596",
+      "official_url": "https://www.norwoodohio.gov/DocumentCenter/View/3256/Signage-Permit-Application",
+      "sha256": "c09e620b478f5e50a2b2c8b74f4dd46675e687076275ba273b87d0678f2bfa47",
+      "bytes": 142153,
+      "status": "not_registered",
+      "catalog_candidate_ids": [],
+      "profile_document_ids": [],
+      "storage_verified": false,
+      "registration_allowed": false,
+      "next_action": "Verify app-storage archive through existing registration process; fresh identity lookup before create.",
+      "authority_approved": false
+    },
+    {
+      "file": "norwood-business-checklist.pdf",
+      "jurisdiction_id": "6ac19f0cd3b3f47e53ac0596",
+      "official_url": "https://www.norwoodohio.gov/DocumentCenter/View/140",
+      "sha256": "f9a76f867aef8de446cd49b76c5060c23052162af4b9bb9a90ecc8046d907d91",
+      "bytes": 335939,
+      "status": "not_registered",
+      "catalog_candidate_ids": [],
+      "profile_document_ids": [],
+      "storage_verified": false,
+      "registration_allowed": false,
+      "next_action": "Verify app-storage archive through existing registration process; fresh identity lookup before create.",
+      "authority_approved": false
+    },
+    {
+      "file": "norwood-fees-2026.pdf",
+      "jurisdiction_id": "6ac19f0cd3b3f47e53ac0596",
+      "official_url": "https://www.norwoodohio.gov/DocumentCenter/View/2889",
+      "sha256": "467aaf54cfc6ccef8d93a672f5800ee53cf46921092383108f5e7394f269c728",
+      "bytes": 190509,
+      "status": "not_registered",
+      "catalog_candidate_ids": [],
+      "profile_document_ids": [],
+      "storage_verified": false,
+      "registration_allowed": false,
+      "next_action": "Verify app-storage archive through existing registration process; fresh identity lookup before create.",
+      "authority_approved": false
+    },
+    {
+      "file": "deer-park-building-process.docx",
+      "jurisdiction_id": "6ac19f1a3d1976f72bf908a7",
+      "official_url": "https://www.deerpark-oh.gov/media/user/documents/Building%20Permit%20Process%208-2025.docx",
+      "sha256": "935d92933a9b5449835d46034b9291534ade141d69ea539078b50b52750c812b",
+      "bytes": 41083,
+      "status": "not_registered",
+      "catalog_candidate_ids": [],
+      "profile_document_ids": [],
+      "storage_verified": false,
+      "registration_allowed": false,
+      "next_action": "Verify app-storage archive through existing registration process; fresh identity lookup before create.",
+      "authority_approved": false
+    },
+    {
+      "file": "deer-park-building-zoning-application.doc",
+      "jurisdiction_id": "6ac19f1a3d1976f72bf908a7",
+      "official_url": "https://www.deerpark-oh.gov/media/user/documents/City%20of%20Deer%20Park%20%20Building%20%20Zoning%20Application%20revised%20April%202022.doc",
+      "sha256": "bfccede4ebae71ba1a7ef337b29c9f682ccb0aa9ff16de3861408e7a3f040b39",
+      "bytes": 44032,
+      "status": "not_registered",
+      "catalog_candidate_ids": [],
+      "profile_document_ids": [],
+      "storage_verified": false,
+      "registration_allowed": false,
+      "next_action": "Verify app-storage archive through existing registration process; fresh identity lookup before create.",
+      "authority_approved": false
+    },
+    {
+      "file": "deer-park-fees-2026.pdf",
+      "jurisdiction_id": "6ac19f1a3d1976f72bf908a7",
+      "official_url": "https://www.deerpark-oh.gov/media/user/departments/2026 HAMILTON COUNTY BUILDING PERMIT FEE SCHEDULE.pdf",
+      "sha256": "5fe9f8c76c869a14f04e977f2e6c1f88caf1b84ca43d221294ea014e894cb23b",
+      "bytes": 2048710,
+      "status": "not_registered",
+      "catalog_candidate_ids": [],
+      "profile_document_ids": [],
+      "storage_verified": false,
+      "registration_allowed": false,
+      "next_action": "Verify app-storage archive through existing registration process; fresh identity lookup before create.",
+      "authority_approved": false
+    }
+  ],
+  "legacy_catalog_preserved": [
+    {
+      "id": "6ac28293dd8bb93174b2f7c0",
+      "jurisdiction_id": "6ac19f0cd3b3f47e53ac0596",
+      "official_url": "https://norwoodgov.com/wp-content/uploads/2019/03/Norwood-Zoning-Ordinance.pdf"
+    }
+  ],
+  "gaps": [
+    "Repository retention is distinct from verified app-storage registration.",
+    "Legacy domain, scope and currentness require separate review.",
+    "Original DOC/DOCX formats are preserved; PDF-only extraction must not be used for them."
+  ]
+}

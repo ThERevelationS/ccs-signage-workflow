@@ -1,0 +1,122 @@
+{
+  "observed_at": "2026-10-07T13:16:36.054Z",
+  "catalog": [
+    {
+      "id": "6ac28293dd8bb93174b2f7c0",
+      "title": "Norwood Zoning Ordinance (PDF)",
+      "jurisdiction_id": "6ac19f0cd3b3f47e53ac0596",
+      "jurisdiction_name": "Norwood",
+      "official_url": "https://norwoodgov.com/wp-content/uploads/2019/03/Norwood-Zoning-Ordinance.pdf",
+      "file_hash_sha256": "e66d1878169f95b36542b9b07633b5e6820aa33e6c351a605d5976e081c1e299",
+      "file_bytes": 4773275,
+      "archived_file_path": null,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/bbd1c14db_Norwood-Zoning-Ordinance.pdf",
+      "updated_date": "2026-10-06T18:17:45.579000",
+      "jurisdiction_profile_doc_id": "ai_2026-10-04T00:35:18Z_3"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "6ac19f0cd3b3f47e53ac0596",
+      "name": "Norwood",
+      "state": "OH",
+      "type": "city",
+      "updated_date": "2026-10-07T00:56:59.460000",
+      "documents": [
+        {
+          "file_url": null,
+          "id": "ai_2026-10-04T00:35:18Z_1",
+          "doc_type": "application_form",
+          "source": "ai_discovered",
+          "title": "Norwood Building/Zoning Permit Application",
+          "url": "https://www.norwood-ohio.com/DocumentCenter/View/1209",
+          "last_fetched": "2026-10-04T00:35:18Z"
+        },
+        {
+          "file_url": null,
+          "id": "ai_2026-10-04T00:35:18Z_2",
+          "doc_type": "sign_ordinance",
+          "source": "ai_discovered",
+          "title": "Norwood Codified Ordinances - Part 11 Planning and Zoning Code (incl. Chapter 1321 Sign Code)",
+          "url": "https://codelibrary.amlegal.com/codes/norwood/latest/norwood_oh/0-0-0-27813",
+          "last_fetched": "2026-10-04T00:35:18Z"
+        },
+        {
+          "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/bbd1c14db_Norwood-Zoning-Ordinance.pdf",
+          "id": "ai_2026-10-04T00:35:18Z_3",
+          "doc_type": "zoning_code",
+          "source": "ai_discovered",
+          "title": "Norwood Zoning Ordinance (PDF)",
+          "url": "https://norwoodgov.com/wp-content/uploads/2019/03/Norwood-Zoning-Ordinance.pdf",
+          "last_fetched": "2026-10-04T00:35:18Z",
+          "archive_state": {
+            "status": "complete",
+            "claim_token": "5632e493-b489-418b-b0b6-b71d27ae51e5",
+            "attempts": 1,
+            "lease_expires_at": "",
+            "last_attempt_at": "2026-10-04T10:45:27.096Z",
+            "error": "",
+            "source_sha256": "e66d1878169f95b36542b9b07633b5e6820aa33e6c351a605d5976e081c1e299",
+            "source_bytes": 4773275,
+            "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/bbd1c14db_Norwood-Zoning-Ordinance.pdf",
+            "uploaded_at": "2026-10-04T10:45:30.217Z",
+            "verification_attempts": 1,
+            "retry_after": "",
+            "completed_at": "2026-10-04T10:45:31.175Z"
+          },
+          "source_sha256": "e66d1878169f95b36542b9b07633b5e6820aa33e6c351a605d5976e081c1e299",
+          "source_bytes": 4773275,
+          "stored_sha256": "e66d1878169f95b36542b9b07633b5e6820aa33e6c351a605d5976e081c1e299",
+          "stored_bytes": 4773275,
+          "downloaded_at": "2026-10-04T10:45:30.217Z",
+          "catalog_state": {
+            "status": "complete",
+            "claim_token": "3bc3a404-6c0a-4eff-8111-94e99ba5083a",
+            "registration_key": "[\"6ac19f0cd3b3f47e53ac0596\",\"https://norwoodgov.com/wp-content/uploads/2019/03/Norwood-Zoning-Ordinance.pdf\",\"e66d1878169f95b36542b9b07633b5e6820aa33e6c351a605d5976e081c1e299\"]",
+            "lease_expires_at": "",
+            "started_at": "2026-10-04T16:45:07.527Z",
+            "source_document_id": "6ac28293dd8bb93174b2f7c0",
+            "registered_at": "2026-10-04T16:45:07.970Z",
+            "error": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "6ac19f1a3d1976f72bf908a7",
+      "name": "Deer Park",
+      "state": "OH",
+      "type": "city",
+      "updated_date": "2026-10-07T00:57:00.011000",
+      "documents": [
+        {
+          "file_url": null,
+          "id": "ai_2026-10-04T00:37:52Z_1",
+          "doc_type": "zoning_code",
+          "source": "ai_discovered",
+          "title": "City of Deer Park Code of Ordinances (Zoning Code incl. Chapter 1145 Sign Regulations)",
+          "url": "https://codelibrary.amlegal.com/codes/deerparkoh/latest/deerpark_oh/",
+          "last_fetched": "2026-10-04T00:37:52Z"
+        },
+        {
+          "file_url": null,
+          "id": "ai_2026-10-04T00:37:52Z_2",
+          "doc_type": "application_form",
+          "source": "ai_discovered",
+          "title": "Deer Park Building Permits Page (Building & Zoning Application, fees, process)",
+          "url": "https://www.deerpark-oh.gov/residents/building-permits/",
+          "last_fetched": "2026-10-04T00:37:52Z"
+        },
+        {
+          "file_url": null,
+          "id": "ai_2026-10-04T00:37:52Z_3",
+          "doc_type": "zoning_code",
+          "source": "ai_discovered",
+          "title": "Deer Park Zoning Code (city website link)",
+          "url": "https://www.deerpark-oh.gov/business/zoning-code/zoning-code/",
+          "last_fetched": "2026-10-04T00:37:52Z"
+        }
+      ]
+    }
+  ]
+}
