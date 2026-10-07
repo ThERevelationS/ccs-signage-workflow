@@ -33,5 +33,12 @@
       "note": "Historical reference; routing may be superseded by the 2026 ezTrak migration.",
       "archive": "/permitting-evidence/cincinnati-electrical/plan-review-routing-2020.pdf"
     }
-  ]
+  ],
+  "scope_review": {
+    "source": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+    "form_source": "https://cincinnati-oh.gov/planning/zoning-administration/zoning-verification-request",
+    "form_archive": "/permitting-evidence/cincinnati-electrical/zoning-verification-request.pdf",
+    "form_sha256": "9974564b6e8dc047153278f4456d5c0a911849e429eeffa346c4e0b6f49bfbab",
+    "observed_on": "2026-10-07"
+  }
 }
