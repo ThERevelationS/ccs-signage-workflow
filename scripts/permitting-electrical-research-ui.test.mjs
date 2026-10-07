@@ -29,11 +29,11 @@ test('every retained download matches original archived bytes and provenance has
  const root='docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/';
  const dossier=JSON.parse(readFileSync(root+'role-resource-reconciliation.json','utf8'));
  const refs=JSON.parse(readFileSync('src/components/permitting/cincinnatiElectricalResearch.json','utf8'));
- const signManifest=JSON.parse(readFileSync(root+'sign-scope/manifest.json','utf8'));
+ const signManifest=JSON.parse(readFileSync(root+'../sign-scope/manifest.json','utf8'));
  const originals=[...signManifest.sources.filter(r=>r.file),dossier.roles.electrical_permit.account_instructions_archive,...dossier.retained_fee_and_submittal_resources.filter(r=>r.file)];
  for(const r of refs.resources){
   const bytes=readFileSync('public'+r.archive);
-  assert.deepEqual(bytes,readFileSync(root+(r.file==='cincinnati-signs-handout.pdf'?'sign-scope/':'')+r.file));
+  assert.deepEqual(bytes,readFileSync(root+(r.file==='cincinnati-signs-handout.pdf'?'../sign-scope/':'')+r.file));
   const source=originals.find(o=>o.file===r.file);
   assert.equal(createHash('sha256').update(bytes).digest('hex'),source.sha256);
   assert.equal(r.source,source.url||source.source_url);
