@@ -1204,7 +1204,7 @@ test('approve_modified cross-period correction uses manager-edited destination a
   correctionRequestAudit.details.payload_hash = originalSubmissionPayloadHash;
   assert.equal(h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period').status, 'review');
 
-  const sourceRefinalized = await periodAction('synthetic-period', 'finalize', 'modified-cross-source-refinalize-001');
+  const sourceRefinalized = await periodAction('synthetic-period', 'finalize', 'modified-cross-source-refinalize-bad-submission-001');
   assert.equal(sourceRefinalized.status, 200, JSON.stringify(sourceRefinalized.body));
   const destinationRefinalized = await periodAction('modified-destination-period', 'finalize', 'modified-cross-destination-refinalize-001');
   assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
