@@ -55,6 +55,7 @@ try {
     ' }',
     ' if(payload.action==="mutation_status"){',
     '   if(state.accessDenied)return {data:{error:"This mechanic portal link is invalid, expired, revoked, or outside its current equipment scope."}};',
+    '   if((payload.mutation_action==="start"&&!state.startPermission)||(payload.mutation_action==="save"&&!state.savePermission))return {data:{error:"This mechanic link is not allowed to verify that action."}};',
     '   if(state.failNextMutationStatus){state.failNextMutationStatus=false;throw new Error("Synthetic mutation status unavailable");}',
     '   const receipt=receiptFor(payload);',
     '   return {data:{success:true,status:receipt?.status||"not_found",request_id:payload.request_id,work_order:work()}};',
@@ -286,7 +287,89 @@ try {
     assert.equal(names.filter(name=>name==="save").length,0,"capability refresh must never invoke Save");
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/8 PASS");
+  await run("Desktop: Start recovery stays locked when permission is removed and restored",1440,async page => {
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.loseStartAck=true;
+      s.failNextMutationStatus=true;
+    });
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    const originalId=(await actions(page)).find(row=>row.action==="start").request_id;
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByText(/does not currently allow starting work/i).waitFor();
+    assert.equal(await recovery.count(),1);
+    assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/not allowed to verify that action/i).waitFor();
+    assert.equal(await recovery.count(),1,"Disallowed status must fail closed");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===3);
+    assert.equal(await recovery.count(),1,"Capability restoration must not settle Start recovery");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Work started\. CCS Fleet confirmed the interrupted request/i).waitFor();
+    const operations=await actions(page);
+    assert.equal(operations.filter(row=>row.action==="start").length,1,"Start must not replay");
+    assert.ok(operations.filter(row=>row.action==="mutation_status").every(row=>row.request_id===originalId));
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isEnabled(),true);
+  });
+
+  await run("Mobile: Save recovery purges stale draft and photos across permission changes",390,async page => {
+    await page.getByLabel("Labor hours").fill("3.25");
+    await page.getByLabel("Corrective action / work performed").fill("Original saved repair");
+    await page.getByLabel("Add mechanic note").fill("Sensitive draft during recovery");
+    const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
+    await page.locator('input[type="file"]').setInputFiles({name:"synthetic.png",mimeType:"image/png",buffer:png});
+    await page.locator('img[src^="blob:"]').waitFor();
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.loseSaveAck=true;
+      s.failNextMutationStatus=true;
+    });
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    const originalId=(await actions(page)).find(row=>row.action==="save").request_id;
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===2);
+    await page.getByText(/Current server state must be checked/i).waitFor();
+    assert.equal(await recovery.count(),1,"Capability removal must not settle Save recovery");
+    assert.equal(await page.getByLabel("Labor hours").inputValue(),"3.25","Reseed must use server state");
+    assert.equal(await page.getByLabel("Corrective action / work performed").inputValue(),"Original saved repair");
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"","Stale note must be purged");
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0,"Unsaved photo previews must be purged");
+    assert.equal(await page.getByLabel("Add mechanic note").isDisabled(),true);
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).count(),0);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/not allowed to verify that action/i).waitFor();
+    assert.equal(await recovery.count(),1,"Disallowed Save verification must remain locked");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByRole("button",{name:"Save Progress"}).waitFor();
+    assert.equal(await recovery.count(),1,"Capability restoration must not settle Save recovery");
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request without replaying it/i).waitFor();
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0);
+    const operations=await actions(page);
+    assert.equal(operations.filter(row=>row.action==="save").length,1,"Save must not replay");
+    assert.ok(operations.filter(row=>row.action==="mutation_status").every(row=>row.request_id===originalId));
+    const final=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal((final.work.notes.match(/Sensitive draft during recovery/g)||[]).length,1);
+    assert.equal(final.photoWrites,1,"Photo upload must run exactly once");
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isEnabled(),true);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/10 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
