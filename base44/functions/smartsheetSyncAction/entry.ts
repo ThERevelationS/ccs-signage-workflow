@@ -1981,6 +1981,11 @@ async function pushDataset(
       remaining_records: Math.max(0, pendingRecords.length - orderProcessedCount),
       successful_record_ids: successfulOrderRecordIds.slice(0, 100),
       unresolved_record_ids: unresolvedOrderRecordIds.slice(0, 100),
+      missing_permanent_row_links: orderMissingPermanentRows.size,
+      missing_permanent_row_record_ids: [...orderMissingPermanentRows.keys()].slice(0, 100),
+      missing_permanent_smartsheet_row_ids: [...orderMissingPermanentRows.values()].slice(0, 100),
+      permanent_row_matching_strategy: 'configured_sheet_and_permanent_row_id_only',
+      automatic_relink_attempted: false,
       ...(orderTimeBudgetReached ? {
         skipped: true,
         partial: true,
