@@ -672,7 +672,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 flex items-start gap-2">
           <RefreshCw className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <div>
-            <strong>Automatic sync is active.</strong> The sync runs automatically every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Both directions (pull and push) run for every dataset that has them enabled. A live status indicator appears at the bottom-right corner of every page.
+            <strong>Automatic sync is active.</strong> The scheduler runs every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled; background push and automatic record creation are locked OFF, so Order writes use Save & Sync. A live status indicator appears at the bottom-right corner of every page.
           </div>
         </div>
 
