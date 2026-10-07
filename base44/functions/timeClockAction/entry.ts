@@ -3437,6 +3437,15 @@ Deno.serve(async (req) => {
       if (current && current.snapshot_active !== false) {
         const check = await verifySummary(current, history, 'Current payroll generation');
         if (!check.verified) return Response.json({ success: true, verified: false, legacy: check.legacy, error: check.error, pay_period_id: period.id, generations: [] });
+        if (Number(current.snapshot_version || 0) >= 3) {
+          if (!Array.isArray(current.shift_manifest)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll generation is missing its immutable shift manifest.', pay_period_id: period.id, generations: [] });
+          const currentManifestHash = await payloadHash(current.shift_manifest);
+          if (!String(current.shift_manifest_hash || '') ||
+              !constantTimeEqual(String(current.shift_manifest_hash), currentManifestHash) ||
+              !constantTimeEqual(String(current.entry_snapshot_hash || ''), currentManifestHash)) {
+            return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift manifest failed verification.', pay_period_id: period.id, generations: [] });
+          }
+        }
         if (Number(current.snapshot_version || 0) >= 8) {
           const priorGeneration = history.length ? history[history.length - 1] : null;
           const expectedSupersedes = String(priorGeneration?.request_id || '');
