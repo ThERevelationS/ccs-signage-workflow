@@ -1,3 +1,15 @@
+## Authenticated four-profile correction path — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 now has an authenticated admin correction endpoint and retained four-profile evidence proposals. Actual live corrections and office reconciliation remain pending; task 4 live acceptance remains pending.
+
+Fresh clean HEAD 7da19ac58f642842f82b7c8bab982702cb9411a6; concurrent CCS edits preserved. Original archived Cleves/Norwood/Deer Park bytes rehashed against their manifests successfully. Added correctJurisdictionIdentityType and a shared handler with explicit preview/apply actions. Only the four retained IDs, names, old types, Hamilton County and source URLs qualify. Server-owned retained evidence and authenticated actor replace all client-supplied evidence/actor/type claims. Each Cleves record remains independent. Existing helper now guards the actual parent_county_name schema field rather than parent_county.
+
+Unauthenticated and non-admin requests fail before profile access. Preview cannot write. Apply commits type and history together using the exact expected version, preserving documents and relationships; existing verification/reservations still block. No staff approval or office/regulation authority is fabricated. Repeat/uncertain outcomes require readback, never blind retries.
+
+Validation: 13 focused tests, affected backend bundle and git diff --check pass. No frontend change/publishing, live endpoint invocation or production profile mutation. Resource files are saved via Base44 synchronization; deployment/live availability is not asserted by a bundle pass.
+
+Next: fresh live read of four profiles and review/history state; verify endpoint availability, preview and apply each supported correction with current versions. Stop for reconciliation if any guard differs. Continue electrical issuer/inspector coverage after Ohio identity correction acceptance.
+
 ## Guarded locality type correction primitive — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 now has a tested correction persistence primitive; actual four-profile corrections and office reconciliation remain outstanding. Task 4 live acceptance remains pending.
