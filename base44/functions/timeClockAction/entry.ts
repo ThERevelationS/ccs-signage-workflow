@@ -2696,6 +2696,7 @@ Deno.serve(async (req) => {
         const provenance = change?.correction_provenance;
         if (!provenance) return true;
         const strictV24 = Number(snapshotVersion || 0) >= 24;
+        const strictV25 = Number(snapshotVersion || 0) >= 25;
         const hasOwn = (key: string) => Object.prototype.hasOwnProperty.call(provenance, key);
         const v24RequiredFields = [
           'correction_request_id', 'submission_request_id', 'requested_by', 'requested_at', 'employee_reason',
@@ -2714,6 +2715,19 @@ Deno.serve(async (req) => {
           String(provenance.corrected_clock_in || '') && String(provenance.corrected_clock_out || '')
         );
         if (!v24ShapeComplete) return false;
+        const v25RequiredFields = [
+          'submission_audit_id', 'submission_audit_outcome', 'submission_audit_at',
+          'submission_actor_role', 'submission_authentication_method', 'submission_payload_hash',
+        ];
+        const v25ShapeComplete = !strictV25 || (
+          v25RequiredFields.every(hasOwn) &&
+          String(provenance.submission_audit_id || '') &&
+          ['confirmed', 'recovered'].includes(String(provenance.submission_audit_outcome || '')) &&
+          String(provenance.submission_audit_at || '') && String(provenance.submission_actor_role || '') &&
+          ['session', 'badge'].includes(String(provenance.submission_authentication_method || '')) &&
+          String(provenance.submission_payload_hash || '')
+        );
+        if (!v25ShapeComplete) return false;
         const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
         const appliedAudit = provenance.applied_audit_id ? await auditEntity.get(provenance.applied_audit_id).catch(() => null) : null;
         const reviewAudits = strictV24 ? await auditEntity.filter({
@@ -2722,6 +2736,12 @@ Deno.serve(async (req) => {
           time_entry_id: String(change.time_entry_id || ''),
         }).catch(() => null) : null;
         const reviewAudit = Array.isArray(reviewAudits) && reviewAudits.length === 1 ? reviewAudits[0] : null;
+        const submissionAudits = strictV25 ? await auditEntity.filter({
+          action: 'correction_request',
+          request_id: String(provenance.submission_request_id || ''),
+          time_entry_id: String(change.time_entry_id || ''),
+        }).catch(() => null) : null;
+        const submissionAudit = Array.isArray(submissionAudits) && submissionAudits.length === 1 ? submissionAudits[0] : null;
         const requested = correction?.requested_changes || {};
         const original = appliedAudit?.details?.original || {};
         const corrected = appliedAudit?.details?.corrected || {};
@@ -2738,6 +2758,40 @@ Deno.serve(async (req) => {
           String(corrected.notes || '') === String(provenance.corrected_notes || '') &&
           Number(corrected.total_hours || 0) === Number(provenance.corrected_total_hours || 0)
         ) : true;
+        const submissionVersion = correction ? String(
+          String(correction.request_kind || '') === 'missed_clock_out'
+            ? correction.time_entry_updated_date || ''
+            : correction.original_snapshot?.updated_date || correction.time_entry_updated_date || ''
+        ) : '';
+        const expectedSubmissionHash = correction && submissionVersion ? await payloadHash({
+          entry_id: correction.time_entry_id,
+          expected_updated_date: submissionVersion,
+          reason: correction.employee_reason,
+          requested_changes: requested,
+        }) : '';
+        const submissionAuditTime = Date.parse(String(submissionAudit?.server_timestamp || ''));
+        const requestedAtTime = Date.parse(String(correction?.requested_at || ''));
+        const reviewedAtTime = Date.parse(String(correction?.reviewed_at || ''));
+        const v25SubmissionAuditMatches = !strictV25 || Boolean(correction && submissionAudit && expectedSubmissionHash &&
+          String(submissionAudit.id || '') === String(provenance.submission_audit_id || '') &&
+          ['confirmed', 'recovered'].includes(String(submissionAudit.outcome || '')) &&
+          String(submissionAudit.outcome || '') === String(provenance.submission_audit_outcome || '') &&
+          asEmail(submissionAudit.user_email) === asEmail(provenance.requested_by) &&
+          asEmail(submissionAudit.actor_email) === asEmail(provenance.requested_by) &&
+          String(submissionAudit.actor_role || '') === String(provenance.submission_actor_role || '') &&
+          String(submissionAudit.authentication_method || '') === String(provenance.submission_authentication_method || '') &&
+          ['session', 'badge'].includes(String(submissionAudit.authentication_method || '')) &&
+          String(submissionAudit.server_timestamp || '') === String(provenance.submission_audit_at || '') &&
+          Number.isFinite(submissionAuditTime) && Number.isFinite(requestedAtTime) && Number.isFinite(reviewedAtTime) &&
+          submissionAuditTime >= requestedAtTime && submissionAuditTime <= reviewedAtTime &&
+          String(submissionAudit.reason || '') === String(provenance.employee_reason || '') &&
+          String(submissionAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
+          String(submissionAudit.details?.payload_hash || '') === String(provenance.submission_payload_hash || '') &&
+          constantTimeEqual(String(submissionAudit.details?.payload_hash || ''), expectedSubmissionHash) &&
+          String(submissionAudit.details?.requested_changes?.clock_in || '') === String(provenance.requested_clock_in || '') &&
+          String(submissionAudit.details?.requested_changes?.clock_out || '') === String(provenance.requested_clock_out || '') &&
+          Number(submissionAudit.details?.requested_changes?.lunch_minutes || 0) === Number(provenance.requested_lunch_minutes || 0) &&
+          String(submissionAudit.details?.requested_changes?.notes || '') === String(provenance.requested_notes || ''));
         const expectedReviewStatus = String(provenance.review_decision || '') === 'approve_modified' ? 'approved_modified' : 'approved';
         const v24AppliedAuditMatches = !strictV24 || Boolean(correction && appliedAudit &&
           String(appliedAudit.action || '') === 'admin_correction' &&
@@ -2796,7 +2850,7 @@ Deno.serve(async (req) => {
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
           (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))) &&
-          requestedMatches && appliedMatches && v24AppliedAuditMatches && v24CorrectionReviewAuditMatches && deltaMatches);
+          requestedMatches && appliedMatches && v25SubmissionAuditMatches && v24AppliedAuditMatches && v24CorrectionReviewAuditMatches && deltaMatches);
       };
       const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
