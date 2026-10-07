@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — Whitewater identity and county routing review (2026-10-07)
+
+Fresh clean HEAD 94f9563ac2b1390bfc266eae5508b7ea2e87a96c preserved. Inspected PermitLocality schema and live Whitewater name query: zero tracker rows, in addition to the earlier canonical-profile gap. No synthetic identity or production record created.
+
+Reviewed county digital-permitting and development-services references. Recorded three original HTML HTTP 403 retention gaps, a duplicated-path forms link 404 and jurisdiction-map link 404. The canonical applications department URL was reachable via web retrieval but remains unarchived. Web-derived summaries are labeled separately from retained originals. Added the county digital-permitting reference to North Bend research with sign-specific applicability unconfirmed; documented partner-agency paper exceptions. Repeat preparation preserves the new reference without duplication. No electrical issuer/inspector or Whitewater zoning status inferred from generic county statements or third-party claims.
+
+Validation: 18 UI/archive tests passed; explicit routing-gap, independent-role and repeat-preparation checks passed; diff check passed. No frontend publication or production entity changes. Task 2 remains partial. Whitewater canonical identity, official zoning status, forms, electrical offices and county original retention remain open. Next: expand Ohio coverage to Green and Delhi Township official sign/building forms and electrical references while preserving these explicit unresolved gaps. Verified app-storage/catalog registration remains outstanding. Kentucky follows Ohio.
+
 ## Phase 10 — Milestone 1 of 3 — North Bend sign findings and original downloads (2026-10-07)
 
 Inspected fresh clean HEAD c0a3d22b8b6d7d95ad6134079f1db36073db5d25 and preserved unrelated concurrent CCS changes. Confirmed live North Bend identity 6ac19f1c2fbbf3b8bb27397c, OH village; state/name readback still has no Whitewater profile. Added exact-identity admin research with two hash-verified original PDF downloads and eight physical-page findings tied to source and embedded-text hashes.
