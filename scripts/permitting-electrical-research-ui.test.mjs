@@ -67,3 +67,18 @@ test('zoning request download matches retained original and official page link',
  assert.equal(packet.locality_coverage_approved,false);
  assert.equal(packet.compiled_code_status.current_exemptions_established,false);
 });
+test('explicit inspection statement stays separate from unresolved permit issuer and approvals',()=>{
+ const html=render();
+ assert.match(html,/Explicit City statement retained; approval pending/);
+ assert.match(html,/Issuer responsibility unresolved/);
+ assert.match(html,/original HTTP provider link/);
+ const packet=JSON.parse(readFileSync('docs/official-evidence/ohio-electrical-discovery-2026-10-06/electrical-office-review/electrical-office-review-packet.json'));
+ assert.equal(packet.roles.electrical_inspection.explicit_municipal_responsibility_clause_retained,true);
+ assert.equal(packet.roles.electrical_inspection.approved,false);
+ assert.equal(packet.roles.electrical_permit.explicit_issuer_established,false);
+ assert.equal(packet.roles.electrical_permit.approved,false);
+ assert.equal(packet.original_link_upgraded,false);
+ assert.equal(packet.redirect_verified,false);
+ assert.equal(packet.provider_contact_retrieval.status,'not_archived');
+ assert.equal(packet.blockers.length,3);
+});

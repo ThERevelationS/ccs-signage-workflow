@@ -12,6 +12,12 @@ export default function ElectricalResearchResources({ jurisdiction, isAdmin = fa
       <p>Inspection Bureau, Inc. is an unapproved candidate for permit and inspection responsibilities. These references do not establish either role, service coverage, or sign-specific requirements.</p>
       <p>City sign guidance supports researching both roles, but the retained handout is dated May 2017. References observed {research.observed_on}. Confirm current submission routing, fees, contractor requirements, and inspection stages with the responsible office.</p>
       <p>The 2017 handout describes submitting paper plan copies. The <a className="underline" href="https://www.cincinnati-oh.gov/buildings/submitting-your-application/electronic-document-submission/" target="_blank" rel="noopener noreferrer">City electronic submission page</a> describes email intake and digital uploads. Confirm the applicable sign submission route; the City process is separate from IBI electrical submissions.</p>
+      {research.role_findings && <dl className="space-y-3 rounded border border-amber-200 bg-white/60 p-3" aria-label="Electrical responsibility review status">
+        {research.role_findings.map(finding => <div key={finding.role}>
+          <dt className="font-semibold">{finding.role}: {finding.status}</dt>
+          <dd>{finding.note} <a className="underline" href={finding.source} target="_blank" rel="noopener noreferrer">Responsibility source</a></dd>
+        </div>)}
+      </dl>}
       <ul className="space-y-3">
         {research.resources.map(resource => <li key={resource.file}>
           <p className="font-medium">{resource.label}</p>

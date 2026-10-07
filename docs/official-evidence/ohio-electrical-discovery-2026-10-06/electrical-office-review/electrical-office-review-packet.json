@@ -1,0 +1,57 @@
+{
+  "method": "municipal-electrical-responsibility-research-v1",
+  "status": "review_blocked",
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "government_office_id": "1776692961965-0.8021021998915965",
+  "evidence": {
+    "official_url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+    "observed_at": "2026-10-07T12:51:47.584364+00:00",
+    "raw_sha256": "2997c0f849f057ca0937ff6da3214a7a0ee6a6970a1bc6d1d292a826c2850fc8",
+    "text_sha256": "4af2a9ae7fef269631a258eb8a4b9a0e2b313f88e74c89bfdee856d092584f4e",
+    "block": 77,
+    "excerpt": "The City contracts with Inspections Bureau, Inc. or IBI to review and inspect all electrical permits.",
+    "printed_office_name": "Inspections Bureau, Inc. or IBI",
+    "literal_provider_link": "http://www.inspectionbureau.com/"
+  },
+  "roles": {
+    "electrical_inspection": {
+      "explicit_municipal_responsibility_clause_retained": true,
+      "approved": false
+    },
+    "electrical_permit": {
+      "explicit_issuer_established": false,
+      "approved": false,
+      "reason": "Electrical plan-review/permit application routing does not establish permit issuance responsibility."
+    }
+  },
+  "blockers": [
+    {
+      "kind": "canonical_identity",
+      "status": "needs_verification",
+      "reason": "Provider contact page is web-readable but original HTML retrieval returned 406; canonical office is not staff verified."
+    },
+    {
+      "kind": "identity_link",
+      "status": "needs_review",
+      "reason": "Original municipal link uses HTTP; retained HTTPS identity-link verification cannot equate it with an HTTPS URL or infer a redirect."
+    },
+    {
+      "kind": "review_route",
+      "status": "unsupported",
+      "reason": "Native HTML delegation supports zoning only; PDF delegation cannot consume this HTML block."
+    }
+  ],
+  "provider_contact_retrieval": {
+    "file": "ibi-contact.html",
+    "official_url": "https://www.inspectionbureau.com/contact-us/",
+    "retrieved_at": "2026-10-07T12:51:47.370011+00:00",
+    "status": "not_archived",
+    "error": "HTTP Error 406: Not Acceptable"
+  },
+  "canonical_name_rewritten": false,
+  "original_link_upgraded": false,
+  "redirect_verified": false,
+  "locality_authority_approved": false,
+  "address_authority_resolved": false,
+  "next_action": "Keep Cincinnati blocked items visible and continue other Ohio office reconciliation; do not repeat identical failed retrievals or manufacture publisher/provider aliases."
+}

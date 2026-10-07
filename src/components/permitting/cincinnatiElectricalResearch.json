@@ -40,5 +40,19 @@
     "form_archive": "/permitting-evidence/cincinnati-electrical/zoning-verification-request.pdf",
     "form_sha256": "9974564b6e8dc047153278f4456d5c0a911849e429eeffa346c4e0b6f49bfbab",
     "observed_on": "2026-10-07"
-  }
+  },
+  "role_findings": [
+    {
+      "role": "Electrical inspection",
+      "status": "Explicit City statement retained; approval pending",
+      "note": "The City names IBI for electrical review and inspection. Canonical identity, the original HTTP provider link, and the HTML review route remain unresolved.",
+      "source": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/"
+    },
+    {
+      "role": "Electrical permit issuance",
+      "status": "Issuer responsibility unresolved",
+      "note": "A separate electrical permit and an application portal do not establish who issues the permit.",
+      "source": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/"
+    }
+  ]
 }
