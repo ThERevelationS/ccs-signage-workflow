@@ -16,6 +16,7 @@ import {
   OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR,
   executeGuardedOpportunityBridgePilot,
 } from "../../shared/opportunityBridgeProductionExecutor.mjs";
+import { buildOpportunityBridgePilotReview } from "../../shared/opportunityBridgePilotReview.mjs";
 
 const PAGE_SIZE = 500;
 const MAX_READ_ROWS = 10000;
@@ -114,7 +115,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = clean(body?.action) || "prepare_pilot";
-    if (!["prepare_pilot","apply_pilot"].includes(action)) {
+    if (!["prepare_pilot","prepare_authorized_pilot","apply_pilot"].includes(action)) {
       return Response.json({ success:false, error:"Unsupported Opportunity bridge production action." }, { status:400 });
     }
 
@@ -138,8 +139,21 @@ Deno.serve(async (req) => {
     const firstBatch = selectOpportunityBridgeFirstBatch(plan.rows);
     const candidate = firstBatch[0] || null;
     const confirmationContract = describeOpportunityBridgeSecondaryConfirmationContract();
+    const candidateCustomerId = clean(candidate?.anchors?.customer_id);
+    const candidateCustomer = candidateCustomerId
+      ? customers.find((row: any) => clean(row?.id) === candidateCustomerId) || null
+      : null;
+    const pilotReview = candidate
+      ? await buildOpportunityBridgePilotReview({
+          planRow:candidate,
+          customer:candidateCustomer,
+          durableReceipts:receipts,
+          opportunities,
+          receiptLedgerSummary:receiptLedger,
+        })
+      : null;
 
-    if (action === "prepare_pilot") {
+    if (action === "prepare_pilot" || action === "prepare_authorized_pilot") {
       const rolloutRunId = crypto.randomUUID();
       const binding = candidate
         ? await buildOpportunityBridgeSecondaryConfirmationBinding({
@@ -149,6 +163,13 @@ Deno.serve(async (req) => {
             actor,
           })
         : null;
+      const sourceAuthorized = Boolean(
+        pilotReview?.review_fingerprint &&
+        clean(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT) === clean(pilotReview.review_fingerprint)
+      );
+      const authorizedPreparation = action === "prepare_authorized_pilot" &&
+        OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED === true &&
+        sourceAuthorized;
 
       return Response.json({
         success:true,
@@ -160,6 +181,10 @@ Deno.serve(async (req) => {
         generated_at:now,
         rollout_run_id:rolloutRunId,
         candidate:publicCandidate(candidate),
+        pilot_review:pilotReview,
+        explicit_user_authorization_required:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.EXPLICIT_PILOT_AUTHORIZATION_REQUIRED,
+        source_authorized_review_fingerprint:clean(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT),
+        source_authorization_matches_fresh_review:sourceAuthorized,
         receipt_ledger:receiptLedger,
         secondary_confirmation_contract:confirmationContract,
         secondary_confirmation_binding:binding ? {
@@ -173,7 +198,9 @@ Deno.serve(async (req) => {
           batch_size:binding.batch_size,
           expires_at:binding.expires_at,
         } : null,
-        confirmation_phrase:binding?.required_phrase || "",
+        confirmation_phrase:authorizedPreparation ? binding?.required_phrase || "" : "",
+        confirmation_phrase_available:authorizedPreparation,
+        review_response_is_not_execution_authorization:action === "prepare_pilot",
         live_counts:{
           workorders_examined:workOrders.length,
           customers:customers.length,
@@ -181,7 +208,7 @@ Deno.serve(async (req) => {
           opportunities:opportunities.length,
           opportunity_bridge_receipts:receipts.length,
         },
-      });
+      }, { status:action === "prepare_authorized_pilot" && !authorizedPreparation ? 423 : 200 });
     }
 
     const requestedWorkOrderId = clean(body?.work_order_id);
@@ -189,6 +216,7 @@ Deno.serve(async (req) => {
       ? body.secondary_confirmation_binding
       : null;
     const suppliedPhrase = clean(body?.confirmation_phrase);
+    const requestedReviewFingerprint = clean(body?.review_fingerprint);
     const planGeneratedAt = clean(suppliedBinding?.plan_generated_at);
 
     const result = await executeGuardedOpportunityBridgePilot({
@@ -199,6 +227,9 @@ Deno.serve(async (req) => {
       confirmationBinding:suppliedBinding,
       confirmationPhrase:suppliedPhrase,
       receiptLedgerSummary:receiptLedger,
+      pilotReviewFingerprint:clean(pilotReview?.review_fingerprint),
+      requestedReviewFingerprint,
+      approvedPilotReviewFingerprint:clean(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT),
       applyEnabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED,
       applyAdapter:makeApplyAdapter(WorkOrder, Opportunity),
       receiptAdapter:createBase44OpportunityBridgeReceiptAdapter(Receipt),
