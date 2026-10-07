@@ -1,0 +1,28 @@
+{
+  "source_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/symmes_township_zoning.php",
+  "observed_on": "2026-10-07",
+  "method": "Web retrieval summary; original page retention HTTP 403, not an archived HTML original",
+  "routing_candidate": "County page lists CAGIS EZtrak for Symmes zoning applications.",
+  "online_form_url": "https://eztrak.cagis.org/CitizenAccess/Default.aspx",
+  "online_form_status": "Linked on official county page; portal retrieval 502; no submission or sign-specific acceptance verified",
+  "documents": [
+    {
+      "file": "zoning-certificate-user-guide.pdf",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310"
+    },
+    {
+      "file": "symmes-fee-schedule-2026.pdf",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Fee_Schedule_2026.pdf?t=202512311158300"
+    },
+    {
+      "file": "symmes-zoning-fees-2026.pdf",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Zoning_Fees_2026.pdf?t=202512311159070"
+    }
+  ],
+  "standalone_sign_form_verified": false,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}

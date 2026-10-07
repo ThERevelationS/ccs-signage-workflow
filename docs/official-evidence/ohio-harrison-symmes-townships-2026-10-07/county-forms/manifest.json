@@ -5,6 +5,27 @@
       "observed_at": "2026-10-07T17:42:58.132576+00:00",
       "status": "original_retention_gap",
       "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "zoning-certificate-user-guide.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310",
+      "observed_at": "2026-10-07T17:44:06.576856+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "symmes-fee-schedule-2026.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Fee_Schedule_2026.pdf?t=202512311158300",
+      "observed_at": "2026-10-07T17:44:07.128198+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "symmes-zoning-fees-2026.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Zoning_Fees_2026.pdf?t=202512311159070",
+      "observed_at": "2026-10-07T17:44:07.667504+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
     }
   ],
   "staff_approved": false
