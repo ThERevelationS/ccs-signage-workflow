@@ -235,3 +235,11 @@ assert.equal(p.retained_pdf_pages,4);for(const d of e.documents){assert.equal(d.
 assert.equal(p.locality.canonical_id,null);assert.ok(p.candidates.every(c=>c.needs_ocr_review&&!c.fee_values_extracted&&!c.office_roles_approved));assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);
 assert.equal(a.attempts.length,3);assert.ok(a.attempts.every(x=>x.status==='original_retention_gap'&&!x.sha256&&!x.retained_path));assert.equal(p.live_records_changed,0);
 });
+
+test('Symmes OCR findings preserve missing attachments and source/render/text identity',()=>{
+const r='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/',o=JSON.parse(readFileSync(r+'ocr/manifest.json')),p=JSON.parse(readFileSync(r+'ocr-review-packet.json')),m=JSON.parse(readFileSync(r+'manifest.json'));
+assert.equal(o.assets.length,12);for(const a of o.assets){const b=readFileSync(r+'ocr/'+a.file);assert.equal(b.length,a.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),a.sha256);}
+assert.equal(p.findings.length,6);for(const f of p.findings){const stem=f.file.replace('.pdf','')+'-'+f.physical_page;assert.equal(f.source_sha256,m.sources.find(s=>s.file===f.file).sha256);assert.equal(f.ocr_text_sha256,o.assets.find(a=>a.file===stem+'.txt').sha256);assert.equal(f.render_sha256,o.assets.find(a=>a.file===stem+'.jpg').sha256);assert.ok(readFileSync(r+'ocr/'+stem+'.txt','utf8').includes(f.matched_ocr_needle));assert.equal(f.authority_approved,false);}
+assert.equal(p.physical_pages_reviewed,4);for(const k of ['fee_appendix_present','contract_exhibit_present','fee_amounts_extracted','executed_contract_verified','electrical_permit_issuer_approved','electrical_inspector_approved','currentness_approved'])assert.equal(p[k],false);
+assert.equal(p.canonical_locality_id,null);assert.equal(p.live_records_changed,0);
+});
