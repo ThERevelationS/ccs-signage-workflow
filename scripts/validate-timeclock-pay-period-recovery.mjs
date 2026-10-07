@@ -2898,7 +2898,7 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
   assert.equal(period.finalized_summary.shift_manifest.length, 1);
   const manifestRow = period.finalized_summary.shift_manifest[0];
   const provenance = manifestRow.late_clock_in_provenance;
-  assert.equal(manifestRow.clock_source, 'employee_attested_missed_clock_in');
+  assert.equal(manifestRow.clock_source, managerCorrected ? 'admin_correction' : 'employee_attested_missed_clock_in');
   assert.equal(manifestRow.clock_in_request_id, recoveryRequestId);
   assert.equal(manifestRow.punch_exception_id, punchCase.id);
   assert.equal(manifestRow.missed_clock_in_reported_at, approvedEntry.missed_clock_in_reported_at);
