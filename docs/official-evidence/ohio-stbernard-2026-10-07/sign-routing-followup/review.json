@@ -1,0 +1,69 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Web-derived paraphrased observations only; blocked originals are not archived sources. No retrieved snippets substituted for original files.",
+  "sources": [
+    {
+      "file": "sign-chapter.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-26655",
+      "observed_version_label": "2024-04",
+      "observation": "Chapter index identifies nine sections; index is not full sign-rule text.",
+      "applicability_approved": false
+    },
+    {
+      "file": "sign-permits.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21716",
+      "observed_version_label": "2026-02",
+      "observation": "Section 1185.002 states a permit precedes sign installation/erection; reconcile village zoning certificate and county building sign application.",
+      "applicability_approved": false
+    },
+    {
+      "file": "business-signs.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21730",
+      "observed_version_label": "2024-04",
+      "observation": "Section 1185.02 contains frontage-dependent area/height, glare, projection and narrow service-station freestanding provisions. Raw phrase storage frontage is an unresolved wording anomaly; do not silently replace with store frontage or apply numeric limits to every sign.",
+      "applicability_approved": false
+    },
+    {
+      "file": "temporary-signs.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-21755",
+      "observed_version_label": "2026-01",
+      "observation": "Section 1185.06 makes special-purpose/event temporary signs discretionary and permit-based; no fixed duration or automatic permission inferred.",
+      "applicability_approved": false
+    },
+    {
+      "file": "sandwich-boards.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36776",
+      "observed_version_label": "2026-02",
+      "observation": "Chapter 1186 separately addresses sidewalk cafe and sandwich boards. Section 1186.03 text expressly covers sidewalk cafe; do not extrapolate that sentence alone to all sandwich-board cases. Remaining definitions, location, insurance and fees need review.",
+      "applicability_approved": false
+    },
+    {
+      "file": "expressway-advertising.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16843",
+      "observed_version_label": "2024-04",
+      "observation": "Chapter 711 separately identifies expressway advertising certificate/nonconforming/standards provisions. Do not treat Chapter 1185 alone as exhaustive billboard regulation; litigation and current legislation require separate review.",
+      "applicability_approved": false
+    },
+    {
+      "file": "ibi-eztrak.html",
+      "url": "https://www.inspectionbureau.com/eztrack-applications/",
+      "observed_version_label": null,
+      "observation": "IBI page links existing ezTrak users to portal and new-user instructions. Provider homepage separately announces Ohio application migration effective September 14, 2026. Portal identity does not prove St. Bernard contract, permit issuer, or inspector.",
+      "applicability_approved": false
+    }
+  ],
+  "version_review": "Responses at latest URLs show 2024-04, 2026-01 and 2026-02 labels; retrieval/cache variation or inconsistent publisher versions unresolved. Do not infer legislative differences from labels alone.",
+  "electrical_review": "Village county transfer, 1305.01(e) IBI routing and provider Ohio ezTrak migration must be reconciled with current St. Bernard service-area/delegation evidence. Shared portal does not establish county replacement of IBI.",
+  "retained_originals": 0,
+  "currentness_approved": false,
+  "sign_application_route_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Review remaining sign sections and current county/IBI delegation evidence; find an official downloadable code original without repeating these blocked URLs."
+}

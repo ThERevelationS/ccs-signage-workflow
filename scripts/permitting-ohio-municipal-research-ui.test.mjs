@@ -298,3 +298,12 @@ assert.equal(e.documents.length,2);assert.equal(e.documents.reduce((n,d)=>n+d.to
 assert.equal(p.locality.id,'6ac1a0d393d41146d708791d');assert.equal(p.locality.type,'village');assert.equal(p.transition.effective_date,'2026-01-01');assert.match(p.electrical_comparison.publisher,/Inspection Bureau/);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
 assert.equal(m.sources.find(s=>s.file==='permit-applications-code.html').status,'original_retention_gap');
 });
+
+test('St Bernard sign followup preserves version uncertainty and distinct sign regimes',()=>{
+const r='docs/official-evidence/ohio-stbernard-2026-10-07/sign-routing-followup/',p=JSON.parse(readFileSync(r+'review.json')),m=JSON.parse(readFileSync(r+'manifest.json'));
+assert.equal(p.locality.id,'6ac1a0d393d41146d708791d');assert.equal(m.sources.length,7);assert.equal(p.sources.length,7);
+for(const s of m.sources){assert.equal(s.status,'original_retention_gap');assert.equal(s.sha256,undefined);assert.equal(s.retained_path,undefined);}
+assert.deepEqual([...new Set(p.sources.map(s=>s.observed_version_label).filter(Boolean))].sort(),['2024-04','2026-01','2026-02']);
+assert.match(p.sources[2].observation,/storage frontage/);assert.match(p.sources[4].observation,/do not extrapolate/);assert.match(p.sources[5].observation,/not.*exhaustive/);assert.match(p.electrical_review,/Shared portal does not establish/);
+for(const k of ['currentness_approved','sign_application_route_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(p[k],false);assert.equal(p.live_records_changed,0);
+});

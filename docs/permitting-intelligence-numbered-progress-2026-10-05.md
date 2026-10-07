@@ -1,3 +1,9 @@
+## 2026-10-07 — Phase 10 → Milestone 2 of 3: St. Bernard sign-routing followup
+
+Reviewed sign permit, business/temporary sign, sidewalk/sandwich-board and expressway-advertising source routes. Saved seven failed original-retention receipts (six HTTP 403, one HTTP 406) and separately labeled web-derived observations. Mixed publisher version labels and literal storage-frontage wording remain unresolved. IBI Ohio ezTrak migration does not prove St. Bernard delegation or county replacement. No authority approved, live records changed or publication. Task 2 remains complete; Milestone 1 Task 4 live-browser acceptance remains open.
+
+Next: remaining sign sections, downloadable official code source and current county/IBI delegation evidence. Avoid repeating blocked URLs.
+
 ### Phase 10 → Milestone 2 of 3 — St. Bernard Ohio current zoning and county transfer (2026-10-07)
 
 Milestone 1 Task 4 browser acceptance remains open; Task 2 closeout preserved. Fresh canonical OH query matched St. Bernard village 6ac1a0d393d41146d708791d. Retained three originals: current planning/zoning HTML, one-page zoning information PDF, one-page zoning map PDF. Bytes/hashes verified and PDF public copies unchanged. Extracted both physical pages; embedded text is not visual map/current parcel verification. Five source/page/text-bound findings cover iWorQ application, site plan, $50 fee candidate/payment, normal review timing, and temporary/permanent signs plus possible county approval.
