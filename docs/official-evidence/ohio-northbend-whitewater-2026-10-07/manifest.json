@@ -1,0 +1,81 @@
+{
+  "sources": [
+    {
+      "file": "northbend-forms.html",
+      "official_url": "https://www.northbendohio.org/forms",
+      "observed_at": "2026-10-07T16:51:49.809714+00:00",
+      "final_url": "https://www.northbendohio.org/forms",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/northbend-forms.html",
+      "bytes": 595822,
+      "sha256": "88bc2574ddff722fae134a7fa8f324c6821858a0ab4a2453f36565d609a656d5"
+    },
+    {
+      "file": "northbend-zoning.html",
+      "official_url": "https://www.northbendohio.org/zoning",
+      "observed_at": "2026-10-07T16:51:49.939294+00:00",
+      "final_url": "https://www.northbendohio.org/zoning",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/northbend-zoning.html",
+      "bytes": 597961,
+      "sha256": "e93b4055dad3fb587eb21e6804f32d6e52318ffe827b4903f8722f574b419efa"
+    },
+    {
+      "file": "whitewater-home.html",
+      "official_url": "https://www.whitewatertwp.org/",
+      "observed_at": "2026-10-07T16:51:50.009231+00:00",
+      "final_url": "https://www.whitewatertwp.org/",
+      "http_status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/whitewater-home.html",
+      "bytes": 1124858,
+      "sha256": "3ab2cb58bbbdb54b426a865cdff21acbfb4706ffc5414996fd53e08d52508620"
+    },
+    {
+      "file": "northbend-county-zoning.html",
+      "official_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/north_bend_zoning.php",
+      "observed_at": "2026-10-07T16:51:50.207561+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "northbend-right-of-way.pdf",
+      "official_url": "https://www.northbendohio.org/_files/ugd/c8a414_2fa27c99fefc48ab93fda35a3f2db926.pdf",
+      "observed_at": "2026-10-07T16:51:50.765973+00:00",
+      "final_url": "https://www.northbendohio.org/_files/ugd/c8a414_2fa27c99fefc48ab93fda35a3f2db926.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/northbend-right-of-way.pdf",
+      "bytes": 910003,
+      "sha256": "0e7aabfed04821b6ac3fe032b193b344a8341f64071f69c52e5567de1ddb9bca"
+    },
+    {
+      "file": "northbend-linked-zoning-code.pdf",
+      "official_url": "https://www.northbendohio.org/_files/ugd/7241ab_59bcc9bd24a6450e8c72f10801d7491c.pdf",
+      "observed_at": "2026-10-07T16:51:52.002090+00:00",
+      "final_url": "https://70f255a1-9697-4a47-a720-207c3f6e683b.filesusr.com/ugd/7241ab_59bcc9bd24a6450e8c72f10801d7491c.pdf",
+      "http_status": 200,
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/northbend-linked-zoning-code.pdf",
+      "bytes": 5346947,
+      "sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2"
+    },
+    {
+      "file": "county-zoning-application-2024.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2024/ZoningApplicationForm.pdf",
+      "observed_at": "2026-10-07T16:51:53.088927+00:00",
+      "status": "retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0
+}
