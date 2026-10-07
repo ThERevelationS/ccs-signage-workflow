@@ -1,3 +1,4 @@
+import {verifyPdfOfficeDelegation} from './permittingPdfOfficeDelegation.mjs';
 import {evidenceDigest,evidenceEqual,evidenceError,sourceAuthoritySnapshot} from './permittingRuleEvidence.mjs';
 import {assertSourceScopeReviewEvidence,safeAuthorityUrl} from './permittingSourceAuthorityPolicy.mjs';
 import {readSourceEvidencePages} from './jurisdictionSourceTextSegments.mjs';
@@ -44,7 +45,8 @@ export async function canonicalAuthorityOffice(settingsEntity,id,publisher,state
   source_url:meta.source_url,verified_by:meta.verified_by,verified_at:meta.verified_at,verification_status:meta.verification_status};
 }
 async function verifyEvidence(deps,profile,input){
- if(input.evidence_kind && !['official_html','pdf'].includes(input.evidence_kind))throw evidenceError('Unknown relationship evidence kind.',400);
+ if(input.evidence_kind && !['official_html','pdf','pdf_delegation'].includes(input.evidence_kind))throw evidenceError('Unknown relationship evidence kind.',400);
+ if(input.evidence_kind==='pdf_delegation')return verifyPdfOfficeDelegation(deps,profile,input,canonicalAuthorityOffice);
  if(input.evidence_kind==='official_html')return verifyHtmlOfficeDelegation(deps,profile,input,canonicalAuthorityOffice);
  if(input.html_evidence_id)throw evidenceError('HTML evidence requires an explicit native evidence kind.',400);
  const {sourceEntity,segmentEntity,profileEntity,settingsEntity}=deps;
