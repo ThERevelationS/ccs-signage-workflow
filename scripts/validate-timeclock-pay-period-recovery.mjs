@@ -1210,14 +1210,15 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
   const sourcePeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period');
   const destinationPeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'modified-destination-period');
-  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 25);
-  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 25);
+  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 26);
+  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 26);
   const sourceChange = sourcePeriod.finalized_summary.generation_changes[0];
   const destinationChange = destinationPeriod.finalized_summary.generation_changes[0];
   assert.equal(sourceChange.change_type, 'removed');
   assert.equal(destinationChange.change_type, 'added');
   for (const change of [sourceChange, destinationChange]) {
     assert.equal(change.correction_provenance.correction_request_id, request.id);
+    assert.equal(change.correction_provenance.request_kind, 'standard');
     assert.equal(change.correction_provenance.submission_audit_id, correctionRequestAudit.id);
     assert.equal(change.correction_provenance.submission_audit_outcome, correctionRequestAudit.outcome);
     assert.equal(change.correction_provenance.submission_audit_at, correctionRequestAudit.server_timestamp);
@@ -1372,6 +1373,7 @@ test('approve_modified cross-period correction uses manager-edited destination a
   finally { h.rows.TimeClockAudit.pop(); }
 
   const provenanceTamperCases = [
+    ['request_kind', 'missed_clock_out'],
     ['submission_audit_id', 'tampered-frozen-submission-audit-id'],
     ['submission_audit_outcome', 'recovered'],
     ['submission_audit_at', '2026-09-29T12:34:56.000Z'],
