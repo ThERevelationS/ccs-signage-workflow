@@ -20,7 +20,12 @@ Deno.serve(async req=>{
    const catalog=settings.length===1?settings[0].setting_value?.items:null;
    if(!Array.isArray(catalog))throw Object.assign(Error('Office catalog missing or ambiguous.'),{status:409});
    const publisher=source.authority_review?.publisher_name;
-   const offices=catalog.filter(o=>publisher && (o.government_office?.name || o.name)===publisher).map(o=>({
+   const offices=catalog.filter(o=>body.evidence_kind==='pdf_delegation'
+    ? publisher && ['city','village','municipality'].includes(profile.type) &&
+      source.authority_review?.office_reference && o.government_office?.verification_status==='staff_verified' &&
+      o.government_office.state===profile.state &&
+      (o.government_office_id || o.id)!==source.authority_review.office_reference.government_office_id
+    : publisher && (o.government_office?.name || o.name)===publisher).map(o=>({
     id:o.government_office_id || o.id,catalog_id:o.id,name:o.government_office?.name || o.name,
     verification_status:o.government_office?.verification_status || 'needs_verification'}));
    const skip=Number(body.cursor || 0);
