@@ -1,3 +1,13 @@
+## 2026-10-07 — Cincinnati electrical research references in locality UI
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Added a separate administrator-only electrical research disclosure beside approved evidence, gated by exact Cincinnati JurisdictionProfile identity (6ac1a123edda6d8dd942690b, Cincinnati, OH, city). Three retained original PDFs are available as frontend assets, with provider source links and explicit historical/current-applicability cautions. Candidate permit/inspection roles remain unapproved; portal operation, sign scope, fees, and post-migration scheduling remain unresolved. No staff reviews or production records changed. Frontend unpublished.
+
+Verification: 15 focused UI/coverage checks passed; original/public/build PDF hashes match (3/3); targeted ESLint, production build and diff check passed. Live browser/phone acceptance remains pending.
+
+Next: Review current Cincinnati sign-specific electrical scope and the canonical office identity before proposing separate permit/inspection authority reviews.
+
 ## Electrical role gaps visible in locality picker — 2026-10-07
 
 Phase 10 — Ohio/Kentucky coverage. Milestone 1 of 3 — Identity and office reconciliation. Tasks complete: 2 of 4. Task 2 remains partial; Task 4 full live acceptance pending.
