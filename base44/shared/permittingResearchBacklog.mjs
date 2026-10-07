@@ -26,8 +26,13 @@ export function queueResearchIdentity(row = {}) {
   return [norm(row.jurisdiction_name), norm(row.state), type, parent].join('|');
 }
 
+function researchParent(value) {
+  const key = norm(value);
+  return ["information not found", "unknown", "n/a", "not found", "not available"].includes(key) ? "" : key;
+}
+
 function profileParent(profile = {}) {
-  return norm(profile?.parent_county?.name || profile?.parent_county_name);
+  return researchParent(profile?.parent_county?.name || profile?.parent_county_name);
 }
 
 export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProfiles = []) {
@@ -39,7 +44,7 @@ export function profileMatchesQueueRow(row = {}, profile = {}, sameNameStateProf
   if (!compatible[queueType]?.includes(profileType)) return false;
   if (queueType === 'county') return profileType === 'county';
 
-  const queueParent = norm(row.parent_county_name);
+  const queueParent = researchParent(row.parent_county_name);
   const existingParent = profileParent(profile);
   if (queueParent && existingParent) return queueParent === existingParent;
 
@@ -53,7 +58,7 @@ export function resolveResearchProfile(row = {}, profiles = []) {
   const matches = profiles.filter(p => norm(p.name) === norm(row.jurisdiction_name) && norm(p.state) === norm(row.state));
   const eligible = matches.filter(p => profileMatchesQueueRow(row, p, matches));
   if (eligible.length === 1) return { profile: eligible[0], conflict: false };
-  const parent = norm(row.parent_county_name);
+  const parent = researchParent(row.parent_county_name);
   const nearby = matches.filter(p => !parent || !profileParent(p) || parent === profileParent(p));
   return { profile: null, conflict: eligible.length > 1 || nearby.length > 0 };
 }

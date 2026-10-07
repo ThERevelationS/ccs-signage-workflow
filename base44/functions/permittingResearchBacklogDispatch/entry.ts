@@ -8,7 +8,6 @@ import {
   ohioFirstResearchRows,
   jurisdictionProfileTypeForQueueRow,
   profileHasResearchEvidence,
-  profileMatchesQueueRow,
   resolveResearchProfile,
 } from "../../shared/permittingResearchBacklog.mjs";
 import {
@@ -74,7 +73,6 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
 }
 
 async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any) {
-  const matches = matchingProfilesForRow(row, profiles);
   const resolution = resolveResearchProfile(row, profiles);
   if (resolution.conflict) throw new Error("Existing locality identity is conflicting or duplicated; admin review required before research or profile creation.");
   const existing = resolution.profile;
@@ -191,7 +189,6 @@ Deno.serve(async (req) => {
     const activeRows: any[] = [];
 
     for (const row of sourceDiscovery) {
-      const matches = matchingProfilesForRow(row, profiles);
       const resolution = resolveResearchProfile(row, profiles);
       const matchingProfile = resolution.profile;
       if (matchingProfile && profileHasResearchEvidence(matchingProfile)) {
