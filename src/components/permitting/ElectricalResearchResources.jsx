@@ -10,7 +10,7 @@ export default function ElectricalResearchResources({ jurisdiction, isAdmin = fa
     </summary>
     <section className="min-w-0 space-y-3 p-3 pt-0 text-sm [overflow-wrap:anywhere]" aria-label="Unapproved electrical research">
       <p>Inspection Bureau, Inc. is an unapproved candidate for permit and inspection responsibilities. These references do not establish either role, service coverage, or sign-specific requirements.</p>
-      <p>References observed {research.observed_on}. Confirm current submission routing, fees, contractor requirements, and inspection stages with the responsible office.</p>
+      <p>City sign guidance supports researching both roles, but the retained handout is dated May 2017. References observed {research.observed_on}. Confirm current submission routing, fees, contractor requirements, and inspection stages with the responsible office.</p>
       <ul className="space-y-3">
         {research.resources.map(resource => <li key={resource.file}>
           <p className="font-medium">{resource.label}</p>

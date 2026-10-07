@@ -1,0 +1,42 @@
+{
+  "jurisdiction_id": "6ac1a123edda6d8dd942690b",
+  "staff_approved": false,
+  "authority_verified": false,
+  "city_handout_revision": "May 2017",
+  "findings": [
+    {
+      "role": "electrical_permit",
+      "source_file": "cincinnati-signs-handout.pdf",
+      "page": 2,
+      "summary": "City sign guidance calls for a separate electrical permit and directs applicants to IBI. Current routing must be reconciled with the provider September 2026 ezTrak notice."
+    },
+    {
+      "role": "electrical_inspection",
+      "source_file": "cincinnati-signs-handout.pdf",
+      "page": 2,
+      "summary": "City sign guidance directs illuminated or electrically wired signs to IBI for electrical inspection."
+    },
+    {
+      "role": "electrical_inspection",
+      "source_file": "cincinnati-electrical-contract.html",
+      "summary": "Current city inspection page identifies contracted IBI electrical review and inspection services."
+    }
+  ],
+  "provider_faq": {
+    "url": "https://www.inspectionbureau.com/faq/",
+    "original_html_archived": false,
+    "summary": "Provider guidance discusses separate sign permits and installed circuit, grounding, terminations, listing and disconnect checks. This is provider guidance, not a staff-approved job checklist."
+  },
+  "identity_conflicts": [
+    "City FAQ lists 205 W Court St; provider lists 250 W Court St #125W. Prefer provider contact pending staff review.",
+    "City uses Inspections Bureau while provider identifies The Inspection Bureau, Inc.; matching phone/domain corroborate a candidate, not staff approval."
+  ],
+  "unresolved": [
+    "Staff canonical identity review",
+    "Current sign permit exemptions and repair scope",
+    "Contractor registration and licensing",
+    "Current fees",
+    "Ohio inspection scheduling after ezTrak migration",
+    "Job-specific inspection stages and legal applicability"
+  ]
+}

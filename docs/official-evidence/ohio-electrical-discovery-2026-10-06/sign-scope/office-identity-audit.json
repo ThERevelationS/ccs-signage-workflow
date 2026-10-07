@@ -1,0 +1,24 @@
+{
+  "observed_on": "2026-10-07",
+  "catalog_rows": 1,
+  "catalog_candidates": [
+    {
+      "catalog_office_id": "1776692961965-0.8021021998915965",
+      "name": "(IBI) Inspection Bureau, Inc.",
+      "phone": "513-381-6080",
+      "website": "https://www.inspectionbureau.com",
+      "address": "250 West Court Street, Suite 125W, Cincinnati, OH 45202",
+      "government_office_id": null,
+      "canonical_verification_status": null
+    }
+  ],
+  "locality_copy": {
+    "permit_locality_id": "69e62744e1f117de43ba7c75",
+    "office_id": "1776693056199-0.29725670755430633",
+    "jurisdiction_profile_id": null,
+    "government_office_id": null,
+    "reviewed_roles": []
+  },
+  "conclusion": "One legacy catalog candidate and one locality copy; neither has staff-reviewed canonical office identity. Preserve workflows; do not auto-link or approve roles.",
+  "staff_approved": false
+}

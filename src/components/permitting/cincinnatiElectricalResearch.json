@@ -6,6 +6,13 @@
   "observed_on": "2026-10-07",
   "resources": [
     {
+      "label": "City of Cincinnati signs handout (May 2017)",
+      "source": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "file": "cincinnati-signs-handout.pdf",
+      "note": "City guidance identifies separate electrical permitting and IBI inspection for illuminated or wired signs. Dated May 2017; confirm current applicability and submission routing.",
+      "archive": "/permitting-evidence/cincinnati-electrical/cincinnati-signs-handout.pdf"
+    },
+    {
       "label": "Ohio ezTrak account instructions",
       "source": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
       "file": "eztrak-new-user.pdf",
