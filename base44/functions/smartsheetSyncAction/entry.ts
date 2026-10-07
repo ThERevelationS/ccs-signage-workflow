@@ -686,9 +686,9 @@ async function pullDataset(
     }
   }
 
-  // Preserve Base44 records whose linked Smartsheet row is missing.
-  // A missing row can be caused by deletion, movement, API visibility, or a partial read;
-  // flag it for review instead of mutating production data automatically.
+  // Preserve Base44 records whose exact permanent Smartsheet row ID is missing.
+  // Sorting or moving a row is harmless because its permanent ID does not change.
+  // If that ID is absent, preserve the Base44 link and require review instead of inferring a replacement.
   const smartsheetRowIds = new Set(allRows.map((r: any) => String(r.id)));
   const orderMissingPermanentRows = dataset === 'orders'
     ? existingRecords
