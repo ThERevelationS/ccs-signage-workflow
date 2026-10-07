@@ -1,0 +1,46 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Web-derived observations only, distinct from original retention.",
+  "sources": [
+    {
+      "section": "711.04",
+      "file": "advertising-certificate.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16930",
+      "version": "2026-02",
+      "observation": "Zoning certificate for specified outdoor-advertising construction/change actions; chapter maintenance/face-change exclusion includes electrical-component replacement but does not independently exempt electrical or building permits."
+    },
+    {
+      "section": "711.07",
+      "file": "advertising-standards.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16959",
+      "version": "2026-02",
+      "observation": "Distinct outdoor-advertising area/height/location, road-class spacing affidavits, buffers and cap-and-replace permit surrender provisions. General 660-foot restriction and I-75 replacement relocation within 300 feet require exception-hierarchy review. Variable-message prohibition requires separate litigation/current-legislation review, not automatic workflow denial."
+    },
+    {
+      "section": "1186.02",
+      "file": "sandwich-definition.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36799",
+      "version": "2026-02",
+      "observation": "Sandwich-board definition refers to temporary signs provided by the Village for adjacent-business sidewalk use; do not assume every customer-supplied A-frame qualifies."
+    },
+    {
+      "section": "1186.06",
+      "file": "sidewalk-location.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36822",
+      "version": "2024-04",
+      "observation": "Sidewalk-sign location requires approval; normal one-foot curb/building placement is not entitlement. Cafe-specific clearance/driveway/intersection provisions and broader review routing need applicability review; 36-inch baseline with discretion for more than five feet should not be silently normalized."
+    }
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Complete remaining Chapter 711/1186 definitions, fees, application, conditions and insurance; current county/IBI delegation still unresolved.",
+  "retained_originals": 0
+}

@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "file": "advertising-certificate.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16930",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "advertising-standards.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16959",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "sandwich-definition.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36799",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "sidewalk-location.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36822",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}
