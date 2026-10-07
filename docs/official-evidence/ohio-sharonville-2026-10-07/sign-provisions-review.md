@@ -1,0 +1,10 @@
+### Phase 10 → Milestone 2 of 3 — Sharonville sign provisions and version reconciliation (2026-10-07)
+
+Milestone 1 Task 4 remains open; Task 2 closeout unchanged. Prepared 13 findings bound to unchanged original code hash and physical-page text hashes: amended cover, municipal two-county scope, illumination, area measurement, district aggregate/facade table, wall/projecting/freestanding/window rules, electronic messages, temporary construction/table/feather conditions, maintenance and nonconforming signs.
+
+Corrected earlier incomplete code-edition description: cover lists amendments through May 27, 2025 despite repeated June 9, 2022 footer. Retained code page 7 explicitly covers Sharonville city boundaries in Hamilton and Butler counties; live Butler parent field is not exhaustive. No profile or authority edited. Publisher web overview labels 2025-01 and local legislation current through November 18, 2025; this differs from PDF amendment label and does not establish October 2026 completeness. Web observations remain separate from archived originals. Fee currentness still unresolved.
+
+General feather-sign prohibition on physical page 132 coexists with temporary feather standards/table on 144; flagged exception hierarchy rather than blanket prohibition or approval. Table column associations/area diagrams remain visual-review gaps. Temporary construction restrictions and maintenance duties not treated as electrical exemptions. Attempted page 97 rendering: remote canvas native binding missing; web screenshot supplied no inspectable image content. No page-empty, OCR-complete or visual-review claim; gap preserved. Fresh HEAD/status checked after error.
+
+Validation: 33 source/archive/page/identity/conditional-rule tests and git diff --check passed. No runtime UI changes, production records, approvals or publication. Existing six archives and five public PDF copies unchanged; app-storage/catalog registration pending. Next: continue Ohio coverage with St. Bernard, carrying Sharonville table/page-97/version/fee/registration gaps for targeted followup when appropriate. Kentucky collection follows Ohio.
+

@@ -14,7 +14,7 @@
     "sign_application": "https://www.sharonville.org/394/Sign-Application",
     "building_electrical_application": "https://www.sharonville.org/392/Building-Permit-Application",
     "submission_candidate": "Guide and city FAQ describe email or office delivery. No standalone online sign-submission form verified; document URLs are downloadable PDFs, not online submissions.",
-    "county_review": "Live parent_county Butler is incomplete as a geographic description: retained code page 7 expressly names Hamilton and Butler city boundaries. Job address/service-area review remains required."
+    "county_review": "Live parent_county Butler is incomplete as a geographic description: retained code page 7 expressly names Hamilton and Butler city boundaries. Job address/service-area review remains required. This single parent is not exhaustive."
   },
   "electrical": {
     "permit_intake_candidate": "City Community Development receives plans, contacts applicant for payment, and issues the approved permit per guide physical page 7.",

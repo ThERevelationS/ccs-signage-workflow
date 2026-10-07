@@ -282,3 +282,11 @@ assert.equal(p.locality.id,'6ac19f0e23bd8a65822f6d51');assert.equal(p.findings.l
 assert.match(p.electrical.permit_intake_candidate,/issues the approved permit/);assert.match(p.electrical.inspection_candidate,/NIC directly/);assert.match(p.electrical.scope_review,/Duke Energy.*utility/);assert.match(p.routing.county_review,/not.*exhaustive/);
 assert.equal(p.currentness_approved,false);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
 });
+
+test('Sharonville sign provisions retain amendment dates, two-county scope and conditional exceptions',()=>{
+const r='docs/official-evidence/ohio-sharonville-2026-10-07/',p=JSON.parse(readFileSync(r+'sign-provisions-review.json')),d=JSON.parse(readFileSync(r+'planning-zoning-code.pages.json'));
+assert.equal(p.findings.length,13);assert.equal(p.code_amendment_label,'May 27, 2025');assert.deepEqual(p.municipal_counties_in_retained_code,['Hamilton','Butler']);
+for(const f of p.findings){const page=d.pages[f.physical_page-1];assert.ok(page.text.includes(f.matched_needle));assert.equal(f.text_sha256,page.text_sha256);assert.equal(f.source_sha256,d.source_sha256);assert.equal(f.applicability_approved,false);}
+assert.ok(d.pages[131].text.includes('Blade or feather signs'));assert.ok(d.pages[143].text.includes('Only one feather sign'));assert.equal(p.feather_sign_exception_review_pending,true);assert.equal(p.table_visual_review_pending,true);assert.equal(p.page_97_visual_review_pending,true);
+assert.equal(p.version_comparison.publisher_local_legislation_cutoff,'November 18, 2025');assert.equal(p.currentness_approved,false);assert.equal(p.fee_currentness_approved,false);assert.equal(p.live_records_changed,0);
+});
