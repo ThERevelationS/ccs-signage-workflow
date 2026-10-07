@@ -1,3 +1,13 @@
+## Phase 10 — Milestone 1 — Cincinnati currentness review packet (2026-10-07)
+
+Checked fresh live profile and source versions. Source 6ac39c0e6657049fb11cd757 remains administrative_guidance, unknown/needs_verification with no authority review. Retrieved and retained the City's Electronic Document Submission HTML, plus fresh official outdoor-advertising application, fillable building application, and site-plan PDF originals. All three fresh PDFs match the corresponding existing app archive hashes and sizes. No duplicate storage uploads or source records were created.
+
+Prepared currentness-review/currentness-review-packet.json with retained page/block proof and explicit blockers. The May 2017 handout calls for three paper plan copies; the City's separately published electronic guidance describes email intake and digital uploads. This is a routing discrepancy requiring applicability review, not proof that either route supersedes the other for every sign. Current listing alone does not establish legal exemptions, current fees, geographic coverage or electrical roles. A publisher logo/address alone does not establish a job site's authority.
+
+Updated the exact-Cincinnati admin-only research panel with both routes and the City source link, preserving separate IBI electrical routing. Four UI/archive integrity checks pass; evidence preparation verifies four retained originals and three live archive identities; targeted ESLint and production build pass. No live database changes, authority decisions or frontend publication.
+
+Progress stays Phase 10, Milestone 1 of 3; Task 2 partial. Next: establish explicit geographic/sign applicability from current official regulation and submission guidance; then resolve IBI responsibility. The Cincinnati packet is ready for focused review rather than repeated alias-candidate work. Ohio remains first.
+
 ## Phase 10 — Milestone 1 — Cincinnati publisher publication trail (2026-10-07)
 
 Verified the retained official Signs index's exact link, handout bytes/hash, physical-page publisher text/hash, and reviewed department identity archives together. Saved publication-provenance-audit.json and a reproducible read-only audit. Eight acceptance/tamper checks pass, plus 26 source-authority regressions; targeted ESLint and production build pass. No new live source review, currentness decision, office authority approval, or publication.
