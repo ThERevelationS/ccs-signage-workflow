@@ -1,0 +1,23 @@
+{
+  "file": "crosby-zoning-application.pdf",
+  "official_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-CERTIFICATE-APPLICATION.pdf",
+  "source_sha256": "d0f16b330a9285d68924a1bca5496f1ab3f39e231331aaee6645459441357fa2",
+  "source_bytes": 18177,
+  "total_pages": 1,
+  "pages_with_embedded_text": 1,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "CROSBY TOWNSHIP ZONING DEPARTMENT \n8910 WILLEY ROAD, CROSBY TOWNSHIP, HARRISON, OH 45030-1808 \nPhone: (513) 738-1440 · Fax: (513) 738-4310 \nwww.crosbytwp.org \nZONING CERTIFICATE APPLICATION \nProperty Address ________________________________________________Zip ______________ \nSubdivision _____________________________________________________Lot #_____________ \nRESIDENTIA L New Construction Single Family Accessory Bldg. Walls or Fences \nSwimming Pools (above or inground) Addition Deck \nMulti-Family, No. of Units _________ Other _______________________________ \nCOMMERCIAL New Construction Warehouse Business Office Fence Wall Sign(s) \nFree Standing Sign Temporary Sign Other _______________________________ \nTotal Square Footage __________________ \nExplain use/project in detail: (Residence type, # of units, business name, type of business, materials used or stored, etc.) \n___________________________________________________________________________________________________________ \nList all existing structures, including size, on the subject parcel: _________________________________________ \n_________________________________________________________________________________________________ \nA SITE PLAN SHOWING THE LOCATION OF EXISTING BUILDINGS AND PROPOSED IMPROVEMENTS IS \nREQUIRED. THE SITE PLAN MUST SHOW DIMENSIONS AND THE LOCATION OF PUBLIC STREETS. SIGNAGE \nAPPLICATIONS MUST SHOW BUILDING AND/OR STREET FRONTAGE DIMENSIONS. \nIT IS THE RESPONSIBILITY OF THE OWNER/APPLICANT TO COMPLY WITH ANY AND ALL CIVIL DEED AND/OR \nSUBDIVISION RESTRICTIONS AND COVENANTS. \nI HEREBY CERTIFY ALL THE ABOVE STATEMENTS, SUBMITTED INFORMATION AND PLANS TO BE FACTUAL \nAND REPRESENTATIVE OF THE EXISTING AND PROPOSED CONDITIONS OF THE PROPERTY RELATIVE TO \nTHIS APPLICATION, AND AGREE TO COMPLY TO THE CROSBY TOWNSHIP ZONING RESOLUTION IN THE USE \nOF THE PROPERTY. ZONING INSPECTOR ALLOWED ON PROPERTY FOR INSPECTIONS ONLY. \n_____________________________________________________ __________________________________________________ \nBuilder/Applicant Date Owner Date \nZONING RESOLUTION ON-LINE @ www.crosbytwp.org \nAPPLICATION APPROVED: Yes / No DATE OF DENIAL _____/_____/_____ \nISSUE DATE OF ZONING CERTIFICATE _____/_____/_____ FEE PAID $__________ OFFICE USE ONLY \nApplicant______________________________________________Phone ( )_____________________ \nAddress _____________________________________City_____________________Zip______________ \nProperty Owner _________________________________________Phone ( )_____________________ \nAddress_____________________________________City_____________________Zip ______________ \nContractor___________________________________Phone ( )_____________Fax ( )___________ \nAddress_____________________________________City_____________________Zip_____________",
+      "text_sha256": "cc49f96290bbb5c95ddce4ff892a74e4fbf5051e67ae2106635695d06e77af73",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "d0f16b330a9285d68924a1bca5496f1ab3f39e231331aaee6645459441357fa2"
+    }
+  ]
+}

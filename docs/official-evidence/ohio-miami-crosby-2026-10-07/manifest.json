@@ -1,0 +1,72 @@
+{
+  "sources": [
+    {
+      "file": "miami-hamilton-zoning.html",
+      "official_url": "https://www.miamitownship.org/zoning",
+      "observed_at": "2026-10-07T17:29:34.433320+00:00",
+      "final_url": "https://www.miamitownship.org/zoning",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-hamilton-zoning.html",
+      "bytes": 794340,
+      "sha256": "6e75de13f6a3dd848cada9cfa3be66d0b07dbace9b8657da7f3a41fec143615a"
+    },
+    {
+      "file": "crosby-zoning.html",
+      "official_url": "https://crosbytownshipohio.gov/zoning-department/",
+      "observed_at": "2026-10-07T17:29:34.598726+00:00",
+      "final_url": "https://crosbytownshipohio.gov/zoning-department/",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-zoning.html",
+      "bytes": 150397,
+      "sha256": "7e9f8b796f51fba8e203bd6960600b341c3aaa030e65c0dcc274b5b45303913f"
+    },
+    {
+      "file": "crosby-documents.html",
+      "official_url": "https://crosbytownshipohio.gov/documents/",
+      "observed_at": "2026-10-07T17:29:35.576379+00:00",
+      "final_url": "https://crosbytownshipohio.gov/documents/",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-documents.html",
+      "bytes": 163803,
+      "sha256": "7121b1cbc1e8fcb7e7b45db6d00f9a952b5df782bbd95977d3452ccec75a150a"
+    },
+    {
+      "file": "crosby-zoning-resolution.pdf",
+      "official_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-RESOLUTION-OF-CROSBY-TOWNSHIP.pdf",
+      "observed_at": "2026-10-07T17:29:36.439217+00:00",
+      "final_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-RESOLUTION-OF-CROSBY-TOWNSHIP.pdf",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-zoning-resolution.pdf",
+      "bytes": 2219086,
+      "sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357"
+    },
+    {
+      "file": "crosby-zoning-application.pdf",
+      "official_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-CERTIFICATE-APPLICATION.pdf",
+      "observed_at": "2026-10-07T17:29:37.194563+00:00",
+      "final_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-CERTIFICATE-APPLICATION.pdf",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-zoning-application.pdf",
+      "bytes": 18177,
+      "sha256": "d0f16b330a9285d68924a1bca5496f1ab3f39e231331aaee6645459441357fa2"
+    },
+    {
+      "file": "crosby-property-maintenance-code.pdf",
+      "official_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/Property-Maintenance-Code.pdf",
+      "observed_at": "2026-10-07T17:29:37.509686+00:00",
+      "final_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/Property-Maintenance-Code.pdf",
+      "http_status": 200,
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-property-maintenance-code.pdf",
+      "bytes": 984213,
+      "sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    }
+  ],
+  "staff_approved": false,
+  "live_records_changed": 0
+}

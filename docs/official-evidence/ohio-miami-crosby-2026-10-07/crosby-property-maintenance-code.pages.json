@@ -1,0 +1,167 @@
+{
+  "file": "crosby-property-maintenance-code.pdf",
+  "official_url": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/Property-Maintenance-Code.pdf",
+  "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd",
+  "source_bytes": 984213,
+  "total_pages": 17,
+  "pages_with_embedded_text": 0,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": false,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 2,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 3,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 4,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 5,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 6,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 7,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 8,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 9,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 10,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 11,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 12,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 13,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 14,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 15,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 16,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    },
+    {
+      "page": 17,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+    }
+  ]
+}
