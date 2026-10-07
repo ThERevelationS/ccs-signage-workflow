@@ -108,6 +108,8 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const hasSkipped = results.some(r => r.skipped);
   const hasConflicts = results.some(r => Number(r.conflicts) > 0);
   const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true;
+  const hasMissingOrderPermanentRows = results.some(r =>
+    r?.dataset === 'orders' && Number(r?.missing_permanent_row_links) > 0);
   const totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
   const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
   const totalExamined = results.reduce((sum, r) => sum + (r.records_examined || r.rows_examined || 0), 0);
@@ -234,7 +236,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             </div>
             <div className="text-xs min-w-0">
               <div className="font-semibold text-gray-800 truncate">
-                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasReviewNeeded ? "Sync needs review" : hasErrors ? "Sync has errors" : compactOrderForm && (hasSkipped || hasConflicts) ? "Sync needs review" : "Sync Complete"}
+                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasMissingOrderPermanentRows ? "Order link needs review" : hasReviewNeeded ? "Sync needs review" : hasErrors ? "Sync has errors" : compactOrderForm && (hasSkipped || hasConflicts) ? "Sync needs review" : "Sync Complete"}
               </div>
               <div className="text-gray-500 truncate">
                 {isRunning
@@ -351,8 +353,10 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               </div>
             )}
             {hasReviewNeeded && (
-              <div className="text-[11px] text-amber-700 pt-1" role="status">
-                A requested sync stage was blocked or reported errors, conflicts or incomplete verification. Review the stage results before treating this run as complete.
+              <div className="text-[11px] text-amber-700 pt-1" role={hasMissingOrderPermanentRows ? "alert" : "status"}>
+                {hasMissingOrderPermanentRows
+                  ? "A permanent Smartsheet row link is missing. The Base44 Order and original link were preserved. Retry Sync cannot choose a replacement row; ask an admin to use Order Form diagnostics → Review links."
+                  : "A requested sync stage was blocked or reported errors, conflicts or incomplete verification. Review the stage results before treating this run as complete."}
               </div>
             )}
             <div className="text-[10px] text-gray-400 pt-0.5">
