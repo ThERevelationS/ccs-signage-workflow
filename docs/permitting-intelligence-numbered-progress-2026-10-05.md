@@ -1,3 +1,15 @@
+## Guarded locality type correction primitive — 2026-10-07
+
+10.1 of 10.3 remains 2 of 4 tasks complete. Task 2 now has a tested correction persistence primitive; actual four-profile corrections and office reconciliation remain outstanding. Task 4 live acceptance remains pending.
+
+Sandbox shell access recovered, with fresh clean HEAD 0c401d6bfd7e05da1f0092f85aa485e65c18c96d before edits. Preserve concurrent CCS work. Added base44/shared/jurisdictionIdentityCorrection.mjs and seven focused tests. The helper requires an exact expected version and identity snapshot, supported changed type, retained source hash/URL/time, target-bound reviewed type/county evidence, actor and stable request ID. Authenticated admin enforcement and original-byte/geographic evidence verification remain caller responsibilities; no endpoint is exposed in this chunk.
+
+Type and existing activity history plus correction provenance commit in one exact-version conditional write. No retry/rebase onto a newer profile. Lost acknowledgements reconcile against the exact saved event once. Documents, IDs, relationships and separate Cleves records remain intact. Any existing staff verification, nonempty HTML/office reservation or rewrite authority blocks correction pending a dedicated reconciliation. No approvals are created or cleared. Historical identity-bound source/office reviews retain their original snapshots and existing mismatch gates.
+
+Seven tests pass for preservation, missing/stale identity, receipt/verification blockers, evidence binding, CAS races, lost acknowledgement and readback. git diff --check passes. No frontend changes, backend endpoint/deployment, live production correction, scans or publishing. The helper is preparation for an authenticated correction path, not a claim that record corrections are complete.
+
+Next: authenticate the admin correction caller, verify retained evidence hashes and fresh four-profile versions/history, then apply supported corrections with this primitive. Preserve both Cleves records and stop for any review reservation/verification reconciliation. Ohio remains before Kentucky.
+
 ## Explicit village profile support — 2026-10-06
 
 10.1 of 10.3 remains 2 of 4 tasks complete. Village schema/pipeline support is implemented and verified; task 2 still has actual identity corrections, duplicate/history review and separate office-role reconciliation outstanding. Task 4 full live acceptance remains pending.

@@ -19,7 +19,7 @@ export function buildIdentityTypeCorrection({profile, expected, newType, evidenc
   // erase them or carry them across an identity change silently.
   if (profile.verification_status === 'verified' || profile.verified_at || profile.verified_by ||
       Object.keys(profile.html_evidence_state || {}).length || Object.keys(profile.office_authority_review_state || {}).length ||
-      profile.rewrite_authority?.adoptionStatus === 'verified' || profile.rewrite_authority?.effectiveDateStatus === 'verified')
+      Object.keys(profile.rewrite_authority || {}).length)
     fail('Identity-bound verification or reservation requires reconciliation before correction.');
   if (!evidence || evidence.profile_id !== profile.id || evidence.new_type !== newType ||
       evidence.state !== profile.state || evidence.official_identity_reviewed !== true ||
