@@ -156,4 +156,9 @@ check("inline nested add controls use reduced phone indentation", () => {
   assert.equal((source.match(/className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"/g) || []).length, 2);
 });
 
+check("inline editors reserve a full phone row for text and actions", () => {
+  assert.equal((source.match(/className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0"/g) || []).length, 10);
+  assert.equal(source.includes('className="flex-1 flex gap-1 min-w-0"'), false);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
