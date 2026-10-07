@@ -140,3 +140,19 @@ test('North Bend originals and page findings remain research-only for exact vill
  const reconciliation=JSON.parse(readFileSync(root+'office-reconciliation.json'));
  assert.equal(reconciliation.profiles.find(p=>p.name==='Whitewater Township').id,null);
 });
+
+test('Green split zoning and Delhi original forms preserve locality and role gaps',()=>{
+ const root='docs/official-evidence/ohio-green-delhi-2026-10-07/';
+ const m=JSON.parse(readFileSync(root+'manifest.json')),e=JSON.parse(readFileSync(root+'pdf-text-extraction.json'));
+ assert.equal(e.documents.reduce((n,d)=>n+d.total_pages,0),189);
+ for(const s of m.sources.filter(s=>s.status==='archived')){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);}
+ for(const d of e.documents){assert.equal(d.pages.length,d.total_pages);assert.equal(d.searchable_content_complete,false);
+ for(const [i,p]of d.pages.entries()){assert.equal(p.page,i+1);assert.equal(p.source_sha256,d.source_sha256);assert.equal(createHash('sha256').update(p.text).digest('hex'),p.text_sha256);}
+ assert.deepEqual(readFileSync('public/permitting-evidence/green-delhi/'+d.file),readFileSync(root+d.file));}
+ const row=dossiers.find(d=>d.name==='Green Township'),html=render(row);
+ assert.match(html,/two zoning jurisdictions/);assert.match(html,/certificate verification/);assert.match(html,/separately unresolved/);
+ assert.equal(row.online_form_url,undefined);assert.equal(render({...row,type:'city'}),'');
+ const r=row.resources[0];assert.deepEqual(readFileSync('public'+r.archive),readFileSync(root+r.file));
+ assert.equal(dossiers.some(d=>d.name==='Delhi Township'),false);
+ const packet=JSON.parse(readFileSync(root+'office-reconciliation.json'));assert.equal(packet.profiles[1].id,null);assert.equal(packet.electrical_roles_approved,false);assert.equal(packet.live_records_changed,0);
+});
