@@ -1,0 +1,76 @@
+{
+  "catalog_office_id": "1776693091752-0.8897164525624395",
+  "government_office_id": "1776693091752-0.8897164525624395",
+  "name": "City of Cincinnati Department of Buildings & Inspections",
+  "state": "OH",
+  "existing_identity_status": "staff_verified",
+  "existing_verified_at": "2026-10-05T02:28:04.918Z",
+  "existing_verified_by": "Codex \u2014 authorized office identity review for brettheinlein1@gmail.com",
+  "source_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+  "retained_identity_evidence": {
+    "method": "manual-official-office-identity-v1",
+    "official_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+    "observed_at": "2026-10-05T02:26:26.047Z",
+    "http_status": 200,
+    "raw_html_sha256": "36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c",
+    "raw_html_bytes": 79023,
+    "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.html",
+    "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.txt",
+    "normalized_text_sha256": "36426432182ef7e466f33d190a97670f76a0b7457b6ae9d389ec7deeb8240a5b",
+    "supporting_sources": [
+      {
+        "name": "buildings-about",
+        "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+        "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+        "retrieved_at": "2026-10-05T02:26:23.909Z",
+        "content_type": "text/html;charset=UTF-8",
+        "file_bytes": 69598,
+        "file_hash_sha256": "59857eb9abb1822738b13bacea187401b3fa4c57e690b13a3babc43664a6ca90",
+        "text_sha256": "a5a188637e83f8f935cc8fc7fd1ef545e5a0a5337a8562cff2624af95de830ed",
+        "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.html",
+        "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.txt"
+      },
+      {
+        "name": "permit-center",
+        "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+        "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+        "retrieved_at": "2026-10-05T02:26:27.947Z",
+        "content_type": "text/html;charset=UTF-8",
+        "file_bytes": 69551,
+        "file_hash_sha256": "9919254a2bbb984e1267a7777fad68bbf9c6099831b75b8bd5e9b13257ef139e",
+        "text_sha256": "5a934435858484e3b712dbe1cc39c9c3b49165c2749ae0288be7f6cfba50b03e",
+        "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.html",
+        "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.txt"
+      }
+    ],
+    "proofs": {
+      "identity": {
+        "source": "buildings-about",
+        "quote": "The Department of Buildings & Inspections (B&I)"
+      },
+      "email": {
+        "source": "buildings-contact",
+        "quote": "ccpbpermitcenter@cincinnati-oh.gov"
+      },
+      "phone": {
+        "source": "buildings-contact",
+        "quote": "352-3271 (opt. 9)",
+        "area_code_quote": "Note: All telephone numbers are area code 513."
+      },
+      "address": {
+        "source": "permit-center",
+        "quote": "805 Central Ave., Suite 500\nCincinnati, OH 45202"
+      }
+    }
+  },
+  "source_document_id": "6ac39c0e6657049fb11cd757",
+  "source_publisher_quote": {
+    "physical_page": 1,
+    "excerpt": "Cincinnati Buildings & Inspections"
+  },
+  "canonical_name_literal_in_pdf": false,
+  "source_publisher_alias_review_needed": true,
+  "source_currentness_approved": false,
+  "authority_verified": false,
+  "notes": "Reuse existing independently reviewed office. The PDF prints a shortened department label, not the full canonical catalog name. Current source review requires a literal name match; prepare independently evidenced alias support rather than altering the PDF quote or the canonical name."
+}
