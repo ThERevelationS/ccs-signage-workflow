@@ -1,0 +1,31 @@
+{
+  "file": "harrison-zoning-application.pdf",
+  "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/3063/APP-ZONING",
+  "source_sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0",
+  "source_bytes": 265146,
+  "total_pages": 2,
+  "pages_with_embedded_text": 2,
+  "extraction_covers_all_physical_pages": true,
+  "searchable_content_complete": true,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Application \nNumber: Date: \nProject Address:_______________________________________________________________Zoned As:___________________ \nProperty Owner: _________________________________________________________________________________________ \nApplicant: __________________________________________________________________________________ \nApplicant Address: __________________________________________________________________________________ \nApplicant Contact Information: PH_____________________FAX____________________EMAIL_________________________ \nPROPOSED USE: [ ] New Construction [ ] Accessory Structure [ ] Fence \n[ ] Swimming Pool [ ] Driveway [ ] Special Event \n[ ] Permanent Sign [ ] Temporary Sign Dates of Display/Event______-______ \nDESCRIPTION OF WORK: __________________________________________________________________________________ \n________________________________________________________________________________________________________ \n**A site plan, drawn to scale, showing the actual dimensions and shape of the lot, exact sizes and locations of existing buildings\non the lot, and the location and dimensions of the proposed buildings, alterations or signs is required at the time of application. \nDIMENSIONS OF WORK: Height_________________ Width_______________ Square Footage______________ \nDIMENSIONS OF LOT: Depth_________________ Width___________ Area_______________________ \nPERCENT OF LOT TO BE OCCUPIED:_______________ EXISTING USE_____________________________________ \nEASEMENTS, COVENANTS, DEED RESTRICTIONS OR AGREEMENTS ON PROPERTY [ ] YES [ ] NO \nOFF STREET PARKING PROVIDED: [ ] YES [ ] NO SEWER____________ WATER______________ \nPROPERTY LOCATED IN A FLOOD HAZARD AREA [ ] YES [ ] NO \nThe undersigned applies for a zoning permit for the above use and agrees to complete all work in compliance with the Harrison\nZoning Regulations. Said permit to be issued on the basis of the information contained within this application. The applicant\nhereby certifies that all information and attachment(s) are true and correct. \nSignature: ____________________________________ Date:______________________________ \nApplication Fee ___________________________________ [ ] PAID [ ]CASH [ ] CHECK #___________ \nRevised 3-20 \nTHE CITY OF HARRISON \nECONOMIC DEVELOPMENT \nBUILDING AND ZONING \n300 George Street · Harrison, Ohio 45030 \n513.202. 8494 \nwww.harrisonohio.gov",
+      "text_sha256": "6a5b01169a37d2c15ac6bba5575bef6129048f4f3aaac21856d44eed3fe2c1fb",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0"
+    },
+    {
+      "page": 2,
+      "text": "Zoning Permit Application \nApplication [ ] APPROVED [ ] DENIED Date:_______________________________ \nSpecial Notes/Provisions:_______________________________________________________________________________ \n____________________________________________________________________________________________________ \n____________________________________________________________________________________________________ \n____________________________________________________________________________________________________ \nReason for Denial:_____________________________________________________________________________________ \n____________________________________________________________________________________________________ \n____________________________________________________________________________________________________ \n____________________________________________________________________________________________________ \n--------------------------------------------------------------------- \nZoning Administrator \nRevised 8-17",
+      "text_sha256": "73e98af5b702031f9fd7de3c5c22e31a66236e640a4eb2326289a124dce20eb9",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0"
+    }
+  ]
+}

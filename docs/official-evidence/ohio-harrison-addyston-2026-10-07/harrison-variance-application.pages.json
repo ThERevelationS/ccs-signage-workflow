@@ -1,0 +1,31 @@
+{
+  "file": "harrison-variance-application.pdf",
+  "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/3470/APP-VARIANCE",
+  "source_sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b",
+  "source_bytes": 597140,
+  "total_pages": 2,
+  "pages_with_embedded_text": 2,
+  "extraction_covers_all_physical_pages": true,
+  "searchable_content_complete": true,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Application \nNumber: Date: \nProject \nAddress:________________________________________________________________________________________________ \nProperty Owner: _________________________________________________________________________________________ \nApplicant: __________________________________________________________________________________ \nApplicant Address: __________________________________________________________________________________ \nApplicant Contact Information: PH_____________________FAX____________________EMAIL_________________________ \nEXISTING USE:______________________________________CURRENT ZONING______________________________________ \nPLEASE INCLUDE THE FOLLOWING INFORMATION WITH APPLICATION \n1. Nature of Variance: Describe generally the nature of the variance_____________________________________________ \n______________________________________________________________________________________________________ \n2. Plans drawn to scale must accompany this application showing dimensions and shape of the lot, size, and locations of \nexisting buildings, the locations and dimensions of proposed buildings or alternations, and any natural or topographic \npeculiarities of the lot in question. \n3. Justification of Variance: In order for a variance to be granted, the applicant must prove to Board of Zoning Appeals that \nthe following items are true: (Please attach these comments on a separate sheet). \nA That special conditions and circumstances exist which are peculiar to the land, structure, \nor building involved and which are not applicable to other lands, structures, or buildings \nin the same district. \nB. That a literal interpretation of the provisions of this Ordinance would deprive the applicant \nof rights commonly enjoyed by other properties in the same district under the terms of \nthis ordinance. \nC. That special conditions and circumstances do not result from the actions of the applicant. \nD. That nothing herein contained shall be construed as authorizing the Board of Zoning Appeals to effect \nchanges to the Zoning Map or to add to the permitted or conditional uses in any Zoning District. \nE. That granting the variance requested will not confer on the applicant any special privilege that is denied \nby this Ordinance to other lands, structures, or buildings in the same district. \nF. That the variance is not for a use which is not allowed in the district in which the property is located. \n4. Two (2) copies of application and all information or documentation submitted. \nRevised 8-17 \nTHE CITY OF HARRISON \nECONOMIC DEVELOPMENT \nBUILDING & ZONING DEPARTMENT \n300 George Street · Harrison, Ohio 45030 \n513.202.8494 \nwww. harrisonohio.gov",
+      "text_sha256": "f14649441a655934e5f14effc9011705c52eb00b279e4b6cec4910a9bf9eb62a",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b"
+    },
+    {
+      "page": 2,
+      "text": "VARIANCE APPLICATION - PAGE 2 \n5. List of all property owners and addresses contiguous to or directly across from property. \n6. An application fee paid at the time of application. \nI certify that the information contained in this application and its supplements are true and correct. \nApplicant's Signature: \nName_________________________________________________________ Date_____________________________________ \nApplication Fee_____________________________________________ [ ] PAID [ ] CASH [ ]CHECK #__________________ \nDate Filed: _____________________ \nDate of Public Hearing: _____________________ \nDate of Notice to Newspaper: _____________________ \nDate of Notice to Parties in Interest: _____________________ \nDecision Of Board of Zoning Appeals: [ ] Approved [ ] Denied Date:_________________ \nSpecial Notes/Provisions:_______________________________________________________________________________ \n____________________________________________________________________________________________________ \n____________________________________________________________________________________________________ \nReason for Denial:_____________________________________________________________________________________ \n____________________________________________________________________________________________________ \n____________________________________________________________________________________________________ \n__________________________________________ \nBoard of Zoning Appeals, Chairperson \nRevised 8-17",
+      "text_sha256": "61340c07f12a0caa49dc82fc0f4a814393077cd6c89ba578e7c9726df68e8954",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b"
+    }
+  ]
+}

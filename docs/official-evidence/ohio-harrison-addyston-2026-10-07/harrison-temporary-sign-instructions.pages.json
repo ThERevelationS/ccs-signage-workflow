@@ -1,0 +1,31 @@
+{
+  "file": "harrison-temporary-sign-instructions.pdf",
+  "official_url": "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
+  "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+  "source_bytes": 549689,
+  "total_pages": 2,
+  "pages_with_embedded_text": 0,
+  "extraction_covers_all_physical_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96"
+    },
+    {
+      "page": 2,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text_status": "no_embedded_text",
+      "needs_ocr_review": true,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96"
+    }
+  ]
+}
