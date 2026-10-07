@@ -1,0 +1,28 @@
+{
+  "locality": {
+    "id": "6ac1a15f8dd6f5306ab7935f",
+    "name": "Elmwood Place",
+    "state": "OH",
+    "type": "village"
+  },
+  "retained_originals": 8,
+  "retained_pdfs": 4,
+  "pdf_physical_pages": 8,
+  "application_candidate": "Building application includes Sign checkbox; forms page supplies email sdornbusch@elmwoodplace-oh.gov and fax 513-242-4578. Candidate intake only, sign-specific completeness/currentness unapproved.",
+  "office_candidate": {
+    "address": "6118 Vine Street, Elmwood Place OH 45216",
+    "phone": "513-242-0291"
+  },
+  "fee_review": "Forms page links 2023 PDF; department page links 2024 XLSX. PDF cover identifies Hamilton County January 1, 2023 schedule, not independently adopted Village fee proof. Spreadsheet retained but cell/formula review pending; do not assert current fees.",
+  "zoning_form_review": "Sparse embedded text (web output only 150.00) is not full form extraction; visual/OCR review pending and no fee inferred from isolated value.",
+  "map_review": "September 11, 2007 map label; currentness, visual and parcel review pending.",
+  "electrical_review": "No current issuer/inspector delegation established from these pages/forms; separate code/provider review required.",
+  "office_documents_review": "XLSX and DOCX original bytes retained; structured contents and layout not reviewed.",
+  "app_storage_catalog_registration": "pending; repository copies do not constitute app-storage registration",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Elmwood Place sign code and electrical roles; visual/OCR zoning form and structured fee/ROW review."
+}
