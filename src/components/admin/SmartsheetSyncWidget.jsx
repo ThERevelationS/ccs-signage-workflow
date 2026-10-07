@@ -110,6 +110,8 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true;
   const hasMissingOrderPermanentRows = results.some(r =>
     r?.dataset === 'orders' && Number(r?.missing_permanent_row_links) > 0);
+  const orderScheduledPullEnabled = config?.observation_mode !== true &&
+    config?.orders?.mirror_enabled === true && config?.orders?.pull_enabled === true;
   const totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
   const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
   const totalExamined = results.reduce((sum, r) => sum + (r.records_examined || r.rows_examined || 0), 0);
@@ -365,7 +367,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               </div>
             )}
             <div className="text-[10px] text-gray-400 pt-0.5">
-              Auto-syncs every 15 min · <Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Settings →</Link>
+              {compactOrderForm
+                ? orderScheduledPullEnabled
+                  ? "Order pull every 15 min · background push off · Save & Sync sends changes"
+                  : "Automatic Order pull off · background push off · Save & Sync sends changes"
+                : "Auto-syncs every 15 min"}
+              {' · '}<Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Settings →</Link>
             </div>
           </div>
         )}
