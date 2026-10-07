@@ -1,0 +1,70 @@
+{
+  "sources": [
+    {
+      "file": "building-zoning.html",
+      "official_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+      "retrieved_at": "2026-10-07T19:33:53.475519+00:00",
+      "final_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+      "content_type": "text/html; charset=utf-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-sharonville-2026-10-07/building-zoning.html",
+      "bytes": 113675,
+      "sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+    },
+    {
+      "file": "sign-application.pdf",
+      "official_url": "https://www.sharonville.org/394/Sign-Application",
+      "retrieved_at": "2026-10-07T19:33:53.476180+00:00",
+      "final_url": "https://www.sharonville.org/DocumentCenter/View/1975/Application-for-Sign-Approval?bidId=",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-sharonville-2026-10-07/sign-application.pdf",
+      "bytes": 733645,
+      "sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6"
+    },
+    {
+      "file": "building-electrical-application.pdf",
+      "official_url": "https://www.sharonville.org/392/Building-Permit-Application",
+      "retrieved_at": "2026-10-07T19:33:53.476392+00:00",
+      "final_url": "https://www.sharonville.org/DocumentCenter/View/4006/Application-For-Plan-Approval",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-sharonville-2026-10-07/building-electrical-application.pdf",
+      "bytes": 390469,
+      "sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211"
+    },
+    {
+      "file": "fee-schedule.pdf",
+      "official_url": "https://www.sharonville.org/393/Fee-Schedule",
+      "retrieved_at": "2026-10-07T19:33:53.476597+00:00",
+      "final_url": "https://www.sharonville.org/DocumentCenter/View/1964/Fee-Schedule?bidId=",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-sharonville-2026-10-07/fee-schedule.pdf",
+      "bytes": 126939,
+      "sha256": "e201fb4fa2a9c8fefc8fcd63fcbef05add84180f5b8c5bff5d55cf241c4b5a93"
+    },
+    {
+      "file": "planning-zoning-code.pdf",
+      "official_url": "https://sharonville.org/DocumentCenter/View/3262/Sharonville-Planning-and-Zoning-Code",
+      "retrieved_at": "2026-10-07T19:33:54.381690+00:00",
+      "final_url": "https://sharonville.org/DocumentCenter/View/3262/Sharonville-Planning-and-Zoning-Code",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-sharonville-2026-10-07/planning-zoning-code.pdf",
+      "bytes": 10129163,
+      "sha256": "c0be28272a4e380ea8609b237215cbee6555f5e26ffc8446cc1495eb2b29ba06"
+    },
+    {
+      "file": "residential-guide-2026.pdf",
+      "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+      "retrieved_at": "2026-10-07T19:33:55.143948+00:00",
+      "final_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-sharonville-2026-10-07/residential-guide-2026.pdf",
+      "bytes": 11002258,
+      "sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    }
+  ]
+}
