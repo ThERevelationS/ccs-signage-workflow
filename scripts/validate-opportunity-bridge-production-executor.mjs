@@ -17,6 +17,7 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 const actor = { id:'admin-1', email:'admin@example.com', role:'admin' };
 const planGeneratedAt = '2026-10-07T20:00:00.000Z';
 const now = '2026-10-07T20:01:00.000Z';
+const pilotReviewFingerprint = 'review-fingerprint-1';
 
 function makeState() {
   return {
@@ -137,7 +138,7 @@ async function bindingFor(plan, runId = 'run-pilot') {
   });
 }
 
-assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.VERSION, '0T-v1');
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.VERSION, '0U-v1');
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.PILOT_BATCH_SIZE, 1);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.REQUIRE_EXACT_FIRST_BATCH, true);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.PRODUCTION_APPLY_WIRED, true);
@@ -155,6 +156,9 @@ assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.PRODUCTION_APPLY_WIRED, true
     confirmationBinding:binding,
     confirmationPhrase:binding.required_phrase,
     receiptLedgerSummary:{ total:0, anomaly_count:0, unresolved_count:0 },
+    pilotReviewFingerprint,
+    requestedReviewFingerprint:pilotReviewFingerprint,
+    approvedPilotReviewFingerprint:pilotReviewFingerprint,
     applyEnabled:false,
   });
   assert.equal(authorization.authorized, false);
@@ -169,6 +173,9 @@ assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.PRODUCTION_APPLY_WIRED, true
     confirmationBinding:binding,
     confirmationPhrase:binding.required_phrase,
     receiptLedgerSummary:{ total:0, anomaly_count:0, unresolved_count:0 },
+    pilotReviewFingerprint,
+    requestedReviewFingerprint:pilotReviewFingerprint,
+    approvedPilotReviewFingerprint:pilotReviewFingerprint,
     applyEnabled:false,
     applyAdapter:makeApplyAdapter(state),
     receiptAdapter:makeReceiptAdapter(state),
@@ -182,7 +189,7 @@ assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.PRODUCTION_APPLY_WIRED, true
   assert.equal(String(state.workOrder.opportunity_id || ''), '');
 }
 
-for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_anomaly','unresolved_receipt','wrong_actor']) {
+for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_anomaly','unresolved_receipt','wrong_actor','wrong_review','missing_source_authorization']) {
   const state = makeState();
   const plan = currentPlan(state);
   const binding = await bindingFor(plan, `run-${variation}`);
@@ -195,6 +202,9 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
     confirmationBinding:binding,
     confirmationPhrase:binding.required_phrase,
     receiptLedgerSummary:{ total:0, anomaly_count:0, unresolved_count:0 },
+    pilotReviewFingerprint,
+    requestedReviewFingerprint:pilotReviewFingerprint,
+    approvedPilotReviewFingerprint:pilotReviewFingerprint,
     applyEnabled:true,
     applyAdapter:makeApplyAdapter(state),
     receiptAdapter:makeReceiptAdapter(state),
@@ -205,6 +215,8 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
   if (variation === 'receipt_anomaly') input.receiptLedgerSummary = { total:2, anomaly_count:1, unresolved_count:0 };
   if (variation === 'unresolved_receipt') input.receiptLedgerSummary = { total:1, anomaly_count:0, unresolved_count:1 };
   if (variation === 'wrong_actor') input.actor = { id:'admin-2', email:'other@example.com', role:'admin' };
+  if (variation === 'wrong_review') input.requestedReviewFingerprint = 'different-review';
+  if (variation === 'missing_source_authorization') input.approvedPilotReviewFingerprint = '';
 
   const result = await executeGuardedOpportunityBridgePilot(input);
   assert.equal(result.success, false, variation);
@@ -230,6 +242,9 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
     confirmationBinding:binding,
     confirmationPhrase:binding.required_phrase,
     receiptLedgerSummary:{ total:0, anomaly_count:0, unresolved_count:0 },
+    pilotReviewFingerprint,
+    requestedReviewFingerprint:pilotReviewFingerprint,
+    approvedPilotReviewFingerprint:pilotReviewFingerprint,
     applyEnabled:true,
     applyAdapter,
     receiptAdapter,
@@ -299,13 +314,19 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
 
 const endpoint = fs.readFileSync(new URL('../base44/functions/opportunityBridgeProductionApply/entry.ts', import.meta.url), 'utf8');
 assert(endpoint.includes('action === "prepare_pilot"'));
-assert(endpoint.includes('action === "apply_pilot"') || endpoint.includes('["prepare_pilot","apply_pilot"]'));
+assert(endpoint.includes('action === "prepare_authorized_pilot"'));
+assert(endpoint.includes('action === "apply_pilot"') || endpoint.includes('["prepare_pilot","prepare_authorized_pilot","apply_pilot"]'));
 assert(endpoint.includes('OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED'));
 assert(endpoint.includes('applyEnabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED'));
 assert(!endpoint.includes('applyEnabled:body'));
 assert(!endpoint.includes('body?.apply_enabled'));
 assert(endpoint.includes('buildOpportunityBridgeDryRunPlan'));
 assert(endpoint.includes('selectOpportunityBridgeFirstBatch'));
+assert(endpoint.includes('buildOpportunityBridgePilotReview'));
+assert(endpoint.includes('AUTHORIZED_PILOT_REVIEW_FINGERPRINT'));
+assert(endpoint.includes('requestedReviewFingerprint'));
+assert(endpoint.includes('confirmation_phrase:authorizedPreparation ?'));
+assert(endpoint.includes('review_response_is_not_execution_authorization:action === "prepare_pilot"'));
 assert(endpoint.includes('createBase44OpportunityBridgeReceiptAdapter'));
 assert(endpoint.includes('executeGuardedOpportunityBridgePilot'));
 assert(endpoint.includes('actor.role !== "admin"'));
