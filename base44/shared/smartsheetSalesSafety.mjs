@@ -28,6 +28,13 @@ export const SALES_SYNC_ALLOWED_FIELDS = Object.freeze([
 
 const SALES_SYNC_ALLOWED_FIELD_SET = new Set(SALES_SYNC_ALLOWED_FIELDS);
 const LEGACY_TERMINAL_TASK_PATTERN = /^(lost(?:$|\s*-)|completed sales?(?:$|\s*-)|closed(?:$|\s*-))/i;
+export const SMARTSHEET_DOWNSTREAM_OPERATIONAL_FIELDS = Object.freeze([
+  "date_order_created",
+  "project_install_date",
+  "permit_receipt_confirmed_date",
+  "permit_approved_date",
+  "permit_number",
+]);
 
 export function filterSalesColumnBindings(bindings = {}) {
   if (!bindings || typeof bindings !== "object" || Array.isArray(bindings)) return {};
@@ -42,9 +49,16 @@ export function isLegacyTerminalSalesTask(value) {
   return LEGACY_TERMINAL_TASK_PATTERN.test(String(value ?? "").trim());
 }
 
+export function hasDownstreamOperationalSmartsheetEvidence(fields = {}) {
+  return SMARTSHEET_DOWNSTREAM_OPERATIONAL_FIELDS.some((field) =>
+    String(fields?.[field] ?? "").trim() !== ""
+  );
+}
+
 export function shouldCreateSmartsheetSalesRecordInPipeline(fields = {}) {
   return hasMeaningfulSmartsheetSalesCustomer(fields) &&
-    !isLegacyTerminalSalesTask(fields?.current_task_description);
+    !isLegacyTerminalSalesTask(fields?.current_task_description) &&
+    !hasDownstreamOperationalSmartsheetEvidence(fields);
 }
 
 // Only skip a linked Sales pull when every populated inbound field already
