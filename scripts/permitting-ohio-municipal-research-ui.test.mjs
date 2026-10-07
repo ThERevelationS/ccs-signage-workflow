@@ -250,3 +250,10 @@ assert.equal(m.sources.filter(s=>s.status==='archived').length,5);for(const s of
 assert.equal(p.fee_appendix_located,false);assert.equal(p.contract_exhibit_located,false);assert.match(p.scope,/not exhaustively searched/);assert.match(p.routing_observation.final_url,/buildings_and_inspections/);
 assert.equal(m.sources.find(s=>s.file==='zoning-permits-route.html').status,'original_retention_gap');assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
 });
+
+test('Woodlawn research preserves canonical identity while blocked originals stay unavailable',()=>{
+const r='docs/official-evidence/ohio-woodlawn-2026-10-07/',m=JSON.parse(readFileSync(r+'manifest.json')),p=JSON.parse(readFileSync(r+'office-reconciliation.json')),e=JSON.parse(readFileSync(r+'pdf-text-extraction.json'));
+assert.equal(p.locality.id,'6ac1a111ea485c76e4c8f201');assert.equal(p.locality.name,'Woodlawn');assert.equal(p.locality.type,'village');assert.equal(m.sources.length,8);
+for(const s of m.sources){assert.equal(s.status,'original_retention_gap');assert.match(s.error,/403/);assert.equal(s.sha256,undefined);assert.equal(s.retained_path,undefined);}
+assert.equal(e.documents.length,0);assert.equal(p.retained_originals,0);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.currentness_approved,false);assert.equal(p.live_records_changed,0);assert.match(p.method,/No retrieved snippets/);
+});

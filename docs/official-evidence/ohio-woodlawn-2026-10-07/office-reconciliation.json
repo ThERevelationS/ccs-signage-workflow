@@ -1,0 +1,35 @@
+{
+  "locality": {
+    "id": "6ac1a111ea485c76e4c8f201",
+    "name": "Woodlawn",
+    "state": "OH",
+    "county": "Hamilton",
+    "type": "village"
+  },
+  "observed_on": "2026-10-07",
+  "method": "Official county webpage and code publisher web retrieval; raw original downloads all HTTP 403. No retrieved snippets counted as archived originals.",
+  "source": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/woodlawn_zoning.php",
+  "routing_candidate": "County page describes Village Council zoning control and contracted county zoning administration since 2018; lists county application intake and ezTrak.",
+  "online_form_url": "https://eztrak.cagis.org/CitizenAccess/Default.aspx",
+  "online_form_status": "Official county linked portal; sign-specific acceptance and submission unverified",
+  "legacy_document_warning": "2019 guide provenance and 2024 application/code filenames require reconciliation with current 2026 schedules and portal route; do not promote mailed paper procedure as current intake.",
+  "publisher_reference": "https://codelibrary.amlegal.com/codes/woodlawn/latest/overview",
+  "publisher_version_candidate": "Web retrieval labels 2025 S-8 with local legislation through December 10, 2024; later amendments unresolved.",
+  "map_version_candidate": "County map web retrieval displays April 2016; job-address coverage and newer village map equivalence unverified.",
+  "retained_originals": 0,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "gaps": [
+    "Eight original-retention HTTP 403 gaps",
+    "Current application guide and 2026 fee originals",
+    "Sign code extraction and amendment review",
+    "Address/district/overlay verification",
+    "Electrical permit issuer",
+    "Electrical inspection office",
+    "App-storage archive and catalog registration"
+  ],
+  "next": "Review current county Woodlawn links for valid original paths; do not repeat the eight blocked URLs unchanged."
+}
