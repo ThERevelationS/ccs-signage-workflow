@@ -1,3 +1,15 @@
+## 2026-10-07 — Admin PDF delegated-provider review interface
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
+
+Connected the explicit pdf_delegation backend path to admin office responsibility review. PDF users can select publisher-performed responsibility or municipal delegation to a separate electrical provider. Switching mode clears options/preview/selection and requires reloading current options. Delegation offers only the source canonical municipality, exact named coverage and electrical_permit/electrical_inspection roles. Publisher/provider names, retained quote, physical page and applicability caveat appear before confirmation and in history.
+
+Preview/save/context carry the explicit evidence kind. Uncertain decisions retain their exact request/body in session storage, freeze mode changes, restore delegation mode across remount, and resume the same decision. After reconciliation the form remains in a valid delegated role. Contact-only guidance does not qualify; supported explicit retained phrasing is explained without populating or rewriting quotes. Existing PDF publisher and HTML zoning workflows preserved.
+
+Verification: mocked React interaction acceptance passed for mode routing, source/coverage/role bounds, previewed identity separation, edited-quote preview invalidation, frozen saved-request replay/recovery, context reset and legacy PDF/HTML routing. Targeted ESLint, full production build and diff checks passed. Initial test import needed its browser window stub, corrected before passing. No live authority or source review created, no production records changed, frontend unpublished. Actual browser/phone acceptance remains pending.
+
+Next: Review the current City of Cincinnati publisher office catalog identity and administrative-source review prerequisites, retaining source currentness limitations and leaving IBI identity/role approvals separate.
+
 ## 2026-10-07 — Separate municipal PDF publisher and electrical provider review path
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
