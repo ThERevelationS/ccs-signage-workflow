@@ -3,7 +3,7 @@ import { reconcileHistoricalSalesOutcome } from './historicalSalesOutcomeReconci
 const clean = (value) => String(value ?? '').trim();
 
 export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
-  VERSION: '0T-v1',
+  VERSION: '0U-v1',
   APPLY_ENABLED: false,
   FIRST_BATCH_SIZE: 1,
   MAX_BATCH_SIZE: 5,
@@ -18,6 +18,8 @@ export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
   RECEIPT_PERSISTENCE_ACTIVE: true,
   SECONDARY_CONFIRMATION_CONFIGURED: true,
   GUARDED_PRODUCTION_EXECUTOR_WIRED: true,
+  EXPLICIT_PILOT_AUTHORIZATION_REQUIRED: true,
+  AUTHORIZED_PILOT_REVIEW_FINGERPRINT: '',
 });
 
 const RECEIPT_ANOMALY_STATES = new Set([
@@ -187,6 +189,13 @@ export function evaluateOpportunityBridgeProductionReadiness({
         : 'Guarded executor is not wired',
     },
     {
+      key:'explicit_pilot_authorization_present',
+      pass:clean(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT) !== '',
+      detail:clean(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT)
+        ? 'An exact pilot review fingerprint is explicitly authorized in source'
+        : 'No exact pilot review fingerprint is authorized; review/Continue does not authorize a production write',
+    },
+    {
       key:'production_apply_enabled',
       pass:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED === true,
       detail:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED ? 'Production apply enabled' : 'Production apply is hard-disabled in source',
@@ -194,7 +203,7 @@ export function evaluateOpportunityBridgeProductionReadiness({
   ];
 
   const technicalChecks = checks.filter((check) =>
-    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','durable_receipt_ledger_reconciled','secondary_confirmation_configured','guarded_production_executor_wired','production_apply_enabled'].includes(check.key)
+    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','durable_receipt_ledger_reconciled','secondary_confirmation_configured','guarded_production_executor_wired','explicit_pilot_authorization_present','production_apply_enabled'].includes(check.key)
   );
   const rolloutChecks = checks.filter((check) => !technicalChecks.includes(check));
 
@@ -225,6 +234,8 @@ export function evaluateOpportunityBridgeProductionReadiness({
       receipt_persistence_active:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_PERSISTENCE_ACTIVE,
       secondary_confirmation_configured:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED,
       guarded_production_executor_wired:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.GUARDED_PRODUCTION_EXECUTOR_WIRED,
+      explicit_pilot_authorization_required:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.EXPLICIT_PILOT_AUTHORIZATION_REQUIRED,
+      authorized_pilot_review_fingerprint:clean(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.AUTHORIZED_PILOT_REVIEW_FINGERPRINT),
       apply_enabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED,
     },
   };
