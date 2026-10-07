@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {build} from 'esbuild';
+import {readFileSync} from 'node:fs';
+const b=await build({entryPoints:['src/components/permitting/ElectricalAuthorityCoverage.jsx'],bundle:true,write:false,format:'esm',platform:'node'});
+const Component=(await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'))).default;
+const render=authority=>renderToStaticMarkup(React.createElement(Component,{authority}));
+test('missing/older response shows two explicit unestablished roles',()=>{const html=render(null);assert.equal((html.match(/Not established/g)||[]).length,2);assert.match(html,/aria-label="Electrical authority coverage"/);});
+test('broad legacy electrical cannot render either specific role as reviewed',()=>{const html=render({verified_roles:['electrical']});assert.equal((html.match(/Not established/g)||[]).length,2);assert.doesNotMatch(html,/Staff reviewed/);assert.match(html,/separate review/);});
+test('issuer reviewed and inspection pending render distinct status text',()=>{const html=render({verified_roles:['electrical_permit'],roles_needing_review:['electrical_inspection']});assert.match(html,/<dt>Permit issuer<\/dt><dd[^>]*>Staff reviewed/);assert.match(html,/<dt>Inspection provider<\/dt><dd[^>]*>Needs staff review/);});
+test('both reviewed retain project-applicability caveat',()=>{const html=render({verified_roles:['electrical_permit','electrical_inspection']});assert.equal((html.match(/Staff reviewed/g)||[]).length,2);assert.match(html,/Confirm applicability for this project/);});
+test('address and manual selection use the same role display',()=>{const source=readFileSync('src/components/permitting/LocalityPickerDialog.jsx','utf8');assert.match(source,/ElectricalAuthorityCoverage authority=\{addressAuthority\}/);assert.match(source,/ElectricalAuthorityCoverage authority=\{selectedAuthority\}/);});

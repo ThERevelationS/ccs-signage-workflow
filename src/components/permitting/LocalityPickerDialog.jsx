@@ -1,3 +1,4 @@
+import ElectricalAuthorityCoverage from './ElectricalAuthorityCoverage';
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -305,6 +306,7 @@ export default function LocalityPickerDialog({
                             )}
                           </div>
                         )}
+                        <ElectricalAuthorityCoverage authority={addressAuthority} />
                         {addressAuthority?.coverage_status === 'configured_offices_reviewed' && (
                           <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
                         )}
@@ -460,6 +462,7 @@ export default function LocalityPickerDialog({
                         </div>
                       )
                     )}
+                    {selectedLocality && <ElectricalAuthorityCoverage authority={selectedAuthority} />}
                   </div>
                 )}
 
