@@ -40,7 +40,7 @@ test('explicitly different county permits independent research',()=>{
 });
 test('unknown and generic profile types do not become cities',()=>{
  for(const type of ['unknown','municipality',undefined]){
-  assert.equal(resolveResearchProfile(row,[profile(type)]).conflict,type===undefined?false:true);
+  assert.equal(resolveResearchProfile(row,[{...profile(),type}]).conflict,true);
  }
 });
 test('placeholder county cannot disguise a same-name type conflict',()=>{
