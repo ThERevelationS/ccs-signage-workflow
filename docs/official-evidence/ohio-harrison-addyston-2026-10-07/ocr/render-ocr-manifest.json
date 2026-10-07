@@ -1,0 +1,27 @@
+{
+  "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+  "source_urls": [
+    "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
+    "https://www.harrisonohio.gov/DocumentCenter/View/356/Permanent-Signs-Instructions-PDF"
+  ],
+  "render_method": "pdftoppm 26.05.0; 150 DPI PNG; both physical pages",
+  "ocr_method": "tesseract 5.3.4; --psm 3; raw TXT and TSV",
+  "pages": [
+    {
+      "page": 1,
+      "png_sha256": "7d49594ec85b6a72c80856222acc7afca327710c6c69385c437275caa5e5178a",
+      "png_bytes": 699684,
+      "raw_ocr_sha256": "615449d84cf222431c0127c0b3c7fa83404669b8ef1ef0c9ea381ea257068610",
+      "tsv_sha256": "bd49b2cabfb15f9c5b270e72360ed5cef16715efed4e723df446634db316211a"
+    },
+    {
+      "page": 2,
+      "png_sha256": "50b07a87a6e9e9596e6739a2a5df5607055fbfa2d9d9775a33063e62f1f1967f",
+      "png_bytes": 657406,
+      "raw_ocr_sha256": "f2c0ebffc3197c219be5d86dd8513fbe920b08510d2c90cc41bc0bafc97e6142",
+      "tsv_sha256": "bbbeec39caba0624ab8f9f5c9898d6f554025ddc592eae25886304324707c61e"
+    }
+  ],
+  "staff_approved": false,
+  "currentness_approved": false
+}
