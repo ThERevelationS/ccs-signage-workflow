@@ -1,0 +1,43 @@
+{
+  "profiles": [
+    {
+      "id": null,
+      "name": "Harrison Township",
+      "state": "OH",
+      "county": "Hamilton",
+      "type": "township",
+      "source_file": "harrison-township-zoning.html",
+      "routing_candidate": "Official township page describes Hamilton County zoning administration; not City of Harrison or Harrison County.",
+      "source_sha256": "9f02d7ebfdc2bda9b896276f46268e92bd16933ac3f8bb44a869e5c14da80836",
+      "identity_status": "OH canonical profile name query returned no match"
+    },
+    {
+      "id": null,
+      "name": "Symmes Township",
+      "state": "OH",
+      "county": "Hamilton",
+      "type": "township",
+      "source_file": "symmes-zoning.html",
+      "routing_candidate": "Official township page describes contracted Hamilton County zoning administration and county office applications.",
+      "source_sha256": "0819de20d424d3fed6afca4855403741e39aaa4cfc749d1dd73aae9acf88588e",
+      "identity_status": "OH canonical profile name query returned no match"
+    }
+  ],
+  "retained_pdf_pages": 199,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "coverage_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "map_version_review": "PDF title symmeszoning05_2017.mxd requires map version/currentness and visual address coverage review.",
+  "code_version_review": "10-8-24 URL label does not establish current amendments or job applicability.",
+  "gaps": [
+    "Both canonical locality identities",
+    "Standalone sign applications and current intake route",
+    "Symmes sign provisions and diagram review",
+    "Map version and job-address coverage",
+    "Separate electrical permit issuer and inspector",
+    "Byte-verified app-storage archive and catalog registration"
+  ]
+}

@@ -208,3 +208,13 @@ test('Crosby sign review keeps zoning/electrical exemptions and printed cross-re
  assert.match(p.findings.find(f=>f.label==='Sign-area measurement').text,/require visual\/table review/);
  assert.equal(dossiers.some(d=>d.name==='Crosby Township'),false);
 });
+
+test('Harrison and Symmes township archives retain 199 physical pages without identity or office approval',()=>{
+ const root='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/',m=JSON.parse(readFileSync(root+'manifest.json')),r=JSON.parse(readFileSync(root+'office-reconciliation.json')),e=JSON.parse(readFileSync(root+'pdf-text-extraction.json'));
+ assert.equal(m.sources.length,4);for(const s of m.sources){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);if(s.file.endsWith('.pdf'))assert.deepEqual(readFileSync('public/permitting-evidence/harrison-symmes-townships/'+s.file),b);}
+ assert.equal(e.documents.reduce((n,d)=>n+d.total_pages,0),199);for(const d of e.documents){assert.equal(d.pages.length,d.total_pages);assert.equal(d.searchable_content_complete,false);for(const p of d.pages){assert.equal(p.source_sha256,d.source_sha256);assert.equal(createHash('sha256').update(p.text).digest('hex'),p.text_sha256);}}
+ assert.equal(r.profiles.length,2);for(const p of r.profiles){assert.equal(p.id,null);assert.equal(p.county,'Hamilton');assert.equal(dossiers.some(d=>d.name===p.name),false);}
+ assert.match(r.profiles[0].routing_candidate,/not City of Harrison or Harrison County/);
+ for(const k of ['staff_approved','currentness_approved','coverage_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(r[k],false);
+ assert.equal(r.live_records_changed,0);assert.match(r.map_version_review,/2017/);
+});
