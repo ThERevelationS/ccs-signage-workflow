@@ -299,7 +299,7 @@ try {
     const originalId=(await actions(page)).find(row=>row.action==="start").request_id;
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=false; });
     await page.getByRole("button",{name:"Refresh"}).click();
-    await page.getByText(/does not currently allow starting work/i).waitFor();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===2);
     assert.equal(await recovery.count(),1);
     assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),0);
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
