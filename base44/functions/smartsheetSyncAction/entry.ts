@@ -2758,7 +2758,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({ success: false, error: 'Global sync kill switch is OFF. Enable it in settings before running sync.' }, { status: 400 });
       }
       if (config.observation_mode) {
-        return Response.json({ success: false, error: 'Observation mode is ON. Turn it off in settings to allow writes.' }, { status: 400 });
+        return Response.json({ success: false, error: 'Observation mode is ON. Turn it off in settings to allow sync execution.' }, { status: 400 });
       }
 
       const isSingleDataset = action === 'push_dataset' || action === 'pull_dataset';
