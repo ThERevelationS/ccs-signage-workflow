@@ -4121,6 +4121,67 @@ Deno.serve(async (req) => {
                 submittedAt < requestedAt || submittedAt > reviewedAt) return null;
             return { audit: submissionAudit, payload_hash: expectedHash };
           };
+          const correctionOriginEvidence = async (correction: any, timeEntryId: string, submissionEvidence: any, appliedAuditId: string) => {
+            const requestKind = String(correction?.request_kind || 'standard');
+            if (requestKind === 'standard') return { request_kind: requestKind, punch: null };
+            if (requestKind !== 'missed_clock_out') return null;
+            const punchExceptionId = String(correction?.punch_exception_id || '');
+            if (!punchExceptionId || !String(correction?.request_id || '')) return null;
+            const punchCase = await punchExceptionEntity.get(punchExceptionId).catch(() => null);
+            const punchRows = await auditEntity.filter({
+              action: 'punch_exception', request_id: String(correction.request_id || ''), time_entry_id: timeEntryId,
+            });
+            if (!punchCase?.id || !Array.isArray(punchRows) || punchRows.length !== 1) return null;
+            const punchAudit = punchRows[0];
+            const requested = correction.requested_changes || {};
+            const claimedClockOut = String(requested.clock_out || '');
+            const expectedPunchHash = await payloadHash({
+              action: 'resolve_punch_exception', user_email: asEmail(correction.user_email),
+              time_entry_id: correction.time_entry_id, response: 'missed_clock_out',
+              claimed_clock_out: claimedClockOut || null,
+            });
+            const originalSnapshotHash = await payloadHash(correction.original_snapshot || {});
+            const punchAuditTime = Date.parse(String(punchAudit.server_timestamp || ''));
+            const requestedAt = Date.parse(String(correction.requested_at || ''));
+            const reviewedAt = Date.parse(String(correction.reviewed_at || ''));
+            const actorRole = String(punchAudit.actor_role || '');
+            const authenticationMethod = String(punchAudit.authentication_method || '');
+            if (
+              String(punchCase.id || '') !== punchExceptionId ||
+              String(punchCase.case_key || '') !== `missed_clock_out:${timeEntryId}` ||
+              asEmail(punchCase.user_email) !== asEmail(correction.user_email) ||
+              String(punchCase.time_entry_id || '') !== timeEntryId ||
+              String(punchCase.exception_type || '') !== 'missed_clock_out' ||
+              String(punchCase.status || '') !== 'resolved' ||
+              String(punchCase.employee_response || '') !== 'missed_clock_out' ||
+              String(punchCase.claimed_clock_out || '') !== claimedClockOut ||
+              String(punchCase.request_id || '') !== String(correction.request_id || '') ||
+              String(punchCase.correction_request_id || '') !== String(correction.id || '') ||
+              String(punchCase.resolution_audit_id || '') !== appliedAuditId ||
+              !constantTimeEqual(await payloadHash(punchCase.original_snapshot || {}), originalSnapshotHash) ||
+              String(punchCase.detected_clock_in || '') !== String(correction.original_snapshot?.clock_in || '') ||
+              !punchAudit?.id || !['confirmed', 'recovered'].includes(String(punchAudit.outcome || '')) ||
+              asEmail(punchAudit.user_email) !== asEmail(correction.user_email) ||
+              asEmail(punchAudit.actor_email) !== asEmail(correction.user_email) ||
+              !actorRole || !['session', 'badge'].includes(authenticationMethod) ||
+              (actorRole === 'badge') !== (authenticationMethod === 'badge') ||
+              String(punchAudit.reason || '') !== String(correction.employee_reason || '') ||
+              String(punchAudit.details?.punch_exception_id || '') !== punchExceptionId ||
+              String(punchAudit.details?.correction_request_id || '') !== String(correction.id || '') ||
+              String(punchAudit.details?.response || '') !== 'missed_clock_out' ||
+              String(punchAudit.details?.claimed_clock_out || '') !== claimedClockOut ||
+              !constantTimeEqual(String(punchAudit.details?.payload_hash || ''), expectedPunchHash) ||
+              !constantTimeEqual(await payloadHash(punchAudit.details?.original_snapshot || {}), originalSnapshotHash) ||
+              String(submissionEvidence?.audit?.details?.punch_exception_id || '') !== punchExceptionId ||
+              String(submissionEvidence?.audit?.details?.request_kind || '') !== 'missed_clock_out' ||
+              !Number.isFinite(punchAuditTime) || !Number.isFinite(requestedAt) || !Number.isFinite(reviewedAt) ||
+              punchAuditTime < requestedAt || punchAuditTime > reviewedAt
+            ) return null;
+            return {
+              request_kind: requestKind,
+              punch: { case: punchCase, audit: punchAudit, payload_hash: expectedPunchHash, original_snapshot_hash: originalSnapshotHash },
+            };
+          };
           const comparable = (row: any) => ({
             user_email: asEmail(row?.user_email), clock_in: row?.clock_in || '', clock_out: row?.clock_out || '',
             total_hours: Number(row?.total_hours || 0), approval_status: row?.approval_status || '',
@@ -4158,12 +4219,17 @@ Deno.serve(async (req) => {
                   if (!submissionEvidence) {
                     return Response.json({ success: false, error: 'Employee correction submission evidence could not be verified before payroll finalization.' }, { status: 409 });
                   }
+                  const originEvidence = await correctionOriginEvidence(correction, id, submissionEvidence, String(appliedAudit.id || ''));
+                  if (!originEvidence) {
+                    return Response.json({ success: false, error: 'Correction origin evidence could not be verified before payroll finalization.' }, { status: 409 });
+                  }
                   const corrected = appliedAudit.details?.corrected || {};
                   const semanticAfter = change.after || {};
                   if (change.change_type === 'removed' || String(corrected.clock_in || '') !== String(semanticAfter.clock_in || '') || String(corrected.clock_out || '') !== String(semanticAfter.clock_out || '') || Number(corrected.total_hours || 0) !== Number(semanticAfter.total_hours || 0)) return Response.json({ success: false, error: 'Correction evidence does not match resulting payroll values.' }, { status: 409 });
                   const employeeRequested = correction.requested_changes || {};
                   change.correction_provenance = {
                     correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
+                    request_kind: originEvidence.request_kind,
                     submission_audit_id: String(submissionEvidence.audit.id || ''), submission_audit_outcome: String(submissionEvidence.audit.outcome || ''),
                     submission_audit_at: String(submissionEvidence.audit.server_timestamp || ''), submission_actor_role: String(submissionEvidence.audit.actor_role || ''),
                     submission_authentication_method: String(submissionEvidence.audit.authentication_method || ''), submission_payload_hash: String(submissionEvidence.payload_hash || ''),
@@ -4177,6 +4243,21 @@ Deno.serve(async (req) => {
                     corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
                     corrected_lunch_minutes: Number(corrected.lunch_minutes || 0), corrected_notes: String(corrected.notes || ''),
                     corrected_total_hours: Number(corrected.total_hours || 0),
+                    ...(originEvidence.punch ? {
+                      punch_exception_id: String(originEvidence.punch.case.id || ''),
+                      punch_case_key: String(originEvidence.punch.case.case_key || ''),
+                      punch_exception_status: String(originEvidence.punch.case.status || ''),
+                      punch_employee_response: String(originEvidence.punch.case.employee_response || ''),
+                      punch_claimed_clock_out: String(originEvidence.punch.case.claimed_clock_out || ''),
+                      punch_resolution_audit_id: String(originEvidence.punch.case.resolution_audit_id || ''),
+                      punch_response_audit_id: String(originEvidence.punch.audit.id || ''),
+                      punch_response_audit_outcome: String(originEvidence.punch.audit.outcome || ''),
+                      punch_response_audit_at: String(originEvidence.punch.audit.server_timestamp || ''),
+                      punch_response_actor_role: String(originEvidence.punch.audit.actor_role || ''),
+                      punch_response_authentication_method: String(originEvidence.punch.audit.authentication_method || ''),
+                      punch_response_payload_hash: String(originEvidence.punch.payload_hash || ''),
+                      punch_original_snapshot_hash: String(originEvidence.punch.original_snapshot_hash || ''),
+                    } : {}),
                   };
                 }
               }
@@ -4239,10 +4320,15 @@ Deno.serve(async (req) => {
                     if (!submissionEvidence) {
                       return Response.json({ success: false, error: 'Linked employee correction submission evidence could not be verified before payroll finalization.' }, { status: 409 });
                     }
+                    const originEvidence = await correctionOriginEvidence(linkedCorrection, id, submissionEvidence, String(cause.id || ''));
+                    if (!originEvidence) {
+                      return Response.json({ success: false, error: 'Linked correction origin evidence could not be verified before payroll finalization.' }, { status: 409 });
+                    }
                     const employeeRequested = linkedCorrection.requested_changes || {};
                     const corrected = cause.details?.corrected || {};
                     change.correction_provenance = {
                       correction_request_id: linkedCorrectionRequestId, submission_request_id: String(linkedCorrection.request_id || ''),
+                      request_kind: originEvidence.request_kind,
                       submission_audit_id: String(submissionEvidence.audit.id || ''), submission_audit_outcome: String(submissionEvidence.audit.outcome || ''),
                       submission_audit_at: String(submissionEvidence.audit.server_timestamp || ''), submission_actor_role: String(submissionEvidence.audit.actor_role || ''),
                       submission_authentication_method: String(submissionEvidence.audit.authentication_method || ''), submission_payload_hash: String(submissionEvidence.payload_hash || ''),
@@ -4255,6 +4341,21 @@ Deno.serve(async (req) => {
                       corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
                       corrected_lunch_minutes: Number(corrected.lunch_minutes || 0), corrected_notes: String(corrected.notes || ''),
                       corrected_total_hours: Number(corrected.total_hours || 0),
+                      ...(originEvidence.punch ? {
+                        punch_exception_id: String(originEvidence.punch.case.id || ''),
+                        punch_case_key: String(originEvidence.punch.case.case_key || ''),
+                        punch_exception_status: String(originEvidence.punch.case.status || ''),
+                        punch_employee_response: String(originEvidence.punch.case.employee_response || ''),
+                        punch_claimed_clock_out: String(originEvidence.punch.case.claimed_clock_out || ''),
+                        punch_resolution_audit_id: String(originEvidence.punch.case.resolution_audit_id || ''),
+                        punch_response_audit_id: String(originEvidence.punch.audit.id || ''),
+                        punch_response_audit_outcome: String(originEvidence.punch.audit.outcome || ''),
+                        punch_response_audit_at: String(originEvidence.punch.audit.server_timestamp || ''),
+                        punch_response_actor_role: String(originEvidence.punch.audit.actor_role || ''),
+                        punch_response_authentication_method: String(originEvidence.punch.audit.authentication_method || ''),
+                        punch_response_payload_hash: String(originEvidence.punch.payload_hash || ''),
+                        punch_original_snapshot_hash: String(originEvidence.punch.original_snapshot_hash || ''),
+                      } : {}),
                     };
                   }
                 }
