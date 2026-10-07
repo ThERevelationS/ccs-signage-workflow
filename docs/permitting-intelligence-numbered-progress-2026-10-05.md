@@ -1,3 +1,9 @@
+## Phase 10 → Milestone 1 of 3 — Harrison Township and Symmes source packet (2026-10-07)
+
+Task 2 remains partial. Retained and hash-verified four official originals: two township zoning pages, Symmes zoning map and 198-page zoning code. Extracted embedded text across all 199 physical PDF pages; this does not establish visual/search completeness or current law. Added reproducible preparation, normalized HTML, unchanged public PDF copies, and source-bound office reconciliation. Both Hamilton County township canonical profile queries returned no matches; no City of Harrison/Harrison County substitution or UI attachment. Official pages describe county zoning administration, with job coverage and authority pending. Map title indicates 2017 provenance requiring version review. Separate electrical issuer and inspector remain pending, as do standalone sign forms, current amendments, and app-storage/catalog registration. No live records changed and no publication.
+
+Validation: 24 tests passed; git diff --check passed. Next: Symmes sign provisions and linked county forms review. Ohio before Kentucky.
+
 ## Phase 10 — Milestone 1 of 3 — Crosby sign/application page review (2026-10-07)
 
 Fresh clean HEAD c3d4e2775ea3191938f9e2717940cc40740ad4fd preserved. Prepared nine findings tied to unchanged original PDF/source and physical-page text hashes. Application page 1 offers wall/freestanding/temporary sign choices and requests site-plan/public-street/building-frontage dimensions. Article 31 review covers zoning triggers and face changes, maintenance exemptions, illumination/heights/setbacks, sign area, prohibitions, district/portable/message-sign provisions and billboard/state permit review.
