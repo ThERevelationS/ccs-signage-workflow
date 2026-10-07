@@ -25,7 +25,7 @@ const FILTER_FIELDS = [
   { value: "designer", label: "Designer", type: "user", role: "Designer" },
   { value: "project_manager", label: "Project Manager", type: "user", role: "PM" },
   { value: "estimator", label: "Estimator", type: "user", role: "Estimator" },
-  { value: "sales_status", label: "Status", type: "select", options: ["lead", "quoted", "follow_up", "won", "lost", "on_hold"] },
+  { value: "sales_status", label: "Status", type: "select", options: ["needs_stage", "lead", "quoted", "follow_up", "won", "lost", "on_hold"] },
   { value: "sales_stage_changed_at", label: "Stage Changed At", type: "date" },
   { value: "project_type", label: "Project Type", type: "localStorage", storageKey: "salesProjectTypes" },
   { value: "estimate_amount", label: "Estimate Amount", type: "number" },
@@ -85,6 +85,7 @@ const SALES_COLUMN_PREVIEW_SAMPLE = Object.freeze({
 
 const STANDARD_FILTERS = [
   { name: "All Statuses", value: "all", conditions: [] },
+  { name: "Needs Stage", value: "needs_stage", conditions: [{ field: "sales_status", operator: "equals", value: "needs_stage" }] },
   { name: "Lead", value: "lead", conditions: [{ field: "sales_status", operator: "equals", value: "lead" }] },
   { name: "Quoted", value: "quoted", conditions: [{ field: "sales_status", operator: "equals", value: "quoted" }] },
   { name: "Follow Up", value: "follow_up", conditions: [{ field: "sales_status", operator: "equals", value: "follow_up" }] },
