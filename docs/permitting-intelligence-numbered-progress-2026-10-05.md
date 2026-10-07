@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — Green and Delhi Township source collection (2026-10-07)
+
+Fresh clean HEAD e0a69fdd9b761f3709e6e9a2eef817165c3aad66 preserved. Live OH canonical name query identified Green Township 6ac1aae70e3a16c893d4e506, township; no Delhi profile matched. Retained four official HTML originals (Green zoning/address directory and Delhi zoning/form center) plus Delhi permanent-sign application PDF and zoning-resolution PDF with retrieval URLs/times, bytes and hashes. Green iWorQ original retrieval failed hostname certificate verification; recorded gap without bypassing TLS validation.
+
+Green exact-identity admin research now exposes the retained directory and the Township-linked northeast iWorQ/county ezTrak references. The page distinguishes northeast Township zoning from county zoning elsewhere; address-range coverage and sign-specific application remain unapproved. Excluded City of Green, other Ohio Green Townships, NJ Green and MI/NY Delhi search collisions. Delhi originals are public archive copies with 189 physical PDF pages of embedded extraction, but no invented canonical record or UI mapping.
+
+Validation: 19 UI/archive/extraction/identity tests, targeted ESLint, production build and diff check passed. No production entity changes or frontend publication. Electrical issuer and inspection offices remain separate unresolved reviews. Task 2 partial; app-storage/catalog registration remains outstanding. Next: review Delhi permanent-sign submission requirements and zoning sign section; investigate township-specific electrical references. Ohio first, Kentucky afterward.
+
 ## Phase 10 — Milestone 1 of 3 — Whitewater identity and county routing review (2026-10-07)
 
 Fresh clean HEAD 94f9563ac2b1390bfc266eae5508b7ea2e87a96c preserved. Inspected PermitLocality schema and live Whitewater name query: zero tracker rows, in addition to the earlier canonical-profile gap. No synthetic identity or production record created.
