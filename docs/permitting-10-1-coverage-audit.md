@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 — Publisher alias candidate evidence (2026-10-07)
+
+Added a standalone, read-only candidate verifier for shortened PDF publisher labels. It reloads the source and canonical office; requires same-state verified identity, exact profile and official host, retained archive identity, a clear physical page and matching text hash. A standalone literal identity-mapping sentence is required; name co-occurrence, qualification and paraphrase fail. Output explicitly remains candidate_only and establishes neither publisher approval, source currentness nor locality authority.
+
+Validation: 10 new candidate checks and 26 existing source-authority checks passed (36 total). No live database changes, frontend publication, or alias approvals. Existing source-review exact-name gates remain unchanged. This helper is not yet integrated into review handlers or UI; persistence, immutable review records, revalidation across rule/office consumers, and admin preview are pending. Cincinnati has no qualifying mapping admitted by this chunk. Do not infer that its shortened name is approved.
+
+Progress remains Phase 10, Milestone 1 of 3; Task 2 partial. Next: decide and retain actual identity-mapping evidence before integrating any approval path. Avoid inventing a matching statement from the handout's contact language.
+
 ## 2026-10-07 — Cincinnati publisher reused; handout guidance classified
 
 Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation. 2 of 4 tasks complete; Task 2 partial; Task 4 live acceptance pending.
