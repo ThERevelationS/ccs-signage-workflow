@@ -1,3 +1,11 @@
+## Phase 10 — Milestone 1 of 3 — Delhi permanent-sign submission and code review (2026-10-07)
+
+Fresh clean HEAD 5d3d7306a2eb079928eb3eabe67a7825b06ea6be preserved. Prepared eight hash-verified physical-page findings from the unchanged Delhi original PDFs. The April 2021 permanent-sign application includes county building routing, drawings/site plans, existing-sign photographs, lit-sign photometric drawings and printed fee candidates. Current submission method, fee formulas and deadlines remain unapproved.
+
+Recorded the application address 697 Neeb Road versus retained official Township page address 5031 Delhi Road without silently selecting intake location. The zoning PDF physical page 4 names Monroe County, Indiana above its table list; this anomaly remains explicit pending publisher/current-compilation verification. Article 17 findings distinguish zoning-certificate exemptions from building/electrical responsibilities and record district tables/temporary-sign review without approving job-specific allowances.
+
+Validation: 20 archive/UI/page/identity tests and diff check passed. One preparation needle failed because embedded text splits photometric; inspected fresh state and used exact retained footcandle text, then successfully prepared and tested the packet. No UI or production record changes, publication, currentness/authority approval or invented Delhi canonical identity. Separate electrical offices remain unresolved; wrong-state Green/Delhi and utility streetlight contacts were excluded. Task 2 partial. Next: inspect county/provider sign and electrical submission documents for explicit service-area evidence; retain electrical forms where accessible. Ohio first; verified app-storage/catalog registration still open.
+
 ## Phase 10 — Milestone 1 of 3 — Green and Delhi Township source collection (2026-10-07)
 
 Fresh clean HEAD e0a69fdd9b761f3709e6e9a2eef817165c3aad66 preserved. Live OH canonical name query identified Green Township 6ac1aae70e3a16c893d4e506, township; no Delhi profile matched. Retained four official HTML originals (Green zoning/address directory and Delhi zoning/form center) plus Delhi permanent-sign application PDF and zoning-resolution PDF with retrieval URLs/times, bytes and hashes. Green iWorQ original retrieval failed hostname certificate verification; recorded gap without bypassing TLS validation.
