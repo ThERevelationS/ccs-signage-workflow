@@ -1,3 +1,13 @@
+### Phase 10 → Milestone 2 of 3 — St. Bernard Ohio current zoning and county transfer (2026-10-07)
+
+Milestone 1 Task 4 browser acceptance remains open; Task 2 closeout preserved. Fresh canonical OH query matched St. Bernard village 6ac1a0d393d41146d708791d. Retained three originals: current planning/zoning HTML, one-page zoning information PDF, one-page zoning map PDF. Bytes/hashes verified and PDF public copies unchanged. Extracted both physical pages; embedded text is not visual map/current parcel verification. Five source/page/text-bound findings cover iWorQ application, site plan, $50 fee candidate/payment, normal review timing, and temporary/permanent signs plus possible county approval.
+
+Current village page reports January 1, 2026 building-permit/inspection transfer to Hamilton County ezTrak, while village zoning remains iWorQ. Old village portal retained for prior permits; do not promote old 2013/2023/2024 building forms to current county intake. Current page and sheet describe zoning review before county building approval when applicable. Separate sign/electrical scope remains pending.
+
+Publisher 2026-02 Section 1305.01(e) still directs electrical work to Inspection Bureau Inc., originating in 2011 ordinance. Raw publisher HTML returned 403; web observation explicitly separate from originals. Contact-first table lists plumbing/electrical under county; this is not proof county itself performs electrical inspection or replaces IBI. Reconcile delegation/service area/intake before office approval. No authority, fee/currentness or job applicability approval. App-storage/catalog registration remains pending; no bypass.
+
+Validation: 34 research/archive/identity/role/page tests and diff check passed. One finding needle failed due embedded 'five business day s'; fresh state inspected and exact retained text used without correcting original. No frontend/runtime UI change, production records or publication. Next: St. Bernard Chapter 1185 signs and current county/provider electrical references; keep raw-retention gap explicit. Ohio before Kentucky.
+
 ### Phase 10 → Milestone 2 of 3 — Sharonville sign provisions and version reconciliation (2026-10-07)
 
 Milestone 1 Task 4 remains open; Task 2 closeout unchanged. Prepared 13 findings bound to unchanged original code hash and physical-page text hashes: amended cover, municipal two-county scope, illumination, area measurement, district aggregate/facade table, wall/projecting/freestanding/window rules, electronic messages, temporary construction/table/feather conditions, maintenance and nonconforming signs.

@@ -290,3 +290,11 @@ for(const f of p.findings){const page=d.pages[f.physical_page-1];assert.ok(page.
 assert.ok(d.pages[131].text.includes('Blade or feather signs'));assert.ok(d.pages[143].text.includes('Only one feather sign'));assert.equal(p.feather_sign_exception_review_pending,true);assert.equal(p.table_visual_review_pending,true);assert.equal(p.page_97_visual_review_pending,true);
 assert.equal(p.version_comparison.publisher_local_legislation_cutoff,'November 18, 2025');assert.equal(p.currentness_approved,false);assert.equal(p.fee_currentness_approved,false);assert.equal(p.live_records_changed,0);
 });
+
+test('St Bernard preserves 2026 county transfer and unresolved electrical routing',()=>{
+const r='docs/official-evidence/ohio-stbernard-2026-10-07/',m=JSON.parse(readFileSync(r+'manifest.json')),p=JSON.parse(readFileSync(r+'review-packet.json')),e=JSON.parse(readFileSync(r+'pdf-text-extraction.json'));
+assert.equal(m.sources.length,4);assert.equal(m.sources.filter(s=>s.status==='archived').length,3);for(const s of m.sources.filter(s=>s.status==='archived')){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);if(s.file.endsWith('.pdf'))assert.deepEqual(b,readFileSync('public/permitting-evidence/stbernard/'+s.file));}
+assert.equal(e.documents.length,2);assert.equal(e.documents.reduce((n,d)=>n+d.total_pages,0),2);const d=e.documents.find(d=>d.file==='zoning-information.pdf');for(const f of p.findings){assert.ok(d.pages[0].text.includes(f.matched_needle));assert.equal(f.source_sha256,d.source_sha256);assert.equal(f.text_sha256,d.pages[0].text_sha256);assert.equal(f.applicability_approved,false);}
+assert.equal(p.locality.id,'6ac1a0d393d41146d708791d');assert.equal(p.locality.type,'village');assert.equal(p.transition.effective_date,'2026-01-01');assert.match(p.electrical_comparison.publisher,/Inspection Bureau/);assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);assert.equal(p.live_records_changed,0);
+assert.equal(m.sources.find(s=>s.file==='permit-applications-code.html').status,'original_retention_gap');
+});
