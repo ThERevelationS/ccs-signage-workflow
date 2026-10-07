@@ -1,0 +1,10 @@
+{
+  "sources": [
+    {
+      "file": "ibi-faq.html",
+      "official_url": "https://www.inspectionbureau.com/faq/",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 406: Not Acceptable"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Read-only link inventory from retained planning-zoning.html plus web-derived provider FAQ observations; not exhaustive site search.",
+  "sidewalk_search": {
+    "current_fee_schedule_located": false,
+    "current_application_form_located": false,
+    "scope": "Retained planning page anchors and targeted search; DocumentCenter unavailable to web retrieval. Failure to locate does not mean forms or schedule do not exist.",
+    "contact_candidate": "Village Zoning Administrator, 513-482-5684; contact candidate only, no message sent."
+  },
+  "electrical": {
+    "provider_url": "https://www.inspectionbureau.com/faq/",
+    "observation": "Provider describes separate permits for signs, commercial electrical plan review when loads change, and sign field inspection beyond testing-lab listing. Candidate checks include circuit/voltage, wiring, grounding, terminations and disconnect. Provider-general information does not establish St. Bernard contract or current adopted electrical code.",
+    "maintenance_boundary": "Provider minor-repair lamp exception is not blanket ballast, driver, rewiring or sign retrofit exemption; Chapter 711 zoning maintenance exclusion does not resolve electrical permits.",
+    "inspection_timing": "FAQ typical next-business-day scheduling is not a guaranteed deadline.",
+    "role_confirmation": "Village 2026 county building transfer, publisher 2011 IBI electrical routing, and September 2026 Ohio ezTrak migration remain unresolved as St. Bernard-specific issuer/inspector evidence."
+  },
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Finish remaining Chapter 711/1186 provisions, consolidate St. Bernard gaps and resume Ohio locality expansion without repeating blocked sources."
+}
