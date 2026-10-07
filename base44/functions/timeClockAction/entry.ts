@@ -2841,6 +2841,7 @@ Deno.serve(async (req) => {
           asEmail(punchCase.user_email) === asEmail(provenance.requested_by) &&
           String(punchCase.time_entry_id || '') === String(change.time_entry_id || '') &&
           String(punchCase.exception_type || '') === 'missed_clock_out' &&
+          String(punchCase.detected_clock_in || '') === String(correction.original_snapshot?.clock_in || '') &&
           String(punchCase.status || '') === String(provenance.punch_exception_status || '') &&
           String(punchCase.status || '') === 'resolved' &&
           String(punchCase.employee_response || '') === String(provenance.punch_employee_response || '') &&
