@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
         sourceAuthorized;
 
       return Response.json({
-        success:true,
+        success:action === "prepare_pilot" || authorizedPreparation,
         action,
         executor_version:OPPORTUNITY_BRIDGE_PRODUCTION_EXECUTOR.VERSION,
         production_apply_enabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED,
