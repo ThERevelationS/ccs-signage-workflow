@@ -61,8 +61,9 @@
         "utility release",
         "canonical identity and staff authority review"
       ],
-      "inspection_area_resource": "inspection-areas-2026.xls",
-      "inspection_area_authority_verified": false
+      "inspection_area_authority_verified": false,
+      "inspection_area_source_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/09/Inspection-Areas-2026-1.xls",
+      "inspection_area_download_status": "HTTP 406; no archive"
     }
   },
   "limitations": [
