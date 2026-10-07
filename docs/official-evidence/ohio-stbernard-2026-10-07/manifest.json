@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "file": "planning-zoning.html",
+      "official_url": "https://www.stbernard-oh.gov/236/Planning-Zoning",
+      "retrieved_at": "2026-10-07T19:47:20.484285+00:00",
+      "final_url": "https://www.stbernard-oh.gov/236/Planning-Zoning",
+      "content_type": "text/html; charset=utf-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-stbernard-2026-10-07/planning-zoning.html",
+      "bytes": 89514,
+      "sha256": "4d1e5808aa623a7a1947690b4a653a7715c37047fb49159fd4717f09f2fb9649"
+    },
+    {
+      "file": "zoning-information.pdf",
+      "official_url": "https://www.stbernard-oh.gov/DocumentCenter/View/225/Zoning-Certificate-Information-Sheet-PDF",
+      "retrieved_at": "2026-10-07T19:47:20.485039+00:00",
+      "final_url": "https://www.stbernard-oh.gov/DocumentCenter/View/225/Zoning-Certificate-Information-Sheet-PDF",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-stbernard-2026-10-07/zoning-information.pdf",
+      "bytes": 141521,
+      "sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb"
+    },
+    {
+      "file": "zoning-map.pdf",
+      "official_url": "https://www.stbernard-oh.gov/DocumentCenter/View/227/Zoning-Map-PDF",
+      "retrieved_at": "2026-10-07T19:47:20.485362+00:00",
+      "final_url": "https://www.stbernard-oh.gov/DocumentCenter/View/227/Zoning-Map-PDF",
+      "content_type": "application/pdf",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-stbernard-2026-10-07/zoning-map.pdf",
+      "bytes": 2933376,
+      "sha256": "2ceb395b30d5c73dbfbd4d2aab0be41199c0b905dbec94f281de4871b0de39d8"
+    },
+    {
+      "file": "permit-applications-code.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-31561",
+      "retrieved_at": "2026-10-07T19:47:20.485694+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}

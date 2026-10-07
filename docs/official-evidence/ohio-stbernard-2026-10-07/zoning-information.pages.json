@@ -1,0 +1,23 @@
+{
+  "file": "zoning-information.pdf",
+  "official_url": "https://www.stbernard-oh.gov/DocumentCenter/View/225/Zoning-Certificate-Information-Sheet-PDF",
+  "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+  "source_bytes": 141521,
+  "total_pages": 1,
+  "pages_with_embedded_text": 1,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Village of St. Bernard \nAPPLICATION FOR \nCERTIFICATE OF ZONING COMPLIANCE \nThe following items must be provided to process an application for Zoning Certificate : \n1. Application – A fully completed Certificate of Zoning Compliance form including your \nsignature at the bottom of the form. Visit our web portal to fill out the application. \n2. A Site Plan must be uploaded through the portal that shows direction (north standard), scale \nsize, adjacent street(s), and the following features: \n• Dimensions of the lot/parcel \n• Location and size of driveways \n• Dimensions of buildings (existing and proposed) \n• Location of well and septic system \n• Setback distance of building from lot lines \n• Distance between buildings \nA great resource for this information can be located at: CAGIS Online \n3. The current permit fee is $50.00 and can be paid through the Village portal or via check to the \nVillage of St. Bernard. Certificates will not be issued unless fee is paid. \n4. If your building project requires a new driveway entrance, you will need to submit the \nappropriate information to the Village Director of Safety and Service. \nApplication Review: After receiving a completed application, the forms are normally \nreviewed by staff within five business day s. If all applicable provisions of the Village of St. Bernard \nZoning Ordinance are satisfied, a Preliminary Certificate of Zoning Compliance will be emailed. \nAdditional Information: Questions regarding the process outlined above may be directed \nto the Village of St. Bernard, Ohio, Zoning Department office at 513-482-5684 or 513-242-7770. \nOutlined below is a list of projects that require a Zoning Certificate and may also need approval\nfrom Hamilton County Building Department before starting project: \nFence Interior Alterations (Business) \nAccessory Structures (ex. Sheds & \nGarages) \nTemporary Tent for Event \nSigns, Temporary or Permanent Temporary Stage \nPools Building Additions \nDecks Building Change of Use",
+      "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb"
+    }
+  ]
+}
