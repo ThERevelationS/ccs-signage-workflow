@@ -1,3 +1,13 @@
+## Electrical role gaps visible in locality picker — 2026-10-07
+
+Phase 10 — Ohio/Kentucky coverage. Milestone 1 of 3 — Identity and office reconciliation. Tasks complete: 2 of 4. Task 2 remains partial; Task 4 full live acceptance pending.
+
+Fresh clean HEAD 0e303ab72e521c54262cc1802ecd743b559f506c. Added ElectricalAuthorityCoverage shared display to address-match and manually selected locality panels. Permit issuer and inspection provider each show Staff reviewed, Needs staff review or Not established from recognized role summaries. Older/missing summaries remain unestablished; broad legacy electrical roles show a separate-review message. Project applicability and every-required-authority caveats stay visible even when both roles have staff review. Flexible wrapping preserves narrow widths. No new apply restrictions or changes to electrical-exclusion behavior.
+
+Validation: five rendered UI checks, six role coverage checks and 25 locality selection checks pass (36 total); targeted component/picker ESLint, full build and git diff --check pass. Initial lint rejected unused React import; fixed and rendered tests rerun using automatic JSX. No production records, LLM calls, backend changes or frontend publication. Actual phone/browser touch acceptance remains pending.
+
+Next: connect retained Cincinnati electrical resources to the locality research/review interface without inventing staff approvals, then continue Ohio office coverage reconciliation. Phase/milestone/task counts unchanged.
+
 ## Separate electrical role completeness checks — 2026-10-07
 
 Phase 10 — Ohio/Kentucky coverage. Milestone 1 of 3 — Identity and office reconciliation. Tasks complete: 2 of 4. Task 2 remains partial; Task 4 live acceptance pending.
