@@ -1,0 +1,23 @@
+{
+  "file": "zoning-map-2007.pdf",
+  "official_url": "https://www.elmwoodplace-oh.gov/Content/Elmwood_Zone_Map2007.pdf",
+  "source_sha256": "f2c65c98acd51c84fbce49685149f113c6c160c615f57c47b55928089454064f",
+  "source_bytes": 2179582,
+  "total_pages": 1,
+  "pages_with_embedded_text": 1,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "T H E V I L L A G E O F E L M W O O D P L A C E\nOfficial Zoning\nMap\nSEPTEMBER 11, 2007 \nDISCLAIMER: \nNeither the provider nor any of the parties of the Cincinnati area geographic information system (CAGIS) make any warranty or representation, either expressed or\nimplied, with respect to this information, its quality, performance, merchantability, or fitness for a particular purpose. As a result this information is provided “as is”, and\nyou, the recipient, are assuming the entire risk as to its quality and performance.\nIn no event, will the provider or any party of CAGIS be liable for direct, indirect, incidental, or consequential damages resulting from any defect in the information or any\nother part of the map product, even if advised of the possibility of such damages. In particular, neither the provider nor any party of CAGIS shall have any liability for any\nother information, programs or data used with or combined with the information received, including the cost of recovering such information, programs or data.\nAny floodway and flood fringe information provided on this map is for conceptual planning purposes only. For official determination of limits recipient must refer to the\n1982 FEMA floodway fringe maps. Large differences can exist between actual flood prone area and official FEMA flood fringe areas. \nCINCINNATI\nSAINT BERNARD CINCINNATI\nMill Creek\nCINCINNATI \nR-1\nM-1\nR-1\nB-2\nR-2 B-1\nB-3\nR-2\nB-3\nB-2\nR-2\nB-3\nR-2\nI-75\nVINE\nTOWNSHIP\nOAK\nLINDEN\nMAPLE\nESTE\nWALNUT\nMURRAY\nELMWOOD\nHIGHLAND\nLOCUST\n66TH\nMCGREGOR\nPROSSER\nTOWNE\nCHESTNUT\nBEECH\nCEDAR\nCENTER HILL\nHELEN\n65TH\nLOMBARDY POPLAR\nSYCAMORE\nELM VIEW\nFISHWICK\nSPRUCE\nELM PARK\nHASLER\nTOWANDA\nBLADE\n64TH\n63RD\nCHEYENNE\nLEBANON\nSILVER\nTOWNE ST TO I-75 NB\nJAMES\nI-75 NB TO TOWNE ST\n66TH\nMAPLE\nWALNUT\nLINDEN\nLEBANON \n± \nLegend\nVine St. Architectural Overlay District\nR-1 One and Two-Family Residence\nR-2 Multi-Family Residence\nB-1 Office\nB-2 Community Business\nB-3 General Business\nM-1 General Manufacturing\n0 400 800 200\nFeet \n§ ¨ ¦ I-75 \n§ ¨ ¦ I-74 \n§ ¨ ¦ I-71 \n126\n562",
+      "text_sha256": "ea5e8295b66d35dee634351f6daa5553c3450319e7e1dfa1807d7519e1d1e271",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "f2c65c98acd51c84fbce49685149f113c6c160c615f57c47b55928089454064f"
+    }
+  ]
+}

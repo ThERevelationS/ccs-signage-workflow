@@ -1,0 +1,136 @@
+{
+  "documents": [
+    {
+      "file": "building-application.pdf",
+      "official_url": "https://www.elmwoodplace-oh.gov/Content/ApplicationsForms/Building-Permit-Application.pdf",
+      "source_sha256": "ef4677a8d6a09faa43fe2d9f84a51dc0dacc93e1c735eae3506ea771d4876481",
+      "source_bytes": 89374,
+      "total_pages": 1,
+      "pages_with_embedded_text": 1,
+      "extraction_covers_all_physical_pages": true,
+      "embedded_text_present_on_all_pages": true,
+      "searchable_content_complete": false,
+      "ocr_performed": false,
+      "pages": [
+        {
+          "page": 1,
+          "text": "VILLAGE OF ELMWOOD PLACE \n6118 Vine Street , Elmwood Place, Ohio 45216 \nPhone 513-242-0291 Fax 513-242-4578 \nBUILDING PERMIT APPLICATION \n1. STREET ADDRESS:______________________________________________________________________________________ \n2. ZONING : ____________ OCCUPANCY: ____________ PARCEL IDENTIFICATION NUMBER:______________ \n3.  Residential Property (RCO)  Commercial Property (OBC) \nNAME STREET ADDRESS CITY \nSTATE \nZIP PHONE/FAX \nOWNER \nCONTRACTOR \nPLANS BY \nEMAIL ADDRESS OF CONTACT FOR PLAN REVIEW (REQUIRED): _________________________________________ \n4. TYPE OF IMPROVEMENT \n New Building  Garage  Deck \n Alteration  Hood System  Pool (Above-Ground) \n Addition  HVAC  Pool (In-Ground) \n Repair/Replacement ____Furnace ____Air Conditioner  Fence \n Change of Use ____Commercial ____Residential  Shed \n Change of Occupancy ____Replacement ____ New  Sign \n Fire Alarm ____Electric ____Gas ____Oil  Wrecking/Moving \n Fire Suppression  Other (specify) \n ____Sprinkler ____Hood  _______________  \n5. OWNERSHIP  Private  Public \n6. COST Estimate cost of construction/improvement for which this application is being made: $______________ \n7. USE OF THIS BUILDING AND PREMISES: \n Existing Use: __ __________________________  Proposed Use: ________________________________ \n8. TOTAL FLOOR AREA FOR NEW BUILDINGS/GARAGES/SHEDS/ADDITIONS/DECKS: _______________ \nThe owner of this building and undersigned, do hereby covenant and agree with all the laws of the State of Ohio and the ordinances of the \nVillage of Elmwood Place pertaining to building(s), and to construct the proposed building(s) or structure(s) or make the proposed change \nor alteration in accordance with the plans and specifications submitted herewith, and certify that the information and statements given on \nthis application, drawings and specifications to the best of their knowledge, true and correct. \nApplication by _ ___________________________________________________________ Date _______________________ \nO wner or Agent's Name (Print) (Sign) \n--------------------------------------------------------------------------------------------------------------------------------------------------------------------- \nDO NOT WRITE BELOW THIS LINE \n(Office Use Only) \nPermit Fee $___________ \nRCO 1% (Residential) $___________ \nOBC 3% (Commercial) $___________ \nTotal $___________ Payment:  Cash  Check  Credit Card Receipt # _____________ \nPlans Examiner Approval:____________________________________________ Date Plans Approved:______________ \nBuilding/Zoning Official Approval _____________________________________ Date Permit Issued ________________ \nActing as Agent. Authorized to Act for the Political Subdivision______________ Permit Number ___________________",
+          "text_sha256": "efdf957eccdfba9adad6eb5dda90a31194253b231173d575d2a06fde01a96994",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "ef4677a8d6a09faa43fe2d9f84a51dc0dacc93e1c735eae3506ea771d4876481"
+        }
+      ]
+    },
+    {
+      "file": "zoning-application.pdf",
+      "official_url": "https://www.elmwoodplace-oh.gov/Content/Zoning%20application.pdf",
+      "source_sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145",
+      "source_bytes": 80523,
+      "total_pages": 1,
+      "pages_with_embedded_text": 1,
+      "extraction_covers_all_physical_pages": true,
+      "embedded_text_present_on_all_pages": true,
+      "searchable_content_complete": false,
+      "ocr_performed": false,
+      "pages": [
+        {
+          "page": 1,
+          "text": "150.00",
+          "text_sha256": "14e0ee8716dfc7c44c70a9e317ad5e56507d728e3a32fe50a3fc9cb6dad7b1b2",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145"
+        }
+      ]
+    },
+    {
+      "file": "zoning-map-2007.pdf",
+      "official_url": "https://www.elmwoodplace-oh.gov/Content/Elmwood_Zone_Map2007.pdf",
+      "source_sha256": "f2c65c98acd51c84fbce49685149f113c6c160c615f57c47b55928089454064f",
+      "source_bytes": 2179582,
+      "total_pages": 1,
+      "pages_with_embedded_text": 1,
+      "extraction_covers_all_physical_pages": true,
+      "embedded_text_present_on_all_pages": true,
+      "searchable_content_complete": false,
+      "ocr_performed": false,
+      "pages": [
+        {
+          "page": 1,
+          "text": "T H E V I L L A G E O F E L M W O O D P L A C E\nOfficial Zoning\nMap\nSEPTEMBER 11, 2007 \nDISCLAIMER: \nNeither the provider nor any of the parties of the Cincinnati area geographic information system (CAGIS) make any warranty or representation, either expressed or\nimplied, with respect to this information, its quality, performance, merchantability, or fitness for a particular purpose. As a result this information is provided “as is”, and\nyou, the recipient, are assuming the entire risk as to its quality and performance.\nIn no event, will the provider or any party of CAGIS be liable for direct, indirect, incidental, or consequential damages resulting from any defect in the information or any\nother part of the map product, even if advised of the possibility of such damages. In particular, neither the provider nor any party of CAGIS shall have any liability for any\nother information, programs or data used with or combined with the information received, including the cost of recovering such information, programs or data.\nAny floodway and flood fringe information provided on this map is for conceptual planning purposes only. For official determination of limits recipient must refer to the\n1982 FEMA floodway fringe maps. Large differences can exist between actual flood prone area and official FEMA flood fringe areas. \nCINCINNATI\nSAINT BERNARD CINCINNATI\nMill Creek\nCINCINNATI \nR-1\nM-1\nR-1\nB-2\nR-2 B-1\nB-3\nR-2\nB-3\nB-2\nR-2\nB-3\nR-2\nI-75\nVINE\nTOWNSHIP\nOAK\nLINDEN\nMAPLE\nESTE\nWALNUT\nMURRAY\nELMWOOD\nHIGHLAND\nLOCUST\n66TH\nMCGREGOR\nPROSSER\nTOWNE\nCHESTNUT\nBEECH\nCEDAR\nCENTER HILL\nHELEN\n65TH\nLOMBARDY POPLAR\nSYCAMORE\nELM VIEW\nFISHWICK\nSPRUCE\nELM PARK\nHASLER\nTOWANDA\nBLADE\n64TH\n63RD\nCHEYENNE\nLEBANON\nSILVER\nTOWNE ST TO I-75 NB\nJAMES\nI-75 NB TO TOWNE ST\n66TH\nMAPLE\nWALNUT\nLINDEN\nLEBANON \n± \nLegend\nVine St. Architectural Overlay District\nR-1 One and Two-Family Residence\nR-2 Multi-Family Residence\nB-1 Office\nB-2 Community Business\nB-3 General Business\nM-1 General Manufacturing\n0 400 800 200\nFeet \n§ ¨ ¦ I-75 \n§ ¨ ¦ I-74 \n§ ¨ ¦ I-71 \n126\n562",
+          "text_sha256": "ea5e8295b66d35dee634351f6daa5553c3450319e7e1dfa1807d7519e1d1e271",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "f2c65c98acd51c84fbce49685149f113c6c160c615f57c47b55928089454064f"
+        }
+      ]
+    },
+    {
+      "file": "fee-schedule-2023.pdf",
+      "official_url": "https://www.elmwoodplace-oh.gov/Content/2023_Fee_Schedule.pdf",
+      "source_sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2",
+      "source_bytes": 766618,
+      "total_pages": 5,
+      "pages_with_embedded_text": 5,
+      "extraction_covers_all_physical_pages": true,
+      "embedded_text_present_on_all_pages": true,
+      "searchable_content_complete": false,
+      "ocr_performed": false,
+      "pages": [
+        {
+          "page": 1,
+          "text": "PLANNING AND DEVELOPMENT \nDIVISION OF BUILDING & \nINFRASTRUCTURE \nHAMILTON COUNTY,OHIO \nSCHEDULE OF FEES \nJANUARY 01, 20 23 , EDITION \nTABLE OF CONTENTS \nBUILDING FEE CALCULATION 2 \nBUILDING FEES \n• HAMILTON CO UNTY BUILDING CODE \n(1 - 2 DWELLING UNITS) \n• OHI O BUILDING CODE \n• FIRE SUPPRESSION SYSTEMS \n• HEATING, VENTILATING & AIR \nCONDITIONING (HVAC) \n2 \n3 \n3 \n4 \nTYPE OF CONSTRUCTION FACTOR 4 \nHAMILTON COUNTY ADMINISTRATIVE FEES 5 \nHAMILTON COUNTY PENALITY FEES 5",
+          "text_sha256": "60cddab3595ca6d2c70fab902e8f0ff4d6858c711d0ab56876e8a0738297b447",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2"
+        },
+        {
+          "page": 2,
+          "text": "BUILDING FEE CALCULATION \nFees for pe rmits, inspections, certificates shall be paid to the Building Official as set forth herein. This Fee Schedule shall \nbecome effective January 1 , 20 23 , as adopted by the Hamilton County Board of County Commissioners pursuant to \nSections 307.37 ORC. \nTo c a lculate a fee using a Permit Fee Multiplier, you need the building gross area (total of all floors), type of construction \n(page 3) and the permit fee multiplier . \nFORMULA A: Building Permit & HVAC application combined \nPermit Fee = \nBuilding \nGross Area X $128.98 \nType of \nConstruction X \nPermit Fee \nMultiplier X 1.25 = \nFORMULA B: Building Permit Only (no HVAC) \nPermit Fee = \nBuilding \nGross Area X $128.98 \nType of \nConstruction X \nPermit Fee \nMultiplier = \nFORMULA C: HVAC Permit Only (no building) \nPe rmit Fee = \nBuilding \nGross Area X $128.98 \nType of \nConstruction X \nPermit Fee \nMultiplier X .25 = \nFORMULA D: One & Two & Three Family Residential Building permit & HVAC application combined \nPermit Fee = \nBuilding \nGross Area X $ 0.275 \n(Building G ross Area includes occupied garage, basement, finished \nor unfinished) \nTECHNOLO GY FEE: 5% ASSESSMENT TO ALL FEES (non - inclusive of OBBS Assessment Fee ) \nPERMIT USE/TYPE \nUNIT \nPRICE \nEACH \nUP - \nFRONT \nUP - FRONT \nFEE W/ \nTECH. & \nSURCHARGE \nMINIMUM \nBUILDING \nF EE \nPERMIT FEE \nMULTIPLIER CO/CC \n*TCO \n1 st 30 \nDays REVISION \nBUILDINGS & STRUCTURES REGULATED BY THE HCBC – 1 - 2 - 3 DWELLING UNITS \nBUILDINGS & STRUCTURE S REGULATED BY THE HCBC & RCO ( ADD OBBS ASSESSMENT FEE – 1%) \n1. New Dwellings (Formula D) - - $ 35 3 .23 $ 353.23 - - $ 52.46 $ 132.90 $132.90 \n2. Additions (Formula D) (Includes \nductwork only) (To add or replace \nHVAC units, add fee from line 6) \n- - $ 353.23 $ 353.23 - - $ 52.46 $ 132.90 $132.90 \n3. Industrialized Dwellings (I n cl udes all \nHVAC) \n$ 307.76 $ 353.23 - - - - $ 52.46 $ 132.90 $132.90 \n4. Alterations & Fire Repair (To add or \nreplace HVAC units, add fees from line \n6) (Total loss by fire or natural disaster \nreviewed as New Dwelling) \n$1 20.08 \nea ch \nfloor \n$2 37.82 $ 237.82 - - $ 52.46 $ 132.90 $132.90 \n5. Accessory Structures (over 200 sf) $ 237.82 $2 90.28 - - - - $ 52.46 $ 132.90 $132.90 \n6. Mechanical Additions & Replacements \nA. Heating or air conditioning \nB. Combined (includes ductwork ) \n$ 8 8.59 \n$ 167.88 \n$1 17.73 \n$ 197.02 \n-- \n-- \n-- \n-- \n$2 9.14 \n$2 9.14 \n-- \n-- \n- - \n- - \n7. Decks & Ramps without Roofs \n(Attached or Detached) \n$ 179.53 $2 31.99 - - - - $ 52.46 $ 132.90 $132.90 \n8. Partial Permits (when granted) $ 23 7.82 $ 2 66.9 6 - - - - $2 9.14 - - - \n9. Moving $2 37 .82 $2 66.9 6 - - - - $2 9.14 - - - \n10. Pools \nA. Above Ground \nB. In - Ground \n$1 44.55 \n$ 353.23 \n$1 97.01 \n$ 405.69 \n- - \n- - \n-- \n- - \n- - \n$ 52.46 \n$ 52.46 \n$ 132.90 \n$ 132.90 \n$132.90 \n11. Retaining Walls (up to 300 ft.) $ 4.00 /lf $ 1 20.08 $ 120.08 - - $29.14 - - $132.90 \n12. Towers $1 20.08 $ 149.22 - - - - $2 9 . 14 - - \n13. Wrecking $ 40.01 /1000 sf TOTAL $ 7 6.93 - - $2 9 . 14 - - - - \n14. Re - R oof $120.08 $149.2 2 $158.17 29.14 \n$132.90\n$132.90",
+          "text_sha256": "8a0e4f5b08628433e3b1bb1486fa205a557120a8f29e512688ffc5d90087e6d8",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2"
+        },
+        {
+          "page": 3,
+          "text": "PERMIT USE/TYPE \nUNIT \nPRICE \nEACH \nUP - \nFRONT \nUP - FRONT \nFEE W/ \nTECH. & \nSURCHARGE \nMINIMUM \nBUILDING \nFEE \nPERMIT FEE \nMULTIPLIER CO/CC \n*TCO \n1 st 30 \nDays REVISION \nBUILDINGS & STRUCTURES REGULATED BY THE OBC (ADD OBBS ASSESSMENT FE E – 3%) \n1. N e w Buildings (Formula A or B) - - $ 586.38 $ 58 6.38 .0019 $ 170.21 $ 265.79 \n$265.79 2. Additions (Formula A or B) - - $ 586.38 $ 586.38 .0019 $ 170.21 $ 265.79 \n3. Industrialized (includes all HVAC) $ 30 7 .76 $ 4 77.97 - - - - $ 170.21 $ 265.79 $265.79 \n4. Alterations & Fire Repair \nA. Entire Building, floor, fire repair \nalterations (Formula A or B) \nB. Minor Alterations (as determined \nby the Building Official) \nC. Change of Use (No building or \nmechanica l work included ) \nD. M inor Alterations and Change of \nUse (Formula A or B) (as \ndetermined by the Building \nOfficial) sq. ft. over 10,000 shall be \ncalculated at 10,000 sq. ft. \n- - \n$ 425.50 \n$ 586.38 \n$5 86.38 \n$ 586.38 \n$ 586.38 \n$ 756.59 \n$ 586.38 \n$ 586.38 \n$425.50 \n- - \n$425.50 \n.0043 \n- - \n- - \n.0043 \n$ 170.21 \n$ 170.21 \n$ 170.21 \n$ 170.21 \n$ 265.79 \n$ 265.79 \n- - \n$ 265.79 \n$265.79 \n$265.79 \n$265.79 \n$265.79 \n5. Partial Permits (conditional permits) \nA. Footing & Foundation \nB. Shell (Formula B) \nC. Interior Build-out of Shell (Formula\nA or B) \n$469.81 \n-- \n-- \n$498.95 \n$586.38 \n$586.38 \n-- \n$586.38 \n$586.38 \n-- \n.0019 \n.0019 \n$29.14 \n$29.14 \n$170.21 \n-- \n-- \n$265.79 \n$265.79 \n6. Utility/Miscellaneous Structure \n(Formula A or B) \n- - $ 408. 03 $2 37.82 .0019 $ 170.21 $ 265.79 $265.79 \n7. Awnings, Canopies & Marquees \nA. Light Construction \nB. Heavy Construction \n$1 20.08 \n$ 237.82 \n$1 49. 22 \n$ 408. 0 3 \n- - \n- - \n- - \n- - \n$29.14 \n$ 170.21 \n- - \n$ 265.79 \n$132.90 \n$132.90 \n8. Decks & Ramps without Roofs\n(Attached or Detached) \n$263.46 $433.67 -- -- $170.21 $265.79 $132.90 \n9. Kitchen Exhaust Hoods $ 3 14.84 $2 85.70 - - $29.14 - - - \n10. Membranes - $ 353.23 - .0019 $ 170.21 $ 265.79 $265.79 \n11. Moving $2 37.82 $2 66.96 - - - - $29.14 - - - - \n12. Pools $4 67.47 $ 637.68 - - - - $ 170.21 $ 265.79 $132.90 \n13. Re - R oofing $.04 8 3 TOTAL $2 28.58 - - $29.14 - - - - \n14. Retaining Walls & Monuments $ 4.00 /lf $1 20.08 $ 120.08 - - $29.14 - - $132.90 \n15. Signs \nA. Permanent Ground Supported \n(over 3 sf) \nB. Wall, Projecting & Roof (over 2 - 1 /2 \nsf) \nC. Si ngle Sign Face Change (M ultiple \nFace Changes on same site) \n$2 37.82 \n$ 96.76 \n$ 96.76 \n$ 29.14 \nea. Add’ l \n$ 266.96 \n$ 1 25.90 \n$ 125 . 90 \n- - \n- - \n- - \n- - \n- - \n- - \n$29.14 \n$29.14 \n$29.14 \n- - \n- - \n- - \n$132.90 \n- - \n- - \n16 . S pray Boot hs $ 192.35 $3 6 2 . 56 - - - - $ 170.21 - - $132.90 \n17. Temporary Structures – under 180 \nday s (see Section 624.0) \n$ 120 .0 8 $1 20.08 $1 20.08 - - $ 170.21 - - - - \n18. Tents $1 20.08 \n$ 29.14 \nea. Add’l. \n$1 20.08 $1 20.08 - - $ 170.21 - - - - \n19. Wrecking $ 40.01 /1000 sf TOT AL $ 76.93 - - $29.14 - - - - \n20. Gas Line (per meter) $ 96.76 $1 25.90 - - - - $29.14 - - \n21. Other Building Service Piping \n(refrigeration lines) \n$ 96.76 $ 125.90 - - - - $29.14 - - \nFIR E PROTECTION SYSTEMS, Re gulated by the OBC (Add OBBS Assessment Fee – 3% ) \n1. Inside suppression work - including \nlimited area \nA. New \nB. Alteration (arm - overs only) \n$. 0 735 / sf \n$. 0232 / sf \n$2 44 . 81 \n$2 44.81 \n$ 215.67 \n$ 21 5.67 \n-- \n-- \n$29.14 \n$29 .14 \n-- \n-- \n2. Outside Fire Line Work $ 215.67 $2 4 4. 81 -- -- $29.14 -- $132.90 \n$132.90\n$132.90\n$132.90 \n$265.79\n$265.79\n$265.79",
+          "text_sha256": "8d05120399fbb8be523e2a8e44756b811ee2c405fb9abcf65cdd3539832d170c",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2"
+        },
+        {
+          "page": 4,
+          "text": "PERMIT USE/TYPE UNIT \nPRICE \nEACH \nUP - \nFRONT \nUP - FRONT \nFEE W/ \nTECH. & \nSURCHARGE \nMINIMUM \nBUILDING \nFEE \nPERMIT FEE \nM ULTI PLIER \nC O/CC *TCO \n1 st 30 \nDays \nRE VISION \n3. Gravity & Pressure Tanks $ 120.08 $1 49.22 -- -- $29.14 -- $132.90 \n4. Fire Pumps $ 120.08 $1 49 .22 -- -- $29.14 -- $132.90 \n5. Standpipes – House or FD hose system $ 52.46 / \nstory/stand\npipe \n$ 2 66 .96 $2 37.82 - - $29.1 4 -- $132.90 \n6. Hoods – Suppression System Only $ 120.08 $1 49.22 -- -- $29.14 -- $132.90 \n7. Fire Alarms \nA. New \n(Use Groups E, I, & R) \n(All other Use Groups) \nB. Alterations \n(Use Groups E. I & R) \n(All other Use Groups) \n$.0243/ sf \n$.0173/ sf \n$.0173/ sf \n$.0061/ sf \n$382.37 \n$382.37 \n$382.37 \n$382.37 \n$353.23 \n$353.23 \n$353.23 \n$353.23 \n-- \n-- \n-- \n-- \n$29.14 \n$29.14 \n$29.14 \n$29.14 \n-- \n-- \n-- \n-- \n$132.90 \n$132.90 \n$132.90 \n$132.90 \nHEATING, VENTILATION & AIR CONDITIONING, REGULATED BY THE OBC (add OBBS Assessment Fee – 3%) \n1. HVAC Equipment Replacement Only \n(Single or combined Unit) \nA. Includes Ductwork \nB. Without Ductwork, Unit Only \nC. Du ctwo rk Only \n$2 37.82 \n$ 170.21 \n$ 170. 21 \n$2 6 6.9 6 \n$1 99.35 \n$ 199.35 \n-- \n-- \n-- \n-- \n-- \n-- \n$29.14 \n$29.14 \n$29.14 \n-- \n-- \n-- \n$132.90 \n-- \n-- \n2. New/Additions/Alterations* \n(Formula C) \n-- $ 266.96 $2 37.82 .0019 $29.14 - - $132.90 \n3. Alterations to Buil dings** \n(Formula C) \n-- $2 66.96 $2 37.82 .005 $29.14 -- $132.90 \n4. HVAC work related to permits using \nCalculation as per 4.D (Formula C); Sq. \nft. over 10,000 shall be calculated at \n10,000 sq. ft. \n*W hen buildin g permit work \nnecessitat es mech anical work. \n**When a new mechanical system is \ninstalled in an existing building as \nregulated by OMC. \n$ 170.21 $2 66.96 $2 37.82 .005 $29.14 -- $132.90 \nTYPE OF CONSTRUCTION FACTOR* \nUSE GROUP \n1A 1B 2A 2B 3 A 3B 4 5A 5B \nA - 1 Assemb ly, the aters 1.78 1.73 1.69 1.60 1.51 1.50 1.56 1.40 1.36 \nA - 2 Assembly, nightclubs, restaurants, bars, banquet halls 1.27 1.23 1.20 1.13 1.05 1.05 1.09 0 .96 0. 93 \nA - 3 Assembly, churches, general, community halls, \nlibrari es, museums \n1.27 1.23 1.20 1.13 1.0 5 1.05 1.09 0.96 0.93 \nA - 4/A - 5 Assembly, arenas 1.25 1.22 1.17 1.11 1.03 1.03 1.08 0.93 0.91 \nB Business 1.20 1.15 1.11 1.04 0.93 0.93 1.00 0.82 0.79 \nE Educational 1.28 1.23 1.20 1.13 1.04 1.01 1.08 0.91 0.88 \nF - 1 Factor y & industr ial, moderate hazard 0.7 6 0.73 0.68 0.64 0.55 0.57 0.62 0.47 0.45 \nF - 2 Factory & industrial, low hazard 0.75 0.71 0.68 .063 0.55 0.55 0.61 0.47 0.43 \nH - 1 High Hazard, explosives 0.73 0.70 0.66 0.61 0.54 0.54 0.59 0.45 N.P. \nH - 2 - H - 4 High Hazard 0 .73 0.70 0. 66 0.61 0.54 0.54 0.59 0 .45 0.4 2 \nH - 5 HPM 1.20 1.15 1.11 1.04 0.93 0.93 1.00 0.82 0.79 \nI - 1 Institutional, supervised environment 1.22 1.17 1.14 1.07 0.99 0.99 1.07 0.90 0.87 \n1 - 2 Institutional, incapacitated 1.77 1.73 1.69 1.62 1.50 N.P . 1.57 1 .39 N.P. \n1 - 3 Institutional, restra ined 1. 39 1.34 1.30 1.23 1.13 1.11 1.19 1.02 0.96 \n1 - 4 Institutional, day care facilities 1.22 1.17 1.14 1.07 .99 0.99 1.07 0.90 0.87 \nM Mercantile 0.97 0.93 0.88 0.83 0.74 0.75 0.79 0.65 0.63 \nR - 1 Residential, hotels/mot els 1.32 1. 28 1.25 1.18 1.10 1.09 1 .17 1.0 1 0.97 \nR - 2 Residential, multiple family 1.11 1.06 1.03 0.97 0.89 0.88 0.96 0.80 0.76 \nR - 3 & IRC Residential, one - & two - family 0.92 0.89 0.86 0.82 0.78 0.78 0.81 0 .73 0.68 \nR - 4 Residential, care/assisted living fac ilit ies 1.2 2 1.17 1.14 1.07 0.99 0. 99 1.07 0 .90 0.87 \nS - 1 Storage, moderate hazard 0.72 0.68 0.63 0.60 0.51 0.52 0.58 0.43 0.41 \nS - 2 Storage, low hazard 0.71 0.67 0.63 0.59 0.51 0.51 0.56 0.43 0.39 \nU Utility/Miscellaneous 0.40 0.40 0.40 0.40 0.40 0.40 0.4 0 0. 40 0.40",
+          "text_sha256": "e94878c791ed7e2ecf1216803a640a2d78becf45818dd42c750f539c8369cbcd",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2"
+        },
+        {
+          "page": 5,
+          "text": "HAMILTON COUNTY ADMIN ISTRATI VE FEES \n1. Certificate of Occupancy (CO) where required: \nA. Buildings and structures regulated by the HCBC - $52.46 (- with surcharge and technology fee included)\nB. Buildings and structures regulated by the OBBC $170.21 (- with surcharge and technology fee included)\nC. Certificate of Completion of Permit (CC) – for all permits where a CO is not required \nResidential - $29.14 (- with surcharge & technology fee included) \nCommercial - $29.14 (- with surcharge & technology fee included) \n2. Certificate of Temporary Occupancy (TCO): \nA. Buildings and structures regulated by the HCBC \n$132.90 – 1 st 30 days + $68.79 each additional 30 days \nIf additional TCO is required $ 265.79 – 1 st co days +$ 132.90 each additi on al 30 days \nB. Buildings and structures regulated by the OBC \n$265.79 – 1 st 30 days + $132.90 each additional 30 days \nIf additional TCO is required $ 528.0 9 – 1 st 30 days +$ 265.79 each additional 30 days \nC. Occupying w/o TCO, penalty fee \nResidential - $ 265.79 \nCom me rc ial - $ 52 8 .09 to be paid in addit ion to TCO fee \nD. Occupying w/o a Certificate of Occupancy \nResidential = $ 265.79 \nCommercial=$ 528.09 \n3. Refund of Permit Fee (Section HC.A108.4). If granted, shall be in the amount of half the entire permit fee, after deducting the Up-Front Fee and the\nZoning Certificate Fee. \n4. Time Extensions (Section HC.A105.6) each - $100.00 \n5. Unspecified Permit Fee – for any permit type, not specifically listed in this Fee Schedule, the fee shall be calculated to the most similar permit type,\nuse group and type of construction to be determined at the discretion of the Building Official \n6. Scanning fee for Permit Applications reviewed under OBC for paper documents submitted without a digital copy in an approved format: \n• Documents up to 8-1/2 X 14 (including Specs.)…………. $2.40/side \n• Documents larger than 8-1/2 X 11 (B) size…………………$7.01/sheet \n7. Field Inspection and Processing Fee (non-building permit related): \nResidential - $132.90 (- with surcharge & technology fee included) \nCommercial - $170.21 (- with surcharge & technology fee included) \n8. After Hours Inspection (OBC Permits) $162.04 per hour: \n• Minimum fee $648.16 to be paid at time of scheduling inspection + 3% $19.44 + 5% $32.41 = \n9. Plan Review Fee – Accessed at 3 rd review for each hour thereafter: \nRes idential - $132.90 hour (no fractions thereof – rounded up) \nCommercial - $265.79 hour (no fractions thereof – rounded up) \n*Hourly time to include Plan Examiner, Supervisors and Department Head time involved. \n10. Board of Building Appeals: \nResidential $201.68 (- with surcharge and technology fee included) \nCommercial $396.35 (- with surcharge and technology fee included) \n11. Fences over 6’ in height requiring a permit:\nResidential - $132.90 (- with surcharge and technology fee included)\nCommercial - $170.21 (- with surcharge and technology fee included) \nHAMILTON COUNTY PENALTY FEES \n1. Starting Without a permit – (See Section HC.A105.1.1) – Permit fee + $200% penalty fee \n2. Rescinding a Revoked Permit Fee – (Section HC.A110.6) - $353.26 or original fee whichever is less \n3. Missed Inspection Fee – Failure to schedule a “called-for” inspection before proceeding to cover the work shall result in a Missed Inspection fee: \nResidential - $265.79 (- with surcharge & technology fee included \nCommercial - $265.79 (- with surcharge & technology fee included \n4. Re—inspection fee – Not ready and Failed Inspections shall result in a Re-inspection Fee: \nResidential - $162.04 – (- with surcharge & technology fee included) Commercial –\n$162.04 – (- with surcharge & technology fee included) \n5. Violations Penalties (Section HC.A113): \n• Violations issued under the Code shall be punishable by a fine of not more than $300.00 for each offense as provided in Ohio Revised Code\nSection 307.37 and 307.99 (C). \n• Violations issued for offenses to ORC Chapters 3781 and 3791 shall not be more than $1,000.00. \n• Each Day that any such violation or failure continues shall be deemed a separate offense.",
+          "text_sha256": "479dc0a14b401e0d0dbb681a0760b2b8b2e40d008fe0fc757bec18c5ce3dbc5f",
+          "text_status": "embedded_text_extracted",
+          "needs_ocr_review": false,
+          "method": "pdfjs-dist embedded text; no OCR",
+          "source_sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2"
+        }
+      ]
+    }
+  ],
+  "staff_approved": false,
+  "currentness_approved": false,
+  "authority_approved": false,
+  "distinct_archives_parsed": 4
+}

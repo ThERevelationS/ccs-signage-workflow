@@ -1,0 +1,23 @@
+{
+  "file": "building-application.pdf",
+  "official_url": "https://www.elmwoodplace-oh.gov/Content/ApplicationsForms/Building-Permit-Application.pdf",
+  "source_sha256": "ef4677a8d6a09faa43fe2d9f84a51dc0dacc93e1c735eae3506ea771d4876481",
+  "source_bytes": 89374,
+  "total_pages": 1,
+  "pages_with_embedded_text": 1,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "VILLAGE OF ELMWOOD PLACE \n6118 Vine Street , Elmwood Place, Ohio 45216 \nPhone 513-242-0291 Fax 513-242-4578 \nBUILDING PERMIT APPLICATION \n1. STREET ADDRESS:______________________________________________________________________________________ \n2. ZONING : ____________ OCCUPANCY: ____________ PARCEL IDENTIFICATION NUMBER:______________ \n3.  Residential Property (RCO)  Commercial Property (OBC) \nNAME STREET ADDRESS CITY \nSTATE \nZIP PHONE/FAX \nOWNER \nCONTRACTOR \nPLANS BY \nEMAIL ADDRESS OF CONTACT FOR PLAN REVIEW (REQUIRED): _________________________________________ \n4. TYPE OF IMPROVEMENT \n New Building  Garage  Deck \n Alteration  Hood System  Pool (Above-Ground) \n Addition  HVAC  Pool (In-Ground) \n Repair/Replacement ____Furnace ____Air Conditioner  Fence \n Change of Use ____Commercial ____Residential  Shed \n Change of Occupancy ____Replacement ____ New  Sign \n Fire Alarm ____Electric ____Gas ____Oil  Wrecking/Moving \n Fire Suppression  Other (specify) \n ____Sprinkler ____Hood  _______________  \n5. OWNERSHIP  Private  Public \n6. COST Estimate cost of construction/improvement for which this application is being made: $______________ \n7. USE OF THIS BUILDING AND PREMISES: \n Existing Use: __ __________________________  Proposed Use: ________________________________ \n8. TOTAL FLOOR AREA FOR NEW BUILDINGS/GARAGES/SHEDS/ADDITIONS/DECKS: _______________ \nThe owner of this building and undersigned, do hereby covenant and agree with all the laws of the State of Ohio and the ordinances of the \nVillage of Elmwood Place pertaining to building(s), and to construct the proposed building(s) or structure(s) or make the proposed change \nor alteration in accordance with the plans and specifications submitted herewith, and certify that the information and statements given on \nthis application, drawings and specifications to the best of their knowledge, true and correct. \nApplication by _ ___________________________________________________________ Date _______________________ \nO wner or Agent's Name (Print) (Sign) \n--------------------------------------------------------------------------------------------------------------------------------------------------------------------- \nDO NOT WRITE BELOW THIS LINE \n(Office Use Only) \nPermit Fee $___________ \nRCO 1% (Residential) $___________ \nOBC 3% (Commercial) $___________ \nTotal $___________ Payment:  Cash  Check  Credit Card Receipt # _____________ \nPlans Examiner Approval:____________________________________________ Date Plans Approved:______________ \nBuilding/Zoning Official Approval _____________________________________ Date Permit Issued ________________ \nActing as Agent. Authorized to Act for the Political Subdivision______________ Permit Number ___________________",
+      "text_sha256": "efdf957eccdfba9adad6eb5dda90a31194253b231173d575d2a06fde01a96994",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "ef4677a8d6a09faa43fe2d9f84a51dc0dacc93e1c735eae3506ea771d4876481"
+    }
+  ]
+}

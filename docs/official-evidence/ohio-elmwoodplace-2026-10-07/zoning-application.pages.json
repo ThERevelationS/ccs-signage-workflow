@@ -1,0 +1,23 @@
+{
+  "file": "zoning-application.pdf",
+  "official_url": "https://www.elmwoodplace-oh.gov/Content/Zoning%20application.pdf",
+  "source_sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145",
+  "source_bytes": 80523,
+  "total_pages": 1,
+  "pages_with_embedded_text": 1,
+  "extraction_covers_all_physical_pages": true,
+  "embedded_text_present_on_all_pages": true,
+  "searchable_content_complete": false,
+  "ocr_performed": false,
+  "pages": [
+    {
+      "page": 1,
+      "text": "150.00",
+      "text_sha256": "14e0ee8716dfc7c44c70a9e317ad5e56507d728e3a32fe50a3fc9cb6dad7b1b2",
+      "text_status": "embedded_text_extracted",
+      "needs_ocr_review": false,
+      "method": "pdfjs-dist embedded text; no OCR",
+      "source_sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145"
+    }
+  ]
+}
