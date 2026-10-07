@@ -45,3 +45,18 @@ test('Cheviot and Cleves original PDFs preserve archive identities and draft lab
  assert.match(cleves,/addresses differ/);assert.match(cheviot,/National Inspection Corporation/);
  for(const html of [cleves,cheviot])assert.match(html,/responsibilities remain unresolved|does not establish separate electrical/);
 });
+
+test('electrical provider guide retains identity while XLS and municipal roles stay unresolved',()=>{
+ const manifest=JSON.parse(readFileSync('docs/official-evidence/ohio-west-offices-2026-10-07/electrical-routing/manifest.json'));
+ const original=manifest.sources.find(s=>s.file==='ibi-eztrak-new-user.pdf');
+ assert.equal(manifest.sources.find(s=>s.file.endsWith('.xls')).status,'retrieval_gap');
+ for(const row of dossiers.filter(d=>['Cheviot','Cleves'].includes(d.name))){
+ const r=row.electrical_research,bytes=readFileSync('public'+r.guide_archive);
+ assert.deepEqual(bytes,readFileSync(original.retained_path));assert.equal(bytes.length,r.bytes);
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),r.sha256);
+ for(const flag of ['coverage_approved','permit_issuer_approved','inspection_role_approved'])assert.equal(r[flag],false);
+ const html=render(row);assert.match(html,/municipal coverage unresolved/);assert.match(html,/HTTP 406/);assert.match(html,/Retained ezTrak guide PDF/);
+ assert.match(html,/Official inspection-area XLS — retention gap/);assert.ok(html.includes('https://eztrak.cagis.org/'));
+ assert.equal(render(row,false),'');
+ }
+});
