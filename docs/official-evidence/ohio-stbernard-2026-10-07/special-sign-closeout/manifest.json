@@ -1,0 +1,58 @@
+{
+  "sources": [
+    {
+      "file": "711.02.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16881",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "711.05.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16940",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "711.06.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16951",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "1186.09.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36854",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "711.01.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16868",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "711.03.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16916",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "711.08.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16990",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "1186.01.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36795",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "1186.99.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36858",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Paraphrased web-derived observations only; original download outcomes separately recorded.",
+  "sources": [
+    {
+      "section": "711.02",
+      "file": "711.02.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16881",
+      "observation": "Highway-visible advertising definition has category exclusions; face-change definition distinguishes panel replacement from copy/poster/vinyl change. Definitions are not independent electrical exemptions.",
+      "version": "2026-01"
+    },
+    {
+      "section": "711.05",
+      "file": "711.05.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16940",
+      "observation": "Lawful nonconforming status requires historical evidence; enlargement, relocation, replacement and damage rules have exceptions. Do not infer grandfathered status or removal obligation from existence alone.",
+      "version": "2026-02"
+    },
+    {
+      "section": "711.06",
+      "file": "711.06.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16951",
+      "observation": "Interstate standards control when sign visible from multiple highways including Interstate; address-specific sightline/road classification review required.",
+      "version": "2026-02"
+    },
+    {
+      "section": "1186.09",
+      "file": "1186.09.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36854",
+      "observation": "Denial/revocation/suspension requires written notice with reasons and takes immediate effect in published text; not proof of any actual permit action.",
+      "version": "2026-02"
+    },
+    {
+      "section": "711.01",
+      "file": "711.01.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16868",
+      "observation": "Intent addresses interstate/primary-highway safety and visual blight; does not grant sign permission.",
+      "version": "2026-02"
+    },
+    {
+      "section": "711.03",
+      "file": "711.03.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16916",
+      "observation": "Maintenance, installer identification, lighting shielding, access/traffic protection and ROW provisions apply within chapter scope. Published 70 foot-candle sign-face limit is not universal luminance limit for every sign.",
+      "version": "2026-02"
+    },
+    {
+      "section": "711.08",
+      "file": "711.08.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-16990",
+      "observation": "Annual inspection and violation notice/hearing provisions; written hearing request 30-day candidate. Text says filed with Board while hearing names directors: recipient ambiguity unresolved; no operational appeal deadline approved.",
+      "version": "2026-02"
+    },
+    {
+      "section": "1186.01",
+      "file": "1186.01.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36795",
+      "observation": "Cafe intent limits section to literal O-B 2 and B-3 districts; O-B 2 wording differs from publisher district index B-2 Office District. Do not silently normalize district label or infer parcel eligibility.",
+      "version": "2024-04"
+    },
+    {
+      "section": "1186.99",
+      "file": "1186.99.html",
+      "url": "https://codelibrary.amlegal.com/codes/stbernard/latest/stbernard_oh/0-0-0-36858",
+      "observation": "Published fourth-degree misdemeanor and separate daily offense language; no penalty assessment automated.",
+      "version": "2026-02"
+    }
+  ],
+  "chapter_observation_coverage": {
+    "chapter_1185": 9,
+    "chapter_711": 8,
+    "chapter_1186": 10,
+    "meaning": "All indexed sections observed across review packets; not adopted/current/archived code completeness."
+  },
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0
+}
