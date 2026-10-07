@@ -77,8 +77,15 @@ assert(source.includes('write_capability:false'), 'Simulation endpoint must expl
 assert(source.includes('apply_path_enabled:false'), 'Simulation endpoint must explicitly report apply path disabled.');
 assert(source.includes('buildOpportunityBridgeDryRunPlan'), 'Backend must compute proposals from trusted live reads.');
 assert(source.includes('evaluateOpportunityBridgeProductionReadiness'), 'Backend must compute the read-only production readiness gate.');
-assert(source.includes('receiptSchemaActivated:false'), 'Simulation must report the receipt ledger as not activated.');
-assert(source.includes('secondaryConfirmationConfigured:false'), 'Simulation must report secondary confirmation as not configured.');
+assert(source.includes('OpportunityBridgeOperationReceipt'), 'Simulation must read the activated durable receipt ledger.');
+assert(source.includes('summarizeOpportunityBridgeReceiptLedger'), 'Simulation must summarize durable receipt identity state.');
+assert(source.includes('receiptSchemaActivated:true'), 'Simulation must report the durable receipt schema as activated.');
+assert(source.includes('secondaryConfirmationConfigured:confirmationContract.configured === true'), 'Simulation must report the configured secondary-confirmation contract.');
+assert(source.includes('buildOpportunityBridgeSecondaryConfirmationBinding'), 'Simulation must prove exact run/batch confirmation binding without enabling apply.');
+assert(source.includes('secondary_confirmation_contract:confirmationContract'), 'Simulation response must include the secondary-confirmation contract.');
+assert(source.includes('secondary_confirmation_binding:confirmationBinding'), 'Simulation response must include only the non-secret confirmation binding metadata.');
+assert(source.includes('rollout_run_id:rolloutRunId'), 'Simulation response must bind readiness to a server-generated rollout run id.');
+assert(!source.includes('required_phrase:'), 'Simulation endpoint must not expose the confirmation phrase.');
 assert(source.includes('readiness,'), 'Simulation response must include the readiness checklist.');
 assert(source.includes('generated_at:generatedAt'), 'Simulation response must include the server plan timestamp.');
 assert(!source.includes('opportunityBridgeApplyEngine'), 'Simulation endpoint must not import the apply engine.');
@@ -99,5 +106,6 @@ assert(/WorkOrder[^\n]*=.*asServiceRole\.entities\.WorkOrder/.test(source));
 assert(/Customer[^\n]*=.*asServiceRole\.entities\.Customer/.test(source));
 assert(/Estimate[^\n]*=.*asServiceRole\.entities\.AllInOneEstimate/.test(source));
 assert(/Opportunity[^\n]*=.*asServiceRole\.entities\.Opportunity/.test(source));
+assert(/Receipt[^\n]*=.*asServiceRole\.entities\.OpportunityBridgeOperationReceipt/.test(source));
 
 console.log('Opportunity bridge simulation-only endpoint validation: PASS');
