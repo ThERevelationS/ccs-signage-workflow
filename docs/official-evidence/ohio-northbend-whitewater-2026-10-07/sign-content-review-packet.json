@@ -1,0 +1,259 @@
+{
+  "profile": {
+    "id": "6ac19f1c2fbbf3b8bb27397c",
+    "name": "North Bend",
+    "state": "OH",
+    "type": "village",
+    "source": "https://www.northbendohio.org/zoning",
+    "observed_on": "2026-10-07",
+    "resources": [
+      {
+        "file": "northbend-right-of-way.pdf",
+        "label": "Village right-of-way application — separate from sign approval",
+        "source": "https://www.northbendohio.org/_files/ugd/c8a414_2fa27c99fefc48ab93fda35a3f2db926.pdf",
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-right-of-way.pdf",
+        "format": "PDF",
+        "bytes": 910003,
+        "sha256": "0e7aabfed04821b6ac3fe032b193b344a8341f64071f69c52e5567de1ddb9bca"
+      },
+      {
+        "file": "northbend-linked-zoning-code.pdf",
+        "label": "Village-linked zoning code — current amendments unverified",
+        "source": "https://www.northbendohio.org/_files/ugd/7241ab_59bcc9bd24a6450e8c72f10801d7491c.pdf",
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf",
+        "format": "PDF",
+        "bytes": 5346947,
+        "sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2"
+      }
+    ],
+    "document_findings": [
+      {
+        "label": "Printed adoption statement",
+        "text": "The cover states adoption April 28, 2025. Later amendments and current compilation remain unverified.",
+        "physical_page": 1,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "a5e7154704cfca36760e650e78a592e6db41dbd791f4e2ff87e0d04cacf158f7",
+        "matched_text": "April 28, 2025",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=1"
+      },
+      {
+        "label": "Permit trigger and exemptions",
+        "text": "Part 4.B starts with a zoning-permit trigger and enumerated exemptions. An exemption must be checked against its conditions and the proposed sign; it does not establish a building or electrical exemption.",
+        "physical_page": 40,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "62f99046ccdfd3e5e81aab4b6e90e3b84ad999cd26340672b171a38aa45a871f",
+        "matched_text": "a Zoning Permit shall be obtained",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=40"
+      },
+      {
+        "label": "Freestanding signs",
+        "text": "The retained page includes district-specific freestanding tables, per-face accounting, base and landscaping provisions, and a pole-sign restriction. Use the original table for review; no district or numeric allowance is approved for a job.",
+        "physical_page": 42,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "9802ae3a53fb6c6f9487ba2650e8220b679fea583cec54f487b2c3135da711de",
+        "matched_text": "Pole Signs",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=42"
+      },
+      {
+        "label": "Wall sign district table",
+        "text": "The wall-sign table varies by district, frontage and building width; PUD provisions refer to an approved development plan. Page-linked table remains unreviewed for current applicability.",
+        "physical_page": 44,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "f309ec4052f9bc7d6b98002a36857fac72a1ece1d3f649948cae465fefb49262",
+        "matched_text": "1 sq. ft. per 1 lineal foot",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=44"
+      },
+      {
+        "label": "Window, wayfinding and sign lighting",
+        "text": "The page includes window coverage, wayfinding, entrance-wall and drive-through provisions, then begins sign lighting. Lighting continues on the next page; a cross-reference printed as B.13.a requires review against the section numbering.",
+        "physical_page": 45,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "5b875858c3871ce2d6dd63e6c1593403095d7475650a39454ef428716c844e8d",
+        "matched_text": "Sign Lighting",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=45"
+      },
+      {
+        "label": "Lighting and temporary signs",
+        "text": "The retained text includes a 4,000K lighting limit and temporary-sign rules with different small/large permit triggers, district restrictions and duration provisions. These are document candidates; zoning lighting conditions do not identify an electrical permit issuer or inspector.",
+        "physical_page": 46,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "8d2a0868d3dafbab4895f86c5c506db2b30ba5ef1ea36d7df2db092e322f6fe0",
+        "matched_text": "4,000K",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=46"
+      },
+      {
+        "label": "Electronic displays and murals",
+        "text": "The page contains message timing, transition and auto-dimming provisions plus mural permits. Review sign type and district before applying these provisions.",
+        "physical_page": 47,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "7ec4f803dd6506e35dd3b506c9cd839187fe622c9050946b90a7b3c772f7351d",
+        "matched_text": "auto dimming photocell",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=47"
+      },
+      {
+        "label": "Billboard certificates and state permits",
+        "text": "The billboard section describes a sign zoning certificate and a possible state transportation permit in addition to local review. Routine-maintenance language here does not establish an electrical-permit exemption.",
+        "physical_page": 48,
+        "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+        "text_sha256": "b6fc4462313dec5e80c2b41b493f8ea6c3cb882f15c8d50f180e45e589d76f87",
+        "matched_text": "State Director of Transportation",
+        "observation_method": "embedded PDF text review",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=48"
+      }
+    ],
+    "notes": [
+      "The Village zoning page identifies Hamilton County zoning assistance and county building-permit issuance. Office identity, current responsibility and job-address coverage still require approval.",
+      "The reviewed Village forms page links a right-of-way application. This form does not replace sign zoning or building approval. A separate sign application/online submission route was not located on that page.",
+      "The county zoning page and 2024 zoning application originals returned HTTP 403. They remain retention gaps.",
+      "Electrical permit issuance and electrical inspection remain independently unresolved. Sign-lighting standards do not establish either office."
+    ],
+    "references": [
+      {
+        "label": "Official Village forms page",
+        "url": "https://www.northbendohio.org/forms"
+      }
+    ],
+    "extraction_note": "Embedded text was extracted across 181 code pages and two right-of-way pages. Page findings remain pending review; extraction does not verify tables, current amendments or complete searchable content."
+  },
+  "findings": [
+    {
+      "label": "Printed adoption statement",
+      "text": "The cover states adoption April 28, 2025. Later amendments and current compilation remain unverified.",
+      "physical_page": 1,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "a5e7154704cfca36760e650e78a592e6db41dbd791f4e2ff87e0d04cacf158f7",
+      "matched_text": "April 28, 2025",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=1"
+    },
+    {
+      "label": "Permit trigger and exemptions",
+      "text": "Part 4.B starts with a zoning-permit trigger and enumerated exemptions. An exemption must be checked against its conditions and the proposed sign; it does not establish a building or electrical exemption.",
+      "physical_page": 40,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "62f99046ccdfd3e5e81aab4b6e90e3b84ad999cd26340672b171a38aa45a871f",
+      "matched_text": "a Zoning Permit shall be obtained",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=40"
+    },
+    {
+      "label": "Freestanding signs",
+      "text": "The retained page includes district-specific freestanding tables, per-face accounting, base and landscaping provisions, and a pole-sign restriction. Use the original table for review; no district or numeric allowance is approved for a job.",
+      "physical_page": 42,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "9802ae3a53fb6c6f9487ba2650e8220b679fea583cec54f487b2c3135da711de",
+      "matched_text": "Pole Signs",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=42"
+    },
+    {
+      "label": "Wall sign district table",
+      "text": "The wall-sign table varies by district, frontage and building width; PUD provisions refer to an approved development plan. Page-linked table remains unreviewed for current applicability.",
+      "physical_page": 44,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "f309ec4052f9bc7d6b98002a36857fac72a1ece1d3f649948cae465fefb49262",
+      "matched_text": "1 sq. ft. per 1 lineal foot",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=44"
+    },
+    {
+      "label": "Window, wayfinding and sign lighting",
+      "text": "The page includes window coverage, wayfinding, entrance-wall and drive-through provisions, then begins sign lighting. Lighting continues on the next page; a cross-reference printed as B.13.a requires review against the section numbering.",
+      "physical_page": 45,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "5b875858c3871ce2d6dd63e6c1593403095d7475650a39454ef428716c844e8d",
+      "matched_text": "Sign Lighting",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=45"
+    },
+    {
+      "label": "Lighting and temporary signs",
+      "text": "The retained text includes a 4,000K lighting limit and temporary-sign rules with different small/large permit triggers, district restrictions and duration provisions. These are document candidates; zoning lighting conditions do not identify an electrical permit issuer or inspector.",
+      "physical_page": 46,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "8d2a0868d3dafbab4895f86c5c506db2b30ba5ef1ea36d7df2db092e322f6fe0",
+      "matched_text": "4,000K",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=46"
+    },
+    {
+      "label": "Electronic displays and murals",
+      "text": "The page contains message timing, transition and auto-dimming provisions plus mural permits. Review sign type and district before applying these provisions.",
+      "physical_page": 47,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "7ec4f803dd6506e35dd3b506c9cd839187fe622c9050946b90a7b3c772f7351d",
+      "matched_text": "auto dimming photocell",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=47"
+    },
+    {
+      "label": "Billboard certificates and state permits",
+      "text": "The billboard section describes a sign zoning certificate and a possible state transportation permit in addition to local review. Routine-maintenance language here does not establish an electrical-permit exemption.",
+      "physical_page": 48,
+      "source_sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "text_sha256": "b6fc4462313dec5e80c2b41b493f8ea6c3cb882f15c8d50f180e45e589d76f87",
+      "matched_text": "State Director of Transportation",
+      "observation_method": "embedded PDF text review",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "applicability_approved": false,
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf#page=48"
+    }
+  ],
+  "staff_approved": false,
+  "currentness_approved": false,
+  "electrical_roles_approved": false,
+  "live_records_changed": 0
+}
