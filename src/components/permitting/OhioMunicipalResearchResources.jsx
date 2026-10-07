@@ -20,6 +20,18 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
           <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official document</a>
         </div>
       </li>)}</ul>
+      {dossier.routing_comparison && <section className="space-y-2" aria-label="Submission and contact comparison">
+        <p className="font-medium">Guide compared with current City pages — review pending</p>
+        <div className="overflow-x-auto"><table className="w-full min-w-[32rem] text-left text-sm">
+          <thead><tr><th className="p-2">Topic</th><th className="p-2">Retained guide</th><th className="p-2">Current City page</th><th className="p-2">Open review</th></tr></thead>
+          <tbody>{dossier.routing_comparison.map(row => <tr className="border-t border-amber-200 align-top" key={row.topic}>
+            <th scope="row" className="p-2">{row.topic}</th>
+            <td className="p-2">{row.guide}<br /><a className="min-h-11 inline-flex items-center underline" href={row.guide_url} target="_blank" rel="noopener noreferrer">Guide page {row.page}</a></td>
+            <td className="p-2">{row.city}<br /><a className="min-h-11 inline-flex items-center underline" href={row.url} target="_blank" rel="noopener noreferrer">Official City source</a></td>
+            <td className="p-2">{row.review}</td>
+          </tr>)}</tbody>
+        </table></div>
+      </section>}
       {(dossier.document_findings || dossier.extraction_note) && <section className="space-y-3 rounded border border-amber-200 p-3" aria-label="Retained document findings">
         <p className="font-medium">Document findings — currentness and applicability unreviewed</p>
         {dossier.extraction_note && <p>{dossier.extraction_note}</p>}

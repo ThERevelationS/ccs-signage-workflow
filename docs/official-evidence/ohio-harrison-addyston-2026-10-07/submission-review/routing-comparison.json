@@ -1,0 +1,48 @@
+{
+  "rows": [
+    {
+      "topic": "Submission method",
+      "guide": "Physical page 1 requests four paper plan copies.",
+      "city": "Current Permits page describes Cloudpermit from January 2025 and still lists paper versions.",
+      "review": "Confirm sign-specific paper/portal acceptance; supersession is not established.",
+      "page": 1,
+      "url": "https://www.harrisonohio.gov/158/Permits",
+      "html_sha256": "7ff1e917cab214753c20a99c26e9243b98daae19d90a611ea23c726df06e3056",
+      "guide_url": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=1",
+      "guide_source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "raw_ocr_sha256": "615449d84cf222431c0127c0b3c7fa83404669b8ef1ef0c9ea381ea257068610",
+      "staff_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "topic": "City inspection contact",
+      "guide": "Physical page 2 prints 513-202-8488 for foundation, mounting and final inspections.",
+      "city": "Current Inspections page lists Harrison Building Department at 513-202-8494.",
+      "review": "Confirm scheduling contact before use; preserve both published numbers.",
+      "page": 2,
+      "url": "https://www.harrisonohio.gov/157/Inspections",
+      "html_sha256": "001482497ec5a93707667837954ab6232d0a6044941c4be4f436c45fe38019fd",
+      "guide_url": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=2",
+      "guide_source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "raw_ocr_sha256": "f2c0ebffc3197c219be5d86dd8513fbe920b08510d2c90cc41bc0bafc97e6142",
+      "staff_approved": false,
+      "currentness_approved": false
+    },
+    {
+      "topic": "Electrical inspection",
+      "guide": "Physical page 2 prints IBI and 513-381-6080 for illuminated/wired signs.",
+      "city": "Current Inspections page names Inspection Bureau Incorporated and the same 513-381-6080 number.",
+      "review": "Consistent inspection contact evidence; canonical identity and responsibility approval remain pending. Permit issuance is separate.",
+      "page": 2,
+      "url": "https://www.harrisonohio.gov/157/Inspections",
+      "html_sha256": "001482497ec5a93707667837954ab6232d0a6044941c4be4f436c45fe38019fd",
+      "guide_url": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=2",
+      "guide_source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "raw_ocr_sha256": "f2c0ebffc3197c219be5d86dd8513fbe920b08510d2c90cc41bc0bafc97e6142",
+      "staff_approved": false,
+      "currentness_approved": false
+    }
+  ],
+  "supersession_approved": false,
+  "live_records_changed": 0
+}

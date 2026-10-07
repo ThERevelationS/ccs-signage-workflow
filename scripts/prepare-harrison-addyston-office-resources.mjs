@@ -26,7 +26,7 @@ for(const row of rows){row.observed_on='2026-10-07';row.resources=manifest.sourc
 });}
 const path='src/components/permitting/ohioMunicipalResearch.json';
 const prior=JSON.parse(readFileSync(path));
-for(const row of rows){const old=prior.find(p=>p.id===row.id);for(const key of ["document_findings","extraction_note","ocr_references"])if(old?.[key])row[key]=old[key];}
+for(const row of rows){const old=prior.find(p=>p.id===row.id);for(const key of ["document_findings","extraction_note","ocr_references","routing_comparison"])if(old?.[key])row[key]=old[key];}
 writeFileSync(path,JSON.stringify([...prior.filter(p=>!rows.some(r=>r.id===p.id)),...rows],null,2)+'\n');
 writeFileSync(root+'office-reconciliation.json',JSON.stringify({profiles:rows,staff_approved:false,electrical_roles_approved:false,live_records_changed:0,retained_downloads:6,distinct_pdf_hashes:new Set(manifest.sources.filter(s=>s.file.endsWith('.pdf')).map(s=>s.sha256)).size,
 gaps:['Addyston permit applications and electrical offices','Harrison permit issuer/canonical inspection provider approval','Current sign-code applicability and fees','App-storage/source-catalog registration']},null,2)+'\n');
