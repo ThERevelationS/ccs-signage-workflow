@@ -1436,6 +1436,24 @@ async function pushDataset(
     try {
       let salesSuccessfulWrite: 'created' | 'updated' | null = null;
       if (existingRowId && /^\d+$/.test(existingRowId) && existingSheetId === sheetId) {
+        // Order identity is permanent sheet + row ID only. Smartsheet sorting or
+        // row movement is harmless because row position is ignored. If the row
+        // was deleted and recreated, the replacement has a different permanent
+        // ID and must never be inferred from customer/description/value matches.
+        if (dataset === 'orders') {
+          const identity = classifyOrderPermanentRowIdentity(record, sheetId, sheetRowIds);
+          if (identity.state !== 'linked') {
+            orderMissingPermanentRows.set(String(record.id), existingRowId);
+            await reportOrderProgress({
+              phase: 'needs_review', current: orderProcessedCount, total: pendingRecords.length,
+              fraction: 0.1 + (0.35 * (orderProcessedCount / Math.max(1, pendingRecords.length))),
+              item_label: orderProgressItemLabel(record),
+              detail: `Permanent Smartsheet row ${existingRowId} is missing. Base44 kept the original link and local data; no automatic relink or replacement-row create was attempted.`,
+              record_id: record.id, smartsheet_row_id: existingRowId,
+            });
+            throw new Error(`Permanent Smartsheet row ${existingRowId} is missing. Base44 preserved the stored permanent link and local data. Review permanent IDs; no relink by customer, description, row position, or similar replacement row was attempted.`);
+          }
+        }
         // Reconcile each field, not an entire row by its last-sync timestamp.
         const cached = sheetRowsMap.get(existingRowId);
         const rowResult = cached ? {body:cached.raw} : await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
