@@ -31,7 +31,8 @@ const source = (rowId, rowNumber, values, customerResolution = exactAlias, statu
 const binding = (fields) => Object.fromEntries(fields.map((field, index) => [field, { column_id: String(index + 1) }]));
 const salesBinding = binding([
   "client_name", "est_inv_at", "current_task_description", "lead_source",
-  "estimate_amount", "date_initial_contact",
+  "estimate_amount", "date_initial_contact", "date_order_created", "project_install_date",
+  "permit_receipt_confirmed_date", "permit_approved_date", "permit_number",
 ]);
 const ordersBinding = binding([
   "customer_name", "request_type", "description", "quantity", "requestor_name", "date_needed",
@@ -87,6 +88,11 @@ const salesRows = [
   source("s-candidate", 12, { client_name: "Acme Old", title: "Existing Base44 record" }, exactAlias, "candidate"),
   source("s-unresolved", 13, { client_name: "Unapproved Co", title: "Unresolved" }, newName),
   source("s-cross", 14, { client_name: "Cross Sheet Co", title: "Cross-sheet job" }, newName),
+  source("s-operational", 15, {
+    client_name: "Acme Old", title: "Installed workflow row",
+    current_task_description: "WIP - Installation",
+    date_order_created: "2026-10-01", project_install_date: "2026-10-20",
+  }),
 ];
 const orderRows = [
   source("old-order", 1, { customer_name: "Acme Old", request_type: "Other", description: "Historical" }),
@@ -159,6 +165,18 @@ for (const forbidden of [
   assert.ok(!(forbidden in existing.proposed_payload), `Must not fabricate ${forbidden}`);
 }
 assert.equal(existing.relationships.estimate.action, "unlinked_no_authoritative_estimate_match");
+
+const operational = row(sales, "s-operational");
+assert.equal(operational.proposal_ready, true,
+  "Objective downstream evidence should not discard the WorkOrder from controlled creation review.");
+assert.equal(operational.proposed_payload.in_pipeline, false,
+  "Operational Smartsheet rows must be preserved outside Current Pipeline.");
+assert.ok(!("sales_status" in operational.proposed_payload),
+  "Operational Smartsheet rows must not be presented as a fabricated Lead.");
+assert.ok(!("current_stage" in operational.proposed_payload),
+  "Operational Smartsheet rows must not be forced into the Sales workflow stage.");
+assert.equal(operational.proposed_payload.date_order_created, "2026-10-01");
+assert.equal(operational.proposed_payload.project_install_date, "2026-10-20");
 
 const alias = row(sales, "s-alias");
 assert.equal(alias.proposal_ready, true);
