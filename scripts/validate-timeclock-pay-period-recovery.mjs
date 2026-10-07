@@ -1210,8 +1210,8 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
   const sourcePeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period');
   const destinationPeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'modified-destination-period');
-  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 26);
-  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 26);
+  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 27);
+  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 27);
   const sourceChange = sourcePeriod.finalized_summary.generation_changes[0];
   const destinationChange = destinationPeriod.finalized_summary.generation_changes[0];
   assert.equal(sourceChange.change_type, 'removed');
@@ -2288,7 +2288,7 @@ test('v26 missed Clock Out payroll provenance binds Punch Exception and employee
 
   const refinalized = await h.action('finalize', 'v26-missed-refinalize-001');
   assert.equal(refinalized.status, 200, JSON.stringify(refinalized.body));
-  assert.equal(period.finalized_summary.snapshot_version, 26);
+  assert.equal(period.finalized_summary.snapshot_version, 27);
   assert.equal(period.finalized_summary.generation_changes.length, 1);
   const change = period.finalized_summary.generation_changes[0];
   assert.equal(change.change_type, 'added');
@@ -2794,6 +2794,243 @@ test('reconstructed missed Clock In status fails closed when its Punch Exception
   assert.equal(status.body.pending_shift_review.has_integrity_issue, true);
   assert.equal(status.body.pending_shift_review.items[0].review_kind, 'missed_clock_in');
   assert.equal(status.body.pending_shift_review.items[0].review_state, 'needs_manager_investigation');
+});
+
+test('v27 late-day missed Clock In payroll provenance binds employee attestation and manager approval', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  const period = h.period();
+  Object.assign(period, {
+    start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '',
+  });
+
+  const initialFinalized = await h.action('finalize', 'v27-late-initial-finalize-001');
+  assert.equal(initialFinalized.status, 200, JSON.stringify(initialFinalized.body));
+  const reopened = await h.action('reopen', 'v27-late-payroll-reopen-001', 'Reconcile employee-reported missed Clock In');
+  assert.equal(reopened.status, 200, JSON.stringify(reopened.body));
+
+  const recoveryRequestId = 'v27-late-source-001';
+  const recovered = await h.invokeAs(employee, {
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: recoveryRequestId, claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  const entryId = recovered.body.entry.id;
+  const punchCase = h.rows.TimeClockPunchException.find((row) => row.id === recovered.body.punch_exception.id);
+  const clockInAudit = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'clock_in' && row.request_id === recoveryRequestId && row.time_entry_id === entryId
+  );
+  const punchAudit = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'punch_exception' && row.request_id === recoveryRequestId && row.time_entry_id === entryId
+  );
+  assert.ok(punchCase?.id);
+  assert.ok(clockInAudit?.id);
+  assert.ok(punchAudit?.id);
+  assert.equal(clockInAudit.actor_email, employee.email);
+  assert.equal(punchAudit.actor_email, employee.email);
+
+  const clockOut = await h.invokeAs(employee, {
+    action: 'clock_out', target_email: employee.email,
+    request_id: 'v27-late-clock-out-001', lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+    notes: 'Synthetic v27 missed Clock In payroll validation',
+  });
+  assert.equal(clockOut.status, 200, JSON.stringify(clockOut.body));
+  const completed = h.rows.TimeEntry.find((row) => row.id === entryId);
+  assert.equal(completed.status, 'clocked_out');
+  assert.equal(completed.approval_status, 'needs_review');
+
+  const approved = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v27-late-manager-approval-001', entry_id: completed.id,
+    expected_updated_date: completed.updated_date, decision: 'approve',
+    note: 'Verified employee-reported missed Clock In for payroll',
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  const approvedEntry = h.rows.TimeEntry.find((row) => row.id === entryId);
+  const approvalAudit = h.rows.TimeClockAudit.find((row) => row.id === approved.body.audit_id);
+  assert.equal(approvedEntry.approval_status, 'approved');
+  assert.ok(approvalAudit?.id);
+  assert.equal(punchCase.status, 'resolved');
+  assert.equal(punchCase.resolution_audit_id, approvalAudit.id);
+
+  const originalPunchHash = punchAudit.details.payload_hash;
+  punchAudit.details.payload_hash = 'tampered-before-v27-finalization';
+  const blockedFinalize = await h.action('finalize', 'v27-late-refinalize-001');
+  assert.equal(blockedFinalize.status, 409, JSON.stringify(blockedFinalize.body));
+  assert.match(blockedFinalize.body.error, /missed Clock In evidence/i);
+  punchAudit.details.payload_hash = originalPunchHash;
+
+  const refinalized = await h.action('finalize', 'v27-late-refinalize-001');
+  assert.equal(refinalized.status, 200, JSON.stringify(refinalized.body));
+  assert.equal(period.finalized_summary.snapshot_version, 27);
+  assert.equal(period.finalized_summary.shift_manifest.length, 1);
+  const manifestRow = period.finalized_summary.shift_manifest[0];
+  const provenance = manifestRow.late_clock_in_provenance;
+  assert.equal(manifestRow.clock_source, 'employee_attested_missed_clock_in');
+  assert.equal(manifestRow.clock_in_request_id, recoveryRequestId);
+  assert.equal(manifestRow.punch_exception_id, punchCase.id);
+  assert.equal(manifestRow.missed_clock_in_reported_at, approvedEntry.missed_clock_in_reported_at);
+  assert.equal(provenance.source, 'employee_attested_missed_clock_in');
+  assert.equal(provenance.request_id, recoveryRequestId);
+  assert.equal(provenance.claimed_clock_in, '2026-09-28T12:00:00.000Z');
+  assert.equal(provenance.payroll_clock_in_at_finalization, approvedEntry.clock_in);
+  assert.equal(provenance.company_date, '2026-09-28');
+  assert.equal(provenance.punch_exception_id, punchCase.id);
+  assert.equal(provenance.punch_case_key, punchCase.case_key);
+  assert.equal(provenance.punch_case_status_at_finalization, 'resolved');
+  assert.equal(provenance.punch_employee_response, 'missed_clock_in');
+  assert.equal(provenance.clock_in_audit_id, clockInAudit.id);
+  assert.equal(provenance.punch_audit_id, punchAudit.id);
+  assert.equal(provenance.punch_payload_hash, punchAudit.details.payload_hash);
+  assert.equal(provenance.manager_approval_audit_id, approvalAudit.id);
+  assert.equal(provenance.manager_approval_request_id, approvedEntry.approval_request_id);
+  assert.ok(provenance.punch_original_snapshot_hash);
+
+  const verify = async (requestId) => h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id: requestId,
+  });
+  const verified = await verify('v27-late-verify-001');
+  assert.equal(verified.status, 200, JSON.stringify(verified.body));
+  assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
+
+  let tamperSequence = 0;
+  const expectTamperFailure = async (label) => {
+    tamperSequence += 1;
+    const result = await verify(`v27-late-tamper-${tamperSequence}`);
+    assert.equal(result.status, 200, `${label}: ${JSON.stringify(result.body)}`);
+    assert.equal(result.body.verified, false, `${label} was not detected: ${JSON.stringify(result.body)}`);
+  };
+  const tamperField = async (target, field, value, label) => {
+    const original = clone(target[field]);
+    target[field] = clone(value);
+    try { await expectTamperFailure(label); }
+    finally { target[field] = original; }
+  };
+
+  for (const [field, value] of [
+    ['clock_source', 'server'],
+    ['clock_in_request_id', 'tampered-clock-in-request'],
+    ['punch_exception_id', 'tampered-punch-exception-id'],
+    ['missed_clock_in_reported_at', '2026-09-28T20:05:00.000Z'],
+  ]) {
+    await tamperField(approvedEntry, field, value, `TimeEntry ${field}`);
+  }
+
+  for (const [field, value] of [
+    ['case_key', 'late_clock_in:other-entry'],
+    ['user_email', 'other-worker@synthetic.invalid'],
+    ['time_entry_id', 'other-entry'],
+    ['exception_type', 'missed_clock_out'],
+    ['status', 'pending_manager_review'],
+    ['employee_response', 'worked_through'],
+    ['claimed_clock_in', '2026-09-28T12:05:00.000Z'],
+    ['request_id', 'tampered-request-id'],
+    ['detected_clock_in', '2026-09-28T12:05:00.000Z'],
+    ['detected_at', '2026-09-28T20:05:00.000Z'],
+    ['submitted_at', '2026-09-28T20:05:00.000Z'],
+    ['resolution_audit_id', 'tampered-resolution-audit-id'],
+  ]) {
+    await tamperField(punchCase, field, value, `PunchException ${field}`);
+  }
+  await tamperField(punchCase.original_snapshot, 'missing_clock_in', false, 'PunchException original missing_clock_in');
+  await tamperField(punchCase.original_snapshot, 'detected_at', '2026-09-28T20:05:00.000Z', 'PunchException original detected_at');
+  await tamperField(punchCase.original_snapshot, 'company_date', '2026-09-27', 'PunchException original company_date');
+
+  for (const [field, value] of [
+    ['outcome', 'blocked'],
+    ['actor_email', 'other-worker@synthetic.invalid'],
+    ['actor_role', 'badge'],
+    ['authentication_method', 'badge'],
+    ['server_timestamp', '2026-09-28T20:05:00.000Z'],
+    ['reason', 'tampered Clock In audit reason'],
+  ]) {
+    await tamperField(clockInAudit, field, value, `clock_in audit ${field}`);
+  }
+  for (const [field, value] of [
+    ['clock_source', 'server'],
+    ['employee_attested_clock_in', '2026-09-28T12:05:00.000Z'],
+    ['reported_at', '2026-09-28T20:05:00.000Z'],
+  ]) {
+    await tamperField(clockInAudit.details, field, value, `clock_in audit details.${field}`);
+  }
+  await tamperField(clockInAudit.details.payroll_membership, 'company_date', '2026-09-27', 'clock_in audit payroll company date');
+
+  for (const [field, value] of [
+    ['outcome', 'blocked'],
+    ['actor_email', 'other-worker@synthetic.invalid'],
+    ['actor_role', 'badge'],
+    ['authentication_method', 'badge'],
+    ['server_timestamp', '2026-09-28T20:05:00.000Z'],
+    ['reason', 'tampered punch audit reason'],
+  ]) {
+    await tamperField(punchAudit, field, value, `punch_exception audit ${field}`);
+  }
+  for (const [field, value] of [
+    ['payload_hash', 'tampered-payload-hash'],
+    ['punch_exception_id', 'tampered-punch-exception-id'],
+    ['response', 'worked_through'],
+    ['claimed_clock_in', '2026-09-28T12:05:00.000Z'],
+    ['company_date', '2026-09-27'],
+  ]) {
+    await tamperField(punchAudit.details, field, value, `punch_exception audit details.${field}`);
+  }
+
+  for (const [field, value] of [
+    ['outcome', 'blocked'],
+    ['actor_email', 'other-manager@synthetic.invalid'],
+    ['actor_role', 'employee'],
+    ['authentication_method', 'badge'],
+    ['server_timestamp', '2026-09-28T20:05:00.000Z'],
+  ]) {
+    await tamperField(approvalAudit, field, value, `approval audit ${field}`);
+  }
+  await tamperField(approvalAudit.details, 'decision', 'reopen', 'approval audit decision');
+
+  for (const [row, label] of [
+    [clockInAudit, 'clock_in'],
+    [punchAudit, 'punch_exception'],
+    [approvalAudit, 'time_approval'],
+  ]) {
+    const index = h.rows.TimeClockAudit.findIndex((audit) => audit.id === row.id);
+    const [removed] = h.rows.TimeClockAudit.splice(index, 1);
+    try { await expectTamperFailure(`missing ${label} audit`); }
+    finally { h.rows.TimeClockAudit.splice(index, 0, removed); }
+    h.rows.TimeClockAudit.push({ ...clone(row), id: `synthetic-duplicate-${label}-audit` });
+    try { await expectTamperFailure(`duplicate ${label} audit`); }
+    finally { h.rows.TimeClockAudit.pop(); }
+  }
+
+  for (const [field, value] of [
+    ['claimed_clock_in', '2026-09-28T12:05:00.000Z'],
+    ['payroll_clock_in_at_finalization', '2026-09-28T12:05:00.000Z'],
+    ['punch_exception_id', 'tampered-frozen-punch-id'],
+    ['clock_in_audit_id', 'tampered-frozen-clock-in-audit-id'],
+    ['punch_audit_id', 'tampered-frozen-punch-audit-id'],
+    ['punch_payload_hash', 'tampered-frozen-payload-hash'],
+    ['manager_approval_audit_id', 'tampered-frozen-approval-id'],
+    ['punch_original_snapshot_hash', 'tampered-frozen-original-snapshot-hash'],
+  ]) {
+    await tamperField(provenance, field, value, `frozen late_clock_in_provenance.${field}`);
+  }
+
+  const verifiedAfterTamper = await verify('v27-late-verify-after-tamper-001');
+  assert.equal(verifiedAfterTamper.body.verified, true, JSON.stringify(verifiedAfterTamper.body));
+
+  const reopenedPayroll = await h.action('reopen', 'v27-late-payroll-reopen-002', 'Recheck missed Clock In after finalized history');
+  assert.equal(reopenedPayroll.status, 200, JSON.stringify(reopenedPayroll.body));
+  const entryAfterReopen = h.rows.TimeEntry.find((row) => row.id === entryId);
+  const reopenedShift = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v27-late-shift-reopen-001', entry_id: entryAfterReopen.id,
+    expected_updated_date: entryAfterReopen.updated_date, decision: 'reopen',
+    note: 'Recheck reconstructed missed Clock In after payroll reopen',
+  });
+  assert.equal(reopenedShift.status, 200, JSON.stringify(reopenedShift.body));
+  assert.equal(punchCase.status, 'pending_manager_review');
+
+  const historicalVerified = await verify('v27-late-retired-verify-001');
+  assert.equal(historicalVerified.status, 200, JSON.stringify(historicalVerified.body));
+  assert.equal(historicalVerified.body.verified, true, JSON.stringify(historicalVerified.body));
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
