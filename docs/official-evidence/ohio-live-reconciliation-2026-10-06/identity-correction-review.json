@@ -53033,13 +53033,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
+        "schema_supports_suggested_type": true,
         "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": true,
         "correction_blockers": [
           "official_identity_review_required",
           "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema",
           "multiple_existing_rows_require_relationship_and_history_review"
         ]
       },
@@ -53659,13 +53658,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
+        "schema_supports_suggested_type": true,
         "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": true,
         "correction_blockers": [
           "official_identity_review_required",
           "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema",
           "multiple_existing_rows_require_relationship_and_history_review"
         ]
       },
@@ -53859,7 +53857,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": true,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -54406,13 +54404,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54484,13 +54481,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54561,13 +54557,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54601,7 +54596,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": true,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -54676,13 +54671,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54715,13 +54709,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54754,13 +54747,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54784,7 +54776,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -54868,13 +54860,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54907,13 +54898,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -54956,7 +54946,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -54993,13 +54983,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55042,7 +55031,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -55079,13 +55068,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55109,7 +55097,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -55382,13 +55370,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55667,13 +55654,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55706,13 +55692,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": true,
         "correction_blockers": [
           "official_identity_review_required",
           "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema",
           "multiple_existing_rows_require_relationship_and_history_review"
         ]
       },
@@ -55746,13 +55731,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55785,13 +55769,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55815,7 +55798,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -55852,13 +55835,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55891,13 +55873,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -55969,13 +55950,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56008,13 +55988,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56048,13 +56027,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56179,13 +56157,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56245,13 +56222,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56284,13 +56260,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56323,13 +56298,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56362,13 +56336,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56401,13 +56374,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56440,13 +56412,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56518,13 +56489,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56594,13 +56564,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56633,13 +56602,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56672,13 +56640,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56711,13 +56678,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56750,13 +56716,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56817,13 +56782,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -56856,13 +56820,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
+        "schema_supports_suggested_type": true,
         "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": true,
         "correction_blockers": [
           "official_identity_review_required",
           "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema",
           "multiple_existing_rows_require_relationship_and_history_review"
         ]
       },
@@ -56924,7 +56887,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -56961,13 +56924,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57000,13 +56962,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57039,13 +57000,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57079,13 +57039,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57119,13 +57078,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57196,13 +57154,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57235,13 +57192,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57302,13 +57258,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57341,13 +57296,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57380,13 +57334,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57457,13 +57410,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57496,13 +57448,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57535,13 +57486,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57583,13 +57533,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57623,13 +57572,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57662,13 +57610,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57701,13 +57648,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57740,13 +57686,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57780,13 +57725,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57819,13 +57763,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57859,13 +57802,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -57926,13 +57868,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58003,13 +57944,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58052,7 +57992,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -58165,7 +58105,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -58202,13 +58142,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58251,7 +58190,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -58288,13 +58227,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58327,13 +58265,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58376,7 +58313,7 @@
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
         "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
@@ -58413,13 +58350,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58453,13 +58389,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58539,13 +58474,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58587,13 +58521,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58654,13 +58587,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58740,13 +58672,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
@@ -58797,13 +58728,12 @@
         "authority_verified": false,
         "requires_fresh_record_read": true,
         "requires_official_identity_evidence": true,
-        "schema_supports_suggested_type": false,
-        "schema_supports_current_type": false,
+        "schema_supports_suggested_type": true,
+        "schema_supports_current_type": true,
         "multiple_rows_suggest_same_reference": false,
         "correction_blockers": [
           "official_identity_review_required",
-          "fresh_version_guard_required",
-          "suggested_type_not_supported_by_entity_schema"
+          "fresh_version_guard_required"
         ]
       },
       {
