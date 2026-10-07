@@ -193,3 +193,18 @@ test('Hamilton Miami and Crosby sources preserve county identity and scanned-ori
  assert.equal(dossiers.some(d=>p.profiles[0].conflicting_records.some(r=>r.id===d.id)),false);
  assert.match(readFileSync(root+'crosby-zoning.txt','utf8'),/dcarter@cvennemeier@/);
 });
+
+test('Crosby sign review keeps zoning/electrical exemptions and printed cross-reference distinct',()=>{
+ const root='docs/official-evidence/ohio-miami-crosby-2026-10-07/',p=JSON.parse(readFileSync(root+'crosby-sign-review-packet.json'));
+ assert.equal(p.findings.length,9);assert.equal(p.locality.canonical_id,null);assert.equal(p.live_records_changed,0);
+ assert.equal(p.electrical_permit_issuer_approved,false);assert.equal(p.electrical_inspector_approved,false);
+ for(const f of p.findings){const d=JSON.parse(readFileSync(root+f.file.replace('.pdf','.pages.json'))),page=d.pages[f.physical_page-1];
+ assert.equal(f.source_sha256,d.source_sha256);assert.equal(f.text_sha256,page.text_sha256);assert.ok(page.text.includes(f.matched_text));
+ assert.equal(f.currentness_approved,false);assert.equal(f.authority_approved,false);assert.equal(f.applicability_approved,false);
+ assert.ok(f.archive.endsWith('#page='+f.physical_page));}
+ const z=JSON.parse(readFileSync(root+'crosby-zoning-resolution.pages.json'));
+ assert.match(z.pages[101].text,/Article\s+13/);
+ assert.match(p.findings.find(f=>f.label==='Maintenance and electrical components').text,/does not establish an electrical-permit/);
+ assert.match(p.findings.find(f=>f.label==='Sign-area measurement').text,/require visual\/table review/);
+ assert.equal(dossiers.some(d=>d.name==='Crosby Township'),false);
+});
