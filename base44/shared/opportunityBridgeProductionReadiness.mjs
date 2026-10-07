@@ -3,7 +3,7 @@ import { reconcileHistoricalSalesOutcome } from './historicalSalesOutcomeReconci
 const clean = (value) => String(value ?? '').trim();
 
 export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
-  VERSION: '0R-v1',
+  VERSION: '0S-v1',
   APPLY_ENABLED: false,
   FIRST_BATCH_SIZE: 1,
   MAX_BATCH_SIZE: 5,
@@ -15,6 +15,8 @@ export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
   ROLLBACK_POLICY: 'forward_correction_only',
   RETRY_POLICY: 'replan_and_reconcile_before_retry',
   RECEIPT_SCHEMA_NAME: 'OpportunityBridgeOperationReceipt',
+  RECEIPT_PERSISTENCE_ACTIVE: true,
+  SECONDARY_CONFIRMATION_CONFIGURED: true,
 });
 
 const RECEIPT_ANOMALY_STATES = new Set([
@@ -89,7 +91,9 @@ export function evaluateOpportunityBridgeProductionReadiness({
   generatedAt = '',
   now = new Date().toISOString(),
   receiptSchemaActivated = false,
+  receiptLedgerSummary = null,
   secondaryConfirmationConfigured = false,
+  secondaryConfirmationContract = null,
 } = {}) {
   const rows = Array.isArray(plan?.rows) ? plan.rows : [];
   const summary = plan?.summary || {};
@@ -146,13 +150,26 @@ export function evaluateOpportunityBridgeProductionReadiness({
     },
     {
       key:'durable_receipt_schema_activated',
-      pass:receiptSchemaActivated === true,
-      detail:receiptSchemaActivated ? 'Durable receipt ledger activated' : 'Receipt ledger remains design-only',
+      pass:receiptSchemaActivated === true && OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_PERSISTENCE_ACTIVE === true,
+      detail:receiptSchemaActivated
+        ? `Durable receipt ledger activated (${Number(receiptLedgerSummary?.total || 0)} records)`
+        : 'Receipt ledger is not activated',
+    },
+    {
+      key:'durable_receipt_ledger_identity_clean',
+      pass:receiptSchemaActivated === true && receiptLedgerSummary != null && Number(receiptLedgerSummary?.anomaly_count || 0) === 0,
+      detail:receiptLedgerSummary == null
+        ? 'Receipt ledger identity summary unavailable'
+        : `${Number(receiptLedgerSummary?.anomaly_count || 0)} durable receipt identity anomalies; ${Number(receiptLedgerSummary?.unresolved_count || 0)} unresolved receipts`,
     },
     {
       key:'secondary_confirmation_configured',
-      pass:secondaryConfirmationConfigured === true,
-      detail:secondaryConfirmationConfigured ? 'Secondary confirmation configured' : 'Secondary confirmation not enabled yet',
+      pass:secondaryConfirmationConfigured === true &&
+        OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED === true &&
+        secondaryConfirmationContract?.configured === true,
+      detail:secondaryConfirmationConfigured && secondaryConfirmationContract?.configured
+        ? `Secondary confirmation configured (${clean(secondaryConfirmationContract?.mode) || 'server-bound'})`
+        : 'Secondary confirmation not configured',
     },
     {
       key:'production_apply_enabled',
@@ -162,7 +179,7 @@ export function evaluateOpportunityBridgeProductionReadiness({
   ];
 
   const technicalChecks = checks.filter((check) =>
-    !['durable_receipt_schema_activated','secondary_confirmation_configured','production_apply_enabled'].includes(check.key)
+    !['durable_receipt_schema_activated','durable_receipt_ledger_identity_clean','secondary_confirmation_configured','production_apply_enabled'].includes(check.key)
   );
   const rolloutChecks = checks.filter((check) => !technicalChecks.includes(check));
 
@@ -190,6 +207,8 @@ export function evaluateOpportunityBridgeProductionReadiness({
       rollback_policy:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.ROLLBACK_POLICY,
       retry_policy:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RETRY_POLICY,
       receipt_schema_name:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_SCHEMA_NAME,
+      receipt_persistence_active:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_PERSISTENCE_ACTIVE,
+      secondary_confirmation_configured:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.SECONDARY_CONFIRMATION_CONFIGURED,
       apply_enabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED,
     },
   };
