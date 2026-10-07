@@ -1,3 +1,13 @@
+## Clear phase, milestone and task reporting — 2026-10-07
+
+Phase 10 — Ohio/Kentucky coverage. Milestone 1 of 3 — Identity and office reconciliation. Tasks complete: 2 of 4. Current task: Task 2, partial. Current work: separate electrical permit issuer and inspection provider completeness acceptance.
+
+This entry supersedes decimal progress labels in earlier receipts. Use Phase → Milestone → Task only, and descriptive names for individual work chunks. Do not append nested decimal numbers or advance a milestone because another Continue arrived. Scope and evidence are unchanged.
+
+Fixed tasks: 1 measurement audit complete; 2 exhaustive geographic identity/office reconciliation partial; 3 dashboard lifecycle/UI measurement and automated interaction acceptance complete; 4 full read-only live acceptance pending. Phase 10 Milestone 2 of 3 is statewide expansion; Milestone 3 of 3 is completeness acceptance.
+
+Updated the roadmap and prepended this format to the current progress/audit documents. Historical receipts and evidence filenames remain intact. Documentation-only change; no app code or production records changed. Validation: fixed four-task denominator and status preservation, roadmap table normalization and git diff --check. Next: separate-role electrical completeness acceptance; broad legacy electrical coverage cannot satisfy issuer and inspector requirements.
+
 ## Separate electrical authority review roles — 2026-10-07
 
 10.1 of 10.3 remains 2 of 4 tasks complete; task 2 office reconciliation remains partial. Fresh clean HEAD dcc7f14602eee521b4fd2251a1d10535f780ffb2. Added electrical_permit and electrical_inspection to reviewed backend roles, PermitLocality authority_roles enum, locality editor role vocabulary and locality picker labels. Legacy electrical remains accepted and visibly labeled broad; existing history is not migrated or expanded into either specific role.

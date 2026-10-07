@@ -1,3 +1,18 @@
+## Authoritative progress format — updated October 7, 2026
+
+Use one hierarchy: Phase → Milestone → Task. No decimal subphase identifiers and no numbered levels beneath tasks. Smaller implementation chunks have descriptive names only. Old labels in dated receipts and filenames are historical references, not the current reporting format. This change does not alter scope, evidence, completion status or denominators.
+
+Current: Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation; 2 of 4 tasks complete. Current task: Task 2, partial; current work: separate electrical permit issuer and inspection provider completeness acceptance.
+
+| Task | Description | Status |
+|---|---|---|
+| 1 | Measurement audit | Complete |
+| 2 | Exhaustive geographic identity and office reconciliation | Partial |
+| 3 | Dashboard lifecycle/UI measurement and automated interaction acceptance | Complete |
+| 4 | Full read-only live acceptance | Pending |
+
+Phase 10 Milestone 2 of 3: statewide expansion. Milestone 3 of 3: completeness acceptance. Ohio precedes Kentucky. Completing individual work chunks must not imply statewide completion or advance the fixed task count.
+
 ## State sequencing — updated October 6, 2026
 
 Prioritize Ohio for new scans, geographic inventory reconciliation and manual acceptance; follow with Kentucky. The scheduled research dispatcher releases eligible Ohio rows first, then Kentucky if capacity remains. This is priority, not cancellation of existing Kentucky work. Known-page/archive/text continuations currently preserve existing safe behavior across both states. Automated cost limits remain intact; manual retrieval has no total record cap. Do not claim statewide Ohio completion based on queue exhaustion; compare against the independent official inventory and authority/office/document gaps.
@@ -24,40 +39,40 @@ Establish safe research/import structures, provenance, merge behavior, staff own
 ## Phase 5 — Official-source collection and verified archives
 Collect current official permitting sources, forms, online application links, ordinances, fee schedules, checklists, instructions, and related documents. Preserve exact source URLs, file archives, hashes, byte counts, timestamps, extracted text, and evidence boundaries. Never invent missing documents or promote historical material to current policy without evidence.
 
-### Phase 5 decimal milestones — endpoint 5.9
+### Phase 5 — 9 milestones
 
-Use numerically increasing decimals with one digit after the point. Never extend a phase to .10. If finer detail is needed, use explicit task counts under the milestone. Phase 5 collection completion concerns the reusable pipeline; statewide coverage remains Phase 10. Historical numbering in dated receipts is superseded by this table.
+Report Phase 5 as Milestone N of 9. Tasks are the only level beneath a milestone; work chunks have descriptive names without numbers. Collection completion concerns the reusable pipeline; statewide coverage remains Phase 10. Historical decimal labels are superseded by this table.
 
-| Decimal | Milestone | Status |
+| Milestone | Description | Status |
 |---|---|---|
-| 5.1 | Shared discovery, sign ranking and PDF routing | Implemented/tested |
-| 5.2 | Durable frontier and atomic continuation | Implemented/tested |
-| 5.3 | Verified byte archives and catalog | Live pilot verified |
-| 5.4 | Deterministic PDF text | Tested; pilot evidence retained |
-| 5.5 | Capped-index recovery | Live verified |
-| 5.6 | Failed-page recovery | Live verified |
-| 5.7 | Selected depth/sign-gap recovery | Live verified; other gaps retained |
-| 5.8 | Ohio/Kentucky pipeline acceptance | Discovery passed; archive/text reconciliation remains |
-| 5.9 | Final collection review and handoff | Outstanding |
+| 1 of 9 | Shared discovery, sign ranking and PDF routing | Implemented/tested |
+| 2 of 9 | Durable frontier and atomic continuation | Implemented/tested |
+| 3 of 9 | Verified byte archives and catalog | Live pilot verified |
+| 4 of 9 | Deterministic PDF text | Tested; pilot evidence retained |
+| 5 of 9 | Capped-index recovery | Live verified |
+| 6 of 9 | Failed-page recovery | Live verified |
+| 7 of 9 | Selected depth/sign-gap recovery | Live verified; other gaps retained |
+| 8 of 9 | Ohio/Kentucky pipeline acceptance | Discovery passed; archive/text reconciliation remains |
+| 9 of 9 | Final collection review and handoff | Outstanding |
 
-Phase 6 development may proceed on retained evidence while 5.8–5.9 remain explicitly open; starting Phase 6 does not certify Phase 5 complete.
+Phase 6 development may proceed on retained evidence while Phase 5 Milestones 8 and 9 remain explicitly open; starting Phase 6 does not certify Phase 5 complete.
 
 ## Phase 6 — Exact-citation AI extraction
 Extract requirements, forms, fees, submission steps, responsible offices, applicability conditions, and conflicts from archived official sources with exact citations and source-version awareness.
 
-### Phase 6 decimal milestones — endpoint 6.9
+### Phase 6 milestones — endpoint 6.9
 
-| Decimal | Milestone | Status |
+| Milestone | Description | Status |
 |---|---|---|
-| 6.1 | Audit and enforce source-purpose/citation eligibility | Category validation tested; broader acceptance at 6.9 |
-| 6.2 | Retained text and source-version readiness | Tested; 16 live snapshots checked, 2 source exceptions retained |
-| 6.3 | Structured candidate schema and explicit applicability | Implemented and tested |
-| 6.4 | Literal citations, numeric units and page validation | Implemented and tested |
-| 6.5 | Idempotent extraction, continuation and credit accounting | Tested; live OH/KY replay verified |
-| 6.6 | Conflicts, missing evidence and historical source handling | Safeguards tested; explicit resolution at 6.8 |
-| 6.7 | Ohio/Kentucky supervised extraction acceptance | Selected-page pilots passed; 3 candidates staged, 4 rejected; none approved |
-| 6.8 | Review-ready candidate presentation and handoff | Complete: live OH/KY handoff and isolated conflict component interaction checks; browser keyboard check carried to 6.9 |
-| 6.9 | Final extraction acceptance before Phase 7 | Technical extraction acceptance passed; conflict browser QA carried explicitly to 7.3, not marked passed |
+| Milestone 1 | Audit and enforce source-purpose/citation eligibility | Category validation tested; broader acceptance at 6.9 |
+| Milestone 2 | Retained text and source-version readiness | Tested; 16 live snapshots checked, 2 source exceptions retained |
+| Milestone 3 | Structured candidate schema and explicit applicability | Implemented and tested |
+| Milestone 4 | Literal citations, numeric units and page validation | Implemented and tested |
+| Milestone 5 | Idempotent extraction, continuation and credit accounting | Tested; live OH/KY replay verified |
+| Milestone 6 | Conflicts, missing evidence and historical source handling | Safeguards tested; explicit resolution at 6.8 |
+| Milestone 7 | Ohio/Kentucky supervised extraction acceptance | Selected-page pilots passed; 3 candidates staged, 4 rejected; none approved |
+| Milestone 8 | Review-ready candidate presentation and handoff | Complete: live OH/KY handoff and isolated conflict component interaction checks; browser keyboard check carried to 6.9 |
+| Milestone 9 | Final extraction acceptance before Phase 7 | Technical extraction acceptance passed; conflict browser QA carried explicitly to 7.3, not marked passed |
 
 ## Phase 7 — Staff-approved regulations
 Provide staff review/approval workflows for extracted requirements, conflicts, applicability, superseded material, exceptions, and local knowledge. Preserve review history and source lineage.
@@ -118,24 +133,24 @@ Connect approved locality/workflow intelligence into live Work Orders and Permit
 ## Phase 15 — Acceptance and rollout
 Run authenticated browser acceptance, permissions/RLS review, concurrency tests, migration checks, source/citation checks, mobile/desktop usability validation, production-data safety review, and controlled rollout. Publishing remains explicit.
 
-## Decimal checkpoints for the remaining major phases
+## Milestones for the remaining major phases
 
 These define each phase endpoint in advance. Phase 5 and Phase 6 use their detailed tables above. Status for other phases must be established from evidence, not presumed complete.
 
 | Phase | First milestone | Second milestone | Final milestone |
 |---|---|---|---|
-| 1 | 1.1 Locality inventory | 1.2 Canonical identities/dedupe | 1.3 Inventory acceptance |
-| 2 | 2.1 Office inventory | 2.2 Authority relationships | 2.3 Authority acceptance |
-| 3 | 3.1 Address matching | 3.2 Boundary/authority ambiguity | 3.3 Resolution acceptance |
-| 4 | 4.1 Provenance/import model | 4.2 Merge/history safeguards | 4.3 Import acceptance |
-| 7 | 7.1 Review/conflict model | 7.2 Approval/history controls | 7.3 Review acceptance |
-| 8 | 8.1 Evidence retrieval | 8.2 Cited answers/uncertainty | 8.3 Search acceptance |
-| 9 | 9.1 Expandable locality interface | 9.2 Forms/rules/office integration | 9.3 Desktop/mobile acceptance |
-| 10 | 10.1 Coverage inventory/gaps | 10.2 OH/KY collection expansion | 10.3 Statewide completeness review |
-| 11 | 11.1 Hash/metadata monitoring | 11.2 Change review/credit controls | 11.3 Monitoring acceptance |
-| 12 | 12.1 Evidence-based workflow model | 12.2 AI proposals/staff overrides | 12.3 Workflow acceptance |
-| 13 | 13.1 Exemption evidence/status | 13.2 Job snapshots/expiry/sync | 13.3 Tax-exempt acceptance |
-| 14 | 14.1 Stable job/permit links | 14.2 Versioned workflow handoff | 14.3 Integration acceptance |
-| 15 | 15.1 Permissions/concurrency checks | 15.2 Browser/mobile/migration checks | 15.3 Explicit rollout acceptance |
+| 1 | Milestone 1 of 3: Locality inventory | Milestone 2 of 3: Canonical identities/dedupe | Milestone 3 of 3: Inventory acceptance |
+| 2 | Milestone 1 of 3: Office inventory | Milestone 2 of 3: Authority relationships | Milestone 3 of 3: Authority acceptance |
+| 3 | Milestone 1 of 3: Address matching | Milestone 2 of 3: Boundary/authority ambiguity | Milestone 3 of 3: Resolution acceptance |
+| 4 | Milestone 1 of 3: Provenance/import model | Milestone 2 of 3: Merge/history safeguards | Milestone 3 of 3: Import acceptance |
+| 7 | Milestone 1 of 3: Review/conflict model | Milestone 2 of 3: Approval/history controls | Milestone 3 of 3: Review acceptance |
+| 8 | Milestone 1 of 3: Evidence retrieval | Milestone 2 of 3: Cited answers/uncertainty | Milestone 3 of 3: Search acceptance |
+| 9 | Milestone 1 of 3: Expandable locality interface | Milestone 2 of 3: Forms/rules/office integration | Milestone 3 of 3: Desktop/mobile acceptance |
+| 10 | Milestone 1 of 3: Coverage inventory/gaps | Milestone 2 of 3: OH/KY collection expansion | Milestone 3 of 3: Statewide completeness review |
+| 11 | Milestone 1 of 3: Hash/metadata monitoring | Milestone 2 of 3: Change review/credit controls | Milestone 3 of 3: Monitoring acceptance |
+| 12 | Milestone 1 of 3: Evidence-based workflow model | Milestone 2 of 3: AI proposals/staff overrides | Milestone 3 of 3: Workflow acceptance |
+| 13 | Milestone 1 of 3: Exemption evidence/status | Milestone 2 of 3: Job snapshots/expiry/sync | Milestone 3 of 3: Tax-exempt acceptance |
+| 14 | Milestone 1 of 3: Stable job/permit links | Milestone 2 of 3: Versioned workflow handoff | Milestone 3 of 3: Integration acceptance |
+| 15 | Milestone 1 of 3: Permissions/concurrency checks | Milestone 2 of 3: Browser/mobile/migration checks | Milestone 3 of 3: Explicit rollout acceptance |
 
-Do not add .10 after .9. Break work within a decimal milestone into named tasks and report completed tasks out of the fixed total when useful.
+Report Phase N → Milestone M of the fixed total → Task T with its status. Do not use decimal phase identifiers or number work chunks beneath tasks. A completed work chunk does not advance a milestone or change its fixed task count.
