@@ -1,0 +1,34 @@
+{
+  "sources": [
+    {
+      "file": "zoning-administration.html",
+      "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+      "retrieved_at": "2026-10-07T12:17:18.691017+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/scope-review/zoning-administration.html",
+      "sha256": "485d7d606db4f99fe35ea1e2a5a98ec9bcf9596b552d414ff3a7a59bf3e59d08",
+      "bytes": 68834
+    },
+    {
+      "file": "zoning-verification-request.pdf",
+      "official_url": "https://cincinnati-oh.gov/planning/zoning-administration/zoning-verification-request",
+      "retrieved_at": "2026-10-07T12:17:20.383666+00:00",
+      "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/zoning-verification-request/",
+      "http_status": 200,
+      "content_type": "application/pdf;charset=UTF-8",
+      "status": "archived",
+      "retained_path": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/scope-review/zoning-verification-request.pdf",
+      "sha256": "9974564b6e8dc047153278f4456d5c0a911849e429eeffa346c4e0b6f49bfbab",
+      "bytes": 89204
+    }
+  ],
+  "staff_approved": false,
+  "chapter_text_acquisition": {
+    "current_municode_html": "HTTP 403 from direct retrieval; search renderer returned empty chapter text",
+    "legacy_chapter_1427": "Search renderer could not retrieve",
+    "current_exemptions_established": false
+  }
+}
