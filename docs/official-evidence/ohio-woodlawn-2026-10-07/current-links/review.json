@@ -1,0 +1,15 @@
+{
+  "observed_on": "2026-10-07",
+  "source_page": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/woodlawn_zoning.php",
+  "method": "Current official county document links observed through web retrieval; four exact URLs attempted separately for original retention.",
+  "documents_retained": 0,
+  "linked_documents": 4,
+  "currentness_approved": false,
+  "staff_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "comparison": "Current county page links shared 2025 revised guide and two 2026 Woodlawn fee schedules; earlier 2019/2024 guide/form references remain historical candidates. No schedule amount or paper/portal acceptance inferred.",
+  "failure_detail": "Web click resolution appends Documents directory beneath development_services and redirects to same nested CMS path; raw exact linked URLs return HTTP 403. Link-path defect is a candidate explanation, not proven origin-server diagnosis.",
+  "next": "Woodlawn remains blocked for originals. Continue Springdale Ohio official documents; revisit Woodlawn when a verified alternate original source or changed access condition exists."
+}

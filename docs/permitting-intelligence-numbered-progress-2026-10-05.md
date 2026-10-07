@@ -1,3 +1,9 @@
+## Phase 10 → Milestone 1 of 3 — Woodlawn current document-link review (2026-10-07)
+
+Task 2 remains partial. Preserved newer concurrent repository HEAD. Resolved exact current official county links for revised 2025 guide, Woodlawn zoning code and two 2026 fee schedules. Four new exact-URL downloads returned HTTP 403; zero originals recovered. Recorded web click nested Documents/CMS path behavior as candidate link defect, not proven diagnosis. No fee amounts, current paper intake, code scope or electrical authority inferred. Earlier eight gaps remain historical. No UI or live record changes, publication or repeated identical download attempts.
+
+Validation: four current link attempts verified as gaps without archive identity; 29 regression tests passed; git diff --check passed. Next: Springdale Ohio official zoning/forms and separate electrical offices. Woodlawn missing originals remain tracked for a changed access condition or verified alternate source.
+
 ## Phase 10 → Milestone 1 of 3 — Woodlawn identity and source-retention gaps (2026-10-07)
 
 Task 2 remains partial. Fresh canonical OH query found Woodlawn village 6ac1a111ea485c76e4c8f201. Located official county zoning reference, linked ezTrak, code publisher, legacy zoning/application/variance PDFs and two map URLs. Attempted eight original downloads; all returned HTTP 403 and no original was retained. No search snippet or web-derived summary substituted for original bytes. Recorded county zoning administration candidate separately from electrical issuance and inspection, which remain unverified. Legacy 2019/2024 provenance and current 2026 schedules require reconciliation. Extraction manifest truthfully contains zero documents. No UI attachment, authority approval, live record changes or publication.
