@@ -1,0 +1,64 @@
+{
+  "profiles": [
+    {
+      "id": "6ac1aae70e3a16c893d4e506",
+      "name": "Green Township",
+      "state": "OH",
+      "type": "township",
+      "source": "https://www.greentwp.org/1201/Development-Zoning",
+      "observed_on": "2026-10-07",
+      "notes": [
+        "The official Township page describes two zoning jurisdictions: Northeast Green Township and Hamilton County elsewhere. Check the street/address range before choosing a route; township name alone does not approve job-address coverage.",
+        "The Township links iWorQ zoning applications for its northeast jurisdiction and county ezTrak outside that area. The iWorQ original download failed hostname certificate verification; its content is not retained. No application was submitted.",
+        "A standalone sign PDF application was not located on the reviewed Township page. Online commercial/residential zoning applications are linked, with sign applicability still requiring review.",
+        "Electrical permit issuance and electrical inspection offices remain separately unresolved. A zoning portal or building route does not establish electrical responsibility."
+      ],
+      "references": [
+        {
+          "label": "Northeast Township zoning applications — original retention gap",
+          "url": "https://greentownship_permit.portal.iworq.net/portalhome/greentownship_permit"
+        },
+        {
+          "label": "County ezTrak — outside northeast zoning jurisdiction per Township page",
+          "url": "https://eztrak.cagis.org/"
+        },
+        {
+          "label": "Official northeast street directory",
+          "url": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId="
+        }
+      ],
+      "resources": [
+        {
+          "file": "green-street-directory.html",
+          "label": "Northeast zoning street directory — address review pending",
+          "source": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId=",
+          "archive": "/permitting-evidence/green-delhi/green-street-directory.html",
+          "format": "HTML",
+          "bytes": 58097,
+          "sha256": "bce825e0dc57d6a25fa77605895f122c05e4be313af899b38bb626c29b5512f7"
+        }
+      ]
+    },
+    {
+      "id": null,
+      "name": "Delhi Township",
+      "state": "OH",
+      "type": "township",
+      "identity_status": "no match in OH canonical profile name query"
+    }
+  ],
+  "retained_pdf_pages": 189,
+  "staff_approved": false,
+  "currentness_approved": false,
+  "coverage_approved": false,
+  "electrical_roles_approved": false,
+  "live_records_changed": 0,
+  "gaps": [
+    "Delhi canonical identity",
+    "Green standalone sign form/applicability",
+    "iWorQ original retention",
+    "Separate electrical issuer and inspector",
+    "Current zoning amendments and sign applicability",
+    "App-storage/catalog registration"
+  ]
+}

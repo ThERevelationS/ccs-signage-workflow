@@ -1,0 +1,617 @@
+Search the directory
+Showing 127 streets
+A
+Arborview Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Asbury Lake Drive
+Cincinnati, OH 45247
+Zoning information
+"OO" Planned Office District/Multi-Family
+Audro Drive
+Cincinnati, OH 45247
+Zoning information
+(All of Audro falls under NEGT Zoning)
+(Even) (5410 – 5476) "D" Retail / Multi-Family
+(Even) (5482 – 5496) "O" Office District / Multi-Family
+(All Odd) "B" Single-Family Residence
+Autumn Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+B
+Balsamridge Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Basswood Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Blue Rock Road
+Cincinnati, OH 45247
+Zoning information
+(Multiple Jurisdictions)
+(2741 – 3325 is in NEGT)
+(Even) (2760 – 2810) "D" Retail / Multi-Family
+(Odd) (2741 – 2841 ) "O" Office District / Multi-Family
+(Even) (2812 – 2882) "O" Office District / Multi-Family
+(Odd) (2857 and up) "C" Single-Family Residence
+(Even) (2896 and up) "C" Single-Family Residence
+Boca Lane
+Cincinnati, OH 45239
+Zoning information
+Private Drive
+"C" Single-Family Residence District
+Brettmer Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Brierly Creek Road
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Brierly Ridge Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Back to top
+C
+Cecelia Court
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Cheviot Road
+Cincinnati, OH 45247
+Zoning information
+(Multiple Jurisdictions)
+(5501 – 6311 is in NEGT)
+(5501 – 6100) "D" Retail / Multi-Family
+(5753 – 5769) Coventry Place west Condos "OO" Planned Multi-Family
+(Odd 6051 – 6155) "B" Single-Family Residence (St. James)
+(6195 – 6311) "O" Office District / Multi-Family
+Citrus Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Clearidge Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Clearpoint Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Colerain Avenue
+Cincinnati, OH 45239
+Zoning information
+(Multiple Jurisdictions)
+(5799 to 6225 odd numbers only are in NEGT)
+(6200 even numbers only to the Township line are in NEGT)
+(5813 – 6225) "D" Retail/ Multi-Family
+Cottage Pointe Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Cottontail Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Coventry Place Condos
+Cincinnati, OH 45239
+Zoning information
+"OO" Planned Multi-Family
+Crimson Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+D
+Daleview Road
+Cincinnati, OH 45247
+Zoning information
+(5976 to 6195 to the Township line)
+"A" Single-Family Residence District
+Deborah Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+E
+Eastridge Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Eastview
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Edger Lane
+Cincinnati, OH 45239
+Zoning information
+(5518 – 5580) north of North Bend Road only
+"C" Single-Family Residence District
+Epley Road
+Cincinnati, OH 45247
+Zoning information
+(All of Epley falls under NEGT Zoning)
+(Even) "B" Single-Family Residence
+(3523) "D" Retail / Multi-Family
+(3529 – 3585) "O" Office District / Multi-Family
+(3685) "B" Single-Family Residence
+Evelyn Road
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Back to top
+F
+Fairhill Drive
+Cincinnati, OH 45239
+Zoning information
+2841 – 2912 (city line west)
+"C" Single-Family Residence District
+Fairwood Road
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Falcon Way Court
+Cincinnati, OH
+Zoning information
+"A" Single-Family Residence District
+Farcrest Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Fardale Lane
+Cincinnati, OH 45239
+Zoning information
+"A" Single-Family Residence District
+Farhaven Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Farlook Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Farview Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Fawnridge Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Floridale Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+G
+Gaines Road
+Cincinnati, OH 45247
+Zoning information
+5756 to 6700 (to the Township line)
+"A" Single-Family Residence District
+Giffindale Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Gold Dust Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Greenvalley Terrace
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+H
+Haubner Road
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Hickory Place Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Hickory Ridge Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Honnert Drive
+Cincinnati, OH 45247
+Zoning information
+(Private Drive) – "B" Single-Family Residence District
+Hubble Road
+Cincinnati, OH 45247
+Zoning information
+(Multiple Jurisdictions)
+(3554 to 4170 even and 3565 to 4947 odd (to the Township line)
+(3624 – 3794) – "B" Single-Family Residence
+(3618 – 3795) – "B" Single-Family Residence
+(3796 and up) "C" Single-Family Residence
+Back to top
+J
+Jessup Road
+Cincinnati, OH 45247 & 45239
+Zoning information
+(All of Jessup falls under NEGT Zoning)
+(2701 – 3554) "C" Single-Family Residence
+(3557) "OO" Planned Office
+(3616) "D" Retail / Multi-Family
+(3629 – 3800) "B" Single-Family Residence
+(3820 – 6150) "C" Single-Family Residence
+Jimbet Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Juliemarie Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+K
+Kardon Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Keywest Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Klausridge Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Krogermount Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+L
+LaGrange Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Lauderdale Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Leumas Drive
+Cincinnati, OH 45239
+Zoning information
+5517 to 5671 (North of North Bend only)
+"C" Single-Family Residence District
+Limestone Circle
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Lincoln Road
+Cincinnati, OH 45247
+Zoning information
+(All of Lincoln falls under NEGT Zoning)
+(3796 – 3894) "A" Single-Family Residence District
+(3727 – 3795) "B" Single-Family Residence District
+Linsan Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Locust Log Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Loretta Drive
+Cincinnati, OH 45239
+Zoning information
+(All of Loretta falls under NEGT Zoning)
+(2890 – 2975) "C" Single-Family Residence District
+(3860) "D" Retail / Multi-Family
+Back to top
+M
+Mayberry Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Mt. Airy Avenue
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+N
+Nickview Drive
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+North Bend Road
+Cincinnati, OH 45211
+Zoning information
+(Multiple Jurisdictions)
+(2908 – 3444) (Even only, is in NEGT)
+(5403 – 5481 (Odd only, is in NEGT)
+(Even 2908 – 3240) "C" Single-Family Residence
+(Even 3252 – 3294) "O" Office/Multi-Family
+(Even 3302 – 3316) Victorian Village "OO" Planned Multi-Family
+(Even 3328 – 3354) "C" Single-Family Residence
+(Even 3420 – 3426) "C" Single-Family Residence
+(Even 3372 – 3402) "C" Single-Family Residence
+(Even 3355 – 3364) "O" Office District / Multi-Family
+(Even 3404 – 3414) Lofts of North Bend Rd "OO" Planned Multi-Family)
+(Even 3500 – 3444) "D" Retail / Multi-Family
+(Odd 5403 – 5481) "D" Retail / Multi-Family
+Northpoint Drive
+Cincinnati, OH 45247
+Zoning information
+(All of Northpoint falls under NEGT Zoning)
+(5494 – 5548) "A" Single-Family Residence District
+(5416 – 5485) "B" Single-Family Residence District
+Back to top
+O
+Ocala Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Opengate Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Back to top
+P
+Palmhill Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Parakeet Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Paramount Ridge Lane
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Pattie Court
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Peachview Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Pegroy Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Penway Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Pictureview Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Pinebrook Circle
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Pineview Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Pond View Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Back to top
+R
+Ramblingridge Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Randy Court
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Ranlyn Avenue
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Ranlyn Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Rebor Court
+Cincinnati, OH 45239
+Zoning information
+"A" Single-Family Residence District
+Red Tail Lane
+Cincinnati, OH
+Zoning information
+"A" Single-Family Residence District
+Ridgedale Drive
+Cincinnati, OH 45247
+Zoning information
+(3804 – 4082) "A" Single-Family Residence District
+(3703 – 3794) "B" Single-Family Residence District
+Robers Avenue
+Cincinnati, OH 45239
+Zoning information
+(Multiple Jurisdictions)
+(2851 – 2891 is in NEGT)
+(2851 – 2891) "C" Single-Family Residence District
+Robroy Drive
+Cincinnati, OH 45247
+Zoning information
+"D" Retail/Multi-Family
+Rose Petal Drive
+Cincinnati, OH 45247
+Zoning information
+6104 to 6138 "A" Single-Family Residence District
+Roseann Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+S
+Sagecrest Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Samver Road
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Schunk Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Schweitzerhoff Road
+Cincinnati, OH 45247
+Zoning information
+6265 to 6583 (to the Township line)
+"A" Single-Family Residence District
+Seiler Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Shadow Hawk Drive
+Cincinnati, OH
+Zoning information
+"A" Single-Family Residence District
+Sheed Road
+Cincinnati, OH 45247
+Zoning information
+Snyder /Road to 6193 (to the Township line)
+"A" Single-Family Residence District
+Shelrich Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Shortridge Circle
+Cincinnati, OH 45247
+Zoning information
+(3630 – 3684) "B" Single-Family Residence District
+Silverpoint Drive
+Cincinnati, OH 45247
+Zoning information
+"B" Single-Family Residence District
+Snyder Road
+Cincinnati, OH 45247
+Zoning information
+5828 to 6320 even only (to the Township line)
+"A" Single-Family Residence District
+Sprucewood Drive
+Cincinnati, OH 45239
+Zoning information
+5521 to 5795 (North of North Bend only)
+"A" Single-Family Residence District
+Squirrelwoods Court
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Squirrelwoods Lane
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+St. James Place
+Cincinnati, OH 45239
+Zoning information
+"C" PUD Single-Family Residence District
+Stevie Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Sumac Terrace
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Sunny Woods Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Sunnyhollow Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Sutters Mill Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Back to top
+T
+Tallahassee Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Thorndale Court
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Timberpoint Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Back to top
+V
+Vista Point Drive
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Vista View Drive
+Cincinnati, OH 45247
+Zoning information
+(6200, 6203, 6204, 6209, 6210)
+"A" Single-Family Residence District
+Vogel Road
+Cincinnati, OH 45239
+Zoning information
+(Odd only) "C" Single-Family Residence District
+Back to top
+W
+West Fork Road
+Cincinnati, OH 45247
+Zoning information
+(Multiple Jurisdictions)
+(3682 – 6510) (even only, is in NEGT)
+(Even 3682 – 4764) "B" Single-Family Residence District
+(Even 4890 – 6510) "A" Single-Family Residence District
+Westmont Circle
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Wheatcroft Drive
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Whispering Oak Trail
+Cincinnati, OH 45247
+Zoning information
+"A" PUD Single-Family Residence District
+Whispering Way
+Cincinnati, OH 45247
+Zoning information
+(5477 – 5545) "A" Single-Family Residence District
+(5474) "B" Single-Family Residence District
+White Oak Drive
+Cincinnati, OH 45247
+Zoning information
+"C" Single-Family Residence District
+Whiteacres Drive
+Cincinnati, OH 45239
+Zoning information
+6308 & 6318 only "C" Single-Family Residence District
+Willowoak Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Wilmer Road
+Cincinnati, OH 45247
+Zoning information
+"A" Single-Family Residence District
+Windy Knoll Lane
+Cincinnati, OH 45239
+Zoning information
+"C" Single-Family Residence District
+Back to top
+Important: This directory is a public reference tool. Confirm parcel-specific zoning and jurisdiction with Northeast Green Township before relying on the information for permits, purchases, construction, or legal decisions.
