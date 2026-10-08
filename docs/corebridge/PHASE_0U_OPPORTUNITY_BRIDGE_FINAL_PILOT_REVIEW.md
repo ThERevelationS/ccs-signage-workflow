@@ -266,6 +266,18 @@ A prior read during the phase briefly observed two eligible rows while productio
 
 `bca66b326527a614f77e05590d14d4171bfb3233af1e9159a6a089bca5425969`
 
+## Read-only Admin review visibility follow-on
+
+The existing Admin → Opportunity Bridge simulation screen now receives the exact 0U pilot review manifest/fingerprint from the simulation-only backend and displays:
+
+- exact first-pilot WorkOrder and Customer display name;
+- full SHA-256 pilot review fingerprint;
+- source-authorized fingerprint state;
+- explicit `NOT AUTHORIZED` / `SOURCE AUTHORIZED` status;
+- reminder that simulation metadata is not execution authorization.
+
+This uses only `opportunityBridgeSimulation`. The review UI still has no production endpoint caller and no Apply action. The simulation endpoint still contains no entity mutation calls and does not expose the confirmation phrase.
+
 ## Result
 
 Phase 0U decision:
