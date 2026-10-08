@@ -43,7 +43,9 @@ const metadataWrite = pull.indexOf('await base44.asServiceRole.entities[entityNa
 assert.ok(bulk >= 0 && candidate > bulk && verification > candidate && metadata > verification && metadataWrite > metadata);
 assert.match(pull, /orderFailedDateVerificationIds.add\(String\(item.id\)\)/);
 assert.match(pull, /eligible = orderBusinessVerifications.filter\(item => !orderFailedDateVerificationIds.has\(String\(item.id\)\)\)/);
-assert.doesNotMatch(pull.slice(candidate, verification), /snapshotUpdates.push\(/, 'Snapshot cannot advance before business read-back');
+const orderBulkBranch = pull.slice(pull.indexOf("if (dataset === 'orders') {\n            const changes = changedPulledOrderDates"), pull.indexOf("} else {\n            const expectedParentRowId"));
+assert.ok(orderBulkBranch.includes('orderBusinessVerifications.push({'));
+assert.doesNotMatch(orderBulkBranch, /snapshotUpdates.push\(/, 'Order snapshot cannot advance from a bulk ACK without read-back');
 assert.match(pull, /if \(typeof options\?\.assertRunOwnership === 'function'\) await options.assertRunOwnership\(\);\s*try \{\s*const actualRows/);
 assert.match(pull, /business_field_write_failures: orderBusinessWriteFailures/);
 console.log('PASS Order business-field read-back occurs after bulk ACK and before snapshot writes, without modifying Sales flow');
