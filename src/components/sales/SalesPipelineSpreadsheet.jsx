@@ -875,6 +875,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // a modern Won/Lost outcome during reads or unrelated field saves.
     if (
       isCurrentPipelineOpportunity(currentWo)
+      // Confirmed closeout/reopening already includes an explicit status.
+      && !Object.prototype.hasOwnProperty.call(nextChanges, "sales_status")
       && Object.prototype.hasOwnProperty.call(nextChanges, "current_task_description")
       && String(nextChanges.current_task_description || "").trim() !== String(currentWo.current_task_description || "").trim()
     ) {
