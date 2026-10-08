@@ -34,7 +34,7 @@ import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBac
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged, classifyOrderPullBusinessReadback } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
-import { orderPullPrewriteBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
+import { orderPullPrewriteBudget, assertOrderPullContinuationBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
 import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
@@ -607,6 +607,9 @@ async function pullDataset(
     });
   }
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
+    if (dataset === 'orders') assertOrderPullContinuationBudget({
+      startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the next Order business-field batch',
+    });
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = toUpdate.slice(i, i + bulkBatchSize);
     const payload = batch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields }: any) => {
@@ -727,6 +730,9 @@ async function pullDataset(
     }
     for (let checkIndex = 0; checkIndex < orderDateVerifications.length; checkIndex++) {
       const item = orderDateVerifications[checkIndex];
+      assertOrderPullContinuationBudget({
+        startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the next Order date/text verification',
+      });
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
         await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);
@@ -753,6 +759,9 @@ async function pullDataset(
   if (dataset === 'orders' && orderBusinessVerifications.length) {
     const eligible = orderBusinessVerifications.filter(item => !orderFailedDateVerificationIds.has(String(item.id)));
     if (eligible.length) {
+      assertOrderPullContinuationBudget({
+        startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the Order business-field read-back',
+      });
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
         const actualRows = await loadOrderPullReadbackRows({
@@ -800,6 +809,9 @@ async function pullDataset(
   const verifiedMetadataExpected: any[] = [];
   const snapshotBatchSize = 100;
   for (let i = 0; i < snapshotUpdates.length; i += snapshotBatchSize) {
+    if (dataset === 'orders') assertOrderPullContinuationBudget({
+      startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the next Order sync snapshot batch',
+    });
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = snapshotUpdates.slice(i, i + snapshotBatchSize);
     try {
@@ -826,6 +838,9 @@ async function pullDataset(
   // Re-read every metadata write by permanent Base44 ID before declaring the
   // pull healthy. This catches silently dropped Sales snapshots/timestamps too.
   if (verifiedMetadataExpected.length) {
+    if (dataset === 'orders') assertOrderPullContinuationBudget({
+      startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the final Order sync metadata read-back',
+    });
     try {
       const readCompleteMetadata = () => loadAllEntityRows({
         entity: dataset === 'sales'
