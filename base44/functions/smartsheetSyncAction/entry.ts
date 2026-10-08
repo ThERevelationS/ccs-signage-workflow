@@ -758,6 +758,7 @@ async function pullDataset(
         const actualRows = await loadOrderPullReadbackRows({
           entity: base44.asServiceRole.entities.Order,
           ids: eligible.map(item => item.id),
+          sheetId,
           readLinkedOrders: () => loadAllEntityRows({
             entity: base44.asServiceRole.entities.Order,
             query: { smartsheet_sheet_id: sheetId },
@@ -840,6 +841,7 @@ async function pullDataset(
         ? await loadOrderPullReadbackRows({
           entity: base44.asServiceRole.entities.Order,
           ids: verifiedMetadataExpected.map(item => item.id),
+          sheetId,
           readLinkedOrders: readCompleteMetadata,
         })
         : await readCompleteMetadata();
