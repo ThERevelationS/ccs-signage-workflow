@@ -15,7 +15,7 @@ assert.match(page, /saveStatus\.isLoading/);
 assert.match(grid, /const pullFromSmartsheet = async \(\) =>/);
 assert.match(grid, /Object\.keys\(pendingChangesRef\.current\)\.length \|\| pendingSyncIdsRef\.current\.size/);
 assert.match(grid, /const pull = await pullOrdersFromSmartsheet\(\{ sessionToken \}\)/);
-assert.match(grid, /const reloaded = await loadData\(false\)/);
+assert.match(grid, /const reloaded = await loadData\(false, \{ manualPullReload: true \}\)/);
 assert.match(grid, /syncInFlightRef\.current = true/);
 assert.match(grid, /pullFromSmartsheet,\s*exportToExcel/);
 assert.match(grid, /if \(!showLoading && \(saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current \|\| Object\.keys\(pendingChangesRef\.current\)\.length > 0\)\) return false/);
