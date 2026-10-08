@@ -307,3 +307,21 @@ assert.deepEqual([...new Set(p.sources.map(s=>s.observed_version_label).filter(B
 assert.match(p.sources[2].observation,/storage frontage/);assert.match(p.sources[4].observation,/do not extrapolate/);assert.match(p.sources[5].observation,/not.*exhaustive/);assert.match(p.electrical_review,/Shared portal does not establish/);
 for(const k of ['currentness_approved','sign_application_route_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(p[k],false);assert.equal(p.live_records_changed,0);
 });
+
+test('Reading dossier exposes retained originals and keeps separate electrical roles unapproved',()=>{
+ const row=dossiers.find(d=>d.id==='6ac19f12298c063943ecc10f');
+ assert.equal(row.name,'Reading');assert.equal(row.resources.length,11);
+ const manifest=JSON.parse(readFileSync('docs/official-evidence/ohio-reading-2026-10-08/manifest.json'));
+ for(const resource of row.resources){
+  const source=manifest.find(s=>s.file===resource.file),bytes=readFileSync('public'+resource.archive);
+  assert.deepEqual(bytes,readFileSync('docs/official-evidence/ohio-reading-2026-10-08/'+source.file));
+  assert.equal(bytes.length,resource.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),source.sha256);
+  assert.equal(resource.sha256,source.sha256);assert.equal(resource.source,source.url);
+ }
+ const html=render(row);
+ for(const r of row.resources)assert.ok(html.includes(r.archive)&&html.includes(r.source));
+ assert.ok(html.includes(row.online_form_url));assert.match(html,/variance \$250/);
+ assert.match(html,/electrical permit issuer remain separately unapproved/);
+ assert.match(html,/1424.04 remains unread/);assert.match(html,/No parcel district or sign allowance is approved/);
+ assert.equal(render(row,false),'');assert.equal(render({...row,type:'village'}),'');
+});
