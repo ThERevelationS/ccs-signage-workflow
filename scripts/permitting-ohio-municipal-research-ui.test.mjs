@@ -325,3 +325,20 @@ test('Reading dossier exposes retained originals and keeps separate electrical r
  assert.match(html,/1424.04 remains unread/);assert.match(html,/No parcel district or sign allowance is approved/);
  assert.equal(render(row,false),'');assert.equal(render({...row,type:'village'}),'');
 });
+
+test('Elmwood Place preserves six original office files and incomplete zoning/electrical scope',()=>{
+ const row=dossiers.find(d=>d.id==='6ac1a15f8dd6f5306ab7935f');
+ assert.equal(row.name,'Elmwood Place');assert.equal(row.type,'village');assert.equal(row.resources.length,6);
+ const sources=JSON.parse(readFileSync('docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json')).sources;
+ const html=render(row);
+ for(const resource of row.resources){
+ const s=sources.find(s=>s.file===resource.file),b=readFileSync('public'+resource.archive);
+ assert.deepEqual(b,readFileSync(s.retained_path));assert.equal(b.length,s.bytes);
+ assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);
+ assert.equal(resource.source,s.official_url);assert.ok(html.includes(resource.archive));
+ }
+ assert.match(html,/Sign rules are not complete/);assert.match(html,/commercial-only building service/);
+ assert.match(html,/electrical inspection delegation remain separately unapproved/);
+ assert.match(html,/Retained XLSX/);assert.match(html,/Retained DOCX/);
+ assert.equal(render(row,false),'');assert.equal(render({...row,type:'city'}),'');
+});
