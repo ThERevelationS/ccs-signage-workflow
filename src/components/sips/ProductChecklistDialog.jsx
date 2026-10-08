@@ -848,6 +848,7 @@ export default function ProductChecklistDialog({
   const [editingProductName, setEditingProductName] = useState(null);
   const [editingProductNameText, setEditingProductNameText] = useState("");
   const [focusedNeedsInputId, setFocusedNeedsInputId] = useState(null);
+  const needsInputSummaryRef = useRef(null);
   const [checklistSearchQuery, setChecklistSearchQuery] = useState("");
   const checklistSearchInputRef = useRef(null);
   const [checklistSearchIndex, setChecklistSearchIndex] = useState(-1);
@@ -1295,10 +1296,17 @@ export default function ProductChecklistDialog({
     checklistSearchInputRef.current?.focus();
   };
   const handleChecklistResultKeyDown = (e) => {
-    if (e.key !== "Escape" || !checklistSearchQuery) return;
+    if (e.key !== "Escape") return;
     if (!e.target?.hasAttribute?.("data-sips-checklist-item-id")) return;
+    if (focusedSearchId && checklistSearchQuery) {
+      e.preventDefault();
+      clearChecklistSearch();
+      return;
+    }
+    if (!focusedNeedsInputId) return;
     e.preventDefault();
-    clearChecklistSearch();
+    setFocusedNeedsInputId(null);
+    needsInputSummaryRef.current?.focus();
   };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
@@ -1357,6 +1365,7 @@ export default function ProductChecklistDialog({
                 <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
               </div>
               <button
+                ref={needsInputSummaryRef}
                 type="button"
                 onClick={focusFirstNeedsInput}
                 disabled={needsInputPrimaryCount === 0}
