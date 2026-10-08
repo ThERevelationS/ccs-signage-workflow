@@ -102,7 +102,7 @@ import {
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { getAccessibleAdminTab } from "@/components/admin/adminTabNavigation";
+import { getAccessibleAdminGroups, getAccessibleAdminTab, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -330,11 +330,32 @@ const TEMPLATE_VARIABLES = [
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
+const ADMIN_TAB_ICONS = {
+  automations: Zap,
+  users: Users,
+  timeclock: Clock,
+  backend: Settings,
+  corebridge: Bot,
+  opportunity_bridge: GitBranch,
+  sync_conflicts: AlertTriangle,
+  smartsheet: GitBranch,
+  resources: Users,
+  permitting_completeness: ClipboardCheck,
+  permitting_rules: Scale,
+  permitting_tests: FlaskConical,
+  task_assignments: UserCheck,
+  calendar: CalendarDays,
+  activity: Activity,
+};
+
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedAdminTab = getAccessibleAdminTab(searchParams.get("tab"), isAdmin);
+  const availableAdminGroups = getAccessibleAdminGroups(isAdmin);
+  const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin);
+  const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
   const handleAdminTabChange = (nextTab) => {
     if (nextTab === selectedAdminTab) return;
     setSearchParams((previous) => {
