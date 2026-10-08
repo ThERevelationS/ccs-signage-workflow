@@ -35,6 +35,7 @@ rejected({ ...active, sales_status: "lost" }, neutral, "A Lost opportunity canno
 rejected({ ...active, in_pipeline: false }, neutral, "A historical WorkOrder cannot be reclassified as neutral.");
 rejected(active, { ...neutral, current_task_description: "WIP - Designing" }, "Neutral closeout requires the correct task.");
 rejected(active, { ...neutral, in_pipeline: true }, "Neutral closeout must exit Current Pipeline.");
+rejected(active, { ...neutral, follow_up_date: "2026-10-12" }, "Closeout must clear follow-up.");
 rejected(active, { ...neutral, sales_neutral_closed_at: "" }, "Neutral closeout must contain an audit timestamp.");
 rejected(active, { ...neutral, sales_neutral_closed_at: "yesterday" }, "Neutral closeout must have an ISO timestamp.");
 rejected(active, { ...neutral, sales_status: "won" }, "Neutral closeout cannot fabricate Won.");
