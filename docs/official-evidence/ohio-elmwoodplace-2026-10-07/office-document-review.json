@@ -1,0 +1,60 @@
+{
+  "locality_id": "6ac1a15f8dd6f5306ab7935f",
+  "method": "All five worksheets extracted with cell addresses, raw stored values, formulas and formula attributes; DOCX body paragraphs extracted without modifying originals. No layout verification or native recalculation performed.",
+  "fee_source_sha256": "149b0786e92d1d41ce25b3f324c23330eb7d4f71d154f809c3a295f7697660c0",
+  "row_source_sha256": "1118ce61a50aefe0162aaa3d1d86adf21d44dcbfa8c6a70ea8ab1349aee0dfcb",
+  "sign_fee_candidates": [
+    {
+      "range": "ALL!B51:J51",
+      "category": "Permanent ground supported (over 3 sf)",
+      "stored_unit_price": "248.52",
+      "stored_upfront": "278.97000000000003",
+      "stored_co_cc": "30.45"
+    },
+    {
+      "range": "ALL!B52:H52",
+      "category": "Wall, projecting and roof (over 2-1/2 sf)",
+      "stored_unit_price": "101.11",
+      "stored_upfront": "131.56",
+      "stored_co_cc": "30.45"
+    },
+    {
+      "range": "ALL!B53:H53",
+      "category": "Single sign face change",
+      "stored_unit_price": "101.11",
+      "stored_upfront": "131.56",
+      "stored_co_cc": "30.45"
+    },
+    {
+      "range": "ALL!B54:C54",
+      "category": "Multiple face changes on same site",
+      "stored_unit_price": "30.45",
+      "interpretation": "Additional-unit basis not independently verified."
+    }
+  ],
+  "fee_limits": [
+    "ALL!A1 stores 1.0449999999999999; defined ChangePct points to ALL!A1. Annual-update instructions and current/next-year columns remain explicit.",
+    "Selected sign cached values independently checked against ROUND(input*1.045,2) and unit plus CO/CC sums. This is not full workbook recalculation.",
+    "County-code references and technology/state surcharges do not establish Village adoption, current effective year or electrical delegation.",
+    "Size labels in fee rows do not establish zoning or electrical permit exemptions.",
+    "No automatic fee calculator or approved fee record populated."
+  ],
+  "row_form_candidates": [
+    "Separate requests if traffic disruptions are anticipated in several locations.",
+    "Excavation section prints $50 per cut with $4 per linear foot; current adoption and measurement basis unresolved.",
+    "Notify affected businesses and residents no less than seven days before closure.",
+    "Applicant restores right-of-way to Village specifications.",
+    "Street closings require detour signs meeting ODOT, Hamilton County and Village standards.",
+    "Village staff circulates to Police, Fire and Public Works; form says permit requires each department approval."
+  ],
+  "row_scope_limit": "ROW form is a separate street/excavation candidate. It does not establish universal sign-installation requirements, current approval authority or electrical routing.",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "derived_sha256": {
+    "fee-schedule-2024.cells.json": "b450fc9b536bb5117fb83c05523f855f469949f3f4fb08e904ea88a3b366d3ba",
+    "right-of-way.paragraphs.json": "b1827f5799ce7f271589ec41b1e53047c8c70f2faadff45f7797f7450c021ccf"
+  }
+}

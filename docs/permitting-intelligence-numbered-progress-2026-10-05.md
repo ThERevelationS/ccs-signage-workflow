@@ -1,3 +1,9 @@
+## 2026-10-07 — Phase 10 → Milestone 2 of 3: Elmwood Place fee and ROW contents
+
+Extracted all five XLSX sheets with stored values/formulas and ROW document body paragraphs, bound to verified original hashes. Reviewed sign fee rows 51–54 and selected cached arithmetic. Annual fee-update template does not prove current adoption. Preserved excavation charge, seven-day closure notice, detour and Police/Fire/Public Works approval language as separate unapproved ROW candidates. No approved fees, electrical delegation, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: underlying zoning document/amendments and current electrical issuer/inspector roles. Layout, currentness and app-storage/catalog gaps remain open.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Elmwood Place zoning form recovered
 
 Completed visual inspection and raw OCR of the retained one-page form, verified against original SHA-256. Preserved OCR errors and annotated M-4 versus visually read M-1. Printed $150 check, 30-day reply claim, owner limitation and appeal reference remain unapproved current-policy observations. No automatic approval, authority approval, live records changed or publication. Task 2 complete; Milestone 1 Task 4 open.

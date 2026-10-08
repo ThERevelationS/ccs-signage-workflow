@@ -13,16 +13,16 @@
     "address": "6118 Vine Street, Elmwood Place OH 45216",
     "phone": "513-242-0291"
   },
-  "fee_review": "Forms page links 2023 PDF; department page links 2024 XLSX. PDF cover identifies Hamilton County January 1, 2023 schedule, not independently adopted Village fee proof. Spreadsheet retained but cell/formula review pending; do not assert current fees.",
+  "fee_review": "Five-sheet 2024 XLSX cell/formula extraction complete; sign rows 51-54 and selected cache arithmetic reviewed. Annual-update template and current/next-year columns prevent effective-year/adoption approval. 2023 county PDF remains separate. See office-document-review.json.",
   "zoning_form_review": "One physical page visually reviewed with source-bound raw OCR. Printed $150 fee and 30-day reply claim are unapproved current-policy candidates; M-4 OCR error visually reads M-1. See zoning-form-visual-review.json.",
   "map_review": "September 11, 2007 map label; currentness, visual and parcel review pending.",
   "electrical_review": "No current issuer/inspector delegation established from these pages/forms; separate code/provider review required.",
-  "office_documents_review": "XLSX and DOCX original bytes retained; structured contents and layout not reviewed.",
+  "office_documents_review": "XLSX cells/formulas and DOCX paragraphs retained as source-bound derivatives. ROW fee, notice, detour and multi-department approval language recorded as unapproved candidates. Layout and current adoption pending.",
   "app_storage_catalog_registration": "pending; repository copies do not constitute app-storage registration",
   "currentness_approved": false,
   "authority_approved": false,
   "electrical_permit_issuer_approved": false,
   "electrical_inspector_approved": false,
   "live_records_changed": 0,
-  "next": "Structured 2024 fee spreadsheet and ROW document review; underlying zoning document/amendments and current electrical roles."
+  "next": "Underlying zoning document/amendments recovery and current electrical issuer/inspector roles; map/currentness and app-storage/catalog registration remain pending."
 }
