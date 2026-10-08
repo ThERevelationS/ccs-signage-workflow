@@ -114,8 +114,26 @@ import {
 const Order = base44.entities.Order;
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const GlobalSettings = base44.entities.GlobalSettings;
 
+const ORDER_REQUEST_TYPES_SETTING_KEY = "orderRequestTypes";
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
+
+function normalizeOrderRequestTypes(values) {
+  const source = Array.isArray(values) ? values : [];
+  const seen = new Set();
+  const normalized = [];
+  for (const value of source) {
+    const label = String(value ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(label);
+    if (normalized.length >= 100) break;
+  }
+  return normalized;
+}
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
 const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
@@ -175,10 +193,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const [editingRequestTypes, setEditingRequestTypes] = useState(false);
   const [editingVendors, setEditingVendors] = useState(false);
-  const [requestTypes, setRequestTypes] = useState(() => {
-    const saved = localStorage.getItem('orderRequestTypes');
-    return saved ? JSON.parse(saved) : DEFAULT_REQUEST_TYPES;
-  });
+  const [requestTypes, setRequestTypes] = useState(DEFAULT_REQUEST_TYPES);
+  const [requestTypeSetting, setRequestTypeSetting] = useState(null);
+  const [requestTypesSaving, setRequestTypesSaving] = useState(false);
+  const [requestTypesError, setRequestTypesError] = useState("");
   const [vendors, setVendors] = useState(() => {
     const saved = localStorage.getItem('orderVendors');
     return saved ? JSON.parse(saved) : DEFAULT_VENDORS;
@@ -192,6 +210,47 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [newReceiptOption, setNewReceiptOption] = useState('');
   const [newRequestType, setNewRequestType] = useState("");
   const [newVendor, setNewVendor] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    const loadRequestTypes = async () => {
+      try {
+        const rows = await GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+        if (!active) return;
+        if (!Array.isArray(rows)) throw new Error("Order item-type settings did not return a record list.");
+        if (rows.length > 1) {
+          throw new Error(`Order item types have ${rows.length} shared settings records. Ask an admin to resolve the duplicate settings.`);
+        }
+        const setting = rows[0] || null;
+        setRequestTypeSetting(setting);
+        const sharedTypes = normalizeOrderRequestTypes(setting?.setting_value?.items);
+        if (sharedTypes.length) {
+          setRequestTypes(sharedTypes);
+          return;
+        }
+
+        // Preserve an admin's old browser-only list as a one-time migration
+        // seed. It is not shared until that admin saves a change through the
+        // verified Base44 + Smartsheet path below.
+        if (currentUser?.role === "admin") {
+          try {
+            const legacyTypes = normalizeOrderRequestTypes(JSON.parse(localStorage.getItem('orderRequestTypes') || '[]'));
+            if (legacyTypes.length) {
+              setRequestTypes(legacyTypes);
+              return;
+            }
+          } catch { /* ignore malformed legacy browser storage */ }
+        }
+        setRequestTypes(DEFAULT_REQUEST_TYPES);
+      } catch (error) {
+        if (!active) return;
+        setRequestTypesError(error?.message || "Order item types could not be loaded.");
+        setRequestTypes(DEFAULT_REQUEST_TYPES);
+      }
+    };
+    loadRequestTypes();
+    return () => { active = false; };
+  }, [currentUser?.role]);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
