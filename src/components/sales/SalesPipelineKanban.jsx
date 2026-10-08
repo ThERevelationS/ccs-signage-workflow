@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2 } from "lucide-react";
@@ -8,7 +7,7 @@ import { getActionableSalesAttentionItems } from "@/components/sales/salesAttent
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
-import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { salesStageDisplayLabel, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -49,18 +48,11 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, onOpenDetails, isRegistered, currentSalesOwnerLabel = "", leadSources = [], users = [] }) {
-  const [draggedId, setDraggedId] = useState(null);
+export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onCompleteFollowUp, onOpenDetails, isRegistered, currentSalesOwnerLabel = "", leadSources = [], users = [] }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const nearClose = localDate(futureDateStamp(14));
 
-  const requestStatusChange = (workOrder, nextStatus) => {
-    const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
-    if (!isRegistered || !workOrder?.id || !nextStatus || ["needs_stage", "closed_neutral"].includes(nextStatus)) return;
-    if (workOrder.sales_status === nextStatus && !unverifiedStage) return;
-    onRequestStatusChange?.(workOrder, nextStatus);
-  };
 
   return (
       <div className="flex h-full min-h-0 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-2">
@@ -74,18 +66,6 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
             <section
               key={status.value}
               className="flex min-h-0 w-[285px] min-w-[285px] flex-col rounded-xl border border-gray-200 bg-gray-50/70"
-              onDragOver={(event) => {
-                if (!isRegistered || status.virtual) return;
-                event.preventDefault();
-              }}
-              onDrop={(event) => {
-                if (!isRegistered || status.virtual) return;
-                event.preventDefault();
-                const id = event.dataTransfer.getData("text/plain") || draggedId;
-                const workOrder = workOrders.find((item) => item.id === id);
-                if (workOrder) requestStatusChange(workOrder, status.value);
-                setDraggedId(null);
-              }}
             >
               <div className={`rounded-t-xl border-b px-3 py-2.5 ${status.header}`}>
                 <div className="flex items-center justify-between gap-2">
@@ -109,20 +89,12 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const attentionKeys = new Set(attentionItems.map((item) => item.key));
                   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
                   const opportunityDisplayName = salesOpportunityDisplayName(workOrder);
-                  const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
                   const stageDisplayValue = salesStageDisplayValue(workOrder);
+                  const stageDisplayLabel = salesStageDisplayLabel(workOrder);
                   return (
                     <article
                       key={workOrder.id}
-                      draggable={Boolean(isRegistered)}
-                      onDragStart={(event) => {
-                        if (!isRegistered) return;
-                        setDraggedId(workOrder.id);
-                        event.dataTransfer.effectAllowed = "move";
-                        event.dataTransfer.setData("text/plain", workOrder.id);
-                      }}
-                      onDragEnd={() => setDraggedId(null)}
-                      className={`rounded-lg border bg-white p-3 shadow-sm transition ${draggedId === workOrder.id ? "opacity-60" : "hover:border-gray-300 hover:shadow"}`}
+                      className="rounded-lg border bg-white p-3 shadow-sm transition hover:border-gray-300 hover:shadow"
                     >
                       <button type="button" onClick={() => onOpenDetails?.(workOrder)}
                         aria-label={`Open sales details for ${opportunityDisplayName}`}
@@ -237,18 +209,13 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                         </div>
                       )}
 
-                      <div className="mt-2 flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
-                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Move stage</span>
-                        <Select value={stageDisplayValue} onValueChange={(value) => requestStatusChange(workOrder, value)} disabled={!isRegistered || stageDisplayValue === "closed_neutral"}>
-                          <SelectTrigger aria-label={`Move ${opportunityDisplayName} to another sales stage`} className={`h-11 flex-1 text-xs sm:h-8 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : ""}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
-                            {stageDisplayValue === "closed_neutral" && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
-                            {STATUS_COLUMNS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
+                        <span className="font-medium">Sales Status</span>
+                        <span className={`rounded-md px-2 py-1 font-semibold ${status.badge}`}
+                          aria-label={`Sales Status: ${stageDisplayLabel}`}
+                          title="Read-only. Open Opportunity Detail to change Task Description.">
+                          {stageDisplayLabel}
+                        </span>
                       </div>
                     </article>
                   );
