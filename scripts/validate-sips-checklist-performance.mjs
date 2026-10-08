@@ -195,8 +195,14 @@ check("deep sub-template detail tasks can wrap on phones", () => {
 
 check("Needs Input navigation moves keyboard focus to the revealed row", () => {
   assert.match(source, /targetElement\?\.focus\(\{ preventScroll: true \}\);/);
-  assert.equal((source.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 4);
   assert.equal((completedSource.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 2);
+});
+
+check("search navigation focuses every rendered result row without adding tab stops", () => {
+  assert.equal((source.match(/targetElement\?\.focus\(\{ preventScroll: true \}\);/g) || []).length, 2);
+  assert.equal((source.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 10);
+  assert.equal(source.includes("data-sips-checklist-item-id={String(task.id)} key={task.id}"), false);
+  assert.equal(source.includes("data-sips-checklist-item-id={String(subtask.id)} key={subtask.id}"), false);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
