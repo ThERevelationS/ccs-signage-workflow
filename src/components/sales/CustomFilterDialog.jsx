@@ -169,6 +169,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           "Prospect Initiation (Gather Info, Initial Discuss ...)",
           "Conduct Site Survey",
           "Complete Estimate for Review",
+          "Estimate Sent to Customer",
           "WIP - Designing",
           "WIP - Installation",
           "Completed Sale"
