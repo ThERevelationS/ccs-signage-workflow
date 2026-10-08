@@ -1,0 +1,57 @@
+{
+  "source_url": "https://www.elmwoodplace-oh.gov/Content/Zoning%20application.pdf",
+  "source_file": "zoning-application.pdf",
+  "source_sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145",
+  "physical_pages": 1,
+  "reviewed_pages": [
+    1
+  ],
+  "method": "Local Poppler render at scale-to 1600, Tesseract raw OCR, visual inspection of full rendered page",
+  "render_sha256": "4ee0ff0e26361f4083789cc6028656b6dfab658deb48a96d96a601cea971d6c6",
+  "render_retained_in_repository": false,
+  "raw_ocr_file": "zoning-application.ocr.txt",
+  "raw_ocr_sha256": "20a3b554e533e5df984e4fa124ea2365a76fd1a9b71670f73a126c7705a24163",
+  "raw_ocr_corrected": false,
+  "ocr_errors": [
+    {
+      "raw": "M-4 manufacturing",
+      "visual": "M-1 manufacturing",
+      "note": "Visual reading only; raw OCR preserved."
+    }
+  ],
+  "findings": [
+    {
+      "topic": "application",
+      "observation": "Application for Certificate of Zoning Compliance requests parcel, owner/applicant, current zoning and explicit proposed use; site plans and additional details requested."
+    },
+    {
+      "topic": "building_plan",
+      "observation": "Form requests a complete as-built plan if a building permit is requested; current procedure and applicability require confirmation."
+    },
+    {
+      "topic": "fee",
+      "observation": "Printed form requests a $150 check payable to Village of Elmwood Place.",
+      "limitation": "Undated form does not establish a currently adopted fee or building/sign fee scope."
+    },
+    {
+      "topic": "reply_timing",
+      "observation": "Printed form states failure to receive a reply in 30 days entitles applicant to a Zoning Certificate.",
+      "limitation": "Not implemented as automatic approval. Current law, complete-application clock and policy require reconciliation."
+    },
+    {
+      "topic": "appeal_and_owner",
+      "observation": "Printed footer says non-approvals may be appealed to Zoning Board and certificate is good for present owner only.",
+      "limitation": "Current appeal recipient, deadline and transfer procedure unresolved."
+    },
+    {
+      "topic": "address",
+      "observation": "Printed footer uses 6118 Vine Street, Cincinnati OH 45216.",
+      "limitation": "Mailing city does not change canonical Elmwood Place village identity."
+    }
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}

@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Elmwood Place zoning form recovered
+
+Completed visual inspection and raw OCR of the retained one-page form, verified against original SHA-256. Preserved OCR errors and annotated M-4 versus visually read M-1. Printed $150 check, 30-day reply claim, owner limitation and appeal reference remain unapproved current-policy observations. No automatic approval, authority approval, live records changed or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: structured 2024 fee spreadsheet and ROW document review; underlying zoning amendments and current electrical roles.
+
 ## 2026-10-07 — Phase 10 → Milestone 2 of 3: Elmwood Place adopted-code gap
 
 Traced official village ordinance link to 2025 publisher edition, cutoff July 2, 2024. Zoning 154.01 incorporates separate Ordinance 10-07 document/amendments on file at village offices; full sign rules absent from this section. Preserved legislative procedure versus permit timing and county code adoption versus issuer/delegation distinctions. Old deep link returned 2013 council rules; excluded as zoning evidence. No approved limits, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

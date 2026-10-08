@@ -14,7 +14,7 @@
     "phone": "513-242-0291"
   },
   "fee_review": "Forms page links 2023 PDF; department page links 2024 XLSX. PDF cover identifies Hamilton County January 1, 2023 schedule, not independently adopted Village fee proof. Spreadsheet retained but cell/formula review pending; do not assert current fees.",
-  "zoning_form_review": "Sparse embedded text (web output only 150.00) is not full form extraction; visual/OCR review pending and no fee inferred from isolated value.",
+  "zoning_form_review": "One physical page visually reviewed with source-bound raw OCR. Printed $150 fee and 30-day reply claim are unapproved current-policy candidates; M-4 OCR error visually reads M-1. See zoning-form-visual-review.json.",
   "map_review": "September 11, 2007 map label; currentness, visual and parcel review pending.",
   "electrical_review": "No current issuer/inspector delegation established from these pages/forms; separate code/provider review required.",
   "office_documents_review": "XLSX and DOCX original bytes retained; structured contents and layout not reviewed.",
@@ -24,5 +24,5 @@
   "electrical_permit_issuer_approved": false,
   "electrical_inspector_approved": false,
   "live_records_changed": 0,
-  "next": "Elmwood Place sign code and electrical roles; visual/OCR zoning form and structured fee/ROW review."
+  "next": "Structured 2024 fee spreadsheet and ROW document review; underlying zoning document/amendments and current electrical roles."
 }
