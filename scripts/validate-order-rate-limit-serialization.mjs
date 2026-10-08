@@ -74,6 +74,6 @@ const savedOrdersAction = backend.slice(
   backend.indexOf("if (action === 'push_saved_orders')"),
   backend.indexOf("if (action === 'push_saved_sales')"),
 );
-assert.match(savedOrdersAction, /await claimSyncRun\(base44/);
+assert.match(savedOrdersAction, /await claimInvocationRun\(/);
 assert.match(savedOrdersAction, /assertRunOwnership: async \(\) => assertSyncRunOwnership\(base44, startedAt\)/);
 console.log('PASS each explicit Order Save & Sync owns one backend coordinator through its write lifecycle');
