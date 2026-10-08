@@ -13,6 +13,34 @@ export function orderPulledFieldsUnchanged(existing, pulledFields = {}) {
   );
 }
 
+// Check actual Base44 business fields and permanent Smartsheet identity before
+// promoting an acknowledged Order bulkUpdate to verified sync metadata. This
+// read-only comparison is also safe for an interrupted, retried pull: anything
+// uncertain retains the older snapshot rather than claiming success.
+export function classifyOrderPullBusinessReadback(expectedWrites = [], actualRecords = []) {
+  const byId = new Map((Array.isArray(actualRecords) ? actualRecords : [])
+    .filter(record => record?.id && !record?.deleted)
+    .map(record => [String(record.id), record]));
+  const verified = [];
+  const failures = [];
+  for (const expected of Array.isArray(expectedWrites) ? expectedWrites : []) {
+    const id = String(expected?.id || '').trim();
+    const record = byId.get(id);
+    const expectedSheet = String(expected?.sheetId || '').trim();
+    const expectedRow = String(expected?.rowId || '').trim();
+    if (!id || !record || !/^\d+$/.test(expectedSheet) || !/^\d+$/.test(expectedRow) ||
+        String(record.smartsheet_sheet_id ?? '').trim() !== expectedSheet ||
+        String(record.smartsheet_row_id ?? '').trim() !== expectedRow ||
+        record.smartsheet_pending_local_sync === true ||
+        !orderPulledFieldsUnchanged(record, expected?.fields)) {
+      failures.push({ id, reason: 'business_fields_or_permanent_identity_not_verified' });
+      continue;
+    }
+    verified.push(expected);
+  }
+  return { verified, failures };
+}
+
 export function orderPushRecordUnchanged(record, sheetId, expectedSnapshot) {
   if (record?.smartsheet_pending_local_sync === true) return false;
   const rowId = String(record?.smartsheet_row_id ?? '').trim();
