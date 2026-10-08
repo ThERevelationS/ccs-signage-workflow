@@ -2796,8 +2796,12 @@ test('reconstructed missed Clock In status fails closed when its Punch Exception
   assert.equal(status.body.pending_shift_review.items[0].review_state, 'needs_manager_investigation');
 });
 
-for (const managerCorrected of [false, true]) {
-test(`v27 late-day missed Clock In payroll provenance binds employee attestation and manager approval${managerCorrected ? ' after audited manager correction' : ''}`, async () => {
+for (const managerCorrectionCount of [0, 1, 2]) {
+const managerCorrected = managerCorrectionCount > 0;
+const correctionLabel = managerCorrectionCount === 2
+  ? ' after two audited manager corrections'
+  : managerCorrected ? ' after audited manager correction' : '';
+test(`v27 late-day missed Clock In payroll provenance binds employee attestation and manager approval${correctionLabel}`, async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   const period = h.period();
   Object.assign(period, {
@@ -2842,7 +2846,7 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
   assert.equal(completed.status, 'clocked_out');
   assert.equal(completed.approval_status, 'needs_review');
 
-  let correctionAudit = null;
+  const correctionAudits = [];
   if (managerCorrected) {
     const correctionPayload = {
       action: 'admin_correct_entry', target_email: employee.email,
@@ -2862,14 +2866,42 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
     assert.equal(retry.status, 200, JSON.stringify(retry.body));
     const audits = h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === correctionPayload.request_id);
     assert.equal(audits.length, 1);
-    correctionAudit = audits[0];
-    assert.equal(correctionAudit.details.corrected.clock_in, correctionPayload.correction.clock_in);
+    correctionAudits.push(audits[0]);
+    assert.equal(correctionAudits[0].details.original.clock_in, '2026-09-28T12:00:00.000Z');
+    assert.equal(correctionAudits[0].details.corrected.clock_in, correctionPayload.correction.clock_in);
     assert.equal(completed.clock_in, correctionPayload.correction.clock_in);
+
+    if (managerCorrectionCount === 2) {
+      const secondCorrectionPayload = {
+        action: 'admin_correct_entry', target_email: employee.email,
+        request_id: 'v27-late-manager-correction-002', entry_id: completed.id,
+        expected_updated_date: completed.updated_date, reason: 'Manager rechecked arrival and corrected payroll time again',
+        correction: {
+          clock_in: '2026-09-28T12:30:00.000Z', clock_out: completed.clock_out,
+          lunch_minutes: 0, notes: 'Second audited manager correction after employee attestation',
+          job_allocations: [{ hours: 7, minutes: 30, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+        },
+      };
+      const secondCorrected = await h.invoke(secondCorrectionPayload);
+      assert.equal(secondCorrected.status, 200, JSON.stringify(secondCorrected.body));
+      const secondRetry = await h.invoke(secondCorrectionPayload);
+      assert.equal(secondRetry.status, 200, JSON.stringify(secondRetry.body));
+      const secondAudits = h.rows.TimeClockAudit.filter((row) =>
+        row.action === 'admin_correction' && row.request_id === secondCorrectionPayload.request_id
+      );
+      assert.equal(secondAudits.length, 1);
+      correctionAudits.push(secondAudits[0]);
+      assert.equal(correctionAudits[1].details.original.clock_in, '2026-09-28T12:15:00.000Z');
+      assert.equal(correctionAudits[1].details.corrected.clock_in, '2026-09-28T12:30:00.000Z');
+      assert.equal(completed.clock_in, '2026-09-28T12:30:00.000Z');
+    }
+
     assert.equal(completed.approval_status, 'needs_review');
     assert.equal(punchCase.claimed_clock_in, '2026-09-28T12:00:00.000Z');
     const unapprovedFinalize = await h.action('finalize', 'v27-late-unapproved-finalize-001');
     assert.equal(unapprovedFinalize.status, 409, JSON.stringify(unapprovedFinalize.body));
   }
+  const correctionAudit = correctionAudits.at(-1) || null;
 
   const approved = await h.invoke({
     action: 'admin_set_entry_approval', target_email: employee.email,
@@ -2906,7 +2938,19 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
   assert.equal(provenance.request_id, recoveryRequestId);
   assert.equal(provenance.claimed_clock_in, '2026-09-28T12:00:00.000Z');
   assert.equal(provenance.payroll_clock_in_at_finalization, approvedEntry.clock_in);
-  assert.equal(provenance.payroll_clock_in_at_finalization, managerCorrected ? '2026-09-28T12:15:00.000Z' : '2026-09-28T12:00:00.000Z');
+  const expectedPayrollClockIn = managerCorrectionCount === 2
+    ? '2026-09-28T12:30:00.000Z'
+    : managerCorrected ? '2026-09-28T12:15:00.000Z' : '2026-09-28T12:00:00.000Z';
+  assert.equal(provenance.payroll_clock_in_at_finalization, expectedPayrollClockIn);
+  if (managerCorrectionCount === 1) {
+    assert.equal(provenance.payroll_correction_evidence.correction_chain, undefined);
+  }
+  if (managerCorrectionCount === 2) {
+    assert.deepEqual(
+      provenance.payroll_correction_evidence.correction_chain.map((row) => row.audit_id),
+      correctionAudits.map((row) => row.id),
+    );
+  }
   const finalizeRetry = await h.action('finalize', 'v27-late-refinalize-001');
   assert.equal(finalizeRetry.status, 200, JSON.stringify(finalizeRetry.body));
   assert.equal(period.finalized_summary.shift_manifest.length, 1);
@@ -2947,6 +2991,16 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
     await tamperField(approvedEntry, 'clock_in', '2026-09-28T12:00:00.000Z', 'payroll Clock In reverted to employee claim');
     await tamperField(correctionAudit.details.corrected, 'clock_in', '2026-09-28T12:00:00.000Z', 'manager correction final Clock In');
     await tamperField(correctionAudit, 'actor_email', employee.email, 'manager correction actor');
+  }
+  if (managerCorrectionCount === 2) {
+    await tamperField(
+      correctionAudits[0].details.corrected, 'clock_in', '2026-09-28T12:10:00.000Z',
+      'intermediate manager correction Clock In',
+    );
+    await tamperField(
+      provenance.payroll_correction_evidence.correction_chain[0], 'evidence_hash', 'tampered-chain-hash',
+      'frozen intermediate manager correction evidence',
+    );
   }
 
   for (const [field, value] of [
