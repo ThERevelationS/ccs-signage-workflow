@@ -6,6 +6,7 @@ import { readRemoteFieldHistory } from '../../shared/smartsheetCellHistory.ts';
 import { measuredSmartsheetFetch, measureSyncEntities, observeSmartsheetBody } from '../../shared/smartsheetTraceIO.ts';
 import { tracedSyncRequest, beginSyncTraceStorage } from '../../shared/smartsheetTraceLifecycle.ts';
 import { filterSalesColumnBindings } from '../../shared/smartsheetSalesSafety.mjs';
+import { validateNeutralSalesCloseout } from '../../shared/salesNeutralCloseoutGuard.mjs';
 
 const optionalFields = new Set(('title client_name customer_name customer_id work_order_id description quantity request_type requestor_email requestor_name date_needed date_needed_option date_ordered date_ordered_option vendor date_received receipt_option status row_number current_stage priority assigned_to notes work_notes follow_up due_date start_date is_rider parent_work_order_id rider_stage completed asap in_pipeline sales_status lead_source current_task_deadline current_task_assigned_to designer surveyor site_survey_date site_survey_time site_survey_am_pm project_manager estimator est_inv_at estimate_amount current_task_description date_initial_contact date_estimate_sent date_order_created project_install_date permit_submitted_date permit_receipt_confirmed_date permit_number permit_approved_date actual_cost profit_margin contact_name contact_email contact_phone representative additional_contact follow_up_date sales_last_follow_up_completed_at sales_last_follow_up_outcome close_date expected_close_date sales_last_activity_at sales_stage_changed_at sales_neutral_closed_at lost_reason project_type install_location address_line_2 billing_address billing_address_line_2 sales_rep permitting township_city county permit_code permit_class property_owner pud parcel_number electrical_ibi electrical_nkyei electrical_nec electrical_city electrical_county customer_is_building_owner customer_is_tenant customer_is_marketing_co business_co_coo_reminder business_co_coo_date install_yes install_no budget_less_than removal_yes removal_no service_repair origination patch paint color products product_1 product_2 product_3 product_4 product_5 product_6 cb_complete cf_complete cc_complete sms_complete production_type sip_checklist mmm_sip_checklist mmm_checklist sip_completed sip_revisit_date image_url files google_drive_folder_url google_drive_file_ids corbridge_invoice_number corbridge_link estimate_id milestones project_health health_override health_notes dependencies').split(' '));
 function cincinnatiDateStamp(now=new Date()) {
@@ -37,18 +38,7 @@ async function fieldHistoryHandler(req) {
         if(!equivalent(record[f],expected[f]) && !equivalent(record[f],v))throw Object.assign(new Error('This field changed in another session: '+f+'. Reload before saving.'),{status:409});
       }
       for(const [f,v] of Object.entries(body.guard_fields||{}))if(!equivalent(record[f],v))throw Object.assign(new Error('The record no longer matches its loaded state.'),{status:409});
-      if(type==='WorkOrder' && Object.prototype.hasOwnProperty.call(patch,'sales_neutral_closed_at')) {
-        const marker=String(patch.sales_neutral_closed_at||'').trim();
-        const matchesSaved=Object.entries(patch).every(([f,v])=>equivalent(record[f],v));
-        const newClosure=record.in_pipeline===true && !['won','lost'].includes(record.sales_status);
-        const replayedClosure=matchesSaved && record.in_pipeline===false;
-        if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(marker) || !Number.isFinite(Date.parse(marker)) ||
-          (!newClosure && !replayedClosure) || patch.in_pipeline!==false ||
-          String(patch.current_task_description||'').trim()!=='Closed - Did not Lose' ||
-          (Object.prototype.hasOwnProperty.call(patch,'sales_status') && patch.sales_status!==record.sales_status)) {
-          throw Object.assign(new Error('Neutral closure requires an active nonterminal Sales opportunity and its confirmed task and pipeline changes together.'),{status:409});
-        }
-      }
+      if(type==='WorkOrder')validateNeutralSalesCloseout(record,patch,equivalent);
       if(type==='WorkOrder' && Object.prototype.hasOwnProperty.call(patch,'date_estimate_sent')) {
         const nextQuoteDate=String(patch.date_estimate_sent||'').slice(0,10);
         const today=cincinnatiDateStamp();
