@@ -68,6 +68,7 @@ export default function FleetMechanic() {
   const selectedWorkOrderRef = useRef(null);
   const estimateCapabilityRef = useRef(null);
   const saveCapabilityRef = useRef(null);
+  const photoDraftEpochRef = useRef(0);
 
   const fetchPortalPayload = async () => {
     const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
@@ -88,6 +89,7 @@ export default function FleetMechanic() {
     estimateCapabilityRef.current = nextCanEstimate;
     saveCapabilityRef.current = nextCanSave;
     if (selectedId && !freshSelected) {
+      photoDraftEpochRef.current += 1;
       selectedWorkOrderRef.current = null;
       setSelected(null);
       setPhotos(current => {
@@ -107,6 +109,7 @@ export default function FleetMechanic() {
         setEstimateForm(nextCanEstimate ? estimateSeed(freshEstimate) : estimateSeed(null));
       }
       if (previousCanSave !== null && previousCanSave !== nextCanSave) {
+        photoDraftEpochRef.current += 1;
         setForm({ actual_hours:freshSelected.actual_hours ?? "", corrective_action:freshSelected.corrective_action || "", mechanic_note:"" });
         setPhotos(current => {
           current.forEach(row => URL.revokeObjectURL(row.preview));
@@ -134,6 +137,7 @@ export default function FleetMechanic() {
   };
 
   const clearSavedProgressDraft = workOrder => {
+    photoDraftEpochRef.current += 1;
     setPhotos(current => {
       current.forEach(row => URL.revokeObjectURL(row.preview));
       return [];
@@ -172,6 +176,7 @@ export default function FleetMechanic() {
   const rows = tab === "active" ? (data?.active_work_orders || []) : (data?.recent_completed || []);
 
   const openJob = workOrder => {
+    photoDraftEpochRef.current += 1;
     selectedWorkOrderRef.current = workOrder.id;
     setSelected(workOrder);
     setForm({ actual_hours: workOrder.actual_hours ?? "", corrective_action: workOrder.corrective_action || "", mechanic_note: "" });
@@ -183,6 +188,7 @@ export default function FleetMechanic() {
   };
 
   const closeJob = () => {
+    photoDraftEpochRef.current += 1;
     selectedWorkOrderRef.current = null;
     photos.forEach(row => URL.revokeObjectURL(row.preview));
     setPhotos([]);
@@ -192,14 +198,34 @@ export default function FleetMechanic() {
   const addPhotos = async event => {
     const files = Array.from(event.target.files || []).slice(0, Math.max(0, 3 - photos.length));
     event.target.value = "";
-    if (!files.length) return;
+    if (!files.length || busy || workRecovery || saveCapabilityRef.current === false) return;
+    const jobId = selectedWorkOrderRef.current;
+    const draftEpoch = photoDraftEpochRef.current;
+    if (!jobId) return;
     setActionError("");
+    const prepared = [];
+    const stillCurrent = () => photoDraftEpochRef.current === draftEpoch &&
+      selectedWorkOrderRef.current === jobId && saveCapabilityRef.current !== false;
     try {
-      const prepared = [];
-      for (const file of files) prepared.push(await fileToJpegPayload(file));
-      setPhotos(prev => [...prev, ...prepared].slice(0, 3));
+      for (const file of files) {
+        prepared.push(await fileToJpegPayload(file));
+        if (!stillCurrent()) {
+          prepared.forEach(row => URL.revokeObjectURL(row.preview));
+          return;
+        }
+      }
+      setPhotos(prev => {
+        if (!stillCurrent()) {
+          prepared.forEach(row => URL.revokeObjectURL(row.preview));
+          return prev;
+        }
+        const remaining = Math.max(0, 3 - prev.length);
+        prepared.slice(remaining).forEach(row => URL.revokeObjectURL(row.preview));
+        return [...prev, ...prepared.slice(0, remaining)];
+      });
     } catch (e) {
-      setActionError(e?.message || "One of the photos could not be prepared.");
+      prepared.forEach(row => URL.revokeObjectURL(row.preview));
+      if (stillCurrent()) setActionError(e?.message || "One of the photos could not be prepared.");
     }
   };
 
@@ -207,6 +233,7 @@ export default function FleetMechanic() {
     if (!recovery?.workOrderId || !recovery?.requestId || !recovery?.action) return false;
     const requestSequence = ++portalRequestRef.current;
     const recoveryReason = reason || recovery.reason || "The mechanic update could not be confirmed.";
+    photoDraftEpochRef.current += 1;
     setWorkRecovery({...recovery,reason:recoveryReason});
     setBusy("work-recovery");
     setRefreshing(true);
