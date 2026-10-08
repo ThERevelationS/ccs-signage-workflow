@@ -684,7 +684,8 @@ async function pullDataset(
         detail: 'Checking Base44 writes before advancing Smartsheet sync evidence',
       });
     }
-    for (const item of orderDateVerifications) {
+    for (let checkIndex = 0; checkIndex < orderDateVerifications.length; checkIndex++) {
+      const item = orderDateVerifications[checkIndex];
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
         await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);
@@ -693,6 +694,12 @@ async function pullDataset(
       } catch (error: any) {
         errors.push(`Order ${item.id} date/text verification: ${error?.message || 'unknown error'}. Snapshot not advanced.`);
         updatedCount--;
+      }
+      if (options.reportOrderPullProgress && ((checkIndex + 1) % 10 === 0 || checkIndex + 1 === orderDateVerifications.length)) {
+        await options.reportOrderPullProgress({ phase: 'verifying_base44', current: checkIndex + 1, total: orderDateVerifications.length,
+          itemLabel: `Checked ${checkIndex + 1} of ${orderDateVerifications.length} Order date/text changes`,
+          detail: 'Only verified updates will have their Smartsheet snapshot metadata advanced',
+        });
       }
     }
   }
