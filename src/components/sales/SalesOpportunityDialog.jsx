@@ -23,15 +23,6 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 
 const CellHistory = base44.entities.CellHistory;
 
-const SALES_STATUSES = [
-  { value: "lead", label: "Lead" },
-  { value: "quoted", label: "Quoted" },
-  { value: "follow_up", label: "Follow Up" },
-  { value: "on_hold", label: "On Hold" },
-  { value: "won", label: "Won" },
-  { value: "lost", label: "Lost" },
-];
-
 const SALES_HISTORY_FIELDS = new Set([
   "sales_status",
   "sales_rep",
@@ -113,6 +104,7 @@ export default function SalesOpportunityDialog({
   workOrder,
   users = [],
   leadSources = [],
+  taskDescriptions = [],
   isRegistered,
   onClose,
   onUpdateFields,
@@ -328,18 +320,15 @@ export default function SalesOpportunityDialog({
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
-              <Select value={stageDisplayValue} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered || recordNeutralClosure}>
-                <SelectTrigger className={`mt-2 h-11 sm:h-9 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : ""}`}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
-                  {recordNeutralClosure && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
-                  {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className={`mt-2 flex min-h-11 items-center rounded-md border px-3 text-sm font-semibold sm:min-h-9 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}
+                role="status" aria-label={`Read-only Sales Status: ${statusLabel}`}
+                title="Sales Status is determined by Task Description.">
+                {statusLabel}
+              </div>
               {stageAging.tracked ? (
                 <div className={`mt-2 text-xs ${stageAging.aged ? "font-semibold text-rose-700" : "text-gray-500"}`}>{stageAging.ageDays} day{stageAging.ageDays === 1 ? "" : "s"} in this stage{workOrder.sales_status === "on_hold" ? " · On Hold is not flagged as stalled" : stageAging.aged ? " · review for stage movement" : ""}</div>
               ) : recordClassification === "current" ? (
-                <div className="mt-2 text-xs text-gray-400">{unverifiedStage ? "Choose the actual Sales stage to establish the first verified stage baseline." : "Stage age begins tracking after the next verified stage change."}</div>
+                <div className="mt-2 text-xs text-gray-400">{unverifiedStage ? "Stage timing is unverified. Select the appropriate Task Description; no timestamp will be invented." : "Stage age begins tracking after the next verified stage change."}</div>
               ) : (
                 <div className="mt-2 text-xs text-gray-400">Stage timing is not treated as authoritative for this non-current record.</div>
               )}
@@ -384,7 +373,25 @@ export default function SalesOpportunityDialog({
                   <Label className="text-xs text-gray-500">Task owner</Label>
                   <TaskAssigneeSelect key={workOrder.id} value={workOrder.current_task_assigned_to || ""} users={users} disabled={!isRegistered || closeout} onChange={(name) => update({ current_task_assigned_to: name })} className="mt-1 h-11 sm:h-9" context={opportunityDisplayName} />
                 </div>
-                <div className="sm:col-span-2"><Label className="text-xs text-gray-500">{closeout ? "Last planned action / task" : "Next action / task"}</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-11 sm:h-9" /></div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs text-gray-500">Task Description · controls Sales Status</Label>
+                  <Select value={workOrder.current_task_description || undefined}
+                    onValueChange={(task) => update({ current_task_description: task })}
+                    disabled={!isRegistered || recordNeutralClosure || !["current", "outcome"].includes(recordClassification)}>
+                    <SelectTrigger aria-label="Task Description (controls Sales Status)" className="mt-1 h-11 w-full text-left sm:h-9">
+                      <SelectValue placeholder="Choose next task" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workOrder.current_task_description && !taskDescriptions.some((item) => (typeof item === "string" ? item : item?.text) === workOrder.current_task_description) && (
+                        <SelectItem value={workOrder.current_task_description}>{workOrder.current_task_description} (existing task)</SelectItem>
+                      )}
+                      {Array.from(new Set(taskDescriptions.map((item) => typeof item === "string" ? item : item?.text).filter(Boolean))).map((task) => (
+                        <SelectItem key={task} value={task}>{task}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {recordClassification === "outcome" && <p className="mt-1 text-xs text-slate-500">Selecting a different Sales stage task requires reopening confirmation. Won SIPs/WIP tasks remain operational.</p>}
+                </div>
               </div>
 
               {closeout && (
