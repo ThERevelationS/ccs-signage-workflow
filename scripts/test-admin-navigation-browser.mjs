@@ -1,0 +1,234 @@
+// Isolated Chromium acceptance for the *real* AdminSettings JSX, navigation and search.
+// Non-navigation dependencies are synthetic, no live Base44 credentials/data or outside requests.
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { tmpdir } from 'node:os';
+import { mkdtemp, symlink, readFile, readdir, copyFile, writeFile, rm } from 'node:fs/promises';
+import { createServer } from 'vite';
+import react from '@vitejs/plugin-react';
+
+const appRoot = process.cwd();
+const { chromium } = await import(process.env.ADMIN_PLAYWRIGHT_PATH ||
+  '/tmp/fleet-browser-check/node_modules/playwright/index.mjs');
+const scratch = await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-'));
+let server, browser, passed = 0;
+
+const syntheticPanels = [
+  'FaceRecognition', 'EmailGroupsManager', 'GmailConnector', 'UserManagement',
+  'ProjectTrash', 'OrderTrash', 'TimeClockAdmin', 'TimeClockReportsDashboard',
+  'ActivityFeed', 'PTOManagement', 'BackupManager', 'OvertimeRulesManager',
+  'SalesPipelineDefaultSort', 'ResourceAllocationView', 'CorebridgeApiSettings',
+  'SmartsheetSyncSettings', 'SyncConflictReview', 'OpportunityBridgeReview',
+  'TaskAssignmentRules', 'WipImporter', 'PermittingRepositoryAdmin',
+  'PermittingCompletenessDashboard', 'PermittingRulesReview', 'PermittingTestSuite',
+  'JurisdictionMonitoringSettings', 'AdminCalendarSettings', 'PasswordMigrationButton',
+];
+const sources = [
+  '../components/admin/EmailGroupsManager', '../components/admin/GmailConnector',
+  '../components/admin/UserManagement', '../components/admin/ProjectTrash',
+  '../components/admin/OrderTrash',
+  '../components/timeclock/FaceRecognition', '../components/timeclock/TimeClockAdmin',
+  '../components/timeclock/TimeClockReportsDashboard',
+  '../components/admin/ActivityFeed', '../components/admin/PTOManagement',
+  '../components/admin/BackupManager', '../components/admin/OvertimeRulesManager',
+  '@/components/admin/SalesPipelineDefaultSort',
+  '@/components/workflow/ResourceAllocationView',
+  '@/components/admin/CorebridgeApiSettings', '@/components/admin/SmartsheetSyncSettings',
+  '@/components/admin/SyncConflictReview', '@/components/admin/OpportunityBridgeReview',
+  '@/components/admin/TaskAssignmentRules', '@/components/admin/WipImporter',
+  '@/components/permitting/PermittingRepositoryAdmin.jsx',
+  '@/components/permitting/PermittingCompletenessDashboard.jsx',
+  '@/components/admin/PermittingRulesReview',
+  '@/components/permitting/PermittingTestSuite',
+  '@/components/admin/JurisdictionMonitoringSettings',
+  '@/components/admin/AdminCalendarSettings',
+  '@/components/admin/PasswordMigrationButton',
+];
+
+function monitor(page, origin, errors) {
+  page.on('pageerror', e => errors.push('Browser: ' + e.message));
+  page.on('request', request => {
+    if (request.url().startsWith('http') && !request.url().startsWith(origin)) {
+      errors.push('External request: ' + request.url());
+    }
+  });
+  page.route('**/*', route => {
+    const url = route.request().url();
+    return url.startsWith('http') && !url.startsWith(origin)
+      ? route.abort('blockedbyclient') : route.continue();
+  });
+}
+
+async function check(name, width, urlSuffix, fn) {
+  const context = await browser.newContext({ viewport: { width, height: 860 } });
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    monitor(page, origin, errors);
+    await page.goto(origin + urlSuffix, { waitUntil: 'networkidle' });
+    await page.getByRole('search', { name: 'Search Admin pages and settings' }).waitFor();
+    await fn(page);
+    assert.deepEqual(errors, [], 'No browser errors or external requests');
+    console.log('PASS ' + name);
+    passed += 1;
+  } finally {
+    await context.close();
+  }
+}
+
+let origin;
+try {
+  await symlink(path.join(appRoot, 'node_modules'), path.join(scratch, 'node_modules'), 'dir');
+  const css = (await readdir(path.join(appRoot, 'dist/assets'))).find(name => name.endsWith('.css'));
+  assert.ok(css, 'Build the app first to provide actual Tailwind CSS');
+  await copyFile(path.join(appRoot, 'dist/assets', css), path.join(scratch, 'styles.css'));
+  await writeFile(path.join(scratch, 'index.html'),
+    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div>' +
+    '<script type="module" src="/main.jsx"></script></body></html>');
+  await writeFile(path.join(scratch, 'main.jsx'), [
+    'import React from "react";',
+    'import { createRoot } from "react-dom/client";',
+    'import { BrowserRouter } from "react-router-dom";',
+    'import AdminSettings from "/@fs' + path.join(appRoot, 'src/pages/AdminSettings.jsx') + '";',
+    'createRoot(document.getElementById("root")).render(<BrowserRouter><AdminSettings /></BrowserRouter>);',
+  ].join('\n'));
+  await writeFile(path.join(scratch, 'mockData.js'), [
+    'export const base44={entities:{AutomationRule:{},EmailGroup:{},AuthorizedEmail:{}},functions:{invoke(){throw Error("Unexpected live API call")}}};',
+  ].join('\n'));
+  await writeFile(path.join(scratch, 'mockAuth.js'), [
+    'export function useAuth(){return {currentUser:{role:new URLSearchParams(window.location.search).get("role")==="basic"?"user":"admin"},sessionToken:"synthetic"};}',
+    'export function getStoredAdminSettingsCapability(){return "synthetic";}',
+    'export function hasStoredAdminSettingsAuthorization(){return true;}',
+    'export function storeAdminSettingsAuthorization(){throw Error("Unexpected write to synthetic auth");}',
+  ].join('\n'));
+  await writeFile(path.join(scratch, 'mockPersistence.js'), [
+    'export async function createAutomationRuleIfAbsent(){throw Error("Unexpected write");}',
+    'export async function deleteAutomationRuleIfUnchanged(){throw Error("Unexpected write");}',
+    'export async function updateAutomationRuleIfUnchanged(){throw Error("Unexpected write");}',
+  ].join('\n'));
+  await writeFile(path.join(scratch, 'mockLogin.js'), 'export async function verifyLogin(){throw Error("Unexpected login");}');
+  await writeFile(path.join(scratch, 'mockEntityList.js'),
+    'export async function loadAllEntityRows(){return [];}');
+  for (const name of syntheticPanels) {
+    await writeFile(path.join(scratch, 'mock-' + name + '.jsx'),
+      'import React from "react";export default function ' + name +
+      '(){return <div data-testid="synthetic-' + name + '">Synthetic ' + name + '</div>;}');
+  }
+  const aliases = [
+    {find:'@/api/base44Client',replacement:path.join(scratch,'mockData.js')},
+    {find:'@/components/auth/EmailGate',replacement:path.join(scratch,'mockAuth.js')},
+    {find:'@/functions/verifyLogin',replacement:path.join(scratch,'mockLogin.js')},
+    {find:'@/components/admin/automationRulePersistence',replacement:path.join(scratch,'mockPersistence.js')},
+    {find:'@/components/estimator/loadAllEntityRows',replacement:path.join(scratch,'mockEntityList.js')},
+    ...sources.map((find, index) => ({
+      find, replacement:path.join(scratch,'mock-'+syntheticPanels[index]+'.jsx'),
+    })),
+    {find:/^@\//,replacement:path.join(appRoot,'src')+'/'},
+  ];
+  server = await createServer({
+    configFile:false, root:scratch, plugins:[react()],
+    resolve:{alias:aliases},
+    server:{host:'127.0.0.1',port:0,fs:{allow:[appRoot,scratch]}},
+    logLevel:'error',
+  });
+  await server.listen();
+  origin='http://127.0.0.1:'+server.httpServer.address().port;
+  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+
+  await check('Desktop group switching and selected-panel behavior', 1440, '/', async page=>{
+    await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).click();
+    assert.equal(new URL(page.url()).searchParams.get('tab'),'smartsheet');
+    await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
+    await page.getByRole('tab',{name:'CoreBridge Migration'}).click();
+    await page.getByTestId('synthetic-CorebridgeApiSettings').waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('tab'),'corebridge');
+    assert.equal(await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).getAttribute('aria-pressed'),'true');
+  });
+
+  await check('Deep links to nested Time Clock and Backend settings', 1366,
+    '/?tab=timeclock&subtab=pto', async page=>{
+      await page.getByTestId('synthetic-PTOManagement').waitFor();
+      await page.getByRole('tab',{name:'Overtime Rules'}).click();
+      await page.getByTestId('synthetic-OvertimeRulesManager').waitFor();
+      assert.equal(new URL(page.url()).searchParams.get('subtab'),'overtime');
+      await page.getByRole('searchbox',{name:'Find an Admin page or setting'}).fill('Data Backup');
+      await page.getByRole('button',{name:/Data Backup/}).first().click();
+      await page.getByTestId('synthetic-BackupManager').waitFor();
+      assert.equal(new URL(page.url()).searchParams.get('tab'),'backend');
+      assert.equal(new URL(page.url()).searchParams.get('subtab'),'backup');
+    });
+
+  await check('Keyboard Enter opens first result and Escape clears query', 1440, '/', async page=>{
+    const box=page.getByRole('searchbox',{name:'Find an Admin page or setting'});
+    await box.fill('PTO');
+    await box.press('Enter');
+    await page.getByTestId('synthetic-PTOManagement').waitFor();
+    assert.equal(await box.inputValue(),'');
+    await box.fill('Smartsheet');
+    await box.press('Escape');
+    assert.equal(await box.inputValue(),'');
+    assert.equal(await page.getByRole('button',{name:'Clear Admin search'}).count(),0);
+  });
+
+  await check('Browser Back/Forward restores selected category and panel', 1440, '/', async page=>{
+    await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'People'}).click();
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+    await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Permitting'}).click();
+    await page.getByTestId('synthetic-PermittingCompletenessDashboard').waitFor();
+    await page.goBack();
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+    await page.goForward();
+    await page.getByTestId('synthetic-PermittingCompletenessDashboard').waitFor();
+  });
+
+  for (const width of [320,375,768,1440]) {
+    await check('No Admin nav overflow at '+width+'px', width, '/?tab=smartsheet', async page=>{
+      const bounds=await page.evaluate(()=>{
+        const shell=document.querySelector('[aria-label="Admin navigation categories"]').parentElement;
+        const root=document.documentElement;
+        const viewport=innerWidth;
+        const card=shell.getBoundingClientRect();
+        const descendants=[...shell.querySelectorAll('button,[role="tab"],input,[role="tablist"]')];
+        return {
+          viewport,
+          documentWidth:root.scrollWidth,
+          cardLeft:card.left,
+          cardRight:card.right,
+          bad:descendants.filter(node=>{
+            const box=node.getBoundingClientRect();
+            return box.width>0 && (box.left < card.left-2 || box.right > card.right+2);
+          }).map(node=>({text:node.textContent?.trim().slice(0,40),rect:node.getBoundingClientRect().toJSON()})),
+        };
+      });
+      assert.ok(bounds.cardLeft>=-1 && bounds.cardRight<=width+1,JSON.stringify(bounds));
+      assert.deepEqual(bounds.bad,[],JSON.stringify(bounds));
+      assert.ok(bounds.documentWidth<=width+1,'Document horizontal overflow: '+JSON.stringify(bounds));
+      await page.getByRole('searchbox',{name:'Find an Admin page or setting'}).fill('permitting');
+      const results=page.getByRole('button',{name:/Permitting/});
+      await results.first().waitFor();
+      const resultBounds=await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').parentElement.getBoundingClientRect();
+        return [...document.querySelectorAll('[aria-label="Admin search results"] button')].filter(node=>{
+          const rect=node.getBoundingClientRect();
+          return rect.left<card.left-2 || rect.right>card.right+2;
+        }).map(node=>node.textContent);
+      });
+      assert.deepEqual(resultBounds,[],'Search results remain inside card');
+    });
+  }
+
+  await check('Non-admin excludes restricted sections from search and category bar', 375,
+    '/?role=basic&tab=smartsheet', async page=>{
+      assert.equal(await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).count(),0);
+      await page.getByRole('searchbox',{name:'Find an Admin page or setting'}).fill('Smartsheet');
+      await page.getByText('No matching Admin settings. Try another term.').waitFor();
+      assert.equal(await page.getByRole('tab',{name:'Smartsheet Sync'}).count(),0);
+    });
+
+  console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
+} finally {
+  if(browser) await browser.close();
+  if(server) await server.close();
+  await rm(scratch,{recursive:true,force:true});
+}
