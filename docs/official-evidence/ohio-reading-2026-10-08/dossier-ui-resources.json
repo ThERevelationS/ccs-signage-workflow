@@ -1,0 +1,114 @@
+{
+  "locality": {
+    "id": "6ac19f12298c063943ecc10f",
+    "name": "Reading",
+    "state": "OH",
+    "type": "city"
+  },
+  "resources": [
+    {
+      "file": "building-fees-2026.pdf",
+      "label": "City-linked building fee schedule (2026) \u2014 applicability pending",
+      "source": "https://www.readingohio.org/documents/Building-and-Zoning/FEE-SCHEDULE-2026.pdf",
+      "archive": "/permitting-evidence/reading/building-fees-2026.pdf",
+      "format": "PDF",
+      "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
+      "bytes": 229928
+    },
+    {
+      "file": "zoning-fees.pdf",
+      "label": "Zoning fee schedule \u2014 fee conflicts pending",
+      "source": "https://www.readingohio.org/documents/City%20of%20Reading%20Zoning%20Fees.pdf",
+      "archive": "/permitting-evidence/reading/zoning-fees.pdf",
+      "format": "PDF",
+      "sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+      "bytes": 106961
+    },
+    {
+      "file": "residential-application.pdf",
+      "label": "Residential building and zoning application",
+      "source": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_RESIDENTIAL_APP%28FILLABLE%29.pdf",
+      "archive": "/permitting-evidence/reading/residential-application.pdf",
+      "format": "PDF",
+      "sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d",
+      "bytes": 312590
+    },
+    {
+      "file": "commercial-application.pdf",
+      "label": "Commercial building and zoning application with tax registration",
+      "source": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_COMMERCIAL_APP%28FILLABLE%29.pdf",
+      "archive": "/permitting-evidence/reading/commercial-application.pdf",
+      "format": "PDF",
+      "sha256": "ba109bcf3aaec5fc3418335b8b5a282fa791715ae68a8eb2f3913956fda7671a",
+      "bytes": 416356
+    },
+    {
+      "file": "bza-appeal.pdf",
+      "label": "BZA appeal and variance application \u2014 fee conflict pending",
+      "source": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BZA_APPEAL_APP%28FILLABLE%29.pdf",
+      "archive": "/permitting-evidence/reading/bza-appeal.pdf",
+      "format": "PDF",
+      "sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719",
+      "bytes": 176863
+    },
+    {
+      "file": "minutes-07-07-26.pdf",
+      "label": "Council minutes 07-07-26 \u2014 amendment research",
+      "source": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-07-26%20Council%20Minutes%20%28Legislative%29.pdf",
+      "archive": "/permitting-evidence/reading/minutes-07-07-26.pdf",
+      "format": "PDF",
+      "sha256": "ebfb36d4b98290e3b74cb2f818a00e9e3ab8a4d1e01cfb6e54797467f3dadd3b",
+      "bytes": 377268
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "label": "Council minutes 07-21-26 \u2014 amendment research",
+      "source": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-21-26%20Council%20Minutes%20%28Legislative%29.pdf",
+      "archive": "/permitting-evidence/reading/minutes-07-21-26.pdf",
+      "format": "PDF",
+      "sha256": "b7ca03afe0fa870fd4cf6a6af7f7509ff303da19d6b76f4a2af025c0417c7654",
+      "bytes": 2524672
+    },
+    {
+      "file": "minutes-08-04-26.pdf",
+      "label": "Council minutes 08-04-26 \u2014 amendment research",
+      "source": "https://www.readingohio.org/documents/Council%20Minutes/2026/08-04-26%20Council%20Minutes%20%28Regular%29.pdf",
+      "archive": "/permitting-evidence/reading/minutes-08-04-26.pdf",
+      "format": "PDF",
+      "sha256": "8840a2f4b1ca62079c835bc167d56cbc7fa27763c375fb16489829fb2b6f04d2",
+      "bytes": 1222879
+    },
+    {
+      "file": "minutes-08-18-26.pdf",
+      "label": "Council minutes 08-18-26 \u2014 amendment research",
+      "source": "https://www.readingohio.org/documents/08-18-26-Council-Minutes-Legislative-.pdf",
+      "archive": "/permitting-evidence/reading/minutes-08-18-26.pdf",
+      "format": "PDF",
+      "sha256": "5294e9991b7be36f07b8dfbd54f008c12d828771c724148d6571032059965aab",
+      "bytes": 312851
+    },
+    {
+      "file": "minutes-09-01-26.pdf",
+      "label": "Council minutes 09-01-26 \u2014 amendment research",
+      "source": "https://www.readingohio.org/documents/09-01-26-Council-Minutes-Regular-.pdf",
+      "archive": "/permitting-evidence/reading/minutes-09-01-26.pdf",
+      "format": "PDF",
+      "sha256": "1699bd0f264aad395f14beba1d6bfb486dfb1f4f1f345d2ff00c8420f321bd73",
+      "bytes": 570538
+    },
+    {
+      "file": "zoning-map-2025.pdf",
+      "label": "Zoning map (March 20, 2025) \u2014 district assignment pending",
+      "source": "https://www.readingohio.org/documents/Building-and-Zoning/2025/Reading-Existing-Zoning-20-March-2025.pdf",
+      "archive": "/permitting-evidence/reading/zoning-map-2025.pdf",
+      "format": "PDF",
+      "sha256": "6886d0ec361c105ee366bf295f21c97ca37de6445934419205a88287d59fe0e6",
+      "bytes": 1985542
+    }
+  ],
+  "admin_only": true,
+  "exact_identity_required": true,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "published": false
+}

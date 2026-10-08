@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Reading locality dossier
+
+Added admin-only exact-identity Reading research dossier with11 hash-verified retained PDFs, City-linked portal and five source references. Fee, map, amendment, diagram and separate electrical-role gaps remain visible; no approved workflow created. Task2 complete; milestone1 Task4 open. Live record changes0; publications0. Next: Elmwood retained forms and research gaps in locality dossier.
+
 ## 2026-10-08 — Phase 10, milestone 2: Reading remaining electrical text and intake
 
 Three additional electrical sections reviewed;1424 coverage5/6 with1424.04 explicitly unread. IBI Ohio migration/intake guidance reviewed; Reading-specific permit issuer/current delegation remain unresolved. Source attempts and portal502 recorded; no application submitted. Prior Elmwood guide remains original evidence, not newly downloaded here. Task2 complete; milestone1 Task4 open. Live changes0; publications0. Next: surface retained Reading documents and research gaps in locality dossier.

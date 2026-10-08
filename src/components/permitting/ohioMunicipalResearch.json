@@ -99,7 +99,7 @@
     "resources": [
       {
         "file": "cheviot-building-application.pdf",
-        "label": "Building application — includes Sign permit type",
+        "label": "Building application \u2014 includes Sign permit type",
         "source": "https://cheviot.org/wp-content/uploads/2025/10/CHEVIOT-BUILDING-PERMIT-APPLICATION.pdf",
         "archive": "/permitting-evidence/ohio-west/cheviot-building-application.pdf",
         "format": "PDF",
@@ -169,7 +169,7 @@
     "resources": [
       {
         "file": "cleves-general-building-application.pdf",
-        "label": "General building application — scanned original",
+        "label": "General building application \u2014 scanned original",
         "source": "https://www.clevesoh.gov/_files/ugd/db9e63_437bc327f9a247d582def69adbe338a0.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-general-building-application.pdf",
         "format": "PDF",
@@ -178,7 +178,7 @@
       },
       {
         "file": "cleves-mechanical-application.pdf",
-        "label": "Mechanical application — scanned original",
+        "label": "Mechanical application \u2014 scanned original",
         "source": "https://www.clevesoh.gov/_files/ugd/db9e63_769e1319cecf46b38920155c7fa0966e.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-mechanical-application.pdf",
         "format": "PDF",
@@ -187,7 +187,7 @@
       },
       {
         "file": "cleves-linked-zoning-manual.pdf",
-        "label": "Village-linked zoning manual — currentness unreviewed",
+        "label": "Village-linked zoning manual \u2014 currentness unreviewed",
         "source": "https://www.clevesoh.gov/_files/ugd/db9e63_703c8f2d8c4c4a1d91fc3a5b54f92e33.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-linked-zoning-manual.pdf",
         "format": "PDF",
@@ -196,7 +196,7 @@
       },
       {
         "file": "cleves-draft-zoning-manual.pdf",
-        "label": "DRAFT zoning manual — not approved law",
+        "label": "DRAFT zoning manual \u2014 not approved law",
         "source": "https://www.clevesoh.gov/_files/ugd/c8a414_ffa0fc0aa616460abe9cce88d3a6dbbc.pdf",
         "archive": "/permitting-evidence/ohio-west/cleves-draft-zoning-manual.pdf",
         "format": "PDF",
@@ -245,7 +245,7 @@
     "resources": [
       {
         "file": "harrison-temporary-sign-instructions.pdf",
-        "label": "Temporary-sign instructions link — same bytes as permanent link",
+        "label": "Temporary-sign instructions link \u2014 same bytes as permanent link",
         "source": "https://www.harrisonohio.gov/DocumentCenter/View/360/Temporary-Signs-Instructions-PDF",
         "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf",
         "format": "PDF",
@@ -254,7 +254,7 @@
       },
       {
         "file": "harrison-permanent-sign-instructions.pdf",
-        "label": "Permanent-sign instructions link — same bytes as temporary link",
+        "label": "Permanent-sign instructions link \u2014 same bytes as temporary link",
         "source": "https://www.harrisonohio.gov/DocumentCenter/View/356/Permanent-Signs-Instructions-PDF",
         "archive": "/permitting-evidence/harrison-addyston/harrison-permanent-sign-instructions.pdf",
         "format": "PDF",
@@ -272,7 +272,7 @@
       },
       {
         "file": "harrison-zoning-application.pdf",
-        "label": "Zoning application — permanent/temporary signs",
+        "label": "Zoning application \u2014 permanent/temporary signs",
         "source": "https://www.harrisonohio.gov/DocumentCenter/View/3063/APP-ZONING",
         "archive": "/permitting-evidence/harrison-addyston/harrison-zoning-application.pdf",
         "format": "PDF",
@@ -312,7 +312,7 @@
       },
       {
         "label": "Scanned instructions: paper plan package",
-        "text": "The scanned guide calls for four plan copies, including a scaled plot plan, sign illustrations, attachment/foundation details and lighting information. Reconcile this paper route with the City’s current Cloudpermit guidance.",
+        "text": "The scanned guide calls for four plan copies, including a scaled plot plan, sign illustrations, attachment/foundation details and lighting information. Reconcile this paper route with the City\u2019s current Cloudpermit guidance.",
         "physical_page": 1,
         "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf#page=1",
         "source_sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
@@ -398,11 +398,11 @@
     "extraction_note": "Both byte-identical sign-instruction PDFs still have no embedded text. Both physical pages now have retained renders, raw OCR/TSV and separate visual-transcription candidates pending staff review. OCR does not establish current requirements.",
     "ocr_references": [
       {
-        "label": "Raw OCR — physical page 1 (uncorrected)",
+        "label": "Raw OCR \u2014 physical page 1 (uncorrected)",
         "url": "/permitting-evidence/harrison-addyston/harrison-sign-instructions-page-1-raw-ocr.txt"
       },
       {
-        "label": "Raw OCR — physical page 2 (uncorrected)",
+        "label": "Raw OCR \u2014 physical page 2 (uncorrected)",
         "url": "/permitting-evidence/harrison-addyston/harrison-sign-instructions-page-2-raw-ocr.txt"
       }
     ],
@@ -466,7 +466,7 @@
     "resources": [
       {
         "file": "addyston-linked-zoning-ordinance.pdf",
-        "label": "Village-linked zoning ordinance — currentness unreviewed",
+        "label": "Village-linked zoning ordinance \u2014 currentness unreviewed",
         "source": "https://www.addystonohio.org/_files/ugd/c8a414_844b617e348e42c4bab3d6d2b064f310.pdf",
         "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf",
         "format": "PDF",
@@ -533,11 +533,11 @@
     ],
     "references": [
       {
-        "label": "Northeast Township zoning applications — original retention gap",
+        "label": "Northeast Township zoning applications \u2014 original retention gap",
         "url": "https://greentownship_permit.portal.iworq.net/portalhome/greentownship_permit"
       },
       {
-        "label": "County ezTrak — outside northeast zoning jurisdiction per Township page",
+        "label": "County ezTrak \u2014 outside northeast zoning jurisdiction per Township page",
         "url": "https://eztrak.cagis.org/"
       },
       {
@@ -545,14 +545,14 @@
         "url": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId="
       },
       {
-        "label": "Electrical plan-review reference — original retention gap; applicability pending",
+        "label": "Electrical plan-review reference \u2014 original retention gap; applicability pending",
         "url": "https://www.inspectionbureau.com/electrical-plan-review/"
       }
     ],
     "resources": [
       {
         "file": "green-street-directory.html",
-        "label": "Northeast zoning street directory — address review pending",
+        "label": "Northeast zoning street directory \u2014 address review pending",
         "source": "https://oh-greentownship.civicplus.com/DocumentCenter/View/883/Search-the-Zoning-Street-Directory-HTML?bidId=",
         "archive": "/permitting-evidence/green-delhi/green-street-directory.html",
         "format": "HTML",
@@ -571,7 +571,7 @@
     "resources": [
       {
         "file": "northbend-right-of-way.pdf",
-        "label": "Village right-of-way application — separate from sign approval",
+        "label": "Village right-of-way application \u2014 separate from sign approval",
         "source": "https://www.northbendohio.org/_files/ugd/c8a414_2fa27c99fefc48ab93fda35a3f2db926.pdf",
         "archive": "/permitting-evidence/northbend-whitewater/northbend-right-of-way.pdf",
         "format": "PDF",
@@ -580,7 +580,7 @@
       },
       {
         "file": "northbend-linked-zoning-code.pdf",
-        "label": "Village-linked zoning code — current amendments unverified",
+        "label": "Village-linked zoning code \u2014 current amendments unverified",
         "source": "https://www.northbendohio.org/_files/ugd/7241ab_59bcc9bd24a6450e8c72f10801d7491c.pdf",
         "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf",
         "format": "PDF",
@@ -708,14 +708,157 @@
         "url": "https://www.northbendohio.org/forms"
       },
       {
-        "label": "County digital permitting reference — original retention gap; sign route unconfirmed",
+        "label": "County digital permitting reference \u2014 original retention gap; sign route unconfirmed",
         "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/learn_about.php"
       },
       {
-        "label": "Electrical plan-review reference — original retention gap; applicability pending",
+        "label": "Electrical plan-review reference \u2014 original retention gap; applicability pending",
         "url": "https://www.inspectionbureau.com/electrical-plan-review/"
       }
     ],
     "extraction_note": "Embedded text was extracted across 181 code pages and two right-of-way pages. Page findings remain pending review; extraction does not verify tables, current amendments or complete searchable content."
+  },
+  {
+    "id": "6ac19f12298c063943ecc10f",
+    "name": "Reading",
+    "state": "OH",
+    "type": "city",
+    "source": "https://www.readingohio.org/building-department.aspx",
+    "observed_on": "2026-10-08",
+    "online_form_url": "https://readingoh2.portal.iworq.net/portalhome/readingoh2",
+    "notes": [
+      "City page requires zoning review before building review and includes sign installation. Online portal is City-linked; submission has not been tested.",
+      "Residential and commercial forms include Sign work. All 12 application/fee PDF pages were visually reviewed; current fees and applicability remain unapproved.",
+      "BZA form prints $150 while zoning schedule lists variance $250 and administrative appeal $150. Residential permanent-sign $25 and commercial $40 remain separate candidates; county surcharge deduction is unresolved.",
+      "All 21 sign-chapter text sections, five design-review sections and eight design-district text sections were read as candidates. Publisher originals returned403; diagrams and current amendments remain unresolved.",
+      "Design-district formulas differ from Chapter1290; South Reading Road district labels differ between code and map. No parcel district or sign allowance is approved.",
+      "Council minutes through September1 record a tabled proposal. Later adoption is unverified; minutes include sparse scan pages awaiting further review.",
+      "Published1424.05 names Inspection Bureau, Inc. for electrical wiring inspections with1948 history. Current electrical inspection delegation and electrical permit issuer remain separately unapproved; general building contacts do not establish electrical roles.",
+      "Electrical chapter text coverage is five of six sections;1424.04 remains unread. IBI Ohio ezTrak guidance is a routing candidate, without confirmed Reading coverage.",
+      "Commercial application includes tax registration; tax exemptions and fee waivers are not inferred from nonprofit fields."
+    ],
+    "resources": [
+      {
+        "file": "building-fees-2026.pdf",
+        "label": "City-linked building fee schedule (2026) \u2014 applicability pending",
+        "source": "https://www.readingohio.org/documents/Building-and-Zoning/FEE-SCHEDULE-2026.pdf",
+        "archive": "/permitting-evidence/reading/building-fees-2026.pdf",
+        "format": "PDF",
+        "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
+        "bytes": 229928
+      },
+      {
+        "file": "zoning-fees.pdf",
+        "label": "Zoning fee schedule \u2014 fee conflicts pending",
+        "source": "https://www.readingohio.org/documents/City%20of%20Reading%20Zoning%20Fees.pdf",
+        "archive": "/permitting-evidence/reading/zoning-fees.pdf",
+        "format": "PDF",
+        "sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+        "bytes": 106961
+      },
+      {
+        "file": "residential-application.pdf",
+        "label": "Residential building and zoning application",
+        "source": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_RESIDENTIAL_APP%28FILLABLE%29.pdf",
+        "archive": "/permitting-evidence/reading/residential-application.pdf",
+        "format": "PDF",
+        "sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d",
+        "bytes": 312590
+      },
+      {
+        "file": "commercial-application.pdf",
+        "label": "Commercial building and zoning application with tax registration",
+        "source": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_COMMERCIAL_APP%28FILLABLE%29.pdf",
+        "archive": "/permitting-evidence/reading/commercial-application.pdf",
+        "format": "PDF",
+        "sha256": "ba109bcf3aaec5fc3418335b8b5a282fa791715ae68a8eb2f3913956fda7671a",
+        "bytes": 416356
+      },
+      {
+        "file": "bza-appeal.pdf",
+        "label": "BZA appeal and variance application \u2014 fee conflict pending",
+        "source": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BZA_APPEAL_APP%28FILLABLE%29.pdf",
+        "archive": "/permitting-evidence/reading/bza-appeal.pdf",
+        "format": "PDF",
+        "sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719",
+        "bytes": 176863
+      },
+      {
+        "file": "minutes-07-07-26.pdf",
+        "label": "Council minutes 07-07-26 \u2014 amendment research",
+        "source": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-07-26%20Council%20Minutes%20%28Legislative%29.pdf",
+        "archive": "/permitting-evidence/reading/minutes-07-07-26.pdf",
+        "format": "PDF",
+        "sha256": "ebfb36d4b98290e3b74cb2f818a00e9e3ab8a4d1e01cfb6e54797467f3dadd3b",
+        "bytes": 377268
+      },
+      {
+        "file": "minutes-07-21-26.pdf",
+        "label": "Council minutes 07-21-26 \u2014 amendment research",
+        "source": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-21-26%20Council%20Minutes%20%28Legislative%29.pdf",
+        "archive": "/permitting-evidence/reading/minutes-07-21-26.pdf",
+        "format": "PDF",
+        "sha256": "b7ca03afe0fa870fd4cf6a6af7f7509ff303da19d6b76f4a2af025c0417c7654",
+        "bytes": 2524672
+      },
+      {
+        "file": "minutes-08-04-26.pdf",
+        "label": "Council minutes 08-04-26 \u2014 amendment research",
+        "source": "https://www.readingohio.org/documents/Council%20Minutes/2026/08-04-26%20Council%20Minutes%20%28Regular%29.pdf",
+        "archive": "/permitting-evidence/reading/minutes-08-04-26.pdf",
+        "format": "PDF",
+        "sha256": "8840a2f4b1ca62079c835bc167d56cbc7fa27763c375fb16489829fb2b6f04d2",
+        "bytes": 1222879
+      },
+      {
+        "file": "minutes-08-18-26.pdf",
+        "label": "Council minutes 08-18-26 \u2014 amendment research",
+        "source": "https://www.readingohio.org/documents/08-18-26-Council-Minutes-Legislative-.pdf",
+        "archive": "/permitting-evidence/reading/minutes-08-18-26.pdf",
+        "format": "PDF",
+        "sha256": "5294e9991b7be36f07b8dfbd54f008c12d828771c724148d6571032059965aab",
+        "bytes": 312851
+      },
+      {
+        "file": "minutes-09-01-26.pdf",
+        "label": "Council minutes 09-01-26 \u2014 amendment research",
+        "source": "https://www.readingohio.org/documents/09-01-26-Council-Minutes-Regular-.pdf",
+        "archive": "/permitting-evidence/reading/minutes-09-01-26.pdf",
+        "format": "PDF",
+        "sha256": "1699bd0f264aad395f14beba1d6bfb486dfb1f4f1f345d2ff00c8420f321bd73",
+        "bytes": 570538
+      },
+      {
+        "file": "zoning-map-2025.pdf",
+        "label": "Zoning map (March 20, 2025) \u2014 district assignment pending",
+        "source": "https://www.readingohio.org/documents/Building-and-Zoning/2025/Reading-Existing-Zoning-20-March-2025.pdf",
+        "archive": "/permitting-evidence/reading/zoning-map-2025.pdf",
+        "format": "PDF",
+        "sha256": "6886d0ec361c105ee366bf295f21c97ca37de6445934419205a88287d59fe0e6",
+        "bytes": 1985542
+      }
+    ],
+    "references": [
+      {
+        "label": "Published sign chapter \u2014 currentness and original retention unresolved",
+        "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64423"
+      },
+      {
+        "label": "Published design review process \u2014 unapproved candidate",
+        "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-63662"
+      },
+      {
+        "label": "Published design districts \u2014 map reconciliation pending",
+        "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-63359"
+      },
+      {
+        "label": "Published electrical inspection designation \u2014 current delegation pending",
+        "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64996"
+      },
+      {
+        "label": "IBI Ohio electrical intake guidance \u2014 Reading coverage pending",
+        "url": "https://www.inspectionbureau.com/eztrack-applications/"
+      }
+    ]
   }
 ]
