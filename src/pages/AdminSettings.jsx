@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,7 @@ import {
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { getAccessibleAdminTab } from "@/components/admin/adminTabNavigation";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -331,8 +333,16 @@ const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
-  const requestedTab = new URLSearchParams(window.location.search).get("tab");
-  const initialAdminTab = isAdmin && ['smartsheet','sync_conflicts','opportunity_bridge'].includes(requestedTab) ? requestedTab : 'automations';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedAdminTab = getAccessibleAdminTab(searchParams.get("tab"), isAdmin);
+  const handleAdminTabChange = (nextTab) => {
+    if (nextTab === selectedAdminTab) return;
+    setSearchParams((previous) => {
+      const updated = new URLSearchParams(previous);
+      updated.set("tab", nextTab);
+      return updated;
+    });
+  };
   
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
@@ -937,11 +947,11 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-3 sm:p-6">
-      <div className="max-w-6xl mx-auto pb-8">
-        <Tabs defaultValue={initialAdminTab} className="space-y-6">
-          <div className="clay-card border-none p-2" style={{ background: '#FEE2E2' }}>
-            <TabsList className="bg-transparent w-full flex flex-wrap gap-1">
+    <div className="h-full min-w-0 overflow-y-auto p-3 sm:p-6">
+      <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
+        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="min-w-0 space-y-6">
+          <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
+            <TabsList aria-label="Admin sections" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 bg-transparent p-1">
               <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                 <Zap className="w-4 h-4 mr-2" />
                 Automations
@@ -1017,8 +1027,8 @@ export default function AdminSettings() {
           {isAdmin && (
             <>
               <TabsContent value="timeclock">
-                <Tabs defaultValue="entries" className="space-y-4">
-                  <TabsList>
+                <Tabs defaultValue="entries" className="min-w-0 space-y-4">
+                  <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="entries">Time Entries</TabsTrigger>
                     <TabsTrigger value="reports">Reports</TabsTrigger>
                     <TabsTrigger value="pto">PTO Policies</TabsTrigger>
@@ -1040,8 +1050,8 @@ export default function AdminSettings() {
               </TabsContent>
 
               <TabsContent value="backend">
-                <Tabs defaultValue="backup" className="space-y-4">
-                  <TabsList>
+                <Tabs defaultValue="backup" className="min-w-0 space-y-4">
+                  <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="backup">Data Backup</TabsTrigger>
                     <TabsTrigger value="client_trash">Client Trash</TabsTrigger>
                     <TabsTrigger value="order_trash">Order Trash</TabsTrigger>
