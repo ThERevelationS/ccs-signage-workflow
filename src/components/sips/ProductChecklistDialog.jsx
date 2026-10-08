@@ -1263,6 +1263,7 @@ export default function ProductChecklistDialog({
     setFocusedNeedsInputId(scrollTargetId);
     window.setTimeout(() => {
       const targetElement = findRenderedChecklistItemElement([scrollTargetId]);
+      targetElement?.focus({ preventScroll: true });
       targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
   };
@@ -1596,7 +1597,7 @@ export default function ProductChecklistDialog({
                         if (!renderMeta) return null;
                         const { displayItem, isCompleted: isItemCompleted, attentionLabel } = renderMeta;
                         return (
-                        <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === displayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
+                        <div data-sips-checklist-item-id={String(displayItem.id)} tabIndex={-1} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === displayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                           {/* Main checklist item */}
                           <div 
                             className="flex flex-wrap items-center gap-2 group"
@@ -1888,7 +1889,7 @@ export default function ProductChecklistDialog({
                                 const isDetailCompleted = detailRenderMeta?.isCompleted || false;
                                 const detailAttentionLabel = detailRenderMeta?.attentionLabel || null;
                                 return (
-                                <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                <div data-sips-checklist-item-id={String(detail.id)} tabIndex={-1} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     {editingItemId === detail.id ? (
@@ -2139,7 +2140,7 @@ export default function ProductChecklistDialog({
                           if (!renderMeta) return null;
                           const { displayItem: stDisplayItem, isCompleted: isStItemCompleted, attentionLabel } = renderMeta;
                           return (
-                          <div data-sips-checklist-item-id={String(stDisplayItem.id)} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === stDisplayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
+                          <div data-sips-checklist-item-id={String(stDisplayItem.id)} tabIndex={-1} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === stDisplayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                             <div 
                               className="flex flex-wrap items-center gap-2 group"
                             >
@@ -2331,7 +2332,7 @@ export default function ProductChecklistDialog({
                                 )}
                                 
                                 {stDisplayItem.details?.map(detail => (
-                                  <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`bg-gray-50 p-1.5 rounded text-xs group/stdetail ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                  <div data-sips-checklist-item-id={String(detail.id)} tabIndex={-1} key={detail.id} className={`bg-gray-50 p-1.5 rounded text-xs group/stdetail ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <div className="flex flex-wrap items-center gap-1">
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                       {editingItemId === detail.id ? (
