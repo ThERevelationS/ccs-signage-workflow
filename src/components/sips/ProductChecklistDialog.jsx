@@ -1283,6 +1283,7 @@ export default function ProductChecklistDialog({
 
     window.setTimeout(() => {
       const targetElement = findRenderedChecklistItemElement([item.id, item.parent_id, topLevelId]);
+      targetElement?.focus({ preventScroll: true });
       targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
   };
@@ -1728,7 +1729,7 @@ export default function ProductChecklistDialog({
                             <div className="ml-2 sm:ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-2 sm:pl-3">
                               {/* Tasks under main item */}
                               {displayItem.tasks?.map(task => (
-                              <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`bg-orange-50 p-1 rounded border-l-2 border-orange-300 group ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                              <div data-sips-checklist-item-id={String(task.id)} tabIndex={-1} key={task.id} className={`bg-orange-50 p-1 rounded border-l-2 border-orange-300 group ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                 <div className="flex flex-wrap items-center gap-1.5">
                                   <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
                                     <Checkbox 
@@ -1786,7 +1787,7 @@ export default function ProductChecklistDialog({
                                 </div>
                                 {/* Subtasks */}
                                 {(checklistChildrenByParentType.get(task.id)?.subtask || []).map(subtask => (
-                                  <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-1 sm:ml-4 mt-0.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                  <div data-sips-checklist-item-id={String(subtask.id)} tabIndex={-1} key={subtask.id} className={`ml-1 sm:ml-4 mt-0.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
                                       <Checkbox 
                                         id={`sips-complete-${subtask.id}`}
@@ -2006,7 +2007,7 @@ export default function ProductChecklistDialog({
                                   {detail.tasks?.length > 0 && (
                                     <div className="ml-1 sm:ml-4 mt-1 space-y-0.5 border-l border-orange-200 pl-1.5">
                                       {detail.tasks.map(task => (
-                                        <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`bg-orange-50 p-0.5 rounded group/dtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                        <div data-sips-checklist-item-id={String(task.id)} tabIndex={-1} key={task.id} className={`bg-orange-50 p-0.5 rounded group/dtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                           <div className="flex flex-wrap items-center gap-1">
                                             <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
                                               <Checkbox 
@@ -2062,7 +2063,7 @@ export default function ProductChecklistDialog({
                                           </div>
                                           {/* Subtasks under detail task */}
                                           {(checklistChildrenByParentType.get(task.id)?.subtask || []).map(subtask => (
-                                            <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-1 sm:ml-3 mt-0.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                            <div data-sips-checklist-item-id={String(subtask.id)} tabIndex={-1} key={subtask.id} className={`ml-1 sm:ml-3 mt-0.5 flex flex-wrap sm:flex-nowrap items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                               <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
                                                 <Checkbox 
                                                   id={`sips-complete-${subtask.id}`}
@@ -2267,7 +2268,7 @@ export default function ProductChecklistDialog({
                             {(expandedItems[stDisplayItem.id] !== false) && (
                               <div className="ml-2 sm:ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
                                 {stDisplayItem.tasks?.map(task => (
-                                  <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                  <div data-sips-checklist-item-id={String(task.id)} tabIndex={-1} key={task.id} className={`flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
                                       <Checkbox 
                                         id={`sips-complete-${task.id}`}
@@ -2389,7 +2390,7 @@ export default function ProductChecklistDialog({
                                     {detail.tasks?.length > 0 && (
                                       <div className="ml-1 sm:ml-4 mt-1 space-y-0.5">
                                         {detail.tasks.map(task => (
-                                          <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                          <div data-sips-checklist-item-id={String(task.id)} tabIndex={-1} key={task.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                             <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
                                               <Checkbox 
                                                 id={`sips-complete-${task.id}`}
