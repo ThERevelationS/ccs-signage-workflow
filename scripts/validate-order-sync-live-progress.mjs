@@ -27,6 +27,40 @@ assert.equal(view.itemLabel, '#418 · New Cincy Inc. · Wall sign');
 assert.equal(view.stalled, false);
 console.log('PASS 3/4 stage progress becomes granular fractional Order progress instead of staying at 75%');
 
+const reading = orderSyncLiveProgress({
+  status: 'running', progress_dataset: 'orders', progress_direction: 'pull',
+  progress_phase: 'reading', progress_current: 400, progress_total: 1684,
+  total_steps: 1, completed_steps: 0,
+  progress_updated_at: new Date(now).toISOString(),
+}, { enabled: true, now });
+assert.equal(reading.readingPull, true);
+assert.equal(reading.readCountLabel, '400 / 1,684 rows read');
+assert.equal(reading.readPercentLabel, '24% of sheet read');
+assert.ok(reading.percent < 100, 'Full sync completion is not claimed while reading pages');
+
+const allRowsRead = orderSyncLiveProgress({
+  status: 'running', progress_dataset: 'orders', progress_direction: 'pull',
+  progress_phase: 'reading', progress_current: 1684, progress_total: 1684,
+  total_steps: 1, completed_steps: 0,
+  progress_updated_at: new Date(now).toISOString(),
+}, { enabled: true, now });
+assert.equal(allRowsRead.readPercentLabel, '100% of sheet read');
+assert.equal(allRowsRead.percent, 99.9, 'The overall sync must remain unconfirmed while row reconciliation is pending');
+
+const beforeFirstPage = orderSyncLiveProgress({
+  status: 'running', progress_dataset: 'orders', progress_direction: 'pull',
+  progress_phase: 'reading', progress_current: 0, progress_total: 0,
+  progress_updated_at: new Date(now).toISOString(),
+}, { enabled: true, now });
+assert.equal(beforeFirstPage.readCountLabel, '0 rows read');
+assert.equal(beforeFirstPage.readPercentLabel, 'Reading Smartsheet…');
+assert.equal(view.readingPull, false, 'Existing Order push counts must remain line-item counts');
+assert.equal(orderSyncLiveProgress({
+  status: 'running', progress_dataset: 'sales', progress_direction: 'pull',
+  progress_phase: 'reading', progress_current: 200, progress_total: 500,
+}, { enabled: true, now }).readingPull, false, 'Sales behavior must remain unchanged');
+console.log('PASS Order-only pull progress distinguishes downloaded rows from confirmed Order updates');
+
 const finishedCurrentStep = orderSyncLiveProgress({
   ...running, progress_current: 1675,
 }, { enabled: true, now });
@@ -81,4 +115,8 @@ assert.match(widget, /\$\{progressCurrent\.toLocaleString\(\)\} \/ \$\{progressT
 assert.match(widget, /progressItemLabel/);
 assert.match(widget, /progressDetail/);
 assert.match(widget, /aria-live="polite"/);
-console.log('PASS Order Form polls active sync every second and displays the exact current line item and live line-item count');
+assert.match(widget, /const orderDownloadReading = compactOrderForm && orderProgress\.readingPull/);
+assert.match(widget, /orderProgress\.readCountLabel/);
+assert.match(widget, /orderProgress\.readPercentLabel/);
+assert.match(widget, /Updates not yet confirmed/);
+console.log('PASS Order Form polls every second, distinguishes downloaded rows from confirmed updates, and preserves push detail');
