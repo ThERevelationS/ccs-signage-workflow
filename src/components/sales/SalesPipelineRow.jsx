@@ -15,7 +15,7 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
-import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -72,7 +72,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   wo, index, visibleColumnIds, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
-  handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, onCompleteFollowUp, openCorbridgeDialog,
+  handleContextMenu, setSelectedWorkOrder, onCompleteFollowUp, openCorbridgeDialog,
   handleDuplicateClient, deleteWorkOrder, leadSources, users, taskDescriptions, projectTypes,
 }) {
   const getTaskDescText = (item) => (typeof item === 'string' ? item : item?.text || '');
@@ -102,6 +102,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const opportunityDisplayName = salesOpportunityDisplayName(wo, "Unnamed customer");
   const unverifiedStage = isUnverifiedSmartsheetSalesStage(wo);
   const stageDisplayValue = salesStageDisplayValue(wo);
+  const stageDisplayLabel = salesStageDisplayLabel(wo);
   const coreBridgeUrl = safeExternalHttpUrl(wo.corbridge_link);
   const expectedCloseStamp = String(wo.expected_close_date || "").slice(0, 10);
   const isOpen = !["won", "lost"].includes(wo.sales_status);
@@ -133,16 +134,13 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               );
               case "sales_status": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
-            <Select value={stageDisplayValue} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered || stageDisplayValue === "closed_neutral"}>
-              <SelectTrigger className={`h-7 text-xs border-0 px-1 ${unverifiedStage ? "bg-violet-50 text-violet-800" : SALES_STATUSES.find((status) => status.value === stageDisplayValue)?.className || "bg-transparent"}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
-                {stageDisplayValue === "closed_neutral" && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
-                {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <span
+              className={`flex h-7 w-full items-center rounded px-2 text-xs font-medium ${unverifiedStage ? "bg-violet-50 text-violet-800" : stageDisplayValue === "closed_neutral" ? "bg-slate-100 text-slate-700" : SALES_STATUSES.find((status) => status.value === stageDisplayValue)?.className || "bg-slate-50 text-slate-700"}`}
+              title="Sales Status is read-only here. Change Task Description to move the Sales stage."
+              aria-label={`Sales Status: ${stageDisplayLabel}`}
+            >
+              <span className="truncate">{stageDisplayLabel}</span>
+            </span>
           </td>
               );
               case "stage_age": return (
