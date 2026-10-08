@@ -581,7 +581,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const pullFromSmartsheet = async () => {
     if (!isRegistered || syncInFlightRef.current || saveInFlightRef.current ||
-        dateNeededSaveInFlightRef.current) return false;
+        dateNeededSaveInFlightRef.current || addInFlightRef.current ||
+        deleteInFlightRef.current || importInFlightRef.current) return false;
     // Never mix a manual remote pull with local unsaved edits or the durable
     // outbound queue. Those changes must use Save & Sync first.
     if (Object.keys(pendingChangesRef.current).length || pendingSyncIdsRef.current.size) {
@@ -626,7 +627,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const addNewRow = async () => {
-    if (!isRegistered || addInFlightRef.current) return;
+    if (!isRegistered || addInFlightRef.current || isPulling) return;
     addInFlightRef.current = true;
     setSaveError("");
     try {
@@ -789,7 +790,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const confirmDelete = async () => {
     const target = deleteConfirm;
-    if (!target || deleteInFlightRef.current) return;
+    if (!target || deleteInFlightRef.current || isPulling) return;
     const baseline = originalOrdersRef.current[target.id] || target;
     deleteInFlightRef.current = true;
     setSaveError("");
@@ -971,7 +972,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    if (importInFlightRef.current) return;
+    if (importInFlightRef.current || isPulling) return;
     importInFlightRef.current = true;
 
     const importId = startMultiImport(file.name);
