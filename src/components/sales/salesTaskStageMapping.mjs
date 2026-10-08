@@ -78,6 +78,25 @@ export function canUpdateWonOperationalField(workOrder, changes, fieldName) {
   return isWonOperationalTask(task);
 }
 
+// Snapshot the Sales classification from the loaded record even when an edit
+// has already been optimistically queued. Changed fields use their own CAS
+// baseline; untouched classification fields must remain guarded as well.
+export function captureSalesTransitionGuards(workOrder, baselines = {}, previousGuards = {}) {
+  const guards = { ...previousGuards };
+  for (const field of ["sales_status", "in_pipeline"]) {
+    if (!Object.prototype.hasOwnProperty.call(guards, field)) {
+      guards[field] = Object.prototype.hasOwnProperty.call(baselines, field)
+        ? baselines[field] : workOrder?.[field] ?? null;
+    }
+  }
+  return guards;
+}
+
+export function untouchedSalesTransitionGuards(guards = {}, changes = {}) {
+  return Object.fromEntries(Object.entries(guards).filter(([field]) =>
+    !Object.prototype.hasOwnProperty.call(changes, field)));
+}
+
 export function planSalesTaskChange(workOrder, nextTaskDescription) {
   const task = String(nextTaskDescription || "").trim();
   const mapping = mapSalesTaskToStage(task);
