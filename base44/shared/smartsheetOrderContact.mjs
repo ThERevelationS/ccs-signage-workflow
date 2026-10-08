@@ -38,7 +38,7 @@ export function planOrderRequestorContactAppend(existingOptions, user) {
   const seen = new Set();
   for (const contact of existingOptions) {
     if (!contact || typeof contact !== 'object' || Array.isArray(contact) ||
-        !isValidContactEmail(contact.email) || typeof contact.name !== 'string') {
+        !isValidContactEmail(contact.email) || (contact.name != null && typeof contact.name !== 'string')) {
       throw new Error('Existing Smartsheet Requestor contact options could not be verified. No options were changed.');
     }
     const key = contact.email.trim().toLowerCase();
