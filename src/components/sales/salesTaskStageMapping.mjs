@@ -68,7 +68,9 @@ export function planSalesTaskChange(workOrder, nextTaskDescription) {
   const mapping = mapSalesTaskToStage(task);
   const currentStatus = String(workOrder?.sales_status || "lead").toLowerCase();
   if (mapping.kind === "unmapped") return { action: "task_only", task, status: null };
-  if (mapping.kind === "neutral_close") return { action: "neutral_close_required", task, status: null };
+  if (mapping.kind === "neutral_close") {
+    return { action: "confirm_neutral_close", task, status: null };
+  }
   const nextStatus = mapping.status;
   if (nextStatus === currentStatus) return { action: "task_only", task, status: nextStatus };
   if (["won", "lost"].includes(nextStatus) || ["won", "lost"].includes(currentStatus)) {
