@@ -127,6 +127,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
     : orderProgress.detail;
   const progressPhaseLabel = reconnectingStatus ? 'Reconnecting to sync status' : orderProgress.phaseLabel;
   const orderDownloadReading = compactOrderForm && orderProgress.readingPull;
+  const orderPullStage = orderDownloadReading || (compactOrderForm && orderProgress.pullStage);
   const progressPercent = orderProgress.show ? orderProgress.percent
     : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const staleSales = isStale && /^Sales Pipeline\b/.test(currentStepLabel) && interpretedStatus.isStale;
@@ -190,8 +191,8 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               <span className="shrink-0 font-semibold text-slate-800 dark:text-slate-100">{isRunning ? "Syncing" : "Sync Complete"}</span>
               <span className="min-w-0 truncate text-[11px] text-slate-500 dark:text-slate-300">
                 {isRunning
-                  ? orderDownloadReading
-                    ? `${progressPhaseLabel || "Reading Smartsheet"} · ${orderProgress.readCountLabel} · ${orderProgress.readPercentLabel} · Updates not yet confirmed`
+                  ? orderPullStage
+                    ? `${progressPhaseLabel || "Checking Orders"} · ${orderProgress.stageCountLabel} · ${orderProgress.stagePercentLabel} · Sync not yet confirmed`
                     : `${progressPhaseLabel || currentStepLabel || "Working…"}${progressTotal > 0 ? ` · ${progressCurrent}/${progressTotal}` : ''}${progressItemLabel ? ` · ${progressItemLabel}` : ''} · ${progressPercent}%`
                   : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
               </span>
@@ -311,10 +312,10 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               />
             </div>
             <div className="flex items-center justify-between text-[10px] text-gray-500">
-              <span>{orderDownloadReading ? orderProgress.readPercentLabel : `${progressPercent}%`}</span>
+              <span>{orderPullStage ? orderProgress.stagePercentLabel : `${progressPercent}%`}</span>
               <span>
-                {orderDownloadReading
-                  ? orderProgress.readCountLabel
+                {orderPullStage
+                  ? orderProgress.stageCountLabel
                   : progressTotal > 0
                     ? `${progressCurrent.toLocaleString()} / ${progressTotal.toLocaleString()} line items`
                   : totalExamined > 0 && `${totalExamined.toLocaleString()} records examined`}
