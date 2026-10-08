@@ -228,4 +228,15 @@ check("Escape from a Needs Input target returns to the Needs Input summary", () 
   assert.match(source, /needsInputSummaryRef\.current\?\.focus\(\);/);
 });
 
+check("navigation highlights clear when interaction leaves the highlighted row", () => {
+  assert.match(source, /const clearNavigationHighlightOutsideRow = \(target\) => \{/);
+  assert.match(source, /target\?\.closest\?\.\("\[data-sips-checklist-item-id\]"\)/);
+  assert.match(source, /targetRowId !== String\(focusedSearchId\)/);
+  assert.match(source, /targetRowId !== String\(focusedNeedsInputId\)/);
+  assert.match(source, /const handleChecklistResultBlurCapture = \(e\) => \{/);
+  assert.match(source, /if \(nextRow === currentRow\) return;/);
+  assert.match(source, /onPointerDownCapture=\{\(e\) => clearNavigationHighlightOutsideRow\(e\.target\)\}/);
+  assert.match(source, /onBlurCapture=\{handleChecklistResultBlurCapture\}/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
