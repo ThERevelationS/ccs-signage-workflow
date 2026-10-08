@@ -1,0 +1,56 @@
+{
+  "reviewed_at": "2026-10-08",
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "sections": [
+    {
+      "section": "1424.02",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64987",
+      "web_reference": "turn158search7",
+      "candidate": "Printed purpose covers electrical installations/materials in1/2/3-family, mobile, multifamily, commercial and industrial occupancies. No permit issuer identified; current scope/code unapproved."
+    },
+    {
+      "section": "1424.03",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64990",
+      "web_reference": "turn159view0",
+      "candidate": "Printed adopted-code copies at City Clerk and County Law Library; Clerk distribution at cost. Not proof current copies were obtained."
+    },
+    {
+      "section": "1424.99",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-65000",
+      "web_reference": "turn159view2",
+      "candidate": "Legacy printed penalty up to300 dollars, daily offenses and equitable remedies; retained only as unapproved text, no automated enforcement."
+    }
+  ],
+  "chapter1424_sections_read": 5,
+  "chapter1424_expected_sections": 6,
+  "prior_receipt": "certificate-electrical-review.json",
+  "unread_sections": [
+    "1424.04"
+  ],
+  "intake_candidates": [
+    {
+      "url": "https://www.inspectionbureau.com/",
+      "web_reference": "turn159search8",
+      "candidate": "Provider says Ohio electrical permit/plan review submissions moved to CAGIS ezTrak September14 2026. Provider jurisdiction scope must be confirmed for Reading."
+    },
+    {
+      "url": "https://www.inspectionbureau.com/eztrack-applications/",
+      "web_reference": "turn160view0",
+      "candidate": "Provider page links CAGIS application and new-userPDF. Contact5133816080,250W CourtSt125W. No Reading-specific delegation statement."
+    },
+    {
+      "url": "https://eztrak.cagis.org/CitizenAccess/Default.aspx",
+      "status": "web fetch502; no submission or account creation"
+    },
+    {
+      "url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+      "web_reference": "turn161view1",
+      "candidate": "Two-page guide already retained and visually reviewed in Elmwood evidence. Heading HamiltonCounty/Cincinnati only; record IDsIBI-PMT/IBI-RVW; C/H/literal0othermunicipality. No Reading assignment inferred."
+    }
+  ],
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0,
+  "published": false
+}

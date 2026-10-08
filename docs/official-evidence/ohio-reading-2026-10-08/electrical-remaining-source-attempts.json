@@ -1,0 +1,32 @@
+[
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64987",
+    "attempted_at": "2026-10-08T20:20:08.274470+00:00",
+    "retained_original": false,
+    "http_status": 403
+  },
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64990",
+    "attempted_at": "2026-10-08T20:20:08.426210+00:00",
+    "retained_original": false,
+    "http_status": 403
+  },
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-65000",
+    "attempted_at": "2026-10-08T20:20:08.526116+00:00",
+    "retained_original": false,
+    "http_status": 403
+  },
+  {
+    "url": "https://www.inspectionbureau.com/",
+    "attempted_at": "2026-10-08T20:20:08.683884+00:00",
+    "retained_original": false,
+    "http_status": 406
+  },
+  {
+    "url": "https://www.inspectionbureau.com/eztrack-applications/",
+    "attempted_at": "2026-10-08T20:20:08.884202+00:00",
+    "retained_original": false,
+    "http_status": 406
+  }
+]

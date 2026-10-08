@@ -45,5 +45,6 @@
   "chapter1290_text_review": "All21 published text sections reviewed across four candidate receipts; originals/railroad diagram, dependencies and currentness unapproved. See remaining-sign-review.json.",
   "design_review_process_review": "All five1278 sections plus1273.01 read as unapproved web-derived candidates. Sign major-improvement classification, submittal/checkpoint/appeal routes recorded; committee labels and currentness unresolved. See design-review-process-review.json.",
   "design_district_sign_review": "All eight1273 text sections read across two receipts; signage extraction scoped, diagrams not reviewed. Formula, certificate and map label conflicts unapproved. See design-district-sign-review.json.",
-  "certificate_electrical_review": "1244.02/.06/.07 and1424.01/.05 reviewed as candidates. Explicit legacy IBI inspection designation found; separate issuer unresolved, currentness unapproved. Supporting originals/attempts in certificate-electrical-source-attempts.json."
+  "certificate_electrical_review": "1244.02/.06/.07 and1424.01/.05 reviewed as candidates. Explicit legacy IBI inspection designation found; separate issuer unresolved, currentness unapproved. Supporting originals/attempts in certificate-electrical-source-attempts.json.",
+  "electrical_remaining_review": "Five of six1424 text sections reviewed;1424.04 remains inaccessible/unread. IBI Ohio ezTrak intake candidate reviewed without Reading-specific issuer approval. See electrical-remaining-intake-review.json."
 }

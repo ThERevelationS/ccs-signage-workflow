@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Reading remaining electrical text and intake
+
+Three additional electrical sections reviewed;1424 coverage5/6 with1424.04 explicitly unread. IBI Ohio migration/intake guidance reviewed; Reading-specific permit issuer/current delegation remain unresolved. Source attempts and portal502 recorded; no application submitted. Prior Elmwood guide remains original evidence, not newly downloaded here. Task2 complete; milestone1 Task4 open. Live changes0; publications0. Next: surface retained Reading documents and research gaps in locality dossier.
+
 ## 2026-10-08 — Phase 10, milestone 2: Reading certificates and electrical role separation
 
 Reviewed three zoning certificate/permit sections and two electrical sections. Reading1424.05 names IBI for inspections with1948 history; separate electrical permit issuer/current delegation unresolved. Legacy1990 NEC not adopted as current rule. County and provider evidence scoped without assigning Reading from general coverage. Original download receipts saved. Task2 complete; milestone1 Task4 open. Live changes0; publications0. Next: remaining electrical chapter/intake and current delegation evidence.
