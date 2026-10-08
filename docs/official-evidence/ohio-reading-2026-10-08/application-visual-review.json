@@ -1,0 +1,39 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "reviews": [
+    {
+      "file": "commercial-application.pdf",
+      "page": 1,
+      "source_sha256": "ba109bcf3aaec5fc3418335b8b5a282fa791715ae68a8eb2f3913956fda7671a",
+      "raw_ocr_sha256": "a7f30e086e849e6d492d7390360ace050eafd1af01fa9bde04a04538743017f2",
+      "local_render_sha256": "cc0b270e00723bd96a5acf82bc6594b0f990bc73bb58c3b89020b70fe37bfac3",
+      "render_retained_in_repository": false,
+      "method": "Poppler page 1 scale-to 1800; Tesseract uncorrected OCR; visual inspection of entire page",
+      "visually_reviewed": true,
+      "raw_ocr_corrected": false
+    },
+    {
+      "file": "residential-application.pdf",
+      "page": 1,
+      "source_sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d",
+      "raw_ocr_sha256": "a7f30e086e849e6d492d7390360ace050eafd1af01fa9bde04a04538743017f2",
+      "local_render_sha256": "cc0b270e00723bd96a5acf82bc6594b0f990bc73bb58c3b89020b70fe37bfac3",
+      "render_retained_in_repository": false,
+      "method": "Poppler page 1 scale-to 1800; Tesseract uncorrected OCR; visual inspection of entire page",
+      "visually_reviewed": true,
+      "raw_ocr_corrected": false
+    }
+  ],
+  "visual_findings": [
+    "Both page-one layouts are the same combined Building/Zoning Permit Application with residential RCO and commercial OBC choices and Sign improvement checkbox.",
+    "Requests zoning, occupancy, parcel, applicant/owner/contractor/plans-preparer information, required contact email, description/cost and existing/proposed use.",
+    "Applicant owner/agent prints, signs and dates. Office section separates zoning approval/date/number from building approval/date/number and plans examiner approval.",
+    "Office fee fields print OBC 3% commercial and RCO 1% residential alongside permit/zoning fees. Reconcile with department page county-surcharge deduction before fee computation.",
+    "Electric checkbox appears within HVAC fuel selection alongside Gas/Oil, not proof this form obtains a separate electrical permit."
+  ],
+  "commercial_second_page": "Previously extracted business/tax registration attachment remains separate; visual review pending.",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "live_records_changed": 0
+}

@@ -44,5 +44,6 @@
   "field_review": "Widget names/types recorded; 74 residential, 105 commercial, 101 appeal. No filled values retained and no form submitted.",
   "currentness_approved": false,
   "authority_approved": false,
-  "live_records_changed": 0
+  "live_records_changed": 0,
+  "empty_text_pages_recovery": "Both empty embedded-text page-one applications now have source-bound raw OCR and full-page visual review; original embedded extraction unchanged."
 }

@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading application scan recovery
+
+Recovered both empty-text application page-one scans through source-hash-matched Poppler/Tesseract and full-page visual inspection. Saved uncorrected OCR/render hashes. Confirmed Sign checkbox, required contact email and separate zoning/building approval fields. Printed 3%/1% fees remain unresolved against city surcharge wording; Electric checkbox is HVAC fuel context, not electrical permit authority. Remaining PDF layouts and commercial tax attachment still pending. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: visual fee tables/tax attachment, Chapter 1290 and electrical routing.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading PDF page and form-field inventory
 
 Verified original and derived text hashes; indexed all 12 physical pages and 280 fillable widgets. Ten pages contain embedded text. Residential page 1 and commercial page 1 remain visual/OCR gaps. Preserved county-versus-Reading surcharge issue and BZA $150 versus variance $250/admin appeal $150 distinction. Visual table/fee adoption pending; no approved fees, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
