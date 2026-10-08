@@ -166,4 +166,9 @@ check("task assignment actions use a dedicated phone row", () => {
   assert.equal((source.match(/<MultiUserSelectInline/g) || []).length, 3);
 });
 
+check("main and detail quick-add actions use a dedicated phone row", () => {
+  assert.equal((source.match(/className="basis-full sm:basis-auto flex justify-end sm:justify-start gap-1/g) || []).length, 4);
+  assert.equal(source.includes('className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity"'), false);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
