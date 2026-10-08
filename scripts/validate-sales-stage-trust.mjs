@@ -105,4 +105,38 @@ check(filterDialog.includes('{ name: "Needs Stage", value: "needs_stage"') &&
       filterDialog.includes('options: ["needs_stage", "lead", "quoted"'),
   "Custom filter manager exposes Needs Stage without changing the WorkOrder enum.");
 
-console.log("Sales stage trust / Needs Stage: " + checks + "/" + checks + " PASS.");
+// Phase 4A: The desktop Status column is purely informational. History, stage
+// colors, sorting and filters remain; Task Description is the edit surface.
+const statusCell = row.slice(row.indexOf('case "sales_status": return ('), row.indexOf('case "stage_age": return ('));
+check(statusCell.includes("stageDisplayLabel") && statusCell.includes("aria-label=") &&
+      statusCell.includes("Change Task Description to move the Sales stage."),
+  "Desktop status renders the shared stage label and directs editing through Task Description.");
+check(!statusCell.includes("<Select") && !statusCell.includes("onValueChange") &&
+      !statusCell.includes("onRequestStatusChange"),
+  "Desktop status cell has no dropdown or independent mutation callback.");
+check(statusCell.includes("SALES_STATUSES.find") && statusCell.includes("closed_neutral") &&
+      statusCell.includes("unverifiedStage"),
+  "All active, terminal, neutral and unverified stage states retain their visual treatments.");
+check(statusCell.includes('handleContextMenu(e, wo, "sales_status", "Sales Status"'),
+  "Desktop status keeps its field-history context menu.");
+check(spreadsheet.includes("if (fieldName === \"sales_status\") return;"),
+  "The generic Clear Cell route cannot independently clear Sales Status.");
+const salesDialogs = readFileSync("src/components/sales/SalesPipelineDialogs.jsx", "utf8");
+check(salesDialogs.includes('contextMenu.fieldName !== "sales_status"'),
+  "Sales Status context menu hides the Clear action for all authenticated roles.");
+const body = readFileSync("src/components/sales/SalesPipelineTableBody.jsx", "utf8");
+check(!body.includes("onRequestStatusChange") &&
+      !row.includes("onRequestStatusChange") &&
+      !spreadsheet.match(/<SalesPipelineTableBody[^>]*onRequestStatusChange/),
+  "Desktop row plumbing no longer accepts independent stage updates.");
+check(spreadsheet.includes("onClick={() => handleSort('sales_status')}") &&
+      spreadsheet.includes("handleHeaderContextMenu(e, 'sales_status', 'Sales Status')"),
+  "Status header sorting and context filters remain operable.");
+check(row.includes('updateWorkOrder(wo.id, "current_task_description", val)'),
+  "Desktop Task Description remains the editable stage-control path.");
+same(salesStageDisplayLabel({ in_pipeline:true, sales_status:"follow_up" }), "Follow Up",
+  "Desktop stage display helper provides the friendly Follow Up label.");
+same(salesStageDisplayLabel({ in_pipeline:true, sales_status:"won" }), "Won",
+  "Verified modern outcomes still show Won rather than a task-derived guess.");
+
+console.log("Sales stage trust and desktop read-only Status: " + checks + "/" + checks + " PASS.");
