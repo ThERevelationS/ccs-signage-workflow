@@ -1,0 +1,34 @@
+{
+  "sources": [
+    {
+      "file": "overview.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/overview",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "zoning-adoption.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12907",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "zoning-procedure.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12912",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "building-adoption.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12244",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "permit-agreement.html",
+      "official_url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12259",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "locality": {
+    "id": "6ac1a15f8dd6f5306ab7935f",
+    "name": "Elmwood Place",
+    "state": "OH",
+    "type": "village"
+  },
+  "method": "Web-derived paraphrased code observations; originals attempted separately.",
+  "publisher": {
+    "label": "2025 Code",
+    "legislation_cutoff": "Ord. 23-24 passed July 2, 2024",
+    "stale_deep_link": "0-0-0-194 returned Standing Rules of Council with 2013 S-2 label; do not use as zoning source."
+  },
+  "sources": [
+    {
+      "file": "overview.html",
+      "url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/overview",
+      "observation": "Official village page links this overview; publisher cutoff not October 2026 currentness proof."
+    },
+    {
+      "file": "zoning-adoption.html",
+      "url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12907",
+      "observation": "154.01 adopts Ordinance 10-07 zoning code, September 11, 2007, with amendments/additions by reference. Copy is on file at village offices. Full underlying sign text not present here."
+    },
+    {
+      "file": "zoning-procedure.html",
+      "url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12912",
+      "observation": "154.03 addresses legislative zoning changes and hearings; not normal sign-permit turnaround or automatic variance approval."
+    },
+    {
+      "file": "building-adoption.html",
+      "url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12244",
+      "observation": "150.01 adopts county building code by reference with older ordinary-repair amendment. Code adoption does not itself establish county permit issuance or electrical inspector delegation. Contractor sign work not automatically exempt under homeowner-oriented $500 language."
+    },
+    {
+      "file": "permit-agreement.html",
+      "url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12259",
+      "observation": "150.10 describes written contractor/owner agreement with work and cost details; current applicability and application package review pending."
+    }
+  ],
+  "underlying_zoning_code_retained": false,
+  "sign_limits_approved": false,
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "next": "Recover adopted zoning document/amendments; review retained zoning form visually/OCR and fee spreadsheet; current electrical delegation still pending."
+}
