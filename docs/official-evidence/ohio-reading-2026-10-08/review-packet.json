@@ -1,0 +1,37 @@
+{
+  "locality": {
+    "id": "6ac19f12298c063943ecc10f",
+    "name": "Reading",
+    "state": "OH",
+    "type": "city"
+  },
+  "retained_originals": 6,
+  "portal_candidate": "https://readingoh2.portal.iworq.net/portalhome/readingoh2",
+  "department_observations": [
+    "Official page requires zoning compliance review before building review and includes sign installation among permit work.",
+    "Page names XPEX for building operations and gives general building/inspection contacts. These are not independent electrical delegation proof.",
+    "Page requests three residential/four commercial plan sets plus site plan. Commercial application includes tax registration.",
+    "Building fee page says county fees less county surcharge; adopted ordinance/current fee applicability requires review."
+  ],
+  "office_candidates": {
+    "zoning_phone": "513-733-3725 ext 126",
+    "zoning_email": "rcook@readingohio.org",
+    "building_phone": "513-884-0891",
+    "building_email": "gerry@stoker.org",
+    "general_inspections_phone": "513-378-4715"
+  },
+  "code_candidate": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64423",
+  "review_gaps": [
+    "All physical PDF pages, fillable fields and visual layout",
+    "Fee adoption and appeal fee differences",
+    "Chapter 1290 sign rules/current amendments",
+    "Zoning map and design districts",
+    "Separate electrical issuer and inspection delegation",
+    "App-storage/catalog registration"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}

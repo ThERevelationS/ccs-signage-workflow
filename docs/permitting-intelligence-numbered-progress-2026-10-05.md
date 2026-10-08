@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading initial originals
+
+Confirmed canonical Reading OH city 6ac19f12298c063943ecc10f. Collected official department page, residential/commercial application, zoning/building fee and BZA appeal originals with per-file byte/hash receipts. Online iWorQ route retained as candidate. Zoning-before-building, XPEX operations and general inspection contacts remain separate from unresolved electrical delegation. Physical-page/form-field, fee/currentness and sign-code review pending. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: Reading PDF page/visual review, sign Chapter 1290 and electrical office evidence.
+
 ## 2026-10-07 — Phase 10 → Milestone 2 of 3: Elmwood Place zoning recovery gap consolidated
 
 Inspected official council/Minutes links and two-engine targeted search. Publisher 154.01 incorporates separate Ordinance 10-07/amendments on file at Village offices; Minutes page has coming-soon placeholder. Underlying zoning/sign code not located in inspected scope. Saved documents-needed checklist and official office candidate without sending a request or inventing sign limits. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

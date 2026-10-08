@@ -1,0 +1,62 @@
+[
+  {
+    "file": "building-zoning.html",
+    "url": "https://www.readingohio.org/building-department.aspx",
+    "attempted_at": "2026-10-08T11:40:53.928241+00:00",
+    "status": 200,
+    "final_url": "https://www.readingohio.org/building-department.aspx",
+    "retained": true,
+    "bytes": 25335,
+    "sha256": "aeebf87df41d1c14283742ce84b38ce97ef88765b33fda21c62ddcf5619c1528"
+  },
+  {
+    "file": "building-fees-2026.pdf",
+    "url": "https://www.readingohio.org/documents/Building-and-Zoning/FEE-SCHEDULE-2026.pdf",
+    "attempted_at": "2026-10-08T11:40:53.929231+00:00",
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Building-and-Zoning/FEE-SCHEDULE-2026.pdf",
+    "retained": true,
+    "bytes": 229928,
+    "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46"
+  },
+  {
+    "file": "zoning-fees.pdf",
+    "url": "https://www.readingohio.org/documents/City%20of%20Reading%20Zoning%20Fees.pdf",
+    "attempted_at": "2026-10-08T11:40:53.929698+00:00",
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/City%20of%20Reading%20Zoning%20Fees.pdf",
+    "retained": true,
+    "bytes": 106961,
+    "sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558"
+  },
+  {
+    "file": "residential-application.pdf",
+    "url": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_RESIDENTIAL_APP%28FILLABLE%29.pdf",
+    "attempted_at": "2026-10-08T11:40:54.109277+00:00",
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_RESIDENTIAL_APP%28FILLABLE%29.pdf",
+    "retained": true,
+    "bytes": 312590,
+    "sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d"
+  },
+  {
+    "file": "commercial-application.pdf",
+    "url": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_COMMERCIAL_APP%28FILLABLE%29.pdf",
+    "attempted_at": "2026-10-08T11:40:54.122570+00:00",
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BLDG_ZONING_COMMERCIAL_APP%28FILLABLE%29.pdf",
+    "retained": true,
+    "bytes": 416356,
+    "sha256": "ba109bcf3aaec5fc3418335b8b5a282fa791715ae68a8eb2f3913956fda7671a"
+  },
+  {
+    "file": "bza-appeal.pdf",
+    "url": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BZA_APPEAL_APP%28FILLABLE%29.pdf",
+    "attempted_at": "2026-10-08T11:40:54.171419+00:00",
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Building-and-Zoning/2026/BZA_APPEAL_APP%28FILLABLE%29.pdf",
+    "retained": true,
+    "bytes": 176863,
+    "sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719"
+  }
+]
