@@ -59,6 +59,7 @@ import {
 
 const Order = base44.entities.Order;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -67,11 +68,28 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
+const ORDER_REQUEST_TYPES_SETTING_KEY = "orderRequestTypes";
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
+function normalizeOrderRequestTypes(values) {
+  const source = Array.isArray(values) ? values : [];
+  const seen = new Set();
+  const normalized = [];
+  for (const value of source) {
+    const label = String(value ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(label);
+    if (normalized.length >= 100) break;
+  }
+  return normalized;
+}
+
 export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientName }) {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, sessionToken, isRegistered } = useAuth();
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,16 +107,16 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   const [editingVendors, setEditingVendors] = useState(false);
   const [newRequestType, setNewRequestType] = useState("");
   const [newVendor, setNewVendor] = useState("");
+  const [requestTypeSetting, setRequestTypeSetting] = useState(null);
+  const [requestTypesSaving, setRequestTypesSaving] = useState(false);
+  const [requestTypesError, setRequestTypesError] = useState("");
   const pendingChangesRef = useRef({});
   const originalOrdersRef = useRef({});
   const saveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
   
-  const [requestTypes, setRequestTypes] = useState(() => {
-    const saved = localStorage.getItem('orderRequestTypes');
-    return saved ? JSON.parse(saved) : DEFAULT_REQUEST_TYPES;
-  });
+  const [requestTypes, setRequestTypes] = useState(DEFAULT_REQUEST_TYPES);
   const [vendors, setVendors] = useState(() => {
     const saved = localStorage.getItem('orderVendors');
     return saved ? JSON.parse(saved) : DEFAULT_VENDORS;
@@ -107,6 +125,43 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   useEffect(() => {
     loadData();
   }, [workOrderId]);
+
+  useEffect(() => {
+    let active = true;
+    const loadRequestTypes = async () => {
+      try {
+        const rows = await GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+        if (!active) return;
+        if (!Array.isArray(rows)) throw new Error("Order item-type settings did not return a record list.");
+        if (rows.length > 1) {
+          throw new Error(`Order item types have ${rows.length} shared settings records. Ask an admin to resolve the duplicate settings.`);
+        }
+        const setting = rows[0] || null;
+        setRequestTypeSetting(setting);
+        const sharedTypes = normalizeOrderRequestTypes(setting?.setting_value?.items);
+        if (sharedTypes.length) {
+          setRequestTypes(sharedTypes);
+          return;
+        }
+        if (currentUser?.role === "admin") {
+          try {
+            const legacyTypes = normalizeOrderRequestTypes(JSON.parse(localStorage.getItem('orderRequestTypes') || '[]'));
+            if (legacyTypes.length) {
+              setRequestTypes(legacyTypes);
+              return;
+            }
+          } catch { /* ignore malformed legacy browser storage */ }
+        }
+        setRequestTypes(DEFAULT_REQUEST_TYPES);
+      } catch (error) {
+        if (!active) return;
+        setRequestTypesError(error?.message || "Order item types could not be loaded.");
+        setRequestTypes(DEFAULT_REQUEST_TYPES);
+      }
+    };
+    loadRequestTypes();
+    return () => { active = false; };
+  }, [currentUser?.role]);
 
   const loadData = async () => {
     setIsLoading(true);
