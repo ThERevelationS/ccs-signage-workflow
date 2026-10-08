@@ -4,6 +4,10 @@ export function orderSyncPhaseLabel(phase) {
   return ({
     backup: 'Preparing backup',
     reading: 'Reading Smartsheet',
+    matching: 'Matching Order rows',
+    applying: 'Applying Base44 updates',
+    verifying_base44: 'Verifying Base44 dates',
+    confirming_base44: 'Confirming Order snapshots',
     checking: 'Checking Order',
     create: 'Creating Order row',
     writing: 'Writing to Smartsheet',
@@ -36,7 +40,21 @@ export function orderSyncLiveProgress(status, { enabled = true, now = Date.now()
   const rawPercent = totalSteps > 0
     ? Math.round(((completedSteps + stepFraction) / totalSteps) * 1000) / 10
     : 0;
-  const percent = running ? Math.min(99.9, rawPercent) : rawPercent;
+  // Order pull has several phases within one coordinator step. Allocate a
+  // bounded share to each phase so the overall bar never drops back to zero
+  // after downloading the sheet (nor claims 100% before verified completion).
+  const pullPhaseRanges = {
+    reading: [0, 35], matching: [35, 25], applying: [60, 20],
+    verifying_base44: [80, 10], confirming_base44: [90, 9.9],
+  };
+  const pullPhase = show && running && status?.progress_direction === 'pull'
+    ? pullPhaseRanges[phase] : null;
+  const pullStage = Boolean(pullPhase);
+  const phaseRatio = total > 0 ? Math.min(1, current / total) : 0;
+  const weightedPullStep = pullPhase ? (pullPhase[0] + pullPhase[1] * phaseRatio) / 100 : null;
+  const weightedPullPercent = weightedPullStep !== null && totalSteps > 0
+    ? Math.round(((completedSteps + weightedPullStep) / totalSteps) * 1000) / 10 : 0;
+  const percent = running ? Math.min(99.9, pullPhase ? weightedPullPercent : rawPercent) : rawPercent;
 
   const stamp = Date.parse(status?.progress_updated_at || status?.updated_at || status?.started_at || '');
   const heartbeatAgeMs = Number.isFinite(stamp) ? Math.max(0, now - stamp) : null;
@@ -58,6 +76,13 @@ export function orderSyncLiveProgress(status, { enabled = true, now = Date.now()
     ? readPercent === null ? 'Reading Smartsheet…' : `${readPercent}% of sheet read`
     : '';
 
+  const stageCountLabel = pullStage ? readingPull ? readCountLabel :
+    `${current.toLocaleString()}${total > 0 ? ` / ${total.toLocaleString()}` : ''} ${({
+      matching: 'rows compared', applying: 'candidate updates processed',
+      verifying_base44: 'date/text checks performed', confirming_base44: 'snapshot writes processed',
+    })[phase] || 'items processed'}` : '';
+  const stagePercentLabel = pullStage ? readingPull ? readPercentLabel :
+    total > 0 ? `${Math.round(phaseRatio * 100)}% of stage processed` : phaseLabel : '';
   return { show, current, total, itemLabel, detail, phase, phaseLabel, percent, stalled, heartbeatAgeMs,
-    readingPull, readCountLabel, readPercentLabel };
+    readingPull, readCountLabel, readPercentLabel, pullStage, stageCountLabel, stagePercentLabel };
 }
