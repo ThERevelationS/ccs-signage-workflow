@@ -3555,6 +3555,14 @@ Deno.serve(async (req) => {
           return { verified: true, conflict: null };
         }
         if (!windowStart || !Number.isFinite(Date.parse(windowStart)) || Date.parse(windowStart) > Date.parse(windowEnd)) return failed();
+        const storedAuditIds = new Set(stored.map((item: any) => String(item?.audit_id || '')).filter(Boolean));
+        const inFrozenGenerationWindow = (audit: any) => {
+          const auditTime = Date.parse(String(audit?.server_timestamp || ''));
+          const startTime = Date.parse(windowStart);
+          const endTime = Date.parse(windowEnd);
+          if (!Number.isFinite(auditTime) || auditTime < startTime || auditTime > endTime) return false;
+          return auditTime < endTime || storedAuditIds.has(String(audit?.id || ''));
+        };
         const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
         const changedIds = new Set((summary.generation_changes || []).map((change: any) => String(change.time_entry_id || '')));
         const periodEntryIdSet = new Set([
@@ -3568,7 +3576,8 @@ Deno.serve(async (req) => {
           const candidateIds = [...new Set(windowAudits.filter((row: any) =>
             relevantActions.includes(String(row.action || '')) &&
             ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
-            String(row.time_entry_id || '')
+            String(row.time_entry_id || '') &&
+            inFrozenGenerationWindow(row)
           ).map((row: any) => String(row.time_entry_id || '')))];
           for (const candidateId of candidateIds) {
             if (periodEntryIdSet.has(candidateId)) continue;
@@ -3614,7 +3623,7 @@ Deno.serve(async (req) => {
           for (const row of audits.filter((audit: any) =>
             relevantActions.includes(String(audit.action || '')) &&
             ['confirmed', 'recovered'].includes(String(audit.outcome || '')) &&
-            inCausalWindow(audit.server_timestamp, windowStart, windowEnd)
+            inFrozenGenerationWindow(audit)
           )) {
             if (row.details?.payroll_membership && ['clock_in', 'clock_out', 'admin_correction', 'admin_archive'].includes(String(row.action || '')) &&
                 !normalizedPayrollMembershipFromAudit(row)) return failed();
