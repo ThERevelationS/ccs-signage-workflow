@@ -44,7 +44,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                 {mainItems.map(rawItem => {
                   const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
                   return (
-                    <div data-sips-checklist-item-id={String(item.id)} key={item.id} className={`clay-card p-2 bg-green-100/70 ${focusedNeedsInputId === item.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
+                    <div data-sips-checklist-item-id={String(item.id)} tabIndex={-1} key={item.id} className={`clay-card p-2 bg-green-100/70 ${focusedNeedsInputId === item.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span className="text-xs px-2 py-0.5 rounded bg-green-200 text-green-700 shrink-0">Checklist</span>
@@ -78,7 +78,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                   {stItems.map(rawItem => {
                     const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
                     return (
-                      <div data-sips-checklist-item-id={String(stItem.id)} key={stItem.id} className={`clay-card p-2 bg-green-100/70 ${focusedNeedsInputId === stItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
+                      <div data-sips-checklist-item-id={String(stItem.id)} tabIndex={-1} key={stItem.id} className={`clay-card p-2 bg-green-100/70 ${focusedNeedsInputId === stItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             <span className="text-xs px-1.5 py-0.5 rounded bg-green-200 text-green-700 shrink-0">Checklist</span>
