@@ -5,6 +5,7 @@ import { getAccessibleAdminTab } from '../src/components/admin/adminTabNavigatio
 
 const page = readFileSync(new URL('../src/pages/AdminSettings.jsx', import.meta.url), 'utf8');
 const listTags = page.match(/<TabsList\b[^>]*>/g) || [];
+const triggerTags = page.match(/<TabsTrigger\b[^>]*>/g) || [];
 const mainNav = page.slice(page.indexOf('<Tabs value={selectedAdminTab}'), page.indexOf('<TabsContent value="users">'));
 const mainTabIds = [...mainNav.matchAll(/<TabsTrigger value="([^"]+)"/g)].map((match) => match[1]);
 const contentIds = new Set([...page.matchAll(/<TabsContent value="([^"]+)"/g)].map((match) => match[1]));
@@ -24,6 +25,12 @@ test('Admin tab bars grow and wrap inside a bounded container', () => {
     assert.match(list, /aria-label="[^"]+"/);
   }
   assert.match(page, /clay-card w-full min-w-0 max-w-full/);
+  assert.equal(triggerTags.length, 26);
+  for (const trigger of triggerTags) {
+    for (const className of ['max-w-full', 'min-h-10', 'whitespace-normal']) {
+      assert.ok(trigger.includes(className), `${className} missing in ${trigger}`);
+    }
+  }
 });
 
 test('Selected tab follows URL changes instead of being frozen at mount', () => {
