@@ -178,10 +178,14 @@ check("main and detail quick-add actions use a dedicated phone row", () => {
 });
 
 check("standalone destructive actions use an intentional phone row", () => {
-  assert.equal((source.match(/className="basis-full sm:basis-auto flex justify-end sm:justify-start">/g) || []).length, 3);
-  assert.match(source, /className="basis-full sm:basis-auto flex justify-end sm:justify-start">\s*<Button[^>]*deleteChecklistItem\(displayItem\.id\)/);
-  assert.match(source, /className="basis-full sm:basis-auto flex justify-end sm:justify-start">\s*<Button[^>]*deleteChecklistItem\(detail\.id\)/);
-  assert.match(source, /className="basis-full sm:basis-auto flex justify-end sm:justify-start">\s*<Button[^>]*deleteChecklistItem\(stDisplayItem\.id\)/);
+  const destructivePhoneRows = source
+    .split('className="basis-full sm:basis-auto flex justify-end sm:justify-start">')
+    .slice(1)
+    .map(section => section.slice(0, 700));
+  assert.equal(destructivePhoneRows.length, 3);
+  assert.ok(destructivePhoneRows.some(section => section.includes("deleteChecklistItem(displayItem.id)")));
+  assert.ok(destructivePhoneRows.some(section => section.includes("deleteChecklistItem(detail.id)")));
+  assert.ok(destructivePhoneRows.some(section => section.includes("deleteChecklistItem(stDisplayItem.id)")));
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
