@@ -205,4 +205,11 @@ check("search navigation focuses every rendered result row without adding tab st
   assert.equal(source.includes("data-sips-checklist-item-id={String(subtask.id)} key={subtask.id}"), false);
 });
 
+check("clearing search returns keyboard focus to the search field", () => {
+  assert.match(source, /const checklistSearchInputRef = useRef\(null\);/);
+  assert.match(source, /ref=\{checklistSearchInputRef\}/);
+  assert.match(source, /checklistSearchInputRef\.current\?\.focus\(\);/);
+  assert.match(source, /e\.key === "Escape" && checklistSearchQuery/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
