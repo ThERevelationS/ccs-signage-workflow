@@ -46,6 +46,10 @@
       "type": "string",
       "description": "SHA-256 stable fingerprint of the canonical proposed Opportunity payload. Never a password/authentication secret."
     },
+    "pilot_review_fingerprint": {
+      "type": "string",
+      "description": "Exact SHA-256 0U pilot review fingerprint explicitly authorized for this production bridge attempt. Binds source snapshot, proposed Opportunity, canonical Customer evidence, existing Opportunity identity and durable receipt state."
+    },
     "proposal_summary": {
       "type": "object",
       "description": "Compact auditable proposal facts. Does not store payment secrets or unrelated customer data."
@@ -134,7 +138,8 @@
     "opportunity_creation_request_key",
     "status",
     "source_snapshot",
-    "proposal_fingerprint"
+    "proposal_fingerprint",
+    "pilot_review_fingerprint"
   ],
   "rls": {
     "create": {
