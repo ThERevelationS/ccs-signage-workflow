@@ -61,7 +61,7 @@ test('Category and nested tab bars remain bounded on small screens', () => {
     }
     assert.match(list, /aria-label=/);
   }
-  assert.match(mainNav, /max-w-full flex-wrap items-center/);
+  assert.match(mainNav, /flex min-w-0 flex-wrap items-center/);
   assert.match(mainNav, /clay-card w-full min-w-0 max-w-full/);
   assert.equal(triggerTags.length, 12); // One mapped main trigger plus eleven nested triggers.
   for (const trigger of triggerTags) {
