@@ -576,6 +576,7 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
 
 async function canonicalLateClockInPayrollProvenance({
   entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution = true,
+  payrollGenerationContext = null,
 }: any) {
   // Audited manager corrections change clock_source; the original missed-punch
   // report marker still requires independent employee-attestation verification.
@@ -796,6 +797,95 @@ async function canonicalLateClockInPayrollProvenance({
       }
     }
 
+    const priorGeneration = payrollGenerationContext?.prior_generation || null;
+    const payrollPeriodId = String(payrollGenerationContext?.period_id || '');
+    let payrollGenerationBridge = null;
+    const snapshotWithoutPayrollVersion = (snapshot: any) => {
+      const comparable = { ...(snapshot || {}) };
+      delete comparable.updated_date;
+      delete comparable.pay_period_id;
+      delete comparable.pay_period_locked_at;
+      delete comparable.pay_period_locked_by;
+      return comparable;
+    };
+    const resolvePayrollGenerationBridge = async (cursorSnapshot: any) => {
+      if (!priorGeneration || !payrollPeriodId || payrollGenerationBridge) return null;
+      if (Number(priorGeneration.snapshot_version || 0) < 27 ||
+          priorGeneration.snapshot_active !== false ||
+          !String(priorGeneration.request_id || '') ||
+          !String(priorGeneration.invalidated_by_reopen_request_id || '')) return null;
+      const priorRows = Array.isArray(priorGeneration.shift_manifest) ? priorGeneration.shift_manifest : [];
+      const priorMatches = priorRows.filter((row: any) => String(row.id || '') === entryId);
+      if (priorMatches.length !== 1) return null;
+      const priorRow = priorMatches[0];
+      const manifestHash = await payloadHash(priorRows);
+      if (!String(priorGeneration.shift_manifest_hash || '') ||
+          !constantTimeEqual(String(priorGeneration.shift_manifest_hash), manifestHash)) return null;
+      if (
+        asEmail(priorRow.user_email) !== userEmail ||
+        String(priorRow.clock_in || '') !== String(cursorSnapshot?.clock_in || '') ||
+        String(priorRow.clock_out || '') !== String(cursorSnapshot?.clock_out || '') ||
+        Number(priorRow.total_hours || 0) !== Number(cursorSnapshot?.total_hours || 0) ||
+        String(priorRow.approval_status || '') !== String(cursorSnapshot?.approval_status || '') ||
+        String(priorRow.approval_request_id || '') !== String(cursorSnapshot?.approval_request_id || '') ||
+        String(priorRow.late_clock_in_provenance?.claimed_clock_in || '') !== claimedClockIn ||
+        String(priorRow.late_clock_in_provenance?.payroll_clock_in_at_finalization || '') !== String(cursorSnapshot?.clock_in || '')
+      ) return null;
+      const priorApproval = eligibleApprovalTransitions.filter((row: any) =>
+        String(row.id || '') === String(priorRow.approval_evidence?.id || '') &&
+        String(row.request_id || '') === String(priorRow.approval_request_id || '') &&
+        String(row.details?.decision || '') === 'approve'
+      );
+      if (priorApproval.length !== 1) return null;
+      if (!constantTimeEqual(
+        await payloadHash(snapshotWithoutPayrollVersion(priorApproval[0].details?.updated || {})),
+        await payloadHash(snapshotWithoutPayrollVersion(cursorSnapshot)),
+      )) return null;
+      const reopenRows = await auditEntity.filter({
+        action: 'pay_period_status',
+        request_id: String(priorGeneration.invalidated_by_reopen_request_id || ''),
+      }).catch(() => null);
+      if (!Array.isArray(reopenRows) || reopenRows.length !== 1) return null;
+      const reopenAudit = reopenRows[0];
+      if (
+        !['confirmed', 'recovered'].includes(String(reopenAudit.outcome || '')) ||
+        String(reopenAudit.actor_role || '') !== 'admin' ||
+        String(reopenAudit.authentication_method || '') !== 'session' ||
+        asEmail(reopenAudit.actor_email) !== asEmail(priorGeneration.invalidated_by) ||
+        String(priorGeneration.invalidated_by_role || '') !== 'admin' ||
+        String(priorGeneration.invalidation_authentication_method || '') !== 'session' ||
+        String(reopenAudit.details?.decision || '') !== 'reopen' ||
+        String(reopenAudit.details?.pay_period_id || '') !== payrollPeriodId ||
+        String(reopenAudit.details?.note || '') !== String(priorGeneration.invalidation_reason || '')
+      ) return null;
+      payrollGenerationBridge = {
+        period_id: payrollPeriodId,
+        prior_generation_request_id: String(priorGeneration.request_id || ''),
+        prior_generation_shift_manifest_hash: String(priorGeneration.shift_manifest_hash || ''),
+        prior_shift_hash: await payloadHash(priorRow),
+        reopen_request_id: String(priorGeneration.invalidated_by_reopen_request_id || ''),
+        reopen_audit_id: String(reopenAudit.id || ''),
+        reopen_audit_evidence_hash: await payloadHash({
+          id: reopenAudit.id, request_id: reopenAudit.request_id,
+          user_email: asEmail(reopenAudit.user_email), actor_email: asEmail(reopenAudit.actor_email),
+          actor_role: reopenAudit.actor_role, authentication_method: reopenAudit.authentication_method,
+          server_timestamp: reopenAudit.server_timestamp, outcome: reopenAudit.outcome, details: reopenAudit.details,
+        }),
+        prior_generation_evidence_hash: await payloadHash({
+          request_id: priorGeneration.request_id,
+          snapshot_version: priorGeneration.snapshot_version,
+          shift_manifest_hash: priorGeneration.shift_manifest_hash,
+          invalidated_at: priorGeneration.invalidated_at,
+          invalidated_by: asEmail(priorGeneration.invalidated_by),
+          invalidated_by_role: priorGeneration.invalidated_by_role,
+          invalidation_authentication_method: priorGeneration.invalidation_authentication_method,
+          invalidated_by_reopen_request_id: priorGeneration.invalidated_by_reopen_request_id,
+          invalidation_reason: priorGeneration.invalidation_reason,
+        }),
+      };
+      return priorApproval[0].details?.updated || null;
+    };
+
     const correctionChain = [terminal];
     const reviewTransitionChain = [];
     const usedCorrectionIds = new Set([String(terminal.id || '')]);
@@ -831,6 +921,13 @@ async function canonicalLateClockInPayrollProvenance({
         cursorOriginal = reviewPredecessor.details?.original || {};
         continue;
       }
+      if (correctionPredecessors.length === 0 && reviewPredecessors.length === 0) {
+        const bridgedSnapshot = await resolvePayrollGenerationBridge(cursorOriginal);
+        if (bridgedSnapshot) {
+          cursorOriginal = bridgedSnapshot;
+          continue;
+        }
+      }
       return { applicable: true, provenance: null };
     }
     if (correctionChain.length !== eligible.length) return { applicable: true, provenance: null };
@@ -856,6 +953,7 @@ async function canonicalLateClockInPayrollProvenance({
       evidence_hash: terminalEvidence.evidence_hash,
       ...(correctionEvidenceChain.length > 1 ? { correction_chain: correctionEvidenceChain } : {}),
       ...(reviewTransitionEvidence.length ? { review_transition_chain: reviewTransitionEvidence } : {}),
+      ...(payrollGenerationBridge ? { payroll_generation_bridge: payrollGenerationBridge } : {}),
     };
   }
 
