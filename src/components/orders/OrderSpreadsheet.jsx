@@ -98,6 +98,7 @@ import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
+import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
@@ -271,6 +272,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const originalOrdersRef = useRef({}); // Track original order data for comparison
   const saveInFlightRef = useRef(false);
   const syncInFlightRef = useRef(false);
+  const manualPullInFlightRef = useRef(false);
+  const orderLoadGenerationRef = useRef(0);
   const dateNeededSaveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
@@ -348,8 +351,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   }, [hasUnsavedChanges, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, onSaveStatusChange]);
 
-  const loadData = async (showLoading = true) => {
-    if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
+  const loadData = async (showLoading = true, { manualPullReload = false } = {}) => {
+    // A focus/timer refresh must not race a manual Smartsheet pull.
+    if (manualPullInFlightRef.current && !manualPullReload) return false;
+    if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return false;
+    const requestGeneration = ++orderLoadGenerationRef.current;
     if (showLoading && orders.length === 0) setIsLoading(true);
     setReadError("");
     try {
@@ -370,8 +376,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
       ]);
-      // An edit can begin while these async reads are in flight. Never let
-      // their older snapshot replace an active user's pending form changes.
+      // A manual Sync or a newer refresh can start while these reads are
+      // in flight. Never let the older response replace the newer snapshot.
+      if (!canCommitOrderReload({
+        requestGeneration,
+        latestGeneration: orderLoadGenerationRef.current,
+        manualPullInFlight: manualPullInFlightRef.current,
+        manualPullReload,
+      })) return false;
+      // An edit can begin after the read started; preserve its local baseline.
       if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return false;
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
@@ -394,6 +407,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setIsLoading(false);
       return true;
     } catch (error) {
+      // Errors from invalidated requests must not hide a successful newer load.
+      if (!canCommitOrderReload({
+        requestGeneration,
+        latestGeneration: orderLoadGenerationRef.current,
+        manualPullInFlight: manualPullInFlightRef.current,
+        manualPullReload,
+      })) return false;
       console.error("Error loading data:", error);
       setReadError(error?.message || "Orders could not be verified completely.");
       setIsLoading(false);
@@ -590,13 +610,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       return false;
     }
     syncInFlightRef.current = true;
+    manualPullInFlightRef.current = true;
+    // Invalidate any focus/timer refresh started before this pull.
+    orderLoadGenerationRef.current += 1;
     setIsSyncing(true);
     setIsPulling(true);
     setSaveError('');
     setSyncMessage('');
     try {
       const pull = await pullOrdersFromSmartsheet({ sessionToken });
-      const reloaded = await loadData(false);
+      const reloaded = await loadData(false, { manualPullReload: true });
       if (!reloaded) throw new Error('Smartsheet was checked but the updated Orders could not be reloaded safely.');
       setLastSynced(new Date());
       setLastSyncDirection('pull');
@@ -614,6 +637,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setSaveError(`Smartsheet pull needs attention: ${error?.message || 'Could not verify remote Order changes.'}`);
       return false;
     } finally {
+      manualPullInFlightRef.current = false;
       syncInFlightRef.current = false;
       setIsPulling(false);
       setIsSyncing(false);
