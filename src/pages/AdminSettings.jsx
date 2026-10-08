@@ -102,7 +102,8 @@ import {
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { getAccessibleAdminGroups, getAccessibleAdminTab, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
+import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
+import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -356,11 +357,17 @@ export default function AdminSettings() {
   const availableAdminGroups = getAccessibleAdminGroups(isAdmin);
   const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
-  const handleAdminTabChange = (nextTab) => {
-    if (nextTab === selectedAdminTab) return;
+  const handleAdminTabChange = (nextTab, nextSubtab = null) => {
+    if (getAccessibleAdminTab(nextTab, isAdmin) !== nextTab) return;
+    const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab) === nextSubtab
+      ? nextSubtab
+      : null;
+    if (nextTab === selectedAdminTab && validSubtab === (searchParams.get("subtab") || null)) return;
     setSearchParams((previous) => {
       const updated = new URLSearchParams(previous);
       updated.set("tab", nextTab);
+      if (validSubtab) updated.set("subtab", validSubtab);
+      else updated.delete("subtab");
       return updated;
     });
   };
@@ -972,6 +979,7 @@ export default function AdminSettings() {
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="min-w-0 space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
+            <AdminSettingsSearch isAdmin={isAdmin} onNavigate={handleAdminTabChange} />
             <div role="group" aria-label="Admin navigation categories" className="flex min-w-0 flex-wrap items-center gap-1.5 border-b border-red-200/70 pb-2">
               {availableAdminGroups.map((group) => (
                 <button
@@ -1014,7 +1022,7 @@ export default function AdminSettings() {
           {isAdmin && (
             <>
               <TabsContent value="timeclock">
-                <Tabs defaultValue="entries" className="min-w-0 space-y-4">
+                <Tabs value={getAccessibleAdminSubtab("timeclock", searchParams.get("subtab"))} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Time Entries</TabsTrigger>
                     <TabsTrigger value="reports" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Reports</TabsTrigger>
@@ -1037,7 +1045,7 @@ export default function AdminSettings() {
               </TabsContent>
 
               <TabsContent value="backend">
-                <Tabs defaultValue="backup" className="min-w-0 space-y-4">
+                <Tabs value={getAccessibleAdminSubtab("backend", searchParams.get("subtab"))} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Data Backup</TabsTrigger>
                     <TabsTrigger value="client_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Client Trash</TabsTrigger>
