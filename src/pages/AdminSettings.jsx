@@ -1029,10 +1029,10 @@ export default function AdminSettings() {
               <TabsContent value="timeclock">
                 <Tabs defaultValue="entries" className="min-w-0 space-y-4">
                   <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
-                    <TabsTrigger value="entries">Time Entries</TabsTrigger>
-                    <TabsTrigger value="reports">Reports</TabsTrigger>
-                    <TabsTrigger value="pto">PTO Policies</TabsTrigger>
-                    <TabsTrigger value="overtime">Overtime Rules</TabsTrigger>
+                    <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Time Entries</TabsTrigger>
+                    <TabsTrigger value="reports" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Reports</TabsTrigger>
+                    <TabsTrigger value="pto" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">PTO Policies</TabsTrigger>
+                    <TabsTrigger value="overtime" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <TabsContent value="entries">
                     <TimeClockAdmin />
@@ -1052,13 +1052,13 @@ export default function AdminSettings() {
               <TabsContent value="backend">
                 <Tabs defaultValue="backup" className="min-w-0 space-y-4">
                   <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
-                    <TabsTrigger value="backup">Data Backup</TabsTrigger>
-                    <TabsTrigger value="client_trash">Client Trash</TabsTrigger>
-                    <TabsTrigger value="order_trash">Order Trash</TabsTrigger>
-                    <TabsTrigger value="default_sort">Default Sort</TabsTrigger>
-                    <TabsTrigger value="wip_import">WIP Import</TabsTrigger>
-                    <TabsTrigger value="permitting">Permitting Repository</TabsTrigger>
-                    <TabsTrigger value="monitoring">Jurisdiction Monitoring</TabsTrigger>
+                    <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Data Backup</TabsTrigger>
+                    <TabsTrigger value="client_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Client Trash</TabsTrigger>
+                    <TabsTrigger value="order_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Order Trash</TabsTrigger>
+                    <TabsTrigger value="default_sort" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Default Sort</TabsTrigger>
+                    <TabsTrigger value="wip_import" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">WIP Import</TabsTrigger>
+                    <TabsTrigger value="permitting" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Permitting Repository</TabsTrigger>
+                    <TabsTrigger value="monitoring" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Jurisdiction Monitoring</TabsTrigger>
                   </TabsList>
                     <TabsContent value="backup">
                     <BackupManager />
