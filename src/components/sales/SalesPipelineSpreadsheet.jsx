@@ -2670,6 +2670,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, []);
 
   const clearCell = (woId, fieldName) => {
+    // Sales Status is derived from Task Description, never cleared independently.
+    if (fieldName === "sales_status") return;
     updateWorkOrder(woId, fieldName, "");
   };
 
