@@ -1,0 +1,52 @@
+[
+  {
+    "file": "minutes-07-07-26.pdf",
+    "url": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-07-26%20Council%20Minutes%20%28Legislative%29.pdf",
+    "attempted_at": "2026-10-08T16:29:10.174817+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-07-26%20Council%20Minutes%20%28Legislative%29.pdf",
+    "bytes": 377268,
+    "sha256": "ebfb36d4b98290e3b74cb2f818a00e9e3ab8a4d1e01cfb6e54797467f3dadd3b"
+  },
+  {
+    "file": "minutes-07-21-26.pdf",
+    "url": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-21-26%20Council%20Minutes%20%28Legislative%29.pdf",
+    "attempted_at": "2026-10-08T16:29:10.430589+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Council%20Minutes/2026/07-21-26%20Council%20Minutes%20%28Legislative%29.pdf",
+    "bytes": 2524672,
+    "sha256": "b7ca03afe0fa870fd4cf6a6af7f7509ff303da19d6b76f4a2af025c0417c7654"
+  },
+  {
+    "file": "minutes-08-04-26.pdf",
+    "url": "https://www.readingohio.org/documents/Council%20Minutes/2026/08-04-26%20Council%20Minutes%20%28Regular%29.pdf",
+    "attempted_at": "2026-10-08T16:29:10.926477+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/Council%20Minutes/2026/08-04-26%20Council%20Minutes%20%28Regular%29.pdf",
+    "bytes": 1222879,
+    "sha256": "8840a2f4b1ca62079c835bc167d56cbc7fa27763c375fb16489829fb2b6f04d2"
+  },
+  {
+    "file": "minutes-08-18-26.pdf",
+    "url": "https://www.readingohio.org/documents/08-18-26-Council-Minutes-Legislative-.pdf",
+    "attempted_at": "2026-10-08T16:29:11.220361+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/08-18-26-Council-Minutes-Legislative-.pdf",
+    "bytes": 312851,
+    "sha256": "5294e9991b7be36f07b8dfbd54f008c12d828771c724148d6571032059965aab"
+  },
+  {
+    "file": "minutes-09-01-26.pdf",
+    "url": "https://www.readingohio.org/documents/09-01-26-Council-Minutes-Regular-.pdf",
+    "attempted_at": "2026-10-08T16:29:11.475042+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/documents/09-01-26-Council-Minutes-Regular-.pdf",
+    "bytes": 570538,
+    "sha256": "1699bd0f264aad395f14beba1d6bfb486dfb1f4f1f345d2ff00c8420f321bd73"
+  }
+]
