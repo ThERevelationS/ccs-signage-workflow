@@ -160,7 +160,9 @@ export default function SalesOpportunityDialog({
   const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
   const stageDisplayValue = salesStageDisplayValue(workOrder);
   const statusLabel = salesStageDisplayLabel(workOrder);
-  const closeout = ["won", "lost"].includes(workOrder?.sales_status);
+  const recordNeutralClosure = stageDisplayValue === "closed_neutral";
+  const closeout = ["won", "lost"].includes(workOrder?.sales_status) || recordNeutralClosure;
+
   const stageAging = getStageAgingState(workOrder);
   const quoteAging = getQuoteAgingState(workOrder);
   const allAttentionItems = getSalesAttentionItems(workOrder);
@@ -230,6 +232,7 @@ export default function SalesOpportunityDialog({
                 <Badge variant="outline">{statusLabel}</Badge>
                 {recordClassification === "current" && <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Current Pipeline</Badge>}
                 {recordClassification === "outcome" && <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Tracked Outcome</Badge>}
+                {recordClassification === "neutral_closed" && <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">Closed without outcome · All Records</Badge>}
                 {recordClassification === "legacy_history" && <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">Legacy History</Badge>}
                 {recordClassification === "other" && <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600">Not Current Pipeline</Badge>}
                 {likelyPlaceholder && <Badge variant="outline" className="border-rose-300 bg-rose-50 text-rose-700">Likely test / placeholder</Badge>}
@@ -322,10 +325,11 @@ export default function SalesOpportunityDialog({
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
-              <Select value={stageDisplayValue} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered}>
+              <Select value={stageDisplayValue} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered || recordNeutralClosure}>
                 <SelectTrigger className={`mt-2 h-11 sm:h-9 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : ""}`}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
+                  {recordNeutralClosure && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
                   {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
                 </SelectContent>
               </Select>
