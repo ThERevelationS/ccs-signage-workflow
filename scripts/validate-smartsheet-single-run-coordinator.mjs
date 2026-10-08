@@ -14,7 +14,7 @@ check(backend.includes("matches.length !== 1") &&
   "Missing or duplicate status coordinators must fail closed");
 
 check(backend.includes("async function claimSyncRun") &&
-      backend.includes("if (current?.status === 'running')"),
+      backend.includes("if (current?.status === 'running' && !abandoned)"),
   "A new sync must reject an already-running coordinator");
 check(backend.includes("existing Order sync is stale and must be closed for review") &&
       backend.includes("Another Smartsheet sync is already running."),
