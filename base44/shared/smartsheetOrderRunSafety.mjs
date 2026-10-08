@@ -6,6 +6,7 @@ export function orderRunRequiresReview(results = []) {
     result?.dataset === 'orders' && (
       (result?.skipped === true && (result?.direction === 'pull' || result?.direction === 'push')) ||
       Number(result?.errors || 0) > 0 ||
+      Number(result?.business_field_write_failures || 0) > 0 ||
       Number(result?.conflicts || 0) > 0 ||
       Number(result?.snapshot_write_failures || 0) > 0 ||
       Number(result?.unlinked_smartsheet_rows_flagged_for_review || 0) > 0 ||
