@@ -408,7 +408,32 @@ try {
     assert.equal((await actionNames(page)).filter(name=>name==="save").length,1);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/11 PASS");
+  await run("Desktop: late photo processing cannot repopulate a job removed from equipment scope",1440,async page => {
+    await page.evaluate(() => {
+      const original=window.createImageBitmap;
+      window.createImageBitmap=async (...args) => {
+        await new Promise(resolve => { window.__releaseScopedFleetPhoto=resolve; });
+        return original(...args);
+      };
+    });
+    const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
+    await page.locator('input[type="file"]').setInputFiles({name:"out-of-scope.png",mimeType:"image/png",buffer:png});
+    await page.waitForFunction(() => typeof window.__releaseScopedFleetPhoto==="function");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.scopeRemoved=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===2);
+    assert.equal(await page.getByRole("heading",{name:"Synthetic work recovery",exact:true}).count(),0);
+    await page.evaluate(() => window.__releaseScopedFleetPhoto());
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.scopeRemoved=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).waitFor();
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).locator("xpath=ancestor::button[1]").click();
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0,"Previous out-of-scope photo must never be restored in a new job session");
+    assert.deepEqual(await actionNames(page),["bootstrap","bootstrap","bootstrap"],"No mechanic mutation may be replayed");
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/12 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
