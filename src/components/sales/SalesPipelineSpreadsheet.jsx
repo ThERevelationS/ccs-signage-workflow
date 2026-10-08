@@ -111,6 +111,12 @@ const LEGACY_CLOSED_QUERY = {
   deleted: { $ne: true },
 };
 const ALL_RECORDS_ACTIVE_QUERY = { is_rider: false, completed: false, deleted: { $ne: true } };
+const EXPLICIT_NEUTRAL_CLOSED_QUERY = {
+  is_rider: false,
+  in_pipeline: false,
+  sales_neutral_closed_at: { $gt: "" },
+  deleted: { $ne: true },
+};
 const SALES_USER_FILTER_ROLES = Object.freeze({
   sales_rep: null,
   current_task_assigned_to: "Task Assigned",
@@ -691,7 +697,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         pagedCount = page.length;
         hasMore = page.length === ARCHIVE_PAGE_SIZE;
       } else {
-        const [activePage, modernOutcomes, completedLegacy] = await Promise.all([
+        const [activePage, modernOutcomes, completedLegacy, neutralClosed] = await Promise.all([
           readArchivePage(ALL_RECORDS_ACTIVE_QUERY, 0),
           loadAllEntityRows({
             entity: WorkOrder,
@@ -705,8 +711,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             sort: "-created_date",
             label: "Sales Pipeline completed legacy history",
           }),
+          loadAllEntityRows({
+            entity: WorkOrder,
+            query: EXPLICIT_NEUTRAL_CLOSED_QUERY,
+            sort: "-sales_neutral_closed_at",
+            label: "Sales Pipeline explicit neutral closures",
+          }),
         ]);
-        rows = [...activePage, ...modernOutcomes, ...completedLegacy];
+        rows = [...activePage, ...modernOutcomes, ...completedLegacy, ...neutralClosed];
         pagedCount = activePage.length;
         hasMore = activePage.length === ARCHIVE_PAGE_SIZE;
       }
