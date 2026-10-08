@@ -63,6 +63,12 @@ export function mapSalesTaskToStage(taskDescription) {
   return status ? { kind: "stage", status } : { kind: "unmapped", status: null };
 }
 
+// Won is a Sales outcome, not a freeze on downstream SIPs/WIP work.
+// Only known Won-family tasks qualify for continued operational task editing.
+export function isWonOperationalTask(taskDescription) {
+  return mapSalesTaskToStage(taskDescription).status === "won";
+}
+
 export function planSalesTaskChange(workOrder, nextTaskDescription) {
   const task = String(nextTaskDescription || "").trim();
   const mapping = mapSalesTaskToStage(task);
