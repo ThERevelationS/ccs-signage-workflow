@@ -63,6 +63,27 @@ const TOKEN_SECRET_NAME = 'SMARTSHEET_API_TOKEN';
 const API_BASE = 'https://api.smartsheet.com/2.0';
 const MAX_RESPONSE_BYTES = 2_000_000;
 const SETTING_KEY = 'smartsheetSyncConfig';
+const ORDER_REQUEST_TYPES_SETTING_KEY = 'orderRequestTypes';
+
+function normalizeOrderRequestTypes(value: unknown): string[] {
+  const source = Array.isArray(value) ? value : [];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const raw of source) {
+    const label = cleanText(raw, 120);
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(label);
+    if (normalized.length >= 100) break;
+  }
+  return normalized;
+}
+
+function sameOrderRequestTypeList(left: unknown, right: unknown): boolean {
+  return JSON.stringify(normalizeOrderRequestTypes(left)) === JSON.stringify(normalizeOrderRequestTypes(right));
+}
 
 // Compare current Smartsheet cell values against the last-sync snapshot stored
 // on the Base44 record. Returns true if Smartsheet was edited since the last
@@ -2055,7 +2076,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -2138,6 +2159,137 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       } catch (error: any) {
         return Response.json({ success: false, error: cleanText(error?.message || 'Smartsheet sync settings could not be saved.', 1000) }, { status: Number(error?.status) || 500 });
       }
+    }
+
+    if (action === 'order_request_types_save') {
+      if (adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
+      }
+      if (!configured) {
+        return Response.json({ success: false, error: 'Smartsheet API token is not configured.' }, { status: 503 });
+      }
+
+      const requestTypes = normalizeOrderRequestTypes(body?.request_types);
+      if (!requestTypes.length) {
+        return Response.json({ success: false, error: 'At least one Order item type is required.' }, { status: 400 });
+      }
+
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      if (!config || duplicateCount > 1) {
+        return Response.json({ success: false,
+          error: duplicateCount > 1
+            ? `Smartsheet sync configuration has ${duplicateCount} records. Resolve the duplicate settings before changing Order item types.`
+            : 'Smartsheet sync configuration is missing.' }, { status: duplicateCount > 1 ? 409 : 400 });
+      }
+      const orderProfile = config?.orders || {};
+      const sheetId = cleanText(orderProfile?.smartsheet_sheet_id, 80);
+      const columnId = cleanText(orderProfile?.column_bindings?.request_type, 80);
+      if (!/^\d+$/.test(sheetId) || !/^\d+$/.test(columnId)) {
+        return Response.json({ success: false,
+          error: 'Order Request Type must be bound to permanent Smartsheet sheet and column IDs before item types can be saved.' }, { status: 400 });
+      }
+
+      const settingRowsResult = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+      const settingRows = Array.isArray(settingRowsResult) ? settingRowsResult : (settingRowsResult ? [settingRowsResult] : []);
+      if (settingRows.length > 1) {
+        return Response.json({ success: false,
+          error: `Order item types have ${settingRows.length} shared settings records. No value was changed; review the duplicate settings first.` }, { status: 409 });
+      }
+      const currentSetting = settingRows[0] || null;
+      const expectedSettingId = cleanText(body?.expected_setting_id, 80);
+      const expectedUpdatedAt = cleanText(body?.expected_setting_updated_date, 80);
+      if (currentSetting?.id) {
+        if (expectedSettingId !== String(currentSetting.id) || expectedUpdatedAt !== cleanText(currentSetting.updated_date, 80)) {
+          return Response.json({ success: false,
+            error: 'Order item types changed in another session. Reload the Order Form before saving your list.' }, { status: 409 });
+        }
+      } else if (expectedSettingId || expectedUpdatedAt) {
+        return Response.json({ success: false,
+          error: 'The shared Order item-type setting changed before this save. Reload before retrying.' }, { status: 409 });
+      }
+
+      const columnPath = `/sheets/${sheetId}/columns/${columnId}`;
+      const beforeColumn = (await smartsheetGet(columnPath, token)).body || {};
+      if (String(beforeColumn?.id || '') !== columnId) {
+        return Response.json({ success: false,
+          error: 'Smartsheet returned a different Request Type column ID. No item-type setting was changed.' }, { status: 409 });
+      }
+      if (String(beforeColumn?.type || '') !== 'PICKLIST') {
+        return Response.json({ success: false,
+          error: `Smartsheet Request Type column ${columnId} is ${cleanText(beforeColumn?.type, 40) || 'unknown'}, not PICKLIST. No item-type setting was changed.` }, { status: 409 });
+      }
+
+      // Preserve historical Smartsheet options even if an admin removes them
+      // from the current Order Form menu. This prevents old Orders from becoming
+      // invalid picklist values while still allowing the active menu to evolve.
+      const existingOptions = normalizeOrderRequestTypes(beforeColumn?.options);
+      const smartsheetOptions = normalizeOrderRequestTypes([...requestTypes, ...existingOptions]);
+      if (!sameOrderRequestTypeList(existingOptions, smartsheetOptions)) {
+        try {
+          await smartsheetWriteNoTimeoutRetry('PUT', columnPath, token, {
+            type: 'PICKLIST',
+            options: smartsheetOptions,
+          });
+        } catch (error: any) {
+          // A timed-out column write is ambiguous. Never resend it blindly;
+          // read back the permanent column and accept only a verified outcome.
+          if (!error?.timedOut) throw error;
+        }
+      }
+
+      const verifiedColumn = (await smartsheetGet(columnPath, token)).body || {};
+      const verifiedOptions = normalizeOrderRequestTypes(verifiedColumn?.options);
+      if (String(verifiedColumn?.id || '') !== columnId || String(verifiedColumn?.type || '') !== 'PICKLIST' ||
+          !sameOrderRequestTypeList(verifiedOptions, smartsheetOptions)) {
+        return Response.json({ success: false, needs_review: true,
+          error: 'Smartsheet Request Type options could not be verified after the update. The shared Base44 item-type list was not changed.' }, { status: 502 });
+      }
+
+      let savedSetting: any = null;
+      const settingValue = { items: requestTypes };
+      if (currentSetting?.id) {
+        const saved = await base44.asServiceRole.entities.GlobalSettings.updateMany(
+          { id: currentSetting.id, setting_key: ORDER_REQUEST_TYPES_SETTING_KEY, updated_date: currentSetting.updated_date },
+          { $set: { setting_value: settingValue } },
+        );
+        if (saved?.updated !== 1) {
+          return Response.json({ success: false,
+            error: 'Order item types changed in another session after Smartsheet was updated. Reload before retrying; no Orders were changed.' }, { status: 409 });
+        }
+        savedSetting = await base44.asServiceRole.entities.GlobalSettings.get(currentSetting.id);
+      } else {
+        await base44.asServiceRole.entities.GlobalSettings.create({
+          setting_key: ORDER_REQUEST_TYPES_SETTING_KEY,
+          setting_value: settingValue,
+        });
+        const afterCreateResult = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+        const afterCreate = Array.isArray(afterCreateResult) ? afterCreateResult : (afterCreateResult ? [afterCreateResult] : []);
+        if (afterCreate.length !== 1) {
+          return Response.json({ success: false,
+            error: `Order item-type setting creation could not be verified safely (${afterCreate.length} matching records). No duplicate setting was deleted automatically.` }, { status: 409 });
+        }
+        savedSetting = afterCreate[0];
+      }
+
+      if (!sameOrderRequestTypeList(savedSetting?.setting_value?.items, requestTypes)) {
+        return Response.json({ success: false,
+          error: 'The shared Order item-type list could not be verified after saving. Reload before retrying.' }, { status: 500 });
+      }
+
+      return Response.json({
+        success: true,
+        request_types: requestTypes,
+        smartsheet_options: verifiedOptions,
+        retained_historical_smartsheet_options: verifiedOptions.filter((option: string) =>
+          !requestTypes.some((active: string) => active.toLowerCase() === option.toLowerCase())),
+        setting: {
+          id: savedSetting.id,
+          updated_date: savedSetting.updated_date,
+          setting_value: savedSetting.setting_value,
+        },
+        sheet_id: sheetId,
+        request_type_column_id: columnId,
+      });
     }
 
     if (action === 'sync_alert_get') {
