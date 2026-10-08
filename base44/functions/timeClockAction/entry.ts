@@ -728,44 +728,134 @@ async function canonicalLateClockInPayrollProvenance({
       String(b.id).localeCompare(String(a.id))
     )[0];
 
+    const approvalTransitions = await auditEntity.filter({
+      action: 'time_approval', time_entry_id: entryId,
+    }).catch(() => null);
+    if (!Array.isArray(approvalTransitions)) return { applicable: true, provenance: null };
+    const eligibleApprovalTransitions = [];
+    for (const row of approvalTransitions) {
+      const original = row?.details?.original || {};
+      const updated = row?.details?.updated || {};
+      const decision = String(row?.details?.decision || '');
+      const note = String(row?.details?.note || '');
+      const payrollFieldsUnchanged = Boolean(
+        String(original.clock_in || '') === String(updated.clock_in || '') &&
+        String(original.clock_out || '') === String(updated.clock_out || '') &&
+        Number(original.lunch_minutes || 0) === Number(updated.lunch_minutes || 0) &&
+        Number(original.total_hours || 0) === Number(updated.total_hours || 0) &&
+        String(original.status || '') === String(updated.status || '') &&
+        String(original.notes || '') === String(updated.notes || '') &&
+        String(original.clock_source || '') === String(updated.clock_source || '') &&
+        JSON.stringify(original.job_allocations || []) === JSON.stringify(updated.job_allocations || [])
+      );
+      const decisionMatches = decision === 'approve'
+        ? (
+            ['unreviewed', 'needs_review'].includes(String(original.approval_status || 'unreviewed')) &&
+            String(updated.approval_status || '') === 'approved' &&
+            String(updated.approval_request_id || '') === String(row.request_id || '') &&
+            asEmail(updated.approved_by) === asEmail(row.actor_email) &&
+            asEmail(row.actor_email) !== userEmail
+          )
+        : decision === 'reopen'
+          ? (
+              String(original.approval_status || '') === 'approved' &&
+              String(updated.approval_status || '') === 'needs_review' &&
+              String(updated.approval_request_id || '') === String(row.request_id || '') &&
+              !asEmail(updated.approved_by)
+            )
+          : false;
+      const expectedApprovalPayloadHash = String(original.updated_date || '')
+        ? await payloadHash({
+            entry_id: entryId,
+            expected_updated_date: String(original.updated_date || ''),
+            decision,
+            note,
+          })
+        : '';
+      if (
+        ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
+        asEmail(row.user_email) === userEmail &&
+        String(row.actor_role || '') === 'admin' &&
+        ['session', 'admin_kiosk'].includes(String(row.authentication_method || '')) &&
+        Boolean(asEmail(row.actor_email)) &&
+        String(row.time_entry_id || '') === entryId &&
+        String(original.id || '') === entryId &&
+        String(updated.id || '') === entryId &&
+        asEmail(original.user_email) === userEmail &&
+        asEmail(updated.user_email) === userEmail &&
+        Boolean(String(original.updated_date || '')) &&
+        Boolean(String(updated.updated_date || '')) &&
+        payrollFieldsUnchanged &&
+        decisionMatches &&
+        Boolean(expectedApprovalPayloadHash) &&
+        constantTimeEqual(String(row.details?.payload_hash || ''), expectedApprovalPayloadHash) &&
+        Number.isFinite(Date.parse(String(row.server_timestamp || ''))) &&
+        Date.parse(String(row.server_timestamp)) <= Date.parse(String(approvalAudit.server_timestamp))
+      ) {
+        eligibleApprovalTransitions.push(row);
+      }
+    }
+
     const correctionChain = [terminal];
+    const reviewTransitionChain = [];
     const usedCorrectionIds = new Set([String(terminal.id || '')]);
+    const usedReviewIds = new Set();
     let cursorOriginal = terminal.details?.original || {};
     while (String(cursorOriginal.clock_in || '') !== claimedClockIn) {
-      const predecessorUpdatedDate = String(cursorOriginal.updated_date || '');
-      if (!predecessorUpdatedDate) return { applicable: true, provenance: null };
-      const predecessors = eligible.filter((row: any) =>
-        !usedCorrectionIds.has(String(row.id || '')) &&
-        String(row.details?.corrected?.updated_date || '') === predecessorUpdatedDate &&
-        String(row.details?.corrected?.clock_in || '') === String(cursorOriginal.clock_in || '')
-      );
-      if (predecessors.length !== 1) return { applicable: true, provenance: null };
-      const predecessor = predecessors[0];
-      correctionChain.unshift(predecessor);
-      usedCorrectionIds.add(String(predecessor.id || ''));
-      cursorOriginal = predecessor.details?.original || {};
+      const cursorHash = await payloadHash(cursorOriginal);
+      const correctionPredecessors = [];
+      for (const row of eligible) {
+        if (usedCorrectionIds.has(String(row.id || ''))) continue;
+        if (constantTimeEqual(await payloadHash(row.details?.corrected || {}), cursorHash)) {
+          correctionPredecessors.push(row);
+        }
+      }
+      const reviewPredecessors = [];
+      for (const row of eligibleApprovalTransitions) {
+        if (usedReviewIds.has(String(row.id || ''))) continue;
+        if (constantTimeEqual(await payloadHash(row.details?.updated || {}), cursorHash)) {
+          reviewPredecessors.push(row);
+        }
+      }
+      if (correctionPredecessors.length === 1 && reviewPredecessors.length === 0) {
+        const predecessor = correctionPredecessors[0];
+        correctionChain.unshift(predecessor);
+        usedCorrectionIds.add(String(predecessor.id || ''));
+        cursorOriginal = predecessor.details?.original || {};
+        continue;
+      }
+      if (correctionPredecessors.length === 0 && reviewPredecessors.length === 1) {
+        const reviewPredecessor = reviewPredecessors[0];
+        reviewTransitionChain.unshift(reviewPredecessor);
+        usedReviewIds.add(String(reviewPredecessor.id || ''));
+        cursorOriginal = reviewPredecessor.details?.original || {};
+        continue;
+      }
+      return { applicable: true, provenance: null };
     }
     if (correctionChain.length !== eligible.length) return { applicable: true, provenance: null };
 
+    const auditEvidence = async (row: any) => ({
+      audit_id: String(row.id || ''),
+      request_id: String(row.request_id || ''),
+      evidence_hash: await payloadHash({
+        id: row.id, request_id: row.request_id, time_entry_id: row.time_entry_id,
+        user_email: asEmail(row.user_email), actor_email: asEmail(row.actor_email),
+        actor_role: row.actor_role, authentication_method: row.authentication_method,
+        server_timestamp: row.server_timestamp, outcome: row.outcome, details: row.details,
+      }),
+    });
     const correctionEvidenceChain = [];
-    for (const row of correctionChain) {
-      correctionEvidenceChain.push({
-        audit_id: String(row.id || ''),
-        request_id: String(row.request_id || ''),
-        evidence_hash: await payloadHash({
-          id: row.id, request_id: row.request_id, time_entry_id: row.time_entry_id,
-          user_email: asEmail(row.user_email), actor_email: asEmail(row.actor_email),
-          actor_role: row.actor_role, authentication_method: row.authentication_method,
-          server_timestamp: row.server_timestamp, outcome: row.outcome, details: row.details,
-        }),
-      });
-    }
+    for (const row of correctionChain) correctionEvidenceChain.push(await auditEvidence(row));
+    const reviewTransitionEvidence = [];
+    for (const row of reviewTransitionChain) reviewTransitionEvidence.push(await auditEvidence(row));
     const terminalEvidence = correctionEvidenceChain[correctionEvidenceChain.length - 1];
     payrollCorrectionEvidence = {
       audit_id: terminalEvidence.audit_id,
       request_id: terminalEvidence.request_id,
       evidence_hash: terminalEvidence.evidence_hash,
       ...(correctionEvidenceChain.length > 1 ? { correction_chain: correctionEvidenceChain } : {}),
+      ...(reviewTransitionEvidence.length ? { review_transition_chain: reviewTransitionEvidence } : {}),
     };
   }
 
