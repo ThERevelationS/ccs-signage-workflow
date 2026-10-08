@@ -27,7 +27,7 @@ try {
   await writeFile(path.join(scratch, "mockBase44.js"), [
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 1;',
-    'const state = {actions:[],delayNextBootstrap:false,bootstrapWaiting:false,releaseBootstrap:null,bootstrapSnapshotOnRelease:false,delayNextStartAck:false,startAckWaiting:false,releaseStartAck:null,delayNextSaveAck:false,saveAckWaiting:false,releaseSaveAck:null,startPermission:true,savePermission:true,loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
+    'const state = {actions:[],delayNextBootstrap:false,bootstrapWaiting:false,releaseBootstrap:null,bootstrapSnapshotOnRelease:false,delayNextStartAck:false,failDelayedStartAck:false,startAckWaiting:false,releaseStartAck:null,delayNextSaveAck:false,failDelayedSaveAck:false,saveAckWaiting:false,releaseSaveAck:null,startPermission:true,savePermission:true,loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
     'window.__fleetMechanicWorkFixture = state;',
     'const work = () => clone(state.work);',
     'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{start:state.startPermission,save:state.savePermission,estimates:false}},active_work_orders:state.scopeRemoved?[]:[work()],recent_completed:[],equipment:state.scopeRemoved?[]:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
@@ -44,17 +44,17 @@ try {
     ' if(name!=="fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
     ' if(payload.action==="bootstrap"){ let snapshot=bootstrap(); if(state.delayNextBootstrap){ state.delayNextBootstrap=false; state.bootstrapWaiting=true; await new Promise(resolve=>{ state.releaseBootstrap=resolve; }); state.bootstrapWaiting=false; if(state.bootstrapSnapshotOnRelease){state.bootstrapSnapshotOnRelease=false;snapshot=bootstrap();} } return {data:snapshot}; }',
-    ' if(payload.action==="start"){ if(!state.startPermission)return {data:{error:"This mechanic link is not allowed to perform that action."}}; applyStart(payload); if(state.postCommitStart403){state.postCommitStart403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};} if(state.loseStartAck){state.loseStartAck=false;throw new Error("Synthetic lost Start Work acknowledgement");} const response={data:{success:true,request_id:payload.request_id,work_order:work()}}; if(state.delayNextStartAck){state.delayNextStartAck=false;state.startAckWaiting=true;await new Promise(resolve=>{state.releaseStartAck=resolve;});state.startAckWaiting=false;} return response; }',
+    ' if(payload.action==="start"){ if(!state.startPermission)return {data:{error:"This mechanic link is not allowed to perform that action."}}; applyStart(payload); if(state.postCommitStart403){state.postCommitStart403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};} if(state.loseStartAck){state.loseStartAck=false;throw new Error("Synthetic lost Start Work acknowledgement");} const response={data:{success:true,request_id:payload.request_id,work_order:work()}}; if(state.delayNextStartAck){state.delayNextStartAck=false;state.startAckWaiting=true;await new Promise(resolve=>{state.releaseStartAck=resolve;});state.startAckWaiting=false;if(state.failDelayedStartAck){state.failDelayedStartAck=false;throw new Error("Synthetic delayed Start acknowledgement failure");}} return response; }',
     ' if(payload.action==="save"){',
     '   if(!state.savePermission)return {data:{error:"This mechanic link is not allowed to perform that action."}};',
     '   if(state.staleNextSave){state.staleNextSave=false;state.work={...state.work,updated_date:"wo-rev-"+(++revision)};return {data:{error:"This Fleet work order changed since it was opened. Refresh before saving."}};}',
     '   applySave(payload);',
     '   if(state.postCommitSave403){state.postCommitSave403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};}',
     '   if(state.loseSaveAck){state.loseSaveAck=false;throw new Error("Synthetic lost Save Progress acknowledgement");}',
-    '   const response={data:{success:true,request_id:payload.request_id,work_order:work()}}; if(state.delayNextSaveAck){state.delayNextSaveAck=false;state.saveAckWaiting=true;await new Promise(resolve=>{state.releaseSaveAck=resolve;});state.saveAckWaiting=false;} return response;',
+    '   const response={data:{success:true,request_id:payload.request_id,work_order:work()}}; if(state.delayNextSaveAck){state.delayNextSaveAck=false;state.saveAckWaiting=true;await new Promise(resolve=>{state.releaseSaveAck=resolve;});state.saveAckWaiting=false;if(state.failDelayedSaveAck){state.failDelayedSaveAck=false;throw new Error("Synthetic delayed Save acknowledgement failure");}} return response;',
     ' }',
     ' if(payload.action==="mutation_status"){',
-    '   if(state.accessDenied)return {data:{error:"This mechanic portal link is invalid, expired, revoked, or outside its current equipment scope."}};',
+    '   if(state.accessDenied || state.scopeRemoved)return {data:{error:"This mechanic portal link is invalid, expired, revoked, or outside its current equipment scope."}};',
     '   if((payload.mutation_action==="start"&&!state.startPermission)||(payload.mutation_action==="save"&&!state.savePermission))return {data:{error:"This mechanic link is not allowed to verify that action."}};',
     '   if(state.failNextMutationStatus){state.failNextMutationStatus=false;throw new Error("Synthetic mutation status unavailable");}',
     '   const receipt=receiptFor(payload);',
@@ -591,7 +591,96 @@ try {
     assert.equal((state.work.notes.match(/Single authorized overlapping note/g)||[]).length,1);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/17 PASS");
+  await run("Desktop: delayed failed Start acknowledgement stays scoped out and reconciles after access returns",1440,async page => {
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.delayNextBootstrap=true;
+      s.bootstrapSnapshotOnRelease=true;
+      s.delayNextStartAck=true;
+      s.failDelayedStartAck=true;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.startAckWaiting);
+    const startId=(await actions(page)).find(row=>row.action==="start").request_id;
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.scopeRemoved=true;
+      s.releaseBootstrap();
+    });
+    await page.getByText("No active Fleet maintenance jobs right now.").waitFor();
+    await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseStartAck());
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="mutation_status").length===1);
+    await page.waitForTimeout(150);
+    assert.equal(await page.getByText("WO-SYNTH-WORK",{exact:true}).count(),0,"Rejected acknowledgement must not re-expose out-of-scope work");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).count(),0);
+    const denied=(await actions(page)).filter(row=>row.action==="mutation_status");
+    assert.equal(denied[0].request_id,startId,"Failure reconciliation must use the original Start request");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.scopeRemoved=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).waitFor();
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).locator("xpath=ancestor::button[1]").click();
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true,"Recovery lock must survive scope removal");
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Work started\. CCS Fleet confirmed the interrupted request/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isEnabled(),true);
+    const current=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal(current.work.status,"in_progress");
+    assert.equal(current.actions.filter(row=>row.action==="start").length,1,"Start must never replay");
+    assert.equal(current.actions.filter(row=>row.action==="mutation_status").length,2);
+  });
+
+  await run("Mobile: delayed failed Save acknowledgement never leaks scoped-out note or replays upload",390,async page => {
+    await page.getByLabel("Labor hours").fill("5");
+    await page.getByLabel("Add mechanic note").fill("Unique delayed failure work note");
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.delayNextBootstrap=true;
+      s.bootstrapSnapshotOnRelease=true;
+      s.delayNextSaveAck=true;
+      s.failDelayedSaveAck=true;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.saveAckWaiting);
+    const saveId=(await actions(page)).find(row=>row.action==="save").request_id;
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.scopeRemoved=true;
+      s.releaseBootstrap();
+    });
+    await page.getByText("No active Fleet maintenance jobs right now.").waitFor();
+    await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseSaveAck());
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="mutation_status").length===1);
+    await page.waitForTimeout(150);
+    assert.equal(await page.getByText("WO-SYNTH-WORK",{exact:true}).count(),0);
+    assert.equal(await page.getByText("Unique delayed failure work note").count(),0,"Scoped-out note must never reappear");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).count(),0);
+    const denied=(await actions(page)).filter(row=>row.action==="mutation_status");
+    assert.equal(denied[0].request_id,saveId);
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.scopeRemoved=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).waitFor();
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).locator("xpath=ancestor::button[1]").click();
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"","New session must not resurrect unsaved note draft");
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request without replaying it/i).waitFor();
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    const current=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal(current.work.actual_hours,5);
+    assert.equal((current.work.notes.match(/Unique delayed failure work note/g)||[]).length,1);
+    assert.equal(current.actions.filter(row=>row.action==="save").length,1,"Save must never replay");
+    assert.equal(current.actions.filter(row=>row.action==="mutation_status").length,2);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/19 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
