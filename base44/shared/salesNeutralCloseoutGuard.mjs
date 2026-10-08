@@ -10,6 +10,7 @@ export function validateNeutralSalesCloseout(record, patch, equivalent) {
   const validStamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(marker)
     && Number.isFinite(Date.parse(marker));
   if (!validStamp || (!newClosure && !replayedClosure) || patch.in_pipeline !== false
+    || patch.follow_up_date !== ""
     || String(patch.current_task_description || "").trim() !== "Closed - Did not Lose"
     || (Object.prototype.hasOwnProperty.call(patch, "sales_status") && patch.sales_status !== record.sales_status)) {
     throw Object.assign(
