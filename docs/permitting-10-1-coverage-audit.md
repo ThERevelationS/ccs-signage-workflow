@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Elmwood Place locality dossier
+
+Added exact-identity admin research dossier with six verified retained office files (four PDF, XLSX, DOCX), official sources and explicit zoning/currentness/electrical gaps. Existing archives reused without changes; no approved workflow or live record changes. Task2 complete; milestone1 Task4 open. Publications0. Next: remaining researched Ohio dossiers and document access coverage.
+
 ## 2026-10-08 — Phase 10, milestone 2: Reading locality dossier
 
 Added admin-only exact-identity Reading research dossier with11 hash-verified retained PDFs, City-linked portal and five source references. Fee, map, amendment, diagram and separate electrical-role gaps remain visible; no approved workflow created. Task2 complete; milestone1 Task4 open. Live record changes0; publications0. Next: Elmwood retained forms and research gaps in locality dossier.

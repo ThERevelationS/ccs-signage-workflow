@@ -1,0 +1,68 @@
+{
+  "locality": {
+    "id": "6ac1a15f8dd6f5306ab7935f",
+    "name": "Elmwood Place",
+    "state": "OH",
+    "type": "village"
+  },
+  "resources": [
+    {
+      "file": "building-application.pdf",
+      "label": "Building application \u2014 includes Sign work",
+      "source": "https://www.elmwoodplace-oh.gov/Content/ApplicationsForms/Building-Permit-Application.pdf",
+      "archive": "/permitting-evidence/elmwoodplace/building-application.pdf",
+      "format": "PDF",
+      "sha256": "ef4677a8d6a09faa43fe2d9f84a51dc0dacc93e1c735eae3506ea771d4876481",
+      "bytes": 89374
+    },
+    {
+      "file": "zoning-application.pdf",
+      "label": "Zoning application \u2014 current fee pending",
+      "source": "https://www.elmwoodplace-oh.gov/Content/Zoning%20application.pdf",
+      "archive": "/permitting-evidence/elmwoodplace/zoning-application.pdf",
+      "format": "PDF",
+      "sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145",
+      "bytes": 80523
+    },
+    {
+      "file": "zoning-map-2007.pdf",
+      "label": "Zoning map (2007) \u2014 currentness and parcel review pending",
+      "source": "https://www.elmwoodplace-oh.gov/Content/Elmwood_Zone_Map2007.pdf",
+      "archive": "/permitting-evidence/elmwoodplace/zoning-map-2007.pdf",
+      "format": "PDF",
+      "sha256": "f2c65c98acd51c84fbce49685149f113c6c160c615f57c47b55928089454064f",
+      "bytes": 2179582
+    },
+    {
+      "file": "fee-schedule-2023.pdf",
+      "label": "City-linked county fee schedule (2023) \u2014 historical candidate",
+      "source": "https://www.elmwoodplace-oh.gov/Content/2023_Fee_Schedule.pdf",
+      "archive": "/permitting-evidence/elmwoodplace/fee-schedule-2023.pdf",
+      "format": "PDF",
+      "sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2",
+      "bytes": 766618
+    },
+    {
+      "file": "fee-schedule-2024.xlsx",
+      "label": "Fee workbook (2024) \u2014 adoption and effective columns pending",
+      "source": "https://www.elmwoodplace-oh.gov/Content/2024_Fee_Schedule.xlsx",
+      "archive": "/permitting-evidence/elmwoodplace/fee-schedule-2024.xlsx",
+      "format": "XLSX",
+      "sha256": "149b0786e92d1d41ce25b3f324c23330eb7d4f71d154f809c3a295f7697660c0",
+      "bytes": 42120
+    },
+    {
+      "file": "right-of-way.docx",
+      "label": "Right-of-way excavation application",
+      "source": "https://www.elmwoodplace-oh.gov/Content/Right%20of%20Way-Excavation%20Permit%20Application.docx",
+      "archive": "/permitting-evidence/elmwoodplace/right-of-way.docx",
+      "format": "DOCX",
+      "sha256": "1118ce61a50aefe0162aaa3d1d86adf21d44dcbfa8c6a70ea8ab1349aee0dfcb",
+      "bytes": 18082
+    }
+  ],
+  "admin_only": true,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "published": false
+}
