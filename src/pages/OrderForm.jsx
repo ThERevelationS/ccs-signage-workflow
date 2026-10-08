@@ -163,6 +163,7 @@ export default function OrderForm() {
                 size="sm" 
                 className="h-8 px-3"
                 variant="ghost"
+                disabled={saveStatus.isSyncing || saveStatus.isSaving || saveStatus.isLoading}
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
