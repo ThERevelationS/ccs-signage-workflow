@@ -276,6 +276,7 @@ for (const variation of ['wrong_record','wrong_phrase','stale_plan','receipt_ano
     runId:'run-terminal-retry',
     actor,
     secondaryConfirmationFingerprint:binding.confirmation_fingerprint,
+    pilotReviewFingerprint,
   });
   assert.equal(terminalClaim.ok, true);
   assert.equal(terminalClaim.state, 'terminal_existing', 'Terminal receipt must converge despite the expected post-link source snapshot change.');
