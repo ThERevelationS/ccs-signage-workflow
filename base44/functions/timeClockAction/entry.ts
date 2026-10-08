@@ -702,32 +702,70 @@ async function canonicalLateClockInPayrollProvenance({
       action: 'admin_correction', time_entry_id: entryId,
     }).catch(() => null);
     if (!Array.isArray(corrections)) return { applicable: true, provenance: null };
-    const matching = corrections.filter((row: any) =>
+    const eligible = corrections.filter((row: any) =>
       ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
       asEmail(row.user_email) === userEmail &&
       String(row.actor_role || '') === 'admin' &&
       ['session', 'admin_kiosk'].includes(String(row.authentication_method || '')) &&
       Boolean(asEmail(row.actor_email)) &&
-      String(row.details?.corrected?.clock_in || '') === payrollClockIn &&
-      String(row.details?.corrected?.clock_out || '') === String(entry.clock_out || '') &&
-      Number(row.details?.corrected?.total_hours || 0) === Number(entry.total_hours || 0) &&
+      String(row.details?.original?.id || '') === entryId &&
+      String(row.details?.corrected?.id || '') === entryId &&
+      asEmail(row.details?.original?.user_email) === userEmail &&
+      asEmail(row.details?.corrected?.user_email) === userEmail &&
+      Boolean(String(row.details?.original?.clock_in || '')) &&
+      Boolean(String(row.details?.corrected?.clock_in || '')) &&
       Number.isFinite(Date.parse(String(row.server_timestamp || ''))) &&
       Date.parse(String(row.server_timestamp)) <= Date.parse(String(approvalAudit.server_timestamp))
+    );
+    const matching = eligible.filter((row: any) =>
+      String(row.details?.corrected?.clock_in || '') === payrollClockIn &&
+      String(row.details?.corrected?.clock_out || '') === String(entry.clock_out || '') &&
+      Number(row.details?.corrected?.total_hours || 0) === Number(entry.total_hours || 0)
     );
     if (!matching.length) return { applicable: true, provenance: null };
     const terminal = matching.sort((a: any, b: any) =>
       String(b.server_timestamp).localeCompare(String(a.server_timestamp)) ||
       String(b.id).localeCompare(String(a.id))
     )[0];
+
+    const correctionChain = [terminal];
+    const usedCorrectionIds = new Set([String(terminal.id || '')]);
+    let cursorOriginal = terminal.details?.original || {};
+    while (String(cursorOriginal.clock_in || '') !== claimedClockIn) {
+      const predecessorUpdatedDate = String(cursorOriginal.updated_date || '');
+      if (!predecessorUpdatedDate) return { applicable: true, provenance: null };
+      const predecessors = eligible.filter((row: any) =>
+        !usedCorrectionIds.has(String(row.id || '')) &&
+        String(row.details?.corrected?.updated_date || '') === predecessorUpdatedDate &&
+        String(row.details?.corrected?.clock_in || '') === String(cursorOriginal.clock_in || '')
+      );
+      if (predecessors.length !== 1) return { applicable: true, provenance: null };
+      const predecessor = predecessors[0];
+      correctionChain.unshift(predecessor);
+      usedCorrectionIds.add(String(predecessor.id || ''));
+      cursorOriginal = predecessor.details?.original || {};
+    }
+    if (correctionChain.length !== eligible.length) return { applicable: true, provenance: null };
+
+    const correctionEvidenceChain = [];
+    for (const row of correctionChain) {
+      correctionEvidenceChain.push({
+        audit_id: String(row.id || ''),
+        request_id: String(row.request_id || ''),
+        evidence_hash: await payloadHash({
+          id: row.id, request_id: row.request_id, time_entry_id: row.time_entry_id,
+          user_email: asEmail(row.user_email), actor_email: asEmail(row.actor_email),
+          actor_role: row.actor_role, authentication_method: row.authentication_method,
+          server_timestamp: row.server_timestamp, outcome: row.outcome, details: row.details,
+        }),
+      });
+    }
+    const terminalEvidence = correctionEvidenceChain[correctionEvidenceChain.length - 1];
     payrollCorrectionEvidence = {
-      audit_id: String(terminal.id || ''),
-      request_id: String(terminal.request_id || ''),
-      evidence_hash: await payloadHash({
-        id: terminal.id, request_id: terminal.request_id, time_entry_id: terminal.time_entry_id,
-        user_email: asEmail(terminal.user_email), actor_email: asEmail(terminal.actor_email),
-        actor_role: terminal.actor_role, authentication_method: terminal.authentication_method,
-        server_timestamp: terminal.server_timestamp, outcome: terminal.outcome, details: terminal.details,
-      }),
+      audit_id: terminalEvidence.audit_id,
+      request_id: terminalEvidence.request_id,
+      evidence_hash: terminalEvidence.evidence_hash,
+      ...(correctionEvidenceChain.length > 1 ? { correction_chain: correctionEvidenceChain } : {}),
     };
   }
 
