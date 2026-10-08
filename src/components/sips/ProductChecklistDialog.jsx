@@ -1294,6 +1294,12 @@ export default function ProductChecklistDialog({
     setFocusedSearchId(null);
     checklistSearchInputRef.current?.focus();
   };
+  const handleChecklistResultKeyDown = (e) => {
+    if (e.key !== "Escape" || !checklistSearchQuery) return;
+    if (!e.target?.hasAttribute?.("data-sips-checklist-item-id")) return;
+    e.preventDefault();
+    clearChecklistSearch();
+  };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1477,7 +1483,7 @@ export default function ProductChecklistDialog({
           )}
 
           {/* Checklist Items */}
-          <div className="flex-1 overflow-y-auto space-y-3 pr-0.5">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-0.5" onKeyDown={handleChecklistResultKeyDown}>
             {isLoading ? (
               <div className="flex items-center justify-center py-12 text-gray-500">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading checklist…
