@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Reading design-district sign standards
+
+Reviewed remaining seven Chapter1273 sections; all eight text sections now covered across two receipts. Scoped signage/design candidates preserve structural types, illumination, area formulas, roofline and manufacture requirements. Chapter1290 formula differences, certificate terminology and map labels remain unresolved; no parcel assignment or automated approval. Seven original attempts recorded separately. Task2 complete; milestone1 Task4 open. Live changes0; publications0. Next:1244.02 certificate dependency and electrical authority evidence.
+
 ## 2026-10-08 — Phase10, milestone2: Reading design-review process
 
 Reviewed all five Chapter1278 sections and1273.01 dependency. Recorded sign major-improvement classification, application materials, administrator/committee referrals and two-stage appeals as unapproved candidates. Currentness, committee labels, district scope, current forms/fees and electrical authorities remain open. Source attempt receipts retained separately. Task2 remains complete; milestone1 Task4 live acceptance remains open. Live record changes0; publications0. Next: Chapter1273 district-specific design/sign standards.

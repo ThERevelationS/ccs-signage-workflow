@@ -1,0 +1,106 @@
+{
+  "reviewed_at": "2026-10-08",
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "edition_label": "2025 S-10",
+  "scope": "Signage and directly related design requirements; not exhaustive land-use extraction or visual diagram review",
+  "sections": [
+    {
+      "section": "1273.02",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-70560",
+      "web_reference": "turn152view0",
+      "district": "North Reading Road Office/Industrial",
+      "candidates": [
+        "Types limited to awning, ground, wall, window.",
+        "Aggregate sign face cap200sf; internal illumination prohibited.",
+        "Professional manufacture/hand lettering required; visible facade materials and color approval affect mounting context."
+      ],
+      "approved": false
+    },
+    {
+      "section": "1273.03",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-70676",
+      "web_reference": "turn152view1",
+      "district": "Downtown Reading Mixed Use",
+      "candidates": [
+        "Types limited to awning, canopy, projecting, wall, window.",
+        "Area frontage times1.25 capped120sf, without Chapter1290.15 printed plus10.",
+        "No face or structure above attached building roofline; professional manufacture/hand lettering; compatibility with architecture/colors/materials recommended.",
+        "Facade primarily brick/natural stone; ROW-visible cinder block/vinyl/metal siding prohibited; exterior color scheme approval."
+      ],
+      "approved": false
+    },
+    {
+      "section": "1273.04",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-70845",
+      "web_reference": "turn152view2",
+      "district": "Reading Road General Commercial",
+      "candidates": [
+        "Signage refers to Chapter1290; professional manufacture/hand lettering required.",
+        "No separate sign cap/type restriction stated in this section; this does not remove Chapter1290 restrictions."
+      ],
+      "approved": false
+    },
+    {
+      "section": "1273.05",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-70954",
+      "web_reference": "turn153view0",
+      "district": "South Reading Road Commercial",
+      "candidates": [
+        "Signage refers to Chapter1290; professional manufacture/hand lettering required.",
+        "Section title Commercial differs from retained map Light Manufacturing; no identity substitution or parcel assignment.",
+        "No separate sign cap/type restriction stated here; building60ft height and25ft front yard are not sign dimensions."
+      ],
+      "approved": false
+    },
+    {
+      "section": "1273.06",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71051",
+      "web_reference": "turn153view1",
+      "district": "West Benson Street Mixed Use",
+      "candidates": [
+        "Types limited to awning, canopy, projecting, wall, window.",
+        "Area frontage times1.25 capped120sf, without Chapter1290.15 printed plus10.",
+        "No face or structure above attached building roofline; professional manufacture/hand lettering; architectural/color/material compatibility recommended.",
+        "Facade primarily brick/natural stone; exterior color scheme approval; preservation/neutral palettes recommended.",
+        "Printed buffering reference Chapter1270 conflicts with chapter titled Buffering and Screening1276; preserve unresolved."
+      ],
+      "approved": false
+    },
+    {
+      "section": "1273.07",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71225",
+      "web_reference": "turn153view2",
+      "district": "Reserved",
+      "candidates": [
+        "Reserved heading only; no active district or permission inferred."
+      ],
+      "approved": false
+    },
+    {
+      "section": "1273.08",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71228",
+      "web_reference": "turn153view3",
+      "district": "Development authorization/modification",
+      "candidates": [
+        "Certificate of Appropriateness application to administrator pursuant1244.02, forms provided, demonstrating district compliance.",
+        "Planning Commission modification requires hearing/public-benefit findings; density/floor-area constraints retained; do not infer automatic sign variance or substitute for1278 appeal.",
+        "Certificate of Appropriateness wording versus Zoning Certificate in1278 requires reconciliation."
+      ],
+      "approved": false
+    }
+  ],
+  "chapter1273_text_sections_read": 8,
+  "prior_general_section_receipt": "design-review-process-review.json",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "published": false,
+  "unresolved": [
+    "Original publisher HTML/illustrations",
+    "Current adoption/amendments",
+    "District mapping and South district name",
+    "1290 versus1273 formulas/structural types and temporary sandwich boards",
+    "1244.02 dependency and certificate terminology",
+    "Electrical issuer/inspection delegation"
+  ]
+}
