@@ -193,4 +193,10 @@ check("deep sub-template detail tasks can wrap on phones", () => {
   assert.equal(source.includes("className={`flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask"), false);
 });
 
+check("Needs Input navigation moves keyboard focus to the revealed row", () => {
+  assert.match(source, /targetElement\?\.focus\(\{ preventScroll: true \}\);/);
+  assert.equal((source.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 4);
+  assert.equal((completedSource.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 2);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
