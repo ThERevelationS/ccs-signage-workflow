@@ -575,8 +575,8 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
 }
 
 async function canonicalLateClockInPayrollProvenance({
-  entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution = true,
-  payrollGenerationContext = null, expectedProvenance = null,
+  entry, approvalEvidence, auditEntity, punchExceptionEntity, correctionRequestEntity,
+  requireCurrentResolution = true, payrollGenerationContext = null, expectedProvenance = null,
 }: any) {
   // Audited manager corrections change clock_source; the original missed-punch
   // report marker still requires independent employee-attestation verification.
@@ -977,6 +977,139 @@ async function canonicalLateClockInPayrollProvenance({
     for (const row of correctionChain) correctionEvidenceChain.push(await auditEvidence(row));
     const reviewTransitionEvidence = [];
     for (const row of reviewTransitionChain) reviewTransitionEvidence.push(await auditEvidence(row));
+
+    const employeeCorrectionReviewChain = [];
+    for (const row of correctionChain) {
+      const correctionRequestId = String(row.details?.correction_request_id || '');
+      if (!correctionRequestId) continue;
+      if (!correctionRequestEntity) return { applicable: true, provenance: null };
+      const correctionRequest = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
+      const requestKind = String(correctionRequest?.request_kind || 'standard');
+      const reviewDecision = String(correctionRequest?.review_decision || '');
+      const finalStatus = reviewDecision === 'approve_modified' ? 'approved_modified' : reviewDecision === 'approve' ? 'approved' : '';
+      const submissionVersion = String(
+        correctionRequest?.original_snapshot?.updated_date ||
+        correctionRequest?.time_entry_updated_date || ''
+      );
+      if (
+        !correctionRequest?.id ||
+        requestKind !== 'standard' ||
+        asEmail(correctionRequest.user_email) !== userEmail ||
+        String(correctionRequest.time_entry_id || '') !== entryId ||
+        !submissionVersion ||
+        !String(correctionRequest.request_id || '') ||
+        !String(correctionRequest.requested_at || '') ||
+        !String(correctionRequest.employee_reason || '') ||
+        !finalStatus ||
+        String(correctionRequest.status || '') !== finalStatus ||
+        String(correctionRequest.review_request_id || '') !== String(row.request_id || '') ||
+        String(correctionRequest.applied_audit_id || '') !== String(row.id || '') ||
+        asEmail(correctionRequest.reviewer_email) !== asEmail(row.actor_email) ||
+        String(correctionRequest.review_payload_hash || '') !== String(row.details?.review_payload_hash || '')
+      ) return { applicable: true, provenance: null };
+
+      const requestedChanges = correctionRequest.requested_changes || {};
+      const expectedSubmissionHash = await payloadHash({
+        entry_id: correctionRequest.time_entry_id,
+        expected_updated_date: submissionVersion,
+        reason: correctionRequest.employee_reason,
+        requested_changes: requestedChanges,
+      });
+      const submissionRows = await auditEntity.filter({
+        action: 'correction_request',
+        request_id: String(correctionRequest.request_id || ''),
+        time_entry_id: entryId,
+      }).catch(() => null);
+      const reviewRows = await auditEntity.filter({
+        action: 'correction_review',
+        request_id: String(correctionRequest.review_request_id || ''),
+        time_entry_id: entryId,
+      }).catch(() => null);
+      if (!Array.isArray(submissionRows) || submissionRows.length !== 1 ||
+          !Array.isArray(reviewRows) || reviewRows.length !== 1) {
+        return { applicable: true, provenance: null };
+      }
+      const submissionAudit = submissionRows[0];
+      const reviewAudit = reviewRows[0];
+      const requestedAtTime = Date.parse(String(correctionRequest.requested_at || ''));
+      const reviewedAtTime = Date.parse(String(correctionRequest.reviewed_at || ''));
+      const submissionAuditTime = Date.parse(String(submissionAudit.server_timestamp || ''));
+      const reviewAuditTime = Date.parse(String(reviewAudit.server_timestamp || ''));
+      if (
+        !['confirmed', 'recovered'].includes(String(submissionAudit.outcome || '')) ||
+        asEmail(submissionAudit.user_email) !== userEmail ||
+        asEmail(submissionAudit.actor_email) !== userEmail ||
+        !['session', 'badge'].includes(String(submissionAudit.authentication_method || '')) ||
+        (String(submissionAudit.actor_role || '') === 'badge') !== (String(submissionAudit.authentication_method || '') === 'badge') ||
+        String(submissionAudit.reason || '') !== String(correctionRequest.employee_reason || '') ||
+        String(submissionAudit.details?.correction_request_id || '') !== correctionRequestId ||
+        !constantTimeEqual(String(submissionAudit.details?.payload_hash || ''), expectedSubmissionHash) ||
+        String(submissionAudit.details?.requested_changes?.clock_in || '') !== String(requestedChanges.clock_in || '') ||
+        String(submissionAudit.details?.requested_changes?.clock_out || '') !== String(requestedChanges.clock_out || '') ||
+        Number(submissionAudit.details?.requested_changes?.lunch_minutes || 0) !== Number(requestedChanges.lunch_minutes || 0) ||
+        String(submissionAudit.details?.requested_changes?.notes || '') !== String(requestedChanges.notes || '') ||
+        !['confirmed', 'recovered'].includes(String(reviewAudit.outcome || '')) ||
+        asEmail(reviewAudit.user_email) !== userEmail ||
+        asEmail(reviewAudit.actor_email) !== asEmail(correctionRequest.reviewer_email) ||
+        String(reviewAudit.actor_role || '') !== 'admin' ||
+        !['session', 'admin_kiosk'].includes(String(reviewAudit.authentication_method || '')) ||
+        String(reviewAudit.reason || '') !== String(correctionRequest.reviewer_reason || '') ||
+        String(reviewAudit.details?.correction_request_id || '') !== correctionRequestId ||
+        String(reviewAudit.details?.decision || '') !== finalStatus ||
+        String(reviewAudit.details?.applied_audit_id || '') !== String(row.id || '') ||
+        !constantTimeEqual(
+          String(reviewAudit.details?.review_payload_hash || ''),
+          String(correctionRequest.review_payload_hash || ''),
+        ) ||
+        !Number.isFinite(requestedAtTime) || !Number.isFinite(reviewedAtTime) ||
+        !Number.isFinite(submissionAuditTime) || !Number.isFinite(reviewAuditTime) ||
+        submissionAuditTime < requestedAtTime || submissionAuditTime > reviewedAtTime ||
+        reviewAuditTime !== reviewedAtTime
+      ) return { applicable: true, provenance: null };
+
+      const auditEvidenceHash = async (auditRow: any) => payloadHash({
+        id: auditRow.id, action: auditRow.action, request_id: auditRow.request_id,
+        time_entry_id: auditRow.time_entry_id, user_email: asEmail(auditRow.user_email),
+        actor_email: asEmail(auditRow.actor_email), actor_role: auditRow.actor_role,
+        authentication_method: auditRow.authentication_method, server_timestamp: auditRow.server_timestamp,
+        outcome: auditRow.outcome, reason: auditRow.reason, details: auditRow.details,
+      });
+      employeeCorrectionReviewChain.push({
+        applied_audit_id: String(row.id || ''),
+        correction_request_id: correctionRequestId,
+        submission_audit_id: String(submissionAudit.id || ''),
+        submission_payload_hash: expectedSubmissionHash,
+        submission_audit_evidence_hash: await auditEvidenceHash(submissionAudit),
+        review_audit_id: String(reviewAudit.id || ''),
+        review_payload_hash: String(correctionRequest.review_payload_hash || ''),
+        review_audit_evidence_hash: await auditEvidenceHash(reviewAudit),
+        correction_request_evidence_hash: await payloadHash({
+          id: correctionRequest.id,
+          request_kind: requestKind,
+          user_email: asEmail(correctionRequest.user_email),
+          time_entry_id: correctionRequest.time_entry_id,
+          time_entry_updated_date: correctionRequest.time_entry_updated_date,
+          request_id: correctionRequest.request_id,
+          requested_at: correctionRequest.requested_at,
+          employee_reason: correctionRequest.employee_reason,
+          original_snapshot: correctionRequest.original_snapshot,
+          requested_changes: correctionRequest.requested_changes,
+          status: correctionRequest.status,
+          reviewed_at: correctionRequest.reviewed_at,
+          reviewer_email: asEmail(correctionRequest.reviewer_email),
+          reviewer_reason: correctionRequest.reviewer_reason,
+          review_request_id: correctionRequest.review_request_id,
+          review_decision: correctionRequest.review_decision,
+          review_payload_hash: correctionRequest.review_payload_hash,
+          applied_audit_id: correctionRequest.applied_audit_id,
+        }),
+      });
+    }
+    const expectedEmployeeCorrectionChain =
+      expectedProvenance?.payroll_correction_evidence?.employee_correction_review_chain;
+    const includeEmployeeCorrectionChain = !expectedProvenance ||
+      Array.isArray(expectedEmployeeCorrectionChain);
+
     const terminalEvidence = correctionEvidenceChain[correctionEvidenceChain.length - 1];
     payrollCorrectionEvidence = {
       audit_id: terminalEvidence.audit_id,
@@ -984,6 +1117,9 @@ async function canonicalLateClockInPayrollProvenance({
       evidence_hash: terminalEvidence.evidence_hash,
       ...(correctionEvidenceChain.length > 1 ? { correction_chain: correctionEvidenceChain } : {}),
       ...(reviewTransitionEvidence.length ? { review_transition_chain: reviewTransitionEvidence } : {}),
+      ...(includeEmployeeCorrectionChain && employeeCorrectionReviewChain.length ? {
+        employee_correction_review_chain: employeeCorrectionReviewChain,
+      } : {}),
       ...(payrollGenerationBridges.length ? {
         payroll_generation_bridge: payrollGenerationBridges[payrollGenerationBridges.length - 1],
       } : {}),
@@ -3669,7 +3805,7 @@ Deno.serve(async (req) => {
             for (const row of retiredShifts) {
               const lateClockIn = await canonicalLateClockInPayrollProvenance({
                 entry: row, approvalEvidence: row.approval_evidence,
-                auditEntity, punchExceptionEntity, requireCurrentResolution: false,
+                auditEntity, punchExceptionEntity, correctionRequestEntity, requireCurrentResolution: false,
                 payrollGenerationContext: {
                   period_id: period.id,
                   prior_generations: history.slice(0, index),
@@ -3842,7 +3978,7 @@ Deno.serve(async (req) => {
             snapshotRow.punch_exception_id = String(entry.punch_exception_id || '');
             snapshotRow.missed_clock_in_reported_at = String(entry.missed_clock_in_reported_at || '');
             const lateClockIn = await canonicalLateClockInPayrollProvenance({
-              entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution: true,
+              entry, approvalEvidence, auditEntity, punchExceptionEntity, correctionRequestEntity, requireCurrentResolution: true,
               payrollGenerationContext: {
                 period_id: period.id,
                 prior_generations: history,
@@ -4173,7 +4309,7 @@ Deno.serve(async (req) => {
                 recoverySnapshotRow.missed_clock_in_reported_at = String(entry.missed_clock_in_reported_at || '');
                 const finalizedHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
                 const lateClockIn = await canonicalLateClockInPayrollProvenance({
-                  entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution: true,
+                  entry, approvalEvidence, auditEntity, punchExceptionEntity, correctionRequestEntity, requireCurrentResolution: true,
                   payrollGenerationContext: {
                     period_id: period.id,
                     prior_generations: finalizedHistory,
@@ -4595,7 +4731,7 @@ Deno.serve(async (req) => {
             const finalizationHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
             const lateClockIn = await canonicalLateClockInPayrollProvenance({
               entry: sourceEntry, approvalEvidence: row.approval_evidence,
-              auditEntity, punchExceptionEntity, requireCurrentResolution: true,
+              auditEntity, punchExceptionEntity, correctionRequestEntity, requireCurrentResolution: true,
               payrollGenerationContext: {
                 period_id: period.id,
                 prior_generations: finalizationHistory,
