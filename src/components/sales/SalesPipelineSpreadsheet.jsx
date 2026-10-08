@@ -57,7 +57,7 @@ import {
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
-import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
+import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -89,7 +89,7 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "current_task_assigned_to",
   "in_pipeline",
 ]);
-const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at", "sales_quote_sent_verified_at", "sales_neutral_closed_at"]);
+const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at", "sales_quote_sent_verified_at"]);
 const CLOSEOUT_HISTORICAL_FIELDS = new Set([
   "date_estimate_sent",
   "follow_up_date",
@@ -902,11 +902,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           setQuickEditError("Reopen this Won/Lost opportunity before closing it without an outcome.");
           return;
         }
-        setStatusTransition({ workOrder: currentWo, nextStatus: null, nextTask: taskPlan.task, kind: "neutral_close" });
+        setStatusTransition({ workOrder: currentWo, nextStatus: null, nextTask: taskPlan.task, kind: "neutral_close", pendingChanges: proposedUpdates });
         return;
       }
       if (taskPlan.action === "confirm_transition") {
-        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task });
+        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task, pendingChanges: proposedUpdates });
         return;
       }
       if (taskPlan.action === "save_stage_and_task") {
@@ -1184,6 +1184,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!statusTransition?.workOrder?.id) return;
     const current = workOrders.find((row) => row.id === statusTransition.workOrder.id) || statusTransition.workOrder;
     const nextStatus = statusTransition.nextStatus;
+    if (!isSalesTransitionSnapshotCurrent(statusTransition.workOrder, current)) {
+      setQuickEditError("This opportunity changed while the transition confirmation was open. Reload the latest record before trying again.");
+      setStatusTransition(null);
+      return;
+    }
     if (statusTransition.kind === "neutral_close") {
       if (!isCurrentPipelineOpportunity(current)) {
         setQuickEditError("This record is no longer an active Sales opportunity. Reload before closing it.");
@@ -1191,6 +1196,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         return;
       }
       updateWorkOrderFields(current.id, {
+        ...(statusTransition.pendingChanges || {}),
         current_task_description: statusTransition.nextTask,
         in_pipeline: false,
         sales_neutral_closed_at: new Date().toISOString(),
@@ -1203,6 +1209,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const closing = ["won", "lost"].includes(nextStatus);
     const reopening = ["won", "lost"].includes(current.sales_status) && !closing;
     let changes = {
+      ...(statusTransition.pendingChanges || {}),
       sales_status: nextStatus,
       ...(typeof statusTransition.nextTask === "string"
         ? { current_task_description: statusTransition.nextTask }
