@@ -2388,7 +2388,7 @@ export default function ProductChecklistDialog({
                                     {detail.tasks?.length > 0 && (
                                       <div className="ml-1 sm:ml-4 mt-1 space-y-0.5">
                                         {detail.tasks.map(task => (
-                                          <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
+                                          <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                             <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
                                               <Checkbox 
                                                 id={`sips-complete-${task.id}`}
