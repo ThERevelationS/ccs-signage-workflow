@@ -69,6 +69,15 @@ export function isWonOperationalTask(taskDescription) {
   return mapSalesTaskToStage(taskDescription).status === "won";
 }
 
+export function canUpdateWonOperationalField(workOrder, changes, fieldName) {
+  if (workOrder?.in_pipeline !== true || workOrder?.sales_status !== "won") return false;
+  if (["current_task_description", "current_task_deadline", "current_task_assigned_to"].includes(fieldName) === false) return false;
+  if (changes?.sales_status && changes.sales_status !== "won") return false;
+  const task = Object.prototype.hasOwnProperty.call(changes || {}, "current_task_description")
+    ? changes.current_task_description : workOrder.current_task_description;
+  return isWonOperationalTask(task);
+}
+
 export function planSalesTaskChange(workOrder, nextTaskDescription) {
   const task = String(nextTaskDescription || "").trim();
   const mapping = mapSalesTaskToStage(task);
