@@ -62,6 +62,11 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
                 ? `The current close date and lost reason will be cleared from the live opportunity. Their previous values remain in sales change history. Review the preserved expected-close/task plan and schedule a new follow-up after reopening.`
                 : `${workOrder?.client_name || "This opportunity"} will move to the selected sales stage.`}
           </AlertDialogDescription>
+          {transition.nextTask && (
+            <p className="text-sm font-medium text-gray-700">
+              Task Description will change to “{transition.nextTask}” when you confirm.
+            </p>
+          )}
         </AlertDialogHeader>
 
         {isLost && (
