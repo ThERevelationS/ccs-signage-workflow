@@ -75,8 +75,10 @@ check(spreadsheet.includes('const stageKey = salesStageDisplayValue(wo)') &&
   "Insights stage breakdown separates unverified imports from Lead.");
 
 const row = readFileSync("src/components/sales/SalesPipelineRow.jsx", "utf8");
-check(row.includes('value={stageDisplayValue}') && row.includes('Needs Stage'),
-  "Desktop table displays Needs Stage and allows real stage selection.");
+check(row.includes("salesStageDisplayLabel(wo)") && row.includes("{stageDisplayLabel}") &&
+      row.includes("bg-violet-50 text-violet-800") &&
+      !row.slice(row.indexOf('case "sales_status": return ('), row.indexOf('case "stage_age": return (')).includes("<Select"),
+  "Desktop table shows the stage trust label without an independent status selector.");
 
 const mobile = readFileSync("src/components/sales/SalesPipelineMobileCards.jsx", "utf8");
 check(mobile.includes('value={stageDisplayValue}') && mobile.includes('Needs Stage'),
