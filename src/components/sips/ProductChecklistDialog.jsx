@@ -1638,7 +1638,7 @@ export default function ProductChecklistDialog({
 
                             {/* Quick add buttons on hover */}
                             {isRegistered && (
-                              <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
+                              <div className="basis-full sm:basis-auto flex justify-end sm:justify-start gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
                                 <button
                                   type="button"
                                   onClick={(e) => { 
@@ -1913,15 +1913,17 @@ export default function ProductChecklistDialog({
 
                                     {/* Quick add task button for detail */}
                                     {isRegistered && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: displayItem.product_name || productName }); }}
-                                        className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/detail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                                        title="Add Task"
-                                        aria-label={`Add task under ${detail.text || "detail"}`}
-                                      >
-                                        +Task
-                                      </button>
+                                      <div className="basis-full sm:basis-auto flex justify-end sm:justify-start gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: displayItem.product_name || productName }); }}
+                                          className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/detail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                                          title="Add Task"
+                                          aria-label={`Add task under ${detail.text || "detail"}`}
+                                        >
+                                          +Task
+                                        </button>
+                                      </div>
                                     )}
                                     
                                     <Select
@@ -2173,7 +2175,7 @@ export default function ProductChecklistDialog({
 
                               {/* Quick add buttons on hover for sub-templates */}
                               {isRegistered && (
-                                <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
+                                <div className="basis-full sm:basis-auto flex justify-end sm:justify-start gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
                                   <button
                                     type="button"
                                     onClick={(e) => { 
@@ -2341,20 +2343,20 @@ export default function ProductChecklistDialog({
                                         </div>
                                       )}
                                       {isRegistered && (
-                                        <button
-                                          type="button"
-                                          onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
-                                          className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                                          title="Add Task"
-                                          aria-label={`Add task under ${detail.text || "detail"}`}
-                                        >
-                                          +Task
-                                        </button>
-                                      )}
-                                      {isRegistered && (
-                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100" aria-label={`Delete detail ${detail.text || ""}`}>
-                                          <Trash2 className="w-2.5 h-2.5" />
-                                        </Button>
+                                        <div className="basis-full sm:basis-auto flex justify-end sm:justify-start gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
+                                            className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                                            title="Add Task"
+                                            aria-label={`Add task under ${detail.text || "detail"}`}
+                                          >
+                                            +Task
+                                          </button>
+                                          <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100" aria-label={`Delete detail ${detail.text || ""}`}>
+                                            <Trash2 className="w-2.5 h-2.5" />
+                                          </Button>
+                                        </div>
                                       )}
                                     </div>
                                     {/* Inline add task for sub-template detail */}
