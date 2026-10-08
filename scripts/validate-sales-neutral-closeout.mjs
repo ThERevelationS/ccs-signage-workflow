@@ -64,7 +64,8 @@ for (const path of [
   const source = readFileSync(path, "utf8");
   check(source.includes("closed_neutral") && (
     source.includes("Closed (Neutral)") ||
-    (path.endsWith("/SalesPipelineRow.jsx") && source.includes("salesStageDisplayLabel(wo)"))
+    (path.endsWith("/SalesPipelineRow.jsx") && source.includes("salesStageDisplayLabel(wo)")) ||
+    (path.endsWith("/SalesOpportunityDialog.jsx") && source.includes("salesStageDisplayLabel(workOrder)") && source.includes("Closed without outcome · All Records"))
   ), path + " shows neutral closure safely.");
 }
 const schema = readFileSync("base44/entities/WorkOrder.jsonc", "utf8");
