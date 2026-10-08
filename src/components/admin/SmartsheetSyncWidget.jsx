@@ -126,6 +126,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
     ? 'Could not refresh Base44 sync status. The last known backend run remains authoritative; reconnecting now to confirm what finished and what still needs Retry Sync.'
     : orderProgress.detail;
   const progressPhaseLabel = reconnectingStatus ? 'Reconnecting to sync status' : orderProgress.phaseLabel;
+  const orderDownloadReading = compactOrderForm && orderProgress.readingPull;
   const progressPercent = orderProgress.show ? orderProgress.percent
     : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const staleSales = isStale && /^Sales Pipeline\b/.test(currentStepLabel) && interpretedStatus.isStale;
@@ -189,7 +190,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               <span className="shrink-0 font-semibold text-slate-800 dark:text-slate-100">{isRunning ? "Syncing" : "Sync Complete"}</span>
               <span className="min-w-0 truncate text-[11px] text-slate-500 dark:text-slate-300">
                 {isRunning
-                  ? `${progressPhaseLabel || currentStepLabel || "Working…"}${progressTotal > 0 ? ` · ${progressCurrent}/${progressTotal}` : ''}${progressItemLabel ? ` · ${progressItemLabel}` : ''} · ${progressPercent}%`
+                  ? orderDownloadReading
+                    ? `${progressPhaseLabel || "Reading Smartsheet"} · ${orderProgress.readCountLabel} · ${orderProgress.readPercentLabel} · Updates not yet confirmed`
+                    : `${progressPhaseLabel || currentStepLabel || "Working…"}${progressTotal > 0 ? ` · ${progressCurrent}/${progressTotal}` : ''}${progressItemLabel ? ` · ${progressItemLabel}` : ''} · ${progressPercent}%`
                   : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
               </span>
               {!isRunning && <span className="shrink-0 text-[10px] text-slate-400">just now</span>}
@@ -308,10 +311,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               />
             </div>
             <div className="flex items-center justify-between text-[10px] text-gray-500">
-              <span>{progressPercent}%</span>
+              <span>{orderDownloadReading ? orderProgress.readPercentLabel : `${progressPercent}%`}</span>
               <span>
-                {progressTotal > 0
-                  ? `${progressCurrent.toLocaleString()} / ${progressTotal.toLocaleString()} line items`
+                {orderDownloadReading
+                  ? orderProgress.readCountLabel
+                  : progressTotal > 0
+                    ? `${progressCurrent.toLocaleString()} / ${progressTotal.toLocaleString()} line items`
                   : totalExamined > 0 && `${totalExamined.toLocaleString()} records examined`}
               </span>
             </div>
