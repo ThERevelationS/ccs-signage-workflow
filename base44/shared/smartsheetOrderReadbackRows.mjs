@@ -3,11 +3,15 @@
 // retain the existing safe, complete paginated sheet-linked read path.
 export const ORDER_PULL_DIRECT_READBACK_LIMIT = 3;
 
-export async function loadOrderPullReadbackRows({ entity, ids, readLinkedOrders }) {
+export async function loadOrderPullReadbackRows({ entity, ids, sheetId, readLinkedOrders }) {
   if (!Array.isArray(ids) || ids.length === 0) return [];
   const normalizedIds = ids.map(id => String(id ?? '').trim());
   if (normalizedIds.some(id => !id)) {
     throw new Error('Order read-back is missing a permanent Base44 ID; no sync verification was confirmed.');
+  }
+  const expectedSheetId = String(sheetId ?? '').trim();
+  if (!/^\d+$/.test(expectedSheetId)) {
+    throw new Error('Order read-back is missing the configured permanent Smartsheet sheet ID.');
   }
   const uniqueIds = [...new Set(normalizedIds)];
   if (uniqueIds.length <= ORDER_PULL_DIRECT_READBACK_LIMIT) {
@@ -15,8 +19,9 @@ export async function loadOrderPullReadbackRows({ entity, ids, readLinkedOrders 
     const rows = [];
     for (const id of uniqueIds) {
       const row = await entity.get(id);
-      if (!row?.id || String(row.id) !== id) {
-        throw new Error('Exact Order read-back did not confirm the requested permanent Base44 ID.');
+      if (!row?.id || String(row.id) !== id ||
+          String(row.smartsheet_sheet_id ?? '').trim() !== expectedSheetId) {
+        throw new Error('Exact Order read-back did not confirm the permanent Base44 ID and configured Smartsheet sheet.');
       }
       rows.push(row);
     }
