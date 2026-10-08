@@ -5,6 +5,7 @@ import { validateNeutralSalesCloseout } from "../base44/shared/salesNeutralClose
 import {
   captureSalesTransitionGuards,
   untouchedSalesTransitionGuards,
+  isSalesTransitionSnapshotCurrent,
 } from "../src/components/sales/salesTaskStageMapping.mjs";
 
 let checks = 0;
@@ -21,6 +22,17 @@ const active = {
   current_task_description: "Waiting on Deposit",
 };
 const marker = "2026-10-08T12:00:00.000Z";
+check(isSalesTransitionSnapshotCurrent(active, { ...active }), "Unchanged loaded Sales snapshot can be confirmed.");
+for (const stale of [
+  { sales_status: "won" },
+  { in_pipeline: false },
+  { current_task_description: "Lost" },
+  { sales_neutral_closed_at: marker },
+  { id: "other-work-order" },
+]) {
+  check(!isSalesTransitionSnapshotCurrent(active, { ...active, ...stale }),
+    "Stale or different Sales classification/task cannot be confirmed.");
+}
 const neutral = {
   current_task_description: "Closed - Did not Lose",
   in_pipeline: false, sales_neutral_closed_at: marker, follow_up_date: "",
@@ -62,6 +74,16 @@ const wrapper = readFileSync("src/components/shared/trackedFieldPersistence.js",
 const historyBackend = readFileSync("base44/functions/fieldHistoryAction/entry.ts", "utf8");
 check(salesSheet.includes("&& !confirmedTaskTransition") && salesSheet.includes("}, false, true);"),
   "Confirmed neutral transition bypasses repeated task mapping confirmation.");
+check(salesSheet.includes("pendingChanges: proposedUpdates") &&
+  (salesSheet.match(/\.\.\.\(statusTransition\.pendingChanges \|\| \{\}\)/g) || []).length === 2,
+  "Follow-up outcome/completion and rule-driven edits survive a terminal or neutral confirmation.");
+check(salesSheet.includes("isSalesTransitionSnapshotCurrent(statusTransition.workOrder, current)"),
+  "Confirmation checks its opened snapshot before writing.");
+check(!salesSheet.includes('"sales_quote_sent_verified_at", "sales_neutral_closed_at"'),
+  "Neutral closure timestamp is eligible for regular-user CellHistory recording.");
+const opportunity = readFileSync("src/components/sales/SalesOpportunityDialog.jsx", "utf8");
+check(opportunity.includes('"sales_neutral_closed_at"') && opportunity.includes("Neutral closure confirmed"),
+  "Opportunity Detail displays explicit neutral closure in history.");
 check(salesSheet.includes("pendingSalesGuardsRef.current[orderId] = captureSalesTransitionGuards") &&
   salesSheet.includes("guardFields: untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes)"),
   "Quick edits preserve untouched Sales classification guards.");
@@ -142,4 +164,30 @@ equal(live, beforeConflict, "Concurrent version conflict does not modify WorkOrd
 check(auditRows.filter((row) => row.status === "aborted").length === 2,
   "Rejected transition marks prepared audit events aborted.");
 check(auditWrites === 2, "Both successful and rejected writes finalize audit intent.");
+
+// Reopening preserves the prior committed audit events while clearing only
+// active closeout fields; a later neutral close records the follow-up outcome.
+forceConflict = false;
+const reopened = await trackedConditionalSave(base44, "WorkOrder", { ...live }, {
+  current_task_description: "Follow up with Customer - Post-Estimate",
+  sales_status: "follow_up", close_date: "", lost_reason: "",
+}, actor);
+equal(reopened.sales_status, "follow_up", "Confirmed reopening restores an active Sales stage.");
+equal(reopened.close_date, "", "Reopening clears the active close date.");
+check(auditRows.some(row => row.field_name === "close_date" && row.status === "committed"),
+  "Prior close date evidence remains in historical audit events.");
+const followUpNeutral = {
+  ...neutral,
+  sales_last_follow_up_completed_at: "2026-10-08T12:01:00.000Z",
+  sales_last_follow_up_outcome: "No response",
+};
+validateNeutralSalesCloseout(reopened, followUpNeutral, equivalent);
+const neutralSaved = await trackedConditionalSave(base44, "WorkOrder", { ...live }, followUpNeutral, actor);
+equal(neutralSaved.in_pipeline, false, "Neutral closure removes current pipeline membership.");
+equal(neutralSaved.sales_status, "follow_up", "Neutral close does not fabricate Won/Lost status.");
+equal(neutralSaved.sales_last_follow_up_outcome, "No response", "Follow-up outcome survives neutral closure.");
+equal(neutralSaved.sales_last_follow_up_completed_at, "2026-10-08T12:01:00.000Z",
+  "Follow-up completed timestamp survives neutral closure.");
+check(auditRows.some(row => row.field_name === "sales_neutral_closed_at" && row.status === "committed"),
+  "Neutral closure marker receives committed audit history.");
 console.log("Sales transition atomicity, guards and neutral closeout: " + checks + "/" + checks + " PASS.");
