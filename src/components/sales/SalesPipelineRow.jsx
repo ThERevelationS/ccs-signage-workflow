@@ -243,7 +243,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               );
               case "current_task_description": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_description", "Task Description", wo.current_task_description)}>
-            <Select value={wo.current_task_description || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)} disabled={!isRegistered || !isOpen}>
+            <Select value={wo.current_task_description || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)} disabled={!isRegistered || (!isOpen && wo.in_pipeline !== true) || stageDisplayValue === "closed_neutral"}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-" /></SelectTrigger>
               <SelectContent>{taskDescriptions.map(desc => <SelectItem key={getTaskDescText(desc)} value={getTaskDescText(desc)}>{getTaskDescText(desc)}</SelectItem>)}</SelectContent>
             </Select>
