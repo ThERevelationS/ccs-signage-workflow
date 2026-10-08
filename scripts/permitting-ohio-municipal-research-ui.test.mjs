@@ -342,3 +342,16 @@ test('Elmwood Place preserves six original office files and incomplete zoning/el
  assert.match(html,/Retained XLSX/);assert.match(html,/Retained DOCX/);
  assert.equal(render(row,false),'');assert.equal(render({...row,type:'city'}),'');
 });
+
+test('St Bernard dossier displays distinct portals, retained pages and unresolved electrical roles',()=>{
+ const row=dossiers.find(d=>d.id==='6ac1a0d393d41146d708791d');
+ assert.equal(row.name,'St. Bernard');assert.equal(row.type,'village');
+ assert.equal(row.resources.length,2);assert.equal(row.document_findings.length,5);
+ const html=render(row),packet=JSON.parse(readFileSync('docs/official-evidence/ohio-stbernard-2026-10-07/review-packet.json'));
+ assert.ok(html.includes(packet.transition.zoning_portal));assert.ok(html.includes(packet.transition.county_portal));
+ for(const resource of row.resources){assert.ok(html.includes(resource.archive));assert.ok(html.includes(resource.source));}
+ for(const f of row.document_findings){assert.ok(html.includes(f.archive));assert.equal(f.authority_approved,false);}
+ assert.match(html,/January 1, 2026/);assert.match(html,/Electrical permit issuance and electrical inspection remain separately unapproved/);
+ assert.match(html,/sidewalk-cafe fee must not be substituted/);assert.match(html,/not a guaranteed approval deadline/);
+ assert.equal(render(row,false),'');assert.equal(render({...row,type:'city'}),'');
+});
