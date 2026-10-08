@@ -35,6 +35,7 @@ import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadata
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged, classifyOrderPullBusinessReadback } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
 import { orderPullPrewriteBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
+import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -754,11 +755,15 @@ async function pullDataset(
     if (eligible.length) {
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
-        const actualRows = await loadAllEntityRows({
+        const actualRows = await loadOrderPullReadbackRows({
           entity: base44.asServiceRole.entities.Order,
-          query: { smartsheet_sheet_id: sheetId },
-          sort: 'id',
-          label: 'Order pull business-field read-back before sync metadata',
+          ids: eligible.map(item => item.id),
+          readLinkedOrders: () => loadAllEntityRows({
+            entity: base44.asServiceRole.entities.Order,
+            query: { smartsheet_sheet_id: sheetId },
+            sort: 'id',
+            label: 'Order pull business-field read-back before sync metadata',
+          }),
         });
         const review = classifyOrderPullBusinessReadback(eligible, actualRows);
         snapshotUpdates.push(...review.verified.map(item => ({
@@ -821,7 +826,7 @@ async function pullDataset(
   // pull healthy. This catches silently dropped Sales snapshots/timestamps too.
   if (verifiedMetadataExpected.length) {
     try {
-      const metadataRows = await loadAllEntityRows({
+      const readCompleteMetadata = () => loadAllEntityRows({
         entity: dataset === 'sales'
           ? base44.asServiceRole.entities.WorkOrder
           : base44.asServiceRole.entities.Order,
@@ -831,6 +836,13 @@ async function pullDataset(
           ? 'Sales Smartsheet sync metadata verification'
           : 'Order Form sync metadata verification',
       });
+      const metadataRows = dataset === 'orders'
+        ? await loadOrderPullReadbackRows({
+          entity: base44.asServiceRole.entities.Order,
+          ids: verifiedMetadataExpected.map(item => item.id),
+          readLinkedOrders: readCompleteMetadata,
+        })
+        : await readCompleteMetadata();
       const metadataFailures = findUnverifiedSyncMetadata(
         verifiedMetadataExpected,
         metadataRows.filter((record: any) => !record?.deleted),
