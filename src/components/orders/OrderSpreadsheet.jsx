@@ -96,7 +96,7 @@ import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
-import { pushSavedOrdersToSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
+import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
@@ -153,6 +153,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const [lastSyncDirection, setLastSyncDirection] = useState("");
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [saveError, setSaveError] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
@@ -340,11 +342,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   useEffect(() => {
     if (onSaveStatusChange) {
       onSaveStatusChange({
-        hasUnsavedChanges, isSaving, lastSaved,
-        isSyncing, pendingSyncCount, lastSynced, syncMessage, saveError,
+        hasUnsavedChanges, isSaving, lastSaved, isLoading,
+        isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError,
       });
     }
-  }, [hasUnsavedChanges, isSaving, lastSaved, isSyncing, pendingSyncCount, lastSynced, syncMessage, saveError, onSaveStatusChange]);
+  }, [hasUnsavedChanges, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, onSaveStatusChange]);
 
   const loadData = async (showLoading = true) => {
     if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
@@ -368,6 +370,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
       ]);
+      // An edit can begin while these async reads are in flight. Never let
+      // their older snapshot replace an active user's pending form changes.
+      if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return false;
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
@@ -541,6 +546,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         ? { ...order, smartsheet_pending_local_sync: false }
         : order));
       setLastSynced(new Date());
+      setLastSyncDirection('push');
       setSyncMessage(summary.message);
       return true;
     } catch (error) {
@@ -569,6 +575,46 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       return false;
     } finally {
       syncInFlightRef.current = false;
+      setIsSyncing(false);
+    }
+  };
+
+  const pullFromSmartsheet = async () => {
+    if (!isRegistered || syncInFlightRef.current || saveInFlightRef.current ||
+        dateNeededSaveInFlightRef.current) return false;
+    // Never mix a manual remote pull with local unsaved edits or the durable
+    // outbound queue. Those changes must use Save & Sync first.
+    if (Object.keys(pendingChangesRef.current).length || pendingSyncIdsRef.current.size) {
+      setSaveError('Local Order changes are waiting. Use Save & Sync before pulling Smartsheet updates.');
+      return false;
+    }
+    syncInFlightRef.current = true;
+    setIsSyncing(true);
+    setIsPulling(true);
+    setSaveError('');
+    setSyncMessage('');
+    try {
+      const pull = await pullOrdersFromSmartsheet({ sessionToken });
+      const reloaded = await loadData(false);
+      if (!reloaded) throw new Error('Smartsheet was checked but the updated Orders could not be reloaded safely.');
+      setLastSynced(new Date());
+      setLastSyncDirection('pull');
+      const count = pull.updated;
+      setSyncMessage(pull.needsReview
+        ? `Smartsheet pull updated ${count} Order${count === 1 ? '' : 's'}, but some links or records need admin review.`
+        : count > 0
+          ? `Pulled ${count} updated Order${count === 1 ? '' : 's'} from Smartsheet.`
+          : 'Smartsheet checked. No linked Order changes found.');
+      if (pull.needsReview) {
+        setSaveError('Smartsheet pull needs review. Confirm unresolved Order links in Admin → Smartsheet → Review links.');
+      }
+      return !pull.needsReview;
+    } catch (error) {
+      setSaveError(`Smartsheet pull needs attention: ${error?.message || 'Could not verify remote Order changes.'}`);
+      return false;
+    } finally {
+      syncInFlightRef.current = false;
+      setIsPulling(false);
       setIsSyncing(false);
     }
   };
@@ -658,6 +704,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const updateOrder = (orderId, field, value, skipHistory = false) => {
+    if (isPulling) {
+      setSaveError('Wait for the Smartsheet pull to finish before editing Orders.');
+      return;
+    }
     const currentOrder = orders.find(o => o.id === orderId);
     if (!currentOrder) return;
     const oldValue = currentOrder[field];
@@ -678,6 +728,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const persistImmediateOrderFields = async (orderId, nextFields, label, { supersedePendingFields = [] } = {}) => {
+    if (isPulling) throw new Error('Wait for the Smartsheet pull to finish before editing Orders.');
     const pendingAtStart = { ...(pendingChangesRef.current[orderId] || {}) };
     const baseline = originalOrdersRef.current[orderId];
     if (!baseline?.id) throw new Error(`${label} is missing its loaded Order baseline. Reload before saving.`);
@@ -965,6 +1016,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   React.useImperativeHandle(ref, () => ({
     addNewRow,
     saveAndSync,
+    pullFromSmartsheet,
     exportToExcel,
     refreshOrders: () => loadData(false),
     importFromExcel: () => fileInputRef.current?.click(),
