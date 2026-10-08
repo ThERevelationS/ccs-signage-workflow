@@ -33,6 +33,7 @@ import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue } from 
 import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBackgroundPolicy.mjs';
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged } from '../../shared/smartsheetOrderPullSafety.mjs';
+import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -226,7 +227,10 @@ async function pullDataset(
   sheetPageGuard.assertComplete();
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
-  if (allRows.length > massLimit) {
+  // Sales retains its existing sheet-size guard. An Order-only pull must
+  // examine the full sheet to establish permanent-ID matches and then cap
+  // actual proposed Base44 updates (never the read-only downloaded row count).
+  if (dataset === 'sales' && allRows.length > massLimit) {
     return {
       dataset,
       direction: 'pull',
@@ -527,6 +531,19 @@ async function pullDataset(
       itemLabel: `Compared ${allRows.length} Order Request rows`,
       detail: `${toUpdate.length} linked Orders queued for update; ${unchangedSkipped} already matched`,
     });
+  }
+  if (dataset === 'orders') {
+    // This preflight precedes every Order business-field, snapshot and date
+    // write. A full download with a small change set must remain syncable;
+    // an unexpectedly large change set remains blocked without partial writes.
+    const changeLimit = orderPullChangeLimit({ proposedUpdates: toUpdate.length, configuredLimit: massLimit });
+    if (!changeLimit.allowed) return {
+      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+      reason: changeLimit.reason,
+      rows_examined: allRows.length, planned_order_updates: toUpdate.length,
+      mass_change_limit_count: changeLimit.limit,
+      unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
+    };
   }
 
   await persistSalesReviews(base44, salesPullReviews, options?.assertRunOwnership);
