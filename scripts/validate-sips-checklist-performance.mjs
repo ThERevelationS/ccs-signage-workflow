@@ -212,4 +212,11 @@ check("clearing search returns keyboard focus to the search field", () => {
   assert.match(source, /e\.key === "Escape" && checklistSearchQuery/);
 });
 
+check("Escape from a focused search result returns to search without hijacking child controls", () => {
+  assert.match(source, /const handleChecklistResultKeyDown = \(e\) => \{/);
+  assert.match(source, /e\.key !== "Escape" \|\| !checklistSearchQuery/);
+  assert.match(source, /e\.target\?\.hasAttribute\?\.\("data-sips-checklist-item-id"\)/);
+  assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5" onKeyDown=\{handleChecklistResultKeyDown\}/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
