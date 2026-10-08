@@ -265,6 +265,7 @@ export async function executeGuardedOpportunityBridgePilot({
     runId,
     actor,
     secondaryConfirmationFingerprint:confirmationFingerprint,
+    pilotReviewFingerprint,
   });
   if (!claim?.ok || !claim?.receipt?.id) {
     return {
