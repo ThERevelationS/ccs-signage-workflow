@@ -157,7 +157,11 @@ async function pullDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
-  options: { assertRunOwnership?: () => Promise<void> | void; recordIds?: string[] } = {},
+  options: {
+    assertRunOwnership?: () => Promise<void> | void;
+    recordIds?: string[];
+    reportOrderReadProgress?: (progress: { page: number; rowsLoaded: number; totalRows: number }) => Promise<void> | void;
+  } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
@@ -182,6 +186,9 @@ async function pullDataset(
   });
   let totalRowCount = 0;
   while (page <= 100) {
+    // A stopped or superseded Order run must not keep downloading for eventual
+    // mutation. Sales continues using its existing pull behavior unchanged.
+    if (dataset === 'orders' && options.assertRunOwnership) await options.assertRunOwnership();
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(pageSize),
@@ -205,6 +212,12 @@ async function pullDataset(
     const pageComplete = sheetPageGuard.accept(page, result.body, rows);
     if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
     allRows.push(...rows);
+    // Each verified page advances the existing coordinator's real row-count
+    // progress. Reported rows are read, NOT committed Order updates.
+    if (dataset === 'orders' && options.reportOrderReadProgress) {
+      await options.reportOrderReadProgress({ page, rowsLoaded: allRows.length, totalRows: totalRowCount });
+      if (options.assertRunOwnership) await options.assertRunOwnership();
+    }
     if (pageComplete) break;
     page++;
   }
@@ -3048,7 +3061,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           if (wantPull) {
             activeDirection = 'pull';
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'pull')?.label || '';
-            await saveSyncStatusForRun(base44, {
+            const readingStatusSaved = await saveSyncStatusForRun(base44, {
               status: 'running',
               action,
               total_steps: steps.length,
@@ -3063,8 +3076,26 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                 progress_updated_at: new Date().toISOString(),
               } : {}),
             }, runStartedAt);
+            if (dataset === 'orders' && !readingStatusSaved) {
+              throw new Error('Order pull progress ownership could not be verified before reading. No Orders were changed.');
+            }
             const pullResult = await pullDataset(base44, token, dataset, profile, config, {
               assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+              ...(dataset === 'orders' ? {
+                reportOrderReadProgress: async ({ page, rowsLoaded, totalRows }) => {
+                  const saved = await saveSyncStatusForRun(base44, {
+                    status: 'running', action,
+                    total_steps: steps.length, completed_steps: completedSteps,
+                    current_step_label: stepLabel, results,
+                    progress_dataset: 'orders', progress_direction: 'pull', progress_phase: 'reading',
+                    progress_current: rowsLoaded, progress_total: Math.max(totalRows, rowsLoaded),
+                    progress_item_label: `Read Smartsheet page ${page}: ${rowsLoaded} rows`,
+                    progress_detail: 'Reading Order Request rows by permanent Smartsheet row and column IDs; no Orders changed yet',
+                    progress_updated_at: new Date().toISOString(),
+                  }, runStartedAt);
+                  if (!saved) throw new Error('Order pull lost progress checkpoint ownership. No further pull writes are allowed.');
+                },
+              } : {}),
               ...(action === 'pull_dataset' && dataset === 'sales' ? { recordIds: body.work_order_ids || [] } : {}),
             });
             results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
