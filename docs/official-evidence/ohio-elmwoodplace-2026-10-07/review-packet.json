@@ -16,7 +16,7 @@
   "fee_review": "Five-sheet 2024 XLSX cell/formula extraction complete; sign rows 51-54 and selected cache arithmetic reviewed. Annual-update template and current/next-year columns prevent effective-year/adoption approval. 2023 county PDF remains separate. See office-document-review.json.",
   "zoning_form_review": "One physical page visually reviewed with source-bound raw OCR. Printed $150 fee and 30-day reply claim are unapproved current-policy candidates; M-4 OCR error visually reads M-1. See zoning-form-visual-review.json.",
   "map_review": "September 11, 2007 map label; currentness, visual and parcel review pending.",
-  "electrical_review": "No current issuer/inspector delegation established from these pages/forms; separate code/provider review required.",
+  "electrical_review": "Retained county development-process page supports Elmwood Place commercial-only county building route and IBI plan-review/inspection candidate. Separate electric application required. Exact electrical issuer, residential delegation and sign applicability remain unapproved. Provider homepage original failed 406; ezTrak guide retained but content review pending. See electrical-routing/routing-review.json.",
   "office_documents_review": "XLSX cells/formulas and DOCX paragraphs retained as source-bound derivatives. ROW fee, notice, detour and multi-department approval language recorded as unapproved candidates. Layout and current adoption pending.",
   "app_storage_catalog_registration": "pending; repository copies do not constitute app-storage registration",
   "currentness_approved": false,

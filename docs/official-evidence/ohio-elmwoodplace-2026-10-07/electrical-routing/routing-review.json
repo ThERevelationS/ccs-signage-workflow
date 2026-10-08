@@ -1,0 +1,41 @@
+{
+  "locality_id": "6ac1a15f8dd6f5306ab7935f",
+  "scope": "Elmwood Place OH village, commercial county-building route only",
+  "retained_originals": 2,
+  "county_source_sha256": "d00caa3d8e23aef506526628e812ce074af97516c5fd408acf79cef3048604cb",
+  "observations": [
+    {
+      "source": "county-development-process.html",
+      "observation": "County lists Elmwood Place with a commercial-only footnote among municipal building-permit service areas. Local zoning certificate precedes county building acceptance/review/inspection/issuance.",
+      "status": "source-bound research candidate; no authority approval"
+    },
+    {
+      "source": "county-development-process.html",
+      "observation": "Electrical permits require a separate application. County identifies IBI for electrical plan review and inspection on behalf of its Buildings and Inspections division.",
+      "limitation": "Commercial-project route inference combines county geographic scope with its provider statement. Exact electrical permit issuer and residential/local sign scope are not independently established."
+    },
+    {
+      "source_url": "https://www.inspectionbureau.com/",
+      "observation": "Provider web observation says Ohio electrical plan review and permit applications move to CAGIS ezTrak beginning September 14, 2026.",
+      "retention": "Homepage original download failed HTTP 406; web-derived observation only. Portal does not itself prove Elmwood Place delegation."
+    },
+    {
+      "source": "ibi-eztrak-new-user.pdf",
+      "observation": "Original guide linked by provider homepage retained with byte/hash verification.",
+      "content_review": "pending; no full-text, physical-page or visual acceptance claimed"
+    }
+  ],
+  "portal_candidate": "https://eztrak.cagis.org/",
+  "remaining": [
+    "Exact electrical permit issuance authority and commercial sign applicability",
+    "Residential electrical delegation",
+    "Underlying Village zoning document and amendments",
+    "Guide full-text/visual review",
+    "App-storage/catalog registration"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}
