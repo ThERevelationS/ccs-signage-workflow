@@ -184,6 +184,19 @@ export default function OrderForm() {
           </div>
         </div>
 
+        {(String(saveStatus.saveError || '').startsWith('Smartsheet pull') ||
+          (saveStatus.lastSyncDirection === 'pull' && saveStatus.syncMessage)) && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={`mb-3 rounded-md border px-3 py-2 text-sm md:hidden ${saveStatus.saveError
+              ? 'border-red-200 bg-red-50 text-red-800'
+              : 'border-blue-200 bg-blue-50 text-blue-800'}`}
+          >
+            {saveStatus.saveError || saveStatus.syncMessage}
+          </div>
+        )}
+
         <OrderSpreadsheet 
           ref={spreadsheetRef}
           searchTerm={searchTerm} 
