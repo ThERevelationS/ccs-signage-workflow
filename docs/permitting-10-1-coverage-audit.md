@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading post-June amendment timeline
+
+Retained five official council PDF packets (July 7/21, August 4/18, September 1) and indexed all 49 pages with source/text hashes. Targeted zoning passages establish first reading August 4, second reading August 18 and third reading tabled September 1 (7-0), with revisions returning to Planning Commission. September 1 page 1 visually confirmed against original hash. Later adoption, ordinance text and sign-code effects unresolved; sparse pages/attachments remain OCR/visual gaps. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: remaining Chapter 1290/1278 and maps; later amendment proceedings and sparse minute pages remain explicit. Separate electrical authority pending.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading sign-code/currentness routing
 
 Read five published sign sections (1290.03/.04/.10/.13/.20) as web-derived candidates; retained official hearing notice and live council-minutes index with hashes. Direct publisher chapter/section original downloads returned 403 and remain explicit gaps. June 2026 proposed changes are not adoption proof. Live index includes August/September links absent from older web retrieval; minutes contents pending. Preserved chapter-specific exemption scope, four sign districts, lighting and Chapter 1278 design-review dependency. No approved rules, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

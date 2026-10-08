@@ -1,0 +1,102 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "scope": "Five retained council packets July 7 through September 1, 2026; all pages indexed, targeted zoning passages reviewed. Not exhaustive visual/attachment review.",
+  "timeline": [
+    {
+      "file": "minutes-07-07-26.pdf",
+      "pages": [
+        3
+      ],
+      "finding": "Committee review of Planning Commission zoning recommendations scheduled for July 21."
+    },
+    {
+      "file": "minutes-08-04-26.pdf",
+      "pages": [
+        7,
+        11
+      ],
+      "finding": "Committee recommendations discussed; zoning-change ordinance first reading only."
+    },
+    {
+      "file": "minutes-08-18-26.pdf",
+      "pages": [
+        1
+      ],
+      "finding": "Zoning-change ordinance second reading only; notification/procedure concerns raised."
+    },
+    {
+      "file": "minutes-09-01-26.pdf",
+      "pages": [
+        1,
+        6,
+        8
+      ],
+      "finding": "Hearing canceled; scheduled third reading tabled 7-0, not read. Return to Planning Commission for revisions/further hearing, potentially including food truck regulations."
+    }
+  ],
+  "visual_confirmation": {
+    "file": "minutes-09-01-26.pdf",
+    "pages": [
+      1
+    ],
+    "source_sha256": "1699bd0f264aad395f14beba1d6bfb486dfb1f4f1f345d2ff00c8420f321bd73",
+    "method": "Hash-matched download, Poppler render at 1800, full-page visual inspection; image not retained"
+  },
+  "limits": [
+    "This proposed ordinance was not adopted at the reviewed September 1 meeting. This does not establish no subsequent adoption or absence of other amendments.",
+    "Proposed/adopted ordinance text, attachments, later proceedings and sign-code effects remain unverified.",
+    "Sparse-text/image pages require OCR/visual review; road-project traffic signs are not private commercial sign regulation.",
+    "Existing twelve-page application/fee layout review remains complete; these new minute packets are a separate incomplete review."
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "total_pages": 49,
+  "sparse_text_pages": [
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 2,
+      "characters": 41
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 3,
+      "characters": 41
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 4,
+      "characters": 41
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 5,
+      "characters": 41
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 6,
+      "characters": 41
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 7,
+      "characters": 41
+    },
+    {
+      "file": "minutes-07-21-26.pdf",
+      "page": 8,
+      "characters": 41
+    },
+    {
+      "file": "minutes-08-04-26.pdf",
+      "page": 5,
+      "characters": 132
+    },
+    {
+      "file": "minutes-08-04-26.pdf",
+      "page": 12,
+      "characters": 133
+    }
+  ]
+}
