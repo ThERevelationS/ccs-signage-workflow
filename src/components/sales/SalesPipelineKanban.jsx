@@ -89,7 +89,6 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const attentionKeys = new Set(attentionItems.map((item) => item.key));
                   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
                   const opportunityDisplayName = salesOpportunityDisplayName(workOrder);
-                  const stageDisplayValue = salesStageDisplayValue(workOrder);
                   const stageDisplayLabel = salesStageDisplayLabel(workOrder);
                   return (
                     <article
