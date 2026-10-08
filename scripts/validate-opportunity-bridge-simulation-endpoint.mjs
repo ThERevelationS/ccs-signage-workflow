@@ -79,6 +79,11 @@ assert(source.includes('buildOpportunityBridgeDryRunPlan'), 'Backend must comput
 assert(source.includes('evaluateOpportunityBridgeProductionReadiness'), 'Backend must compute the read-only production readiness gate.');
 assert(source.includes('OpportunityBridgeOperationReceipt'), 'Simulation must read the activated durable receipt ledger.');
 assert(source.includes('summarizeOpportunityBridgeReceiptLedger'), 'Simulation must summarize durable receipt identity state.');
+assert(source.includes('buildOpportunityBridgePilotReview'), 'Simulation must build the exact read-only pilot review fingerprint from trusted live data.');
+assert(source.includes('pilot_review:pilotReview'), 'Simulation response must expose the exact pilot review manifest/fingerprint.');
+assert(source.includes('source_authorized_review_fingerprint:sourceAuthorizedReviewFingerprint'), 'Simulation must expose source authorization state without changing it.');
+assert(source.includes('source_authorization_matches_fresh_review:sourceAuthorizationMatchesFreshReview'), 'Simulation must report whether source authorization matches the exact fresh review.');
+assert(source.includes('review_response_is_not_execution_authorization:true'), 'Simulation must explicitly state that review output is not execution authorization.');
 assert(source.includes('receiptSchemaActivated:true'), 'Simulation must report the durable receipt schema as activated.');
 assert(source.includes('secondaryConfirmationConfigured:confirmationContract.configured === true'), 'Simulation must report the configured secondary-confirmation contract.');
 assert(source.includes('buildOpportunityBridgeSecondaryConfirmationBinding'), 'Simulation must prove exact run/batch confirmation binding without enabling apply.');
