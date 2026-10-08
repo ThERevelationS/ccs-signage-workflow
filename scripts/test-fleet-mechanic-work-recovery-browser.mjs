@@ -369,7 +369,46 @@ try {
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isEnabled(),true);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/10 PASS");
+  await run("Mobile: delayed photo conversion cannot restore a draft after Save revocation during recovery",390,async page => {
+    await page.evaluate(() => {
+      const original=window.createImageBitmap;
+      window.createImageBitmap=async (...args) => {
+        await new Promise(resolve => { window.__releaseFleetPhotoDecode=resolve; });
+        return original(...args);
+      };
+    });
+    const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
+    await page.locator('input[type="file"]').setInputFiles({name:"late.png",mimeType:"image/png",buffer:png});
+    await page.waitForFunction(() => typeof window.__releaseFleetPhotoDecode==="function");
+    await page.getByLabel("Add mechanic note").fill("Request awaiting verification");
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.loseSaveAck=true;
+      s.failNextMutationStatus=true;
+    });
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===2);
+    assert.equal(await recovery.count(),1);
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    await page.evaluate(() => window.__releaseFleetPhotoDecode());
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0,"An in-flight image conversion must not resurrect purged photos");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByRole("button",{name:"Save Progress"}).waitFor();
+    assert.equal(await recovery.count(),1);
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request without replaying it/i).waitFor();
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0);
+    assert.equal((await actionNames(page)).filter(name=>name==="save").length,1);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/11 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
