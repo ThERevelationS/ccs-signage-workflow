@@ -63,7 +63,13 @@ assert.doesNotMatch(settings, /dataset === "sales" && \["push_enabled"/);
 assert.match(settings, /Sales Pipeline follows its enabled pull\/push directions/);
 assert.match(settings, /Order Form can pull automatically when enabled; background push and automatic record creation are locked OFF, so Order writes use Save & Sync/);
 assert.doesNotMatch(settings, /Both directions \(pull and push\) run for every dataset/);
-console.log('PASS Admin settings cannot re-enable or misdescribe Order background writes, while Sales controls remain outside this Order-only guard');
+assert.match(settings, /title: "Automatic sync is off\."/);
+assert.match(settings, /title: "Automatic sync is paused\."/);
+assert.match(settings, /title: "Automatic sync has no enabled directions\."/);
+assert.match(settings, /title: "Automatic sync is active\."/);
+assert.match(settings, /scheduledOrderPullEnabled = Boolean\(\s*config\.orders\.mirror_enabled && config\.orders\.pull_enabled\s*\)/);
+assert.match(settings, /<strong>\{automaticSyncBanner\.title\}<\/strong> \{automaticSyncBanner\.detail\}/);
+console.log('PASS Admin settings cannot re-enable or misdescribe Order background writes, and all four automatic-sync banner states are rendered from current config');
 
 assert.match(workflow, /Run scheduled Smartsheet sync/);
 assert.match(workflow, /configured Sales Pipeline pull\/push directions and Order Form pull only/);
