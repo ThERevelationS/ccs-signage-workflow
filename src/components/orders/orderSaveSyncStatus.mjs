@@ -5,7 +5,9 @@ export function orderSaveSyncStatus(status = {}) {
   );
 
   if (status?.isSyncing) {
-    return { kind: 'working', text: 'Syncing to Smartsheet…', title: 'Your saved Order changes are being synchronized to Smartsheet.' };
+    return status?.isPulling
+      ? { kind: 'working', text: 'Checking Smartsheet…', title: 'Checking for changes to linked Orders in Smartsheet.' }
+      : { kind: 'working', text: 'Syncing to Smartsheet…', title: 'Your saved Order changes are being synchronized to Smartsheet.' };
   }
   if (status?.isSaving) {
     return { kind: 'working', text: 'Saving locally…', title: 'Your Order edits are being saved to Base44 before synchronization.' };
@@ -27,7 +29,9 @@ export function orderSaveSyncStatus(status = {}) {
     };
   }
   if (status?.lastSynced) {
-    return { kind: 'success', text: 'Saved & synced', title: 'The latest Order changes were saved and confirmed in Smartsheet.' };
+    return status?.lastSyncDirection === 'pull'
+      ? { kind: 'success', text: 'Smartsheet checked', title: 'The latest manual Smartsheet Order pull completed and the app was refreshed.' }
+      : { kind: 'success', text: 'Saved & synced', title: 'The latest Order changes were saved and confirmed in Smartsheet.' };
   }
   if (status?.lastSaved) {
     return { kind: 'local', text: 'Saved locally', title: 'The latest Order changes are saved in Base44.' };
