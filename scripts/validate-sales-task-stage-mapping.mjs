@@ -8,6 +8,7 @@ import {
   isWonOperationalTask,
   canUpdateWonOperationalField,
 } from "../src/components/sales/salesTaskStageMapping.mjs";
+import { getQuoteAgingState } from "../src/components/sales/salesQuoteAging.js";
 
 const expected = {
   "Prospect Initiation (Gather Info, Initial Discuss ...)": "lead",
@@ -146,4 +147,21 @@ check(sheet.includes("!canUpdateWonOperationalField(currentWo, proposedUpdates, 
   "Protected historical guard permits only approved Won operational fields.");
 check(sheet.includes("Reopen this Won/Lost opportunity before closing it without an outcome."),
   "Terminal records cannot silently convert to neutral closeout.");
+
+// The catalog option is selectable and drives Quoted, but task selection alone
+// must never manufacture an estimate-sent date or quote-timing evidence.
+same(planSalesTaskChange({ sales_status: "lead", in_pipeline: true }, "Estimate Sent to Customer"),
+  { action: "save_stage_and_task", task: "Estimate Sent to Customer", status: "quoted" },
+  "Selecting Estimate Sent to Customer transitions an active Lead to Quoted.");
+const missingQuoteTiming = getQuoteAgingState({ sales_status: "quoted", current_task_description: "Estimate Sent to Customer" });
+check(missingQuoteTiming.awaitingResponse && !missingQuoteTiming.trusted && !missingQuoteTiming.tracked && missingQuoteTiming.ageDays === null,
+  "Selecting Quoted without a verified sent date retains Quote Timing Missing.");
+check((sheet.match(/text: "Estimate Sent to Customer", page: "", color: "", opacity: 100, markOut: false, wip: false/g) || []).length === 2,
+  "Initial and settings-unavailable task catalogs include the new option.");
+const row = readFileSync("src/components/sales/SalesPipelineRow.jsx", "utf8");
+check(row.includes("taskDescriptions.map(desc => <SelectItem") && row.includes('updateWorkOrder(wo.id, "current_task_description", val)'),
+  "Sales table options feed the existing task-edit and stage-mapping save path.");
+const filter = readFileSync("src/components/sales/CustomFilterDialog.jsx", "utf8");
+check(filter.includes('"Estimate Sent to Customer"') && filter.includes("taskDescSetting.setting_value.items.map"),
+  "Saved/custom filter options include the new fallback and read the live task catalog.");
 console.log("Sales task-to-status mapping and transition safety: " + checks + "/" + checks + " PASS.");
