@@ -57,6 +57,7 @@ import {
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -869,6 +870,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const ruleUpdates = applyRules(taskAssignmentRules, updatedWo);
     const proposedUpdates = { ...nextChanges, ...ruleUpdates };
 
+    // Only an actual user edit of a CURRENT modern Sales task can drive a
+    // stage. Historical Smartsheet task text is never silently promoted into
+    // a modern Won/Lost outcome during reads or unrelated field saves.
+    if (
+      isCurrentPipelineOpportunity(currentWo)
+      && Object.prototype.hasOwnProperty.call(nextChanges, "current_task_description")
+      && String(nextChanges.current_task_description || "").trim() !== String(currentWo.current_task_description || "").trim()
+    ) {
+      const taskPlan = planSalesTaskChange(currentWo, nextChanges.current_task_description);
+      if (taskPlan.action === "neutral_close_required") {
+        setQuickEditError("Closed - Did not Lose requires the separate neutral closeout workflow. The task was not saved as Won or Lost.");
+        return;
+      }
+      if (taskPlan.action === "confirm_transition") {
+        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task });
+        return;
+      }
+      if (taskPlan.action === "save_stage_and_task") {
+        proposedUpdates.sales_status = taskPlan.status;
+      }
+    }
+
     const currentSalesStatus = currentWo.sales_status ?? "lead";
     const resultingSalesStatus = proposedUpdates.sales_status ?? currentSalesStatus;
     const currentIsTerminal = ["won", "lost"].includes(currentSalesStatus);
@@ -1126,7 +1149,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const today = format(new Date(), "yyyy-MM-dd");
     const closing = ["won", "lost"].includes(nextStatus);
     const reopening = ["won", "lost"].includes(current.sales_status) && !closing;
-    let changes = { sales_status: nextStatus };
+    let changes = {
+      sales_status: nextStatus,
+      ...(typeof statusTransition.nextTask === "string"
+        ? { current_task_description: statusTransition.nextTask }
+        : {}),
+    };
 
     if (closing) {
       changes = {
