@@ -4,13 +4,39 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
-import { isValidContactEmail, sharedOrderRequestorColumnId } from '../base44/shared/smartsheetOrderContact.mjs';
+import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorContactAppend, orderRequestorOptionsPreserved } from '../base44/shared/smartsheetOrderContact.mjs';
 
 const bindings = { customer_name: '321', requestor_name: '123', requestor_email: '123' };
 assert.equal(sharedOrderRequestorColumnId(bindings), '123');
 assert.equal(sharedOrderRequestorColumnId({ requestor_name: '123', requestor_email: '124' }), '');
 assert.equal(isValidContactEmail('casey@example.com'), true);
 assert.equal(isValidContactEmail('Casey Example'), false);
+
+const legacyContacts = [
+  { email: 'brett@example.com', name: 'Brett' },
+  { email: 'tw@example.com', name: 'Twyla' },
+];
+const appended = planOrderRequestorContactAppend(legacyContacts, {
+  email: 'NEW@EXAMPLE.COM', full_name: 'New Example',
+});
+assert.equal(appended.changed, true);
+assert.deepEqual(appended.options, [...legacyContacts, { email: 'new@example.com', name: 'New Example' }]);
+assert.deepEqual(legacyContacts, [
+  { email: 'brett@example.com', name: 'Brett' },
+  { email: 'tw@example.com', name: 'Twyla' },
+]);
+assert.equal(orderRequestorOptionsPreserved(appended.options, appended.options), true);
+assert.equal(orderRequestorOptionsPreserved(appended.options, legacyContacts), false);
+const repeat = planOrderRequestorContactAppend(appended.options, { email: 'new@example.com', full_name: 'Someone Else' });
+assert.equal(repeat.changed, false);
+assert.deepEqual(repeat.options, appended.options);
+assert.throws(() => planOrderRequestorContactAppend(legacyContacts, { email: 'bad', full_name: 'Bad' }), /valid email/);
+assert.throws(() => planOrderRequestorContactAppend(legacyContacts, { email: 'new@example.com', full_name: '' }), /full name/);
+assert.throws(() => planOrderRequestorContactAppend(
+  [{ email: 'same@example.com', name: 'One' }, { email: 'SAME@example.com', name: 'Two' }],
+  { email: 'new@example.com', full_name: 'New Example' }
+), /duplicate contact emails/);
+console.log('PASS new Order Requestor appended once by email; historical first-name translation labels and contacts preserved');
 
 const tempDir = await mkdtemp(join(tmpdir(), 'ccs-order-contact-'));
 try {
@@ -111,6 +137,17 @@ try {
   assert.ok((engine.match(/displayValue: c\.displayValue/g) || []).length >= 2);
   assert.match(engine, /freshCells\.map\(\(c\) =>/); // guarded Order create still sends contact display names
   assert.match(engine, /requestor_contacts_skipped_no_valid_email/);
+  assert.match(engine, /if \(action === 'order_requestor_contact_sync'\)/);
+  assert.match(engine, /adminActor\?\.role !== 'admin'/);
+  assert.match(engine, /AuthorizedEmail\.filter\(\{ email: requestedEmail \}\)/);
+  assert.match(engine, /sharedOrderRequestorColumnId\(profile\?\.column_bindings\)/);
+  assert.match(engine, /type: 'CONTACT_LIST', contactOptions: plan\.options/);
+  assert.match(engine, /orderRequestorOptionsPreserved\(plan\.options, verifiedOptions\)/);
+  const userManagement = await readFile('src/components/admin/UserManagement.jsx', 'utf8');
+  assert.match(userManagement, /const inviteResult = await createAuthorizedUserAdmin/);
+  assert.ok(userManagement.indexOf('action: "order_requestor_contact_sync"') >
+    userManagement.indexOf('const inviteResult = await createAuthorizedUserAdmin'));
+  assert.match(userManagement, /Order Requestor Smartsheet sync needs attention/);
   console.log('PASS push payload and conflict guard use Order contact semantics');
 
   const salesCells = buildCells(
