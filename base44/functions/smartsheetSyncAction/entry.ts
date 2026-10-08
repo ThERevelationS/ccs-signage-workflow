@@ -20,7 +20,7 @@ import { hasMeaningfulSmartsheetSalesCustomer } from '../../shared/smartsheetSal
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
 import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBackupReadiness.mjs';
-import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
+import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorContactAppend, orderRequestorOptionsPreserved } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
@@ -2082,7 +2082,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -2165,6 +2165,74 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       } catch (error: any) {
         return Response.json({ success: false, error: cleanText(error?.message || 'Smartsheet sync settings could not be saved.', 1000) }, { status: Number(error?.status) || 500 });
       }
+    }
+
+    if (action === 'order_requestor_contact_sync') {
+      // Order Form Requestor dropdown only. This does not provision Smartsheet
+      // accounts, touch rows, or change Sales name/assignee translations.
+      if (adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
+      }
+      if (!configured) {
+        return Response.json({ success: false, error: 'Smartsheet API token is not configured.' }, { status: 503 });
+      }
+      const requestedEmail = cleanText(body?.user_email, 320).toLowerCase();
+      if (!isValidContactEmail(requestedEmail)) {
+        return Response.json({ success: false, error: 'A valid saved app user email is required.' }, { status: 400 });
+      }
+      // Look up the authoritative saved user rather than trusting a name
+      // supplied from the browser.
+      const userResult = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: requestedEmail });
+      const users = Array.isArray(userResult) ? userResult : (userResult ? [userResult] : []);
+      if (users.length !== 1 || !users[0]?.id || users[0]?.is_active === false) {
+        return Response.json({ success: false,
+          error: 'The active app user could not be identified uniquely. No Smartsheet contact was changed.' }, { status: 409 });
+      }
+
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      if (!config || duplicateCount > 1) {
+        return Response.json({ success: false,
+          error: duplicateCount > 1 ? 'Duplicate Smartsheet sync configurations require review.' : 'Smartsheet sync configuration is missing.' },
+          { status: duplicateCount > 1 ? 409 : 400 });
+      }
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 80);
+      const contactColumnId = sharedOrderRequestorColumnId(profile?.column_bindings);
+      if (!/^\d+$/.test(sheetId) || !contactColumnId) {
+        return Response.json({ success: false,
+          error: 'The Order Requestor name/email bindings must share one permanent Smartsheet CONTACT_LIST column ID.' }, { status: 409 });
+      }
+      const columnPath = `/sheets/${sheetId}/columns/${contactColumnId}`;
+      const before = (await smartsheetGet(columnPath, token)).body || {};
+      if (String(before?.id || '') !== contactColumnId || before?.type !== 'CONTACT_LIST') {
+        return Response.json({ success: false,
+          error: 'Smartsheet did not confirm the permanent Order Requestor CONTACT_LIST column. Nothing was changed.' }, { status: 409 });
+      }
+      const originalOptions = before.contactOptions;
+      const plan = planOrderRequestorContactAppend(originalOptions, users[0]);
+      if (plan.changed) {
+        try {
+          await smartsheetWriteNoTimeoutRetry('PUT', columnPath, token, {
+            type: 'CONTACT_LIST', contactOptions: plan.options,
+          });
+        } catch (error: any) {
+          // Timeout may mean Smartsheet applied the update. Do not resend a
+          // possibly successful column write; always verify by permanent ID.
+          if (!error?.timedOut) throw error;
+        }
+      }
+      const after = (await smartsheetGet(columnPath, token)).body || {};
+      const verifiedOptions = after?.contactOptions;
+      if (String(after?.id || '') !== contactColumnId || after?.type !== 'CONTACT_LIST' ||
+          !orderRequestorOptionsPreserved(plan.options, verifiedOptions)) {
+        return Response.json({ success: false, needs_review: true,
+          error: 'The Requestor dropdown contact update could not be verified. Review Smartsheet before retrying; no Order rows were changed.' },
+          { status: 502 });
+      }
+      return Response.json({
+        success: true, added: plan.changed, already_present: !plan.changed,
+        user_email: requestedEmail, sheet_id: sheetId, requestor_column_id: contactColumnId,
+      });
     }
 
     if (action === 'order_request_types_save') {
