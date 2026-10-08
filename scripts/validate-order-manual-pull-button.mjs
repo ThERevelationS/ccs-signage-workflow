@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { orderSaveSyncStatus } from "../src/components/orders/orderSaveSyncStatus.mjs";
+
+const page = readFileSync("src/pages/OrderForm.jsx", "utf8");
+const grid = readFileSync("src/components/orders/OrderSpreadsheet.jsx", "utf8");
+const helper = readFileSync("src/components/orders/orderSaveSync.js", "utf8");
+const backend = readFileSync("base44/functions/smartsheetSyncAction/entry.ts", "utf8");
+
+assert.match(page, /hasLocalOrderChanges = saveStatus\.hasUnsavedChanges \|\| saveStatus\.pendingSyncCount > 0/);
+assert.match(page, /hasLocalOrderChanges\s*\? spreadsheetRef\.current\?\.saveAndSync\?\.\(\)\s*: spreadsheetRef\.current\?\.pullFromSmartsheet\?\.\(\)/);
+assert.match(page, /hasLocalOrderChanges \? "Save & Sync" : "Sync"/);
+assert.match(page, /saveStatus\.isLoading/);
+assert.match(grid, /const pullFromSmartsheet = async \(\) =>/);
+assert.match(grid, /Object\.keys\(pendingChangesRef\.current\)\.length \|\| pendingSyncIdsRef\.current\.size/);
+assert.match(grid, /const pull = await pullOrdersFromSmartsheet\(\{ sessionToken \}\)/);
+assert.match(grid, /const reloaded = await loadData\(false\)/);
+assert.match(grid, /syncInFlightRef\.current = true/);
+assert.match(grid, /pullFromSmartsheet,\s*exportToExcel/);
+assert.match(grid, /if \(!showLoading && \(saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current \|\| Object\.keys\(pendingChangesRef\.current\)\.length > 0\)\) return false/);
+console.log("PASS Order button swaps modes based on unsaved or durable pending changes; pull guards in-flight data");
+
+assert.match(helper, /action: "pull_dataset",\s*dataset: "orders"/);
+assert.match(helper, /retryRateLimit: false/);
+assert.match(helper, /results\.length !== 1 \|\| results\[0\]\?\.dataset !== "orders"/);
+assert.match(helper, /results\[0\]\?\.direction !== "pull"/);
+assert.match(helper, /if \(results\[0\]\?\.skipped\)/);
+assert.match(backend, /allowedOrderManualPull = action === 'pull_dataset' && body\?\.dataset === 'orders' && Boolean\(actor\?\.id\)/);
+assert.match(backend, /action === 'pull_dataset' \|\| \(action === 'run_sync' && profile\.pull_enabled\)/);
+assert.match(backend, /dataset !== 'orders' && profile\.push_enabled/);
+console.log("PASS authorized manual Order pull uses existing permanent-ID pull and cannot trigger Sales or Order push");
+
+assert.equal(orderSaveSyncStatus({ isSyncing: true, isPulling: true }).text, "Checking Smartsheet…");
+assert.equal(orderSaveSyncStatus({ lastSynced: new Date(), lastSyncDirection: "pull" }).text, "Smartsheet checked");
+assert.equal(orderSaveSyncStatus({ lastSynced: new Date(), lastSyncDirection: "push" }).text, "Saved & synced");
+assert.equal(orderSaveSyncStatus({ pendingSyncCount: 1 }).kind, "pending");
+assert.equal(orderSaveSyncStatus({ hasUnsavedChanges: true }).kind, "unsaved");
+console.log("PASS pull vs push states and remaining durable pending queue are distinct");
