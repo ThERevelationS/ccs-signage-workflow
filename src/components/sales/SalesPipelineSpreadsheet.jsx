@@ -57,7 +57,7 @@ import {
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
-import { planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
+import { isWonOperationalTask, planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -886,7 +886,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // stage. Historical Smartsheet task text is never silently promoted into
     // a modern Won/Lost outcome during reads or unrelated field saves.
     if (
-      isCurrentPipelineOpportunity(currentWo)
+      (isCurrentPipelineOpportunity(currentWo) || isTrustedSalesOutcome(currentWo))
       // Confirmed closeout/reopening already includes an explicit status.
       && !Object.prototype.hasOwnProperty.call(nextChanges, "sales_status")
       && Object.prototype.hasOwnProperty.call(nextChanges, "current_task_description")
@@ -894,6 +894,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     ) {
       const taskPlan = planSalesTaskChange(currentWo, nextChanges.current_task_description);
       if (taskPlan.action === "confirm_neutral_close") {
+        if (isTrustedSalesOutcome(currentWo)) {
+          setQuickEditError("Reopen this Won/Lost opportunity before closing it without an outcome.");
+          return;
+        }
         setStatusTransition({ workOrder: currentWo, nextStatus: null, nextTask: taskPlan.task, kind: "neutral_close" });
         return;
       }
@@ -913,12 +917,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const salesStatusChanged = Object.prototype.hasOwnProperty.call(proposedUpdates, "sales_status")
       && currentSalesStatus !== resultingSalesStatus;
     if (currentIsTerminal && resultingIsTerminal && !salesStatusChanged) {
+      // Confirmed Won status stays authoritative while SIPs/WIP work proceeds.
+      // Quote, follow-up and closeout evidence remain protected. Lost remains locked.
+      const wonOperationalTask = currentSalesStatus === "won"
+        && isWonOperationalTask(proposedUpdates.current_task_description ?? currentWo.current_task_description);
+      const operationalFields = new Set(["current_task_description", "current_task_deadline", "current_task_assigned_to"]);
       const changedHistoricalField = Array.from(CLOSEOUT_HISTORICAL_FIELDS).find((fieldName) =>
-        Object.prototype.hasOwnProperty.call(proposedUpdates, fieldName)
+        !(wonOperationalTask && operationalFields.has(fieldName))
+        && Object.prototype.hasOwnProperty.call(proposedUpdates, fieldName)
         && JSON.stringify(currentWo[fieldName]) !== JSON.stringify(proposedUpdates[fieldName])
       );
       if (changedHistoricalField) {
-        setQuickEditError("Closed Won/Lost opportunities keep quote timing, follow-up, expected-close, closeout, and task-planning values as historical context. Reopen or change the outcome before editing those fields.");
+        setQuickEditError("Closed Won/Lost opportunities preserve historical quote timing, follow-up and closeout values. Won SIPs/WIP tasks may continue; reopen or change the outcome to edit protected sales history.");
         return;
       }
     }
