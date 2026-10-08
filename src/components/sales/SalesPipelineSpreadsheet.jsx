@@ -372,6 +372,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [taskDescriptions, setTaskDescriptions] = useState([
     { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "", color: "", opacity: 100, markOut: false },
     { text: "Complete Estimate for Review", page: "Estimating", color: "", opacity: 100, markOut: false },
+    { text: "Estimate Sent to Customer", page: "", color: "", opacity: 100, markOut: false, wip: false },
     { text: "WIP - Prepare/Submit Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
     { text: "WIP - Production/Fabrication", page: "Production", color: "", opacity: 100, markOut: false },
     { text: "Completed Sale", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
@@ -569,6 +570,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         : [
           { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "", color: "", opacity: 100, markOut: false },
           { text: "Complete Estimate for Review", page: "Estimating", color: "", opacity: 100, markOut: false },
+          { text: "Estimate Sent to Customer", page: "", color: "", opacity: 100, markOut: false, wip: false },
           { text: "WIP - Prepare/Submit Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
           { text: "WIP - Production/Fabrication", page: "Production", color: "", opacity: 100, markOut: false },
           { text: "Completed Sale", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
