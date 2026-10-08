@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const spreadsheet = readFileSync("src/components/orders/OrderSpreadsheet.jsx", "utf8");
+const workOrderOrders = readFileSync("src/components/orders/WorkOrderOrders.jsx", "utf8");
 const backend = readFileSync("base44/functions/smartsheetSyncAction/entry.ts", "utf8");
 const readiness = readFileSync("src/components/admin/smartsheetCreationReadinessModel.js", "utf8");
 const fields = readFileSync("base44/shared/smartsheetSyncFields.ts", "utf8");
@@ -15,7 +16,12 @@ assert.match(spreadsheet, /expected_setting_updated_date: requestTypeSetting\?\.
 assert.match(spreadsheet, /Manage Order Item Types/);
 assert.match(spreadsheet, /Smartsheet Request Type dropdown/);
 assert.doesNotMatch(spreadsheet, /localStorage\.setItem\('orderRequestTypes'/);
-console.log("PASS Order Form item types are shared, admin-managed and no longer browser-only");
+assert.match(workOrderOrders, /GlobalSettings\.filter\(\{ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY \}\)/);
+assert.match(workOrderOrders, /currentUser\?\.role === "admin"/);
+assert.match(workOrderOrders, /action: "order_request_types_save"/);
+assert.match(workOrderOrders, /Manage Order Item Types/);
+assert.doesNotMatch(workOrderOrders, /localStorage\.setItem\('orderRequestTypes'/);
+console.log("PASS both Order entry points use one shared admin-managed item-type list instead of browser-only storage");
 
 assert.match(backend, /if \(action === 'order_request_types_save'\)/);
 assert.match(backend, /adminActor\?\.role !== 'admin'/);
