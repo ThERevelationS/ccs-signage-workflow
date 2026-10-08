@@ -188,4 +188,9 @@ check("standalone destructive actions use an intentional phone row", () => {
   assert.ok(destructivePhoneRows.some(section => section.includes("deleteChecklistItem(stDisplayItem.id)")));
 });
 
+check("deep sub-template detail tasks can wrap on phones", () => {
+  assert.match(source, /className={\`flex flex-wrap sm:flex-nowrap items-center gap-1 bg-orange-50 p-0\.5 rounded group\/stdtask/);
+  assert.equal(source.includes("className={`flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask"), false);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
