@@ -67,9 +67,9 @@ check(spreadsheet.includes('field === "sales_status" ? salesStageDisplayValue(wo
   "Saved custom status filters evaluate the trusted display stage.");
 check(spreadsheet.includes('sortConfig.key === "sales_status" ? salesStageDisplayValue(viewItem)'),
   "Header selected-value filters evaluate the trusted display stage.");
-check(spreadsheet.includes('if (unverifiedStage && currentStatus === nextStatus)') &&
-      spreadsheet.includes("sales_stage_changed_at: classificationStamp"),
-  "Explicitly confirming the same raw Lead stamps the first verified stage baseline.");
+check(!spreadsheet.includes("requestSalesStatusChange") &&
+      !spreadsheet.includes("sales_stage_changed_at: classificationStamp"),
+  "No independent status confirmation can fabricate a stage timestamp; unresolved legacy timing remains visible.");
 check(spreadsheet.includes('const stageKey = salesStageDisplayValue(wo)') &&
       spreadsheet.includes('? "Needs Stage"'),
   "Insights stage breakdown separates unverified imports from Lead.");
