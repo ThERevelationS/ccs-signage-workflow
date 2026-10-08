@@ -409,6 +409,11 @@
       ],
       "default": "lead"
     },
+    "sales_neutral_closed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Explicit user-confirmed neutral Sales archive timestamp for Closed - Did not Lose. Never counted as Won or Lost; no legacy task inference."
+    },
     "lead_source": {
       "type": "string"
     },
