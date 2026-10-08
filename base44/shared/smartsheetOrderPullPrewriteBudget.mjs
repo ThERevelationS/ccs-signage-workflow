@@ -26,3 +26,28 @@ export function orderPullPrewriteBudget({
   }
   return { allowed: true, elapsedMs, budgetMs };
 }
+
+// After any business-field writes, an expired run cannot claim that Orders
+// were unchanged. Abort at safe operation boundaries and let the coordinator
+// mark the attempted pull as requiring review. This is a conservative
+// application deadline, not a platform timeout guarantee.
+export const ORDER_PULL_POSTWRITE_BUDGET_MS = 4 * 60 * 1000;
+
+export function assertOrderPullContinuationBudget({
+  startedAtMs,
+  nowMs,
+  stage,
+  budgetMs = ORDER_PULL_POSTWRITE_BUDGET_MS,
+} = {}) {
+  const valid = Number.isFinite(startedAtMs) &&
+    Number.isFinite(nowMs) && nowMs >= startedAtMs &&
+    Number.isFinite(budgetMs) && budgetMs > 0;
+  if (!valid || nowMs - startedAtMs >= budgetMs) {
+    throw new Error(
+      `Order pull stopped before ${String(stage || 'continuing')}: time budget ` +
+      'exhausted or unverified. Earlier Base44 updates may already have been applied. ' +
+      'Sync snapshots may be incomplete; review the pull before retrying.',
+    );
+  }
+  return { elapsedMs: nowMs - startedAtMs, budgetMs };
+}
