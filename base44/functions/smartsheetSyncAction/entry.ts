@@ -2061,7 +2061,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const actor = await authenticateSignShopSession(base44, body?.session_token);
       // Save & Sync is intentionally available to any currently authorized
       // user, but it can only push exact saved record IDs for its dataset.
-      const allowedOrderManualPull = action === 'pull_dataset' && body?.dataset === 'orders';
+      const allowedOrderManualPull = action === 'pull_dataset' && body?.dataset === 'orders' && Boolean(actor?.id);
       if (actor?.role !== 'admin' && !['push_saved_orders', 'push_saved_sales'].includes(action) && !allowedOrderManualPull) {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
