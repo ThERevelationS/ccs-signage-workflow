@@ -27,7 +27,7 @@ try {
   await writeFile(path.join(scratch, "mockBase44.js"), [
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 1;',
-    'const state = {actions:[],startPermission:true,savePermission:true,loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
+    'const state = {actions:[],delayNextBootstrap:false,bootstrapWaiting:false,releaseBootstrap:null,startPermission:true,savePermission:true,loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
     'window.__fleetMechanicWorkFixture = state;',
     'const work = () => clone(state.work);',
     'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{start:state.startPermission,save:state.savePermission,estimates:false}},active_work_orders:state.scopeRemoved?[]:[work()],recent_completed:[],equipment:state.scopeRemoved?[]:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
@@ -43,7 +43,7 @@ try {
     'export const base44 = {functions:{async invoke(name,payload){',
     ' if(name!=="fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
-    ' if(payload.action==="bootstrap") return {data:bootstrap()};',
+    ' if(payload.action==="bootstrap"){ const snapshot=bootstrap(); if(state.delayNextBootstrap){ state.delayNextBootstrap=false; state.bootstrapWaiting=true; await new Promise(resolve=>{ state.releaseBootstrap=resolve; }); state.bootstrapWaiting=false; } return {data:snapshot}; }', 
     ' if(payload.action==="start"){ if(!state.startPermission)return {data:{error:"This mechanic link is not allowed to perform that action."}}; applyStart(payload); if(state.postCommitStart403){state.postCommitStart403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};} if(state.loseStartAck){state.loseStartAck=false;throw new Error("Synthetic lost Start Work acknowledgement");} return {data:{success:true,request_id:payload.request_id,work_order:work()}}; }',
     ' if(payload.action==="save"){',
     '   if(!state.savePermission)return {data:{error:"This mechanic link is not allowed to perform that action."}};',
@@ -433,7 +433,64 @@ try {
     assert.deepEqual(await actionNames(page),["bootstrap","bootstrap","bootstrap"],"No mechanic mutation may be replayed");
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/12 PASS");
+
+  await run("Desktop: older bootstrap snapshot cannot overwrite applied Save recovery",1440,async page => {
+    await page.getByLabel("Add mechanic note").fill("Newer committed overlapping note");
+    await page.evaluate(() => { const s=window.__fleetMechanicWorkFixture; s.delayNextBootstrap=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.loseSaveAck=true; });
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request/i).waitFor();
+    await page.getByText("Newer committed overlapping note").waitFor();
+    await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseBootstrap());
+    await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.waitForTimeout(120);
+    assert.equal(await page.getByText("Newer committed overlapping note").count(),1,"Older refresh must not remove newer saved notes");
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isEnabled(),true);
+    assert.deepEqual(await actionNames(page),["bootstrap","bootstrap","save","mutation_status"]);
+    const state=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal((state.work.notes.match(/Newer committed overlapping note/g)||[]).length,1,"Save must not be replayed");
+  });
+
+  await run("Mobile: stale bootstrap cannot clear uncertain Start or bypass removed access",390,async page => {
+    await page.evaluate(() => { const s=window.__fleetMechanicWorkFixture; s.delayNextBootstrap=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.loseStartAck=true;
+      s.failNextMutationStatus=true;
+    });
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.startPermission=false;
+      s.releaseBootstrap();
+    });
+    await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.waitForTimeout(120);
+    assert.equal(await recovery.count(),1,"Older refresh cannot release uncertain mutation");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/not allowed to verify that action/i).waitFor();
+    assert.equal(await recovery.count(),1,"Removed permission must deny status check");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===3);
+    assert.equal(await recovery.count(),1,"Permission restoration cannot itself settle recovery");
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Work started\. CCS Fleet confirmed the interrupted request/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isEnabled(),true);
+    const actions=await actionNames(page);
+    assert.equal(actions.filter(name=>name==="start").length,1,"Start must never replay");
+    assert.equal(actions.filter(name=>name==="mutation_status").length,3);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/14 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
