@@ -48,6 +48,7 @@ const SALES_HISTORY_FIELDS = new Set([
   "current_task_deadline",
   "current_task_assigned_to",
   "in_pipeline",
+  "sales_neutral_closed_at",
 ]);
 
 const FIELD_LABELS = {
@@ -66,6 +67,7 @@ const FIELD_LABELS = {
   current_task_deadline: "Task deadline",
   current_task_assigned_to: "Task owner",
   in_pipeline: "Current Pipeline membership",
+  sales_neutral_closed_at: "Neutral closure recorded",
 };
 
 const money = (value) => new Intl.NumberFormat("en-US", {
@@ -103,6 +105,7 @@ const historyTitle = (entry) => {
   if (entry.field_name === "date_estimate_sent") return "Quote sent date changed";
   if (entry.field_name === "follow_up_date") return "Follow-up schedule changed";
   if (entry.field_name === "in_pipeline") return "Current Pipeline membership changed";
+  if (entry.field_name === "sales_neutral_closed_at") return "Neutral closure confirmed";
   return `${FIELD_LABELS[entry.field_name] || entry.field_name} changed`;
 };
 
