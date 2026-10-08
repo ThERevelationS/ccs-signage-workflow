@@ -32,7 +32,9 @@ export function classifyOrderPullBusinessReadback(expectedWrites = [], actualRec
         String(record.smartsheet_sheet_id ?? '').trim() !== expectedSheet ||
         String(record.smartsheet_row_id ?? '').trim() !== expectedRow ||
         record.smartsheet_pending_local_sync === true ||
-        !orderPulledFieldsUnchanged(record, expected?.fields)) {
+        !expected?.fields || typeof expected.fields !== 'object' ||
+        Array.isArray(expected.fields) || Object.keys(expected.fields).length === 0 ||
+        !orderPulledFieldsUnchanged(record, expected.fields)) {
       failures.push({ id, reason: 'business_fields_or_permanent_identity_not_verified' });
       continue;
     }
