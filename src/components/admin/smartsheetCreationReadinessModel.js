@@ -1,8 +1,6 @@
 import { normalizeCustomerText } from "./smartsheetCustomerResolutionModel.js";
 import { buildCustomerResolutionReviewGroups } from "./smartsheetCustomerResolutionReviewModel.js";
 
-const ORDER_REQUEST_TYPES = new Set(["substrate", "vinyl", "supplies", "other"]);
-
 function cleanText(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
 }
@@ -42,12 +40,6 @@ function requiredFieldBlockers(row, dataset) {
     }
     if (!cleanText(values.request_type)) {
       blockers.push(blocker("missing_request_type", "Request Type missing", "Order requires Request Type."));
-    } else if (!ORDER_REQUEST_TYPES.has(cleanText(values.request_type).toLowerCase())) {
-      blockers.push(blocker(
-        "invalid_request_type",
-        "Request Type invalid",
-        `Expected Substrate, Vinyl, Supplies, or Other; found "${cleanText(values.request_type)}".`,
-      ));
     }
     if (!cleanText(values.description)) {
       blockers.push(blocker("missing_description", "Description missing", "Order requires Description."));
@@ -223,7 +215,7 @@ export function buildSmartsheetCreationReadiness({
     if (item.blockers.some((entry) => ["customer_review_required", "customer_review_missing", "customer_name_missing", "missing_customer"].includes(entry.code))) {
       acc.blocked_customer += 1;
     }
-    if (item.blockers.some((entry) => ["missing_request_type", "invalid_request_type", "missing_description"].includes(entry.code))) {
+    if (item.blockers.some((entry) => ["missing_request_type", "missing_description"].includes(entry.code))) {
       acc.blocked_required_fields += 1;
     }
     if (item.blockers.some((entry) => ["already_linked", "existing_record_candidate", "existing_record_ambiguous"].includes(entry.code))) {
