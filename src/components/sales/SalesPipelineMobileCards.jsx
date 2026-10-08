@@ -8,7 +8,7 @@ import { getActionableSalesAttentionItems } from "@/components/sales/salesAttent
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
-import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { salesStageDisplayLabel, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -32,13 +32,13 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered, currentSalesOwnerLabel = "", leadSources = [], users = [] }) {
+export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onCompleteFollowUp, isRegistered, currentSalesOwnerLabel = "", leadSources = [], users = [] }) {
   return (
     <div className="space-y-2 p-1.5">
       {workOrders.map((wo) => {
-        const unverifiedStage = isUnverifiedSmartsheetSalesStage(wo);
         const stageDisplayValue = salesStageDisplayValue(wo);
-        const status = unverifiedStage
+        const stageDisplayLabel = salesStageDisplayLabel(wo);
+        const status = stageDisplayValue === "needs_stage"
           ? { value: "needs_stage", label: "Needs Stage", color: "bg-violet-100 text-violet-800" }
           : stageDisplayValue === "closed_neutral"
             ? { value: "closed_neutral", label: "Closed (Neutral)", color: "bg-slate-100 text-slate-700" }
@@ -81,18 +81,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 </button>
               </div>
               {status && (
-                <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-                  <Select value={stageDisplayValue} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered || stageDisplayValue === "closed_neutral"}>
-                    <SelectTrigger className={`h-11 w-[112px] border-0 text-xs font-medium ${status.color}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
-                      {stageDisplayValue === "closed_neutral" && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
-                      {SALES_STATUSES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <span className={`flex-shrink-0 rounded-md px-2.5 py-2 text-xs font-semibold ${status.color}`}
+                  aria-label={`Sales Status: ${stageDisplayLabel}`}
+                  title="Read-only Sales Status. Change Task Description in Opportunity Detail to move stages.">
+                  {stageDisplayLabel}
+                </span>
               )}
             </div>
 
