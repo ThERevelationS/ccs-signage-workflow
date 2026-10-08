@@ -572,6 +572,7 @@ try {
     await page.getByRole("button",{name:"Save Progress"}).click();
     await page.waitForFunction(() => window.__fleetMechanicWorkFixture.saveAckWaiting);
     await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseBootstrap());
+    await page.getByText("Single authorized overlapping note").waitFor();
     await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.bootstrapWaiting);
     await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseSaveAck());
     await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.saveAckWaiting);
