@@ -367,9 +367,50 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     return {};
   };
 
-  const saveRequestTypes = (types) => {
-    setRequestTypes(types);
-    localStorage.setItem('orderRequestTypes', JSON.stringify(types));
+  const saveRequestTypes = async (types) => {
+    if (currentUser?.role !== "admin") {
+      setRequestTypesError("Admin access is required to change Order item types.");
+      return false;
+    }
+    const normalized = normalizeOrderRequestTypes(types);
+    if (!normalized.length) {
+      setRequestTypesError("Keep at least one Order item type.");
+      return false;
+    }
+    if (!sessionToken) {
+      setRequestTypesError("Your Sign Shop session expired. Sign in again before changing Order item types.");
+      return false;
+    }
+
+    setRequestTypesSaving(true);
+    setRequestTypesError("");
+    try {
+      const response = await base44.functions.invoke("smartsheetSyncAction", {
+        action: "order_request_types_save",
+        session_token: sessionToken,
+        request_types: normalized,
+        expected_setting_id: requestTypeSetting?.id || "",
+        expected_setting_updated_date: requestTypeSetting?.updated_date || "",
+      });
+      const data = response?.data || response;
+      if (!data?.success) throw new Error(data?.error || "Order item types could not be saved.");
+      const verifiedTypes = normalizeOrderRequestTypes(data?.request_types);
+      if (!verifiedTypes.length) throw new Error("The saved Order item-type list could not be verified.");
+      setRequestTypes(verifiedTypes);
+      setRequestTypeSetting(data?.setting || null);
+      localStorage.removeItem('orderRequestTypes');
+      return true;
+    } catch (error) {
+      setRequestTypesError(
+        error?.response?.data?.error ||
+        error?.data?.error ||
+        error?.message ||
+        "Order item types could not be saved to Base44 and Smartsheet safely."
+      );
+      return false;
+    } finally {
+      setRequestTypesSaving(false);
+    }
   };
 
   const saveVendors = (vendorList) => {
@@ -377,15 +418,22 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     localStorage.setItem('orderVendors', JSON.stringify(vendorList));
   };
 
-  const addRequestType = () => {
-    if (newRequestType.trim() && !requestTypes.includes(newRequestType.trim())) {
-      saveRequestTypes([...requestTypes, newRequestType.trim()]);
-      setNewRequestType("");
+  const addRequestType = async () => {
+    const label = String(newRequestType || "").trim().replace(/\s+/g, " ").slice(0, 120);
+    if (!label) return;
+    if (requestTypes.some((type) => type.toLowerCase() === label.toLowerCase())) {
+      setRequestTypesError(`"${label}" is already in the Order item-type list.`);
+      return;
     }
+    if (await saveRequestTypes([...requestTypes, label])) setNewRequestType("");
   };
 
-  const removeRequestType = (type) => {
-    saveRequestTypes(requestTypes.filter(t => t !== type));
+  const removeRequestType = async (type) => {
+    if (requestTypes.length <= 1) {
+      setRequestTypesError("Keep at least one Order item type.");
+      return;
+    }
+    await saveRequestTypes(requestTypes.filter(t => t !== type));
   };
 
   const addVendor = () => {
@@ -497,8 +545,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
             <div className="w-24 px-2 py-1.5 border-r">
               <div className="flex items-center gap-1">
                 Type
-                {isRegistered && (
-                  <button onClick={() => setEditingRequestTypes(true)} className="hover:bg-gray-200 rounded p-0.5">
+                {currentUser?.role === "admin" && (
+                  <button
+                    onClick={() => { setRequestTypesError(""); setEditingRequestTypes(true); }}
+                    className="hover:bg-gray-200 rounded p-0.5"
+                    aria-label="Manage Order item types"
+                    title="Manage Order item types"
+                  >
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
