@@ -43,7 +43,7 @@ try {
     'export const base44 = {functions:{async invoke(name,payload){',
     ' if(name!=="fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
-    ' if(payload.action==="bootstrap"){ const snapshot=bootstrap(); if(state.delayNextBootstrap){ state.delayNextBootstrap=false; state.bootstrapWaiting=true; await new Promise(resolve=>{ state.releaseBootstrap=resolve; }); state.bootstrapWaiting=false; } return {data:snapshot}; }', 
+    ' if(payload.action==="bootstrap"){ const snapshot=bootstrap(); if(state.delayNextBootstrap){ state.delayNextBootstrap=false; state.bootstrapWaiting=true; await new Promise(resolve=>{ state.releaseBootstrap=resolve; }); state.bootstrapWaiting=false; } return {data:snapshot}; }',
     ' if(payload.action==="start"){ if(!state.startPermission)return {data:{error:"This mechanic link is not allowed to perform that action."}}; applyStart(payload); if(state.postCommitStart403){state.postCommitStart403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};} if(state.loseStartAck){state.loseStartAck=false;throw new Error("Synthetic lost Start Work acknowledgement");} return {data:{success:true,request_id:payload.request_id,work_order:work()}}; }',
     ' if(payload.action==="save"){',
     '   if(!state.savePermission)return {data:{error:"This mechanic link is not allowed to perform that action."}};',
