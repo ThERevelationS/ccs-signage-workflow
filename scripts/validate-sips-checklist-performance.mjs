@@ -150,10 +150,16 @@ check("nested checklist indentation preserves phone width", () => {
 
 check("inline nested add controls use reduced phone indentation", () => {
   assert.match(source, /className="ml-1 sm:ml-4 mt-0\.5 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-yellow-50/);
-  assert.match(source, /className="ml-1 sm:ml-4 mt-2 flex items-center gap-2 bg-orange-50/);
+  assert.match(source, /className="ml-1 sm:ml-4 mt-2 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-2 bg-orange-50/);
   assert.match(source, /className="ml-1 sm:ml-3 mt-0\.5 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-yellow-50/);
-  assert.match(source, /className="ml-1 sm:ml-4 mt-1 flex items-center gap-1 bg-orange-50/);
-  assert.equal((source.match(/className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"/g) || []).length, 2);
+  assert.match(source, /className="ml-1 sm:ml-4 mt-1 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-orange-50/);
+});
+
+check("inline add task and detail forms reserve a full phone input row", () => {
+  assert.equal((source.match(/className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"/g) || []).length, 8);
+  assert.match(source, /className="flex flex-wrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400"/);
+  assert.match(source, /className="flex flex-wrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-1\.5 rounded border-l-4 border-orange-400"/);
+  assert.match(source, /className="flex flex-wrap items-center justify-end sm:justify-start gap-1"/);
 });
 
 check("inline editors reserve a full phone row for text and actions", () => {
