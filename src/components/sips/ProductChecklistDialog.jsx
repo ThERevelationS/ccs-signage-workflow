@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -849,6 +849,7 @@ export default function ProductChecklistDialog({
   const [editingProductNameText, setEditingProductNameText] = useState("");
   const [focusedNeedsInputId, setFocusedNeedsInputId] = useState(null);
   const [checklistSearchQuery, setChecklistSearchQuery] = useState("");
+  const checklistSearchInputRef = useRef(null);
   const [checklistSearchIndex, setChecklistSearchIndex] = useState(-1);
   const [focusedSearchId, setFocusedSearchId] = useState(null);
 
@@ -1291,6 +1292,7 @@ export default function ProductChecklistDialog({
     setChecklistSearchQuery("");
     setChecklistSearchIndex(-1);
     setFocusedSearchId(null);
+    checklistSearchInputRef.current?.focus();
   };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
@@ -1408,6 +1410,7 @@ export default function ProductChecklistDialog({
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                   <Input
+                    ref={checklistSearchInputRef}
                     value={checklistSearchQuery}
                     onChange={(e) => {
                       setChecklistSearchQuery(e.target.value);
@@ -1418,6 +1421,9 @@ export default function ProductChecklistDialog({
                       if (e.key === "Enter") {
                         e.preventDefault();
                         navigateChecklistSearch(e.shiftKey ? -1 : 1);
+                      } else if (e.key === "Escape" && checklistSearchQuery) {
+                        e.preventDefault();
+                        clearChecklistSearch();
                       }
                     }}
                     placeholder="Find product, checklist item, detail, task, status, or assignee…"
