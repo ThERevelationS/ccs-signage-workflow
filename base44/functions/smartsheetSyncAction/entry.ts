@@ -3148,6 +3148,19 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                   }, runStartedAt);
                   if (!saved) throw new Error('Order pull lost progress checkpoint ownership. No further pull writes are allowed.');
                 },
+                reportOrderPullProgress: async ({ phase, current, total, itemLabel, detail }) => {
+                  const saved = await saveSyncStatusForRun(base44, {
+                    status: 'running', action,
+                    total_steps: steps.length, completed_steps: completedSteps,
+                    current_step_label: stepLabel, results,
+                    progress_dataset: 'orders', progress_direction: 'pull', progress_phase: phase,
+                    progress_current: current, progress_total: total,
+                    progress_item_label: cleanText(itemLabel, 220),
+                    progress_detail: cleanText(detail, 260),
+                    progress_updated_at: new Date().toISOString(),
+                  }, runStartedAt);
+                  if (!saved) throw new Error('Order pull lost its progress checkpoint before completion. Further writes are blocked.');
+                },
               } : {}),
               ...(action === 'pull_dataset' && dataset === 'sales' ? { recordIds: body.work_order_ids || [] } : {}),
             });
