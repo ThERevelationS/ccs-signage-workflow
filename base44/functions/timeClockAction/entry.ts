@@ -812,9 +812,12 @@ async function canonicalLateClockInPayrollProvenance({
       }
     }
 
-    const priorGeneration = payrollGenerationContext?.prior_generation || null;
+    const priorGenerations = Array.isArray(payrollGenerationContext?.prior_generations)
+      ? payrollGenerationContext.prior_generations
+      : payrollGenerationContext?.prior_generation ? [payrollGenerationContext.prior_generation] : [];
     const payrollPeriodId = String(payrollGenerationContext?.period_id || '');
-    let payrollGenerationBridge = null;
+    const payrollGenerationBridges = [];
+    const usedPriorGenerationRequests = new Set();
     const snapshotWithoutPayrollVersion = (snapshot: any) => {
       const comparable = { ...(snapshot || {}) };
       delete comparable.updated_date;
@@ -824,56 +827,69 @@ async function canonicalLateClockInPayrollProvenance({
       return comparable;
     };
     const resolvePayrollGenerationBridge = async (cursorSnapshot: any) => {
-      if (!priorGeneration || !payrollPeriodId || payrollGenerationBridge) return null;
-      if (Number(priorGeneration.snapshot_version || 0) < 27 ||
-          priorGeneration.snapshot_active !== false ||
-          !String(priorGeneration.request_id || '') ||
-          !String(priorGeneration.invalidated_by_reopen_request_id || '')) return null;
-      const priorRows = Array.isArray(priorGeneration.shift_manifest) ? priorGeneration.shift_manifest : [];
-      const priorMatches = priorRows.filter((row: any) => String(row.id || '') === entryId);
-      if (priorMatches.length !== 1) return null;
-      const priorRow = priorMatches[0];
-      const manifestHash = await payloadHash(priorRows);
-      if (!String(priorGeneration.shift_manifest_hash || '') ||
-          !constantTimeEqual(String(priorGeneration.shift_manifest_hash), manifestHash)) return null;
-      if (
-        asEmail(priorRow.user_email) !== userEmail ||
-        String(priorRow.clock_in || '') !== String(cursorSnapshot?.clock_in || '') ||
-        String(priorRow.clock_out || '') !== String(cursorSnapshot?.clock_out || '') ||
-        Number(priorRow.total_hours || 0) !== Number(cursorSnapshot?.total_hours || 0) ||
-        String(priorRow.approval_status || '') !== String(cursorSnapshot?.approval_status || '') ||
-        String(priorRow.approval_request_id || '') !== String(cursorSnapshot?.approval_request_id || '') ||
-        String(priorRow.late_clock_in_provenance?.claimed_clock_in || '') !== claimedClockIn ||
-        String(priorRow.late_clock_in_provenance?.payroll_clock_in_at_finalization || '') !== String(cursorSnapshot?.clock_in || '')
-      ) return null;
-      const priorApproval = eligibleApprovalTransitions.filter((row: any) =>
-        String(row.id || '') === String(priorRow.approval_evidence?.id || '') &&
-        String(row.request_id || '') === String(priorRow.approval_request_id || '') &&
-        String(row.details?.decision || '') === 'approve'
-      );
-      if (priorApproval.length !== 1) return null;
-      if (!constantTimeEqual(
-        await payloadHash(snapshotWithoutPayrollVersion(priorApproval[0].details?.updated || {})),
-        await payloadHash(snapshotWithoutPayrollVersion(cursorSnapshot)),
-      )) return null;
-      const reopenRows = await auditEntity.filter({
-        action: 'pay_period_status',
-        request_id: String(priorGeneration.invalidated_by_reopen_request_id || ''),
-      }).catch(() => null);
-      if (!Array.isArray(reopenRows) || reopenRows.length !== 1) return null;
-      const reopenAudit = reopenRows[0];
-      if (
-        !['confirmed', 'recovered'].includes(String(reopenAudit.outcome || '')) ||
-        String(reopenAudit.actor_role || '') !== 'admin' ||
-        String(reopenAudit.authentication_method || '') !== 'session' ||
-        asEmail(reopenAudit.actor_email) !== asEmail(priorGeneration.invalidated_by) ||
-        String(priorGeneration.invalidated_by_role || '') !== 'admin' ||
-        String(priorGeneration.invalidation_authentication_method || '') !== 'session' ||
-        String(reopenAudit.details?.decision || '') !== 'reopen' ||
-        String(reopenAudit.details?.pay_period_id || '') !== payrollPeriodId ||
-        String(reopenAudit.details?.note || '') !== String(priorGeneration.invalidation_reason || '')
-      ) return null;
-      payrollGenerationBridge = {
+      if (!priorGenerations.length || !payrollPeriodId) return null;
+      const candidates = [];
+      for (const priorGeneration of [...priorGenerations].reverse()) {
+        const generationRequestId = String(priorGeneration?.request_id || '');
+        if (!generationRequestId || usedPriorGenerationRequests.has(generationRequestId)) continue;
+        if (Number(priorGeneration.snapshot_version || 0) < 27 ||
+            priorGeneration.snapshot_active !== false ||
+            !String(priorGeneration.invalidated_by_reopen_request_id || '')) continue;
+        const priorRows = Array.isArray(priorGeneration.shift_manifest) ? priorGeneration.shift_manifest : [];
+        const priorMatches = priorRows.filter((row: any) => String(row.id || '') === entryId);
+        if (priorMatches.length !== 1) continue;
+        const priorRow = priorMatches[0];
+        const manifestHash = await payloadHash(priorRows);
+        if (!String(priorGeneration.shift_manifest_hash || '') ||
+            !constantTimeEqual(String(priorGeneration.shift_manifest_hash), manifestHash)) continue;
+        if (
+          asEmail(priorRow.user_email) !== userEmail ||
+          String(priorRow.clock_in || '') !== String(cursorSnapshot?.clock_in || '') ||
+          String(priorRow.clock_out || '') !== String(cursorSnapshot?.clock_out || '') ||
+          Number(priorRow.total_hours || 0) !== Number(cursorSnapshot?.total_hours || 0) ||
+          String(priorRow.approval_status || '') !== String(cursorSnapshot?.approval_status || '') ||
+          String(priorRow.approval_request_id || '') !== String(cursorSnapshot?.approval_request_id || '') ||
+          String(priorRow.late_clock_in_provenance?.claimed_clock_in || '') !== claimedClockIn ||
+          String(priorRow.late_clock_in_provenance?.payroll_clock_in_at_finalization || '') !== String(cursorSnapshot?.clock_in || '')
+        ) continue;
+        const priorApproval = eligibleApprovalTransitions.filter((row: any) =>
+          String(row.id || '') === String(priorRow.approval_evidence?.id || '') &&
+          String(row.request_id || '') === String(priorRow.approval_request_id || '') &&
+          String(row.details?.decision || '') === 'approve'
+        );
+        if (priorApproval.length !== 1) continue;
+        if (!constantTimeEqual(
+          await payloadHash(snapshotWithoutPayrollVersion(priorApproval[0].details?.updated || {})),
+          await payloadHash(snapshotWithoutPayrollVersion(cursorSnapshot)),
+        )) continue;
+        const reopenRows = await auditEntity.filter({
+          action: 'pay_period_status',
+          request_id: String(priorGeneration.invalidated_by_reopen_request_id || ''),
+        }).catch(() => null);
+        if (!Array.isArray(reopenRows) || reopenRows.length !== 1) continue;
+        const reopenAudit = reopenRows[0];
+        if (
+          !['confirmed', 'recovered'].includes(String(reopenAudit.outcome || '')) ||
+          String(reopenAudit.actor_role || '') !== 'admin' ||
+          String(reopenAudit.authentication_method || '') !== 'session' ||
+          asEmail(reopenAudit.actor_email) !== asEmail(priorGeneration.invalidated_by) ||
+          String(priorGeneration.invalidated_by_role || '') !== 'admin' ||
+          String(priorGeneration.invalidation_authentication_method || '') !== 'session' ||
+          String(reopenAudit.details?.decision || '') !== 'reopen' ||
+          String(reopenAudit.details?.pay_period_id || '') !== payrollPeriodId ||
+          String(reopenAudit.details?.note || '') !== String(priorGeneration.invalidation_reason || '')
+        ) continue;
+        candidates.push({
+          priorGeneration,
+          priorRow,
+          priorApproval: priorApproval[0],
+          reopenAudit,
+        });
+      }
+      if (candidates.length !== 1) return null;
+      const { priorGeneration, priorRow, priorApproval, reopenAudit } = candidates[0];
+      usedPriorGenerationRequests.add(String(priorGeneration.request_id || ''));
+      payrollGenerationBridges.unshift({
         period_id: payrollPeriodId,
         prior_generation_request_id: String(priorGeneration.request_id || ''),
         prior_generation_shift_manifest_hash: String(priorGeneration.shift_manifest_hash || ''),
@@ -897,8 +913,8 @@ async function canonicalLateClockInPayrollProvenance({
           invalidated_by_reopen_request_id: priorGeneration.invalidated_by_reopen_request_id,
           invalidation_reason: priorGeneration.invalidation_reason,
         }),
-      };
-      return priorApproval[0].details?.updated || null;
+      });
+      return priorApproval.details?.updated || null;
     };
 
     const correctionChain = [terminal];
@@ -968,7 +984,12 @@ async function canonicalLateClockInPayrollProvenance({
       evidence_hash: terminalEvidence.evidence_hash,
       ...(correctionEvidenceChain.length > 1 ? { correction_chain: correctionEvidenceChain } : {}),
       ...(reviewTransitionEvidence.length ? { review_transition_chain: reviewTransitionEvidence } : {}),
-      ...(payrollGenerationBridge ? { payroll_generation_bridge: payrollGenerationBridge } : {}),
+      ...(payrollGenerationBridges.length ? {
+        payroll_generation_bridge: payrollGenerationBridges[payrollGenerationBridges.length - 1],
+      } : {}),
+      ...(payrollGenerationBridges.length > 1 ? {
+        payroll_generation_bridge_chain: payrollGenerationBridges,
+      } : {}),
     };
   }
 
@@ -3634,7 +3655,7 @@ Deno.serve(async (req) => {
                 auditEntity, punchExceptionEntity, requireCurrentResolution: false,
                 payrollGenerationContext: {
                   period_id: period.id,
-                  prior_generation: index > 0 ? history[index - 1] : null,
+                  prior_generations: history.slice(0, index),
                 },
                 expectedProvenance: row.late_clock_in_provenance || null,
               });
@@ -3807,7 +3828,7 @@ Deno.serve(async (req) => {
               entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution: true,
               payrollGenerationContext: {
                 period_id: period.id,
-                prior_generation: history.length ? history[history.length - 1] : null,
+                prior_generations: history,
               },
               expectedProvenance: current.shift_manifest?.find((row: any) => String(row.id || '') === String(entry.id || ''))?.late_clock_in_provenance || null,
             });
@@ -4138,7 +4159,7 @@ Deno.serve(async (req) => {
                   entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution: true,
                   payrollGenerationContext: {
                     period_id: period.id,
-                    prior_generation: finalizedHistory.length ? finalizedHistory[finalizedHistory.length - 1] : null,
+                    prior_generations: finalizedHistory,
                   },
                 });
                 if (lateClockIn.applicable && !lateClockIn.provenance) {
@@ -4560,7 +4581,7 @@ Deno.serve(async (req) => {
               auditEntity, punchExceptionEntity, requireCurrentResolution: true,
               payrollGenerationContext: {
                 period_id: period.id,
-                prior_generation: finalizationHistory.length ? finalizationHistory[finalizationHistory.length - 1] : null,
+                prior_generations: finalizationHistory,
               },
             });
             if (lateClockIn.applicable && !lateClockIn.provenance) {
