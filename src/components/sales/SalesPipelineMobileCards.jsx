@@ -40,7 +40,9 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const stageDisplayValue = salesStageDisplayValue(wo);
         const status = unverifiedStage
           ? { value: "needs_stage", label: "Needs Stage", color: "bg-violet-100 text-violet-800" }
-          : SALES_STATUSES.find(s => s.value === stageDisplayValue);
+          : stageDisplayValue === "closed_neutral"
+            ? { value: "closed_neutral", label: "Closed (Neutral)", color: "bg-slate-100 text-slate-700" }
+            : SALES_STATUSES.find(s => s.value === stageDisplayValue);
         const deadline = wo.current_task_deadline ? safeDate(wo.current_task_deadline) : null;
         const followUp = wo.follow_up_date ? safeDate(wo.follow_up_date) : null;
         const expectedClose = wo.expected_close_date ? safeDate(wo.expected_close_date) : null;
@@ -80,12 +82,13 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               </div>
               {status && (
                 <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-                  <Select value={stageDisplayValue} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered}>
+                  <Select value={stageDisplayValue} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered || stageDisplayValue === "closed_neutral"}>
                     <SelectTrigger className={`h-11 w-[112px] border-0 text-xs font-medium ${status.color}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
+                      {stageDisplayValue === "closed_neutral" && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
                       {SALES_STATUSES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
