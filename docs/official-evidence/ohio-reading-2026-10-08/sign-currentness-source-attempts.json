@@ -25,5 +25,40 @@
     "attempted_at": "2026-10-08T16:24:27.224463+00:00",
     "retained": false,
     "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.03.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64485",
+    "attempted_at": "2026-10-08T16:25:38.525831+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.04.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64493",
+    "attempted_at": "2026-10-08T16:25:38.593258+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.10.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64534",
+    "attempted_at": "2026-10-08T16:25:38.641711+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.13.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64555",
+    "attempted_at": "2026-10-08T16:25:38.714757+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.20.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64658",
+    "attempted_at": "2026-10-08T16:25:38.762641+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
   }
 ]

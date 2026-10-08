@@ -1,0 +1,72 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "status": "partial web-derived research; originals pending",
+  "publisher_label": "2025 S-10 (current); not municipal currentness confirmation",
+  "sections": [
+    {
+      "section": "1290.03",
+      "id": "64485",
+      "observations": [
+        "Traffic/government lookalikes prohibited; wheeled portable signs require zoning administrator approval.",
+        "Natural formations/public fixtures restricted absent city authorization; moving signs restricted with section 1290.15 banner exception; traffic sightlines protected."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64485",
+      "method": "Full section read through web retrieval; paraphrased candidate observations; not retained publisher original",
+      "currentness_approved": false
+    },
+    {
+      "section": "1290.04",
+      "id": "64493",
+      "observations": [
+        "Chapter-specific exclusions include safety signs for public-right-of-way maintenance, nameplates up to 1.5 square feet, flags, building plaques up to 8 square feet, nonadvertising seasonal decorations, cemetery monuments and original machine markings.",
+        "Chapter exclusion is not evidence of electrical, building or tax exemption."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64493",
+      "method": "Full section read through web retrieval; paraphrased candidate observations; not retained publisher original",
+      "currentness_approved": false
+    },
+    {
+      "section": "1290.10",
+      "id": "64534",
+      "observations": [
+        "Illumination must avoid hazardous or interfering glare; flashing/intermittent external lighting prohibited.",
+        "No electrical issuer or inspection delegation established."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64534",
+      "method": "Full section read through web retrieval; paraphrased candidate observations; not retained publisher original",
+      "currentness_approved": false
+    },
+    {
+      "section": "1290.13",
+      "id": "64555",
+      "observations": [
+        "I: residential and other areas outside II-IV. II: Benson west of Third. III: Reading Road from East Galbraith north to city boundary. IV: East Galbraith west of Cross County Highway intersection and Reading Road south of Galbraith.",
+        "Attached sign district map controls geographic limits; parcel assignment pending. Public/institutional signs follow surrounding sign district unless administrator approves otherwise."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64555",
+      "method": "Full section read through web retrieval; paraphrased candidate observations; not retained publisher original",
+      "currentness_approved": false
+    },
+    {
+      "section": "1290.20",
+      "id": "64658",
+      "observations": [
+        "Published provision sends all signs to Design Review Committee under Chapter 1278; committee scope/procedure and exemptions require cross-reference review."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64658",
+      "method": "Full section read through web retrieval; paraphrased candidate observations; not retained publisher original",
+      "currentness_approved": false
+    }
+  ],
+  "amendment_gap": "Official May 20 2026 notice schedules proposed zoning changes June 22 2026 and directs proposed-text requests to pross@readingohio.org. Notice does not establish adoption or sign-code effect. No request sent.",
+  "minutes_gap": "Retained live council index has August 4/August 18/September 1 2026 links omitted from older web retrieval; original index is authoritative discovery source. Minutes contents not yet reviewed.",
+  "next": [
+    "Download and review post-June council minutes and any adopted zoning ordinance/attachments",
+    "Remaining sixteen Chapter 1290 sections and Chapter 1278 cross-reference",
+    "Sign district/zoning map originals",
+    "Separate electrical issuer and inspection authority"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0
+}

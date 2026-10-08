@@ -5,7 +5,7 @@
     "state": "OH",
     "type": "city"
   },
-  "retained_originals": 6,
+  "retained_originals": 8,
   "portal_candidate": "https://readingoh2.portal.iworq.net/portalhome/readingoh2",
   "department_observations": [
     "Official page requires zoning compliance review before building review and includes sign installation among permit work.",
@@ -36,5 +36,6 @@
   "pdf_extraction": "All 12 physical pages indexed; 10 contain embedded text, two application pages need OCR/visual recovery. 280 fillable widgets indexed. See pdf-text-extraction.json and pdf-review-gaps.json.",
   "fee_discrepancies": "County 2026 schedule includes surcharges while Reading page says less county surcharge; exact deduction unresolved. BZA form $150 versus zoning variance $250/admin appeal $150 requires scope reconciliation. Residential permanent sign S-column $25 versus commercial $40 retained separately; BZA form explicitly includes variance requests but prints $150, so conflict remains unresolved.",
   "fee_tax_visual_review": "Building fee page 2, zoning fee page 3 and commercial tax attachment page 2 visually reviewed with original hashes. Columns, separate appeal/variance fees and nonresident contractor registration preserved. Current fees, surcharge deduction and tax applicability unapproved.",
-  "pdf_visual_review": "All 12 physical PDF pages visually reviewed across application-visual-review.json, fee-tax-visual-review.json and remaining-pdf-visual-review.json; currentness and authority remain unapproved."
+  "pdf_visual_review": "All 12 physical PDF pages visually reviewed across application-visual-review.json, fee-tax-visual-review.json and remaining-pdf-visual-review.json; currentness and authority remain unapproved.",
+  "sign_code_review": "Five of 21 sections read as web-derived candidates; direct publisher originals inaccessible (403). See sign-code-currentness-review.json. Chapter 1278/map and post-June adopted amendments pending."
 }

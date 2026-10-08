@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading sign-code/currentness routing
+
+Read five published sign sections (1290.03/.04/.10/.13/.20) as web-derived candidates; retained official hearing notice and live council-minutes index with hashes. Direct publisher chapter/section original downloads returned 403 and remain explicit gaps. June 2026 proposed changes are not adoption proof. Live index includes August/September links absent from older web retrieval; minutes contents pending. Preserved chapter-specific exemption scope, four sign districts, lighting and Chapter 1278 design-review dependency. No approved rules, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: post-June minutes/adopted amendments, remaining sign sections, Chapter 1278 and maps; separate electrical authority still pending.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading remaining PDF layouts complete
 
 Visually reviewed remaining seven pages against original SHA-256 hashes: building fee pages 1/3/4, zoning fee pages 1/2 and both BZA pages. All 12 physical PDF pages now visually reviewed across receipts. Added residential permanent-sign $25 candidate separately from commercial $40; retained BZA variance-request form $150 versus zoning variance $250 conflict and 3.5% card wording. Recorded scaled plans, abutting owners across rights-of-way and five appeal narratives. County surcharge/Reading deduction and currentness unresolved. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

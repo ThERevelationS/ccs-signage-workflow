@@ -58,5 +58,25 @@
     "retained": true,
     "bytes": 176863,
     "sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719"
+  },
+  {
+    "file": "planning-hearing-2026.html",
+    "url": "https://www.readingohio.org/post/planning.aspx",
+    "attempted_at": "2026-10-08T16:24:26.900515+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/post/planning.aspx",
+    "bytes": 23319,
+    "sha256": "f346eb1e88cfd32505364da48307a5d0628276b59a32188f391728b311d8bce1"
+  },
+  {
+    "file": "council-minutes.html",
+    "url": "https://www.readingohio.org/council-minutes.aspx",
+    "attempted_at": "2026-10-08T16:24:27.080931+00:00",
+    "retained": true,
+    "status": 200,
+    "final_url": "https://www.readingohio.org/council-minutes.aspx",
+    "bytes": 47020,
+    "sha256": "519a69b1b25ca6d578cd5114ca934554322f1d1e67c0a98aec17c23299e703c3"
   }
 ]
