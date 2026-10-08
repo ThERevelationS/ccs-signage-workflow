@@ -1,0 +1,739 @@
+{
+  "file": "bza-appeal.pdf",
+  "source_sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719",
+  "total_pages": 2,
+  "pages": [
+    {
+      "page": 1,
+      "text": "1000 Market St., Reading, OH 45215 | Phone: 513.733.3725 | www.readingohio.org \nLOCATION: \nBook: ______ __________ Page: _____ ___________ Parcel Number: ___ _____________________ \nAddress of Property in Question: _ ________________________________________________________________________ \nName of Applicant: _____ _______________________________________________________________________________ \nAddress of Applicant: _ _________________________________________________________________________________ \nName of Owner of Property in Question: __ _________________________________________________________________ \nAddress of Owner of Property in Question: ______ ___________________________________________________________ \nUSE: \n Residential  Commercial \nEXISTING ZONING DESCRIPTION: \n Res. “A”  Res. “B”  Res. “C”  Res. “D”  Res. “E” \n Res. “E-R”  Bus. “A”  Bus. “B”  Bus. “C”  Bus. “D” \n Lt. Ind.  Hvy. Ind.  PPD  Public / Institutional  R & D \n W. Benson St. Mixed Use Design Review  S. Reading Rd. Commercial Design Review \n N. Reading Rd. Office & Industrial Design Review  Downtown Reading Mixed Use Design Review \n Reading Rd General Commercial Design Review \nDESCRIPTION OF APPEAL: \nCode Section(s) to be Appealed: _ ________________________________________________________________________ \nThis appeal specifically is requesting a variance for which of the following (Check Appropriate) \n Building Height \nLot & Yard Regulations \n Lot Frontage \n Front Yard \n Side Yard Setbacks \n Rear Yard Setbacks \n Corner Lot \n Off-Street Parking \n Signs \n Fences / Walls \n Other \nDescribe in Detail Work to be Performed: __ ________________________________________________________________ \n___ _________________________________________________________________________________________________ \n___ _________________________________________________________________________________________________ \n___ _________________________________________________________________________________________________ \nDescribe How the Proposed Project Does Comply with Current Zoning Code: __________________________________ \n_ __________________________________________________________________________________________ \n_ __________________________________________________________________________________________ \n_ __________________________________________________________________________________________",
+      "text_sha256": "c8dd095be935ee111b12cdd61d88c41a15443e3702d304b2ef77c741674fbfef",
+      "source_sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719",
+      "method": "pdfjs embedded text, no OCR",
+      "visual_reviewed": false,
+      "form_fields": [
+        {
+          "name": "Book",
+          "type": "Tx",
+          "alternate_text": "Book",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Page",
+          "type": "Tx",
+          "alternate_text": "Page",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Number",
+          "type": "Tx",
+          "alternate_text": "Number",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "on",
+          "type": "Tx",
+          "alternate_text": "on",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "cant",
+          "type": "Tx",
+          "alternate_text": "cant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "cant_2",
+          "type": "Tx",
+          "alternate_text": "cant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "on_2",
+          "type": "Tx",
+          "alternate_text": "on",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "on_3",
+          "type": "Tx",
+          "alternate_text": "on",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res",
+          "type": "Btn",
+          "alternate_text": "Res",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Commerc",
+          "type": "Btn",
+          "alternate_text": "Commerc",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res A",
+          "type": "Btn",
+          "alternate_text": "Res. “A",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res ER",
+          "type": "Btn",
+          "alternate_text": "Res. “E-R",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Lt Ind",
+          "type": "Btn",
+          "alternate_text": "Lt. Ind",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "W Benson St M",
+          "type": "Btn",
+          "alternate_text": "W. Benson St. M",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "N Reading Rd Off",
+          "type": "Btn",
+          "alternate_text": "N. Reading Rd. Off",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Read",
+          "type": "Btn",
+          "alternate_text": "Read",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res B",
+          "type": "Btn",
+          "alternate_text": "Res. “B",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res C",
+          "type": "Btn",
+          "alternate_text": "Res. “C",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res D",
+          "type": "Btn",
+          "alternate_text": "Res. “D",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Res E",
+          "type": "Btn",
+          "alternate_text": "Res. “E",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Bus A",
+          "type": "Btn",
+          "alternate_text": "Bus. “A",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Bus B",
+          "type": "Btn",
+          "alternate_text": "Bus. “B",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Bus C",
+          "type": "Btn",
+          "alternate_text": "Bus. “C",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Bus D",
+          "type": "Btn",
+          "alternate_text": "Bus. “D",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Hvy Ind",
+          "type": "Btn",
+          "alternate_text": "Hvy. Ind",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "PPD",
+          "type": "Btn",
+          "alternate_text": "PPD",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Pub",
+          "type": "Btn",
+          "alternate_text": "Pub",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "R  D",
+          "type": "Btn",
+          "alternate_text": "R & D",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "S Read",
+          "type": "Btn",
+          "alternate_text": "S. Read",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Downtown Read",
+          "type": "Btn",
+          "alternate_text": "Downtown Read",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "ed",
+          "type": "Tx",
+          "alternate_text": "ed",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Bu",
+          "type": "Btn",
+          "alternate_text": "Bu",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Lot Frontage",
+          "type": "Btn",
+          "alternate_text": "Lot Frontage",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Front Yard",
+          "type": "Btn",
+          "alternate_text": "Front Yard",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "S",
+          "type": "Btn",
+          "alternate_text": "S",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Rear Yard Setbacks",
+          "type": "Btn",
+          "alternate_text": "Rear Yard Setbacks",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Corner Lot",
+          "type": "Btn",
+          "alternate_text": "Corner Lot",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "OffStreet Park",
+          "type": "Btn",
+          "alternate_text": "Off-Street Park",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "S_2",
+          "type": "Btn",
+          "alternate_text": "S",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Fences  Wa",
+          "type": "Btn",
+          "alternate_text": "Fences / Wa",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Other",
+          "type": "Btn",
+          "alternate_text": "Other",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Work to be Performed",
+          "type": "Tx",
+          "alternate_text": "Work to be Performed",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Descr 1",
+          "type": "Tx",
+          "alternate_text": "Descr [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Descr 2",
+          "type": "Tx",
+          "alternate_text": "Descr [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Descr 3",
+          "type": "Tx",
+          "alternate_text": "Descr [3]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Descr 1_2",
+          "type": "Tx",
+          "alternate_text": "Descr [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Descr 2_2",
+          "type": "Tx",
+          "alternate_text": "Descr [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Descr 3_2",
+          "type": "Tx",
+          "alternate_text": "Descr [3]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "ng Code",
+          "type": "Tx",
+          "alternate_text": "ng Code",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box1.0.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.3",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.4",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.2.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.1.0.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.1.0.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.0.1.0.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.2.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.0.1.0.1.2.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.1.3",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.1.4",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.0.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.0.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.0.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box2.5.1.0.1.3",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        }
+      ],
+      "needs_visual_or_ocr_review": true
+    },
+    {
+      "page": 2,
+      "text": "APPEAL CRITERIA: \nFor an appeal to be granted, the items listed must be addressed. Please describe how your project relates to each. \n1. Does the property have a unique physical condition that is not characteristic of other properties in the vicinity?\n____ ____________________________________________________________________________________________ \n____ ____________________________________________________________________________________________ \n____ ____________________________________________________________________________________________ \n2. Is there any other solution to the physical problem which exists? _______________________________ _____________ \n____ ____________________________________________________________________________________________ \n____ ____________________________________________________________________________________________ \n3. Is there a hardship condition that would be created for the Owner/ Applicant if the appeal is not granted? If yes, explain in\ndetail. ________ ___________________________________________________________________________________ \n____ ____________________________________________________________________________________________ \n____ ____________________________________________________________________________________________ \n4. How will the variance affect abutting properties or immediate neighborhood? ______________________ _____________ \n___ _____________________________________________________________________________________________ \n___ _____________________________________________________________________________________________ \n5. Is the requested variance the smallest variance possible? ______ ____________________________________________ \n___ _____________________________________________________________________________________________ \n___ _____________________________________________________________________________________________ \nSUBMITTAL CHECKLIST: \nPlans drawn to scale showing the actual shape and dimensions of the lot of the buildings and accessory buildings existing and\nthe lines within which the proposed building is to be erected or altered, the existing and intended use of each building or part\nof a building, the number of families or housekeeping units the building is designed to accommodate and such information with\nregard to the lot and neighboring lots may be necessary to determine and provide for the proper hearing of the application. \nNames and Addresses of Owners of ALL abutting properties to the subject property, including those across public/private\nright-of-ways. \n$150 Cash / Check (Make checks payable to the City of Reading) / Credit Card (3.5% fee) \nI hereby depose and say that all the above statements and the statement contained in all the exhibits transmitted here with\nare true \n___ _____________________________ __________ _______________________ _______________ ___ \n(Print Name) (Sign Name) Date",
+      "text_sha256": "5b8934b4e23450b8560b8d1c0ce43bd5655b0dee5698cec94f93ff94472a3338",
+      "source_sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719",
+      "method": "pdfjs embedded text, no OCR",
+      "visual_reviewed": false,
+      "form_fields": [
+        {
+          "name": "Does the property have a un 1",
+          "type": "Tx",
+          "alternate_text": "Does the property have a un [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Does the property have a un 2",
+          "type": "Tx",
+          "alternate_text": "Does the property have a un [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Does the property have a un 3",
+          "type": "Tx",
+          "alternate_text": "Does the property have a un [3]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Is there any other so 1",
+          "type": "Tx",
+          "alternate_text": "Is there any other so [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Is there any other so 2",
+          "type": "Tx",
+          "alternate_text": "Is there any other so [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "sts",
+          "type": "Tx",
+          "alternate_text": "sts",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Is there a hardsh",
+          "type": "Tx",
+          "alternate_text": "Is there a hardsh",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "deta 1",
+          "type": "Tx",
+          "alternate_text": "deta [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "deta 2",
+          "type": "Tx",
+          "alternate_text": "deta [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "How w 1",
+          "type": "Tx",
+          "alternate_text": "How w [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "How w 2",
+          "type": "Tx",
+          "alternate_text": "How w [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "ghborhood",
+          "type": "Tx",
+          "alternate_text": "ghborhood",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Is the requested var 1",
+          "type": "Tx",
+          "alternate_text": "Is the requested var [1]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Is the requested var 2",
+          "type": "Tx",
+          "alternate_text": "Is the requested var [2]",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "e",
+          "type": "Tx",
+          "alternate_text": "e",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "nt Name",
+          "type": "Tx",
+          "alternate_text": "nt Name)",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Pr",
+          "type": "Tx",
+          "alternate_text": "Pr",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "gn Name",
+          "type": "Tx",
+          "alternate_text": "gn Name)",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "S_3",
+          "type": "Tx",
+          "alternate_text": "S",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Date",
+          "type": "Tx",
+          "alternate_text": "Date",
+          "read_only": false,
+          "required": false
+        }
+      ],
+      "needs_visual_or_ocr_review": true
+    }
+  ],
+  "searchable_content_complete": false,
+  "currentness_approved": false,
+  "authority_approved": false
+}

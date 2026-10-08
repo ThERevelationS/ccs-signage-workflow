@@ -1,0 +1,40 @@
+{
+  "file": "zoning-fees.pdf",
+  "source_sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+  "total_pages": 3,
+  "pages": [
+    {
+      "page": 1,
+      "text": "Zoning Fee Sched ule Zoning Permit Fees (Ceriticate of Occupancy) Fee\nLand Use, not involving any building or structure $25.00\nChange in use of building or land $25.00\nChange of occupancy or tenancy, commercial $25.00\nChange of occupancy or tenancy, residential $0.00 Residential \nPrincipally Permitted \nSingle Family Dwelling $40.00\nTwo-Family Dwelling $80.00\nMulti-Family or Condo(first 2 units $80.00\nEach additional unit $20.00\nAdditions/structural alterations $40.00 \nConditionally Permitted \nFamily Day Care Home $250.00\nResidential Facility $250.00\nGroup Home $250.00\nAdult Group Homes $250.00\nAdditions/Structural Alterations $40.00",
+      "text_sha256": "3bdee2f44cb9444612d6c736db27fa6a94024f6bc8d927f28ae68db9136911de",
+      "source_sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+      "method": "pdfjs embedded text, no OCR",
+      "visual_reviewed": false,
+      "form_fields": [],
+      "needs_visual_or_ocr_review": true
+    },
+    {
+      "page": 2,
+      "text": "Accessory Uses, Buildings, Structures \nU B S \nHome Occupation Garage Fence\nStorage Pod/Dumpster Storage(Sheds) Sidewalks\nSecondary Dwelling Gazebo Driveways\nPatios/Decks\nAwning/Canopy\nCarport\nPorch\nSign(permanent)\nWalls\nSwimming Pools\nFees for items listed in U or B : $40.00\nFees for items listed in S : $25.00\n*Fees for Accessory Uses not specifically listed shall be the\nsame as that for an established use that has comparable\ncharacteristics or impacts as determined by the zoning\nadministrator \nThese fees shall be waived if the improvement eliminates a legal,\nnon conformity and establishes a new, conforming structure or\ncondition.",
+      "text_sha256": "d9fab2eab11e399d4029a93b337751b97ebfaff910ba0c4f30eac65cbef632bc",
+      "source_sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+      "method": "pdfjs embedded text, no OCR",
+      "visual_reviewed": false,
+      "form_fields": [],
+      "needs_visual_or_ocr_review": true
+    },
+    {
+      "page": 3,
+      "text": "Commercial, Institutional, and Any Non-Residential \nAny new construction, additions, alterations, or paving of land\n0-5,000 $100.00\n5,001- 10,000 $150.00\n10,001-15,000 $200.00\n15,001-20,000 $250.00\nMore than 20,000 $300.00 \n*The area of each floor will used for determining total square footage \nAccesory Uses $40.00\nFence\nAwning/Canopy\nSigns, Permanent (see below for non permanent)\nWalls\nSwimming Pools\nAntenna Towers\nDumpster Enclosure \n*Fees for Accessory Uses not specifically listed shall be the\nsame as that for an established use that has comparable\ncharacteristics or impacts as determined by the zoning\nadministrator\nThese fees shall be waived if the improvement eliminates a legal,\nnon conformity and establishes a new, conforming structure or\ncondition. \nSpecial Uses \nSandwich board sign annual/Temporary Sign $40.00\nStorage Tank $100.00\nTeen Club Permit (1286.07 C) $850.00\nTeen Club Permit Annual Renewal (1286.07) $300.00\nTransfer for Teen Club Permit (1286.1382) $300.00\nSexually Oriented Business Annual Permit $850.00\nTransfer fee for Sexually Oriented Business $170.00\nAntenna Tower, Satellite Communication Earth\nStation, Wireless and Cellular Comm.\nFacilities fee for new $250.00\nBiannual registration $100.00 Administrative Procedures \nConditional Use Permit $150.00\nVariance $250.00\nAppeal from Decision of Zoning Administrator $150.00\nZone Change $250.00\nPlanned Development District (PDD) $150.00\nRequired Plan Review $150.00",
+      "text_sha256": "1b1d0b2522b8a0b2d2d00e43d17c5f2ce33a5fe16773335ef0ade2f4247a1b94",
+      "source_sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+      "method": "pdfjs embedded text, no OCR",
+      "visual_reviewed": false,
+      "form_fields": [],
+      "needs_visual_or_ocr_review": true
+    }
+  ],
+  "searchable_content_complete": false,
+  "currentness_approved": false,
+  "authority_approved": false
+}

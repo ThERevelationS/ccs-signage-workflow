@@ -1,0 +1,539 @@
+{
+  "file": "residential-application.pdf",
+  "source_sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d",
+  "total_pages": 1,
+  "pages": [
+    {
+      "page": 1,
+      "text": "",
+      "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d",
+      "method": "pdfjs embedded text, no OCR",
+      "visual_reviewed": false,
+      "form_fields": [
+        {
+          "name": "1 Street Address",
+          "type": "Tx",
+          "alternate_text": "1. Street Address",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "2 Zoning",
+          "type": "Tx",
+          "alternate_text": "2. Zoning",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Occupancy",
+          "type": "Tx",
+          "alternate_text": "Occupancy",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Parcel Number",
+          "type": "Tx",
+          "alternate_text": "Parcel Number",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "D Commercial Property OBC",
+          "type": "Tx",
+          "alternate_text": "D Commercial Property (OBC",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Commercial Use Group",
+          "type": "Tx",
+          "alternate_text": "Commercial Use Group",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "NameApplicant",
+          "type": "Tx",
+          "alternate_text": "Name_Applicant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "AddressApplicant",
+          "type": "Tx",
+          "alternate_text": "Address_Applicant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "CityApplicant",
+          "type": "Tx",
+          "alternate_text": "City_Applicant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "StateApplicant",
+          "type": "Tx",
+          "alternate_text": "State_Applicant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Zip CodeApplicant",
+          "type": "Tx",
+          "alternate_text": "Zip Code_Applicant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "PhoneApplicant",
+          "type": "Tx",
+          "alternate_text": "Phone_Applicant",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "NameOwner",
+          "type": "Tx",
+          "alternate_text": "Name_Owner",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "AddressOwner",
+          "type": "Tx",
+          "alternate_text": "Address_Owner",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "CityOwner",
+          "type": "Tx",
+          "alternate_text": "City_Owner",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "StateOwner",
+          "type": "Tx",
+          "alternate_text": "State_Owner",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Zip CodeOwner",
+          "type": "Tx",
+          "alternate_text": "Zip Code_Owner",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "PhoneOwner",
+          "type": "Tx",
+          "alternate_text": "Phone_Owner",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "NameContractor",
+          "type": "Tx",
+          "alternate_text": "Name_Contractor",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "AddressContractor",
+          "type": "Tx",
+          "alternate_text": "Address_Contractor",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "CityContractor",
+          "type": "Tx",
+          "alternate_text": "City_Contractor",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "StateContractor",
+          "type": "Tx",
+          "alternate_text": "State_Contractor",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Zip CodeContractor",
+          "type": "Tx",
+          "alternate_text": "Zip Code_Contractor",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "PhoneContractor",
+          "type": "Tx",
+          "alternate_text": "Phone_Contractor",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "NamePlans By",
+          "type": "Tx",
+          "alternate_text": "Name_Plans By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "AddressPlans By",
+          "type": "Tx",
+          "alternate_text": "Address_Plans By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "CityPlans By",
+          "type": "Tx",
+          "alternate_text": "City_Plans By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "StatePlans By",
+          "type": "Tx",
+          "alternate_text": "State_Plans By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Zip CodePlans By",
+          "type": "Tx",
+          "alternate_text": "Zip Code_Plans By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "PhonePlans By",
+          "type": "Tx",
+          "alternate_text": "Phone_Plans By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Required Email Address of contact for Plan Review and Other Questions",
+          "type": "Tx",
+          "alternate_text": "Required: Email Address of contact for Plan Review and Other Questions",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Other",
+          "type": "Tx",
+          "alternate_text": "Other",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "5 Description of Work",
+          "type": "Tx",
+          "alternate_text": "5. Description of Work",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Estimated cost of constructionImprovement for which this application is being made",
+          "type": "Tx",
+          "alternate_text": "Estimated cost of construction/Improvement for which this application is being made",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Existing Use",
+          "type": "Tx",
+          "alternate_text": "Existing Use",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Proposed Use",
+          "type": "Tx",
+          "alternate_text": "Proposed Use",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "8 Total Floor Area for New BuildingGarageShedsAdditionsDecks",
+          "type": "Tx",
+          "alternate_text": "8. Total Floor Area for New Building/Garage/Sheds/Additions/Decks",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Application By",
+          "type": "Tx",
+          "alternate_text": "Application By",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Sign",
+          "type": "Sig",
+          "alternate_text": "Sign",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Date",
+          "type": "Tx",
+          "alternate_text": "Date",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.1.0.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.1.0.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.1.0.3",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.1.0.4",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.1.0.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.1.0.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.1.0.3",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.1.1.1.0.4",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.3.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.1.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.1.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.1.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.3.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.3.1.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.1.3.1.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.1.0",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.1.1",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.1.2",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.1.3",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.1.4",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        },
+        {
+          "name": "Check Box4.0.0.0.1.1.0.1.5",
+          "type": "Btn",
+          "alternate_text": "",
+          "read_only": false,
+          "required": false
+        }
+      ],
+      "needs_visual_or_ocr_review": true
+    }
+  ],
+  "searchable_content_complete": false,
+  "currentness_approved": false,
+  "authority_approved": false
+}
