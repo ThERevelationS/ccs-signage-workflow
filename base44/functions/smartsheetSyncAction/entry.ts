@@ -161,6 +161,7 @@ async function pullDataset(
     assertRunOwnership?: () => Promise<void> | void;
     recordIds?: string[];
     reportOrderReadProgress?: (progress: { page: number; rowsLoaded: number; totalRows: number }) => Promise<void> | void;
+    reportOrderPullProgress?: (progress: { phase: string; current: number; total: number; itemLabel: string; detail: string }) => Promise<void> | void;
   } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
@@ -344,7 +345,22 @@ async function pullDataset(
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
 
-  for (const row of allRows) {
+  if (dataset === 'orders' && options.reportOrderPullProgress) {
+    await options.reportOrderPullProgress({ phase: 'matching', current: 0, total: allRows.length,
+      itemLabel: 'Matching permanent Smartsheet row IDs',
+      detail: 'Comparing downloaded rows with linked Base44 Orders; unmatched rows are held for review',
+    });
+  }
+  for (let rowIndex = 0; rowIndex < allRows.length; rowIndex++) {
+    // Bounded progress updates avoid hammering the coordinator for each row.
+    // Report only rows already compared, never rows about to be processed.
+    if (dataset === 'orders' && options.reportOrderPullProgress && rowIndex > 0 && rowIndex % 200 === 0) {
+      await options.reportOrderPullProgress({ phase: 'matching', current: rowIndex, total: allRows.length,
+        itemLabel: `Compared ${rowIndex} Order Request rows`,
+        detail: 'Matching by permanent row ID and respecting locally pending Orders',
+      });
+    }
+    const row = allRows[rowIndex];
     const rowId = row.id;
     if (!rowId || !/^\d+$/.test(rowId)) continue;
     if (dataset === 'orders' && deletedOrderLinkedRowIds.has(rowId)) {
@@ -506,6 +522,12 @@ async function pullDataset(
       toCreate.push(newRecord);
     }
   }
+  if (dataset === 'orders' && options.reportOrderPullProgress) {
+    await options.reportOrderPullProgress({ phase: 'matching', current: allRows.length, total: allRows.length,
+      itemLabel: `Compared ${allRows.length} Order Request rows`,
+      detail: `${toUpdate.length} linked Orders queued for update; ${unchangedSkipped} already matched`,
+    });
+  }
 
   await persistSalesReviews(base44, salesPullReviews, options?.assertRunOwnership);
 
@@ -543,6 +565,12 @@ async function pullDataset(
   const salesBusinessVerifications: any[] = [];
   const salesBusinessWriteFailureIds: string[] = [];
   const bulkBatchSize = 100;
+  if (dataset === 'orders' && options.reportOrderPullProgress) {
+    await options.reportOrderPullProgress({ phase: 'applying', current: 0, total: toUpdate.length,
+      itemLabel: toUpdate.length ? 'Applying linked Order changes in Base44' : 'No linked Order changes to apply',
+      detail: 'Only permanent-ID matches are eligible; acknowledgments are not yet verified',
+    });
+  }
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = toUpdate.slice(i, i + bulkBatchSize);
@@ -580,6 +608,12 @@ async function pullDataset(
       }
     } catch (err: any) {
       errors.push(`Bulk update batch ${Math.floor(i / bulkBatchSize) + 1}: ${err?.message || 'unknown error'}`);
+    }
+    if (dataset === 'orders' && options.reportOrderPullProgress) {
+      await options.reportOrderPullProgress({ phase: 'applying', current: Math.min(i + batch.length, toUpdate.length), total: toUpdate.length,
+        itemLabel: `Processed ${Math.min(i + batch.length, toUpdate.length)} of ${toUpdate.length} linked Order updates`,
+        detail: `${errors.length} reported write issues; dates and sync metadata still require verification`,
+      });
     }
   }
 
@@ -644,6 +678,12 @@ async function pullDataset(
   // text choices that it omitted. Repair only fields whose previous value
   // remains safe, verify the permanent Order, then record sync evidence.
   if (dataset === 'orders') {
+    if (options.reportOrderPullProgress) {
+      await options.reportOrderPullProgress({ phase: 'verifying_base44', current: 0, total: orderDateVerifications.length,
+        itemLabel: 'Verifying Order dates and text options',
+        detail: 'Checking Base44 writes before advancing Smartsheet sync evidence',
+      });
+    }
     for (const item of orderDateVerifications) {
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
@@ -655,6 +695,13 @@ async function pullDataset(
         updatedCount--;
       }
     }
+  }
+
+  if (dataset === 'orders' && options.reportOrderPullProgress) {
+    await options.reportOrderPullProgress({ phase: 'confirming_base44', current: 0, total: snapshotUpdates.length,
+      itemLabel: 'Confirming Order sync snapshots',
+      detail: 'Saving and verifying metadata only after eligible business-field checks',
+    });
   }
 
   // Reconciliation metadata is part of verified success for both datasets.
@@ -678,6 +725,12 @@ async function pullDataset(
         `(IDs: ${batch.slice(0, 5).map((row: any) => row.id).join(', ')}). ` +
         `Review before treating this pull as complete: ${error?.message || 'unknown error'}`
       );
+    }
+    if (dataset === 'orders' && options.reportOrderPullProgress) {
+      await options.reportOrderPullProgress({ phase: 'confirming_base44', current: Math.min(i + batch.length, snapshotUpdates.length), total: snapshotUpdates.length,
+        itemLabel: `Processed ${Math.min(i + batch.length, snapshotUpdates.length)} of ${snapshotUpdates.length} Order snapshot updates`,
+        detail: 'Checking sync metadata write acknowledgments; read-back still required',
+      });
     }
   }
 
