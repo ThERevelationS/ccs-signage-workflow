@@ -361,6 +361,27 @@ export default function UserManagement() {
         const message = emailError?.response?.data?.error || emailError?.data?.error || emailError?.message || "Invitation email could not be sent.";
         setInviteSuccess(`User authorized! Invitation email failed: ${message}`);
       }
+
+      // Order Form only: append the saved user to the Smartsheet Requestor
+      // CONTACT_LIST. Do not change the account/invitation outcome if the
+      // independent dropdown sync fails.
+      try {
+        const contactResponse = await base44.functions.invoke("smartsheetSyncAction", {
+          action: "order_requestor_contact_sync",
+          session_token: sessionToken,
+          user_email: email,
+        });
+        const contactResult = contactResponse?.data || contactResponse;
+        if (!contactResult?.success) {
+          throw new Error(contactResult?.error || "Requestor contact update could not be verified.");
+        }
+        setInviteSuccess((previous) => `${previous} · Order Requestor verified in Smartsheet.`);
+      } catch (contactError) {
+        const detail = contactError?.response?.data?.error || contactError?.data?.error ||
+          contactError?.message || "Could not verify the Smartsheet Requestor dropdown.";
+        setInviteSuccess((previous) =>
+          `${previous} · Order Requestor Smartsheet sync needs attention: ${detail}`);
+      }
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
