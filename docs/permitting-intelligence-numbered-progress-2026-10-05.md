@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Reading certificates and electrical role separation
+
+Reviewed three zoning certificate/permit sections and two electrical sections. Reading1424.05 names IBI for inspections with1948 history; separate electrical permit issuer/current delegation unresolved. Legacy1990 NEC not adopted as current rule. County and provider evidence scoped without assigning Reading from general coverage. Original download receipts saved. Task2 complete; milestone1 Task4 open. Live changes0; publications0. Next: remaining electrical chapter/intake and current delegation evidence.
+
 ## 2026-10-08 — Phase 10, milestone 2: Reading design-district sign standards
 
 Reviewed remaining seven Chapter1273 sections; all eight text sections now covered across two receipts. Scoped signage/design candidates preserve structural types, illumination, area formulas, roofline and manufacture requirements. Chapter1290 formula differences, certificate terminology and map labels remain unresolved; no parcel assignment or automated approval. Seven original attempts recorded separately. Task2 complete; milestone1 Task4 open. Live changes0; publications0. Next:1244.02 certificate dependency and electrical authority evidence.

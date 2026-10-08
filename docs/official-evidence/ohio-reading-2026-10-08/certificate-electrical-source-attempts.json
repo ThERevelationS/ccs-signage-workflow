@@ -1,0 +1,60 @@
+[
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-62167",
+    "key": "1244.02",
+    "attempted_at": "2026-10-08T18:47:14.989936+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "No original retained"
+  },
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-62222",
+    "key": "1244.06",
+    "attempted_at": "2026-10-08T18:47:15.110933+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "No original retained"
+  },
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-62227",
+    "key": "1244.07",
+    "attempted_at": "2026-10-08T18:47:15.207146+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "No original retained"
+  },
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64996",
+    "key": "1424.05",
+    "attempted_at": "2026-10-08T18:47:15.301304+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "No original retained"
+  },
+  {
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64984",
+    "key": "1424.01",
+    "attempted_at": "2026-10-08T18:47:15.402516+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "No original retained"
+  },
+  {
+    "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/index.php",
+    "key": "county-building-electrical-scope",
+    "attempted_at": "2026-10-08T18:47:15.497479+00:00",
+    "retained_original": true,
+    "http_status": 200,
+    "file": "certificate-electrical-county-building-electrical-scope.html",
+    "bytes": 227493,
+    "sha256": "ce2eadb74bf5cd726904aa7c4460027b4eefd14d3685460429cf3126c63c6037"
+  },
+  {
+    "url": "https://www.inspectionbureau.com/faq/",
+    "key": "ibi-sign-electrical-faq",
+    "attempted_at": "2026-10-08T18:47:15.802352+00:00",
+    "retained_original": false,
+    "http_status": 406,
+    "error": "No original retained"
+  }
+]

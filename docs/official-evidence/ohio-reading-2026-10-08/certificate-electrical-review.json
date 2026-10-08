@@ -1,0 +1,74 @@
+{
+  "reviewed_at": "2026-10-08",
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "sections": [
+    {
+      "section": "1244.02",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-62167",
+      "web_reference": "turn156view0",
+      "candidate": "Administrator receives applications, issues permits/certificates, examines premises, inspects and enforces zoning with stated exceptions for Part14. No specific electrical issuing authority or equivalence between certificate types established.",
+      "approved": false
+    },
+    {
+      "section": "1244.06",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-62222",
+      "web_reference": "turn155view1",
+      "candidate": "Zoning permit before land/structure construction, modification or conversion. No commencement within one year expires permit; one-year abandonment after commencement triggers printed removal procedure, not automated enforcement. Applicant may request one additional year from Planning Commission/Council before original expiration with justification. Do not silently extend1278 certificate.",
+      "approved": false
+    },
+    {
+      "section": "1244.07",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-62227",
+      "web_reference": "turn156view1",
+      "candidate": "Zoning certificate of occupancy after administrator inspection for newly erected/changed/converted/enlarged premises/use; printed part of building permit. Temporary partial occupancy possible under administrator rules. Business/industrial ownership/tenancy transfer provision has seller-business continuation exception. Fees Council-established; sign-only applicability unresolved.",
+      "approved": false
+    },
+    {
+      "section": "1424.05",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64996",
+      "web_reference": "turn157view0",
+      "candidate": "IBI designated official electrical wiring inspection organization until Council provides otherwise; inspections without cost to CITY, not applicant fee exemption. History Resolution395-1948 April7 1948. Current delegation unapproved; section does not separately identify permit issuer.",
+      "approved": false
+    },
+    {
+      "section": "1424.01",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64984",
+      "web_reference": "turn157view1",
+      "candidate": "Printed1990 NEC adoption is legacy evidence only, not current code edition approval.",
+      "approved": false
+    }
+  ],
+  "supporting_sources": [
+    {
+      "key": "county-building-electrical-scope",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/index.php",
+      "web_reference": "turn155view2",
+      "candidate": "County department serves unincorporated/contract jurisdictions and says IBI handles electrical permits/inspections. This general statement does not prove Reading is within county service scope."
+    },
+    {
+      "key": "ibi-sign-electrical-faq",
+      "url": "https://www.inspectionbureau.com/faq/",
+      "web_reference": "turn155search0",
+      "candidate": "Provider FAQ says separate permits required for signs; listed sign still requires field-connection inspection. Lists circuitry, voltage, wiring, grounding, terminations and disconnect checks. General provider guidance does not prove Reading permit delegation; legacy technical references not current code approval."
+    }
+  ],
+  "electrical_roles": {
+    "inspection_office_candidate": "Inspection Bureau, Inc.",
+    "inspection_evidence": "Reading1424.05 explicit legacy designation; currentness pending",
+    "permit_issuer_candidate": null,
+    "permit_issuer_status": "Unresolved; county/provider general permit handling not Reading-specific delegation"
+  },
+  "unresolved": [
+    "Current electrical delegation/issuer/intake/sign scope",
+    "Current electrical code edition; legacy1990 text not approved",
+    "Certificate of Appropriateness versus Zoning Certificate versus occupancy certificate",
+    "Adopted amendments and original publisher retention",
+    "Current fees/forms and district mapping"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0,
+  "published": false
+}
