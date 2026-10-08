@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { orderSaveSyncStatus } from "../src/components/orders/orderSaveSyncStatus.mjs";
+import { canCommitOrderReload } from "../src/components/orders/orderReloadSafety.mjs";
 
 const page = readFileSync("src/pages/OrderForm.jsx", "utf8");
 const grid = readFileSync("src/components/orders/OrderSpreadsheet.jsx", "utf8");
@@ -19,6 +20,24 @@ assert.match(grid, /syncInFlightRef\.current = true/);
 assert.match(grid, /pullFromSmartsheet,\s*exportToExcel/);
 assert.match(grid, /if \(!showLoading && \(saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current \|\| Object\.keys\(pendingChangesRef\.current\)\.length > 0\)\) return false/);
 console.log("PASS Order button swaps modes based on unsaved or durable pending changes; pull guards in-flight data");
+
+// A timer/focus refresh may begin before Sync and finish after it. The older
+// response must not overwrite the remote changes pulled by the newer request.
+assert.equal(canCommitOrderReload({ requestGeneration: 4, latestGeneration: 5 }), false);
+assert.equal(canCommitOrderReload({ requestGeneration: 5, latestGeneration: 5 }), true);
+assert.equal(canCommitOrderReload({ requestGeneration: 5, latestGeneration: 5, manualPullInFlight: true }), false);
+assert.equal(canCommitOrderReload({ requestGeneration: 5, latestGeneration: 5, manualPullInFlight: true, manualPullReload: true }), true);
+assert.equal(canCommitOrderReload({ requestGeneration: 4, latestGeneration: 5, manualPullInFlight: true, manualPullReload: true }), false);
+assert.equal(canCommitOrderReload({ requestGeneration: undefined, latestGeneration: 5 }), false);
+assert.match(grid, /const orderLoadGenerationRef = useRef\(0\)/);
+assert.match(grid, /const manualPullInFlightRef = useRef\(false\)/);
+assert.match(grid, /const requestGeneration = \+\+orderLoadGenerationRef\.current/);
+assert.match(grid, /orderLoadGenerationRef\.current \+= 1/);
+assert.match(grid, /if \(manualPullInFlightRef\.current && !manualPullReload\) return false/);
+assert.match(grid, /loadData\(false, \{ manualPullReload: true \}\)/);
+assert.match(grid, /if \(!canCommitOrderReload\(\{/);
+assert.match(grid, /manualPullInFlightRef\.current = false/);
+console.log("PASS old refresh discarded, manual Sync reload accepted, and concurrent timer refresh blocked");
 
 assert.match(helper, /action: "pull_dataset",\s*dataset: "orders"/);
 assert.match(helper, /retryRateLimit: false/);
