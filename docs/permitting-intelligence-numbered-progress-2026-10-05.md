@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Sharonville locality dossier
+
+Added admin exact-identity dossier with five hash-verified retained PDFs and seven page-linked findings. City issuance versus NIC inspection candidates, two-county scope, feather-sign conflict, code version and page97 gaps remain unapproved. Live changes0; publications0. Task2 complete; milestone1 Task4 open. Next: St Bernard locality dossier.
+
 ## 2026-10-08 — Phase 10, milestone 2: Elmwood Place locality dossier
 
 Added exact-identity admin research dossier with six verified retained office files (four PDF, XLSX, DOCX), official sources and explicit zoning/currentness/electrical gaps. Existing archives reused without changes; no approved workflow or live record changes. Task2 complete; milestone1 Task4 open. Publications0. Next: remaining researched Ohio dossiers and document access coverage.

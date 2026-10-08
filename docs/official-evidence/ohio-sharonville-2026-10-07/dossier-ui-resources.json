@@ -1,0 +1,59 @@
+{
+  "locality": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city"
+  },
+  "resources": [
+    {
+      "file": "sign-application.pdf",
+      "label": "Sign application \u2014 review pending",
+      "source": "https://www.sharonville.org/394/Sign-Application",
+      "archive": "/permitting-evidence/sharonville/sign-application.pdf",
+      "format": "PDF",
+      "bytes": 733645,
+      "sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6"
+    },
+    {
+      "file": "building-electrical-application.pdf",
+      "label": "Building electrical application \u2014 review pending",
+      "source": "https://www.sharonville.org/392/Building-Permit-Application",
+      "archive": "/permitting-evidence/sharonville/building-electrical-application.pdf",
+      "format": "PDF",
+      "bytes": 390469,
+      "sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211"
+    },
+    {
+      "file": "fee-schedule.pdf",
+      "label": "Fee schedule \u2014 review pending",
+      "source": "https://www.sharonville.org/393/Fee-Schedule",
+      "archive": "/permitting-evidence/sharonville/fee-schedule.pdf",
+      "format": "PDF",
+      "bytes": 126939,
+      "sha256": "e201fb4fa2a9c8fefc8fcd63fcbef05add84180f5b8c5bff5d55cf241c4b5a93"
+    },
+    {
+      "file": "planning-zoning-code.pdf",
+      "label": "Planning zoning code \u2014 review pending",
+      "source": "https://sharonville.org/DocumentCenter/View/3262/Sharonville-Planning-and-Zoning-Code",
+      "archive": "/permitting-evidence/sharonville/planning-zoning-code.pdf",
+      "format": "PDF",
+      "bytes": 10129163,
+      "sha256": "c0be28272a4e380ea8609b237215cbee6555f5e26ffc8446cc1495eb2b29ba06"
+    },
+    {
+      "file": "residential-guide-2026.pdf",
+      "label": "Residential guide 2026 \u2014 review pending",
+      "source": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+      "archive": "/permitting-evidence/sharonville/residential-guide-2026.pdf",
+      "format": "PDF",
+      "bytes": 11002258,
+      "sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+    }
+  ],
+  "admin_only": true,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "published": false
+}
