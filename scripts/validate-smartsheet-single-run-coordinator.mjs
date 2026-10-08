@@ -53,6 +53,17 @@ check(backend.includes("const safeStatus = [400, 401, 403, 409, 429, 502, 503]")
 check(backend.includes("order_sync_backend_contract: 'order-run-scoped-cleanup-v1'") &&
       backend.includes("if (action === 'status')"),
   "Read-only status exposes a stable contract marker to distinguish a deployed guarded backend");
+check(backend.includes("reportOrderReadProgress?: (progress: { page: number; rowsLoaded: number; totalRows: number })") &&
+      backend.includes("if (dataset === 'orders' && options.reportOrderReadProgress)") &&
+      backend.includes("await options.reportOrderReadProgress({ page, rowsLoaded: allRows.length, totalRows: totalRowCount })"),
+  "Order pull reports read progress after every verified Smartsheet page, without changing Sales pull behavior");
+check(backend.includes("if (dataset === 'orders' && options.assertRunOwnership) await options.assertRunOwnership();") &&
+      backend.includes("if (options.assertRunOwnership) await options.assertRunOwnership();"),
+  "Order page reader checks coordinator ownership before and after each page");
+check(backend.includes("if (dataset === 'orders' && !readingStatusSaved)") &&
+      backend.includes("if (!saved) throw new Error('Order pull lost progress checkpoint ownership.") &&
+      backend.includes("progress_current: rowsLoaded, progress_total: Math.max(totalRows, rowsLoaded)"),
+  "Order page status must be verified and use real read counts; cannot continue after lost checkpoint ownership");
 check(backend.includes("let claimedRunStartedAt = ''") &&
       backend.includes("claimedRunStartedAt = cleanText(status?.started_at, 80)"),
   "Only an invocation that successfully claimed a run may own cleanup authority");
