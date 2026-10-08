@@ -32,7 +32,7 @@ import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mj
 import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
 import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBackgroundPolicy.mjs';
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
-import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged } from '../../shared/smartsheetOrderPullSafety.mjs';
+import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged, classifyOrderPullBusinessReadback } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
 import { orderPullPrewriteBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
@@ -593,6 +593,9 @@ async function pullDataset(
   //    read back before the pull can be treated as verified.
   const snapshotUpdates: any[] = [...salesPendingSnapshotRepairs, ...salesSnapshotOnlyUpdates];
   const orderDateVerifications: any[] = [];
+  const orderBusinessVerifications: any[] = [];
+  const orderFailedDateVerificationIds = new Set<string>();
+  let orderBusinessWriteFailures = 0;
   const salesBusinessVerifications: any[] = [];
   const salesBusinessWriteFailureIds: string[] = [];
   const bulkBatchSize = 100;
@@ -618,10 +621,16 @@ async function pullDataset(
           const snapshot = _remoteSnapshot;
           if (dataset === 'orders') {
             const changes = changedPulledOrderDates(_existing, fields);
+            // A bulk ACK can silently omit ordinary business fields, too.
+            // Hold *all* Order snapshot advancement until an exact-ID,
+            // permanent-link and field-by-field read-back has succeeded.
+            orderBusinessVerifications.push({
+              id, sheetId, rowId: cleanText(_existing.smartsheet_row_id, 40),
+              fields: { ...fields }, snapshot,
+            });
             if (Object.keys(changes).length) {
               orderDateVerifications.push({ id, previous: _existing, changes, snapshot });
-            } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot,
-              smartsheet_last_synced_at: new Date().toISOString() });
+            }
           } else {
             const expectedParentRowId = cleanText(fields?.smartsheet_parent_row_id, 40);
             const expectedFields = { ...fields };
@@ -720,10 +729,11 @@ async function pullDataset(
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
         await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);
-        snapshotUpdates.push({ id: item.id, smartsheet_sync_snapshot: item.snapshot,
-          smartsheet_last_synced_at: new Date().toISOString() });
+        // This repairs dates only; the full business-field read-back below
+        // must still succeed before advancing metadata.
       } catch (error: any) {
         errors.push(`Order ${item.id} date/text verification: ${error?.message || 'unknown error'}. Snapshot not advanced.`);
+        orderFailedDateVerificationIds.add(String(item.id));
         updatedCount--;
       }
       if (options.reportOrderPullProgress && ((checkIndex + 1) % 10 === 0 || checkIndex + 1 === orderDateVerifications.length)) {
@@ -731,6 +741,41 @@ async function pullDataset(
           itemLabel: `Checked ${checkIndex + 1} of ${orderDateVerifications.length} Order date/text changes`,
           detail: 'Only verified updates will have their Smartsheet snapshot metadata advanced',
         });
+      }
+    }
+  }
+
+  // On a partial/acknowledged Base44 batch, do not advance Order snapshots
+  // until the actual persisted business fields agree with this Smartsheet
+  // read. Unverified IDs remain on their prior baseline for a future pull;
+  // the run is reported as needing review, never silently "recovered".
+  if (dataset === 'orders' && orderBusinessVerifications.length) {
+    const eligible = orderBusinessVerifications.filter(item => !orderFailedDateVerificationIds.has(String(item.id)));
+    if (eligible.length) {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      try {
+        const actualRows = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Order,
+          query: { smartsheet_sheet_id: sheetId },
+          sort: 'id',
+          label: 'Order pull business-field read-back before sync metadata',
+        });
+        const review = classifyOrderPullBusinessReadback(eligible, actualRows);
+        snapshotUpdates.push(...review.verified.map(item => ({
+          id: item.id, smartsheet_sync_snapshot: item.snapshot,
+          smartsheet_last_synced_at: new Date().toISOString(),
+        })));
+        orderBusinessWriteFailures += review.failures.length;
+        updatedCount = Math.max(0, updatedCount - review.failures.length);
+        if (review.failures.length) errors.push(
+          `${review.failures.length} Order business-field writes could not be verified by permanent ID; ` +
+          `snapshots were preserved for review (IDs: ${review.failures.slice(0, 5).map(item => item.id).join(', ')}).`,
+        );
+      } catch (error: any) {
+        orderBusinessWriteFailures += eligible.length;
+        updatedCount = Math.max(0, updatedCount - eligible.length);
+        errors.push(`Order business-field read-back failed for ${eligible.length} records. ` +
+          `No snapshots advanced for these records: ${error?.message || 'unknown error'}`);
       }
     }
   }
@@ -894,6 +939,7 @@ async function pullDataset(
       snapshot_review_record_ids: salesPullBaselineReviewRequired.slice(0, 20),
     } : {}),
     ...(dataset === 'orders' ? {
+      business_field_write_failures: orderBusinessWriteFailures,
       snapshot_write_failures: snapshotWriteFailures,
       conflicts: orderLocalPendingConflicts.length,
       conflict_record_ids: orderLocalPendingConflicts.slice(0, 10),
