@@ -50,6 +50,9 @@ check(backend.includes("const pullResult = await pullDataset(base44, token, data
 check(backend.includes("const safeStatus = [400, 401, 403, 409, 429, 502, 503]"),
   "Coordinator conflicts must surface as HTTP 409 instead of generic 500");
 
+check(backend.includes("order_sync_backend_contract: 'order-run-scoped-cleanup-v1'") &&
+      backend.includes("if (action === 'status')"),
+  "Read-only status exposes a stable contract marker to distinguish a deployed guarded backend");
 check(backend.includes("let claimedRunStartedAt = ''") &&
       backend.includes("claimedRunStartedAt = cleanText(status?.started_at, 80)"),
   "Only an invocation that successfully claimed a run may own cleanup authority");
