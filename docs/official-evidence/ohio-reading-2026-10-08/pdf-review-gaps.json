@@ -1,0 +1,48 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "physical_pages": 12,
+  "pages_with_embedded_text": 10,
+  "fillable_widgets": 280,
+  "visual_review_complete": false,
+  "findings": [
+    {
+      "source": "building-fees-2026.pdf",
+      "page": 1,
+      "source_sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
+      "observation": "Cover identifies Hamilton County January 1, 2026 schedule. Totals include technology and state surcharges.",
+      "limitation": "Reading page says county fees less county surcharge; exact deduction/adopting ordinance unresolved. County totals not approved Reading fees."
+    },
+    {
+      "source": "building-fees-2026.pdf",
+      "page": 2,
+      "observation": "Sign fee rows include ground over 3 sf and over 6 feet tall; wall/projecting/roof over 2.5 sf and face changes.",
+      "limitation": "Flattened fee table needs visual column verification; size labels do not establish sign or electrical exemptions."
+    },
+    {
+      "source": "zoning-fees.pdf",
+      "page": 3,
+      "observation": "Schedule lists variance $250 and administrative zoning appeal $150; permanent/nonpermanent sign fee candidates also present.",
+      "limitation": "Effective date/adoption and visual table review pending."
+    },
+    {
+      "source": "bza-appeal.pdf",
+      "page": 2,
+      "observation": "Form prints $150 plus 3.5% credit card fee, while describing variance criteria. Requires scaled plans and abutting-owner details including across rights-of-way.",
+      "limitation": "Reconcile appeal versus variance scope and fee before workflow use."
+    }
+  ],
+  "empty_text_pages": [
+    {
+      "file": "residential-application.pdf",
+      "page": 1
+    },
+    {
+      "file": "commercial-application.pdf",
+      "page": 1
+    }
+  ],
+  "field_review": "Widget names/types recorded; 74 residential, 105 commercial, 101 appeal. No filled values retained and no form submitted.",
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0
+}

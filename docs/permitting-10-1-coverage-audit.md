@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading PDF page and form-field inventory
+
+Verified original and derived text hashes; indexed all 12 physical pages and 280 fillable widgets. Ten pages contain embedded text. Residential page 1 and commercial page 1 remain visual/OCR gaps. Preserved county-versus-Reading surcharge issue and BZA $150 versus variance $250/admin appeal $150 distinction. Visual table/fee adoption pending; no approved fees, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: recover application page images/text, visually verify fee tables, then Chapter 1290 and electrical routing.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading initial originals
 
 Confirmed canonical Reading OH city 6ac19f12298c063943ecc10f. Collected official department page, residential/commercial application, zoning/building fee and BZA appeal originals with per-file byte/hash receipts. Online iWorQ route retained as candidate. Zoning-before-building, XPEX operations and general inspection contacts remain separate from unresolved electrical delegation. Physical-page/form-field, fee/currentness and sign-code review pending. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
