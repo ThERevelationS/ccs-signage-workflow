@@ -46,5 +46,18 @@ export function orderSyncLiveProgress(status, { enabled = true, now = Date.now()
   const stalled = Boolean(show && running &&
     (heartbeatAgeMs === null || heartbeatAgeMs > ORDER_SYNC_HEARTBEAT_STALE_MS));
 
-  return { show, current, total, itemLabel, detail, phase, phaseLabel, percent, stalled, heartbeatAgeMs };
+  // These counts reflect Smartsheet pages downloaded, not Base44 Order writes.
+  // A full download is only the first phase of a manual two-way sync.
+  const readingPull = show && running && status?.progress_direction === 'pull' && phase === 'reading';
+  const readPercent = readingPull && total > 0
+    ? Math.min(100, Math.round((Math.min(current, total) / total) * 100)) : null;
+  const readCountLabel = readingPull
+    ? `${current.toLocaleString()}${total > 0 ? ` / ${total.toLocaleString()}` : ''} rows read`
+    : '';
+  const readPercentLabel = readingPull
+    ? readPercent === null ? 'Reading Smartsheet…' : `${readPercent}% of sheet read`
+    : '';
+
+  return { show, current, total, itemLabel, detail, phase, phaseLabel, percent, stalled, heartbeatAgeMs,
+    readingPull, readCountLabel, readPercentLabel };
 }
