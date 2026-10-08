@@ -162,6 +162,9 @@ export default function OpportunityBridgeReview() {
   const summary = result?.summary || {};
   const readiness = result?.readiness || null;
   const receiptLedger = result?.receipt_ledger || null;
+  const pilotReview = result?.pilot_review || null;
+  const sourceAuthorizationMatchesFreshReview = result?.source_authorization_matches_fresh_review === true;
+  const sourceAuthorizedReviewFingerprint = String(result?.source_authorized_review_fingerprint || "");
   const confirmationContract = result?.secondary_confirmation_contract || null;
   const confirmationBinding = result?.secondary_confirmation_binding || null;
   const previousSummary = previous?.summary || null;
