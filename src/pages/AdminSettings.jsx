@@ -952,64 +952,64 @@ export default function AdminSettings() {
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="min-w-0 space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
             <TabsList aria-label="Admin sections" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 bg-transparent p-1">
-              <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <TabsTrigger value="automations" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                 <Zap className="w-4 h-4 mr-2" />
                 Automations
               </TabsTrigger>
-              <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <TabsTrigger value="users" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                 <Users className="w-4 h-4 mr-2" />
                 Users
               </TabsTrigger>
               {isAdmin && (
                 <>
-                  <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="timeclock" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <Clock className="w-4 h-4 mr-2" />
                     Time Clock
                   </TabsTrigger>
-                  <TabsTrigger value="backend" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="backend" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <Settings className="w-4 h-4 mr-2" />
                     Backend Functions
                   </TabsTrigger>
-                  <TabsTrigger value="corebridge" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="corebridge" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <Bot className="w-4 h-4 mr-2" />
                     CoreBridge Migration
                   </TabsTrigger>
-                  <TabsTrigger value="opportunity_bridge" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="opportunity_bridge" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <GitBranch className="w-4 h-4 mr-2" />
                     Opportunity Bridge
                   </TabsTrigger>
-                  <TabsTrigger value="sync_conflicts" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm"><AlertTriangle className="w-4 h-4 mr-2"/>Sync Conflict Review</TabsTrigger>
-                  <TabsTrigger value="smartsheet" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="sync_conflicts" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80"><AlertTriangle className="w-4 h-4 mr-2"/>Sync Conflict Review</TabsTrigger>
+                  <TabsTrigger value="smartsheet" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <GitBranch className="w-4 h-4 mr-2" />
                     Smartsheet Sync
                   </TabsTrigger>
-                  <TabsTrigger value="resources" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="resources" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <Users className="w-4 h-4 mr-2" />
                     Resources
                   </TabsTrigger>
-                  <TabsTrigger value="permitting_completeness" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="permitting_completeness" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <ClipboardCheck className="w-4 h-4 mr-2" />
                     Permitting Completeness
                   </TabsTrigger>
-                  <TabsTrigger value="permitting_rules" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="permitting_rules" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <Scale className="w-4 h-4 mr-2" />
                     Permitting Rules
                   </TabsTrigger>
-                  <TabsTrigger value="permitting_tests" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <TabsTrigger value="permitting_tests" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                     <FlaskConical className="w-4 h-4 mr-2" />
                     Permitting Tests
                   </TabsTrigger>
                 </>
               )}
-              <TabsTrigger value="task_assignments" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <TabsTrigger value="task_assignments" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                 <UserCheck className="w-4 h-4 mr-2" />
                 Task Assignments
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <TabsTrigger value="calendar" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                 <CalendarDays className="w-4 h-4 mr-2" />
                 Calendar
               </TabsTrigger>
-              <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <TabsTrigger value="activity" className="max-w-full min-h-10 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80">
                 <Activity className="w-4 h-4 mr-2" />
                 Activity
               </TabsTrigger>
