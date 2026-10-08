@@ -261,4 +261,28 @@ check("reclassified or resolved navigation results do not retain stale highlight
   assert.match(source, /needsInputPrimaryCount > 0 \? needsInputSummaryRef\.current : checklistSearchInputRef\.current/);
 });
 
+check("confirmed checklist deletion clears stale Search and Needs Input navigation", () => {
+  const confirmHandler = source.slice(source.indexOf("const confirmDeleteChecklistItem ="), source.indexOf("// Descendant completion"));
+  assert.match(confirmHandler, /getDescendantIds\(pendingDelete\.itemId\)/);
+  assert.match(confirmHandler, /deleteFocusRecoveryRef\.current = true/);
+  assert.match(confirmHandler, /setFocusedSearchId\(null\)/);
+  assert.match(confirmHandler, /setFocusedNeedsInputId\(null\)/);
+  assert.match(confirmHandler, /focusedNeedsInputSourceIdRef\.current = null/);
+  assert.match(confirmHandler, /setChecklistSearchIndex\(-1\)/);
+  assert.match(confirmHandler, /setChecklist\(prev => prev\.filter\(item => !deleteIds\.has\(item\.id\)\)\)/);
+  assert.match(confirmHandler, /setPendingDelete\(null\)/);
+});
+
+check("delete confirmation restores focus after unmount, while Cancel keeps native restoration", () => {
+  const deletionDialog = source.slice(source.indexOf("{/* Checklist item deletion */}"), source.indexOf("{/* Validation guidance */}"));
+  assert.match(deletionDialog, /onCloseAutoFocus=\{\(event\) => \{/);
+  assert.match(deletionDialog, /if \(!deleteFocusRecoveryRef\.current\) return;/);
+  assert.match(deletionDialog, /event\.preventDefault\(\);/);
+  assert.match(deletionDialog, /deleteFocusRecoveryRef\.current = false;/);
+  assert.match(deletionDialog, /checklistSearchInputRef\.current \|\| checklistCloseButtonRef\.current/);
+  assert.match(deletionDialog, /if \(fallback && !fallback\.disabled\) fallback\.focus\(\)/);
+  assert.match(deletionDialog, /<AlertDialogCancel className="h-11 sm:h-9">Cancel<\/AlertDialogCancel>/);
+  assert.match(source, /<Button ref=\{checklistCloseButtonRef\} variant="outline" onClick=\{requestClose\}/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
