@@ -45,7 +45,31 @@ const allRowsRead = orderSyncLiveProgress({
   progress_updated_at: new Date(now).toISOString(),
 }, { enabled: true, now });
 assert.equal(allRowsRead.readPercentLabel, '100% of sheet read');
-assert.equal(allRowsRead.percent, 99.9, 'The overall sync must remain unconfirmed while row reconciliation is pending');
+assert.equal(allRowsRead.percent, 35, 'Download completion is only the first bounded stage of manual Sync');
+assert.equal(allRowsRead.stageCountLabel, '1,684 / 1,684 rows read');
+const nextPhases = [
+  ['matching', 0, 1684, 35, '0 / 1,684 rows compared'],
+  ['matching', 1684, 1684, 60, '1,684 / 1,684 rows compared'],
+  ['applying', 0, 125, 60, '0 / 125 candidate updates processed'],
+  ['applying', 125, 125, 80, '125 / 125 candidate updates processed'],
+  ['verifying_base44', 0, 12, 80, '0 / 12 date/text checks performed'],
+  ['verifying_base44', 12, 12, 90, '12 / 12 date/text checks performed'],
+  ['confirming_base44', 0, 125, 90, '0 / 125 snapshot writes processed'],
+  ['confirming_base44', 125, 125, 99.9, '125 / 125 snapshot writes processed'],
+];
+for (const [phase, current, total, percent, label] of nextPhases) {
+  const stage = orderSyncLiveProgress({
+    status: 'running', progress_dataset: 'orders', progress_direction: 'pull',
+    progress_phase: phase, progress_current: current, progress_total: total,
+    total_steps: 1, completed_steps: 0,
+    progress_updated_at: new Date(now).toISOString(),
+  }, { enabled: true, now });
+  assert.equal(stage.percent, percent, `${phase} weighted progress must not regress across stages`);
+  assert.equal(stage.stageCountLabel, label);
+  assert.equal(stage.pullStage, true);
+  assert.ok(stage.percent < 100);
+}
+console.log('PASS manual Order pull progress increases across matching, applying, Base44 verification and snapshot confirmation');
 
 const beforeFirstPage = orderSyncLiveProgress({
   status: 'running', progress_dataset: 'orders', progress_direction: 'pull',
@@ -116,7 +140,13 @@ assert.match(widget, /progressItemLabel/);
 assert.match(widget, /progressDetail/);
 assert.match(widget, /aria-live="polite"/);
 assert.match(widget, /const orderDownloadReading = compactOrderForm && orderProgress\.readingPull/);
-assert.match(widget, /orderProgress\.readCountLabel/);
-assert.match(widget, /orderProgress\.readPercentLabel/);
-assert.match(widget, /Updates not yet confirmed/);
-console.log('PASS Order Form polls every second, distinguishes downloaded rows from confirmed updates, and preserves push detail');
+assert.match(widget, /orderProgress\.stageCountLabel/);
+assert.match(widget, /orderProgress\.stagePercentLabel/);
+assert.match(widget, /Sync not yet confirmed/);
+assert.match(backend, /reportOrderPullProgress: async \(\{ phase, current, total, itemLabel, detail \}\) =>/);
+assert.match(backend, /phase: 'matching', current: 0, total: allRows\.length/);
+assert.match(backend, /phase: 'applying', current: 0, total: toUpdate\.length/);
+assert.match(backend, /phase: 'verifying_base44', current: 0, total: orderDateVerifications\.length/);
+assert.match(backend, /phase: 'confirming_base44', current: 0, total: snapshotUpdates\.length/);
+assert.match(backend, /if \(!saved\) throw new Error\('Order pull lost its progress checkpoint/);
+console.log('PASS Order Form polls every second, emits fail-closed backend stages and preserves existing push detail');
