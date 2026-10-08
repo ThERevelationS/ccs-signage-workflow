@@ -1308,6 +1308,20 @@ export default function ProductChecklistDialog({
     setFocusedNeedsInputId(null);
     needsInputSummaryRef.current?.focus();
   };
+  const clearNavigationHighlightOutsideRow = (target) => {
+    const targetRowId = target?.closest?.("[data-sips-checklist-item-id]")?.dataset?.sipsChecklistItemId || null;
+    if (focusedSearchId && targetRowId !== String(focusedSearchId)) setFocusedSearchId(null);
+    if (focusedNeedsInputId && targetRowId !== String(focusedNeedsInputId)) setFocusedNeedsInputId(null);
+  };
+  const handleChecklistResultBlurCapture = (e) => {
+    const currentRow = e.target?.closest?.("[data-sips-checklist-item-id]");
+    if (!currentRow) return;
+    const nextRow = e.relatedTarget?.closest?.("[data-sips-checklist-item-id]");
+    if (nextRow === currentRow) return;
+    const currentRowId = currentRow.dataset.sipsChecklistItemId;
+    if (focusedSearchId && currentRowId === String(focusedSearchId)) setFocusedSearchId(null);
+    if (focusedNeedsInputId && currentRowId === String(focusedNeedsInputId)) setFocusedNeedsInputId(null);
+  };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1329,7 +1343,10 @@ export default function ProductChecklistDialog({
   return (
     <>
       <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={() => {}}>
-        <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] sm:w-full max-w-6xl max-h-[94vh] sm:max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6 [&>button]:hidden">
+        <DialogContent
+          className="clay-card border-none w-[calc(100vw-1rem)] sm:w-full max-w-6xl max-h-[94vh] sm:max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6 [&>button]:hidden"
+          onPointerDownCapture={(e) => clearNavigationHighlightOutsideRow(e.target)}
+        >
           <DialogHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 flex-wrap">
@@ -1492,7 +1509,11 @@ export default function ProductChecklistDialog({
           )}
 
           {/* Checklist Items */}
-          <div className="flex-1 overflow-y-auto space-y-3 pr-0.5" onKeyDown={handleChecklistResultKeyDown}>
+          <div
+            className="flex-1 overflow-y-auto space-y-3 pr-0.5"
+            onKeyDown={handleChecklistResultKeyDown}
+            onBlurCapture={handleChecklistResultBlurCapture}
+          >
             {isLoading ? (
               <div className="flex items-center justify-center py-12 text-gray-500">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading checklist…
