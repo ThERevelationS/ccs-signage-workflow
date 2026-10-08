@@ -97,6 +97,16 @@ export function untouchedSalesTransitionGuards(guards = {}, changes = {}) {
     !Object.prototype.hasOwnProperty.call(changes, field)));
 }
 
+// Reject a confirmation opened against an older Sales classification/task.
+// The conditional WorkOrder save still guards changes arriving after this check.
+export function isSalesTransitionSnapshotCurrent(opened, current) {
+  if (!opened?.id || opened.id !== current?.id) return false;
+  return opened.sales_status === current.sales_status
+    && opened.in_pipeline === current.in_pipeline
+    && String(opened.current_task_description ?? "").trim() === String(current.current_task_description ?? "").trim()
+    && String(opened.sales_neutral_closed_at ?? "").trim() === String(current.sales_neutral_closed_at ?? "").trim();
+}
+
 export function planSalesTaskChange(workOrder, nextTaskDescription) {
   const task = String(nextTaskDescription || "").trim();
   const mapping = mapSalesTaskToStage(task);
