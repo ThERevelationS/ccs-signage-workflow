@@ -57,7 +57,7 @@ import {
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
-import { canUpdateWonOperationalField, planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
+import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -272,6 +272,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const pendingChangesRef = useRef({});
   const pendingBaselinesRef = useRef({});
+  const pendingSalesGuardsRef = useRef({});
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
@@ -1013,6 +1014,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     });
     pendingBaselinesRef.current[orderId] = baselines;
+    if (changedFields.some((field) => ["sales_status", "current_task_description", "in_pipeline", "sales_neutral_closed_at"].includes(field))) {
+      pendingSalesGuardsRef.current[orderId] = captureSalesTransitionGuards(
+        currentWo, baselines, pendingSalesGuardsRef.current[orderId]
+      );
+    }
     pendingRecordScopesRef.current[orderId] = activeRecordScopeRef.current;
     pendingChangesRef.current[orderId] = {
       ...(pendingChangesRef.current[orderId] || {}),
@@ -1056,6 +1062,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           workOrderId: orderId,
           expectedFields,
           nextFields: changes,
+          guardFields: untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
           label: "Sales Pipeline quick edit",
         });
 
@@ -1080,9 +1087,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           pendingChangesRef.current[orderId] = remaining;
           pendingBaselinesRef.current[orderId] = remainingBaselines;
           pendingHistoryFieldsRef.current[orderId] = remainingHistoryFields;
+          if (pendingSalesGuardsRef.current[orderId]) {
+            pendingSalesGuardsRef.current[orderId] = {
+              sales_status: saved.sales_status ?? null,
+              in_pipeline: saved.in_pipeline ?? null,
+            };
+          }
         } else {
           delete pendingChangesRef.current[orderId];
           delete pendingBaselinesRef.current[orderId];
+          delete pendingSalesGuardsRef.current[orderId];
           delete pendingHistoryFieldsRef.current[orderId];
           delete pendingRecordScopesRef.current[orderId];
         }
@@ -1216,6 +1230,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     debounceTimers.current = {};
     pendingChangesRef.current = {};
     pendingBaselinesRef.current = {};
+    pendingSalesGuardsRef.current = {};
     pendingHistoryFieldsRef.current = {};
     pendingRecordScopesRef.current = {};
     setQuickEditError("");
@@ -1274,6 +1289,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
         delete pendingChangesRef.current[id];
         delete pendingBaselinesRef.current[id];
+        delete pendingSalesGuardsRef.current[id];
         delete pendingHistoryFieldsRef.current[id];
         delete pendingRecordScopesRef.current[id];
         await softDeleteWorkOrderFromLoadedSnapshot({
@@ -1311,6 +1327,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
     delete pendingChangesRef.current[orderId];
     delete pendingBaselinesRef.current[orderId];
+    delete pendingSalesGuardsRef.current[orderId];
     delete pendingHistoryFieldsRef.current[orderId];
     delete pendingRecordScopesRef.current[orderId];
     
