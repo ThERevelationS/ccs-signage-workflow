@@ -1,0 +1,66 @@
+{
+  "reviewed_at": "2026-10-08",
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "edition_label": "2025 S-10",
+  "status": "web-derived candidates; not approved for automation",
+  "sections": [
+    {
+      "section": "1278.01",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71335",
+      "web_reference": "turn148view0",
+      "candidate": "Administrator/designee receives, reviews and determines zoning certificates in five named design districts; South Reading Road Commercial label differs from retained map Light Manufacturing. Other districts may be established through official map by Planning Commission/Council.",
+      "approved": false
+    },
+    {
+      "section": "1278.02",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71351",
+      "web_reference": "turn148view1",
+      "candidate": "Design Advisory Committee handles administrator appeals and referrals. Five mayor-appointed/Council-approved members, potentially more for district representation; design/resident/property-owner criteria can overlap, plus alternate. Public monthly meetings as needed, quorum three, majority of present members; conflicts prevent voting. Committee may recommend minor-category additions; current membership/calendar not verified.",
+      "approved": false
+    },
+    {
+      "section": "1278.03",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71394",
+      "web_reference": "turn148view2",
+      "candidate": "Submit to administrator/designee. Minor: owner/agent signed standard form, work description, color photos from public rights-of-way, material/color samples retained by Building Department. Major adds project/design rationale, existing/proposed uses/materials/methods; existing site plan including demolition, boundaries/easements/ROW and qualifying trees; proposed site/grading/drainage; detailed architectural drawings; color perspective from impactful ROW viewpoint (single-family exception); color building elevations showing new signs/awnings size, placement and graphics. Actual current standard form and fees unconfirmed.",
+      "approved": false
+    },
+    {
+      "section": "1278.04",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71433",
+      "web_reference": "turn148view3",
+      "candidate": "Completed application plus required fees starts stated review periods: approval within30 days, major pre-hearing conference within20 days; additional major review entails committee hearing scheduling and mailed abutter notice within30 days, applicant property placard furnished by Building Officer. Wording does not establish automatic approval or guaranteed hearing completion. Outcomes approval/certificate, conditional approval before certificate, one-month continuance for more information, denial with administrator-to-committee or committee-to-BZA appeal. Begin improvements within one year after certificate issuance or certificate invalid. Current enforcement unapproved.",
+      "approved": false
+    },
+    {
+      "section": "1278.05",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71463",
+      "web_reference": "turn148view4",
+      "candidate": "Administrator recommendation may be appealed to Design Advisory Committee within30 days; committee recommendation may be appealed to BZA within30 days. Each appeal heard at next regularly scheduled meeting after complete appeal application. No current meeting dates, form scope or fee inferred.",
+      "approved": false
+    },
+    {
+      "section": "1273.01",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-70466",
+      "web_reference": "turn149view0",
+      "candidate": "Design district applicability follows official zoning map; district provisions printed as prevailing over other zoning regulations, not current legal priority approval. Signs/awnings/hardware listed as major improvements. Certificate required before listed improvements and before building permit within mapped districts. Minor repair matching original and unchanged painting distinctions preserved; substantial expansion threshold50% gross floor area. No parcel assignment inferred. Chapter1290 all-sign review and1278 district-focused administrator route remain unreconciled.",
+      "approved": false
+    }
+  ],
+  "chapter1278_sections_read": 5,
+  "dependencies_read": [
+    "1273.01"
+  ],
+  "original_retention": "Attempt results in design-review-source-attempts.json; web retrieval is not a retained publisher original.",
+  "unresolved": [
+    "Current amendments/adoption",
+    "1290.20 Design Review Committee versus1278 Design Advisory Committee; district scope and all-sign route",
+    "Current design-review standard application, fees and meeting schedule",
+    "Full1273 district standards and dedicated sign district map",
+    "Separate electrical permit issuer and inspection office"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "published": false
+}

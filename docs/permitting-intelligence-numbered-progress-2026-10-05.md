@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase10, milestone2: Reading design-review process
+
+Reviewed all five Chapter1278 sections and1273.01 dependency. Recorded sign major-improvement classification, application materials, administrator/committee referrals and two-stage appeals as unapproved candidates. Currentness, committee labels, district scope, current forms/fees and electrical authorities remain open. Source attempt receipts retained separately. Task2 remains complete; milestone1 Task4 live acceptance remains open. Live record changes0; publications0. Next: Chapter1273 district-specific design/sign standards.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading Chapter1290 text review complete
 
 Read remaining ten published sign sections as web-derived candidates; all21 text sections now reviewed across receipts. Recorded prior-permit nonconformity, original-cost60% boundary gap,30-day discontinuance versus six-month abandonment and notice-triggered60-day abatement. Preserved historical1998 phaseout, legacy OBBC/roof classifications and unresolved railroad diagram. No grandfathering, roof permission, political-law enforceability or code-priority conclusion approved. Originals, definitions/design procedure, map and currentness remain unresolved. No live writes/publication. Task2 complete; Milestone1 Task4 open.

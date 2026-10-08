@@ -1,0 +1,50 @@
+[
+  {
+    "section": "1278.01",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71335",
+    "attempted_at": "2026-10-08T17:51:44.557119+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "HTTP error; no publisher original retained"
+  },
+  {
+    "section": "1278.02",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71351",
+    "attempted_at": "2026-10-08T17:51:44.650587+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "HTTP error; no publisher original retained"
+  },
+  {
+    "section": "1278.03",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71394",
+    "attempted_at": "2026-10-08T17:51:44.706377+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "HTTP error; no publisher original retained"
+  },
+  {
+    "section": "1278.04",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71433",
+    "attempted_at": "2026-10-08T17:51:44.750657+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "HTTP error; no publisher original retained"
+  },
+  {
+    "section": "1278.05",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-71463",
+    "attempted_at": "2026-10-08T17:51:44.793385+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "HTTP error; no publisher original retained"
+  },
+  {
+    "section": "1273.01",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-70466",
+    "attempted_at": "2026-10-08T17:51:44.838126+00:00",
+    "retained_original": false,
+    "http_status": 403,
+    "error": "HTTP error; no publisher original retained"
+  }
+]
