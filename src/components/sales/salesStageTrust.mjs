@@ -1,3 +1,5 @@
+import { isExplicitNeutralSalesClosure } from "./salesRecordScopes.js";
+
 export const UNVERIFIED_SALES_STAGE = "needs_stage";
 
 const text = (value) => String(value ?? "").trim();
@@ -11,11 +13,13 @@ export function isUnverifiedSmartsheetSalesStage(workOrder = {}) {
 }
 
 export function salesStageDisplayValue(workOrder = {}) {
+  if (isExplicitNeutralSalesClosure(workOrder)) return "closed_neutral";
   if (isUnverifiedSmartsheetSalesStage(workOrder)) return UNVERIFIED_SALES_STAGE;
   return text(workOrder?.sales_status) || "lead";
 }
 
 export function salesStageDisplayLabel(workOrder = {}) {
+  if (isExplicitNeutralSalesClosure(workOrder)) return "Closed (Neutral)";
   if (isUnverifiedSmartsheetSalesStage(workOrder)) return "Needs Stage";
   const value = salesStageDisplayValue(workOrder);
   return ({
