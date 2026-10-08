@@ -577,7 +577,8 @@ try {
     await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseSaveAck());
     await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.saveAckWaiting);
     const recovery=page.getByRole("alert");
-    await recovery.getByText(/A newer Fleet portal refresh completed/i).waitFor();
+    await page.getByText(/A newer Fleet portal refresh completed/i).waitFor();
+    assert.equal(await recovery.count(),1,"Superseded Save must require explicit receipt verification");
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true,"Save must not be replayable before receipt verification");
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
