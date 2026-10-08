@@ -22,7 +22,7 @@
     {
       "source": "ibi-eztrak-new-user.pdf",
       "observation": "Original guide linked by provider homepage retained with byte/hash verification.",
-      "content_review": "pending; no full-text, physical-page or visual acceptance claimed"
+      "content_review": "Both physical pages text-extracted and visually reviewed. See ibi-guide-review.json; scope/identifier ambiguity retained."
     }
   ],
   "portal_candidate": "https://eztrak.cagis.org/",
@@ -30,7 +30,6 @@
     "Exact electrical permit issuance authority and commercial sign applicability",
     "Residential electrical delegation",
     "Underlying Village zoning document and amendments",
-    "Guide full-text/visual review",
     "App-storage/catalog registration"
   ],
   "currentness_approved": false,

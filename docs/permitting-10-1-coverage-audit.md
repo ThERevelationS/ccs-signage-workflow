@@ -1,3 +1,9 @@
+## 2026-10-07 — Phase 10 → Milestone 2 of 3: IBI ezTrak guide reviewed
+
+Verified retained original hash, extracted text and visually reviewed both physical pages. Recorded IBI-PMT versus IBI-RVW record types and C/H/literal 0 jurisdiction identifiers. Guide heading limits Hamilton County/Cincinnati submissions while other-municipality identifier appears later; no Elmwood Place assignment or electrical authority inferred. No fee amount established, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: underlying Village zoning document/amendments recovery and unresolved locality electrical delegation.
+
 ## 2026-10-07 — Phase 10 → Milestone 2 of 3: Elmwood Place commercial electrical routing
 
 Recovered interrupted collection and verified two retained originals against manifest bytes/SHA-256: county development-process HTML and provider ezTrak guide PDF. County page supports a commercial-only building route and IBI electrical review/inspection candidate; separate electrical application remains explicit. Provider homepage failed 406, so portal migration observation remains web-derived. Exact issuer, residential delegation, sign applicability and guide content review remain open. No authority approved, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

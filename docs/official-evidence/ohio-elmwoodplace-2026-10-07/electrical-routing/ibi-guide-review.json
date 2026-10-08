@@ -1,0 +1,36 @@
+{
+  "source_sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+  "text_sha256": "e07452ef9fabd771cf86a4fc7d36602bb5466daddb4c73c360c8bfe9a72aa5ce",
+  "method": "Local Poppler pdftotext -layout and visual review of both pages rendered at scale-to 1100; original hash matches retained repository PDF",
+  "physical_pages": 2,
+  "visually_reviewed_pages": [
+    1,
+    2
+  ],
+  "renders_retained_in_repository": false,
+  "findings": [
+    {
+      "page": 1,
+      "observation": "Guide heading limits instructions to Hamilton County and Cincinnati IBI electrical permit/plan-review submissions. Kentucky directed to provider homepage."
+    },
+    {
+      "page": 1,
+      "observation": "CAGIS membership, active email, confirmation and permit-specific instructions/fees required. Password wording is printed guidance, not independently verified current portal policy."
+    },
+    {
+      "page": 2,
+      "observation": "Start Application/New collects project, owner, contractor and work type; save then payment and/or document submission. Track via Record/My Records/Action Center."
+    },
+    {
+      "page": 2,
+      "observation": "IBI-PMT identifies electrical permit records; IBI-RVW identifies plan-review records. C identifies Cincinnati, H Hamilton County, and literal 0 other municipality building departments.",
+      "limitation": "Literal 0 preserved, not silently normalized to letter O. Heading scope versus other-municipality identifier requires clarification. No Elmwood Place identifier assignment inferred."
+    }
+  ],
+  "fee_amount_verified": false,
+  "locality_delegation_established": false,
+  "permit_issuer_approved": false,
+  "inspector_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0
+}

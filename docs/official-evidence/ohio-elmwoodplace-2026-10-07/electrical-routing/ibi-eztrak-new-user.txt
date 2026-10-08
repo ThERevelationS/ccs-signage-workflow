@@ -1,0 +1,74 @@
+How to Set Up an ezTrak Account for submitting Electrical Permits or Plan Review to
+Inspection Bureau. Inc. (IBI) for Hamilton County and Cincinnati submittals only.
+
+NOTE: For Kentucky submittals refer to the IBI Home Page
+
+To submit permits/plans online through ezTrak for Hamilton County and the City of Cincinnati,
+you’ll need to register for a CAGIS ezTrak membership. This gives you access to apply for
+permits/plans, track projects, and receive notifications.
+
+We recommend looking over the ezTrak Account Registration page, https://eztrak.cagis.org/
+prior to starting your registration.
+
+1. Go to the Registration Page
+
+Visit the official registration page: CAGIS ezTrak
+Registration
+
+
+2. Provide Your Registration Details
+
+You’ll need:
+
+      User Name: Your name or the name of the business you represent.
+
+      Email Address: Your own active email account (CAGIS does not provide one). This will
+       be your login ID and is used for all communications. We highly recommend using a
+       generic email address that is not tied to a specific person like
+       permits@companyname.com.
+
+      Password: At least 8 characters, including at least one number, no special characters,
+       and case-sensitive.
+
+3. Complete the Registration
+
+      Click Register to create your account.
+
+      You’ll receive a confirmation email; check your inbox and spam folder.
+
+      Once registered, log in to access the Apply for Permits section.
+
+4. Prepare for Your Permit Application
+
+Before starting:
+
+      Review the specific instructions for the permit or plan review submittal, including
+       fees. (IBI Fee Schedule)
+      Ensure your email is active, as you’ll receive important updates and notifications.
+
+5. Start Applying Online
+
+From the ezTrak home page:
+
+      Use the Start an Application link or the New tab in the top toolbar to begin.
+
+      Follow the step-by-step process, providing project, owner, contractor, and work type
+       details.
+
+      Save your application and proceed to fee payment and/or document submission.
+
+6. Track Your Application
+
+      Use your Application number to track your application in the “Record” tab using “My
+       Records” or the “Action Center”.
+
+      IBI’s application numbers are identified by “IBI-PMT” for electrical permits and with
+       “IBI-RVW” for plan review. Jurisdiction identifiers are as follows: “C” (Cincinnati
+       Building Department), “H” (Hamilton County Building Department) and “0” (Other
+       Municipality Building Departments)
+
+      You can also set up email notifications to be alerted about updates.
+
+Tip: If you have multiple employees or partners, set up your account to allow shared access
+and collaboration
+
