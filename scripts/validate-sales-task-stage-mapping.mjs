@@ -87,8 +87,8 @@ same(planSalesTaskChange({ sales_status: "won" }, "Prospect Initiation (Gather I
   { action: "confirm_transition", task: "Prospect Initiation (Gather Info, Initial Discuss ...)", status: "lead" },
   "Reopening terminal outcomes requires confirmation.");
 same(planSalesTaskChange({ sales_status: "lead" }, NEUTRAL_CLOSED_TASK),
-  { action: "neutral_close_required", task: NEUTRAL_CLOSED_TASK, status: null },
-  "Neutral Closed cannot silently change a modern outcome.");
+  { action: "confirm_neutral_close", task: NEUTRAL_CLOSED_TASK, status: null },
+  "Neutral Closed requires explicit confirmation rather than inventing a modern Won/Lost outcome.");
 same(planSalesTaskChange({ sales_status: "quoted" }, "Custom follow up task"),
   { action: "task_only", task: "Custom follow up task", status: null },
   "Unrecognized free text cannot infer a Sales status.");
