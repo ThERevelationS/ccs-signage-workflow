@@ -65,6 +65,7 @@ export default function FleetMechanic() {
   const [estimateRecovery, setEstimateRecovery] = useState(null);
   const [workRecovery, setWorkRecovery] = useState(null);
   const portalRequestRef = useRef(0);
+  const portalAppliedEpochRef = useRef(0);
   const selectedWorkOrderRef = useRef(null);
   const estimateCapabilityRef = useRef(null);
   const saveCapabilityRef = useRef(null);
@@ -77,6 +78,7 @@ export default function FleetMechanic() {
   };
 
   const applyPortalPayload = result => {
+    portalAppliedEpochRef.current += 1;
     setData(result || null);
     setError("");
     const all = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])];
@@ -288,16 +290,29 @@ export default function FleetMechanic() {
     }
   };
 
+  const handleSupersededWorkAcknowledgement = recovery => {
+    if (selectedWorkOrderRef.current !== recovery.workOrderId) return;
+    const reason = "A newer Fleet portal refresh completed while this update was in progress.";
+    setWorkRecovery({...recovery,reason});
+    setSavedMessage("");
+    setActionError(`${reason} Check Current Server State before making another update. Nothing was replayed.`);
+  };
+
   const startJob = async () => {
     if (!selected) return;
     if (workRecovery?.workOrderId === selected.id) { setActionError("Check the current server state before trying another work-order update."); return; }
     const recovery = {workOrderId:selected.id,action:"start",requestId:newMechanicRequestId(),reason:"Work-start request could not be confirmed."};
+    const appliedPortalEpoch = portalAppliedEpochRef.current;
     setBusy("start"); setActionError(""); setSavedMessage("");
     try {
       const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
         action: "start", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
       });
       if (result?.error) throw new Error(result.error);
+      if (appliedPortalEpoch !== portalAppliedEpochRef.current) {
+        handleSupersededWorkAcknowledgement(recovery);
+        return;
+      }
       if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
       setWorkRecovery(null);
       setSavedMessage("Work started. CCS Fleet has been updated.");
@@ -391,6 +406,7 @@ export default function FleetMechanic() {
     if (!selected) return;
     if (workRecovery?.workOrderId === selected.id) { setActionError("Check the current server state before saving progress again."); return; }
     const recovery = {workOrderId:selected.id,action:"save",requestId:newMechanicRequestId(),reason:"Progress-save request could not be confirmed."};
+    const appliedPortalEpoch = portalAppliedEpochRef.current;
     setBusy("save"); setActionError(""); setSavedMessage("");
     try {
       const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
@@ -399,6 +415,10 @@ export default function FleetMechanic() {
         photos: photos.map(({type, data}) => ({type, data})),
       });
       if (result?.error) throw new Error(result.error);
+      if (appliedPortalEpoch !== portalAppliedEpochRef.current) {
+        handleSupersededWorkAcknowledgement(recovery);
+        return;
+      }
       if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
       setWorkRecovery(null);
       setSavedMessage("Progress saved to CCS Fleet.");
