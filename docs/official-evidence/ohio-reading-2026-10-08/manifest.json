@@ -128,5 +128,23 @@
     "final_url": "https://www.readingohio.org/documents/09-01-26-Council-Minutes-Regular-.pdf",
     "bytes": 570538,
     "sha256": "1699bd0f264aad395f14beba1d6bfb486dfb1f4f1f345d2ff00c8420f321bd73"
+  },
+  {
+    "file": "zoning-map-page.html",
+    "url": "https://www.readingohio.org/zoning-map.aspx",
+    "attempted_at": "2026-10-08T16:57:08.730165+00:00",
+    "status": 200,
+    "retained": true,
+    "bytes": 22502,
+    "sha256": "a0c07dfdbcb3b690106d89f528946bdfd2f3199f0bd3f51f64f7e83dae17d95b"
+  },
+  {
+    "file": "zoning-map-2025.pdf",
+    "url": "https://www.readingohio.org/documents/Building-and-Zoning/2025/Reading-Existing-Zoning-20-March-2025.pdf",
+    "attempted_at": "2026-10-08T16:57:08.731736+00:00",
+    "status": 200,
+    "retained": true,
+    "bytes": 1985542,
+    "sha256": "6886d0ec361c105ee366bf295f21c97ca37de6445934419205a88287d59fe0e6"
   }
 ]

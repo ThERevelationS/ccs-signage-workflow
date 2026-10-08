@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading zoning map original reviewed
+
+Retained official map landing HTML and one-page March 20 2025 PDF; verified source hashes and visually reviewed the sheet. Recorded zoning/design overlays, floodplain, corporation limits and PDD numbering separately. PDD 1/2/3 must not become sign districts I-IV. Dedicated sign district map remains unresolved. Preserved South Reading Road Light Manufacturing map label versus Commercial application label; currentness and parcel assignments unapproved. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: remaining Chapter 1290 and Chapter 1278 primary-source review, separate sign district map and electrical authority; minute image gaps/later amendments remain pending.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading post-June amendment timeline
 
 Retained five official council PDF packets (July 7/21, August 4/18, September 1) and indexed all 49 pages with source/text hashes. Targeted zoning passages establish first reading August 4, second reading August 18 and third reading tabled September 1 (7-0), with revisions returning to Planning Commission. September 1 page 1 visually confirmed against original hash. Later adoption, ordinance text and sign-code effects unresolved; sparse pages/attachments remain OCR/visual gaps. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

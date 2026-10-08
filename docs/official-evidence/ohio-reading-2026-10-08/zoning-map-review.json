@@ -1,0 +1,51 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "file": "zoning-map-2025.pdf",
+  "source_sha256": "6886d0ec361c105ee366bf295f21c97ca37de6445934419205a88287d59fe0e6",
+  "physical_pages": 1,
+  "visual_reviewed": true,
+  "method": "Hash-matched original locally rendered with Poppler at 2400; whole-sheet visual review. No parcel boundary determination; render not retained.",
+  "printed_title": "Existing Zoning Map \u2014 City of Reading, Ohio",
+  "printed_last_update": "20 March 2025",
+  "update_scope": "Printed latest update describes updated parcels/corporation limits, not adoption of all zoning/sign rules.",
+  "legend": {
+    "zoning": [
+      "Light Industrial",
+      "Heavy Industrial",
+      "Public and Institutional",
+      "Research & Development",
+      "Business A/B/C/D",
+      "Residential E-R/A/B/C/E/D"
+    ],
+    "design_review": [
+      "West Benson Street Mixed Use",
+      "South Reading Road Light Manufacturing",
+      "North Reading Road Office and Industrial",
+      "Downtown Reading Mixed Use",
+      "Reading Road General Commercial"
+    ],
+    "other": [
+      "Benson Street Retail District",
+      "100 Year Flood Plain",
+      "PDD Overlay",
+      "Corporation Limits"
+    ],
+    "pdd_numbers": {
+      "1": "Jefferson Street",
+      "2": "Hill Street",
+      "3": "Reading Community School"
+    }
+  },
+  "limits": [
+    "Numbered PDD 1/2/3 are not Chapter 1290 sign districts I/II/III/IV.",
+    "No dedicated sign district I-IV legend identified on this sheet. Referenced attached sign district map remains unresolved.",
+    "South Reading Road Light Manufacturing design-review label differs from Commercial Design Review on application. Preserve both labels; no silent normalization.",
+    "Base zoning, design overlays, PDD, floodplain and corporation limits remain separate; no parcel approvals or automated polygon inference.",
+    "Chapter 1278 procedure/committee scope pending primary-source review; no inference from unrelated municipalities or secondary copies.",
+    "Currentness after March 2025 and later amendments unverified."
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "parcel_assignment_approved": false,
+  "live_records_changed": 0
+}
