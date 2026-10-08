@@ -1,0 +1,32 @@
+{
+  "locality": {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village"
+  },
+  "resources": [
+    {
+      "file": "zoning-information.pdf",
+      "label": "Zoning certificate information \u2014 review pending",
+      "source": "https://www.stbernard-oh.gov/DocumentCenter/View/225/Zoning-Certificate-Information-Sheet-PDF",
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf",
+      "format": "PDF",
+      "bytes": 141521,
+      "sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb"
+    },
+    {
+      "file": "zoning-map.pdf",
+      "label": "Zoning map \u2014 parcel and currentness review pending",
+      "source": "https://www.stbernard-oh.gov/DocumentCenter/View/227/Zoning-Map-PDF",
+      "archive": "/permitting-evidence/stbernard/zoning-map.pdf",
+      "format": "PDF",
+      "bytes": 2933376,
+      "sha256": "2ceb395b30d5c73dbfbd4d2aab0be41199c0b905dbec94f281de4871b0de39d8"
+    }
+  ],
+  "findings_count": 5,
+  "authority_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0
+}

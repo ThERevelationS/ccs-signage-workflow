@@ -1079,5 +1079,97 @@
         "authority_approved": false
       }
     ]
+  },
+  {
+    "id": "6ac1a0d393d41146d708791d",
+    "name": "St. Bernard",
+    "state": "OH",
+    "type": "village",
+    "source": "https://www.stbernard-oh.gov/236/Planning-Zoning",
+    "observed_on": "2026-10-08",
+    "online_form_url": "https://stbernardoh.portal.iworq.net/",
+    "references": [
+      {
+        "label": "County ezTrak portal \u2014 building route review pending",
+        "url": "https://eztrak.cagis.org/"
+      }
+    ],
+    "resources": [
+      {
+        "file": "zoning-information.pdf",
+        "label": "Zoning certificate information \u2014 review pending",
+        "source": "https://www.stbernard-oh.gov/DocumentCenter/View/225/Zoning-Certificate-Information-Sheet-PDF",
+        "archive": "/permitting-evidence/stbernard/zoning-information.pdf",
+        "format": "PDF",
+        "bytes": 141521,
+        "sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb"
+      },
+      {
+        "file": "zoning-map.pdf",
+        "label": "Zoning map \u2014 parcel and currentness review pending",
+        "source": "https://www.stbernard-oh.gov/DocumentCenter/View/227/Zoning-Map-PDF",
+        "archive": "/permitting-evidence/stbernard/zoning-map.pdf",
+        "format": "PDF",
+        "bytes": 2933376,
+        "sha256": "2ceb395b30d5c73dbfbd4d2aab0be41199c0b905dbec94f281de4871b0de39d8"
+      }
+    ],
+    "notes": [
+      "Retained Village page describes a January 1, 2026 building-permit transfer to Hamilton County via ezTrak. Village zoning through iWorQ remains a separate candidate step; sign-specific applicability needs review.",
+      "Village portal routing for permits completed before January 1, 2026 is historical. Do not use it as the current county building intake route.",
+      "Electrical routing is unresolved: the Village contact table points to Hamilton County, while publisher Section 1305.01(e), originating in Ord.15-2011, names Inspection Bureau Inc. Electrical permit issuance and electrical inspection remain separately unapproved; a shared portal does not establish delegation.",
+      "Zoning information sheet lists temporary and permanent signs and possible county building approval. It states a $50 zoning fee and normal five-business-day review; fee currentness is pending and timing is not a guaranteed approval deadline.",
+      "Zoning map visual, currentness and parcel review remain pending. Embedded map text does not establish the job parcel district or permitted sign allowance.",
+      "Publisher sign provisions span differing version labels; original code downloads were blocked. Current adoption and sign exceptions remain unapproved.",
+      "Sidewalk-sign form and fee remain unresolved. A sidewalk-cafe fee must not be substituted for a sign fee.",
+      "Two original PDFs are retained. Complete searchable content and verified app-storage catalog registration remain pending."
+    ],
+    "document_findings": [
+      {
+        "label": "Portal application",
+        "text": "Online zoning form route; not legacy building application.",
+        "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+        "physical_page": 1,
+        "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+        "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+        "authority_approved": false
+      },
+      {
+        "label": "Site plan",
+        "text": "Scaled north-oriented plan with parcel, building and setback details.",
+        "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+        "physical_page": 1,
+        "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+        "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+        "authority_approved": false
+      },
+      {
+        "label": "Fee and issuance",
+        "text": "Sheet states $50 fee and payment before issuance; currentness pending.",
+        "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+        "physical_page": 1,
+        "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+        "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+        "authority_approved": false
+      },
+      {
+        "label": "Review timing",
+        "text": "Normal review timing, not guaranteed approval deadline; raw extraction spacing preserved.",
+        "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+        "physical_page": 1,
+        "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+        "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+        "authority_approved": false
+      },
+      {
+        "label": "Signs and county review",
+        "text": "Temporary/permanent signs included; county building approval may also be needed.",
+        "archive": "/permitting-evidence/stbernard/zoning-information.pdf#page=1",
+        "physical_page": 1,
+        "source_sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+        "text_sha256": "0d221b09cf745a387c159df42c5eaa15ebbcd9735e84922631f6053674efd19e",
+        "authority_approved": false
+      }
+    ]
   }
 ]

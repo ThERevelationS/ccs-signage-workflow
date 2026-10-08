@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: St Bernard locality dossier
+
+Added exact-identity admin dossier with two hash-verified retained PDFs, five page-linked findings and distinct Village zoning/county building portal links. January2026 transfer, conflicting electrical routing, code versions, map and sidewalk-sign gaps remain unapproved. Live record changes0; publications0. Task2 complete; milestone1 Task4 open. Next: remaining Ohio dossier and document access coverage audit.
+
 ## 2026-10-08 — Phase 10, milestone 2: Sharonville locality dossier
 
 Added admin exact-identity dossier with five hash-verified retained PDFs and seven page-linked findings. City issuance versus NIC inspection candidates, two-county scope, feather-sign conflict, code version and page97 gaps remain unapproved. Live changes0; publications0. Task2 complete; milestone1 Task4 open. Next: St Bernard locality dossier.
