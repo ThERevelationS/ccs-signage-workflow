@@ -133,12 +133,13 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               );
               case "sales_status": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
-            <Select value={stageDisplayValue} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered}>
+            <Select value={stageDisplayValue} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered || stageDisplayValue === "closed_neutral"}>
               <SelectTrigger className={`h-7 text-xs border-0 px-1 ${unverifiedStage ? "bg-violet-50 text-violet-800" : SALES_STATUSES.find((status) => status.value === stageDisplayValue)?.className || "bg-transparent"}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
+                {stageDisplayValue === "closed_neutral" && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
                 {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
               </SelectContent>
             </Select>
