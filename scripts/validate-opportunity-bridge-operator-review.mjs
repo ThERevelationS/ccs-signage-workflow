@@ -24,6 +24,10 @@ assert(review.includes('Secondary confirmation contract'), 'Review UI must expos
 assert(review.includes('exact admin actor + exact run + exact batch'), 'Review UI must explain exact binding requirements.');
 assert(review.includes('Confirmation phrase/token is not stored or exposed'), 'Review UI must state that confirmation secret material is not exposed.');
 assert(review.includes('Proposed first batch — planning only'), 'Review UI must label the first batch as planning-only.');
+assert(review.includes('Exact pilot review fingerprint'), 'Review UI must expose the exact pilot review fingerprint.');
+assert(review.includes('NOT AUTHORIZED'), 'Review UI must show the default non-authorized state.');
+assert(review.includes('Source-authorized fingerprint:'), 'Review UI must expose the source authorization fingerprint state.');
+assert(review.includes('This review response is not execution authorization.'), 'Review UI must explicitly separate read-only review metadata from execution authorization.');
 assert(review.includes('localStorage'), 'Review UI must support client-local drift comparison without production writes.');
 
 for (const forbidden of [
