@@ -2887,7 +2887,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             workOrders={filteredWorkOrders}
             onOpenDetails={openOpportunityDetails}
             onUpdateWorkOrder={updateWorkOrder}
-              onCompleteFollowUp={requestFollowUpCompletion}
+            onCompleteFollowUp={requestFollowUpCompletion}
             isRegistered={isRegistered}
             currentSalesOwnerLabel={currentSalesOwnerLabel}
             leadSources={leadSources}
@@ -2911,7 +2911,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             users={users}
             workOrders={filteredWorkOrders}
             onUpdateWorkOrder={updateWorkOrder}
-              onCompleteFollowUp={requestFollowUpCompletion}
+            onCompleteFollowUp={requestFollowUpCompletion}
             onOpenDetails={openOpportunityDetails}
             isRegistered={isRegistered}
             currentSalesOwnerLabel={currentSalesOwnerLabel}
