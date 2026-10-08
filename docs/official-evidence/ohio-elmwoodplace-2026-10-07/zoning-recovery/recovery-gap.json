@@ -1,0 +1,36 @@
+{
+  "locality_id": "6ac1a15f8dd6f5306ab7935f",
+  "search_scope": [
+    "Official building/forms links previously retained",
+    "Village council and Minutes pages",
+    "Two search engines for Ordinance 10-07, zoning PDF and amendments",
+    "Publisher 154.01 observed separately from unavailable original archive"
+  ],
+  "outcome": "Underlying zoning document and amendment chain not located within inspected online scope. This does not establish that no online copy exists.",
+  "publisher_observation": {
+    "url": "https://codelibrary.amlegal.com/codes/elmwoodplace/latest/elmwoodplace_oh/0-0-0-12907",
+    "type": "web-derived observation; original archive unavailable in earlier code-routing manifest",
+    "summary": "Section adopts Ordinance 10-07 dated September 11, 2007 and amendments by reference; copy on file at village offices."
+  },
+  "minutes_observation": {
+    "url": "https://www.elmwoodplace-oh.gov/Minutes",
+    "summary": "Page currently says content coming soon; no meeting document links in retrieved page."
+  },
+  "documents_needed": [
+    "Full zoning code adopted by Ordinance 10-07 including sign regulations, tables, diagrams and attachments",
+    "All subsequent text/map amendments and effective dates",
+    "Current adopted zoning map and Vine architectural-overlay regulations",
+    "Current sign/zoning application, fee adoption and appeal procedure",
+    "Current commercial/residential electrical permit issuer and inspection delegation"
+  ],
+  "office_candidate": {
+    "address": "6118 Vine Street, Elmwood Place OH 45216",
+    "phone": "513-242-0291",
+    "basis": "Official Village council/Minutes pages; not an approval of permitting authority"
+  },
+  "message_sent": false,
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0,
+  "next": "Continue Ohio locality collection; revisit Elmwood Place when original zoning/amendment evidence is available."
+}

@@ -24,5 +24,6 @@
   "electrical_permit_issuer_approved": false,
   "electrical_inspector_approved": false,
   "live_records_changed": 0,
-  "next": "Underlying zoning document/amendments recovery and current electrical issuer/inspector roles; map/currentness and app-storage/catalog registration remain pending."
+  "next": "Resume Ohio locality expansion; Elmwood Place original zoning/amendments, authority, map/currentness and app-storage/catalog gaps remain open.",
+  "zoning_document_recovery": "Official council/Minutes and targeted two-engine search inspected; full Ordinance 10-07 and amendments not located in that scope. Publisher says copy on file at Village offices. Documents-needed checklist saved in zoning-recovery/recovery-gap.json; no request sent."
 }

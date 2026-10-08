@@ -1,3 +1,9 @@
+## 2026-10-07 — Phase 10 → Milestone 2 of 3: Elmwood Place zoning recovery gap consolidated
+
+Inspected official council/Minutes links and two-engine targeted search. Publisher 154.01 incorporates separate Ordinance 10-07/amendments on file at Village offices; Minutes page has coming-soon placeholder. Underlying zoning/sign code not located in inspected scope. Saved documents-needed checklist and official office candidate without sending a request or inventing sign limits. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: resume Ohio locality expansion; Elmwood Place unresolved originals, currentness, delegation and catalog gaps remain explicit.
+
 ## 2026-10-07 — Phase 10 → Milestone 2 of 3: IBI ezTrak guide reviewed
 
 Verified retained original hash, extracted text and visually reviewed both physical pages. Recorded IBI-PMT versus IBI-RVW record types and C/H/literal 0 jurisdiction identifiers. Guide heading limits Hamilton County/Cincinnati submissions while other-municipality identifier appears later; no Elmwood Place assignment or electrical authority inferred. No fee amount established, live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
