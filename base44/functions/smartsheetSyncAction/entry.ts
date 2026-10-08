@@ -2208,7 +2208,12 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({ success: false,
           error: 'Smartsheet did not confirm the permanent Order Requestor CONTACT_LIST column. Nothing was changed.' }, { status: 409 });
       }
-      const originalOptions = before.contactOptions ?? [];
+      if (!Array.isArray(before.contactOptions)) {
+        return Response.json({ success: false, needs_review: true,
+          error: 'Smartsheet did not return the existing Requestor contacts. To protect historical contact options, no update was attempted.' },
+          { status: 409 });
+      }
+      const originalOptions = before.contactOptions;
       const plan = planOrderRequestorContactAppend(originalOptions, users[0]);
       if (plan.changed) {
         try {
