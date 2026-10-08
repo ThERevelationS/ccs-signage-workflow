@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading sign fee columns and tax attachment
+
+Visually reviewed county building fee page 2, city zoning fee page 3 and commercial tax attachment page 2 against hash-matched originals. Preserved unit/upfront/surcharge/CO-CC distinctions, $40 sign fee candidates, variance-versus-appeal amounts and conditional waiver wording. Recorded nonresident contractor/subcontractor registration without inferring tax exemption from Non-Profit checkbox. Current fee adoption and surcharge deduction remain unresolved. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: remaining PDF layouts, sign Chapter 1290 and separate electrical authority evidence.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading application scan recovery
 
 Recovered both empty-text application page-one scans through source-hash-matched Poppler/Tesseract and full-page visual inspection. Saved uncorrected OCR/render hashes. Confirmed Sign checkbox, required contact email and separate zoning/building approval fields. Printed 3%/1% fees remain unresolved against city surcharge wording; Electric checkbox is HVAC fuel context, not electrical permit authority. Remaining PDF layouts and commercial tax attachment still pending. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

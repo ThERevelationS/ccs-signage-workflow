@@ -35,5 +35,6 @@
   "electrical_inspector_approved": false,
   "live_records_changed": 0,
   "pdf_extraction": "All 12 physical pages indexed; 10 contain embedded text, two application pages need OCR/visual recovery. 280 fillable widgets indexed. See pdf-text-extraction.json and pdf-review-gaps.json.",
-  "fee_discrepancies": "County 2026 schedule includes surcharges while Reading page says less county surcharge; exact deduction unresolved. BZA form $150 versus zoning variance $250/admin appeal $150 requires scope reconciliation."
+  "fee_discrepancies": "County 2026 schedule includes surcharges while Reading page says less county surcharge; exact deduction unresolved. BZA form $150 versus zoning variance $250/admin appeal $150 requires scope reconciliation.",
+  "fee_tax_visual_review": "Building fee page 2, zoning fee page 3 and commercial tax attachment page 2 visually reviewed with original hashes. Columns, separate appeal/variance fees and nonresident contractor registration preserved. Current fees, surcharge deduction and tax applicability unapproved."
 }

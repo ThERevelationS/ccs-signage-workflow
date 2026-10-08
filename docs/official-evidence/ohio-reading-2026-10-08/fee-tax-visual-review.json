@@ -1,0 +1,74 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "method": "Hash-matched original downloads rendered locally with Poppler; full-page visual inspection. Render images not retained in repository.",
+  "reviewed_pages": [
+    {
+      "file": "building-fees-2026.pdf",
+      "page": 2,
+      "source_sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46"
+    },
+    {
+      "file": "zoning-fees.pdf",
+      "page": 3,
+      "source_sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558"
+    },
+    {
+      "file": "commercial-application.pdf",
+      "page": 2,
+      "source_sha256": "ba109bcf3aaec5fc3418335b8b5a282fa791715ae68a8eb2f3913956fda7671a"
+    }
+  ],
+  "building_sign_rows": [
+    {
+      "category": "Ground (>3 sf, >6 feet tall)",
+      "unit_price": "264.92",
+      "upfront": "297.38",
+      "upfront_with_technology_and_state_surcharge": "321.17",
+      "co_cc": "32.46",
+      "revision_base": "148.05",
+      "revision_total": "159.89"
+    },
+    {
+      "category": "Wall/projecting/roof (>2.5 sf)",
+      "unit_price": "107.78",
+      "upfront": "140.24",
+      "upfront_with_technology_and_state_surcharge": "151.46",
+      "co_cc": "32.46"
+    },
+    {
+      "category": "Single sign face change",
+      "unit_price": "107.78",
+      "upfront": "140.24",
+      "upfront_with_technology_and_state_surcharge": "151.46",
+      "co_cc": "32.46",
+      "additional_face_unit_price": "32.46"
+    }
+  ],
+  "building_limits": [
+    "Upfront already includes CO/CC numerically; do not add CO/CC again without fee-policy confirmation.",
+    "These are county schedule printed amounts, not approved Reading totals. Reading surcharge deduction unresolved.",
+    "Size thresholds are fee labels, not zoning/electrical exemption determinations."
+  ],
+  "zoning_observations": [
+    "Page 3 groups permanent signs under commercial accessory uses $40.",
+    "Special uses row prints sandwich board sign annual/temporary sign $40.",
+    "Variance $250 and administrative appeal $150 visually confirmed.",
+    "Fee waiver wording requires elimination of a legal nonconformity and establishment of a conforming structure/condition; no blanket fee exemption inferred."
+  ],
+  "tax_attachment_observations": [
+    "Business/professional registration includes nonresident contractors/vendors temporarily conducting business in Reading.",
+    "Requests job-site address and complete subcontractor listing with addresses/phones.",
+    "Requests business identification, operating dates, accounting period and payroll/withholding details; blank original retained only.",
+    "Printed 15-day return instruction does not establish trigger date or sign-permit deadline.",
+    "Non-Profit checkbox is business classification, not proof of tax exemption."
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "tax_exemption_approved": false,
+  "live_records_changed": 0,
+  "remaining_visual_pages": [
+    "building fees pages 1,3,4",
+    "zoning fees pages 1,2",
+    "BZA appeal pages 1,2"
+  ]
+}
