@@ -1,0 +1,16 @@
+[
+  {
+    "file": "sign-1290.12.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64545",
+    "attempted_at": "2026-10-08T17:22:50.148851+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.18.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64641",
+    "attempted_at": "2026-10-08T17:22:50.222854+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "method": "Full publisher sections read through web retrieval; paraphrased candidates, original downloads attempted separately.",
+  "sections": [
+    {
+      "section": "1290.12",
+      "id": "64545",
+      "observations": [
+        "Aggregate includes permanent surfaces visible from public ways. Panel surface area, smallest enclosing rectangle for individual letters, and permanent window/door area counted; pole/projecting excluded from that stated method.",
+        "Frontage is facade width facing principal street or containing main entrance.",
+        "Secondary street/parking entrance may receive up to25% additional area; do not double-stack with1290.15(D)(1) without confirmation.",
+        "Multiface uses one face, largest when unequal; enclosing squares/rectangles include structure.",
+        "DistrictIV frontage cross-reference now located, but relationship with II/III Ch1242 remains unresolved."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64545"
+    },
+    {
+      "section": "1290.18",
+      "id": "64641",
+      "observations": [
+        "General temporary: max40 sf, one/premises; premises-related special occasions. Flat-wall public-thoroughfare exception max21 days is separate from permit duration.",
+        "Permit options15/30 days; remove within24 hours after expiry unless renewed. Parcel/calendar-year max four15-day or two30-day permits; mixed-duration handling unresolved.",
+        "Extra sandwich board limited to sidewalk frontage in Downtown/West Benson Mixed Use subdistricts. Annual permit possible at temporary fee; fee currentness unapproved.",
+        "Board max36 in wide/42 in high/base4 sf; curb offset1 ft; sidewalk minimum8 ft6 in; straight clear pedestrian path5 ft accounting for fixed obstacles.",
+        "No curb-cut/driveway placement or traffic obstruction. Design review; display only while open for walk-in customers."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64641"
+    }
+  ],
+  "limits": [
+    "No parcel/subdistrict assignment approved.",
+    "Temporary allowances interact with movement prohibition1290.03; no blanket banner approval.",
+    "No electrical/building exemption or automatic permit renewal inferred.",
+    "Published edition2025S-10; originals and later legislative currentness pending."
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "calculator_enabled": false,
+  "live_records_changed": 0
+}

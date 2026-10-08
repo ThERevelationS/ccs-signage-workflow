@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading measurement and temporary signs
+
+Reviewed 1290.12/.18 as web-derived candidates. Recorded lettering rectangles, window/door area, largest-face method and frontage definition; secondary-entrance bonus must not be stacked automatically. Temporary 15/30-day permits, 24-hour removal and annual parcel limits remain separate from 21-day wall exception and annual sandwich-board option. Preserved sidewalk/curb/path geometry, subdistrict/design-review and business-hours conditions. Eleven of 21 sign sections read; currentness/originals unresolved. No live writes/publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: remaining sign sections and Chapter1242/1278 dependencies; separate electrical authority still pending.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading four sign-district rule candidates
 
 Reviewed 1290.14-.17 through publisher web retrieval and recorded District I-IV size/type/placement candidates with inheritance dependencies. Preserved formula footnotes, invalid bulletin height wording, II billboard reference to I, III billboard aggregate reference to II and IV frontage cross-reference differences. Direct original attempts remain separately recorded; no calculator or approved parcel/rule assignment. Currentness and originals unresolved. No live writes/publication. Task 2 complete; Milestone 1 Task 4 open.
