@@ -22,6 +22,7 @@ const STATUS_COLUMNS = [
 const BOARD_COLUMNS = [
   { value: "needs_stage", label: "Needs Stage", header: "border-violet-200 bg-violet-50", badge: "bg-violet-100 text-violet-800", virtual: true },
   ...STATUS_COLUMNS,
+  { value: "closed_neutral", label: "Closed (Neutral)", header: "border-slate-200 bg-slate-50", badge: "bg-slate-100 text-slate-700", virtual: true },
 ];
 
 const money = (value) => new Intl.NumberFormat("en-US", {
@@ -56,7 +57,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
 
   const requestStatusChange = (workOrder, nextStatus) => {
     const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
-    if (!isRegistered || !workOrder?.id || !nextStatus || nextStatus === "needs_stage") return;
+    if (!isRegistered || !workOrder?.id || !nextStatus || ["needs_stage", "closed_neutral"].includes(nextStatus)) return;
     if (workOrder.sales_status === nextStatus && !unverifiedStage) return;
     onRequestStatusChange?.(workOrder, nextStatus);
   };
@@ -235,12 +236,13 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
 
                       <div className="mt-2 flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Move stage</span>
-                        <Select value={stageDisplayValue} onValueChange={(value) => requestStatusChange(workOrder, value)} disabled={!isRegistered}>
+                        <Select value={stageDisplayValue} onValueChange={(value) => requestStatusChange(workOrder, value)} disabled={!isRegistered || stageDisplayValue === "closed_neutral"}>
                           <SelectTrigger aria-label={`Move ${opportunityDisplayName} to another sales stage`} className={`h-11 flex-1 text-xs sm:h-8 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : ""}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {unverifiedStage && <SelectItem value="needs_stage" disabled>Needs Stage</SelectItem>}
+                            {stageDisplayValue === "closed_neutral" && <SelectItem value="closed_neutral" disabled>Closed (Neutral)</SelectItem>}
                             {STATUS_COLUMNS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                           </SelectContent>
                         </Select>
