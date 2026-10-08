@@ -74,7 +74,7 @@ export default function SalesPipelineDialogs({
           fieldLabel={contextMenu.fieldLabel}
           currentValue={contextMenu.currentValue}
           onClear={() => clearCell(contextMenu.workOrder.id, contextMenu.fieldName)}
-          isRegistered={isRegistered && !(
+          isRegistered={isRegistered && contextMenu.fieldName !== "sales_status" && !(
             ["won", "lost"].includes(contextMenu.workOrder?.sales_status)
             && CLOSEOUT_HISTORICAL_FIELDS.has(contextMenu.fieldName)
           )}
