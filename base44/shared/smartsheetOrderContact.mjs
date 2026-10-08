@@ -24,6 +24,46 @@ export function readSharedOrderRequestor(cell) {
   };
 }
 
+// Add-only Order Requestor dropdown update. Existing contact emails and display
+// names are never translated, relabeled, removed, or reordered.
+export function planOrderRequestorContactAppend(existingOptions, user) {
+  if (!Array.isArray(existingOptions)) {
+    throw new Error('Smartsheet Requestor contact options were not returned as a list.');
+  }
+  const email = String(user?.email ?? '').trim().toLowerCase();
+  const name = String(user?.full_name ?? '').trim();
+  if (!isValidContactEmail(email) || !name || name.length > 120) {
+    throw new Error('The new app user needs a valid email and full name before joining the Smartsheet Requestor dropdown.');
+  }
+  const seen = new Set();
+  for (const contact of existingOptions) {
+    if (!contact || typeof contact !== 'object' || Array.isArray(contact) ||
+        !isValidContactEmail(contact.email) || typeof contact.name !== 'string') {
+      throw new Error('Existing Smartsheet Requestor contact options could not be verified. No options were changed.');
+    }
+    const key = contact.email.trim().toLowerCase();
+    if (seen.has(key)) {
+      throw new Error('Smartsheet Requestor dropdown contains duplicate contact emails. Review it before adding users.');
+    }
+    seen.add(key);
+  }
+  // Existing same-email contacts retain their historical labels, including
+  // first-name display aliases; never replace them with the new full name.
+  if (seen.has(email)) return { changed: false, options: existingOptions };
+  return {
+    changed: true,
+    options: [...existingOptions, { email, name }],
+  };
+}
+
+export function orderRequestorOptionsPreserved(expected, actual) {
+  if (!Array.isArray(expected) || !Array.isArray(actual) || actual.length < expected.length) return false;
+  return expected.every((contact) => actual.some((row) =>
+    String(row?.email || '').trim().toLowerCase() === String(contact?.email || '').trim().toLowerCase() &&
+    String(row?.name || '') === String(contact?.name || '')
+  ));
+}
+
 export function buildSharedOrderContactCell(record, columnId) {
   const email = String(record?.requestor_email ?? '').trim();
   if (!isValidContactEmail(email)) return null;
