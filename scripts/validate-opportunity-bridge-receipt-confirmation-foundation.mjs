@@ -52,6 +52,7 @@ function memoryAdapter({ loseNextCreateAck = false, loseNextUpdateAck = false } 
 const actor = { id:'admin-1', email:'admin@example.com', role:'admin' };
 const planGeneratedAt = '2026-10-07T18:00:00.000Z';
 const runId = 'run-0s-test';
+const pilotReviewFingerprint = 'review-fingerprint-0u';
 const planRow = {
   work_order_id:'wo-1',
   receipt_key:'workorder:wo-1:opportunity:v1',
@@ -151,11 +152,14 @@ assert.equal((await verifyOpportunityBridgeSecondaryConfirmation({
     runId,
     actor,
     secondaryConfirmationFingerprint:binding.confirmation_fingerprint,
+    pilotReviewFingerprint,
   });
   assert.equal(claimed.ok, true);
   assert.equal(claimed.state, 'created_recovered_after_error');
   assert.equal(adapter.rows.length, 1);
   assert.equal(adapter.rows[0].secondary_confirmation_fingerprint, binding.confirmation_fingerprint);
+  assert.equal(adapter.rows[0].pilot_review_fingerprint, pilotReviewFingerprint);
+  assert.deepEqual(adapter.rows[0].proposal_snapshot, planRow.proposed_opportunity);
 
   const retry = await claimOpportunityBridgeReceipt({
     adapter,
@@ -163,6 +167,7 @@ assert.equal((await verifyOpportunityBridgeSecondaryConfirmation({
     runId:'run-retry',
     actor,
     secondaryConfirmationFingerprint:binding.confirmation_fingerprint,
+    pilotReviewFingerprint,
   });
   assert.equal(retry.ok, true);
   assert.equal(retry.state, 'existing');
@@ -174,6 +179,7 @@ assert.equal((await verifyOpportunityBridgeSecondaryConfirmation({
     runId:'run-replan',
     actor,
     secondaryConfirmationFingerprint:binding.confirmation_fingerprint,
+    pilotReviewFingerprint,
   });
   assert.equal(mismatch.ok, false);
   assert.equal(mismatch.reason, 'receipt_plan_mismatch');
@@ -230,6 +236,7 @@ assert.equal((await verifyOpportunityBridgeSecondaryConfirmation({
     runId,
     actor,
     secondaryConfirmationFingerprint:binding.confirmation_fingerprint,
+    pilotReviewFingerprint,
   });
   const attempt = {
     attempt_id:'attempt-lost-ack',
@@ -258,6 +265,8 @@ assert.equal((await verifyOpportunityBridgeSecondaryConfirmation({
     opportunity_creation_request_key:'workorder:wo-a:opportunity:v1',
     status:'planned',
     proposal_fingerprint:'f'.repeat(64),
+    pilot_review_fingerprint:'review-fingerprint-valid',
+    proposal_snapshot:{ creation_request_key:'workorder:wo-a:opportunity:v1', compatibility_work_order_id:'wo-a', title:'Valid' },
   };
   const summary = summarizeOpportunityBridgeReceiptLedger([valid, { ...valid, id:'b' }]);
   assert.equal(summary.duplicate_operation_key_count, 1);
@@ -270,5 +279,7 @@ assert.equal(activeSchema.rls.create.user_condition.role, '__opportunity_bridge_
 assert.equal(activeSchema.rls.update.user_condition.role, '__opportunity_bridge_server_only__');
 assert.equal(activeSchema.rls.delete.user_condition.role, '__opportunity_bridge_server_only__');
 assert.equal(activeSchema.rls.read.user_condition.role, 'admin');
+assert(activeSchema.required.includes('pilot_review_fingerprint'));
+assert(activeSchema.required.includes('proposal_snapshot'));
 
 console.log('Opportunity bridge 0S receipt + confirmation foundation harness: PASS');
