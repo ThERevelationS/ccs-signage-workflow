@@ -514,6 +514,17 @@ export default function ProductChecklistDialog({
       return false;
     }
 
+    // Moving between Active and Completed unmounts the status trigger.
+    // Restore focus to the persistent Search field after the transition.
+    const wasCompleted = Boolean(dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed);
+    const willBeCompleted = Boolean(selectedCondition?.is_completed);
+    if (wasCompleted !== willBeCompleted) {
+      setFocusedSearchId(null);
+      setFocusedNeedsInputId(null);
+      setChecklistSearchIndex(-1);
+      window.setTimeout(() => checklistSearchInputRef.current?.focus(), 0);
+    }
+
     updateChecklistItem(itemId, { custom_dropdown_value: value });
     return true;
   };
@@ -848,6 +859,7 @@ export default function ProductChecklistDialog({
   const [editingProductName, setEditingProductName] = useState(null);
   const [editingProductNameText, setEditingProductNameText] = useState("");
   const [focusedNeedsInputId, setFocusedNeedsInputId] = useState(null);
+  const focusedNeedsInputSourceIdRef = useRef(null);
   const needsInputSummaryRef = useRef(null);
   const [checklistSearchQuery, setChecklistSearchQuery] = useState("");
   const checklistSearchInputRef = useRef(null);
@@ -1179,6 +1191,31 @@ export default function ProductChecklistDialog({
     });
     return results;
   }, [checklistSearchIndexData, normalizedChecklistSearch]);
+
+  // When checklist edits remove a navigated match, clear the stale cursor and
+  // highlight. Keep focus in place when its row remains visible.
+  useEffect(() => {
+    if (!isOpen || isLoading) return;
+
+    if (focusedSearchId && !checklistSearchResults.some(({ item }) => item.id === focusedSearchId)) {
+      setFocusedSearchId(null);
+      setChecklistSearchIndex(-1);
+      if (!needsInputNavigationIndex.activeIds.has(focusedSearchId)) {
+        checklistSearchInputRef.current?.focus();
+      }
+    }
+
+    if (focusedNeedsInputId && !needsInputPrimaryItems.some(item => item.id === focusedNeedsInputSourceIdRef.current)) {
+      setFocusedNeedsInputId(null);
+      // The summary can become disabled when its final missing answer is supplied.
+      const stillRendered = Boolean(findRenderedChecklistItemElement([focusedNeedsInputId])?.getClientRects().length);
+      if (!stillRendered) {
+        (needsInputPrimaryCount > 0 ? needsInputSummaryRef.current : checklistSearchInputRef.current)?.focus();
+      }
+    }
+  }, [isOpen, isLoading, focusedSearchId, checklistSearchResults, needsInputNavigationIndex,
+    focusedNeedsInputId, needsInputPrimaryItems, needsInputPrimaryCount]);
+
   // Search typing and inline editor state cause frequent renders. Collapse-all
   // state should only be recomputed when the relevant hierarchy/state changes.
   const allDetailsCollapsed = useMemo(
@@ -1248,6 +1285,7 @@ export default function ProductChecklistDialog({
 
     const { activeIds, completedIds, activeProductByItemId } = needsInputNavigationIndex;
     const target = needsInputPrimaryItems.find(item => activeIds.has(item.id)) || needsInputPrimaryItems[0];
+    focusedNeedsInputSourceIdRef.current = target.id;
     const topLevelId = getTopLevelChecklistId(target);
     const isActiveTarget = activeIds.has(target.id);
     const scrollTargetId = isActiveTarget ? target.id : topLevelId;
