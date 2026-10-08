@@ -76,6 +76,8 @@ export default function ProductChecklistDialog({
   const [showCompletedItems, setShowCompletedItems] = useState(false);
   const [discardWarning, setDiscardWarning] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const deleteFocusRecoveryRef = useRef(false);
+  const checklistCloseButtonRef = useRef(null);
 
   // Keep hierarchy indexes stable while unrelated dialog state changes. Long
   // checklists should only rebuild these O(n) structures when their source data changes.
@@ -483,6 +485,14 @@ export default function ProductChecklistDialog({
   const confirmDeleteChecklistItem = () => {
     if (!pendingDelete?.itemId) return;
     const deleteIds = getDescendantIds(pendingDelete.itemId);
+    // The dialog's original Delete trigger is about to unmount. Avoid
+    // restoring focus to that deleted row, and reset navigation indexes
+    // that may now point to a different Search result.
+    deleteFocusRecoveryRef.current = true;
+    setFocusedSearchId(null);
+    setFocusedNeedsInputId(null);
+    focusedNeedsInputSourceIdRef.current = null;
+    setChecklistSearchIndex(-1);
     setChecklist(prev => prev.filter(item => !deleteIds.has(item.id)));
     setPendingDelete(null);
   };
@@ -2654,7 +2664,7 @@ export default function ProductChecklistDialog({
             </div>
           )}
           <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
-            <Button variant="outline" onClick={requestClose} disabled={isSaving} className="sm:flex-1 h-11 sm:h-10">
+            <Button ref={checklistCloseButtonRef} variant="outline" onClick={requestClose} disabled={isSaving} className="sm:flex-1 h-11 sm:h-10">
               Cancel
             </Button>
             {isRegistered && (
@@ -2765,7 +2775,21 @@ export default function ProductChecklistDialog({
 
       {/* Checklist item deletion */}
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent
+          className="clay-card border-none"
+          onCloseAutoFocus={(event) => {
+            // Only confirmed deletion needs focus recovery. On Cancel,
+            // preserve Radix's normal return-to-trigger behavior.
+            if (!deleteFocusRecoveryRef.current) return;
+            event.preventDefault();
+            deleteFocusRecoveryRef.current = false;
+            window.setTimeout(() => {
+              // Search disappears when the last checklist row is deleted.
+              const fallback = checklistSearchInputRef.current || checklistCloseButtonRef.current;
+              if (fallback && !fallback.disabled) fallback.focus();
+            }, 0);
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-red-500" />
