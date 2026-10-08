@@ -3176,6 +3176,7 @@ test('v27 missed Clock In correction lineage survives approve and reopen between
     note: 'First approval before re-review',
   });
   assert.equal(approvalB.status, 200, JSON.stringify(approvalB.body));
+  const approvalBAudit = h.rows.TimeClockAudit.find((row) => row.id === approvalB.body.audit_id);
   assert.equal(entry.approval_status, 'approved');
   assert.equal(punchCase.status, 'resolved');
 
@@ -3186,6 +3187,7 @@ test('v27 missed Clock In correction lineage survives approve and reopen between
     note: 'New arrival evidence requires another correction',
   });
   assert.equal(reopenB.status, 200, JSON.stringify(reopenB.body));
+  const reopenBAudit = h.rows.TimeClockAudit.find((row) => row.id === reopenB.body.audit_id);
   assert.equal(entry.approval_status, 'needs_review');
   assert.equal(punchCase.status, 'pending_manager_review');
 
@@ -3232,6 +3234,10 @@ test('v27 missed Clock In correction lineage survives approve and reopen between
     provenance.payroll_correction_evidence.correction_chain.map((row) => row.audit_id),
     [correctionBAudit.id, correctionCAudit.id],
   );
+  assert.deepEqual(
+    provenance.payroll_correction_evidence.review_transition_chain.map((row) => row.audit_id),
+    [approvalBAudit.id, reopenBAudit.id],
+  );
 
   const verified = await h.invoke({
     action: 'pay_period_history_verify', pay_period_id: period.id,
@@ -3249,6 +3255,27 @@ test('v27 missed Clock In correction lineage survives approve and reopen between
   assert.equal(tampered.status, 200, JSON.stringify(tampered.body));
   assert.equal(tampered.body.verified, false, JSON.stringify(tampered.body));
   correctionBAudit.details.corrected.clock_in = originalIntermediate;
+
+  const originalReopenDecision = reopenBAudit.details.decision;
+  reopenBAudit.details.decision = 'approve';
+  const tamperedReview = await h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id,
+    request_id: 'v27-review-chain-tamper-review-001',
+  });
+  assert.equal(tamperedReview.status, 200, JSON.stringify(tamperedReview.body));
+  assert.equal(tamperedReview.body.verified, false, JSON.stringify(tamperedReview.body));
+  reopenBAudit.details.decision = originalReopenDecision;
+
+  const frozenReviewEvidence = provenance.payroll_correction_evidence.review_transition_chain[0];
+  const originalReviewHash = frozenReviewEvidence.evidence_hash;
+  frozenReviewEvidence.evidence_hash = 'tampered-review-transition-hash';
+  const tamperedFrozenReview = await h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id,
+    request_id: 'v27-review-chain-tamper-frozen-review-001',
+  });
+  assert.equal(tamperedFrozenReview.status, 200, JSON.stringify(tamperedFrozenReview.body));
+  assert.equal(tamperedFrozenReview.body.verified, false, JSON.stringify(tamperedFrozenReview.body));
+  frozenReviewEvidence.evidence_hash = originalReviewHash;
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
