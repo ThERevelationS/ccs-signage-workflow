@@ -57,7 +57,7 @@ import {
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
-import { isWonOperationalTask, planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
+import { canUpdateWonOperationalField, planSalesTaskChange } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -919,11 +919,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (currentIsTerminal && resultingIsTerminal && !salesStatusChanged) {
       // Confirmed Won status stays authoritative while SIPs/WIP work proceeds.
       // Quote, follow-up and closeout evidence remain protected. Lost remains locked.
-      const wonOperationalTask = currentSalesStatus === "won"
-        && isWonOperationalTask(proposedUpdates.current_task_description ?? currentWo.current_task_description);
-      const operationalFields = new Set(["current_task_description", "current_task_deadline", "current_task_assigned_to"]);
       const changedHistoricalField = Array.from(CLOSEOUT_HISTORICAL_FIELDS).find((fieldName) =>
-        !(wonOperationalTask && operationalFields.has(fieldName))
+        !canUpdateWonOperationalField(currentWo, proposedUpdates, fieldName)
         && Object.prototype.hasOwnProperty.call(proposedUpdates, fieldName)
         && JSON.stringify(currentWo[fieldName]) !== JSON.stringify(proposedUpdates[fieldName])
       );
