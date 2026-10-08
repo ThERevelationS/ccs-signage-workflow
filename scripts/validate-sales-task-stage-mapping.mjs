@@ -5,6 +5,8 @@ import {
   NEUTRAL_CLOSED_TASK,
   mapSalesTaskToStage,
   planSalesTaskChange,
+  isWonOperationalTask,
+  canUpdateWonOperationalField,
 } from "../src/components/sales/salesTaskStageMapping.mjs";
 
 const expected = {
@@ -112,4 +114,36 @@ check(sheet.includes('nextStatus === "lost" ? lostReason : ""'),
   "Lost transition retains the existing required reason.");
 check(sheet.includes("sales_stage_changed_at: activityStamp"),
   "A real Sales stage change still establishes stage timing.");
+
+// Won preserves the Sales outcome while allowing ongoing SIPs/WIP operations.
+const won = { in_pipeline: true, sales_status: "won", current_task_description: "WIP - Designing" };
+const lost = { ...won, sales_status: "lost" };
+check(isWonOperationalTask("SIPs") && isWonOperationalTask("WIP - Installation"),
+  "Approved SIPs and WIP tasks remain Won-family operational work.");
+check(!isWonOperationalTask("Follow up with Customer - Post-Estimate") && !isWonOperationalTask("Lost"),
+  "Follow Up and Lost tasks are not WIP operations.");
+for (const field of ["current_task_description", "current_task_deadline", "current_task_assigned_to"]) {
+  check(canUpdateWonOperationalField(won, { current_task_description: "WIP - Installation" }, field),
+    "Confirmed Won operations may update " + field + ".");
+  check(!canUpdateWonOperationalField(lost, { current_task_description: "WIP - Installation" }, field),
+    "Lost opportunity preserves closed " + field + ".");
+}
+check(!canUpdateWonOperationalField(won, { current_task_description: "Follow up with Customer - Post-Estimate" }, "current_task_description"),
+  "Reopening from Won must be confirmed, not saved as an operational task.");
+check(!canUpdateWonOperationalField(won, { current_task_description: "WIP - Installation" }, "close_date"),
+  "Won closeout evidence remains protected from WIP task edits.");
+check(!canUpdateWonOperationalField({ ...won, in_pipeline: false }, { current_task_description: "WIP - Installation" }, "current_task_description"),
+  "Inactive and legacy records cannot use operational Won exemption.");
+same(planSalesTaskChange(won, "Follow up with Customer - Post-Estimate"),
+  { action: "confirm_transition", task: "Follow up with Customer - Post-Estimate", status: "follow_up" },
+  "Changing Won to Follow Up through Task Description prompts protected reopening.");
+same(planSalesTaskChange(lost, "Prospect Initiation (Gather Info, Initial Discuss ...)"),
+  { action: "confirm_transition", task: "Prospect Initiation (Gather Info, Initial Discuss ...)", status: "lead" },
+  "Changing Lost to Lead prompts protected reopening.");
+check(sheet.includes("(isCurrentPipelineOpportunity(currentWo) || isTrustedSalesOutcome(currentWo))"),
+  "Task-derived transitions now include trusted modern Won/Lost opportunities.");
+check(sheet.includes("!canUpdateWonOperationalField(currentWo, proposedUpdates, fieldName)"),
+  "Protected historical guard permits only approved Won operational fields.");
+check(sheet.includes("Reopen this Won/Lost opportunity before closing it without an outcome."),
+  "Terminal records cannot silently convert to neutral closeout.");
 console.log("Sales task-to-status mapping and transition safety: " + checks + "/" + checks + " PASS.");
