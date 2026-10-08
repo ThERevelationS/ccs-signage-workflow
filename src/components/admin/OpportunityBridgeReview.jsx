@@ -280,6 +280,36 @@ export default function OpportunityBridgeReview() {
             </div>
           </div>
 
+          {pilotReview?.review_fingerprint && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-white/80 p-3 text-xs dark:border-amber-900 dark:bg-slate-900/70">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">Exact pilot review fingerprint</div>
+                  <div className="mt-1 text-slate-700 dark:text-slate-300">
+                    WorkOrder <span className="font-mono">{pilotReview?.manifest?.work_order_id || "unknown"}</span>
+                    {pilotReview?.manifest?.customer_evidence?.customer_display_name
+                      ? ` · ${pilotReview.manifest.customer_evidence.customer_display_name}`
+                      : ""}
+                  </div>
+                </div>
+                <span className={sourceAuthorizationMatchesFreshReview
+                  ? "w-fit rounded-full bg-emerald-100 px-2.5 py-1 font-semibold text-emerald-800"
+                  : "w-fit rounded-full bg-slate-200 px-2.5 py-1 font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200"}>
+                  {sourceAuthorizationMatchesFreshReview ? "SOURCE AUTHORIZED" : "NOT AUTHORIZED"}
+                </span>
+              </div>
+              <div className="mt-2 break-all rounded-lg bg-slate-950 p-2 font-mono text-[11px] text-slate-100">
+                {pilotReview.review_fingerprint}
+              </div>
+              <div className="mt-2 text-slate-600 dark:text-slate-400">
+                Source-authorized fingerprint: {sourceAuthorizedReviewFingerprint || "none"}. This fingerprint binds the exact source snapshot, proposed Opportunity, canonical Customer evidence, existing Opportunity identity, and durable receipt state.
+              </div>
+              <div className="mt-1 font-medium text-amber-800 dark:text-amber-200">
+                Read-only simulation metadata only. This review response is not execution authorization.
+              </div>
+            </div>
+          )}
+
           {(readiness.first_batch || []).length > 0 && (
             <div className="mt-3 rounded-xl border border-amber-200 bg-white/80 p-3 dark:border-amber-900 dark:bg-slate-900/70">
               <div className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">
