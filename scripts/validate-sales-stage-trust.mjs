@@ -81,20 +81,34 @@ check(row.includes("salesStageDisplayLabel(wo)") && row.includes("{stageDisplayL
   "Desktop table shows the stage trust label without an independent status selector.");
 
 const mobile = readFileSync("src/components/sales/SalesPipelineMobileCards.jsx", "utf8");
-check(mobile.includes('value={stageDisplayValue}') && mobile.includes('Needs Stage'),
-  "Mobile cards display Needs Stage and allow real stage selection.");
+check(mobile.includes("salesStageDisplayLabel(wo)") && mobile.includes('aria-label={`Sales Status: ${stageDisplayLabel}`}') &&
+      !mobile.includes("onRequestStatusChange") && !mobile.includes("<Select value={stageDisplayValue}"),
+  "Mobile shows a readable stage badge without independent status selection.");
 
 const board = readFileSync("src/components/sales/SalesPipelineKanban.jsx", "utf8");
 check(board.includes('value: "needs_stage", label: "Needs Stage"') &&
       board.includes("salesStageDisplayValue(workOrder) === status.value"),
   "Board has a dedicated virtual Needs Stage column.");
-check(board.includes("if (!isRegistered || status.virtual) return;"),
-  "Users cannot drag records into the virtual Needs Stage column.");
+check(!board.includes("draggable=") && !board.includes("onDrop=") &&
+      !board.includes("onDragOver=") && !board.includes("requestStatusChange"),
+  "Kanban stage changes via drag-and-drop or independent actions are disabled.");
+check(board.includes("salesStageDisplayLabel(workOrder)") && board.includes('aria-label={`Sales Status: ${stageDisplayLabel}`}'),
+  "Kanban retains read-only stage badges and direct Opportunity Detail access.");
 
 const detail = readFileSync("src/components/sales/SalesOpportunityDialog.jsx", "utf8");
 check(detail.includes("salesStageDisplayLabel(workOrder)") &&
-      detail.includes("Choose the actual Sales stage to establish the first verified stage baseline."),
-  "Opportunity detail explains how to classify unverified stages.");
+      detail.includes("Stage timing is unverified. Select the appropriate Task Description; no timestamp will be invented."),
+  "Opportunity detail directs stage updates through Task Description without fabricating history.");
+check(detail.includes('aria-label={`Read-only Sales Status: ${statusLabel}`}') &&
+      !detail.includes("onRequestStatusChange") && !detail.includes("<Select value={stageDisplayValue}"),
+  "Opportunity Detail Status is informational only.");
+check(detail.includes('aria-label="Task Description (controls Sales Status)"') &&
+      detail.includes('onValueChange={(task) => update({ current_task_description: task })}') &&
+      detail.includes('["current", "outcome"].includes(recordClassification)'),
+  "Opportunity Detail offers the mapped task catalog for current and modern terminal opportunities.");
+check(spreadsheet.includes("taskDescriptions={taskDescriptions}") &&
+      !spreadsheet.includes("requestSalesStatusChange") && !spreadsheet.includes("onRequestStatusChange"),
+  "All Sales views share the catalog and have no independent stage-change callback.");
 
 const page = readFileSync("src/pages/SalesPipeline.jsx", "utf8");
 check(page.includes('"needs_stage"') && page.includes('<SelectItem value="needs_stage">Needs Stage</SelectItem>'),
@@ -132,8 +146,9 @@ check(!body.includes("onRequestStatusChange") &&
 check(spreadsheet.includes("onClick={() => handleSort('sales_status')}") &&
       spreadsheet.includes("handleHeaderContextMenu(e, 'sales_status', 'Sales Status')"),
   "Status header sorting and context filters remain operable.");
-check(row.includes('updateWorkOrder(wo.id, "current_task_description", val)'),
-  "Desktop Task Description remains the editable stage-control path.");
+check(row.includes('updateWorkOrder(wo.id, "current_task_description", val)') &&
+      row.includes('(!isOpen && wo.in_pipeline !== true)'),
+  "Desktop Task Description is editable for modern Won/Lost reopening while legacy and neutral closures remain protected.");
 same(salesStageDisplayLabel({ in_pipeline:true, sales_status:"follow_up" }), "Follow Up",
   "Desktop stage display helper provides the friendly Follow Up label.");
 same(salesStageDisplayLabel({ in_pipeline:true, sales_status:"won" }), "Won",
