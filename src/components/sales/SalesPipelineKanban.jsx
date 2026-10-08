@@ -64,7 +64,10 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
 
   return (
       <div className="flex h-full min-h-0 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-2">
-        {BOARD_COLUMNS.map((status) => {
+        {BOARD_COLUMNS.filter((status) =>
+          status.value !== "closed_neutral" ||
+          workOrders.some((workOrder) => salesStageDisplayValue(workOrder) === "closed_neutral")
+        ).map((status) => {
           const items = workOrders.filter((workOrder) => salesStageDisplayValue(workOrder) === status.value);
           const value = items.reduce((sum, workOrder) => sum + (Number(workOrder.estimate_amount ?? 0) || 0), 0);
           return (
