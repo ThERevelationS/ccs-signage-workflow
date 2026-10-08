@@ -121,8 +121,9 @@ try {
     {find:'@/functions/verifyLogin',replacement:path.join(scratch,'mockLogin.js')},
     {find:'@/components/admin/automationRulePersistence',replacement:path.join(scratch,'mockPersistence.js')},
     {find:'@/components/estimator/loadAllEntityRows',replacement:path.join(scratch,'mockEntityList.js')},
-    ...sources.map((find, index) => ({
-      find, replacement:path.join(scratch,'mock-'+syntheticPanels[index]+'.jsx'),
+    ...sources.map((find) => ({
+      find,
+      replacement:path.join(scratch,'mock-'+path.basename(find).replace(/\.jsx$/, '')+'.jsx'),
     })),
     {find:/^@\//,replacement:path.join(appRoot,'src')+'/'},
   ];
