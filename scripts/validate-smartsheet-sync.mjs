@@ -658,7 +658,7 @@ const readinessRows = [
   },
   {
     status: "new_record",
-    row_id: "invalid-type",
+    row_id: "custom-type",
     row_number: 35,
     values: { customer_name: "Acme Old", request_type: "Hardware", description: "Fasteners" },
     customer_resolution: {
@@ -685,9 +685,9 @@ const readiness = buildSmartsheetCreationReadiness({
   customerReviewState: { schema_version: 1, decisions: {} },
 });
 assert(readiness.summary.post_baseline_rows === 5, "All row IDs absent from the baseline must be inspected by creation readiness.");
-assert(readiness.summary.ready_for_controlled_create_review === 1, "Only the fully resolved, schema-complete row should be data-ready.");
+assert(readiness.summary.ready_for_controlled_create_review === 2, "Fully resolved rows with any nonblank admin-managed Order item type should be data-ready.");
 assert(readiness.summary.blocked_customer === 1, "Unresolved post-baseline Customer must block future creation.");
-assert(readiness.summary.blocked_required_fields === 2, "Missing Description and invalid Request Type must block future creation.");
+assert(readiness.summary.blocked_required_fields === 1, "Missing Description must block future creation; arbitrary nonblank Order item types are valid.");
 assert(readiness.summary.blocked_existing_record === 1, "A post-baseline existing-record candidate must block duplicate creation.");
 assert(readiness.automatic_creates === 0, "Readiness must never authorize automatic creation.");
 
@@ -717,7 +717,7 @@ const readinessAfterCustomerDecision = buildSmartsheetCreationReadiness({
   sheetId: "4963691473987460",
   customerReviewState: approvedNewState,
 });
-assert(readinessAfterCustomerDecision.summary.ready_for_controlled_create_review === 2, "An explicit new-Customer review decision may clear only the Customer blocker.");
+assert(readinessAfterCustomerDecision.summary.ready_for_controlled_create_review === 3, "An explicit new-Customer review decision may clear only the Customer blocker while custom Order item types remain valid.");
 assert(readinessAfterCustomerDecision.automatic_creates === 0, "Even data-ready rows must remain non-automatic.");
 
 const salesReadinessBaseline = buildSmartsheetRolloutBaseline({
