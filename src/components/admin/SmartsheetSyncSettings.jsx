@@ -297,7 +297,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     config.global_enabled &&
     !config.observation_mode &&
     ((config.sales.mirror_enabled && (config.sales.pull_enabled || config.sales.push_enabled)) ||
-      (config.orders.mirror_enabled && (config.orders.pull_enabled || config.orders.push_enabled)))
+      (config.orders.mirror_enabled && config.orders.pull_enabled))
   ), [config]);
 
   const scheduledSalesEnabled = Boolean(
