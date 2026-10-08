@@ -42,6 +42,7 @@ export function validateOpportunityBridgeReceiptIdentity(receipt = {}) {
   if (!creationKey || creationKey !== operationKey) errors.push('opportunity_creation_request_key_mismatch');
   if (!clean(receipt?.proposal_fingerprint)) errors.push('missing_proposal_fingerprint');
   if (!clean(receipt?.pilot_review_fingerprint)) errors.push('missing_pilot_review_fingerprint');
+  if (!receipt?.proposal_snapshot || typeof receipt.proposal_snapshot !== 'object' || Array.isArray(receipt.proposal_snapshot)) errors.push('missing_proposal_snapshot');
   if (!VALID_STATUSES.has(clean(receipt?.status))) errors.push('invalid_status');
   return errors;
 }
@@ -168,6 +169,7 @@ export async function claimOpportunityBridgeReceipt({
     source_snapshot:planRow?.source_snapshot || {},
     proposal_fingerprint:fingerprints.proposal_fingerprint,
     pilot_review_fingerprint:exactPilotReviewFingerprint,
+    proposal_snapshot:planRow?.proposed_opportunity || {},
     proposal_summary:proposalSummary(planRow),
     attempt_count:0,
     actor_user_id:actorUserId,
