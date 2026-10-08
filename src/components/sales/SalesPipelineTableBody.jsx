@@ -5,7 +5,7 @@ const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
   virtualItems, filteredWorkOrders, visibleColumnIds, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
-  handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, onCompleteFollowUp, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
+  handleContextMenu, setSelectedWorkOrder, onCompleteFollowUp, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
   leadSources, users, taskDescriptions, projectTypes, rowVirtualizer,
 }) {
   return (
@@ -37,7 +37,6 @@ const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
             toggleRowSelection={toggleRowSelection}
             handleContextMenu={handleContextMenu}
             setSelectedWorkOrder={setSelectedWorkOrder}
-            onRequestStatusChange={onRequestStatusChange}
             onCompleteFollowUp={onCompleteFollowUp}
             openCorbridgeDialog={openCorbridgeDialog}
             handleDuplicateClient={handleDuplicateClient}
