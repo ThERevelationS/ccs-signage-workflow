@@ -240,4 +240,25 @@ check("navigation highlights clear when interaction leaves the highlighted row",
   assert.match(source, /onBlurCapture=\{handleChecklistResultBlurCapture\}/);
 });
 
+check("status transitions safely release Active/Completed navigation focus", () => {
+  const statusHandler = source.slice(source.indexOf("const applyChecklistStatus ="), source.indexOf("const checkIfComplete ="));
+  assert.match(statusHandler, /wasCompleted !== willBeCompleted/);
+  assert.match(statusHandler, /setFocusedSearchId\(null\);/);
+  assert.match(statusHandler, /setFocusedNeedsInputId\(null\);/);
+  assert.match(statusHandler, /setChecklistSearchIndex\(-1\);/);
+  assert.match(statusHandler, /window\.setTimeout\(\(\) => checklistSearchInputRef\.current\?\.focus\(\), 0\)/);
+  assert.ok(statusHandler.indexOf("if (!item.approved_by)") < statusHandler.indexOf("wasCompleted !== willBeCompleted"));
+  assert.ok(statusHandler.indexOf("if (selectedCondition?.is_completed && !areChildrenComplete(itemId))")
+    < statusHandler.indexOf("wasCompleted !== willBeCompleted"));
+});
+
+check("reclassified or resolved navigation results do not retain stale highlights", () => {
+  assert.match(source, /focusedSearchId && !checklistSearchResults\.some/);
+  assert.match(source, /!needsInputNavigationIndex\.activeIds\.has\(focusedSearchId\)/);
+  assert.match(source, /focusedNeedsInputSourceIdRef\.current = target\.id/);
+  assert.match(source, /focusedNeedsInputId && !needsInputPrimaryItems\.some/);
+  assert.match(source, /findRenderedChecklistItemElement\(\[focusedNeedsInputId\]\)/);
+  assert.match(source, /needsInputPrimaryCount > 0 \? needsInputSummaryRef\.current : checklistSearchInputRef\.current/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
