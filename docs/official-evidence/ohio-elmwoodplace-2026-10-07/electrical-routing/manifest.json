@@ -1,0 +1,30 @@
+[
+  {
+    "file": "county-development-process.html",
+    "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_process.php",
+    "attempted_at": "2026-10-08T01:53:19.416682+00:00",
+    "status": 200,
+    "final_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_process.php",
+    "bytes": 271424,
+    "sha256": "d00caa3d8e23aef506526628e812ce074af97516c5fd408acf79cef3048604cb",
+    "retained": true
+  },
+  {
+    "file": "ibi-home.html",
+    "url": "https://www.inspectionbureau.com/",
+    "attempted_at": "2026-10-08T01:53:19.840838+00:00",
+    "retained": false,
+    "error": "HTTP Error 406: Not Acceptable",
+    "status": 406
+  },
+  {
+    "file": "ibi-eztrak-new-user.pdf",
+    "url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+    "attempted_at": "2026-10-08T01:53:20.105966+00:00",
+    "status": 200,
+    "final_url": "https://www.inspectionbureau.com/wp-content/uploads/2026/10/ezTrack-NewUser.pdf",
+    "bytes": 47398,
+    "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+    "retained": true
+  }
+]
