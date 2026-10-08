@@ -109,7 +109,6 @@ export default function SalesOpportunityDialog({
   onClose,
   onUpdateFields,
   onRemoveFromCurrentPipeline,
-  onRequestStatusChange,
   onCompleteFollowUp,
   onOpenFullDetails,
   currentSalesOwnerLabel = "",
