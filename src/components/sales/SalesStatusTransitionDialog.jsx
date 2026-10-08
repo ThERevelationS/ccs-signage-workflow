@@ -37,6 +37,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
   if (!transition) return null;
 
   const { workOrder, nextStatus } = transition;
+  const neutralClosing = transition.kind === "neutral_close";
   const currentStatus = workOrder?.sales_status || "lead";
   const closing = ["won", "lost"].includes(nextStatus);
   const reopening = ["won", "lost"].includes(currentStatus) && !closing;
@@ -44,7 +45,9 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
   const finalReason = lostReason === "Other" ? otherReason.trim() : lostReason.trim();
   const canConfirm = !isLost || Boolean(finalReason);
 
-  const title = closing
+  const title = neutralClosing
+    ? "Close this opportunity without a Won/Lost outcome?"
+    : closing
     ? `Mark this opportunity ${nextStatus === "won" ? "Won" : "Lost"}?`
     : reopening
       ? `Reopen this opportunity as ${nextStatus.replace("_", " ")}?`
@@ -56,7 +59,9 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {closing
+            {neutralClosing
+              ? `${workOrder?.client_name || "This opportunity"} will leave Current Pipeline and remain inspectable under All Records as Closed (Neutral). No Won/Lost outcome or close date will be fabricated. Its follow-up schedule will be cleared, and existing WorkOrder and Smartsheet links will remain intact.`
+              : closing
               ? `${workOrder?.client_name || "This opportunity"} will be closed today. Close date fills automatically, follow-up scheduling will be cleared, and expected-close/task-planning values stay preserved as historical sales context.`
               : reopening
                 ? `The current close date and lost reason will be cleared from the live opportunity. Their previous values remain in sales change history. Review the preserved expected-close/task plan and schedule a new follow-up after reopening.`
@@ -96,7 +101,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
             onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "" })}
             className={isLost ? "h-11 bg-red-600 hover:bg-red-700 sm:h-9" : "h-11 sm:h-9"}
           >
-            {closing ? `Mark ${nextStatus === "won" ? "Won" : "Lost"}` : reopening ? "Reopen Opportunity" : "Move Opportunity"}
+            {neutralClosing ? "Close Without Outcome" : closing ? `Mark ${nextStatus === "won" ? "Won" : "Lost"}` : reopening ? "Reopen Opportunity" : "Move Opportunity"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
