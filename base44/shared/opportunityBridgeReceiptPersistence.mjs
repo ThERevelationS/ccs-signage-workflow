@@ -41,6 +41,7 @@ export function validateOpportunityBridgeReceiptIdentity(receipt = {}) {
   if (!expectedKey || operationKey !== expectedKey) errors.push('operation_key_mismatch');
   if (!creationKey || creationKey !== operationKey) errors.push('opportunity_creation_request_key_mismatch');
   if (!clean(receipt?.proposal_fingerprint)) errors.push('missing_proposal_fingerprint');
+  if (!clean(receipt?.pilot_review_fingerprint)) errors.push('missing_pilot_review_fingerprint');
   if (!VALID_STATUSES.has(clean(receipt?.status))) errors.push('invalid_status');
   return errors;
 }
@@ -117,6 +118,7 @@ export async function claimOpportunityBridgeReceipt({
   runId,
   actor = {},
   secondaryConfirmationFingerprint = '',
+  pilotReviewFingerprint = '',
 } = {}) {
   const store = requireAdapter(adapter);
   const workOrderId = clean(planRow?.work_order_id);
@@ -125,11 +127,13 @@ export async function claimOpportunityBridgeReceipt({
   const rolloutRunId = clean(runId);
   const actorUserId = clean(actor?.id);
   const actorEmail = clean(actor?.email);
+  const exactPilotReviewFingerprint = clean(pilotReviewFingerprint);
 
   if (!workOrderId || !operationKey || plannedKey !== operationKey) {
     return { ok:false, state:'held', reason:'invalid_plan_receipt_identity' };
   }
   if (!rolloutRunId) return { ok:false, state:'held', reason:'missing_run_id' };
+  if (!exactPilotReviewFingerprint) return { ok:false, state:'held', reason:'missing_pilot_review_fingerprint' };
 
   const fingerprints = await fingerprintOpportunityBridgePlanRow(planRow);
   const before = await store.findByOperationKey(operationKey);
@@ -142,6 +146,9 @@ export async function claimOpportunityBridgeReceipt({
     const existing = before[0];
     const identityErrors = validateOpportunityBridgeReceiptIdentity(existing);
     if (identityErrors.length) return { ok:false, state:'held', reason:'receipt_identity_invalid', identity_errors:identityErrors, receipt:existing };
+    if (clean(existing?.pilot_review_fingerprint) !== exactPilotReviewFingerprint) {
+      return { ok:false, state:'held', reason:'receipt_review_fingerprint_mismatch', receipt:existing };
+    }
     if (terminalReceiptStatus(existing) && sameReceiptProposal(existing, fingerprints)) {
       return { ok:true, state:'terminal_existing', ownership:false, receipt:existing, fingerprints };
     }
@@ -160,6 +167,7 @@ export async function claimOpportunityBridgeReceipt({
     status:'planned',
     source_snapshot:planRow?.source_snapshot || {},
     proposal_fingerprint:fingerprints.proposal_fingerprint,
+    pilot_review_fingerprint:exactPilotReviewFingerprint,
     proposal_summary:proposalSummary(planRow),
     attempt_count:0,
     actor_user_id:actorUserId,
@@ -190,6 +198,9 @@ export async function claimOpportunityBridgeReceipt({
   const receipt = after[0];
   const identityErrors = validateOpportunityBridgeReceiptIdentity(receipt);
   if (identityErrors.length) return { ok:false, state:'held', reason:'receipt_identity_invalid', identity_errors:identityErrors, receipt };
+  if (clean(receipt?.pilot_review_fingerprint) !== exactPilotReviewFingerprint) {
+    return { ok:false, state:'held', reason:'receipt_review_fingerprint_mismatch', receipt };
+  }
   if (!sameReceiptPlan(receipt, planRow, fingerprints)) return { ok:false, state:'held', reason:'receipt_plan_mismatch', receipt };
 
   return {
