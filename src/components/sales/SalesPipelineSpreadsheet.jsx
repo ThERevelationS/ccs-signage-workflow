@@ -56,7 +56,7 @@ import {
   reconcileSalesLiveEditPinWithRemote,
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
-import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -1135,29 +1135,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const openOpportunityDetails = (workOrder) => {
     setSelectedWorkOrder(workOrder);
     setShowFullWorkOrderDetails(false);
-  };
-
-  const requestSalesStatusChange = (workOrder, nextStatus) => {
-    const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
-    if (!isRegistered || !workOrder?.id || !nextStatus || nextStatus === "needs_stage" || isExplicitNeutralSalesClosure(workOrder)) return;
-    if (workOrder.sales_status === nextStatus && !unverifiedStage) return;
-    const currentStatus = workOrder.sales_status || "lead";
-    const terminalChange = ["won", "lost"].includes(nextStatus);
-    const reopening = ["won", "lost"].includes(currentStatus) && !terminalChange;
-    if (terminalChange || reopening) {
-      setStatusTransition({ workOrder, nextStatus });
-      return;
-    }
-    if (unverifiedStage && currentStatus === nextStatus) {
-      const classificationStamp = new Date().toISOString();
-      updateWorkOrderFields(workOrder.id, {
-        sales_status: nextStatus,
-        sales_stage_changed_at: classificationStamp,
-        sales_last_activity_at: classificationStamp,
-      });
-      return;
-    }
-    updateWorkOrderFields(workOrder.id, { sales_status: nextStatus });
   };
 
   const requestFollowUpCompletion = (workOrder) => {
@@ -2762,11 +2739,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           workOrder={selectedWorkOrder}
           users={users}
           leadSources={leadSources}
+          taskDescriptions={taskDescriptions}
           isRegistered={isRegistered}
           onClose={() => setSelectedWorkOrder(null)}
           onUpdateFields={updateWorkOrderFields}
           onRemoveFromCurrentPipeline={removeFromCurrentPipeline}
-          onRequestStatusChange={requestSalesStatusChange}
           onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
           currentSalesOwnerLabel={currentSalesOwnerLabel}
@@ -2910,8 +2887,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             workOrders={filteredWorkOrders}
             onOpenDetails={openOpportunityDetails}
             onUpdateWorkOrder={updateWorkOrder}
-            onRequestStatusChange={requestSalesStatusChange}
-            onCompleteFollowUp={requestFollowUpCompletion}
+              onCompleteFollowUp={requestFollowUpCompletion}
             isRegistered={isRegistered}
             currentSalesOwnerLabel={currentSalesOwnerLabel}
             leadSources={leadSources}
@@ -2935,8 +2911,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             users={users}
             workOrders={filteredWorkOrders}
             onUpdateWorkOrder={updateWorkOrder}
-            onRequestStatusChange={requestSalesStatusChange}
-            onCompleteFollowUp={requestFollowUpCompletion}
+              onCompleteFollowUp={requestFollowUpCompletion}
             onOpenDetails={openOpportunityDetails}
             isRegistered={isRegistered}
             currentSalesOwnerLabel={currentSalesOwnerLabel}
