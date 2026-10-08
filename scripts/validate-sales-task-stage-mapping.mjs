@@ -97,6 +97,8 @@ const sheet = readFileSync("src/components/sales/SalesPipelineSpreadsheet.jsx", 
 check(sheet.includes("isCurrentPipelineOpportunity(currentWo)") &&
   sheet.includes('Object.prototype.hasOwnProperty.call(nextChanges, "current_task_description")'),
   "Stage inference happens only for user edits to an active Current Pipeline record.");
+check(sheet.includes('!Object.prototype.hasOwnProperty.call(nextChanges, "sales_status")'),
+  "A confirmed stage-and-task save bypasses task inference instead of re-opening its confirmation.");
 check(sheet.includes('taskPlan.action === "confirm_transition"') &&
   sheet.includes("nextTask: taskPlan.task"),
   "Protected task changes defer both task and status until explicit confirmation.");
