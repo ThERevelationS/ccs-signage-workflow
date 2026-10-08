@@ -39,5 +39,6 @@
   "pdf_visual_review": "All 12 physical PDF pages visually reviewed across application-visual-review.json, fee-tax-visual-review.json and remaining-pdf-visual-review.json; currentness and authority remain unapproved.",
   "sign_code_review": "Five of 21 sections read as web-derived candidates; direct publisher originals inaccessible (403). See sign-code-currentness-review.json. Chapter 1278/map and post-June adopted amendments pending.",
   "amendment_timeline": "See post-june-minutes-review.json: proposal first/second readings August, third tabled September 1; later adoption and ordinance text unverified. New minute packets have sparse/visual gaps separate from completed application/fee layouts.",
-  "zoning_map_review": "Official March 20 2025 one-page map retained and visually reviewed. PDD numbering not sign districts; map/application South Reading Road labels differ. Dedicated sign district map, parcel assignment and currentness unapproved."
+  "zoning_map_review": "Official March 20 2025 one-page map retained and visually reviewed. PDD numbering not sign districts; map/application South Reading Road labels differ. Dedicated sign district map, parcel assignment and currentness unapproved.",
+  "sign_district_review": "1290.14-.17 reviewed as web-derived candidates with inheritance/formula/reference anomalies. See sign-district-review.json. Nine of 21 sign sections now read; originals/currentness and calculator unresolved."
 }

@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading four sign-district rule candidates
+
+Reviewed 1290.14-.17 through publisher web retrieval and recorded District I-IV size/type/placement candidates with inheritance dependencies. Preserved formula footnotes, invalid bulletin height wording, II billboard reference to I, III billboard aggregate reference to II and IV frontage cross-reference differences. Direct original attempts remain separately recorded; no calculator or approved parcel/rule assignment. Currentness and originals unresolved. No live writes/publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: measurement/frontage definitions and remaining sign sections, Chapter 1278 and separate electrical authority.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading zoning map original reviewed
 
 Retained official map landing HTML and one-page March 20 2025 PDF; verified source hashes and visually reviewed the sheet. Recorded zoning/design overlays, floodplain, corporation limits and PDD numbering separately. PDD 1/2/3 must not become sign districts I-IV. Dedicated sign district map remains unresolved. Preserved South Reading Road Light Manufacturing map label versus Commercial application label; currentness and parcel assignments unapproved. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

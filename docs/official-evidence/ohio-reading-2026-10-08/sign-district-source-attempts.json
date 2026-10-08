@@ -1,0 +1,30 @@
+[
+  {
+    "file": "sign-1290.14.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64564",
+    "attempted_at": "2026-10-08T17:01:25.490288+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.15.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64576",
+    "attempted_at": "2026-10-08T17:01:25.558635+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.16.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64613",
+    "attempted_at": "2026-10-08T17:01:25.641359+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.17.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64634",
+    "attempted_at": "2026-10-08T17:01:25.695535+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  }
+]

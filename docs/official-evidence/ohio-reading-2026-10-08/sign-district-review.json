@@ -1,0 +1,83 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "method": "Published full sections read through web retrieval; paraphrased research candidates. Direct original retrieval attempted separately.",
+  "publisher_label": "2025 S-10",
+  "sections": [
+    {
+      "section": "1290.14",
+      "id": "64564",
+      "district": "I",
+      "candidate_limits": [
+        "Institution bulletin board: one, 20 sf, 5 ft height candidate, 15 ft ROW setback, indirect lighting.",
+        "Construction sign: one, 50 sf/10 ft; remove by final occupancy or one year from building permit, sooner.",
+        "Directionals: two, 2 sf each/3 ft tall, 5 ft lot/ROW setback.",
+        "Identification: one wall/ground, 8 sf; wall on multifamily street side.",
+        "Real estate: one temporary double-face wall/freestanding, 5 sf.",
+        "Canopy: one/building, 5 sf face/12 in vertical/8 ft clearance. Awning: one/building, 6 sf face/2 ft vertical/8 ft clearance.",
+        "Residential billboards prohibited. Political-sign item has no substantive text."
+      ],
+      "anomalies": [
+        "Bulletin wording joins area and height with 'of'; candidate 5 ft interpretation requires confirmation."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64564"
+    },
+    {
+      "section": "1290.15",
+      "id": "64576",
+      "district": "II",
+      "candidate_limits": [
+        "Permanent total per separate use uses W*1.25+10, cap120 sf; W frontage definition Ch1242; formula rendering unresolved.",
+        "Ground: one40 sf/10 ft. Pole: one40 sf each face/16 ft top/8 ft bottom, no sidewalk projection, driveway barrier.",
+        "Projecting: one/unit12 sf/8 ft clearance/4 ft projection/6 in thick; indirect only, internal lighting excluded.",
+        "Side/rear entrance additional area25%; shopping-center ground40 sf extra; vacant lot50 sf ground at building setback.",
+        "Wall billboard: one, smaller40 sf or10% eligible plain wall,50 ft ROW setback,16 ft height, faces side/rear parking not residential; aggregate cap applies."
+      ],
+      "anomalies": [
+        "Formula equals symbol unclear with superscript footnotes.",
+        "Bulletin board says30 square feet in area or height, invalid dimensional wording.",
+        "Billboard division E references District I despite District II section; unresolved."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64576"
+    },
+    {
+      "section": "1290.16",
+      "id": "64613",
+      "district": "III",
+      "candidate_limits": [
+        "Inherits DistrictII except stated differences; structural list ground/pole/wall; functional list development temporary/directional/identification/realestate.",
+        "Permanent area W*2, cap300 sf, frontage Ch1242.",
+        "Vacant ground lot50 sf at building setback.",
+        "Wall billboard one, smaller40 sf or10% plain wall,50 ft ROW setback,16 ft height, faces side/rear parking not residential."
+      ],
+      "anomalies": [
+        "Billboard aggregate reference explicitly1290.15(C)(1), conflicts with apparent DistrictIII300 sf cap; preserve both.",
+        "Functional list differs from DistrictII; inheritance must not automatically add all DistrictII types."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64613"
+    },
+    {
+      "section": "1290.17",
+      "id": "64634",
+      "district": "IV",
+      "candidate_limits": [
+        "Inherits DistrictIII unless overridden.",
+        "Permanent area W*3, cap400 sf."
+      ],
+      "anomalies": [
+        "W definition points1290.12 versus Ch1242 in II/III; measurement definitions pending.",
+        "Formula parenthesis/footnote typography unresolved; no automatic calculation."
+      ],
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64634"
+    }
+  ],
+  "requirements_before_automation": [
+    "Original/adopted current code and unresolved drafting references",
+    "Frontage/area measurements1290.12 and1242",
+    "Full type-specific inheritedII limits",
+    "Parcel/sign district assignment and design review1278"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "calculator_enabled": false,
+  "live_records_changed": 0
+}
