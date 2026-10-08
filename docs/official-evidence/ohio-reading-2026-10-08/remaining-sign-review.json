@@ -1,0 +1,105 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "method": "Full published sections read through web retrieval; paraphrased candidates, originals unretained pending download attempts.",
+  "sections": [
+    {
+      "section": "1290.01",
+      "id": "64446",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64446",
+      "observations": [
+        "Purpose/maintenance and traffic safety; intent language does not replace operative allowances."
+      ]
+    },
+    {
+      "section": "1290.02",
+      "id": "64458",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64458",
+      "observations": [
+        "Twelve functional and eleven structural classifications; classification is not district permission. Changeable copy requires definition review before electronic-message inference."
+      ]
+    },
+    {
+      "section": "1290.05",
+      "id": "64503",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64503",
+      "observations": [
+        "Legacy OBBC Article29 structural/fire reference, political exception; current building code and electrical applicability unresolved."
+      ]
+    },
+    {
+      "section": "1290.06",
+      "id": "64506",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64506",
+      "observations": [
+        "Railroad grade-crossing sight area defined by200 ft street-property-line leg and400 ft nearest-rail leg; state-required railroad signals excluded. Referenced diagram not recovered."
+      ]
+    },
+    {
+      "section": "1290.07",
+      "id": "64510",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64510",
+      "observations": [
+        "Continued nonconforming permanent sign requires prior city permit and existence at relevant effective date; ordinary/nonstructural repair only, no enlargement or relocation without compliance.",
+        "Restoration above60% ORIGINAL cost requires conformity; below60% starts within6 months and diligently completes. Exactly60% unresolved.",
+        "30-day discontinuance and business/use/identity change trigger conformity. Historical five-year phaseout tied to February3 1998 retained, not restarted today.",
+        "Compatible-district hardship clause and original masonry graphic exception require case-specific evidence; no blanket grandfathering."
+      ]
+    },
+    {
+      "section": "1290.08",
+      "id": "64524",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64524",
+      "observations": [
+        "Relocated sign treated as new at destination and must conform."
+      ]
+    },
+    {
+      "section": "1290.09",
+      "id": "64527",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64527",
+      "observations": [
+        "Political signs barred on public property/ROW/poles/bridges; over36 in height needs8 ft curb setback and clear sightlines.",
+        "Political message substitution on permitted permanent signs; printed election timing Labor Day for November/general,60 days for others retained as unapproved source wording."
+      ]
+    },
+    {
+      "section": "1290.11",
+      "id": "64539",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64539",
+      "observations": [
+        "Roof sign/supports noncombustible; approved combustible exception40 sf/face80 sf aggregate40 ft face length, one such sign/roof.",
+        "Roof-edge offset5 ft, bottom clearance6 ft. Height above20 ft subject to specified roof/load/fire-resistance conditions; legacy classification unresolved.",
+        "Construction specification does not establish district roof-sign permission."
+      ]
+    },
+    {
+      "section": "1290.19",
+      "id": "64655",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64655",
+      "observations": [
+        "Printed chapter-priority clause references building/housing/county/OBBC conflicts; no current state-code preemption conclusion inferred."
+      ]
+    },
+    {
+      "section": "1290.21",
+      "id": "64661",
+      "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64661",
+      "observations": [
+        "Abandonment at least6 consecutive months within18 months; abate within60 days AFTER zoning administrator notice.",
+        "Remove whole structure/base to grade or alter to conformity; city removal/assessment provision retained as candidate, no automatic enforcement. Distinct from30-day nonconforming discontinuance."
+      ]
+    }
+  ],
+  "chapter_text_sections_reviewed": 21,
+  "chapter_complete_for_automation": false,
+  "gaps": [
+    "Original publisher files and railroad diagram",
+    "Chapter1242 definitions and1278 review procedure",
+    "Current adoption/amendments and authority",
+    "Sign district map/parcel approval",
+    "Electrical issuer and inspector"
+  ],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "live_records_changed": 0
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "file": "sign-1290.01.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64446",
+    "attempted_at": "2026-10-08T17:29:32.054792+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.02.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64458",
+    "attempted_at": "2026-10-08T17:29:32.128835+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.05.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64503",
+    "attempted_at": "2026-10-08T17:29:32.170428+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.06.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64506",
+    "attempted_at": "2026-10-08T17:29:32.230396+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.07.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64510",
+    "attempted_at": "2026-10-08T17:29:32.272359+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.08.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64524",
+    "attempted_at": "2026-10-08T17:29:32.315410+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.09.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64527",
+    "attempted_at": "2026-10-08T17:29:32.367783+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.11.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64539",
+    "attempted_at": "2026-10-08T17:29:32.409560+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.19.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64655",
+    "attempted_at": "2026-10-08T17:29:32.455652+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "sign-1290.21.html",
+    "url": "https://codelibrary.amlegal.com/codes/reading/latest/reading_oh/0-0-0-64661",
+    "attempted_at": "2026-10-08T17:29:32.498044+00:00",
+    "retained": false,
+    "error": "HTTP Error 403: Forbidden"
+  }
+]

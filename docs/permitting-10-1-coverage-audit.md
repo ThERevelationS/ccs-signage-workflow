@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading Chapter1290 text review complete
+
+Read remaining ten published sign sections as web-derived candidates; all21 text sections now reviewed across receipts. Recorded prior-permit nonconformity, original-cost60% boundary gap,30-day discontinuance versus six-month abandonment and notice-triggered60-day abatement. Preserved historical1998 phaseout, legacy OBBC/roof classifications and unresolved railroad diagram. No grandfathering, roof permission, political-law enforceability or code-priority conclusion approved. Originals, definitions/design procedure, map and currentness remain unresolved. No live writes/publication. Task2 complete; Milestone1 Task4 open.
+
+Next: Chapter1242/1278 dependencies and separate electrical issuer/inspection evidence; railroad diagram/originals and later amendments pending.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading measurement and temporary signs
 
 Reviewed 1290.12/.18 as web-derived candidates. Recorded lettering rectangles, window/door area, largest-face method and frontage definition; secondary-entrance bonus must not be stacked automatically. Temporary 15/30-day permits, 24-hour removal and annual parcel limits remain separate from 21-day wall exception and annual sandwich-board option. Preserved sidewalk/curb/path geometry, subdistrict/design-review and business-hours conditions. Eleven of 21 sign sections read; currentness/originals unresolved. No live writes/publication. Task 2 complete; Milestone 1 Task 4 open.
