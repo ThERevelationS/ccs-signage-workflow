@@ -140,8 +140,8 @@ export async function mutateLocatedWorkOrderArrayItem({
   });
 }
 
-export async function replaceWorkOrderFieldsIfUnchanged({ workOrderId, expectedFields, nextFields }) {
-  return saveTrackedFields({entityType:'WorkOrder', id:workOrderId, expectedFields, nextFields});
+export async function replaceWorkOrderFieldsIfUnchanged({ workOrderId, expectedFields, nextFields, guardFields = {} }) {
+  return saveTrackedFields({entityType:'WorkOrder', id:workOrderId, expectedFields, nextFields, guardFields});
 }
 
 export async function transitionWorkOrderFromLoadedSnapshot({
