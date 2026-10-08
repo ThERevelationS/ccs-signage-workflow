@@ -15,6 +15,9 @@ export function orderSaveSyncStatus(status = {}) {
   if (syncError) {
     return { kind: 'error', text: 'Saved locally · Sync needs attention', title: 'Your Base44 save succeeded, but Smartsheet has not been confirmed. Use Retry Sync.' };
   }
+  if (String(status?.saveError || '').startsWith('Smartsheet pull')) {
+    return { kind: 'error', text: 'Smartsheet pull needs attention', title: status.saveError };
+  }
   if (status?.saveError) {
     return { kind: 'error', text: 'Save needs attention', title: 'One or more Order changes could not be saved safely.' };
   }
