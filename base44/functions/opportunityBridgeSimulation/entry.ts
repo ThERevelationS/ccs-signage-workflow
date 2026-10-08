@@ -15,6 +15,7 @@ import {
   parseOpportunityBridgeSimulationRequest,
   selectOpportunityBridgeSimulationRows,
 } from "../../shared/opportunityBridgeSimulationPolicy.mjs";
+import { buildOpportunityBridgePilotReview } from "../../shared/opportunityBridgePilotReview.mjs";
 
 const PAGE_SIZE = 500;
 const MAX_READ_ROWS = 10000;
@@ -99,6 +100,20 @@ Deno.serve(async (req) => {
     const receiptLedger = summarizeOpportunityBridgeReceiptLedger(receipts);
     const confirmationContract = describeOpportunityBridgeSecondaryConfirmationContract();
     const firstBatchRows = selectOpportunityBridgeFirstBatch(plan.rows);
+    const firstBatchCandidate = firstBatchRows[0] || null;
+    const firstBatchCustomerId = String(firstBatchCandidate?.anchors?.customer_id || "");
+    const firstBatchCustomer = firstBatchCustomerId
+      ? customers.find((row: any) => String(row?.id || "") === firstBatchCustomerId) || null
+      : null;
+    const pilotReview = firstBatchCandidate
+      ? await buildOpportunityBridgePilotReview({
+          planRow:firstBatchCandidate,
+          customer:firstBatchCustomer,
+          durableReceipts:receipts,
+          opportunities,
+          receiptLedgerSummary:receiptLedger,
+        })
+      : null;
     const confirmationBinding = firstBatchRows.length
       ? await buildOpportunityBridgeSecondaryConfirmationBinding({
           runId:rolloutRunId,
@@ -116,6 +131,11 @@ Deno.serve(async (req) => {
       secondaryConfirmationConfigured:confirmationContract.configured === true,
       secondaryConfirmationContract:confirmationContract,
     });
+    const sourceAuthorizedReviewFingerprint = String(readiness?.policy?.authorized_pilot_review_fingerprint || "");
+    const sourceAuthorizationMatchesFreshReview = Boolean(
+      pilotReview?.review_fingerprint &&
+      sourceAuthorizedReviewFingerprint === String(pilotReview.review_fingerprint)
+    );
     const selected = selectOpportunityBridgeSimulationRows(plan.rows, request).map(responseRow);
     return Response.json({
       success:true,
@@ -135,6 +155,10 @@ Deno.serve(async (req) => {
       summary:plan.summary,
       source_audit:plan.source_audit,
       receipt_ledger:receiptLedger,
+      pilot_review:pilotReview,
+      source_authorized_review_fingerprint:sourceAuthorizedReviewFingerprint,
+      source_authorization_matches_fresh_review:sourceAuthorizationMatchesFreshReview,
+      review_response_is_not_execution_authorization:true,
       secondary_confirmation_contract:confirmationContract,
       secondary_confirmation_binding:confirmationBinding ? {
         run_id:confirmationBinding.run_id,
