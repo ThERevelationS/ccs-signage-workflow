@@ -559,7 +559,37 @@ try {
     assert.equal(s.actions.filter(row=>row.action==="save").length,1,"Never replay Save after restoring scope");
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/16 PASS");
+  await run("Desktop: newer authorized refresh keeps late Save acknowledgement locked until receipt verification",1440,async page => {
+    await page.getByLabel("Add mechanic note").fill("Single authorized overlapping note");
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.delayNextBootstrap=true;
+      s.bootstrapSnapshotOnRelease=true;
+      s.delayNextSaveAck=true;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.saveAckWaiting);
+    await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseBootstrap());
+    await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseSaveAck());
+    await page.waitForFunction(() => !window.__fleetMechanicWorkFixture.saveAckWaiting);
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/A newer Fleet portal refresh completed/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true,"Save must not be replayable before receipt verification");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request without replaying it/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isEnabled(),true);
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    const state=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal(state.actions.filter(row=>row.action==="save").length,1,"No duplicate Save");
+    assert.equal(state.actions.filter(row=>row.action==="mutation_status").length,1);
+    assert.equal((state.work.notes.match(/Single authorized overlapping note/g)||[]).length,1);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/17 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
