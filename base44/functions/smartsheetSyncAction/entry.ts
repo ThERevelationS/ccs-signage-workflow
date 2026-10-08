@@ -34,6 +34,7 @@ import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBac
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
+import { orderPullPrewriteBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -165,6 +166,7 @@ async function pullDataset(
     reportOrderPullProgress?: (progress: { phase: string; current: number; total: number; itemLabel: string; detail: string }) => Promise<void> | void;
   } = {},
 ) {
+  const orderPullStartedAtMs = dataset === 'orders' ? Date.now() : 0;
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
     return { dataset, direction: 'pull', skipped: true, reason: 'No numeric Smartsheet sheet ID configured.' };
@@ -542,6 +544,18 @@ async function pullDataset(
       reason: changeLimit.reason,
       rows_examined: allRows.length, planned_order_updates: toUpdate.length,
       mass_change_limit_count: changeLimit.limit,
+      unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
+    };
+    // The download and permanent-ID comparison can consume most of the
+    // function runtime. Never begin a new Order write sequence with too
+    // little reserved time left for verification. No Sales behavior changes.
+    const prewriteBudget = orderPullPrewriteBudget({ startedAtMs: orderPullStartedAtMs, nowMs: Date.now() });
+    if (!prewriteBudget.allowed) return {
+      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+      reason: prewriteBudget.reason,
+      rows_examined: allRows.length, planned_order_updates: toUpdate.length,
+      prewrite_elapsed_ms: prewriteBudget.elapsedMs ?? null,
+      prewrite_budget_ms: prewriteBudget.budgetMs ?? null,
       unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
     };
   }
