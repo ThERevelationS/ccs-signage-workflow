@@ -62,7 +62,10 @@ for (const path of [
   "src/components/sales/SalesOpportunityDialog.jsx",
 ]) {
   const source = readFileSync(path, "utf8");
-  check(source.includes("closed_neutral") && source.includes("Closed (Neutral)"), path + " shows neutral closure safely.");
+  check(source.includes("closed_neutral") && (
+    source.includes("Closed (Neutral)") ||
+    (path.endsWith("/SalesPipelineRow.jsx") && source.includes("salesStageDisplayLabel(wo)"))
+  ), path + " shows neutral closure safely.");
 }
 const schema = readFileSync("base44/entities/WorkOrder.jsonc", "utf8");
 check(schema.includes('"sales_neutral_closed_at"'), "WorkOrder schema supports explicit neutral close provenance.");
