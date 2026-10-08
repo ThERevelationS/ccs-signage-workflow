@@ -842,18 +842,27 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
       <Dialog open={editingRequestTypes} onOpenChange={setEditingRequestTypes}>
         <DialogContent className="clay-card border-none max-w-sm [&>button]:hidden">
           <DialogHeader>
-            <DialogTitle>Edit Request Types</DialogTitle>
+            <DialogTitle>Manage Order Item Types</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            <p className="text-xs text-gray-500">
+              Admin-only. Changes save immediately to the shared Order Form list and the Smartsheet Request Type dropdown.
+            </p>
+            {requestTypesError && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+                {requestTypesError}
+              </div>
+            )}
             <div className="flex gap-2">
               <Input
                 value={newRequestType}
                 onChange={(e) => setNewRequestType(e.target.value)}
-                placeholder="New request type..."
-                onKeyDown={(e) => e.key === 'Enter' && addRequestType()}
+                placeholder="New item type..."
+                onKeyDown={(e) => e.key === 'Enter' && !requestTypesSaving && addRequestType()}
+                disabled={requestTypesSaving}
               />
-              <Button onClick={addRequestType} size="icon" className="shrink-0">
-                <Plus className="w-4 h-4" />
+              <Button onClick={addRequestType} size="icon" className="shrink-0" disabled={requestTypesSaving}>
+                {requestTypesSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               </Button>
             </div>
             <div className="space-y-1 max-h-64 overflow-y-auto">
@@ -868,7 +877,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           [items[index - 1], items[index]] = [items[index], items[index - 1]];
                           saveRequestTypes(items);
                         }}
-                        disabled={index === 0}
+                        disabled={index === 0 || requestTypesSaving}
                         className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
@@ -880,7 +889,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           [items[index], items[index + 1]] = [items[index + 1], items[index]];
                           saveRequestTypes(items);
                         }}
-                        disabled={index === requestTypes.length - 1}
+                        disabled={index === requestTypes.length - 1 || requestTypesSaving}
                         className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -888,15 +897,20 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     </div>
                     <span className="text-sm">{type}</span>
                   </div>
-                  <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
+                  <button
+                    onClick={() => removeRequestType(type)}
+                    disabled={requestTypesSaving || requestTypes.length <= 1}
+                    className="text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={`Remove ${type}`}
+                  >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
-            <Button onClick={() => setEditingRequestTypes(false)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Save & Close
+            <Button onClick={() => setEditingRequestTypes(false)} className="w-full" disabled={requestTypesSaving}>
+              {requestTypesSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {requestTypesSaving ? "Saving…" : "Close"}
             </Button>
           </div>
         </DialogContent>
