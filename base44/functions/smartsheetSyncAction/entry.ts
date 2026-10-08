@@ -2035,12 +2035,18 @@ async function pushDataset(
 
 async function smartsheetSyncHandler(req: Request): Promise<Response> {
   let base44Instance: any = null;
+  let claimedRunStartedAt = '';
   try {
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
     const backgroundSync = ['run_sync', 'push_dataset', 'pull_dataset'].includes(action);
     const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0 });
     base44Instance = base44;
+    const claimInvocationRun = async (status: any) => {
+      const claimed = await claimSyncRun(base44, status);
+      claimedRunStartedAt = cleanText(status?.started_at, 80);
+      return claimed;
+    };
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
     const configured = Boolean(token);
 
@@ -2067,7 +2073,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
 
     await beginSyncTraceStorage(base44);
     if (['conflict_list','conflict_count','resolve_conflict'].includes(action)) {
-      return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:state=>claimSyncRun(base44,state),finish:(state,start)=>saveSyncStatusForRun(base44,state,start),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:start=>assertSyncRunOwnership(base44,start)}));
+      return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:state=>claimInvocationRun(state),finish:(state,start)=>saveSyncStatusForRun(base44,state,start),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:start=>assertSyncRunOwnership(base44,start)}));
     }
     if (action === 'status') {
       return Response.json({
@@ -2346,7 +2352,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
 
       const startedAt = new Date().toISOString();
       const requestedBy = cleanText(adminActor?.email, 320);
-      await claimSyncRun(base44, {
+      await claimInvocationRun({
         status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
         requested_order_ids: orderIds, requested_by: requestedBy, results: [],
@@ -2413,7 +2419,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       }
 
       const startedAt = new Date().toISOString();
-      await claimSyncRun(base44, {
+      await claimInvocationRun({
         status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Sales Pipeline → Smartsheet',
         requested_work_order_ids: workOrderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
@@ -2933,7 +2939,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       }
 
       const runStartedAt = new Date().toISOString();
-      await claimSyncRun(base44, {
+      await claimInvocationRun({
         status: 'running',
         started_at: runStartedAt,
         action,
@@ -3075,11 +3081,13 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     // If a sync run is still "running" after the handler exits (crash, timeout,
     // or unhandled error), mark it as "failed" so the lock is released and
     // future runs aren't blocked. Also send an alert if enabled.
-    if (base44Instance) {
+    if (base44Instance && claimedRunStartedAt) {
       try {
         const record = await base44Instance.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
         const matches = Array.isArray(record) ? record.filter((r: any) => r?.id) : (record?.id ? [record] : []);
-        if (matches.length === 1 && matches[0]?.setting_value?.status === 'running') {
+        if (matches.length === 1 &&
+            matches[0]?.setting_value?.status === 'running' &&
+            cleanText(matches[0]?.setting_value?.started_at, 80) === claimedRunStartedAt) {
           const failedAt = new Date().toISOString();
           const failedStatus = { ...matches[0].setting_value, status: 'failed', failed_at: failedAt, error: 'Sync run did not complete; marked as failed by cleanup.' };
           await base44Instance.asServiceRole.entities.GlobalSettings.updateMany(
