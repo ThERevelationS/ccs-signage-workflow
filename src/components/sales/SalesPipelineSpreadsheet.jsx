@@ -874,7 +874,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false) => {
+  const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
 
@@ -888,6 +888,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // a modern Won/Lost outcome during reads or unrelated field saves.
     if (
       (isCurrentPipelineOpportunity(currentWo) || isTrustedSalesOutcome(currentWo))
+      && !confirmedTaskTransition
       // Confirmed closeout/reopening already includes an explicit status.
       && !Object.prototype.hasOwnProperty.call(nextChanges, "sales_status")
       && Object.prototype.hasOwnProperty.call(nextChanges, "current_task_description")
@@ -1192,7 +1193,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         in_pipeline: false,
         sales_neutral_closed_at: new Date().toISOString(),
         follow_up_date: "",
-      });
+      }, false, true);
       setStatusTransition(null);
       return;
     }
