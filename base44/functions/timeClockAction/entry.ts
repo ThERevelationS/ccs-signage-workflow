@@ -576,7 +576,7 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
 
 async function canonicalLateClockInPayrollProvenance({
   entry, approvalEvidence, auditEntity, punchExceptionEntity, requireCurrentResolution = true,
-  payrollGenerationContext = null,
+  payrollGenerationContext = null, expectedProvenance = null,
 }: any) {
   // Audited manager corrections change clock_source; the original missed-punch
   // report marker still requires independent employee-attestation verification.
@@ -703,7 +703,15 @@ async function canonicalLateClockInPayrollProvenance({
       action: 'admin_correction', time_entry_id: entryId,
     }).catch(() => null);
     if (!Array.isArray(corrections)) return { applicable: true, provenance: null };
+    const expectedCorrectionEvidence = expectedProvenance?.payroll_correction_evidence || null;
+    const expectedCorrectionIds = new Set(
+      Array.isArray(expectedCorrectionEvidence?.correction_chain) && expectedCorrectionEvidence.correction_chain.length
+        ? expectedCorrectionEvidence.correction_chain.map((item: any) => String(item?.audit_id || '')).filter(Boolean)
+        : [String(expectedCorrectionEvidence?.audit_id || '')].filter(Boolean)
+    );
+    const constrainToFrozenCorrections = Boolean(expectedProvenance && expectedCorrectionEvidence);
     const eligible = corrections.filter((row: any) =>
+      (!constrainToFrozenCorrections || expectedCorrectionIds.has(String(row.id || ''))) &&
       ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
       asEmail(row.user_email) === userEmail &&
       String(row.actor_role || '') === 'admin' &&
@@ -733,6 +741,12 @@ async function canonicalLateClockInPayrollProvenance({
       action: 'time_approval', time_entry_id: entryId,
     }).catch(() => null);
     if (!Array.isArray(approvalTransitions)) return { applicable: true, provenance: null };
+    const expectedReviewIds = new Set(
+      Array.isArray(expectedCorrectionEvidence?.review_transition_chain)
+        ? expectedCorrectionEvidence.review_transition_chain.map((item: any) => String(item?.audit_id || '')).filter(Boolean)
+        : []
+    );
+    const constrainToFrozenReviews = Boolean(expectedProvenance);
     const eligibleApprovalTransitions = [];
     for (const row of approvalTransitions) {
       const original = row?.details?.original || {};
@@ -774,6 +788,7 @@ async function canonicalLateClockInPayrollProvenance({
           })
         : '';
       if (
+        (!constrainToFrozenReviews || expectedReviewIds.has(String(row.id || ''))) &&
         ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
         asEmail(row.user_email) === userEmail &&
         String(row.actor_role || '') === 'admin' &&
@@ -3621,6 +3636,7 @@ Deno.serve(async (req) => {
                   period_id: period.id,
                   prior_generation: index > 0 ? history[index - 1] : null,
                 },
+                expectedProvenance: row.late_clock_in_provenance || null,
               });
               if (lateClockIn.applicable) {
                 if (!lateClockIn.provenance || !row.late_clock_in_provenance ||
@@ -3793,6 +3809,7 @@ Deno.serve(async (req) => {
                 period_id: period.id,
                 prior_generation: history.length ? history[history.length - 1] : null,
               },
+              expectedProvenance: current.shift_manifest?.find((row: any) => String(row.id || '') === String(entry.id || ''))?.late_clock_in_provenance || null,
             });
             if (lateClockIn.applicable && !lateClockIn.provenance) {
               return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll missed Clock In provenance no longer matches authoritative evidence.', pay_period_id: period.id, generations: [] });
