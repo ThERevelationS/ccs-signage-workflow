@@ -67,3 +67,94 @@ export function getAdminGroupForTab(tabValue, isAdmin) {
     (group) => group.tabs.some((tab) => tab.value === tabValue),
   )?.id || 'workflow';
 }
+
+// Searchable nested settings are mapped only to panels that actually exist.
+export const ADMIN_NESTED_TABS = {
+  timeclock: [
+    { value: 'entries', label: 'Time Entries', keywords: 'punches clock in clock out shifts' },
+    { value: 'reports', label: 'Reports', keywords: 'timeclock payroll reports' },
+    { value: 'pto', label: 'PTO Policies', keywords: 'paid time off vacation leave' },
+    { value: 'overtime', label: 'Overtime Rules', keywords: 'payroll overtime hours' },
+  ],
+  backend: [
+    { value: 'backup', label: 'Data Backup', keywords: 'data recovery' },
+    { value: 'client_trash', label: 'Client Trash', keywords: 'deleted clients restore' },
+    { value: 'order_trash', label: 'Order Trash', keywords: 'deleted orders restore' },
+    { value: 'default_sort', label: 'Default Sort', keywords: 'sales pipeline sorting' },
+    { value: 'wip_import', label: 'WIP Import', keywords: 'work in progress importer' },
+    { value: 'permitting', label: 'Permitting Repository', keywords: 'permit documents' },
+    { value: 'monitoring', label: 'Jurisdiction Monitoring', keywords: 'permit research jurisdictions' },
+  ],
+};
+
+const ADMIN_SEARCH_KEYWORDS = {
+  automations: 'automation rules email groups gmail',
+  users: 'staff user accounts access roles permissions passwords',
+  timeclock: 'time clock employee hours payroll',
+  backend: 'backend functions maintenance administration',
+  corebridge: 'corebridge api migration',
+  opportunity_bridge: 'sales opportunities integration',
+  sync_conflicts: 'sync conflict review discrepancies',
+  smartsheet: 'smartsheet sync integration sales orders',
+  resources: 'resource allocation capacity',
+  permitting_completeness: 'permit completeness',
+  permitting_rules: 'permit rules review',
+  permitting_tests: 'permit tests',
+  task_assignments: 'task assignment rules',
+  calendar: 'scheduling calendar',
+  activity: 'activity feed events history',
+};
+
+export function getAccessibleAdminSubtab(parentTab, requestedSubtab) {
+  const tabs = ADMIN_NESTED_TABS[parentTab];
+  if (!tabs) return null;
+  return tabs.find((tab) => tab.value === requestedSubtab)?.value || tabs[0].value;
+}
+
+const normalizedSearch = (input) => String(input ?? '')
+  .normalize('NFKD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[_-]+/g, ' ')
+  .trim()
+  .replace(/\s+/g, ' ');
+
+export function searchAdminSettings(input, isAdmin, limit = 8) {
+  const query = normalizedSearch(input);
+  if (!query) return [];
+  const terms = query.split(' ');
+  const destinations = getAccessibleAdminGroups(isAdmin).flatMap((group) =>
+    group.tabs.flatMap((tab) => [
+      {
+        id: tab.value,
+        label: tab.label,
+        group: group.label,
+        tab: tab.value,
+        keywords: ADMIN_SEARCH_KEYWORDS[tab.value] || '',
+      },
+      ...(ADMIN_NESTED_TABS[tab.value] || []).map((nested) => ({
+        id: `${tab.value}:${nested.value}`,
+        label: nested.label,
+        group: group.label,
+        parentLabel: tab.label,
+        tab: tab.value,
+        subtab: nested.value,
+        keywords: nested.keywords || '',
+      })),
+    ])
+  );
+
+  return destinations
+    .map((destination, order) => {
+      const label = normalizedSearch(destination.label);
+      const breadcrumb = normalizedSearch(`${destination.group} ${destination.parentLabel || ''}`);
+      const haystack = `${label} ${breadcrumb} ${normalizedSearch(destination.keywords)}`;
+      if (!terms.every((term) => haystack.includes(term))) return null;
+      const rank = label === query ? 0 : label.startsWith(query) ? 1 : label.includes(query) ? 2 : 3;
+      return { destination, rank, order };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.rank - b.rank || a.order - b.order)
+    .slice(0, Math.max(0, Math.floor(Number(limit) || 0)))
+    .map(({ destination: { keywords, ...result } }) => result);
+}
