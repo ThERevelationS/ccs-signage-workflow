@@ -31,7 +31,7 @@ import SalesDailyQueue from "@/components/sales/SalesDailyQueue";
 import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
 import { getQuoteAgeDays, getQuoteAgingState, isQuoteAwaitingResponse, QUOTE_REVIEW_DAYS } from "@/components/sales/salesQuoteAging";
 import { getSalesAttentionScore, hasSalesAttention } from "@/components/sales/salesAttention";
-import { isCurrentPipelineOpportunity, isLegacyClosedSalesRecord, isTrustedSalesOutcome, isExplicitNeutralSalesClosure } from "@/components/sales/salesRecordScopes";
+import { isCurrentPipelineOpportunity, isLegacyClosedSalesRecord, isTrustedSalesOutcome } from "@/components/sales/salesRecordScopes";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
