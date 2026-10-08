@@ -1840,12 +1840,12 @@ export default function ProductChecklistDialog({
 
                               {/* Inline add task input */}
                               {newItemInput.show && newItemInput.parentId === displayItem.id && newItemInput.type === 'task' && (
-                              <div className="flex flex-wrap items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
+                              <div className="flex flex-wrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
                                 <Input
                                   value={newItemText}
                                   onChange={(e) => setNewItemText(e.target.value)}
                                   placeholder="New task..."
-                                  className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                  className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                   aria-label={`New task under ${displayItem.text || "checklist item"}`}
                                   autoFocus
                                   onKeyDown={(e) => {
@@ -1861,12 +1861,12 @@ export default function ProductChecklistDialog({
                               {/* Inline add detail input */}
                               {newItemInput.show && newItemInput.parentId === displayItem.id && newItemInput.type === 'detail' && (
                                 <div className="bg-gray-50 p-2 rounded border">
-                                  <div className="flex flex-wrap items-center gap-2">
+                                  <div className="flex flex-wrap items-center justify-end sm:justify-start gap-2">
                                     <Input
                                       value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New detail..."
-                                      className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                      className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                       aria-label={`New detail under ${displayItem.text || "checklist item"}`}
                                       autoFocus
                                       onKeyDown={(e) => {
@@ -1979,12 +1979,12 @@ export default function ProductChecklistDialog({
 
                                   {/* Inline add task for detail */}
                                   {newItemInput.show && newItemInput.parentId === detail.id && newItemInput.type === 'task' && (
-                                    <div className="ml-1 sm:ml-4 mt-2 flex items-center gap-2 bg-orange-50 p-1.5 rounded">
+                                    <div className="ml-1 sm:ml-4 mt-2 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-1.5 rounded">
                                       <Input
                                         value={newItemText}
                                         onChange={(e) => setNewItemText(e.target.value)}
                                         placeholder="New task..."
-                                        className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                        className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                         aria-label={`New task under ${detail.text || "detail"}`}
                                         autoFocus
                                         onKeyDown={(e) => {
@@ -2306,12 +2306,12 @@ export default function ProductChecklistDialog({
                                 
                                 {/* Inline add task for sub-template */}
                                 {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'task' && (
-                                  <div className="flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
+                                  <div className="flex flex-wrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
                                     <Input
                                       value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New task..."
-                                      className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                      className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                       aria-label={`New task under ${stDisplayItem.text || "checklist item"}`}
                                       autoFocus
                                       onKeyDown={(e) => {
@@ -2361,12 +2361,12 @@ export default function ProductChecklistDialog({
                                     </div>
                                     {/* Inline add task for sub-template detail */}
                                     {newItemInput.show && newItemInput.parentId === detail.id && newItemInput.type === 'task' && (
-                                      <div className="ml-1 sm:ml-4 mt-1 flex items-center gap-1 bg-orange-50 p-1 rounded">
+                                      <div className="ml-1 sm:ml-4 mt-1 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-orange-50 p-1 rounded">
                                         <Input
                                           value={newItemText}
                                           onChange={(e) => setNewItemText(e.target.value)}
                                           placeholder="New task..."
-                                          className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                          className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                           aria-label={`New task under ${detail.text || "detail"}`}
                                           autoFocus
                                           onKeyDown={(e) => {
@@ -2423,12 +2423,12 @@ export default function ProductChecklistDialog({
                                       {/* Inline add detail for sub-template */}
                                 {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'detail' && (
                                   <div className="bg-gray-50 p-1.5 rounded border">
-                                    <div className="flex flex-wrap items-center gap-1">
+                                    <div className="flex flex-wrap items-center justify-end sm:justify-start gap-1">
                                       <Input
                                         value={newItemText}
                                         onChange={(e) => setNewItemText(e.target.value)}
                                         placeholder="New detail..."
-                                        className="h-11 md:h-7 text-xs flex-1 min-w-0"
+                                        className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
                                         aria-label={`New detail under ${stDisplayItem.text || "checklist item"}`}
                                         autoFocus
                                         onKeyDown={(e) => {
