@@ -40,7 +40,7 @@ check(count("await claimInvocationRun({") >= 3,
 check(count("assertRunOwnership: async () => assertSyncRunOwnership") >= 4,
   "Targeted Order, targeted Sales, full Order and full Sales push paths must all assert ownership");
 
-check(backend.includes("options: { assertRunOwnership?: () => Promise<void> | void } = {}") &&
+check(backend.includes("assertRunOwnership?: () => Promise<void> | void;") &&
       count("if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();") >= 7,
   "Pull and push mutation batches must assert ownership before production writes");
 check(backend.includes("const pullResult = await pullDataset(base44, token, dataset, profile, config, {") &&
