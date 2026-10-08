@@ -2079,6 +2079,9 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     if (action === 'status') {
       return Response.json({
         success: true,
+        // Read-only deployment fingerprint. An absent marker means the active
+        // backend has not yet picked up the Order run-scoped cleanup contract.
+        order_sync_backend_contract: 'order-run-scoped-cleanup-v1',
         configured,
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
