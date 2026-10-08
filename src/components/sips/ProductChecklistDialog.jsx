@@ -1714,9 +1714,11 @@ export default function ProductChecklistDialog({
                             </Select>
 
                             {isRegistered && (
-                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(displayItem.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${displayItem.text || ""}`}>
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
+                              <div className="basis-full sm:basis-auto flex justify-end sm:justify-start">
+                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(displayItem.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${displayItem.text || ""}`}>
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
                             )}
                           </div>
 
@@ -1971,9 +1973,11 @@ export default function ProductChecklistDialog({
                                     </Select>
 
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete detail ${detail.text || ""}`}>
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
+                                      <div className="basis-full sm:basis-auto flex justify-end sm:justify-start">
+                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete detail ${detail.text || ""}`}>
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
                                     )}
                                   </div>
 
@@ -2250,9 +2254,11 @@ export default function ProductChecklistDialog({
                               </Select>
 
                               {isRegistered && (
-                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(stDisplayItem.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${stDisplayItem.text || ""}`}>
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
+                                <div className="basis-full sm:basis-auto flex justify-end sm:justify-start">
+                                  <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(stDisplayItem.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${stDisplayItem.text || ""}`}>
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
 
