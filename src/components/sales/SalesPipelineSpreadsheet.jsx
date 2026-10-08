@@ -89,7 +89,7 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "current_task_assigned_to",
   "in_pipeline",
 ]);
-const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at", "sales_quote_sent_verified_at"]);
+const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at", "sales_quote_sent_verified_at", "sales_neutral_closed_at"]);
 const CLOSEOUT_HISTORICAL_FIELDS = new Set([
   "date_estimate_sent",
   "follow_up_date",
@@ -881,8 +881,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       && String(nextChanges.current_task_description || "").trim() !== String(currentWo.current_task_description || "").trim()
     ) {
       const taskPlan = planSalesTaskChange(currentWo, nextChanges.current_task_description);
-      if (taskPlan.action === "neutral_close_required") {
-        setQuickEditError("Closed - Did not Lose requires the separate neutral closeout workflow. The task was not saved as Won or Lost.");
+      if (taskPlan.action === "confirm_neutral_close") {
+        setStatusTransition({ workOrder: currentWo, nextStatus: null, nextTask: taskPlan.task, kind: "neutral_close" });
         return;
       }
       if (taskPlan.action === "confirm_transition") {
@@ -1148,6 +1148,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!statusTransition?.workOrder?.id) return;
     const current = workOrders.find((row) => row.id === statusTransition.workOrder.id) || statusTransition.workOrder;
     const nextStatus = statusTransition.nextStatus;
+    if (statusTransition.kind === "neutral_close") {
+      if (!isCurrentPipelineOpportunity(current)) {
+        setQuickEditError("This record is no longer an active Sales opportunity. Reload before closing it.");
+        setStatusTransition(null);
+        return;
+      }
+      updateWorkOrderFields(current.id, {
+        current_task_description: statusTransition.nextTask,
+        in_pipeline: false,
+        sales_neutral_closed_at: new Date().toISOString(),
+        follow_up_date: "",
+      });
+      setStatusTransition(null);
+      return;
+    }
     const today = format(new Date(), "yyyy-MM-dd");
     const closing = ["won", "lost"].includes(nextStatus);
     const reopening = ["won", "lost"].includes(current.sales_status) && !closing;
