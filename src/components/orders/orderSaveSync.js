@@ -36,6 +36,40 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
   }
 }
 
+// Manual Order Form Sync is pull-only. Reuse the guarded permanent-ID pull;
+ // never turn this button into a mass Order push or automatic record create.
+export async function pullOrdersFromSmartsheet({ sessionToken } = {}) {
+  const token = String(sessionToken || "").trim();
+  if (!token) throw new Error("Your Sign Shop session expired. Sign in again before syncing.");
+
+  try {
+    const response = await queueSmartsheetSync({
+      action: "pull_dataset",
+      dataset: "orders",
+      session_token: token,
+    }, {
+      retryRateLimit: false,
+      retryCoordinatorBusy: true,
+    });
+    const data = response?.data || response;
+    if (!data?.success) throw new Error(data?.error || "Order pull could not be completed.");
+    const results = Array.isArray(data?.results) ? data.results : [];
+    if (results.length !== 1 || results[0]?.dataset !== "orders" ||
+        results[0]?.direction !== "pull") {
+      throw new Error("Smartsheet did not confirm one isolated Order-only pull.");
+    }
+    if (results[0]?.skipped) {
+      throw new Error(results[0]?.reason || "The Order pull was skipped safely.");
+    }
+    if (!Number.isSafeInteger(results[0]?.updated) || results[0].updated < 0) {
+      throw new Error("Smartsheet did not return a verifiable Order update count.");
+    }
+    return { updated: results[0].updated, needsReview: data.needs_review === true || data.sync_complete !== true };
+  } catch (error) {
+    throw new Error(safeMessage(error, "Could not check Smartsheet for Order changes safely."));
+  }
+}
+
 export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {}) {
   const expected = (
     typeof expectedOrderCount === "number" && Number.isSafeInteger(expectedOrderCount) && expectedOrderCount >= 0
