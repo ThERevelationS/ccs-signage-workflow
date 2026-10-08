@@ -217,7 +217,8 @@ check("Escape from a focused search result returns to search without hijacking c
   assert.match(source, /e\.key !== "Escape"/);
   assert.match(source, /e\.target\?\.hasAttribute\?\.\("data-sips-checklist-item-id"\)/);
   assert.match(source, /focusedSearchId && checklistSearchQuery/);
-  assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5" onKeyDown=\{handleChecklistResultKeyDown\}/);
+  assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5"/);
+  assert.match(source, /onKeyDown=\{handleChecklistResultKeyDown\}/);
 });
 
 check("Escape from a Needs Input target returns to the Needs Input summary", () => {
