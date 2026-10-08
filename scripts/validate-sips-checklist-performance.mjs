@@ -177,4 +177,9 @@ check("main and detail quick-add actions use a dedicated phone row", () => {
   assert.equal(source.includes('className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity"'), false);
 });
 
+check("standalone destructive actions use an intentional phone row", () => {
+  assert.equal((source.match(/className="basis-full sm:basis-auto flex justify-end sm:justify-start"/g) || []).length, 7);
+  assert.equal((source.match(/className="basis-full sm:basis-auto flex justify-end sm:justify-start">/g) || []).length, 3);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
