@@ -214,9 +214,18 @@ check("clearing search returns keyboard focus to the search field", () => {
 
 check("Escape from a focused search result returns to search without hijacking child controls", () => {
   assert.match(source, /const handleChecklistResultKeyDown = \(e\) => \{/);
-  assert.match(source, /e\.key !== "Escape" \|\| !checklistSearchQuery/);
+  assert.match(source, /e\.key !== "Escape"/);
   assert.match(source, /e\.target\?\.hasAttribute\?\.\("data-sips-checklist-item-id"\)/);
+  assert.match(source, /focusedSearchId && checklistSearchQuery/);
   assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5" onKeyDown=\{handleChecklistResultKeyDown\}/);
+});
+
+check("Escape from a Needs Input target returns to the Needs Input summary", () => {
+  assert.match(source, /const needsInputSummaryRef = useRef\(null\);/);
+  assert.match(source, /ref=\{needsInputSummaryRef\}/);
+  assert.match(source, /if \(!focusedNeedsInputId\) return;/);
+  assert.match(source, /setFocusedNeedsInputId\(null\);/);
+  assert.match(source, /needsInputSummaryRef\.current\?\.focus\(\);/);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
