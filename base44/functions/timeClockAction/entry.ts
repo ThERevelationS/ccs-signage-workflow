@@ -3484,11 +3484,19 @@ Deno.serve(async (req) => {
         if (!Array.isArray(chain) || !windowStart || !windowEnd) return false;
         const authoritative = await auditEntity.filter({ time_entry_id: String(change.time_entry_id || '') });
         if (!Array.isArray(authoritative)) return false;
+        const frozenAuditIds = new Set(chain.map((link: any) => String(link?.audit_id || '')).filter(Boolean));
+        const startTime = Date.parse(windowStart);
+        const endTime = Date.parse(windowEnd);
+        const inFrozenCausalWindow = (row: any) => {
+          const auditTime = Date.parse(String(row?.server_timestamp || ''));
+          if (!Number.isFinite(auditTime) || auditTime < startTime || auditTime > endTime) return false;
+          return auditTime < endTime || frozenAuditIds.has(String(row?.id || ''));
+        };
         const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
         const expected = authoritative.filter((row: any) =>
           relevantActions.includes(String(row.action || '')) &&
           ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
-          inCausalWindow(row.server_timestamp, windowStart, windowEnd)
+          inFrozenCausalWindow(row)
         ).sort((a: any, b: any) => {
           const timeOrder = Date.parse(String(a.server_timestamp || '')) - Date.parse(String(b.server_timestamp || ''));
           return timeOrder || String(a.id || '').localeCompare(String(b.id || ''));
