@@ -68,6 +68,8 @@ assert.match(settings, /title: "Automatic sync is paused\."/);
 assert.match(settings, /title: "Automatic sync has no enabled directions\."/);
 assert.match(settings, /title: "Automatic sync is active\."/);
 assert.match(settings, /scheduledOrderPullEnabled = Boolean\(\s*config\.orders\.mirror_enabled && config\.orders\.pull_enabled\s*\)/);
+assert.match(settings, /config\.orders\.mirror_enabled && config\.orders\.pull_enabled\)\)\s*\), \[config\]\);/);
+assert.doesNotMatch(settings, /config\.orders\.mirror_enabled && \(config\.orders\.pull_enabled \|\| config\.orders\.push_enabled\)/);
 assert.match(settings, /<strong>\{automaticSyncBanner\.title\}<\/strong> \{automaticSyncBanner\.detail\}/);
 console.log('PASS Admin settings cannot re-enable or misdescribe Order background writes, and all four automatic-sync banner states are rendered from current config');
 
