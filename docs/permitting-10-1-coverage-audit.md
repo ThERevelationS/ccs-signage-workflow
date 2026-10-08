@@ -1,3 +1,9 @@
+## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading remaining PDF layouts complete
+
+Visually reviewed remaining seven pages against original SHA-256 hashes: building fee pages 1/3/4, zoning fee pages 1/2 and both BZA pages. All 12 physical PDF pages now visually reviewed across receipts. Added residential permanent-sign $25 candidate separately from commercial $40; retained BZA variance-request form $150 versus zoning variance $250 conflict and 3.5% card wording. Recorded scaled plans, abutting owners across rights-of-way and five appeal narratives. County surcharge/Reading deduction and currentness unresolved. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.
+
+Next: sign Chapter 1290/current amendments, zoning map and separate electrical issuer/inspection evidence; catalog registration remains pending.
+
 ## 2026-10-08 — Phase 10 → Milestone 2 of 3: Reading sign fee columns and tax attachment
 
 Visually reviewed county building fee page 2, city zoning fee page 3 and commercial tax attachment page 2 against hash-matched originals. Preserved unit/upfront/surcharge/CO-CC distinctions, $40 sign fee candidates, variance-versus-appeal amounts and conditional waiver wording. Recorded nonresident contractor/subcontractor registration without inferring tax exemption from Non-Profit checkbox. Current fee adoption and surcharge deduction remain unresolved. No live writes or publication. Task 2 complete; Milestone 1 Task 4 open.

@@ -1,0 +1,49 @@
+{
+  "locality_id": "6ac19f12298c063943ecc10f",
+  "method": "Hash-matched official originals downloaded and rendered locally with Poppler; full-page visual inspection. Render images not retained.",
+  "reviewed_pages": [
+    {
+      "file": "building-fees-2026.pdf",
+      "pages": [
+        1,
+        3,
+        4
+      ],
+      "source_sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46"
+    },
+    {
+      "file": "zoning-fees.pdf",
+      "pages": [
+        1,
+        2
+      ],
+      "source_sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558"
+    },
+    {
+      "file": "bza-appeal.pdf",
+      "pages": [
+        1,
+        2
+      ],
+      "source_sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719"
+    }
+  ],
+  "observations": [
+    "Building page 1 states January 1 2026 county effective date and 5% technology fee plus OBBS 1% RCO/3% OBC surcharge. This is county printed adoption wording, not confirmation of Reading's precise deduction.",
+    "Building page 3 separates fire alarm, OBC HVAC and RCO 1-2-3 dwelling schedules; no separate electrical permit route established.",
+    "Building page 4 separates CO, CC, TCO, processing, review, building appeal and penalty fees; building appeals must not be substituted for zoning BZA fees.",
+    "Zoning page 1 includes land/use/commercial occupancy change $25 and residential occupancy change $0; neither is a blanket sign permit exemption.",
+    "Zoning page 2 continues Residential accessory table: permanent sign in S column, $25 for S versus $40 for U/B. Commercial permanent sign $40 appears on page 3. Applicability/currentness pending.",
+    "BZA page 1 expressly includes Signs among variance categories, code sections, project detail, applicant/owner/location and zoning/design district choices. Form choices do not prove actual parcel zoning.",
+    "BZA page 2 requests five narratives: unique physical condition, alternatives, hardship, effects on neighbors and smallest variance.",
+    "BZA checklist requires scaled plans and names/addresses of ALL abutting owners, including across public/private rights-of-way; print/sign/date certification.",
+    "BZA form prints $150 cash/check payable City of Reading or credit card 3.5% fee. Because page 1 expressly requests variance, this does not resolve zoning schedule variance $250/admin appeal $150 conflict."
+  ],
+  "all_12_pdf_pages_visually_reviewed_across_receipts": true,
+  "remaining_visual_pages": [],
+  "currentness_approved": false,
+  "authority_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}
