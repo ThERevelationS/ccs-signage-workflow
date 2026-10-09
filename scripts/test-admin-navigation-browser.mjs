@@ -320,6 +320,54 @@ try {
     assert.equal(new URL(page.url()).searchParams.has('tab'), false);
   });
 
+  await check('Screen reader combobox points to the highlighted option and retains input focus', 375, '/', async page => {
+    const input = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
+    assert.equal(await input.getAttribute('aria-expanded'), 'false');
+    assert.equal(await input.getAttribute('aria-activedescendant'), null);
+    await input.fill('time');
+    const listbox = page.getByRole('listbox', { name: 'Matching Admin settings' });
+    const options = listbox.getByRole('option');
+    assert.ok(await options.count() > 1);
+    assert.equal(await input.getAttribute('aria-expanded'), 'true');
+    assert.equal(await input.getAttribute('aria-controls'), await listbox.getAttribute('id'));
+    assert.equal(await input.getAttribute('aria-activedescendant'), null);
+    await input.press('ArrowDown');
+    const firstOptionId = await options.nth(0).getAttribute('id');
+    assert.equal(await input.getAttribute('aria-activedescendant'), firstOptionId);
+    assert.equal(await options.nth(0).getAttribute('aria-selected'), 'true');
+    assert.equal(await options.nth(1).getAttribute('aria-selected'), 'false');
+    assert.equal(await input.evaluate(node => document.activeElement === node), true);
+    await input.press('ArrowDown');
+    assert.equal(await input.getAttribute('aria-activedescendant'), await options.nth(1).getAttribute('id'));
+    assert.equal(await options.nth(0).getAttribute('aria-selected'), 'false');
+    assert.equal(await options.nth(1).getAttribute('aria-selected'), 'true');
+    await input.press('Enter');
+    assert.equal(await input.getAttribute('aria-expanded'), 'false');
+    assert.equal(await input.getAttribute('aria-controls'), null);
+    assert.equal(await input.getAttribute('aria-activedescendant'), null);
+  });
+
+  await check('Screen reader search attributes reset after no matches or Escape', 320, '/', async page => {
+    const input = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
+    await input.fill('time');
+    await input.press('ArrowUp');
+    assert.ok(await input.getAttribute('aria-activedescendant'));
+    await input.fill('not-a-real-admin-setting-9999');
+    assert.equal(await input.getAttribute('aria-expanded'), 'false');
+    assert.equal(await input.getAttribute('aria-controls'), null);
+    assert.equal(await input.getAttribute('aria-activedescendant'), null);
+    assert.equal(await page.getByRole('listbox').count(), 0);
+    await input.fill('pto');
+    const listbox = page.getByRole('listbox');
+    assert.equal(await input.getAttribute('aria-expanded'), 'true');
+    assert.equal(await input.getAttribute('aria-controls'), await listbox.getAttribute('id'));
+    await input.press('Escape');
+    assert.equal(await input.getAttribute('aria-expanded'), 'false');
+    assert.equal(await input.getAttribute('aria-controls'), null);
+    assert.equal(await input.getAttribute('aria-activedescendant'), null);
+    assert.equal(await input.evaluate(node => document.activeElement === node), true);
+  });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
