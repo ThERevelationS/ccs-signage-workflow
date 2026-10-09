@@ -1,5 +1,6 @@
 import { smartsheetSalesAssigneeLabel } from './smartsheetSalesAssigneeTranslation.mjs';
 import { hasMeaningfulSmartsheetSalesCustomer } from './smartsheetSalesImportEligibility.mjs';
+import { mapSalesTaskToStage } from './salesTaskStageCatalog.mjs';
 
 // Sales Pipeline Smartsheet boundary safety.
 //
@@ -56,9 +57,23 @@ export function hasDownstreamOperationalSmartsheetEvidence(fields = {}) {
 }
 
 export function shouldCreateSmartsheetSalesRecordInPipeline(fields = {}) {
+  const task = mapSalesTaskToStage(fields?.current_task_description);
   return hasMeaningfulSmartsheetSalesCustomer(fields) &&
     !isLegacyTerminalSalesTask(fields?.current_task_description) &&
+    // WIP/SIPs already describe downstream operations, not a new Lead.
+    // Never invent a modern Won/Lost outcome on historical Smartsheet import.
+    task.kind !== 'neutral_close' && !['won', 'lost'].includes(task.status) &&
     !hasDownstreamOperationalSmartsheetEvidence(fields);
+}
+
+// Only initial creation of genuinely active Sales candidates may classify a
+// stage from known task catalog vocabulary. Older linked WorkOrders keep their
+// saved status; the import must not invent activity or stage-change timestamps.
+export function initialSmartsheetSalesStatus(fields = {}) {
+  if (!shouldCreateSmartsheetSalesRecordInPipeline(fields)) return 'lead';
+  const mapping = mapSalesTaskToStage(fields?.current_task_description);
+  return mapping.kind === 'stage' && ['lead', 'quoted', 'follow_up', 'on_hold'].includes(mapping.status)
+    ? mapping.status : 'lead';
 }
 
 // Only skip a linked Sales pull when every populated inbound field already
