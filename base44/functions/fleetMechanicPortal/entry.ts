@@ -109,11 +109,16 @@ async function claimMechanicReceipt(Receipt: any, data: any) {
 }
 
 async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
-  await Receipt.update(receipt.id, {
-    status:'failed',
-    failed_at:nowIso(),
-    error_message:clean(error instanceof Error ? error.message : error,1200),
-  }).catch(()=>null);
+  // Another reconciler may have committed this receipt while this request lost CAS.
+  // Never downgrade a durable applied/cancelled receipt based on a stale snapshot.
+  await Receipt.updateMany(
+    {id:receipt.id,status:'started'},
+    {$set:{
+      status:'failed',
+      failed_at:nowIso(),
+      error_message:clean(error instanceof Error ? error.message : error,1200),
+    }},
+  ).catch(()=>null);
 }
 
 async function cancelMechanicReceipt(Receipt:any, receipt:any, reason:string, adminEmail='') {
@@ -667,8 +672,14 @@ Deno.serve(async (req) => {
             action:'update',id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
           });
           if (result?.data?.error) {
+            const fresh = await WorkOrder.get(id).catch(()=>null);
+            if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
+              await markMechanicReceiptApplied(Receipt,receipt,fresh,true);
+              await resolveReusedUploadReceipt(Receipt,receipt);
+              return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh,{success:true,status:'applied',request_id:requestId,recovered:true});
+            }
             await failMechanicReceipt(Receipt,receipt,result.data.error);
-            return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'failed',request_id:requestId,error_message:result.data.error});
+            return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh || current,{success:true,status:'failed',request_id:requestId,error_message:result.data.error});
           }
           const updated = result?.data?.work_order || await WorkOrder.get(id);
           await markMechanicReceiptApplied(Receipt,receipt,updated,true);
@@ -744,6 +755,12 @@ Deno.serve(async (req) => {
             action:'update',id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
           });
           if (result?.data?.error) {
+            const fresh = await WorkOrder.get(id).catch(()=>null);
+            if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
+              await markMechanicReceiptApplied(Receipt,receipt,fresh,true);
+              await resolveReusedUploadReceipt(Receipt,receipt);
+              return await mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was confirmed. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
+            }
             await failMechanicReceipt(Receipt,receipt,result.data.error);
             continue;
           }
