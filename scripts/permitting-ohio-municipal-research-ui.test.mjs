@@ -377,3 +377,13 @@ test('Hamilton County Symmes dossier retains original links and namesake boundar
  assert.match(html,/Electrical permit issuance and electrical inspection remain separate unapproved roles/);
  assert.equal(render(row,false),'');assert.equal(render({...row,id:'lawrence-county-symmes'}),'');assert.equal(render({...row,type:'city'}),'');
 });
+
+test('Crosby dossier exposes three originals while labels and electrical exemptions stay unresolved',()=>{
+ const row=dossiers.find(d=>d.id==='6ac92e850924ddbe0e2f88c3');
+ assert.equal(row.name,'Crosby Township');assert.equal(row.resources.length,3);assert.equal(row.document_findings.length,9);
+ const html=render(row);for(const r of row.resources)assert.ok(html.includes(r.archive)&&html.includes(r.source));
+ for(const f of row.document_findings)assert.ok(html.includes(f.archive));
+ assert.match(html,/two @ characters/);assert.match(html,/not a BZA application/);assert.match(html,/2026 upload path does not establish/);
+ assert.match(html,/do not establish electrical-permit or inspection exemptions/);
+ assert.equal(render(row,false),'');assert.equal(render({...row,type:'city'}),'');assert.equal(render({...row,id:'other-township'}),'');
+});

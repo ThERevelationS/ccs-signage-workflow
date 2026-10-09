@@ -4,6 +4,7 @@ import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.
 import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 import { buildMechanicRecoveryPatch, mechanicGrantAllowsAction, mechanicGrantAllowsMutation, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
+import { isIdenticalLastAppliedMechanicSave } from '../../shared/fleetMechanicLastSaveGuard.ts';
 import { requireCurrentMechanicGrantForCommittedResponse } from '../../shared/fleetMechanicCommittedResponse.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
@@ -774,6 +775,22 @@ Deno.serve(async (req) => {
     if (!ACTIVE.has(current.status)) return json({error:'Only active Fleet work orders can be changed from the mechanic portal.'},{status:409});
     const expected = String(body?.expected_updated_date || '').trim();
     if (!expected || expected !== String(current.updated_date || '')) return json({error:'This Fleet work order changed since it was opened. Refresh before saving.'},{status:409});
+
+    // A closed tab can lose its original request id. Only the latest unchanged,
+    // durably applied Save with identical content can be acknowledged as already applied.
+    // Never infer an older receipt applied or suppress distinct new progress.
+    if (action === 'save' &&
+        String(current.mechanic_operation_fingerprint || '') === String(mechanicMutation?.fingerprint || '') &&
+        String(current.mechanic_operation_key || '').startsWith(`mechanic:${String(grant.id || '')}:${id}:save:`)) {
+      await requireCurrentMechanicGrant(Access,String(grant.id || ''),'save',String(current.equipment_id || ''));
+      const priorRows = await Receipt.filter({operation_key:String(current.mechanic_operation_key || '')});
+      if ((priorRows || []).length > 1) return json({error:'Conflicting mechanic operation receipts require CCS review before Save Progress can continue.'},{status:409});
+      if (isIdenticalLastAppliedMechanicSave(current,priorRows?.[0] || null,String(grant.id || ''),id,mechanicMutation.fingerprint)) {
+        return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',current,{
+          success:true,already_applied:true,request_id:mechanicMutation.requestId,
+        });
+      }
+    }
 
     if (action === 'estimate_save' || action === 'estimate_submit') {
       const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;

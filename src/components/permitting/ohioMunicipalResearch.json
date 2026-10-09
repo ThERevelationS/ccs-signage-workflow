@@ -1549,5 +1549,180 @@
       "Map version, current code amendments, job address and sign-district applicability remain pending. Fee-free signs may still require certificates; building/electrical exemptions are not inferred.",
       "Electrical permit issuance and electrical inspection remain separate unapproved roles."
     ]
+  },
+  {
+    "id": "6ac92e850924ddbe0e2f88c3",
+    "name": "Crosby Township",
+    "state": "OH",
+    "type": "township",
+    "source": "https://crosbytownshipohio.gov/zoning-department/",
+    "observed_on": "2026-10-09",
+    "resources": [
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "label": "zoning resolution \u2014 review pending",
+        "source": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-RESOLUTION-OF-CROSBY-TOWNSHIP.pdf",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf",
+        "format": "PDF",
+        "bytes": 2219086,
+        "sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357"
+      },
+      {
+        "file": "crosby-zoning-application.pdf",
+        "label": "zoning application \u2014 review pending",
+        "source": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/ZONING-CERTIFICATE-APPLICATION.pdf",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-application.pdf",
+        "format": "PDF",
+        "bytes": 18177,
+        "sha256": "d0f16b330a9285d68924a1bca5496f1ab3f39e231331aaee6645459441357fa2"
+      },
+      {
+        "file": "crosby-property-maintenance-code.pdf",
+        "label": "property maintenance code \u2014 review pending",
+        "source": "https://crosbytownshipohio.gov/wp-content/uploads/2026/03/Property-Maintenance-Code.pdf",
+        "archive": "/permitting-evidence/miami-crosby/crosby-property-maintenance-code.pdf",
+        "format": "PDF",
+        "bytes": 984213,
+        "sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd"
+      }
+    ],
+    "document_findings": [
+      {
+        "file": "crosby-zoning-application.pdf",
+        "physical_page": 1,
+        "label": "Sign application package",
+        "text": "The zoning application offers wall, freestanding and temporary sign choices. It requests existing/proposed structures, site-plan dimensions, public streets and building/street frontage dimensions for signage. Confirm current submission method and sign-specific supporting drawings.",
+        "matched_text": "STREET FRONTAGE DIMENSIONS",
+        "source_sha256": "d0f16b330a9285d68924a1bca5496f1ab3f39e231331aaee6645459441357fa2",
+        "text_sha256": "cc49f96290bbb5c95ddce4ff892a74e4fbf5051e67ae2106635695d06e77af73",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-application.pdf#page=1",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 102,
+        "label": "Zoning trigger and face changes",
+        "text": "The retained text describes zoning certificates for erection, enlargement, alteration including face changes, relocation and reconstruction, subject to exemptions and nonconforming provisions. Current amendments and project applicability remain unreviewed.",
+        "matched_text": "including face",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "fdfe0d3f778352208449bbc6f0dd168a157b38499fd69b3126a21199600586db",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=102",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 102,
+        "label": "Cross-reference discrepancy",
+        "text": "Section 31.1.1 refers to compliance with Article 13 inside Article 31 sign regulations. Preserve this printed cross-reference without silently correcting it; request publisher/staff interpretation.",
+        "matched_text": "provisions of Article",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "fdfe0d3f778352208449bbc6f0dd168a157b38499fd69b3126a21199600586db",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=102",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 102,
+        "label": "Maintenance and electrical components",
+        "text": "Routine maintenance language includes lamps, ballast and electrical components as a zoning-certificate exemption. It does not establish an electrical-permit or inspection exemption.",
+        "matched_text": "replacing lamps",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "fdfe0d3f778352208449bbc6f0dd168a157b38499fd69b3126a21199600586db",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=102",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 103,
+        "label": "Illumination, height and setbacks",
+        "text": "The page contains shielding, billboard illumination, district-specific height and setback provisions. These numeric provisions remain document candidates rather than approved job constraints. No current electrical code edition or office is established.",
+        "matched_text": "Level of Illumination",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "6164990875704f61105b1504dd4ef60cf0e28db009a75faf449e5e0fa065b611",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=103",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 104,
+        "label": "Sign-area measurement",
+        "text": "The retained page describes visible display area, multi-face accounting and building sign measurement. Original diagrams on the following pages require visual/table review before a calculation is approved.",
+        "matched_text": "Area of Building Signs",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "74f77f24e600e35c5f6b08d33e3b04deffc042ebec3bfcf710b26aaf15f72e29",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=104",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 108,
+        "label": "Prohibitions and conditional exemptions",
+        "text": "The text lists prohibited sign types and conditional exemptions across districts. Review the complete exceptions and district context; no blanket exemption or approval is created.",
+        "matched_text": "Roof Signs",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "505af989d135d8c403f01c9a987a904d246142f08bc7980038e85a5877c38601",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=108",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 112,
+        "label": "Retail/industrial portable and freestanding signs",
+        "text": "The retained page discusses illuminated portable-sign electrical-code compliance and retail/industrial frontage, monument, landscaping and variable-message conditions. It does not identify an electrical permit issuer or inspection provider.",
+        "matched_text": "National Electric Code",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "c28861183fcfb8b2529dea63aa1ffab4f860a3072dc45cc1d4233e757eade802",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=112",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      },
+      {
+        "file": "crosby-zoning-resolution.pdf",
+        "physical_page": 114,
+        "label": "Billboard and state-permit review",
+        "text": "The billboard provisions include size, spacing, maintenance exemptions and possible state transportation permitting. Local zoning review and state-permit review remain distinct pending determinations.",
+        "matched_text": "State Director",
+        "source_sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+        "text_sha256": "a5c24eae1cfcbb989f26ee66b5f20c67cdc5e4327871b34b084df98807bef302",
+        "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf#page=114",
+        "staff_approved": false,
+        "currentness_approved": false,
+        "applicability_approved": false,
+        "authority_approved": false
+      }
+    ],
+    "notes": [
+      "Identity-only Hamilton County township profile; needs verification. Current sign requirements and electrical offices remain unapproved.",
+      "Resolution cover reports revisions through 2021. A 2026 upload path does not establish current amendment status.",
+      "Official page labels the zoning certificate application as Building Permits. The label does not establish a building permit issuer.",
+      "Property maintenance PDF is linked with BZA Application text; the retained scan is not a BZA application. OCR review remains pending.",
+      "Printed zoning-office email has two @ characters. Current contact information must be verified before use.",
+      "Article31 printed cross-reference to Article13 remains unresolved. No automatic correction or numeric district allowance is approved.",
+      "Zoning-certificate maintenance exemptions for lamps, ballast and electrical components do not establish electrical-permit or inspection exemptions.",
+      "Sign diagrams, district and job-address coverage require review. Electrical permit issuance and electrical inspection remain separate pending reviews."
+    ]
   }
 ]

@@ -1,0 +1,16 @@
+{
+  "locality": {
+    "id": "6ac92e850924ddbe0e2f88c3",
+    "name": "Crosby Township",
+    "state": "OH",
+    "type": "township"
+  },
+  "parent_county_name": "Hamilton County",
+  "geographic_candidate_key": "OH:county_subdivision:3906119470",
+  "live_readback_count": 1,
+  "verification_status": "needs_verification",
+  "auto_refresh": false,
+  "permit_requirements": null,
+  "live_records_created": 1,
+  "authority_approved": false
+}
