@@ -15,6 +15,7 @@ import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems } from "@/components/sales/salesAttention";
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
+import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
@@ -166,6 +167,7 @@ export default function SalesOpportunityDialog({
   const attentionItems = getActionableSalesAttentionItems(workOrder);
   const attentionKeys = new Set(allAttentionItems.map((item) => item.key));
   const recordClassification = getSalesRecordClassification(workOrder);
+  const taskStatusAudit = classifySalesTaskStatusAudit(workOrder);
   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
   const placeholderReason = getSalesPlaceholderReason(workOrder);
   const salesOwnerSelect = buildSalesPersonSelectModel(workOrder?.sales_rep, users);
@@ -270,6 +272,22 @@ export default function SalesOpportunityDialog({
         </DialogHeader>
 
         <div className="space-y-5 p-4 sm:p-6">
+          {taskStatusAudit.kind !== 'none' && (
+            <section className={`rounded-xl border p-3 sm:p-4 ${taskStatusAudit.kind === 'modern_review' ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}
+              aria-label={taskStatusAudit.kind === 'modern_review' ? 'Task and Sales Status need review' : 'Legacy task context'}>
+              <div className="flex items-start gap-2">
+                <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${taskStatusAudit.kind === 'modern_review' ? 'text-amber-800' : 'text-slate-600'}`} />
+                <div className="min-w-0 text-xs leading-relaxed">
+                  <div className="font-semibold text-slate-900">{taskStatusAudit.kind === 'modern_review' ? 'Task / Status review · read-only finding' : 'Legacy task text · not a modern outcome'}</div>
+                  <p className="mt-1 text-slate-700">{taskStatusAudit.reason}</p>
+                  <p className="mt-1 text-slate-600">Saved status: {statusLabel} · Task: {workOrder.current_task_description || 'Not set'}</p>
+                  {taskStatusAudit.mappedStatus && taskStatusAudit.kind === 'modern_review' &&
+                    <p className="mt-1 text-slate-600">Task catalog category: {taskStatusAudit.mappedStatus.replace(/_/g, ' ')} (not applied automatically).</p>}
+                  <p className="mt-1 text-slate-600">Review the task and existing history before making a protected change. No classification or timestamp was updated by this audit.</p>
+                </div>
+              </div>
+            </section>
+          )}
           {likelyPlaceholder && recordClassification === "current" && (
             <section className="rounded-xl border border-rose-200 bg-rose-50/70 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
