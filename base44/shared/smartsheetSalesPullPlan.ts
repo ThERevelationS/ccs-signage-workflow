@@ -1,4 +1,6 @@
 import { buildSnapshot, serializeWorkNotes } from './smartsheetSyncFields.ts';
+import { mapSalesTaskToStage } from './salesTaskStageCatalog.mjs';
+import { isLegacyTerminalSmartsheetSalesRecord } from './historicalSalesOutcomeReconciliation.mjs';
 
 const same = (a, b) => String(a ?? '').trim() === String(b ?? '').trim();
 // Reconcile inbound fields independently. Missing data may be filled without
@@ -38,4 +40,41 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
     }
   }
   return { fields, snapshot, held };
+}
+
+// A Smartsheet pull must not independently change the task of a modern Sales
+// record when doing so requires a stage change, a terminal confirmation, or a
+// choice between two locally edited versions. The pull's ordinary bulkUpdate
+// cannot atomically perform the Sales stage transition or its approvals.
+// Hold only the task column, keeping other safe incoming fields syncable.
+export function guardSalesPulledTaskTransition(record, incoming, plan, bindings) {
+  if (record?.in_pipeline !== true ||
+      !Object.prototype.hasOwnProperty.call(incoming || {}, 'current_task_description') ||
+      same(record?.current_task_description, incoming.current_task_description)) return plan;
+  const bindingId = String(bindings?.current_task_description || '').trim();
+  if (!/^\d+$/.test(bindingId)) return plan;
+
+  const mapped = mapSalesTaskToStage(incoming.current_task_description);
+  const currentStatus = String(record?.sales_status || 'lead').trim().toLowerCase();
+  const prior = record?.smartsheet_sync_snapshot || {};
+  const known = Boolean(record?.smartsheet_last_synced_at &&
+    Object.prototype.hasOwnProperty.call(prior, bindingId));
+  const locallyEdited = known
+    ? !same(record?.current_task_description, prior[bindingId])
+    : Boolean(String(record?.current_task_description || '').trim());
+  const requiresReview = isLegacyTerminalSmartsheetSalesRecord(record) ||
+    mapped.kind !== 'stage' || mapped.status !== currentStatus || locallyEdited;
+  if (!requiresReview) return plan;
+
+  const fields = { ...plan.fields };
+  delete fields.current_task_description;
+  const snapshot = { ...plan.snapshot };
+  if (Object.prototype.hasOwnProperty.call(prior, bindingId)) snapshot[bindingId] = prior[bindingId];
+  else delete snapshot[bindingId];
+  return {
+    ...plan,
+    fields,
+    snapshot,
+    held: [...new Set([...(plan.held || []), 'current_task_description'])],
+  };
 }
