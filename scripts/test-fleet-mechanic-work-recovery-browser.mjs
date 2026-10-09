@@ -87,7 +87,8 @@ try {
 
   async function run(name,width,scenario) {
     if (process.env.FLEET_CASE_MATCH && !name.includes(process.env.FLEET_CASE_MATCH)) return;
-    const page = await browser.newPage({viewport:{width,height:width<500?844:900}});
+    const context = await browser.newContext({viewport:{width,height:width<500?844:900}});
+    const page = await context.newPage();
     const runtimeErrors = [], outside = [];
     page.on("pageerror", error => runtimeErrors.push(error.message));
     page.on("request", request => {
@@ -108,7 +109,7 @@ try {
       passed++;
       console.log("PASS " + name);
     } finally {
-      await page.close();
+      await context.close();
     }
   }
 
