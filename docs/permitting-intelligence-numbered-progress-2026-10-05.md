@@ -1,3 +1,7 @@
+## 2026-10-08 — Phase 10, milestone 2: Ohio document-access audit
+
+Reproducible repository audit verified all61 retained PDF/office archives against original bytes and manifest hashes. Twelve municipal dossiers exist; nine archives have no literal app-source references: Delhi2, Symmes4, Crosby3. This is source-link coverage, not published/browser availability or statewide completeness. OCR derivative text excluded from original-document count. Live record changes0; publications0. Next: Delhi exact-identity locality dossier.
+
 ## 2026-10-08 — Phase 10, milestone 2: St Bernard locality dossier
 
 Added exact-identity admin dossier with two hash-verified retained PDFs, five page-linked findings and distinct Village zoning/county building portal links. January2026 transfer, conflicting electrical routing, code versions, map and sidewalk-sign gaps remain unapproved. Live record changes0; publications0. Task2 complete; milestone1 Task4 open. Next: remaining Ohio dossier and document access coverage audit.
