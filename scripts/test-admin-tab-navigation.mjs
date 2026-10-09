@@ -11,9 +11,9 @@ import {
 const page = readFileSync(new URL('../src/pages/AdminSettings.jsx', import.meta.url), 'utf8');
 const listTags = page.match(/<TabsList\b[^>]*>/g) || [];
 const triggerTags = page.match(/<TabsTrigger\b[^>]*>/g) || [];
-const mainNav = page.slice(page.indexOf('<Tabs value={selectedAdminTab}'), page.indexOf('<TabsContent value="users">'));
+const mainNav = page.slice(page.indexOf('<Tabs value={selectedAdminTab}'), page.indexOf('<AdminPanelContent value="users">'));
 const allTabs = ADMIN_TAB_GROUPS.flatMap((group) => group.tabs);
-const contentIds = new Set([...page.matchAll(/<TabsContent value="([^"]+)"/g)].map((match) => match[1]));
+const contentIds = new Set([...page.matchAll(/<AdminPanelContent value="([^"]+)"/g)].map((match) => match[1]));
 
 test('Five categorized groups preserve all 15 Admin pages and their panels', () => {
   assert.deepEqual(ADMIN_TAB_GROUPS.map((group) => group.id), ['workflow', 'people', 'integrations', 'permitting', 'system']);
