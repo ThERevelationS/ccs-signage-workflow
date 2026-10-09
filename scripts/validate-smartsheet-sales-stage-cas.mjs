@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { trackedConditionalSave } from "../base44/shared/fieldAudit.ts";
 import { buildNonterminalSalesPullPatch } from "../base44/shared/smartsheetSalesStageTransition.mjs";
+import { salesStageCellHistoryRows } from "../base44/shared/smartsheetSalesStageHistory.mjs";
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from "../base44/shared/smartsheetSalesPullPlan.ts";
 import { readFileSync } from "node:fs";
 
@@ -67,6 +68,17 @@ for (const field of ["current_task_description","sales_status","sales_stage_chan
 }
 assert.equal(saved.smartsheet_sync_snapshot[taskId],baseline.smartsheet_sync_snapshot[taskId],
   "CAS business write must not prematurely advance Smartsheet snapshot"); checks++;
+const historyRows = salesStageCellHistoryRows(baseline,patch);
+assert.deepEqual(historyRows.map((row)=>row.field_name),
+  ["current_task_description","sales_status","sales_stage_changed_at"],
+  "Regular-user history captures the task, status and real stage transition timestamp");checks++;
+assert(historyRows.every((row)=>row.entity_type==="WorkOrder" &&
+  row.entity_id===baseline.id && row.changed_by_name==="Smartsheet Sync"),
+  "History identifies the same WorkOrder and the remote change origin");checks++;
+assert.equal(historyRows[1].old_value,"lead");checks++;
+assert.equal(historyRows[1].new_value,"quoted");checks++;
+assert.equal(historyRows[2].new_value,stamp);checks++;
+assert.throws(()=>salesStageCellHistoryRows(baseline,{...patch,sales_status:"lead"}));checks++;
 const metadata = { smartsheet_sync_snapshot: remote, smartsheet_last_synced_at:"2026-10-09T17:34:00.000Z" };
 const completedMetadata = await trackedConditionalSave(success.base44,"WorkOrder",saved,metadata,
   {full_name:"Smartsheet Sales snapshot verification"},"smartsheet");
@@ -99,6 +111,13 @@ assert(backend.includes("if (payload.length) await base44.asServiceRole.entities
   "Ordinary records retain existing bulk path without empty bulk calls"); checks++;
 assert(backend.includes("trackedConditionalSave(base44, 'WorkOrder', _existing, patch") &&
   backend.includes("expectedStageChangedAt: stamp"),"Stage CAS retains timestamp for read-back");checks++;
+assert(backend.includes("CellHistory.bulkCreate(historyRows)") &&
+  backend.includes("CellHistory.filter({ id: { $in: historyIds } }") &&
+  backend.includes("Sales stage history did not pass ID-based read-back."),
+  "Regular-user stage history is created and read back before sync completion");checks++;
+const detail = readFileSync("src/components/sales/SalesOpportunityDialog.jsx","utf8");
+assert(detail.includes('"sales_stage_changed_at"') && detail.includes('Stage timing recorded'),
+  "Opportunity Detail displays the verified stage history event");checks++;
 assert(backend.includes("salesStageMetadataCandidates.push({ record: persisted, patch: snapshotPatch })") &&
   backend.includes("trackedConditionalSave(base44, 'WorkOrder', candidate.record, metadata"),
   "Stage snapshot metadata uses its own CAS rather than unprotected bulk update");checks++;
