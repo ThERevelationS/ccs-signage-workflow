@@ -28,18 +28,20 @@ try {
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 1;',
     'const state = {actions:[],delayNextBootstrap:false,bootstrapWaiting:false,releaseBootstrap:null,bootstrapSnapshotOnRelease:false,delayNextStartAck:false,failDelayedStartAck:false,startAckWaiting:false,releaseStartAck:null,delayNextSaveAck:false,failDelayedSaveAck:false,saveAckWaiting:false,releaseSaveAck:null,startPermission:true,savePermission:true,loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
+    'const persisted=JSON.parse(sessionStorage.getItem("synthetic-fleet-server")||"null"); if(persisted)Object.assign(state,{work:persisted.work,receipt:persisted.receipt,photoWrites:persisted.photoWrites});',
+    'const persist=()=>sessionStorage.setItem("synthetic-fleet-server",JSON.stringify({work:state.work,receipt:state.receipt,photoWrites:state.photoWrites}));',
     'window.__fleetMechanicWorkFixture = state;',
-    'const work = () => clone(state.work);',
+    'const work = () => clone(state.work);'
     'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{start:state.startPermission,save:state.savePermission,estimates:false}},active_work_orders:state.scopeRemoved?[]:[work()],recent_completed:[],equipment:state.scopeRemoved?[]:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
     'const receiptFor = payload => state.receipt && state.receipt.action===payload.mutation_action && state.receipt.requestId===payload.request_id ? state.receipt : null;',
-    'const applyStart = payload => { state.work={...state.work,status:"in_progress",started_date:"2026-09-29",updated_date:"wo-rev-"+(++revision)}; state.receipt={action:"start",requestId:payload.request_id,status:"applied"}; };',
+    'const applyStart = payload => { state.work={...state.work,status:"in_progress",started_date:"2026-09-29",updated_date:"wo-rev-"+(++revision)}; state.receipt={action:"start",requestId:payload.request_id,status:"applied"}; persist(); };'
     'const applySave = payload => {',
     ' const note=String(payload.mechanic_note||"").trim();',
     ' const appended=note ? "[Mechanic – Synthetic Mechanic]\\n"+note : "";',
     ' const urls=(payload.photos||[]).map(()=> {state.photoWrites++;return "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";});',
     ' state.work={...state.work,actual_hours:payload.actual_hours===""?state.work.actual_hours:Number(payload.actual_hours),corrective_action:String(payload.corrective_action||""),notes:[state.work.notes,appended].filter(Boolean).join("\\n\\n"),after_photos:[...(state.work.after_photos||[]),...urls],updated_date:"wo-rev-"+(++revision)};',
-    ' state.receipt={action:"save",requestId:payload.request_id,status:"applied"};',
-    '};',
+    ' state.receipt={action:"save",requestId:payload.request_id,status:"applied"}; persist();',
+    '};'
     'export const base44 = {functions:{async invoke(name,payload){',
     ' if(name!=="fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
@@ -877,7 +879,76 @@ try {
     assert.equal(checks[0].request_id,originalId);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/23 PASS");
+  await run("Desktop: reload during delayed successful Start restores locked receipt check",1440,async page => {
+    await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextStartAck=true;});
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.startAckWaiting===true);
+    const initial=await actions(page);
+    const requestId=initial.find(row=>row.action==="start").request_id;
+    const marker=await page.evaluate(()=>Object.entries(sessionStorage).find(([key])=>key.startsWith("ccs_fleet_mechanic_pending_v1"))?.[1]||"");
+    assert.equal(JSON.parse(marker).requestId,requestId);
+    assert.equal(marker.includes("synthetic-mechanic-token"),false,"Recovery marker must not store bearer tokens");
+    await page.reload({waitUntil:"networkidle"});
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
+    assert.deepEqual(await actionNames(page),["bootstrap"],"Reload must not replay an uncertain Start");
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Work started\. CCS Fleet confirmed the interrupted request/i).waitFor();
+    const checked=await actions(page);
+    assert.equal(checked[1].request_id,requestId,"Reconciliation must retain the original request id");
+    assert.equal(await page.evaluate(()=>Object.keys(sessionStorage).filter(key=>key.startsWith("ccs_fleet_mechanic_pending_v1")).length),0,"Confirmed receipt must clear its marker");
+    assert.equal(await page.evaluate(()=>window.__fleetMechanicWorkFixture.work.status),"in_progress");
+  });
+
+  await run("Mobile: reload during delayed Save does not duplicate notes or uploads",390,async page => {
+    await page.getByLabel("Add mechanic note").fill("Single note after reload");
+    await page.getByLabel("Labor hours").fill("3.5");
+    await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextSaveAck=true;});
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.saveAckWaiting===true);
+    const requestId=(await actions(page)).find(row=>row.action==="save").request_id;
+    await page.reload({waitUntil:"networkidle"});
+    const recovery=page.getByRole("alert");
+    await recovery.getByText(/Current server state must be checked/i).waitFor();
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"","Notes must not be copied to browser storage");
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request without replaying it/i).waitFor();
+    const fixture=await page.evaluate(()=>window.__fleetMechanicWorkFixture);
+    assert.equal(fixture.actions.filter(row=>row.action==="save").length,0,"Reload must not repeat Save");
+    assert.equal(fixture.actions.find(row=>row.action==="mutation_status").request_id,requestId);
+    assert.equal((fixture.work.notes.match(/Single note after reload/g)||[]).length,1);
+    assert.equal(fixture.work.actual_hours,3.5);
+  });
+
+  await run("Desktop: interrupted Start marker stays isolated across different bearer links",1440,async page => {
+    await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextStartAck=true;});
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.startAckWaiting===true);
+    await page.goto(origin+"/#different-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).waitFor();
+    assert.equal(await page.getByRole("alert").count(),0,"A different bearer link cannot inherit the previous recovery marker");
+    await page.goto(origin+"/#synthetic-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
+    await page.getByRole("alert").getByText(/Current server state must be checked/i).waitFor();
+    assert.deepEqual(await actionNames(page),["bootstrap"],"Returning to original link must not replay Start");
+  });
+
+  await run("Desktop: blocked recovery storage prevents dispatch entirely",1440,async page => {
+    await page.evaluate(()=>{
+      const native=Storage.prototype.setItem;
+      Storage.prototype.setItem=function(key,value){
+        if(String(key).startsWith("ccs_fleet_mechanic_pending_v1"))throw new Error("Synthetic quota failure");
+        return native.call(this,key,value);
+      };
+    });
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    await page.getByText(/Start Work was not sent/i).waitFor();
+    assert.deepEqual(await actionNames(page),["bootstrap"],"Storage failure must not send an untracked mutation");
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/27 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
