@@ -113,7 +113,7 @@ try {
   for (const name of syntheticPanels) {
     await writeFile(path.join(scratch, 'mock-' + name + '.jsx'),
       'import React from "react";export default function ' + name +
-      '(){return <div data-testid="synthetic-' + name + '">Synthetic ' + name + '</div>;}');
+      '(){if(window.__adminPanelFailures?.includes("'+name+'"))throw new Error("synthetic-private-panel-error");return <div data-testid="synthetic-' + name + '">Synthetic ' + name + '</div>;}');
   }
   const aliases = [
     {find:'@/api/base44Client',replacement:path.join(scratch,'mockData.js')},
