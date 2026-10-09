@@ -59,7 +59,7 @@ function monitor(page, origin, errors) {
   });
 }
 
-async function check(name, width, urlSuffix, fn) {
+async function check(name, width, urlSuffix, fn, { allowSyntheticPanelError = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 860 } });
   const errors = [];
   try {
@@ -68,7 +68,16 @@ async function check(name, width, urlSuffix, fn) {
     await page.goto(origin + urlSuffix, { waitUntil: 'networkidle' });
     await page.getByRole('search', { name: 'Search Admin pages and settings' }).waitFor();
     await fn(page);
-    assert.deepEqual(errors, [], 'No browser errors or external requests');
+    // Chromium can report intentionally thrown render errors even after React
+    // catches them in the panel boundary. Never allow unexpected exceptions.
+    const unexpectedErrors = allowSyntheticPanelError
+      ? errors.filter(error => error !== 'Browser: synthetic-private-panel-error')
+      : errors;
+    assert.deepEqual(unexpectedErrors, [], 'No unexpected browser errors or external requests');
+    if (allowSyntheticPanelError) {
+      assert.ok(errors.includes('Browser: synthetic-private-panel-error'),
+        'Fixture exercised the real render error path');
+    }
     console.log('PASS ' + name);
     passed += 1;
   } finally {
@@ -440,7 +449,7 @@ try {
     await failure.getByRole('button', { name: 'Retry panel' }).click();
     await page.getByTestId('synthetic-BackupManager').waitFor();
     assert.equal(await failure.count(), 0);
-  });
+  }, { allowSyntheticPanelError: true });
 
   await check('Failed Users panel does not block access to other main Admin categories', 320, '/?tab=calendar', async page => {
     await page.getByTestId('synthetic-AdminCalendarSettings').waitFor();
@@ -456,7 +465,7 @@ try {
     await page.evaluate(() => { window.__adminPanelFailures = []; });
     await failure.getByRole('button', { name: 'Retry panel' }).click();
     await page.getByTestId('synthetic-UserManagement').waitFor();
-  });
+  }, { allowSyntheticPanelError: true });
 
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
