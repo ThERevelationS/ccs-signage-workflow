@@ -6,6 +6,7 @@ import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
+import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
 import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
@@ -705,6 +706,24 @@ async function pullDataset(
               ? cleanText(latest[field], 40) === cleanText(value, 40)
               : JSON.stringify(latest[field] ?? null) === JSON.stringify(value ?? null))) throw error;
         }
+        // FieldAudit captures the guarded server save. Also preserve regular-
+        // user-visible CellHistory, verifying every created event before the
+        // Smartsheet snapshot can advance.
+        const historyRows = salesStageCellHistoryRows(_existing, patch);
+        const createdHistory = await base44.asServiceRole.entities.CellHistory.bulkCreate(historyRows);
+        const historyIds = Array.isArray(createdHistory) ? createdHistory.map((event: any) => event?.id) : [];
+        if (historyIds.length !== historyRows.length || historyIds.some((eventId: any) => !eventId)) {
+          throw new Error('Sales stage history creation was not acknowledged in full.');
+        }
+        const historyReadback = await base44.asServiceRole.entities.CellHistory.filter({ id: { $in: historyIds } }, { limit: historyIds.length });
+        const historyConfirmed = Array.isArray(historyReadback) ? historyReadback : historyReadback?.items || [];
+        const historyById = new Map(historyConfirmed.map((event: any) => [String(event.id), event]));
+        if (!createdHistory.every((event: any, index: number) => {
+          const saved = historyById.get(String(event.id));
+          const expected = historyRows[index];
+          return saved && saved.entity_id === expected.entity_id && saved.field_name === expected.field_name &&
+            saved.old_value === expected.old_value && saved.new_value === expected.new_value;
+        })) throw new Error('Sales stage history did not pass ID-based read-back.');
         const expectedFields = { ...fields };
         delete expectedFields.smartsheet_parent_row_id;
         salesBusinessVerifications.push({
