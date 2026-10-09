@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, Search, X } from "lucide-react";
 import { searchAdminSettings } from "@/components/admin/adminTabNavigation";
 
@@ -6,12 +6,15 @@ import { searchAdminSettings } from "@/components/admin/adminTabNavigation";
 // results remain within the Admin navigation card on narrow viewports.
 export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
   const [query, setQuery] = useState("");
+  const searchInputRef = useRef(null);
   const results = searchAdminSettings(query, isAdmin);
   const hasQuery = Boolean(query.trim());
 
   const openResult = (result) => {
     onNavigate(result.tab, result.subtab || null);
     setQuery("");
+    // A clicked result disappears after navigation; keep focus in a usable control.
+    searchInputRef.current?.focus();
   };
 
   return (
@@ -27,6 +30,7 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
         <div className="relative w-full min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" aria-hidden="true" />
           <input
+            ref={searchInputRef}
             type="search"
             aria-label="Find an Admin page or setting"
             placeholder="Find a setting... (PTO, sync, backup)"
