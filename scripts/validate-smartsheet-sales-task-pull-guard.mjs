@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { mapSalesTaskToStage } from "../base44/shared/salesTaskStageCatalog.mjs";
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from "../base44/shared/smartsheetSalesPullPlan.ts";
+import { buildNonterminalSalesPullPatch } from "../base44/shared/smartsheetSalesStageTransition.mjs";
 
 let checks = 0;
 const same = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
@@ -48,10 +49,18 @@ for (const [task, status] of [
 ]) {
   same(mapSalesTaskToStage(task).status, status, "Shared catalog agrees on stage for " + task);
   const guarded = held(base, task);
-  check(!Object.hasOwn(guarded.fields, "current_task_description"),
-    "Never apply the task independently of stage/approval: " + task);
-  same(guarded.snapshot[taskColumn], startTask, "Blocked task keeps prior snapshot: " + task);
-  check(guarded.held.includes("current_task_description"), "Blocked task is sent to existing review pipeline: " + task);
+  if (["quoted", "follow_up", "on_hold"].includes(status)) {
+    same(guarded.stageTransition, { from: "lead", to: status },
+      "Verified nonterminal task change may use the atomic stage path: " + task);
+    same(guarded.fields.current_task_description, task, "Transition retains its mapped task: " + task);
+    same(guarded.snapshot[taskColumn], task, "Stage snapshot advances only after verified CAS: " + task);
+    check(!guarded.held.includes("current_task_description"), "Safe nonterminal task is not held: " + task);
+  } else {
+    check(!Object.hasOwn(guarded.fields, "current_task_description"),
+      "Never apply protected task independently of stage/approval: " + task);
+    same(guarded.snapshot[taskColumn], startTask, "Blocked task keeps prior snapshot: " + task);
+    check(guarded.held.includes("current_task_description"), "Protected task stays in review pipeline: " + task);
+  }
   same(guarded.fields.estimate_amount, 150, "Unrelated safe estimate can still pull: " + task);
 }
 const neutral = held(base, "Closed - Did not Lose");
@@ -84,6 +93,27 @@ check(!Object.hasOwn(stalePlan.guarded.fields, "current_task_description"),
   "Guard refuses to overwrite a locally changed task regardless of row age.");
 same(stalePlan.guarded.snapshot[taskColumn], startTask,
   "Conflict never falsely establishes a fresh task baseline.");
+check(!stalePlan.guarded.stageTransition, "Stale local task edits never qualify for atomic stage transition.");
+
+const stamp = "2026-10-09T17:20:15.123Z";
+const accepted = held(base, "Estimate Sent to Customer");
+const atomicPatch = buildNonterminalSalesPullPatch(base, accepted.fields, accepted.stageTransition, stamp);
+same(atomicPatch.current_task_description, "Estimate Sent to Customer", "Atomic patch carries source task.");
+same(atomicPatch.sales_status, "quoted", "Atomic patch sets matching status.");
+same(atomicPatch.sales_stage_changed_at, stamp, "Actual stage change gets a new, verified timestamp.");
+same(atomicPatch.estimate_amount, 150, "Atomic patch preserves other safely merged fields.");
+for (const rejected of [
+  { transition: { from: "lead", to: "won" }, task: "SIPs" },
+  { transition: { from: "lead", to: "lost" }, task: "Lost" },
+  { transition: { from: "lead", to: "quoted" }, task: "Complete Estimate for Review" },
+  { transition: { from: "quoted", to: "follow_up" }, task: "Follow up with Customer - Post-Estimate" },
+]) {
+  assert.throws(() => buildNonterminalSalesPullPatch(base,
+    { current_task_description: rejected.task }, rejected.transition, stamp));
+  checks++;
+}
+assert.throws(() => buildNonterminalSalesPullPatch(base, accepted.fields, accepted.stageTransition, "")); checks++;
+assert.throws(() => buildNonterminalSalesPullPatch({ ...base, in_pipeline: false }, accepted.fields, accepted.stageTransition, stamp)); checks++;
 
 const noBaseline = { ...base, smartsheet_last_synced_at: "", smartsheet_sync_snapshot: {} };
 const unknown = held(noBaseline, "Conduct Site Survey");
@@ -132,6 +162,11 @@ check(backend.includes("guardSalesPulledTaskTransition(existing, fieldValues") &
   "Production Sales pull applies task guard before constructing any bulk business update.");
 check(backend.includes("buildSalesPullReviews(existing") && backend.includes("plan.held.map"),
   "Held tasks retain the existing admin review and baseline-preservation path.");
+check(backend.includes("stageBatch = dataset === 'sales'") &&
+      backend.includes("ordinaryBatch.map(") &&
+      backend.includes("trackedConditionalSave(base44, 'WorkOrder', _existing, patch") &&
+      backend.includes("persisted.sales_stage_changed_at === item.expectedStageChangedAt"),
+  "Nonterminal stage transitions bypass bulkUpdate, use CAS and require stage/timing read-back.");
 check(!backend.includes("sales_status: 'won'") && !backend.includes("sales_status: 'lost'"),
   "Task pull never invents terminal statuses.");
 
