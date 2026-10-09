@@ -16,6 +16,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns } from "@/components/sales/salesColumnCatalog.mjs";
 import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual, SALES_ESSENTIAL_COLUMN_IDS } from "@/components/sales/salesColumnEditorDraft.mjs";
 import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
+import { hasRetiredSalesStageCondition } from "@/components/sales/salesStageTrust.mjs";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -25,7 +26,7 @@ const FILTER_FIELDS = [
   { value: "designer", label: "Designer", type: "user", role: "Designer" },
   { value: "project_manager", label: "Project Manager", type: "user", role: "PM" },
   { value: "estimator", label: "Estimator", type: "user", role: "Estimator" },
-  { value: "sales_status", label: "Status", type: "select", options: ["needs_stage", "lead", "quoted", "follow_up", "won", "lost", "on_hold"] },
+  { value: "sales_status", label: "Status", type: "select", options: ["lead", "quoted", "follow_up", "won", "lost", "on_hold"] },
   { value: "sales_stage_changed_at", label: "Stage Changed At", type: "date" },
   { value: "project_type", label: "Project Type", type: "localStorage", storageKey: "salesProjectTypes" },
   { value: "estimate_amount", label: "Estimate Amount", type: "number" },
@@ -85,7 +86,6 @@ const SALES_COLUMN_PREVIEW_SAMPLE = Object.freeze({
 
 const STANDARD_FILTERS = [
   { name: "All Statuses", value: "all", conditions: [] },
-  { name: "Needs Stage", value: "needs_stage", conditions: [{ field: "sales_status", operator: "equals", value: "needs_stage" }] },
   { name: "Lead", value: "lead", conditions: [{ field: "sales_status", operator: "equals", value: "lead" }] },
   { name: "Quoted", value: "quoted", conditions: [{ field: "sales_status", operator: "equals", value: "quoted" }] },
   { name: "Follow Up", value: "follow_up", conditions: [{ field: "sales_status", operator: "equals", value: "follow_up" }] },
@@ -221,6 +221,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     }
 
     if (activeTab === "filters") {
+      if (hasRetiredSalesStageCondition(filterConditions)) {
+        setPersistenceError("This saved filter uses a retired Sales stage. Choose one of the current statuses before saving.");
+        return false;
+      }
       const fieldIds = new Set(FILTER_FIELDS.map((field) => field.value));
       const operatorIds = new Set(OPERATORS.map((operator) => operator.value));
       const invalidConditionIndex = filterConditions.findIndex((condition) => {
