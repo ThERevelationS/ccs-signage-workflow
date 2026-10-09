@@ -42,12 +42,34 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
   return { fields, snapshot, held };
 }
 
+// If a stage CAS succeeded but its history/snapshot confirmation did not,
+// later no-op pulls must not launder the missing stage evidence into a clean
+// baseline. The real stage-change stamp is newer than the verified sync.
+export function salesStageSnapshotRecoveryNeedsReview(record, bindings) {
+  const column = String(bindings?.current_task_description || '').trim();
+  const prior = record?.smartsheet_sync_snapshot;
+  if (record?.in_pipeline !== true || !/^\d+$/.test(column) ||
+      !prior || !Object.prototype.hasOwnProperty.call(prior, column) ||
+      same(record.current_task_description, prior[column])) return false;
+  const stageAt = Date.parse(String(record.sales_stage_changed_at || ''));
+  const syncAt = Date.parse(String(record.smartsheet_last_synced_at || ''));
+  return Number.isFinite(stageAt) && Number.isFinite(syncAt) && stageAt > syncAt;
+}
+
 // A Smartsheet pull must not independently change the task of a modern Sales
 // record when doing so requires a stage change, a terminal confirmation, or a
 // choice between two locally edited versions. The pull's ordinary bulkUpdate
 // cannot atomically perform the Sales stage transition or its approvals.
 // Hold only the task column, keeping other safe incoming fields syncable.
 export function guardSalesPulledTaskTransition(record, incoming, plan, bindings) {
+  if (salesStageSnapshotRecoveryNeedsReview(record, bindings)) {
+    const column = String(bindings.current_task_description).trim();
+    const snapshot = { ...plan.snapshot, [column]: record.smartsheet_sync_snapshot[column] };
+    const fields = { ...plan.fields };
+    delete fields.current_task_description;
+    return { ...plan, fields, snapshot,
+      held: [...new Set([...(plan.held || []), 'current_task_description'])], stageTransition: null };
+  }
   if (record?.in_pipeline !== true ||
       !Object.prototype.hasOwnProperty.call(incoming || {}, 'current_task_description') ||
       same(record?.current_task_description, incoming.current_task_description)) return { ...plan, stageTransition: null };
