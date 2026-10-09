@@ -1063,7 +1063,84 @@ try {
     assert.equal(await recoveryMarkerCount(page),0);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + (process.env.FLEET_CASE_MATCH ? passed + " filtered PASS" : passed + "/31 PASS"));
+  await run("Desktop: fresh tab after unacknowledged Save recognizes identical note and photo",1440,async page => {
+    const image=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
+    await page.getByLabel("Labor hours").fill("2.5");
+    await page.getByLabel("Corrective action / work performed").fill("Repaired belt once");
+    await page.getByLabel("Add mechanic note").fill("Reopened tab must not repeat note");
+    await page.locator('input[type="file"]').setInputFiles({name:"same-image.png",mimeType:"image/png",buffer:image});
+    await page.locator('img[src^="blob:"]').waitFor();
+    await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextSaveAck=true;});
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.saveAckWaiting===true);
+    const first=(await actions(page)).find(row=>row.action==="save");
+    const next=await page.context().newPage();
+    try {
+      await page.close();
+      await next.goto(origin+"/#synthetic-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
+      await next.getByText("WO-SYNTH-WORK",{exact:true}).first().waitFor();
+      assert.equal(await recoveryMarkerCount(next),0,"A new tab must not inherit the old session recovery marker");
+      assert.deepEqual(await actionNames(next),["bootstrap"],"Opening another tab cannot replay Save automatically");
+      await next.getByText("WO-SYNTH-WORK",{exact:true}).locator("xpath=ancestor::button[1]").click();
+      await next.getByLabel("Add mechanic note").fill("Reopened tab must not repeat note");
+      await next.locator('input[type="file"]').setInputFiles({name:"same-image.png",mimeType:"image/png",buffer:image});
+      await next.locator('img[src^="blob:"]').waitFor();
+      await next.getByRole("button",{name:"Save Progress"}).click();
+      await next.getByText(/identical progress was already saved/i).waitFor();
+      const resumed=await next.evaluate(()=>window.__fleetMechanicWorkFixture);
+      const newSave=resumed.actions.find(row=>row.action==="save");
+      assert.notEqual(newSave.request_id,first.request_id,"New tab uses a new request id");
+      assert.equal((resumed.work.notes.match(/Reopened tab must not repeat note/g)||[]).length,1);
+      assert.equal(resumed.photoWrites,1,"Identical photo must not upload again");
+      assert.equal(resumed.work.after_photos.length,1);
+      assert.equal(resumed.work.updated_date,"wo-rev-2","Identical repeat cannot modify the Fleet work order");
+      assert.equal(await recoveryMarkerCount(next),0);
+    } finally {
+      await next.close();
+    }
+  });
+
+  await run("Mobile: fresh tab permits genuinely new Save after previous Save was applied",390,async page => {
+    await page.getByLabel("Add mechanic note").fill("First saved note");
+    await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextSaveAck=true;});
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.saveAckWaiting===true);
+    const next=await page.context().newPage();
+    try {
+      await page.close();
+      await next.goto(origin+"/#synthetic-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
+      await next.getByText("WO-SYNTH-WORK",{exact:true}).locator("xpath=ancestor::button[1]").click();
+      await next.getByLabel("Add mechanic note").fill("Second genuinely new note");
+      await next.getByRole("button",{name:"Save Progress"}).click();
+      await next.getByText("Progress saved to CCS Fleet.",{exact:true}).waitFor();
+      const state=await next.evaluate(()=>window.__fleetMechanicWorkFixture);
+      assert.equal((state.work.notes.match(/First saved note/g)||[]).length,1);
+      assert.equal((state.work.notes.match(/Second genuinely new note/g)||[]).length,1);
+      assert.equal(state.work.updated_date,"wo-rev-2","Distinct Save must commit after new tab");
+    } finally {
+      await next.close();
+    }
+  });
+
+  await run("Desktop: fresh tab shows committed Start without replay or inherited marker",1440,async page => {
+    await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextStartAck=true;});
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.startAckWaiting===true);
+    const next=await page.context().newPage();
+    try {
+      await page.close();
+      await next.goto(origin+"/#synthetic-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
+      await next.getByText("WO-SYNTH-WORK",{exact:true}).locator("xpath=ancestor::button[1]").click();
+      assert.equal(await recoveryMarkerCount(next),0);
+      assert.equal(await next.getByRole("button",{name:"Mark Work Started"}).count(),0);
+      assert.equal(await next.getByText("in progress",{exact:true}).count()>0,true);
+      assert.deepEqual(await actionNames(next),["bootstrap"],"Fresh tab cannot repeat Start");
+    } finally {
+      await next.close();
+    }
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + (process.env.FLEET_CASE_MATCH ? passed + " filtered PASS" : passed + "/34 PASS"));
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
