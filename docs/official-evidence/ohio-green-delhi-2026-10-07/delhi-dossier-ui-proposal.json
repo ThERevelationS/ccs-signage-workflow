@@ -1,0 +1,159 @@
+{
+  "locality": {
+    "name": "Delhi Township",
+    "state": "OH",
+    "type": "township",
+    "canonical_id": null
+  },
+  "status": "blocked_missing_canonical_profile",
+  "source": "https://www.delhi.oh.us/177/Planning-Zoning",
+  "observed_on": "2026-10-09",
+  "resources": [
+    {
+      "file": "delhi-permanent-sign-application.pdf",
+      "label": "permanent sign application \u2014 review pending",
+      "source": "https://delhi.oh.us/DocumentCenter/View/729/Application-for-Zoning-Certificate---Permanent-Signs-PDF",
+      "archive": "/permitting-evidence/green-delhi/delhi-permanent-sign-application.pdf",
+      "format": "PDF",
+      "bytes": 200789,
+      "sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915"
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "label": "zoning resolution \u2014 review pending",
+      "source": "https://delhi.oh.us/DocumentCenter/View/737/Delhi-Zoning-Resolution-PDF",
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf",
+      "format": "PDF",
+      "bytes": 5837587,
+      "sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c"
+    }
+  ],
+  "document_findings": [
+    {
+      "file": "delhi-permanent-sign-application.pdf",
+      "physical_page": 1,
+      "label": "County building routing",
+      "text": "The retained form routes sign building permits to Hamilton County Buildings & Inspections. This does not identify a separate electrical issuer or inspector.",
+      "matched_text": "Signs also require a building permit",
+      "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915",
+      "text_sha256": "39fa5643de4f668d6b230ba96622894e314dba88958e3c850cc8cfc3c425e5fd",
+      "archive": "/permitting-evidence/green-delhi/delhi-permanent-sign-application.pdf#page=1",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-permanent-sign-application.pdf",
+      "physical_page": 2,
+      "label": "Submission package",
+      "text": "The form requests four or six drawing sets based on county requirements plus one Township set, site/elevation plans, sign dimensions and illumination, existing-sign photos/dimensions and photometric drawings for lit signs. Confirm current paper/digital acceptance.",
+      "matched_text": "footcandle measurement",
+      "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915",
+      "text_sha256": "a2d3d749f4aae1309972090d1d79d41441283e26caa6edd2b1a94bfbcd35f613",
+      "archive": "/permitting-evidence/green-delhi/delhi-permanent-sign-application.pdf#page=2",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-permanent-sign-application.pdf",
+      "physical_page": 3,
+      "label": "Printed fee candidates",
+      "text": "The April 2021 form prints new-sign and face-change fee formulas and a doubled-fee checkbox. These remain historical printed candidates; current fees are not approved.",
+      "matched_text": "New Sign",
+      "source_sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915",
+      "text_sha256": "a96752a05a76446526cbfce281f750cf4ac46ad5c5ce37cc412ce754b2a629ee",
+      "archive": "/permitting-evidence/green-delhi/delhi-permanent-sign-application.pdf#page=3",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "physical_page": 4,
+      "label": "Document identity anomaly",
+      "text": "Physical page 4 names Monroe County, Indiana above its table list, while the retained document is published as Delhi zoning. Preserve the original and verify publisher correction/current compilation before approval.",
+      "matched_text": "MONROE COUNTY, INDIANA",
+      "source_sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "text_sha256": "550bba5e6b3dd4799a52c4f017b45cb70b0a0b4de3f77143c30c61c6fc39e252",
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf#page=4",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "physical_page": 105,
+      "label": "Permit and electrical-code applicability",
+      "text": "Article 17 describes zoning certificates, sign-panel changes and compliance with the applicable electrical code for illuminated signs. No code edition or electrical office is established here.",
+      "matched_text": "electrically illuminated signs",
+      "source_sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "text_sha256": "9ed1e8b5a03b35fcbbf8fff05ea2db507619e1c8fe801f8378c504eb8fdf8645",
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf#page=105",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "physical_page": 107,
+      "label": "Conditional zoning exemptions",
+      "text": "Signs exempt from zoning certificates must still comply with applicable height, area and location standards. This does not establish building or electrical exemptions.",
+      "matched_text": "Each sign exempt",
+      "source_sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "text_sha256": "b3d127ee62b660f4aac3e9005a627641efc3fd6a4aacbc034dde1894535522ce",
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf#page=107",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "physical_page": 112,
+      "label": "District and sign-type table",
+      "text": "Article 17 includes a district/sign-type summary table. Preserve its original layout and linked provisions; no numeric or district allowance is approved for a job.",
+      "matched_text": "Summary Table of Permitted Signs",
+      "source_sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "text_sha256": "b9bef385a79a2cf6ae08d04190d5b2bb15016d4f342ab67f57dd94e04c052596",
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf#page=112",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    },
+    {
+      "file": "delhi-zoning-resolution.pdf",
+      "physical_page": 117,
+      "label": "Temporary-sign standards",
+      "text": "Temporary signs have separate standards in Section 17.9; permit exemption alone does not remove size, placement or duration review.",
+      "matched_text": "Temporary Signs",
+      "source_sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "text_sha256": "d60d0ee2b8836df4e4c199ea0d18513701ac40e393150d9b742b9ded10ef1ccd",
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf#page=117",
+      "staff_approved": false,
+      "currentness_approved": false,
+      "authority_approved": false
+    }
+  ],
+  "notes": [
+    "No canonical Delhi Township OH profile was returned by the live name query. This proposal is not included in the locality UI and is not assigned to another jurisdiction.",
+    "April2021 sign application and current retained Township page differ on intake address:697 Neeb Road versus5031 Delhi Road. Current delivery location needs verification.",
+    "County building routing does not establish separate electrical permit issuance or inspection delegation.",
+    "Historical printed fees and submission set counts need current confirmation; zoning exemptions do not prove building or electrical exemptions.",
+    "Resolution physical page4 names Monroe County Indiana. Compilation identity, current adoption and district/sign tables need review before job-specific use."
+  ],
+  "identity_readback": {
+    "entity": "JurisdictionProfile",
+    "query": {
+      "state": "OH",
+      "name": {
+        "$regex": "Delhi",
+        "$options": "i"
+      }
+    },
+    "count": 0,
+    "checked_on": "2026-10-09"
+  },
+  "authority_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0
+}

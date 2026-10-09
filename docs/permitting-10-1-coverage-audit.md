@@ -1,3 +1,7 @@
+## 2026-10-09 — Phase 10, milestone 2: Delhi dossier identity gate
+
+Live Ohio profile query returned no Delhi match. Prepared an unattached dossier proposal with two byte/hash-verified PDFs and eight page/hash-verified findings; no null-ID UI row or guessed locality association added. Address discrepancy, resolution identity anomaly, fees and separate electrical roles remain unapproved. Live records changed0; publications0. Next: resolve Delhi canonical identity before UI attachment; continue Symmes retained-document access meanwhile.
+
 ## 2026-10-08 — Phase 10, milestone 2: Ohio document-access audit
 
 Reproducible repository audit verified all61 retained PDF/office archives against original bytes and manifest hashes. Twelve municipal dossiers exist; nine archives have no literal app-source references: Delhi2, Symmes4, Crosby3. This is source-link coverage, not published/browser availability or statewide completeness. OCR derivative text excluded from original-document count. Live record changes0; publications0. Next: Delhi exact-identity locality dossier.
