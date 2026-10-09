@@ -206,7 +206,7 @@ test('Crosby sign review keeps zoning/electrical exemptions and printed cross-re
  assert.match(z.pages[101].text,/Article\s+13/);
  assert.match(p.findings.find(f=>f.label==='Maintenance and electrical components').text,/does not establish an electrical-permit/);
  assert.match(p.findings.find(f=>f.label==='Sign-area measurement').text,/require visual\/table review/);
- assert.equal(dossiers.some(d=>d.name==='Crosby Township'),false);
+ const receipt=JSON.parse(readFileSync(root+'crosby-locality-identity-receipt-2026-10-09.json'));assert.equal(dossiers.find(d=>d.name==='Crosby Township').id,receipt.locality.id);assert.equal(receipt.verification_status,'needs_verification');assert.equal(receipt.permit_requirements,null);
 });
 
 test('Harrison and Symmes township archives retain 199 physical pages without identity or office approval',()=>{
