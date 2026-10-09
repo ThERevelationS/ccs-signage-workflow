@@ -1,18 +1,30 @@
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, Search, X } from "lucide-react";
-import { searchAdminSettings } from "@/components/admin/adminTabNavigation";
+import { getAdminSearchKeyboardIndex, searchAdminSettings } from "@/components/admin/adminTabNavigation";
 
 // Search is deliberately inline rather than an unbounded dropdown overlay:
 // results remain within the Admin navigation card on narrow viewports.
 export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(-1);
   const searchInputRef = useRef(null);
+  const resultsListRef = useRef(null);
+  const searchStatusId = useId();
   const results = searchAdminSettings(query, isAdmin);
   const hasQuery = Boolean(query.trim());
+  const selectedResult = activeIndex >= 0 ? results[activeIndex] : null;
+
+  useEffect(() => {
+    if (selectedResult) {
+      resultsListRef.current?.querySelector('[data-admin-search-active="true"]')
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }, [activeIndex, selectedResult?.id]);
 
   const openResult = (result) => {
     onNavigate(result.tab, result.subtab || null);
     setQuery("");
+    setActiveIndex(-1);
     // A clicked result disappears after navigation; keep focus in a usable control.
     searchInputRef.current?.focus();
   };
@@ -24,7 +36,7 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
         aria-label="Search Admin pages and settings"
         onSubmit={(event) => {
           event.preventDefault();
-          if (results.length) openResult(results[0]);
+          if (results.length) openResult(selectedResult || results[0]);
         }}
       >
         <div className="relative w-full min-w-0">
@@ -33,13 +45,24 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
             ref={searchInputRef}
             type="search"
             aria-label="Find an Admin page or setting"
+            aria-describedby={hasQuery ? searchStatusId : undefined}
             placeholder="Find a setting... (PTO, sync, backup)"
             maxLength={100}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActiveIndex(-1);
+            }}
             onKeyDown={(event) => {
+              const nextIndex = getAdminSearchKeyboardIndex(event.key, activeIndex, results.length);
+              if (nextIndex !== null) {
+                event.preventDefault();
+                setActiveIndex(nextIndex);
+                return;
+              }
               if (event.key === "Escape") {
                 setQuery("");
+                setActiveIndex(-1);
                 event.stopPropagation();
               }
             }}
@@ -50,7 +73,7 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
               type="button"
               aria-label="Clear Admin search"
               title="Clear search"
-              onClick={() => setQuery("")}
+              onClick={() => { setQuery(""); setActiveIndex(-1); }}
               className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
             >
               <X className="h-4 w-4" aria-hidden="true" />
@@ -60,17 +83,22 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
       </form>
       {hasQuery && (
         <div aria-label="Admin search results" className="mt-2 min-w-0">
-          <p role="status" aria-live="polite" className="mb-1 px-1 text-xs text-gray-600">
-            {results.length ? "Choose a matching page or setting (Enter opens the first result)." : "No matching Admin settings. Try another term."}
+          <p id={searchStatusId} role="status" aria-live="polite" className="mb-1 px-1 text-xs text-gray-600">
+            {results.length
+              ? selectedResult
+                ? `Selected ${selectedResult.label} (${activeIndex + 1} of ${results.length}). Press Enter to open; Up/Down to change.`
+                : "Use Up/Down arrows to highlight a result. Enter opens the first result."
+              : "No matching Admin settings. Try another term."}
           </p>
           {results.length > 0 && (
-            <div className="grid max-h-60 min-w-0 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
-              {results.map((result) => (
+            <div ref={resultsListRef} className="grid max-h-60 min-w-0 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
+              {results.map((result, index) => (
                 <button
                   key={result.id}
                   type="button"
+                  data-admin-search-active={index === activeIndex ? "true" : "false"}
                   onClick={() => openResult(result)}
-                  className="flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border border-red-200/60 bg-white/85 px-3 py-2 text-left text-sm text-gray-900 hover:border-red-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                  className={`flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${index === activeIndex ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300" : "border-red-200/60 bg-white/85 hover:border-red-300 hover:bg-white"}`}
                 >
                   <span className="min-w-0">
                     <span className="block break-words font-medium">{result.label}</span>
