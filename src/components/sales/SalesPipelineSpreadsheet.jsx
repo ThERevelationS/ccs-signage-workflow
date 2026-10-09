@@ -330,6 +330,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     currentUser?.email,
   );
 
+  // Repair only the retired virtual-stage choice in a user-local header filter.
+  // Preserve other selected statuses, direction, and the remaining layout.
+  useEffect(() => {
+    if (sortConfig.key !== "sales_status" || sortConfig.customFilter?.filterType !== "selected") return;
+    const selected = sortConfig.customFilter.selectedValues || [];
+    if (!selected.includes("needs_stage")) return;
+    const supported = selected.filter((value) => value !== "needs_stage");
+    if (supported.length === 0) clearCustomFilter();
+    else handleCustomSort("sales_status", { ...sortConfig.customFilter, selectedValues: supported, direction: sortConfig.direction });
+  }, [sortConfig, clearCustomFilter, handleCustomSort]);
+
   const activeColumnHeaderFilter = useMemo(
     () => describeSalesColumnHeaderFilter(sortConfig),
     [sortConfig],
