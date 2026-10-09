@@ -272,6 +272,54 @@ try {
     assert.equal(await input.inputValue(), '');
   });
 
+  await check('Search arrows highlight and Enter opens the selected result without losing input focus', 375, '/', async page => {
+    const input = page.getByRole('searchbox', { name: 'Find an Admin page or setting' });
+    await input.fill('time');
+    const rows = page.locator('[aria-label="Admin search results"] button');
+    assert.ok(await rows.count() > 1, 'Fixture needs several matching settings');
+    await input.press('ArrowDown');
+    assert.equal(await rows.nth(0).getAttribute('data-admin-search-active'), 'true');
+    await input.press('ArrowDown');
+    assert.equal(await rows.nth(1).getAttribute('data-admin-search-active'), 'true');
+    assert.equal(await input.evaluate(node => document.activeElement === node), true);
+    assert.match(await page.getByRole('status').first().innerText(), /Selected .*2 of/);
+    const expected = (await import('../src/components/admin/adminTabNavigation.js')).searchAdminSettings('time', true)[1];
+    await input.press('Enter');
+    assert.equal(await input.inputValue(), '');
+    assert.equal(await input.evaluate(node => document.activeElement === node), true);
+    assert.equal(new URL(page.url()).searchParams.get('tab'), expected.tab);
+    assert.equal(new URL(page.url()).searchParams.get('subtab'), expected.subtab || null);
+  });
+
+  await check('Search reverse arrows wrap; editing and Escape reset the highlighted result', 320, '/', async page => {
+    const input = page.getByRole('searchbox', { name: 'Find an Admin page or setting' });
+    await input.fill('time');
+    const rows = page.locator('[aria-label="Admin search results"] button');
+    const count = await rows.count();
+    assert.ok(count > 1);
+    await input.press('ArrowUp');
+    assert.equal(await rows.nth(count - 1).getAttribute('data-admin-search-active'), 'true');
+    const visible = await page.evaluate(() => {
+      const item = document.querySelector('[data-admin-search-active="true"]')?.getBoundingClientRect();
+      const list = document.querySelector('[aria-label="Admin search results"] .overflow-y-auto')?.getBoundingClientRect();
+      return Boolean(item && list && item.top >= list.top - 2 && item.bottom <= list.bottom + 2);
+    });
+    assert.equal(visible, true, 'Keyboard selection scrolls into visible results');
+    await input.press('ArrowDown');
+    assert.equal(await rows.nth(0).getAttribute('data-admin-search-active'), 'true');
+    await input.fill('timecl');
+    assert.equal(await page.locator('[data-admin-search-active="true"]').count(), 0);
+    await input.fill('time');
+    await input.press('ArrowDown');
+    await input.press('Escape');
+    assert.equal(await input.inputValue(), '');
+    await input.fill('nonexistent-admin-category-123');
+    await input.press('ArrowDown');
+    assert.equal(await page.locator('[data-admin-search-active="true"]').count(), 0);
+    await input.press('Enter');
+    assert.equal(new URL(page.url()).searchParams.has('tab'), false);
+  });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
