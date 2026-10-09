@@ -47,8 +47,8 @@ export function verifyOpportunityBridgePilotOutcome({
   workOrderId,
   expectedReviewFingerprint,
   workOrder = null,
-  opportunities = [],
-  receipts = [],
+  opportunities,
+  receipts,
 } = {}) {
   const id = clean(workOrderId);
   const expectedReview = clean(expectedReviewFingerprint);
