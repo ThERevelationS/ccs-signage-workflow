@@ -1859,9 +1859,15 @@ async function pushDataset(
         };
         deferredBase44Updates.push(deferredUpdate);
         if (dataset === 'sales') {
+          // Verify only safely reconciled remote columns. The held task must
+          // retain its prior Base44 baseline but may differ on Smartsheet.
+          const verifiedRemoteColumns = fieldPlan.taskStageHeld
+            ? Object.fromEntries(Object.entries(batchSnapshot).filter(([columnId]) =>
+                columnId !== String(bindings.current_task_description)))
+            : batchSnapshot;
           deferredSalesVerification.set(String(record.id), {
             rowId: existingRowId,
-            expectedSnapshot: batchSnapshot,
+            expectedSnapshot: verifiedRemoteColumns,
             requiresRemoteWrite: fieldPlan.outgoing.length > 0,
           });
         }
