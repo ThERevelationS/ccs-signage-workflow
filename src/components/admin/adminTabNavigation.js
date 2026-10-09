@@ -141,6 +141,15 @@ const normalizedSearch = (input) => String(input ?? '')
   .trim()
   .replace(/\s+/g, ' ');
 
+// Search results retain input focus. -1 means no result has been highlighted yet.
+// Return null for keys that should use their native input behavior.
+export function getAdminSearchKeyboardIndex(key, index, resultCount) {
+  if (!Number.isInteger(resultCount) || resultCount < 1 || !Number.isInteger(index)) return null;
+  if (key === 'ArrowDown') return index < 0 || index >= resultCount - 1 ? 0 : index + 1;
+  if (key === 'ArrowUp') return index <= 0 || index >= resultCount ? resultCount - 1 : index - 1;
+  return null;
+}
+
 export function searchAdminSettings(input, isAdmin, limit = 8) {
   const query = normalizedSearch(input);
   if (!query) return [];
