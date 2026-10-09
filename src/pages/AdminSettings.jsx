@@ -104,6 +104,7 @@ import {
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
+import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -353,7 +354,25 @@ export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedAdminTab = getAccessibleAdminTab(searchParams.get("tab"), isAdmin);
+  const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
+  const navigationKey = getAdminNavigationStorageKey(currentUser);
+  // Restore only after identity and Admin unlock are established; direct URLs win.
+  const browserStorage = (() => {
+    try { return typeof window === "undefined" ? null : window.localStorage; }
+    catch { return null; }
+  })();
+  const savedNavigation = !searchParams.has("tab") && isUnlocked
+    ? readAdminNavigation(browserStorage, navigationKey, isAdmin)
+    : null;
+  const { tab: selectedAdminTab, subtab: selectedAdminSubtab } =
+    resolveAdminNavigation(searchParams, savedNavigation, isAdmin);
+  useEffect(() => {
+    if (isUnlocked && navigationKey) {
+      storeAdminNavigation(browserStorage, navigationKey, {
+        tab: selectedAdminTab, subtab: selectedAdminSubtab,
+      }, isAdmin);
+    }
+  }, [isUnlocked, navigationKey, selectedAdminTab, selectedAdminSubtab, isAdmin, browserStorage]);
   const availableAdminGroups = getAccessibleAdminGroups(isAdmin);
   const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
@@ -379,7 +398,6 @@ export default function AdminSettings() {
   // Password/Face ID protection state. A UI unlock is valid only while the
   // backend-issued Admin Settings capability is still present and unexpired.
   const [adminCapability, setAdminCapability] = useState(() => getStoredAdminSettingsCapability());
-  const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -1030,7 +1048,7 @@ export default function AdminSettings() {
           {isAdmin && (
             <>
               <TabsContent value="timeclock">
-                <Tabs value={getAccessibleAdminSubtab("timeclock", searchParams.get("subtab"))} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
+                <Tabs value={selectedAdminTab === "timeclock" ? selectedAdminSubtab : "entries"} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
                     <TabsTrigger value="reports" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
@@ -1053,7 +1071,7 @@ export default function AdminSettings() {
               </TabsContent>
 
               <TabsContent value="backend">
-                <Tabs value={getAccessibleAdminSubtab("backend", searchParams.get("subtab"))} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
+                <Tabs value={selectedAdminTab === "backend" ? selectedAdminSubtab : "backup"} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Data Backup</TabsTrigger>
                     <TabsTrigger value="client_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Client Trash</TabsTrigger>
