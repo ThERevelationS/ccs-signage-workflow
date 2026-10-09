@@ -1,0 +1,919 @@
+{
+  "scope": "Existing public/permitting-evidence PDF and office documents with Ohio evidence manifests; not statewide completeness or live browser acceptance",
+  "observed_on": "2026-10-08",
+  "dossier_count": 12,
+  "archive_count": 61,
+  "verified_original_count": 61,
+  "missing_manifest_matches": [],
+  "without_literal_ui_reference": [
+    "/permitting-evidence/green-delhi/delhi-permanent-sign-application.pdf",
+    "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf",
+    "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf",
+    "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf",
+    "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf",
+    "/permitting-evidence/harrison-symmes-townships/symmes-zoning-map.pdf",
+    "/permitting-evidence/miami-crosby/crosby-property-maintenance-code.pdf",
+    "/permitting-evidence/miami-crosby/crosby-zoning-application.pdf",
+    "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf"
+  ],
+  "files": [
+    {
+      "archive": "/permitting-evidence/cincinnati-electrical/cincinnati-signs-handout.pdf",
+      "bytes": 282256,
+      "sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/sign-scope/manifest.json",
+          "original": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/sign-scope/cincinnati-signs-handout.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/cincinnatiElectricalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/cincinnati-electrical/eztrak-new-user.pdf",
+      "bytes": 47398,
+      "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/current-source-manifest.json",
+          "original": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/eztrak-new-user.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/electrical-routing/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/electrical-routing/ibi-eztrak-new-user.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/electrical-routing/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/electrical-routing/ibi-eztrak-new-user.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/cincinnatiElectricalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/cincinnati-electrical/fee-schedule-effective-2025-01-01.pdf",
+      "bytes": 2362479,
+      "sha256": "847339b30c74420bd84c989f06664b5586bb8bfeeb8339239b139d9827484b3b",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/fee-submittal-manifest.json",
+          "original": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/fee-schedule-effective-2025-01-01.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/cincinnatiElectricalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/cincinnati-electrical/plan-review-routing-2020.pdf",
+      "bytes": 16303,
+      "sha256": "802e71369f1b85dfa2a1ebafea485ce38c0aea318f165fb8991f50075dba12fb",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/fee-submittal-manifest.json",
+          "original": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/plan-review-routing-2020.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/cincinnatiElectricalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/cincinnati-electrical/zoning-verification-request.pdf",
+      "bytes": 89204,
+      "sha256": "9974564b6e8dc047153278f4456d5c0a911849e429eeffa346c4e0b6f49bfbab",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/scope-review/manifest.json",
+          "original": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/scope-review/zoning-verification-request.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/cincinnatiElectricalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/elmwoodplace/building-application.pdf",
+      "bytes": 89374,
+      "sha256": "ef4677a8d6a09faa43fe2d9f84a51dc0dacc93e1c735eae3506ea771d4876481",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/building-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/elmwoodplace/fee-schedule-2023.pdf",
+      "bytes": 766618,
+      "sha256": "d37265fd7c79f243633dcad57f63aa07cb8137a39dad3f69d435e0de041e41e2",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/fee-schedule-2023.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/elmwoodplace/fee-schedule-2024.xlsx",
+      "bytes": 42120,
+      "sha256": "149b0786e92d1d41ce25b3f324c23330eb7d4f71d154f809c3a295f7697660c0",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/fee-schedule-2024.xlsx"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/elmwoodplace/right-of-way.docx",
+      "bytes": 18082,
+      "sha256": "1118ce61a50aefe0162aaa3d1d86adf21d44dcbfa8c6a70ea8ab1349aee0dfcb",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/right-of-way.docx"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/elmwoodplace/zoning-application.pdf",
+      "bytes": 80523,
+      "sha256": "15f35e07f9e569d2a862aca91fdbda1ce810dd41a4804f602af7a57954149145",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/zoning-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/elmwoodplace/zoning-map-2007.pdf",
+      "bytes": 2179582,
+      "sha256": "f2c65c98acd51c84fbce49685149f113c6c160c615f57c47b55928089454064f",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/zoning-map-2007.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/green-delhi/delhi-permanent-sign-application.pdf",
+      "bytes": 200789,
+      "sha256": "222ff1a05045308f372289ad3a1891fa7e3daa409792574ab3b0a26c4cc3f915",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-green-delhi-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-permanent-sign-application.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/green-delhi/delhi-zoning-resolution.pdf",
+      "bytes": 5837587,
+      "sha256": "e3e1dcaebf430369c7606b0e0ac932af3d375a159331f2c4254498d3f4be500c",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-green-delhi-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-green-delhi-2026-10-07/delhi-zoning-resolution.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/harrison-addyston/addyston-linked-zoning-ordinance.pdf",
+      "bytes": 951077,
+      "sha256": "062e78d21104cead125cc010c998370de0274fbbf0213ffed8d77b8630461f25",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/addyston-linked-zoning-ordinance.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/harrison-addyston/harrison-commercial-application.pdf",
+      "bytes": 336030,
+      "sha256": "354946505142da0cb1b922df167519b6081089878216510a5e93e0a4895cceb5",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-commercial-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/harrison-addyston/harrison-permanent-sign-instructions.pdf",
+      "bytes": 549689,
+      "sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-temporary-sign-instructions.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-permanent-sign-instructions.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/harrison-addyston/harrison-temporary-sign-instructions.pdf",
+      "bytes": 549689,
+      "sha256": "457941546219fef28a3ccca3d3d93cd0b96c91a867fb38203688b979afa60e96",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-temporary-sign-instructions.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-permanent-sign-instructions.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/harrison-addyston/harrison-variance-application.pdf",
+      "bytes": 597140,
+      "sha256": "1a614ff066c67448095d718c1a47d684727545e0a205ee3e632eee58e2e3fb7b",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-variance-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/harrison-addyston/harrison-zoning-application.pdf",
+      "bytes": 265146,
+      "sha256": "da59584e152cc6e17a825252b44efa05a1b14a0a294f78fe90ce3a5dcb4843b0",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-addyston-2026-10-07/harrison-zoning-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf",
+      "bytes": 746814,
+      "sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/symmes-county-contract-g2025-104.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf",
+      "bytes": 786622,
+      "sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/resolution-recovery/symmes-fee-amendment-g2025-100.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf",
+      "bytes": 2853736,
+      "sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/symmes-zoning-code.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-map.pdf",
+      "bytes": 845922,
+      "sha256": "19501fb3729ccb031547c54f06d2be564b11bda238baf84848d68e65e475c8f5",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/symmes-zoning-map.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/miami-crosby/crosby-property-maintenance-code.pdf",
+      "bytes": 984213,
+      "sha256": "63e571fdf26f734c0505d5ea3a22a573b7bb86a7fc40bda1a4c88b37094e33fd",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-miami-crosby-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-property-maintenance-code.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/miami-crosby/crosby-zoning-application.pdf",
+      "bytes": 18177,
+      "sha256": "d0f16b330a9285d68924a1bca5496f1ab3f39e231331aaee6645459441357fa2",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-miami-crosby-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-zoning-application.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/miami-crosby/crosby-zoning-resolution.pdf",
+      "bytes": 2219086,
+      "sha256": "48948fd6c62537aade99a2865700d8bb219cd7236e2a4850d311de44bef87357",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-miami-crosby-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-miami-crosby-2026-10-07/crosby-zoning-resolution.pdf"
+        }
+      ],
+      "literal_source_references": []
+    },
+    {
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-linked-zoning-code.pdf",
+      "bytes": 5346947,
+      "sha256": "be5bc6269b1c5286612a91a6484340faeb98b36690558cc6cd925aaec3e751a2",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/northbend-linked-zoning-code.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/northbend-whitewater/northbend-right-of-way.pdf",
+      "bytes": 910003,
+      "sha256": "0e7aabfed04821b6ac3fe032b193b344a8341f64071f69c52e5567de1ddb9bca",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/northbend-right-of-way.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-nearby/deer-park-building-process.docx",
+      "bytes": 41083,
+      "sha256": "935d92933a9b5449835d46034b9291534ade141d69ea539078b50b52750c812b",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-building-process.docx"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-nearby/deer-park-building-zoning-application.doc",
+      "bytes": 44032,
+      "sha256": "bfccede4ebae71ba1a7ef337b29c9f682ccb0aa9ff16de3861408e7a3f040b39",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-building-zoning-application.doc"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-nearby/deer-park-fees-2026.pdf",
+      "bytes": 2048710,
+      "sha256": "5fe9f8c76c869a14f04e977f2e6c1f88caf1b84ca43d221294ea014e894cb23b",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-nearby-offices-2026-10-07/deer-park-fees-2026.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-nearby/norwood-business-checklist.pdf",
+      "bytes": 335939,
+      "sha256": "f9a76f867aef8de446cd49b76c5060c23052162af4b9bb9a90ecc8046d907d91",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-business-checklist.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-nearby/norwood-fees-2026.pdf",
+      "bytes": 190509,
+      "sha256": "467aaf54cfc6ccef8d93a672f5800ee53cf46921092383108f5e7394f269c728",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-fees-2026.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-nearby/norwood-sign-application.pdf",
+      "bytes": 142153,
+      "sha256": "c09e620b478f5e50a2b2c8b74f4dd46675e687076275ba273b87d0678f2bfa47",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-nearby-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-nearby-offices-2026-10-07/norwood-sign-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cheviot-building-application.pdf",
+      "bytes": 486444,
+      "sha256": "9b144149b57bc1e45fc28573c4a784f7b4cdbd23fb2d03ac4b70f1bc24154367",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cheviot-building-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cheviot-fees-2026.pdf",
+      "bytes": 229928,
+      "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/building-fees-2026.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cheviot-fees-2026.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cheviot-resubmittal-application.pdf",
+      "bytes": 126830,
+      "sha256": "9639264af086e698ed2a75497ea2c75137b9f682ce0081fbc891650ac6c69cf0",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cheviot-resubmittal-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cheviot-variance-application.pdf",
+      "bytes": 148352,
+      "sha256": "c2d8158588fae3fbcd7bde0f6b1254950ba3f807bebc898b80a333d5a392e9da",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cheviot-variance-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cleves-draft-zoning-manual.pdf",
+      "bytes": 5622810,
+      "sha256": "170589a92b31a90564388a5715308f6887038a23da3c08f1baf829a26633e6ce",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cleves-draft-zoning-manual.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cleves-general-building-application.pdf",
+      "bytes": 61757,
+      "sha256": "f484ee6f7050a05b19b31409b6f7e1d58a0a4257b335d8692e33c00f89557012",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cleves-general-building-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cleves-linked-zoning-manual.pdf",
+      "bytes": 853919,
+      "sha256": "5e8bcb739d1a8925d67fd352c3646bdda6360679f723d6aede6c723e21cdbb1b",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cleves-linked-zoning-manual.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/cleves-mechanical-application.pdf",
+      "bytes": 52311,
+      "sha256": "a5004bf8aa20005917c99536f8417c596cb78355e36494937ecae99ed9246c5a",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cleves-mechanical-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/ohio-west/ibi-eztrak-new-user.pdf",
+      "bytes": 47398,
+      "sha256": "cd2dd70f4bb767d4f392ae46909d0989d1ca742bd913eb329c1bfd8575bd0b02",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/current-source-manifest.json",
+          "original": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/provider/eztrak-new-user.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/electrical-routing/manifest.json",
+          "original": "docs/official-evidence/ohio-elmwoodplace-2026-10-07/electrical-routing/ibi-eztrak-new-user.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/electrical-routing/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/electrical-routing/ibi-eztrak-new-user.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/building-fees-2026.pdf",
+      "bytes": 229928,
+      "sha256": "11e0e8516a22b01d9af3abcf0e4577d415df67ad4b05f6cd8a7e7c471d9f4e46",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/building-fees-2026.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-west-offices-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-west-offices-2026-10-07/cheviot-fees-2026.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/bza-appeal.pdf",
+      "bytes": 176863,
+      "sha256": "3cc3c0aa68fab3a2e5dd13cc8f07f1a9febcb2e6157726d4e81572ec6493c719",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/bza-appeal.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/commercial-application.pdf",
+      "bytes": 416356,
+      "sha256": "ba109bcf3aaec5fc3418335b8b5a282fa791715ae68a8eb2f3913956fda7671a",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/commercial-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/minutes-07-07-26.pdf",
+      "bytes": 377268,
+      "sha256": "ebfb36d4b98290e3b74cb2f818a00e9e3ab8a4d1e01cfb6e54797467f3dadd3b",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-07-07-26.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/post-june-minutes-manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-07-07-26.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/minutes-07-21-26.pdf",
+      "bytes": 2524672,
+      "sha256": "b7ca03afe0fa870fd4cf6a6af7f7509ff303da19d6b76f4a2af025c0417c7654",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-07-21-26.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/post-june-minutes-manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-07-21-26.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/minutes-08-04-26.pdf",
+      "bytes": 1222879,
+      "sha256": "8840a2f4b1ca62079c835bc167d56cbc7fa27763c375fb16489829fb2b6f04d2",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-08-04-26.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/post-june-minutes-manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-08-04-26.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/minutes-08-18-26.pdf",
+      "bytes": 312851,
+      "sha256": "5294e9991b7be36f07b8dfbd54f008c12d828771c724148d6571032059965aab",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-08-18-26.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/post-june-minutes-manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-08-18-26.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/minutes-09-01-26.pdf",
+      "bytes": 570538,
+      "sha256": "1699bd0f264aad395f14beba1d6bfb486dfb1f4f1f345d2ff00c8420f321bd73",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-09-01-26.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/post-june-minutes-manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/minutes-09-01-26.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/residential-application.pdf",
+      "bytes": 312590,
+      "sha256": "1671dc92965dac858d5f27d1e426df5b43115490d814ae18881e4885b19b1a6d",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/residential-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/zoning-fees.pdf",
+      "bytes": 106961,
+      "sha256": "af603e46720fdf3579b5d191acc14e9ffa3a511e9e7ad3071c80bb6c00c58558",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/zoning-fees.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/reading/zoning-map-2025.pdf",
+      "bytes": 1985542,
+      "sha256": "6886d0ec361c105ee366bf295f21c97ca37de6445934419205a88287d59fe0e6",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/zoning-map-2025.pdf"
+        },
+        {
+          "manifest": "docs/official-evidence/ohio-reading-2026-10-08/map-manifest.json",
+          "original": "docs/official-evidence/ohio-reading-2026-10-08/zoning-map-2025.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/sharonville/building-electrical-application.pdf",
+      "bytes": 390469,
+      "sha256": "702e312a335eba41ed377c6537e11461b130e00aa8e106f67eba5c6182cf0211",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-sharonville-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-sharonville-2026-10-07/building-electrical-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/sharonville/fee-schedule.pdf",
+      "bytes": 126939,
+      "sha256": "e201fb4fa2a9c8fefc8fcd63fcbef05add84180f5b8c5bff5d55cf241c4b5a93",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-sharonville-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-sharonville-2026-10-07/fee-schedule.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/sharonville/planning-zoning-code.pdf",
+      "bytes": 10129163,
+      "sha256": "c0be28272a4e380ea8609b237215cbee6555f5e26ffc8446cc1495eb2b29ba06",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-sharonville-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-sharonville-2026-10-07/planning-zoning-code.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/sharonville/residential-guide-2026.pdf",
+      "bytes": 11002258,
+      "sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-sharonville-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-sharonville-2026-10-07/residential-guide-2026.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/sharonville/sign-application.pdf",
+      "bytes": 733645,
+      "sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-sharonville-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-sharonville-2026-10-07/sign-application.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/stbernard/zoning-information.pdf",
+      "bytes": 141521,
+      "sha256": "aa8926d7ef049f118a030bb5a3f276a49a90d6ef05fee81f6f6403e86c8f2fcb",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-stbernard-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-stbernard-2026-10-07/zoning-information.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    },
+    {
+      "archive": "/permitting-evidence/stbernard/zoning-map.pdf",
+      "bytes": 2933376,
+      "sha256": "2ceb395b30d5c73dbfbd4d2aab0be41199c0b905dbec94f281de4871b0de39d8",
+      "verified_originals": [
+        {
+          "manifest": "docs/official-evidence/ohio-stbernard-2026-10-07/manifest.json",
+          "original": "docs/official-evidence/ohio-stbernard-2026-10-07/zoning-map.pdf"
+        }
+      ],
+      "literal_source_references": [
+        "src/components/permitting/ohioMunicipalResearch.json"
+      ]
+    }
+  ],
+  "limitations": [
+    "Literal source references do not prove rendering, routing, HTTP availability or published access.",
+    "Dynamically generated links may not be detected.",
+    "App-storage catalog registration, authority approval and statewide collection remain separate pending work."
+  ],
+  "live_records_changed": 0
+}
