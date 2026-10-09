@@ -8,6 +8,7 @@ import { getActionableSalesAttentionItems } from "@/components/sales/salesAttent
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { salesStageDisplayLabel, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 
 const SALES_STATUSES = [
@@ -57,6 +58,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const attentionKeys = new Set(attentionItems.map((item) => item.key));
         const likelyPlaceholder = isLikelySalesPlaceholder(wo);
         const opportunityDisplayName = salesOpportunityDisplayName(wo);
+        const taskStatusAudit = classifySalesTaskStatusAudit(wo);
         const salesOwnerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical;
         return (
           <div
@@ -71,6 +73,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                   <p className="min-w-0 flex-1 truncate text-base font-semibold text-gray-800">{opportunityDisplayName}</p>
                   {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-800">TEST</span>}
                 </div>
+                {taskStatusAudit.kind !== 'none' && (
+                  <div className={`mt-1 rounded-md border px-2 py-1.5 text-[11px] leading-4 ${taskStatusAudit.kind === 'modern_review' ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-slate-200 bg-slate-50 text-slate-700'}`} role="note">
+                    <span className="font-semibold">{taskStatusAudit.kind === 'modern_review' ? 'Task / Status review' : 'Legacy task context'}</span> · {taskStatusAudit.reason}
+                  </div>
+                )}
                 {wo.title && <p className="text-gray-500 text-sm truncate">{wo.title}</p>}
                 <button type="button" onClick={(event) => { event.stopPropagation(); onOpenDetails?.(wo); }}
                   className="mt-1 inline-flex min-h-11 items-center rounded-md px-1 text-xs font-semibold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
