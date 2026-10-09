@@ -38,11 +38,9 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
       {workOrders.map((wo) => {
         const stageDisplayValue = salesStageDisplayValue(wo);
         const stageDisplayLabel = salesStageDisplayLabel(wo);
-        const status = stageDisplayValue === "needs_stage"
-          ? { value: "needs_stage", label: "Needs Stage", color: "bg-violet-100 text-violet-800" }
-          : stageDisplayValue === "closed_neutral"
-            ? { value: "closed_neutral", label: "Closed (Neutral)", color: "bg-slate-100 text-slate-700" }
-            : SALES_STATUSES.find(s => s.value === stageDisplayValue);
+        const status = stageDisplayValue === "closed_neutral"
+          ? { value: "closed_neutral", label: "Closed (Neutral)", color: "bg-slate-100 text-slate-700" }
+          : SALES_STATUSES.find(s => s.value === stageDisplayValue);
         const deadline = wo.current_task_deadline ? safeDate(wo.current_task_deadline) : null;
         const followUp = wo.follow_up_date ? safeDate(wo.follow_up_date) : null;
         const expectedClose = wo.expected_close_date ? safeDate(wo.expected_close_date) : null;
