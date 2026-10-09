@@ -444,6 +444,7 @@ async function pullDataset(
         }
       }
     }
+    let salesStageTransition: { from: string; to: string } | null = null;
     if (dataset === 'sales' && existing) {
       // Stage-changing, terminal, and locally edited tasks require a protected
       // Sales transition, not a blind Smartsheet bulkUpdate. Other fields may pull.
@@ -452,6 +453,7 @@ async function pullDataset(
       for (const key of Object.keys(fieldValues)) delete fieldValues[key];
       Object.assign(fieldValues, plan.fields);
       salesRemoteSnapshot = plan.snapshot;
+      salesStageTransition = plan.stageTransition || null;
       if (plan.held.length) {
         salesLocalPendingPreserved.push(existing.id);
         salesAssigneeTranslationUnresolved = true; // Do not advance completion while fields are held.
@@ -504,6 +506,7 @@ async function pullDataset(
             ? {
                 _remoteSnapshot: salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings),
                 _salesAssigneeNeedsReview: salesAssigneeTranslationUnresolved,
+                _salesStageTransition: salesStageTransition,
               }
             : {}),
         ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
