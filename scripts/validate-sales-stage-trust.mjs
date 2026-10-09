@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { getStageAgingState } from "../src/components/sales/salesStageAging.js";
 import {
   hasRetiredSalesStageCondition,
   isUnverifiedSmartsheetSalesStage,
@@ -24,6 +25,10 @@ same(salesStageDisplayValue(importedDefaultLead), "lead",
   "An imported Lead displays the persisted Lead classification, not a virtual stage.");
 same(salesStageDisplayLabel(importedDefaultLead), "Lead",
   "The displayed stage remains Lead even when stage timing is missing.");
+same(getStageAgingState({ ...importedDefaultLead, created_date: "2024-01-01", updated_date: "2026-10-08" }).tracked, false,
+  "Missing stage timing is never backfilled from created_date or updated_date.");
+same(salesStageDisplayValue({ ...importedDefaultLead, current_task_description: "Completed Sale" }), "lead",
+  "Reading a legacy terminal task must not infer a modern Won outcome.");
 
 same(salesStageDisplayValue({
   ...importedDefaultLead,
@@ -77,7 +82,7 @@ check(spreadsheet.includes('const stageKey = salesStageDisplayValue(wo)') &&
 
 const row = readFileSync("src/components/sales/SalesPipelineRow.jsx", "utf8");
 check(row.includes("salesStageDisplayLabel(wo)") && row.includes("{stageDisplayLabel}") &&
-      row.includes("bg-violet-50 text-violet-800") &&
+      row.includes("Stage Timing Missing") &&
       !row.slice(row.indexOf('case "sales_status": return ('), row.indexOf('case "stage_age": return (')).includes("<Select"),
   "Desktop table shows the stage trust label without an independent status selector.");
 
@@ -101,7 +106,7 @@ const detail = readFileSync("src/components/sales/SalesOpportunityDialog.jsx", "
 check(detail.includes("salesStageDisplayLabel(workOrder)") &&
       detail.includes("Stage timing is unverified. Select the appropriate Task Description; no timestamp will be invented."),
   "Opportunity detail directs stage updates through Task Description without fabricating history.");
-check(detail.includes('aria-label={`Read-only Sales Status: ${statusLabel}`}') &&
+check(detail.includes('aria-label={`Read-only Sales Status: ${statusLabel}') &&
       !detail.includes("onRequestStatusChange") && !detail.includes("<Select value={stageDisplayValue}"),
   "Opportunity Detail Status is informational only.");
 check(detail.includes('aria-label="Task Description (controls Sales Status)"') &&
