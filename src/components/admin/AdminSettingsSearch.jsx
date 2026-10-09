@@ -10,9 +10,11 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
   const searchInputRef = useRef(null);
   const resultsListRef = useRef(null);
   const searchStatusId = useId();
+  const resultsListId = useId();
   const results = searchAdminSettings(query, isAdmin);
   const hasQuery = Boolean(query.trim());
   const selectedResult = activeIndex >= 0 ? results[activeIndex] : null;
+  const hasResults = hasQuery && results.length > 0;
 
   useEffect(() => {
     if (selectedResult) {
@@ -44,7 +46,13 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
           <input
             ref={searchInputRef}
             type="search"
+            role="combobox"
             aria-label="Find an Admin page or setting"
+            aria-autocomplete="list"
+            aria-haspopup="listbox"
+            aria-expanded={hasResults}
+            aria-controls={hasResults ? resultsListId : undefined}
+            aria-activedescendant={selectedResult ? `${resultsListId}-option-${activeIndex}` : undefined}
             aria-describedby={hasQuery ? searchStatusId : undefined}
             placeholder="Find a setting... (PTO, sync, backup)"
             maxLength={100}
@@ -91,11 +99,14 @@ export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
               : "No matching Admin settings. Try another term."}
           </p>
           {results.length > 0 && (
-            <div ref={resultsListRef} className="grid max-h-60 min-w-0 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
+            <div id={resultsListId} ref={resultsListRef} role="listbox" aria-label="Matching Admin settings" className="grid max-h-60 min-w-0 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
               {results.map((result, index) => (
                 <button
+                  id={`${resultsListId}-option-${index}`}
                   key={result.id}
                   type="button"
+                  role="option"
+                  aria-selected={index === activeIndex}
                   data-admin-search-active={index === activeIndex ? "true" : "false"}
                   onClick={() => openResult(result)}
                   className={`flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${index === activeIndex ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300" : "border-red-200/60 bg-white/85 hover:border-red-300 hover:bg-white"}`}
