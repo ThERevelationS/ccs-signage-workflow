@@ -35,6 +35,13 @@ export const SALES_MORE_ATTENTION_GROUPS = Object.freeze([
     ],
   },
   {
+    label: "Task / status audit · loaded rows only",
+    items: [
+      { key: "task_status_review", label: "Task / Status Review", countKey: "taskStatusReviewCount" },
+      { key: "legacy_task_context", label: "Legacy Task Text", countKey: "legacyTaskContextCount", conditional: true },
+    ],
+  },
+  {
     label: "Other views",
     items: [
       { key: "mine", label: "My Opportunities", countKey: "myOpportunityCount" },
