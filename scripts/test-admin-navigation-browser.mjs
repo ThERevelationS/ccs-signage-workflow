@@ -418,6 +418,46 @@ try {
     assert.equal(await page.getByTestId('synthetic-JurisdictionMonitoringSettings').count(), 0);
   });
 
+  await check('Nested Backend panel render failure is isolated, retryable and does not reveal exception', 375, '/?tab=backend&subtab=client_trash', async page => {
+    await page.getByTestId('synthetic-ProjectTrash').waitFor();
+    await page.evaluate(() => { window.__adminPanelFailures = ['BackupManager']; });
+    await page.getByRole('tab', { name: 'Data Backup' }).click();
+    const failure = page.getByRole('alert', { name: 'Data Backup panel failed' });
+    await failure.waitFor();
+    assert.match(await failure.innerText(), /couldn't load/);
+    assert.equal((await failure.innerText()).includes('synthetic-private-panel-error'), false,
+      'No raw error details or credentials appear in the fallback');
+    assert.equal(await page.getByRole('group', { name: 'Admin navigation categories' }).isVisible(), true);
+    await failure.getByRole('button', { name: 'Retry panel' }).click();
+    await failure.waitFor();
+    assert.equal(await failure.getByRole('button', { name: 'Retry panel' }).count(), 1,
+      'A repeat failure still gives a recoverable fallback');
+    await page.getByRole('tab', { name: 'Client Trash' }).click();
+    await page.getByTestId('synthetic-ProjectTrash').waitFor();
+    await page.getByRole('tab', { name: 'Data Backup' }).click();
+    await failure.waitFor();
+    await page.evaluate(() => { window.__adminPanelFailures = []; });
+    await failure.getByRole('button', { name: 'Retry panel' }).click();
+    await page.getByTestId('synthetic-BackupManager').waitFor();
+    assert.equal(await failure.count(), 0);
+  });
+
+  await check('Failed Users panel does not block access to other main Admin categories', 320, '/?tab=calendar', async page => {
+    await page.getByTestId('synthetic-AdminCalendarSettings').waitFor();
+    await page.evaluate(() => { window.__adminPanelFailures = ['UserManagement']; });
+    await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'People' }).click();
+    const failure = page.getByRole('alert', { name: 'Users panel failed' });
+    await failure.waitFor();
+    await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'Integrations' }).click();
+    await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
+    assert.equal(await failure.count(), 0);
+    await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'People' }).click();
+    await failure.waitFor();
+    await page.evaluate(() => { window.__adminPanelFailures = []; });
+    await failure.getByRole('button', { name: 'Retry panel' }).click();
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+  });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
