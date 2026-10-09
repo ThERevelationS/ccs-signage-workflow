@@ -1,4 +1,4 @@
-import { getAccessibleAdminSubtab, getAccessibleAdminTab } from "./adminTabNavigation";
+import { getAccessibleAdminSubtab, getAccessibleAdminTab } from "./adminTabNavigation.js";
 
 // UI preference only: never store authentication data, capabilities or backend records.
 const STORAGE_PREFIX = "ccs_admin_navigation:v1:";
