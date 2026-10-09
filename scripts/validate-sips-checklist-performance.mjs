@@ -194,12 +194,12 @@ check("deep sub-template detail tasks can wrap on phones", () => {
 });
 
 check("Needs Input navigation moves keyboard focus to the revealed row", () => {
-  assert.match(source, /targetElement\?\.focus\(\{ preventScroll: true \}\);/);
+  assert.match(source, /targetElement\.focus\(\{ preventScroll: true \}\);/);
   assert.equal((completedSource.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 2);
 });
 
 check("search navigation focuses every rendered result row without adding tab stops", () => {
-  assert.equal((source.match(/targetElement\?\.focus\(\{ preventScroll: true \}\);/g) || []).length, 2);
+  assert.equal((source.match(/targetElement\.focus\(\{ preventScroll: true \}\);/g) || []).length, 2);
   assert.equal((source.match(/data-sips-checklist-item-id=\{String\([^)]*\.id\)\} tabIndex=\{-1\}/g) || []).length, 10);
   assert.equal(source.includes("data-sips-checklist-item-id={String(task.id)} key={task.id}"), false);
   assert.equal(source.includes("data-sips-checklist-item-id={String(subtask.id)} key={subtask.id}"), false);
@@ -246,7 +246,7 @@ check("status transitions safely release Active/Completed navigation focus", () 
   assert.match(statusHandler, /setFocusedSearchId\(null\);/);
   assert.match(statusHandler, /setFocusedNeedsInputId\(null\);/);
   assert.match(statusHandler, /setChecklistSearchIndex\(-1\);/);
-  assert.match(statusHandler, /window\.setTimeout\(\(\) => checklistSearchInputRef\.current\?\.focus\(\), 0\)/);
+  assert.match(statusHandler, /scheduleNavigationFocus\(\(\) => checklistSearchInputRef\.current\?\.focus\(\)\)/);
   assert.ok(statusHandler.indexOf("if (!item.approved_by)") < statusHandler.indexOf("wasCompleted !== willBeCompleted"));
   assert.ok(statusHandler.indexOf("if (selectedCondition?.is_completed && !areChildrenComplete(itemId))")
     < statusHandler.indexOf("wasCompleted !== willBeCompleted"));
@@ -312,6 +312,52 @@ check("collapsing does not steal focus from visible controls and recovers strand
   assert.match(collapseGuard, /hiddenNeedsInput && needsInputPrimaryCount > 0\s*\? needsInputSummaryRef\.current\s*: checklistSearchInputRef\.current \|\| checklistCloseButtonRef\.current/);
   assert.match(collapseGuard, /destination\?\.focus\(\);/);
   assert.equal((collapseGuard.match(/destination\?\.focus\(\)/g) || []).length, 1);
+});
+
+check("delayed focus callbacks cancel on dialog close or Template Builder switch", () => {
+  const scheduler = source.slice(source.indexOf("  const cancelPendingNavigationFocus = () => {"),
+    source.indexOf("  const startEditItem ="));
+  assert.match(scheduler, /window\.clearTimeout\(pendingNavigationFocusTimerRef\.current\)/);
+  assert.match(scheduler, /if \(navigationFocusVersionRef\.current !== version\) return;/);
+  assert.match(scheduler, /useLayoutEffect\(\(\) => \{/);
+  assert.match(scheduler, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder\) cancelPendingNavigationFocus\(\)/);
+  assert.match(scheduler, /return cancelPendingNavigationFocus;/);
+  assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, workOrder\?\.id\]/);
+  assert.equal((source.match(/scheduleNavigationFocus\(\(\) => \{/g) || []).length, 3);
+  assert.match(source, /const clearChecklistSearch = \(\) => \{\s*cancelPendingNavigationFocus\(\)/);
+  assert.match(source, /onClick=\{\(\) => \{\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\)/);
+
+  // Execute the actual scheduler with fake timers. Even a late callback
+  // must not focus a stale result after replacement or dialog cleanup.
+  const pending = new Map();
+  let nextId = 0;
+  let cleanup = null;
+  const fakeWindow = {
+    setTimeout(callback) { const id = ++nextId; pending.set(id, callback); return id; },
+    clearTimeout(id) { pending.delete(id); }
+  };
+  const createHarness = new Function(
+    "window", "useLayoutEffect", "isOpen", "isLoading", "showTemplateBuilder", "workOrder",
+    "pendingNavigationFocusTimerRef", "navigationFocusVersionRef",
+    scheduler + "\nreturn { scheduleNavigationFocus, cancelPendingNavigationFocus };"
+  );
+  const harness = createHarness(fakeWindow, callback => { cleanup = callback(); },
+    true, false, false, { id: "test-order" }, { current: null }, { current: 0 });
+  const focused = [];
+  harness.scheduleNavigationFocus(() => focused.push("old"));
+  const staleCallback = [...pending.values()][0];
+  harness.scheduleNavigationFocus(() => focused.push("new"));
+  assert.equal(pending.size, 1);
+  staleCallback();
+  assert.deepEqual(focused, []);
+  [...pending.values()][0]();
+  assert.deepEqual(focused, ["new"]);
+  harness.scheduleNavigationFocus(() => focused.push("closed"));
+  const closedCallback = [...pending.values()][0];
+  cleanup();
+  assert.equal(pending.size, 0);
+  closedCallback();
+  assert.deepEqual(focused, ["new"]);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
