@@ -155,6 +155,18 @@ test("fresh new-id Save with incomplete original photo evidence reuses prefix fo
   assert.equal(store.receipts.get(original.id).result_summary.resolved_by_retry,true);
   assert.equal([...store.receipts.values()].filter(row=>row.status==="applied").length,2);
 });
+test("status reconciliation racing another status check reports the same applied receipt",async()=>{
+  const old=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:old,barrier:true});
+  const status={action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:"request-original-123456"};
+  const results=await Promise.all([call(status,client),call(status,client)]);
+  assert.deepEqual(results.map(row=>row.code),[200,200]);
+  assert.ok(results.every(row=>row.body.status==="applied" && row.body.request_id===status.request_id));
+  assert.equal(store.updates,1);
+  assert.equal(store.receipts.get(old.id).status,"applied");
+  assert.equal(store.receipts.size,1);
+});
 test("concurrent distinct new request ids cannot apply same started receipt twice",async()=>{
   const old=makeReceipt(payload("request-original-123456"));
   const {store,client}=setup({receipt:old,barrier:true});
