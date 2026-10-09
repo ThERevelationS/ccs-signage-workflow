@@ -350,7 +350,9 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
   assert.equal(pending.size, 1);
   staleCallback();
   assert.deepEqual(focused, []);
-  [...pending.values()][0]();
+  const [activeTimerId, activeTimerCallback] = [...pending.entries()][0];
+  pending.delete(activeTimerId); // Simulate the timer firing and leaving the queue.
+  activeTimerCallback();
   assert.deepEqual(focused, ["new"]);
   harness.scheduleNavigationFocus(() => focused.push("closed"));
   const closedCallback = [...pending.values()][0];
