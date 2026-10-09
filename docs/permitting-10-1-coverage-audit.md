@@ -1,3 +1,7 @@
+## 2026-10-09 — Phase 10, milestone 2: Symmes Hamilton County dossier attachment
+
+Created one real identity-only Hamilton County Symmes Township profile after live absence check; distinct Census candidate from Lawrence County namesake. Readback count1, needs verification, auto-refresh off, requirements null. Attached four hash-verified PDFs and20 research findings to exact-ID admin dossier. Missing fee Appendix1/contract ExhibitA, execution and electrical roles remain unapproved. Live records created1; publications0. Next: Crosby locality identity and three retained-document links.
+
 ## 2026-10-09 — Phase 10, milestone 2: Delhi identity and dossier attachment
 
 Created one real identity-only Delhi Township profile after live absence check and retained Census Hamilton County candidate match; exact-ID readback count1. Needs verification; auto-refresh off; requirements null. Attached two retained PDFs and eight page-linked findings to admin locality dossier. Historical proposal preserved. Live records created1; authority approvals0; publications0. Next: Symmes Hamilton County locality identity and dossier attachment.

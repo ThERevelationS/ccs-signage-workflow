@@ -366,3 +366,14 @@ test('Delhi exact-identity dossier exposes originals while rules and electrical 
  assert.match(html,/No approved sign requirements or electrical office roles/);
  assert.equal(render(row,false),'');assert.equal(render({...row,type:'city'}),'');assert.equal(render({...row,id:'other'}),'');
 });
+
+test('Hamilton County Symmes dossier retains original links and namesake boundary',()=>{
+ const row=dossiers.find(d=>d.id==='6ac92dee074e0e48d031f6dc');
+ assert.equal(row.name,'Symmes Township');assert.equal(row.resources.length,4);assert.equal(row.document_findings.length,20);
+ const html=render(row);
+ for(const r of row.resources)assert.ok(html.includes(r.archive)&&html.includes(r.source));
+ for(const f of row.document_findings)assert.ok(html.includes(f.archive));
+ assert.match(html,/Distinct from Symmes in Lawrence County/);assert.match(html,/Appendix 1/);assert.match(html,/Exhibit A/);
+ assert.match(html,/Electrical permit issuance and electrical inspection remain separate unapproved roles/);
+ assert.equal(render(row,false),'');assert.equal(render({...row,id:'lawrence-county-symmes'}),'');assert.equal(render({...row,type:'city'}),'');
+});
