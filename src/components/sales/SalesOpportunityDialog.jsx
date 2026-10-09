@@ -319,9 +319,9 @@ export default function SalesOpportunityDialog({
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
-              <div className={`mt-2 flex min-h-11 items-center rounded-md border px-3 text-sm font-semibold sm:min-h-9 ${unverifiedStage ? "border-violet-200 bg-violet-50 text-violet-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}
-                role="status" aria-label={`Read-only Sales Status: ${statusLabel}`}
-                title="Sales Status is determined by Task Description.">
+              <div className="mt-2 flex min-h-11 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 sm:min-h-9"
+                role="status" aria-label={`Read-only Sales Status: ${statusLabel}${unverifiedStage ? ". Stage Timing Missing" : ""}`}
+                title={unverifiedStage ? "Stage Timing Missing; the displayed status is the stored classification." : "Sales Status is determined by Task Description."}>
                 {statusLabel}
               </div>
               {stageAging.tracked ? (
