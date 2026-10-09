@@ -53,15 +53,16 @@ check(page.includes("loadSalesPipelinePreferencesSafely({ sessionToken") &&
       page.includes("Promise.all(["),
   "Saved presets and active preferences must load together on login");
 check(page.includes('savedInformation.startsWith("custom_")') &&
-      page.includes('selected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null'),
+      page.includes('availableSelected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null'),
   "A saved custom Information Filter must restore only while still available to that user");
 check(page.includes('selected.find((filter) => filter.type === "column_preset"') &&
       page.includes('column_preset_id'),
   "A saved Column Filter must restore only while still available to that user");
 check(page.includes("salesAttentionOption(savedAttention) ? savedAttention : \"all\""),
   "Unknown/stale attention preferences must fail closed to All");
-check(page.includes('["all", "needs_stage", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation)'),
-  "Current Pipeline login must restore Needs Stage but not outcome-only Won/Lost statuses into the active workspace");
+check(page.includes('["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation)') &&
+      page.includes('retiredInformationPreference') && page.includes('savedInformation === "needs_stage"'),
+  "Current Pipeline restores real statuses and guardedly repairs retired virtual-stage preferences to All");
 
 check(page.includes('persistFilterPreferences({ informationFilter: value, attention: "all" })'),
   "Explicit Information Filter selections must persist while clearing the alternate attention mode");
