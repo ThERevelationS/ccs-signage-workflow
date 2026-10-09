@@ -1,3 +1,7 @@
+## 2026-10-09 — Phase 10, milestone 2: Symmes dossier identity gate
+
+Live Ohio profile query returned no Symmes match. Prepared unattached dossier proposal with four byte/hash-verified PDFs and 20 page-linked research findings, including six OCR findings verified against raw text hashes. Missing Appendix1/ExhibitA, execution, map/currentness and electrical roles remain unapproved. No null-ID UI row or production record change. Publications0. Next: resolve missing township profile identities before attaching Delhi/Symmes/Crosby documents.
+
 ## 2026-10-09 — Phase 10, milestone 2: Delhi dossier identity gate
 
 Live Ohio profile query returned no Delhi match. Prepared an unattached dossier proposal with two byte/hash-verified PDFs and eight page/hash-verified findings; no null-ID UI row or guessed locality association added. Address discrepancy, resolution identity anomaly, fees and separate electrical roles remain unapproved. Live records changed0; publications0. Next: resolve Delhi canonical identity before UI attachment; continue Symmes retained-document access meanwhile.

@@ -1,0 +1,256 @@
+{
+  "locality": {
+    "name": "Symmes Township",
+    "state": "OH",
+    "county": "Hamilton",
+    "type": "township",
+    "canonical_id": null
+  },
+  "status": "blocked_missing_canonical_profile",
+  "source": "https://symmestownship.org/243/Zoning-Resolution",
+  "observed_on": "2026-10-09",
+  "resources": [
+    {
+      "file": "symmes-zoning-map.pdf",
+      "label": "zoning map \u2014 review pending",
+      "source": "https://symmestownship.org/DocumentCenter/View/2633/Symmes-Township-Zoning-Map-PDF",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-map.pdf",
+      "format": "PDF",
+      "bytes": 845922,
+      "sha256": "19501fb3729ccb031547c54f06d2be564b11bda238baf84848d68e65e475c8f5"
+    },
+    {
+      "file": "symmes-zoning-code.pdf",
+      "label": "zoning code \u2014 review pending",
+      "source": "https://symmestownship.org/DocumentCenter/View/2848/SymmesZoningCode_10-8-24PDF",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf",
+      "format": "PDF",
+      "bytes": 2853736,
+      "sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5"
+    },
+    {
+      "file": "symmes-fee-amendment-g2025-100.pdf",
+      "label": "fee amendment g2025 100 \u2014 review pending",
+      "source": "https://www.symmestownship.org/DocumentCenter/View/3444/G2025-100-to-amend-fees-for-applications-under-Symmes-Township-Zoning-Resolution",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf",
+      "format": "PDF",
+      "bytes": 786622,
+      "sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965"
+    },
+    {
+      "file": "symmes-county-contract-g2025-104.pdf",
+      "label": "county contract g2025 104 \u2014 review pending",
+      "source": "https://www.symmestownship.org/DocumentCenter/View/3443/G2025-104-Authorizing-contract-with-Hamilton-County-for-Planning-and-Zoning-Services",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf",
+      "format": "PDF",
+      "bytes": 746814,
+      "sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60"
+    }
+  ],
+  "document_findings": [
+    {
+      "label": "Nonconforming signs",
+      "text": "Relocation, enlargement, damage and structural changes have nonconforming-sign consequences; evaluate the complete provision.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=149",
+      "physical_page": 149,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "af2cd2d84927d134abd325b2f84301e6b4b2e841b30920cb4cbe5c4cc8250259",
+      "authority_approved": false
+    },
+    {
+      "label": "Temporary signs",
+      "text": "Special temporary-use certificate, duration, size and circumstances are conditional; not a blanket temporary-sign allowance.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=150",
+      "physical_page": 150,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "d6f6214e83e18e1150cfe9549699d77464cfcd4945dc6557a3493f04613c8264",
+      "authority_approved": false
+    },
+    {
+      "label": "Illumination",
+      "text": "Shielding and a printed 1987 IES reference require technical/currentness review; no inferred electrical code edition or office.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=152",
+      "physical_page": 152,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "31cc2972e3bcc656e1d04e8b51a7de8f5799b8de9bdc6d38b05c23959ca2549d",
+      "authority_approved": false
+    },
+    {
+      "label": "Special signs requiring certificates",
+      "text": "Some fee-free special signs still require zoning certificates; distinguish fee, certificate and other permits.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=153",
+      "physical_page": 153,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "e672d1b0c31de56b78581e7299c2a9b87c0be30dad63e4ac6ec6c13102cf8f3a",
+      "authority_approved": false
+    },
+    {
+      "label": "Special signs exceptions",
+      "text": "Conditional special-sign provisions do not establish building or electrical exemptions.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=154",
+      "physical_page": 154,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "1920e65d24314060fa9c93d7d37875d968f773c2f60dfeefe2dc3103b0732087",
+      "authority_approved": false
+    },
+    {
+      "label": "Office district signs",
+      "text": "Office freestanding and wall sign allowances require district, frontage and full-section review.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=156",
+      "physical_page": 156,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "d11a10b25957036439c0261bfebe1ee95903f69eadf7c549f1f5ca3ac4af3f1c",
+      "authority_approved": false
+    },
+    {
+      "label": "Variable message signs",
+      "text": "Variable-message limitations require reading complete conditions and adjoining pages.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=157",
+      "physical_page": 157,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "5c6733bc2069d39d82a0abbb43d6a11cf9235dd3a114e57fedef3bdf93118ed8",
+      "authority_approved": false
+    },
+    {
+      "label": "Commercial ground signs",
+      "text": "Commercial freestanding allowances require confirmed district, frontage, area and setbacks.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=158",
+      "physical_page": 158,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "400943a6bc1335931da49240fcdcaa9a7c1175a454b43a38c476114c6da2c55a",
+      "authority_approved": false
+    },
+    {
+      "label": "Commercial wall signs",
+      "text": "Facade-based area, projection and clearance provisions are research candidates, not approved job limits.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=159",
+      "physical_page": 159,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "e103bb170ba2e6506da74adc03b6a9c5c12bacbc0772d96cbe9707a445bacb49",
+      "authority_approved": false
+    },
+    {
+      "label": "Industrial district signs",
+      "text": "Industrial district and nonresidential H applicability requires address and district confirmation.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=160",
+      "physical_page": 160,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "53d7b68e7554c2eaa6a211cb18ca4f1b1b3a62a880caf0f8a738ab3b6456d253",
+      "authority_approved": false
+    },
+    {
+      "label": "Prohibitions and promotions",
+      "text": "Roof, off-premise, vehicular and bench provisions plus special promotions require exceptions review.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=161",
+      "physical_page": 161,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "204b807cb19c13ca908565a2060b44e37cecc015b44e5b0fab8f88b185b6aa8b",
+      "authority_approved": false
+    },
+    {
+      "label": "Certificate triggers and maintenance",
+      "text": "Routine maintenance including lamps, ballast and electrical components requires a zoning certificate but no fee in this retained code. No electrical exemption inferred.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=162",
+      "physical_page": 162,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "877b74b0b63e96490f2da33f4937594f6ca52763e2d7f263a3b1e1111e4da85a",
+      "authority_approved": false
+    },
+    {
+      "label": "Application documents",
+      "text": "Printed application content includes scaled design and illumination details and a site plan signed by a registered surveyor; verify current intake requirements.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=162",
+      "physical_page": 162,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "877b74b0b63e96490f2da33f4937594f6ca52763e2d7f263a3b1e1111e4da85a",
+      "authority_approved": false
+    },
+    {
+      "label": "Enforcement",
+      "text": "After-the-fact certificates and penalties do not authorize work in advance.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-zoning-code.pdf#page=163",
+      "physical_page": 163,
+      "source_sha256": "ae719e2781893685005cb95c9f355c7c36133aac908dc2a0326c0fe7c83e9af5",
+      "text_sha256": "9c48af55a4f0f826cbf434dd3e76afbf46086203d31519928167ceb67c45baeb",
+      "authority_approved": false
+    },
+    {
+      "label": "Fee schedule effective date",
+      "text": "Section 2 specifies January 1, 2026 for the fee schedule, with applications filed earlier subject to the schedule in effect when filed. Current applicability pending.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf#page=1",
+      "physical_page": 1,
+      "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+      "ocr_text_sha256": "4a6d8aa52f3a5c4474ad53a2bc441cbb860f54cd9a49ff43020b7ab1c5f375f2",
+      "authority_approved": false
+    },
+    {
+      "label": "Missing fee attachment",
+      "text": "Section 1 references Appendix 1, but both retained pages contain the resolution only. Fee amounts cannot be extracted from this archive.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf#page=1",
+      "physical_page": 1,
+      "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+      "ocr_text_sha256": "4a6d8aa52f3a5c4474ad53a2bc441cbb860f54cd9a49ff43020b7ab1c5f375f2",
+      "authority_approved": false
+    },
+    {
+      "label": "Fee resolution adoption",
+      "text": "Printed adoption December 9, 2025 observed visually; signatures and OCR vote transcription are not staff authority verification.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-fee-amendment-g2025-100.pdf#page=2",
+      "physical_page": 2,
+      "source_sha256": "0640265e250b6a73ef142fad37c6cedda145fbbe06dce39c70d249f5cb97b965",
+      "ocr_text_sha256": "2aae2887f8b0b2b860eeb6efd4540f512c9b5d462a4074b54a9e196477b67752",
+      "authority_approved": false
+    },
+    {
+      "label": "2026 planning and zoning authorization",
+      "text": "Authorizes execution of county Regional Planning Commission zoning administration/enforcement assistance contract for 2026. Does not establish execution or electrical roles.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf#page=1",
+      "physical_page": 1,
+      "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+      "ocr_text_sha256": "87f8e64525e9d9e357e233f26b23486dfc52d5ff33b4731954325cfc9badf3c6",
+      "authority_approved": false
+    },
+    {
+      "label": "Missing contract attachment",
+      "text": "Section 1 refers to Exhibit A; no exhibit appears in the two retained pages. Detailed terms and execution remain unresolved.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf#page=1",
+      "physical_page": 1,
+      "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+      "ocr_text_sha256": "87f8e64525e9d9e357e233f26b23486dfc52d5ff33b4731954325cfc9badf3c6",
+      "authority_approved": false
+    },
+    {
+      "label": "Contract authorization adoption",
+      "text": "Printed adoption December 9, 2025; Section 6 uses earliest period allowed by law, not a calculated effective date.",
+      "archive": "/permitting-evidence/harrison-symmes-townships/symmes-county-contract-g2025-104.pdf#page=2",
+      "physical_page": 2,
+      "source_sha256": "8eff9d588b2d8084e56025b04020d00579e61917066804916b14e2a6ba174d60",
+      "ocr_text_sha256": "643b8bc4580dd2b8e147462dc645704a4c361de07e208f562193ec6c5101f06e",
+      "authority_approved": false
+    }
+  ],
+  "notes": [
+    "Live Ohio profile name query returned no Symmes match. No dossier is attached to another locality or a null ID.",
+    "County zoning administration and ezTrak are routing candidates; building forms destination does not prove sign zoning acceptance or electrical delegation.",
+    "G2025-100 references Appendix 1, absent from the retained two pages. January1 2026 fee schedule effective-date observation does not provide current fee amounts.",
+    "G2025-104 authorizes a2026 county planning/zoning contract and references Exhibit A, absent from the retained pages. Authorization does not establish execution or electrical roles.",
+    "Four scanned resolution pages already have OCR and visual review; missing attachments remain unresolved. Earlier scan-only packet is historical.",
+    "Map version, current code amendments, job address and sign-district applicability remain pending. Fee-free signs may still require certificates; building/electrical exemptions are not inferred.",
+    "Electrical permit issuance and electrical inspection remain separate unapproved roles."
+  ],
+  "identity_readback": {
+    "entity": "JurisdictionProfile",
+    "query": {
+      "state": "OH",
+      "name": {
+        "$regex": "Symmes",
+        "$options": "i"
+      }
+    },
+    "count": 0,
+    "checked_on": "2026-10-09"
+  },
+  "authority_approved": false,
+  "currentness_approved": false,
+  "live_records_changed": 0
+}
