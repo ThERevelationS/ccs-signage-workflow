@@ -227,6 +227,51 @@ try {
       assert.equal(await page.getByRole('tab',{name:'Smartsheet Sync'}).count(),0);
     });
 
+  await check('Keyboard arrows move category focus without changing the selected page', 375, '/', async page => {
+    const categories = page.getByRole('group', { name: 'Admin navigation categories' });
+    const workflow = categories.getByRole('button', { name: 'Workflow' });
+    const people = categories.getByRole('button', { name: 'People' });
+    const system = categories.getByRole('button', { name: 'System' });
+    await workflow.focus();
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await system.evaluate(node => document.activeElement === node), true, 'Left wraps to last category');
+    assert.equal(await workflow.getAttribute('aria-pressed'), 'true', 'Arrow keys must not activate a new category');
+    await page.keyboard.press('Home');
+    assert.equal(await workflow.evaluate(node => document.activeElement === node), true, 'Home returns to first');
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await people.evaluate(node => document.activeElement === node), true, 'Right focuses next');
+    assert.equal(await people.getAttribute('aria-pressed'), 'false');
+    const outline = await people.evaluate(node => getComputedStyle(node).boxShadow);
+    assert.notEqual(outline, 'none', 'Keyboard focus must be visually distinguishable');
+    await page.keyboard.press('Enter');
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+    assert.equal(await people.getAttribute('aria-pressed'), 'true', 'Enter activates category');
+    assert.equal(await people.evaluate(node => document.activeElement === node), true, 'Focus remains on activating category');
+  });
+
+  await check('Non-admin category keyboard wraps only through accessible buttons', 375, '/?role=basic', async page => {
+    const categories = page.getByRole('group', { name: 'Admin navigation categories' });
+    const workflow = categories.getByRole('button', { name: 'Workflow' });
+    const people = categories.getByRole('button', { name: 'People' });
+    assert.equal(await categories.locator('button').count(), 2);
+    await people.focus();
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await workflow.evaluate(node => document.activeElement === node), true);
+    await page.keyboard.press('End');
+    assert.equal(await people.evaluate(node => document.activeElement === node), true);
+    await page.keyboard.press(' ');
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+  });
+
+  await check('Clicking a search result retains focus on the search control', 375, '/', async page => {
+    const input = page.getByRole('searchbox', { name: 'Find an Admin page or setting' });
+    await input.fill('PTO');
+    await page.getByRole('button', { name: /PTO Policies/ }).click();
+    await page.getByTestId('synthetic-PTOManagement').waitFor();
+    assert.equal(await input.evaluate(node => document.activeElement === node), true, 'Search input receives focus after clicked result disappears');
+    assert.equal(await input.inputValue(), '');
+  });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
