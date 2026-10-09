@@ -1,5 +1,6 @@
 // Isolated real-Chromium acceptance for /FleetMechanic Start Work and Save Progress recovery.
-// All Base44 responses are synthetic browser-memory fixtures. No production records are read or written.
+// All Base44 responses are synthetic fixtures; localStorage emulates only the fake server across tabs.
+// The actual Fleet mechanic app never stores its server receipts, notes, or photos in localStorage.
 import assert from "node:assert/strict";
 import { mkdtemp, writeFile, symlink, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -28,20 +29,21 @@ try {
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 1;',
     'const state = {actions:[],delayNextBootstrap:false,bootstrapWaiting:false,releaseBootstrap:null,bootstrapSnapshotOnRelease:false,delayNextStartAck:false,failDelayedStartAck:false,startAckWaiting:false,releaseStartAck:null,delayNextSaveAck:false,failDelayedSaveAck:false,saveAckWaiting:false,releaseSaveAck:null,startPermission:true,savePermission:true,loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
-    'const persisted=JSON.parse(sessionStorage.getItem("synthetic-fleet-server")||"null"); if(persisted)Object.assign(state,{work:persisted.work,receipt:persisted.receipt,photoWrites:persisted.photoWrites,startPermission:persisted.startPermission,savePermission:persisted.savePermission,scopeRemoved:persisted.scopeRemoved,accessDenied:persisted.accessDenied});',
-    'const persist=()=>sessionStorage.setItem("synthetic-fleet-server",JSON.stringify({work:state.work,receipt:state.receipt,photoWrites:state.photoWrites,startPermission:state.startPermission,savePermission:state.savePermission,scopeRemoved:state.scopeRemoved,accessDenied:state.accessDenied}));',
+    'const persisted=JSON.parse(localStorage.getItem("synthetic-fleet-server")||"null"); if(persisted)Object.assign(state,{work:persisted.work,receipt:persisted.receipt,photoWrites:persisted.photoWrites,startPermission:persisted.startPermission,savePermission:persisted.savePermission,scopeRemoved:persisted.scopeRemoved,accessDenied:persisted.accessDenied});',
+    'const persist=()=>localStorage.setItem("synthetic-fleet-server",JSON.stringify({work:state.work,receipt:state.receipt,photoWrites:state.photoWrites,startPermission:state.startPermission,savePermission:state.savePermission,scopeRemoved:state.scopeRemoved,accessDenied:state.accessDenied}));',
     'state.setAuthorization=patch=>{Object.assign(state,patch);persist();};',
     'window.__fleetMechanicWorkFixture = state;',
     'const work = () => clone(state.work);',
     'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{start:state.startPermission,save:state.savePermission,estimates:false}},active_work_orders:state.scopeRemoved?[]:[work()],recent_completed:[],equipment:state.scopeRemoved?[]:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
     'const receiptFor = payload => state.receipt && state.receipt.action===payload.mutation_action && state.receipt.requestId===payload.request_id ? state.receipt : null;',
+    'const saveFingerprint = payload => JSON.stringify({actual_hours:String(payload.actual_hours??"").trim(),corrective_action:String(payload.corrective_action||"").trim(),mechanic_note:String(payload.mechanic_note||"").trim(),photos:(payload.photos||[]).map(photo=>({type:photo.type,data:photo.data}))});',
     'const applyStart = payload => { state.work={...state.work,status:"in_progress",started_date:"2026-09-29",updated_date:"wo-rev-"+(++revision)}; state.receipt={action:"start",requestId:payload.request_id,status:"applied"}; persist(); };',
     'const applySave = payload => {',
     ' const note=String(payload.mechanic_note||"").trim();',
     ' const appended=note ? "[Mechanic – Synthetic Mechanic]\\n"+note : "";',
     ' const urls=(payload.photos||[]).map(()=> {state.photoWrites++;return "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";});',
     ' state.work={...state.work,actual_hours:payload.actual_hours===""?state.work.actual_hours:Number(payload.actual_hours),corrective_action:String(payload.corrective_action||""),notes:[state.work.notes,appended].filter(Boolean).join("\\n\\n"),after_photos:[...(state.work.after_photos||[]),...urls],updated_date:"wo-rev-"+(++revision)};',
-    ' state.receipt={action:"save",requestId:payload.request_id,status:"applied"}; persist();',
+    ' state.receipt={action:"save",requestId:payload.request_id,status:"applied",savedPayload:saveFingerprint(payload),workUpdatedDate:state.work.updated_date}; persist();',
     '};',
     'export const base44 = {functions:{async invoke(name,payload){',
     ' if(name!=="fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
@@ -51,7 +53,8 @@ try {
     ' if(payload.action==="save"){',
     '   if(!state.savePermission)return {data:{error:"This mechanic link is not allowed to perform that action."}};',
     '   if(state.staleNextSave){state.staleNextSave=false;state.work={...state.work,updated_date:"wo-rev-"+(++revision)};return {data:{error:"This Fleet work order changed since it was opened. Refresh before saving."}};}',
-    '   applySave(payload);',
+    '   if(state.receipt?.action==="save" && state.receipt?.status==="applied" && state.receipt?.workUpdatedDate===state.work.updated_date && state.receipt?.savedPayload===saveFingerprint(payload))return {data:{success:true,already_applied:true,request_id:payload.request_id,work_order:work()}};',
+    '   applySave(payload);
     '   if(state.postCommitSave403){state.postCommitSave403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};}',
     '   if(state.loseSaveAck){state.loseSaveAck=false;throw new Error("Synthetic lost Save Progress acknowledgement");}',
     '   const response={data:{success:true,request_id:payload.request_id,work_order:work()}}; if(state.delayNextSaveAck){state.delayNextSaveAck=false;state.saveAckWaiting=true;await new Promise(resolve=>{state.releaseSaveAck=resolve;});state.saveAckWaiting=false;if(state.failDelayedSaveAck){state.failDelayedSaveAck=false;throw new Error("Synthetic delayed Save acknowledgement failure");}} return response;',
