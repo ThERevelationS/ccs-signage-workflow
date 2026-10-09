@@ -285,4 +285,33 @@ check("delete confirmation restores focus after unmount, while Cancel keeps nati
   assert.match(source, /<Button ref=\{checklistCloseButtonRef\} variant="outline" onClick=\{requestClose\}/);
 });
 
+check("collapsing products, details, or Completed clears only hidden navigation results", () => {
+  const collapseGuard = source.slice(
+    source.indexOf("// A collapsed product, hierarchy, or Completed section"),
+    source.indexOf("// Search typing and inline editor state")
+  );
+  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder\) return;/);
+  assert.match(collapseGuard, /focusedSearchId &&\s*!findRenderedChecklistItemElement\(\[focusedSearchId\]\)\?\.getClientRects\(\)\.length/);
+  assert.match(collapseGuard, /focusedNeedsInputId &&\s*!findRenderedChecklistItemElement\(\[focusedNeedsInputId\]\)\?\.getClientRects\(\)\.length/);
+  assert.match(collapseGuard, /if \(!hiddenSearch && !hiddenNeedsInput\) return;/);
+  assert.match(collapseGuard, /if \(hiddenSearch\) \{\s*setFocusedSearchId\(null\);\s*setChecklistSearchIndex\(-1\);/);
+  assert.match(collapseGuard, /if \(hiddenNeedsInput\) setFocusedNeedsInputId\(null\);/);
+  assert.match(collapseGuard, /showCompletedItems, focusedSearchId, focusedNeedsInputId, needsInputPrimaryCount\]/);
+  assert.match(collapseGuard, /collapsedProducts, expandedItems/);
+});
+
+check("collapsing does not steal focus from visible controls and recovers stranded focus", () => {
+  const collapseGuard = source.slice(
+    source.indexOf("// A collapsed product, hierarchy, or Completed section"),
+    source.indexOf("// Search typing and inline editor state")
+  );
+  assert.match(collapseGuard, /const activeElement = document\.activeElement;/);
+  assert.match(collapseGuard, /const activeRow = activeElement\?\.closest\?\.\("\[data-sips-checklist-item-id\]"\);/);
+  assert.match(collapseGuard, /activeElement === document\.body \|\|\s*\(activeRow && !activeRow\.getClientRects\(\)\.length\)/);
+  assert.match(collapseGuard, /if \(focusIsStranded\) \{/);
+  assert.match(collapseGuard, /hiddenNeedsInput && needsInputPrimaryCount > 0\s*\? needsInputSummaryRef\.current\s*: checklistSearchInputRef\.current \|\| checklistCloseButtonRef\.current/);
+  assert.match(collapseGuard, /destination\?\.focus\(\);/);
+  assert.equal((collapseGuard.match(/destination\?\.focus\(\)/g) || []).length, 1);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
