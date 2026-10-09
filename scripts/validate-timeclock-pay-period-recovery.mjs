@@ -3926,6 +3926,182 @@ test('v27 reverse mixed direct admin correction then employee correction review 
   directBAudit.actor_email = originalDirectBActor;
 });
 
+test('v27 two employee correction reviews across payroll generations preserve both review branches', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  const period = h.period();
+  Object.assign(period, {
+    start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '',
+  });
+
+  const recovered = await h.invokeAs(employee, {
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'v27-double-employee-source-001', claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  const entry = h.rows.TimeEntry.find((row) => row.id === recovered.body.entry.id);
+
+  const clockOut = await h.invokeAs(employee, {
+    action: 'clock_out', target_email: employee.email,
+    request_id: 'v27-double-employee-clock-out-001', lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+    notes: 'Double employee correction-review lineage validation',
+  });
+  assert.equal(clockOut.status, 200, JSON.stringify(clockOut.body));
+
+  const submitAndReview = async ({
+    submitId, employeeClockIn, reviewId, managerClockIn,
+    employeeReason, managerReason, employeeNotes, managerNotes,
+  }) => {
+    const submitted = await h.invokeAs(employee, {
+      action: 'submit_correction_request', target_email: employee.email,
+      request_id: submitId, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: employeeReason,
+      requested_changes: {
+        clock_in: employeeClockIn, clock_out: entry.clock_out,
+        lunch_minutes: 0, notes: employeeNotes,
+      },
+    });
+    assert.equal(submitted.status, 200, JSON.stringify(submitted.body));
+    const request = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === submitId);
+    assert.ok(request?.id);
+    const submissionAudit = h.rows.TimeClockAudit.find((row) =>
+      row.action === 'correction_request' && row.request_id === submitId
+    );
+    assert.ok(submissionAudit?.id);
+
+    const reviewRequest = {
+      action: 'review_correction_request', target_email: employee.email,
+      request_id: reviewId, correction_request_id: request.id,
+      expected_request_updated_date: request.updated_date, decision: 'approve_modified',
+      reason: managerReason,
+      correction: {
+        clock_in: managerClockIn, clock_out: entry.clock_out,
+        lunch_minutes: 0, notes: managerNotes,
+      },
+    };
+    const reviewed = await h.invoke(reviewRequest);
+    assert.equal(reviewed.status, 200, JSON.stringify(reviewed.body));
+    const retry = await h.invoke(reviewRequest);
+    assert.equal(retry.status, 200, JSON.stringify(retry.body));
+    const appliedAudit = h.rows.TimeClockAudit.find((row) => row.id === reviewed.body.audit_id);
+    const reviewAudit = h.rows.TimeClockAudit.find((row) => row.id === reviewed.body.review_audit_id);
+    assert.ok(appliedAudit?.id);
+    assert.ok(reviewAudit?.id);
+    return { request, submissionAudit, reviewAudit, appliedAudit };
+  };
+
+  const first = await submitAndReview({
+    submitId: 'v27-double-employee-submit-b-001',
+    employeeClockIn: '2026-09-28T12:10:00.000Z',
+    reviewId: 'v27-double-employee-review-b-001',
+    managerClockIn: '2026-09-28T12:15:00.000Z',
+    employeeReason: 'Employee reports generation B arrival correction',
+    managerReason: 'Manager verifies generation B arrival',
+    employeeNotes: 'Employee generation B request',
+    managerNotes: 'Manager generation B modification',
+  });
+  assert.equal(entry.clock_in, '2026-09-28T12:15:00.000Z');
+
+  const approveB = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v27-double-employee-approve-b-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve',
+    note: 'Approve generation B employee review result',
+  });
+  assert.equal(approveB.status, 200, JSON.stringify(approveB.body));
+
+  const finalizeB = await h.action('finalize', 'v27-double-employee-finalize-b-001');
+  assert.equal(finalizeB.status, 200, JSON.stringify(finalizeB.body));
+  const firstProvenance = clone(period.finalized_summary.shift_manifest[0].late_clock_in_provenance);
+  assert.equal(firstProvenance.payroll_clock_in_at_finalization, '2026-09-28T12:15:00.000Z');
+  assert.equal(firstProvenance.payroll_correction_evidence.employee_correction_review_chain.length, 1);
+  assert.equal(
+    firstProvenance.payroll_correction_evidence.employee_correction_review_chain[0].correction_request_id,
+    first.request.id,
+  );
+
+  const reopenPayroll = await h.action(
+    'reopen', 'v27-double-employee-payroll-reopen-001',
+    'Employee provides a second independently reviewed correction',
+  );
+  assert.equal(reopenPayroll.status, 200, JSON.stringify(reopenPayroll.body));
+
+  const reopenShift = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v27-double-employee-shift-reopen-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen',
+    note: 'Reopen for second employee correction',
+  });
+  assert.equal(reopenShift.status, 200, JSON.stringify(reopenShift.body));
+
+  const second = await submitAndReview({
+    submitId: 'v27-double-employee-submit-c-001',
+    employeeClockIn: '2026-09-28T12:35:00.000Z',
+    reviewId: 'v27-double-employee-review-c-001',
+    managerClockIn: '2026-09-28T12:45:00.000Z',
+    employeeReason: 'Employee reports generation C arrival correction',
+    managerReason: 'Manager verifies generation C arrival',
+    employeeNotes: 'Employee generation C request',
+    managerNotes: 'Manager generation C modification',
+  });
+  assert.equal(entry.clock_in, '2026-09-28T12:45:00.000Z');
+
+  const approveC = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v27-double-employee-approve-c-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve',
+    note: 'Approve generation C employee review result',
+  });
+  assert.equal(approveC.status, 200, JSON.stringify(approveC.body));
+
+  const finalizeC = await h.action('finalize', 'v27-double-employee-finalize-c-001');
+  assert.equal(finalizeC.status, 200, JSON.stringify(finalizeC.body));
+  const finalizeCRetry = await h.action('finalize', 'v27-double-employee-finalize-c-001');
+  assert.equal(finalizeCRetry.status, 200, JSON.stringify(finalizeCRetry.body));
+
+  const retiredB = period.finalized_summary_history[0].shift_manifest[0].late_clock_in_provenance;
+  const currentC = period.finalized_summary.shift_manifest[0].late_clock_in_provenance;
+  assert.deepEqual(retiredB, firstProvenance);
+  assert.equal(currentC.payroll_clock_in_at_finalization, '2026-09-28T12:45:00.000Z');
+  assert.deepEqual(
+    currentC.payroll_correction_evidence.correction_chain.map((row) => row.audit_id),
+    [first.appliedAudit.id, second.appliedAudit.id],
+  );
+  assert.deepEqual(
+    currentC.payroll_correction_evidence.employee_correction_review_chain.map((row) => row.correction_request_id),
+    [first.request.id, second.request.id],
+  );
+  assert.deepEqual(
+    currentC.payroll_correction_evidence.employee_correction_review_chain.map((row) => row.submission_audit_id),
+    [first.submissionAudit.id, second.submissionAudit.id],
+  );
+  assert.deepEqual(
+    currentC.payroll_correction_evidence.employee_correction_review_chain.map((row) => row.review_audit_id),
+    [first.reviewAudit.id, second.reviewAudit.id],
+  );
+
+  const verify = (requestId) => h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id: requestId,
+  });
+  const verified = await verify('v27-double-employee-verify-001');
+  assert.equal(verified.status, 200, JSON.stringify(verified.body));
+  assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
+
+  const firstSubmissionHash = first.submissionAudit.details.payload_hash;
+  first.submissionAudit.details.payload_hash = 'tampered-first-employee-submission';
+  const tamperedFirst = await verify('v27-double-employee-tamper-first-001');
+  assert.equal(tamperedFirst.status, 200, JSON.stringify(tamperedFirst.body));
+  assert.equal(tamperedFirst.body.verified, false, JSON.stringify(tamperedFirst.body));
+  first.submissionAudit.details.payload_hash = firstSubmissionHash;
+
+  const secondReviewHash = second.reviewAudit.details.review_payload_hash;
+  second.reviewAudit.details.review_payload_hash = 'tampered-second-manager-review';
+  const tamperedSecond = await verify('v27-double-employee-tamper-second-001');
+  assert.equal(tamperedSecond.status, 200, JSON.stringify(tamperedSecond.body));
+  assert.equal(tamperedSecond.body.verified, false, JSON.stringify(tamperedSecond.body));
+  second.reviewAudit.details.review_payload_hash = secondReviewHash;
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
