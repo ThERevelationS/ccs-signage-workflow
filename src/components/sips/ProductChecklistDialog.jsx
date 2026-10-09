@@ -1226,6 +1226,35 @@ export default function ProductChecklistDialog({
   }, [isOpen, isLoading, focusedSearchId, checklistSearchResults, needsInputNavigationIndex,
     focusedNeedsInputId, needsInputPrimaryItems, needsInputPrimaryCount]);
 
+  // A collapsed product, hierarchy, or Completed section can hide a navigated
+  // row without a reliable blur event. Clear only a hidden result; do not take
+  // focus away from a visible collapse button or another editor control.
+  useEffect(() => {
+    if (!isOpen || isLoading || showTemplateBuilder) return;
+    const hiddenSearch = focusedSearchId &&
+      !findRenderedChecklistItemElement([focusedSearchId])?.getClientRects().length;
+    const hiddenNeedsInput = focusedNeedsInputId &&
+      !findRenderedChecklistItemElement([focusedNeedsInputId])?.getClientRects().length;
+    if (!hiddenSearch && !hiddenNeedsInput) return;
+
+    const activeElement = document.activeElement;
+    const activeRow = activeElement?.closest?.("[data-sips-checklist-item-id]");
+    const focusIsStranded = activeElement === document.body ||
+      (activeRow && !activeRow.getClientRects().length);
+    if (hiddenSearch) {
+      setFocusedSearchId(null);
+      setChecklistSearchIndex(-1);
+    }
+    if (hiddenNeedsInput) setFocusedNeedsInputId(null);
+    if (focusIsStranded) {
+      const destination = hiddenNeedsInput && needsInputPrimaryCount > 0
+        ? needsInputSummaryRef.current
+        : checklistSearchInputRef.current || checklistCloseButtonRef.current;
+      destination?.focus();
+    }
+  }, [isOpen, isLoading, showTemplateBuilder, collapsedProducts, expandedItems,
+    showCompletedItems, focusedSearchId, focusedNeedsInputId, needsInputPrimaryCount]);
+
   // Search typing and inline editor state cause frequent renders. Collapse-all
   // state should only be recomputed when the relevant hierarchy/state changes.
   const allDetailsCollapsed = useMemo(
