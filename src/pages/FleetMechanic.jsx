@@ -476,7 +476,7 @@ export default function FleetMechanic() {
       if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
       await clearStoredWorkRecovery(token,recovery);
       setWorkRecovery(null);
-      setSavedMessage("Progress saved to CCS Fleet.");
+      setSavedMessage(result?.already_applied ? "This identical progress was already saved to CCS Fleet. Nothing was added again." : "Progress saved to CCS Fleet.");
       clearSavedProgressDraft(result?.work_order || selected);
     } catch (e) {
       const detail = e?.message || "Progress could not be saved.";
