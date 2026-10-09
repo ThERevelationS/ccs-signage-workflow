@@ -174,7 +174,8 @@ export default function SalesPipeline() {
     }
     if (requestId !== activeFiltersLoadRef.current) return;
     const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
-    // Keep obsolete saved definitions available for editing, not as active filters.
+    // Obsolete virtual-stage filters are retained in the manager for editing,
+    // but must not produce an apparently empty active pipeline after upgrade.
     const availableSelected = selected.filter(f => f.type !== "filter" || !hasRetiredSalesStageCondition(f.conditions));
     setActiveFilters(availableSelected);
 
@@ -186,9 +187,11 @@ export default function SalesPipeline() {
       ? availableSelected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null
       : null;
     const missingInformationReference = Boolean(savedCustomFilterId && !savedCustomFilter);
+    const retiredInformationPreference = savedInformation === "needs_stage" ||
+      Boolean(savedCustomFilterId && selected.some((filter) => filter.id === savedCustomFilterId && hasRetiredSalesStageCondition(filter.conditions)));
     const restoredInformation = savedCustomFilterId
       ? (savedCustomFilter ? savedInformation : "all")
-      : (["all", "needs_stage", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation) ? savedInformation : "all");
+      : (["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation) ? savedInformation : "all");
     const savedAttention = String(preferences?.attention_filter || "all");
     const restoredAttention = salesAttentionOption(savedAttention) ? savedAttention : "all";
     const savedColumnId = String(preferences?.column_preset_id || "default");
@@ -252,7 +255,9 @@ export default function SalesPipeline() {
     setFilterStatus(restoredModes.informationFilter);
     setAttentionFilter(restoredModes.attentionFilter);
     setActiveColumnPreset(restoredColumn);
-    if (missingInformationReference && missingColumnReference) {
+    if (retiredInformationPreference) {
+      setFilterReconciliationNotice("A retired Sales stage filter was reset to All Statuses. Saved custom filter definitions remain available under Manage Filters for editing.");
+    } else if (missingInformationReference && missingColumnReference) {
       setFilterReconciliationNotice("A saved Information Filter and Column Filter are no longer available. Both were reset.");
     } else if (missingInformationReference) {
       setFilterReconciliationNotice("The active saved Information Filter is no longer available. Showing All Statuses.");
@@ -262,7 +267,7 @@ export default function SalesPipeline() {
       setFilterReconciliationNotice(liveDefinitionNotice);
     }
 
-    if (hasLegacyFilterConflict || missingInformationReference || missingColumnReference) {
+    if (hasLegacyFilterConflict || missingInformationReference || missingColumnReference || retiredInformationPreference) {
       const repairIdentity = preferenceIdentityRef.current;
       const repairSessionToken = sessionToken;
       const expectedPreferences = {
@@ -656,7 +661,6 @@ export default function SalesPipeline() {
                 </SelectTrigger>
               <SelectContent>
                 {isStandardFilterEnabled("all") && <SelectItem value="all">{recordScope === "outcomes" ? "All Outcomes" : "All Statuses"}</SelectItem>}
-                {recordScope === "current" && isStandardFilterEnabled("needs_stage") && <SelectItem value="needs_stage">Needs Stage</SelectItem>}
                 {recordScope !== "outcomes" && isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
                 {recordScope !== "outcomes" && isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
                 {recordScope !== "outcomes" && isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
