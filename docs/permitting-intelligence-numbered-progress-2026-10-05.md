@@ -1,3 +1,7 @@
+## 2026-10-09 — Phase 10, milestone 2: Delhi identity and dossier attachment
+
+Created one real identity-only Delhi Township profile after live absence check and retained Census Hamilton County candidate match; exact-ID readback count1. Needs verification; auto-refresh off; requirements null. Attached two retained PDFs and eight page-linked findings to admin locality dossier. Historical proposal preserved. Live records created1; authority approvals0; publications0. Next: Symmes Hamilton County locality identity and dossier attachment.
+
 ## 2026-10-09 — Phase 10, milestone 2: Symmes dossier identity gate
 
 Live Ohio profile query returned no Symmes match. Prepared unattached dossier proposal with four byte/hash-verified PDFs and 20 page-linked research findings, including six OCR findings verified against raw text hashes. Missing Appendix1/ExhibitA, execution, map/currentness and electrical roles remain unapproved. No null-ID UI row or production record change. Publications0. Next: resolve missing township profile identities before attaching Delhi/Symmes/Crosby documents.
