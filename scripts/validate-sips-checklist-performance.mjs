@@ -296,7 +296,7 @@ check("collapsing products, details, or Completed clears only hidden navigation 
   assert.match(collapseGuard, /if \(!hiddenSearch && !hiddenNeedsInput\) return;/);
   assert.match(collapseGuard, /if \(hiddenSearch\) \{\s*setFocusedSearchId\(null\);\s*setChecklistSearchIndex\(-1\);/);
   assert.match(collapseGuard, /if \(hiddenNeedsInput\) setFocusedNeedsInputId\(null\);/);
-  assert.match(collapseGuard, /showCompletedItems, focusedSearchId, focusedNeedsInputId, needsInputPrimaryCount\]/);
+  assert.match(collapseGuard, /showCompletedItems, focusedSearchId, focusedNeedsInputId,\s*needsInputPrimaryCount\]/);
   assert.match(collapseGuard, /collapsedProducts, expandedItems/);
 });
 
