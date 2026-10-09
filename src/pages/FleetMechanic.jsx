@@ -9,6 +9,34 @@ const estimateSeed = row => row?.visibility === "mechanic" ? ({estimated_labor_h
 const estimateTotal = form => Number(form.estimated_labor_hours||0)*Number(form.labor_rate||0)+(form.parts_estimate||[]).reduce((sum,line)=>sum+Number(line.quantity||0)*Number(line.estimated_cost||0),0)+(form.fluids_estimate||[]).reduce((sum,line)=>sum+Number(line.quantity||0)*Number(line.estimated_cost||0),0)+Number(form.misc_total||0);
 const ACTIVE_WORK_STATUSES = new Set(["open","assigned","in_progress"]);
 const newMechanicRequestId = () => globalThis.crypto.randomUUID();
+const WORK_RECOVERY_STORAGE_PREFIX = "ccs_fleet_mechanic_pending_v1";
+async function workRecoveryStorageKey(token) {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return WORK_RECOVERY_STORAGE_PREFIX + ":" + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2,"0")).join("");
+}
+async function readStoredWorkRecovery(token) {
+  const raw = sessionStorage.getItem(await workRecoveryStorageKey(token));
+  if (!raw) return null;
+  const pending = JSON.parse(raw);
+  if (!pending || !["start","save"].includes(pending.action) ||
+      typeof pending.workOrderId !== "string" || !pending.workOrderId ||
+      typeof pending.requestId !== "string" || !/^[A-Za-z0-9_-]{16,120}$/.test(pending.requestId)) {
+    throw new Error("A previous mechanic request marker cannot be verified. Contact CCS before making further changes.");
+  }
+  return {...pending,reason:"A mechanic request was interrupted by a browser reload. Its original server receipt must be checked; local unsent notes and photos are not restored."};
+}
+async function storeWorkRecovery(token,recovery) {
+  sessionStorage.setItem(await workRecoveryStorageKey(token),JSON.stringify({
+    workOrderId:recovery.workOrderId,action:recovery.action,requestId:recovery.requestId,
+  }));
+}
+async function clearStoredWorkRecovery(token,recovery) {
+  try {
+    const key = await workRecoveryStorageKey(token);
+    const pending = JSON.parse(sessionStorage.getItem(key) || "null");
+    if (pending?.workOrderId === recovery.workOrderId && pending?.action === recovery.action && pending?.requestId === recovery.requestId) sessionStorage.removeItem(key);
+  } catch { /* Keeping the marker is safer than discarding unverified recovery state. */ }
+}
 
 function initialToken() {
   if (typeof window === "undefined") return "";
@@ -158,8 +186,17 @@ export default function FleetMechanic() {
     if (quiet) setRefreshing(true); else setLoading(true);
     try {
       const result = await fetchPortalPayload();
+      const pending = quiet ? null : await readStoredWorkRecovery(token);
       if (requestId !== portalRequestRef.current) return;
       applyPortalPayload(result);
+      if (pending) {
+        setWorkRecovery(pending);
+        if (!selectedWorkOrderRef.current) {
+          const visible = [...(result?.active_work_orders || []),...(result?.recent_completed || [])];
+          const matching = visible.find(row => row.id === pending.workOrderId);
+          if (matching) openJob(matching);
+        }
+      }
     } catch (e) {
       if (requestId === portalRequestRef.current) setError(e?.message || "The Fleet mechanic portal could not be loaded.");
     } finally {
@@ -249,6 +286,7 @@ export default function FleetMechanic() {
       if (fresh) applyWorkOrderSnapshot(fresh);
       const isSameOpenJob = selectedWorkOrderRef.current === recovery.workOrderId;
       if (result?.status === "applied") {
+        await clearStoredWorkRecovery(token,recovery);
         setWorkRecovery(null);
         if (isSameOpenJob) {
           if (recovery.action === "save") clearSavedProgressDraft(fresh);
@@ -258,6 +296,7 @@ export default function FleetMechanic() {
         return true;
       }
       if (result?.status === "failed" || result?.status === "not_found") {
+        await clearStoredWorkRecovery(token,recovery);
         setWorkRecovery(null);
         if (isSameOpenJob) {
           setSavedMessage("");
@@ -305,6 +344,13 @@ export default function FleetMechanic() {
     const appliedPortalEpoch = portalAppliedEpochRef.current;
     setBusy("start"); setActionError(""); setSavedMessage("");
     try {
+      await storeWorkRecovery(token,recovery);
+    } catch {
+      setBusy("");
+      setActionError("This browser cannot retain the request recovery marker. Start Work was not sent. Enable session storage or contact CCS.");
+      return;
+    }
+    try {
       const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
         action: "start", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
       });
@@ -314,6 +360,7 @@ export default function FleetMechanic() {
         return;
       }
       if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
+      await clearStoredWorkRecovery(token,recovery);
       setWorkRecovery(null);
       setSavedMessage("Work started. CCS Fleet has been updated.");
     } catch (e) {
@@ -409,6 +456,13 @@ export default function FleetMechanic() {
     const appliedPortalEpoch = portalAppliedEpochRef.current;
     setBusy("save"); setActionError(""); setSavedMessage("");
     try {
+      await storeWorkRecovery(token,recovery);
+    } catch {
+      setBusy("");
+      setActionError("This browser cannot retain the request recovery marker. Save Progress was not sent. Enable session storage or contact CCS.");
+      return;
+    }
+    try {
       const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
         action: "save", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
         actual_hours: form.actual_hours, corrective_action: form.corrective_action, mechanic_note: form.mechanic_note,
@@ -420,6 +474,7 @@ export default function FleetMechanic() {
         return;
       }
       if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
+      await clearStoredWorkRecovery(token,recovery);
       setWorkRecovery(null);
       setSavedMessage("Progress saved to CCS Fleet.");
       clearSavedProgressDraft(result?.work_order || selected);
@@ -439,6 +494,7 @@ export default function FleetMechanic() {
         <button onClick={()=>load(true)} disabled={refreshing||!!busy} className="min-h-11 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm disabled:opacity-50">{refreshing?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh</button>
       </div>
 
+      {workRecovery && ![...(data?.active_work_orders || []),...(data?.recent_completed || [])].some(row=>row.id===workRecovery.workOrderId) && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">An interrupted mechanic update requires CCS review. The affected job is no longer available to this link. No request was replayed, and no restricted job details are shown.</div>}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <Summary label="Active Jobs" value={data?.active_work_orders?.length || 0} icon={Wrench}/>
         <Summary label="Recent Completed" value={data?.recent_completed?.length || 0} icon={CheckCircle2}/>
@@ -488,8 +544,8 @@ function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddP
 
       {canEstimate && <EstimateEditor estimate={estimate} form={estimateForm} setForm={setEstimateForm} completed={completed} busy={busy} recoveryRequired={recoveryRequired} onSave={onSaveEstimate} onSubmit={onSubmitEstimate} onCheckServerState={onCheckEstimateState}/>} 
 
+      {workRecoveryRequired&&<div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><div className="font-semibold">Current server state must be checked.</div><p className="mt-1 text-xs text-amber-800">Start Work, progress fields, notes, photos, and Save Progress are locked until CCS Fleet confirms whether the previous mechanic request was applied. Nothing will be replayed automatically. Notes and photos not saved before a browser reload cannot be restored.</p><button type="button" onClick={onCheckWorkState} disabled={busy==="work-recovery"} className="mt-3 min-h-11 w-full sm:w-auto px-4 rounded-xl border border-amber-500 bg-white font-semibold text-amber-900 inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="work-recovery"?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Check Current Server State</button></div>}
       {!completed && <Section title="Mechanic Progress">
-        {workRecoveryRequired&&<div role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><div className="font-semibold">Current server state must be checked.</div><p className="mt-1 text-xs text-amber-800">Start Work, progress fields, notes, photos, and Save Progress are locked until CCS Fleet confirms whether the previous mechanic request was applied. Nothing will be replayed automatically.</p><button type="button" onClick={onCheckWorkState} disabled={busy==="work-recovery"} className="mt-3 min-h-11 w-full sm:w-auto px-4 rounded-xl border border-amber-500 bg-white font-semibold text-amber-900 inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="work-recovery"?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Check Current Server State</button></div>}
         {canStart&&workOrder.status!=="in_progress"&&<button onClick={onStart} disabled={!!busy||approvalBlocked||workRecoveryRequired} className="mb-4 w-full sm:w-auto min-h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy==="start"?<Loader2 className="w-4 h-4 animate-spin"/>:approvalBlocked?<Clock3 className="w-4 h-4"/>:<Activity className="w-4 h-4"/>}{approvalBlocked?"Waiting for CCS Approval":"Mark Work Started"}</button>}
         {!canStart&&workOrder.status!=="in_progress"&&<div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">This mechanic link does not currently allow starting work.</div>}
         <fieldset disabled={!canSave||approvalBlocked||workRecoveryRequired||!!busy} className="disabled:opacity-55">
