@@ -63,6 +63,7 @@ import {
   verifiedSalesPreviewColumn,
   salesRunRequiresReview,
   shouldCreateSmartsheetSalesRecordInPipeline,
+  initialSmartsheetSalesStatus,
 } from '../../shared/smartsheetSalesSafety.mjs';
 import { cleanText, normalizeSheets, normalizeColumns, normalizeCellPayload, normalizeSheetRows, numericIdList, normalizePullValue } from '../../shared/smartsheetSyncUtils.ts';
 
@@ -524,6 +525,9 @@ async function pullDataset(
         newRecord.smartsheet_parent_row_id = salesParentRowId;
         if (!newRecord.title) newRecord.title = newRecord.client_name;
         newRecord.in_pipeline = shouldCreateSmartsheetSalesRecordInPipeline(newRecord);
+        newRecord.sales_status = initialSmartsheetSalesStatus(newRecord);
+        // This is imported classification, not a verified stage movement:
+        // do not manufacture sales_stage_changed_at or sales_last_activity_at.
         // A record created from this remote row already has a known sync
         // baseline. Store the actual remote cells (with any unresolved assignee
         // held at the conservative local baseline above), not a local reconstruction.
