@@ -5,6 +5,7 @@ import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
 import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
+import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
 import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
@@ -635,16 +636,18 @@ async function pullDataset(
         batchEvidence: orderPullBatchEvidence,
       });
     }
-    const payload = batch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields }: any) => {
+    const stageBatch = dataset === 'sales' ? batch.filter((rec: any) => rec._salesStageTransition) : [];
+    const ordinaryBatch = dataset === 'sales' ? batch.filter((rec: any) => !rec._salesStageTransition) : batch;
+    const payload = ordinaryBatch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, ...fields }: any) => {
       const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
       return { id, ...withoutUnverifiedTimestamp };
     });
     try {
-      await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
+      if (payload.length) await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
       if (dataset === 'orders') updatedCount += payload.length;
-      for (const rec of batch) {
+      for (const rec of ordinaryBatch) {
         if (rec._existing) {
-          const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields } = rec;
+          const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, ...fields } = rec;
           const snapshot = _remoteSnapshot;
           if (dataset === 'orders') {
             const changes = changedPulledOrderDates(_existing, fields);
