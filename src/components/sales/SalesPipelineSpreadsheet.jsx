@@ -58,6 +58,7 @@ import {
 } from "@/components/sales/salesLiveEditView.mjs";
 import { salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
+import { salesReviewQueueFilterKey, canKeepLocallyResolvedSalesReview, keepLocallyResolvedSalesReviewDetails, nextSalesReviewQueueIndex } from "@/components/sales/salesReviewQueueExit.mjs";
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -265,6 +266,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const activeRecordScopeRef = useRef(recordScope);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const selectedQueueIndexRef = useRef(null);
+  const resolvedReviewExitRef = useRef(null);
   const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
   const [statusTransition, setStatusTransition] = useState(null);
   const [followUpCompletion, setFollowUpCompletion] = useState(null);
@@ -348,6 +350,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     () => describeSalesColumnHeaderFilter(sortConfig),
     [sortConfig],
   );
+  const reviewQueueFilterKey = salesReviewQueueFilterKey({
+    attentionFilter, recordScope, filterStatus, searchTerm, outcomePeriod,
+    customFilters, customHeaderFilter: sortConfig.customFilter,
+  });
 
   useEffect(() => {
     onColumnHeaderFilterChange?.(activeColumnHeaderFilter);
@@ -1008,6 +1014,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         : {}),
     } : {};
     const mergedUpdates = { ...proposedUpdates, ...trackingUpdates };
+    if (selectedWorkOrder?.id === orderId &&
+        (Object.prototype.hasOwnProperty.call(mergedUpdates, 'sales_status') ||
+         Object.prototype.hasOwnProperty.call(mergedUpdates, 'current_task_description'))) {
+      // Preserve an opened review detail only when this user's own protected
+      // task edit resolves the mismatch. Filter changes still close hidden rows.
+      resolvedReviewExitRef.current = canKeepLocallyResolvedSalesReview({
+        selectedId: selectedWorkOrder.id, workOrderBefore: currentWo,
+        workOrderAfter: { ...currentWo, ...mergedUpdates }, attentionFilter,
+      }) ? { id: orderId, filterKey: reviewQueueFilterKey } : null;
+    }
     const changedFields = Object.keys(mergedUpdates).filter((changedField) =>
       JSON.stringify(currentWo[changedField]) !== JSON.stringify(mergedUpdates[changedField])
       || (changedField === "date_estimate_sent" && quoteDateVerificationRequested)
@@ -1147,6 +1163,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const openOpportunityDetails = (workOrder) => {
+    resolvedReviewExitRef.current = null;
     setSelectedWorkOrder(workOrder);
     setShowFullWorkOrderDetails(false);
   };
@@ -2516,6 +2533,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   useEffect(() => {
     if (!selectedWorkOrder?.id) {
       selectedQueueIndexRef.current = null;
+      resolvedReviewExitRef.current = null;
       return;
     }
     const currentIndex = filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id);
@@ -2524,9 +2542,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return;
     }
 
-    // Filters/search can remove the row that owns an open details/action dialog.
-    // Close that row-bound surface rather than leaving a hidden, no-longer-visible
-    // opportunity actionable against the newly filtered queue.
+    // A locally corrected Task / Status review may leave the visible queue.
+    // Keep the already-open details and its previous index for Next/Previous;
+    // changing filters or removing a row externally still closes it normally.
+    if (keepLocallyResolvedSalesReviewDetails({
+      selectedId: selectedWorkOrder.id,
+      exit: resolvedReviewExitRef.current,
+      filterKey: reviewQueueFilterKey,
+      latestRow: workOrders.find(row => row.id === selectedWorkOrder.id),
+    })) return;
+    resolvedReviewExitRef.current = null;
     setSelectedWorkOrder(null);
     setShowFullWorkOrderDetails(false);
     setStatusTransition(null);
@@ -2535,7 +2560,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setCorbridgeDraft({ invoiceNumber: "", link: "" });
     setCorbridgeSaveError("");
     selectedQueueIndexRef.current = null;
-  }, [selectedWorkOrder?.id, filteredWorkOrders]);
+  }, [selectedWorkOrder?.id, filteredWorkOrders, reviewQueueFilterKey, workOrders]);
 
   const selectedQueueIndex = selectedWorkOrder?.id
     ? filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id)
@@ -2553,18 +2578,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   );
   const navigateSelectedOpportunity = (direction) => {
     if (!selectedWorkOrder || filteredWorkOrders.length === 0) return;
-    const currentIndex = filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id);
-    const anchor = currentIndex >= 0
-      ? currentIndex
-      : Number.isInteger(selectedQueueIndexRef.current)
-        ? selectedQueueIndexRef.current
-        : 0;
-    const targetIndex = currentIndex >= 0
-      ? currentIndex + direction
-      : direction > 0
-        ? anchor
-        : anchor - 1;
-    if (targetIndex < 0 || targetIndex >= filteredWorkOrders.length) return;
+    const targetIndex = nextSalesReviewQueueIndex({
+      filteredRows: filteredWorkOrders, selectedId: selectedWorkOrder.id,
+      anchor: selectedQueueIndexRef.current, direction,
+    });
+    if (targetIndex < 0) return;
+    resolvedReviewExitRef.current = null;
     selectedQueueIndexRef.current = targetIndex;
     setSelectedWorkOrder(filteredWorkOrders[targetIndex]);
     setShowFullWorkOrderDetails(false);
@@ -2763,7 +2782,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           leadSources={leadSources}
           taskDescriptions={taskDescriptions}
           isRegistered={isRegistered}
-          onClose={() => setSelectedWorkOrder(null)}
+          onClose={() => { resolvedReviewExitRef.current = null; setSelectedWorkOrder(null); }}
           onUpdateFields={updateWorkOrderFields}
           onRemoveFromCurrentPipeline={removeFromCurrentPipeline}
           onCompleteFollowUp={requestFollowUpCompletion}
