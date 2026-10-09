@@ -14,6 +14,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
 import { loadSalesPipelinePreferencesSafely, saveSalesPipelinePreferencesSafely } from "@/components/sales/salesFilterPersistence";
 import { resolveRestoredSalesFilterModes } from "@/components/sales/salesFilterPreferenceRestore.mjs";
+import { hasRetiredSalesStageCondition } from "@/components/sales/salesStageTrust.mjs";
 
 const EMPTY_PIPELINE_SUMMARY = {
   openCount: 0,
@@ -173,14 +174,16 @@ export default function SalesPipeline() {
     }
     if (requestId !== activeFiltersLoadRef.current) return;
     const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
-    setActiveFilters(selected);
+    // Keep obsolete saved definitions available for editing, not as active filters.
+    const availableSelected = selected.filter(f => f.type !== "filter" || !hasRetiredSalesStageCondition(f.conditions));
+    setActiveFilters(availableSelected);
 
     const savedInformation = String(preferences?.information_filter || "all");
     const savedCustomFilterId = savedInformation.startsWith("custom_")
       ? savedInformation.slice("custom_".length)
       : "";
     const savedCustomFilter = savedCustomFilterId
-      ? selected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null
+      ? availableSelected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null
       : null;
     const missingInformationReference = Boolean(savedCustomFilterId && !savedCustomFilter);
     const restoredInformation = savedCustomFilterId
