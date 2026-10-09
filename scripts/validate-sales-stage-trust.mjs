@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  UNVERIFIED_SALES_STAGE,
+  hasRetiredSalesStageCondition,
   isUnverifiedSmartsheetSalesStage,
   salesStageDisplayLabel,
   salesStageDisplayValue,
@@ -20,10 +20,10 @@ const importedDefaultLead = {
 };
 same(isUnverifiedSmartsheetSalesStage(importedDefaultLead), true,
   "Smartsheet-linked open rows without a verified stage timestamp are unverified.");
-same(salesStageDisplayValue(importedDefaultLead), UNVERIFIED_SALES_STAGE,
-  "Defaulted imported Lead displays as Needs Stage.");
-same(salesStageDisplayLabel(importedDefaultLead), "Needs Stage",
-  "Unverified imported stage has an explicit user-facing label.");
+same(salesStageDisplayValue(importedDefaultLead), "lead",
+  "An imported Lead displays the persisted Lead classification, not a virtual stage.");
+same(salesStageDisplayLabel(importedDefaultLead), "Lead",
+  "The displayed stage remains Lead even when stage timing is missing.");
 
 same(salesStageDisplayValue({
   ...importedDefaultLead,
@@ -42,7 +42,7 @@ same(salesStageDisplayValue({
   smartsheet_sheet_id: "8702703019812740",
   smartsheet_row_id: "123456789",
   sales_stage_changed_at: "",
-}), "needs_stage", "Unverified imported rows are not trusted merely because a raw open status exists.");
+}), "quoted", "Imported Quoted rows keep their stored stage without inventing verified timing.");
 
 same(salesStageDisplayValue({
   in_pipeline: true,
@@ -50,7 +50,7 @@ same(salesStageDisplayValue({
   smartsheet_sheet_id: "8702703019812740",
   smartsheet_row_id: "123456789",
   sales_stage_changed_at: "",
-}), "won", "Terminal Won outcome is never rewritten to Needs Stage.");
+}), "won", "Explicit modern Won outcomes remain Won.");
 
 same(salesStageDisplayValue({
   in_pipeline: false,
@@ -71,8 +71,9 @@ check(!spreadsheet.includes("requestSalesStatusChange") &&
       !spreadsheet.includes("sales_stage_changed_at: classificationStamp"),
   "No independent status confirmation can fabricate a stage timestamp; unresolved legacy timing remains visible.");
 check(spreadsheet.includes('const stageKey = salesStageDisplayValue(wo)') &&
-      spreadsheet.includes('? "Needs Stage"'),
-  "Insights stage breakdown separates unverified imports from Lead.");
+      !spreadsheet.includes('? "Needs Stage"') &&
+      spreadsheet.includes("stageRow.trackedCount += 1;"),
+  "Insights group stored statuses and only count verified stage-age evidence.");
 
 const row = readFileSync("src/components/sales/SalesPipelineRow.jsx", "utf8");
 check(row.includes("salesStageDisplayLabel(wo)") && row.includes("{stageDisplayLabel}") &&
@@ -86,9 +87,10 @@ check(mobile.includes("salesStageDisplayLabel(wo)") && mobile.includes('aria-lab
   "Mobile shows a readable stage badge without independent status selection.");
 
 const board = readFileSync("src/components/sales/SalesPipelineKanban.jsx", "utf8");
-check(board.includes('value: "needs_stage", label: "Needs Stage"') &&
-      board.includes("salesStageDisplayValue(workOrder) === status.value"),
-  "Board has a dedicated virtual Needs Stage column.");
+check(!board.includes('value: "needs_stage"') &&
+      board.includes("salesStageDisplayValue(workOrder) === status.value") &&
+      board.includes('value: "closed_neutral"'),
+  "Board uses the real Sales stages plus distinct neutral closure, never a virtual Needs Stage column.");
 check(!board.includes("draggable=") && !board.includes("onDrop=") &&
       !board.includes("onDragOver=") && !board.includes("requestStatusChange"),
   "Kanban stage changes via drag-and-drop or independent actions are disabled.");
@@ -111,13 +113,26 @@ check(spreadsheet.includes("taskDescriptions={taskDescriptions}") &&
   "All Sales views share the catalog and have no independent stage-change callback.");
 
 const page = readFileSync("src/pages/SalesPipeline.jsx", "utf8");
-check(page.includes('"needs_stage"') && page.includes('<SelectItem value="needs_stage">Needs Stage</SelectItem>'),
-  "Top-level Information Filter exposes Needs Stage and can restore it per user.");
+check(!page.includes('<SelectItem value="needs_stage">') &&
+      page.includes('savedInformation === "needs_stage"') && page.includes("retiredInformationPreference"),
+  "Information Filter removes the retired option and repairs an old selection safely.");
 
 const filterDialog = readFileSync("src/components/sales/CustomFilterDialog.jsx", "utf8");
-check(filterDialog.includes('{ name: "Needs Stage", value: "needs_stage"') &&
-      filterDialog.includes('options: ["needs_stage", "lead", "quoted"'),
-  "Custom filter manager exposes Needs Stage without changing the WorkOrder enum.");
+check(!filterDialog.includes('{ name: "Needs Stage", value: "needs_stage"') &&
+      filterDialog.includes('options: ["lead", "quoted"') &&
+      filterDialog.includes("hasRetiredSalesStageCondition(filterConditions)"),
+  "Custom filter manager offers only real stages and rejects retired conditions on save.");
+check(hasRetiredSalesStageCondition([{ field:"sales_status", operator:"equals", value:"needs_stage" }]),
+  "Legacy saved stage equality filters are detected without editing stored definitions.");
+check(hasRetiredSalesStageCondition([{ field:"sales_status", operator:"is_one_of", value:"lead,needs_stage" }]),
+  "Legacy selected-stage lists containing the retired option are detected.");
+check(!hasRetiredSalesStageCondition([{ field:"sales_status", operator:"equals", value:"lead" }]) &&
+      !hasRetiredSalesStageCondition([{ field:"sales_status", operator:"not_empty", value:"needs_stage" }]),
+  "Valid modern status filters and value-free operators are preserved.");
+check(page.includes("availableSelected = selected.filter") && page.includes("hasRetiredSalesStageCondition(f.conditions)"),
+  "Invalid saved filters are excluded from active selections but retained for editing.");
+check(spreadsheet.includes('selected.includes("needs_stage")') && spreadsheet.includes("handleCustomSort"),
+  "Retired header filter values are removed without discarding other selected statuses.");
 
 // Phase 4A: The desktop Status column is purely informational. History, stage
 // colors, sorting and filters remain; Task Description is the edit surface.
