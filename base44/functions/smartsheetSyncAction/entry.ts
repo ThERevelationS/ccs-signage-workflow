@@ -1851,7 +1851,10 @@ async function pushDataset(
           id: record.id,
           ...fieldPlan.incoming,
           smartsheet_sync_snapshot: batchSnapshot,
-          smartsheet_last_synced_at: new Date().toISOString(),
+          // A held Sales task is not fully synchronized. Preserve its last
+          // verified full-sync time even when unrelated fields reconcile.
+          ...(dataset === 'sales' && fieldPlan.taskStageHeld
+            ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
           ...(dataset === 'orders' ? { smartsheet_pending_local_sync: fieldPlan.unresolved.length > 0 } : {}),
         };
         deferredBase44Updates.push(deferredUpdate);
