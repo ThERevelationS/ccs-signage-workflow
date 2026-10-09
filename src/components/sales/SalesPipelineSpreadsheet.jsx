@@ -57,6 +57,7 @@ import {
   salesLiveEditPinChanged,
 } from "@/components/sales/salesLiveEditView.mjs";
 import { salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -220,6 +221,8 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
     return isOperational && isQuoteAwaitingResponse(workOrder) && getQuoteAgeDays(workOrder, parseLocalDate(todayStamp)) === null;
   }
   if (attentionFilter === "needs_attention") return isOperational && hasSalesAttention(workOrder, parseLocalDate(todayStamp));
+  if (attentionFilter === "task_status_review") return classifySalesTaskStatusAudit(workOrder).kind === 'modern_review';
+  if (attentionFilter === "legacy_task_context") return classifySalesTaskStatusAudit(workOrder).kind === 'legacy_context';
   if (attentionFilter === "placeholder") return isOperational && isLikelySalesPlaceholder(workOrder);
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
   if (attentionFilter === "near_close") return isOperational && workOrder?.expected_close_date >= todayStamp && workOrder?.expected_close_date <= nearCloseStamp;
@@ -2325,6 +2328,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     };
     summary.ownerOutcomePerformance = buildOutcomePerformance("sales_rep", "Unassigned");
     summary.sourceOutcomePerformance = buildOutcomePerformance("lead_source", "Unspecified");
+    // Audit counts describe only the records already loaded in this workspace.
+    // They never claim whole-archive completeness or reclassify legacy Sales.
+    summary.taskStatusReviewCount = 0;
+    summary.legacyTaskContextCount = 0;
+    summary.taskAuditLoadedCount = scopedWorkOrders.length;
+    for (const wo of scopedWorkOrders) {
+      const kind = classifySalesTaskStatusAudit(wo).kind;
+      if (kind === 'modern_review') summary.taskStatusReviewCount++;
+      if (kind === 'legacy_context') summary.legacyTaskContextCount++;
+    }
     return summary;
   }, [scopedWorkOrders, workOrders, recordScope, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp, users]);
 
