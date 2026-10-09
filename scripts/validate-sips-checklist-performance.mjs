@@ -314,4 +314,22 @@ check("collapsing does not steal focus from visible controls and recovers strand
   assert.equal((collapseGuard.match(/destination\?\.focus\(\)/g) || []).length, 1);
 });
 
+check("collapsing a section clears navigation for hidden rows without stealing visible focus", () => {
+  const guard = source.slice(
+    source.indexOf("// A collapsed product, hierarchy, or Completed section"),
+    source.indexOf("// Search typing and inline editor state")
+  );
+  assert.match(guard, /getClientRects\(\)\.length/);
+  assert.match(guard, /if \(!hiddenSearch && !hiddenNeedsInput\) return;/);
+  assert.match(guard, /if \(hiddenSearch\) \{\s*setFocusedSearchId\(null\);\s*setChecklistSearchIndex\(-1\);/);
+  assert.match(guard, /if \(hiddenNeedsInput\) setFocusedNeedsInputId\(null\);/);
+  assert.match(guard, /if \(focusIsStranded\) \{/);
+  assert.match(guard, /activeElement === document\.body/);
+  assert.match(guard, /\(activeRow && !activeRow\.getClientRects\(\)\.length\)/);
+  assert.match(guard, /needsInputSummaryRef\.current/);
+  assert.match(guard, /checklistSearchInputRef\.current \|\| checklistCloseButtonRef\.current/);
+  assert.match(guard, /showCompletedItems, focusedSearchId, focusedNeedsInputId, needsInputPrimaryCount\]/);
+  assert.match(guard, /collapsedProducts, expandedItems/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
