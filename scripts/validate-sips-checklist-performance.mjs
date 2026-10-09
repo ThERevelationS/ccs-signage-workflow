@@ -297,7 +297,7 @@ check("collapsing products, details, or Completed clears only hidden navigation 
   assert.match(collapseGuard, /if \(hiddenSearch\) \{\s*setFocusedSearchId\(null\);\s*setChecklistSearchIndex\(-1\);/);
   assert.match(collapseGuard, /if \(hiddenNeedsInput\) setFocusedNeedsInputId\(null\);/);
   assert.match(collapseGuard, /showCompletedItems, focusedSearchId, focusedNeedsInputId,\s*needsInputPrimaryCount\]/);
-  assert.match(collapseGuard, /collapsedProducts, expandedItems/);
+  assert.match(collapseGuard, /collapsedProducts,\s*expandedItems/);
 });
 
 check("collapsing does not steal focus from visible controls and recovers stranded focus", () => {
