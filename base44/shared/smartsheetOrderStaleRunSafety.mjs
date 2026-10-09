@@ -38,16 +38,37 @@ export function classifyRecoverableStaleOrderSync(status, now = Date.now()) {
   };
 }
 
+// Verify that close-for-review did not silently drop the permanent-ID
+// evidence of an uncertain in-flight Order write. Object key ordering is not
+// meaningful; array ordering (batch order and mapped IDs) is meaningful.
+function canonicalEvidence(value) {
+  if (Array.isArray(value)) return value.map(canonicalEvidence);
+  if (!value || typeof value !== 'object') return value;
+  return Object.keys(value).sort().reduce((record, key) => {
+    record[key] = canonicalEvidence(value[key]);
+    return record;
+  }, {});
+}
+
+export function orderStaleBatchEvidencePreserved(before, after) {
+  if (!before?.order_pull_batch_evidence) return true;
+  return JSON.stringify(canonicalEvidence(before.order_pull_batch_evidence)) ===
+    JSON.stringify(canonicalEvidence(after?.order_pull_batch_evidence));
+}
+
 export function recoveredStaleOrderSyncValue(status, recoveredAt = new Date().toISOString()) {
   const results = Array.isArray(status?.results) ? [...status.results] : [];
   const progressCurrent = Math.max(0, Number(status?.progress_current) || 0);
   const progressTotal = Math.max(0, Number(status?.progress_total) || 0);
   const remaining = progressTotal > 0 ? Math.max(0, progressTotal - progressCurrent) : null;
   const priorLabel = String(status?.current_step_label || 'Order Form → Smartsheet').trim();
+  const attemptedPullBatches = Math.max(0, Number(status?.order_pull_batch_evidence?.attempted_batches) || 0);
+  const hasUnverifiedPullWrites = attemptedPullBatches > 0;
+  const direction = String(status?.progress_direction || '').trim() || (hasUnverifiedPullWrites ? 'pull' : 'push');
 
   results.push({
     dataset: 'orders',
-    direction: String(status?.progress_direction || '').trim() || 'push',
+    direction,
     skipped: true,
     partial: true,
     stalled: true,
@@ -58,7 +79,13 @@ export function recoveredStaleOrderSyncValue(status, recoveredAt = new Date().to
     } : {}),
     errors: 0,
     conflicts: 0,
-    reason: 'The Order sync stopped reporting progress. Its final write outcome is unverified; review and run a new sync before relying on completion.',
+    ...(hasUnverifiedPullWrites ? {
+      order_pull_batch_evidence_requires_review: true,
+      attempted_order_pull_batches: attemptedPullBatches,
+    } : {}),
+    reason: hasUnverifiedPullWrites
+      ? 'The Order pull stopped after write attempts. Some Base44 changes may have applied without verified sync snapshots. Closing this run does not retry writes. Review the recorded permanent Order and Smartsheet row IDs before starting another sync.'
+      : 'The Order sync stopped reporting progress. Its final write outcome is unverified; review the run before starting another sync. Closing does not retry writes.',
   });
 
   return {
@@ -72,9 +99,11 @@ export function recoveredStaleOrderSyncValue(status, recoveredAt = new Date().to
     stale_recovered_from_step: priorLabel,
     progress_phase: 'stalled',
     progress_item_label: 'Stalled Order sync closed for review',
-    progress_detail: remaining === null
-      ? 'The previous run stopped reporting progress; its final outcome is unverified.'
-      : `${remaining.toLocaleString()} line item${remaining === 1 ? '' : 's'} were not confirmed complete.`,
+    progress_detail: hasUnverifiedPullWrites
+      ? `${attemptedPullBatches.toLocaleString()} Order pull batch${attemptedPullBatches === 1 ? '' : 'es'} attempted. Final write and snapshot outcomes require permanent-ID review; no automatic retry.`
+      : remaining === null
+        ? 'The previous run stopped reporting progress; its final outcome is unverified.'
+        : `${remaining.toLocaleString()} line item${remaining === 1 ? '' : 's'} were not confirmed complete.`,
     progress_updated_at: recoveredAt,
     results,
   };
