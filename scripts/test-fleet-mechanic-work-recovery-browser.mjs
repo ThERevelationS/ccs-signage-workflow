@@ -82,6 +82,7 @@ try {
   browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
 
   async function run(name,width,scenario) {
+    if (process.env.FLEET_CASE_MATCH && !name.includes(process.env.FLEET_CASE_MATCH)) return;
     const page = await browser.newPage({viewport:{width,height:width<500?844:900}});
     const runtimeErrors = [], outside = [];
     page.on("pageerror", error => runtimeErrors.push(error.message));
@@ -905,6 +906,9 @@ try {
   await run("Mobile: reload during delayed Save does not duplicate notes or uploads",390,async page => {
     await page.getByLabel("Add mechanic note").fill("Single note after reload");
     await page.getByLabel("Labor hours").fill("3.5");
+    const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
+    await page.locator('input[type="file"]').setInputFiles({name:"reload-photo.png",mimeType:"image/png",buffer:png});
+    await page.locator('img[src^="blob:"]').waitFor();
     await page.evaluate(()=>{window.__fleetMechanicWorkFixture.delayNextSaveAck=true;});
     await page.getByRole("button",{name:"Save Progress"}).click();
     await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.saveAckWaiting===true);
@@ -921,6 +925,8 @@ try {
     assert.equal(fixture.actions.find(row=>row.action==="mutation_status").request_id,requestId);
     assert.equal((fixture.work.notes.match(/Single note after reload/g)||[]).length,1);
     assert.equal(fixture.work.actual_hours,3.5);
+    assert.equal(fixture.photoWrites,1,"Photo must be uploaded once despite reload");
+    assert.equal(fixture.work.after_photos.length,1);
   });
 
   await run("Desktop: interrupted Start marker stays isolated across different bearer links",1440,async page => {
@@ -928,9 +934,11 @@ try {
     await page.getByRole("button",{name:"Mark Work Started"}).click();
     await page.waitForFunction(()=>window.__fleetMechanicWorkFixture.startAckWaiting===true);
     await page.goto(origin+"/#different-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
-    await page.getByText("WO-SYNTH-WORK",{exact:true}).waitFor();
+    await page.reload({waitUntil:"networkidle"});
+    await page.getByText("WO-SYNTH-WORK",{exact:true}).first().waitFor();
     assert.equal(await page.getByRole("alert").count(),0,"A different bearer link cannot inherit the previous recovery marker");
     await page.goto(origin+"/#synthetic-mechanic-token-abcdefghijklmnopqrstuvwxyz0123456789",{waitUntil:"networkidle"});
+    await page.reload({waitUntil:"networkidle"});
     await page.getByRole("alert").getByText(/Current server state must be checked/i).waitFor();
     assert.deepEqual(await actionNames(page),["bootstrap"],"Returning to original link must not replay Start");
   });
@@ -948,7 +956,7 @@ try {
     assert.deepEqual(await actionNames(page),["bootstrap"],"Storage failure must not send an untracked mutation");
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/27 PASS");
+  console.log("Fleet mechanic work recovery browser acceptance: " + (process.env.FLEET_CASE_MATCH ? passed + " filtered PASS" : passed + "/27 PASS"));
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
