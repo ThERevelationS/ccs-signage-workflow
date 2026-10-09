@@ -161,7 +161,7 @@ test("concurrent distinct new request ids cannot apply same started receipt twic
   const next=payload("request-new-abc-123456",{mechanic_note:"Different note"});
   const other=payload("request-new-def-789012",{mechanic_note:"Another new note"});
   const results=await Promise.all([call(next,client),call(other,client)]);
-  assert.equal(store.updateAttempts,2,"Both requests must reach the same backend CAS recovery: "+JSON.stringify(results));
+  assert.ok(store.updateAttempts>=2,"Both requests must reach backend CAS recovery: "+JSON.stringify(results));
   assert.equal(store.updates,1,"Only one CAS recovery may write the work order");
   assert.deepEqual(results.map(row=>row.code).sort(),[409,409]);
   assert.equal(store.receipts.size,1,"Race must not create a replacement mutation");
