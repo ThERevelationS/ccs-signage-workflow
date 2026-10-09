@@ -45,3 +45,16 @@ test('Selection resets on query edits, Escape, clear button and activation', () 
   assert.ok(resets.length >= 4, `Expected four reset paths, found ${resets.length}`);
   assert.match(ui, /searchInputRef\.current\?\.focus\(\)/);
 });
+
+test('Search input explicitly identifies its active option using combobox semantics', () => {
+  assert.match(ui, /role="combobox"/);
+  assert.match(ui, /aria-autocomplete="list"/);
+  assert.match(ui, /aria-expanded=\{hasResults\}/);
+  assert.match(ui, /aria-controls=\{hasResults \? resultsListId : undefined\}/);
+  assert.match(ui, /aria-activedescendant=\{selectedResult \?/);
+  assert.match(ui, /role="listbox"/);
+  assert.match(ui, /id=\{resultsListId\}/);
+  assert.match(ui, /role="option"/);
+  assert.match(ui, /aria-selected=\{index === activeIndex\}/);
+  assert.match(ui, /id=\{\`\$\{resultsListId\}-option-\$\{index\}\`\}/);
+});
