@@ -19,7 +19,6 @@ const STATUS_COLUMNS = [
 ];
 
 const BOARD_COLUMNS = [
-  { value: "needs_stage", label: "Needs Stage", header: "border-violet-200 bg-violet-50", badge: "bg-violet-100 text-violet-800", virtual: true },
   ...STATUS_COLUMNS,
   { value: "closed_neutral", label: "Closed (Neutral)", header: "border-slate-200 bg-slate-50", badge: "bg-slate-100 text-slate-700", virtual: true },
 ];
