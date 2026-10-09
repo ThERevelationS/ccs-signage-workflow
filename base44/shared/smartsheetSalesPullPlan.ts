@@ -50,9 +50,9 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
 export function guardSalesPulledTaskTransition(record, incoming, plan, bindings) {
   if (record?.in_pipeline !== true ||
       !Object.prototype.hasOwnProperty.call(incoming || {}, 'current_task_description') ||
-      same(record?.current_task_description, incoming.current_task_description)) return plan;
+      same(record?.current_task_description, incoming.current_task_description)) return { ...plan, stageTransition: null };
   const bindingId = String(bindings?.current_task_description || '').trim();
-  if (!/^\d+$/.test(bindingId)) return plan;
+  if (!/^\d+$/.test(bindingId)) return { ...plan, stageTransition: null };
 
   const mapped = mapSalesTaskToStage(incoming.current_task_description);
   const currentStatus = String(record?.sales_status || 'lead').trim().toLowerCase();
@@ -76,7 +76,7 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
   }
   const requiresReview = isLegacyTerminalSmartsheetSalesRecord(record) ||
     mapped.kind !== 'stage' || needsStageChange || locallyEdited;
-  if (!requiresReview) return plan;
+  if (!requiresReview) return { ...plan, stageTransition: null };
 
   const fields = { ...plan.fields };
   delete fields.current_task_description;
@@ -88,5 +88,6 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
     fields,
     snapshot,
     held: [...new Set([...(plan.held || []), 'current_task_description'])],
+    stageTransition: null,
   };
 }
