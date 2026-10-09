@@ -37,6 +37,7 @@ import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimi
 import { orderPullPrewriteBudget, assertOrderPullContinuationBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
 import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
 import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBatchEvidence.mjs';
+import { classifyPriorUncertainOrderPull } from '../../shared/smartsheetOrderPriorUncertainPull.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -444,7 +445,6 @@ async function pullDataset(
         }
       }
     }
-    let salesStageTransition: { from: string; to: string } | null = null;
     if (dataset === 'sales' && existing) {
       // Stage-changing, terminal, and locally edited tasks require a protected
       // Sales transition, not a blind Smartsheet bulkUpdate. Other fields may pull.
@@ -453,7 +453,6 @@ async function pullDataset(
       for (const key of Object.keys(fieldValues)) delete fieldValues[key];
       Object.assign(fieldValues, plan.fields);
       salesRemoteSnapshot = plan.snapshot;
-      salesStageTransition = plan.stageTransition || null;
       if (plan.held.length) {
         salesLocalPendingPreserved.push(existing.id);
         salesAssigneeTranslationUnresolved = true; // Do not advance completion while fields are held.
@@ -506,7 +505,6 @@ async function pullDataset(
             ? {
                 _remoteSnapshot: salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings),
                 _salesAssigneeNeedsReview: salesAssigneeTranslationUnresolved,
-                _salesStageTransition: salesStageTransition,
               }
             : {}),
         ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
@@ -1140,6 +1138,16 @@ async function claimSyncRun(base44: any, status: any) {
       ? 'The existing Order sync is stale and must be closed for review before another sync can start.'
       : 'Another Order Save & Sync is already running.';
     throw Object.assign(new Error(detail), { status: 409 });
+  }
+
+  // A new Order pull must not erase prior permanent-ID evidence after an
+  // interrupted or review-required pull. This is read-only preflight: no
+  // coordinator reset, Base44 Order write, or Smartsheet retry occurs.
+  const priorOrderPull = classifyPriorUncertainOrderPull(current, {
+    orderPullRequested: status?.order_pull_requested === true,
+  });
+  if (priorOrderPull.blocked) {
+    throw Object.assign(new Error(priorOrderPull.reason), { status: 409 });
   }
 
   // Preserve the existing coordinator behavior for non-Order consumers.
@@ -3241,6 +3249,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         total_steps: steps.length,
         completed_steps: 0,
         current_step_label: steps[0]?.label || '',
+        order_pull_requested: steps.some(step => step.dataset === 'orders' && step.direction === 'pull'),
         results: [],
       });
 
