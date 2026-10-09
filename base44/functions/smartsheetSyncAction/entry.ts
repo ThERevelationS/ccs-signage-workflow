@@ -4,7 +4,7 @@ import { planFieldPush, recordFieldPullHolds, applyMergedLocalFields } from '../
 import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
 import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
-import { planSalesFieldPull } from '../../shared/smartsheetSalesPullPlan.ts';
+import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
 import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
@@ -445,7 +445,10 @@ async function pullDataset(
       }
     }
     if (dataset === 'sales' && existing) {
-      const plan = planSalesFieldPull(existing, fieldValues, salesRemoteSnapshot, bindings);
+      // Stage-changing, terminal, and locally edited tasks require a protected
+      // Sales transition, not a blind Smartsheet bulkUpdate. Other fields may pull.
+      const plan = guardSalesPulledTaskTransition(existing, fieldValues,
+        planSalesFieldPull(existing, fieldValues, salesRemoteSnapshot, bindings), bindings);
       for (const key of Object.keys(fieldValues)) delete fieldValues[key];
       Object.assign(fieldValues, plan.fields);
       salesRemoteSnapshot = plan.snapshot;
