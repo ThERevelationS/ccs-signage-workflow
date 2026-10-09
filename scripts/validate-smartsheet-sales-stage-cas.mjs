@@ -67,6 +67,17 @@ for (const field of ["current_task_description","sales_status","sales_stage_chan
 }
 assert.equal(saved.smartsheet_sync_snapshot[taskId],baseline.smartsheet_sync_snapshot[taskId],
   "CAS business write must not prematurely advance Smartsheet snapshot"); checks++;
+const metadata = { smartsheet_sync_snapshot: remote, smartsheet_last_synced_at:"2026-10-09T17:34:00.000Z" };
+const completedMetadata = await trackedConditionalSave(success.base44,"WorkOrder",saved,metadata,
+  {full_name:"Smartsheet Sales snapshot verification"},"smartsheet");
+assert.deepEqual(completedMetadata.smartsheet_sync_snapshot,remote,"Verified stage metadata may advance via CAS");checks++;
+assert.equal(success.writes,2,"Stage and metadata use separate version-guarded writes");checks++;
+const metadataRace = makeFake(saved);
+metadataRace.simulateConcurrentEdit();
+await assert.rejects(trackedConditionalSave(metadataRace.base44,"WorkOrder",saved,metadata,
+  {full_name:"Smartsheet Sales snapshot verification"},"smartsheet"),(e)=>e.status===409);checks++;
+assert.equal(metadataRace.record.smartsheet_sync_snapshot[taskId],baseline.current_task_description,
+  "Concurrent edit blocks stale Smartsheet metadata advancement"); checks++;
 
 const concurrent = makeFake(baseline);
 concurrent.simulateConcurrentEdit();
@@ -88,6 +99,9 @@ assert(backend.includes("if (payload.length) await base44.asServiceRole.entities
   "Ordinary records retain existing bulk path without empty bulk calls"); checks++;
 assert(backend.includes("trackedConditionalSave(base44, 'WorkOrder', _existing, patch") &&
   backend.includes("expectedStageChangedAt: stamp"),"Stage CAS retains timestamp for read-back");checks++;
+assert(backend.includes("salesStageMetadataCandidates.push({ record: persisted, patch: snapshotPatch })") &&
+  backend.includes("trackedConditionalSave(base44, 'WorkOrder', candidate.record, metadata"),
+  "Stage snapshot metadata uses its own CAS rather than unprotected bulk update");checks++;
 assert(backend.includes("if (!businessFieldsVerified || !parentRowVerified || !stageVerified)"),
   "Stage verification must gate metadata advancement");checks++;
 assert(!backend.includes("bulkUpdate(stageBatch)"),"Stage rows never use bulk updates");checks++;
