@@ -290,7 +290,7 @@ check("collapsing products, details, or Completed clears only hidden navigation 
     source.indexOf("// A collapsed product, hierarchy, or Completed section"),
     source.indexOf("// Search typing and inline editor state")
   );
-  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder\) return;/);
+  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) return;/);
   assert.match(collapseGuard, /focusedSearchId &&\s*!findRenderedChecklistItemElement\(\[focusedSearchId\]\)\?\.getClientRects\(\)\.length/);
   assert.match(collapseGuard, /focusedNeedsInputId &&\s*!findRenderedChecklistItemElement\(\[focusedNeedsInputId\]\)\?\.getClientRects\(\)\.length/);
   assert.match(collapseGuard, /if \(!hiddenSearch && !hiddenNeedsInput\) return;/);
@@ -320,9 +320,9 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
   assert.match(scheduler, /window\.clearTimeout\(pendingNavigationFocusTimerRef\.current\)/);
   assert.match(scheduler, /if \(navigationFocusVersionRef\.current !== version\) return;/);
   assert.match(scheduler, /useLayoutEffect\(\(\) => \{/);
-  assert.match(scheduler, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder\) cancelPendingNavigationFocus\(\)/);
+  assert.match(scheduler, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) cancelPendingNavigationFocus\(\)/);
   assert.match(scheduler, /return cancelPendingNavigationFocus;/);
-  assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, workOrder\?\.id\]/);
+  assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, showRevisitPopup, workOrder\?\.id\]/);
   assert.equal((source.match(/scheduleNavigationFocus\(\(\) => \{/g) || []).length, 3);
   assert.match(source, /const clearChecklistSearch = \(\) => \{\s*cancelPendingNavigationFocus\(\)/);
   assert.match(source, /onClick=\{\(\) => \{\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\)/);
@@ -337,12 +337,12 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
     clearTimeout(id) { pending.delete(id); }
   };
   const createHarness = new Function(
-    "window", "useLayoutEffect", "isOpen", "isLoading", "showTemplateBuilder", "workOrder",
+    "window", "useLayoutEffect", "isOpen", "isLoading", "showTemplateBuilder", "showRevisitPopup", "workOrder",
     "pendingNavigationFocusTimerRef", "navigationFocusVersionRef",
     scheduler + "\nreturn { scheduleNavigationFocus, cancelPendingNavigationFocus };"
   );
   const harness = createHarness(fakeWindow, callback => { cleanup = callback(); },
-    true, false, false, { id: "test-order" }, { current: null }, { current: 0 });
+    true, false, false, false, { id: "test-order" }, { current: null }, { current: 0 });
   const focused = [];
   harness.scheduleNavigationFocus(() => focused.push("old"));
   const staleCallback = [...pending.values()][0];
@@ -360,6 +360,36 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
   assert.equal(pending.size, 0);
   closedCallback();
   assert.deepEqual(focused, ["new"]);
+});
+
+check("Save and Revisit opens focus-safe confirmation without bypassing date selection", () => {
+  const saveClick = source.slice(source.indexOf("  const handleSaveClick = () => {"),
+    source.indexOf("  // Called after user picks (or skips) a revisit date"));
+  const calls = [];
+  const makeClick = new Function("isRegistered", "cancelPendingNavigationFocus",
+    "setPendingRevisitDate", "loadedRevisitDateSnapshot", "setShowRevisitPopup",
+    saveClick + "\nreturn handleSaveClick;");
+  const cancel = () => calls.push("cancel focus");
+  const setDate = date => calls.push(["revisit date", date]);
+  const setOpen = open => calls.push(["confirmation open", open]);
+  makeClick(false, cancel, setDate, "2099-02-17", setOpen)();
+  assert.deepEqual(calls, []);
+  makeClick(true, cancel, setDate, "2099-02-17", setOpen)();
+  assert.deepEqual(calls, [
+    "cancel focus", ["revisit date", "2099-02-17"], ["confirmation open", true]
+  ]);
+  assert.match(source, /<RevisitDatePopup\s+isOpen=\{showRevisitPopup\}/);
+  assert.match(source, /onSave=\{handleRevisitSave\}/);
+  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
+
+  const searchRecovery = source.slice(source.indexOf("// When checklist edits remove a navigated match"),
+    source.indexOf("// A collapsed product, hierarchy, or Completed section"));
+  const collapseRecovery = source.slice(source.indexOf("// A collapsed product, hierarchy, or Completed section"),
+    source.indexOf("// Search typing and inline editor state"));
+  for (const effect of [searchRecovery, collapseRecovery]) {
+    assert.match(effect, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) return;/);
+    assert.match(effect, /showRevisitPopup/);
+  }
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
