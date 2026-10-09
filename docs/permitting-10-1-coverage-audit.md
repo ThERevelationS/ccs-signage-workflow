@@ -912,3 +912,9 @@ No coverage totals or statewide completion are certified by this source audit. N
 
 Fixed tasks within 10.1: (1) current measurement audit — complete; (2) safe scoped exhaustive coverage reader and identity reconciliation — pending; (3) accurate completeness UI and request lifecycle — pending; (4) read-only live OH/KY inventory acceptance — pending. Endpoint remains 10.3. Next: validate current SDK/entity contracts, then implement task 2 with no total record cap and explicit source/form/archive/office/review gaps.
 
+
+## 2026-10-09 — Phase 10, milestone 2 of 3: document-access audit refreshed
+
+Re-ran the retained Ohio document audit after attaching Delhi, Symmes and Crosby dossiers. All 61 public PDF/office archives match retained original bytes, manifest SHA-256 and recorded byte counts; all 61 now have literal app-source links. The nine previously unlinked files are covered across 15 municipal/township dossiers. These checks do not establish browser HTTP access, publication, current requirements, authority approval or statewide completeness.
+
+Audit script accepts an ISO observation date and produces dated reports, preserving the October 8 historical audit. New reports: docs/permitting-ohio-document-access-audit-2026-10-09.json and .md. All 34 municipal research UI checks passed; git diff whitespace check passed. No live entity writes or publication occurred in this chunk. Milestone 2 remains active. Next: reconcile the Hamilton County Miami Township identity against the retained official evidence without merging Montgomery County namesakes; app-storage catalog registration and live browser acceptance remain open.

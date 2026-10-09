@@ -1,5 +1,9 @@
 """Audit repository archive bytes and literal UI references; no network or entity writes."""
-import hashlib,json,pathlib
+import argparse,datetime,hashlib,json,pathlib
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--observed-on", default=datetime.date.today().isoformat(), type=lambda value: datetime.date.fromisoformat(value).isoformat())
+args=parser.parse_args()
+output_base=pathlib.Path(f"docs/permitting-ohio-document-access-audit-{args.observed_on}")
 root=pathlib.Path('docs/official-evidence')
 manifest_entries=[]
 def walk(value,manifest):
@@ -29,10 +33,10 @@ for p in sorted(pathlib.Path('public/permitting-evidence').rglob('*')):
  files.append(dict(archive=url,bytes=len(b),sha256=digest,verified_originals=matches,literal_source_references=references))
 missing=[f['archive'] for f in files if not f['verified_originals']]
 unlinked=[f['archive'] for f in files if not f['literal_source_references']]
-report=dict(scope='Existing public/permitting-evidence PDF and office documents with Ohio evidence manifests; not statewide completeness or live browser acceptance',observed_on='2026-10-08',dossier_count=len(json.loads(pathlib.Path('src/components/permitting/ohioMunicipalResearch.json').read_text())),archive_count=len(files),verified_original_count=sum(bool(f['verified_originals']) for f in files),missing_manifest_matches=missing,without_literal_ui_reference=unlinked,files=files,limitations=['Literal source references do not prove rendering, routing, HTTP availability or published access.','Dynamically generated links may not be detected.','App-storage catalog registration, authority approval and statewide collection remain separate pending work.'],live_records_changed=0)
+report=dict(scope='Existing public/permitting-evidence PDF and office documents with Ohio evidence manifests; not statewide completeness or live browser acceptance',observed_on=args.observed_on,dossier_count=len(json.loads(pathlib.Path('src/components/permitting/ohioMunicipalResearch.json').read_text())),archive_count=len(files),verified_original_count=sum(bool(f['verified_originals']) for f in files),missing_manifest_matches=missing,without_literal_ui_reference=unlinked,files=files,limitations=['Literal source references do not prove rendering, routing, HTTP availability or published access.','Dynamically generated links may not be detected.','App-storage catalog registration, authority approval and statewide collection remain separate pending work.'],live_records_changed=0)
 assert not missing,'Unverified archive manifests: '+str(missing)
-out=pathlib.Path('docs/permitting-ohio-document-access-audit-2026-10-08.json');out.write_text(json.dumps(report,indent=2)+'\n')
+out=output_base.with_suffix('.json');out.write_text(json.dumps(report,indent=2)+'\n')
 text='# Ohio retained-document access audit\n\n'+report['scope']+'\n\n'+f"Verified {len(files)} archives against retained original bytes and manifest hashes. Existing municipal dossiers: {report['dossier_count']}.\n\n"
-text+='## Files without literal app-source references\n\n'+ ('\n'.join('- '+x for x in unlinked) or 'None.')+'\n\n## Limits\n\n'+'\n'.join('- '+x for x in report['limitations'])+'\n\nNext: connect the remaining retained township documents to exact-identity locality dossiers, beginning with Delhi. No records changed or publication performed.\n'
-pathlib.Path('docs/permitting-ohio-document-access-audit-2026-10-08.md').write_text(text)
+text+='## Files without literal app-source references\n\n'+ ('\n'.join('- '+x for x in unlinked) or 'None.')+'\n\n## Limits\n\n'+'\n'.join('- '+x for x in report['limitations'])+'\n\nNext: resolve any listed link gaps; continue app-storage catalog registration and locality identity/authority review. No records changed or publication performed.\n'
+output_base.with_suffix('.md').write_text(text)
 print(json.dumps({k:v for k,v in report.items() if k not in ['files','limitations']},indent=2))
