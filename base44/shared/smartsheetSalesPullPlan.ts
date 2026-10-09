@@ -62,8 +62,19 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
   const locallyEdited = known
     ? !same(record?.current_task_description, prior[bindingId])
     : Boolean(String(record?.current_task_description || '').trim());
+  const activeStatuses = ['lead', 'quoted', 'follow_up', 'on_hold'];
+  const needsStageChange = mapped.kind === 'stage' && mapped.status !== currentStatus;
+  const canAutoTransition = needsStageChange &&
+    activeStatuses.includes(currentStatus) && activeStatuses.includes(mapped.status) &&
+    known && !locallyEdited && !isLegacyTerminalSmartsheetSalesRecord(record) &&
+    Object.prototype.hasOwnProperty.call(plan.fields, 'current_task_description');
+  if (canAutoTransition) {
+    // Only the separate CAS write path may consume this marker. The task,
+    // real status, and stage timestamp must commit in one guarded WorkOrder save.
+    return { ...plan, stageTransition: { from: currentStatus, to: mapped.status } };
+  }
   const requiresReview = isLegacyTerminalSmartsheetSalesRecord(record) ||
-    mapped.kind !== 'stage' || mapped.status !== currentStatus || locallyEdited;
+    mapped.kind !== 'stage' || needsStageChange || locallyEdited;
   if (!requiresReview) return plan;
 
   const fields = { ...plan.fields };
