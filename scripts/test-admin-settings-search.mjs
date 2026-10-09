@@ -64,8 +64,8 @@ test('Nested routing validates available subtabs and defaults to existing panels
   assert.equal(getAccessibleAdminSubtab('users', 'pto'), null);
   assert.match(page, /updated\.set\("subtab", validSubtab\)/);
   assert.match(page, /updated\.delete\("subtab"\)/);
-  assert.match(page, /<Tabs value=\{getAccessibleAdminSubtab\("timeclock", searchParams\.get\("subtab"\)\)\}/);
-  assert.match(page, /<Tabs value=\{getAccessibleAdminSubtab\("backend", searchParams\.get\("subtab"\)\)\}/);
+  assert.match(page, /<Tabs value=\{selectedAdminTab === "timeclock" \? selectedAdminSubtab : "entries"\}/);
+  assert.match(page, /<Tabs value=\{selectedAdminTab === "backend" \? selectedAdminSubtab : "backup"\}/);
   assert.match(page, /<AdminSettingsSearch isAdmin=\{isAdmin\} onNavigate=\{handleAdminTabChange\}/);
 });
 
