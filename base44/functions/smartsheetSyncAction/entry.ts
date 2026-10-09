@@ -29,7 +29,7 @@ import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegr
 import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
-import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
+import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue, orderStaleBatchEvidencePreserved } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
 import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBackgroundPolicy.mjs';
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged, classifyOrderPullBusinessReadback } from '../../shared/smartsheetOrderPullSafety.mjs';
@@ -2352,7 +2352,8 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);
       if (verified?.setting_value?.status !== 'needs_review' ||
           verified?.setting_value?.stale_recovered_at !== recoveredAt ||
-          verified?.setting_value?.started_at !== expectedStartedAt) {
+          verified?.setting_value?.started_at !== expectedStartedAt ||
+          !orderStaleBatchEvidencePreserved(current, verified?.setting_value)) {
         return Response.json({ success: false,
           error: 'The stalled-run recovery write could not be verified. Reload before starting another sync.' }, { status: 500 });
       }
@@ -2360,7 +2361,8 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         success: true,
         recovered: true,
         status: verified.setting_value,
-        message: 'The stalled Order sync was closed as Needs review. Its final outcome remains unverified.',
+        writes_retried: false,
+        message: 'The stalled Order sync was closed as Needs review without retrying writes. Check permanent Order and Smartsheet row IDs and verify any uncertain batches before starting another sync.',
       });
     }
 
