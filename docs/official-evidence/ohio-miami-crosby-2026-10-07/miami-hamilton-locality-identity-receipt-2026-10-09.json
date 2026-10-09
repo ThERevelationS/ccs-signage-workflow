@@ -1,0 +1,23 @@
+{
+  "locality": {
+    "id": "6ac96cc5b42e6e5c9417704c",
+    "name": "Miami Township",
+    "state": "OH",
+    "type": "township"
+  },
+  "parent_county_name": "Hamilton County",
+  "geographic_candidate_key": "OH:county_subdivision:3906149364",
+  "excluded_geographic_candidate_key": "OH:county_subdivision:3911349392",
+  "excluded_montgomery_record_ids": [
+    "69b1ff3561c6ae0615974020",
+    "69a5ee8c2648963bf4fde2d6"
+  ],
+  "live_readback_count": 1,
+  "verification_status": "needs_verification",
+  "auto_refresh": false,
+  "permit_requirements": null,
+  "live_records_created": 1,
+  "authority_approved": false,
+  "source_sha256": "6e75de13f6a3dd848cada9cfa3be66d0b07dbace9b8657da7f3a41fec143615a",
+  "observed_on": "2026-10-09"
+}

@@ -387,3 +387,14 @@ test('Crosby dossier exposes three originals while labels and electrical exempti
  assert.match(html,/do not establish electrical-permit or inspection exemptions/);
  assert.equal(render(row,false),'');assert.equal(render({...row,type:'city'}),'');assert.equal(render({...row,id:'other-township'}),'');
 });
+
+test('Hamilton Miami research is isolated from Montgomery namesakes and keeps document gaps visible',()=>{
+ const root='docs/official-evidence/ohio-miami-crosby-2026-10-07/';
+ const receipt=JSON.parse(readFileSync(root+'miami-hamilton-locality-identity-receipt-2026-10-09.json'));
+ const row=dossiers.find(d=>d.id===receipt.locality.id),html=render(row);
+ assert.equal(receipt.parent_county_name,'Hamilton County');assert.equal(receipt.verification_status,'needs_verification');assert.equal(receipt.permit_requirements,null);assert.equal(receipt.auto_refresh,false);
+ assert.equal(row.resources.length,0);assert.match(html,/unincorporated territory/);assert.match(html,/collection gaps/);assert.match(html,/Village of North Bend/);assert.ok(html.includes('https://www.miamitownship.org/zoning'));
+ for(const id of receipt.excluded_montgomery_record_ids)assert.equal(render({...row,id}),'');
+ const source=JSON.parse(readFileSync(root+'manifest.json')).sources.find(s=>s.file==='miami-hamilton-zoning.html');
+ assert.equal(createHash('sha256').update(readFileSync(source.retained_path)).digest('hex'),receipt.source_sha256);
+});

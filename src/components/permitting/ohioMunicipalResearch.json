@@ -1724,5 +1724,21 @@
       "Zoning-certificate maintenance exemptions for lamps, ballast and electrical components do not establish electrical-permit or inspection exemptions.",
       "Sign diagrams, district and job-address coverage require review. Electrical permit issuance and electrical inspection remain separate pending reviews."
     ]
+  },
+  {
+    "id": "6ac96cc5b42e6e5c9417704c",
+    "name": "Miami Township",
+    "state": "OH",
+    "type": "township",
+    "source": "https://www.miamitownship.org/zoning",
+    "observed_on": "2026-10-07",
+    "resources": [],
+    "notes": [
+      "Hamilton County identity-only profile; needs verification. Distinct from Montgomery County Miami Township records.",
+      "Retained township page describes Hamilton County zoning routing for unincorporated territory. This is a research candidate; job-address coverage and current authority remain unapproved.",
+      "North Bend mailing address does not establish Village of North Bend coverage.",
+      "Sign application forms, current fees and online submission links remain collection gaps. No sign documents have been attached to this dossier.",
+      "Electrical permit issuance and electrical inspection offices require separate verification. County zoning routing does not approve either electrical role."
+    ]
   }
 ]
