@@ -153,7 +153,7 @@ test('Green split zoning and Delhi original forms preserve locality and role gap
  assert.match(html,/two zoning jurisdictions/);assert.match(html,/certificate verification/);assert.match(html,/separately unresolved/);
  assert.equal(row.online_form_url,undefined);assert.equal(render({...row,type:'city'}),'');
  const r=row.resources[0];assert.deepEqual(readFileSync('public'+r.archive),readFileSync(root+r.file));
- assert.equal(dossiers.some(d=>d.name==='Delhi Township'),false);
+ const receipt=JSON.parse(readFileSync(root+'delhi-locality-identity-receipt-2026-10-09.json'));assert.equal(dossiers.find(d=>d.name==='Delhi Township').id,receipt.locality.id);assert.equal(receipt.verification_status,'needs_verification');assert.equal(receipt.permit_requirements,null);
  const packet=JSON.parse(readFileSync(root+'office-reconciliation.json'));assert.equal(packet.profiles[1].id,null);assert.equal(packet.electrical_roles_approved,false);assert.equal(packet.live_records_changed,0);
 });
 
