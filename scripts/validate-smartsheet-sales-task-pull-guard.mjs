@@ -150,7 +150,8 @@ check(!nonPipeline.held.includes("current_task_description"),
   "Legacy non-pipeline records are not automatically converted into modern outcomes.");
 
 const unchanged = merge(base, { current_task_description: startTask });
-same(unchanged.guarded, unchanged.plan, "Unchanged incoming task stays a no-op.");
+same(unchanged.guarded.fields, unchanged.plan.fields, "Unchanged incoming task stays a no-op.");
+same(unchanged.guarded.stageTransition, null, "No-op task cannot request a stage transition.");
 
 const frontend = readFileSync("src/components/sales/salesTaskStageMapping.mjs", "utf8");
 check(frontend.includes('salesTaskStageCatalog.mjs') &&
