@@ -1,8 +1,17 @@
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { isCurrentPipelineOpportunity } from "@/components/sales/salesRecordScopes";
+import { salesTaskStatusNeedsReview } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 
 const DEFINITIONS = {
+  task_status_review: {
+    key: "task_status_review",
+    label: "Task / Status review",
+    shortLabel: "Task / Status",
+    detail: "Saved task and Sales Status need review. Select only a verified Task Description; protected stage transitions preserve history and outcome approvals.",
+    actionable: true,
+    priority: 110,
+  },
   next_action: {
     key: "next_action",
     label: "No next action",
@@ -51,6 +60,7 @@ export const getSalesAttentionItems = (workOrder, today = new Date()) => {
   const items = [];
   const add = (key) => items.push(DEFINITIONS[key]);
 
+  if (salesTaskStatusNeedsReview(workOrder)) add("task_status_review");
   if (!workOrder.follow_up_date && !workOrder.current_task_deadline) add("next_action");
   if (!String(workOrder.sales_rep || "").trim()) add("owner_missing");
   if (!String(workOrder.lead_source || "").trim()) add("source_missing");
