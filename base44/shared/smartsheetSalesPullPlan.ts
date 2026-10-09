@@ -67,6 +67,7 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
   const canAutoTransition = needsStageChange &&
     activeStatuses.includes(currentStatus) && activeStatuses.includes(mapped.status) &&
     known && !locallyEdited && !isLegacyTerminalSmartsheetSalesRecord(record) &&
+    !plan.held.includes('current_task_description') &&
     Object.prototype.hasOwnProperty.call(plan.fields, 'current_task_description');
   if (canAutoTransition) {
     // Only the separate CAS write path may consume this marker. The task,
