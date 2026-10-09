@@ -31,17 +31,17 @@ try {
     'const persisted=JSON.parse(sessionStorage.getItem("synthetic-fleet-server")||"null"); if(persisted)Object.assign(state,{work:persisted.work,receipt:persisted.receipt,photoWrites:persisted.photoWrites});',
     'const persist=()=>sessionStorage.setItem("synthetic-fleet-server",JSON.stringify({work:state.work,receipt:state.receipt,photoWrites:state.photoWrites}));',
     'window.__fleetMechanicWorkFixture = state;',
-    'const work = () => clone(state.work);'
+    'const work = () => clone(state.work);',
     'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{start:state.startPermission,save:state.savePermission,estimates:false}},active_work_orders:state.scopeRemoved?[]:[work()],recent_completed:[],equipment:state.scopeRemoved?[]:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
     'const receiptFor = payload => state.receipt && state.receipt.action===payload.mutation_action && state.receipt.requestId===payload.request_id ? state.receipt : null;',
-    'const applyStart = payload => { state.work={...state.work,status:"in_progress",started_date:"2026-09-29",updated_date:"wo-rev-"+(++revision)}; state.receipt={action:"start",requestId:payload.request_id,status:"applied"}; persist(); };'
+    'const applyStart = payload => { state.work={...state.work,status:"in_progress",started_date:"2026-09-29",updated_date:"wo-rev-"+(++revision)}; state.receipt={action:"start",requestId:payload.request_id,status:"applied"}; persist(); };',
     'const applySave = payload => {',
     ' const note=String(payload.mechanic_note||"").trim();',
     ' const appended=note ? "[Mechanic – Synthetic Mechanic]\\n"+note : "";',
     ' const urls=(payload.photos||[]).map(()=> {state.photoWrites++;return "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";});',
     ' state.work={...state.work,actual_hours:payload.actual_hours===""?state.work.actual_hours:Number(payload.actual_hours),corrective_action:String(payload.corrective_action||""),notes:[state.work.notes,appended].filter(Boolean).join("\\n\\n"),after_photos:[...(state.work.after_photos||[]),...urls],updated_date:"wo-rev-"+(++revision)};',
     ' state.receipt={action:"save",requestId:payload.request_id,status:"applied"}; persist();',
-    '};'
+    '};',
     'export const base44 = {functions:{async invoke(name,payload){',
     ' if(name!=="fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
