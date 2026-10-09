@@ -25,6 +25,7 @@ const CellHistory = base44.entities.CellHistory;
 
 const SALES_HISTORY_FIELDS = new Set([
   "sales_status",
+  "sales_stage_changed_at",
   "sales_rep",
   "lead_source",
   "estimate_amount",
@@ -44,6 +45,7 @@ const SALES_HISTORY_FIELDS = new Set([
 
 const FIELD_LABELS = {
   sales_status: "Sales status",
+  sales_stage_changed_at: "Stage change timestamp",
   sales_rep: "Sales owner",
   lead_source: "Lead source",
   estimate_amount: "Estimate Amount",
@@ -81,7 +83,7 @@ const displayValue = (field, value) => {
   if (field === "in_pipeline") return value === true || value === "true" ? "Current Pipeline" : "Not Current Pipeline";
   if (value === undefined || value === null || value === "") return "—";
   if (field === "estimate_amount") return money(value);
-  if (field === "sales_last_follow_up_completed_at") {
+  if (field === "sales_last_follow_up_completed_at" || field === "sales_stage_changed_at") {
     const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? String(value) : format(parsed, "MMM d, yyyy h:mm a");
   }
@@ -93,6 +95,7 @@ const historyTitle = (entry) => {
   if (entry.field_name === "sales_last_follow_up_completed_at") return "Follow-up completed";
   if (entry.field_name === "sales_last_follow_up_outcome") return "Follow-up outcome recorded";
   if (entry.field_name === "sales_status") return "Sales status changed";
+  if (entry.field_name === "sales_stage_changed_at") return "Stage timing recorded";
   if (entry.field_name === "date_estimate_sent") return "Quote sent date changed";
   if (entry.field_name === "follow_up_date") return "Follow-up schedule changed";
   if (entry.field_name === "in_pipeline") return "Current Pipeline membership changed";
