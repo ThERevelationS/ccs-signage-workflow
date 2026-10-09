@@ -368,6 +368,56 @@ try {
     assert.equal(await input.evaluate(node => document.activeElement === node), true);
   });
 
+  await check('Returning to Admin restores the most recent nested tab and direct links win', 375, '/?user=persistence-a', async page => {
+    const search = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
+    await search.fill('PTO');
+    await search.press('Enter');
+    await page.getByTestId('synthetic-PTOManagement').waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('subtab'), 'pto');
+
+    await page.goto(origin+'/?user=persistence-a', { waitUntil: 'networkidle' });
+    await page.getByTestId('synthetic-PTOManagement').waitFor();
+    assert.equal(new URL(page.url()).searchParams.has('tab'), false, 'Restoration need not rewrite a direct URL');
+    assert.equal(await page.getByRole('tab', { name: 'PTO Policies' }).getAttribute('data-state'), 'active');
+    assert.equal(await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'People' }).getAttribute('aria-pressed'), 'true');
+
+    await page.goto(origin+'/?user=persistence-a&tab=backend&subtab=monitoring', { waitUntil: 'networkidle' });
+    await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+    await page.goto(origin+'/?user=persistence-a', { waitUntil: 'networkidle' });
+    await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+
+    await page.goto(origin+'/?user=persistence-a&tab=users', { waitUntil: 'networkidle' });
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+    assert.equal(await page.getByTestId('synthetic-JurisdictionMonitoringSettings').count(), 0);
+    await page.goto(origin+'/?user=persistence-a', { waitUntil: 'networkidle' });
+    await page.getByTestId('synthetic-UserManagement').waitFor();
+  });
+
+  await check('Saved Admin navigation never crosses user identities', 375, '/?user=persistence-isolation-a&tab=smartsheet', async page => {
+    await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
+    await page.goto(origin+'/?user=persistence-isolation-b', { waitUntil: 'networkidle' });
+    assert.equal(await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'Workflow' }).getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.getByTestId('synthetic-SmartsheetSyncSettings').count(), 0);
+    await page.goto(origin+'/?user=persistence-isolation-a', { waitUntil: 'networkidle' });
+    await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
+  });
+
+  await check('Role downgrade hides and clears previously saved restricted destinations', 375, '/?user=persistence-downgrade&tab=backend&subtab=monitoring', async page => {
+    await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+    await page.goto(origin+'/?user=persistence-downgrade&role=basic', { waitUntil: 'networkidle' });
+    await page.getByRole('search', { name: 'Search Admin pages and settings' }).waitFor();
+    assert.equal(await page.getByRole('tab', { name: 'Backend Functions' }).count(), 0);
+    assert.equal(await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'System' }).count(), 0);
+    assert.equal(await page.getByTestId('synthetic-JurisdictionMonitoringSettings').count(), 0);
+
+    await page.goto(origin+'/?user=persistence-downgrade&role=basic&tab=backend&subtab=monitoring', { waitUntil: 'networkidle' });
+    assert.equal(await page.getByRole('tab', { name: 'Backend Functions' }).count(), 0);
+    assert.equal(await page.getByTestId('synthetic-JurisdictionMonitoringSettings').count(), 0);
+    await page.goto(origin+'/?user=persistence-downgrade', { waitUntil: 'networkidle' });
+    assert.equal(await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'Workflow' }).getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.getByTestId('synthetic-JurisdictionMonitoringSettings').count(), 0);
+  });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
