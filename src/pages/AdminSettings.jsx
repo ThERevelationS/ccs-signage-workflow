@@ -102,7 +102,7 @@ import {
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
+import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -985,11 +985,19 @@ export default function AdminSettings() {
                 <button
                   key={group.id}
                   type="button"
+                  data-admin-category={group.id}
                   aria-pressed={activeAdminGroup.id === group.id}
                   onClick={() => {
                     if (activeAdminGroup.id !== group.id) handleAdminTabChange(group.tabs[0].value);
                   }}
-                  className={`inline-flex min-h-9 max-w-full items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 ${activeAdminGroup.id === group.id ? "border-red-200 bg-white text-gray-900 shadow-sm" : "border-transparent bg-white/30 text-gray-700 hover:border-red-200 hover:bg-white/70"}`}
+                  onKeyDown={(event) => {
+                    const index = availableAdminGroups.findIndex((entry) => entry.id === group.id);
+                    const targetIndex = getAdminCategoryKeyboardTarget(event.key, index, availableAdminGroups.length);
+                    if (targetIndex === null) return;
+                    event.preventDefault();
+                    event.currentTarget.parentElement?.querySelectorAll("[data-admin-category]")[targetIndex]?.focus();
+                  }}
+                  className={`inline-flex min-h-9 max-w-full items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${activeAdminGroup.id === group.id ? "border-red-200 bg-white text-gray-900 shadow-sm" : "border-transparent bg-white/30 text-gray-700 hover:border-red-200 hover:bg-white/70"}`}
                 >
                   {group.label}
                 </button>
@@ -1002,7 +1010,7 @@ export default function AdminSettings() {
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className="max-w-full min-h-10 gap-2 whitespace-normal px-3 py-2 text-center text-sm data-[state=active]:bg-white/80"
+                    className="max-w-full min-h-10 gap-2 whitespace-normal px-3 py-2 text-center text-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 data-[state=active]:bg-white/80"
                   >
                     {TabIcon && <TabIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                     <span>{tab.label}</span>
@@ -1024,10 +1032,10 @@ export default function AdminSettings() {
               <TabsContent value="timeclock">
                 <Tabs value={getAccessibleAdminSubtab("timeclock", searchParams.get("subtab"))} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
-                    <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Time Entries</TabsTrigger>
-                    <TabsTrigger value="reports" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Reports</TabsTrigger>
-                    <TabsTrigger value="pto" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">PTO Policies</TabsTrigger>
-                    <TabsTrigger value="overtime" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Overtime Rules</TabsTrigger>
+                    <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
+                    <TabsTrigger value="reports" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
+                    <TabsTrigger value="pto" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
+                    <TabsTrigger value="overtime" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <TabsContent value="entries">
                     <TimeClockAdmin />
@@ -1047,13 +1055,13 @@ export default function AdminSettings() {
               <TabsContent value="backend">
                 <Tabs value={getAccessibleAdminSubtab("backend", searchParams.get("subtab"))} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
-                    <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Data Backup</TabsTrigger>
-                    <TabsTrigger value="client_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Client Trash</TabsTrigger>
-                    <TabsTrigger value="order_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Order Trash</TabsTrigger>
-                    <TabsTrigger value="default_sort" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Default Sort</TabsTrigger>
-                    <TabsTrigger value="wip_import" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">WIP Import</TabsTrigger>
-                    <TabsTrigger value="permitting" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Permitting Repository</TabsTrigger>
-                    <TabsTrigger value="monitoring" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center">Jurisdiction Monitoring</TabsTrigger>
+                    <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Data Backup</TabsTrigger>
+                    <TabsTrigger value="client_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Client Trash</TabsTrigger>
+                    <TabsTrigger value="order_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Order Trash</TabsTrigger>
+                    <TabsTrigger value="default_sort" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Default Sort</TabsTrigger>
+                    <TabsTrigger value="wip_import" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">WIP Import</TabsTrigger>
+                    <TabsTrigger value="permitting" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Permitting Repository</TabsTrigger>
+                    <TabsTrigger value="monitoring" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Jurisdiction Monitoring</TabsTrigger>
                   </TabsList>
                     <TabsContent value="backup">
                     <BackupManager />
