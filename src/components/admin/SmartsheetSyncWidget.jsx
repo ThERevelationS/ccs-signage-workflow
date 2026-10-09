@@ -107,7 +107,8 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const hasErrors = results.some(r => r.errors > 0);
   const hasSkipped = results.some(r => r.skipped);
   const hasConflicts = results.some(r => Number(r.conflicts) > 0);
-  const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true;
+  const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true ||
+    (status?.status === 'failed' && Number(status?.order_pull_batch_evidence?.attempted_batches || 0) > 0);
   const hasMissingOrderPermanentRows = results.some(r =>
     r?.dataset === 'orders' && Number(r?.missing_permanent_row_links) > 0);
   const orderScheduledPullEnabled = config?.observation_mode !== true &&
@@ -150,13 +151,50 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
     }
   };
 
+  // Order Form only: preserve bounded write-attempt evidence after a failed or
+  // interrupted pull. An acknowledged batch is NOT a verified update.
+  const orderBatchEvidence = compactOrderForm && currentUser?.role === 'admin' &&
+    status?.progress_dataset === 'orders' &&
+    Number(status?.order_pull_batch_evidence?.attempted_batches || 0) > 0
+      ? status.order_pull_batch_evidence : null;
+  const orderBatchEvidenceDetails = orderBatchEvidence ? (
+    <details className="rounded-md border border-amber-200 p-2 text-[11px] text-amber-900 dark:border-amber-800 dark:text-amber-200">
+      <summary className="cursor-pointer font-semibold">
+        Order pull batch evidence: {orderBatchEvidence.attempted_batches} attempted,
+        {' '}{orderBatchEvidence.acknowledged_unverified_batches} acknowledged but unverified
+      </summary>
+      <p className="mt-1">
+        An API acknowledgment does not prove fields or snapshots were saved.
+        Check permanent IDs before retrying; an interrupted batch may be partly applied.
+      </p>
+      {Number(orderBatchEvidence.older_batches_omitted) > 0 && (
+        <p className="mt-1">Only the latest {orderBatchEvidence.recent_batches?.length || 0} batches retain IDs here;
+          {' '}{orderBatchEvidence.older_batches_omitted} older attempted batches are summarized by count.</p>
+      )}
+      <div className="mt-1 max-h-48 space-y-1 overflow-y-auto">
+        {(orderBatchEvidence.recent_batches || []).map(batch => (
+          <details key={batch.batch_number} className="rounded border border-amber-200/70 p-1 dark:border-amber-800">
+            <summary className="cursor-pointer">
+              Batch {batch.batch_number}/{batch.total_batches} · {batch.count} Orders ·
+              {' '}{batch.state === 'attempting' ? 'write outcome unknown'
+                : batch.state === 'acknowledged_unverified' ? 'write acknowledged, verification pending'
+                : 'write outcome uncertain'}
+            </summary>
+            <p className="mt-1 break-all">Base44 Order IDs: <code>{(batch.base44_order_ids || []).join(', ')}</code></p>
+            <p className="mt-1 break-all">Permanent Smartsheet row IDs: <code>{(batch.smartsheet_row_ids || []).join(', ')}</code></p>
+          </details>
+        ))}
+      </div>
+    </details>
+  ) : null;
+
   // A successful completion dismissal belongs to that specific run, so the next
   // completion can still appear even if polling missed its brief running phase.
   if (!isRunning && (orderToast.compact
     ? Boolean(orderToast.key && dismissedSuccessRun === orderToast.key)
     : dismissed)) return null;
   if (orderToast.compact && !orderToast.visible) return null;
-  if (!isRunning && !isStale && !status?.completed_at) return null;
+  if (!isRunning && !isStale && !status?.completed_at && !hasReviewNeeded) return null;
   if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors && !hasReviewNeeded && !(compactOrderForm && hasSkipped)) return null;
 
   const lastSync = status?.completed_at || status?.started_at;
@@ -289,6 +327,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               )}
             </div>
             {recoveryError && <p className="text-red-700 dark:text-red-300" role="alert">{recoveryError}</p>}
+            {orderBatchEvidenceDetails}
           </div>
         ) : isRunning ? (
           <div className="px-3 py-2.5 space-y-2">
@@ -372,6 +411,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
                   : "A requested sync stage was blocked or reported errors, conflicts or incomplete verification. Review the stage results before treating this run as complete."}
               </div>
             )}
+            {orderBatchEvidenceDetails}
             <div className="text-[10px] text-gray-400 pt-0.5">
               {compactOrderForm
                 ? orderScheduledPullEnabled
