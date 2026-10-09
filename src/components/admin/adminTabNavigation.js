@@ -68,6 +68,28 @@ export function getAdminGroupForTab(tabValue, isAdmin) {
   )?.id || 'workflow';
 }
 
+// Button groups keep Enter/Space activation; arrows only move keyboard focus.
+// A null result means the key should retain its native behavior.
+export function getAdminCategoryKeyboardTarget(key, index, count) {
+  if (!Number.isInteger(index) || !Number.isInteger(count) || count < 1 || index < 0 || index >= count) {
+    return null;
+  }
+  switch (key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      return (index + 1) % count;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      return (index - 1 + count) % count;
+    case 'Home':
+      return 0;
+    case 'End':
+      return count - 1;
+    default:
+      return null;
+  }
+}
+
 // Searchable nested settings are mapped only to panels that actually exist.
 export const ADMIN_NESTED_TABS = {
   timeclock: [
