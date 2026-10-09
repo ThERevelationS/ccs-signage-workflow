@@ -70,7 +70,7 @@ const SALES_STATUSES = [
   { value: "lost", label: "Lost", color: "bg-red-100" },
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
-const SALES_STAGE_DISPLAY_ORDER = ["needs_stage", ...SALES_STATUSES.map((status) => status.value)];
+const SALES_STAGE_DISPLAY_ORDER = SALES_STATUSES.map((status) => status.value);
 
 const SALES_ACTIVITY_FIELDS = new Set([
   "sales_status",
@@ -149,7 +149,7 @@ const describeSalesColumnHeaderFilter = (sortConfig) => {
     const selected = (filter.selectedValues || []).filter((value) => value != null && String(value).trim() !== "");
     if (!selected.length) return null;
     const displaySelected = key === "sales_status"
-      ? selected.map((value) => value === "needs_stage" ? "Needs Stage" : SALES_STATUSES.find((status) => status.value === value)?.label || value)
+      ? selected.map((value) => SALES_STATUSES.find((status) => status.value === value)?.label || value)
       : selected;
     const preview = displaySelected.slice(0, 2).join(", ");
     return {
@@ -2228,9 +2228,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
 
       const stageKey = salesStageDisplayValue(wo);
-      const stageLabel = stageKey === "needs_stage"
-        ? "Needs Stage"
-        : SALES_STATUSES.find((status) => status.value === stageKey)?.label || stageKey;
+      const stageLabel = SALES_STATUSES.find((status) => status.value === stageKey)?.label || stageKey;
       const stageRow = stageMix.get(stageKey) || { stage: stageKey, label: stageLabel, count: 0, value: 0, trackedCount: 0, ageDaysTotal: 0, agedCount: 0 };
       stageRow.count += 1;
       stageRow.value += value;
