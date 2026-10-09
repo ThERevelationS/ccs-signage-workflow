@@ -97,7 +97,7 @@ try {
     'export const base44={entities:{AutomationRule:{},EmailGroup:{},AuthorizedEmail:{}},functions:{invoke(){throw Error("Unexpected live API call")}}};',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockAuth.js'), [
-    'export function useAuth(){return {currentUser:{role:new URLSearchParams(window.location.search).get("role")==="basic"?"user":"admin"},sessionToken:"synthetic"};}',
+    'export function useAuth(){const params=new URLSearchParams(window.location.search);return {currentUser:{id:params.get("user")||"synthetic-admin-user",role:params.get("role")==="basic"?"user":"admin"},sessionToken:"synthetic"};}',
     'export function getStoredAdminSettingsCapability(){return "synthetic";}',
     'export function hasStoredAdminSettingsAuthorization(){return true;}',
     'export function storeAdminSettingsAuthorization(){throw Error("Unexpected write to synthetic auth");}',
