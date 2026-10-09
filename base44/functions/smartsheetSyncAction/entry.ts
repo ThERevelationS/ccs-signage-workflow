@@ -684,6 +684,43 @@ async function pullDataset(
         totalBatches: Math.ceil(toUpdate.length / bulkBatchSize), batch, state: 'write_uncertain',
       });
     }
+    // Only a compare-and-set WorkOrder save can move a real Sales stage. Never
+    // include these rows in bulkUpdate, where task and status can diverge.
+    for (const rec of stageBatch) {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, ...fields } = rec;
+      try {
+        const stamp = new Date().toISOString();
+        const patch = buildNonterminalSalesPullPatch(_existing, fields, _salesStageTransition, stamp);
+        try {
+          await trackedConditionalSave(base44, 'WorkOrder', _existing, patch,
+            { full_name: 'Smartsheet Sales stage synchronization' }, 'smartsheet');
+        } catch (error) {
+          // The remote ACK may be lost after the CAS actually commits.
+          // Verify exact fields once, never retry an uncertain write.
+          const latest = await base44.asServiceRole.entities.WorkOrder.get(id);
+          if (!latest || !Object.entries(patch).every(([field, value]) =>
+            field === 'smartsheet_parent_row_id'
+              ? cleanText(latest[field], 40) === cleanText(value, 40)
+              : JSON.stringify(latest[field] ?? null) === JSON.stringify(value ?? null))) throw error;
+        }
+        const expectedFields = { ...fields };
+        delete expectedFields.smartsheet_parent_row_id;
+        salesBusinessVerifications.push({
+          id, expectedFields,
+          expectedParentRowId: cleanText(fields.smartsheet_parent_row_id, 40),
+          expectedStage: _salesStageTransition.to,
+          expectedStageChangedAt: stamp,
+          expectedRowId: cleanText(_existing.smartsheet_row_id, 40),
+          snapshot: _remoteSnapshot,
+          salesAssigneeNeedsReview: Boolean(_salesAssigneeNeedsReview),
+        });
+      } catch (error: any) {
+        salesBusinessWriteFailureIds.push(String(id));
+        errors.push(`Sales ${id} task/stage conditional save not verified; snapshot not advanced. ` +
+          `Review before retrying: ${error?.message || 'unknown error'}`);
+      }
+    }
     if (dataset === 'orders' && options.reportOrderPullProgress) {
       if (orderPullBatchEvidence?.recent_batches?.at(-1)?.state === 'attempting') {
         orderPullBatchEvidence = recordOrderPullBatchEvidence(orderPullBatchEvidence, {
