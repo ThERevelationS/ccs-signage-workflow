@@ -46,7 +46,7 @@ test('Category keyboard movement focuses neighbors; only buttons activate change
 });
 
 test('Selected categories and all Admin tab levels show a distinct keyboard focus ring', () => {
-  const section=page.slice(page.indexOf('aria-label="Admin navigation categories"'),page.indexOf('<TabsContent value="users">'));
+  const section=page.slice(page.indexOf('aria-label="Admin navigation categories"'),page.indexOf('<AdminPanelContent value="users">'));
   assert.match(section,/focus-visible:ring-blue-600 focus-visible:ring-offset-2/);
   const triggerTags=page.match(/<TabsTrigger\b[\s\S]*?>/g)||[];
   assert.equal(triggerTags.length,12);
