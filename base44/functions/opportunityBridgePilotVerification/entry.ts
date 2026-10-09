@@ -71,11 +71,14 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error("opportunityBridgePilotVerification error", error);
+    const errorMessage = error instanceof Error
+      ? error.message
+      : String(error || "Opportunity bridge pilot verification failed.");
     return Response.json({
       success:false,
       read_only:true,
       write_capability:false,
-      error:clean(error?.message || "Opportunity bridge pilot verification failed."),
+      error:clean(errorMessage || "Opportunity bridge pilot verification failed."),
     }, { status:500 });
   }
 });
