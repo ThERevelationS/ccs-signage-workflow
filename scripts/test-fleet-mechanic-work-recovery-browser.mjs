@@ -780,7 +780,104 @@ try {
     assert.ok(verifies.every(row=>row.request_id===originalId));
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/21 PASS");
+  await run("Desktop: delayed successful Start acknowledgement cannot bypass newer revoked Start permission",1440,async page => {
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.delayNextBootstrap=true;
+      s.bootstrapSnapshotOnRelease=true;
+      s.delayNextStartAck=true;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.getByRole("button",{name:"Mark Work Started"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.startAckWaiting);
+    const originalId=(await actions(page)).find(row=>row.action==="start").request_id;
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.startPermission=false;
+      s.releaseBootstrap();
+    });
+    await page.getByRole("button",{name:"Mark Work Started"}).waitFor({state:"detached"});
+    await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseStartAck());
+    await page.getByText(/A newer Fleet portal refresh completed/i).waitFor();
+    const recovery=page.getByRole("alert");
+    assert.equal(await recovery.count(),1,"Later Start revocation must require explicit receipt verification");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),0);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/not allowed to verify that action/i).waitFor();
+    assert.equal(await recovery.count(),1,"Revoked Start permission must deny status verification");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByRole("button",{name:"Close work order"}).waitFor();
+    assert.equal(await recovery.count(),1,"Restored capability alone cannot unlock Start");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Work started\. CCS Fleet confirmed the interrupted request/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isEnabled(),true);
+    const state=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal(state.work.status,"in_progress");
+    assert.equal(state.actions.filter(row=>row.action==="start").length,1,"No Start replay");
+    const checks=state.actions.filter(row=>row.action==="mutation_status");
+    assert.equal(checks.length,2);
+    assert.ok(checks.every(row=>row.request_id===originalId));
+  });
+
+  await run("Mobile: successful delayed Save stays locked if permission changes twice before acknowledgement",390,async page => {
+    await page.getByLabel("Labor hours").fill("7.5");
+    await page.getByLabel("Add mechanic note").fill("Single delayed success note");
+    const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
+    await page.locator('input[type="file"]').setInputFiles({name:"delayed-success.png",mimeType:"image/png",buffer:png});
+    await page.locator('img[src^="blob:"]').waitFor();
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.delayNextBootstrap=true;
+      s.bootstrapSnapshotOnRelease=true;
+      s.delayNextSaveAck=true;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.bootstrapWaiting);
+    await page.getByRole("button",{name:"Save Progress"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.saveAckWaiting);
+    const originalId=(await actions(page)).find(row=>row.action==="save").request_id;
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.savePermission=false;
+      s.releaseBootstrap();
+    });
+    await page.getByRole("button",{name:"Save Progress"}).waitFor({state:"detached"});
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"","Revocation must purge local note");
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0,"Revocation must purge photo previews");
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.savePermission=true;
+      s.releaseSaveAck();
+    });
+    await page.getByText(/A newer Fleet portal refresh completed/i).waitFor();
+    const recovery=page.getByRole("alert");
+    assert.equal(await recovery.count(),1,"Re-enabled server action must not implicitly confirm older Save");
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).count(),0,"Client cannot infer restoration until refreshed");
+    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByRole("button",{name:"Save Progress"}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true,"Refresh restores capability, not permission to replay");
+    assert.equal(await recovery.count(),1);
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    assert.equal(await page.locator('img[src^="blob:"]').count(),0);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Progress saved\. CCS Fleet confirmed the interrupted request without replaying it/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isEnabled(),true);
+    const state=await page.evaluate(() => window.__fleetMechanicWorkFixture);
+    assert.equal(state.work.actual_hours,7.5);
+    assert.equal((state.work.notes.match(/Single delayed success note/g)||[]).length,1);
+    assert.equal(state.photoWrites,1,"One uploaded image only");
+    assert.equal(state.actions.filter(row=>row.action==="save").length,1,"Save cannot be replayed");
+    const checks=state.actions.filter(row=>row.action==="mutation_status");
+    assert.equal(checks.length,1);
+    assert.equal(checks[0].request_id,originalId);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/23 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
