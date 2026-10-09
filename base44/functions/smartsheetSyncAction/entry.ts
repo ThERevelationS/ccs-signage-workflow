@@ -36,6 +36,7 @@ import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUn
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
 import { orderPullPrewriteBudget, assertOrderPullContinuationBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
 import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
+import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBatchEvidence.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -164,7 +165,7 @@ async function pullDataset(
     assertRunOwnership?: () => Promise<void> | void;
     recordIds?: string[];
     reportOrderReadProgress?: (progress: { page: number; rowsLoaded: number; totalRows: number }) => Promise<void> | void;
-    reportOrderPullProgress?: (progress: { phase: string; current: number; total: number; itemLabel: string; detail: string }) => Promise<void> | void;
+    reportOrderPullProgress?: (progress: { phase: string; current: number; total: number; itemLabel: string; detail: string; batchEvidence?: any }) => Promise<void> | void;
   } = {},
 ) {
   const orderPullStartedAtMs = dataset === 'orders' ? Date.now() : 0;
@@ -599,6 +600,7 @@ async function pullDataset(
   let orderBusinessWriteFailures = 0;
   const salesBusinessVerifications: any[] = [];
   const salesBusinessWriteFailureIds: string[] = [];
+  let orderPullBatchEvidence: any = null;
   const bulkBatchSize = 100;
   if (dataset === 'orders' && options.reportOrderPullProgress) {
     await options.reportOrderPullProgress({ phase: 'applying', current: 0, total: toUpdate.length,
@@ -612,6 +614,23 @@ async function pullDataset(
     });
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = toUpdate.slice(i, i + bulkBatchSize);
+    if (dataset === 'orders') {
+      orderPullBatchEvidence = recordOrderPullBatchEvidence(orderPullBatchEvidence, {
+        batchNumber: Math.floor(i / bulkBatchSize) + 1,
+        totalBatches: Math.ceil(toUpdate.length / bulkBatchSize), batch, state: 'attempting',
+      });
+      // Persist the exact attempted permanent IDs BEFORE the API write. A
+      // process interruption inside bulkUpdate must remain diagnosable.
+      if (!options.reportOrderPullProgress) {
+        throw new Error('Order pull batch evidence cannot be persisted. No further Order writes are allowed.');
+      }
+      await options.reportOrderPullProgress({
+        phase: 'applying', current: i, total: toUpdate.length,
+        itemLabel: `Starting Order batch ${Math.floor(i / bulkBatchSize) + 1} of ${Math.ceil(toUpdate.length / bulkBatchSize)}`,
+        detail: `${batch.length} permanent-ID linked Orders are about to be submitted; none verified`,
+        batchEvidence: orderPullBatchEvidence,
+      });
+    }
     const payload = batch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields }: any) => {
       const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
       return { id, ...withoutUnverifiedTimestamp };
@@ -652,11 +671,23 @@ async function pullDataset(
       }
     } catch (err: any) {
       errors.push(`Bulk update batch ${Math.floor(i / bulkBatchSize) + 1}: ${err?.message || 'unknown error'}`);
+      // An API error is NOT evidence that Base44 applied zero writes.
+      if (dataset === 'orders') orderPullBatchEvidence = recordOrderPullBatchEvidence(orderPullBatchEvidence, {
+        batchNumber: Math.floor(i / bulkBatchSize) + 1,
+        totalBatches: Math.ceil(toUpdate.length / bulkBatchSize), batch, state: 'write_uncertain',
+      });
     }
     if (dataset === 'orders' && options.reportOrderPullProgress) {
+      if (orderPullBatchEvidence?.recent_batches?.at(-1)?.state === 'attempting') {
+        orderPullBatchEvidence = recordOrderPullBatchEvidence(orderPullBatchEvidence, {
+          batchNumber: Math.floor(i / bulkBatchSize) + 1,
+          totalBatches: Math.ceil(toUpdate.length / bulkBatchSize), batch, state: 'acknowledged_unverified',
+        });
+      }
       await options.reportOrderPullProgress({ phase: 'applying', current: Math.min(i + batch.length, toUpdate.length), total: toUpdate.length,
         itemLabel: `Processed ${Math.min(i + batch.length, toUpdate.length)} of ${toUpdate.length} linked Order updates`,
         detail: `${errors.length} reported write issues; dates and sync metadata still require verification`,
+        batchEvidence: orderPullBatchEvidence,
       });
     }
   }
