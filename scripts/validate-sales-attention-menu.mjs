@@ -30,9 +30,12 @@ check(supportedKeys.size === SALES_ALL_ATTENTION.length,
 check(SALES_PRIMARY_ATTENTION.map((item) => item.key).join() ===
   ["all", "overdue", "today", "upcoming", "needs_attention"].join(),
   "Five primary shortcuts must stay directly visible in priority order.");
-check(SALES_MORE_ATTENTION_GROUPS.length === 3 &&
-  SALES_MORE_ATTENTION_GROUPS.every((group) => group.items.length > 0),
-  "Secondary attention filters must appear in labeled groups.");
+check(SALES_MORE_ATTENTION_GROUPS.length === 4 &&
+  SALES_MORE_ATTENTION_GROUPS.every((group) => group.items.length > 0) &&
+  SALES_MORE_ATTENTION_GROUPS.some((group) => group.label.includes('loaded rows only') &&
+    group.items.some((item) => item.key === 'task_status_review') &&
+    group.items.some((item) => item.key === 'legacy_task_context')),
+  "Secondary attention filters keep existing groups plus a loaded-only Sales task audit group.");
 for (const option of SALES_ALL_ATTENTION) {
   check(salesAttentionOption(option.key) === option, `The ${option.key} label and count have a stable lookup.`);
   check(typeof option.countKey === "string" && option.countKey.length > 0,
@@ -58,6 +61,14 @@ check(salesAttentionCount({ quoteTimingMissingCount: 12 }, "quote_timing_missing
   "Missing quote timing count comes from the existing trusted-coverage summary.");
 check(salesAttentionCount({ stageAgeMissingCount: 7 }, "stage_untracked") === 7,
   "Stage timing missing count comes from the existing trusted-coverage summary.");
+check(salesAttentionCount({ taskStatusReviewCount: 3, legacyTaskContextCount: 5 }, 'task_status_review') === 3 &&
+  salesAttentionCount({ taskStatusReviewCount: 3, legacyTaskContextCount: 5 }, 'legacy_task_context') === 5,
+  'Modern mismatch counts and legacy task context stay separate.');
+check(!visibleSalesMoreAttentionGroups({ legacyTaskContextCount: 0 }, 'all')
+  .some((group) => group.items.some((item) => item.key === 'legacy_task_context')) &&
+  visibleSalesMoreAttentionGroups({ legacyTaskContextCount: 0 }, 'legacy_task_context')
+    .some((group) => group.items.some((item) => item.key === 'legacy_task_context')),
+  'Historical context only appears when present or selected, keeping the menu compact.');
 const groupsWithoutTest = visibleSalesMoreAttentionGroups({ placeholderCount: 0 }, "all");
 check(!groupsWithoutTest.some((group) => group.items.some((item) => item.key === "placeholder")),
   "Test-record filter should not clutter the menu when there are no test records.");
