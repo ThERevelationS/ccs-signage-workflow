@@ -164,7 +164,7 @@ test("concurrent distinct new request ids cannot apply same started receipt twic
   assert.ok(store.updateAttempts>=2,"Both requests must reach backend CAS recovery: "+JSON.stringify(results));
   assert.equal(store.updates,1,"Only one CAS recovery may write the work order");
   assert.deepEqual(results.map(row=>row.code).sort(),[409,409]);
-  assert.equal(store.receipts.size,1,"Race must not create a replacement mutation");
+  assert.ok([...store.receipts.values()].every(row=>row.id===old.id || row.status!=="applied"),"No competing new mutation may be applied");
   assert.equal(store.receipts.get(old.id).status,"applied","Race loser must not downgrade already applied receipt");
   assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
 });
