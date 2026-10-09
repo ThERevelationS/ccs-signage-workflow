@@ -6,6 +6,7 @@ import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
+import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -1817,6 +1818,17 @@ async function pushDataset(
         const currentRows = cached ? [cached.row] : normalizeSheetRows(rowResult.body);
         if(currentRows.length !== 1 || currentRows[0].id !== existingRowId)throw new Error('The permanent Smartsheet row is missing. Local data was preserved.');
         fieldPlan = await planFieldPush({base44,record,dataset,bindings,remoteRow:currentRows[0],rawSheet:rowResult.body,get:async path=>smartsheetGet(path,token),cells,...(dataset==='sales'?{salesReviews,queueSalesReview:review=>queuedSalesReviews.push(review)}:{})});
+        if (dataset === 'sales') {
+          fieldPlan = guardSalesPushTaskPlan(record, fieldPlan, bindings);
+          if (fieldPlan.taskStageHeld) {
+            const taskReviews = await buildSalesPullReviews(record,
+              { current_task_description: bindings.current_task_description }, currentRows[0]);
+            queuedSalesReviews.push(...taskReviews.map((review: any) => ({
+              ...review,
+              reason: 'Task Description conflicts with the saved Sales Status. No automatic stage or terminal outcome was created; review this task and classification before syncing.',
+            })));
+          }
+        }
         if(fieldPlan.unresolved.length) {
           conflicts.push(record.id);
           if (dataset === 'orders') {
@@ -1858,11 +1870,13 @@ async function pushDataset(
             requiresRemoteWrite: fieldPlan.outgoing.length > 0,
           });
         }
-        if (fieldPlan.decisions?.length) {
+        if (fieldPlan.decisions?.length && !fieldPlan.taskStageHeld) {
           if (dataset === 'orders') deferredOrderConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
           else deferredConflictDecisions.push(...fieldPlan.decisions);
         }
-        if (dataset !== 'orders') deferredConflictRecordIds.push(record.id);
+        // Never auto-resolve the task review simply because another Sales
+        // field was pushed successfully in this same WorkOrder.
+        if (dataset !== 'orders' && !fieldPlan.unresolved.length) deferredConflictRecordIds.push(record.id);
         continue;
       } else if (dataset === 'orders') {
         // Reserve the permanent Order before POST; never automatically retry an
