@@ -153,15 +153,15 @@ try {
       await page.getByRole('tab',{name:'Overtime Rules'}).click();
       await page.getByTestId('synthetic-OvertimeRulesManager').waitFor();
       assert.equal(new URL(page.url()).searchParams.get('subtab'),'overtime');
-      await page.getByRole('searchbox',{name:'Find an Admin page or setting'}).fill('Data Backup');
-      await page.getByRole('button',{name:/Data Backup/}).first().click();
+      await page.getByRole('combobox',{name:'Find an Admin page or setting'}).fill('Data Backup');
+      await page.getByRole('option',{name:/Data Backup/}).first().click();
       await page.getByTestId('synthetic-BackupManager').waitFor();
       assert.equal(new URL(page.url()).searchParams.get('tab'),'backend');
       assert.equal(new URL(page.url()).searchParams.get('subtab'),'backup');
     });
 
   await check('Keyboard Enter opens first result and Escape clears query', 1440, '/', async page=>{
-    const box=page.getByRole('searchbox',{name:'Find an Admin page or setting'});
+    const box=page.getByRole('combobox',{name:'Find an Admin page or setting'});
     await box.fill('PTO');
     await box.press('Enter');
     await page.getByTestId('synthetic-PTOManagement').waitFor();
@@ -205,8 +205,8 @@ try {
       assert.ok(bounds.cardLeft>=-1 && bounds.cardRight<=width+1,JSON.stringify(bounds));
       assert.deepEqual(bounds.bad,[],JSON.stringify(bounds));
       assert.ok(bounds.documentWidth<=width+1,'Document horizontal overflow: '+JSON.stringify(bounds));
-      await page.getByRole('searchbox',{name:'Find an Admin page or setting'}).fill('permitting');
-      const results=page.getByRole('button',{name:/Permitting/});
+      await page.getByRole('combobox',{name:'Find an Admin page or setting'}).fill('permitting');
+      const results=page.getByRole('option',{name:/Permitting/});
       await results.first().waitFor();
       const resultBounds=await page.evaluate(()=>{
         const card=document.querySelector('[aria-label="Admin navigation categories"]').parentElement.getBoundingClientRect();
@@ -222,7 +222,7 @@ try {
   await check('Non-admin excludes restricted sections from search and category bar', 375,
     '/?role=basic&tab=smartsheet', async page=>{
       assert.equal(await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).count(),0);
-      await page.getByRole('searchbox',{name:'Find an Admin page or setting'}).fill('Smartsheet');
+      await page.getByRole('combobox',{name:'Find an Admin page or setting'}).fill('Smartsheet');
       await page.getByText('No matching Admin settings. Try another term.').waitFor();
       assert.equal(await page.getByRole('tab',{name:'Smartsheet Sync'}).count(),0);
     });
@@ -264,16 +264,16 @@ try {
   });
 
   await check('Clicking a search result retains focus on the search control', 375, '/', async page => {
-    const input = page.getByRole('searchbox', { name: 'Find an Admin page or setting' });
+    const input = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
     await input.fill('PTO');
-    await page.getByRole('button', { name: /PTO Policies/ }).click();
+    await page.getByRole('option', { name: /PTO Policies/ }).click();
     await page.getByTestId('synthetic-PTOManagement').waitFor();
     assert.equal(await input.evaluate(node => document.activeElement === node), true, 'Search input receives focus after clicked result disappears');
     assert.equal(await input.inputValue(), '');
   });
 
   await check('Search arrows highlight and Enter opens the selected result without losing input focus', 375, '/', async page => {
-    const input = page.getByRole('searchbox', { name: 'Find an Admin page or setting' });
+    const input = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
     await input.fill('time');
     const rows = page.locator('[aria-label="Admin search results"] button');
     assert.ok(await rows.count() > 1, 'Fixture needs several matching settings');
@@ -292,7 +292,7 @@ try {
   });
 
   await check('Search reverse arrows wrap; editing and Escape reset the highlighted result', 320, '/', async page => {
-    const input = page.getByRole('searchbox', { name: 'Find an Admin page or setting' });
+    const input = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
     await input.fill('time');
     const rows = page.locator('[aria-label="Admin search results"] button');
     const count = await rows.count();
