@@ -143,7 +143,7 @@ assert.match(widget, /const orderDownloadReading = compactOrderForm && orderProg
 assert.match(widget, /orderProgress\.stageCountLabel/);
 assert.match(widget, /orderProgress\.stagePercentLabel/);
 assert.match(widget, /Sync not yet confirmed/);
-assert.match(backend, /reportOrderPullProgress: async \(\{ phase, current, total, itemLabel, detail \}\) =>/);
+assert.match(backend, /reportOrderPullProgress: async \(\{ phase, current, total, itemLabel, detail, batchEvidence \}\) =>/);
 assert.match(backend, /phase: 'matching', current: 0, total: allRows\.length/);
 assert.match(backend, /phase: 'applying', current: 0, total: toUpdate\.length/);
 assert.match(backend, /phase: 'verifying_base44', current: 0, total: orderDateVerifications\.length/);
