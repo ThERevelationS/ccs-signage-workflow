@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AdminPanelContent from "@/components/admin/AdminPanelContent";
 import {
   Select,
   SelectContent,
@@ -1038,16 +1039,16 @@ export default function AdminSettings() {
             </TabsList>
           </div>
 
-          <TabsContent value="users">
+          <AdminPanelContent value="users">
             <div className="mb-6">
               <PasswordMigrationButton />
             </div>
             <UserManagement />
-          </TabsContent>
+          </AdminPanelContent>
 
           {isAdmin && (
             <>
-              <TabsContent value="timeclock">
+              <AdminPanelContent value="timeclock">
                 <Tabs value={selectedAdminTab === "timeclock" ? selectedAdminSubtab : "entries"} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
@@ -1055,22 +1056,22 @@ export default function AdminSettings() {
                     <TabsTrigger value="pto" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
                     <TabsTrigger value="overtime" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Overtime Rules</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="entries">
+                  <AdminPanelContent value="entries">
                     <TimeClockAdmin />
-                  </TabsContent>
-                  <TabsContent value="reports">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="reports">
                     <TimeClockReportsDashboard />
-                  </TabsContent>
-                  <TabsContent value="pto">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="pto">
                     <PTOManagement adminCapability={adminCapability} />
-                  </TabsContent>
-                  <TabsContent value="overtime">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="overtime">
                     <OvertimeRulesManager />
-                  </TabsContent>
+                  </AdminPanelContent>
                 </Tabs>
-              </TabsContent>
+              </AdminPanelContent>
 
-              <TabsContent value="backend">
+              <AdminPanelContent value="backend">
                 <Tabs value={selectedAdminTab === "backend" ? selectedAdminSubtab : "backup"} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
                   <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
                     <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Data Backup</TabsTrigger>
@@ -1081,45 +1082,45 @@ export default function AdminSettings() {
                     <TabsTrigger value="permitting" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Permitting Repository</TabsTrigger>
                     <TabsTrigger value="monitoring" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Jurisdiction Monitoring</TabsTrigger>
                   </TabsList>
-                    <TabsContent value="backup">
+                    <AdminPanelContent value="backup">
                     <BackupManager />
-                  </TabsContent>
-                  <TabsContent value="client_trash">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="client_trash">
                     <ProjectTrash />
-                  </TabsContent>
-                  <TabsContent value="order_trash">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="order_trash">
                     <OrderTrash />
-                  </TabsContent>
-                  <TabsContent value="default_sort">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="default_sort">
                     <SalesPipelineDefaultSort />
-                  </TabsContent>
-                  <TabsContent value="wip_import">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="wip_import">
                     <WipImporter />
-                  </TabsContent>
-                  <TabsContent value="permitting">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="permitting">
                     <PermittingRepositoryAdmin />
-                  </TabsContent>
-                  <TabsContent value="monitoring">
+                  </AdminPanelContent>
+                  <AdminPanelContent value="monitoring">
                     <JurisdictionMonitoringSettings />
-                  </TabsContent>
+                  </AdminPanelContent>
                   </Tabs>
-                  </TabsContent>
+                  </AdminPanelContent>
 
-              <TabsContent value="corebridge">
+              <AdminPanelContent value="corebridge">
                 <CorebridgeApiSettings sessionToken={sessionToken} />
-              </TabsContent>
+              </AdminPanelContent>
 
-              <TabsContent value="opportunity_bridge">
+              <AdminPanelContent value="opportunity_bridge">
                 <OpportunityBridgeReview />
-              </TabsContent>
+              </AdminPanelContent>
 
-              <TabsContent value="permitting_completeness">
+              <AdminPanelContent value="permitting_completeness">
                 <PermittingCompletenessDashboard />
-              </TabsContent>
-              <TabsContent value="permitting_rules">
+              </AdminPanelContent>
+              <AdminPanelContent value="permitting_rules">
                 <PermittingRulesReview sessionToken={sessionToken} />
-              </TabsContent>
-              <TabsContent value="permitting_tests">
+              </AdminPanelContent>
+              <AdminPanelContent value="permitting_tests">
                 <div className="mb-3 flex justify-end">
                   <a href="/PermittingDocs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100">
                     <BookOpen className="h-4 w-4" />
@@ -1127,34 +1128,34 @@ export default function AdminSettings() {
                   </a>
                 </div>
                 <PermittingTestSuite />
-              </TabsContent>
+              </AdminPanelContent>
 
-              <TabsContent value="smartsheet">
+              <AdminPanelContent value="smartsheet">
                 <SmartsheetSyncSettings sessionToken={sessionToken} />
-              </TabsContent>
-              <TabsContent value="sync_conflicts"><SyncConflictReview sessionToken={sessionToken}/></TabsContent>
+              </AdminPanelContent>
+              <AdminPanelContent value="sync_conflicts"><SyncConflictReview sessionToken={sessionToken}/></AdminPanelContent>
             </>
           )}
 
-          <TabsContent value="task_assignments">
+          <AdminPanelContent value="task_assignments">
             <TaskAssignmentRules />
-          </TabsContent>
+          </AdminPanelContent>
 
-          <TabsContent value="calendar">
+          <AdminPanelContent value="calendar">
             <AdminCalendarSettings adminCapability={adminCapability} />
-          </TabsContent>
+          </AdminPanelContent>
 
-          <TabsContent value="activity">
+          <AdminPanelContent value="activity">
             <ActivityFeed />
-          </TabsContent>
+          </AdminPanelContent>
 
           {isAdmin && (
-            <TabsContent value="resources">
+            <AdminPanelContent value="resources">
               <ResourceAllocationView />
-            </TabsContent>
+            </AdminPanelContent>
           )}
 
-          <TabsContent value="automations">
+          <AdminPanelContent value="automations">
             {/* Email Groups Section - moved under Automations */}
             <div className="mb-8">
               <GmailConnector sessionToken={sessionToken} />
@@ -1307,7 +1308,7 @@ export default function AdminSettings() {
                 ))}
               </div>
             )}
-          </TabsContent>
+          </AdminPanelContent>
         </Tabs>
 
         {/* Create/Edit Dialog */}
