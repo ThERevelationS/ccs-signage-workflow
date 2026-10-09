@@ -604,6 +604,7 @@ async function pullDataset(
   const orderFailedDateVerificationIds = new Set<string>();
   let orderBusinessWriteFailures = 0;
   const salesBusinessVerifications: any[] = [];
+  const salesStageMetadataCandidates: any[] = [];
   const salesBusinessWriteFailureIds: string[] = [];
   let orderPullBatchEvidence: any = null;
   const bulkBatchSize = 100;
@@ -778,11 +779,18 @@ async function pullDataset(
           continue;
         }
         updatedCount++;
-        snapshotUpdates.push({
+        const snapshotPatch = {
           id: item.id,
           smartsheet_sync_snapshot: item.snapshot,
           ...(item.salesAssigneeNeedsReview ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
-        });
+        };
+        if (item.expectedStage) {
+          // The successful stage CAS is not license to advance the remote
+          // baseline after another app edit. Guard this metadata write too.
+          salesStageMetadataCandidates.push({ record: persisted, patch: snapshotPatch });
+        } else {
+          snapshotUpdates.push(snapshotPatch);
+        }
       }
     } catch (error: any) {
       salesBusinessWriteFailureIds.push(
