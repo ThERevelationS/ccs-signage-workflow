@@ -24,7 +24,7 @@ test('Search indexes all 15 Admin pages and 11 real nested settings', () => {
   for (const [parent, nestedTabs] of Object.entries(ADMIN_NESTED_TABS)) {
     for (const nested of nestedTabs) {
       assert.match(page, new RegExp('<TabsTrigger value="' + nested.value + '"'));
-      assert.match(page, new RegExp('<TabsContent value="' + nested.value + '"'));
+      assert.match(page, new RegExp('<AdminPanelContent value="' + nested.value + '"'));
       const result = searchAdminSettings(nested.label, true, 26).find(
         (entry) => entry.id === `${parent}:${nested.value}`,
       );
