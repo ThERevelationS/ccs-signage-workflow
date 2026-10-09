@@ -762,7 +762,14 @@ async function pullDataset(
           persisted &&
           cleanText(persisted?.smartsheet_parent_row_id, 40) === item.expectedParentRowId
         );
-        if (!businessFieldsVerified || !parentRowVerified) {
+        const stageVerified = !item.expectedStage || Boolean(
+          persisted && persisted.in_pipeline === true &&
+          persisted.sales_status === item.expectedStage &&
+          persisted.sales_stage_changed_at === item.expectedStageChangedAt &&
+          cleanText(persisted.smartsheet_sheet_id, 40) === sheetId &&
+          cleanText(persisted.smartsheet_row_id, 40) === item.expectedRowId
+        );
+        if (!businessFieldsVerified || !parentRowVerified || !stageVerified) {
           salesBusinessWriteFailureIds.push(String(item.id));
           errors.push(
             `Sales ${item.id} business-field read-back did not match the pulled Smartsheet row. ` +
