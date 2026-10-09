@@ -43,6 +43,15 @@ function terminalAttemptChecks(receipt = {}, opportunityId = '') {
   };
 }
 
+/**
+ * @param {{
+ *   workOrderId?: unknown,
+ *   expectedReviewFingerprint?: unknown,
+ *   workOrder?: any,
+ *   opportunities?: any[],
+ *   receipts?: any[],
+ * }} [input]
+ */
 export function verifyOpportunityBridgePilotOutcome({
   workOrderId,
   expectedReviewFingerprint,
