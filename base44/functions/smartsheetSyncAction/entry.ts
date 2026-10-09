@@ -897,6 +897,21 @@ async function pullDataset(
   // acknowledged writes while silently omitting individual fields.
   let snapshotWriteFailures = 0;
   const verifiedMetadataExpected: any[] = [];
+  // Stage-change metadata is version-guarded separately from the old bulk
+  // metadata path. A newer local edit must not inherit the remote baseline.
+  for (const candidate of salesStageMetadataCandidates) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    const { id, ...metadata } = candidate.patch;
+    try {
+      await trackedConditionalSave(base44, 'WorkOrder', candidate.record, metadata,
+        { full_name: 'Smartsheet Sales snapshot verification' }, 'smartsheet');
+      verifiedMetadataExpected.push(candidate.patch);
+    } catch (error: any) {
+      snapshotWriteFailures++;
+      errors.push(`Sales ${id} stage metadata changed before its conditional save could be verified; ` +
+        `snapshot not confirmed. Review before retrying: ${error?.message || 'unknown error'}`);
+    }
+  }
   const snapshotBatchSize = 100;
   for (let i = 0; i < snapshotUpdates.length; i += snapshotBatchSize) {
     if (dataset === 'orders') assertOrderPullContinuationBudget({
