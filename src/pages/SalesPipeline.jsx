@@ -174,8 +174,7 @@ export default function SalesPipeline() {
     }
     if (requestId !== activeFiltersLoadRef.current) return;
     const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
-    // Obsolete virtual-stage filters are retained in the manager for editing,
-    // but must not produce an apparently empty active pipeline after upgrade.
+    // Keep obsolete saved definitions available for editing, not as active filters.
     const availableSelected = selected.filter(f => f.type !== "filter" || !hasRetiredSalesStageCondition(f.conditions));
     setActiveFilters(availableSelected);
 
@@ -256,7 +255,7 @@ export default function SalesPipeline() {
     setAttentionFilter(restoredModes.attentionFilter);
     setActiveColumnPreset(restoredColumn);
     if (retiredInformationPreference) {
-      setFilterReconciliationNotice("A retired Sales stage filter was reset to All Statuses. Saved custom filter definitions remain available under Manage Filters for editing.");
+      setFilterReconciliationNotice("A retired Sales stage filter was reset to All Statuses. Custom filter definitions remain available in Manage Filters for editing.");
     } else if (missingInformationReference && missingColumnReference) {
       setFilterReconciliationNotice("A saved Information Filter and Column Filter are no longer available. Both were reset.");
     } else if (missingInformationReference) {
