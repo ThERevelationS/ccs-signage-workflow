@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -532,7 +532,7 @@ export default function ProductChecklistDialog({
       setFocusedSearchId(null);
       setFocusedNeedsInputId(null);
       setChecklistSearchIndex(-1);
-      window.setTimeout(() => checklistSearchInputRef.current?.focus(), 0);
+      scheduleNavigationFocus(() => checklistSearchInputRef.current?.focus());
     }
 
     updateChecklistItem(itemId, { custom_dropdown_value: value });
@@ -875,6 +875,32 @@ export default function ProductChecklistDialog({
   const checklistSearchInputRef = useRef(null);
   const [checklistSearchIndex, setChecklistSearchIndex] = useState(-1);
   const [focusedSearchId, setFocusedSearchId] = useState(null);
+  const pendingNavigationFocusTimerRef = useRef(null);
+  const navigationFocusVersionRef = useRef(0);
+
+  const cancelPendingNavigationFocus = () => {
+    navigationFocusVersionRef.current += 1;
+    if (pendingNavigationFocusTimerRef.current !== null) {
+      window.clearTimeout(pendingNavigationFocusTimerRef.current);
+      pendingNavigationFocusTimerRef.current = null;
+    }
+  };
+  const scheduleNavigationFocus = (focusCallback) => {
+    cancelPendingNavigationFocus();
+    const version = navigationFocusVersionRef.current;
+    pendingNavigationFocusTimerRef.current = window.setTimeout(() => {
+      pendingNavigationFocusTimerRef.current = null;
+      if (navigationFocusVersionRef.current !== version) return;
+      focusCallback();
+    }, 0);
+  };
+
+  // Cancel queued focus before the checklist closes, switches work orders,
+  // reloads or yields to Template Builder (and when it unmounts).
+  useLayoutEffect(() => {
+    if (!isOpen || isLoading || showTemplateBuilder) cancelPendingNavigationFocus();
+    return cancelPendingNavigationFocus;
+  }, [isOpen, isLoading, showTemplateBuilder, workOrder?.id]);
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -1340,11 +1366,12 @@ export default function ProductChecklistDialog({
     }
 
     setFocusedNeedsInputId(scrollTargetId);
-    window.setTimeout(() => {
+    scheduleNavigationFocus(() => {
       const targetElement = findRenderedChecklistItemElement([scrollTargetId]);
-      targetElement?.focus({ preventScroll: true });
-      targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 0);
+      if (!targetElement?.getClientRects().length) return;
+      targetElement.focus({ preventScroll: true });
+      targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
   const navigateChecklistSearch = (direction = 1) => {
     if (checklistSearchResults.length === 0) return;
@@ -1360,13 +1387,15 @@ export default function ProductChecklistDialog({
     setFocusedSearchId(item.id);
     setChecklistSearchIndex(nextIndex);
 
-    window.setTimeout(() => {
+    scheduleNavigationFocus(() => {
       const targetElement = findRenderedChecklistItemElement([item.id, item.parent_id, topLevelId]);
-      targetElement?.focus({ preventScroll: true });
-      targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 0);
+      if (!targetElement?.getClientRects().length) return;
+      targetElement.focus({ preventScroll: true });
+      targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
   const clearChecklistSearch = () => {
+    cancelPendingNavigationFocus();
     setChecklistSearchQuery("");
     setChecklistSearchIndex(-1);
     setFocusedSearchId(null);
@@ -1414,6 +1443,7 @@ export default function ProductChecklistDialog({
       setDiscardWarning(true);
       return;
     }
+    cancelPendingNavigationFocus();
     onClose();
   };
 
@@ -1440,7 +1470,10 @@ export default function ProductChecklistDialog({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowTemplateBuilder(true)}
+                    onClick={() => {
+                      cancelPendingNavigationFocus();
+                      setShowTemplateBuilder(true);
+                    }}
                     className="w-full h-11 sm:w-auto sm:h-8"
                   >
                     <Pencil className="w-4 h-4 mr-1" />
@@ -1522,6 +1555,7 @@ export default function ProductChecklistDialog({
                     ref={checklistSearchInputRef}
                     value={checklistSearchQuery}
                     onChange={(e) => {
+                      cancelPendingNavigationFocus();
                       setChecklistSearchQuery(e.target.value);
                       setChecklistSearchIndex(-1);
                       setFocusedSearchId(null);
@@ -2812,11 +2846,11 @@ export default function ProductChecklistDialog({
             if (!deleteFocusRecoveryRef.current) return;
             event.preventDefault();
             deleteFocusRecoveryRef.current = false;
-            window.setTimeout(() => {
+            scheduleNavigationFocus(() => {
               // Search disappears when the last checklist row is deleted.
               const fallback = checklistSearchInputRef.current || checklistCloseButtonRef.current;
               if (fallback && !fallback.disabled) fallback.focus();
-            }, 0);
+            });
           }}
         >
           <AlertDialogHeader>
