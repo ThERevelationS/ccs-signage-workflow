@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { trackedConditionalSave } from "../base44/shared/fieldAudit.ts";
 import { buildNonterminalSalesPullPatch } from "../base44/shared/smartsheetSalesStageTransition.mjs";
 import { salesStageCellHistoryRows } from "../base44/shared/smartsheetSalesStageHistory.mjs";
-import { planSalesFieldPull, guardSalesPulledTaskTransition } from "../base44/shared/smartsheetSalesPullPlan.ts";
+import { planSalesFieldPull, guardSalesPulledTaskTransition, salesStageSnapshotRecoveryNeedsReview } from "../base44/shared/smartsheetSalesPullPlan.ts";
 import { readFileSync } from "node:fs";
 
 const taskId = "4783818077955972";
@@ -68,6 +68,18 @@ for (const field of ["current_task_description","sales_status","sales_stage_chan
 }
 assert.equal(saved.smartsheet_sync_snapshot[taskId],baseline.smartsheet_sync_snapshot[taskId],
   "CAS business write must not prematurely advance Smartsheet snapshot"); checks++;
+assert(salesStageSnapshotRecoveryNeedsReview(saved,bindings),
+  "Interrupted stage write must be detected before a later no-op snapshot repair");checks++;
+const recoveryIncoming = { current_task_description: saved.current_task_description, estimate_amount:150 };
+const recoveryPlan = guardSalesPulledTaskTransition(saved,recoveryIncoming,
+  planSalesFieldPull(saved,recoveryIncoming,remote,bindings),bindings);
+assert(recoveryPlan.held.includes("current_task_description"),
+  "Unverified stage snapshot is held for admin review on a later pull");checks++;
+assert.equal(recoveryPlan.snapshot[taskId],baseline.current_task_description,
+  "Recovery hold cannot advance the old task baseline");checks++;
+assert(!recoveryPlan.stageTransition,"Recovery does not restamp a stage");checks++;
+assert(!salesStageSnapshotRecoveryNeedsReview({...saved,sales_stage_changed_at:""},bindings),
+  "Missing timestamps never imply a prior stage transition");checks++;
 const historyRows = salesStageCellHistoryRows(baseline,patch);
 assert.deepEqual(historyRows.map((row)=>row.field_name),
   ["current_task_description","sales_status","sales_stage_changed_at"],
