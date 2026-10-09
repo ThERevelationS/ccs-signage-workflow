@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { buildCells } from '../base44/shared/smartsheetSyncFields.ts';
 import { planFieldPush } from '../base44/shared/smartsheetFieldMerge.ts';
 import { guardSalesPushTaskPlan } from '../base44/shared/smartsheetSalesPushTaskGuard.mjs';
+import { salesSnapshotsEqual } from '../base44/shared/smartsheetSalesSafety.mjs';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -58,6 +59,18 @@ equal(conflict.guarded.remote[taskId],base.smartsheet_sync_snapshot[taskId],
 check(conflict.guarded.unresolved.includes('current_task_description'),
   'Task mismatch enters review instead of silently marking sync complete.');
 check(conflict.guarded.taskStageHeld===true,'Mismatch identified explicitly.');
+const candidateSnapshot = {
+  ...conflict.guarded.remote,
+  ...Object.fromEntries(conflict.guarded.outgoing.map(cell => [String(cell.columnId),cell.value])),
+};
+equal(candidateSnapshot[taskId],base.smartsheet_sync_snapshot[taskId],
+  'Persistable partial snapshot preserves previously verified task value.');
+const remoteAfterSafeEstimate = {[taskId]:'Estimate Sent to Customer',[amountId]:125};
+const remoteVerifyOnly = Object.fromEntries(Object.entries(candidateSnapshot).filter(([column])=>column!==taskId));
+check(salesSnapshotsEqual(remoteVerifyOnly,remoteAfterSafeEstimate),
+  'A safely pushed estimate can verify without declaring the conflicting task synchronized.');
+check(!salesSnapshotsEqual(candidateSnapshot,remoteAfterSafeEstimate),
+  'Never compare the held task as if it had been reconciled remotely.');
 
 // The opposite direction is equally important: a locally inconsistent task
 // must not be pushed to Smartsheet as if it were an approved stage.
@@ -105,4 +118,10 @@ check(backend.includes("if (dataset !== 'orders' && !fieldPlan.unresolved.length
   'Other field success does not resolve held Sales task review.');
 check(backend.includes("fieldPlan.decisions?.length && !fieldPlan.taskStageHeld"),
   'Approved field decisions are not auto-resolved during protected task holds.');
+check(backend.includes("dataset === 'sales' && fieldPlan.taskStageHeld") &&
+  backend.includes("? {} : { smartsheet_last_synced_at: new Date().toISOString() }"),
+  'Held Sales task cannot advance the full-sync timestamp.');
+check(backend.includes('const verifiedRemoteColumns = fieldPlan.taskStageHeld') &&
+  backend.includes('columnId !== String(bindings.current_task_description)'),
+  'A held task is excluded only from remote read-back of unrelated safe columns.');
 console.log('Sales reverse Smartsheet task/status safety: '+checks+'/'+checks+' PASS.');
