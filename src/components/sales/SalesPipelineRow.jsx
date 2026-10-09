@@ -15,6 +15,7 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 
 const SALES_STATUSES = [
@@ -100,6 +101,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const attentionItems = getActionableSalesAttentionItems(wo);
   const likelyPlaceholder = isLikelySalesPlaceholder(wo);
   const opportunityDisplayName = salesOpportunityDisplayName(wo, "Unnamed customer");
+  const taskStatusAudit = classifySalesTaskStatusAudit(wo);
   const unverifiedStage = isUnverifiedSmartsheetSalesStage(wo);
   const stageDisplayValue = salesStageDisplayValue(wo);
   const stageDisplayLabel = salesStageDisplayLabel(wo);
@@ -128,6 +130,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
             <button onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
               <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="min-w-0 flex-1 truncate">{opportunityDisplayName}</span>
               {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800" title="Exact placeholder customer name detected. Review before removing from Current Pipeline.">TEST</span>}
+              {taskStatusAudit.kind !== 'none' && <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${taskStatusAudit.kind === 'modern_review' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'}`} title={taskStatusAudit.reason} aria-label={taskStatusAudit.kind === 'modern_review' ? 'Task and status need review' : 'Legacy task context'}>{taskStatusAudit.kind === 'modern_review' ? 'T/S' : 'Legacy'}</span>}
               {attentionItems.length > 0 && <span className="flex-shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" title={`Needs attention: ${attentionItems.map((item) => item.label).join(", ")}`}>!{attentionItems.length}</span>}
             </button>
           </td>
