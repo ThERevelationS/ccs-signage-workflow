@@ -594,6 +594,9 @@ export default function ProductChecklistDialog({
   // Called when Save button is clicked - first show revisit date popup
   const handleSaveClick = () => {
     if (!isRegistered) return;
+    // The Revisit confirmation owns keyboard focus until it closes.
+    // Do not allow a queued checklist navigation callback behind it.
+    cancelPendingNavigationFocus();
     setPendingRevisitDate(loadedRevisitDateSnapshot || null);
     setShowRevisitPopup(true);
   };
@@ -896,11 +899,11 @@ export default function ProductChecklistDialog({
   };
 
   // Cancel queued focus before the checklist closes, switches work orders,
-  // reloads or yields to Template Builder (and when it unmounts).
+  // reloads, or yields to Template Builder / the Revisit confirmation.
   useLayoutEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder) cancelPendingNavigationFocus();
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) cancelPendingNavigationFocus();
     return cancelPendingNavigationFocus;
-  }, [isOpen, isLoading, showTemplateBuilder, workOrder?.id]);
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, workOrder?.id]);
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -1231,7 +1234,7 @@ export default function ProductChecklistDialog({
   // When checklist edits remove a navigated match, clear the stale cursor and
   // highlight. Keep focus in place when its row remains visible.
   useEffect(() => {
-    if (!isOpen || isLoading) return;
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) return;
 
     if (focusedSearchId && !checklistSearchResults.some(({ item }) => item.id === focusedSearchId)) {
       setFocusedSearchId(null);
@@ -1249,14 +1252,15 @@ export default function ProductChecklistDialog({
         (needsInputPrimaryCount > 0 ? needsInputSummaryRef.current : checklistSearchInputRef.current)?.focus();
       }
     }
-  }, [isOpen, isLoading, focusedSearchId, checklistSearchResults, needsInputNavigationIndex,
-    focusedNeedsInputId, needsInputPrimaryItems, needsInputPrimaryCount]);
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, focusedSearchId,
+    checklistSearchResults, needsInputNavigationIndex, focusedNeedsInputId,
+    needsInputPrimaryItems, needsInputPrimaryCount]);
 
   // A collapsed product, hierarchy, or Completed section can hide a navigated
   // row without a reliable blur event. Clear only a hidden result; do not take
   // focus away from a visible collapse button or another editor control.
   useEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder) return;
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) return;
     const hiddenSearch = focusedSearchId &&
       !findRenderedChecklistItemElement([focusedSearchId])?.getClientRects().length;
     const hiddenNeedsInput = focusedNeedsInputId &&
@@ -1278,8 +1282,9 @@ export default function ProductChecklistDialog({
         : checklistSearchInputRef.current || checklistCloseButtonRef.current;
       destination?.focus();
     }
-  }, [isOpen, isLoading, showTemplateBuilder, collapsedProducts, expandedItems,
-    showCompletedItems, focusedSearchId, focusedNeedsInputId, needsInputPrimaryCount]);
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, collapsedProducts,
+    expandedItems, showCompletedItems, focusedSearchId, focusedNeedsInputId,
+    needsInputPrimaryCount]);
 
   // Search typing and inline editor state cause frequent renders. Collapse-all
   // state should only be recomputed when the relevant hierarchy/state changes.
