@@ -54,7 +54,7 @@ try {
     '   if(!state.savePermission)return {data:{error:"This mechanic link is not allowed to perform that action."}};',
     '   if(state.staleNextSave){state.staleNextSave=false;state.work={...state.work,updated_date:"wo-rev-"+(++revision)};return {data:{error:"This Fleet work order changed since it was opened. Refresh before saving."}};}',
     '   if(state.receipt?.action==="save" && state.receipt?.status==="applied" && state.receipt?.workUpdatedDate===state.work.updated_date && state.receipt?.savedPayload===saveFingerprint(payload))return {data:{success:true,already_applied:true,request_id:payload.request_id,work_order:work()}};',
-    '   applySave(payload);
+    '   applySave(payload);',
     '   if(state.postCommitSave403){state.postCommitSave403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};}',
     '   if(state.loseSaveAck){state.loseSaveAck=false;throw new Error("Synthetic lost Save Progress acknowledgement");}',
     '   const response={data:{success:true,request_id:payload.request_id,work_order:work()}}; if(state.delayNextSaveAck){state.delayNextSaveAck=false;state.saveAckWaiting=true;await new Promise(resolve=>{state.releaseSaveAck=resolve;});state.saveAckWaiting=false;if(state.failDelayedSaveAck){state.failDelayedSaveAck=false;throw new Error("Synthetic delayed Save acknowledgement failure");}} return response;',
