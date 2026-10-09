@@ -18,6 +18,15 @@ export function salesStageDisplayValue(workOrder = {}) {
   return text(workOrder?.sales_status) || "lead";
 }
 
+// Keep retired virtual-stage conditions available for manual editing, but
+// never silently reinterpret them as Lead or another real Sales status.
+export function hasRetiredSalesStageCondition(conditions = []) {
+  return Array.isArray(conditions) && conditions.some((condition) =>
+    condition?.field === "sales_status"
+    && !["empty", "not_empty"].includes(condition.operator)
+    && String(condition.value ?? "").split(",").some((value) => value.trim() === "needs_stage"));
+}
+
 export function salesStageDisplayLabel(workOrder = {}) {
   if (isExplicitNeutralSalesClosure(workOrder)) return "Closed (Neutral)";
   const value = salesStageDisplayValue(workOrder);
