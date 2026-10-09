@@ -135,9 +135,9 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               case "sales_status": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
             <span
-              className={`flex h-7 w-full items-center rounded px-2 text-xs font-medium ${unverifiedStage ? "bg-violet-50 text-violet-800" : stageDisplayValue === "closed_neutral" ? "bg-slate-100 text-slate-700" : SALES_STATUSES.find((status) => status.value === stageDisplayValue)?.className || "bg-slate-50 text-slate-700"}`}
-              title="Sales Status is read-only here. Change Task Description to move the Sales stage."
-              aria-label={`Sales Status: ${stageDisplayLabel}`}
+              className={`flex h-7 w-full items-center rounded px-2 text-xs font-medium ${stageDisplayValue === "closed_neutral" ? "bg-slate-100 text-slate-700" : SALES_STATUSES.find((status) => status.value === stageDisplayValue)?.className || "bg-slate-50 text-slate-700"}`}
+              title={unverifiedStage ? "Sales Status is read-only. Stage Timing Missing; change Task Description to move stages." : "Sales Status is read-only here. Change Task Description to move the Sales stage."}
+              aria-label={`Sales Status: ${stageDisplayLabel}${unverifiedStage ? ". Stage Timing Missing" : ""}`}
             >
               <span className="truncate">{stageDisplayLabel}</span>
             </span>
