@@ -2925,11 +2925,12 @@ export default function ProductChecklistDialog({
             // option is the return target—not a checklist control behind it.
             const returnToOtherPopup = Boolean(itemId && showOtherPopup?.itemId === itemId);
             const popupTarget = returnToOtherPopup
-              ? otherPopupValidationReturnRef.current || customStatusInputRef.current
+              ? [otherPopupValidationReturnRef.current, customStatusInputRef.current]
+                .find(target => target?.isConnected && !target.disabled &&
+                  target.getClientRects().length)
               : null;
             otherPopupValidationReturnRef.current = null;
-            if (popupTarget?.isConnected && !popupTarget.disabled &&
-                popupTarget.getClientRects().length) {
+            if (popupTarget) {
               popupTarget.focus();
               return;
             }
