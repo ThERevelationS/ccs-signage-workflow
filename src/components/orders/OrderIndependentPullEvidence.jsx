@@ -22,6 +22,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
     }
     let active = true;
     let inFlight = false;
+    let lastEvidenceVersion = null;
     setComparison(null);
     const refresh = async () => {
       if (inFlight) return;
@@ -30,9 +31,18 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         const rows = await base44.entities.GlobalSettings.filter({
           setting_key: ORDER_PULL_EVIDENCE_KEY,
         });
-        if (active) setView(orderIndependentPullEvidenceModel(rows));
+        if (active) {
+          const nextView = orderIndependentPullEvidenceModel(rows);
+          const version = JSON.stringify(rows?.[0]?.setting_value ?? null);
+          if (lastEvidenceVersion !== null && lastEvidenceVersion !== version) setComparison(null);
+          lastEvidenceVersion = version;
+          setView(nextView);
+        }
       } catch {
-        if (active) setView(orderIndependentPullEvidenceModel(null, { readFailed: true }));
+        if (active) {
+          setComparison(null);
+          setView(orderIndependentPullEvidenceModel(null, { readFailed: true }));
+        }
       } finally {
         inFlight = false;
       }
