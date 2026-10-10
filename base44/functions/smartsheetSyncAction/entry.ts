@@ -44,7 +44,7 @@ import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBa
 import { classifyPriorUncertainOrderPull } from '../../shared/smartsheetOrderPriorUncertainPull.mjs';
 import { assertNoUnresolvedOrderPullEvidence, saveOrderPullEvidence, verifyCompletedOrderPullEvidence, readOrderPullEvidenceStore } from '../../shared/smartsheetOrderPullEvidenceStore.mjs';
 import { findUnresolvedOrderEvidencePair, compareUnresolvedOrderEvidenceRow } from '../../shared/smartsheetOrderPullRowReview.mjs';
-import { planUnresolvedOrderBatchReview, summarizeUnresolvedOrderBatchPage } from '../../shared/smartsheetOrderPullBatchReview.mjs';
+import { planUnresolvedOrderBatchReview, verifyUnresolvedOrderBatchSheetRows, summarizeUnresolvedOrderBatchPage } from '../../shared/smartsheetOrderPullBatchReview.mjs';
 import { buildOrderPullReadOnlyRowReport } from '../../shared/smartsheetOrderPullReviewMapping.ts';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
@@ -2508,19 +2508,17 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         }).toString()}`, token),
       ]);
       verifyOrderCreateAuditSheetIdentity(remoteResponse.body, sheetId);
-      if (!Array.isArray(remoteResponse.body?.rows)) {
-        throw new Error('Smartsheet did not return a verifiable row-ID-filtered response; no comparison was confirmed.');
-      }
+      // Reject the entire page if Smartsheet's rowIds-filtered sheet response
+      // omitted any requested ID; an API omission is not evidence of deletion.
+      verifyUnresolvedOrderBatchSheetRows(remoteResponse.body, rowIds);
       const rows = normalizeSheetRows(remoteResponse.body);
-      const requestedIds = new Set(rowIds);
-      if (rows.length > rowIds.length || new Set(rows.map((row: any) => row.id)).size !== rows.length ||
-          rows.some((row: any) => !requestedIds.has(row.id))) {
-        throw new Error('Smartsheet returned unexpected or duplicate permanent row IDs in the batch review.');
+      if (rows.length !== rowIds.length) {
+        throw new Error('Smartsheet Order batch normalization was incomplete; no comparison was confirmed.');
       }
       const requestedOrders = new Set(ids);
-      if (orders.length > ids.length || new Set(orders.map((order: any) => String(order.id))).size !== orders.length ||
+      if (orders.length !== ids.length || new Set(orders.map((order: any) => String(order.id))).size !== orders.length ||
           orders.some((order: any) => !requestedOrders.has(String(order.id)))) {
-        throw new Error('Base44 returned unexpected or duplicated permanent Order IDs in the batch review.');
+        throw new Error('Base44 Order batch response was incomplete or contained unexpected permanent IDs; no comparison was confirmed.');
       }
       const byOrderId = new Map(orders.map((order: any) => [String(order.id), order]));
       const byRowId = new Map(rows.map((row: any) => [String(row.id), row]));
