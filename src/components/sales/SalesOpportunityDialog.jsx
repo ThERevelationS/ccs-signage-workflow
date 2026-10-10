@@ -114,6 +114,9 @@ export default function SalesOpportunityDialog({
   onClose,
   onUpdateFields,
   onReconcileExistingTaskStatus,
+  taskStatusCorrectionPending = false,
+  taskStatusCorrectionError = '',
+  onReloadAfterFailedTaskStatusCorrection,
   onRemoveFromCurrentPipeline,
   onCompleteFollowUp,
   onOpenFullDetails,
@@ -275,6 +278,19 @@ export default function SalesOpportunityDialog({
         </DialogHeader>
 
         <div className="space-y-5 p-4 sm:p-6">
+          {(taskStatusCorrectionPending || taskStatusCorrectionError) && (
+            <section className={`rounded-xl border p-3 text-xs ${taskStatusCorrectionError ? 'border-rose-300 bg-rose-50 text-rose-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}
+              role={taskStatusCorrectionError ? 'alert' : 'status'} aria-label="Task status correction save state">
+              <p className="font-semibold">{taskStatusCorrectionError ? 'Task / Status correction not verified' : 'Saving Task / Status correction'}</p>
+              <p className="mt-1">{taskStatusCorrectionError || 'The original mismatch remains visible until Base44 confirms the conflict-safe save and Sales history.'}</p>
+              {taskStatusCorrectionError && onReloadAfterFailedTaskStatusCorrection && (
+                <Button type="button" variant="outline" size="sm" className="mt-2 h-11 border-rose-300 bg-white text-rose-900 sm:h-9"
+                  onClick={onReloadAfterFailedTaskStatusCorrection}>
+                  Discard unsaved changes and reload latest
+                </Button>
+              )}
+            </section>
+          )}
           {taskStatusAudit.kind !== 'none' && (
             <section className={`rounded-xl border p-3 sm:p-4 ${taskStatusAudit.kind === 'modern_review' ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}
               aria-label={taskStatusAudit.kind === 'modern_review' ? 'Task and Sales Status need review' : 'Legacy task context'}>
@@ -287,7 +303,7 @@ export default function SalesOpportunityDialog({
                   {taskStatusAudit.mappedStatus && taskStatusAudit.kind === 'modern_review' &&
                     <p className="mt-1 text-slate-600">Task catalog category: {taskStatusAudit.mappedStatus.replace(/_/g, ' ')} (not applied automatically).</p>}
                   <p className="mt-1 text-slate-600">Review the task and existing history before making a protected change. No classification or timestamp was updated by this audit.</p>
-                  {isRegistered && taskStatusReconciliation && onReconcileExistingTaskStatus && (
+                  {isRegistered && taskStatusReconciliation && onReconcileExistingTaskStatus && !taskStatusCorrectionPending && !taskStatusCorrectionError && (
                     <Button type="button" variant="outline" size="sm"
                       className="mt-3 h-11 w-full border-amber-300 bg-white text-amber-900 hover:bg-amber-100 sm:h-9 sm:w-auto"
                       onClick={() => onReconcileExistingTaskStatus(workOrder)}>
