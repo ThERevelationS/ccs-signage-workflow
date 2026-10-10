@@ -1,0 +1,171 @@
+{
+  "locality": {
+    "id": "6ac1a111ea485c76e4c8f201",
+    "name": "Woodlawn",
+    "state": "OH",
+    "type": "village"
+  },
+  "observed_on": "2026-10-10",
+  "method": "Publisher section texts and official Village/county web retrieval; research paraphrases are not original archives.",
+  "chapter_sections_reviewed": 16,
+  "web_findings": [
+    {
+      "section": "1292.01",
+      "label": "Purpose",
+      "text": "The chapter balances business identification, appearance, traffic safety and consistent enforcement.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12376",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.02",
+      "label": "Chapter exceptions",
+      "text": "Certain small identification and public-building signs are excepted, while building-access and nearby-residential illumination provisions still apply. Chapter exceptions and permit exemptions are different reviews.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12382",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.03",
+      "label": "General requirements",
+      "text": "Review on-premises use, visibility, building access, animation restrictions and residential illumination hours. Unsafe-sign inspection language names the Building Commissioner or Zoning Officer; it does not establish the electrical inspection provider.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12390",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.04",
+      "label": "Measurement",
+      "text": "Area uses enclosing geometric shapes and faces visible from one point; height uses the preconstruction ground elevation. The referenced illustration has not been retained or independently checked.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12410",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.05",
+      "label": "Nonresidential signs and conflicts",
+      "text": "Wall signs use a 10% front-face allowance and a 150-square-foot individual cap. Ground-sign height, setback, area, landscaping and temporary-display rules also apply. Subsection (d) uses a 100-foot frontage threshold, while (e) lists one sign for 0\u2013400 feet; (d) refers to 1292.04(a) for professional signs although that section concerns measurement. Preserve both anomalies for staff interpretation. Variable-message signs have a conditional-use review path; reconcile it with the general animation restriction.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12419",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.06",
+      "label": "Residential signs",
+      "text": "Separate categories cover home occupations, institutions, real estate, subdivisions, contractors and temporary promotions. Temporary promotions require prior Zoning Officer approval and have duration and spacing limits. Determine the actual sign category before applying a dimensional rule.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12469",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.07",
+      "label": "Planned developments",
+      "text": "Underlying district rules apply unless the Planning Commission approves a coordinated sign plan for the entire PUD site.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12489",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.08",
+      "label": "Political signs",
+      "text": "The text allows political signs without an application and specifies nonillumination, size, number and setback limits. The wording about an application for a building requires staff interpretation and currentness review.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12492",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.09",
+      "label": "Inflatable signs",
+      "text": "A temporary sign permit, registered/licensed installer and insurance are specified. Review height, overhead-line separation, parking occupancy, anchoring, material and nonillumination conditions. Municipal Council determines any fee; no current amount is established here.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12499",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.10",
+      "label": "Maintenance",
+      "text": "Owners or agents must maintain signs, lighting and surrounding premises.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12515",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.11",
+      "label": "Nonconforming signs",
+      "text": "Replacement after collapse, burning or removal outside normal maintenance must comply with applicable chapter provisions. Do not infer an unrestricted grandfathering entitlement.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12518",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.12",
+      "label": "Variances",
+      "text": "The BZA may consider practical difficulties subject to conditions; a variance may not perpetuate a public-safety hazard.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12522",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.13",
+      "label": "Right-of-way signs",
+      "text": "The municipality disclaims responsibility for removal of previously placed right-of-way signs. This section does not authorize new encroachment.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12525",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.14",
+      "label": "Municipal signs",
+      "text": "Municipal name, traffic and temporary signs have municipal authority provisions.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12528",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.15",
+      "label": "Permit exemptions; missing fee amount",
+      "text": "Despite its title, this section lists categories not requiring a permit and supplies no fee amount. Exempt signs can remain subject to chapter rules. A zoning exemption does not establish a building or electrical exemption.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12531",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "1292.16",
+      "label": "Abandoned signs",
+      "text": "The text identifies abandonment over six consecutive months in a 12-month period and a 60-day notice response involving removal or compliant alteration.",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-12541",
+      "status": "web_research_unapproved"
+    },
+    {
+      "section": "Village referral",
+      "label": "Village confirms county building and zoning referral",
+      "url": "https://www.beautifulwoodlawn.us/building_and_zoning/index.php",
+      "text": "The Village directs building and zoning permitting to Hamilton County. Its building inspection phone instructions concern county building permits; they do not identify the electrical inspector."
+    },
+    {
+      "section": "County zoning intake",
+      "label": "County intake and current fee links",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/woodlawn_zoning.php",
+      "text": "The county describes contracted zoning administration since 2018 and links ezTrak, a customer guide, a zoning map and two 2026 fee schedules. The originals remain unavailable; no fee amount or sign-specific attachment checklist is approved."
+    },
+    {
+      "section": "Digital submission",
+      "label": "Paper procedure reconciled with 2025 digital announcement",
+      "url": "https://www.hamiltoncountyohio.gov/news_detail_T24_R21.php",
+      "text": "The county announced fully digital building and zoning permitting effective February 18, 2025. Historical mailed-paper instructions should not be used as current intake. The exact sign application record type and attachments still require confirmation."
+    },
+    {
+      "section": "Electrical routing",
+      "label": "Inspection Bureau candidate \u2014 two roles require review",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/index.php",
+      "text": "The county states that Inspection Bureau, Inc. handles electrical permits and inspections. Combined with the Village county referral, this supports an IBI candidate for both roles, not an approved Woodlawn sign workflow. Confirm permit issuance and inspection separately for the job address."
+    },
+    {
+      "section": "1444.06",
+      "label": "Historical electrical sign fees",
+      "url": "https://codelibrary.amlegal.com/codes/woodlawn/latest/woodlawn_oh/0-0-0-13545",
+      "text": "The publisher shows electrical sign fees attributed to a 2007 ordinance, with under-30 and over-30-square-foot categories and plan review. Exactly 30 square feet is not resolved by those labels. Reconcile this historical schedule with current 2026 schedules and IBI charges before calculating fees."
+    }
+  ],
+  "retained_originals": 0,
+  "currentness_approved": false,
+  "sign_application_route_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "staff_approved": false,
+  "live_records_changed": 0,
+  "open_review": [
+    "Later amendments and full cross-reference review",
+    "Address, district, overlay and approved PUD plan",
+    "Ground-sign frontage conflict and mistaken cross-reference",
+    "Current 2026 fee originals and historical 2007 electrical fee reconciliation",
+    "Exact sign record type and application attachments",
+    "Electrical issuance and inspection confirmation"
+  ],
+  "download_manifest": "recovery-2026-10-10/manifest.json"
+}

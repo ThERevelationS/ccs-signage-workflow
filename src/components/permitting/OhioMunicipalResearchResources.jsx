@@ -10,7 +10,7 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
     <section className="min-w-0 space-y-3 p-3 pt-0 text-sm [overflow-wrap:anywhere]" aria-label={`${dossier.name} unapproved permitting research`}>
       <p>Official references observed {dossier.observed_on}. These documents remain unreviewed for current fees, sign applicability, office responsibility, and geographic coverage.</p>
       <ul className="list-disc space-y-2 pl-5">{dossier.notes.map(note => <li key={note}>{note}</li>)}</ul>
-      <p><a className="underline" href={dossier.source} target="_blank" rel="noopener noreferrer">Official City department page</a></p>
+      <p><a className="underline" href={dossier.source} target="_blank" rel="noopener noreferrer">Official locality research source</a></p>
       {dossier.online_form_url && <p><a className="min-h-11 inline-flex items-center underline" href={dossier.online_form_url} target="_blank" rel="noopener noreferrer">Officially linked online application portal</a></p>}
       {[...(dossier.references || []), ...(dossier.ocr_references || [])].map(reference => <p key={reference.url}><a className="min-h-11 inline-flex items-center underline" href={reference.url} target="_blank" rel="noopener noreferrer">{reference.label}</a></p>)}
       <ul className="space-y-3">{dossier.resources.map(resource => <li key={resource.file}>
@@ -20,6 +20,14 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
           <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official document</a>
         </div>
       </li>)}</ul>
+      {dossier.web_findings?.length > 0 && <section className="space-y-3 rounded border border-amber-200 p-3" aria-label="Web research findings">
+        <p className="font-medium">Web findings — original documents unavailable; staff review pending</p>
+        <p>These observations come from web references and are not retained original documents or approved requirements.</p>
+        <ul className="space-y-3">{dossier.web_findings.map(finding => <li key={finding.section}>
+          <p className="font-medium">{finding.section}: {finding.label}</p><p>{finding.text}</p>
+          <a className="min-h-11 inline-flex items-center underline" href={finding.url} target="_blank" rel="noopener noreferrer">Official web reference — {finding.section}</a>
+        </li>)}</ul>
+      </section>}
       {dossier.routing_comparison && <section className="space-y-2" aria-label="Submission and contact comparison">
         <p className="font-medium">Guide compared with current City pages — review pending</p>
         <div className="overflow-x-auto"><table className="w-full min-w-[32rem] text-left text-sm">
