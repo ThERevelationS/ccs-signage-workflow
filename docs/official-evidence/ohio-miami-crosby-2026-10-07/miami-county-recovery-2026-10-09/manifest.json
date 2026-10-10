@@ -1,0 +1,21 @@
+{
+  "sources": [
+    {
+      "file": "county-zoning-user-guide-2025.pdf",
+      "candidate_url": "https://cms2.revize.com/revize/hamiltoncountyoh/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf",
+      "method": "County-linked document path resolved from provider root; candidate until successful original retrieval",
+      "observed_at": "2026-10-10T00:51:18.606622+00:00",
+      "status": "retrieval_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "county-zoning-fees-2026.pdf",
+      "candidate_url": "https://cms2.revize.com/revize/hamiltoncountyoh/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/Fee%20Schedules/2026/Zoning_Fees_2026.pdf",
+      "method": "County-linked document path resolved from provider root; candidate until successful original retrieval",
+      "observed_at": "2026-10-10T00:51:18.697062+00:00",
+      "status": "retrieval_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false
+}
