@@ -561,7 +561,7 @@ check("rejected custom-status entries retain draft and popup selection", () => {
     source.indexOf("  // Apply only genuinely new template content")
   );
   assert.match(customHandler, /otherPopupValidationReturnRef\.current = customStatusInputRef\.current;/);
-  assert.match(customHandler, /if \(!applyChecklistStatus\(itemId, value\)\) return;/);
+  assert.ok(customHandler.includes("if (!applyChecklistStatus(itemId, value, { fromOtherPopup: true })) return;"));
   assert.ok(customHandler.indexOf("if (!applyChecklistStatus") <
     customHandler.indexOf('setCustomDropdownValue("");'));
   assert.ok(customHandler.indexOf("otherPopupValidationReturnRef.current = null;") <
@@ -570,7 +570,8 @@ check("rejected custom-status entries retain draft and popup selection", () => {
   const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
   assert.match(popup, /ref=\{customStatusInputRef\}/);
   assert.match(popup, /onClick=\{\(event\) => \{\s*if \(!showOtherPopup\?\.itemId\) return;\s*otherPopupValidationReturnRef\.current = event\.currentTarget;/);
-  assert.match(popup, /if \(applyChecklistStatus\(showOtherPopup\.itemId, dd\.name\)\) \{\s*otherPopupValidationReturnRef\.current = null;\s*setShowOtherPopup\(null\);/);
+  assert.ok(popup.includes("if (applyChecklistStatus(showOtherPopup.itemId, dd.name, { fromOtherPopup: true })) {"));
+  assert.match(popup, /otherPopupDismissedRef\.current = true;[\s\S]*customStatusDraftsByItemIdRef\.current\.delete\(showOtherPopup\.itemId\);/);
   assert.match(popup, /value=\{customDropdownValue\}/);
 });
 
