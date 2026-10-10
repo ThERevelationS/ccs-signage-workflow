@@ -2482,7 +2482,9 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       }
 
       // Exact immutable IDs, not customer names or visual sheet positions.
-      const base44Order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
+      const base44Order = await base44.asServiceRole.entities.Order.get(orderId);
+      // Failed reads are not proof that a production Order is missing; return
+      // an error rather than silently treating an API outage as absent data.
       const remoteResponse = await smartsheetGet(`/sheets/${sheetId}/rows/${rowId}`, token);
       const remoteRow = normalizeSheetRows({ rows: [remoteResponse.body] })[0] || null;
       let report: any;
