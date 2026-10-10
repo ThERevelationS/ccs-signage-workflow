@@ -436,3 +436,27 @@ test('Whitewater identity disclosure keeps homepage distinct from zoning and nei
  assert.equal(render({...row,id:'6ac19f1c2fbbf3b8bb27397c'}),'');assert.equal(render(row,false),'');
  assert.equal(createHash('sha256').update(readFileSync(root+'whitewater-home.html')).digest('hex'),r.source_sha256);
 });
+
+test('Woodlawn web findings expose code conflicts without inventing retained documents or approved roles',()=>{
+ const row=dossiers.find(r=>r.id==='6ac1a111ea485c76e4c8f201');
+ const review=JSON.parse(readFileSync('docs/official-evidence/ohio-woodlawn-2026-10-07/recovery-2026-10-10/web-review.json'));
+ const recovery=JSON.parse(readFileSync('docs/official-evidence/ohio-woodlawn-2026-10-07/recovery-2026-10-10/manifest.json'));
+ assert.equal(row.resources.length,0);assert.equal(row.web_findings.length,21);assert.equal(review.chapter_sections_reviewed,16);
+ assert.deepEqual(row.web_findings,review.web_findings);
+ assert.equal(new Set(row.web_findings.map(f=>f.section)).size,21);
+ for(let n=1;n<=16;n++)assert.ok(row.web_findings.some(f=>f.section==='1292.'+String(n).padStart(2,'0')));
+ for(const k of ['currentness_approved','sign_application_route_approved','electrical_permit_issuer_approved','electrical_inspector_approved','staff_approved'])assert.equal(review[k],false);
+ assert.equal(review.retained_originals,0);assert.equal(review.live_records_changed,0);
+ for(const source of recovery.sources){assert.equal(source.status,'original_retention_gap');assert.match(source.error,/403/);assert.equal(source.sha256,undefined);assert.equal(source.retained_path,undefined);}
+ const html=render(row);
+ assert.match(html,/Web findings — original documents unavailable; staff review pending/);
+ assert.match(html,/not retained original documents or approved requirements/);
+ assert.match(html,/100-foot frontage threshold/);assert.match(html,/Exactly 30 square feet/);
+ assert.match(html,/2007 ordinance/);assert.match(html,/Inspection Bureau, Inc/);
+ assert.match(html,/permit issuance and inspection remain separate unresolved approvals/);
+ assert.match(html,/do not create an approved workflow/);
+ assert.doesNotMatch(html,/Retained PDF|Original PDF — physical page/);
+ for(const finding of row.web_findings)assert.ok(html.includes('href="'+finding.url+'"'));
+ assert.equal(render(row,false),'');
+ assert.equal(render({...row,type:'city'}),'');
+});
