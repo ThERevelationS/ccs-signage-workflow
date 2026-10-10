@@ -63,6 +63,8 @@ export default function ProductChecklistDialog({
   const [, setProductTypes] = useState([]);
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
+  const customStatusInputRef = useRef(null);
+  const otherPopupValidationReturnRef = useRef(null);
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
@@ -321,7 +323,10 @@ export default function ProductChecklistDialog({
   const handleCreateCustomValue = (itemId) => {
     const value = customDropdownValue.trim();
     if (!value) return;
+    otherPopupValidationReturnRef.current = customStatusInputRef.current;
+    // Rejected validation keeps this dialog and the draft value available.
     if (!applyChecklistStatus(itemId, value)) return;
+    otherPopupValidationReturnRef.current = null;
     setCustomDropdownValue("");
     setShowOtherPopup(null);
   };
@@ -2916,6 +2921,18 @@ export default function ProductChecklistDialog({
             event.preventDefault();
             const itemId = validationFocusItemIdRef.current;
             validationFocusItemIdRef.current = null;
+            // When validation came from the custom-status popup, its input or
+            // option is the return target—not a checklist control behind it.
+            const returnToOtherPopup = Boolean(itemId && showOtherPopup?.itemId === itemId);
+            const popupTarget = returnToOtherPopup
+              ? otherPopupValidationReturnRef.current || customStatusInputRef.current
+              : null;
+            otherPopupValidationReturnRef.current = null;
+            if (popupTarget?.isConnected && !popupTarget.disabled &&
+                popupTarget.getClientRects().length) {
+              popupTarget.focus();
+              return;
+            }
             const targetRow = itemId ? findRenderedChecklistItemElement([itemId]) : null;
             const statusControl = targetRow?.querySelector('[aria-label^="Status for "]');
             const focusTarget = statusControl?.getClientRects().length && !statusControl.disabled
@@ -2997,8 +3014,11 @@ export default function ProductChecklistDialog({
                     <button
                       type="button"
                       key={dd.id}
-                      onClick={() => {
-                        if (showOtherPopup?.itemId && applyChecklistStatus(showOtherPopup.itemId, dd.name)) {
+                      onClick={(event) => {
+                        if (!showOtherPopup?.itemId) return;
+                        otherPopupValidationReturnRef.current = event.currentTarget;
+                        if (applyChecklistStatus(showOtherPopup.itemId, dd.name)) {
+                          otherPopupValidationReturnRef.current = null;
                           setShowOtherPopup(null);
                         }
                       }}
@@ -3024,6 +3044,7 @@ export default function ProductChecklistDialog({
               <Label className="text-sm font-medium mb-2 block">Or Enter Custom Value</Label>
               <div className="flex gap-2">
                 <Input
+                  ref={customStatusInputRef}
                   value={customDropdownValue}
                   onChange={(e) => setCustomDropdownValue(e.target.value)}
                   placeholder="Type custom value..."
