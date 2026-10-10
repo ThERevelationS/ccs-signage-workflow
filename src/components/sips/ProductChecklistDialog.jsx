@@ -369,8 +369,9 @@ export default function ProductChecklistDialog({
     if (!value) return;
     otherPopupValidationReturnRef.current = customStatusInputRef.current;
     // Rejected validation keeps this dialog and the draft value available.
-    if (!applyChecklistStatus(itemId, value)) return;
+    if (!applyChecklistStatus(itemId, value, { fromOtherPopup: true })) return;
     otherPopupValidationReturnRef.current = null;
+    otherPopupDismissedRef.current = true;
     customStatusDraftsByItemIdRef.current.delete(itemId);
     setCustomDropdownValue("");
     setShowOtherPopup(null);
@@ -555,7 +556,7 @@ export default function ProductChecklistDialog({
   // Descendant completion is memoized above so repeated render/validation checks are O(1).
   const areChildrenComplete = (itemId) => childrenCompleteByItemId.get(itemId) ?? true;
 
-  const applyChecklistStatus = (itemId, value) => {
+  const applyChecklistStatus = (itemId, value, { fromOtherPopup = false } = {}) => {
     const item = checklistItemById.get(itemId);
     if (!item || !value) return false;
 
@@ -581,15 +582,16 @@ export default function ProductChecklistDialog({
       return false;
     }
 
-    // Moving between Active and Completed unmounts the status trigger.
-    // Restore focus to the persistent Search field after the transition.
+    // Moving between Active and Completed can unmount the status trigger.
+    // Direct edits restore Search focus; the Other popup restores focus
+    // after it closes so a timer cannot steal focus behind the popup.
     const wasCompleted = Boolean(dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed);
     const willBeCompleted = Boolean(selectedCondition?.is_completed);
     if (wasCompleted !== willBeCompleted) {
       setFocusedSearchId(null);
       setFocusedNeedsInputId(null);
       setChecklistSearchIndex(-1);
-      scheduleNavigationFocus(() => checklistSearchInputRef.current?.focus());
+      if (!fromOtherPopup) scheduleNavigationFocus(() => checklistSearchInputRef.current?.focus());
     }
 
     updateChecklistItem(itemId, { custom_dropdown_value: value });
@@ -2710,7 +2712,7 @@ export default function ProductChecklistDialog({
                         isRegistered={isRegistered}
                         updateChecklistItem={updateChecklistItem}
                         applyChecklistStatus={applyChecklistStatus}
-                        setShowOtherPopup={setShowOtherPopup}
+                        openOtherPopup={openOtherPopup}
                         focusedNeedsInputId={focusedNeedsInputId}
                       />
                       </div>
@@ -3066,8 +3068,11 @@ export default function ProductChecklistDialog({
                       onClick={(event) => {
                         if (!showOtherPopup?.itemId) return;
                         otherPopupValidationReturnRef.current = event.currentTarget;
-                        if (applyChecklistStatus(showOtherPopup.itemId, dd.name)) {
+                        if (applyChecklistStatus(showOtherPopup.itemId, dd.name, { fromOtherPopup: true })) {
                           otherPopupValidationReturnRef.current = null;
+                          otherPopupDismissedRef.current = true;
+                          customStatusDraftsByItemIdRef.current.delete(showOtherPopup.itemId);
+                          setCustomDropdownValue("");
                           setShowOtherPopup(null);
                         }
                       }}
