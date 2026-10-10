@@ -276,6 +276,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editInput, setEditInput] = useState("");
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const pendingChangesRef = useRef({});
+  // Show a same-task status repair only after a verified guarded save.
+  const pendingSameTaskRepairRef = useRef(new Set());
   const pendingBaselinesRef = useRef({});
   const pendingSalesGuardsRef = useRef({});
   const pendingHistoryFieldsRef = useRef({});
@@ -500,7 +502,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         setWorkOrders((current) => {
           const existing = current.find((row) => row.id === id) || null;
           const remoteRow = { ...(existing || {}), ...remotePatch, id };
-          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current
+          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current && !pendingSameTaskRepairRef.current.has(id)
             ? pendingForRow
             : {};
           const displayRow = { ...remoteRow, ...scopedPending };
@@ -516,7 +518,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
         setSelectedWorkOrder((selected) => {
           if (selected?.id !== id) return selected;
-          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current
+          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current && !pendingSameTaskRepairRef.current.has(id)
             ? pendingForRow
             : {};
           return { ...selected, ...remotePatch, id, ...scopedPending };
@@ -685,7 +687,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return [...mergedById.values()]
       .map((order) => ({
         ...order,
-        ...(pendingRecordScopesRef.current[order.id] === scope ? (pendingChangesRef.current[order.id] || {}) : {}),
+        ...(pendingRecordScopesRef.current[order.id] === scope && !pendingSameTaskRepairRef.current.has(order.id) ? (pendingChangesRef.current[order.id] || {}) : {}),
       }))
       .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
   };
@@ -1025,7 +1027,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         : {}),
     } : {};
     const mergedUpdates = { ...proposedUpdates, ...trackingUpdates };
-    if (selectedWorkOrder?.id === orderId &&
+    if (!reconcileSameTask && selectedWorkOrder?.id === orderId &&
         (Object.prototype.hasOwnProperty.call(mergedUpdates, 'sales_status') ||
          Object.prototype.hasOwnProperty.call(mergedUpdates, 'current_task_description'))) {
       // Preserve an opened review detail only when this user's own protected
@@ -1041,15 +1043,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     );
     if (changedFields.length === 0) return;
 
-    const pinChanges = Object.fromEntries(changedFields.map((field) => [field, mergedUpdates[field]]));
-    liveEditPinsRef.current = {
-      ...liveEditPinsRef.current,
-      [orderId]: createOrExtendSalesLiveEditPin(liveEditPinsRef.current[orderId], currentWo, pinChanges),
-    };
-    setLiveEditPinVersion((version) => version + 1);
-
-    setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, ...mergedUpdates } : wo));
-    setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...mergedUpdates } : selected);
+    if (reconcileSameTask) {
+      // Preserve the true review warning until persistence is verified.
+      pendingSameTaskRepairRef.current.add(orderId);
+    } else {
+      const pinChanges = Object.fromEntries(changedFields.map((field) => [field, mergedUpdates[field]]));
+      liveEditPinsRef.current = {
+        ...liveEditPinsRef.current,
+        [orderId]: createOrExtendSalesLiveEditPin(liveEditPinsRef.current[orderId], currentWo, pinChanges),
+      };
+      setLiveEditPinVersion((version) => version + 1);
+      setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, ...mergedUpdates } : wo));
+      setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...mergedUpdates } : selected);
+    }
 
     const baselines = { ...(pendingBaselinesRef.current[orderId] || {}) };
     changedFields.forEach((changedField) => {
