@@ -7,6 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
+import { verifiedSalesConflictResolutionTargets } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -1715,7 +1716,7 @@ async function pushDataset(
   const deferredSmartsheetWrites: any[] = [];
   const deferredBase44Updates: any[] = [];
   const deferredConflictRecordIds: string[] = [];
-  const deferredConflictDecisions: string[] = [];
+  const deferredSalesConflictDecisions = new Map<string, string[]>();
   const deferredOrderConflictDecisions = new Map<string, string[]>();
   const deferredSalesVerification = new Map<string, {
     rowId: string;
@@ -1890,7 +1891,7 @@ async function pushDataset(
         }
         if (fieldPlan.decisions?.length && !fieldPlan.taskStageHeld) {
           if (dataset === 'orders') deferredOrderConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
-          else deferredConflictDecisions.push(...fieldPlan.decisions);
+          else deferredSalesConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
         }
         // Never auto-resolve the task review simply because another Sales
         // field was pushed successfully in this same WorkOrder.
@@ -2315,11 +2316,19 @@ async function pushDataset(
       try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset:'orders',entity_id:{$in:[...successfulOrderUpdates]},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}}); } catch {}
     }
   } else {
-    if (deferredConflictDecisions.length) {
-      try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:deferredConflictDecisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}
+    // An approved Sales review is only a requested decision, never proof that
+    // either remote task/field or local snapshot reconciliation succeeded.
+    // Retain approved AND open reviews for every failed/unverified WorkOrder.
+    const verifiedTargets = verifiedSalesConflictResolutionTargets({
+      verifiedWorkOrderIds: updated,
+      approvedDecisionsByWorkOrder: deferredSalesConflictDecisions,
+      openReviewWorkOrderIds: deferredConflictRecordIds,
+    });
+    if (verifiedTargets.approvedDecisionIds.length) {
+      try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:verifiedTargets.approvedDecisionIds},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}
     }
-    if (deferredConflictRecordIds.length) {
-      try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:{$in:deferredConflictRecordIds},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Smartsheet-wins reconciliation'}}); } catch {}
+    if (verifiedTargets.openReviewWorkOrderIds.length) {
+      try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:{$in:verifiedTargets.openReviewWorkOrderIds},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified Sales field reconciliation'}}); } catch {}
     }
   }
 
