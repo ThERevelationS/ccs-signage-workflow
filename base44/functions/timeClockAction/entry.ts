@@ -3509,41 +3509,52 @@ Deno.serve(async (req) => {
         let deltaMatches = directDeltaMatches;
         if (!deltaMatches && strictV28 && change.change_type === 'changed' && Array.isArray(change.causal_chain)) {
           const correctionLinks = change.causal_chain.filter((link: any) => String(link?.action || '') === 'admin_correction');
-          if (correctionLinks.length > 1) {
-            let semanticState = {
-              clock_in: String(change.before?.clock_in || ''),
-              clock_out: String(change.before?.clock_out || ''),
-              total_hours: Number(change.before?.total_hours || 0),
-            };
-            let terminalCorrectionId = '';
-            let chainMatches = true;
+          if (correctionLinks.length > 1 &&
+              String(correctionLinks[correctionLinks.length - 1]?.audit_id || '') === String(provenance.applied_audit_id || '')) {
+            const correctionAudits = [];
             for (const link of correctionLinks) {
               const chainAudit = await auditEntity.get(String(link?.audit_id || '')).catch(() => null);
-              const chainOriginal = chainAudit?.details?.original || {};
-              const chainCorrected = chainAudit?.details?.corrected || {};
               if (!chainAudit ||
                   String(chainAudit.action || '') !== 'admin_correction' ||
                   !['confirmed', 'recovered'].includes(String(chainAudit.outcome || '')) ||
                   String(chainAudit.time_entry_id || '') !== String(change.time_entry_id || '') ||
-                  String(chainAudit.id || '') !== String(link?.audit_id || '') ||
-                  String(chainOriginal.clock_in || '') !== semanticState.clock_in ||
-                  String(chainOriginal.clock_out || '') !== semanticState.clock_out ||
-                  Number(chainOriginal.total_hours || 0) !== semanticState.total_hours) {
-                chainMatches = false;
+                  String(chainAudit.id || '') !== String(link?.audit_id || '')) {
+                correctionAudits.length = 0;
                 break;
               }
-              semanticState = {
-                clock_in: String(chainCorrected.clock_in || ''),
-                clock_out: String(chainCorrected.clock_out || ''),
-                total_hours: Number(chainCorrected.total_hours || 0),
-              };
-              terminalCorrectionId = String(chainAudit.id || '');
+              correctionAudits.push(chainAudit);
             }
-            deltaMatches = chainMatches &&
-              terminalCorrectionId === String(provenance.applied_audit_id || '') &&
-              semanticState.clock_in === String(change.after?.clock_in || '') &&
-              semanticState.clock_out === String(change.after?.clock_out || '') &&
-              semanticState.total_hours === Number(change.after?.total_hours || 0);
+            let matchingSuffixes = 0;
+            for (let startIndex = 0; startIndex < correctionAudits.length; startIndex += 1) {
+              let semanticState = {
+                clock_in: String(change.before?.clock_in || ''),
+                clock_out: String(change.before?.clock_out || ''),
+                total_hours: Number(change.before?.total_hours || 0),
+              };
+              let suffixMatches = true;
+              for (let index = startIndex; index < correctionAudits.length; index += 1) {
+                const chainOriginal = correctionAudits[index]?.details?.original || {};
+                const chainCorrected = correctionAudits[index]?.details?.corrected || {};
+                if (String(chainOriginal.clock_in || '') !== semanticState.clock_in ||
+                    String(chainOriginal.clock_out || '') !== semanticState.clock_out ||
+                    Number(chainOriginal.total_hours || 0) !== semanticState.total_hours) {
+                  suffixMatches = false;
+                  break;
+                }
+                semanticState = {
+                  clock_in: String(chainCorrected.clock_in || ''),
+                  clock_out: String(chainCorrected.clock_out || ''),
+                  total_hours: Number(chainCorrected.total_hours || 0),
+                };
+              }
+              if (suffixMatches &&
+                  semanticState.clock_in === String(change.after?.clock_in || '') &&
+                  semanticState.clock_out === String(change.after?.clock_out || '') &&
+                  semanticState.total_hours === Number(change.after?.total_hours || 0)) {
+                matchingSuffixes += 1;
+              }
+            }
+            deltaMatches = matchingSuffixes === 1;
           }
         }
         return Boolean(correction && appliedAudit &&
