@@ -189,7 +189,7 @@ test("late applied mechanic receipt cannot be downgraded by stale admin revocati
   const result=await revoke;
   const late=await mechanic;
   assert.equal(result.code,200);
-  assert.equal(result.body.reconciled_applied,1,"Admin must report the newer durable outcome");
+  assert.equal(result.body.reconciled_applied,1,`Admin must report the newer durable outcome: ${JSON.stringify(result.body)} latest=${JSON.stringify(store.receipts.get(previous.id))}`);
   assert.equal(result.body.reconciled_cancelled,0);
   assert.equal(late.code,403);
   assert.equal(store.receipts.get(previous.id).status,"applied","Stale admin cancellation must not replace durable applied evidence");
