@@ -170,8 +170,8 @@ async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, reque
   }}).catch(()=>null);
 }
 
-async function reconcileReservedMechanicPhotoRetry(
-  base44:any, Access:any, Receipt:any, WorkOrder:any, current:any, source:any, grantId:string,
+async function findReservedMechanicPhotoRetry(
+  Receipt:any, current:any, source:any, grantId:string,
 ) {
   const summary = source?.result_summary || {};
   const owner = String(summary.retry_reserved_by_request_id || '');
@@ -180,11 +180,11 @@ async function reconcileReservedMechanicPhotoRetry(
       source?.operation_type !== 'mechanic_progress_save' ||
       source?.target_entity !== 'FleetMaintenanceWorkOrder' ||
       String(source?.target_id || '') !== workOrderId ||
-      String(summary.grant_id || '') !== grantId) return {status:'blocked'};
+      String(summary.grant_id || '') !== grantId) return null;
 
   const key = mechanicOperationKey(grantId,workOrderId,'save',owner);
   const matches = await Receipt.filter({operation_key:key});
-  if ((matches || []).length !== 1) return {status:'blocked'};
+  if ((matches || []).length !== 1) return null;
   const retry = matches[0];
   if (retry.operation_type !== 'mechanic_progress_save' ||
       retry.target_entity !== 'FleetMaintenanceWorkOrder' ||
@@ -194,15 +194,26 @@ async function reconcileReservedMechanicPhotoRetry(
       String(retry?.result_summary?.request_id || '') !== owner ||
       String(retry?.result_summary?.expected_updated_date || '') !== String(summary.expected_updated_date || '') ||
       String(retry?.result_summary?.reused_upload_receipt_id || '') !== String(source.id) ||
-      retry?.result_summary?.retry_reservation_required !== true) return {status:'blocked'};
+      retry?.result_summary?.retry_reservation_required !== true) return null;
 
   const priorUrls = summary.uploaded_photo_urls;
   const retriedUrls = retry?.result_summary?.uploaded_photo_urls;
   if (!Array.isArray(priorUrls) || !Array.isArray(retriedUrls) ||
       priorUrls.length > retriedUrls.length ||
       !priorUrls.every((url:any,index:number)=>/^https:\/\//i.test(String(url || '')) && url === retriedUrls[index])) {
-    return {status:'blocked'};
+    return null;
   }
+
+  return retry;
+}
+
+async function reconcileReservedMechanicPhotoRetry(
+  base44:any, Access:any, Receipt:any, WorkOrder:any, current:any, source:any, grantId:string,
+) {
+  const retry = await findReservedMechanicPhotoRetry(Receipt,current,source,grantId);
+  if (!retry) return {status:'blocked'};
+  const owner = String(source.result_summary.retry_reserved_by_request_id || '');
+  const workOrderId = String(current.id || '');
 
   if (workOrderHasMechanicReceipt(current,retry)) {
     await markMechanicReceiptApplied(Receipt,retry,current,retry.status !== 'applied');
