@@ -1259,3 +1259,11 @@ All 160 focused tests pass; refreshJurisdiction and permittingResearchBacklogDis
 
 Evidence: docs/permitting-external-referral-replay-2026-10-10.json. Reusable replay: scripts/replay-permitting-external-referrals.mjs.
 Next: connect directly linked external document originals to scoped retrieval and archive verification, with redirect provenance and source-locality isolation; keep publisher/department/online-form referrals distinct.
+
+
+### 2026-10-10 — Shared external document archival
+Phase 10, milestone 2 of 3 remains active. Connected manually selected saved external direct-document referrals to the shared archive worker. The official HTML page is rechecked for the exact link before staging and before a failed-source retry; original requests and redirects are limited to the selected source/document host. Durable upload receipts, stored-byte validation and catalog registration use the existing worker. Source-page provenance is preserved in the jurisdiction document schema and tied to jurisdiction identity. Authority and applicability remain unapproved.
+
+Validation: 174 isolated automated tests passed, including 10 external archive-path and 4 actual scoped-fetch tests. Archive worker, backlog dispatcher and download handler backend bundles passed. No production test-record writes or publishing.
+
+Remaining: expose selected external collection in the review UI, then connect explicitly scoped referrals to the opted-in automatic backlog. Portals and code publishers still require separate scope and review. This completes the shared backend unit, not Ohio/Kentucky coverage or the whole Downloader.

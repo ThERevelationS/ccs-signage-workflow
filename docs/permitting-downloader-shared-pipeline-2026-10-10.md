@@ -39,3 +39,11 @@ Expose external resources linked directly by an official locality page as a prov
 The shared scanner now captures external links in discovery_scan_state.external_referrals. This inventory is provenance-bound to its official page, resolution base, original href and page SHA-256. It does not populate JurisdictionProfile.documents or expand the same-host frontier. Category labels are hints, not host ownership or regulatory approval. Existing source, identity, version and manual-protection guards persist the cursor atomically.
 
 Replay of retained Sharonville, Symmes Township and Cincinnati pages found 8 external references. No fresh network verification is claimed. The next implementation step is scoped direct-document retrieval, preserving source locality and redirect provenance, followed by original-byte archive validation and catalog registration. Review displays and automatic cross-host archival are not completed in this batch.
+
+
+### 2026-10-10 — Shared external document archival
+Phase 10, milestone 2 of 3 remains active. Connected manually selected saved external direct-document referrals to the shared archive worker. The official HTML page is rechecked for the exact link before staging and before a failed-source retry; original requests and redirects are limited to the selected source/document host. Durable upload receipts, stored-byte validation and catalog registration use the existing worker. Source-page provenance is preserved in the jurisdiction document schema and tied to jurisdiction identity. Authority and applicability remain unapproved.
+
+Validation: 174 isolated automated tests passed, including 10 external archive-path and 4 actual scoped-fetch tests. Archive worker, backlog dispatcher and download handler backend bundles passed. No production test-record writes or publishing.
+
+Remaining: expose selected external collection in the review UI, then connect explicitly scoped referrals to the opted-in automatic backlog. Portals and code publishers still require separate scope and review. This completes the shared backend unit, not Ohio/Kentucky coverage or the whole Downloader.
