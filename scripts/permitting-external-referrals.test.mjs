@@ -33,7 +33,9 @@ test('cross-host embedded document and online form references are inventoried wi
  '<iframe src="https://portal.example/apply" title="Online permit form"></iframe>'+
  '<a href="https://portal.example/apply">Online permit form</a>',seed);
  assert.equal(rows.length,2);assert.equal(rows[0].discovery_element,'object');
- assert.equal(rows.find(r=>r.referral_kind==='online_form').discovery_element,'iframe');
+ assert.equal(rows.find(r=>r.referral_kind==='online_form').discovery_element,'anchor');
+ const iframe=discoverOfficialPermittingReferrals('<iframe src="https://portal.example/apply" title="Online permit form"></iframe>',seed);
+ assert.equal(iframe[0].discovery_element,'iframe');
 });
 test('scanner saves referrals atomically with frontier but never puts them in download candidates',async()=>{
  const fetched=[];const scan=await scanOfficialPermittingPages({seedUrl:seed,maxPages:1,fetchPage:async url=>{fetched.push(url);return{html,finalUrl:url};}});
@@ -93,4 +95,18 @@ test('retained Ohio official pages replay through the shared referral scanner',a
   total+=scan.external_referrals.length;
  }
  assert(total>0);
+});
+
+test('reread page replaces removed referrals while preserving unchanged link recovery offsets',async()=>{
+ const links=Array.from({length:105},(_,i)=>'<a href="/application-'+i+'">Building Application '+i+'</a>').join('');
+ const first=await scanOfficialPermittingPages({seedUrl:seed,maxPages:1,fetchPage:async url=>({html:links+'<a href="https://old.example/sign.pdf">Sign form</a>',finalUrl:url})});
+ assert(first.gaps.some(g=>g.reason==='page_link_limit'));
+ const next=await scanOfficialPermittingPages({seedUrl:seed,resume:first.continuation_state,recoverLinkLimits:true,maxPages:1,fetchPage:async url=>({html:links+'<a href="https://new.example/sign.pdf">Sign form</a>',finalUrl:url})});
+ assert.equal(next.external_referrals.length,1);assert.equal(next.external_referrals[0].url,'https://new.example/sign.pdf');
+ assert.equal(next.pages[0].recovered_link_offset,100);
+});
+test('oversized referral inventory raises review rather than silently dropping external links',async()=>{
+ const markup=Array.from({length:5001},(_,i)=>'<a href="https://cdn.example/sign-'+i+'.pdf">Sign application</a>').join('');
+ let calls=0;await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,fetchPage:async()=>{calls++;return{html:markup,finalUrl:seed};}}),error=>error.frontier_review_required===true && /storage bounds/.test(error.message));
+ assert.equal(calls,1);
 });
