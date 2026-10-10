@@ -174,7 +174,10 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
     const verifying = { ...state, verification_attempts: (Number(state.verification_attempts) || 0) + 1 };
     await transition(entity, jurisdictionId, doc, state, verifying);
     state = verifying;
-    const {bytes: stored} = await fetchBytes(state.file_url);
+    const storedResponse = await fetchBytes(state.file_url);
+    const stored = storedResponse.bytes;
+    const storedFormat = state.detected_format || (knownPdf || classifiedPdf ? 'pdf' : new URL(doc.url).pathname.split('.').pop().toLowerCase());
+    validatePermitDocumentBytes(stored, {format: storedFormat, contentType: storedResponse.contentType});
     const storedSha = await digest(stored);
     if (stored.length !== state.source_bytes || storedSha !== state.source_sha256) throw new Error('Stored archive bytes do not match the official source.');
     const complete = { ...state, status: 'complete', lease_expires_at: '', retry_after: '', error: '', completed_at: stamp() };

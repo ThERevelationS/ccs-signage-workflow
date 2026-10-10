@@ -97,3 +97,17 @@ test('compiled direct downloader blocks forged Office document before storage de
  const response=await handler(new Request('https://test',{method:'POST',body:JSON.stringify({jurisdiction_id:'fixture',document_url:'https://county.gov/sign.doc'})}));
  assert.equal(response.status,415);assert.equal(uploads,0);assert.equal(writes,0);assert.match((await response.json()).error,/HTML/);
 });
+
+test('legacy uploaded receipt cannot finalize a matching-hash HTML impostor during readback recovery',async()=>{
+ const bytes=new TextEncoder().encode('<html>Old Word download error</html>');
+ const hash=Buffer.from(await crypto.subtle.digest('SHA-256',bytes)).toString('hex');
+ let version=1,uploads=0;
+ let profile={id:'fixture',updated_date:'v1',documents:[{id:'doc',url:'https://county.gov/sign.doc',source:'official_page_harvest',archive_state:{
+ status:'uploaded',file_url:'https://storage.test/existing',source_sha256:hash,source_bytes:bytes.length,attempts:1,verification_attempts:0}}]};
+ const entity={get:async()=>structuredClone(profile),updateMany:async(q,p)=>{if(q.updated_date!==profile.updated_date)return{updated:0};profile={...profile,...p.$set,updated_date:'v'+(++version)};return{updated:1};}};
+ const result=await archiveKnownJurisdictionSource({entity,jurisdictionId:'fixture',documentId:'doc',fetchSource:async()=>new Response(bytes,{headers:{'content-type':'application/octet-stream'}}),uploadFile:async()=>{uploads++;throw Error('Unexpected upload');}});
+ assert.equal(result.success,false);assert.equal(uploads,0);assert.match(result.error,/HTML/);
+ assert.equal(profile.documents[0].file_url,undefined);
+ assert.equal(profile.documents[0].archive_state.file_url,'https://storage.test/existing');
+ assert.equal(profile.documents[0].archive_state.status,'uploaded');
+});
