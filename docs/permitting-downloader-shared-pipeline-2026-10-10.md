@@ -57,3 +57,13 @@ Corrected www-host normalization in the actual collection route. External docume
 Validation: 184 focused downloader/backend/component tests passed, including compiled endpoint scope/admin/payload tests and rendered React interaction tests. Full Vite build, archive backend bundle and new-component lint passed. Separate PDF keyboard script: 9/12 passed, with the same three failures reproduced against the pre-change panel at Git 1e0f9b50 (stale source assertion/fixture assumptions); PDF behavior was not modified. Isolated mocked APIs only; no production record test writes, no publication. Live browser verification remains outstanding.
 
 Next: connect explicitly scoped external referrals to opted-in automatic scheduling, retaining Ohio priority, credit limits and source rechecks. Overall jurisdiction coverage remains incomplete.
+
+
+### 2026-10-10 — Scoped automatic external document recovery
+Phase 10, milestone 2 of 3 remains active. Connected already selected external direct-document sources to both the scheduled research dispatcher and automatic archive endpoint. Only profiles with auto_refresh exactly true may resume these sources. New, unselected referrals remain review-only. Ohio original-file work (regular and external) is checked before Kentucky original-file work, with bounded 20-profile queries and one original-file archive attempt per cycle. Catalog registration continues separately.
+
+Recovery uses the same scoped original/source-page fetcher as manual collection; source retries recheck the exact official link. Durable archive receipts enforce backoff, active leases and three total source attempts. Uploaded receipts resume storage verification without refetch or reupload. Every external archive transition checks automatic-refresh opt-out; an opt-out during fetch blocks upload. Manual recovery remains available and clears the automatic-only guard. Authority and applicability stay unapproved. The existing research cycle and credit configuration were not changed, and isolated dispatcher tests cover continuation at the daily LLM cap.
+
+Validation: 202 focused automated tests passed; automatic archive and scheduled dispatcher backend bundles passed; Git whitespace check passed. No live collection cycle or production test writes were run; nothing published. Existing PDF keyboard harness failures from the previous entry remain outside this backend change.
+
+Next: durable first-attempt records and bounded failure/backoff tracking for newly discovered external referrals before automatic initial collection. Live browser verification and overall Ohio/Kentucky coverage remain incomplete.
