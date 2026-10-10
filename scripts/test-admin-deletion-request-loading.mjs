@@ -30,7 +30,7 @@ test("Deletion request error is different from verified empty list and has retry
 });
 
 test("Impact review and request resolution require a verified directory of requests", () => {
-  assert.match(page, /if \(!request\?\.id \|\| deletionImpactLoading \|\| deletionRequestsLoading \|\| deletionRequestsError \|\| !sessionToken\) return/);
+  assert.match(page, /if \(!verifiedRequest \|\| deletionImpactLoading \|\| deletionRequestsLoading \|\|\s*deletionRequestsError \|\| !sessionToken\) return/);
   assert.match(page, /if \(!request\?\.id \|\| !resolution \|\| deletionRequestSaving \|\| deletionRequestsLoading \|\| deletionRequestsError \|\| !sessionToken\) return/);
   assert.match(page, /disabled=\{deletionImpactLoading \|\| deletionRequestSaving \|\| deletionRequestsLoading \|\| deletionRequestsError \|\| !sessionToken\}/);
   const disabledResolution = page.match(/disabled=\{deletionRequestSaving \|\| deletionRequestsLoading \|\| deletionRequestsError \|\| !sessionToken\}/g) || [];
