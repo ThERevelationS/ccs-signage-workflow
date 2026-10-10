@@ -93,7 +93,8 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
     const attrs = match[2];
     const attr = name => new RegExp('(?:^|\\s)' + name + '\\s*=\\s*["\x27]([^"\x27]*)["\x27]', 'i').exec(attrs)?.[1] || '';
     const href = attr(match[1].toLowerCase() === 'object' ? 'data' : 'src');
-    if (!DOWNLOADABLE_RE.test(decodeHtmlText(href)) && !/application\/pdf/i.test(attr('type'))) continue;
+    const embeddedForm = externalOnly && /\b(forms?|applications?|apply|permits?|portal|eztrak|citizenaccess)\b/i.test(linkWords(href+' '+attr('title')+' '+attr('aria-label')));
+    if (!DOWNLOADABLE_RE.test(decodeHtmlText(href)) && !/application\/pdf/i.test(attr('type')) && !embeddedForm) continue;
     links.push({href, label: attr('title') || attr('aria-label'), embedded: match[1].toLowerCase()});
   }
   for (const link of links) {
@@ -108,7 +109,7 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
     // Use the raw href: an inherited /zoning/ directory must not make Home,
     // schools, calendar, language selectors, or other navigation relevant.
     const relevance = linkWords(title + ' ' + rawHref.split('#')[0]);
-    if (!RELEVANT_LINK_RE.test(relevance) || /^(home|skip to|login|read more)\b/i.test(title)) continue;
+    if (!(RELEVANT_LINK_RE.test(relevance) || (externalOnly && /\b(portals?|eztrak|citizenaccess)\b/i.test(relevance))) || /^(home|skip to|login|read more)\b/i.test(title)) continue;
     if (/\b(house number|house numbering|address assignment|nondiscrimination|fraud|waste and abuse|employment|careers?|jobs?|newsletters?|e alerts?|subscribe|sign up)\b/i.test(relevance)) continue;
     if (seen.has(target.href)) continue;
     seen.add(target.href);
