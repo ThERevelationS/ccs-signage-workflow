@@ -79,21 +79,25 @@ function workOrderHasMechanicReceipt(current: any, receipt: any) {
 }
 
 async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: any, recovered = false) {
-  if (receipt?.status !== 'applied') {
-    await Receipt.update(receipt.id, {
+  if (receipt?.status === 'applied') return receipt;
+  // A proven Fleet work-order commit wins over an earlier admin cancellation,
+  // but never replace newer upload evidence or reconciliation provenance.
+  const changed = await Receipt.updateMany(
+    {id:receipt.id,status:{$in:['started','failed','cancelled']}},
+    {$set:{
       status:'applied',
       applied_at:receipt?.applied_at || nowIso(),
       failed_at:null,
       error_message:'',
-      result_summary:{
-        ...(receipt?.result_summary || {}),
-        work_order_updated_date:current?.updated_date || '',
-        work_order_status:current?.status || '',
-        recovered_from_work_order_marker:recovered === true,
-      },
-    });
-  }
-  return { ...receipt, status:'applied' };
+      'result_summary.work_order_updated_date':current?.updated_date || '',
+      'result_summary.work_order_status':current?.status || '',
+      'result_summary.recovered_from_work_order_marker':recovered === true,
+    }},
+  );
+  if (changed?.updated === 1) return {...receipt,status:'applied'};
+  const latest = await Receipt.get(receipt.id).catch(()=>null);
+  if (latest?.status === 'applied') return latest;
+  throw Object.assign(new Error('Fleet mechanic receipt changed before committed work evidence could be recorded. CCS review is required.'),{status:409});
 }
 
 async function claimMechanicReceipt(Receipt: any, data: any) {
