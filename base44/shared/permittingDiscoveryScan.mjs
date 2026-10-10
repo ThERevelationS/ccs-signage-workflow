@@ -129,7 +129,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
     }
   }
   const pendingPages = pending.filter(p => !visited.has(key(p.url)));
-  const continuationState = { method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
+  const continuationState = { external_initial_collection_drained:false, method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
     visited_urls: [...visited], pending_pages: pendingPages, gaps, external_referrals:referrals,
     attempted_pages_total: (Number(resume?.attempted_pages_total) || 0) + attempted };
   if (referrals.length + continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||

@@ -34,9 +34,9 @@ export async function archiveExternalJurisdictionReferral(options){
  if(existing && (existing.source==='manual' || existing.pinned || existing.archive_pinned ||
     !existing.external_referral_provenance || !linkFields.every(key=>existing.external_referral_provenance[key]===referral[key])))
   fail('Existing document has different or protected provenance; reconcile it separately.');
- if(!options.manual && !existing)fail('Automatic external recovery requires an already selected document.');
+ if(!options.manual && !existing && options.automaticInitialCollection!==true)fail('Automatic external recovery requires an already selected document.');
  let document=existing;
- let linkChecked=false;
+ let linkChecked=false,recheckReceipt=null;
  async function recheckLink(){
   const response=await withResearchArchiveTimeout(fetchScopedSource(referral.source_page_url,{
    signal:AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),headers:{'User-Agent':'Mozilla/5.0'}},
@@ -48,25 +48,26 @@ export async function archiveExternalJurisdictionReferral(options){
   const fresh=discoverOfficialPermittingReferrals(resource.html,final.href).find(row=>linkFields.every(key=>row[key]===referral[key]));
   if(!fresh)fail('Official source no longer contains the exact selected document link.');
   const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(resource.html)))].map(b=>b.toString(16).padStart(2,'0')).join('');
-  linkChecked=true;return {...fresh,source_page_sha256:hash};
+  linkChecked=true;recheckReceipt={source_page_url:referral.source_page_url,source_page_sha256:hash,checked_at:new Date().toISOString()};return {...fresh,source_page_sha256:hash};
  }
  if(!document){
-  const fresh=await recheckLink();
+  const fresh=options.manual?await recheckLink():referral;
   document={id:crypto.randomUUID(),url:referral.url,title:referral.title,source:'official_page_harvest',
-   doc_type:permittingDocumentType(referral),verification_notes:'Direct external document link rechecked on the official source; authority and applicability remain unapproved.',
+   doc_type:permittingDocumentType(referral),verification_notes:options.manual?'Direct external document link rechecked on the official source; authority and applicability remain unapproved.':'Saved official-page referral staged for source recheck; authority and applicability remain unapproved.',
    external_referral_provenance:{...fresh,discovered_page_sha256:referral.source_page_sha256,
-    collection_method:'official-direct-document-link-v1',rechecked_at:new Date().toISOString(),
+    collection_method:'official-direct-document-link-v1',rechecked_at:options.manual?new Date().toISOString():null,
     jurisdiction_id:profile.id,jurisdiction_name:profile.name,jurisdiction_state:profile.state,jurisdiction_type:profile.type,
     seed_url:profile.permitting_url}};
-  const next=invalidateProfile(profile,{documents:[...(profile.documents || []),document]});
+  const documents=[...(profile.documents || []),document];
+  const next=invalidateProfile(profile,{documents,discovery_scan_state:{...cursor,external_initial_collection_drained:!cursor.external_referrals.some(row=>row.referral_kind==='downloadable_document' && !documents.some(doc=>doc.url===row.url))}});
   await replaceJurisdictionFieldsIfUnchanged({entity,jurisdiction:profile,nextFields:next,
-   guardFields:{_manual_documents:profile._manual_documents,discovery_scan_state:cursor,
+   guardFields:{_manual_documents:profile._manual_documents,auto_refresh:profile.auto_refresh,discovery_scan_state:cursor,
     name:profile.name,state:profile.state,type:profile.type,permitting_url:profile.permitting_url},
    label:'External document source staging'});
  }
  // The durable archive worker owns claims, retries, uploads and readback. Scope
  // applies to every original-file redirect; storage readback uses its own URL.
  const result=await archiveKnownJurisdictionSource({...options,documentId:document.id,knownPdf:null,externalReferralAuthorized:true,
-  fetchSource:async(url,init)=>{if(url!==document.url)return options.fetchSource(url,init);if(!linkChecked)await recheckLink();return fetchScopedSource(url,init,host(document.url));}});
+  fetchSource:async(url,init)=>{if(url!==document.url)return options.fetchSource(url,init);if(!linkChecked)await recheckLink();const response=await fetchScopedSource(url,init,host(document.url));Object.defineProperty(response,'permittingReferralRecheck',{value:recheckReceipt});return response;}});
  return {...result,external_referral:true,document_id:document.id};
 }

@@ -154,7 +154,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
     if (requirePdf && !/^application\/pdf(?:\s*;|$)/i.test(response.headers.get('content-type') || ''))
       throw new Error('Selected official resource did not return PDF content.');
     const bytes = await readBytes(response);
-    return {bytes, contentType: response.headers.get('content-type') || '', finalUrl: response.url || url};
+    return {bytes, contentType: response.headers.get('content-type') || '', finalUrl: response.url || url,referralRecheck:response.permittingReferralRecheck};
   })(), RESEARCH_FETCH_TIMEOUT_MS, 'Archive fetch/read');
   try {
     if (!resumeUpload) {
@@ -166,7 +166,8 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
       if (knownPdf && (bytes.length !== knownPdf.bytes || sha !== knownPdf.sha256))
         throw new Error('Official PDF changed from the retained expectation; review before upload.');
       const uploading = { ...state, status: 'uploading', source_sha256: sha, source_bytes: bytes.length, detected_format: ext, validation_method: validation.validation_method,
-        source_content_type: sourceResponse.contentType, source_final_url: sourceResponse.finalUrl };
+        source_content_type: sourceResponse.contentType, source_final_url: sourceResponse.finalUrl,
+        ...(doc.external_referral_provenance ? {source_link_recheck:sourceResponse.referralRecheck} : {}) };
       await transition(entity, jurisdictionId, doc, state, uploading);
       state = uploading;
       stage = 'upload';
