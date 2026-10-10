@@ -46,9 +46,9 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
       mutation_plan:{actual_hours:2.5,corrective_action:"Synthetic repair",appended_note:"[Mechanic – Synthetic]\\nSynthetic note"}},
   };
 }
-function setup({receipt=null,barrier=false}={}){
-  const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,
-    waiting:[], release:null};
+function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
+  const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,
+    waiting:[], uploadWaiting:[], release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
@@ -110,6 +110,12 @@ function setup({receipt=null,barrier=false}={}){
       FleetMaintenanceWorkOrder:WorkOrder,FleetOperationReceipt:receipts},
     functions:{invoke},
     integrations:{Core:{UploadFile:async()=> {
+      if(store.uploadBarrier)await new Promise(resolve=>{
+        store.uploadWaiting.push(resolve);
+        if(store.uploadWaiting.length===2) {
+          for(const release of store.uploadWaiting.splice(0))release();
+        } else setTimeout(()=>{for(const release of store.uploadWaiting.splice(0))release();},350);
+      });
       const url=`https://files.example/new-${store.uploads.length+1}.jpg`;
       store.uploads.push(url);
       return {file_url:url};
@@ -154,6 +160,20 @@ test("fresh new-id Save with incomplete original photo evidence reuses prefix fo
   assert.equal(store.receipts.get(original.id).status,"applied");
   assert.equal(store.receipts.get(original.id).result_summary.resolved_by_retry,true);
   assert.equal([...store.receipts.values()].filter(row=>row.status==="applied").length,2);
+});
+test("simultaneous identical partial-photo retries upload the missing photo at most once",async()=>{
+  const retry=payload("request-new-abc-123456",{photos:[photoPayload,photoPayload]});
+  const original=makeReceipt(retry,{photos:["https://files.example/old-a.jpg"],count:2});
+  const {store,client}=setup({receipt:original,uploadBarrier:true});
+  const results=await Promise.all([
+    call(retry,client),
+    call({...retry,request_id:"request-new-def-789012"},client),
+  ]);
+  assert.equal(store.uploads.length,1,"Concurrent retries must not upload the same missing photo twice");
+  assert.equal(store.updates,1,"Only one progress update is allowed");
+  assert.deepEqual(results.map(row=>row.code).sort(),[200,409]);
+  assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
+  assert.equal(store.work.after_photos.length,2);
 });
 test("status reconciliation racing another status check reports the same applied receipt",async()=>{
   const old=makeReceipt(payload("request-original-123456"));
