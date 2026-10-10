@@ -14,7 +14,7 @@ const scratch = await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-'));
 let server, browser, passed = 0;
 
 const syntheticPanels = [
-  'FaceRecognition', 'EmailGroupsManager', 'GmailConnector', 'UserManagement',
+  'FaceRecognition', 'GmailConnector', 'UserManagement',
   'ProjectTrash', 'OrderTrash', 'TimeClockAdmin', 'TimeClockReportsDashboard',
   'ActivityFeed', 'PTOManagement', 'BackupManager', 'OvertimeRulesManager',
   'SalesPipelineDefaultSort', 'ResourceAllocationView', 'CorebridgeApiSettings',
@@ -24,7 +24,7 @@ const syntheticPanels = [
   'JurisdictionMonitoringSettings', 'AdminCalendarSettings', 'PasswordMigrationButton',
 ];
 const sources = [
-  '../components/admin/EmailGroupsManager', '../components/admin/GmailConnector',
+  '../components/admin/GmailConnector',
   '../components/admin/UserManagement', '../components/admin/ProjectTrash',
   '../components/admin/OrderTrash',
   '../components/timeclock/FaceRecognition', '../components/timeclock/TimeClockAdmin',
@@ -116,9 +116,14 @@ try {
     'export async function deleteAutomationRuleIfUnchanged(){throw Error("Unexpected write");}',
     'export async function updateAutomationRuleIfUnchanged(){throw Error("Unexpected write");}',
   ].join('\n'));
+  await writeFile(path.join(scratch, 'mockEmailGroupPersistence.js'), [
+    'export async function createEmailGroupIfAbsent(){throw Error("Unexpected email group write");}',
+    'export async function updateEmailGroupIfUnchanged(){throw Error("Unexpected email group write");}',
+    'export async function deleteEmailGroupIfUnused(){throw Error("Unexpected email group write");}',
+  ].join('\n'));
   await writeFile(path.join(scratch, 'mockLogin.js'), 'export async function verifyLogin(){throw Error("Unexpected login");}');
   await writeFile(path.join(scratch, 'mockEntityList.js'),
-    'export async function loadAllEntityRows({label}={}){if(label==="Admin Settings automation rules"){window.__adminAutomationReadAttempts=(window.__adminAutomationReadAttempts||0)+1;const q=new URLSearchParams(location.search);if(window.__adminAutomationFailure===true||(window.__adminAutomationFailure!==false&&q.get("automation_read_fail")==="1"))throw Error("synthetic-private-automation-read-error");return q.get("automation_rows")==="1"?[{id:"synthetic-rule-1",name:"Synthetic rule",enabled:true,triggers:[],actions:[]}]:[];}return [];}');
+    'export async function loadAllEntityRows({label}={}){const q=new URLSearchParams(location.search);if(label==="Admin Settings automation rules"){window.__adminAutomationReadAttempts=(window.__adminAutomationReadAttempts||0)+1;if(window.__adminAutomationFailure===true||(window.__adminAutomationFailure!==false&&q.get("automation_read_fail")==="1"))throw Error("synthetic-private-automation-read-error");return q.get("automation_rows")==="1"?[{id:"synthetic-rule-1",name:"Synthetic rule",enabled:true,triggers:[],actions:[]}]:[];}if(label==="Email Groups admin catalog"){window.__adminEmailManagerAttempts=(window.__adminEmailManagerAttempts||0)+1;if(window.__adminEmailManagerFailure===true||(window.__adminEmailManagerFailure!==false&&q.get("email_manager_fail")==="1"))throw Error("synthetic-private-email-manager-read-error");return q.get("email_group_rows")==="1"?[{id:"synthetic-group-1",name:"Synthetic Email Group",description:"Synthetic only",emails:["test@example.invalid"]}]:[];}if(label==="Admin Settings email groups"){window.__adminEmailChoicesAttempts=(window.__adminEmailChoicesAttempts||0)+1;if(window.__adminEmailChoicesFailure===true||(window.__adminEmailChoicesFailure!==false&&q.get("email_parent_fail")==="1"))throw Error("synthetic-private-email-choices-read-error");return q.get("email_group_rows")==="1"?[{id:"synthetic-group-1",name:"Synthetic Email Group",emails:["test@example.invalid"]}]:[];}return [];}');
   for (const name of syntheticPanels) {
     await writeFile(path.join(scratch, 'mock-' + name + '.jsx'),
       'import React from "react";export default function ' + name +
@@ -129,6 +134,7 @@ try {
     {find:'@/components/auth/EmailGate',replacement:path.join(scratch,'mockAuth.js')},
     {find:'@/functions/verifyLogin',replacement:path.join(scratch,'mockLogin.js')},
     {find:'@/components/admin/automationRulePersistence',replacement:path.join(scratch,'mockPersistence.js')},
+    {find:'@/components/admin/emailGroupPersistence',replacement:path.join(scratch,'mockEmailGroupPersistence.js')},
     {find:'@/components/estimator/loadAllEntityRows',replacement:path.join(scratch,'mockEntityList.js')},
     ...sources.map((find) => ({
       find,
