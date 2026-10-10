@@ -593,6 +593,44 @@ try {
       assert.equal(await page.getByRole('button', { name: 'New Group' }).isEnabled(), true);
     });
 
+  await check('User directory read failure is explicit and cannot authorize account changes', 375,
+    '/?tab=users&real_users=1&user_rows=1&user_directory_fail=1', async page => {
+      const error = page.getByRole('alert', { name: 'User directory unavailable' });
+      await error.waitFor();
+      assert.match(await error.innerText(), /Team directory could not be loaded/);
+      assert.equal((await error.innerText()).includes('synthetic-private-user-directory-error'), false);
+      assert.equal(await page.getByText('User count unavailable').count(), 1);
+      assert.equal(await page.getByText('No users yet. Invite your first team member above.').count(), 0);
+      assert.equal(await page.getByText('Synthetic Directory User').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Add User' }).isDisabled(), true);
+      assert.equal(await page.getByText('Account Deletion Requests').isVisible(), true);
+      const attempts = await page.evaluate(() => window.__adminUserDirectoryAttempts);
+      await error.getByRole('button', { name: 'Retry loading users' }).click();
+      await error.waitFor();
+      assert.ok(await page.evaluate(() => window.__adminUserDirectoryAttempts) > attempts);
+      await page.evaluate(() => { window.__adminUserDirectoryFailure = false; });
+      await error.getByRole('button', { name: 'Retry loading users' }).click();
+      await page.getByText('Synthetic Directory User').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await page.getByText('1 users in your organization').count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Add User' }).isEnabled(), true);
+      assert.equal(await page.getByRole('search', { name: 'Search Admin pages and settings' }).isVisible(), true);
+    });
+
+  await check('User directory verified-empty state is distinct from an unsuccessful read', 320,
+    '/?tab=users&real_users=1&user_directory_fail=1', async page => {
+      const error = page.getByRole('alert', { name: 'User directory unavailable' });
+      await error.waitFor();
+      assert.equal(await page.getByText('No users yet. Invite your first team member above.').count(), 0);
+      await page.evaluate(() => { window.__adminUserDirectoryFailure = false; });
+      await error.getByRole('button', { name: 'Retry loading users' }).click();
+      await page.getByText('No users yet. Invite your first team member above.').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Add User' }).isEnabled(), true);
+      await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'Integrations' }).click();
+      await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
