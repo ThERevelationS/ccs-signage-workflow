@@ -734,6 +734,18 @@ Deno.serve(async (req) => {
       }
       if (receipt.status === 'started') {
         if (receipt?.result_summary?.retry_reserved_by_request_id || receipt?.result_summary?.retry_reservation_required) {
+          const source = receipt?.result_summary?.retry_reservation_required
+            ? await Receipt.get(String(receipt?.result_summary?.reused_upload_receipt_id || '')).catch(()=>null)
+            : receipt;
+          const resolution = await reconcileReservedMechanicPhotoRetry(
+            base44,Access,Receipt,WorkOrder,current,source,String(grant.id || ''),
+          );
+          if (resolution.status === 'applied' || resolution.status === 'released') {
+            return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,resolution.work_order || current,{
+              success:true,status:resolution.status === 'applied' ? 'applied' : 'failed',
+              request_id:requestId,recovered:resolution.status === 'applied',
+            });
+          }
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{
             success:true,status:'started',request_id:requestId,
             error_message:'A mechanic photo retry is still being verified. CCS must review an interrupted retry before it can be repeated.',
@@ -823,6 +835,21 @@ Deno.serve(async (req) => {
         }
         if (String(receipt?.result_summary?.grant_id || '') !== String(grant.id || '')) continue;
         if (receipt?.result_summary?.retry_reserved_by_request_id || receipt?.result_summary?.retry_reservation_required) {
+          const source = receipt?.result_summary?.retry_reservation_required
+            ? await Receipt.get(String(receipt?.result_summary?.reused_upload_receipt_id || '')).catch(()=>null)
+            : receipt;
+          const resolution = await reconcileReservedMechanicPhotoRetry(
+            base44,Access,Receipt,WorkOrder,current,source,String(grant.id || ''),
+          );
+          if (resolution.status === 'applied') {
+            return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',resolution.work_order || current,{
+              error:'An interrupted mechanic photo retry was confirmed. Refresh the work order before making another change.',
+              recovered_previous:true,
+            },{status:409});
+          }
+          if (resolution.status === 'released') return json({
+            error:'The interrupted mechanic photo retry was confirmed failed and its reservation released. Refresh the current Fleet work order before retrying.',
+          },{status:409});
           return json({error:'An interrupted mechanic photo retry is still being verified. CCS must confirm its outcome before another Save.'},{status:409});
         }
         if (!ACTIVE.has(current.status)) {
