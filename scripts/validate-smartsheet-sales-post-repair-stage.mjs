@@ -102,6 +102,8 @@ const protectedReverse=guardSalesPushTaskPlan(restored,reverse,bindings);
 check(protectedReverse.taskStageHeld,'Reverse push guard already refuses the incompatible remote Lead task.');
 check(!Object.hasOwn(protectedReverse.incoming,'current_task_description'),
   'Reverse push cannot overwrite Quoted after stage-only correction.');
+equal(protectedReverse.incoming.estimate_amount,150,
+  'Reverse push keeps the independently safe Estimate Amount pull while holding the task.');
 equal(protectedReverse.remote[taskColumn],before.smartsheet_sync_snapshot[taskColumn],
   'Reverse push does not falsely advance the task baseline.');
 check(protectedReverse.unresolved.includes('current_task_description'),
