@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,8 @@ const EmailGroup = base44.entities.EmailGroup;
 export default function EmailGroupsManager({ adminCapability }) {
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const loadSequence = useRef(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -48,6 +50,7 @@ export default function EmailGroupsManager({ adminCapability }) {
   }, []);
 
   const loadGroups = async () => {
+    const requestSequence = ++loadSequence.current;
     setIsLoading(true);
     try {
       const data = await loadAllEntityRows({
@@ -55,16 +58,23 @@ export default function EmailGroupsManager({ adminCapability }) {
         sort: "-created_date",
         label: "Email Groups admin catalog",
       });
-      setGroups(data || []);
-    } catch (error) {
-      console.error("Error loading email groups:", error);
-      setPersistenceError(error?.message || "Email groups could not be loaded safely.");
+      if (requestSequence === loadSequence.current) {
+        setGroups(data);
+        setLoadError(false);
+      }
+      return data;
+    } catch {
+      // Incomplete or failed reads are not evidence of an empty catalog.
+      // Keep the last verified data internally, but block stale edits.
+      if (requestSequence === loadSequence.current) setLoadError(true);
+      return null;
     } finally {
-      setIsLoading(false);
+      if (requestSequence === loadSequence.current) setIsLoading(false);
     }
   };
 
   const openNewGroup = () => {
+    if (isLoading || loadError || isSaving) return;
     setPersistenceError("");
     setEditingGroup(null);
     setFormData({ name: "", description: "", emails: [] });
@@ -73,6 +83,7 @@ export default function EmailGroupsManager({ adminCapability }) {
   };
 
   const openEditGroup = (group) => {
+    if (isLoading || loadError || isSaving) return;
     setPersistenceError("");
     setEditingGroup(group);
     setFormData({
@@ -85,7 +96,7 @@ export default function EmailGroupsManager({ adminCapability }) {
   };
 
   const handleSave = async () => {
-    if (isSaving || !formData.name || formData.emails.length === 0) return;
+    if (isSaving || isLoading || loadError || !formData.name || formData.emails.length === 0) return;
     setIsSaving(true);
     setPersistenceError("");
     try {
@@ -118,7 +129,7 @@ export default function EmailGroupsManager({ adminCapability }) {
   };
 
   const handleDelete = async (group) => {
-    if (!group?.id || isSaving) return;
+    if (!group?.id || isSaving || isLoading || loadError) return;
     setIsSaving(true);
     setPersistenceError("");
     try {
@@ -159,6 +170,7 @@ export default function EmailGroupsManager({ adminCapability }) {
         </div>
         <Button
           onClick={openNewGroup}
+          disabled={isLoading || loadError || isSaving}
           size="sm"
           className="clay-button border-none text-gray-800 h-8"
           style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
@@ -174,12 +186,25 @@ export default function EmailGroupsManager({ adminCapability }) {
             <div className="font-medium">Email group update blocked</div>
             <div className="mt-1 text-xs">{persistenceError}</div>
           </div>
-          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setPersistenceError(""); await loadGroups(); }}>Reload latest</Button>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { const refreshed = await loadGroups(); if (refreshed) setPersistenceError(""); }}>Reload latest</Button>
         </div>
       )}
 
       {isLoading ? (
-        <p className="text-gray-500 text-sm">Loading groups...</p>
+        <p role="status" className="text-gray-500 text-sm">Loading groups...</p>
+      ) : loadError ? (
+        <div role="alert" aria-label="Email groups unavailable" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <h3 className="font-semibold">Email groups could not be loaded</h3>
+          <p className="mt-1 text-sm">
+            The current group list could not be verified. Group changes are paused until it loads successfully.
+            A previous save may have succeeded; do not repeat it before checking the latest groups.
+          </p>
+          <Button type="button" size="sm" variant="outline"
+            onClick={() => { void loadGroups(); }}
+            className="mt-3 min-h-10 border-amber-500 bg-white text-amber-950">
+            Retry loading groups
+          </Button>
+        </div>
       ) : groups.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -298,7 +323,7 @@ export default function EmailGroupsManager({ adminCapability }) {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={isSaving || !formData.name || formData.emails.length === 0}
+                disabled={isSaving || isLoading || loadError || !formData.name || formData.emails.length === 0}
                 className="clay-button border-none"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
               >
@@ -323,7 +348,7 @@ export default function EmailGroupsManager({ adminCapability }) {
             <AlertDialogAction
               onClick={() => handleDelete(deleteConfirm)}
               className="bg-red-600 text-white"
-              disabled={isSaving}
+              disabled={isSaving || isLoading || loadError}
             >
               {isSaving ? "Deleting..." : "Delete"}
             </AlertDialogAction>
