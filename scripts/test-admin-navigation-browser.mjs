@@ -118,7 +118,7 @@ try {
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockLogin.js'), 'export async function verifyLogin(){throw Error("Unexpected login");}');
   await writeFile(path.join(scratch, 'mockEntityList.js'),
-    'export async function loadAllEntityRows(){return [];}');
+    'export async function loadAllEntityRows({label}={}){if(label==="Admin Settings automation rules"){window.__adminAutomationReadAttempts=(window.__adminAutomationReadAttempts||0)+1;const q=new URLSearchParams(location.search);if(window.__adminAutomationFailure===true||(window.__adminAutomationFailure!==false&&q.get("automation_read_fail")==="1"))throw Error("synthetic-private-automation-read-error");return q.get("automation_rows")==="1"?[{id:"synthetic-rule-1",name:"Synthetic rule",enabled:true,triggers:[],actions:[]}]:[];}return [];}');
   for (const name of syntheticPanels) {
     await writeFile(path.join(scratch, 'mock-' + name + '.jsx'),
       'import React from "react";export default function ' + name +
