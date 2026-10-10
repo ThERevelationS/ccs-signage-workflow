@@ -977,3 +977,11 @@ Three alternate original URLs returned HTTP 403; zero new originals retained. Hi
 
 Validation: all 40 municipal research tests pass, including actual rendered web labels/links, access/identity isolation, missing-archive disclosure, and unapproved-role flags; git diff --check passes. Saved evidence: docs/official-evidence/ohio-woodlawn-2026-10-07/recovery-2026-10-10/web-review.json.
 Next: continue a similarly sized Springdale Ohio batch, reconciling its sign-code version conflict and application/electrical routing together. Statewide coverage is not complete.
+
+
+### 2026-10-10 — Shared Downloader discovery and document validation
+Phase 10, milestone 2 of 3 remains active. Shifted this batch from individual-locality collection to reusable Downloader logic. Added same-host embedded form discovery (object/embed/iframe) through existing relevance, identity and dedupe gates. Added shared PDF, legacy Office, DOCX/XLSX package and UTF-8 text admission checks to both archival and pinned-source direct download. New archival receipts record detected format, validation method, response type and final URL. Readback validates format even for legacy uploaded receipts; matching hashes alone cannot finalize an HTML error page.
+
+Verified four retained Deer Park/Elmwood Place Office originals through isolated download/upload/readback. All 130 focused Downloader/discovery/archive/catalog/continuation tests pass. Tests made no production record writes, Integration uploads or LLM calls. No publication or dispatcher changes. Full Word/Excel content parsing and external-host discovery remain gaps, not completed features.
+
+Pipeline status and next implementation plan: docs/permitting-downloader-shared-pipeline-2026-10-10.md. Next: provenance-bound external document-host, department, publisher and online-form referral discovery; preserve SSRF and locality isolation while making legitimate external document links visible to collection.
