@@ -7,7 +7,6 @@ import {RESEARCH_FETCH_TIMEOUT_MS,withResearchArchiveTimeout} from './jurisdicti
 
 const host=url=>new URL(url).hostname.toLowerCase().replace(/^www\./,'');
 const fail=message=>{throw Object.assign(Error(message),{status:409});};
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const linkFields=['url','title','source_page_url','linked_href','resolution_base_url','referral_kind','discovery_element'];
 // Only the exact direct-document referral is staged. This grants no broad host
 // crawl, regulatory authority, department delegation or portal submission.
@@ -35,7 +34,8 @@ export async function archiveExternalJurisdictionReferral(options){
     !existing.external_referral_provenance || !linkFields.every(key=>existing.external_referral_provenance[key]===referral[key])))
   fail('Existing document has different or protected provenance; reconcile it separately.');
  let document=existing;
- if(!document){
+ let linkChecked=false;
+ async function recheckLink(){
   const response=await withResearchArchiveTimeout(fetchScopedSource(referral.source_page_url,{
    signal:AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),headers:{'User-Agent':'Mozilla/5.0'}},
    host(referral.source_page_url)),RESEARCH_FETCH_TIMEOUT_MS,'External referral source recheck');
@@ -46,9 +46,13 @@ export async function archiveExternalJurisdictionReferral(options){
   const fresh=discoverOfficialPermittingReferrals(resource.html,final.href).find(row=>linkFields.every(key=>row[key]===referral[key]));
   if(!fresh)fail('Official source no longer contains the exact selected document link.');
   const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(resource.html)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  linkChecked=true;return {...fresh,source_page_sha256:hash};
+ }
+ if(!document){
+  const fresh=await recheckLink();
   document={id:crypto.randomUUID(),url:referral.url,title:referral.title,source:'official_page_harvest',
    doc_type:permittingDocumentType(referral),verification_notes:'Direct external document link rechecked on the official source; authority and applicability remain unapproved.',
-   external_referral_provenance:{...fresh,source_page_sha256:hash,discovered_page_sha256:referral.source_page_sha256,
+   external_referral_provenance:{...fresh,discovered_page_sha256:referral.source_page_sha256,
     collection_method:'official-direct-document-link-v1',rechecked_at:new Date().toISOString(),
     jurisdiction_id:profile.id,jurisdiction_name:profile.name,jurisdiction_state:profile.state,jurisdiction_type:profile.type,
     seed_url:profile.permitting_url}};
@@ -61,6 +65,6 @@ export async function archiveExternalJurisdictionReferral(options){
  // The durable archive worker owns claims, retries, uploads and readback. Scope
  // applies to every original-file redirect; storage readback uses its own URL.
  const result=await archiveKnownJurisdictionSource({...options,documentId:document.id,knownPdf:null,
-  fetchSource:(url,init)=>url===document.url?fetchScopedSource(url,init,host(document.url)):options.fetchSource(url,init)});
+  fetchSource:async(url,init)=>{if(url!==document.url)return options.fetchSource(url,init);if(!linkChecked)await recheckLink();return fetchScopedSource(url,init,host(document.url));}});
  return {...result,external_referral:true,document_id:document.id};
 }

@@ -171,6 +171,11 @@
             "type": "string",
             "format": "date-time"
           },
+          "external_referral_provenance": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Exact official-page external document referral and collection recheck; authority and applicability remain unapproved."
+          },
           "resource_classification": {
             "type": "object",
             "additionalProperties": true,
