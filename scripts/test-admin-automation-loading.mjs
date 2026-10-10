@@ -29,5 +29,5 @@ test('Failed automation reads hide unverified rule counts and disable editing', 
 });
 
 test('A failed refresh cannot silently dismiss an earlier save error', () => {
-  assert.match(source, /const refreshed = await loadAutomations\(\); if \(refreshed\) setAutomationSaveError\(" "\)/.source ? /const refreshed = await loadAutomations\(\); if \(refreshed\) setAutomationSaveError\(" "\)/ : /const refreshed = await loadAutomations\(\); if \(refreshed\) setAutomationSaveError\(""\)/);
+  assert.match(source, /const refreshed = await loadAutomations\(\); if \(refreshed\) setAutomationSaveError\(""\)/);
 });
