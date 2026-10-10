@@ -136,7 +136,7 @@ check(backend.includes('verifiedTargets.approvedDecisionIds') &&
 check(backend.includes('if (fieldPlan.decisions?.length && !fieldPlan.taskStageHeld)') &&
   backend.includes('if (dataset !== \'orders\' && !fieldPlan.unresolved.length) deferredConflictRecordIds.push(record.id)'),
   'Held task reviews are excluded even when other fields on the same row succeed.');
-check(backend.includes('if (failedMetadataIds.has(recordId))') &&
+check(backend.includes('if (failedMetadataIds.has(recordId) || salesFailedRecordIds.has(recordId))') &&
   backend.includes('updated.push(recordId);'),
   'Success IDs require verified Base44 metadata read-back and exclude failures.');
 check(!backend.includes('deferredConflictDecisions.push('),
