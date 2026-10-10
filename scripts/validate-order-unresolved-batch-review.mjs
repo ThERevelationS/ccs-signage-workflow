@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   ORDER_PULL_REVIEW_PAGE_SIZE,
   planUnresolvedOrderBatchReview,
+  verifyUnresolvedOrderBatchSheetRows,
   summarizeUnresolvedOrderBatchPage,
 } from '../base44/shared/smartsheetOrderPullBatchReview.mjs';
 import {
@@ -47,6 +48,27 @@ assert.throws(() => planUnresolvedOrderBatchReview({ ...evidence, batch_evidence
   attempted_batches: 5, recent_batches: [{ ...batch, count: 44 }],
 } }, args), /malformed permanent/);
 console.log('PASS exact unresolved batch identity, safe 20+20+3 paging and duplicate permanent-ID rejection');
+
+// The rowIds-filtered Smartsheet Get Sheet response may change row order,
+// but absent, extra, duplicate, or malformed permanent IDs invalidate a page.
+const selectedIds = a.pairs.map(pair => pair.rowId);
+const responseRows = selectedIds.map(id => ({ id: Number(id), cells: [] }));
+assert.equal(verifyUnresolvedOrderBatchSheetRows({ rows: [...responseRows].reverse() }, selectedIds).length, 20);
+assert.equal(verifyUnresolvedOrderBatchSheetRows({ rows: responseRows.slice(0, 3) }, selectedIds.slice(0, 3)).length, 3);
+for (const invalid of [
+  { rows: responseRows.slice(1) },
+  { rows: [] },
+  { rows: [...responseRows.slice(0, 19), responseRows[0]] },
+  { rows: [...responseRows, { id: 987654321 }] },
+  { rows: [...responseRows.slice(0, 19), { id: 987654321 }] },
+  { rows: [...responseRows.slice(0, 19), { cells: [] }] },
+  { rows: null },
+  {},
+]) assert.throws(() => verifyUnresolvedOrderBatchSheetRows(invalid, selectedIds), /Smartsheet/);
+for (const request of [[selectedIds[0], selectedIds[0]], ['not-a-row'], []]) {
+  assert.throws(() => verifyUnresolvedOrderBatchSheetRows({ rows: responseRows }, request), /Order|Smartsheet/);
+}
+console.log('PASS exact rowIds-filtered completeness, reordering, omissions, duplicates, unexpected IDs and malformed payloads');
 
 function reports(plan, offset = 0) {
   return plan.pairs.map((pair, i) => ({
