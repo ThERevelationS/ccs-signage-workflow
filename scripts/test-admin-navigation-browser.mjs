@@ -515,6 +515,46 @@ try {
       assert.equal(await page.getByRole('button', { name: 'New Automation' }).isEnabled(), true);
     });
 
+  await check('Email Groups read failure blocks edits, explains error and recovers only after verified retry',
+    375, '/?tab=automations&email_manager_fail=1&email_group_rows=1', async page => {
+      const unavailable = page.getByRole('alert', { name: 'Email groups unavailable' });
+      await unavailable.waitFor();
+      assert.equal(await page.getByText('No email groups yet').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'New Group' }).isDisabled(), true);
+      assert.equal(await page.getByText('Synthetic Email Group').count(), 0);
+      assert.ok(!(await unavailable.innerText()).includes('synthetic-private-email-manager-read-error'));
+      const before = await page.evaluate(() => window.__adminEmailManagerAttempts);
+      await unavailable.getByRole('button', { name: 'Retry loading groups' }).click();
+      await unavailable.waitFor();
+      assert.ok(await page.evaluate(() => window.__adminEmailManagerAttempts) > before);
+      await page.evaluate(() => { window.__adminEmailManagerFailure = false; });
+      await unavailable.getByRole('button', { name: 'Retry loading groups' }).click();
+      await page.getByText('Synthetic Email Group').waitFor();
+      assert.equal(await unavailable.count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'New Group' }).isEnabled(), true);
+      assert.equal(await page.getByRole('group', { name: 'Admin navigation categories' }).isVisible(), true);
+    });
+
+  await check('Automations group choices fail independently and retry without enabling unverified editing',
+    375, '/?tab=automations&email_parent_fail=1&automation_rows=1', async page => {
+      const unavailable = page.getByRole('alert', { name: 'Automation email groups unavailable' });
+      await unavailable.waitFor();
+      assert.equal(await page.getByRole('button', { name: 'New Automation' }).isDisabled(), true);
+      assert.equal(await page.getByRole('button', { name: 'New Group' }).isEnabled(), true,
+        'Independent Email Groups manager remains operable');
+      const before = await page.evaluate(() => window.__adminEmailChoicesAttempts);
+      await unavailable.getByRole('button', { name: 'Retry group choices' }).click();
+      await unavailable.waitFor();
+      assert.ok(await page.evaluate(() => window.__adminEmailChoicesAttempts) > before);
+      await page.evaluate(() => { window.__adminEmailChoicesFailure = false; });
+      await unavailable.getByRole('button', { name: 'Retry group choices' }).click();
+      await unavailable.waitFor({ state: 'detached' });
+      assert.equal(await page.getByRole('button', { name: 'New Automation' }).isEnabled(), true);
+      await page.getByRole('button', { name: 'New Automation' }).click();
+      await page.getByRole('dialog', { name: /Create Automation/ }).waitFor();
+      assert.equal(await page.getByRole('button', { name: 'New Group' }).count(), 1);
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
