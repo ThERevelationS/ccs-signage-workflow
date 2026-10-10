@@ -522,7 +522,28 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
     { current: null }, null, { current: null }, { current: null });
   assert.equal(statusFocus, 1);
   assert.equal(searchFocus, 1);
-  assert.equal(prevented, 6);
+
+  // A warning on top of the custom-status popup must return focus inside
+  // that popup instead of its underlying checklist row.
+  let optionFocus = 0, inputFocus = 0;
+  const selectedOption = { isConnected: true, disabled: false,
+    getClientRects: () => [1], focus: () => { optionFocus++; } };
+  const customInput = { isConnected: true, disabled: false,
+    getClientRects: () => [1], focus: () => { inputFocus++; } };
+  const optionReturnRef = { current: selectedOption };
+  statusControl.disabled = false;
+  validationItemRef.current = "item-1";
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef,
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
+  assert.equal(optionFocus, 1);
+  assert.equal(statusFocus, 1);
+  assert.equal(optionReturnRef.current, null);
+  validationItemRef.current = "item-1";
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef,
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
+  assert.equal(inputFocus, 1);
+  assert.equal(statusFocus, 1);
+  assert.equal(prevented, 8);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
