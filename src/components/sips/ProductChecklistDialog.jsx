@@ -65,6 +65,9 @@ export default function ProductChecklistDialog({
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   const customStatusInputRef = useRef(null);
   const otherPopupValidationReturnRef = useRef(null);
+  const customStatusDraftsByItemIdRef = useRef(new Map());
+  const otherPopupFocusItemIdRef = useRef(null);
+  const otherPopupDismissedRef = useRef(false);
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
@@ -320,6 +323,38 @@ export default function ProductChecklistDialog({
     setShowOtherPopup(null);
   };
 
+  const openOtherPopup = (itemId) => {
+    otherPopupFocusItemIdRef.current = itemId;
+    otherPopupDismissedRef.current = false;
+    otherPopupValidationReturnRef.current = null;
+    setCustomDropdownValue(customStatusDraftsByItemIdRef.current.get(itemId) || "");
+    setShowOtherPopup({ itemId });
+  };
+
+  const updateCustomStatusDraft = (value) => {
+    if (showOtherPopup?.itemId) customStatusDraftsByItemIdRef.current.set(showOtherPopup.itemId, value);
+    setCustomDropdownValue(value);
+  };
+
+  const dismissOtherPopup = () => {
+    if (validationDialog) return; // Do not close behind an active validation warning.
+    otherPopupDismissedRef.current = true;
+    otherPopupValidationReturnRef.current = null;
+    setShowOtherPopup(null);
+  };
+
+  const handleOtherPopupCloseAutoFocus = (event) => {
+    if (!isOpen || !otherPopupDismissedRef.current) return;
+    otherPopupDismissedRef.current = false;
+    event.preventDefault();
+    const row = findRenderedChecklistItemElement([otherPopupFocusItemIdRef.current]);
+    const statusControl = row?.querySelector('[aria-label^="Status for "]');
+    const fallback = checklistSearchInputRef.current || checklistCloseButtonRef.current;
+    const destination = [statusControl, fallback].find(target =>
+      target?.isConnected && !target.disabled && target.getClientRects().length);
+    destination?.focus();
+  };
+
   const handleCreateCustomValue = (itemId) => {
     const value = customDropdownValue.trim();
     if (!value) return;
@@ -327,6 +362,7 @@ export default function ProductChecklistDialog({
     // Rejected validation keeps this dialog and the draft value available.
     if (!applyChecklistStatus(itemId, value)) return;
     otherPopupValidationReturnRef.current = null;
+    customStatusDraftsByItemIdRef.current.delete(itemId);
     setCustomDropdownValue("");
     setShowOtherPopup(null);
   };
@@ -1873,7 +1909,7 @@ export default function ProductChecklistDialog({
                               value={displayItem.custom_dropdown_value || "select_value"}
                               onValueChange={(val) => {
                                 if (val === "other") {
-                                  setShowOtherPopup({ itemId: displayItem.id });
+                                  openOtherPopup(displayItem.id);
                                 } else if (val !== "select_value") {
                                   applyChecklistStatus(displayItem.id, val);
                                 }
@@ -2132,7 +2168,7 @@ export default function ProductChecklistDialog({
                                       value={detail.custom_dropdown_value || "select_value"}
                                       onValueChange={(val) => {
                                         if (val === "other") {
-                                          setShowOtherPopup({ itemId: detail.id });
+                                          openOtherPopup(detail.id);
                                         } else if (val !== "select_value") {
                                           applyChecklistStatus(detail.id, val);
                                         }
@@ -2413,7 +2449,7 @@ export default function ProductChecklistDialog({
                                 value={stDisplayItem.custom_dropdown_value || "select_value"}
                                 onValueChange={(val) => {
                                   if (val === "other") {
-                                    setShowOtherPopup({ itemId: stDisplayItem.id });
+                                    openOtherPopup(stDisplayItem.id);
                                   } else if (val !== "select_value") {
                                     applyChecklistStatus(stDisplayItem.id, val);
                                   }
@@ -2993,8 +3029,11 @@ export default function ProductChecklistDialog({
       </AlertDialog>
 
       {/* Other Dropdown Popup */}
-      <OtherDialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
-        <OtherDialogContent className="max-w-md clay-card border-none [&>button]:h-11 [&>button]:w-11 [&>button]:inline-flex [&>button]:items-center [&>button]:justify-center sm:[&>button]:h-9 sm:[&>button]:w-9">
+      <OtherDialog open={!!showOtherPopup} onOpenChange={(open) => { if (!open) dismissOtherPopup(); }}>
+        <OtherDialogContent
+          className="max-w-md clay-card border-none [&>button]:h-11 [&>button]:w-11 [&>button]:inline-flex [&>button]:items-center [&>button]:justify-center sm:[&>button]:h-9 sm:[&>button]:w-9"
+          onCloseAutoFocus={handleOtherPopupCloseAutoFocus}
+        >
           <OtherDialogHeader>
             <OtherDialogTitle className="flex items-center gap-2">
               <List className="w-5 h-5 text-purple-500" />
@@ -3047,7 +3086,7 @@ export default function ProductChecklistDialog({
                 <Input
                   ref={customStatusInputRef}
                   value={customDropdownValue}
-                  onChange={(e) => setCustomDropdownValue(e.target.value)}
+                  onChange={(e) => updateCustomStatusDraft(e.target.value)}
                   placeholder="Type custom value..."
                   className="h-11 flex-1 min-w-0 sm:h-9"
                   onKeyDown={(e) => e.key === 'Enter' && showOtherPopup?.itemId && handleCreateCustomValue(showOtherPopup.itemId)}
@@ -3065,7 +3104,7 @@ export default function ProductChecklistDialog({
           </div>
 
           <OtherDialogFooter>
-            <Button variant="outline" onClick={() => setShowOtherPopup(null)} className="h-11 sm:h-9">
+            <Button variant="outline" onClick={dismissOtherPopup} className="h-11 sm:h-9">
               Cancel
             </Button>
           </OtherDialogFooter>
