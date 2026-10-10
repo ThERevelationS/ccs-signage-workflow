@@ -603,7 +603,7 @@ try {
       assert.equal(await page.getByText('No users yet. Invite your first team member above.').count(), 0);
       assert.equal(await page.getByText('Synthetic Directory User').count(), 0);
       assert.equal(await page.getByRole('button', { name: 'Add User' }).isDisabled(), true);
-      assert.equal(await page.getByText('Account Deletion Requests').isVisible(), true);
+      assert.equal(await page.getByRole('heading', { name: 'Account Deletion Requests' }).isVisible(), true);
       const attempts = await page.evaluate(() => window.__adminUserDirectoryAttempts);
       await error.getByRole('button', { name: 'Retry loading users' }).click();
       await error.waitFor();
