@@ -2317,7 +2317,32 @@ async function pushDataset(
       );
       if (verifiedSalesUpdates.length) {
         try {
-          await base44.asServiceRole.entities[entityName].bulkUpdate(verifiedSalesUpdates);
+          // Approved Sales decisions need a final atomic revision check;
+          // ordinary rows retain the existing efficient batch update path.
+          const approvedUpdates = verifiedSalesUpdates.filter((update: any) =>
+            approvedSalesPlanSnapshots.has(String(update.id)));
+          const ordinaryUpdates = verifiedSalesUpdates.filter((update: any) =>
+            !approvedSalesPlanSnapshots.has(String(update.id)));
+          if (ordinaryUpdates.length) {
+            await base44.asServiceRole.entities[entityName].bulkUpdate(ordinaryUpdates);
+          }
+          for (const update of approvedUpdates) {
+            const id = String(update.id);
+            const planned = approvedSalesPlanSnapshots.get(id);
+            const { id: _approvedId, ...fields } = update;
+            try {
+              if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+              const committed = await base44.asServiceRole.entities.WorkOrder.updateMany(
+                { id, updated_date: planned.updated_date }, { $set: fields },
+              );
+              if (committed?.updated !== 1) {
+                throw new Error('WorkOrder changed while approved Sales review was synchronizing.');
+              }
+            } catch (error: any) {
+              salesFailedRecordIds.add(id);
+              errors.push(id + ': Approved Sales review was not committed against the original WorkOrder version. Keep the review and reload before retrying.');
+            }
+          }
           const verifiedRecords = await loadAllEntityRows({
             entity: base44.asServiceRole.entities.WorkOrder,
             query: { id: { $in: verifiedSalesUpdates.map((update: any) => update.id) } },
@@ -2328,7 +2353,7 @@ async function pushDataset(
           const failedMetadataIds = new Set(metadataFailures.map((failure: any) => String(failure.id)));
           for (const update of verifiedSalesUpdates) {
             const recordId = String(update.id);
-            if (failedMetadataIds.has(recordId)) {
+            if (failedMetadataIds.has(recordId) || salesFailedRecordIds.has(recordId)) {
               salesFailedRecordIds.add(recordId);
               errors.push(recordId + ': Sales Base44 sync metadata could not be verified after the Smartsheet write.');
             } else {
