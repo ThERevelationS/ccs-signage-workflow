@@ -1,0 +1,28 @@
+{
+  "observed_on": "2026-10-09",
+  "source_url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/applications_and_forms.php",
+  "method": "Web tool readable county page; original HTML not retained",
+  "references": [
+    {
+      "label": "County applications and forms \u2014 current listing; original retention pending",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/applications_and_forms.php"
+    },
+    {
+      "label": "County 2026 zoning fee schedule \u2014 linked PDF; original retrieval gap",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/Fee%20Schedules/2026/Zoning_Fees_2026.pdf?t=202601050916480"
+    },
+    {
+      "label": "County 2025 zoning certificate user guide \u2014 linked PDF; original retrieval gap",
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310"
+    }
+  ],
+  "online_form_url": "https://eztrak.cagis.org/",
+  "portal_retrieval_status": "HTTP 502",
+  "sign_submission_acceptance_verified": false,
+  "northwestern_boundary_verified": false,
+  "currentness_approved": false,
+  "coverage_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}

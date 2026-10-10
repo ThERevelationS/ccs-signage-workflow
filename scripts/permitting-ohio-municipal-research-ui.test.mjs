@@ -408,3 +408,13 @@ test('Hamilton Miami county referral preserves Northwestern exception and blocke
  assert.match(html,/Northwestern Miami/);assert.match(html,/PDF has not been downloaded/);assert.ok(html.includes(review.submission_guide_url));assert.equal(row.resources.length,0);
  assert.equal(render({...row,id:'69b1ff3561c6ae0615974020'}),'');
 });
+
+test('Miami county current listing portal remains a link with explicit acceptance and boundary gaps',()=>{
+ const root='docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-county-recovery-2026-10-09/';
+ const receipt=JSON.parse(readFileSync(root+'county-listing-review.json'));
+ const row=dossiers.find(d=>d.id==='6ac96cc5b42e6e5c9417704c'),html=render(row);
+ assert.equal(row.online_form_url,receipt.online_form_url);assert.ok(html.includes(receipt.online_form_url));
+ assert.equal(receipt.sign_submission_acceptance_verified,false);assert.equal(receipt.northwestern_boundary_verified,false);
+ assert.match(html,/HTTP 502/);assert.match(html,/2026 zoning fee schedule/);assert.match(html,/boundaries remain unresolved/);
+ assert.equal(row.resources.length,0);assert.equal(render(row,false),'');
+});

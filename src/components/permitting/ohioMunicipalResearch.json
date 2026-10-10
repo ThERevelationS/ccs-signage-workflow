@@ -1740,7 +1740,8 @@
       "Sign application forms, current fees and online submission links remain collection gaps. No sign documents have been attached to this dossier.",
       "Electrical permit issuance and electrical inspection offices require separate verification. County zoning routing does not approve either electrical role.",
       "Search-indexed county 2025 guide lists Miami Township except Northwestern Miami. Boundary and present applicability are unverified; do not apply county zoning routing to every township job.",
-      "County referral and 2025 submission-guide original returned HTTP 403 on October 9. The PDF has not been downloaded; search excerpts are not an archived original or approved submission requirements."
+      "County referral and 2025 submission-guide original returned HTTP 403 on October 9. The PDF has not been downloaded; search excerpts are not an archived original or approved submission requirements.",
+      "County current applications listing links CAGIS ezTrak and a 2026 zoning fee schedule. Portal retrieval returned HTTP 502; sign-specific submission acceptance is unverified. Linked guide/PDF originals remain blocked, and Northwestern Miami boundaries remain unresolved."
     ],
     "references": [
       {
@@ -1750,7 +1751,20 @@
       {
         "label": "County 2025 zoning submission guide PDF \u2014 download blocked HTTP 403; currentness unverified",
         "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2025/how_to_zoning_certification_application.pdf"
+      },
+      {
+        "label": "County applications and forms \u2014 current listing; original retention pending",
+        "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/applications_and_forms.php"
+      },
+      {
+        "label": "County 2026 zoning fee schedule \u2014 linked PDF; original retrieval gap",
+        "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/Fee%20Schedules/2026/Zoning_Fees_2026.pdf?t=202601050916480"
+      },
+      {
+        "label": "County 2025 zoning certificate user guide \u2014 linked PDF; original retrieval gap",
+        "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310"
       }
-    ]
+    ],
+    "online_form_url": "https://eztrak.cagis.org/"
   }
 ]
