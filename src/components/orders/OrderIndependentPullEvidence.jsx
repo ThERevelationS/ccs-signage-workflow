@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
   ORDER_PULL_EVIDENCE_KEY,
   orderIndependentPullEvidenceModel,
 } from './orderIndependentPullEvidenceModel.mjs';
+import { startOrderBatchReview, appendOrderBatchReviewPage } from './orderBatchReviewSummary.mjs';
 
 // Order Form ONLY: read-only admin review. The shared Sales coordinator can
 // change without affecting this independent permanent-ID evidence.
@@ -14,9 +15,15 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   const [refreshKey, setRefreshKey] = useState(0);
   const [comparison, setComparison] = useState(null);
   const [comparing, setComparing] = useState(false);
+  const [batchReview, setBatchReview] = useState(null);
+  const [reviewingBatch, setReviewingBatch] = useState(false);
+  const reviewEpoch = useRef(0);
 
   useEffect(() => {
     if (!isAdmin) {
+      reviewEpoch.current++;
+      setBatchReview(null);
+      setReviewingBatch(false);
       setView({ kind: 'none' });
       return;
     }
@@ -24,6 +31,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
     let inFlight = false;
     let lastEvidenceVersion = null;
     setComparison(null);
+    setBatchReview(null);
     const refresh = async () => {
       if (inFlight) return;
       inFlight = true;
@@ -34,13 +42,21 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         if (active) {
           const nextView = orderIndependentPullEvidenceModel(rows);
           const version = JSON.stringify(rows?.[0]?.setting_value ?? null);
-          if (lastEvidenceVersion !== null && lastEvidenceVersion !== version) setComparison(null);
+          if (lastEvidenceVersion !== null && lastEvidenceVersion !== version) {
+            reviewEpoch.current++;
+            setComparison(null);
+            setBatchReview(null);
+            setReviewingBatch(false);
+          }
           lastEvidenceVersion = version;
           setView(nextView);
         }
       } catch {
         if (active) {
+          reviewEpoch.current++;
           setComparison(null);
+          setBatchReview(null);
+          setReviewingBatch(false);
           setView(orderIndependentPullEvidenceModel(null, { readFailed: true }));
         }
       } finally {
@@ -57,6 +73,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
     document.addEventListener('visibilitychange', refreshVisible);
     return () => {
       active = false;
+      reviewEpoch.current++;
       clearInterval(interval);
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refreshVisible);
@@ -88,6 +105,41 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         message: error?.response?.data?.error || error?.message || 'Could not verify both live records. Refresh and retry the comparison.' });
     } finally {
       setComparing(false);
+    }
+  };
+
+  const reviewRecordedBatch = async (batch) => {
+    if (!isAdmin || !sessionToken || reviewingBatch || view.kind !== 'unresolved') return;
+    const epoch = ++reviewEpoch.current;
+    let progress;
+    setReviewingBatch(true);
+    setBatchReview(null);
+    try {
+      progress = startOrderBatchReview(batch, { runStartedAt: view.startedAt, sheetId: view.sheetId });
+      setBatchReview(progress);
+      while (progress.nextOffset !== null) {
+        const response = await base44.functions.invoke('smartsheetSyncAction', {
+          action: 'review_unresolved_order_pull_batch',
+          session_token: sessionToken,
+          run_started_at: view.startedAt,
+          batch_number: batch.number,
+          offset: progress.nextOffset,
+        });
+        if (reviewEpoch.current !== epoch) return;
+        progress = appendOrderBatchReviewPage(progress, response?.data || response, batch);
+        setBatchReview(progress);
+      }
+    } catch (error) {
+      if (reviewEpoch.current === epoch) {
+        setBatchReview({
+          ...(progress || { batchNumber: batch.number, reviewed: 0, total: batch.count,
+            counts: { matching: 0, differing: 0, investigating: 0 }, rows: [] }),
+          kind: 'error',
+          error: error?.response?.data?.error || error?.message || 'The batch review could not be verified.',
+        });
+      }
+    } finally {
+      if (reviewEpoch.current === epoch) setReviewingBatch(false);
     }
   };
 
@@ -149,6 +201,40 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
           )}
         </div>
       )}
+      {batchReview && (
+        <div className="mt-3 min-w-0 rounded-md border border-amber-300 bg-white/70 p-2 text-xs dark:border-amber-800 dark:bg-slate-900/50"
+          role="status" aria-live="polite">
+          <p className="font-semibold">
+            Batch {batchReview.batchNumber} read-only review · {batchReview.reviewed}/{batchReview.total} Orders checked
+            {batchReview.kind === 'running' ? ' · Checking…'
+              : batchReview.kind === 'complete' ? ' · Review completed' : ' · Incomplete'}
+          </p>
+          <p className="mt-1">
+            {batchReview.counts.matching} currently match · {batchReview.counts.differing} differ ·
+            {' '}{batchReview.counts.investigating} require investigation
+          </p>
+          {batchReview.kind === 'error' && (
+            <p className="mt-1 font-medium text-red-700 dark:text-red-300">
+              {batchReview.error} Any partial counts above are not a complete batch review.
+            </p>
+          )}
+          {batchReview.kind === 'complete' && (
+            <p className="mt-1">All recorded pairs in this batch were compared. Matching values do not resolve the interrupted run or unlock Sync.</p>
+          )}
+          {batchReview.rows?.some(row => row.category !== 'matching') && (
+            <details className="mt-2">
+              <summary className="cursor-pointer font-medium">Orders with differences or unresolved questions</summary>
+              <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                {batchReview.rows.filter(row => row.category !== 'matching').map(row => (
+                  <p key={row.base44_order_id} className="break-all">
+                    {row.base44_order_id} ↔ {row.smartsheet_row_id} · {row.state.replaceAll('_', ' ')}
+                  </p>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
       {view.kind === 'unresolved' && (
         <details className="mt-2 text-xs">
           <summary className="cursor-pointer font-semibold">
@@ -179,6 +265,12 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
                       : batch.state === 'write_uncertain' ? 'write uncertain'
                       : 'acknowledged, not verified'}
                   </summary>
+                  <button type="button"
+                    disabled={reviewingBatch || comparing || !sessionToken}
+                    onClick={() => reviewRecordedBatch(batch)}
+                    className="mb-2 mt-2 min-h-9 rounded-md border border-amber-400 px-3 text-[11px] font-semibold hover:bg-amber-100 disabled:opacity-50 dark:hover:bg-amber-900/40">
+                    {reviewingBatch ? 'Reviewing batch…' : 'Review batch'}
+                  </button>
                   <div className="mt-2 max-h-48 overflow-auto">
                     <table className="w-full table-fixed text-left text-[11px]">
                       <thead><tr>
