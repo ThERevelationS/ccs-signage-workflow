@@ -551,8 +551,10 @@ try {
       await unavailable.waitFor({ state: 'detached' });
       assert.equal(await page.getByRole('button', { name: 'New Automation' }).isEnabled(), true);
       await page.getByRole('button', { name: 'New Automation' }).click();
-      await page.getByRole('dialog', { name: /Create Automation/ }).waitFor();
-      assert.equal(await page.getByRole('button', { name: 'New Group' }).count(), 1);
+      const editor = page.getByRole('dialog', { name: /Create Automation/ });
+      await editor.waitFor();
+      await editor.getByRole('button', { name: 'Cancel' }).click();
+      assert.equal(await page.getByRole('button', { name: 'New Group' }).isEnabled(), true);
     });
 
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
