@@ -162,7 +162,7 @@ assert.equal(validColumns.includes(boundColumns.status), true);
 assert.deepEqual(numericIdList(['bad', '123x', null, ''], 100), []);
 const singleBegin = backend.indexOf("if (action === 'review_unresolved_order_pull_row')");
 const singleEnd = backend.indexOf("if (action === 'recover_stale_order_run')", singleBegin);
-assert.ok(singleBegin > end && singleEnd > singleBegin);
+assert.ok(singleBegin === end && singleEnd > singleBegin);
 const singleAction = backend.slice(singleBegin, singleEnd);
 assert.match(singleAction, /const columnIds = numericIdList\(Object.values\(bindings\), 100\)/);
 assert.match(singleAction, /!columnIds.length/);
