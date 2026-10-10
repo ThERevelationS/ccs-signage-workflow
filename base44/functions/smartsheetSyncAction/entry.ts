@@ -2317,32 +2317,7 @@ async function pushDataset(
       );
       if (verifiedSalesUpdates.length) {
         try {
-          // Approved Sales decisions need a final atomic revision check;
-          // ordinary rows retain the existing efficient batch update path.
-          const approvedUpdates = verifiedSalesUpdates.filter((update: any) =>
-            approvedSalesPlanSnapshots.has(String(update.id)));
-          const ordinaryUpdates = verifiedSalesUpdates.filter((update: any) =>
-            !approvedSalesPlanSnapshots.has(String(update.id)));
-          if (ordinaryUpdates.length) {
-            await base44.asServiceRole.entities[entityName].bulkUpdate(ordinaryUpdates);
-          }
-          for (const update of approvedUpdates) {
-            const id = String(update.id);
-            const planned = approvedSalesPlanSnapshots.get(id);
-            const { id: _approvedId, ...fields } = update;
-            try {
-              if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-              const committed = await base44.asServiceRole.entities.WorkOrder.updateMany(
-                { id, updated_date: planned.updated_date }, { $set: fields },
-              );
-              if (committed?.updated !== 1) {
-                throw new Error('WorkOrder changed while approved Sales review was synchronizing.');
-              }
-            } catch (error: any) {
-              salesFailedRecordIds.add(id);
-              errors.push(id + ': Approved Sales review was not committed against the original WorkOrder version. Keep the review and reload before retrying.');
-            }
-          }
+          await base44.asServiceRole.entities[entityName].bulkUpdate(verifiedSalesUpdates);
           const verifiedRecords = await loadAllEntityRows({
             entity: base44.asServiceRole.entities.WorkOrder,
             query: { id: { $in: verifiedSalesUpdates.map((update: any) => update.id) } },
@@ -2353,7 +2328,7 @@ async function pushDataset(
           const failedMetadataIds = new Set(metadataFailures.map((failure: any) => String(failure.id)));
           for (const update of verifiedSalesUpdates) {
             const recordId = String(update.id);
-            if (failedMetadataIds.has(recordId) || salesFailedRecordIds.has(recordId)) {
+            if (failedMetadataIds.has(recordId)) {
               salesFailedRecordIds.add(recordId);
               errors.push(recordId + ': Sales Base44 sync metadata could not be verified after the Smartsheet write.');
             } else {
@@ -2551,9 +2526,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const { config, duplicateCount } = await loadSyncConfig(base44);
       const profile = config?.orders || {};
       const bindings = profile.column_bindings || {};
-      const columnIds = [...new Set(Object.values(bindings)
-        .map((id: any) => cleanText(id, 40))
-        .filter((id: string) => /^\\d+$/.test(id)))];
+      const columnIds = numericIdList(Object.values(bindings), 100);
       if (duplicateCount !== 1 || cleanText(profile.smartsheet_sheet_id, 40) !== sheetId || !columnIds.length) {
         return Response.json({ success: false,
           error: 'The Order sheet configuration no longer matches this unresolved batch.' }, { status: 409 });
@@ -2628,8 +2601,9 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const { config, duplicateCount } = await loadSyncConfig(base44);
       const profile = config?.orders || {};
       const bindings = profile.column_bindings || {};
+      const columnIds = numericIdList(Object.values(bindings), 100);
       if (duplicateCount !== 1 || cleanText(profile.smartsheet_sheet_id, 40) !== sheetId ||
-          !Object.values(bindings).some((id: any) => /^\\d+$/.test(String(id ?? '').trim()))) {
+          !columnIds.length) {
         return Response.json({ success: false,
           error: 'Order sheet configuration no longer matches the unresolved evidence. No comparison was claimed.' }, { status: 409 });
       }
@@ -2669,7 +2643,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
             if (normalized !== undefined) expectedFields[key] = normalized;
           }
           Object.assign(expectedFields, orderStatusFromPulledDates(
-            expectedFields, base44Order, /^\\d+$/.test(String(bindings?.status ?? '').trim()),
+            expectedFields, base44Order, columnIds.includes(cleanText(bindings?.status, 40)),
           ));
           report = compareUnresolvedOrderEvidenceRow({
             base44Order, remoteRow, orderId, sheetId, rowId, expectedFields,
