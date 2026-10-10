@@ -270,6 +270,51 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
   const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
   const current = await WorkOrder.get(String(receipt?.target_id || '')).catch(()=>null);
   if (!current) throw Object.assign(new Error('The Fleet work order for this receipt no longer exists.'),{status:404});
+  // Treat the reserved source and retry as one evidence decision.
+  // Admin review must not replay or cancel just one side after access changes.
+  if (action === 'save' && (receipt?.result_summary?.retry_reserved_by_request_id ||
+      receipt?.result_summary?.retry_reservation_required === true)) {
+    const grantId = String(receipt?.result_summary?.grant_id || '').trim();
+    const isRetry = receipt?.result_summary?.retry_reservation_required === true;
+    const source = isRetry
+      ? await Receipt.get(String(receipt?.result_summary?.reused_upload_receipt_id || '')).catch(()=>null)
+      : receipt;
+    const retry = await findReservedMechanicPhotoRetry(Receipt,current,source,grantId);
+    if (!retry || (isRetry && String(retry.id) !== String(receipt.id))) {
+      return {status:'blocked',recovered:false,work_order:current,
+        error_message:'Reserved Fleet mechanic photo-retry receipts have conflicting or missing evidence. CCS review is required.'};
+    }
+    if (workOrderHasMechanicReceipt(current,retry)) {
+      await markMechanicReceiptApplied(Receipt,retry,current,retry.status !== 'applied');
+      await resolveReusedUploadReceipt(Receipt,retry);
+      return {status:'applied',recovered:true,work_order:current};
+    }
+    if (retry.status === 'applied') {
+      await resolveReusedUploadReceipt(Receipt,retry);
+      return {status:'applied',recovered:false,work_order:current};
+    }
+    if (retry.status === 'failed') {
+      await releaseReservedMechanicUpload(Receipt,String(source.id),String(source.result_summary.retry_reserved_by_request_id || ''));
+      return {status:'blocked',recovered:false,work_order:current,
+        error_message:'The photo retry failed. Its original upload evidence was released for review; no work was replayed.'};
+    }
+    if (retry.status !== 'started') {
+      return {status:'blocked',recovered:false,work_order:current,
+        error_message:'Reserved Fleet mechanic photo-retry receipt status needs CCS review.'};
+    }
+    const grant = grantId ? await Access.get(grantId).catch(()=>null) : null;
+    const authorization = mechanicGrantAllowsMutation(grant,'save',String(current.equipment_id || ''),Date.now());
+    if (!authorization.allowed) {
+      return {status:'blocked',recovered:false,work_order:current,
+        error_message:`Mechanic access is ${authorization.reason || 'no longer authorized'}. Both reserved photo receipts remain pending; no work was replayed.`};
+    }
+    const resolution = await reconcileReservedMechanicPhotoRetry(base44,Access,Receipt,WorkOrder,current,source,grantId);
+    if (resolution.status === 'applied') {
+      return {status:'applied',recovered:true,work_order:resolution.work_order || current};
+    }
+    return {status:'blocked',recovered:false,work_order:current,
+      error_message:'The reserved Fleet mechanic photo retry has not been proven safe to apply. Both receipts remain pending review.'};
+  }
   if (workOrderHasMechanicReceipt(current,receipt)) {
     await markMechanicReceiptApplied(Receipt,receipt,current,receipt.status !== 'applied');
     await resolveReusedUploadReceipt(Receipt,receipt);
