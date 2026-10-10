@@ -68,7 +68,9 @@ assert.ok(attempt >= 0 && beforeWrite > attempt && beforeWrite < write);
 assert.ok(acknowledgment > write && uncertain > write);
 assert.match(pull, /batchEvidence: orderPullBatchEvidence/);
 assert.match(backend, /let lastOrderPullBatchEvidence: any = null/);
-assert.match(backend, /if \(batchEvidence\) lastOrderPullBatchEvidence = batchEvidence/);
+assert.match(backend, /if \(batchEvidence\) \{[\s\S]*?await saveOrderPullEvidence\([\s\S]*?lastOrderPullBatchEvidence = batchEvidence/);
+assert.ok(backend.indexOf('await saveOrderPullEvidence(') < backend.indexOf('lastOrderPullBatchEvidence = batchEvidence'),
+  'Order evidence must be durably saved before updating the shared coordinator');
 assert.ok((backend.match(/order_pull_batch_evidence: lastOrderPullBatchEvidence/g) || []).length >= 2,
   'Batch evidence must survive both subsequent progress and terminal status writes');
 const widget = readFileSync('src/components/admin/SmartsheetSyncWidget.jsx', 'utf8');
