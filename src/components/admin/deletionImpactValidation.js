@@ -53,13 +53,14 @@ export function validateDeletionImpactReport(report, loadedRequest) {
       clean(request.updated_date) !== clean(loadedRequest.updated_date) ||
       email(request.user_email) !== email(loadedRequest.user_email) ||
       clean(request.authorized_email_id) !== clean(loadedRequest.authorized_email_id) ||
+      !["pending", "processed", "cancelled"].includes(loadedRequest.status) ||
       request.status !== loadedRequest.status ||
       email(target.email) !== email(loadedRequest.user_email) ||
       clean(target.authorized_email_id) !== clean(loadedRequest.authorized_email_id) ||
       typeof target.authorized_email_exists !== "boolean" ||
       !isCount(target.base44_user_count) ||
       !Array.isArray(target.base44_user_ids) ||
-      !target.base44_user_ids.every(id => !!clean(id)) ||
+      !target.base44_user_ids.every(id => !!clean(id) && clean(id) === id) ||
       new Set(target.base44_user_ids).size !== target.base44_user_ids.length ||
       target.base44_user_ids.length !== target.base44_user_count) throw invalid();
 
