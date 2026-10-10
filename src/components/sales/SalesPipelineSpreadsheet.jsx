@@ -278,6 +278,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingChangesRef = useRef({});
   // Show a same-task status repair only after a verified guarded save.
   const pendingSameTaskRepairRef = useRef(new Set());
+  const [, refreshSameTaskSaveNotice] = useState(0);
   const pendingBaselinesRef = useRef({});
   const pendingSalesGuardsRef = useRef({});
   const pendingHistoryFieldsRef = useRef({});
@@ -1046,6 +1047,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (reconcileSameTask) {
       // Preserve the true review warning until persistence is verified.
       pendingSameTaskRepairRef.current.add(orderId);
+      refreshSameTaskSaveNotice((version) => version + 1);
     } else {
       const pinChanges = Object.fromEntries(changedFields.map((field) => [field, mergedUpdates[field]]));
       liveEditPinsRef.current = {
@@ -1156,6 +1158,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingRecordScopesRef.current[orderId];
         }
         const verifiedSameTaskRepair = pendingSameTaskRepairRef.current.delete(orderId);
+        if (verifiedSameTaskRepair) refreshSameTaskSaveNotice((version) => version + 1);
         const verifiedRepairFields = verifiedSameTaskRepair
           ? Object.fromEntries(Object.keys(changes).map((field) => [field, saved[field]])) : {};
         if (verifiedSameTaskRepair && selectedWorkOrder?.id === orderId) {
@@ -1297,6 +1300,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     debounceTimers.current = {};
     pendingChangesRef.current = {};
     pendingSameTaskRepairRef.current.clear();
+    refreshSameTaskSaveNotice((version) => version + 1);
     resolvedReviewExitRef.current = null;
     pendingBaselinesRef.current = {};
     pendingSalesGuardsRef.current = {};
