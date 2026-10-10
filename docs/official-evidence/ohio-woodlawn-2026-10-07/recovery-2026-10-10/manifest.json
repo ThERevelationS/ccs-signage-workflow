@@ -1,0 +1,26 @@
+{
+  "sources": [
+    {
+      "file": "woodlawn-zoning-fees-2025.pdf",
+      "official_url": "https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Woodlawn/2025/Woodlawn_Zoning_Fees_2025.pdf",
+      "observed_at": "2026-10-10T15:54:15.778597+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-zoning-customer-guide.pdf",
+      "official_url": "https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Woodlawn/how_to_woodlawn_zoning_certification_application.pdf",
+      "observed_at": "2026-10-10T15:54:15.779702+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "woodlawn-right-of-way-application.pdf",
+      "official_url": "https://cms8.revize.com/revize/woodlawnoh/PROW%20APPLICATION.pdf",
+      "observed_at": "2026-10-10T15:54:15.780322+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false
+}
