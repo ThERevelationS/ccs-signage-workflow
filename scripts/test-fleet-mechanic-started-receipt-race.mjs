@@ -76,6 +76,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
     async delete(id){store.receipts.delete(id);}
   };
   const access={
+    async list(){return [clone(grant)];},
     async filter(filter){return matches(grant,filter)?[clone(grant)]:[];},
     async get(id){return id===grantId?clone(grant):null;},
     async update(_id,patch){Object.assign(grant,patch);return clone(grant);}
@@ -196,7 +197,7 @@ test("admin applies complete reserved photo evidence once while grant is authori
   ]});
   const first=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
   const second=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
-  assert.equal(first.body.status,"applied");
+  assert.equal(first.body.status,"applied",JSON.stringify({first,second,updates:store.updates}));
   assert.equal(second.body.status,"applied");
   assert.equal(store.receipts.get(source.id).status,"applied");
   assert.equal(store.receipts.get(retry.id).status,"applied");
