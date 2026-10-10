@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -395,7 +395,9 @@ export default function AdminSettings() {
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [automationLoadError, setAutomationLoadError] = useState(false);
+  const automationLoadSequence = useRef(0);
+
   // Password/Face ID protection state. A UI unlock is valid only while the
   // backend-issued Admin Settings capability is still present and unexpired.
   const [adminCapability, setAdminCapability] = useState(() => getStoredAdminSettingsCapability());
@@ -486,6 +488,7 @@ export default function AdminSettings() {
   };
 
   const loadAutomations = async () => {
+    const requestSequence = ++automationLoadSequence.current;
     setIsLoading(true);
     try {
       const rules = await loadAllEntityRows({
@@ -493,10 +496,22 @@ export default function AdminSettings() {
         sort: "-created_date",
         label: "Admin Settings automation rules",
       });
-      setAutomations(rules);
+      if (requestSequence === automationLoadSequence.current) {
+        setAutomations(rules);
+        setAutomationLoadError(false);
+      }
       return rules;
+    } catch {
+      // A failed read is not an empty automation list. Preserve the last known
+      // rows internally but do not offer stale data for editing until recovery.
+      if (requestSequence === automationLoadSequence.current) {
+        setAutomationLoadError(true);
+      }
+      return null;
     } finally {
-      setIsLoading(false);
+      if (requestSequence === automationLoadSequence.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -1170,7 +1185,7 @@ export default function AdminSettings() {
                   <div className="font-medium">Automation update blocked</div>
                   <div className="mt-1 text-xs">{automationSaveError}</div>
                 </div>
-                <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadAutomations(); setAutomationSaveError(""); }}>Reload rules</Button>
+                <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { const refreshed = await loadAutomations(); if (refreshed) setAutomationSaveError(""); }}>Reload rules</Button>
               </div>
             )}
 
@@ -1213,14 +1228,14 @@ export default function AdminSettings() {
                   </Button>
                 </div>
               </div>
-              <Button onClick={openNewRule} className="clay-button border-none text-gray-800"
+              <Button onClick={openNewRule} disabled={isLoading || automationLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                 <Plus className="w-5 h-5 mr-2" /> New Automation
               </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            {/* Stats are authoritative only after a complete successful read. */}
+            {!isLoading && !automationLoadError && <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="clay-card p-4">
                 <div className="flex items-center gap-3">
                   <Zap className="w-5 h-5 text-purple-600" />
@@ -1248,11 +1263,24 @@ export default function AdminSettings() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Automations List */}
             {isLoading ? (
               <div className="clay-card p-12 text-center"><p className="text-gray-500">Loading...</p></div>
+            ) : automationLoadError ? (
+              <div role="alert" aria-label="Automation rules unavailable" className="clay-card rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950">
+                <h3 className="font-semibold">Automation rules could not be loaded</h3>
+                <p className="mt-1 text-sm">
+                  The current rule list could not be verified. Existing rules have not been changed.
+                  Editing is paused until the list loads successfully.
+                </p>
+                <Button type="button" size="sm" variant="outline" disabled={isLoading}
+                  onClick={() => { void loadAutomations(); }}
+                  className="mt-3 min-h-10 border-amber-500 bg-white text-amber-950">
+                  Retry loading rules
+                </Button>
+              </div>
             ) : automations.length === 0 ? (
               <div className="clay-card p-12 text-center">
                 <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
