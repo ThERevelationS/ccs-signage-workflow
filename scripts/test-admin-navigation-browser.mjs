@@ -709,7 +709,7 @@ try {
       assert.match(await error.innerText(), /read-only impact scan could not be verified/);
       assert.equal((await error.innerText()).includes('secret-synthetic-impact-diagnostic'), false);
       assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
-      assert.equal(await dialog.getByRole('button', { name: 'Close' }).isEnabled(), true);
+      assert.equal(await dialog.getByRole('button', { name: 'Close' }).first().isEnabled(), true);
       const before = await page.evaluate(() => window.__adminImpactAttempts);
       await error.getByRole('button', { name: 'Retry impact scan' }).click();
       await error.waitFor();
@@ -719,7 +719,7 @@ try {
       await dialog.getByText('Synthetic review verified').waitFor();
       assert.equal(await error.count(), 0);
       assert.equal(await dialog.getByText('Read-only review only.', { exact: false }).count(), 1);
-      await dialog.getByRole('button', { name: 'Close' }).click();
+      await dialog.getByRole('button', { name: 'Close' }).first().click();
       assert.equal(await dialog.count(), 0);
     });
 
@@ -730,8 +730,8 @@ try {
       const dialog = page.getByRole('dialog', { name: /Account Deletion Impact/ });
       await dialog.waitFor();
       await dialog.getByRole('status').getByText('Reviewing account impact...').waitFor();
-      assert.equal(await dialog.getByRole('button', { name: 'Close' }).isEnabled(), true);
-      await dialog.getByRole('button', { name: 'Close' }).click();
+      assert.equal(await dialog.getByRole('button', { name: 'Close' }).first().isEnabled(), true);
+      await dialog.getByRole('button', { name: 'Close' }).first().click();
       assert.equal(await dialog.count(), 0);
       await page.evaluate(() => {
         const pending = window.__adminImpactPending.shift();
@@ -741,7 +741,7 @@ try {
       await page.getByRole('button', { name: 'Review Impact' }).click();
       await dialog.getByText('Synthetic review verified').waitFor();
       assert.equal(await dialog.getByRole('alert', { name: 'Account deletion impact unavailable' }).count(), 0);
-      await dialog.getByRole('button', { name: 'Close' }).click();
+      await dialog.getByRole('button', { name: 'Close' }).first().click();
     });
 
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
