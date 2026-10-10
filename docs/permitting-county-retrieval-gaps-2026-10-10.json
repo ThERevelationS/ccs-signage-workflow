@@ -1,0 +1,342 @@
+{
+  "observed_on": "2026-10-10",
+  "scope": "Recorded Hamilton County retrieval gaps in retained Ohio research receipts; not an exhaustive county source inventory",
+  "unique_exact_urls": 24,
+  "recorded_attempts": 26,
+  "document_urls": 17,
+  "items": [
+    {
+      "url": "https://cms2.revize.com/revize/hamiltoncountyoh/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/Fee%20Schedules/2026/Zoning_Fees_2026.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-county-recovery-2026-10-09/manifest.json",
+          "status": "retrieval_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-10T00:51:18.697062+00:00",
+          "candidate_only": true
+        }
+      ]
+    },
+    {
+      "url": "https://cms2.revize.com/revize/hamiltoncountyoh/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-county-recovery-2026-10-09/manifest.json",
+          "status": "retrieval_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-10T00:51:18.606622+00:00",
+          "candidate_only": true
+        }
+      ]
+    },
+    {
+      "url": "https://cms2.revize.com/revize/hamiltoncountyoh/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/Woodlawn_Zoning_Map.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:18:04.387520+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamilton-co.org/government/departments/planning_and_development",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-county-routing-2026-10-09/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-10T00:10:13.621171+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/Documents/Government/Departments/Planning%20and%20Development/Buildings%20And%20Inspections/Applications%20and%20Forms/Commercial%20Permit%20Guides%20and%20Forms/Signs-08.pdf?t=202502261002430",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/whitewater-building-2026-10-10/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-10T15:43:17.336360+00:00",
+          "candidate_only": true
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/link-recovery-attempts.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:50:28.318309+00:00",
+          "candidate_only": true
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Fee_Schedule_2026.pdf?t=202512311158300",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/link-recovery-attempts.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:50:28.927637+00:00",
+          "candidate_only": true
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Zoning_Fees_2026.pdf?t=202512311159070",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/link-recovery-attempts.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:50:29.485589+00:00",
+          "candidate_only": true
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Woodlawn/2024/BZA_Variance_User_Guide.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:17:34.335913+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2024/ZoningApplicationForm.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/manifest.json",
+          "status": "retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T16:51:53.088927+00:00",
+          "candidate_only": false
+        },
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:17:33.785518+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2025/how_to_zoning_certification_application.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-county-routing-2026-10-09/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-10T00:10:14.265260+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Zoning/HCZonRes.pdf",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/whitewater-scope-2026-10-10/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-10T15:15:52.847226+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/county-routing/manifest.json",
+          "status": "retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:14:02.714771+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Applications%20and%20Forms/User%20Guides/Zoning%20Certificate%20User%20Guide%20-%20Customer%20Instructions%202025%20revised.pdf?t=202512311214310",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:44:06.576856+00:00",
+          "candidate_only": false
+        },
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/current-links/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:41:08.545526+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Fee_Schedule_2026.pdf?t=202512311158300",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:44:07.128198+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Symmes%20Township%20Zoning/2026/Symmes_Zoning_Fees_2026.pdf?t=202512311159070",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:44:07.667504+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/2026/Woodlawn_Fee_Schedule_2026.pdf?t=202512311151410",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/current-links/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:41:09.658438+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/2026/Woodlawn_Zoning_Fees_2026.pdf?t=202512311152240",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/current-links/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:41:10.201301+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/Documents/Government/Departments/Planning%20and%20Development/Development%20Services/Woodlawn%20Zoning/Woodlawn_Zoning_Code_2024.pdf?t=202502261002460",
+      "kind": "document",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/current-links/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:41:09.118431+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/applications_and_forms.php",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/county-routing/manifest.json",
+          "status": "retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:14:03.943339+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/north_bend_zoning.php",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/manifest.json",
+          "status": "retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T16:51:50.207561+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/symmes_township_zoning.php",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/county-forms/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:42:58.132576+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/woodlawn_zoning.php",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-woodlawn-2026-10-07/manifest.json",
+          "status": "original_retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T18:18:04.991582+00:00",
+          "candidate_only": false
+        }
+      ]
+    },
+    {
+      "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/learn_about.php",
+      "kind": "page",
+      "attempts": [
+        {
+          "receipt": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07/county-routing/manifest.json",
+          "status": "retention_gap",
+          "error": "HTTP Error 403: Forbidden",
+          "observed_at": "2026-10-07T17:14:03.406875+00:00",
+          "candidate_only": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Exact URLs remain distinct; aliases and proposed repairs are not verified equivalents.",
+    "Receipt presence does not establish current HTTP failure; no requests were repeated.",
+    "Failures may subsequently have been recovered elsewhere; no resolved/unresolved authority is inferred.",
+    "A county source reference does not establish locality coverage or office responsibility."
+  ],
+  "live_records_changed": 0
+}
