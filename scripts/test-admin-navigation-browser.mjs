@@ -756,6 +756,32 @@ try {
       await dialog.getByRole('button', { name: 'Close' }).first().click();
     });
 
+  await check('Malformed and cross-account impact results are rejected until a verified retry', 375,
+    '/?tab=users&real_users=1&deletion_rows=1&impact_invalid=request', async page => {
+      await page.getByRole('button', { name: 'Review Impact' }).click();
+      const dialog = page.getByRole('dialog', { name: /Account Deletion Impact/ });
+      const error = dialog.getByRole('alert', { name: 'Account deletion impact unavailable' });
+      await error.waitFor();
+      assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
+      assert.equal(await dialog.getByText('Workflow references').count(), 0);
+      const first = await page.evaluate(() => window.__adminImpactAttempts);
+      for (const category of ['version', 'target', 'counts', 'partial']) {
+        await page.evaluate(value => { window.__adminImpactInvalid = value; }, category);
+        await error.getByRole('button', { name: 'Retry impact scan' }).click();
+        await error.waitFor();
+        assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
+        assert.equal(await dialog.getByText('Workflow references').count(), 0);
+      }
+      assert.ok(await page.evaluate(() => window.__adminImpactAttempts) >= first + 4);
+      await page.evaluate(() => { window.__adminImpactInvalid = false; });
+      await error.getByRole('button', { name: 'Retry impact scan' }).click();
+      await dialog.getByText('Synthetic review verified').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await dialog.getByText('Workflow references').count(), 1);
+      await dialog.getByRole('button', { name: 'Close' }).first().click();
+      await dialog.waitFor({ state: 'detached' });
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
