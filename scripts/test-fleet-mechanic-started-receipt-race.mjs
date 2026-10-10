@@ -156,6 +156,78 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("revocation during a dispatched mechanic photo retry preserves the receipt pair until late commit",async()=>{
+  const original=payload("request-original-123456",{photos:[photoPayload,photoPayload]});
+  const previous=makeReceipt(original,{status:"failed",photos:["https://files.example/old-a.jpg"],count:2});
+  const {store,client,grant}=setup({receipt:previous,holdUpdates:true});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const mechanic=call(payload("request-late-mechanic-234567",{photos:[photoPayload,photoPayload]}),client);
+  await until("mechanic work-order update dispatch",()=>store.pendingUpdates.length===1);
+  const pending=[...store.receipts.values()].find(row=>row.id!==previous.id);
+  assert.ok(pending);
+  assert.equal(store.receipts.get(previous.id).status,"started");
+  assert.equal(pending.status,"started");
+  assert.equal(pending.result_summary.uploaded_photo_urls.length,2);
+  const revocation=await call({action:"admin_revoke_link",id:grantId},client);
+  assert.equal(revocation.code,200);
+  assert.equal(revocation.body.reconciled_blocked,2);
+  assert.equal(store.receipts.get(previous.id).status,"started");
+  assert.equal(store.receipts.get(pending.id).status,"started");
+  assert.equal(grant.enabled,false);
+  assert.equal(store.updates,0);
+  store.pendingUpdates.shift()();
+  const late=await mechanic;
+  assert.equal(late.code,403,"Revoked bearer link cannot return the committed work-order details");
+  assert.equal(store.updates,1,"In-flight, previously authorized work commits at most once");
+  assert.equal(store.receipts.get(previous.id).status,"applied");
+  assert.equal(store.receipts.get(pending.id).status,"applied");
+  assert.equal(store.uploads.length,1,"Only the missing image was uploaded");
+  assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
+});
+test("two admin photo reconciliations racing revocation cannot commit twice",async()=>{
+  const {store,client,grant}=setup({holdUpdates:true});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/second.jpg",
+  ]});
+  const first=call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  const second=call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  await until("both admin recovery dispatches",()=>store.pendingUpdates.length===2);
+  const revoked=await call({action:"admin_revoke_link",id:grantId},client);
+  assert.equal(revoked.code,200);
+  assert.equal(grant.enabled,false);
+  assert.equal(revoked.body.reconciled_blocked,2);
+  assert.equal(store.updates,0);
+  for(const release of store.pendingUpdates.splice(0))release();
+  const results=await Promise.all([first,second]);
+  assert.deepEqual(results.map(row=>row.body.status),["applied","applied"]);
+  assert.equal(store.updates,1);
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.uploads.length,0);
+});
+test("admin cannot dispatch reserved photo reconciliation after revoked scope while mechanic commit is pending",async()=>{
+  const {store,client,grant}=setup({holdUpdates:true});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/second.jpg",
+  ]});
+  const pending=call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  await until("authorized admin recovery dispatch",()=>store.pendingUpdates.length===1);
+  grant.scope_mode="selected_equipment";
+  grant.allowed_equipment_ids=["some-other-equipment"];
+  const rejected=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  assert.equal(rejected.body.status,"blocked");
+  assert.match(rejected.body.error_message,/outside_scope/);
+  assert.equal(store.updateAttempts,1,"No second update after the scope narrowed");
+  store.pendingUpdates.shift()();
+  const result=await pending;
+  assert.equal(result.body.status,"applied","Already dispatched operation has durable proof");
+  assert.equal(store.updates,1);
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+});
+
 test("admin preserves both reserved photo receipts when grant is revoked, expired, or loses equipment scope",async()=>{
   for (const [reason,change] of [
     ["revoked",grant=>{grant.enabled=false;}],
