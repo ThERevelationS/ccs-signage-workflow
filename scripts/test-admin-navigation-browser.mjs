@@ -720,7 +720,7 @@ try {
       assert.equal(await error.count(), 0);
       assert.equal(await dialog.getByText('Read-only review only.', { exact: false }).count(), 1);
       await dialog.getByRole('button', { name: 'Close' }).first().click();
-      assert.equal(await dialog.count(), 0);
+      await dialog.waitFor({ state: 'detached' });
     });
 
   await check('Closing a pending impact scan discards its late result', 375,
@@ -732,7 +732,7 @@ try {
       await dialog.getByRole('status').getByText('Reviewing account impact...').waitFor();
       assert.equal(await dialog.getByRole('button', { name: 'Close' }).first().isEnabled(), true);
       await dialog.getByRole('button', { name: 'Close' }).first().click();
-      assert.equal(await dialog.count(), 0);
+      await dialog.waitFor({ state: 'detached' });
       await page.evaluate(() => {
         const pending = window.__adminImpactPending.shift();
         window.__adminImpactDelay = false;
