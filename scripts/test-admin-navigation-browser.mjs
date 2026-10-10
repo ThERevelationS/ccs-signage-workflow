@@ -467,6 +467,48 @@ try {
     await page.getByTestId('synthetic-UserManagement').waitFor();
   }, { allowSyntheticPanelError: true });
 
+  await check('Failed automation read shows retry, not an empty rule list or editable controls', 375,
+    '/?tab=automations&automation_read_fail=1', async page => {
+      const failure = page.getByRole('alert', { name: 'Automation rules unavailable' });
+      await failure.waitFor();
+      assert.match(await failure.innerText(), /could not be loaded/);
+      assert.equal((await failure.innerText()).includes('synthetic-private-automation-read-error'), false);
+      assert.equal(await page.getByText('No Automations').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Create First Automation' }).count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'New Automation' }).isDisabled(), true);
+      assert.equal(await page.getByText('Total Automations').count(), 0, 'Do not present unverified zero counts');
+      const attemptCount = await page.evaluate(() => window.__adminAutomationReadAttempts);
+      await failure.getByRole('button', { name: 'Retry loading rules' }).click();
+      await failure.waitFor();
+      assert.ok(await page.evaluate(() => window.__adminAutomationReadAttempts) > attemptCount);
+      assert.equal(await page.getByText('No Automations').count(), 0);
+      await page.getByRole('group', { name: 'Admin navigation categories' })
+        .getByRole('button', { name: 'People' }).click();
+      await page.getByTestId('synthetic-UserManagement').waitFor();
+      await page.getByRole('group', { name: 'Admin navigation categories' })
+        .getByRole('button', { name: 'Workflow' }).click();
+      await failure.waitFor();
+      await page.evaluate(() => { window.__adminAutomationFailure = false; });
+      await failure.getByRole('button', { name: 'Retry loading rules' }).click();
+      await page.getByText('No Automations').waitFor();
+      assert.equal(await failure.count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'New Automation' }).isEnabled(), true);
+    });
+
+  await check('Successful automation retry distinguishes actual rules from a failed read', 768,
+    '/?tab=automations&automation_rows=1&automation_read_fail=1', async page => {
+      const failure = page.getByRole('alert', { name: 'Automation rules unavailable' });
+      await failure.waitFor();
+      assert.equal(await page.getByText('Synthetic rule').count(), 0);
+      assert.equal(await page.getByText('No Automations').count(), 0);
+      await page.evaluate(() => { window.__adminAutomationFailure = false; });
+      await failure.getByRole('button', { name: 'Retry loading rules' }).click();
+      await page.getByText('Synthetic rule').waitFor();
+      assert.equal(await page.getByText('Total Automations').count(), 1);
+      assert.equal(await failure.count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'New Automation' }).isEnabled(), true);
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
