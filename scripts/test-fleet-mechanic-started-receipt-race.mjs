@@ -195,6 +195,102 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("admin marker recovery preserves photo evidence and cancellation provenance added after its receipt read",async()=>{
+  const original=makeReceipt(payload("request-original-123456",{photos:[photoPayload]}),{count:1});
+  const {store,client,receipts}=setup({receipt:original});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.work.mechanic_operation_key=original.operation_key;
+  store.work.mechanic_operation_fingerprint=original.payload_fingerprint;
+  store.pauseWorkRead=true;
+  const reconciliation=call({action:"admin_reconcile_mechanic_mutation",receipt_id:original.id},client);
+  await until("admin work-order marker read",()=>store.pendingWorkReads.length===1);
+  const live=store.receipts.get(original.id);
+  await receipts.update(original.id,{status:"cancelled",result_summary:{
+    ...live.result_summary,uploaded_photo_urls:["https://files.example/durable-just-uploaded.jpg"],
+    upload_evidence_updated_at:"2026-10-10T12:00:00.000Z",
+    admin_reconciled_not_applied:true,admin_reconciled_by:"other-admin@example.test",
+  }});
+  store.pendingWorkReads.shift()();
+  const result=await reconciliation;
+  assert.equal(result.code,200);
+  assert.equal(result.body.status,"applied");
+  const final=store.receipts.get(original.id);
+  assert.equal(final.status,"applied");
+  assert.deepEqual(final.result_summary.uploaded_photo_urls,["https://files.example/durable-just-uploaded.jpg"]);
+  assert.equal(final.result_summary.admin_reconciled_by,"other-admin@example.test");
+  assert.equal(final.result_summary.admin_reconciled_not_applied,true);
+  assert.equal(final.result_summary.recovered_from_work_order_marker,true);
+  assert.equal(store.updates,0);
+});
+test("reused photo receipt resolution preserves newer forensic evidence despite stale source read",async()=>{
+  const {store,client,receipts}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"applied",urls:[
+    "https://files.example/old-a.jpg","https://files.example/complete-b.jpg",
+  ]});
+  store.pauseSourceReadAt=2;
+  const reconciliation=call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  await until("source read before retry resolution",()=>store.pendingSourceReads.length===1);
+  const live=store.receipts.get(source.id);
+  await receipts.update(source.id,{result_summary:{...live.result_summary,
+    forensic_review_note:"The late photo is being verified",
+    upload_evidence_updated_at:"2026-10-10T12:01:00.000Z",
+  }});
+  store.pendingSourceReads.shift()();
+  const result=await reconciliation;
+  assert.equal(result.code,200);
+  assert.equal(result.body.status,"applied");
+  const final=store.receipts.get(source.id);
+  assert.equal(final.status,"applied");
+  assert.equal(final.result_summary.forensic_review_note,"The late photo is being verified");
+  assert.equal(final.result_summary.upload_evidence_updated_at,"2026-10-10T12:01:00.000Z");
+  assert.deepEqual(final.result_summary.uploaded_photo_urls,["https://files.example/old-a.jpg"]);
+  assert.equal(final.result_summary.resolved_by_operation_key,retry.operation_key);
+  assert.equal(final.result_summary.resolved_by_retry,true);
+  assert.equal(store.updates,0);
+});
+test("reservation release cannot clear a different retry owner after a racing reassignment",async()=>{
+  const {store,client,receipts}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"failed"});
+  store.pauseReleaseWrite=true;
+  const reconciliation=call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  await until("old photo reservation release",()=>store.pendingReleaseWrites.length===1);
+  const live=store.receipts.get(source.id);
+  await receipts.update(source.id,{result_summary:{...live.result_summary,
+    retry_reserved_by_request_id:"request-other-owner-456789",forensic_review_note:"Reservation reassigned",
+  }});
+  store.pendingReleaseWrites.shift()();
+  const result=await reconciliation;
+  assert.equal(result.code,200);
+  assert.equal(result.body.status,"blocked");
+  const final=store.receipts.get(source.id);
+  assert.equal(final.status,"started");
+  assert.equal(final.result_summary.retry_reserved_by_request_id,"request-other-owner-456789");
+  assert.equal(final.result_summary.forensic_review_note,"Reservation reassigned");
+  assert.equal(final.result_summary.retry_reservation_released_at,undefined);
+  assert.equal(store.updates,0);
+});
+test("successful reservation release preserves forensic metadata added while it was pending",async()=>{
+  const {store,client,receipts}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"failed"});
+  store.pauseReleaseWrite=true;
+  const reconciliation=call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  await until("reservation metadata release",()=>store.pendingReleaseWrites.length===1);
+  const live=store.receipts.get(source.id);
+  await receipts.update(source.id,{result_summary:{...live.result_summary,forensic_review_note:"Photo retained for audit"}});
+  store.pendingReleaseWrites.shift()();
+  await reconciliation;
+  const final=store.receipts.get(source.id);
+  assert.equal(final.status,"failed");
+  assert.equal(final.result_summary.retry_reserved_by_request_id,"");
+  assert.equal(final.result_summary.forensic_review_note,"Photo retained for audit");
+  assert.deepEqual(final.result_summary.uploaded_photo_urls,["https://files.example/old-a.jpg"]);
+  assert.ok(final.result_summary.retry_reservation_released_at);
+  assert.equal(store.updates,0);
+});
+
 test("late applied mechanic receipt cannot be downgraded by stale admin revocation cancellation",async()=>{
   const previous=makeReceipt(payload("request-original-123456"));
   const {store,client}=setup({receipt:previous,holdUpdates:true});
