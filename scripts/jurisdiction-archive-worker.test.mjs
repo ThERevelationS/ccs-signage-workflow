@@ -22,7 +22,7 @@ function setup({role='admin',enabled=true,atCap=false}={}) {
       {daily_day_key:new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date()),dispatched_today:atCap?40:0,last_cycle_at:'2000-01-01T00:00:00Z'},
   }]};
   globalThis.workerFixture={auth:{me:async()=>role?{role}:null},asServiceRole:{
-    entities:{PermittingSourceDocument:{filter:async(q,s,l)=>{assert.ok(q.source_registration_key);assert.equal(l,20);calls.textScans++;return[];},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents.$elemMatch);calls.scans++;return[];},
+    entities:{PermittingSourceDocument:{filter:async(q,s,l)=>{assert.ok(q.source_registration_key);assert.equal(l,20);calls.textScans++;return[];},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents?.$elemMatch || query['discovery_scan_state.external_referrals']?.$elemMatch);calls.scans++;return[];},
       get:async()=>({id:'j',documents:[],updated_date:'v1'}),updateMany:async()=>{calls.writes++;return{updated:1};}}},
     integrations:{Core:{UploadFile:async()=>{throw Error('Unexpected upload');}}},
     functions:{invoke:async()=>{calls.research++;throw Error('Unexpected research');}},
@@ -45,7 +45,7 @@ test('manual targeted archive is available while automatic research is paused',a
 });
 test('automatic backlog scan is bounded and requires no research',async()=>{
   const calls=setup();assert.equal((await invoke(worker,{automatic:true})).data.profiles_checked,0);
-  assert.equal(calls.scans,6);assert.equal(calls.research,0);
+  assert.equal(calls.scans,8);assert.equal(calls.research,0);
 });
 test('dispatcher at its daily LLM limit still runs archival and makes no research/state writes',async()=>{
   const calls=setup({atCap:true});
@@ -53,7 +53,7 @@ test('dispatcher at its daily LLM limit still runs archival and makes no researc
   assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.dispatched_today,40);
   assert.equal(r.data.archive_continuation.reason,'no_eligible_file');
   assert.equal(r.data.text_continuation.reason,'no_eligible_text_source');assert.equal(calls.textScans,1);
-  assert.equal(calls.scans,6);assert.equal(calls.research,0);assert.equal(calls.writes,0);
+  assert.equal(calls.scans,8);assert.equal(calls.research,0);assert.equal(calls.writes,0);
 });
 
 test('catalog route requires a stable manual target and denies automated caller-selected targets',async()=>{

@@ -159,6 +159,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   try {
     if (!resumeUpload) {
       const sourceResponse = await fetchBytes(doc.url, Boolean(knownPdf || classifiedPdf));
+      if(doc.external_referral_provenance && (sourceResponse.referralRecheck?.source_page_url!==doc.external_referral_provenance.source_page_url || !/^[a-f0-9]{64}$/.test(sourceResponse.referralRecheck?.source_page_sha256 || '')))throw new Error('External source link recheck receipt is missing.');
       const bytes = sourceResponse.bytes;
       const ext = knownPdf || classifiedPdf ? 'pdf' : new URL(doc.url).pathname.split('.').pop().toLowerCase();
       const validation = validatePermitDocumentBytes(bytes, {format: ext, contentType: sourceResponse.contentType});
