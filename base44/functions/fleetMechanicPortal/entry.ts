@@ -953,6 +953,7 @@ Deno.serve(async (req) => {
         result_summary:{
           grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'save',expected_updated_date:expected,photo_count:decoded.photos.length,
           uploaded_photo_urls:[...reusable.urls],reused_upload_receipt_id:reusable.receipt_id || '',reused_upload_operation_key:reusable.operation_key || '',
+          retry_reservation_required:!!reusable.receipt_id,
           mutation_plan:{actual_hours:actualHours,corrective_action:correctiveAction,appended_note:appended},
         },
       });
@@ -970,6 +971,22 @@ Deno.serve(async (req) => {
       let receipt = claim.receipt;
       try {
         const assertAuthorized = () => requireCurrentMechanicGrant(Access,String(grant.id || ''),'save',String(current.equipment_id || ''));
+        if (reusable.receipt_id) {
+          await assertAuthorized();
+          const source = sameGrantFailed.find((row:any)=>String(row.id) === reusable.receipt_id);
+          if (!source) {
+            await failMechanicReceipt(Receipt,receipt,'Previous photo evidence is unavailable.');
+            return json({error:'The previous photo evidence is unavailable. CCS must review this retry.'},{status:409});
+          }
+          const reservation = await Receipt.updateMany({id:source.id,status:'failed'},{$set:{
+            status:'started',
+            result_summary:{...(source.result_summary || {}),retry_reserved_by_request_id:mechanicMutation.requestId,retry_reserved_at:nowIso()},
+          }});
+          if (reservation?.updated !== 1) {
+            await failMechanicReceipt(Receipt,receipt,'Another mechanic request reserved the same interrupted photo upload.');
+            return json({error:'Another mechanic request is already recovering these photos. Check current Fleet state before retrying.'},{status:409});
+          }
+        }
         const upload = await uploadPhotos(base44,Receipt,receipt,decoded.photos,reusable.urls,assertAuthorized);
         receipt = upload.receipt;
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
@@ -996,6 +1013,15 @@ Deno.serve(async (req) => {
         }
         await failMechanicReceipt(Receipt,receipt,error);
         throw error;
+      } finally {
+        if (reusable.receipt_id) {
+          // On unknown outcomes, retain the reservation rather than risk duplicate files.
+          // Release it only when the retry receipt is durably confirmed failed.
+          const latest = await Receipt.get(receipt.id).catch(()=>null);
+          if (latest?.status === 'failed') {
+            await releaseReservedMechanicUpload(Receipt,reusable.receipt_id,mechanicMutation.requestId);
+          }
+        }
       }
     }
 
