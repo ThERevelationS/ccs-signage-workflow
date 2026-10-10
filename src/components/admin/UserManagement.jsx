@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { setPassword as setPasswordFn } from "@/functions/setPassword";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -66,6 +66,8 @@ export default function UserManagement() {
   const { sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userDirectoryError, setUserDirectoryError] = useState(false);
+  const userLoadSequence = useRef(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -105,28 +107,43 @@ export default function UserManagement() {
 
   useEffect(() => {
     if (sessionToken) {
-      loadUsers();
-      loadDeletionRequests();
+      void loadUsers();
+      void loadDeletionRequests();
     } else {
+      ++userLoadSequence.current;
       setUsers([]);
+      setUserDirectoryError(true);
       setDeletionRequests([]);
       setIsLoading(false);
       setDeletionRequestsLoading(false);
     }
+    // Invalidate any response from a previous admin session on logout/change.
+    return () => { ++userLoadSequence.current; };
   }, [sessionToken]);
 
   const loadUsers = async () => {
-    if (!sessionToken) return;
+    const requestSequence = ++userLoadSequence.current;
+    if (!sessionToken) {
+      setUserDirectoryError(true);
+      setIsLoading(false);
+      return null;
+    }
     setIsLoading(true);
     try {
       const allUsers = await listAuthorizedUsersAdmin({ sessionToken });
-      setUsers(allUsers);
-    } catch (error) {
-      console.error("Error loading users:", error);
-      setUsers([]);
-      setUserMutationError(error?.message || "Authorized users could not be loaded safely.");
+      if (requestSequence === userLoadSequence.current) {
+        setUsers(allUsers);
+        setUserDirectoryError(false);
+      }
+      return allUsers;
+    } catch {
+      // A failed authenticated read is not an empty directory. Preserve the
+      // previously verified rows internally but never offer them for editing.
+      if (requestSequence === userLoadSequence.current) setUserDirectoryError(true);
+      return null;
+    } finally {
+      if (requestSequence === userLoadSequence.current) setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const loadDeletionRequests = async () => {
@@ -202,6 +219,7 @@ export default function UserManagement() {
   };
 
   const openEditUser = (user) => {
+    if (isLoading || userDirectoryError || !sessionToken) return;
     setEditingUser(user);
     setFormData({
       full_name: user.full_name || "",
@@ -219,7 +237,7 @@ export default function UserManagement() {
   };
 
   const handleSendPasswordReset = async (user) => {
-    if (!user.email || !sessionToken) return;
+    if (!user.email || !sessionToken || isLoading || userDirectoryError) return;
 
     setSendingPasswordReset(user.id);
     setUserMutationError("");
@@ -241,7 +259,7 @@ export default function UserManagement() {
   };
 
   const handleResendOnboarding = async (user) => {
-    if (!user.email || !sessionToken) return;
+    if (!user.email || !sessionToken || isLoading || userDirectoryError) return;
 
     setSendingOnboardingEmail(user.id);
     setUserMutationError("");
@@ -265,7 +283,7 @@ export default function UserManagement() {
   };
 
   const handleSave = async () => {
-    if (!editingUser || userMutationSaving) return;
+    if (!editingUser || userMutationSaving || isLoading || userDirectoryError || !sessionToken) return;
     setUserMutationError("");
     const requestedPassword = String(formData.password_hash || "");
     if (requestedPassword && requestedPassword.length < 8) {
@@ -313,6 +331,7 @@ export default function UserManagement() {
   };
 
   const handleInvite = async () => {
+    if (isInviting || isLoading || userDirectoryError || !sessionToken) return;
     if (!inviteEmail.trim()) {
       setInviteError("Please enter an email address");
       return;
@@ -394,7 +413,7 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (user) => {
-    if (!user?.id || userMutationSaving) return;
+    if (!user?.id || userMutationSaving || isLoading || userDirectoryError || !sessionToken) return;
     setUserMutationError("");
     setUserMutationSaving(true);
     try {
@@ -440,7 +459,7 @@ export default function UserManagement() {
             <div className="mt-1 text-xs">{userMutationError}</div>
           </div>
           <div className="flex gap-1 shrink-0">
-            <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={async () => { await loadUsers(); setUserMutationError(""); }}>Reload latest</Button>
+            <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={async () => { const refreshed = await loadUsers(); if (refreshed) setUserMutationError(""); }}>Reload latest</Button>
             <Button type="button" size="sm" variant="ghost" className="h-7 text-red-800" onClick={() => setUserMutationError("")}>Dismiss</Button>
           </div>
         </div>
@@ -506,7 +525,7 @@ export default function UserManagement() {
           </div>
           <Button
             onClick={handleInvite}
-            disabled={isInviting}
+            disabled={isInviting || isLoading || userDirectoryError || !sessionToken}
             className="clay-button border-none text-gray-800"
             style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
           >
@@ -649,14 +668,30 @@ export default function UserManagement() {
             </div>
             <div>
               <h4 className="font-medium text-gray-800">Team Members</h4>
-              <p className="text-sm text-gray-500">{users.length} users in your organization</p>
+              <p className="text-sm text-gray-500">
+                {isLoading ? "Loading team directory..." : userDirectoryError ? "User count unavailable" : `${users.length} users in your organization`}
+              </p>
             </div>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
+          <div role="status" className="flex items-center justify-center gap-2 py-8 text-sm text-gray-500">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            Loading team directory...
+          </div>
+        ) : userDirectoryError ? (
+          <div role="alert" aria-label="User directory unavailable" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+            <h3 className="font-semibold">Team directory could not be loaded</h3>
+            <p className="mt-1 text-sm">
+              The user list could not be verified. Account changes are paused until a successful read.
+              Existing user accounts have not been changed by this failed load.
+            </p>
+            <Button type="button" size="sm" variant="outline" disabled={!sessionToken}
+              onClick={() => { void loadUsers(); }}
+              className="mt-3 min-h-10 border-amber-500 bg-white text-amber-950">
+              Retry loading users
+            </Button>
           </div>
         ) : users.length === 0 ? (
           <div className="text-center py-8">
@@ -976,7 +1011,12 @@ export default function UserManagement() {
                   <UserHRDataForm 
                     userData={editingUser} 
                     onUpdate={loadUsers}
-                    onSave={(hrData) => updateAuthorizedUserHrAdmin({ record: editingUser, hrData, sessionToken })}
+                    onSave={(hrData) => {
+                      if (isLoading || userDirectoryError || !sessionToken) {
+                        throw new Error("The user directory must be reloaded before saving HR data.");
+                      }
+                      return updateAuthorizedUserHrAdmin({ record: editingUser, hrData, sessionToken });
+                    }}
                     section="all"
                     isAdmin={true}
                   />
@@ -991,7 +1031,7 @@ export default function UserManagement() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving}
+              disabled={userMutationSaving || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
@@ -1180,7 +1220,7 @@ export default function UserManagement() {
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleDelete(deleteConfirm)}
-              disabled={userMutationSaving}
+              disabled={userMutationSaving || isLoading || userDirectoryError || !sessionToken}
               className="bg-red-600 text-white"
             >
               Remove User
