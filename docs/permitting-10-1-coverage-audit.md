@@ -1004,3 +1004,13 @@ Phase 10, milestone 2 of 3 remains active. Connected manually selected saved ext
 Validation: 174 isolated automated tests passed, including 10 external archive-path and 4 actual scoped-fetch tests. Archive worker, backlog dispatcher and download handler backend bundles passed. No production test-record writes or publishing.
 
 Remaining: expose selected external collection in the review UI, then connect explicitly scoped referrals to the opted-in automatic backlog. Portals and code publishers still require separate scope and review. This completes the shared backend unit, not Ohio/Kentucky coverage or the whole Downloader.
+
+
+### 2026-10-10 — External document collection on locality details
+Phase 10, milestone 2 of 3 remains active. Added the external referral review section to locality details: target and official source-page links, resource category, archive receipt status, admin-selected direct-document collection/retry, and 20-row pagination. Non-admins can review links; online forms and code publishers have no download action. Protected/changed-source profiles and uncertain upload receipts disable collection. Duplicate clicks are fenced, durable receipts reload after errors, and late responses cannot update a closed locality panel.
+
+Corrected www-host normalization in the actual collection route. External documents now cannot enter the legacy generic manual or automatic original-download path; only the scoped referral helper authorizes their archive worker call. Automatic referral scheduling remains unfinished.
+
+Validation: 184 focused downloader/backend/component tests passed, including compiled endpoint scope/admin/payload tests and rendered React interaction tests. Full Vite build, archive backend bundle and new-component lint passed. Existing PDF keyboard regressions also checked separately. Isolated mocked APIs only; no production record test writes, no publication. Live browser verification remains outstanding.
+
+Next: connect explicitly scoped external referrals to opted-in automatic scheduling, retaining Ohio priority, credit limits and source rechecks. Overall jurisdiction coverage remains incomplete.
