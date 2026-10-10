@@ -78,6 +78,7 @@ export default function ProductChecklistDialog({
   const [pendingDelete, setPendingDelete] = useState(null);
   const deleteFocusRecoveryRef = useRef(false);
   const checklistCloseButtonRef = useRef(null);
+  const saveRevisitButtonRef = useRef(null);
 
   // Keep hierarchy indexes stable while unrelated dialog state changes. Long
   // checklists should only rebuild these O(n) structures when their source data changes.
@@ -2755,7 +2756,8 @@ export default function ProductChecklistDialog({
                 Complete
               </Button>
             )}
-            <Button 
+            <Button
+              ref={saveRevisitButtonRef}
               onClick={handleSaveClick}
               disabled={isSaving || !isRegistered}
               className="sm:flex-1 h-11 sm:h-10 bg-blue-600 hover:bg-blue-700"
@@ -2793,6 +2795,7 @@ export default function ProductChecklistDialog({
         onClose={() => setShowRevisitPopup(false)}
         onSave={handleRevisitSave}
         currentDate={pendingRevisitDate}
+        returnFocusRef={saveRevisitButtonRef}
       />
 
       {/* Incomplete Warning */}
