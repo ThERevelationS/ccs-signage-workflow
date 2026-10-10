@@ -20,7 +20,7 @@ test('Automation reads track loading, error and latest-request ownership', () =>
 
 test('Failed automation reads hide unverified rule counts and disable editing', () => {
   assert.match(source, /!isLoading && !automationLoadError && <div className="grid grid-cols-3/);
-  assert.match(source, /disabled=\{isLoading \|\| automationLoadError\}/);
+  assert.match(source, /disabled=\{isLoading \|\| automationLoadError \|\| emailGroupsLoading \|\| emailGroupsLoadError\}/);
   assert.match(source, /\) : automationLoadError \? \(/);
   assert.match(source, /role="alert" aria-label="Automation rules unavailable"/);
   assert.match(source, /Retry loading rules/);
