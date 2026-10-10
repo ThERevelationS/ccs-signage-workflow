@@ -54,6 +54,33 @@ export function planUnresolvedOrderBatchReview(evidence, {
   };
 }
 
+// A successful Smartsheet Get Sheet rowIds response is not proof that
+// every requested permanent row was returned. Never treat omissions as deletes.
+export function verifyUnresolvedOrderBatchSheetRows(sheetResponse, requestedRowIds) {
+  if (!Array.isArray(requestedRowIds) || !requestedRowIds.length ||
+      requestedRowIds.length > ORDER_PULL_REVIEW_PAGE_SIZE ||
+      !Array.isArray(sheetResponse?.rows)) {
+    throw new Error('Smartsheet rowIds-filtered Order batch response was incomplete or malformed.');
+  }
+  const expected = new Set(requestedRowIds);
+  if (expected.size !== requestedRowIds.length ||
+      requestedRowIds.some(id => typeof id !== 'string' || !/^\d+$/.test(id))) {
+    throw new Error('Order batch request has duplicate or malformed permanent row IDs.');
+  }
+  const seen = new Set();
+  for (const row of sheetResponse.rows) {
+    const id = String(row?.id ?? '');
+    if (!/^\d+$/.test(id) || !expected.has(id) || seen.has(id)) {
+      throw new Error('Smartsheet rowIds-filtered Order batch response has unexpected or duplicate permanent row IDs.');
+    }
+    seen.add(id);
+  }
+  if (seen.size !== expected.size) {
+    throw new Error('Smartsheet rowIds-filtered Order batch response omitted requested permanent rows. No page comparison was confirmed; absence does not establish deletion.');
+  }
+  return sheetResponse.rows;
+}
+
 export function summarizeUnresolvedOrderBatchPage(plan, reports) {
   if (!plan || !Array.isArray(reports) || !Array.isArray(plan.pairs) ||
       reports.length !== plan.pairs.length) {
