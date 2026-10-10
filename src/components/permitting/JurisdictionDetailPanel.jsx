@@ -1,3 +1,4 @@
+import ExternalPermittingReferrals from "./ExternalPermittingReferrals";
 import LocalityApprovedEvidence from "./LocalityApprovedEvidence";
 import { useAuth } from "@/components/auth/EmailGate";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
@@ -958,6 +959,8 @@ Answer only from the provided excerpts and cite the document title and official 
             </div>
           </div>
         )}
+
+        <ExternalPermittingReferrals key={jurisdiction.id} jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} onUpdate={onUpdate} disabled={isResearching || Boolean(downloadingDocId)} />
 
         {/* Documents */}
          <div className="bg-green-50 rounded-lg p-3 border border-green-200">

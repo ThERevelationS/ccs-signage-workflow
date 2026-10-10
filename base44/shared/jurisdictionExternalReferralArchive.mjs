@@ -64,7 +64,7 @@ export async function archiveExternalJurisdictionReferral(options){
  }
  // The durable archive worker owns claims, retries, uploads and readback. Scope
  // applies to every original-file redirect; storage readback uses its own URL.
- const result=await archiveKnownJurisdictionSource({...options,documentId:document.id,knownPdf:null,
+ const result=await archiveKnownJurisdictionSource({...options,documentId:document.id,knownPdf:null,externalReferralAuthorized:true,
   fetchSource:async(url,init)=>{if(url!==document.url)return options.fetchSource(url,init);if(!linkChecked)await recheckLink();return fetchScopedSource(url,init,host(document.url));}});
  return {...result,external_referral:true,document_id:document.id};
 }

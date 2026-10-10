@@ -35,7 +35,7 @@ Deno.serve(async req => {
     if (body.external_referral) return Response.json(await archiveExternalJurisdictionReferral({
       ...options,jurisdictionId,selection:body.external_referral,invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
       fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,
-        candidate=>candidate.hostname.toLowerCase().replace(/^www\\./,'')===allowedHost),
+        candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
     }));
     if (body.catalog_only === true) {
       if (!body.document_id) return Response.json({ error: 'Catalog reconciliation requires a stable document id.' }, { status: 400 });

@@ -13,6 +13,7 @@ const protectedDoc = doc => doc?.source === 'manual' || doc?.pinned === true || 
 
 export function archiveDocumentEligible(doc, { manual = false, selectedPdf = false, now = Date.now() } = {}) {
   if (!doc?.id || !(isDownloadableResearchDocument(doc) || (manual && selectedPdf)) || protectedDoc(doc)) return false;
+  if (!manual && doc.external_referral_provenance) return false;
   const state = doc.archive_state || {};
   if (['complete', 'uploading', 'upload_uncertain'].includes(state.status)) return false;
   if (Date.parse(state.lease_expires_at || '') > now) return false;
@@ -30,6 +31,7 @@ export function archiveBacklogQuery(now = Date.now()) {
       $or: [{ url: { $regex: '\\.(pdf|docx?|xlsx?|csv|txt)(\\?|#|$)', $options: 'i' } },
         { 'resource_classification.kind': 'pdf', 'resource_classification.method': 'http-mime-signature-v1' }],
       file_url: { $in: [null, ''] }, source_sha256: { $in: [null, ''] },
+      external_referral_provenance: { $in: [null] },
       source: { $ne: 'manual' }, pinned: { $ne: true }, archive_pinned: { $ne: true },
       'archive_state.status': { $nin: ['complete', 'uploading', 'upload_uncertain', 'blocked', 'verification_blocked'] },
       $and: [
@@ -118,7 +120,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
   throw new Error('Archive write repeatedly conflicted; newer work was preserved.');
 }
 
-export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, knownPdf = null, token = crypto.randomUUID(), now = () => Date.now() }) {
+export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, knownPdf = null, externalReferralAuthorized = false, token = crypto.randomUUID(), now = () => Date.now() }) {
   if (knownPdf && (!manual || !documentId || !/^[a-f0-9]{64}$/.test(knownPdf.sha256 || '') ||
       !Number.isInteger(knownPdf.bytes) || knownPdf.bytes < 5 || knownPdf.bytes > MAX_BYTES)) {
     throw new Error('A selected manual PDF requires its retained SHA-256 and bounded byte count.');
@@ -128,7 +130,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   if (!manual && initial.auto_refresh === false) return { success: true, skipped: true, reason: 'auto_refresh_disabled', jurisdiction: initial };
   if (initial._manual_documents) return { success: true, skipped: true, reason: 'manual_collection', jurisdiction: initial };
   const docs = initial.documents || [];
-  const doc = docs.find(d => (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, selectedPdf: Boolean(knownPdf && documentId === d.id), now: now() }) &&
+  const doc = docs.find(d => (!d.external_referral_provenance || (manual && externalReferralAuthorized)) && (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, selectedPdf: Boolean(knownPdf && documentId === d.id), now: now() }) &&
     !docs.some(other => other !== d && jurisdictionDocumentSourceKey(other) === jurisdictionDocumentSourceKey(d)));
   if (!doc) return { success: true, skipped: true, reason: 'no_eligible_file', jurisdiction: initial };
   const classifiedPdf = hasClassifiedPdfResource(doc);
