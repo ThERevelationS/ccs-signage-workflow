@@ -54,7 +54,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
   let receiptSequence=0;
   const matches=(row,filter)=>Object.entries(filter||{}).every(([key,value])=>{
-    const current=row[key];
+    const current=key.split('.').reduce((item,part)=>item?.[part],row);
     return value&&typeof value==="object"&&"$in" in value?value.$in.includes(current):current===value;
   });
   const receipts={
