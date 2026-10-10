@@ -4302,6 +4302,148 @@ test('v27 rejected employee correction stays audit-only before later approved pa
   assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
 });
 
+test('v28 rejected post-reopen employee correction cannot disturb prior finalized payroll lineage', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  const period = h.period();
+  Object.assign(period, { start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '' });
+
+  const recovered = await h.invokeAs(employee, {
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'v28-post-reject-source-001', claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  const entry = h.rows.TimeEntry.find((row) => row.id === recovered.body.entry.id);
+
+  assert.equal((await h.invokeAs(employee, {
+    action: 'clock_out', target_email: employee.email,
+    request_id: 'v28-post-reject-clock-out-001', lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+    notes: 'Post-reopen rejection lineage validation',
+  })).status, 200);
+
+  const submitB = await h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'v28-post-reject-submit-b-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Supported generation B employee correction',
+    requested_changes: {
+      clock_in: '2026-09-28T12:15:00.000Z', clock_out: entry.clock_out,
+      lunch_minutes: 0, notes: 'Generation B employee correction',
+    },
+  });
+  assert.equal(submitB.status, 200, JSON.stringify(submitB.body));
+  const requestB = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === 'v28-post-reject-submit-b-001');
+
+  const reviewBPayload = {
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'v28-post-reject-review-b-001', correction_request_id: requestB.id,
+    expected_request_updated_date: requestB.updated_date, decision: 'approve',
+    reason: 'Manager verifies generation B employee correction',
+  };
+  const reviewB = await h.invoke(reviewBPayload);
+  assert.equal(reviewB.status, 200, JSON.stringify(reviewB.body));
+  assert.equal((await h.invoke(reviewBPayload)).status, 200);
+  const appliedB = h.rows.TimeClockAudit.find((row) => row.id === reviewB.body.audit_id);
+
+  const approveB = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-post-reject-shift-approve-b-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve',
+    note: 'Approve generation B employee correction',
+  });
+  assert.equal(approveB.status, 200, JSON.stringify(approveB.body));
+
+  assert.equal((await h.action('finalize', 'v28-post-reject-finalize-b-001')).status, 200);
+  const generationB = clone(period.finalized_summary.shift_manifest[0].late_clock_in_provenance);
+  const generationBApproval = clone(period.finalized_summary.shift_manifest[0].approval_evidence);
+  assert.equal(period.finalized_summary.snapshot_version, 28);
+
+  assert.equal((await h.action(
+    'reopen', 'v28-post-reject-payroll-reopen-001',
+    'Review later employee request without changing accepted payroll time',
+  )).status, 200);
+
+  assert.equal((await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-post-reject-shift-reopen-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen',
+    note: 'Reopen shift to review later employee request',
+  })).status, 200);
+
+  const submitC = await h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'v28-post-reject-submit-c-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Employee later asks for unsupported change',
+    requested_changes: {
+      clock_in: '2026-09-28T12:45:00.000Z', clock_out: entry.clock_out,
+      lunch_minutes: 0, notes: 'Unsupported later correction',
+    },
+  });
+  assert.equal(submitC.status, 200, JSON.stringify(submitC.body));
+  const requestC = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === 'v28-post-reject-submit-c-001');
+  const submissionC = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'correction_request' && row.request_id === requestC.request_id
+  );
+
+  const rejectCPayload = {
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'v28-post-reject-review-c-001', correction_request_id: requestC.id,
+    expected_request_updated_date: requestC.updated_date, decision: 'reject',
+    reason: 'Manager cannot verify the later requested time',
+  };
+  const rejectC = await h.invoke(rejectCPayload);
+  assert.equal(rejectC.status, 200, JSON.stringify(rejectC.body));
+  assert.equal((await h.invoke(rejectCPayload)).status, 200);
+  const rejectCAudit = h.rows.TimeClockAudit.find((row) => row.id === rejectC.body.review_audit_id);
+  assert.equal(requestC.status, 'rejected');
+  assert.equal(requestC.applied_audit_id, undefined);
+  assert.equal(entry.clock_in, '2026-09-28T12:15:00.000Z');
+
+  const approveC = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-post-reject-shift-approve-c-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve',
+    note: 'Reapprove unchanged generation B time after rejecting later request',
+  });
+  assert.equal(approveC.status, 200, JSON.stringify(approveC.body));
+
+  assert.equal((await h.action('finalize', 'v28-post-reject-finalize-c-001')).status, 200);
+  assert.equal((await h.action('finalize', 'v28-post-reject-finalize-c-001')).status, 200);
+  assert.equal(period.finalized_summary.snapshot_version, 28);
+  assert.equal(period.finalized_summary.generation_changes.length, 0);
+  assert.equal(period.finalized_summary.generation_change_count, 0);
+
+  const retiredB = period.finalized_summary_history[0].shift_manifest[0].late_clock_in_provenance;
+  const currentRow = period.finalized_summary.shift_manifest[0];
+  const currentC = currentRow.late_clock_in_provenance;
+  assert.deepEqual(retiredB, generationB);
+  assert.equal(currentC.payroll_clock_in_at_finalization, '2026-09-28T12:15:00.000Z');
+  assert.equal(currentC.payroll_correction_evidence.audit_id, appliedB.id);
+  assert.deepEqual(
+    currentC.payroll_correction_evidence.employee_correction_review_chain.map((row) => row.correction_request_id),
+    [requestB.id],
+  );
+  assert.equal(
+    currentC.payroll_correction_evidence.employee_correction_review_chain.some((row) =>
+      row.correction_request_id === requestC.id ||
+      row.submission_audit_id === submissionC.id ||
+      row.review_audit_id === rejectCAudit.id
+    ),
+    false,
+  );
+
+  assert.notEqual(currentRow.approval_evidence.id, generationBApproval.id);
+  assert.equal(currentRow.approval_evidence.id, approveC.body.audit_id);
+  assert.equal(h.rows.TimeClockCorrectionRequest.find((row) => row.id === requestC.id).status, 'rejected');
+  assert.ok(h.rows.TimeClockAudit.find((row) => row.id === submissionC.id));
+  assert.ok(h.rows.TimeClockAudit.find((row) => row.id === rejectCAudit.id));
+
+  const verified = await h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id: 'v28-post-reject-verify-001',
+  });
+  assert.equal(verified.status, 200, JSON.stringify(verified.body));
+  assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
