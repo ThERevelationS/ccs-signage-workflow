@@ -1,0 +1,165 @@
+{
+  "observed_on": "2026-10-10",
+  "method": "retained-official-page-replay",
+  "current_http_checked": false,
+  "production_records_changed": 0,
+  "external_fetches": 0,
+  "llm_calls": 0,
+  "authority_established": false,
+  "pages": [
+    {
+      "name": "Sharonville",
+      "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+      "retained_source_path": "docs/official-evidence/ohio-sharonville-2026-10-07/building-zoning.html",
+      "retained_source_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129",
+      "retained_source_bytes": 113675,
+      "original_retrieved_at": "2026-10-07T19:33:53.475519+00:00",
+      "referral_count": 3,
+      "referrals": [
+        {
+          "url": "https://msdgc.org/doing-business-with-us/development-services/",
+          "title": "Request for Availability of Sewer Service Form (online form)",
+          "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "linked_href": "https://msdgc.org/doing-business-with-us/development-services/",
+          "resolution_base_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "discovery_element": "anchor",
+          "referral_kind": "online_form",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+        },
+        {
+          "url": "https://www.hazards.fema.gov/wps/portal/mapviewer",
+          "title": "FEMA Flood Plain Mapping Information",
+          "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "linked_href": "https://www.hazards.fema.gov/wps/portal/mapviewer",
+          "resolution_base_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "discovery_element": "anchor",
+          "referral_kind": "online_form",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+        },
+        {
+          "url": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "title": "Civil Service Commission Rules and Regulations",
+          "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "linked_href": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "resolution_base_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "discovery_element": "anchor",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+        }
+      ],
+      "pending_same_host_pages": 10,
+      "unresolved_gaps": 0,
+      "jurisdiction_coverage_complete": false
+    },
+    {
+      "name": "Symmes Township",
+      "source_page_url": "https://symmestownship.org/243/Zoning-Resolution",
+      "retained_source_path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/symmes-zoning.html",
+      "retained_source_sha256": "0819de20d424d3fed6afca4855403741e39aaa4cfc749d1dd73aae9acf88588e",
+      "retained_source_bytes": 95521,
+      "original_retrieved_at": "2026-10-07T17:33:42.864121+00:00",
+      "referral_count": 2,
+      "referrals": [
+        {
+          "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/applications_and_forms.php",
+          "title": "Zoning Permits",
+          "source_page_url": "https://symmestownship.org/243/Zoning-Resolution",
+          "linked_href": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/applications_and_forms.php",
+          "resolution_base_url": "https://symmestownship.org/243/Zoning-Resolution",
+          "discovery_element": "anchor",
+          "referral_kind": "online_form",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "0819de20d424d3fed6afca4855403741e39aaa4cfc749d1dd73aae9acf88588e"
+        },
+        {
+          "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/symmes_township_zoning.php",
+          "title": "Zoning Forms & Resolution",
+          "source_page_url": "https://symmestownship.org/243/Zoning-Resolution",
+          "linked_href": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/development_services/symmes_township_zoning.php",
+          "resolution_base_url": "https://symmestownship.org/243/Zoning-Resolution",
+          "discovery_element": "anchor",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "0819de20d424d3fed6afca4855403741e39aaa4cfc749d1dd73aae9acf88588e"
+        }
+      ],
+      "pending_same_host_pages": 8,
+      "unresolved_gaps": 0,
+      "jurisdiction_coverage_complete": false
+    },
+    {
+      "name": "Cincinnati",
+      "source_page_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+      "retained_source_path": "docs/official-evidence/ohio-electrical-discovery-2026-10-06/publisher-review/permit-center.html",
+      "retained_source_sha256": "2e64e7c6a40779f4ccf545871255782f65c6d1c1cb9d1bda018b7f6027a102cd",
+      "retained_source_bytes": 69551,
+      "original_retrieved_at": "2026-10-07T11:47:15.585692+00:00",
+      "referral_count": 3,
+      "referrals": [
+        {
+          "url": "https://opencincy.cincinnati-oh.gov/",
+          "title": "OpenCincy Business Portal",
+          "source_page_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "linked_href": "https://opencincy.cincinnati-oh.gov/",
+          "resolution_base_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "discovery_element": "anchor",
+          "referral_kind": "online_form",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "2e64e7c6a40779f4ccf545871255782f65c6d1c1cb9d1bda018b7f6027a102cd"
+        },
+        {
+          "url": "http://cagismaps.hamilton-co.org/PropertyActivity/PropertyMaintenance",
+          "title": "Cincy Code Enforcement",
+          "source_page_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "linked_href": "http://cagismaps.hamilton-co.org/PropertyActivity/PropertyMaintenance",
+          "resolution_base_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "discovery_element": "anchor",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "2e64e7c6a40779f4ccf545871255782f65c6d1c1cb9d1bda018b7f6027a102cd"
+        },
+        {
+          "url": "https://opencounter.cincinnati-oh.gov/",
+          "title": "Find Permits",
+          "source_page_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "linked_href": "https://opencounter.cincinnati-oh.gov/",
+          "resolution_base_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "discovery_element": "anchor",
+          "referral_kind": "other_permitting_resource",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "2e64e7c6a40779f4ccf545871255782f65c6d1c1cb9d1bda018b7f6027a102cd"
+        }
+      ],
+      "pending_same_host_pages": 52,
+      "unresolved_gaps": 0,
+      "jurisdiction_coverage_complete": false
+    }
+  ]
+}
