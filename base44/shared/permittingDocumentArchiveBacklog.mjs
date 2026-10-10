@@ -3,10 +3,10 @@ import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferra
 // Keep the one-original-file budget. Only previously selected external documents
 // may resume automatically, and only on explicitly enabled profiles.
 export async function continuePermittingDocumentArchiveBacklog(options){
- const regular=await continueJurisdictionArchiveBacklog(options);
- if(!regular.skipped)return regular;
- let checked=0;
+ let regular,checked=0;const review=[];
  for(const state of ['OH','KY']){
+  regular=await continueJurisdictionArchiveBacklog({...options,state});
+  if(!regular.skipped)return regular;
   const query=archiveBacklogQuery(options.now?.() || Date.now());
   query.state=state;query.auto_refresh=true;
   query.documents.$elemMatch.external_referral_provenance={$ne:null};
@@ -20,8 +20,8 @@ export async function continuePermittingDocumentArchiveBacklog(options){
     const result=await archiveExternalJurisdictionReferral({...options,jurisdictionId:profile.id,manual:false,automaticScopedResume:true,
      selection:{url:doc.url,source_page_url:doc.external_referral_provenance.source_page_url}});
     if(!result.skipped)return {...result,external_profiles_checked:checked};
-   }catch(error){return {success:false,status:'external_resume_requires_review',error:String(error.message || error),external_profiles_checked:checked};}
+   }catch(error){review.push({jurisdiction_id:profile.id,error:String(error.message || error).slice(0,500)});}
   }
  }
- return {...regular,external_profiles_checked:checked};
+ return {...regular,external_profiles_checked:checked,external_review_gaps:review};
 }

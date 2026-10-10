@@ -142,7 +142,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   const resumeUpload = ['uploaded', 'verification_blocked'].includes(state.status) && Boolean(state.file_url);
   const attempts = resumeUpload ? Math.max(1, Number(state.attempts) || 1) : (Number(state.attempts) || 0) + 1;
   const stamp = () => new Date(now()).toISOString();
-  const claimed = { ...state, ...(doc.external_referral_provenance && !manual ? {automatic_external_collection:true} : {}), ...(knownPdf ? { known_pdf: { sha256: knownPdf.sha256, bytes: knownPdf.bytes } } : {}), status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
+  const claimed = { ...state, ...(doc.external_referral_provenance ? {automatic_external_collection:!manual} : {}), ...(knownPdf ? { known_pdf: { sha256: knownPdf.sha256, bytes: knownPdf.bytes } } : {}), status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
     lease_expires_at: new Date(now() + ARCHIVE_LEASE_MS).toISOString(), last_attempt_at: stamp(), error: '' };
   await transition(entity, jurisdictionId, doc, state, claimed);
   state = claimed;
@@ -216,7 +216,9 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
 // Selection is bounded; oldest updated profiles move behind untouched ones as
 // each attempt writes its receipt. Backoff/active leases are excluded in-query.
 export async function continueJurisdictionArchiveBacklog(options) {
-  const candidates = await options.entity.filter(archiveBacklogQuery(), 'updated_date', 20, 0);
+  const query=archiveBacklogQuery(options.now?.() || Date.now());
+  if(['OH','KY'].includes(options.state))query.state=options.state;
+  const candidates = await options.entity.filter(query, 'updated_date', 20, 0);
   for (const profile of candidates) {
     try {
       // Register the oldest verified archive separately, so new downloads cannot

@@ -45,7 +45,7 @@ test('manual targeted archive is available while automatic research is paused',a
 });
 test('automatic backlog scan is bounded and requires no research',async()=>{
   const calls=setup();assert.equal((await invoke(worker,{automatic:true})).data.profiles_checked,0);
-  assert.equal(calls.scans,2);assert.equal(calls.research,0);
+  assert.equal(calls.scans,6);assert.equal(calls.research,0);
 });
 test('dispatcher at its daily LLM limit still runs archival and makes no research/state writes',async()=>{
   const calls=setup({atCap:true});
@@ -53,7 +53,7 @@ test('dispatcher at its daily LLM limit still runs archival and makes no researc
   assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.dispatched_today,40);
   assert.equal(r.data.archive_continuation.reason,'no_eligible_file');
   assert.equal(r.data.text_continuation.reason,'no_eligible_text_source');assert.equal(calls.textScans,1);
-  assert.equal(calls.scans,2);assert.equal(calls.research,0);assert.equal(calls.writes,0);
+  assert.equal(calls.scans,6);assert.equal(calls.research,0);assert.equal(calls.writes,0);
 });
 
 test('catalog route requires a stable manual target and denies automated caller-selected targets',async()=>{
