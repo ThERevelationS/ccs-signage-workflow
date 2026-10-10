@@ -1178,6 +1178,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     updateWorkOrderFields(orderId, { [field]: value }, skipHistory);
   };
 
+  const reconcileExistingSalesTaskStatus = (workOrder) => {
+    if (!isRegistered || !workOrder?.id) return;
+    const current = workOrders.find(row => row.id === workOrder.id);
+    const plan = planExistingSalesTaskStatusReconciliation(current);
+    if (!plan || String(workOrder.current_task_description || '').trim() !== plan.task ||
+        workOrder.sales_status !== current.sales_status ||
+        pendingChangesRef.current[current.id] || debounceTimers.current[current.id]) {
+      setQuickEditError('This opportunity changed or has unsaved edits. Save or reload before reconciling the stored task.');
+      return;
+    }
+    // Explicit reconciliation alone may reuse the current task. Won/Lost
+    // changes still go through the same protected confirmation flow.
+    updateWorkOrderFields(current.id, { current_task_description: plan.task }, false, false, true);
+  };
+
   const openOpportunityDetails = (workOrder) => {
     resolvedReviewExitRef.current = null;
     setSelectedWorkOrder(workOrder);
@@ -1255,7 +1270,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       };
     }
 
-    updateWorkOrderFields(current.id, changes);
+    updateWorkOrderFields(current.id, changes, false, false, statusTransition.reconcileSameTask === true);
     setStatusTransition(null);
   };
 
@@ -2800,6 +2815,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           isRegistered={isRegistered}
           onClose={() => { resolvedReviewExitRef.current = null; setSelectedWorkOrder(null); }}
           onUpdateFields={updateWorkOrderFields}
+          onReconcileExistingTaskStatus={reconcileExistingSalesTaskStatus}
           onRemoveFromCurrentPipeline={removeFromCurrentPipeline}
           onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
