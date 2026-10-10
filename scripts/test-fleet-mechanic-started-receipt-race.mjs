@@ -147,6 +147,91 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("admin preserves both reserved photo receipts when grant is revoked, expired, or loses equipment scope",async()=>{
+  for (const [reason,change] of [
+    ["revoked",grant=>{grant.enabled=false;}],
+    ["expired",grant=>{grant.expires_at="2020-01-01T00:00:00.000Z";}],
+    ["outside_scope",grant=>{grant.scope_mode="selected_equipment";grant.allowed_equipment_ids=["eq-other"];}],
+  ]) {
+    const {store,client,grant}=setup();
+    client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+    const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+      "https://files.example/old-a.jpg","https://files.example/new-b.jpg",
+    ]});
+    change(grant);
+    for (const receipt of [source,retry]) {
+      const result=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:receipt.id},client);
+      assert.equal(result.code,200,reason);
+      assert.equal(result.body.status,"blocked",reason);
+      assert.match(result.body.error_message,new RegExp(reason.replace("_","."),"i"));
+      assert.equal(store.receipts.get(source.id).status,"started",reason);
+      assert.equal(store.receipts.get(retry.id).status,"started",reason);
+    }
+    assert.equal(store.updates,0,reason);
+    assert.equal(store.uploads.length,0,reason);
+  }
+});
+test("admin recovers a committed photo retry marker even after grant revocation",async()=>{
+  const {store,client,grant}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/new-b.jpg",
+  ]});
+  store.work.mechanic_operation_key=retry.operation_key;
+  store.work.mechanic_operation_fingerprint=retry.payload_fingerprint;
+  store.work.after_photos=["https://files.example/old-a.jpg","https://files.example/new-b.jpg"];
+  grant.enabled=false;
+  const result=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  assert.equal(result.code,200);
+  assert.equal(result.body.status,"applied");
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.updates,0,"Existing work-order evidence is enough; no replay");
+});
+test("admin applies complete reserved photo evidence once while grant is authorized",async()=>{
+  const {store,client}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/new-b.jpg",
+  ]});
+  const first=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  const second=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  assert.equal(first.body.status,"applied");
+  assert.equal(second.body.status,"applied");
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,0);
+});
+test("admin blocks mismatched photo retry provenance without modifying either receipt",async()=>{
+  const {store,client}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/new-b.jpg",
+  ]});
+  store.receipts.get(retry.id).payload_fingerprint="substituted-payload";
+  for (const receipt of [source,retry]) {
+    const response=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:receipt.id},client);
+    assert.equal(response.body.status,"blocked");
+    assert.match(response.body.error_message,/conflicting or missing evidence/i);
+  }
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+});
+test("admin link revocation reports blocked reserved source and retry rather than cancelling either",async()=>{
+  const {store,client}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store);
+  const response=await call({action:"admin_revoke_link",id:grantId},client);
+  assert.equal(response.code,200);
+  assert.equal(response.body.reconciled_blocked,2);
+  assert.equal(response.body.reconciled_cancelled,0);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+});
+
 test("complete stranded photo retry reconciles from durable URLs without another upload",async()=>{
   const {store,client}=setup();
   const {source,retry}=strandReservedPhotoRetry(store,{urls:[
