@@ -2317,23 +2317,24 @@ async function pushDataset(
       );
       if (verifiedSalesUpdates.length) {
         try {
-          // An approved Sales decision must not overwrite a newer WorkOrder.
-          const approvedUpdates = verifiedSalesUpdates.filter((u: any) => approvedSalesPlanSnapshots.has(String(u.id)));
-          const ordinaryUpdates = verifiedSalesUpdates.filter((u: any) => !approvedSalesPlanSnapshots.has(String(u.id)));
+          // Approved conflict decisions use a final revision CAS. Preserve
+          // the bulk path for ordinary Sales rows and unrelated workflows.
+          const approvedUpdates = verifiedSalesUpdates.filter((update: any) => approvedSalesPlanSnapshots.has(String(update.id)));
+          const ordinaryUpdates = verifiedSalesUpdates.filter((update: any) => !approvedSalesPlanSnapshots.has(String(update.id)));
           if (ordinaryUpdates.length) await base44.asServiceRole.entities[entityName].bulkUpdate(ordinaryUpdates);
           for (const update of approvedUpdates) {
             const id = String(update.id);
+            const planned = approvedSalesPlanSnapshots.get(id);
             const { id: _approvedId, ...fields } = update;
             try {
               if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-              const result = await base44.asServiceRole.entities.WorkOrder.updateMany(
-                { id, updated_date: approvedSalesPlanSnapshots.get(id).updated_date },
-                { $set: fields },
+              const committed = await base44.asServiceRole.entities.WorkOrder.updateMany(
+                { id, updated_date: planned.updated_date }, { $set: fields },
               );
-              if (result?.updated !== 1) throw new Error('Approved Sales WorkOrder revision changed.');
+              if (committed?.updated !== 1) throw new Error('The approved Sales record changed during synchronization.');
             } catch (error: any) {
               salesFailedRecordIds.add(id);
-              errors.push(id + ': Approved Sales reconciliation was blocked by a newer WorkOrder revision. The review remains pending.');
+              errors.push(id + ': Approved Sales review did not pass the final WorkOrder revision guard. Reload before retrying; the review remains pending.');
             }
           }
           const verifiedRecords = await loadAllEntityRows({
@@ -2346,7 +2347,7 @@ async function pushDataset(
           const failedMetadataIds = new Set(metadataFailures.map((failure: any) => String(failure.id)));
           for (const update of verifiedSalesUpdates) {
             const recordId = String(update.id);
-            if (failedMetadataIds.has(recordId)) {
+            if (failedMetadataIds.has(recordId) || salesFailedRecordIds.has(recordId)) {
               salesFailedRecordIds.add(recordId);
               errors.push(recordId + ': Sales Base44 sync metadata could not be verified after the Smartsheet write.');
             } else {
