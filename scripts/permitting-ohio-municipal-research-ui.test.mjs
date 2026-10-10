@@ -136,7 +136,7 @@ test('North Bend originals and page findings remain research-only for exact vill
  assert.ok(f.archive.endsWith('#page='+f.physical_page));}
  const html=render(row);assert.match(html,/April 28, 2025/);assert.match(html,/4,000K/);assert.match(html,/independently unresolved/);
  assert.equal(render({...row,type:'township'}),'');assert.equal(render({...row,name:'Whitewater Township'}),'');
- assert.equal(dossiers.some(d=>d.name==='Whitewater Township'),false);
+ const receipt=JSON.parse(readFileSync(root+'whitewater-locality-identity-receipt-2026-10-10.json'));assert.equal(dossiers.find(d=>d.name==='Whitewater Township').id,receipt.locality.id);assert.equal(receipt.permitting_url,null);assert.equal(receipt.permit_requirements,null);
  const reconciliation=JSON.parse(readFileSync(root+'office-reconciliation.json'));
  assert.equal(reconciliation.profiles.find(p=>p.name==='Whitewater Township').id,null);
 });
@@ -426,4 +426,13 @@ test('Hamilton Harrison Township research rejects city and county identities',()
  for(const id of receipt.excluded_record_ids)assert.equal(render({...row,id}),'');
  assert.match(html,/No township sign PDFs have been retained/);assert.match(html,/job-address coverage remain unapproved/);assert.match(html,/separate verification/);
  assert.equal(createHash('sha256').update(readFileSync(root+'harrison-township-zoning.html')).digest('hex'),receipt.source_sha256);
+});
+
+test('Whitewater identity disclosure keeps homepage distinct from zoning and neighboring documents',()=>{
+ const root='docs/official-evidence/ohio-northbend-whitewater-2026-10-07/';
+ const r=JSON.parse(readFileSync(root+'whitewater-locality-identity-receipt-2026-10-10.json')),row=dossiers.find(d=>d.id===r.locality.id),html=render(row);
+ assert.equal(r.parent_county_name,'Hamilton County');assert.equal(r.verification_status,'needs_verification');assert.equal(r.auto_refresh,false);assert.equal(row.resources.length,0);
+ assert.match(html,/not a zoning department/);assert.match(html,/Cleves mailing address/);assert.match(html,/not Whitewater evidence/);
+ assert.equal(render({...row,id:'6ac19f1c2fbbf3b8bb27397c'}),'');assert.equal(render(row,false),'');
+ assert.equal(createHash('sha256').update(readFileSync(root+'whitewater-home.html')).digest('hex'),r.source_sha256);
 });

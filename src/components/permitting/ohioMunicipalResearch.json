@@ -1781,5 +1781,21 @@
       "Standalone sign forms, current fees and sign-specific online submission remain collection gaps. No township sign PDFs have been retained for this dossier.",
       "Electrical permit issuance and electrical inspection offices require separate verification. County zoning administration does not establish either electrical role."
     ]
+  },
+  {
+    "id": "6aca54c92442aa97edfb015c",
+    "name": "Whitewater Township",
+    "state": "OH",
+    "type": "township",
+    "source": "https://www.whitewatertwp.org/",
+    "observed_on": "2026-10-07",
+    "resources": [],
+    "notes": [
+      "Hamilton County identity-only township profile; needs verification. Cleves mailing address does not establish Village of Cleves identity or coverage.",
+      "Retained official homepage establishes an identity source, not a zoning department or permitting route. Zoning administration and job-address coverage remain unverified.",
+      "Sign forms, current fees, sign code and online submission remain collection gaps. No Whitewater sign PDFs have been retained for this dossier.",
+      "North Bend retained zoning code and right-of-way documents are not Whitewater evidence and have not been assigned to this township.",
+      "Electrical permit issuance and electrical inspection offices require separate verification; no approved workflow is created."
+    ]
   }
 ]
