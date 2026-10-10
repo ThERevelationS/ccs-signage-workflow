@@ -69,7 +69,9 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           </AlertDialogDescription>
           {transition.nextTask && (
             <p className="text-sm font-medium text-gray-700">
-              Task Description will change to “{transition.nextTask}” when you confirm.
+              {transition.reconcileSameTask
+                ? `The existing Task Description “${transition.nextTask}” stays unchanged. The stored Sales Status will be reconciled only after confirmation and a conflict-safe save.`
+                : `Task Description will change to “${transition.nextTask}” when you confirm.`}
             </p>
           )}
         </AlertDialogHeader>
