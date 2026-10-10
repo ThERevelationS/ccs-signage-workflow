@@ -546,4 +546,22 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   assert.equal(prevented, 8);
 });
 
+check("rejected custom-status entries retain draft and popup selection", () => {
+  const customHandler = source.slice(
+    source.indexOf("  const handleCreateCustomValue = (itemId) => {"),
+    source.indexOf("  // Apply only genuinely new template content")
+  );
+  assert.match(customHandler, /otherPopupValidationReturnRef\.current = customStatusInputRef\.current;/);
+  assert.match(customHandler, /if \(!applyChecklistStatus\(itemId, value\)\) return;/);
+  assert.ok(customHandler.indexOf("if (!applyChecklistStatus") <
+    customHandler.indexOf('setCustomDropdownValue("");'));
+  assert.match(customHandler, /otherPopupValidationReturnRef\.current = null;\s*setCustomDropdownValue\("");\s*setShowOtherPopup\(null\);/);
+
+  const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
+  assert.match(popup, /ref=\{customStatusInputRef\}/);
+  assert.match(popup, /onClick=\{\(event\) => \{\s*if \(!showOtherPopup\?\.itemId\) return;\s*otherPopupValidationReturnRef\.current = event\.currentTarget;/);
+  assert.match(popup, /if \(applyChecklistStatus\(showOtherPopup\.itemId, dd\.name\)\) \{\s*otherPopupValidationReturnRef\.current = null;\s*setShowOtherPopup\(null\);/);
+  assert.match(popup, /value=\{customDropdownValue\}/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
