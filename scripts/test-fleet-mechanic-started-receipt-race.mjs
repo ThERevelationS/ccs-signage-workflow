@@ -94,7 +94,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
         await new Promise(resolve=>store.pendingGrantChecks.push(resolve));
       }
       return snapshot;
-    }
+    },
     async update(_id,patch){Object.assign(grant,patch);return clone(grant);}
   };
   const WorkOrder={
