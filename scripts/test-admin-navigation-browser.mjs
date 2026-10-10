@@ -699,6 +699,51 @@ try {
       await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
     });
 
+  await check('Failed impact scan displays safe error and manual retry restores read-only report', 375,
+    '/?tab=users&real_users=1&deletion_rows=1&impact_fail=1', async page => {
+      await page.getByRole('button', { name: 'Review Impact' }).click();
+      const dialog = page.getByRole('dialog', { name: /Account Deletion Impact/ });
+      await dialog.waitFor();
+      const error = dialog.getByRole('alert', { name: 'Account deletion impact unavailable' });
+      await error.waitFor();
+      assert.match(await error.innerText(), /read-only impact scan could not be verified/);
+      assert.equal((await error.innerText()).includes('secret-synthetic-impact-diagnostic'), false);
+      assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
+      assert.equal(await dialog.getByRole('button', { name: 'Close' }).isEnabled(), true);
+      const before = await page.evaluate(() => window.__adminImpactAttempts);
+      await error.getByRole('button', { name: 'Retry impact scan' }).click();
+      await error.waitFor();
+      assert.ok(await page.evaluate(() => window.__adminImpactAttempts) > before);
+      await page.evaluate(() => { window.__adminImpactFailure = false; });
+      await error.getByRole('button', { name: 'Retry impact scan' }).click();
+      await dialog.getByText('Synthetic review verified').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await dialog.getByText('Read-only review only.', { exact: false }).count(), 1);
+      await dialog.getByRole('button', { name: 'Close' }).click();
+      assert.equal(await dialog.count(), 0);
+    });
+
+  await check('Closing a pending impact scan discards its late result', 375,
+    '/?tab=users&real_users=1&deletion_rows=1', async page => {
+      await page.evaluate(() => { window.__adminImpactDelay = true; });
+      await page.getByRole('button', { name: 'Review Impact' }).click();
+      const dialog = page.getByRole('dialog', { name: /Account Deletion Impact/ });
+      await dialog.waitFor();
+      await dialog.getByRole('status').getByText('Reviewing account impact...').waitFor();
+      assert.equal(await dialog.getByRole('button', { name: 'Close' }).isEnabled(), true);
+      await dialog.getByRole('button', { name: 'Close' }).click();
+      assert.equal(await dialog.count(), 0);
+      await page.evaluate(() => {
+        const pending = window.__adminImpactPending.shift();
+        window.__adminImpactDelay = false;
+        pending.resolve(pending.report);
+      });
+      await page.getByRole('button', { name: 'Review Impact' }).click();
+      await dialog.getByText('Synthetic review verified').waitFor();
+      assert.equal(await dialog.getByRole('alert', { name: 'Account deletion impact unavailable' }).count(), 0);
+      await dialog.getByRole('button', { name: 'Close' }).click();
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
