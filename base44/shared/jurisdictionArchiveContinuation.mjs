@@ -87,6 +87,16 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
     const source = matching[0];
     if (source.source === 'manual' || source.pinned === true || source.archive_pinned === true) throw new Error('Archive source became protected.');
     if (!sameState(source.resource_classification, doc.resource_classification)) throw new Error('Resource classification changed concurrently.');
+    if (doc.external_referral_provenance) {
+      const proof=doc.external_referral_provenance;
+      if (!sameState(source.external_referral_provenance,proof) ||
+          proof.jurisdiction_id!==current.id || proof.jurisdiction_name!==current.name ||
+          proof.jurisdiction_state!==current.state || proof.jurisdiction_type!==current.type ||
+          proof.seed_url!==current.permitting_url || current.discovery_scan_state?.blocked ||
+          !current.discovery_scan_state?.external_referrals?.some(row=>row.url===doc.url && row.source_page_url===proof.source_page_url &&
+            row.source_page_sha256===proof.discovered_page_sha256))
+        throw new Error('External source provenance or jurisdiction identity changed concurrently.');
+    }
     const converged = sameState(source.archive_state, nextState) && Object.entries(flatPatch).every(([key, value]) => source[key] === value);
     if (converged) return current;
     if (!sameState(source.archive_state || {}, expected || {}) || source.file_url || source.source_sha256) throw new Error('Archive source or receipt changed concurrently.');

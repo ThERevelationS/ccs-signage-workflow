@@ -99,9 +99,12 @@ export async function assertSafeExternalUrl(input: unknown) {
   return url;
 }
 
-export async function safeExternalFetch(input: unknown, init: RequestInit = {}, maxRedirects = 5) {
+export async function safeExternalFetch(input: unknown, init: RequestInit = {}, maxRedirects = 5, allowedUrl?: (url: URL) => boolean) {
   let url = await assertSafeExternalUrl(input);
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
+    if (allowedUrl && !allowedUrl(new URL(url.href))) {
+      throw Object.assign(new Error('External redirect is outside the selected document/source host; review required.'), { status: 400 });
+    }
     const response = await fetch(url, { ...init, redirect: 'manual' });
     // Re-resolve after the connection as defense in depth against DNS answers
     // changing between preflight and fetch. This is not socket pinning, but it
