@@ -11,9 +11,9 @@ export const AUTOMATIC_ARCHIVE_RETRY_LIMIT = 3;
 const MAX_BYTES = 50 * 1024 * 1024;
 const protectedDoc = doc => doc?.source === 'manual' || doc?.pinned === true || doc?.archive_pinned === true || Boolean(doc?.file_url || doc?.source_sha256);
 
-export function archiveDocumentEligible(doc, { manual = false, selectedPdf = false, now = Date.now() } = {}) {
+export function archiveDocumentEligible(doc, { manual = false, selectedPdf = false, scopedExternal = false, now = Date.now() } = {}) {
   if (!doc?.id || !(isDownloadableResearchDocument(doc) || (manual && selectedPdf)) || protectedDoc(doc)) return false;
-  if (!manual && doc.external_referral_provenance) return false;
+  if (!manual && doc.external_referral_provenance && !scopedExternal) return false;
   const state = doc.archive_state || {};
   if (['complete', 'uploading', 'upload_uncertain'].includes(state.status)) return false;
   if (Date.parse(state.lease_expires_at || '') > now) return false;
@@ -95,6 +95,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
           proof.jurisdiction_id!==current.id || proof.jurisdiction_name!==current.name ||
           proof.jurisdiction_state!==current.state || proof.jurisdiction_type!==current.type ||
           proof.seed_url!==current.permitting_url || current.discovery_scan_state?.blocked ||
+          (nextState.automatic_external_collection && current.auto_refresh!==true) ||
           !current.discovery_scan_state?.external_referrals?.some(row=>row.url===doc.url && row.source_page_url===proof.source_page_url &&
             row.source_page_sha256===proof.discovered_page_sha256))
         throw new Error('External source provenance or jurisdiction identity changed concurrently.');
@@ -130,7 +131,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   if (!manual && initial.auto_refresh === false) return { success: true, skipped: true, reason: 'auto_refresh_disabled', jurisdiction: initial };
   if (initial._manual_documents) return { success: true, skipped: true, reason: 'manual_collection', jurisdiction: initial };
   const docs = initial.documents || [];
-  const doc = docs.find(d => (!d.external_referral_provenance || (manual && externalReferralAuthorized)) && (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, selectedPdf: Boolean(knownPdf && documentId === d.id), now: now() }) &&
+  const doc = docs.find(d => (!d.external_referral_provenance || externalReferralAuthorized) && (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, selectedPdf: Boolean(knownPdf && documentId === d.id), scopedExternal:externalReferralAuthorized, now: now() }) &&
     !docs.some(other => other !== d && jurisdictionDocumentSourceKey(other) === jurisdictionDocumentSourceKey(d)));
   if (!doc) return { success: true, skipped: true, reason: 'no_eligible_file', jurisdiction: initial };
   const classifiedPdf = hasClassifiedPdfResource(doc);
@@ -141,7 +142,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   const resumeUpload = ['uploaded', 'verification_blocked'].includes(state.status) && Boolean(state.file_url);
   const attempts = resumeUpload ? Math.max(1, Number(state.attempts) || 1) : (Number(state.attempts) || 0) + 1;
   const stamp = () => new Date(now()).toISOString();
-  const claimed = { ...state, ...(knownPdf ? { known_pdf: { sha256: knownPdf.sha256, bytes: knownPdf.bytes } } : {}), status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
+  const claimed = { ...state, ...(doc.external_referral_provenance && !manual ? {automatic_external_collection:true} : {}), ...(knownPdf ? { known_pdf: { sha256: knownPdf.sha256, bytes: knownPdf.bytes } } : {}), status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
     lease_expires_at: new Date(now() + ARCHIVE_LEASE_MS).toISOString(), last_attempt_at: stamp(), error: '' };
   await transition(entity, jurisdictionId, doc, state, claimed);
   state = claimed;

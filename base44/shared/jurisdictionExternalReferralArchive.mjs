@@ -12,11 +12,12 @@ const linkFields=['url','title','source_page_url','linked_href','resolution_base
 // crawl, regulatory authority, department delegation or portal submission.
 export async function archiveExternalJurisdictionReferral(options){
  const {entity,jurisdictionId,selection,fetchScopedSource,invalidateProfile}=options;
- if(!options.manual || typeof fetchScopedSource!=='function' || typeof invalidateProfile!=='function')
-  fail('External referral archival requires selected manual collection and guarded source fetching.');
+ if((!options.manual && options.automaticScopedResume!==true) || typeof fetchScopedSource!=='function' || typeof invalidateProfile!=='function')
+  fail('External referral archival requires selected collection and guarded source fetching.');
  const profile=await entity.get(jurisdictionId);
  if(!profile?.id || !['OH','KY'].includes(profile.state) || profile._manual_documents)
   fail('Jurisdiction is missing, outside collection scope or manually protected.');
+ if(!options.manual && profile.auto_refresh!==true)fail('Automatic external collection is not enabled for this jurisdiction.');
  const cursor=profile.discovery_scan_state;
  if(!cursor || cursor.blocked || cursor.seed_url!==profile.permitting_url)fail('Official discovery source changed or requires review.');
  const rows=(cursor.external_referrals || []).filter(row=>row.url===selection?.url && row.source_page_url===selection?.source_page_url);
@@ -33,6 +34,7 @@ export async function archiveExternalJurisdictionReferral(options){
  if(existing && (existing.source==='manual' || existing.pinned || existing.archive_pinned ||
     !existing.external_referral_provenance || !linkFields.every(key=>existing.external_referral_provenance[key]===referral[key])))
   fail('Existing document has different or protected provenance; reconcile it separately.');
+ if(!options.manual && !existing)fail('Automatic external recovery requires an already selected document.');
  let document=existing;
  let linkChecked=false;
  async function recheckLink(){

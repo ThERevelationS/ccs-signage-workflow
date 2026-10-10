@@ -1,3 +1,4 @@
+import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import {continueDiscoveryBacklog} from '../../shared/permittingDiscoveryContinuation.mjs';
 import {readPermittingResourceResponse} from '../../shared/permittingResourceResponse.mjs';
 import {invalidateVerifiedJurisdictionAfterResearch} from '../../shared/jurisdictionVerification.ts';
@@ -18,7 +19,6 @@ import {
   researchCycleDecision,
 } from "../../shared/permittingResearchDispatchConfig.mjs";
 
-import { continueJurisdictionArchiveBacklog } from "../../shared/jurisdictionArchiveContinuation.mjs";
 import { safeExternalFetch } from "../../shared/safeExternalFetch.ts";
 import { continueSourceTextBacklog, automaticSourceTextGuard } from "../../shared/jurisdictionSourceTextContinuation.mjs";
 
@@ -146,7 +146,9 @@ Deno.serve(async (req) => {
           },
         });
       } catch(error) { discoveryContinuation = {success:false,status:'discovery_continuation_failed',llm_calls:0}; }
-      archiveContinuation = await continueJurisdictionArchiveBacklog({
+      archiveContinuation = await continuePermittingDocumentArchiveBacklog({
+        invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
+        fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
       });

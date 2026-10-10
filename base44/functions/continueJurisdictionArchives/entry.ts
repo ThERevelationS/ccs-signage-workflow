@@ -1,8 +1,9 @@
+import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import { archiveExternalJurisdictionReferral } from '../../shared/jurisdictionExternalReferralArchive.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
-import { continueJurisdictionArchiveBacklog, archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
+import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 import { registerJurisdictionArchive } from '../../shared/jurisdictionArchiveCatalog.mjs';
 import { PERMITTING_RESEARCH_CONFIG_KEY } from '../../shared/permittingResearchDispatchConfig.mjs';
 
@@ -45,7 +46,8 @@ Deno.serve(async req => {
     const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);
     if (configs.length > 1) throw new Error('Duplicate dispatcher settings; automatic archival stopped.');
     if (configs[0]?.setting_value?.enabled === false) return Response.json({ success: true, skipped: true, reason: 'disabled' });
-    return Response.json(await continueJurisdictionArchiveBacklog(options));
+    return Response.json(await continuePermittingDocumentArchiveBacklog({...options,invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
+      fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost)}));
   } catch (error) {
     console.error('continueJurisdictionArchives:', error?.message || error);
     const status=[400,409].includes(Number(error?.status))?Number(error.status):500;
