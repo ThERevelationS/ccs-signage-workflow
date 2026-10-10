@@ -8,10 +8,12 @@ import {
 
 // Order Form ONLY: read-only admin review. The shared Sales coordinator can
 // change without affecting this independent permanent-ID evidence.
-export default function OrderIndependentPullEvidence({ currentUser }) {
+export default function OrderIndependentPullEvidence({ currentUser, sessionToken = '' }) {
   const isAdmin = currentUser?.role === 'admin';
   const [view, setView] = useState({ kind: 'none' });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [comparison, setComparison] = useState(null);
+  const [comparing, setComparing] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -20,6 +22,7 @@ export default function OrderIndependentPullEvidence({ currentUser }) {
     }
     let active = true;
     let inFlight = false;
+    setComparison(null);
     const refresh = async () => {
       if (inFlight) return;
       inFlight = true;
@@ -49,6 +52,34 @@ export default function OrderIndependentPullEvidence({ currentUser }) {
       document.removeEventListener('visibilitychange', refreshVisible);
     };
   }, [isAdmin, refreshKey]);
+
+  const compareLivePair = async (link) => {
+    if (!isAdmin || !sessionToken || comparing || view.kind !== 'unresolved') return;
+    setComparing(true);
+    setComparison(null);
+    try {
+      const response = await base44.functions.invoke('smartsheetSyncAction', {
+        action: 'review_unresolved_order_pull_row',
+        session_token: sessionToken,
+        run_started_at: view.startedAt,
+        order_id: link.base44Id,
+        smartsheet_row_id: link.smartsheetRowId,
+      });
+      const data = response?.data || response;
+      if (!data?.success || data.read_only !== true || data.writes_attempted !== false ||
+          data.evidence_unresolved !== true || data.run_started_at !== view.startedAt ||
+          data.sheet_id !== view.sheetId || data.report?.base44_order_id !== link.base44Id ||
+          data.report?.smartsheet_row_id !== link.smartsheetRowId) {
+        throw new Error(data?.error || 'Live comparison was not verified. No reconciliation is confirmed.');
+      }
+      setComparison({ kind: 'result', data: data.report });
+    } catch (error) {
+      setComparison({ kind: 'error',
+        message: error?.response?.data?.error || error?.message || 'Could not verify both live records. Refresh and retry the comparison.' });
+    } finally {
+      setComparing(false);
+    }
+  };
 
   if (!isAdmin || view.kind === 'none') return null;
 
@@ -81,6 +112,33 @@ export default function OrderIndependentPullEvidence({ currentUser }) {
           <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" /> Refresh
         </button>
       </div>
+      {comparison && (
+        <div className="mt-3 min-w-0 rounded-md border border-amber-300 bg-white/70 p-2 text-xs dark:border-amber-800 dark:bg-slate-900/50"
+          role="status" aria-live="polite">
+          {comparison.kind === 'error' ? <p>{comparison.message}</p> : (
+            <>
+              <p className="font-semibold">Read-only live comparison — {comparison.data.state.replaceAll('_', ' ')}</p>
+              <p className="mt-1">{comparison.data.message}</p>
+              {comparison.data.fields?.length > 0 && (
+                <div className="mt-2 max-h-60 min-w-0 overflow-auto">
+                  <table className="w-full min-w-[420px] text-left text-[11px]">
+                    <thead><tr><th className="p-1">Mapped field</th><th className="p-1">Base44</th><th className="p-1">Smartsheet translated</th><th className="p-1">Match</th></tr></thead>
+                    <tbody>{comparison.data.fields.map(field => (
+                      <tr key={field.field} className="border-t border-amber-200 dark:border-amber-900">
+                        <td className="break-words p-1 font-medium">{field.field}</td>
+                        <td className="max-w-36 break-all p-1">{field.base44_value || '—'}</td>
+                        <td className="max-w-36 break-all p-1">{field.smartsheet_pulled_value || '—'}</td>
+                        <td className="p-1">{field.matches ? 'Yes' : 'No'}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-2 font-medium">Comparison does not clear the review lock or retry any write.</p>
+            </>
+          )}
+        </div>
+      )}
       {view.kind === 'unresolved' && (
         <details className="mt-2 text-xs">
           <summary className="cursor-pointer font-semibold">
@@ -119,7 +177,14 @@ export default function OrderIndependentPullEvidence({ currentUser }) {
                       </tr></thead>
                       <tbody>{batch.links.map(link => (
                         <tr key={link.base44Id} className="border-t border-amber-200 dark:border-amber-900">
-                          <td className="break-all py-1 pr-2 font-mono">{link.base44Id}</td>
+                          <td className="break-all py-1 pr-2 font-mono">
+                            {link.base44Id}
+                            <button type="button" disabled={comparing || !sessionToken}
+                              onClick={() => compareLivePair(link)}
+                              className="mt-1 block min-h-8 rounded border border-amber-400 px-2 text-[11px] font-semibold hover:bg-amber-100 disabled:opacity-50 dark:hover:bg-amber-900/40">
+                              {comparing ? 'Checking…' : 'Compare live records'}
+                            </button>
+                          </td>
                           <td className="break-all py-1 font-mono">{link.smartsheetRowId}</td>
                         </tr>
                       ))}</tbody>
