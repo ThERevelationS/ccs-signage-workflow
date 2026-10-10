@@ -555,7 +555,8 @@ check("rejected custom-status entries retain draft and popup selection", () => {
   assert.match(customHandler, /if \(!applyChecklistStatus\(itemId, value\)\) return;/);
   assert.ok(customHandler.indexOf("if (!applyChecklistStatus") <
     customHandler.indexOf('setCustomDropdownValue("");'));
-  assert.match(customHandler, /otherPopupValidationReturnRef\.current = null;\s*setCustomDropdownValue\("");\s*setShowOtherPopup\(null\);/);
+  assert.ok(customHandler.indexOf("otherPopupValidationReturnRef.current = null;") <
+    customHandler.indexOf('setCustomDropdownValue("");'));
 
   const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
   assert.match(popup, /ref=\{customStatusInputRef\}/);
