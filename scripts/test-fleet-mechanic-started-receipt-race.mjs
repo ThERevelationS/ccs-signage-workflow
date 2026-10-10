@@ -110,7 +110,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
       FleetMaintenanceWorkOrder:WorkOrder,FleetOperationReceipt:receipts},
     functions:{invoke},
     integrations:{Core:{UploadFile:async()=> {
-      if(store.failUploads>0){store.failUploads--;throw new Error("Synthetic upload disconnected");}
+      if(store.failUploads>0){store.failUploads--;const error=new Error("Synthetic upload disconnected");error.stack="Synthetic upload disconnected";throw error;}
       if(store.uploadBarrier)await new Promise(resolve=>{
         store.uploadWaiting.push(resolve);
         if(store.uploadWaiting.length===2) {
@@ -189,7 +189,9 @@ test("failed reserved photo retry releases the old evidence so an identical late
   assert.equal(successful.code,200);
   assert.equal(store.updates,1);
   assert.equal(store.uploads.length,1,"Only the missing photo is retried");
-  assert.equal(store.receipts.get(original.id).status,"applied");
+  assert.equal([...store.receipts.values()].filter(row=>row.result_summary?.resolved_by_retry===true).length,1,
+    "The best matching failed upload-prefix receipt must be resolved by the successful retry");
+  assert.deepEqual(store.work.after_photos,["https://files.example/old-a.jpg","https://files.example/new-1.jpg"]);
   assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
 });
 test("stranded in-flight photo reservation fails closed without uploading or changing evidence",async()=>{
