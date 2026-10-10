@@ -200,6 +200,95 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("incremental upload retains newer admin provenance instead of replacing the receipt summary",async()=>{
+  const {store,client,receipts}=setup();
+  store.pausePhotoEvidenceWrite=true;
+  const saving=call(payload("request-upload-preserve-123456",{photos:[photoPayload]}),client);
+  await until("uploaded image evidence write",()=>store.pendingPhotoEvidenceWrites.length===1);
+  const receipt=[...store.receipts.values()][0];
+  assert.equal(receipt.status,"started");
+  await receipts.update(receipt.id,{result_summary:{
+    ...receipt.result_summary,admin_review_note:"Verified original mechanic scope",
+    admin_reviewed_at:"2026-10-10T14:00:00.000Z",
+  }});
+  store.pendingPhotoEvidenceWrites.shift()();
+  const response=await saving;
+  assert.equal(response.code,200);
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,1);
+  const completed=store.receipts.get(receipt.id);
+  assert.equal(completed.status,"applied");
+  assert.equal(completed.result_summary.admin_review_note,"Verified original mechanic scope");
+  assert.equal(completed.result_summary.admin_reviewed_at,"2026-10-10T14:00:00.000Z");
+  assert.deepEqual(completed.result_summary.uploaded_photo_urls,store.uploads);
+  assert.deepEqual(store.work.after_photos,store.uploads);
+});
+test("delayed upload cannot replace a different durable photo URL prefix",async()=>{
+  const {store,client,receipts}=setup();
+  store.pausePhotoEvidenceWrite=true;
+  const saving=call(payload("request-photo-cas-conflict-123456",{photos:[photoPayload]}),client);
+  await until("photo prefix CAS",()=>store.pendingPhotoEvidenceWrites.length===1);
+  const receipt=[...store.receipts.values()][0];
+  await receipts.update(receipt.id,{result_summary:{
+    ...receipt.result_summary,
+    uploaded_photo_urls:["https://files.example/other-concurrent.jpg"],
+    admin_review_note:"Other evidence is already on file",
+  }});
+  store.pendingPhotoEvidenceWrites.shift()();
+  const response=await saving;
+  assert.equal(response.code,409);
+  assert.match(response.body.error,/photo evidence changed during upload/i);
+  const latest=store.receipts.get(receipt.id);
+  assert.equal(latest.status,"failed");
+  assert.deepEqual(latest.result_summary.uploaded_photo_urls,["https://files.example/other-concurrent.jpg"]);
+  assert.equal(latest.result_summary.admin_review_note,"Other evidence is already on file");
+  assert.equal(store.uploads.length,1);
+  assert.equal(store.updates,0);
+});
+test("upload evidence survives a terminal admin receipt state without replaying work",async()=>{
+  for(const terminal of ["cancelled","failed"]){
+    const {store,client,receipts}=setup();
+    store.pausePhotoEvidenceWrite=true;
+    const saving=call(payload("request-photo-terminal-123456",{photos:[photoPayload,photoPayload]}),client);
+    await until("terminal transition before first photo evidence",()=>store.pendingPhotoEvidenceWrites.length===1);
+    const receipt=[...store.receipts.values()][0];
+    await receipts.update(receipt.id,{status:terminal,result_summary:{
+      ...receipt.result_summary,admin_review_note:`Reviewed as ${terminal}`,
+      admin_reconciled_by:"admin@example.test",
+    }});
+    store.pendingPhotoEvidenceWrites.shift()();
+    const response=await saving;
+    assert.equal(response.code,409,terminal);
+    assert.match(response.body.error,/request was resolved while its photo was uploading/i);
+    const latest=store.receipts.get(receipt.id);
+    assert.equal(latest.status,terminal);
+    assert.equal(latest.result_summary.admin_review_note,`Reviewed as ${terminal}`);
+    assert.equal(latest.result_summary.admin_reconciled_by,"admin@example.test");
+    assert.deepEqual(latest.result_summary.uploaded_photo_urls,["https://files.example/new-1.jpg"]);
+    assert.equal(store.uploads.length,1,"No second upload after terminal decision");
+    assert.equal(store.updates,0);
+  }
+});
+test("upload evidence is not written to a receipt whose immutable operation identity changed",async()=>{
+  const {store,client,receipts}=setup();
+  store.pausePhotoEvidenceWrite=true;
+  const saving=call(payload("request-photo-identity-race-123456",{photos:[photoPayload]}),client);
+  await until("operation identity guard",()=>store.pendingPhotoEvidenceWrites.length===1);
+  const receipt=[...store.receipts.values()][0];
+  await receipts.update(receipt.id,{payload_fingerprint:"different-operation-fingerprint",
+    result_summary:{...receipt.result_summary,admin_review_note:"Operation identity conflict"}});
+  store.pendingPhotoEvidenceWrites.shift()();
+  const response=await saving;
+  assert.equal(response.code,409);
+  assert.match(response.body.error,/photo evidence changed during upload/i);
+  const latest=store.receipts.get(receipt.id);
+  assert.equal(latest.status,"failed");
+  assert.equal(latest.payload_fingerprint,"different-operation-fingerprint");
+  assert.equal(latest.result_summary.admin_review_note,"Operation identity conflict");
+  assert.deepEqual(latest.result_summary.uploaded_photo_urls,[]);
+  assert.equal(store.updates,0);
+});
+
 test("admin marker recovery preserves photo evidence and cancellation provenance added after its receipt read",async()=>{
   const original=makeReceipt(payload("request-original-123456",{photos:[photoPayload]}),{count:1});
   const {store,client,receipts}=setup({receipt:original});
