@@ -17,6 +17,10 @@ export function findUnresolvedOrderEvidencePair(value, { runStartedAt, orderId, 
         batch.base44_order_ids.length !== batch.smartsheet_row_ids.length ||
         !['attempting', 'acknowledged_unverified', 'write_uncertain'].includes(batch.state)) return null;
     for (let i = 0; i < batch.base44_order_ids.length; i++) {
+      if (!String(batch.base44_order_ids[i] || '').trim() ||
+          !/^\d+$/.test(String(batch.smartsheet_row_ids[i] || ''))) return null;
+      if (String(batch.smartsheet_row_ids[i]) === String(rowId) &&
+          batch.base44_order_ids[i] !== orderId) return null;
       if (batch.base44_order_ids[i] !== orderId) continue;
       // Multiple or relinked identities must never be resolved by picking one.
       if (found || String(batch.smartsheet_row_ids[i]) !== String(rowId)) return null;
