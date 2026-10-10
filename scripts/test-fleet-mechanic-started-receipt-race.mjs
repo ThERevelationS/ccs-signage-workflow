@@ -220,6 +220,34 @@ test("admin blocks mismatched photo retry provenance without modifying either re
   assert.equal(store.receipts.get(retry.id).status,"started");
   assert.equal(store.updates,0);
 });
+test("admin releases a confirmed failed retry without cancelling or replaying its reserved source",async()=>{
+  const {store,client,grant}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"failed"});
+  grant.enabled=false;
+  const result=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  assert.equal(result.code,200);
+  assert.equal(result.body.status,"blocked");
+  assert.equal(store.receipts.get(retry.id).status,"failed");
+  assert.equal(store.receipts.get(source.id).status,"failed");
+  assert.equal(store.receipts.get(source.id).result_summary.retry_reserved_by_request_id,"");
+  assert.deepEqual(store.receipts.get(source.id).result_summary.uploaded_photo_urls,["https://files.example/old-a.jpg"]);
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+test("admin leaves an incomplete reserved photo retry intact after revocation",async()=>{
+  const {store,client,grant}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store);
+  grant.enabled=false;
+  const result=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  assert.equal(result.body.status,"blocked");
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+
 test("admin link revocation reports blocked reserved source and retry rather than cancelling either",async()=>{
   const {store,client}=setup();
   client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
