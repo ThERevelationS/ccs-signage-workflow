@@ -12,6 +12,10 @@ const completedSource = readFileSync(
   new URL("../src/components/sips/ChecklistCompletedSection.jsx", import.meta.url),
   "utf8"
 );
+const revisitPopupSource = readFileSync(
+  new URL("../src/components/sips/RevisitDatePopup.jsx", import.meta.url),
+  "utf8"
+);
 
 let passed = 0;
 function check(name, run) {
@@ -390,6 +394,68 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
     assert.match(effect, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) return;/);
     assert.match(effect, /showRevisitPopup/);
   }
+});
+
+check("cancelled Revisit confirmation returns focus to Save & Revisit without saving", () => {
+  assert.match(source, /const saveRevisitButtonRef = useRef\(null\);/);
+  assert.match(source, /ref=\{saveRevisitButtonRef\}\s*onClick=\{handleSaveClick\}/);
+  assert.match(source, /<RevisitDatePopup\s+isOpen=\{showRevisitPopup\}/);
+  assert.match(source, /returnFocusRef=\{saveRevisitButtonRef\}/);
+  assert.match(revisitPopupSource, /onCloseAutoFocus=\{handleRevisitCloseAutoFocus\}/);
+  assert.match(revisitPopupSource, /onClick=\{cancelDateSelection\}/);
+  assert.match(revisitPopupSource, /onClick=\{\(\) => submitDate\(selected\)\}/);
+  assert.match(revisitPopupSource, /onClick=\{\(\) => submitDate\(null\)\}/);
+
+  const section = revisitPopupSource.slice(
+    revisitPopupSource.indexOf("  const submitDate = (date) => {"),
+    revisitPopupSource.indexOf("  const quickDates =")
+  );
+  const makeHandlers = new Function(
+    "isSubmitting", "restoreFocusAfterCancelRef", "setIsSubmitting",
+    "onSave", "onClose", "format", "returnFocusRef",
+    section + "\nreturn { submitDate, cancelDateSelection, handleRevisitCloseAutoFocus };"
+  );
+  let closed = 0, focused = 0, prevented = 0;
+  const saved = [], submitting = [];
+  const focusRef = { current: {
+    isConnected: true, disabled: false, focus: () => { focused += 1; }
+  }};
+  const restoreRef = { current: false };
+  const handler = makeHandlers(false, restoreRef,
+    value => submitting.push(value), value => saved.push(value),
+    () => { closed += 1; }, () => "2099-03-15", focusRef);
+
+  handler.cancelDateSelection();
+  assert.equal(closed, 1);
+  assert.equal(restoreRef.current, true);
+  handler.handleRevisitCloseAutoFocus({ preventDefault: () => { prevented += 1; } });
+  assert.equal(focused, 1);
+  assert.equal(prevented, 1);
+  assert.equal(restoreRef.current, false);
+  assert.deepEqual(saved, []);
+  assert.deepEqual(submitting, []);
+  handler.handleRevisitCloseAutoFocus({ preventDefault: () => { prevented += 1; } });
+  assert.equal(focused, 1);
+
+  handler.submitDate(new Date(2099, 2, 15));
+  assert.deepEqual(saved, ["2099-03-15"]);
+  assert.deepEqual(submitting, [true]);
+  assert.equal(restoreRef.current, false);
+  handler.handleRevisitCloseAutoFocus({ preventDefault: () => { prevented += 1; } });
+  assert.equal(focused, 1); // Saving must not shift focus behind the closing workflow.
+
+  const blocked = makeHandlers(true, { current: false }, () => {}, () => {
+    throw new Error("Saving twice must be blocked");
+  }, () => { throw new Error("Cancel while saving must be blocked"); },
+  () => "", focusRef);
+  blocked.cancelDateSelection();
+  blocked.submitDate(null);
+  const absentTarget = makeHandlers(false, { current: false }, () => {}, () => {},
+    () => {}, () => "", { current: { isConnected: false, disabled: false, focus: () => {
+      throw new Error("Disconnected trigger must not receive focus");
+    } } });
+  absentTarget.cancelDateSelection();
+  absentTarget.handleRevisitCloseAutoFocus({ preventDefault: () => {} });
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
