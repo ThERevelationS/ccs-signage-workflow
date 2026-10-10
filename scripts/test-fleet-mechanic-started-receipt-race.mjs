@@ -48,7 +48,9 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
 }
 function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false}={}){
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
-    waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,release:null};
+    waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
+    pauseWorkRead:false,pendingWorkReads:[],sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
+    pauseReleaseWrite:false,pendingReleaseWrites:[],release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
@@ -58,7 +60,13 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
     return value&&typeof value==="object"&&"$in" in value?value.$in.includes(current):current===value;
   });
   const receipts={
-    async get(id){return clone(store.receipts.get(id)||null);},
+    async get(id){
+      const record=clone(store.receipts.get(id)||null);
+      if(id==='old-receipt' && ++store.sourceReadNumber===store.pauseSourceReadAt){
+        await new Promise(resolve=>store.pendingSourceReads.push(resolve));
+      }
+      return record;
+    },
     async filter(filter){return [...store.receipts.values()].filter(row=>matches(row,filter)).map(clone);},
     async create(row){
       const record={...clone(row),id:"new-receipt-"+(++receiptSequence),created_date:new Date().toISOString()};
@@ -72,6 +80,10 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
       if(operators?.$set?.status==='cancelled' && store.pauseCancelWrite){
         store.pauseCancelWrite=false;
         await new Promise(resolve=>store.pendingCancelWrites.push(resolve));
+      }
+      if(operators?.$set?.['result_summary.retry_reservation_released_at'] && store.pauseReleaseWrite){
+        store.pauseReleaseWrite=false;
+        await new Promise(resolve=>store.pendingReleaseWrites.push(resolve));
       }
       const found=[...store.receipts.values()].filter(row=>matches(row,filter));
       for(const row of found){
@@ -102,7 +114,14 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
     async update(_id,patch){Object.assign(grant,patch);return clone(grant);}
   };
   const WorkOrder={
-    async get(id){return id===workId?clone(store.work):null;},
+    async get(id){
+      const record=id===workId?clone(store.work):null;
+      if(store.pauseWorkRead){
+        store.pauseWorkRead=false;
+        await new Promise(resolve=>store.pendingWorkReads.push(resolve));
+      }
+      return record;
+    },
   };
   const invoke=async (name,mutation)=>{
     assert.equal(name,"fleetWorkOrderAction");
