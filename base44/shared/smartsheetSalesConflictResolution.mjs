@@ -1,3 +1,16 @@
+// The approval is for particular Sales values, not permission to overwrite
+// a newer WorkOrder revision. A batched preflight checks the planned record
+// before remote writes; an exact version CAS checks again on Base44 commit.
+export function approvedSalesRecordStillCurrent(planned, latest) {
+  return Boolean(planned?.id && latest?.id && String(planned.id) === String(latest.id) &&
+    planned.updated_date && latest.updated_date === planned.updated_date &&
+    latest.deleted !== true &&
+    String(latest.smartsheet_sheet_id ?? '') === String(planned.smartsheet_sheet_id ?? '') &&
+    String(latest.smartsheet_row_id ?? '') === String(planned.smartsheet_row_id ?? '') &&
+    String(latest.sales_status ?? '') === String(planned.sales_status ?? '') &&
+    String(latest.current_task_description ?? '') === String(planned.current_task_description ?? ''));
+}
+
 // Approval is intent, not completion. A Sales conflict decision may leave the
 // review queue only for a WorkOrder whose Smartsheet reconciliation AND Base44
 // snapshot metadata both passed the existing read-back verification gates.
