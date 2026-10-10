@@ -47,7 +47,7 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
   };
 }
 function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
-  const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,
+  const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,failUploads:0,
     waiting:[], uploadWaiting:[], release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
@@ -110,6 +110,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
       FleetMaintenanceWorkOrder:WorkOrder,FleetOperationReceipt:receipts},
     functions:{invoke},
     integrations:{Core:{UploadFile:async()=> {
+      if(store.failUploads>0){store.failUploads--;throw new Error("Synthetic upload disconnected");}
       if(store.uploadBarrier)await new Promise(resolve=>{
         store.uploadWaiting.push(resolve);
         if(store.uploadWaiting.length===2) {
@@ -174,6 +175,34 @@ test("simultaneous identical partial-photo retries upload the missing photo at m
   assert.deepEqual(results.map(row=>row.code).sort(),[200,409]);
   assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
   assert.equal(store.work.after_photos.length,2);
+});
+test("failed reserved photo retry releases the old evidence so an identical later retry can finish",async()=>{
+  const retry=payload("request-new-abc-123456",{photos:[photoPayload,photoPayload]});
+  const original=makeReceipt(retry,{photos:["https://files.example/old-a.jpg"],count:2});
+  const {store,client}=setup({receipt:original});
+  store.failUploads=1;
+  const failed=await call(retry,client);
+  assert.notEqual(failed.body.success,true);
+  assert.equal(store.receipts.get(original.id).status,"failed","Source reservation must be released after a confirmed failed retry");
+  assert.equal(store.uploads.length,0);
+  const successful=await call({...retry,request_id:"request-new-def-789012"},client);
+  assert.equal(successful.code,200);
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,1,"Only the missing photo is retried");
+  assert.equal(store.receipts.get(original.id).status,"applied");
+  assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
+});
+test("stranded in-flight photo reservation fails closed without uploading or changing evidence",async()=>{
+  const retry=payload("request-new-abc-123456",{photos:[photoPayload,photoPayload]});
+  const source=makeReceipt(retry,{status:"started",photos:["https://files.example/old-a.jpg"],count:2});
+  source.result_summary.retry_reserved_by_request_id="request-owner-lost-987654";
+  const {store,client}=setup({receipt:source});
+  const result=await call(retry,client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/still being verified/i);
+  assert.equal(store.uploads.length,0);
+  assert.equal(store.updates,0);
+  assert.equal(store.receipts.get(source.id).status,"started","Uncertain upload evidence must remain pending for CCS");
 });
 test("status reconciliation racing another status check reports the same applied receipt",async()=>{
   const old=makeReceipt(payload("request-original-123456"));
