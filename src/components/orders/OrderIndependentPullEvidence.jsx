@@ -18,10 +18,12 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   const [batchReview, setBatchReview] = useState(null);
   const [reviewingBatch, setReviewingBatch] = useState(false);
   const reviewEpoch = useRef(0);
+  const batchReviewInFlight = useRef(false);
 
   useEffect(() => {
     if (!isAdmin) {
       reviewEpoch.current++;
+      batchReviewInFlight.current = false;
       setBatchReview(null);
       setReviewingBatch(false);
       setView({ kind: 'none' });
@@ -44,6 +46,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
           const version = JSON.stringify(rows?.[0]?.setting_value ?? null);
           if (lastEvidenceVersion !== null && lastEvidenceVersion !== version) {
             reviewEpoch.current++;
+            batchReviewInFlight.current = false;
             setComparison(null);
             setBatchReview(null);
             setReviewingBatch(false);
@@ -54,6 +57,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
       } catch {
         if (active) {
           reviewEpoch.current++;
+          batchReviewInFlight.current = false;
           setComparison(null);
           setBatchReview(null);
           setReviewingBatch(false);
@@ -74,6 +78,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
     return () => {
       active = false;
       reviewEpoch.current++;
+      batchReviewInFlight.current = false;
       clearInterval(interval);
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refreshVisible);
@@ -109,7 +114,8 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   };
 
   const reviewRecordedBatch = async (batch) => {
-    if (!isAdmin || !sessionToken || reviewingBatch || view.kind !== 'unresolved') return;
+    if (!isAdmin || !sessionToken || batchReviewInFlight.current || view.kind !== 'unresolved') return;
+    batchReviewInFlight.current = true;
     const epoch = ++reviewEpoch.current;
     let progress;
     setReviewingBatch(true);
@@ -139,7 +145,10 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         });
       }
     } finally {
-      if (reviewEpoch.current === epoch) setReviewingBatch(false);
+      if (reviewEpoch.current === epoch) {
+        batchReviewInFlight.current = false;
+        setReviewingBatch(false);
+      }
     }
   };
 
