@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { numericIdList } from '../base44/shared/smartsheetSyncUtils.ts';
 import {
   ORDER_PULL_REVIEW_PAGE_SIZE,
   planUnresolvedOrderBatchReview,
@@ -132,6 +133,7 @@ const action = backend.slice(begin, end);
 assert.match(action, /adminActor\?\.role !== 'admin'/);
 assert.match(action, /readOrderPullEvidenceStore\(/);
 assert.match(action, /planUnresolvedOrderBatchReview\(/);
+assert.match(action, /const columnIds = numericIdList\(Object.values\(bindings\), 100\)/);
 assert.match(action, /rowIds: rowIds\.join\(','\)/);
 assert.match(action, /query: \{ id: \{ \$in: ids \} \}/);
 assert.match(action, /verifyOrderCreateAuditSheetIdentity\(/);
@@ -147,3 +149,22 @@ assert.match(panel, /Any partial counts above are not a complete batch review/);
 assert.match(panel, /Matching values do not resolve the interrupted run or unlock Sync/);
 assert.match(panel, /reviewEpoch\.current\+\+/);
 console.log('PASS Order-only admin read-only bounded batch action, progress UI and stale evidence guard preserve the review lock');
+
+// Regression: double-escaped numeric regexes in the review gates previously
+// rejected every real Smartsheet column ID before any read-only API call.
+const boundColumns = {
+  description: ' 4963691473987460 ', status: '2685133109155716',
+  duplicate: '4963691473987460', invalid: 'not-a-column', missing: null,
+};
+const validColumns = numericIdList(Object.values(boundColumns), 100);
+assert.deepEqual(validColumns, ['4963691473987460', '2685133109155716']);
+assert.equal(validColumns.includes(boundColumns.status), true);
+assert.deepEqual(numericIdList(['bad', '123x', null, ''], 100), []);
+const singleBegin = backend.indexOf("if (action === 'review_unresolved_order_pull_row')");
+const singleEnd = backend.indexOf("if (action === 'recover_stale_order_run')", singleBegin);
+assert.ok(singleBegin > end && singleEnd > singleBegin);
+const singleAction = backend.slice(singleBegin, singleEnd);
+assert.match(singleAction, /const columnIds = numericIdList\(Object.values\(bindings\), 100\)/);
+assert.match(singleAction, /!columnIds.length/);
+assert.match(singleAction, /columnIds.includes\(cleanText\(bindings\?\.status, 40\)\)/);
+console.log('PASS executable numeric column-ID validation is shared by batch and single-row review gates');
