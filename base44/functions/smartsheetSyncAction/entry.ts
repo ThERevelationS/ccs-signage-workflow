@@ -7,7 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
-import { verifiedSalesConflictResolutionTargets } from '../../shared/smartsheetSalesConflictResolution.mjs';
+import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -1717,6 +1717,7 @@ async function pushDataset(
   const deferredBase44Updates: any[] = [];
   const deferredConflictRecordIds: string[] = [];
   const deferredSalesConflictDecisions = new Map<string, string[]>();
+  const approvedSalesPlanSnapshots = new Map<string, any>();
   const deferredOrderConflictDecisions = new Map<string, string[]>();
   const deferredSalesVerification = new Map<string, {
     rowId: string;
@@ -1891,7 +1892,10 @@ async function pushDataset(
         }
         if (fieldPlan.decisions?.length && !fieldPlan.taskStageHeld) {
           if (dataset === 'orders') deferredOrderConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
-          else deferredSalesConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
+          else {
+            deferredSalesConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
+            approvedSalesPlanSnapshots.set(String(record.id), record);
+          }
         }
         // Never auto-resolve the task review simply because another Sales
         // field was pushed successfully in this same WorkOrder.
@@ -2050,12 +2054,48 @@ async function pushDataset(
     }
   }
 
+  // Recheck every approved Sales decision against a fresh batched read before
+  // writing Smartsheet. A concurrent WorkOrder change invalidates this RUN's
+  // planned approval; the existing review remains available for the next run.
+  // This is not an atomic transaction across systems: the final Base44 save
+  // also requires an exact WorkOrder-version compare-and-set.
+  if (dataset === 'sales' && approvedSalesPlanSnapshots.size) {
+    const approvalIds = [...approvedSalesPlanSnapshots.keys()];
+    try {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      const recent = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.WorkOrder,
+        query: { id: { $in: approvalIds } }, sort: 'id',
+        label: 'Approved Sales review version preflight',
+      });
+      const latestById = new Map(recent.map((row: any) => [String(row.id), row]));
+      for (const [id, planned] of approvedSalesPlanSnapshots) {
+        if (!approvedSalesRecordStillCurrent(planned, latestById.get(id))) {
+          salesFailedRecordIds.add(id);
+          errors.push(id + ': This Sales WorkOrder changed after the approved review was planned. No approved remote write or Base44 reconciliation was attempted for this record; reload before retrying.');
+        }
+      }
+    } catch (error: any) {
+      // A failed preflight is never evidence of unchanged approved values.
+      for (const id of approvalIds) {
+        salesFailedRecordIds.add(id);
+        errors.push(id + ': Approved Sales review version could not be checked. The review remains pending for a later safe retry.');
+      }
+    }
+  }
+  const heldApprovedSalesRowIds = new Set([...salesFailedRecordIds]
+    .map((id) => approvedSalesPlanSnapshots.get(id)?.smartsheet_row_id)
+    .filter((id) => id != null).map(String));
+  const eligibleSmartsheetWrites = dataset === 'sales'
+    ? deferredSmartsheetWrites.filter((row: any) => !heldApprovedSalesRowIds.has(String(row.id)))
+    : deferredSmartsheetWrites;
+
   // Phase 2: Batch Smartsheet write. Neither Sales nor Order rows are
   // considered complete from the write acknowledgement alone; affected
   // permanent rows are freshly read back before Base44 sync metadata advances.
   let salesBatchWriteError = '';
   let orderBatchWriteError = '';
-  if (deferredSmartsheetWrites.length) {
+  if (eligibleSmartsheetWrites.length) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     try {
       if (dataset === 'orders') {
@@ -2066,7 +2106,7 @@ async function pushDataset(
         });
       }
       await (dataset === 'orders' ? smartsheetWriteNoTimeoutRetry : smartsheetWrite)(
-        'PUT', '/sheets/' + sheetId + '/rows', token, deferredSmartsheetWrites,
+        'PUT', '/sheets/' + sheetId + '/rows', token, eligibleSmartsheetWrites,
         ...(dataset === 'orders' ? [{
           onRateLimitWait: async ({ attempt, waitSeconds }: any) => reportOrderProgress({
             phase: 'waiting_rate_limit', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.54,
