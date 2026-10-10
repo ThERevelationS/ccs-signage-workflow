@@ -1210,8 +1210,8 @@ test('approve_modified cross-period correction uses manager-edited destination a
   assert.equal(destinationRefinalized.status, 200, JSON.stringify(destinationRefinalized.body));
   const sourcePeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'synthetic-period');
   const destinationPeriod = h.rows.TimeClockPayPeriod.find((row) => row.id === 'modified-destination-period');
-  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 27);
-  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 27);
+  assert.equal(sourcePeriod.finalized_summary.snapshot_version, 28);
+  assert.equal(destinationPeriod.finalized_summary.snapshot_version, 28);
   const sourceChange = sourcePeriod.finalized_summary.generation_changes[0];
   const destinationChange = destinationPeriod.finalized_summary.generation_changes[0];
   assert.equal(sourceChange.change_type, 'removed');
@@ -2288,7 +2288,7 @@ test('v26 missed Clock Out payroll provenance binds Punch Exception and employee
 
   const refinalized = await h.action('finalize', 'v26-missed-refinalize-001');
   assert.equal(refinalized.status, 200, JSON.stringify(refinalized.body));
-  assert.equal(period.finalized_summary.snapshot_version, 27);
+  assert.equal(period.finalized_summary.snapshot_version, 28);
   assert.equal(period.finalized_summary.generation_changes.length, 1);
   const change = period.finalized_summary.generation_changes[0];
   assert.equal(change.change_type, 'added');
@@ -2926,7 +2926,7 @@ test(`v27 late-day missed Clock In payroll provenance binds employee attestation
 
   const refinalized = await h.action('finalize', 'v27-late-refinalize-001');
   assert.equal(refinalized.status, 200, JSON.stringify(refinalized.body));
-  assert.equal(period.finalized_summary.snapshot_version, 27);
+  assert.equal(period.finalized_summary.snapshot_version, 28);
   assert.equal(period.finalized_summary.shift_manifest.length, 1);
   const manifestRow = period.finalized_summary.shift_manifest[0];
   const provenance = manifestRow.late_clock_in_provenance;
