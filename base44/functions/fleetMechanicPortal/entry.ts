@@ -155,18 +155,28 @@ async function adminCancelMechanicReceiptResult(Receipt:any, receipt:any, reason
   return {status:'cancelled',recovered:false,work_order:workOrder,error_message:reason};
 }
 
-async function updateMechanicReceiptSummary(Receipt: any, receipt: any, patch: any) {
-  const latest = await Receipt.get(receipt.id).catch(()=>receipt);
-  const resultSummary = {...(latest?.result_summary || receipt?.result_summary || {}),...(patch || {})};
-  try {
-    const updated = await Receipt.update(receipt.id,{result_summary:resultSummary});
-    return updated || {...latest,result_summary:resultSummary};
-  } catch (firstError) {
-    await new Promise(resolve=>setTimeout(resolve,40));
-    const updated = await Receipt.update(receipt.id,{result_summary:resultSummary});
-    if (!updated) throw firstError;
-    return updated;
+async function recordMechanicUploadedPhoto(Receipt:any, receipt:any, priorUrls:string[], url:string) {
+  // Bind the new URL to precisely the evidence prefix already recorded for
+  // this operation. A delayed upload must never replace newer URLs or admin notes.
+  const nextUrls = [...priorUrls,url];
+  const saved = await Receipt.updateMany({
+    id:receipt.id,
+    operation_key:receipt.operation_key,
+    payload_fingerprint:receipt.payload_fingerprint,
+    status:{$in:['started','failed','cancelled']},
+    'result_summary.uploaded_photo_urls':priorUrls,
+  },{$set:{
+    'result_summary.uploaded_photo_urls':nextUrls,
+    'result_summary.upload_evidence_updated_at':nowIso(),
+  }});
+  if (saved?.updated !== 1) {
+    throw Object.assign(new Error('Fleet mechanic photo evidence changed during upload. CCS must review the uploaded file before retrying; no work was replayed.'),{status:409});
   }
+  const latest = await Receipt.get(receipt.id);
+  if (!latest || latest.status !== 'started') {
+    throw Object.assign(new Error('Fleet mechanic request was resolved while its photo was uploading. The recorded photo evidence is preserved; CCS review is required.'),{status:409});
+  }
+  return latest;
 }
 
 async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
