@@ -24,7 +24,7 @@ import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { orderSaveSyncStatus } from "@/components/orders/orderSaveSyncStatus.mjs";
 
 export default function OrderForm() {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, isRegistered, sessionToken } = useAuth();
   
   // Show outstanding Orders and a visibly separate received history by default.
   const [filterStatus, setFilterStatus] = useState("all_with_received");
@@ -101,7 +101,7 @@ export default function OrderForm() {
           </div>
         </div>
 
-        <OrderIndependentPullEvidence currentUser={currentUser} />
+        <OrderIndependentPullEvidence currentUser={currentUser} sessionToken={sessionToken} />
 
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex flex-wrap items-center gap-2">
