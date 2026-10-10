@@ -2317,7 +2317,25 @@ async function pushDataset(
       );
       if (verifiedSalesUpdates.length) {
         try {
-          await base44.asServiceRole.entities[entityName].bulkUpdate(verifiedSalesUpdates);
+          // An approved Sales decision must not overwrite a newer WorkOrder.
+          const approvedUpdates = verifiedSalesUpdates.filter((u: any) => approvedSalesPlanSnapshots.has(String(u.id)));
+          const ordinaryUpdates = verifiedSalesUpdates.filter((u: any) => !approvedSalesPlanSnapshots.has(String(u.id)));
+          if (ordinaryUpdates.length) await base44.asServiceRole.entities[entityName].bulkUpdate(ordinaryUpdates);
+          for (const update of approvedUpdates) {
+            const id = String(update.id);
+            const { id: _approvedId, ...fields } = update;
+            try {
+              if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+              const result = await base44.asServiceRole.entities.WorkOrder.updateMany(
+                { id, updated_date: approvedSalesPlanSnapshots.get(id).updated_date },
+                { $set: fields },
+              );
+              if (result?.updated !== 1) throw new Error('Approved Sales WorkOrder revision changed.');
+            } catch (error: any) {
+              salesFailedRecordIds.add(id);
+              errors.push(id + ': Approved Sales reconciliation was blocked by a newer WorkOrder revision. The review remains pending.');
+            }
+          }
           const verifiedRecords = await loadAllEntityRows({
             entity: base44.asServiceRole.entities.WorkOrder,
             query: { id: { $in: verifiedSalesUpdates.map((update: any) => update.id) } },
