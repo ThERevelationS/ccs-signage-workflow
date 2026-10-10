@@ -1796,13 +1796,23 @@
       "Sign forms, current fees, sign code and online submission remain collection gaps. No Whitewater sign PDFs have been retained for this dossier.",
       "North Bend retained zoning code and right-of-way documents are not Whitewater evidence and have not been assigned to this township.",
       "Electrical permit issuance and electrical inspection offices require separate verification; no approved workflow is created.",
-      "Official county resolution search-index snippet places Whitewater among unzoned territory outside that resolution. Full original, physical-page citation and current job-address applicability remain unverified. This does not establish a sign/building/electrical permit exemption."
+      "Official county resolution search-index snippet places Whitewater among unzoned territory outside that resolution. Full original, physical-page citation and current job-address applicability remain unverified. This does not establish a sign/building/electrical permit exemption.",
+      "County building guides list a commercial Signs guide and direct applications to ezTrak. The Signs PDF link redirects through a duplicated path; original retention remains unresolved. Whitewater building coverage and sign-specific portal acceptance are unverified."
     ],
     "references": [
       {
         "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Zoning/HCZonRes.pdf",
         "label": "County zoning resolution \u2014 scope review pending; original retrieval gap"
+      },
+      {
+        "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/building_permit_guides.php",
+        "label": "County building permit guides \u2014 Whitewater coverage review pending"
+      },
+      {
+        "url": "https://www.hamiltoncountyohio.gov/government/departments/planning_and_development/buildings_and_inspections/Documents/Government/Departments/Planning%20and%20Development/Buildings%20And%20Inspections/Applications%20and%20Forms/Commercial%20Permit%20Guides%20and%20Forms/Signs-08.pdf?t=202502261002430",
+        "label": "County commercial Signs guide \u2014 linked PDF; original retrieval gap"
       }
-    ]
+    ],
+    "online_form_url": "https://eztrak.cagis.org/"
   }
 ]

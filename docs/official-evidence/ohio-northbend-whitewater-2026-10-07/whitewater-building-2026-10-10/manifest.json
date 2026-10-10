@@ -1,0 +1,11 @@
+{
+  "sources": [
+    {
+      "candidate_url": "https://www.hamiltoncountyohio.gov/Documents/Government/Departments/Planning%20and%20Development/Buildings%20And%20Inspections/Applications%20and%20Forms/Commercial%20Permit%20Guides%20and%20Forms/Signs-08.pdf?t=202502261002430",
+      "observed_at": "2026-10-10T15:43:17.336360+00:00",
+      "method": "Resolve county-linked document path from site root; not a verified replacement URL",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ]
+}
