@@ -6,7 +6,7 @@ const seed='https://city.gov/forms',url='https://cdn.example/sign.pdf';
 const html=`<a href="${url}">Sign application</a>`,pdf='%PDF-1.7 sample';
 async function fixture(){
  const scan=await scanOfficialPermittingPages({seedUrl:seed,maxPages:1,fetchPage:async()=>({html,finalUrl:seed})});
- let record={id:'j1',name:'City',state:'OH',type:'city',permitting_url:seed,updated_date:'v1',documents:[],discovery_scan_state:scan.cursor,notes:'keep'};
+ let record={id:'j1',name:'City',state:'OH',type:'city',permitting_url:seed,updated_date:'v1',documents:[],discovery_scan_state:scan.continuation_state,notes:'keep'};
  let version=1,body=html,downloadFail=false,readFail=false;const calls={page:0,source:0,upload:0,stored:0};
  const entity={get:async()=>structuredClone(record),updateMany:async(q,p)=>{if(q.updated_date!==record.updated_date)return {updated:0};record={...record,...p.$set,updated_date:'v'+(++version)};return {updated:1};}};
  const api={entity,jurisdictionId:'j1',manual:true,selection:{url,source_page_url:seed},invalidateProfile:(p,next)=>({...next,verification_status:'needs_verification'}),fetchScopedSource:async(u,init,h)=>{assert.equal(new URL(u).hostname,h);if(u===seed){calls.page++;return new Response(body,{headers:{'content-type':'text/html'}});}assert.equal(u,url);calls.source++;if(downloadFail)throw Error('source unavailable');return new Response(pdf,{headers:{'content-type':'application/pdf'}});},fetchSource:async u=>{assert.equal(u,'https://storage.test/archive.pdf');calls.stored++;if(readFail)throw Error('storage unavailable');return new Response(pdf,{headers:{'content-type':'application/pdf'}});},uploadFile:async({file})=>{assert.equal(await file.text(),pdf);calls.upload++;return {file_url:'https://storage.test/archive.pdf'};}};
