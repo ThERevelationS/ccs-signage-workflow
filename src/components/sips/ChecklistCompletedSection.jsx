@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
  * Renders the "Completed Items" section at the bottom of ProductChecklistDialog.
  * Extracted to reduce file size.
  */
-export default function ChecklistCompletedSection({ completedChecklist, dropdownOptionsByChecklistItemId, users, isRegistered, updateChecklistItem, applyChecklistStatus, setShowOtherPopup, focusedNeedsInputId }) {
+export default function ChecklistCompletedSection({ completedChecklist, dropdownOptionsByChecklistItemId, users, isRegistered, updateChecklistItem, applyChecklistStatus, openOtherPopup, focusedNeedsInputId }) {
   const { renderGroups, totalCount } = useMemo(() => {
     const groups = [];
     let count = 0;
@@ -55,7 +55,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                             <SelectTrigger className="h-11 sm:h-8 text-xs w-full sm:w-32" aria-label={`Answered by for completed checklist item: ${item.text || "checklist item"}`}><SelectValue placeholder="Answered..." /></SelectTrigger>
                             <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
                           </Select>
-                          <Select value={item.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") setShowOtherPopup({ itemId: item.id }); else if (val !== "select_value") applyChecklistStatus(item.id, val); }} disabled={!isRegistered}>
+                          <Select value={item.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") openOtherPopup(item.id); else if (val !== "select_value") applyChecklistStatus(item.id, val); }} disabled={!isRegistered}>
                             <SelectTrigger className="h-11 sm:h-8 text-xs w-full sm:w-36" aria-label={`Status for completed checklist item: ${item.text || "checklist item"}`}><SelectValue placeholder="Answer...">{item.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
                             <SelectContent>
                               {(dropdownOptionsByChecklistItemId.get(item.id) || []).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}</SelectItem>)}
@@ -89,7 +89,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                               <SelectTrigger className="h-11 sm:h-8 text-xs w-full sm:w-32" aria-label={`Answered by for completed checklist option: ${stItem.text || "checklist item"}`}><SelectValue placeholder="Answered..." /></SelectTrigger>
                               <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
                             </Select>
-                            <Select value={stItem.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") setShowOtherPopup({ itemId: stItem.id }); else if (val !== "select_value") applyChecklistStatus(stItem.id, val); }} disabled={!isRegistered}>
+                            <Select value={stItem.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") openOtherPopup(stItem.id); else if (val !== "select_value") applyChecklistStatus(stItem.id, val); }} disabled={!isRegistered}>
                               <SelectTrigger className="h-11 sm:h-8 text-xs w-full sm:w-36" aria-label={`Status for completed checklist option: ${stItem.text || "checklist item"}`}><SelectValue placeholder="Answer...">{stItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
                               <SelectContent>
                                 {(dropdownOptionsByChecklistItemId.get(stItem.id) || []).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}</SelectItem>)}
