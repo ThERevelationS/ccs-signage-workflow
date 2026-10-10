@@ -197,8 +197,7 @@ test("admin applies complete reserved photo evidence once while grant is authori
   ]});
   const first=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
   const second=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
-  console.log('admin-pair-debug',JSON.stringify({first:first.body,second:second.body,updates:store.updates}));
-  assert.equal(first.body.status,"applied",JSON.stringify({first,second,updates:store.updates}));
+  assert.equal(first.body.status,"applied");
   assert.equal(second.body.status,"applied");
   assert.equal(store.receipts.get(source.id).status,"applied");
   assert.equal(store.receipts.get(retry.id).status,"applied");
