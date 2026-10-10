@@ -16,6 +16,7 @@ import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems } from "@/components/sales/salesAttention";
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
 import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
+import { planExistingSalesTaskStatusReconciliation } from "@/components/sales/salesTaskStageMapping.mjs";
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
@@ -112,6 +113,7 @@ export default function SalesOpportunityDialog({
   isRegistered,
   onClose,
   onUpdateFields,
+  onReconcileExistingTaskStatus,
   onRemoveFromCurrentPipeline,
   onCompleteFollowUp,
   onOpenFullDetails,
@@ -168,6 +170,7 @@ export default function SalesOpportunityDialog({
   const attentionKeys = new Set(allAttentionItems.map((item) => item.key));
   const recordClassification = getSalesRecordClassification(workOrder);
   const taskStatusAudit = classifySalesTaskStatusAudit(workOrder);
+  const taskStatusReconciliation = planExistingSalesTaskStatusReconciliation(workOrder);
   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
   const placeholderReason = getSalesPlaceholderReason(workOrder);
   const salesOwnerSelect = buildSalesPersonSelectModel(workOrder?.sales_rep, users);
@@ -284,6 +287,16 @@ export default function SalesOpportunityDialog({
                   {taskStatusAudit.mappedStatus && taskStatusAudit.kind === 'modern_review' &&
                     <p className="mt-1 text-slate-600">Task catalog category: {taskStatusAudit.mappedStatus.replace(/_/g, ' ')} (not applied automatically).</p>}
                   <p className="mt-1 text-slate-600">Review the task and existing history before making a protected change. No classification or timestamp was updated by this audit.</p>
+                  {isRegistered && taskStatusReconciliation && onReconcileExistingTaskStatus && (
+                    <Button type="button" variant="outline" size="sm"
+                      className="mt-3 h-11 w-full border-amber-300 bg-white text-amber-900 hover:bg-amber-100 sm:h-9 sm:w-auto"
+                      onClick={() => onReconcileExistingTaskStatus(workOrder)}>
+                      Use Current Task to Correct Status
+                    </Button>
+                  )}
+                  {taskStatusReconciliation && taskStatusAudit.kind === 'modern_review' && (
+                    <p className="mt-1.5 text-slate-600">This requires an explicit save{taskStatusReconciliation.action === 'confirm_transition' ? ' and outcome/reopening confirmation' : ''}; the task text stays unchanged. Concurrent edits will block the correction.</p>
+                  )}
                 </div>
               </div>
             </section>
