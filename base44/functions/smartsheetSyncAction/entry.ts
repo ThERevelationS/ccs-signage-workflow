@@ -41,7 +41,8 @@ import { orderPullPrewriteBudget, assertOrderPullContinuationBudget } from '../.
 import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
 import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBatchEvidence.mjs';
 import { classifyPriorUncertainOrderPull } from '../../shared/smartsheetOrderPriorUncertainPull.mjs';
-import { assertNoUnresolvedOrderPullEvidence, saveOrderPullEvidence, verifyCompletedOrderPullEvidence } from '../../shared/smartsheetOrderPullEvidenceStore.mjs';
+import { assertNoUnresolvedOrderPullEvidence, saveOrderPullEvidence, verifyCompletedOrderPullEvidence, readOrderPullEvidenceStore } from '../../shared/smartsheetOrderPullEvidenceStore.mjs';
+import { findUnresolvedOrderEvidencePair, compareUnresolvedOrderEvidenceRow } from '../../shared/smartsheetOrderPullRowReview.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -2435,7 +2436,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -2450,6 +2451,95 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const verified=await base44.asServiceRole.entities.GlobalSettings.get(record.id);
       if(verified.setting_value?.stale_recovered_at!==at)throw new Error('Sales recovery could not be verified.');
       return Response.json({success:true,recovered:true,status:verified.setting_value});
+    }
+
+    if (action === 'review_unresolved_order_pull_row') {
+      // Order Form admin read-only diagnostics. No sync coordinator claim,
+      // snapshot advancement, marker clearing, relinking, or retry is allowed.
+      if (adminActor?.role !== 'admin' || !hasSessionToken) {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      const requestedRun = cleanText(body?.run_started_at, 80);
+      const orderId = cleanText(body?.order_id, 100);
+      const rowId = cleanText(body?.smartsheet_row_id, 40);
+      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+      const evidence = evidenceRecord?.setting_value;
+      const sheetId = cleanText(evidence?.smartsheet_sheet_id, 40);
+      const match = findUnresolvedOrderEvidencePair(evidence, {
+        runStartedAt: requestedRun, orderId, rowId, sheetId,
+      });
+      if (!match) {
+        return Response.json({ success: false,
+          error: 'This exact permanent Order/Smartsheet row pair is not part of the active unresolved evidence. Refresh the review; nothing changed.' }, { status: 409 });
+      }
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const bindings = profile.column_bindings || {};
+      if (duplicateCount !== 1 || cleanText(profile.smartsheet_sheet_id, 40) !== sheetId ||
+          !Object.values(bindings).some((id: any) => /^\\d+$/.test(String(id ?? '').trim()))) {
+        return Response.json({ success: false,
+          error: 'Order sheet configuration no longer matches the unresolved evidence. No comparison was claimed.' }, { status: 409 });
+      }
+
+      // Exact immutable IDs, not customer names or visual sheet positions.
+      const base44Order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
+      const remoteResponse = await smartsheetGet(`/sheets/${sheetId}/rows/${rowId}`, token);
+      const remoteRow = normalizeSheetRows({ rows: [remoteResponse.body] })[0] || null;
+      let report: any;
+      if (base44Order?.id && String(base44Order.id) === orderId &&
+          !base44Order.deleted && remoteRow?.id === rowId &&
+          String(base44Order.smartsheet_sheet_id ?? '') === sheetId &&
+          String(base44Order.smartsheet_row_id ?? '') === rowId) {
+        const dateAudit = auditOrderDateParity([base44Order], [remoteRow], bindings, sheetId);
+        if (dateAudit.counts.invalid_date_values > 0) {
+          report = { base44_order_id: orderId, smartsheet_row_id: rowId,
+            state: 'invalid_remote_dates', fields: [],
+            message: 'Smartsheet date translation is invalid. Review source cells; no write or snapshot change was attempted.' };
+        } else {
+          const rawFields = parseRowToFields(remoteRow, bindings, 'orders');
+          const expectedFields: Record<string, any> = {};
+          for (const [key, val] of Object.entries(rawFields)) {
+            if (val === '' && ['date_needed', 'date_ordered', 'date_received'].includes(key) &&
+                rawFields[orderDateOptionField(key)]) {
+              expectedFields[key] = '';
+              continue;
+            }
+            if (val === '' && ['date_needed_option', 'date_ordered_option', 'receipt_option'].includes(key) &&
+                ['date_needed', 'date_ordered', 'date_received'].some(dateKey =>
+                  orderDateOptionField(dateKey) === key && rawFields[dateKey])) {
+              expectedFields[key] = '';
+              continue;
+            }
+            const normalized = normalizePullValue(key, val);
+            if (normalized !== undefined) expectedFields[key] = normalized;
+          }
+          Object.assign(expectedFields, orderStatusFromPulledDates(
+            expectedFields, base44Order, /^\\d+$/.test(String(bindings?.status ?? '').trim()),
+          ));
+          report = compareUnresolvedOrderEvidenceRow({
+            base44Order, remoteRow, orderId, sheetId, rowId, expectedFields,
+            expectedSnapshot: buildOrderPullSnapshot(remoteRow, bindings),
+          });
+        }
+      } else {
+        report = compareUnresolvedOrderEvidenceRow({
+          base44Order, remoteRow, orderId, sheetId, rowId,
+        });
+      }
+
+      // A long-running read must not return stale data as an authoritative
+      // reconciliation after a different run or evidence mutation.
+      const current = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+      if (!sameStableValue(current?.setting_value, evidence) ||
+          current?.id !== evidenceRecord.id) {
+        return Response.json({ success: false,
+          error: 'Order evidence changed while reviewing. Reload before comparing again.' }, { status: 409 });
+      }
+      return Response.json({
+        success: true, read_only: true, writes_attempted: false, evidence_unresolved: true,
+        run_started_at: requestedRun, sheet_id: sheetId,
+        batch_number: match.batchNumber, batch_write_state: match.batchState, report,
+      });
     }
 
     if (action === 'recover_stale_order_run') {
