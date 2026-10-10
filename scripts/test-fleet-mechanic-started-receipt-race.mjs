@@ -48,7 +48,7 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
 }
 function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false}={}){
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
-    waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pauseGrantCheck:false,release:null};
+    waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
@@ -69,6 +69,10 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
       const next={...prior,...clone(patch)};store.receipts.set(id,next);return clone(next);
     },
     async updateMany(filter,operators){
+      if(operators?.$set?.status==='cancelled' && store.pauseCancelWrite){
+        store.pauseCancelWrite=false;
+        await new Promise(resolve=>store.pendingCancelWrites.push(resolve));
+      }
       const found=[...store.receipts.values()].filter(row=>matches(row,filter));
       for(const row of found){
         const next=clone(row);
@@ -179,17 +183,17 @@ test("late applied mechanic receipt cannot be downgraded by stale admin revocati
   const mechanic=call({action:"mutation_status",token,work_order_id:workId,
     mutation_action:"save",request_id:"request-original-123456"},client);
   await until("mechanic recovery dispatched",()=>store.pendingUpdates.length===1);
-  store.pauseGrantCheck=true;
+  store.pauseCancelWrite=true;
   const revoke=call({action:"admin_revoke_link",id:grantId},client);
-  await until("admin grant verification paused",()=>store.pendingGrantChecks.length===1);
+  await until("admin cancellation CAS paused",()=>store.pendingCancelWrites.length===1);
   assert.equal(store.receipts.get(previous.id).status,"started");
   store.pendingUpdates.shift()();
   await until("mechanic receipt applied after commit",()=>store.receipts.get(previous.id).status==="applied");
-  store.pendingGrantChecks.shift()();
+  store.pendingCancelWrites.shift()();
   const result=await revoke;
   const late=await mechanic;
   assert.equal(result.code,200);
-  assert.equal(result.body.reconciled_applied,1,`Admin must report the newer durable outcome: ${JSON.stringify(result.body)} latest=${JSON.stringify(store.receipts.get(previous.id))}`);
+  assert.equal(result.body.reconciled_applied,1,"Admin must report the newer durable outcome");
   assert.equal(result.body.reconciled_cancelled,0);
   assert.equal(late.code,403);
   assert.equal(store.receipts.get(previous.id).status,"applied","Stale admin cancellation must not replace durable applied evidence");
