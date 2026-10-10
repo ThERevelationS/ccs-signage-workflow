@@ -50,14 +50,15 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
     waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
     pauseWorkRead:false,pendingWorkReads:[],sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
-    pauseReleaseWrite:false,pendingReleaseWrites:[],release:null};
+    pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
   let receiptSequence=0;
   const matches=(row,filter)=>Object.entries(filter||{}).every(([key,value])=>{
     const current=key.split('.').reduce((item,part)=>item?.[part],row);
-    return value&&typeof value==="object"&&"$in" in value?value.$in.includes(current):current===value;
+    if(value&&typeof value==="object"&&"$in" in value) return value.$in.includes(current);
+    return Array.isArray(value) ? JSON.stringify(current)===JSON.stringify(value) : current===value;
   });
   const receipts={
     async get(id){
@@ -84,6 +85,10 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
       if(operators?.$set?.['result_summary.retry_reservation_released_at'] && store.pauseReleaseWrite){
         store.pauseReleaseWrite=false;
         await new Promise(resolve=>store.pendingReleaseWrites.push(resolve));
+      }
+      if(operators?.$set?.['result_summary.uploaded_photo_urls'] && store.pausePhotoEvidenceWrite){
+        store.pausePhotoEvidenceWrite=false;
+        await new Promise(resolve=>store.pendingPhotoEvidenceWrites.push(resolve));
       }
       const found=[...store.receipts.values()].filter(row=>matches(row,filter));
       for(const row of found){
