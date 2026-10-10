@@ -3,6 +3,19 @@ import { mapSalesTaskToStage } from './salesTaskStageCatalog.mjs';
 import { isLegacyTerminalSmartsheetSalesRecord } from './historicalSalesOutcomeReconciliation.mjs';
 
 const same = (a, b) => String(a ?? '').trim() === String(b ?? '').trim();
+
+// A user-confirmed Sales stage movement is not permission for a later
+// Smartsheet pull to reverse it merely because the *task text* still equals
+// the old remote snapshot. Only a verified Sales stage-change timestamp counts
+// as local stage evidence; never infer it from generic WorkOrder timestamps.
+export function hasUnverifiedSalesStageChangeSinceSync(record) {
+  if (record?.in_pipeline !== true) return false;
+  const stageAt = Date.parse(String(record?.sales_stage_changed_at || ''));
+  if (!Number.isFinite(stageAt)) return false;
+  const syncAt = Date.parse(String(record?.smartsheet_last_synced_at || ''));
+  return !Number.isFinite(syncAt) || stageAt > syncAt;
+}
+
 // Reconcile inbound fields independently. Missing data may be filled without
 // allowing an unrelated local edit to freeze the entire row.
 export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
@@ -88,6 +101,10 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
   const needsStageChange = mapped.kind === 'stage' && mapped.status !== currentStatus;
   const canAutoTransition = needsStageChange &&
     activeStatuses.includes(currentStatus) && activeStatuses.includes(mapped.status) &&
+    // A verified local stage move since the last full Smartsheet sync takes
+    // precedence over a later remote task disagreement. Hold for review and
+    // keep other independently safe fields flowing.
+    !hasUnverifiedSalesStageChangeSinceSync(record) &&
     known && !locallyEdited && !isLegacyTerminalSmartsheetSalesRecord(record) &&
     !plan.held.includes('current_task_description') &&
     Object.prototype.hasOwnProperty.call(plan.fields, 'current_task_description');
