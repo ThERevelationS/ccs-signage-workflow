@@ -1,0 +1,16 @@
+{
+  "locality_id": "6ac96cc5b42e6e5c9417704c",
+  "observed_on": "2026-10-09",
+  "source_method": "Township retained HTML referral plus official county PDF search-index excerpt; county original retrieval blocked HTTP 403",
+  "county_referral_url": "https://www.hamilton-co.org/government/departments/planning_and_development",
+  "submission_guide_url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2025/how_to_zoning_certification_application.pdf",
+  "coverage_exception_candidate": "Search-indexed 2025 county guide lists Miami Township except Northwestern Miami; boundary and present applicability unverified. Do not route every Miami Township job to county zoning.",
+  "standalone_sign_form_verified": false,
+  "online_sign_submission_verified": false,
+  "original_pdf_retained": false,
+  "currentness_approved": false,
+  "coverage_approved": false,
+  "electrical_permit_issuer_approved": false,
+  "electrical_inspector_approved": false,
+  "live_records_changed": 0
+}

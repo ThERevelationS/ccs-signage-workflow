@@ -1738,7 +1738,19 @@
       "Retained township page describes Hamilton County zoning routing for unincorporated territory. This is a research candidate; job-address coverage and current authority remain unapproved.",
       "North Bend mailing address does not establish Village of North Bend coverage.",
       "Sign application forms, current fees and online submission links remain collection gaps. No sign documents have been attached to this dossier.",
-      "Electrical permit issuance and electrical inspection offices require separate verification. County zoning routing does not approve either electrical role."
+      "Electrical permit issuance and electrical inspection offices require separate verification. County zoning routing does not approve either electrical role.",
+      "Search-indexed county 2025 guide lists Miami Township except Northwestern Miami. Boundary and present applicability are unverified; do not apply county zoning routing to every township job.",
+      "County referral and 2025 submission-guide original returned HTTP 403 on October 9. The PDF has not been downloaded; search excerpts are not an archived original or approved submission requirements."
+    ],
+    "references": [
+      {
+        "label": "Township-linked county Planning and Development \u2014 original retrieval HTTP 403",
+        "url": "https://www.hamilton-co.org/government/departments/planning_and_development"
+      },
+      {
+        "label": "County 2025 zoning submission guide PDF \u2014 download blocked HTTP 403; currentness unverified",
+        "url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2025/how_to_zoning_certification_application.pdf"
+      }
     ]
   }
 ]

@@ -398,3 +398,13 @@ test('Hamilton Miami research is isolated from Montgomery namesakes and keeps do
  const source=JSON.parse(readFileSync(root+'manifest.json')).sources.find(s=>s.file==='miami-hamilton-zoning.html');
  assert.equal(createHash('sha256').update(readFileSync(source.retained_path)).digest('hex'),receipt.source_sha256);
 });
+
+test('Hamilton Miami county referral preserves Northwestern exception and blocked originals',()=>{
+ const root='docs/official-evidence/ohio-miami-crosby-2026-10-07/miami-county-routing-2026-10-09/';
+ const review=JSON.parse(readFileSync(root+'routing-review.json')),manifest=JSON.parse(readFileSync(root+'manifest.json'));
+ const row=dossiers.find(d=>d.id===review.locality_id),html=render(row);
+ assert.equal(review.original_pdf_retained,false);assert.equal(review.coverage_approved,false);assert.equal(review.online_sign_submission_verified,false);
+ assert.ok(manifest.sources.every(s=>s.status==='original_retention_gap'&&s.error.includes('403')&&!s.sha256));
+ assert.match(html,/Northwestern Miami/);assert.match(html,/PDF has not been downloaded/);assert.ok(html.includes(review.submission_guide_url));assert.equal(row.resources.length,0);
+ assert.equal(render({...row,id:'69b1ff3561c6ae0615974020'}),'');
+});
