@@ -79,6 +79,9 @@ export default function ProductChecklistDialog({
   const deleteFocusRecoveryRef = useRef(false);
   const checklistCloseButtonRef = useRef(null);
   const saveRevisitButtonRef = useRef(null);
+  const completeButtonRef = useRef(null);
+  const validationFocusItemIdRef = useRef(null);
+  const completingWithoutChecklistRef = useRef(false);
 
   // Keep hierarchy indexes stable while unrelated dialog state changes. Long
   // checklists should only rebuild these O(n) structures when their source data changes.
@@ -442,6 +445,7 @@ export default function ProductChecklistDialog({
     }
 
     if (skippedSections.length > 0) {
+      validationFocusItemIdRef.current = null;
       const examples = skippedSections.slice(0, 3).join(", ");
       const extraCount = skippedSections.length - Math.min(skippedSections.length, 3);
       setValidationDialog({
@@ -507,6 +511,7 @@ export default function ProductChecklistDialog({
 
     const itemLabel = item.type === 'detail' ? 'detail' : 'checklist item';
     if (!item.approved_by) {
+      validationFocusItemIdRef.current = itemId;
       setValidationDialog({
         title: "Approver Required",
         message: `Select who approved this ${itemLabel} before setting its status.`
@@ -516,6 +521,7 @@ export default function ProductChecklistDialog({
 
     const selectedCondition = dropdownConditionByName.get(value);
     if (selectedCondition?.is_completed && !areChildrenComplete(itemId)) {
+      validationFocusItemIdRef.current = itemId;
       setValidationDialog({
         title: "Tasks Still Open",
         message: item.type === 'detail'
@@ -569,6 +575,7 @@ export default function ProductChecklistDialog({
     const status = checkIfComplete();
     
     if (!status.hasChecklist) {
+      completingWithoutChecklistRef.current = false;
       setNoChecklistWarning(true);
       return;
     }
@@ -585,6 +592,7 @@ export default function ProductChecklistDialog({
 
   const proceedWithCheckOff = async () => {
     if (isSaving) return;
+    completingWithoutChecklistRef.current = true;
     setNoChecklistWarning(false);
     // Preserve any local product edits and complete the SIP in the same
     // concurrency-safe write, even when the user explicitly overrides the
@@ -905,6 +913,11 @@ export default function ProductChecklistDialog({
     if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) cancelPendingNavigationFocus();
     return cancelPendingNavigationFocus;
   }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, workOrder?.id]);
+
+  // Warning dialogs must keep focus inside their modal while displayed.
+  useLayoutEffect(() => {
+    if (incompleteWarning || validationDialog || noChecklistWarning) cancelPendingNavigationFocus();
+  }, [incompleteWarning, validationDialog, noChecklistWarning]);
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -1235,7 +1248,8 @@ export default function ProductChecklistDialog({
   // When checklist edits remove a navigated match, clear the stale cursor and
   // highlight. Keep focus in place when its row remains visible.
   useEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) return;
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup ||
+        incompleteWarning || validationDialog || noChecklistWarning) return;
 
     if (focusedSearchId && !checklistSearchResults.some(({ item }) => item.id === focusedSearchId)) {
       setFocusedSearchId(null);
@@ -1253,7 +1267,8 @@ export default function ProductChecklistDialog({
         (needsInputPrimaryCount > 0 ? needsInputSummaryRef.current : checklistSearchInputRef.current)?.focus();
       }
     }
-  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, focusedSearchId,
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup,
+    incompleteWarning, validationDialog, noChecklistWarning, focusedSearchId,
     checklistSearchResults, needsInputNavigationIndex, focusedNeedsInputId,
     needsInputPrimaryItems, needsInputPrimaryCount]);
 
@@ -1261,7 +1276,8 @@ export default function ProductChecklistDialog({
   // row without a reliable blur event. Clear only a hidden result; do not take
   // focus away from a visible collapse button or another editor control.
   useEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) return;
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup ||
+        incompleteWarning || validationDialog || noChecklistWarning) return;
     const hiddenSearch = focusedSearchId &&
       !findRenderedChecklistItemElement([focusedSearchId])?.getClientRects().length;
     const hiddenNeedsInput = focusedNeedsInputId &&
@@ -1283,7 +1299,8 @@ export default function ProductChecklistDialog({
         : checklistSearchInputRef.current || checklistCloseButtonRef.current;
       destination?.focus();
     }
-  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, collapsedProducts,
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup,
+    incompleteWarning, validationDialog, noChecklistWarning, collapsedProducts,
     expandedItems, showCompletedItems, focusedSearchId, focusedNeedsInputId,
     needsInputPrimaryCount]);
 
@@ -2748,6 +2765,7 @@ export default function ProductChecklistDialog({
             )}
             {isRegistered && !workOrder.sip_completed && (
               <Button
+                ref={completeButtonRef}
                 onClick={handleCheckOff}
                 disabled={isSaving}
                 className="sm:flex-1 h-11 sm:h-10 bg-green-600 hover:bg-green-700 text-white"
@@ -2800,7 +2818,16 @@ export default function ProductChecklistDialog({
 
       {/* Incomplete Warning */}
       <AlertDialog open={!!incompleteWarning} onOpenChange={() => setIncompleteWarning(null)}>
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent
+          className="clay-card border-none"
+          onCloseAutoFocus={(event) => {
+            if (!isOpen) return;
+            event.preventDefault();
+            if (completeButtonRef.current?.isConnected && !completeButtonRef.current.disabled) {
+              completeButtonRef.current.focus();
+            }
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-orange-500" />
@@ -2882,7 +2909,21 @@ export default function ProductChecklistDialog({
 
       {/* Validation guidance */}
       <AlertDialog open={!!validationDialog} onOpenChange={(open) => { if (!open) setValidationDialog(null); }}>
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent
+          className="clay-card border-none"
+          onCloseAutoFocus={(event) => {
+            if (!isOpen) return;
+            event.preventDefault();
+            const itemId = validationFocusItemIdRef.current;
+            validationFocusItemIdRef.current = null;
+            const targetRow = itemId ? findRenderedChecklistItemElement([itemId]) : null;
+            const statusControl = targetRow?.querySelector('[aria-label^="Status for "]');
+            const focusTarget = statusControl?.getClientRects().length && !statusControl.disabled
+              ? statusControl
+              : checklistSearchInputRef.current || checklistCloseButtonRef.current;
+            if (focusTarget?.isConnected && !focusTarget.disabled) focusTarget.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -2900,7 +2941,20 @@ export default function ProductChecklistDialog({
 
       {/* No Checklist Warning */}
       <AlertDialog open={!!noChecklistWarning} onOpenChange={() => setNoChecklistWarning(null)}>
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent
+          className="clay-card border-none"
+          onCloseAutoFocus={(event) => {
+            if (!isOpen) return;
+            event.preventDefault();
+            if (completingWithoutChecklistRef.current) {
+              completingWithoutChecklistRef.current = false;
+              return;
+            }
+            if (completeButtonRef.current?.isConnected && !completeButtonRef.current.disabled) {
+              completeButtonRef.current.focus();
+            }
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-yellow-500" />
