@@ -30,6 +30,13 @@ assert.equal(findUnresolvedOrderEvidencePair({ ...data, batch_evidence: {
   attempted_batches: 2, recent_batches: [
     data.batch_evidence.recent_batches[0],
     { batch_number: 2, state: 'write_uncertain',
+      base44_order_ids: ['o-c'], smartsheet_row_ids: ['101'] },
+  ],
+} }, args), null, 'Duplicate Smartsheet permanent row assigned to two Orders must block comparison');
+assert.equal(findUnresolvedOrderEvidencePair({ ...data, batch_evidence: {
+  attempted_batches: 2, recent_batches: [
+    data.batch_evidence.recent_batches[0],
+    { batch_number: 2, state: 'write_uncertain',
       base44_order_ids: ['o-a'], smartsheet_row_ids: ['101'] },
   ],
 } }, args), null);
