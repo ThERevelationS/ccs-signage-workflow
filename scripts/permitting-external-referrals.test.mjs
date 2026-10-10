@@ -39,7 +39,7 @@ test('cross-host embedded document and online form references are inventoried wi
 });
 test('scanner saves referrals atomically with frontier but never puts them in download candidates',async()=>{
  const fetched=[];const scan=await scanOfficialPermittingPages({seedUrl:seed,maxPages:1,fetchPage:async url=>{fetched.push(url);return{html,finalUrl:url};}});
- assert.deepEqual(fetched,[seed]);assert.equal(scan.external_fetches,0);assert.equal(scan.external_referrals.length,4);
+ assert.deepEqual(fetched,[seed]);assert.equal(scan.external_requests_scheduled,0);assert.equal(scan.external_referrals.length,4);
  assert(scan.documents.every(d=>d.url.startsWith('https://city.gov/')));
  assert(scan.pending_pages.every(p=>p.url.startsWith('https://city.gov/')));
  assert.equal(scan.external_referrals_require_review,true);assert.equal(scan.jurisdiction_coverage_complete,false);
@@ -77,7 +77,7 @@ test('guarded continuation persists referrals without editing unrelated document
  let row={id:'fixture',state:'OH',permitting_url:seed,website_url:'https://city.gov',updated_date:'v1',documents:[],permit_requirements:{keep:true},discovery_scan_state:first.continuation_state},writes=0;
  const entity={get:async()=>structuredClone(row),updateMany:async(q,p)=>{assert.equal(q.updated_date,'v1');writes++;row={...row,...p.$set,updated_date:'v2'};return{updated:1};}};
  const result=await continueKnownDiscovery({entity,jurisdictionId:'fixture',invalidateProfile:(p,next)=>next,fetchPage:async url=>({html,finalUrl:url})});
- assert.equal(writes,1);assert.equal(result.external_referrals,4);assert.equal(result.external_fetches,0);
+ assert.equal(writes,1);assert.equal(result.external_referrals,4);assert.equal(result.external_requests_scheduled,0);
  assert.equal(row.discovery_scan_state.external_referrals.length,4);assert.deepEqual(row.permit_requirements,{keep:true});
  assert(row.documents.every(d=>d.url.startsWith('https://city.gov/')));
 });
@@ -90,7 +90,7 @@ test('retained Ohio official pages replay through the shared referral scanner',a
  let total=0;
  for(const [path,url] of sources){
   const markup=readFileSync(path,'utf8'),scan=await scanOfficialPermittingPages({seedUrl:url,maxPages:1,fetchPage:async link=>{assert.equal(link,url);return{html:markup,finalUrl:link};}});
-  assert.equal(scan.external_fetches,0);assert.equal(scan.authority_established,false);
+  assert.equal(scan.external_requests_scheduled,0);assert.equal(scan.authority_established,false);
   for(const row of scan.external_referrals){assert.equal(row.source_page_sha256,sha(markup));assert.equal(row.source_page_url,url);assert.equal(row.fetch_scope_approved,false);}
   total+=scan.external_referrals.length;
  }

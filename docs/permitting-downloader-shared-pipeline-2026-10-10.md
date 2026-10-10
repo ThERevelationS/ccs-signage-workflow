@@ -32,3 +32,10 @@ No production records, files or dispatcher settings were changed by tests. No LL
 ## Next coherent Downloader batch
 
 Expose external resources linked directly by an official locality page as a provenance-bound referral inventory. Distinguish document CDN, delegated department, publisher and online form destinations. Preserve source-page and exact-link provenance; never infer regulatory authority from a shared hosting hostname. Then connect verified document-host scope to archival without loosening the existing SSRF or locality-identity checks.
+
+
+## External referral inventory implemented after the initial batch
+
+The shared scanner now captures external links in discovery_scan_state.external_referrals. This inventory is provenance-bound to its official page, resolution base, original href and page SHA-256. It does not populate JurisdictionProfile.documents or expand the same-host frontier. Category labels are hints, not host ownership or regulatory approval. Existing source, identity, version and manual-protection guards persist the cursor atomically.
+
+Replay of retained Sharonville, Symmes Township and Cincinnati pages found 8 external references. No fresh network verification is claimed. The next implementation step is scoped direct-document retrieval, preserving source locality and redirect provenance, followed by original-byte archive validation and catalog registration. Review displays and automatic cross-host archival are not completed in this batch.

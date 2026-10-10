@@ -138,7 +138,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && attempted === 0 && !pendingPages.length), documents: [...documents.values()], pages, external_referrals:referrals, external_referrals_require_review:referrals.length>0,
     pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume), recovering_link_limits: recoverLinkLimits, recovering_fetch_failures: recoverFetchFailures, recovering_depth_url: recoverDepthUrl,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
-    jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0, external_fetches:0,
+    jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0, external_requests_scheduled:0,
     limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',
       'PDF classification is a routing hint; full original-byte verification occurs during archival.',
       'Saved failed pages and depth/link gaps require separate review; traversal completion does not establish locality coverage.'] };

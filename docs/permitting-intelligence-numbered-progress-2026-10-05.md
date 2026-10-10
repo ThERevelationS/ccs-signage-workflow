@@ -1248,3 +1248,14 @@ Phase 10, milestone 2 of 3 remains active. Shifted this batch from individual-lo
 Verified four retained Deer Park/Elmwood Place Office originals through isolated download/upload/readback. All 130 focused Downloader/discovery/archive/catalog/continuation tests pass. Tests made no production record writes, Integration uploads or LLM calls. No publication or dispatcher changes. Full Word/Excel content parsing and external-host discovery remain gaps, not completed features.
 
 Pipeline status and next implementation plan: docs/permitting-downloader-shared-pipeline-2026-10-10.md. Next: provenance-bound external document-host, department, publisher and online-form referral discovery; preserve SSRF and locality isolation while making legitimate external document links visible to collection.
+
+
+### 2026-10-10 — Shared Downloader external referral discovery
+Phase 10, milestone 2 of 3 remains active. The deterministic scanner now inventories relevant external documents, code publishers, online forms and department references linked by an official source page, including embedded resources. Each observation records source page, exact decoded href, resolution base, source-page SHA-256 and classification. External references stay separate from document candidates and same-host crawl queues. The scanner schedules zero external requests; backend redirect behavior remains governed by the existing safe fetcher and same-host final-URL check.
+
+The inventory persists in the existing guarded discovery cursor, supports legacy cursors, preserves separate source pages for a repeated target, replaces removed links on a successful reread, and retains earlier observations after a fetch failure. Tampered link identity/approval fields and storage overflow require review without discarding prior saved progress. Public-link syntax screening is not a DNS/ownership or authority check.
+
+All 160 focused tests pass; refreshJurisdiction and permittingResearchBacklogDispatch backend bundles pass. Retained official HTML replay captures 8 referrals: Sharonville 3, Symmes Township 2, Cincinnati 3. This is historical-source replay, not a current HTTP verification or new original download. No production records, dispatcher settings, Integration uploads or LLM calls changed; nothing published.
+
+Evidence: docs/permitting-external-referral-replay-2026-10-10.json. Reusable replay: scripts/replay-permitting-external-referrals.mjs.
+Next: connect directly linked external document originals to scoped retrieval and archive verification, with redirect provenance and source-locality isolation; keep publisher/department/online-form referrals distinct.
