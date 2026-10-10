@@ -56,7 +56,7 @@ console.log('PASS independent evidence maps permanent ID pairs, hides verified r
 
 const page = readFileSync('src/pages/OrderForm.jsx', 'utf8');
 const component = readFileSync('src/components/orders/OrderIndependentPullEvidence.jsx', 'utf8');
-assert.match(page, /<OrderIndependentPullEvidence currentUser=\{currentUser\} \/>/);
+assert.match(page, /<OrderIndependentPullEvidence currentUser=\{currentUser\} sessionToken=\{sessionToken\} \/>/);
 assert.ok(page.indexOf('<OrderIndependentPullEvidence') < page.indexOf('<OrderSpreadsheet'));
 assert.match(component, /const isAdmin = currentUser\?\.role === 'admin'/);
 assert.match(component, /if \(!isAdmin\) \{/);
@@ -69,7 +69,10 @@ assert.match(component, /Smartsheet row ID/);
 assert.match(component, /Base44 Order ID/);
 assert.match(component, /role=\{view\.kind === 'unresolved' \|\| view\.kind === 'invalid'/);
 assert.match(component, /onClick=\{\(\) => setRefreshKey\(value => value \+ 1\)\}/);
-assert.doesNotMatch(component, /\.create\(|\.update\(|\.delete\(|\.invoke\(/);
+assert.doesNotMatch(component, /\.create\(|\.update\(|\.delete\(/);
+assert.match(component, /action: 'review_unresolved_order_pull_row'/);
+assert.match(component, /data\.read_only !== true \|\| data\.writes_attempted !== false/);
+assert.match(component, /Comparison does not clear the review lock or retry any write/);
 const widget = readFileSync('src/components/admin/SmartsheetSyncWidget.jsx', 'utf8');
 assert.match(widget, /orderFormSyncStatusRelevant\(status\)/);
 console.log('PASS only Order Form admins read and display the independent evidence; read-only mobile panel survives Sales coordinator changes without touching shared widgets');
