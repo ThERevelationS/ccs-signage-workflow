@@ -68,6 +68,15 @@ export default function ProductChecklistDialog({
   const customStatusDraftsByItemIdRef = useRef(new Map());
   const otherPopupFocusItemIdRef = useRef(null);
   const otherPopupDismissedRef = useRef(false);
+  // Transient custom-status drafts belong only to the current Work Order.
+  useEffect(() => {
+    customStatusDraftsByItemIdRef.current.clear();
+    otherPopupValidationReturnRef.current = null;
+    otherPopupFocusItemIdRef.current = null;
+    otherPopupDismissedRef.current = false;
+    setCustomDropdownValue("");
+    setShowOtherPopup(null);
+  }, [workOrder?.id]);
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
