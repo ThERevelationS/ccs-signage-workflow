@@ -106,8 +106,16 @@ export default function UserManagement() {
   const [deletionImpactReport, setDeletionImpactReport] = useState(null);
   const [deletionImpactLoading, setDeletionImpactLoading] = useState(false);
   const [deletionImpactError, setDeletionImpactError] = useState("");
+  const deletionImpactSequence = useRef(0);
 
   useEffect(() => {
+    // Every session change invalidates read-only scans from the previous
+    // identity, even when a new session token replaces the old one directly.
+    ++deletionImpactSequence.current;
+    setDeletionImpactRequest(null);
+    setDeletionImpactReport(null);
+    setDeletionImpactError("");
+    setDeletionImpactLoading(false);
     if (sessionToken) {
       void loadUsers();
       void loadDeletionRequests();
@@ -119,8 +127,6 @@ export default function UserManagement() {
       setDeletionRequests([]);
       setDeletionRequestsError(true);
       setDeletionRequestConfirm(null);
-      setDeletionImpactRequest(null);
-      setDeletionImpactReport(null);
       setIsLoading(false);
       setDeletionRequestsLoading(false);
     }
@@ -128,6 +134,7 @@ export default function UserManagement() {
     return () => {
       ++userLoadSequence.current;
       ++deletionRequestLoadSequence.current;
+      ++deletionImpactSequence.current;
     };
   }, [sessionToken]);
 
@@ -158,7 +165,13 @@ export default function UserManagement() {
 
   const loadDeletionRequests = async () => {
     const requestSequence = ++deletionRequestLoadSequence.current;
-    // A prior confirmation must not survive a refresh of its source record.
+    // A prior confirmation or impact scan cannot survive a refresh of its
+    // source record, including refreshes that fail or return a newer version.
+    ++deletionImpactSequence.current;
+    setDeletionImpactRequest(null);
+    setDeletionImpactReport(null);
+    setDeletionImpactError("");
+    setDeletionImpactLoading(false);
     setDeletionRequestConfirm(null);
     if (!sessionToken) {
       setDeletionRequestsError(true);
@@ -184,27 +197,41 @@ export default function UserManagement() {
   };
 
   const handleLoadDeletionImpact = async (request) => {
-    if (!request?.id || deletionImpactLoading || deletionRequestsLoading || deletionRequestsError || !sessionToken) return;
-    setDeletionImpactRequest(request);
+    // Only the currently verified request version may be scanned. A closed or
+    // superseded read never restores its report or error into a different view.
+    const verifiedRequest = deletionRequests.find(item =>
+      item.id === request?.id && item.updated_date === request?.updated_date);
+    if (!verifiedRequest || deletionImpactLoading || deletionRequestsLoading ||
+        deletionRequestsError || !sessionToken) return;
+    const requestSequence = ++deletionImpactSequence.current;
+    setDeletionImpactRequest(verifiedRequest);
     setDeletionImpactReport(null);
     setDeletionImpactError("");
     setDeletionImpactLoading(true);
     try {
-      const impact = await getAccountDeletionImpactAdmin({ request, sessionToken });
-      setDeletionImpactReport(impact);
-    } catch (error) {
-      console.error("Deletion impact review failed:", error);
-      setDeletionImpactError(error?.message || "Account deletion impact could not be reviewed safely.");
+      const impact = await getAccountDeletionImpactAdmin({ request: verifiedRequest, sessionToken });
+      if (requestSequence === deletionImpactSequence.current) {
+        setDeletionImpactReport(impact);
+      }
+    } catch {
+      if (requestSequence === deletionImpactSequence.current) {
+        // Do not display backend error details: impact errors may mention
+        // confidential employee identities or historical account references.
+        setDeletionImpactError("The read-only impact scan could not be verified. No records were changed. Retry the scan or close this review.");
+      }
     } finally {
-      setDeletionImpactLoading(false);
+      if (requestSequence === deletionImpactSequence.current) {
+        setDeletionImpactLoading(false);
+      }
     }
   };
 
   const closeDeletionImpact = () => {
-    if (deletionImpactLoading) return;
+    ++deletionImpactSequence.current;
     setDeletionImpactRequest(null);
     setDeletionImpactReport(null);
     setDeletionImpactError("");
+    setDeletionImpactLoading(false);
   };
 
   const formatImpactEntity = (name) => String(name || "")
@@ -1094,12 +1121,19 @@ export default function UserManagement() {
           </div>
 
           {deletionImpactLoading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <div role="status" className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" aria-hidden="true" />
+              Reviewing account impact...
             </div>
           ) : deletionImpactError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {deletionImpactError}
+            <div role="alert" aria-label="Account deletion impact unavailable" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+              <p>{deletionImpactError}</p>
+              <Button type="button" size="sm" variant="outline"
+                disabled={!sessionToken || deletionRequestsLoading || deletionRequestsError}
+                onClick={() => { void handleLoadDeletionImpact(deletionImpactRequest); }}
+                className="mt-3 min-h-10 border-amber-500 bg-white text-amber-950">
+                Retry impact scan
+              </Button>
             </div>
           ) : deletionImpactReport ? (
             <div className="space-y-4">
@@ -1203,7 +1237,7 @@ export default function UserManagement() {
           ) : null}
 
           <div className="flex justify-end">
-            <Button type="button" variant="outline" onClick={closeDeletionImpact} disabled={deletionImpactLoading}>
+            <Button type="button" variant="outline" onClick={closeDeletionImpact}>
               Close
             </Button>
           </div>
