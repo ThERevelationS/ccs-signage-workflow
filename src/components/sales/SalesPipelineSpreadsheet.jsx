@@ -1155,13 +1155,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingHistoryFieldsRef.current[orderId];
           delete pendingRecordScopesRef.current[orderId];
         }
+        const verifiedSameTaskRepair = pendingSameTaskRepairRef.current.delete(orderId);
+        if (verifiedSameTaskRepair && selectedWorkOrder?.id === orderId) {
+          // Only now is a corrected review eligible to leave the queue.
+          resolvedReviewExitRef.current = canKeepLocallyResolvedSalesReview({
+            selectedId: orderId, workOrderBefore: currentWo,
+            workOrderAfter: saved, attentionFilter,
+          }) ? { id: orderId, filterKey: reviewQueueFilterKey } : null;
+        }
         setWorkOrders((current) => current.map((row) => row.id === orderId ? {
           ...row,
+          ...(verifiedSameTaskRepair ? saved : {}),
           updated_date: saved.updated_date,
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : row));
         setSelectedWorkOrder((selected) => selected?.id === orderId ? {
           ...selected,
+          ...(verifiedSameTaskRepair ? saved : {}),
           updated_date: saved.updated_date,
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : selected);
@@ -1284,6 +1294,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
     debounceTimers.current = {};
     pendingChangesRef.current = {};
+    pendingSameTaskRepairRef.current.clear();
+    resolvedReviewExitRef.current = null;
     pendingBaselinesRef.current = {};
     pendingSalesGuardsRef.current = {};
     pendingHistoryFieldsRef.current = {};
