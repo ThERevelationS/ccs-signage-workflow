@@ -634,4 +634,81 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
   assert.equal(prevented, 3);
 });
 
+check("Other status transitions defer focus until popup close, including Completed rows", () => {
+  const statusBody = source.slice(source.indexOf("  const applyChecklistStatus = (itemId, value"),
+    source.indexOf("  const checkIfComplete ="));
+  assert.match(statusBody, /if \(!fromOtherPopup\) scheduleNavigationFocus/);
+  assert.match(completedSource, /openOtherPopup\(item\.id\)/);
+  assert.match(completedSource, /openOtherPopup\(stItem\.id\)/);
+  assert.match(source, /<ChecklistCompletedSection[\s\S]*?openOtherPopup=\{openOtherPopup\}/);
+  assert.doesNotMatch(completedSource, /setShowOtherPopup/);
+  const makeStatus = new Function("checklistItemById", "dropdownConditionByName",
+    "areChildrenComplete", "validationFocusItemIdRef", "setValidationDialog",
+    "setFocusedSearchId", "setFocusedNeedsInputId", "setChecklistSearchIndex",
+    "scheduleNavigationFocus", "checklistSearchInputRef", "updateChecklistItem",
+    statusBody + "\nreturn applyChecklistStatus;");
+  const item = { id: "A", approved_by: "Reviewer", custom_dropdown_value: "Continued" };
+  const conditions = new Map([
+    ["Continued", { is_completed: false }],
+    ["Completed", { is_completed: true }]
+  ]);
+  const events = [];
+  const setValue = value => events.push(["updated", value.custom_dropdown_value]);
+  const apply = makeStatus(new Map([["A", item]]), conditions, () => true,
+    { current: null }, () => events.push("warning"),
+    () => events.push("clear search"), () => events.push("clear needs"),
+    () => events.push("reset index"), () => events.push("timer"),
+    { current: { focus() {} } }, (id, updates) => { assert.equal(id, "A"); setValue(updates); });
+
+  assert.equal(apply("A", "Completed", { fromOtherPopup: true }), true);
+  assert.ok(events.includes("clear search"));
+  assert.ok(events.includes("reset index"));
+  assert.ok(events.some(e => Array.isArray(e) && e[1] === "Completed"));
+  assert.equal(events.includes("timer"), false);
+  item.custom_dropdown_value = "Completed";
+  events.length = 0;
+  assert.equal(apply("A", "Continued", { fromOtherPopup: true }), true);
+  assert.equal(events.includes("timer"), false);
+  item.custom_dropdown_value = "Continued";
+  events.length = 0;
+  assert.equal(apply("A", "Completed"), true);
+  assert.equal(events.filter(e => e === "timer").length, 1);
+});
+
+check("successful Other application clears draft and requests post-close focus", () => {
+  const customBody = source.slice(source.indexOf("  const handleCreateCustomValue = (itemId) => {"),
+    source.indexOf("  // Apply only genuinely new template content"));
+  const makeCustom = new Function("customDropdownValue", "otherPopupValidationReturnRef",
+    "customStatusInputRef", "applyChecklistStatus", "otherPopupDismissedRef",
+    "customStatusDraftsByItemIdRef", "setCustomDropdownValue", "setShowOtherPopup",
+    customBody + "\nreturn handleCreateCustomValue;");
+  const draftMap = { current: new Map([["A", "draft"]]) };
+  const dismissFlag = { current: false };
+  let cleared = 0, closed = 0;
+  const args = [ "  Completed  ", { current: null }, { current: {} },
+    () => false, dismissFlag, draftMap,
+    () => { cleared++; }, () => { closed++; } ];
+  makeCustom(...args)("A");
+  assert.equal(draftMap.current.get("A"), "draft");
+  assert.equal(cleared, 0);
+  assert.equal(closed, 0);
+  assert.equal(dismissFlag.current, false);
+  args[3] = (id, value, options) => {
+    assert.equal(id, "A");
+    assert.equal(value, "Completed");
+    assert.deepEqual(options, { fromOtherPopup: true });
+    return true;
+  };
+  makeCustom(...args)("A");
+  assert.equal(draftMap.current.has("A"), false);
+  assert.equal(dismissFlag.current, true);
+  assert.equal(cleared, 1);
+  assert.equal(closed, 1);
+  const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
+  const closeFlag = popup.indexOf("otherPopupDismissedRef.current = true;");
+  const clearDraft = popup.indexOf("customStatusDraftsByItemIdRef.current.delete(showOtherPopup.itemId)");
+  const closeModal = popup.indexOf("setShowOtherPopup(null);");
+  assert.ok(closeFlag > 0 && clearDraft > closeFlag && closeModal > clearDraft);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
