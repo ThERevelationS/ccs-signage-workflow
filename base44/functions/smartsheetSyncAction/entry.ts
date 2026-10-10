@@ -43,6 +43,8 @@ import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBa
 import { classifyPriorUncertainOrderPull } from '../../shared/smartsheetOrderPriorUncertainPull.mjs';
 import { assertNoUnresolvedOrderPullEvidence, saveOrderPullEvidence, verifyCompletedOrderPullEvidence, readOrderPullEvidenceStore } from '../../shared/smartsheetOrderPullEvidenceStore.mjs';
 import { findUnresolvedOrderEvidencePair, compareUnresolvedOrderEvidenceRow } from '../../shared/smartsheetOrderPullRowReview.mjs';
+import { planUnresolvedOrderBatchReview, summarizeUnresolvedOrderBatchPage } from '../../shared/smartsheetOrderPullBatchReview.mjs';
+import { buildOrderPullReadOnlyRowReport } from '../../shared/smartsheetOrderPullReviewMapping.ts';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -2436,7 +2438,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -2451,6 +2453,85 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const verified=await base44.asServiceRole.entities.GlobalSettings.get(record.id);
       if(verified.setting_value?.stale_recovered_at!==at)throw new Error('Sales recovery could not be verified.');
       return Response.json({success:true,recovered:true,status:verified.setting_value});
+    }
+
+    if (action === 'review_unresolved_order_pull_batch') {
+      // Admin-only. Each call compares at most 20 permanent-ID pairs from ONE
+      // recorded batch. No writes, coordinator claims or reconciliation.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      const runStartedAt = cleanText(body?.run_started_at, 80);
+      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+      const evidence = evidenceRecord?.setting_value;
+      const sheetId = cleanText(evidence?.smartsheet_sheet_id, 40);
+      let plan: any;
+      try {
+        plan = planUnresolvedOrderBatchReview(evidence, {
+          runStartedAt, sheetId, batchNumber: body?.batch_number,
+          offset: body?.offset ?? 0,
+        });
+      } catch (error: any) {
+        return Response.json({ success: false, error: error?.message || 'Unresolved Order batch evidence changed.' }, { status: 409 });
+      }
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const bindings = profile.column_bindings || {};
+      const columnIds = [...new Set(Object.values(bindings)
+        .map((id: any) => cleanText(id, 40))
+        .filter((id: string) => /^\\d+$/.test(id)))];
+      if (duplicateCount !== 1 || cleanText(profile.smartsheet_sheet_id, 40) !== sheetId || !columnIds.length) {
+        return Response.json({ success: false,
+          error: 'The Order sheet configuration no longer matches this unresolved batch.' }, { status: 409 });
+      }
+      const ids = plan.pairs.map((pair: any) => pair.orderId);
+      const rowIds = plan.pairs.map((pair: any) => pair.rowId);
+      const [orders, remoteResponse] = await Promise.all([
+        loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Order,
+          query: { id: { $in: ids } }, sort: 'id',
+          pageSize: 50, maxRows: 100,
+          label: 'Order Form read-only batch review permanent-ID Orders',
+        }),
+        smartsheetGet(`/sheets/${sheetId}?${new URLSearchParams({
+          rowIds: rowIds.join(','), columnIds: columnIds.join(','),
+          exclude: 'nonexistentCells',
+        }).toString()}`, token),
+      ]);
+      verifyOrderCreateAuditSheetIdentity(remoteResponse.body, sheetId);
+      if (!Array.isArray(remoteResponse.body?.rows)) {
+        throw new Error('Smartsheet did not return a verifiable row-ID-filtered response; no comparison was confirmed.');
+      }
+      const rows = normalizeSheetRows(remoteResponse.body);
+      const requestedIds = new Set(rowIds);
+      if (rows.length > rowIds.length || new Set(rows.map((row: any) => row.id)).size !== rows.length ||
+          rows.some((row: any) => !requestedIds.has(row.id))) {
+        throw new Error('Smartsheet returned unexpected or duplicate permanent row IDs in the batch review.');
+      }
+      const requestedOrders = new Set(ids);
+      if (orders.length > ids.length || new Set(orders.map((order: any) => String(order.id))).size !== orders.length ||
+          orders.some((order: any) => !requestedOrders.has(String(order.id)))) {
+        throw new Error('Base44 returned unexpected or duplicated permanent Order IDs in the batch review.');
+      }
+      const byOrderId = new Map(orders.map((order: any) => [String(order.id), order]));
+      const byRowId = new Map(rows.map((row: any) => [String(row.id), row]));
+      const reports = plan.pairs.map((pair: any) =>
+        buildOrderPullReadOnlyRowReport({
+          base44Order: byOrderId.get(pair.orderId) || null,
+          remoteRow: byRowId.get(pair.rowId) || null,
+          orderId: pair.orderId, rowId: pair.rowId, sheetId, bindings,
+        }),
+      );
+      const current = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+      if (!sameStableValue(current?.setting_value, evidence) || current?.id !== evidenceRecord.id) {
+        return Response.json({ success: false,
+          error: 'The unresolved Order batch changed during review. Discard partial results and refresh.' }, { status: 409 });
+      }
+      return Response.json({
+        success: true, read_only: true, writes_attempted: false, evidence_unresolved: true,
+        run_started_at: runStartedAt, sheet_id: sheetId,
+        ...summarizeUnresolvedOrderBatchPage(plan, reports),
+      });
     }
 
     if (action === 'review_unresolved_order_pull_row') {
