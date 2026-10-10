@@ -98,6 +98,8 @@ export default function UserManagement() {
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [deletionRequests, setDeletionRequests] = useState([]);
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
+  const [deletionRequestsError, setDeletionRequestsError] = useState(false);
+  const deletionRequestLoadSequence = useRef(0);
   const [deletionRequestConfirm, setDeletionRequestConfirm] = useState(null);
   const [deletionRequestSaving, setDeletionRequestSaving] = useState(false);
   const [deletionImpactRequest, setDeletionImpactRequest] = useState(null);
@@ -111,14 +113,22 @@ export default function UserManagement() {
       void loadDeletionRequests();
     } else {
       ++userLoadSequence.current;
+      ++deletionRequestLoadSequence.current;
       setUsers([]);
       setUserDirectoryError(true);
       setDeletionRequests([]);
+      setDeletionRequestsError(true);
+      setDeletionRequestConfirm(null);
+      setDeletionImpactRequest(null);
+      setDeletionImpactReport(null);
       setIsLoading(false);
       setDeletionRequestsLoading(false);
     }
     // Invalidate any response from a previous admin session on logout/change.
-    return () => { ++userLoadSequence.current; };
+    return () => {
+      ++userLoadSequence.current;
+      ++deletionRequestLoadSequence.current;
+    };
   }, [sessionToken]);
 
   const loadUsers = async () => {
@@ -147,21 +157,34 @@ export default function UserManagement() {
   };
 
   const loadDeletionRequests = async () => {
-    if (!sessionToken) return;
+    const requestSequence = ++deletionRequestLoadSequence.current;
+    // A prior confirmation must not survive a refresh of its source record.
+    setDeletionRequestConfirm(null);
+    if (!sessionToken) {
+      setDeletionRequestsError(true);
+      setDeletionRequestsLoading(false);
+      return null;
+    }
     setDeletionRequestsLoading(true);
     try {
       const requests = await listAccountDeletionRequestsAdmin({ sessionToken });
-      setDeletionRequests(requests);
-    } catch (error) {
-      console.error("Error loading account deletion requests:", error);
-      setDeletionRequests([]);
-      setUserMutationError(error?.message || "Account deletion requests could not be loaded safely.");
+      if (requestSequence === deletionRequestLoadSequence.current) {
+        setDeletionRequests(requests);
+        setDeletionRequestsError(false);
+      }
+      return requests;
+    } catch {
+      // An incomplete authenticated read cannot prove there are no requests.
+      // Retain the last verified list internally, but block all stale actions.
+      if (requestSequence === deletionRequestLoadSequence.current) setDeletionRequestsError(true);
+      return null;
+    } finally {
+      if (requestSequence === deletionRequestLoadSequence.current) setDeletionRequestsLoading(false);
     }
-    setDeletionRequestsLoading(false);
   };
 
   const handleLoadDeletionImpact = async (request) => {
-    if (!request?.id || deletionImpactLoading) return;
+    if (!request?.id || deletionImpactLoading || deletionRequestsLoading || deletionRequestsError || !sessionToken) return;
     setDeletionImpactRequest(request);
     setDeletionImpactReport(null);
     setDeletionImpactError("");
@@ -191,7 +214,7 @@ export default function UserManagement() {
   const handleResolveDeletionRequest = async () => {
     const request = deletionRequestConfirm?.request;
     const resolution = deletionRequestConfirm?.resolution;
-    if (!request?.id || !resolution || deletionRequestSaving) return;
+    if (!request?.id || !resolution || deletionRequestSaving || deletionRequestsLoading || deletionRequestsError || !sessionToken) return;
 
     setDeletionRequestSaving(true);
     setUserMutationError("");
@@ -557,7 +580,9 @@ export default function UserManagement() {
             <div>
               <h4 className="font-medium text-gray-800">Account Deletion Requests</h4>
               <p className="text-sm text-gray-500">
-                {deletionRequests.filter((request) => request.status === "pending").length} pending review
+                {deletionRequestsLoading ? "Loading requests..." : deletionRequestsError
+                  ? "Pending request count unavailable"
+                  : `${deletionRequests.filter((request) => request.status === "pending").length} pending review`}
               </p>
             </div>
           </div>
@@ -577,8 +602,22 @@ export default function UserManagement() {
         </p>
 
         {deletionRequestsLoading ? (
-          <div className="flex items-center justify-center py-6">
+          <div role="status" className="flex items-center justify-center gap-2 py-6 text-sm text-gray-500">
             <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            Loading account deletion requests...
+          </div>
+        ) : deletionRequestsError ? (
+          <div role="alert" aria-label="Account deletion requests unavailable" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+            <h3 className="font-semibold">Account deletion requests could not be loaded</h3>
+            <p className="mt-1 text-sm">
+              The request list could not be verified. Impact reviews and request decisions are paused until a successful refresh.
+              No request status was changed by this failed read.
+            </p>
+            <Button type="button" size="sm" variant="outline" disabled={!sessionToken}
+              onClick={() => { void loadDeletionRequests(); }}
+              className="mt-3 min-h-10 border-amber-500 bg-white text-amber-950">
+              Retry loading requests
+            </Button>
           </div>
         ) : deletionRequests.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white/50 p-4 text-sm text-gray-500">
@@ -623,7 +662,7 @@ export default function UserManagement() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      disabled={deletionImpactLoading || deletionRequestSaving}
+                      disabled={deletionImpactLoading || deletionRequestSaving || deletionRequestsLoading || deletionRequestsError || !sessionToken}
                       onClick={() => handleLoadDeletionImpact(request)}
                     >
                       Review Impact
@@ -634,7 +673,7 @@ export default function UserManagement() {
                           type="button"
                           size="sm"
                           variant="outline"
-                          disabled={deletionRequestSaving}
+                          disabled={deletionRequestSaving || deletionRequestsLoading || deletionRequestsError || !sessionToken}
                           onClick={() => setDeletionRequestConfirm({ request, resolution: "processed" })}
                         >
                           Mark Reviewed
@@ -644,7 +683,7 @@ export default function UserManagement() {
                           size="sm"
                           variant="outline"
                           className="border-red-200 text-red-700 hover:bg-red-50"
-                          disabled={deletionRequestSaving}
+                          disabled={deletionRequestSaving || deletionRequestsLoading || deletionRequestsError || !sessionToken}
                           onClick={() => setDeletionRequestConfirm({ request, resolution: "cancelled" })}
                         >
                           Cancel Request
@@ -1193,7 +1232,7 @@ export default function UserManagement() {
             <AlertDialogCancel disabled={deletionRequestSaving}>Back</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleResolveDeletionRequest}
-              disabled={deletionRequestSaving}
+              disabled={deletionRequestSaving || deletionRequestsLoading || deletionRequestsError || !sessionToken}
               className={deletionRequestConfirm?.resolution === "cancelled" ? "bg-red-600 text-white" : ""}
             >
               {deletionRequestSaving
