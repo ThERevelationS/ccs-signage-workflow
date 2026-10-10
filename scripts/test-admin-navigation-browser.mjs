@@ -14,7 +14,7 @@ const scratch = await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-'));
 let server, browser, passed = 0;
 
 const syntheticPanels = [
-  'FaceRecognition', 'GmailConnector', 'UserManagement',
+  'FaceRecognition', 'GmailConnector',
   'ProjectTrash', 'OrderTrash', 'TimeClockAdmin', 'TimeClockReportsDashboard',
   'ActivityFeed', 'PTOManagement', 'BackupManager', 'OvertimeRulesManager',
   'SalesPipelineDefaultSort', 'ResourceAllocationView', 'CorebridgeApiSettings',
@@ -25,7 +25,7 @@ const syntheticPanels = [
 ];
 const sources = [
   '../components/admin/GmailConnector',
-  '../components/admin/UserManagement', '../components/admin/ProjectTrash',
+  '../components/admin/ProjectTrash',
   '../components/admin/OrderTrash',
   '../components/timeclock/FaceRecognition', '../components/timeclock/TimeClockAdmin',
   '../components/timeclock/TimeClockReportsDashboard',
@@ -129,12 +129,48 @@ try {
       'import React from "react";export default function ' + name +
       '(){if(window.__adminPanelFailures?.includes("'+name+'"))throw new Error("synthetic-private-panel-error");return <div data-testid="synthetic-' + name + '">Synthetic ' + name + '</div>;}');
   }
+  await writeFile(path.join(scratch, 'mock-UserManagement.jsx'), [
+    'import React from "react";',
+    'import RealUserManagement from "/@fs' + path.join(appRoot, 'src/components/admin/UserManagement.jsx') + '";',
+    'export default function UserManagement(){',
+    'if(window.__adminPanelFailures?.includes("UserManagement"))throw Error("synthetic-private-panel-error");',
+    'return new URLSearchParams(location.search).get("real_users")==="1"?<RealUserManagement />:',
+    '<div data-testid="synthetic-UserManagement">Synthetic UserManagement</div>;',
+    '}',
+  ].join('\n'));
+  for (const name of ['UserQRCode','FaceEnrollmentDialog','UserHRDataForm']) {
+    await writeFile(path.join(scratch, 'mock-'+name+'.jsx'),
+      'import React from "react";export default function '+name+'(){return <div data-testid="synthetic-'+name+'"/>;}');
+  }
+  await writeFile(path.join(scratch, 'mockAuthorizedUserPersistence.js'), [
+    'const fail=()=>{throw Error("Unexpected synthetic user mutation");};',
+    'export const createAuthorizedUserAdmin=fail, deleteAuthorizedUserAdmin=fail;',
+    'export const updateAuthorizedUserAdmin=fail, updateAuthorizedUserHrAdmin=fail;',
+    'export const getAccountDeletionImpactAdmin=fail, resolveAccountDeletionRequestAdmin=fail;',
+    'export async function listAccountDeletionRequestsAdmin(){return [];}', 
+    'export async function listAuthorizedUsersAdmin(){',
+    ' window.__adminUserDirectoryAttempts=(window.__adminUserDirectoryAttempts||0)+1;',
+    ' const params=new URLSearchParams(location.search);',
+    ' if(window.__adminUserDirectoryFailure===true||(window.__adminUserDirectoryFailure!==false&&params.get("user_directory_fail")==="1"))',
+    ' throw Error("synthetic-private-user-directory-error");',
+    ' return params.get("user_rows")==="1"?',
+    ' [{id:"synthetic-person-1",email:"staff@example.invalid",full_name:"Synthetic Directory User",role:"user",updated_date:"synthetic"}]:[];',
+    '}',
+  ].join('\n'));
+  await writeFile(path.join(scratch, 'mockSetPassword.js'),
+    'export async function setPassword(){throw Error("Unexpected password change");}');
   const aliases = [
     {find:'@/api/base44Client',replacement:path.join(scratch,'mockData.js')},
     {find:'@/components/auth/EmailGate',replacement:path.join(scratch,'mockAuth.js')},
     {find:'@/functions/verifyLogin',replacement:path.join(scratch,'mockLogin.js')},
     {find:'@/components/admin/automationRulePersistence',replacement:path.join(scratch,'mockPersistence.js')},
     {find:'@/components/admin/emailGroupPersistence',replacement:path.join(scratch,'mockEmailGroupPersistence.js')},
+    {find:'../components/admin/UserManagement',replacement:path.join(scratch,'mock-UserManagement.jsx')},
+    {find:'@/components/admin/authorizedUserAdminPersistence',replacement:path.join(scratch,'mockAuthorizedUserPersistence.js')},
+    {find:'@/functions/setPassword',replacement:path.join(scratch,'mockSetPassword.js')},
+    {find:'@/components/timeclock/UserQRCode',replacement:path.join(scratch,'mock-UserQRCode.jsx')},
+    {find:'@/components/timeclock/FaceEnrollmentDialog',replacement:path.join(scratch,'mock-FaceEnrollmentDialog.jsx')},
+    {find:'@/components/user/UserHRDataForm',replacement:path.join(scratch,'mock-UserHRDataForm.jsx')},
     {find:'@/components/estimator/loadAllEntityRows',replacement:path.join(scratch,'mockEntityList.js')},
     ...sources.map((find) => ({
       find,
