@@ -55,8 +55,13 @@ export async function saveOrderPullEvidence(entity, { startedAt, sheetId, batchE
   }
   const current = await readOrderPullEvidenceStore(entity);
   const before = current?.setting_value;
-  if (before?.state === 'unresolved' && before.run_started_at !== startedAt) {
-    throw failure('A different Order pull has unresolved write evidence. Do not overwrite or retry it.');
+  if (before?.state === 'unresolved') {
+    if (before.run_started_at !== startedAt || before.smartsheet_sheet_id !== String(sheetId)) {
+      throw failure('A different Order pull or sheet has unresolved write evidence. Do not overwrite or retry it.');
+    }
+    if (Number(before.batch_evidence?.attempted_batches) > batchEvidence.attempted_batches) {
+      throw failure('Order pull batch evidence regressed. No further Order writes are allowed.');
+    }
   }
   if (current && (!before || !['unresolved', 'verified_complete'].includes(before.state))) {
     throw failure('The existing Order pull evidence state is unknown; no further writes are allowed.');
