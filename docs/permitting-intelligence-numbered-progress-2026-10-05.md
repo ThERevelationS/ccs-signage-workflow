@@ -1229,3 +1229,14 @@ Whitewater admin dossier now links county guide listing, actual Signs PDF link a
 Added reproducible read-only receipt audit and dated JSON/Markdown inventory: 26 recorded failed attempts across 24 exact URLs, including 17 document URLs. Every receipt path and total verified; diff check passed. Alias/candidate URLs remain distinct, not asserted equivalent originals. Historical failures are not a fresh HTTP status or a claim that subsequent recovery never occurred. Locality coverage/office approval remain separate. No requests repeated, live records modified or publication.
 
 Reports: docs/permitting-county-retrieval-gaps-2026-10-10.json and .md. Next: prioritize accessible Ohio locality originals, beginning with Woodlawn official forms/current source links; county recovery should use new official URLs/access evidence rather than repeat unchanged 403 requests. Milestone 2 remains active; statewide collection, catalog registration and live-browser acceptance remain open.
+
+
+### 2026-10-10 — Woodlawn complete sign-chapter web research and review panel
+Phase 10, milestone 2 of 3 remains active. Larger coherent locality batch: confirmed the existing Woodlawn village identity (6ac1a111ea485c76e4c8f201), examined all 16 Chapter 1292 section texts, and attached 21 source-linked findings to the exact-identity, admin-only municipal research panel. Added a web-findings display that explicitly distinguishes observations from retained originals and approved requirements.
+
+Compared Village county referral, county zoning intake, the February 18, 2025 digital permitting announcement, county IBI electrical routing, and historical 2007 electrical sign fee text. Preserved ground-sign frontage conflict, mistaken professional-sign cross-reference, missing fee amount in 1292.15, and the unassigned exactly-30-square-foot electrical fee boundary for staff review. IBI is a routing candidate; electrical issuance and inspection remain separate pending approvals.
+
+Three alternate original URLs returned HTTP 403; zero new originals retained. Historical manifests remain intact. Current fee amounts, application attachments, illustrations, later amendments, district/overlay applicability and electrical role confirmation remain open. No production entity writes and no publication.
+
+Validation: all 40 municipal research tests pass, including actual rendered web labels/links, access/identity isolation, missing-archive disclosure, and unapproved-role flags; git diff --check passes. Saved evidence: docs/official-evidence/ohio-woodlawn-2026-10-07/recovery-2026-10-10/web-review.json.
+Next: continue a similarly sized Springdale Ohio batch, reconciling its sign-code version conflict and application/electrical routing together. Statewide coverage is not complete.
