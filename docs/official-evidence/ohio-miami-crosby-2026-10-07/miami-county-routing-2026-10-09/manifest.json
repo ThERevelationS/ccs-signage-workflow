@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "file": "county-referral.html",
+      "official_url": "https://www.hamilton-co.org/government/departments/planning_and_development",
+      "observed_at": "2026-10-10T00:10:13.621171+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "county-zoning-submission-guide-2025.pdf",
+      "official_url": "https://www.hamiltoncountyohio.gov/UserFiles/Servers/Server_3788196/File/Government/Departments/Development%20Services/Applications%20and%20Forms/Zoning/2025/how_to_zoning_certification_application.pdf",
+      "observed_at": "2026-10-10T00:10:14.265260+00:00",
+      "status": "original_retention_gap",
+      "error": "HTTP Error 403: Forbidden"
+    }
+  ],
+  "staff_approved": false
+}
