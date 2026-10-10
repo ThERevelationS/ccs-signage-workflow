@@ -1,5 +1,6 @@
 export { NEUTRAL_CLOSED_TASK, SALES_TASK_STAGE_MAP, mapSalesTaskToStage } from "../../../base44/shared/salesTaskStageCatalog.mjs";
 import { mapSalesTaskToStage } from "../../../base44/shared/salesTaskStageCatalog.mjs";
+import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 
 // Won is a Sales outcome, not a freeze on downstream SIPs/WIP work.
 // Only known Won-family tasks qualify for continued operational task editing.
@@ -43,6 +44,19 @@ export function isSalesTransitionSnapshotCurrent(opened, current) {
     && opened.in_pipeline === current.in_pipeline
     && String(opened.current_task_description ?? "").trim() === String(current.current_task_description ?? "").trim()
     && String(opened.sales_neutral_closed_at ?? "").trim() === String(current.sales_neutral_closed_at ?? "").trim();
+}
+
+// Explicit repair of an existing mapped task/status mismatch. This only
+// plans an action; it does not change persisted WorkOrders or infer a modern
+// Won/Lost outcome from imported legacy task text.
+export function planExistingSalesTaskStatusReconciliation(workOrder) {
+  if (classifySalesTaskStatusAudit(workOrder).kind !== "modern_review") return null;
+  const status = String(workOrder?.sales_status || "").trim().toLowerCase();
+  if (!["lead", "quoted", "follow_up", "on_hold", "won", "lost"].includes(status)) return null;
+  const mapping = mapSalesTaskToStage(workOrder?.current_task_description);
+  if (mapping.kind !== "stage" || !mapping.status || mapping.status === status) return null;
+  const plan = planSalesTaskChange(workOrder, workOrder.current_task_description);
+  return ["save_stage_and_task", "confirm_transition"].includes(plan.action) ? plan : null;
 }
 
 export function planSalesTaskChange(workOrder, nextTaskDescription) {
