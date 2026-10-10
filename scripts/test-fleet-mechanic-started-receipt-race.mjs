@@ -218,6 +218,47 @@ test("unrelated retry provenance cannot unlock a reserved photo receipt",async()
   assert.equal(store.uploads.length,0);
 });
 
+test("stranded retry with substituted photo prefix stays blocked",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/substituted.jpg","https://files.example/owner-b.jpg",
+  ]});
+  const result=await call(payload("request-new-def-789012"),client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/still being verified/i);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+test("stranded retry cannot overwrite a changed Fleet work-order version",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  store.work.updated_date="version-7";
+  const result=await call(payload("request-new-def-789012",{expected_updated_date:"version-7"}),client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/still being verified/i);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+test("previously applied owner receipt releases stranded source without updating work again",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"applied",urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  const result=await call(payload("request-new-def-789012"),client);
+  assert.equal(result.code,409);
+  assert.equal(result.body.recovered_previous,true);
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+
 test("fresh new-id Save first recovers fully uploaded started receipt, never applies new work",async()=>{
   const original=payload("request-original-123456",{photos:[photoPayload,photoPayload]});
   const old=makeReceipt(original,{photos:["https://files.example/old-a.jpg","https://files.example/old-b.jpg"],count:2});
