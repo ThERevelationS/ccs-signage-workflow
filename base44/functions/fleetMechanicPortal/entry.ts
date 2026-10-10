@@ -149,14 +149,25 @@ async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
   const sourceId = String(receipt?.result_summary?.reused_upload_receipt_id || '').trim();
   if (!sourceId) return;
   const source = await Receipt.get(sourceId).catch(()=>null);
-  if (!source || source.status !== 'failed' || String(source.payload_fingerprint || '') !== String(receipt.payload_fingerprint || '')) return;
-  await Receipt.update(source.id,{
-    status:'applied',
-    applied_at:nowIso(),
-    failed_at:null,
-    error_message:'',
+  const owner = String(source?.result_summary?.retry_reserved_by_request_id || '');
+  const requestId = String(receipt?.result_summary?.request_id || '');
+  if (!source || !['failed','started'].includes(source.status) ||
+      (source.status === 'started' && (!owner || owner !== requestId)) ||
+      String(source.payload_fingerprint || '') !== String(receipt.payload_fingerprint || '')) return;
+  await Receipt.updateMany({id:source.id,status:source.status},{$set:{
+    status:'applied',applied_at:nowIso(),failed_at:null,error_message:'',
     result_summary:{...(source.result_summary || {}),resolved_by_operation_key:receipt.operation_key || '',resolved_by_retry:true},
-  }).catch(()=>null);
+  }}).catch(()=>null);
+}
+
+async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, requestId:string) {
+  if (!sourceId || !requestId) return;
+  const source = await Receipt.get(sourceId).catch(()=>null);
+  if (source?.status !== 'started' || String(source?.result_summary?.retry_reserved_by_request_id || '') !== requestId) return;
+  await Receipt.updateMany({id:source.id,status:'started'},{$set:{
+    status:'failed',
+    result_summary:{...(source.result_summary || {}),retry_reserved_by_request_id:'',retry_reservation_released_at:nowIso()},
+  }}).catch(()=>null);
 }
 
 function mechanicActionForReceipt(receipt:any) {
@@ -651,6 +662,12 @@ Deno.serve(async (req) => {
         return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'applied',request_id:requestId,recovered:receipt.status !== 'applied'});
       }
       if (receipt.status === 'started') {
+        if (receipt?.result_summary?.retry_reserved_by_request_id || receipt?.result_summary?.retry_reservation_required) {
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{
+            success:true,status:'started',request_id:requestId,
+            error_message:'A mechanic photo retry is still being verified. CCS must review an interrupted retry before it can be repeated.',
+          });
+        }
         if (!ACTIVE.has(current.status)) {
           const message = 'The Fleet work order is no longer active, so this interrupted mechanic request was not resumed.';
           await failMechanicReceipt(Receipt,receipt,message);
@@ -734,6 +751,9 @@ Deno.serve(async (req) => {
           continue;
         }
         if (String(receipt?.result_summary?.grant_id || '') !== String(grant.id || '')) continue;
+        if (receipt?.result_summary?.retry_reserved_by_request_id || receipt?.result_summary?.retry_reservation_required) {
+          return json({error:'An interrupted mechanic photo retry is still being verified. CCS must confirm its outcome before another Save.'},{status:409});
+        }
         if (!ACTIVE.has(current.status)) {
           await failMechanicReceipt(Receipt,receipt,'The Fleet work order is no longer active, so the interrupted mechanic request was not resumed.');
           continue;
