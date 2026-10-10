@@ -172,6 +172,53 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("late applied mechanic receipt cannot be downgraded by stale admin revocation cancellation",async()=>{
+  const previous=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:previous,holdUpdates:true});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const mechanic=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:"request-original-123456"},client);
+  await until("mechanic recovery dispatched",()=>store.pendingUpdates.length===1);
+  store.pauseGrantCheck=true;
+  const revoke=call({action:"admin_revoke_link",id:grantId},client);
+  await until("admin grant verification paused",()=>store.pendingGrantChecks.length===1);
+  assert.equal(store.receipts.get(previous.id).status,"started");
+  store.pendingUpdates.shift()();
+  await until("mechanic receipt applied after commit",()=>store.receipts.get(previous.id).status==="applied");
+  store.pendingGrantChecks.shift()();
+  const result=await revoke;
+  const late=await mechanic;
+  assert.equal(result.code,200);
+  assert.equal(result.body.reconciled_applied,1,"Admin must report the newer durable outcome");
+  assert.equal(result.body.reconciled_cancelled,0);
+  assert.equal(late.code,403);
+  assert.equal(store.receipts.get(previous.id).status,"applied","Stale admin cancellation must not replace durable applied evidence");
+  assert.equal(store.receipts.get(previous.id).result_summary.admin_reconciled_not_applied,undefined);
+  assert.equal(store.updates,1);
+});
+test("admin cancellation retains photo URLs recorded after its initial receipt snapshot",async()=>{
+  const interrupted=makeReceipt(payload("request-original-123456",{photos:[photoPayload]}),{
+    status:"started",count:1,photos:[],
+  });
+  const {store,client,receipts}=setup({receipt:interrupted});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseGrantCheck=true;
+  const admin=call({action:"admin_revoke_link",id:grantId},client);
+  await until("stale admin grant verification",()=>store.pendingGrantChecks.length===1);
+  const fresh=store.receipts.get(interrupted.id);
+  await receipts.update(interrupted.id,{
+    result_summary:{...fresh.result_summary,uploaded_photo_urls:["https://files.example/photo-uploaded-during-revocation.jpg"]},
+  });
+  store.pendingGrantChecks.shift()();
+  const result=await admin;
+  assert.equal(result.body.reconciled_cancelled,1);
+  const saved=store.receipts.get(interrupted.id);
+  assert.equal(saved.status,"cancelled");
+  assert.deepEqual(saved.result_summary.uploaded_photo_urls,["https://files.example/photo-uploaded-during-revocation.jpg"]);
+  assert.equal(saved.result_summary.admin_reconciled_not_applied,true);
+  assert.equal(store.updates,0);
+});
+
 test("revocation during a dispatched mechanic photo retry preserves the receipt pair until late commit",async()=>{
   const original=payload("request-original-123456",{photos:[photoPayload,photoPayload]});
   const previous=makeReceipt(original,{status:"failed",photos:["https://files.example/old-a.jpg"],count:2});
