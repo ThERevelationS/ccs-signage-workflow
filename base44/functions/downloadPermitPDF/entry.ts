@@ -1,3 +1,4 @@
+import { validatePermitDocumentBytes } from '../../shared/permittingDocumentValidation.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { patchJurisdictionDocuments } from '../../shared/jurisdictionPersistence.mjs';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
@@ -156,10 +157,7 @@ Deno.serve(async (req) => {
     if (fileBytes.byteLength === 0) {
       return Response.json({ error: 'Downloaded file is empty' }, { status: 400 });
     }
-    if ((ext === 'pdf' || /application\/pdf/i.test(contentType)) &&
-        new TextDecoder().decode(fileBytes.slice(0, 5)) !== '%PDF-') {
-      return Response.json({ error: 'Source did not return a valid PDF document' }, { status: 415 });
-    }
+    validatePermitDocumentBytes(fileBytes, {format: ext, contentType});
 
     if (expectedBytes > 0 && fileBytes.byteLength !== expectedBytes) {
       return Response.json({ error: `Official source changed size since archival (${fileBytes.byteLength} bytes received; ${expectedBytes} expected). Re-verify before live ingest.` }, { status: 409 });
