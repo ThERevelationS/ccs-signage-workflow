@@ -1,3 +1,4 @@
+import { createExternalPermittingReferral } from './permittingExternalReferrals.mjs';
 import { hasClassifiedPdfResource } from './permittingResourceResponse.mjs';
 const RELEVANT_LINK_RE = /\b(signs?|zoning|permits?|applications?|apply|forms?|fees?|checklists?|submittals?|building|electrical|electric|inspections?|inspectors?|development|ordinances?|codes?|regulations?|resolutions?|variances?|conditional use)\b/i;
 const DOWNLOADABLE_RE = /\.(pdf|doc|docx|xls|xlsx|csv|txt)(?:$|[?#])/i;
@@ -49,7 +50,7 @@ export function permittingDocumentType({ title = '', url = '' } = {}) {
   return 'other';
 }
 
-function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offset = 0 } = {}) {
+function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offset = 0, externalOnly = false } = {}) {
   let page;
   try { page = new URL(String(pageUrl || '').trim()); } catch { return []; }
   if (!['http:', 'https:'].includes(page.protocol) || page.username || page.password) return [];
@@ -69,7 +70,7 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
   const results = [];
   const seen = new Set();
   page.hash = '';
-  if (/\b(forms?|permits?|apply|applications?)\b/i.test(linkWords(page.pathname + page.search))) {
+  if (!externalOnly && /\b(forms?|permits?|apply|applications?)\b/i.test(linkWords(page.pathname + page.search))) {
     seen.add(page.href);
     results.push({
       title: 'Official permitting/forms page',
@@ -100,8 +101,8 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
     if (!rawHref || rawHref.startsWith('#') || /^(javascript:|mailto:|tel:)/i.test(rawHref)) continue;
     let target;
     try { target = new URL(rawHref, base); } catch { continue; }
-    if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password || target.port !== page.port) continue;
-    if (normalizedHost(target.hostname) !== normalizedHost(page.hostname)) continue;
+    if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password || (externalOnly ? Boolean(target.port) : target.port !== page.port)) continue;
+    if ((normalizedHost(target.hostname) !== normalizedHost(page.hostname)) !== externalOnly) continue;
     target.hash = '';
     const title = decodeHtmlText(link.label);
     // Use the raw href: an inherited /zoning/ directory must not make Home,
@@ -111,6 +112,12 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
     if (/\b(house number|house numbering|address assignment|nondiscrimination|fraud|waste and abuse|employment|careers?|jobs?|newsletters?|e alerts?|subscribe|sign up)\b/i.test(relevance)) continue;
     if (seen.has(target.href)) continue;
     seen.add(target.href);
+    if (externalOnly) {
+      const referral = createExternalPermittingReferral({url:target.href,title:title || target.pathname.split('/').pop() || 'Permitting reference',
+        sourcePageUrl:page.href,linkedHref:rawHref,resolutionBaseUrl:base.href,element:link.embedded || 'anchor'});
+      if (referral) candidates.push(referral);
+      continue;
+    }
     candidates.push({
       title: title || target.pathname.split('/').pop() || 'Official permitting resource',
       url: target.href,
@@ -135,5 +142,12 @@ export function discoverOfficialPermittingResources(html, pageUrl, {maxLinks=25,
 export function permittingResourceSnapshot(html,pageUrl) {
   const rows=collectOfficialPermittingResources(html,pageUrl,{maxLinks:5001});
   if(rows.length>5000) throw Error('Page resource storage bounds require review.');
+  return rows;
+}
+
+
+export function discoverOfficialPermittingReferrals(html,pageUrl) {
+  const rows=collectOfficialPermittingResources(html,pageUrl,{maxLinks:5001,externalOnly:true});
+  if(rows.length>5000)throw Error('External referral storage bounds require review.');
   return rows;
 }

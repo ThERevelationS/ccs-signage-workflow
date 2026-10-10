@@ -29,6 +29,7 @@ export async function continueKnownDiscovery({entity,jurisdictionId,fetchPage,in
  const nextFields=invalidateProfile(profile,{documents:mergeJurisdictionResearchDocuments(profile.documents,docs),discovery_scan_state:scan.continuation_state});
  await replaceJurisdictionFieldsIfUnchanged({entity,jurisdiction:profile,nextFields,guardFields:guards,label:'Discovery continuation'});
  return{success:true,jurisdiction_id:profile.id,attempted_pages:scan.attempted_pages,pending_pages:scan.pending_pages.length,
+  external_referrals:scan.external_referrals.length,external_fetches:0,
   unresolved_gaps:scan.gaps.length,discovered_resources:scan.documents.length,traversal_complete:scan.traversal_complete,
   jurisdiction_coverage_complete:false,authority_established:false,llm_calls:0};
 }

@@ -1,5 +1,6 @@
+import { validateExternalPermittingReferral } from './permittingExternalReferrals.mjs';
 import { PDF_RESOURCE_METHOD } from './permittingResourceResponse.mjs';
-import { discoverOfficialPermittingResources, isDownloadableResearchDocument, permittingResourcePriority, permittingResourceSnapshot } from './jurisdictionPermittingLinkDiscovery.mjs';
+import { discoverOfficialPermittingResources, isDownloadableResearchDocument, permittingResourcePriority, permittingResourceSnapshot, discoverOfficialPermittingReferrals } from './jurisdictionPermittingLinkDiscovery.mjs';
 
 const key = value => { const u = new URL(value); u.hash = ''; u.hostname = u.hostname.replace(/^www\./, ''); return u.href; };
 function scopedUrl(value, seed) {
@@ -23,10 +24,15 @@ function validateCursor(cursor, seedUrl, maxDepth) {
   if (!cursor || cursor.blocked || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||
       !Number.isInteger(cursor.attempted_pages_total) || cursor.attempted_pages_total < 0 ||
       !Array.isArray(cursor.pending_pages) || !Array.isArray(cursor.visited_urls) || !Array.isArray(cursor.gaps) ||
-      cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS ||
+      (cursor.external_referrals?.length || 0) + cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS ||
       JSON.stringify(cursor).length > CURSOR_MAX_CHARS)
     throw frontierError('Saved discovery frontier requires review; source, format or bounds changed.');
   for (const url of cursor.visited_urls) scopedUrl(url, seedUrl);
+  if(cursor.external_referrals!==undefined && !Array.isArray(cursor.external_referrals))throw Error('Saved external referral inventory requires review.');
+  for(const row of cursor.external_referrals || []){
+    validateExternalPermittingReferral(row,seedUrl);
+    if(!cursor.visited_urls.some(url=>key(url)===key(row.source_page_url)))throw Error('External referral source page was not visited.');
+  }
   for (const page of cursor.pending_pages) {
     scopedUrl(page.url, seedUrl);
     if (!Number.isInteger(page.depth) || page.depth < 0 || page.depth > maxDepth) throw Error('Saved discovery page depth requires review.');
@@ -45,6 +51,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   const gaps = (resume?.gaps || []).map(g => ({ ...g }));
   const queued = new Set([...visited, ...pending.map(p => key(p.url)), ...gaps.map(g => key(g.url))]);
   const documents = new Map(), pages = [];
+  let referrals = (resume?.external_referrals || []).map(row=>({...row}));
   // Existing retained document metadata supplies labels/classification for a
   // pending URL; it is not copied into the new scan's write set.
   const priorDocuments = new Map();
@@ -87,6 +94,14 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       const contentHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(permittingResourceSnapshot(response.html,finalUrl).map(d=>({url:d.url,title:d.title}))))))].map(b => b.toString(16).padStart(2,'0')).join('');
       if (recoveryGap?.link_hash_method === 'ordered-resource-list-v1' && recoveryGap.link_content_sha256 && recoveryGap.link_content_sha256 !== contentHash)
         throw Error('Capped page changed during recovery; saved offset requires review.');
+      let pageReferrals;
+      try { pageReferrals=discoverOfficialPermittingReferrals(response.html,finalUrl); }
+      catch(error){throw frontierError(error.message);}
+      const pageSha=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(response.html)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+      // Replace observations from this successfully read page; retain other page
+      // provenance, including a second official page pointing to the same URL.
+      referrals=[...referrals.filter(row=>key(row.source_page_url)!==finalKey),
+        ...pageReferrals.map(row=>({...row,source_page_sha256:pageSha}))];
       const batch = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100, offset });
       const found = batch;
       if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
@@ -105,6 +120,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         pending.sort((a, b) => permittingResourcePriority(documents.get(key(b.url)) || priorDocuments.get(key(b.url))) - permittingResourcePriority(documents.get(key(a.url)) || priorDocuments.get(key(a.url))));
       }
     } catch (error) {
+      if(error.frontier_review_required)throw error;
       const reason = String(error?.message || error).slice(0, 300);
       pages.push({ ...next, status: 'failed', error: reason });
       if (!recoveryGap) gaps.push({ url: next.url, reason: 'page_fetch_failed', depth: next.depth, detail: reason, requires_review: true });
@@ -114,15 +130,15 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   }
   const pendingPages = pending.filter(p => !visited.has(key(p.url)));
   const continuationState = { method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
-    visited_urls: [...visited], pending_pages: pendingPages, gaps,
+    visited_urls: [...visited], pending_pages: pendingPages, gaps, external_referrals:referrals,
     attempted_pages_total: (Number(resume?.attempted_pages_total) || 0) + attempted };
-  if (continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||
+  if (referrals.length + continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||
       JSON.stringify(continuationState).length > CURSOR_MAX_CHARS)
     throw frontierError('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
-  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && attempted === 0 && !pendingPages.length), documents: [...documents.values()], pages,
+  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && attempted === 0 && !pendingPages.length), documents: [...documents.values()], pages, external_referrals:referrals, external_referrals_require_review:referrals.length>0,
     pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume), recovering_link_limits: recoverLinkLimits, recovering_fetch_failures: recoverFetchFailures, recovering_depth_url: recoverDepthUrl,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
-    jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,
+    jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0, external_fetches:0,
     limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',
       'PDF classification is a routing hint; full original-byte verification occurs during archival.',
       'Saved failed pages and depth/link gaps require separate review; traversal completion does not establish locality coverage.'] };
