@@ -1766,5 +1766,20 @@
       }
     ],
     "online_form_url": "https://eztrak.cagis.org/"
+  },
+  {
+    "id": "6aca3fb12dacd5a21906a778",
+    "name": "Harrison Township",
+    "state": "OH",
+    "type": "township",
+    "source": "https://www.harrisontownshipohio.com/zoning",
+    "observed_on": "2026-10-07",
+    "resources": [],
+    "notes": [
+      "Hamilton County identity-only township profile; needs verification. Separate from City of Harrison and Harrison County.",
+      "Retained township zoning page describes Hamilton County zoning administration. Current authority and job-address coverage remain unapproved.",
+      "Standalone sign forms, current fees and sign-specific online submission remain collection gaps. No township sign PDFs have been retained for this dossier.",
+      "Electrical permit issuance and electrical inspection offices require separate verification. County zoning administration does not establish either electrical role."
+    ]
   }
 ]

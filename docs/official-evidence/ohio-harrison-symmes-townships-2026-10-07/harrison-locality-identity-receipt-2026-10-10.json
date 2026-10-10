@@ -1,0 +1,21 @@
+{
+  "locality": {
+    "id": "6aca3fb12dacd5a21906a778",
+    "name": "Harrison Township",
+    "state": "OH",
+    "type": "township"
+  },
+  "parent_county_name": "Hamilton County",
+  "geographic_candidate_key": "OH:county_subdivision:3906133852",
+  "live_readback_count": 1,
+  "verification_status": "needs_verification",
+  "auto_refresh": false,
+  "permit_requirements": null,
+  "live_records_created": 1,
+  "authority_approved": false,
+  "source_sha256": "9f02d7ebfdc2bda9b896276f46268e92bd16933ac3f8bb44a869e5c14da80836",
+  "excluded_record_ids": [
+    "69a7043e496af8043b9e4f00",
+    "6ac1ebd2b2a2ba1a032a8985"
+  ]
+}

@@ -213,7 +213,7 @@ test('Harrison and Symmes township archives retain 199 physical pages without id
  const root='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/',m=JSON.parse(readFileSync(root+'manifest.json')),r=JSON.parse(readFileSync(root+'office-reconciliation.json')),e=JSON.parse(readFileSync(root+'pdf-text-extraction.json'));
  assert.equal(m.sources.length,4);for(const s of m.sources){const b=readFileSync(s.retained_path);assert.equal(b.length,s.bytes);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);if(s.file.endsWith('.pdf'))assert.deepEqual(readFileSync('public/permitting-evidence/harrison-symmes-townships/'+s.file),b);}
  assert.equal(e.documents.reduce((n,d)=>n+d.total_pages,0),199);for(const d of e.documents){assert.equal(d.pages.length,d.total_pages);assert.equal(d.searchable_content_complete,false);for(const p of d.pages){assert.equal(p.source_sha256,d.source_sha256);assert.equal(createHash('sha256').update(p.text).digest('hex'),p.text_sha256);}}
- assert.equal(r.profiles.length,2);for(const p of r.profiles){assert.equal(p.id,null);assert.equal(p.county,'Hamilton');if(p.name==='Symmes Township'){const receipt=JSON.parse(readFileSync(root+'symmes-locality-identity-receipt-2026-10-09.json'));assert.equal(dossiers.find(d=>d.name===p.name).id,receipt.locality.id);assert.equal(receipt.parent_county_name,'Hamilton County');assert.equal(receipt.verification_status,'needs_verification');assert.equal(receipt.permit_requirements,null);}else assert.equal(dossiers.some(d=>d.name===p.name),false);}
+ assert.equal(r.profiles.length,2);for(const p of r.profiles){assert.equal(p.id,null);assert.equal(p.county,'Hamilton');if(p.name==='Symmes Township'){const receipt=JSON.parse(readFileSync(root+'symmes-locality-identity-receipt-2026-10-09.json'));assert.equal(dossiers.find(d=>d.name===p.name).id,receipt.locality.id);assert.equal(receipt.parent_county_name,'Hamilton County');assert.equal(receipt.verification_status,'needs_verification');assert.equal(receipt.permit_requirements,null);}else {const receipt=JSON.parse(readFileSync(root+'harrison-locality-identity-receipt-2026-10-10.json'));assert.equal(dossiers.find(d=>d.name===p.name).id,receipt.locality.id);assert.equal(receipt.verification_status,'needs_verification');assert.equal(receipt.permit_requirements,null);}}
  assert.match(r.profiles[0].routing_candidate,/not City of Harrison or Harrison County/);
  for(const k of ['staff_approved','currentness_approved','coverage_approved','electrical_permit_issuer_approved','electrical_inspector_approved'])assert.equal(r[k],false);
  assert.equal(r.live_records_changed,0);assert.match(r.map_version_review,/2017/);
@@ -417,4 +417,13 @@ test('Miami county current listing portal remains a link with explicit acceptanc
  assert.equal(receipt.sign_submission_acceptance_verified,false);assert.equal(receipt.northwestern_boundary_verified,false);
  assert.match(html,/HTTP 502/);assert.match(html,/2026 zoning fee schedule/);assert.match(html,/boundaries remain unresolved/);
  assert.equal(row.resources.length,0);assert.equal(render(row,false),'');
+});
+
+test('Hamilton Harrison Township research rejects city and county identities',()=>{
+ const root='docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07/';
+ const receipt=JSON.parse(readFileSync(root+'harrison-locality-identity-receipt-2026-10-10.json')),row=dossiers.find(d=>d.id===receipt.locality.id),html=render(row);
+ assert.equal(receipt.parent_county_name,'Hamilton County');assert.equal(receipt.auto_refresh,false);assert.equal(row.resources.length,0);
+ for(const id of receipt.excluded_record_ids)assert.equal(render({...row,id}),'');
+ assert.match(html,/No township sign PDFs have been retained/);assert.match(html,/job-address coverage remain unapproved/);assert.match(html,/separate verification/);
+ assert.equal(createHash('sha256').update(readFileSync(root+'harrison-township-zoning.html')).digest('hex'),receipt.source_sha256);
 });
