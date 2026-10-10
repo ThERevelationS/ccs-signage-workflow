@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
+import OrderIndependentPullEvidence from "@/components/orders/OrderIndependentPullEvidence";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { orderSaveSyncStatus } from "@/components/orders/orderSaveSyncStatus.mjs";
 
@@ -99,6 +100,8 @@ export default function OrderForm() {
             <p className="text-gray-600 text-sm">Manage material orders</p>
           </div>
         </div>
+
+        <OrderIndependentPullEvidence currentUser={currentUser} />
 
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex flex-wrap items-center gap-2">
