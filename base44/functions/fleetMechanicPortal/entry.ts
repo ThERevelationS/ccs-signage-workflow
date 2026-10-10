@@ -272,7 +272,7 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
   if (!current) throw Object.assign(new Error('The Fleet work order for this receipt no longer exists.'),{status:404});
   // Treat the reserved source and retry as one evidence decision.
   // Admin review must not replay or cancel just one side after access changes.
-  if (action === 'save' && (receipt?.result_summary?.retry_reserved_by_request_id ||
+  if (action === 'save' && receipt.status === 'started' && (receipt?.result_summary?.retry_reserved_by_request_id ||
       receipt?.result_summary?.retry_reservation_required === true)) {
     const grantId = String(receipt?.result_summary?.grant_id || '').trim();
     const isRetry = receipt?.result_summary?.retry_reservation_required === true;
