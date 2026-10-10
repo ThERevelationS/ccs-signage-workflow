@@ -34,7 +34,10 @@ for (const [task,from,status,action] of [
   ["Follow up with Customer - Post-Estimate","lost","follow_up","confirm_transition"],
   ["Lost","won","lost","confirm_transition"],
 ]) {
-  const row={...baseline,sales_status:from,current_task_description:task};
+  const row={...baseline,sales_status:from,current_task_description:task,
+    // Terminal task words on a Smartsheet row are legacy without independent
+    // modern workflow evidence; only eligible modern repairs may confirm Won/Lost.
+    ...(['won','lost'].includes(status) ? {sales_stage_changed_at:'2026-10-08T12:00:00.000Z'} : {})};
   const plan=planExistingSalesTaskStatusReconciliation(row);
   same(plan,{action,task,status},`Explicit ${from} -> ${status} via stored task ${task}`);
   same(classifySalesTaskStatusAudit({...row,sales_status:plan.status}).kind,"none",
