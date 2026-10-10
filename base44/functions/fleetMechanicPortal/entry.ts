@@ -744,14 +744,16 @@ Deno.serve(async (req) => {
         const started = await Receipt.filter({status:'started',operation_type:{$in:Object.values(MECHANIC_MUTATION_TYPES)}}).catch(()=>[]);
         let reconciledApplied = 0;
         let reconciledCancelled = 0;
+        let reconciledBlocked = 0;
         for (const receipt of (started || []).filter((row:any)=>String(row?.result_summary?.grant_id || '') === id)) {
           const result = await reconcileMechanicReceiptForAdmin(base44,Access,Receipt,receipt,auth.user.email || '').catch(()=>null);
           if (result?.status === 'applied') reconciledApplied += 1;
           else if (result?.status === 'cancelled') reconciledCancelled += 1;
+          else if (result?.status === 'blocked') reconciledBlocked += 1;
         }
-        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link revoked.',details:{grant_id:id,name:found.name || '',revoked_by:auth.user.email || '',reconciled_applied:reconciledApplied,reconciled_cancelled:reconciledCancelled}}).catch(()=>null);
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link revoked.',details:{grant_id:id,name:found.name || '',revoked_by:auth.user.email || '',reconciled_applied:reconciledApplied,reconciled_cancelled:reconciledCancelled,reconciled_blocked:reconciledBlocked}}).catch(()=>null);
         const grants = await loadAllEntityRows({entity:Access,sort:'-created_date',label:'Fleet mechanic access links'});
-        return json({success:true,links:(grants || []).map(publicGrant),reconciled_applied:reconciledApplied,reconciled_cancelled:reconciledCancelled});
+        return json({success:true,links:(grants || []).map(publicGrant),reconciled_applied:reconciledApplied,reconciled_cancelled:reconciledCancelled,reconciled_blocked:reconciledBlocked});
       }
       return json({error:'Unsupported Fleet mechanic admin action.'},{status:400});
     }
