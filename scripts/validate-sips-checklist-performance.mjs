@@ -503,7 +503,8 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
     focus: () => { searchFocus++; } } };
   const validationHandler = new Function("event", "isOpen", "validationFocusItemIdRef",
     "findRenderedChecklistItemElement", "checklistSearchInputRef",
-    "checklistCloseButtonRef", validationBody);
+    "checklistCloseButtonRef", "showOtherPopup", "otherPopupValidationReturnRef",
+    "customStatusInputRef", validationBody);
   const findRow = ([id]) => {
     assert.equal(id, "item-1");
     return { querySelector: (selector) => {
@@ -511,12 +512,14 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
       return statusControl;
     } };
   };
-  validationHandler(event, true, validationItemRef, findRow, searchInputRef, { current: null });
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef,
+    { current: null }, null, { current: null }, { current: null });
   assert.equal(statusFocus, 1);
   assert.equal(validationItemRef.current, null);
   validationItemRef.current = "item-1";
   statusControl.disabled = true;
-  validationHandler(event, true, validationItemRef, findRow, searchInputRef, { current: null });
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef,
+    { current: null }, null, { current: null }, { current: null });
   assert.equal(statusFocus, 1);
   assert.equal(searchFocus, 1);
   assert.equal(prevented, 6);
