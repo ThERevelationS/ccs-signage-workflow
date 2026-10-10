@@ -1,8 +1,8 @@
 import {continueJurisdictionArchiveBacklog,archiveDocumentEligible,archiveBacklogQuery} from './jurisdictionArchiveContinuation.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
 import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferralArchive.mjs';
-// Keep the one-original-file budget. Only previously selected external documents
-// and new direct-document referrals use explicitly enabled profiles.
+// Keep the one-original-file budget. Retained selections and new direct-document
+// referrals require explicitly enabled profiles.
 export async function continuePermittingDocumentArchiveBacklog(options){
  let regular,checked=0;const review=[];
  for(const state of ['OH','KY']){

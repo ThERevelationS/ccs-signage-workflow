@@ -51,6 +51,9 @@ export async function archiveExternalJurisdictionReferral(options){
   linkChecked=true;recheckReceipt={source_page_url:referral.source_page_url,source_page_sha256:hash,checked_at:new Date().toISOString()};return {...fresh,source_page_sha256:hash};
  }
  if(!document){
+  // Automatic staging saves the observed link before any network attempt so
+  // page failures get the same durable lease, retry count and backoff as files.
+  // The worker rechecks the live link before requesting original bytes.
   const fresh=options.manual?await recheckLink():referral;
   document={id:crypto.randomUUID(),url:referral.url,title:referral.title,source:'official_page_harvest',
    doc_type:permittingDocumentType(referral),verification_notes:options.manual?'Direct external document link rechecked on the official source; authority and applicability remain unapproved.':'Saved official-page referral staged for source recheck; authority and applicability remain unapproved.',

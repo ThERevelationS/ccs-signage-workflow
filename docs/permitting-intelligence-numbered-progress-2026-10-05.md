@@ -1287,3 +1287,15 @@ Recovery uses the same scoped original/source-page fetcher as manual collection;
 Validation: 202 focused automated tests passed; automatic archive and scheduled dispatcher backend bundles passed; Git whitespace check passed. No live collection cycle or production test writes were run; nothing published. Existing PDF keyboard harness failures from the previous entry remain outside this backend change.
 
 Next: durable first-attempt records and bounded failure/backoff tracking for newly discovered external referrals before automatic initial collection. Live browser verification and overall Ohio/Kentucky coverage remain incomplete.
+
+
+### 2026-10-10 — Automatic first-time external document collection
+Phase 10, milestone 2 of 3 remains active. Added bounded first-time collection of saved external direct-document referrals to the shared automatic archive backlog. Eligibility requires auto_refresh exactly true, OH/KY scope, current official discovery source and unprotected documents. Ohio regular/recovery/initial original-file work is checked before Kentucky. Each branch scans at most 20 profiles; one original-file attempt returns control to the existing dispatcher. Online forms, code publishers and department pages do not enter this path.
+
+Automatic initial staging persists the observed source-page provenance and a stable document identity before network work. It does not claim that the page has been rechecked. The archive worker then claims the source, rechecks the exact official link, and saves the current page hash/time in archive_state.source_link_recheck before upload. A missing recheck receipt blocks upload. Official-page failures and removed links now produce durable failure receipts/backoff instead of repeating a fresh initial attempt. Existing retry caps, scoped redirects, upload receipt recovery and byte verification are reused. Concurrent initial attempts cannot duplicate the source or upload. Authority and applicability remain unapproved.
+
+The saved discovery cursor records when its direct-document initial inventory is drained. This removes completed inventories from the initial backlog and preserves existing manual/AI document identities. Each fresh official scan resets the marker so new referrals can be considered. Cursor updates retain version and document/opt-out/source guards.
+
+Validation: 210 isolated automated tests passed; archive endpoint, research dispatcher and refresh backend bundles passed; Git whitespace check passed. No live scheduled cycle, production test-record writes or publication.
+
+Next: live browser verification and a controlled real scheduled-cycle check, then assess remaining Downloader coverage gaps. Ohio/Kentucky locality coverage and the overall Permitting project remain incomplete.
