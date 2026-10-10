@@ -20,7 +20,7 @@ test("User directory tracks latest request and preserves verified data on errors
 });
 
 test("Session changes revoke the previous directory's pending reads", () => {
-  assert.match(page, /return \(\) => \{ \+\+userLoadSequence\.current; \}/);
+  assert.match(page, /return \(\) => \{\s*\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\}/);
   assert.match(page, /if \(sessionToken\) \{[\s\S]*?void loadUsers\(\)/);
   assert.match(page, /setUsers\(\[\]\);\s*setUserDirectoryError\(true\)/);
 });
