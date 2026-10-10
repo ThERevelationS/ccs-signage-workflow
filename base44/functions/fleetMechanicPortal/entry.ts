@@ -196,6 +196,14 @@ async function reconcileReservedMechanicPhotoRetry(
       String(retry?.result_summary?.reused_upload_receipt_id || '') !== String(source.id) ||
       retry?.result_summary?.retry_reservation_required !== true) return {status:'blocked'};
 
+  const priorUrls = summary.uploaded_photo_urls;
+  const retriedUrls = retry?.result_summary?.uploaded_photo_urls;
+  if (!Array.isArray(priorUrls) || !Array.isArray(retriedUrls) ||
+      priorUrls.length > retriedUrls.length ||
+      !priorUrls.every((url:any,index:number)=>/^https:\/\//i.test(String(url || '')) && url === retriedUrls[index])) {
+    return {status:'blocked'};
+  }
+
   if (workOrderHasMechanicReceipt(current,retry)) {
     await markMechanicReceiptApplied(Receipt,retry,current,retry.status !== 'applied');
     await resolveReusedUploadReceipt(Receipt,retry);
