@@ -394,6 +394,9 @@ export default function AdminSettings() {
   
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
+  const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
+  const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
+  const emailGroupsLoadSequence = useRef(0);
   const [isLoading, setIsLoading] = useState(true);
   const [automationLoadError, setAutomationLoadError] = useState(false);
   const automationLoadSequence = useRef(0);
@@ -435,12 +438,26 @@ export default function AdminSettings() {
   };
 
   const loadEmailGroups = async () => {
-    const groups = await loadAllEntityRows({
-      entity: EmailGroup,
-      sort: null,
-      label: "Admin Settings email groups",
-    });
-    setEmailGroups(groups);
+    const requestSequence = ++emailGroupsLoadSequence.current;
+    setEmailGroupsLoading(true);
+    try {
+      const groups = await loadAllEntityRows({
+        entity: EmailGroup,
+        sort: null,
+        label: "Admin Settings email groups",
+      });
+      if (requestSequence === emailGroupsLoadSequence.current) {
+        setEmailGroups(groups);
+        setEmailGroupsLoadError(false);
+      }
+      return groups;
+    } catch {
+      // Unavailable group choices must not masquerade as an empty catalog.
+      if (requestSequence === emailGroupsLoadSequence.current) setEmailGroupsLoadError(true);
+      return null;
+    } finally {
+      if (requestSequence === emailGroupsLoadSequence.current) setEmailGroupsLoading(false);
+    }
   };
 
   const loadAllUsers = async () => {
@@ -522,9 +539,10 @@ export default function AdminSettings() {
   }, []);
 
   const openNewRule = async () => {
+    if (emailGroupsLoading) return;
     setAutomationSaveError("");
+    if (!(await loadEmailGroups())) return;
     setEditingRule(null);
-    await loadEmailGroups();
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
     setFormData({ name: "", enabled: true, priority: 0 });
@@ -532,9 +550,10 @@ export default function AdminSettings() {
   };
 
   const openEditRule = async (rule) => {
+    if (emailGroupsLoading) return;
     setAutomationSaveError("");
+    if (!(await loadEmailGroups())) return;
     setEditingRule(rule);
-    await loadEmailGroups();
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
     setFormData({
@@ -546,9 +565,10 @@ export default function AdminSettings() {
   };
 
   const duplicateRule = async (rule) => {
+    if (emailGroupsLoading) return;
     setAutomationSaveError("");
+    if (!(await loadEmailGroups())) return;
     setEditingRule(null);
-    await loadEmailGroups();
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
     const names = new Set(automations.map(item => String(item.name || "").trim().toLowerCase()));
@@ -564,7 +584,7 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
-    if (automationSaving) return;
+    if (automationSaving || emailGroupsLoading || emailGroupsLoadError) return;
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
@@ -1179,6 +1199,16 @@ export default function AdminSettings() {
               </div>
             </div>
 
+            {emailGroupsLoadError && (
+              <div role="alert" aria-label="Automation email groups unavailable" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                <div className="font-semibold">Automation email group choices could not be loaded</div>
+                <p className="mt-1">Rule editing is paused until recipient groups can be verified.</p>
+                <Button type="button" size="sm" variant="outline" disabled={emailGroupsLoading}
+                  className="mt-2 min-h-10 border-amber-500 bg-white text-amber-950"
+                  onClick={() => { void loadEmailGroups(); }}>Retry group choices</Button>
+              </div>
+            )}
+
             {automationSaveError && (
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
                 <div>
@@ -1228,7 +1258,7 @@ export default function AdminSettings() {
                   </Button>
                 </div>
               </div>
-              <Button onClick={openNewRule} disabled={isLoading || automationLoadError} className="clay-button border-none text-gray-800"
+              <Button onClick={openNewRule} disabled={isLoading || automationLoadError || emailGroupsLoading || emailGroupsLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                 <Plus className="w-5 h-5 mr-2" /> New Automation
               </Button>
@@ -1286,7 +1316,7 @@ export default function AdminSettings() {
                 <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">No Automations</h3>
                 <p className="text-gray-500 mb-4">Create your first automation to streamline your workflow</p>
-                <Button onClick={openNewRule} className="clay-button"><Plus className="w-4 h-4 mr-2" /> Create First Automation</Button>
+                <Button onClick={openNewRule} disabled={emailGroupsLoading || emailGroupsLoadError} className="clay-button"><Plus className="w-4 h-4 mr-2" /> Create First Automation</Button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1321,10 +1351,10 @@ export default function AdminSettings() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
-                        <Button variant="ghost" size="icon" onClick={() => duplicateRule(rule)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEditRule(rule)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(rule)} className="h-8 w-8">
@@ -1622,7 +1652,7 @@ export default function AdminSettings() {
               {/* Save */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={automationSaving || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
+                <Button onClick={handleSave} disabled={automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
