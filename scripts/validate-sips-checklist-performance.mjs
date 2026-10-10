@@ -294,7 +294,7 @@ check("collapsing products, details, or Completed clears only hidden navigation 
     source.indexOf("// A collapsed product, hierarchy, or Completed section"),
     source.indexOf("// Search typing and inline editor state")
   );
-  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) return;/);
+  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
   assert.match(collapseGuard, /focusedSearchId &&\s*!findRenderedChecklistItemElement\(\[focusedSearchId\]\)\?\.getClientRects\(\)\.length/);
   assert.match(collapseGuard, /focusedNeedsInputId &&\s*!findRenderedChecklistItemElement\(\[focusedNeedsInputId\]\)\?\.getClientRects\(\)\.length/);
   assert.match(collapseGuard, /if \(!hiddenSearch && !hiddenNeedsInput\) return;/);
@@ -391,7 +391,7 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   const collapseRecovery = source.slice(source.indexOf("// A collapsed product, hierarchy, or Completed section"),
     source.indexOf("// Search typing and inline editor state"));
   for (const effect of [searchRecovery, collapseRecovery]) {
-    assert.match(effect, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) return;/);
+    assert.match(effect, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
     assert.match(effect, /showRevisitPopup/);
   }
 });
@@ -456,6 +456,70 @@ check("cancelled Revisit confirmation returns focus to Save & Revisit without sa
     } } });
   absentTarget.cancelDateSelection();
   absentTarget.handleRevisitCloseAutoFocus({ preventDefault: () => {} });
+});
+
+check("warning dialogs restore keyboard focus to editing after dismissal", () => {
+  assert.match(source, /ref=\{completeButtonRef\}\s*onClick=\{handleCheckOff\}/);
+  assert.match(source, /if \(incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) cancelPendingNavigationFocus\(\)/);
+  const getFocusBody = (comment) => {
+    const section = source.slice(source.indexOf(comment));
+    const start = section.indexOf("onCloseAutoFocus={(event) => {");
+    const end = section.indexOf("\n          }}", start);
+    assert.ok(start >= 0 && end > start, comment);
+    return section.slice(start + "onCloseAutoFocus={(event) => {".length, end);
+  };
+  const completeBody = getFocusBody("{/* Incomplete Warning */}");
+  const noChecklistBody = getFocusBody("{/* No Checklist Warning */}");
+  const validationBody = getFocusBody("{/* Validation guidance */}");
+
+  let prevented = 0, completedFocus = 0, statusFocus = 0, searchFocus = 0;
+  const event = { preventDefault: () => { prevented++; } };
+  const completeButtonRef = { current: { isConnected: true, disabled: false,
+    focus: () => { completedFocus++; } } };
+  const completeHandler = new Function("event", "isOpen", "completeButtonRef", completeBody);
+  completeHandler(event, true, completeButtonRef);
+  assert.equal(completedFocus, 1);
+  completeHandler(event, false, completeButtonRef);
+  assert.equal(completedFocus, 1);
+  completeButtonRef.current.disabled = true;
+  completeHandler(event, true, completeButtonRef);
+  assert.equal(completedFocus, 1);
+  completeButtonRef.current.disabled = false;
+
+  const completeOverrideRef = { current: false };
+  const noChecklistHandler = new Function("event", "isOpen", "completeButtonRef",
+    "completingWithoutChecklistRef", noChecklistBody);
+  noChecklistHandler(event, true, completeButtonRef, completeOverrideRef);
+  assert.equal(completedFocus, 2);
+  completeOverrideRef.current = true;
+  noChecklistHandler(event, true, completeButtonRef, completeOverrideRef);
+  assert.equal(completedFocus, 2);
+  assert.equal(completeOverrideRef.current, false);
+
+  const validationItemRef = { current: "item-1" };
+  const statusControl = { getClientRects: () => [{ width: 1 }], disabled: false,
+    isConnected: true, focus: () => { statusFocus++; } };
+  const searchInputRef = { current: { isConnected: true, disabled: false,
+    focus: () => { searchFocus++; } } };
+  const validationHandler = new Function("event", "isOpen", "validationFocusItemIdRef",
+    "findRenderedChecklistItemElement", "checklistSearchInputRef",
+    "checklistCloseButtonRef", validationBody);
+  const findRow = ([id]) => {
+    assert.equal(id, "item-1");
+    return { querySelector: (selector) => {
+      assert.equal(selector, '[aria-label^="Status for "]');
+      return statusControl;
+    } };
+  };
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef, { current: null });
+  assert.equal(statusFocus, 1);
+  assert.equal(validationItemRef.current, null);
+  validationItemRef.current = "item-1";
+  statusControl.disabled = true;
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef, { current: null });
+  assert.equal(statusFocus, 1);
+  assert.equal(searchFocus, 1);
+  assert.equal(prevented, 6);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
