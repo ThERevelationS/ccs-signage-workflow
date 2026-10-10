@@ -574,4 +574,63 @@ check("rejected custom-status entries retain draft and popup selection", () => {
   assert.match(popup, /value=\{customDropdownValue\}/);
 });
 
+check("custom-status Cancel, Escape and close preserve per-row drafts and restore focus", () => {
+  const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
+  assert.match(popup, /onOpenChange=\{\(open\) => \{ if \(!open\) dismissOtherPopup\(\); \}\}/);
+  assert.match(popup, /onCloseAutoFocus=\{handleOtherPopupCloseAutoFocus\}/);
+  assert.match(popup, /onClick=\{dismissOtherPopup\}/);
+  assert.equal((source.match(/openOtherPopup\((?:displayItem|detail|stDisplayItem)\.id\)/g) || []).length, 3);
+  assert.match(source, /onChange=\{\(e\) => updateCustomStatusDraft\(e\.target\.value\)\}/);
+  assert.match(source, /customStatusDraftsByItemIdRef\.current\.delete\(itemId\)/);
+  assert.match(source, /customStatusDraftsByItemIdRef\.current\.clear\(\);[\s\S]*?\}, \[workOrder\?\.id\]\);/);
+
+  const handlers = source.slice(source.indexOf("  const openOtherPopup = (itemId) => {"),
+    source.indexOf("  const handleCreateCustomValue = (itemId) => {"));
+  const createHandlers = new Function("customStatusDraftsByItemIdRef", "otherPopupFocusItemIdRef",
+    "otherPopupDismissedRef", "otherPopupValidationReturnRef", "showOtherPopup",
+    "validationDialog", "setCustomDropdownValue", "setShowOtherPopup", "isOpen",
+    "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
+    handlers + "\nreturn { openOtherPopup, updateCustomStatusDraft, dismissOtherPopup, handleOtherPopupCloseAutoFocus };");
+  const drafts = { current: new Map() }, focusItem = { current: null };
+  const dismissed = { current: false }, validationReturn = { current: null };
+  let activePopup = null, shownDraft = "", focusedStatus = 0, focusedSearch = 0, prevented = 0;
+  const status = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { focusedStatus++; } };
+  const search = { current: { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { focusedSearch++; } } };
+  const create = (warning = null) => createHandlers(drafts, focusItem, dismissed,
+    validationReturn, activePopup, warning, value => { shownDraft = value; },
+    value => { activePopup = value; }, true,
+    ([itemId]) => itemId === "A" ? { querySelector: () => status } : null,
+    search, { current: null });
+  const closingEvent = { preventDefault() { prevented++; } };
+
+  create().openOtherPopup("A");
+  assert.equal(shownDraft, "");
+  create().updateCustomStatusDraft("Unfinished A");
+  create().dismissOtherPopup(); // Cancel; also used by Escape and X.
+  assert.equal(activePopup, null);
+  create().handleOtherPopupCloseAutoFocus(closingEvent);
+  assert.equal(focusedStatus, 1);
+  assert.equal(prevented, 1);
+  assert.equal(drafts.current.get("A"), "Unfinished A");
+
+  create().openOtherPopup("B");
+  assert.equal(shownDraft, ""); // A's text never appears in B.
+  create().updateCustomStatusDraft("Unfinished B");
+  create().dismissOtherPopup();
+  create().handleOtherPopupCloseAutoFocus(closingEvent);
+  assert.equal(focusedSearch, 1); // Row missing: Search is a safe fallback.
+  create().openOtherPopup("A");
+  assert.equal(shownDraft, "Unfinished A");
+  create({ title: "Approver Required" }).dismissOtherPopup();
+  assert.deepEqual(activePopup, { itemId: "A" }); // Cannot close behind validation.
+  assert.equal(drafts.current.get("B"), "Unfinished B");
+
+  create().dismissOtherPopup();
+  create().handleOtherPopupCloseAutoFocus(closingEvent);
+  assert.equal(focusedStatus, 2);
+  assert.equal(prevented, 3);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
