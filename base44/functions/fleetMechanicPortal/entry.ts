@@ -170,6 +170,77 @@ async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, reque
   }}).catch(()=>null);
 }
 
+async function reconcileReservedMechanicPhotoRetry(
+  base44:any, Access:any, Receipt:any, WorkOrder:any, current:any, source:any, grantId:string,
+) {
+  const summary = source?.result_summary || {};
+  const owner = String(summary.retry_reserved_by_request_id || '');
+  const workOrderId = String(current?.id || '');
+  if (source?.status !== 'started' || !mechanicRequestId(owner) ||
+      source?.operation_type !== 'mechanic_progress_save' ||
+      source?.target_entity !== 'FleetMaintenanceWorkOrder' ||
+      String(source?.target_id || '') !== workOrderId ||
+      String(summary.grant_id || '') !== grantId) return {status:'blocked'};
+
+  const key = mechanicOperationKey(grantId,workOrderId,'save',owner);
+  const matches = await Receipt.filter({operation_key:key});
+  if ((matches || []).length !== 1) return {status:'blocked'};
+  const retry = matches[0];
+  if (retry.operation_type !== 'mechanic_progress_save' ||
+      retry.target_entity !== 'FleetMaintenanceWorkOrder' ||
+      String(retry.target_id || '') !== workOrderId ||
+      String(retry.payload_fingerprint || '') !== String(source.payload_fingerprint || '') ||
+      String(retry?.result_summary?.grant_id || '') !== grantId ||
+      String(retry?.result_summary?.request_id || '') !== owner ||
+      String(retry?.result_summary?.expected_updated_date || '') !== String(summary.expected_updated_date || '') ||
+      String(retry?.result_summary?.reused_upload_receipt_id || '') !== String(source.id) ||
+      retry?.result_summary?.retry_reservation_required !== true) return {status:'blocked'};
+
+  if (workOrderHasMechanicReceipt(current,retry)) {
+    await markMechanicReceiptApplied(Receipt,retry,current,retry.status !== 'applied');
+    await resolveReusedUploadReceipt(Receipt,retry);
+    return {status:'applied',work_order:current};
+  }
+  if (retry.status === 'applied') {
+    await resolveReusedUploadReceipt(Receipt,retry);
+    return {status:'applied',work_order:current};
+  }
+  if (retry.status === 'failed') {
+    await releaseReservedMechanicUpload(Receipt,String(source.id),owner);
+    const released = await Receipt.get(source.id).catch(()=>null);
+    return {status:released?.status === 'failed' ? 'released' : 'blocked',work_order:current};
+  }
+  if (retry.status !== 'started' || !ACTIVE.has(current.status)) return {status:'blocked'};
+  const recovery = buildMechanicRecoveryPatch(current,retry,nowIso());
+  if (!recovery.recoverable) return {status:'blocked'};
+
+  // Reconcile only complete durable photo URLs through existing versioned Fleet updates.
+  // Never initiate an external photo upload or assume a partial upload succeeded.
+  await requireCurrentMechanicGrant(Access,grantId,'save',String(current.equipment_id || ''));
+  try {
+    const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
+      action:'update',id:workOrderId,
+      expected_updated_date:String(retry.result_summary.expected_updated_date || ''),
+      work_order:recovery.patch,
+    });
+    if (!result?.data?.error) {
+      const updated = result?.data?.work_order || await WorkOrder.get(workOrderId);
+      await markMechanicReceiptApplied(Receipt,retry,updated,true);
+      await resolveReusedUploadReceipt(Receipt,retry);
+      return {status:'applied',work_order:updated};
+    }
+  } catch (error) {
+    if (isMechanicAccessChangedError(error)) throw error;
+  }
+  const fresh = await WorkOrder.get(workOrderId).catch(()=>null);
+  if (fresh && workOrderHasMechanicReceipt(fresh,retry)) {
+    await markMechanicReceiptApplied(Receipt,retry,fresh,true);
+    await resolveReusedUploadReceipt(Receipt,retry);
+    return {status:'applied',work_order:fresh};
+  }
+  return {status:'blocked'};
+}
+
 function mechanicActionForReceipt(receipt:any) {
   return receipt?.operation_type === 'mechanic_start' ? 'start' : receipt?.operation_type === 'mechanic_progress_save' ? 'save' : '';
 }
