@@ -123,12 +123,32 @@ async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
 
 async function cancelMechanicReceipt(Receipt:any, receipt:any, reason:string, adminEmail='') {
   const resolvedAt = nowIso();
-  const updated = await Receipt.update(receipt.id,{
+  // A mechanic may commit after the admin read but before cancellation.
+  // Only transition the state we actually reviewed; never downgrade applied.
+  // Update nested provenance fields without replacing concurrent photo evidence.
+  const update = await Receipt.updateMany({id:receipt.id,status:receipt.status},{$set:{
     status:'cancelled',
     error_message:clean(reason,1200),
-    result_summary:{...(receipt?.result_summary || {}),admin_reconciled_not_applied:true,admin_reconciled_at:resolvedAt,admin_reconciled_by:adminEmail || ''},
-  });
-  return updated || {...receipt,status:'cancelled'};
+    'result_summary.admin_reconciled_not_applied':true,
+    'result_summary.admin_reconciled_at':resolvedAt,
+    'result_summary.admin_reconciled_by':adminEmail || '',
+  }});
+  if (update?.updated === 1) return {...receipt,status:'cancelled'};
+  const latest = await Receipt.get(receipt.id).catch(()=>null);
+  if (!latest) throw Object.assign(new Error('Fleet mechanic receipt changed during admin reconciliation and could not be verified.'),{status:409});
+  return latest;
+}
+
+async function adminCancelMechanicReceiptResult(Receipt:any, receipt:any, reason:string, adminEmail:string, workOrder:any) {
+  const resolved = await cancelMechanicReceipt(Receipt,receipt,reason,adminEmail);
+  if (resolved.status === 'applied') {
+    return {status:'applied',recovered:false,work_order:workOrder};
+  }
+  if (resolved.status !== 'cancelled') {
+    return {status:'blocked',recovered:false,work_order:workOrder,
+      error_message:'The Fleet mechanic receipt changed during admin review. Verify its latest work-order evidence before another reconciliation.'};
+  }
+  return {status:'cancelled',recovered:false,work_order:workOrder,error_message:reason};
 }
 
 async function updateMechanicReceiptSummary(Receipt: any, receipt: any, patch: any) {
