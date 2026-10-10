@@ -132,6 +132,92 @@ async function call(body,client){
   }));
   return {code:response.status,body:await response.json()};
 }
+function strandReservedPhotoRetry(store,{status="started",urls=["https://files.example/old-a.jpg"],owner="request-owner-lost-987654"}={}) {
+  const body=payload(owner,{photos:[photoPayload,photoPayload]});
+  const source=makeReceipt(body,{status:"started",photos:["https://files.example/old-a.jpg"],count:2});
+  source.result_summary.retry_reserved_by_request_id=owner;
+  const retry=makeReceipt(body,{status,photos:urls,count:2});
+  retry.id="owner-retry-receipt";
+  retry.operation_key=`mechanic:${grantId}:${workId}:save:${owner}`;
+  retry.result_summary.request_id=owner;
+  retry.result_summary.reused_upload_receipt_id=source.id;
+  retry.result_summary.retry_reservation_required=true;
+  store.receipts.set(source.id,clone(source));
+  store.receipts.set(retry.id,clone(retry));
+  return {source,retry,body};
+}
+
+test("complete stranded photo retry reconciles from durable URLs without another upload",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  const incoming=payload("request-new-def-789012",{mechanic_note:"Later new task"});
+  const result=await call(incoming,client);
+  assert.equal(result.code,409);
+  assert.equal(result.body.recovered_previous,true);
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,0);
+  assert.deepEqual(store.work.after_photos,["https://files.example/old-a.jpg","https://files.example/owner-b.jpg"]);
+  assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.receipts.size,2,"No new mutation receipt was created");
+});
+test("owner receipt status check reconciles complete stranded photos with no replay",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  const status=await call({action:"mutation_status",token,work_order_id:workId,mutation_action:"save",
+    request_id:retry.result_summary.request_id},client);
+  assert.equal(status.code,200);
+  assert.equal(status.body.status,"applied");
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,0);
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.receipts.get(source.id).status,"applied");
+});
+test("durably failed reserved retry releases source and requires a fresh deliberate Save",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"failed"});
+  const result=await call(payload("request-new-def-789012"),client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/confirmed failed.*reservation released/i);
+  assert.equal(store.receipts.get(source.id).status,"failed");
+  assert.equal(store.receipts.get(retry.id).status,"failed");
+  assert.equal(store.uploads.length,0);
+  assert.equal(store.updates,0);
+});
+test("incomplete stranded retry stays locked with no speculative upload or work update",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store);
+  const result=await call(payload("request-new-def-789012"),client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/still being verified/i);
+  const status=await call({action:"mutation_status",token,work_order_id:workId,mutation_action:"save",
+    request_id:retry.result_summary.request_id},client);
+  assert.equal(status.code,200);
+  assert.equal(status.body.status,"started");
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+test("unrelated retry provenance cannot unlock a reserved photo receipt",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  store.receipts.get(retry.id).payload_fingerprint="unrelated-photo-payload";
+  const result=await call(payload("request-new-def-789012"),client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/still being verified/i);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+
 test("fresh new-id Save first recovers fully uploaded started receipt, never applies new work",async()=>{
   const original=payload("request-original-123456",{photos:[photoPayload,photoPayload]});
   const old=makeReceipt(original,{photos:["https://files.example/old-a.jpg","https://files.example/old-b.jpg"],count:2});
