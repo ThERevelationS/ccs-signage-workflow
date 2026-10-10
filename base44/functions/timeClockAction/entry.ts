@@ -3287,6 +3287,7 @@ Deno.serve(async (req) => {
         const strictV24 = Number(snapshotVersion || 0) >= 24;
         const strictV25 = Number(snapshotVersion || 0) >= 25;
         const strictV26 = Number(snapshotVersion || 0) >= 26;
+        const strictV28 = Number(snapshotVersion || 0) >= 28;
         const hasOwn = (key: string) => Object.prototype.hasOwnProperty.call(provenance, key);
         const v24RequiredFields = [
           'correction_request_id', 'submission_request_id', 'requested_by', 'requested_at', 'employee_reason',
@@ -3489,7 +3490,7 @@ Deno.serve(async (req) => {
           String(reviewAudit.details?.applied_audit_id || '') === String(provenance.applied_audit_id || '') &&
           String(correction.review_payload_hash || '') &&
           constantTimeEqual(String(reviewAudit.details?.review_payload_hash || ''), String(correction.review_payload_hash || '')));
-        const deltaMatches = change.change_type === 'removed'
+        const directDeltaMatches = change.change_type === 'removed'
           ? !change.after &&
             String(change.before?.clock_in || '') === String(original.clock_in || '') &&
             String(change.before?.clock_out || '') === String(original.clock_out || '') &&
@@ -3505,6 +3506,46 @@ Deno.serve(async (req) => {
               String(change.after?.clock_in || '') === String(corrected.clock_in || '') &&
               String(change.after?.clock_out || '') === String(corrected.clock_out || '') &&
               Number(change.after?.total_hours || 0) === Number(corrected.total_hours || 0);
+        let deltaMatches = directDeltaMatches;
+        if (!deltaMatches && strictV28 && change.change_type === 'changed' && Array.isArray(change.causal_chain)) {
+          const correctionLinks = change.causal_chain.filter((link: any) => String(link?.action || '') === 'admin_correction');
+          if (correctionLinks.length > 1) {
+            let semanticState = {
+              clock_in: String(change.before?.clock_in || ''),
+              clock_out: String(change.before?.clock_out || ''),
+              total_hours: Number(change.before?.total_hours || 0),
+            };
+            let terminalCorrectionId = '';
+            let chainMatches = true;
+            for (const link of correctionLinks) {
+              const chainAudit = await auditEntity.get(String(link?.audit_id || '')).catch(() => null);
+              const chainOriginal = chainAudit?.details?.original || {};
+              const chainCorrected = chainAudit?.details?.corrected || {};
+              if (!chainAudit ||
+                  String(chainAudit.action || '') !== 'admin_correction' ||
+                  !['confirmed', 'recovered'].includes(String(chainAudit.outcome || '')) ||
+                  String(chainAudit.time_entry_id || '') !== String(change.time_entry_id || '') ||
+                  String(chainAudit.id || '') !== String(link?.audit_id || '') ||
+                  String(chainOriginal.clock_in || '') !== semanticState.clock_in ||
+                  String(chainOriginal.clock_out || '') !== semanticState.clock_out ||
+                  Number(chainOriginal.total_hours || 0) !== semanticState.total_hours) {
+                chainMatches = false;
+                break;
+              }
+              semanticState = {
+                clock_in: String(chainCorrected.clock_in || ''),
+                clock_out: String(chainCorrected.clock_out || ''),
+                total_hours: Number(chainCorrected.total_hours || 0),
+              };
+              terminalCorrectionId = String(chainAudit.id || '');
+            }
+            deltaMatches = chainMatches &&
+              terminalCorrectionId === String(provenance.applied_audit_id || '') &&
+              semanticState.clock_in === String(change.after?.clock_in || '') &&
+              semanticState.clock_out === String(change.after?.clock_out || '') &&
+              semanticState.total_hours === Number(change.after?.total_hours || 0);
+          }
+        }
         return Boolean(correction && appliedAudit &&
           String(correction.time_entry_id || '') === String(change.time_entry_id || '') &&
           ['approved', 'approved_modified'].includes(String(correction.status || '')) &&
