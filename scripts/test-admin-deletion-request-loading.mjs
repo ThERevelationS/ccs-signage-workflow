@@ -40,6 +40,7 @@ test("Impact review and request resolution require a verified directory of reque
 test("Session changes invalidate prior deletion request reads and clear sensitive review state", () => {
   assert.match(page, /\+\+deletionRequestLoadSequence\.current/);
   assert.match(page, /setDeletionRequests\(\[\]\);\s*setDeletionRequestsError\(true\)/);
-  assert.match(page, /setDeletionRequestConfirm\(null\);\s*setDeletionImpactRequest\(null\);\s*setDeletionImpactReport\(null\)/);
+  assert.match(page, /\+\+deletionImpactSequence\.current;\s*setDeletionImpactRequest\(null\);\s*setDeletionImpactReport\(null\);/);
+  assert.match(page, /setDeletionRequests\(\[\]\);\s*setDeletionRequestsError\(true\);\s*setDeletionRequestConfirm\(null\)/);
   assert.match(page, /return \(\) => \{\s*\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
 });
