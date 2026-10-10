@@ -41,6 +41,7 @@ import { orderPullPrewriteBudget, assertOrderPullContinuationBudget } from '../.
 import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
 import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBatchEvidence.mjs';
 import { classifyPriorUncertainOrderPull } from '../../shared/smartsheetOrderPriorUncertainPull.mjs';
+import { assertNoUnresolvedOrderPullEvidence, saveOrderPullEvidence, verifyCompletedOrderPullEvidence } from '../../shared/smartsheetOrderPullEvidenceStore.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
@@ -1245,6 +1246,11 @@ async function claimSyncRun(base44: any, status: any) {
   });
   if (priorOrderPull.blocked) {
     throw Object.assign(new Error(priorOrderPull.reason), { status: 409 });
+  }
+  if (status?.order_pull_requested === true) {
+    // The shared coordinator can be replaced by a later Sales-only run. Keep
+    // Order uncertainty authoritative in a separate verified settings record.
+    await assertNoUnresolvedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings);
   }
 
   // Preserve the existing coordinator behavior for non-Order consumers.
@@ -3430,7 +3436,15 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                   if (!saved) throw new Error('Order pull lost progress checkpoint ownership. No further pull writes are allowed.');
                 },
                 reportOrderPullProgress: async ({ phase, current, total, itemLabel, detail, batchEvidence }) => {
-                  if (batchEvidence) lastOrderPullBatchEvidence = batchEvidence;
+                  if (batchEvidence) {
+                    // Persist independently of the shared Sales/Order coordinator
+                    // before the actual Order bulkUpdate. Fail closed on lost ACK.
+                    await saveOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {
+                      startedAt: runStartedAt,
+                      sheetId: cleanText(profile?.smartsheet_sheet_id, 40), batchEvidence,
+                    });
+                    lastOrderPullBatchEvidence = batchEvidence;
+                  }
                   const saved = await saveSyncStatusForRun(base44, {
                     status: 'running', action,
                     total_steps: steps.length, completed_steps: completedSteps,
@@ -3447,6 +3461,13 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
               } : {}),
               ...(action === 'pull_dataset' && dataset === 'sales' ? { recordIds: body.work_order_ids || [] } : {}),
             });
+            if (dataset === 'orders' && lastOrderPullBatchEvidence && !orderRunRequiresReview([pullResult])) {
+              // Only the fully verified Order pull can release the separate
+              // uncertain evidence gate. Keep the record for later auditing.
+              await verifyCompletedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {
+                startedAt: runStartedAt,
+              });
+            }
             results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
             completedSteps++;
           }
