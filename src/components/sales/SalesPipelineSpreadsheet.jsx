@@ -278,6 +278,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingChangesRef = useRef({});
   // Show a same-task status repair only after a verified guarded save.
   const pendingSameTaskRepairRef = useRef(new Set());
+  const failedSameTaskRepairRef = useRef(new Map());
   const [, refreshSameTaskSaveNotice] = useState(0);
   const pendingBaselinesRef = useRef({});
   const pendingSalesGuardsRef = useRef({});
@@ -1047,6 +1048,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (reconcileSameTask) {
       // Preserve the true review warning until persistence is verified.
       pendingSameTaskRepairRef.current.add(orderId);
+      failedSameTaskRepairRef.current.delete(orderId);
       refreshSameTaskSaveNotice((version) => version + 1);
     } else {
       const pinChanges = Object.fromEntries(changedFields.map((field) => [field, mergedUpdates[field]]));
@@ -1158,6 +1160,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingRecordScopesRef.current[orderId];
         }
         const verifiedSameTaskRepair = pendingSameTaskRepairRef.current.delete(orderId);
+        if (verifiedSameTaskRepair) failedSameTaskRepairRef.current.delete(orderId);
         if (verifiedSameTaskRepair) refreshSameTaskSaveNotice((version) => version + 1);
         const verifiedRepairFields = verifiedSameTaskRepair
           ? Object.fromEntries(Object.keys(changes).map((field) => [field, saved[field]])) : {};
@@ -1186,7 +1189,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
-        setQuickEditError(error?.message || "A Sales Pipeline quick edit could not be saved. Reload the latest data and try again.");
+        const saveError = error?.message || "A Sales Pipeline quick edit could not be saved. Reload the latest data and try again.";
+        if (pendingSameTaskRepairRef.current.has(orderId)) {
+          failedSameTaskRepairRef.current.set(orderId, saveError);
+          refreshSameTaskSaveNotice((version) => version + 1);
+        }
+        setQuickEditError(saveError);
         // Keep the queued values, history intent, and original baselines so no stale value is silently written.
       } finally {
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
@@ -1300,6 +1308,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     debounceTimers.current = {};
     pendingChangesRef.current = {};
     pendingSameTaskRepairRef.current.clear();
+    failedSameTaskRepairRef.current.clear();
     refreshSameTaskSaveNotice((version) => version + 1);
     resolvedReviewExitRef.current = null;
     pendingBaselinesRef.current = {};
@@ -2840,8 +2849,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onClose={() => { resolvedReviewExitRef.current = null; setSelectedWorkOrder(null); }}
           onUpdateFields={updateWorkOrderFields}
           onReconcileExistingTaskStatus={reconcileExistingSalesTaskStatus}
-          taskStatusCorrectionPending={pendingSameTaskRepairRef.current.has(selectedWorkOrder.id) && !quickEditError}
-          taskStatusCorrectionError={pendingSameTaskRepairRef.current.has(selectedWorkOrder.id) ? quickEditError : ''}
+          taskStatusCorrectionPending={pendingSameTaskRepairRef.current.has(selectedWorkOrder.id) && !failedSameTaskRepairRef.current.has(selectedWorkOrder.id)}
+          taskStatusCorrectionError={failedSameTaskRepairRef.current.get(selectedWorkOrder.id) || ''}
           onReloadAfterFailedTaskStatusCorrection={() => { setSelectedWorkOrder(null); discardPendingQuickEdits(); }}
           onRemoveFromCurrentPipeline={removeFromCurrentPipeline}
           onCompleteFollowUp={requestFollowUpCompletion}
