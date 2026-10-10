@@ -46,9 +46,9 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
       mutation_plan:{actual_hours:2.5,corrective_action:"Synthetic repair",appended_note:"[Mechanic – Synthetic]\\nSynthetic note"}},
   };
 }
-function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
-  const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,failUploads:0,
-    waiting:[], uploadWaiting:[], release:null};
+function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false}={}){
+  const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
+    waiting:[], uploadWaiting:[], pendingUpdates:[], release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
@@ -87,6 +87,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
   const invoke=async (name,mutation)=>{
     assert.equal(name,"fleetWorkOrderAction");
     store.updateAttempts++;
+    if(store.holdUpdates)await new Promise(resolve=>store.pendingUpdates.push(resolve));
     if(store.barrier){
       await new Promise(resolve=>{
         store.waiting.push(resolve);
@@ -125,6 +126,13 @@ function setup({receipt=null,barrier=false,uploadBarrier=false}={}){
   }};
   globalThis.__fleetReceiptRaceClient=client;
   return {store,receipts,access,grant,client};
+}
+async function until(label,predicate){
+  const deadline=Date.now()+3000;
+  while(!predicate()){
+    assert.ok(Date.now()<deadline,`Timed out waiting for synthetic ${label}`);
+    await new Promise(resolve=>setTimeout(resolve,5));
+  }
 }
 async function call(body,client){
   globalThis.__fleetReceiptRaceClient=client;
