@@ -1156,6 +1156,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingRecordScopesRef.current[orderId];
         }
         const verifiedSameTaskRepair = pendingSameTaskRepairRef.current.delete(orderId);
+        const verifiedRepairFields = verifiedSameTaskRepair
+          ? Object.fromEntries(Object.keys(changes).map((field) => [field, saved[field]])) : {};
         if (verifiedSameTaskRepair && selectedWorkOrder?.id === orderId) {
           // Only now is a corrected review eligible to leave the queue.
           resolvedReviewExitRef.current = canKeepLocallyResolvedSalesReview({
@@ -1165,13 +1167,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
         setWorkOrders((current) => current.map((row) => row.id === orderId ? {
           ...row,
-          ...(verifiedSameTaskRepair ? saved : {}),
+          ...verifiedRepairFields,
           updated_date: saved.updated_date,
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : row));
         setSelectedWorkOrder((selected) => selected?.id === orderId ? {
           ...selected,
-          ...(verifiedSameTaskRepair ? saved : {}),
+          ...verifiedRepairFields,
           updated_date: saved.updated_date,
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : selected);
@@ -2834,6 +2836,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onClose={() => { resolvedReviewExitRef.current = null; setSelectedWorkOrder(null); }}
           onUpdateFields={updateWorkOrderFields}
           onReconcileExistingTaskStatus={reconcileExistingSalesTaskStatus}
+          taskStatusCorrectionPending={pendingSameTaskRepairRef.current.has(selectedWorkOrder.id) && !quickEditError}
+          taskStatusCorrectionError={pendingSameTaskRepairRef.current.has(selectedWorkOrder.id) ? quickEditError : ''}
+          onReloadAfterFailedTaskStatusCorrection={() => { setSelectedWorkOrder(null); discardPendingQuickEdits(); }}
           onRemoveFromCurrentPipeline={removeFromCurrentPipeline}
           onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
