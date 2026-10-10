@@ -59,7 +59,7 @@ import {
 import { salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { salesReviewQueueFilterKey, canKeepLocallyResolvedSalesReview, keepLocallyResolvedSalesReviewDetails, nextSalesReviewQueueIndex } from "@/components/sales/salesReviewQueueExit.mjs";
-import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
+import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, planExistingSalesTaskStatusReconciliation, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -896,9 +896,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false) => {
+  const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
+    if (reconcileSameTask) {
+      // Only the explicit repair action may reuse an unchanged task. Require
+      // a modern mapped mismatch and a clean pending-save queue.
+      const repairPlan = planExistingSalesTaskStatusReconciliation(currentWo);
+      if (!repairPlan || String(nextChanges.current_task_description ?? '').trim() !== repairPlan.task ||
+          (Object.prototype.hasOwnProperty.call(nextChanges, 'sales_status') && nextChanges.sales_status !== repairPlan.status) ||
+          pendingChangesRef.current[orderId] || debounceTimers.current[orderId]) {
+        setQuickEditError('This task/status pair changed or has unsaved edits. Save or reload before reconciling its stage.');
+        return;
+      }
+    }
 
     const updatedWo = { ...currentWo, ...nextChanges };
     // Apply task assignment rules once against the complete proposed record.
@@ -914,7 +925,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       // Confirmed closeout/reopening already includes an explicit status.
       && !Object.prototype.hasOwnProperty.call(nextChanges, "sales_status")
       && Object.prototype.hasOwnProperty.call(nextChanges, "current_task_description")
-      && String(nextChanges.current_task_description || "").trim() !== String(currentWo.current_task_description || "").trim()
+      && (reconcileSameTask || String(nextChanges.current_task_description || "").trim() !== String(currentWo.current_task_description || "").trim())
     ) {
       const taskPlan = planSalesTaskChange(currentWo, nextChanges.current_task_description);
       if (taskPlan.action === "confirm_neutral_close") {
@@ -926,7 +937,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         return;
       }
       if (taskPlan.action === "confirm_transition") {
-        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task, pendingChanges: proposedUpdates });
+        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task, pendingChanges: proposedUpdates, reconcileSameTask });
         return;
       }
       if (taskPlan.action === "save_stage_and_task") {
@@ -1051,6 +1062,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       pendingSalesGuardsRef.current[orderId] = captureSalesTransitionGuards(
         currentWo, baselines, pendingSalesGuardsRef.current[orderId]
       );
+      if (reconcileSameTask) {
+        // The task does not change, so it must be an untouched CAS guard
+        // against concurrent Task Description edits while status is saved.
+        pendingSalesGuardsRef.current[orderId].current_task_description = currentWo.current_task_description ?? null;
+      }
     }
     pendingRecordScopesRef.current[orderId] = activeRecordScopeRef.current;
     pendingChangesRef.current[orderId] = {
