@@ -178,9 +178,12 @@ async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
   if (!source || !['failed','started'].includes(source.status) ||
       (source.status === 'started' && (!owner || owner !== requestId)) ||
       String(source.payload_fingerprint || '') !== String(receipt.payload_fingerprint || '')) return;
-  await Receipt.updateMany({id:source.id,status:source.status},{$set:{
+  const selector:any = {id:source.id,status:source.status};
+  if (source.status === 'started') selector['result_summary.retry_reserved_by_request_id'] = requestId;
+  await Receipt.updateMany(selector,{$set:{
     status:'applied',applied_at:nowIso(),failed_at:null,error_message:'',
-    result_summary:{...(source.result_summary || {}),resolved_by_operation_key:receipt.operation_key || '',resolved_by_retry:true},
+    'result_summary.resolved_by_operation_key':receipt.operation_key || '',
+    'result_summary.resolved_by_retry':true,
   }}).catch(()=>null);
 }
 
@@ -188,9 +191,11 @@ async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, reque
   if (!sourceId || !requestId) return;
   const source = await Receipt.get(sourceId).catch(()=>null);
   if (source?.status !== 'started' || String(source?.result_summary?.retry_reserved_by_request_id || '') !== requestId) return;
-  await Receipt.updateMany({id:source.id,status:'started'},{$set:{
+  await Receipt.updateMany({id:source.id,status:'started',
+    'result_summary.retry_reserved_by_request_id':requestId},{$set:{
     status:'failed',
-    result_summary:{...(source.result_summary || {}),retry_reserved_by_request_id:'',retry_reservation_released_at:nowIso()},
+    'result_summary.retry_reserved_by_request_id':'',
+    'result_summary.retry_reservation_released_at':nowIso(),
   }}).catch(()=>null);
 }
 
