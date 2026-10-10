@@ -665,11 +665,8 @@ async function uploadPhotos(base44: any, Receipt: any, receipt: any, photos: Uin
     const result = await base44.asServiceRole.integrations.Core.UploadFile({file:new Blob([photos[index]],{type:'image/jpeg'})});
     const url = String(result?.file_url || '').trim();
     if (!/^https:\/\//i.test(url)) throw new Error('Fleet mechanic photo upload failed.');
+    currentReceipt = await recordMechanicUploadedPhoto(Receipt,currentReceipt,urls,url);
     urls.push(url);
-    currentReceipt = await updateMechanicReceiptSummary(Receipt,currentReceipt,{
-      uploaded_photo_urls:[...urls],
-      upload_evidence_updated_at:nowIso(),
-    });
   }
   return {urls,receipt:currentReceipt};
 }
