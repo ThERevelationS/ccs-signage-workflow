@@ -320,7 +320,7 @@ check("collapsing does not steal focus from visible controls and recovers strand
 
 check("delayed focus callbacks cancel on dialog close or Template Builder switch", () => {
   const scheduler = source.slice(source.indexOf("  const cancelPendingNavigationFocus = () => {"),
-    source.indexOf("  const startEditItem ="));
+    source.indexOf("  // Warning dialogs must keep focus inside their modal while displayed."));
   assert.match(scheduler, /window\.clearTimeout\(pendingNavigationFocusTimerRef\.current\)/);
   assert.match(scheduler, /if \(navigationFocusVersionRef\.current !== version\) return;/);
   assert.match(scheduler, /useLayoutEffect\(\(\) => \{/);
