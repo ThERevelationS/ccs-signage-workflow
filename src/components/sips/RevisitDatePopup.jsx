@@ -14,8 +14,9 @@ import { addDays, format, startOfDay } from "date-fns";
  *   onClose      – () => void  (cancel, don't save revisit date)
  *   onSave       – (dateString | null) => void  (save with or without date)
  *   currentDate  – existing sip_revisit_date value (yyyy-MM-dd string or null)
+ *   returnFocusRef – Save & Revisit button to refocus on cancellation only
  */
-export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate }) {
+export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate, returnFocusRef }) {
   const parseDate = (ds) => {
     if (!ds) return undefined;
     try {
@@ -29,6 +30,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
     return parsed && parsed > startOfDay(new Date()) ? parsed : undefined;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const restoreFocusAfterCancelRef = React.useRef(false);
   const today = startOfDay(new Date());
   const earliestRevisitDate = addDays(today, 1);
 
@@ -38,13 +40,29 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
       const parsed = parseDate(currentDate);
       setSelected(parsed && parsed > startOfDay(new Date()) ? parsed : undefined);
       setIsSubmitting(false);
+      restoreFocusAfterCancelRef.current = false;
     }
   }, [isOpen, currentDate]);
 
   const submitDate = (date) => {
     if (isSubmitting) return;
+    restoreFocusAfterCancelRef.current = false;
     setIsSubmitting(true);
     onSave(date ? format(date, "yyyy-MM-dd") : null);
+  };
+
+  const cancelDateSelection = () => {
+    if (isSubmitting) return;
+    restoreFocusAfterCancelRef.current = true;
+    onClose();
+  };
+
+  const handleRevisitCloseAutoFocus = (event) => {
+    if (!restoreFocusAfterCancelRef.current) return;
+    restoreFocusAfterCancelRef.current = false;
+    event.preventDefault();
+    const returnTarget = returnFocusRef?.current;
+    if (returnTarget?.isConnected && !returnTarget.disabled) returnTarget.focus();
   };
 
   const quickDates = [
@@ -59,7 +77,10 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] sm:w-full max-w-sm max-h-[94vh] overflow-y-auto p-4 sm:p-6 [&>button]:hidden">
+      <DialogContent
+        className="clay-card border-none w-[calc(100vw-1rem)] sm:w-full max-w-sm max-h-[94vh] overflow-y-auto p-4 sm:p-6 [&>button]:hidden"
+        onCloseAutoFocus={handleRevisitCloseAutoFocus}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <CalendarClock className="w-5 h-5 text-purple-600" aria-hidden="true" />
@@ -142,7 +163,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
           >
             {currentDate ? "Clear Revisit & Keep Active" : "Keep in Active Queue (No Revisit)"}
           </Button>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting} className="w-full h-11 sm:h-9 text-gray-500">
+          <Button type="button" variant="ghost" onClick={cancelDateSelection} disabled={isSubmitting} className="w-full h-11 sm:h-9 text-gray-500">
             Cancel — Don’t Save Yet
           </Button>
         </div>
