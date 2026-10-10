@@ -191,11 +191,9 @@ async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, reque
   if (!sourceId || !requestId) return;
   const source = await Receipt.get(sourceId).catch(()=>null);
   if (source?.status !== 'started' || String(source?.result_summary?.retry_reserved_by_request_id || '') !== requestId) return;
-  await Receipt.updateMany({id:source.id,status:'started',
-    'result_summary.retry_reserved_by_request_id':requestId},{$set:{
+  await Receipt.updateMany({id:source.id,status:'started'},{$set:{
     status:'failed',
-    'result_summary.retry_reserved_by_request_id':'',
-    'result_summary.retry_reservation_released_at':nowIso(),
+    result_summary:{...(source.result_summary || {}),retry_reserved_by_request_id:'',retry_reservation_released_at:nowIso()},
   }}).catch(()=>null);
 }
 
