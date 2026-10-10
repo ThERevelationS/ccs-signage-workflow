@@ -48,7 +48,7 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
 }
 function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false}={}){
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
-    waiting:[], uploadWaiting:[], pendingUpdates:[], release:null};
+    waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pauseGrantCheck:false,release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
@@ -70,7 +70,16 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
     },
     async updateMany(filter,operators){
       const found=[...store.receipts.values()].filter(row=>matches(row,filter));
-      for(const row of found)store.receipts.set(row.id,{...row,...clone(operators.$set)});
+      for(const row of found){
+        const next=clone(row);
+        for(const [key,value] of Object.entries(operators.$set||{})){
+          const parts=key.split('.');
+          let target=next;
+          for(const part of parts.slice(0,-1))target=target[part]??=( {} );
+          target[parts.at(-1)]=clone(value);
+        }
+        store.receipts.set(row.id,next);
+      }
       return {updated:found.length};
     },
     async delete(id){store.receipts.delete(id);}
@@ -78,7 +87,14 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
   const access={
     async list(){return [clone(grant)];},
     async filter(filter){return matches(grant,filter)?[clone(grant)]:[];},
-    async get(id){return id===grantId?clone(grant):null;},
+    async get(id){
+      const snapshot=id===grantId?clone(grant):null;
+      if(store.pauseGrantCheck){
+        store.pauseGrantCheck=false;
+        await new Promise(resolve=>store.pendingGrantChecks.push(resolve));
+      }
+      return snapshot;
+    }
     async update(_id,patch){Object.assign(grant,patch);return clone(grant);}
   };
   const WorkOrder={
