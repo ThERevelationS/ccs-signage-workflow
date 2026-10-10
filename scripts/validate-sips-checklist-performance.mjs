@@ -543,7 +543,16 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
     { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
   assert.equal(inputFocus, 1);
   assert.equal(statusFocus, 1);
-  assert.equal(prevented, 8);
+  // Unmounted preset option falls back to the still-visible custom input.
+  selectedOption.isConnected = false;
+  optionReturnRef.current = selectedOption;
+  validationItemRef.current = "item-1";
+  validationHandler(event, true, validationItemRef, findRow, searchInputRef,
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
+  assert.equal(optionFocus, 1);
+  assert.equal(inputFocus, 2);
+  assert.equal(statusFocus, 1);
+  assert.equal(prevented, 9);
 });
 
 check("rejected custom-status entries retain draft and popup selection", () => {
