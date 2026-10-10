@@ -638,6 +638,58 @@ try {
       await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
     });
 
+  await check('Failed deletion-request read never looks empty or enables review actions', 375,
+    '/?tab=users&real_users=1&deletion_read_fail=1&deletion_rows=1', async page => {
+      const error = page.getByRole('alert', { name: 'Account deletion requests unavailable' });
+      await error.waitFor();
+      assert.match(await error.innerText(), /could not be loaded/);
+      assert.equal((await error.innerText()).includes('synthetic-private-deletion-request-error'), false);
+      assert.equal(await page.getByText('Pending request count unavailable').count(), 1);
+      assert.equal(await page.getByText('No account deletion requests have been submitted.').count(), 0);
+      assert.equal(await page.getByText('Synthetic Review Request').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Mark Reviewed' }).count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Review Impact' }).count(), 0);
+      const attempts = await page.evaluate(() => window.__adminDeletionListAttempts);
+      await error.getByRole('button', { name: 'Retry loading requests' }).click();
+      await error.waitFor();
+      assert.ok(await page.evaluate(() => window.__adminDeletionListAttempts) > attempts);
+      assert.equal(await page.getByText('Synthetic Review Request').count(), 0);
+      await page.evaluate(() => { window.__adminDeletionListFailure = false; });
+      await error.getByRole('button', { name: 'Retry loading requests' }).click();
+      await page.getByText('Synthetic Review Request').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await page.getByText('1 pending review').count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Mark Reviewed' }).isEnabled(), true);
+      await page.getByRole('button', { name: 'Mark Reviewed' }).click();
+      const decision = page.getByRole('alertdialog', { name: /Mark deletion request reviewed/ });
+      await decision.waitFor();
+      await decision.getByRole('button', { name: 'Back' }).click();
+      // Failed refreshing previously verified requests must hide stale decision actions.
+      await page.evaluate(() => { window.__adminDeletionListFailure = true; });
+      await page.getByRole('button', { name: 'Refresh' }).click();
+      await error.waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Mark Reviewed' }).count(), 0);
+      assert.equal(await page.getByText('Synthetic Review Request').count(), 0);
+      assert.equal(await page.getByText('Pending request count unavailable').count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Add User' }).isEnabled(), true,
+        'Unrelated verified user directory remains independently available');
+    });
+
+  await check('Verified-empty deletion requests display empty state only after successful retry', 320,
+    '/?tab=users&real_users=1&deletion_read_fail=1', async page => {
+      const error = page.getByRole('alert', { name: 'Account deletion requests unavailable' });
+      await error.waitFor();
+      assert.equal(await page.getByText('No account deletion requests have been submitted.').count(), 0);
+      await page.evaluate(() => { window.__adminDeletionListFailure = false; });
+      await error.getByRole('button', { name: 'Retry loading requests' }).click();
+      await page.getByText('No account deletion requests have been submitted.').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await page.getByText('0 pending review').count(), 1);
+      await page.getByRole('group', { name: 'Admin navigation categories' })
+        .getByRole('button', { name: 'Integrations' }).click();
+      await page.getByTestId('synthetic-SmartsheetSyncSettings').waitFor();
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
