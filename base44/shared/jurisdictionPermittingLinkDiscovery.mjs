@@ -83,15 +83,27 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
   const candidates = [];
   const anchorRe = /<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
-  while ((match = anchorRe.exec(markup)) !== null) {
-    const rawHref = decodeHtmlText(match[1]);
+  const links = [];
+  while ((match = anchorRe.exec(markup)) !== null) links.push({href: match[1], label: match[2]});
+  // Embedded government forms use the same host, relevance and dedupe gates as
+  // links. MIME declarations are not proof of a downloaded document.
+  const embedRe = /<(iframe|embed|object)\b([^>]*)>/gi;
+  while ((match = embedRe.exec(markup)) !== null) {
+    const attrs = match[2];
+    const attr = name => new RegExp('(?:^|\\s)' + name + '\\s*=\\s*["\x27]([^"\x27]*)["\x27]', 'i').exec(attrs)?.[1] || '';
+    const href = attr(match[1].toLowerCase() === 'object' ? 'data' : 'src');
+    if (!DOWNLOADABLE_RE.test(decodeHtmlText(href)) && !/application\/pdf/i.test(attr('type'))) continue;
+    links.push({href, label: attr('title') || attr('aria-label'), embedded: match[1].toLowerCase()});
+  }
+  for (const link of links) {
+    const rawHref = decodeHtmlText(link.href);
     if (!rawHref || rawHref.startsWith('#') || /^(javascript:|mailto:|tel:)/i.test(rawHref)) continue;
     let target;
     try { target = new URL(rawHref, base); } catch { continue; }
     if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password || target.port !== page.port) continue;
     if (normalizedHost(target.hostname) !== normalizedHost(page.hostname)) continue;
     target.hash = '';
-    const title = decodeHtmlText(match[2]);
+    const title = decodeHtmlText(link.label);
     // Use the raw href: an inherited /zoning/ directory must not make Home,
     // schools, calendar, language selectors, or other navigation relevant.
     const relevance = linkWords(title + ' ' + rawHref.split('#')[0]);
@@ -104,6 +116,7 @@ function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offs
       url: target.href,
       doc_type: permittingDocumentType({ title, url: target.href }),
       source: 'official_page_harvest',
+      ...(link.embedded ? { discovery_element: link.embedded } : {}),
       verification_notes: 'Discovered from the retained official permitting/forms page; authority not inferred.',
     });
   }

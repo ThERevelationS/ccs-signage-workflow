@@ -1,3 +1,4 @@
+import { validatePermitDocumentBytes } from './permittingDocumentValidation.mjs';
 import { hasClassifiedPdfResource } from './permittingResourceResponse.mjs';
 import { registerJurisdictionArchive, continueJurisdictionCatalogBacklog } from './jurisdictionArchiveCatalog.mjs';
 import { authorizedHtmlUrl } from './permittingHtmlEvidence.mjs';
@@ -139,17 +140,20 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
     if (requirePdf && response.url) authorizedHtmlUrl(initial, response.url);
     if (requirePdf && !/^application\/pdf(?:\s*;|$)/i.test(response.headers.get('content-type') || ''))
       throw new Error('Selected official resource did not return PDF content.');
-    return readBytes(response);
+    const bytes = await readBytes(response);
+    return {bytes, contentType: response.headers.get('content-type') || '', finalUrl: response.url || url};
   })(), RESEARCH_FETCH_TIMEOUT_MS, 'Archive fetch/read');
   try {
     if (!resumeUpload) {
-      const bytes = await fetchBytes(doc.url, Boolean(knownPdf || classifiedPdf));
+      const sourceResponse = await fetchBytes(doc.url, Boolean(knownPdf || classifiedPdf));
+      const bytes = sourceResponse.bytes;
       const ext = knownPdf || classifiedPdf ? 'pdf' : new URL(doc.url).pathname.split('.').pop().toLowerCase();
-      if (ext === 'pdf' && new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-') throw new Error('Source is not a valid PDF.');
+      const validation = validatePermitDocumentBytes(bytes, {format: ext, contentType: sourceResponse.contentType});
       const sha = await digest(bytes);
       if (knownPdf && (bytes.length !== knownPdf.bytes || sha !== knownPdf.sha256))
         throw new Error('Official PDF changed from the retained expectation; review before upload.');
-      const uploading = { ...state, status: 'uploading', source_sha256: sha, source_bytes: bytes.length, ...(classifiedPdf ? { detected_format: 'pdf' } : {}) };
+      const uploading = { ...state, status: 'uploading', source_sha256: sha, source_bytes: bytes.length, detected_format: ext, validation_method: validation.validation_method,
+        source_content_type: sourceResponse.contentType, source_final_url: sourceResponse.finalUrl };
       await transition(entity, jurisdictionId, doc, state, uploading);
       state = uploading;
       stage = 'upload';
@@ -170,7 +174,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
     const verifying = { ...state, verification_attempts: (Number(state.verification_attempts) || 0) + 1 };
     await transition(entity, jurisdictionId, doc, state, verifying);
     state = verifying;
-    const stored = await fetchBytes(state.file_url);
+    const {bytes: stored} = await fetchBytes(state.file_url);
     const storedSha = await digest(stored);
     if (stored.length !== state.source_bytes || storedSha !== state.source_sha256) throw new Error('Stored archive bytes do not match the official source.');
     const complete = { ...state, status: 'complete', lease_expires_at: '', retry_after: '', error: '', completed_at: stamp() };
