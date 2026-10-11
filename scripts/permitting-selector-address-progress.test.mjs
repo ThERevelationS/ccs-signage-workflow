@@ -66,3 +66,5 @@ test('administrator review can inspect employee collections but employees cannot
 });
 
 test('document-link endpoint rejects employee requests before resource access',async()=>{let access=0;const c={asServiceRole:{get entities(){access++;throw Error('must not access');}}};const run=handler('linkAddressResearchDocument',c,{authenticateSignShopSession:async()=>({id:'employee',email:'employee@example.com',role:'user'})});assert.equal((await run({collection_id:'c',document_id:'d',dry_run:true})).status,403);assert.equal(access,0);});
+
+test('administrator document-link preview is read-only and mutations require tracked action identity',async()=>{const c={asServiceRole:{entities:{}}};let called=0;const run=handler('linkAddressResearchDocument',c,{linkAddressDocument:async()=>{called++;return {success:true,dry_run:true};}});assert.equal((await run({collection_id:'c',document_id:'d',dry_run:true})).status,200);assert.equal(called,1);assert.equal((await run({collection_id:'c',document_id:'d',confirmed:true})).status,400);assert.equal(called,1);});
