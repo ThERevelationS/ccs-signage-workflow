@@ -100,7 +100,9 @@ export default function ProductChecklistDialog({
   const [saveError, setSaveError] = useState("");
   const [validationDialog, setValidationDialog] = useState(null);
   const [showCompletedItems, setShowCompletedItems] = useState(false);
-  const [discardWarning, setDiscardWarning] = useState(false);
+  const [discardWarning, setDiscardWarning] = useState(null); // "close" or "reload"
+  const reloadLatestButtonRef = useRef(null);
+  const returnToReloadRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const deleteFocusRecoveryRef = useRef(false);
   const checklistCloseButtonRef = useRef(null);
@@ -218,7 +220,7 @@ export default function ProductChecklistDialog({
     if (isOpen && workOrder) loadData();
     // Older asynchronous reads must never overwrite the next Work Order.
     return () => { loadDataRequestRef.current += 1; };
-  }, [isOpen, workOrder]);
+  }, [isOpen, workOrder?.id]);
 
   const loadData = async () => {
     const requestId = ++loadDataRequestRef.current;
@@ -1543,19 +1545,56 @@ export default function ProductChecklistDialog({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const revisitIsFuture = Boolean(revisitDate && revisitDate > today);
+  const hasUnsubmittedDrafts = (
+    (newItemInput.show && Boolean(newItemText.trim())) ||
+    (showAddGeneralChecklist && Boolean(newGeneralChecklistText.trim())) ||
+    (editingItemId !== null && editingItemText.trim() !== (checklistItemById.get(editingItemId)?.text || "").trim()) ||
+    (editingProductName !== null && editingProductNameText.trim() !== editingProductName.trim()) ||
+    Array.from(customStatusDraftsByItemIdRef.current.values()).some(value => Boolean(value?.trim()))
+  );
   const hasUnsavedChanges = !isLoading && (
     JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot) ||
-    JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot)
+    JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot) ||
+    hasUnsubmittedDrafts
   );
 
   const requestClose = () => {
     if (isSaving) return;
     if (hasUnsavedChanges) {
-      setDiscardWarning(true);
+      setDiscardWarning("close");
       return;
     }
     cancelPendingNavigationFocus();
     onClose();
+  };
+  const requestReloadLatest = () => {
+    if (isSaving || isLoading) return;
+    if (hasUnsavedChanges) {
+      returnToReloadRef.current = true;
+      setDiscardWarning("reload");
+      return;
+    }
+    loadData();
+  };
+  const confirmDiscardChanges = () => {
+    const action = discardWarning;
+    returnToReloadRef.current = false;
+    setDiscardWarning(null);
+    cancelPendingNavigationFocus();
+    if (action === "reload") {
+      // Reload must not leave an editor pointing to a row from the prior snapshot.
+      setEditingItemId(null);
+      setEditingItemText("");
+      setEditingProductName(null);
+      setEditingProductNameText("");
+      setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+      setNewItemText("");
+      setShowAddGeneralChecklist(false);
+      setNewGeneralChecklistText("");
+      loadData();
+    } else if (action === "close") {
+      onClose();
+    }
   };
 
   return (
@@ -2829,8 +2868,8 @@ export default function ProductChecklistDialog({
               <div className="font-medium">SIP product checklist save blocked</div>
               <div className="mt-1 text-xs">{saveError}</div>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                <span className="text-xs text-red-700">Reloading discards unsaved checklist and product edits.</span>
-                <Button type="button" size="sm" variant="outline" onClick={loadData} disabled={isLoading || isSaving} className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 sm:h-8 sm:w-auto">
+                <span className="text-xs text-red-700">Reloading replaces local edits with the latest saved Work Order. Unsaved changes require confirmation.</span>
+                <Button ref={reloadLatestButtonRef} type="button" size="sm" variant="outline" onClick={requestReloadLatest} disabled={isLoading || isSaving} className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 sm:h-8 sm:w-auto">
                   {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
                   Reload latest
                 </Button>
@@ -2933,27 +2972,36 @@ export default function ProductChecklistDialog({
       </AlertDialog>
 
       {/* Unsaved changes warning */}
-      <AlertDialog open={discardWarning} onOpenChange={setDiscardWarning}>
-        <AlertDialogContent className="clay-card border-none">
+      <AlertDialog open={!!discardWarning} onOpenChange={(open) => { if (!open) setDiscardWarning(null); }}>
+        <AlertDialogContent
+          className="clay-card border-none"
+          onCloseAutoFocus={(event) => {
+            if (!returnToReloadRef.current) return;
+            returnToReloadRef.current = false;
+            event.preventDefault();
+            const button = reloadLatestButtonRef.current;
+            if (isOpen && button?.isConnected && !button.disabled && button.getClientRects().length) button.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-amber-500" />
-              Discard unsaved SIP changes?
+              {discardWarning === "reload" ? "Discard edits and reload latest?" : "Discard unsaved SIP changes?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Checklist answers, assignments, items, or product edits made in this window have not been saved yet. Leaving now will discard them.
+              {discardWarning === "reload"
+                ? "Your unsaved checklist answers, items, product edits, and unfinished text will be lost. Reload latest will replace this view with the saved Work Order. Keep Editing preserves everything here."
+                : "Checklist answers, assignments, items, products, or unfinished text entered here have not been saved. Leaving now will discard them."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="h-11 sm:h-9">Keep Editing</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                setDiscardWarning(false);
-                onClose();
-              }}
+              onClick={confirmDiscardChanges}
+              disabled={isSaving || isLoading}
               className="h-11 bg-red-600 hover:bg-red-700 sm:h-9"
             >
-              Discard Changes
+              {discardWarning === "reload" ? "Discard & Reload" : "Discard Changes"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
