@@ -128,7 +128,7 @@ export default function LocalityPickerDialog({
     setResult(null);
     try {
       const invoke=runAction;
-      const { data } = await invoke('findLocalityByAddress', {
+      const { data } = await invoke('resolvePermittingAddress', {
         address: address.trim(),
         session_token: sessionToken,
       },`Find jurisdiction for ${address.trim()}`);
