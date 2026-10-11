@@ -79,7 +79,7 @@ test('duplicate collections cannot upload in the automatic worker',async()=>{
 });
 function repositoryFixture(state='OH'){
  let row={id:'repository',name:'Repository',state,updated_date:'v1',documents:[{id:'repo-file',url:'https://government.example.com/repo.pdf',title:'Repository form',source:'official_page_harvest'}]},version=1;
- return {filter:async q=>q.state===row.state&&(row.discovery_scan_state?.external_referrals?.some(ref=>!(row.documents || []).some(doc=>doc.url===ref.url))||row.documents.some(doc=>archiveDocumentEligible(doc))?[structuredClone(row)]:[],get:async()=>structuredClone(row),updateMany:async(q,patch)=>{if(q.updated_date!==row.updated_date)return {updated:0};row={...row,...structuredClone(patch.$set),updated_date:'v'+(++version)};return {updated:1};}};
+ return {filter:async q=>q.state===row.state&&row.documents.some(doc=>archiveDocumentEligible(doc))?[structuredClone(row)]:[],get:async()=>structuredClone(row),updateMany:async(q,patch)=>{if(q.updated_date!==row.updated_date)return {updated:0};row={...row,...structuredClone(patch.$set),updated_date:'v'+(++version)};return {updated:1};}};
 }
 test('queue rotation selects one address or repository original without expanding the one-file cycle budget',async()=>{
  for(const preferAddressArchives of [true,false]){
