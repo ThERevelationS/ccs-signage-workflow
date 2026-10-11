@@ -4,7 +4,7 @@ export const ResearchProgressContext=createContext(null);
 export function ResearchProgressProvider({children}){
  const [actions,setActions]=useState(()=>{try{return Object.fromEntries(JSON.parse(sessionStorage.getItem('permitting_scan_actions') || '[]').map(row=>[row.id,{...row,status:'unknown',stage:'Restoring saved action status',indeterminate:true,events:[]}]))}catch{return {}}});const legacy=useRef(null);
  const put=useCallback((id,patch)=>setActions(prev=>({...prev,[id]:{...prev[id],...patch}})),[]);
- const startResearch=useCallback((total,label='Locality research batch')=>{const id=crypto.randomUUID();legacy.current=id;put(id,{id,label,total,processed:0,updated:0,skipped:0,status:'running',stage:'Starting',events:[],indeterminate:false});return id;},[put]);
+ const startResearch=useCallback((total,label='Locality research batch')=>{const id=crypto.randomUUID();legacy.current=id;put(id,{id,label,local_batch:true,total,processed:0,updated:0,skipped:0,status:'running',stage:'Starting',events:[],indeterminate:false});return id;},[put]);
  const updateProgress=useCallback((updates,id=legacy.current)=>{if(id)put(id,{...updates,stage:updates.currentJurisdiction || updates.stage || 'Researching'});},[put]);
  const completeResearch=useCallback((updated,skipped,error=null,id=legacy.current)=>{if(id)put(id,{status:error?'failed':'complete',updated,skipped,error,indeterminate:false,stage:error?'Failed':'Complete',processed:updated+skipped});},[put]);
  const clearProgress=useCallback(id=>setActions(prev=>{const next={...prev};delete next[id];return next;}),[]);
@@ -25,7 +25,7 @@ export function ResearchProgressProvider({children}){
  },[put]);
  const actionRows=useRef(actions);actionRows.current=actions;
  const refreshAction=useCallback(async id=>{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});if(res?.data?.run)put(id,{...res.data.run,id,response_lost:false,activity_warning:null});else put(id,{status:'unknown',stage:'No saved activity found — execution unconfirmed',response_lost:true});},[put]);
- useEffect(()=>{try{sessionStorage.setItem('permitting_scan_actions',JSON.stringify(Object.values(actions).slice(-50).map(({id,label})=>({id,label}))))}catch{}},[actions]);
+ useEffect(()=>{try{sessionStorage.setItem('permitting_scan_actions',JSON.stringify(Object.values(actions).filter(row=>!row.local_batch).slice(-50).map(({id,label})=>({id,label}))))}catch{}},[actions]);
  useEffect(()=>{let polling=false;async function sync(){if(polling)return;polling=true;try{await Promise.allSettled(Object.values(actionRows.current).filter(row=>row.status==='unknown'||(row.status==='running'&&row.response_lost)).map(row=>refreshAction(row.id)));}finally{polling=false;}}void sync();const timer=setInterval(()=>void sync(),2000);return()=>clearInterval(timer);},[refreshAction]);
  return <ResearchProgressContext.Provider value={{actions,runAction,refreshAction,startResearch,updateProgress,completeResearch,clearProgress}}>{children}</ResearchProgressContext.Provider>;
 }
