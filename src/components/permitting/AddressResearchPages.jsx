@@ -1,6 +1,6 @@
 import {useState,useRef,useEffect} from 'react';
 import {useResearchProgress} from './ResearchProgressContext';
-import {runAddressPageScan} from './addressPageScan.mjs';
+import {runAddressPageScan,retryAddressFailedPages} from './addressPageScan.mjs';
 function PageLink({url,label}){
  let href;try{const u=new URL(url);if(['https:','http:'].includes(u.protocol)&&!u.username&&!u.password)href=u.href;}catch{}
  return href?<a href={href} target="_blank" rel="noopener noreferrer" className="underline text-blue-700 break-all">{label || href}</a>:<span>Link unavailable</span>;
@@ -11,13 +11,13 @@ export default function AddressResearchPages({collection,review,disabled,onUpdat
  const discovery=collection.discovery;
  const currentSource=Object.values(actions).filter(action=>action.target_id===collection.id&&action.action_kind==='address_discovery'&&action.status==='running'&&action.current_url).at(-1)?.current_url;
  if(!discovery)return null;
- async function scan(retryPageUrl=null){
+ async function scan(retryPageUrl=null,batch=false){
   if(control.current||disabled)return;
-  const request={stop:false};control.current=request;onBusyChange(collection.id,true);setError('');setPass({running:true,retry:retryPageUrl!==null,checked:0,failed:0});
+  const request={stop:false};control.current=request;onBusyChange(collection.id,true);setError('');setPass({running:true,retry:retryPageUrl!==null,batch,processed:0,total:(discovery.gaps || []).filter(gap=>gap.reason==='page_fetch_failed').length,checked:0,failed:0});
   try{
-   const result=retryPageUrl!==null?await retryPage(retryPageUrl):await runAddressPageScan({collection,stopped:()=>request.stop,onProgress:progress=>setPass(previous=>({...previous,...progress})),
+   const result=batch?await retryAddressFailedPages({collection,stopped:()=>request.stop,onProgress:progress=>setPass(previous=>({...previous,...progress})),retryPage:async(current,url)=>{const response=await runAction('continueAddressResearchDiscovery',{collection_id:current.id,retry_page_url:url},'Retry research page — '+(current.target?.name || current.name || 'address research'));if(response.data?.collection)onUpdate(response.data.collection);return response.data;}}):retryPageUrl!==null?await retryPage(retryPageUrl):await runAddressPageScan({collection,stopped:()=>request.stop,onProgress:progress=>setPass(previous=>({...previous,...progress})),
     scanPage:async current=>{const response=await runAction('continueAddressResearchDiscovery',{collection_id:current.id},'Scan research page — '+(current.target?.name || current.name || 'address research'));if(response.data?.collection)onUpdate(response.data.collection);return response.data;}});
-   setPass({...result,retry:retryPageUrl!==null,running:false});
+   setPass({...result,retry:retryPageUrl!==null,batch,running:false});
   }catch(e){setError(e.response?.data?.error || e.message || 'Page result could not be confirmed. Check saved research before retrying.');setPass(previous=>({...previous,running:false,halted:true}));}
   finally{control.current=null;onBusyChange(collection.id,false);}
  }
@@ -32,7 +32,8 @@ export default function AddressResearchPages({collection,review,disabled,onUpdat
   <p>This continues saved pages on the source website. Each page has its own action progress and findings. New originals appear in the file list; use Save all remaining originals to download them.</p>
   {discovery.blocked&&<p className="text-amber-800">Saved page progress needs review: {discovery.block_reason || 'The source or progress changed.'}</p>}
   {!review&&<button type="button" className="min-h-11 border rounded px-3" disabled={disabled||pass?.running||discovery.blocked||!discovery.pending_pages.length} onClick={()=>scan()}>Scan remaining pages</button>}
-  {pass&&<div role="status"><p>{pass.running?(pass.retry?'Retrying failed page':'Scanning saved pages'):pass.halted?'Scan stopped after a request error':pass.stopped?'Stopped after this page':pass.retry?'Page retry finished':'Remaining-page scan finished'}: {pass.checked} checked · {pass.failed} failed.</p>{pass.running&&<p className="break-all">{currentSource?'Checking: '+currentSource:'Waiting for page activity…'}</p>}{pass.running&&<button type="button" className="min-h-11 border rounded px-3" disabled={pass.stopRequested} onClick={()=>{if(control.current)control.current.stop=true;setPass(previous=>({...previous,stopRequested:true}));}}>{pass.stopRequested?'Stopping after this page…':'Stop after this page'}</button>}</div>}
+  {!review&&<button type="button" className="min-h-11 border rounded px-3" disabled={disabled||pass?.running||discovery.blocked||!discovery.gaps.some(gap=>gap.reason==='page_fetch_failed')} onClick={()=>scan(null,true)}>Retry failed pages</button>}
+  {pass&&<div role="status">{pass.batch&&<><p>Failed-page retries: {pass.processed} of {pass.total} checked · {pass.failed} still failed.</p><progress aria-label="Retry failed pages" value={pass.processed} max={Math.max(1,pass.total)} className="w-full"/></>}<p>{pass.running?(pass.batch?'Retrying saved failed pages':pass.retry?'Retrying failed page':'Scanning saved pages'):pass.halted?'Scan stopped after a request error':pass.stopped?'Stopped after this page':pass.batch?'Failed-page retry pass finished':pass.retry?'Page retry finished':'Remaining-page scan finished'}: {pass.checked} checked · {pass.failed} failed.</p>{pass.running&&<p className="break-all">{currentSource?'Checking: '+currentSource:'Waiting for page activity…'}</p>}{pass.running&&<button type="button" className="min-h-11 border rounded px-3" disabled={pass.stopRequested} onClick={()=>{if(control.current)control.current.stop=true;setPass(previous=>({...previous,stopRequested:true}));}}>{pass.stopRequested?'Stopping after this page…':'Stop after this page'}</button>}</div>}
   {error&&<p role="alert" className="text-amber-800">{error}</p>}
   <p>Keep this window open. This is source research; it does not approve an office, assign a jurisdiction or establish complete coverage. Failed and depth-limited pages remain for review.</p>
   {!!discovery.pending_pages.length&&<details><summary className="min-h-11 cursor-pointer">Waiting page URLs ({discovery.pending_pages.length})</summary><ul>{discovery.pending_pages.map((page,index)=><li key={page.url+index}><PageLink url={page.url}/></li>)}</ul></details>}
