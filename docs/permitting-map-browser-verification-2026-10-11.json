@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T01:49:34.994Z",
+  "tested_at": "2026-10-11T01:55:59.536Z",
   "mode": "isolated Chromium, actual React map and loader, production CSS, simulated Google SDK; live API configuration and imagery not verified",
   "production_writes": 0,
   "checks": [
