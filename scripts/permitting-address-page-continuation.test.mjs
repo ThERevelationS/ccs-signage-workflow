@@ -71,3 +71,9 @@ test('collection key changes during fetch cannot reparent discovery progress',as
  const f=await fixture(),fetch=f.options.fetchPage;f.options.fetchPage=async(...args)=>{const result=await fetch(...args);f.patch({collection_key:'changed-origin:0'});return result;};
  await assert.rejects(continueOwnedAddressDiscovery(f.options),/not available/);assert.equal(f.row().documents.length,1);assert.equal(f.row().discovery_scan_state.pending_pages.length,1);
 });
+
+test('new HTTP direct referrals remain outside links rather than queued originals',async()=>{
+ const f=await fixture();f.options.fetchPage=async url=>({html:'<a href="http://cdn.gov/sign.pdf">Sign permit application</a>',finalUrl:url});
+ const result=await continueOwnedAddressDiscovery(f.options);assert.equal(result.collection.external_referrals.length,0);assert.equal(result.collection.discovery.outside_links.length,1);assert.equal(result.collection.discovery.outside_links[0].url,'http://cdn.gov/sign.pdf');
+ assert.equal(f.row().discovery_scan_state.external_referrals[0].referral_kind,'downloadable_document');
+});

@@ -119,3 +119,8 @@ test('address scans retain a pending-page collection even before finding a downl
  const f=fixture();f.options.automatic.scans[0].documents=[];f.options.automatic.scans[0].continuation_state.pending_pages=[{url:'https://government.example.com/permits',depth:1}];
  const r=await retainAddressResearchFiles(f.options);assert.equal(r.collections.length,1);assert.equal(f.rows()[0].documents.length,0);assert.equal(r.collections[0].discovery.pending_pages.length,1);assert.equal(f.calls.source,0);assert.equal(f.calls.uploads,0);assert.equal(r.collections[0].archive,null);
 });
+
+test('automatic address archives do not attempt HTTP-only outside referrals',async()=>{
+ const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});f.patch({documents:[],discovery_scan_state:{...f.rows()[0].discovery_scan_state,external_referrals:[{referral_kind:'downloadable_document',url:'http://cdn.gov/sign.pdf',source_page_url:'https://government.example.com/forms'}]}});
+ const options=backgroundFixture(f),r=await continueAddressResearchArchives(options);assert.equal(r.skipped,true);assert.equal(f.calls.source,0);assert.equal(f.calls.uploads,0);assert.equal(options.actions.size,0);
+});

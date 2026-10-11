@@ -3,12 +3,16 @@ import {isDownloadableResearchDocument} from './jurisdictionPermittingLinkDiscov
 import {mergeJurisdictionResearchDocuments} from './jurisdictionResearchDocumentMerge.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
 
+export function isAddressDirectOriginalReferral(ref){
+ try{const url=new URL(ref.url),source=new URL(ref.source_page_url);return ref.referral_kind==='downloadable_document'&&url.protocol==='https:'&&source.protocol==='https:'&&!url.username&&!url.password&&!source.username&&!source.password;}catch{return false;}
+}
+
 export function addressResearchCollection(row){
  const cursor=row.discovery_scan_state;
  return {id:row.id,target:row.location_target,name:row.name,documents:row.documents || [],
-  external_referrals:(cursor?.external_referrals || []).filter(ref=>ref.referral_kind==='downloadable_document'),
+  external_referrals:(cursor?.external_referrals || []).filter(isAddressDirectOriginalReferral),
   auto_refresh:row.auto_refresh,reference_only:true,authority_established:false,
-  ...(cursor?{discovery:{pending_pages:cursor.pending_pages || [],gaps:cursor.gaps || [],blocked:cursor.blocked===true,block_reason:cursor.block_reason,visited_count:cursor.visited_urls?.length || 0,last_pages:row.discovery_last_scan?.pages || [],last_resources:row.discovery_last_scan?.resources || [],outside_links:(cursor.external_referrals || []).filter(ref=>ref.referral_kind!=='downloadable_document')}}:{})};
+  ...(cursor?{discovery:{pending_pages:cursor.pending_pages || [],gaps:cursor.gaps || [],blocked:cursor.blocked===true,block_reason:cursor.block_reason,visited_count:cursor.visited_urls?.length || 0,last_pages:row.discovery_last_scan?.pages || [],last_resources:row.discovery_last_scan?.resources || [],outside_links:(cursor.external_referrals || []).filter(ref=>!isAddressDirectOriginalReferral(ref))}}:{})};
 }
 
 // One durable page per request; the staff-controlled UI may continue without an overall page cap.

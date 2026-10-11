@@ -1,4 +1,4 @@
-import {addressResearchCollection} from './permittingAddressDiscoveryContinuation.mjs';
+import {addressResearchCollection,isAddressDirectOriginalReferral} from './permittingAddressDiscoveryContinuation.mjs';
 import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferralArchive.mjs';
 import {validateExternalPermittingReferral} from './permittingExternalReferrals.mjs';
 import {createScanReporter,silentScanReporter} from './permittingScanReporter.mjs';
@@ -89,7 +89,7 @@ export async function archiveOwnedAddressResearchReferral({entity,collectionId,a
 
 export async function continueAddressResearchArchives({entity,scanEntity,state,fetchSource,uploadFile,now=()=>Date.now()}){
  if(!entity?.filter||!scanEntity?.get)return {success:true,skipped:true,reason:'address_archive_unavailable'};
- const pending=archiveBacklogQuery(now());delete pending.documents.$elemMatch.external_referral_provenance;const query={state,auto_refresh:true,$or:[{documents:pending.documents},{'discovery_scan_state.blocked':{$ne:true},'discovery_scan_state.external_initial_collection_drained':{$ne:true},'discovery_scan_state.external_referrals':{$elemMatch:{referral_kind:'downloadable_document'}}}]};
+ const pending=archiveBacklogQuery(now());delete pending.documents.$elemMatch.external_referral_provenance;const query={state,auto_refresh:true,$or:[{documents:pending.documents},{'discovery_scan_state.blocked':{$ne:true},'discovery_scan_state.external_initial_collection_drained':{$ne:true},'discovery_scan_state.external_referrals':{$elemMatch:{referral_kind:'downloadable_document',url:{$regex:'^https://'},source_page_url:{$regex:'^https://'}}}}]};
  Object.assign(query,{reference_only:true,authority_established:false,owner_id:{$nin:[null,'']},owner_email:{$nin:[null,'']},scan_run_id:{$nin:[null,'']}});
  const candidates=await entity.filter(query,'updated_date',20,0),review=[];
  for(const listed of candidates){
@@ -100,7 +100,7 @@ export async function continueAddressResearchArchives({entity,scanEntity,state,f
    const run=await scanEntity.get(collection.scan_run_id);
    if(!run||run.action_kind!=='address'||!['complete','completed_with_errors'].includes(run.status)||run.owner_id!==collection.owner_id||run.owner_email!==collection.owner_email||!(collection.collection_key || '').startsWith(run.id+':')||!/^\d+$/.test((collection.collection_key || '').slice(run.id.length+1)))throw Error('Address collection origin or owner requires review.');
    const document=(collection.documents || []).find(doc=>archiveDocumentEligible(doc,{now:now(),scopedExternal:true}));
-   const referral=!document&&(collection.discovery_scan_state?.external_referrals || []).find(ref=>ref.referral_kind==='downloadable_document'&&!(collection.documents || []).some(doc=>doc.url===ref.url));
+   const referral=!document&&(collection.discovery_scan_state?.external_referrals || []).find(ref=>isAddressDirectOriginalReferral(ref)&&!(collection.documents || []).some(doc=>doc.url===ref.url));
    if(!document&&!referral)continue;
    const actor={id:collection.owner_id,email:collection.owner_email};
    reporter=await createScanReporter({entity:scanEntity,token:crypto.randomUUID(),user:actor,targetId:collection.id,targetName:collection.name,kind:'address_archive',label:'Automatic original download — '+(document?.title || referral?.title || collection.name)});
