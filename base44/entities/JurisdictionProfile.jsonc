@@ -151,6 +151,7 @@
             "additionalProperties": true,
             "description": "Durable archival receipt and lease. uploading/upload_uncertain must never auto-retry; uploaded resumes readback of the same file. No regulatory authority is implied."
           },
+          "address_research_review": {"type":"object","additionalProperties":true,"description":"Administrator-reviewed immutable original snapshot link; not rule or office authority approval."},
           "archive_pinned": {
             "type": "boolean",
             "description": "Prevents automatic archival changes to this document."
