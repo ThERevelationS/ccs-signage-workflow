@@ -1154,4 +1154,81 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   assert.match(source, /onClick=\{handleCheckOff\}/);
 });
 
+check("unfinished edit warning returns focus to the exact draft, reopening nested rows", () => {
+  for (const marker of ["new-item", "edit-item", "edit-product", "general"]) {
+    assert.match(source, new RegExp('data-sips-unsubmitted-draft="' + marker + '"'));
+  }
+  assert.equal((source.match(/data-sips-unsubmitted-draft="edit-item"/g) || []).length,
+    (source.match(/value=\{editingItemText\}/g) || []).length);
+  assert.equal((source.match(/data-sips-unsubmitted-draft="new-item"/g) || []).length,
+    (source.match(/value=\{newItemText\}/g) || []).length);
+
+  const focusBody = source.slice(source.indexOf("  const focusUnsubmittedDraft = () => {"),
+    source.indexOf("  const requestClose = () => {"));
+  const makeFocus = new Function("ctx", "with (ctx) {\n" + focusBody +
+    "\nreturn focusUnsubmittedDraft;\n}");
+  let focused = 0, scrolled = 0, fallback = 0;
+  let collapsed = { P: true }, expanded = {}, showCompleted = false;
+  let reopened = null;
+  const targetRef = { current: { kind: "new-item", itemId: "task", productName: "P" } };
+  const customFocusRef = { current: false };
+  const input = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { focused++; }, scrollIntoView: () => { scrolled++; } };
+  const fallbackInput = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { fallback++; } };
+  let hidden = false;
+  const ctx = {
+    unfinishedDraftTargetRef: targetRef, focusCustomDraftOnOpenRef: customFocusRef,
+    isOpen: true, isLoading: false,
+    checklistItemById: new Map([
+      ["task", { id: "task", parent_id: "root", product_name: "P" }],
+      ["root", { id: "root", parent_id: null, product_name: "P" }]
+    ]),
+    checklistSearchInputRef: { current: fallbackInput }, checklistCloseButtonRef: { current: null },
+    setCollapsedProducts(fn) { collapsed = fn(collapsed); },
+    setExpandedItems(fn) { expanded = fn(expanded); },
+    needsInputNavigationIndex: { completedIds: new Set() },
+    setShowCompletedItems(value) { showCompleted = value; },
+    scheduleNavigationFocus(fn) { fn(); },
+    document: { querySelectorAll: () => hidden ? [] : [input] },
+    findRenderedChecklistItemElement: () => ({ getClientRects: () => [1] }),
+    openOtherPopup(id) { reopened = id; }
+  };
+  makeFocus(ctx)();
+  assert.equal(targetRef.current, null);
+  assert.equal(focused, 1);
+  assert.equal(scrolled, 1);
+  assert.equal(collapsed.P, false);
+  assert.equal(expanded.root, true);
+  assert.equal(expanded.task, true);
+
+  targetRef.current = { kind: "custom", itemId: "task" };
+  ctx.needsInputNavigationIndex.completedIds = new Set(["task"]);
+  makeFocus(ctx)();
+  assert.equal(reopened, "task");
+  assert.equal(customFocusRef.current, true);
+  assert.equal(showCompleted, true);
+  const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
+  const at = popup.indexOf("onOpenAutoFocus={(event) => {");
+  const end = popup.indexOf("\n          }}", at);
+  const autoFocus = new Function("event", "focusCustomDraftOnOpenRef", "customStatusInputRef",
+    popup.slice(at + "onOpenAutoFocus={(event) => {".length, end));
+  let prevented = 0, customFocused = 0;
+  autoFocus({ preventDefault: () => { prevented++; } }, customFocusRef,
+    { current: { isConnected: true, disabled: false, focus: () => { customFocused++; } } });
+  assert.equal(prevented, 1);
+  assert.equal(customFocused, 1);
+  assert.equal(customFocusRef.current, false);
+
+  targetRef.current = { kind: "edit-item", itemId: "task" };
+  hidden = true;
+  makeFocus(ctx)();
+  assert.equal(fallback, 1);
+  targetRef.current = { kind: "custom", itemId: "deleted" };
+  makeFocus(ctx)();
+  assert.equal(fallback, 2);
+  assert.equal(reopened, "task");
+  assert.match(source, /unfinishedDraftTargetRef\.current = null;[\s\S]*focusCustomDraftOnOpenRef\.current = false;[\s\S]*setUnfinishedEditsWarning\(null\);/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
