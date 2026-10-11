@@ -1,0 +1,37 @@
+{
+  "tested_at": "2026-10-11T00:55:35.930Z",
+  "mode": "isolated Chromium; actual component and production CSS; mock API only",
+  "production_writes": 0,
+  "checks": [
+    {
+      "name": "concurrent bars, literal findings and independent completion",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "concurrent bars, literal findings and independent completion",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "concurrent bars, literal findings and independent completion",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "known rejection remains failed",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "lost response continues polling to completion",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "source and office buttons send saved identities concurrently",
+      "width": 390,
+      "passed": true
+    }
+  ]
+}
