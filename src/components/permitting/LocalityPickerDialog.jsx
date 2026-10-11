@@ -402,7 +402,7 @@ export default function LocalityPickerDialog({
                   )}
                 </div>
 
-                <AutomaticAddressScanResults scanResult={result.automatic_scan}/>
+                <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>
                 {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">The location was found. An administrator must confirm the sign and zoning offices before you can use it.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
