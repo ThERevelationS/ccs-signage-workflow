@@ -37,6 +37,6 @@ export default function SelectorScanActions({locality,result,profiles,onProfileU
    {canScan&&profile.permitting_url&&<OfficialSourceRescans jurisdiction={profile} onUpdate={onProfileUpdated}/>}
   </div>;})}
   {!loading&&!matches.length&&!brokenLink&&name&&state&&<div className="space-y-2"><p className="text-xs">No saved research for {name}, {state}. Check this name before starting.</p><button type="button" className="min-h-11 rounded border px-3 text-sm" disabled={!canScan||busy.has('new')} onClick={()=>scan(null,true)}>{busy.has('new')?'Working…':`Find information for ${name}`}</button></div>}
-  {canScan&&locality?.offices?.length>0&&<details><summary className="min-h-11 py-2 cursor-pointer text-sm">Check individual offices</summary>{locality.offices.map(office=><div key={office.id} className="border-t py-2"><p className="text-sm font-medium">{office.name || 'Office'}</p><OfficeRescanButton localityId={locality.id} office={office}/></div>)}</details>}
+  {canScan&&locality?.offices?.length>0&&<details><summary className="min-h-11 py-2 cursor-pointer text-sm">Check individual offices</summary>{locality.offices.map(office=><div key={office.id} className="border-t py-2"><p className="text-sm font-medium">{office.name || 'Office'}</p><OfficeRescanButton localityId={locality.id} office={office} showSaveNote={false}/></div>)}</details>}
  </section>;
 }

@@ -153,7 +153,7 @@ export default function LocalityPickerDialog({
   const addressRolesNeedingReview = (addressAuthority?.roles_needing_review || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
 
   const handleApply = () => {
-    if (!selectedLocalityId) return;
+    if (!selectedLocalityId || searching) return;
     onApply(selectedLocalityId, { excludeElectrical });
     onClose();
   };
@@ -263,7 +263,7 @@ export default function LocalityPickerDialog({
                     <Label className="text-xs">Choose a jurisdiction</Label>
                     <select
                       value={selectedLocalityId}
-                      onChange={(e) => setSelectedLocalityId(e.target.value)}
+                      onChange={(e) => {searchVersion.current++;setSearching(false);setSelectedLocalityId(e.target.value);}}
                       className="w-full min-h-11 text-sm border rounded px-2 mt-1"
                     >
                       <option value="">— Select —</option>
@@ -273,6 +273,8 @@ export default function LocalityPickerDialog({
                         </option>
                       ))}
                     </select>
+                    {selectedLocality && <p className="text-xs mt-2">{selectedAuthority.officeCount>0?`${selectedAuthority.officeCount} office(s) reviewed by staff.`:"Office coverage still needs review."}</p>}
+                    <details><summary className="min-h-11 py-2 text-xs cursor-pointer">See office review details</summary>
                     {selectedLocality && (
                       selectedAuthority.officeCount > 0 ? (
                         <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
@@ -303,6 +305,7 @@ export default function LocalityPickerDialog({
                       )
                     )}
                     {selectedLocality && <ElectricalAuthorityCoverage authority={selectedAuthority} />}
+                    </details>
                   </div>
                 )}
 
@@ -317,6 +320,7 @@ export default function LocalityPickerDialog({
             {searching && (
               <div className="h-full flex flex-col items-center justify-center text-gray-500 p-8">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-2" />
+                {currentUser?.role!=='admin'&&<progress aria-label="Find my jurisdiction progress" className="w-full h-3 mb-2"/>}
                 <p className="text-sm">Finding the address and checking saved information…</p>
               </div>
             )}
@@ -570,7 +574,7 @@ export default function LocalityPickerDialog({
             </Button>
             <Button
               onClick={handleApply}
-              disabled={!selectedLocalityId}
+              disabled={!selectedLocalityId || searching}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
               <Save className="w-4 h-4" /> Use this jurisdiction
