@@ -217,5 +217,30 @@
     "exec_probe": "GOOGLE_MAPS_API_KEY unavailable in exec context; does not establish whether deployed function key exists",
     "phase_10_complete": false,
     "next_required_action": "Refresh/reopen Preview from Base44 editor; inspect server Geocoding API configuration before further repeat scans."
+  },
+  "map_controls_live_acceptance": {
+    "verified": [
+      "Zoom changes scale and map zoom",
+      "Satellite switches active map type",
+      "Fullscreen control toggles",
+      "Traffic/transit/bike route toggles operate independently; overlays visible",
+      "Two map clicks calculate distance in feet with approximate notice",
+      "Measurement off clears result",
+      "Layers restored to off; street map restored"
+    ],
+    "layout_fix": "Map pane stretches to constrained desktop flex row with min-h-0 and overflow-y-auto; lower tools and measurement result are now scrollable above fixed dialog footer.",
+    "live_screenshot": "permitting-map-tools-scroll-fixed.jpg",
+    "measurement_sample_ft": 104795.2,
+    "build_exit": 0,
+    "not_verified": [
+      "Verified property pin",
+      "Jurisdiction boundary rendering",
+      "Back to address and directions with confirmed coordinates",
+      "Street View navigation",
+      "Mobile visual acceptance"
+    ],
+    "additional_scans_started": 0,
+    "frontend_published": false,
+    "phase_10_complete": false
   }
 }

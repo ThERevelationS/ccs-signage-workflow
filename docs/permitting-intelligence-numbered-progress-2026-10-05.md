@@ -1,3 +1,7 @@
+## Phase 10 — live map controls and reachable tools (2026-10-11)
+
+Verified zoom, satellite, fullscreen, layer toggles and a two-point distance calculation in feet. Live testing found lower map tools/measurement clipped by the dialog footer. Changed only the desktop map pane flex sizing to stretch with min-h-0 and scrolling; preview screenshot confirms controls and result are reachable above footer. Measurement and optional layers were reset afterward. Production build passes. No additional scans, Work Order assignments or frontend publication. Exact property pin and boundary remain blocked by geocoding/preview revision issues; Phase 10 stays open.
+
 ## Phase 10 — deployed runtime v4 confirmed; preview isolation (2026-10-11 11:28 EDT)
 
 Read-only unauthenticated endpoint probe returns 401 with lookup_revision and X-CCS-Address-Revision both address-geocode-v4. This proves deployed runtime activation without research records. MCP sandbox edit_file resource sync followed by one real authenticated scan still returns v3 (11:27:03–11:27:08 EDT) and Google REQUEST_DENIED. The 21 endpoint tests pass. Shared client routing was preserved. Further repeated deployment/scan attempts are not justified; refresh/reopen the preview from the Base44 editor before the next live scan. Phase 10 remains incomplete.
