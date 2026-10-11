@@ -1,3 +1,11 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: address map, location checks and automatic scans
+
+Implemented the requested selector feature in the draft: authenticated map loading, responsive canvas, early/late address pins, native map controls and optional layers/outlines/measurement. Address searches use strict rooftop identity and government boundary intersections in Ohio/Kentucky. Uncertain/border/conflicting results cannot be applied; employees cannot bypass address checks with a manual selection. No usable match or missing reviewed sign/zoning offices starts source research automatically. Literal activity and individual progress remain visible in the selector. Reference scans do not approve authority or apply Work Orders.
+
+Verification: 303 focused regression tests and 25 Chromium checks passed; production build, targeted frontend lint and backend bundles passed. Three read-only government GIS coordinate probes passed (Mason, Deerfield Township and Florence). Browser Google SDK/API responses were simulated; signed-in live Google key/referrer restrictions, imagery and complete deployed address flow remain unverified. Building-point geography is not statewide parcel verification or complete project-specific legal office applicability. No production Work Orders or authority approvals changed; publications 0.
+
+Phase 10, milestone 2 remains active. Next acceptance step: signed-in live selector/map/address-flow verification. Ohio coverage/currentness, separate electrical permit and inspection roles, parcel evidence and reviewed office applicability remain broader work. See docs/permitting-address-selector-plan-2026-10-10.md and the 2026-10-11 browser/GIS verification JSON files.
+
 ## 2026-10-09 — Phase 10, milestone 2: Crosby locality dossier attachment
 
 Created one real identity-only Hamilton County Crosby profile after live absence check; readback count1, needs verification, auto-refresh off, requirements null. Attached three byte/hash-verified PDFs and nine page-linked findings. Source labels, malformed email, historical amendments, scan/diagram and electrical-role gaps remain unapproved. Live records created1; publications0. Next: refresh document-access audit and verify retained archive UI coverage.
