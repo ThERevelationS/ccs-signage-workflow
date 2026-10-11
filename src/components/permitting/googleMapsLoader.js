@@ -1,7 +1,7 @@
 import {base44} from '@/api/base44Client';
 let pending=null;
 export function loadGoogleMaps(sessionToken){
- if(window.google?.maps?.Map)return Promise.resolve(window.google.maps);
+ if(window.google?.maps?.Map)return (async()=>{const maps=window.google.maps;if(!maps.geometry?.spherical&&maps.importLibrary)await maps.importLibrary('geometry');return maps;})();
  if(pending)return pending;
  pending=(async()=>{const response=await base44.functions.invoke('getGoogleMapsKey',{session_token:sessionToken});const key=response?.data?.apiKey;if(!key)throw Error('Map configuration is unavailable.');
   await new Promise((resolve,reject)=>{const id='permitting-google-maps-script',old=document.getElementById(id);old?.remove();const script=document.createElement('script');script.id=id;const callback='permittingMapsReady';let timer;
