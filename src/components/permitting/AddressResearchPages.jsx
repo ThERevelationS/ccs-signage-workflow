@@ -20,7 +20,7 @@ export default function AddressResearchPages({collection,review,disabled,onUpdat
   }catch(e){setError(e.message || 'Page result could not be confirmed. Check saved research before retrying.');setPass(previous=>({...previous,running:false,halted:true}));}
   finally{control.current=null;onBusyChange(collection.id,false);}
  }
- return <details className="border rounded p-2 space-y-2"><summary className="min-h-11 cursor-pointer">Website pages: {discovery.pending_pages.length} waiting · {discovery.gaps.length} problems</summary>
+ return <details className="border rounded p-2 space-y-2"><summary className="min-h-11 cursor-pointer">Website pages for {collection.target?.name || collection.name || 'this address'}: {discovery.pending_pages.length} waiting · {discovery.gaps.length} problems</summary>
   <p>This continues saved pages on the source website. Each page has its own action progress and findings. New originals appear in the file list; use Save all remaining originals to download them.</p>
   {discovery.blocked&&<p className="text-amber-800">Saved page progress needs review: {discovery.block_reason || 'The source or progress changed.'}</p>}
   {!review&&<button type="button" className="min-h-11 border rounded px-3" disabled={disabled||pass?.running||discovery.blocked||!discovery.pending_pages.length} onClick={scan}>Scan remaining pages</button>}
