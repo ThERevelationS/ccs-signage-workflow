@@ -87,7 +87,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [verificationNote, setVerificationNote] = useState("");
   const [verificationSaving, setVerificationSaving] = useState(false);
   const [verificationError, setVerificationError] = useState("");
-  const { startResearch, updateProgress, completeResearch } = useResearchProgress();
+  const { runAction } = useResearchProgress();
   const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
   const pdfSources = (jurisdiction.documents || []).filter(doc => /\.pdf(?:[?#]|$)/i.test(doc.url || ""));
@@ -459,12 +459,12 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
 
   const handleResearch = async () => {
     setIsResearching(true);
-    startResearch(1);
+
     
     try {
-      updateProgress({ processed: 0, currentJurisdiction: `${jurisdiction.name}, ${jurisdiction.state}` });
+
       
-      const res = await base44.functions.invoke('refreshJurisdiction', {
+      const res = await runAction('refreshJurisdiction', {
         jurisdictionId: jurisdiction.id,
         settings: {
           updateWebsites: !jurisdiction._manual_website_url,
@@ -473,7 +473,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           updateDocuments: !jurisdiction._manual_documents,
           skipManualData: true
         }
-      });
+      },`Research ${jurisdiction.name}, ${jurisdiction.state}`);
       
       if (res.data?.jurisdiction) {
         // Append activity log entry
@@ -492,13 +492,13 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           label: `Jurisdiction research activity ${jurisdiction.name || jurisdiction.id}`,
         });
         onUpdate(savedWithActivity);
-        completeResearch(1, 0);
+
       } else {
-        completeResearch(0, 1, "Research completed but no updates");
+
       }
     } catch (e) {
       console.error("Research error:", e);
-      completeResearch(0, 1, e.message);
+
     }
     
     setIsResearching(false);

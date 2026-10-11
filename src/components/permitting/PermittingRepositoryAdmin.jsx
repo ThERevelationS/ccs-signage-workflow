@@ -50,7 +50,7 @@ export default function PermittingRepositoryAdmin() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState({ processed: 0, total: 0, currentJurisdiction: '' });
   const [deleteError, setDeleteError] = useState('');
-  const { startResearch, updateProgress, completeResearch } = useResearchProgress();
+  const { startResearch, updateProgress, completeResearch,runAction } = useResearchProgress();
 
   useEffect(() => {
     loadJurisdictions();
@@ -244,7 +244,7 @@ export default function PermittingRepositoryAdmin() {
     const idsToUpdate = Array.from(selectedIds);
     const total = idsToUpdate.length;
 
-    startResearch(total);
+    const actionId=startResearch(total);
     setBatchUpdating(true);
 
     let updated = 0;
@@ -263,13 +263,13 @@ export default function PermittingRepositoryAdmin() {
           updateProgress({
             processed: i,
             currentJurisdiction: jurisdictionName
-          });
+          },actionId);
 
           // Call refreshJurisdiction for individual jurisdiction
-          const res = await base44.functions.invoke('refreshJurisdiction', {
+          const res = await runAction('refreshJurisdiction', {
             jurisdictionId,
             settings: batchSettings
-          });
+          },`Research ${jurisdictionName}`);
 
           if (res.data?.success) {
             updated++;
@@ -282,7 +282,7 @@ export default function PermittingRepositoryAdmin() {
         }
       }
 
-      completeResearch(updated, skipped);
+      completeResearch(updated, skipped,null,actionId);
       
       setTimeout(() => {
         loadJurisdictions();
@@ -290,7 +290,7 @@ export default function PermittingRepositoryAdmin() {
       }, 2000);
     } catch (e) {
       console.error("Batch update error:", e);
-      completeResearch(updated, skipped, e.message);
+      completeResearch(updated, skipped, e.message,actionId);
     }
     
     setBatchUpdating(false);

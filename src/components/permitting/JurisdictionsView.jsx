@@ -1,3 +1,4 @@
+import {useResearchProgress} from "./ResearchProgressContext";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ async function pollResearchRequest(id) {
 
 export default function JurisdictionsView({ focusJurisdiction = null }) {
   const { currentUser } = useAuth();
+  const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,31 +89,10 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const handleRefresh = async (jurisdiction) => {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
     try {
-      const request = await createResearchRequest({
-        jurisdiction_name: jurisdiction.name,
-        state: jurisdiction.state || "",
-        city: jurisdiction.name,
-        county: jurisdiction.parent_county?.name || "",
-        ccs_jurisdiction_id: jurisdiction.id,
-        status: 'pending',
-        requested_by: 'refresh'
-      });
-
-      const maxWait = 180000;
-      const start = Date.now();
-      while (Date.now() - start < maxWait) {
-        await new Promise(r => setTimeout(r, 5000));
-        const record = await pollResearchRequest(request.id);
-        const data = record.data || record;
-        if (data.status === 'completed') {
-          const updated = await JurisdictionProfile.get(jurisdiction.id);
-          setJurisdictions(prev => prev.map(j => j.id === jurisdiction.id ? updated : j));
-          if (selectedJurisdiction?.id === jurisdiction.id) setSelectedJurisdiction(updated);
-          break;
-        }
-        if (data.status === 'failed') break;
-      }
-    } catch (e) { console.error(e); }
+      const res=await runAction('refreshJurisdiction',{jurisdiction_id:jurisdiction.id},`Research ${jurisdiction.name}, ${jurisdiction.state}`);
+      const updated=res.data?.jurisdiction;
+      if(updated){setJurisdictions(prev=>prev.map(j=>j.id===updated.id?updated:j));setSelectedJurisdiction(prev=>prev?.id===updated.id?updated:prev);}
+    } catch (e) { setRepositoryNotice(e.message); }
     setRefreshingIds(prev => { const n = new Set(prev); n.delete(jurisdiction.id); return n; });
   };
 

@@ -244,7 +244,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,
           fetchSource: safeExternalFetch,
           uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
-          manual: true,onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
+          manual: Boolean(reporter.id),onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
         });
         const { jurisdiction: archivedProfile, ...summary } = result;
         archival = summary;
