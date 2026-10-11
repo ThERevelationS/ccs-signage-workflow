@@ -1,5 +1,14 @@
 import {archiveKnownJurisdictionSource} from './jurisdictionArchiveContinuation.mjs';
 import {isDownloadableResearchDocument,permittingResourcePriority} from './jurisdictionPermittingLinkDiscovery.mjs';
+function scopedArchiveFetch(entity,id,seed,fetchSource){
+ return async(url,init)=>{
+  const row=await entity.get(id);
+  const isStored=(row.documents || []).some(doc=>doc.archive_state?.file_url===url&&/^[a-f0-9]{64}$/.test(doc.archive_state?.source_sha256 || ''));
+  const root=new URL(seed),target=new URL(url);
+  if(!isStored&&(target.protocol!=='https:'||target.username||target.password||target.hostname.replace(/^www\./,'')!==root.hostname.replace(/^www\./,'')||target.port!==root.port))throw Error('Research original redirected outside the saved source host.');
+  return fetchSource(url,init,isStored?null:root.hostname.replace(/^www\./,''));
+ };
+}
 // A separate owner-scoped collection retains originals without writing a
 // JurisdictionProfile, approved authority, WorkOrder or shared source catalog.
 export async function retainAddressResearchFiles({entity,scanRunId,actor,resolution,automatic,fetchSource,uploadFile,onProgress=async()=>{},archiveLimit=1}){
@@ -13,7 +22,7 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
   try{
    const root=new URL(seed);
    if(root.protocol!=='https:'||root.username||root.password)throw Error('Original-file retention requires an HTTPS source.');
-   const allowed=docs.filter(doc=>{try{const u=new URL(doc.url);return u.protocol==='https:'&&!u.username&&!u.password&&u.hostname.replace(/^www\\./,'')===root.hostname.replace(/^www\\./,'')&&u.port===root.port;}catch{return false;}});
+   const allowed=docs.filter(doc=>{try{const u=new URL(doc.url);return u.protocol==='https:'&&!u.username&&!u.password&&u.hostname.replace(/^www\./,'')===root.hostname.replace(/^www\./,'')&&u.port===root.port;}catch{return false;}});
    if(!allowed.length)continue;
    const collectionKey=scanRunId+':'+index;
    const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.scan_run_id===scanRunId&&row.reference_only===true&&row.authority_established===false&&row.permitting_url===seed;
@@ -30,7 +39,7 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
    // Remaining originals are explicitly pending; no artificial coverage claim.
    const workerEntity={get:async id=>{const row=await entity.get(id);if(!own(row))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:scanRunId,reference_only:true,authority_established:false,permitting_url:seed},patch)};
    let archive=null;
-   if(started<archiveLimit){started++;archive=await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:(url,init)=>fetchSource(url,init,allowed.some(doc=>doc.url===url)?root.hostname.replace(/^www\./,''):null),uploadFile,onProgress,manual:false});}
+   if(started<archiveLimit){started++;archive=await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:scopedArchiveFetch(workerEntity,collection.id,seed,fetchSource),uploadFile,onProgress,manual:false});}
    const current=await workerEntity.get(collection.id);
    collections.push({id:current.id,target:scan.target,documents:current.documents,archive,reference_only:true,authority_established:false});
    await onProgress({kind:'address_file_collection',detail:`Retained ${current.documents.filter(d=>d.archive_state?.status==='complete').length} originals for ${scan.target.name}; ${current.documents.filter(d=>d.archive_state?.status!=='complete').length} files still need download or verification. Research only; no authority approved.`});
@@ -50,6 +59,6 @@ export async function archiveOwnedAddressResearchFile({entity,collectionId,docum
  const source=current.documents.find(doc=>doc.id===documentId),url=new URL(source.url);
  if(seed.protocol!=='https:'||url.protocol!=='https:'||url.username||url.password||url.hostname.replace(/^www\./,'')!==seed.hostname.replace(/^www\./,'')||url.port!==seed.port)throw Object.assign(Error('Research source is outside the saved host.'),{status:400});
  const adapter={get:async id=>{const row=await entity.get(id);if(!own(row))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url},patch)};
- const result=await archiveKnownJurisdictionSource({entity:adapter,jurisdictionId:collectionId,documentId,manual:true,fetchSource:(value,init)=>fetchSource(value,init,value===source.url?seed.hostname.replace(/^www\./,''):null),uploadFile,onProgress});
+ const result=await archiveKnownJurisdictionSource({entity:adapter,jurisdictionId:collectionId,documentId,manual:true,fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress});
  return {...result,collection:await adapter.get(collectionId)};
 }
