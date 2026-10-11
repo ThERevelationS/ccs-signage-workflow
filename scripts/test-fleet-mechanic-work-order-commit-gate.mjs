@@ -131,6 +131,88 @@ test("reused-photo source reservation remains bound to exact operation and URL p
     change(ctx);await reject(ctx,/reused-photo reservation/);
   }
 });
+test("admin cancellation during receiving-service grant read stops the pending work write",async()=>{
+  for(const action of ["start","save"]){
+    const ctx=context(action);
+    let grantsRead=0;
+    ctx.args.Access.get=async()=>{
+      if(++grantsRead===1)ctx.row.status="cancelled";
+      return structuredClone(ctx.grant);
+    };
+    await reject(ctx,/receipt changed during authorization/);
+  }
+});
+test("revocation during receipt reread is rejected by the final grant read",async()=>{
+  for(const action of ["start","save"]){
+    const ctx=context(action);
+    const originalGet=ctx.args.Receipt.get;
+    ctx.args.Receipt.get=async id=>{
+      if(id===ctx.row.id)ctx.grant.enabled=false;
+      return originalGet(id);
+    };
+    await reject(ctx,/mechanic link changed to revoked/);
+  }
+});
+test("changed receipt plan after initial verification cannot be committed",async()=>{
+  for(const action of ["start","save"]){
+    const ctx=context(action);
+    const originalGet=ctx.args.Receipt.get;
+    ctx.args.Receipt.get=async id=>{
+      if(id===ctx.row.id)ctx.row.result_summary.mutation_plan.appended_note="Altered after first verification";
+      return originalGet(id);
+    };
+    await reject(ctx,/mutation plan or photo evidence changed during authorization/);
+  }
+});
+test("reused-photo owner changed during grant authorization blocks receipt reconciliation",async()=>{
+  const ctx=context();
+  ctx.row.result_summary.retry_reservation_required=true;
+  ctx.row.result_summary.reused_upload_receipt_id=ctx.source.id;
+  let sourceReads=0;
+  const originalGet=ctx.args.Receipt.get;
+  ctx.args.Receipt.get=async id=>{
+    if(id===ctx.source.id&&++sourceReads===2)
+      ctx.source.result_summary.retry_reserved_by_request_id="request-other-owner-123456";
+    return originalGet(id);
+  };
+  await reject(ctx,/photo reservation changed during authorization/);
+});
+test("a grant revoked after the final read cannot be made atomic with WorkOrder CAS",async()=>{
+  const ctx=context("save");
+  await accept(ctx);
+  // Synthetic interleaving: the final gate has returned, then an admin revokes
+  // the grant before updateMany. The documented entity API cannot join them.
+  ctx.grant.enabled=false;
+  const persistenceJs=transpile("base44/shared/fleetRecordPersistence.ts");
+  const persistenceUrl="data:text/javascript;base64,"+Buffer.from(persistenceJs).toString("base64");
+  const {updateFleetRecordIfCurrent}=await import(persistenceUrl);
+  let writes=0;
+  const live=structuredClone(ctx.current);
+  const WorkOrder={
+    async updateMany(filter,ops){
+      if(filter.id!==live.id||filter.updated_date!==live.updated_date)return {updated:0};
+      Object.assign(live,structuredClone(ops.$set),{updated_date:"version-2"});
+      writes++;
+      return {updated:1};
+    },
+    async get(){return structuredClone(live);},
+  };
+  const committed=await updateFleetRecordIfCurrent({
+    entity:WorkOrder,id:workId,expectedUpdatedAt:expected,patch:ctx.args.patch,
+  });
+  assert.equal(writes,1,"The Fleet version CAS cannot also read the grant atomically");
+  assert.equal(committed.mechanic_operation_key,key("save"));
+  const committedResponseJs=transpile("base44/shared/fleetMechanicCommittedResponse.ts")
+    .replace("'./fleetMechanicMutationRecovery.ts'",JSON.stringify(recoveryUrl));
+  const committedResponseUrl="data:text/javascript;base64,"+Buffer.from(committedResponseJs).toString("base64");
+  const {requireCurrentMechanicGrantForCommittedResponse}=await import(committedResponseUrl);
+  await assert.rejects(
+    ()=>requireCurrentMechanicGrantForCommittedResponse(ctx.args.Access,grantId,"save",ctx.current.equipment_id),
+    error=>error?.code==="FLEET_MECHANIC_ACCESS_REVOKED",
+    "The mechanic must not receive committed Fleet details after revocation",
+  );
+});
+
 test("record version CAS is still required after service-edge authorization",async()=>{
   const helper=transpile("base44/shared/fleetRecordPersistence.ts");
   assert.match(helper,/updated_date:\s*expected/);
