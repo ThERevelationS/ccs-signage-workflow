@@ -1,0 +1,19 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Guarded retained-original jurisdiction linking",
+  "regression_passed": 586,
+  "targeted_lint": "passed",
+  "backend_bundle": "passed",
+  "browser": "pending",
+  "final_production_build": "pending",
+  "production_test_writes": 0,
+  "published": false,
+  "semantics": "Pinned retained snapshot copy with administrator receipt; not legal authority approval",
+  "concurrency": "Single destination CAS and exact receipt readback; no multi-entity transaction",
+  "remaining": [
+    "External document scopes",
+    "Live signed-in address/map/archive/link acceptance",
+    "Project-specific parcel/authority validation"
+  ]
+}
