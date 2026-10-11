@@ -1,3 +1,11 @@
+## Phase 10, milestone 2 — authenticated live acceptance (2026-10-11)
+
+Verified Base44 and separate Sign Shop sign-in. Latest-code preview uses production data; nothing published. Live map tiles, satellite imagery, traffic layer and zoom work. Each real address request shows separate progress and literal search/page/resource activity. Automatic no-match research ran, and Cincinnati research scanned three pages and classified the outdoor sign application PDF. Own saved research retrieval returned an empty collection list. No Work Order assignment or authority approval was made.
+
+BLOCKERS: both complete public Ohio test addresses returned No map location found. Exact map positioning, government geography matching and original retention/link acceptance therefore remain unpassed. Added safe provider-status diagnostics and compiled endpoint checks; these new messages were not observed in live runs, so live backend alignment is unconfirmed. Base44 dashboard observation encountered credential_observation_restricted after secure authentication; no additional login loop attempted.
+
+Read-only scheduler receipt confirms a genuine 08:01 Eastern scheduled collection: one page attempted, one original archived, then text extraction blocked with Archive exceeds bounded text-extraction size. Scheduler is running, but the entire cycle is not accepted as error-free. No forced dispatch or synthetic production records were used. Authorized live address actions created normal scan activity/research; do not describe this as zero live writes. Authenticated sessions retained for continuation. Detailed evidence: permitting-live-acceptance-2026-10-11.json.
+
 ## Phase 10, milestone 2 — retry all saved failed pages (2026-10-11)
 
 Added **Retry failed pages** beside Scan remaining pages in the jurisdiction selector and My saved research. A progress bar shows the finite retry list, alongside separate tracked page actions with exact server activity and findings. Staff can stop after the current page. Each saved failure is attempted once per pass, with no arbitrary manual overall cap. Repeated failures remain saved; newly created failures do not extend the running batch. Missing acknowledgements, request errors or blocked progress halt the pass. Waiting pages and original file receipts remain intact. Administrator inspection does not expose retry controls.

@@ -1,0 +1,48 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "tested_at": "2026-10-11T12:27:12.364192+00:00",
+  "environment": "Authenticated current-code Base44 preview with production data; not published frontend",
+  "base44_login_verified": true,
+  "sign_shop_login_verified": true,
+  "map_tiles_verified": true,
+  "satellite_imagery_verified": true,
+  "traffic_layer_verified": true,
+  "zoom_verified": true,
+  "address_tests": [
+    "4900 Parkway Dr, Mason, OH 45040",
+    "801 Plum St, Cincinnati, OH 45202"
+  ],
+  "geocoding_result": "Both addresses returned No map location found; cause unconfirmed",
+  "precise_address_positioning_verified": false,
+  "automatic_no_match_scan_verified": true,
+  "actual_page_activity_and_progress_verified": true,
+  "cincinnati_scan_pages": 3,
+  "cincinnati_pdf_classification_verified": true,
+  "unsafe_jurisdiction_apply_blocked": true,
+  "own_saved_research_empty_read_verified": true,
+  "retained_original_download_and_link_verified": false,
+  "scheduler_receipt_observed": {
+    "started_at": "2026-10-11T12:01:51.478Z",
+    "completed_at": "2026-10-11T12:01:59.676Z",
+    "status": "completed_with_errors",
+    "discovery_attempted_pages": 1,
+    "archived_originals": 1,
+    "text_error": "Archive exceeds bounded text-extraction size."
+  },
+  "scheduler_forced": false,
+  "scheduler_full_acceptance_passed": false,
+  "geocode_diagnostics_source_change": "Safe provider-status messages added; compiled tests passed; new messages were not observed live",
+  "live_runtime_source_alignment_verified": false,
+  "backend_dashboard_observation_blocker": "credential_observation_restricted after secure credential delivery; no further authentication loops",
+  "workorder_changes": 0,
+  "authority_approvals": 0,
+  "dummy_production_records": 0,
+  "published": false,
+  "remaining": [
+    "Diagnose live geocoder and verify updated backend diagnostics execute",
+    "Exact address/government boundary agreement and map centering",
+    "Retained-original download/readback and reviewed repository link",
+    "Scheduled text size-block review and complete-cycle acceptance"
+  ]
+}
