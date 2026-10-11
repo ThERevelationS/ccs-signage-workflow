@@ -395,7 +395,7 @@ export default function LocalityPickerDialog({
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-amber-900"><strong>{result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
+                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? 'The map location service needs attention.' : result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
                       <p className="text-xs text-amber-800 mt-2">We started website research automatically. An administrator needs to review the results. You do not need to choose a place or guess.</p>
                       {result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
