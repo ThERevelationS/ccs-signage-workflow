@@ -2087,6 +2087,43 @@ async function pushDataset(
       }
     }
   }
+  // Verify the remote values actually approved, rather than trusting the
+  // earlier paginated sheet cache. Only approved rows incur these bounded
+  // fresh reads; unrelated Sales/Order writes keep their existing flow.
+  if (dataset === 'sales' && approvedSalesRemotePlans.size) {
+    const targets = [...approvedSalesRemotePlans.entries()]
+      .filter(([id]) => !salesFailedRecordIds.has(id));
+    const columnIds = [...new Set(Object.values(bindings)
+      .map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
+    const assigneeColumnId = cleanText(bindings?.current_task_assigned_to, 40);
+    for (let start = 0; start < targets.length; start += 100) {
+      const batch = targets.slice(start, start + 100);
+      try {
+        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+        const params = new URLSearchParams({
+          rowIds: batch.map(([, plan]) => plan.rowId).join(','),
+          columnIds: columnIds.join(','), exclude: 'nonexistentCells',
+        });
+        const result = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+        if (String(result.body?.id ?? '') !== sheetId) throw new Error('Unexpected Smartsheet sheet identity.');
+        const fresh = new Map(normalizeSheetRows(result.body)
+          .map((row: any) => [String(row.id), row]));
+        for (const [id, planned] of batch) {
+          const row: any = fresh.get(planned.rowId);
+          const remote = row ? buildSalesPullSnapshot(row, bindings) : null;
+          if (!approvedSalesRemoteSnapshotStillCurrent(planned.snapshot, remote, assigneeColumnId)) {
+            salesFailedRecordIds.add(id);
+            errors.push(id + ': Smartsheet changed after this Sales conflict was approved/planned. No approved write was sent for this row; review its latest values before retrying.');
+          }
+        }
+      } catch (error: any) {
+        for (const [id] of batch) {
+          salesFailedRecordIds.add(id);
+          errors.push(id + ': Fresh Smartsheet values for this approved Sales review could not be verified. The row was not written; review and retry.');
+        }
+      }
+    }
+  }
   const heldApprovedSalesRowIds = new Set([...salesFailedRecordIds]
     .map((id) => approvedSalesPlanSnapshots.get(id)?.smartsheet_row_id)
     .filter((id) => id != null).map(String));
