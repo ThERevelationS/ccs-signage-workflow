@@ -74,6 +74,7 @@ try{
   await page.getByText(/Automatic downloads are paused for this collection/).waitFor();
   await page.getByText('File uploaded; verification still needed.',{exact:true}).waitFor();
   await page.getByText('Saving file to storage.',{exact:true}).waitFor();
+  assert.ok(await page.getByRole('button',{name:'Working…',exact:true}).isDisabled());
   await page.getByText('Upload outcome needs review; automatic re-upload blocked.',{exact:true}).waitFor();
   assert.equal(await page.locator('time').getAttribute('datetime'),'2099-01-01T00:00:00.000Z');
   assert.equal(await page.getByRole('link',{name:'Open saved original',exact:true}).count(),0);
