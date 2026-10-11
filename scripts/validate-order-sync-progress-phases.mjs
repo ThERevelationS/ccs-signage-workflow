@@ -76,6 +76,7 @@ assert.match(widget, /isRunning && progressDetail/);
 assert.match(widget, /\{progressDetail\}/);
 console.log('PASS compact Order sync toast shows the live phase and detailed current operation');
 
-const salesCreate = backend.match(/const result = await smartsheetWrite\('POST', `\/sheets\/\$\{sheetId\}\/rows`/)?.[0];
-assert.ok(salesCreate, 'Sales create should remain on its existing transport');
-console.log('PASS Sales write path remains outside the Order-only progress/retry hooks');
+const salesCreate = backend.match(/const sent = await smartsheetWriteNoTimeoutRetry\('POST', `\/sheets\/\$\{sheetId\}\/rows`/)?.[0];
+assert.ok(salesCreate, 'Sales create must use its no-timeout-retry transport');
+assert.match(backend, /createSalesSmartsheetRowWithGuard\(\{/);
+console.log('PASS Sales creation is guarded without changing Order-only progress hooks');
