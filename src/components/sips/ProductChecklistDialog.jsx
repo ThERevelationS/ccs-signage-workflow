@@ -67,11 +67,16 @@ export default function ProductChecklistDialog({
   const otherPopupValidationReturnRef = useRef(null);
   // A rejected status keeps its focus target until the warning actually closes.
   const otherPopupValidationPendingRef = useRef(false);
+  const staleValidationFocusRef = useRef(false);
+  const loadDataRequestRef = useRef(0);
   const customStatusDraftsByItemIdRef = useRef(new Map());
   const otherPopupFocusItemIdRef = useRef(null);
   const otherPopupDismissedRef = useRef(false);
-  // Transient custom-status drafts belong only to the current Work Order.
-  useEffect(() => {
+  // A Work Order switch or explicit reload invalidates modal focus targets,
+  // warning attempts and transient drafts from the previous checklist view.
+  const resetOtherPopupForReload = () => {
+    staleValidationFocusRef.current = true;
+    validationFocusItemIdRef.current = null;
     customStatusDraftsByItemIdRef.current.clear();
     otherPopupValidationReturnRef.current = null;
     otherPopupValidationPendingRef.current = false;
@@ -79,6 +84,10 @@ export default function ProductChecklistDialog({
     otherPopupDismissedRef.current = false;
     setCustomDropdownValue("");
     setShowOtherPopup(null);
+    setValidationDialog(null);
+  };
+  useEffect(() => {
+    resetOtherPopupForReload();
   }, [workOrder?.id]);
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
@@ -206,12 +215,14 @@ export default function ProductChecklistDialog({
   }, [checklist, checklistChildrenByParentType, dropdownConditionByName, itemAttentionLabelById]);
 
   useEffect(() => {
-    if (isOpen && workOrder) {
-      loadData();
-    }
+    if (isOpen && workOrder) loadData();
+    // Older asynchronous reads must never overwrite the next Work Order.
+    return () => { loadDataRequestRef.current += 1; };
   }, [isOpen, workOrder]);
 
   const loadData = async () => {
+    const requestId = ++loadDataRequestRef.current;
+    resetOtherPopupForReload();
     setIsLoading(true);
     try {
       const [freshWO, usersData, dropdownsSetting, productTypesSetting] = await Promise.all([
@@ -229,8 +240,9 @@ export default function ProductChecklistDialog({
         })
       ]);
 
+      if (requestId !== loadDataRequestRef.current) return;
       const currentWO = freshWO[0];
-      if (!currentWO) return;
+      if (!currentWO) throw new Error("Work Order no longer available. Close and reopen the checklist.");
 
       setUsers(usersData);
 
@@ -319,10 +331,12 @@ export default function ProductChecklistDialog({
         ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
       setProductTypes(loadedProductTypes);
     } catch (error) {
+      if (requestId !== loadDataRequestRef.current) return;
       console.error("Error loading data:", error);
       setSaveError(error?.message || "This SIP checklist could not be loaded. Close and reopen it, or reload the latest Work Order.");
+    } finally {
+      if (requestId === loadDataRequestRef.current) setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const getDropdownName = (dropdownId) => {
@@ -504,6 +518,7 @@ export default function ProductChecklistDialog({
     }
 
     if (skippedSections.length > 0) {
+      staleValidationFocusRef.current = false;
       validationFocusItemIdRef.current = null;
       const examples = skippedSections.slice(0, 3).join(", ");
       const extraCount = skippedSections.length - Math.min(skippedSections.length, 3);
@@ -570,6 +585,7 @@ export default function ProductChecklistDialog({
 
     const itemLabel = item.type === 'detail' ? 'detail' : 'checklist item';
     if (!item.approved_by) {
+      staleValidationFocusRef.current = false;
       if (fromOtherPopup) otherPopupValidationPendingRef.current = true;
       validationFocusItemIdRef.current = itemId;
       setValidationDialog({
@@ -581,6 +597,7 @@ export default function ProductChecklistDialog({
 
     const selectedCondition = dropdownConditionByName.get(value);
     if (selectedCondition?.is_completed && !areChildrenComplete(itemId)) {
+      staleValidationFocusRef.current = false;
       if (fromOtherPopup) otherPopupValidationPendingRef.current = true;
       validationFocusItemIdRef.current = itemId;
       setValidationDialog({
@@ -2979,7 +2996,12 @@ export default function ProductChecklistDialog({
             // Release only after the warning fully closes, never on an early OK
             // click: otherwise a rapid second attempt can replace this target.
             otherPopupValidationPendingRef.current = false;
-            if (!isOpen) return;
+            if (!isOpen || isLoading || staleValidationFocusRef.current) {
+              event.preventDefault();
+              validationFocusItemIdRef.current = null;
+              otherPopupValidationReturnRef.current = null;
+              return;
+            }
             event.preventDefault();
             const itemId = validationFocusItemIdRef.current;
             validationFocusItemIdRef.current = null;
