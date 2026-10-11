@@ -69,15 +69,10 @@ assert.match(
   backend,
   /smartsheetWriteNoTimeoutRetry\('POST', `\/sheets\/\$\{sheetId\}\/rows`/,
 );
-assert.match(
-  backend,
-  /dataset === 'orders' \? smartsheetWriteNoTimeoutRetry : smartsheetWrite/,
-);
-assert.match(
-  backend,
-  /const result = await smartsheetWrite\('POST', `\/sheets\/\$\{sheetId\}\/rows`/,
-);
-console.log('PASS Order POST/PUT use no-timeout-retry transport while Sales create remains unchanged');
+assert.match(backend, /await smartsheetWriteNoTimeoutRetry\(\s*'PUT', '\/sheets\/' \+ sheetId/);
+assert.match(backend, /const sent = await smartsheetWriteNoTimeoutRetry\('POST', `\/sheets\/\$\{sheetId\}\/rows`/);
+assert.match(backend, /createSalesSmartsheetRowWithGuard\(\{/);
+console.log('PASS Order and Sales POST/PUT avoid replaying timed-out mutations');
 
 assert.match(createSafety, /snapshot is[\s\S]*durable evidence for manual reconciliation only/);
 assert.match(createSafety, /never sufficient to[\s\S]*auto-link a row without a permanent Smartsheet row ID/);
