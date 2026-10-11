@@ -1362,6 +1362,7 @@ function attachScanReporter(entity, id) {
   return { id, emit, finish };
 }
 
+// Standalone address lookup: shared dependencies bundled for Base44 function activation.
 // base44/shared/permittingAddressArchive.mjs
 function scopedArchiveFetch(entity, id, seed, fetchSource) {
   return async (url, init) => {
