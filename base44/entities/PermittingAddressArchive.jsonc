@@ -1,0 +1,85 @@
+{
+  "name": "PermittingAddressArchive",
+  "type": "object",
+  "properties": {
+    "collection_key": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "owner_email": {
+      "type": "string"
+    },
+    "scan_run_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "permitting_url": {
+      "type": "string"
+    },
+    "website_url": {
+      "type": "string"
+    },
+    "auto_refresh": {
+      "type": "boolean"
+    },
+    "reference_only": {
+      "type": "boolean"
+    },
+    "authority_established": {
+      "type": "boolean"
+    },
+    "location_verified": {
+      "type": "boolean"
+    },
+    "location_target": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": [
+    "collection_key",
+    "owner_id",
+    "scan_run_id",
+    "reference_only",
+    "documents"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
