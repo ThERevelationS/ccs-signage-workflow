@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {scanOfficialPermittingPages} from '../base44/shared/permittingDiscoveryScan.mjs';
 import {continueOwnedAddressDiscovery,addressResearchCollection} from '../base44/shared/permittingAddressDiscoveryContinuation.mjs';
-import {runAddressPageScan} from '../src/components/permitting/addressPageScan.mjs';
+import {runAddressPageScan,retryAddressFailedPages} from '../src/components/permitting/addressPageScan.mjs';
 const actor={id:'employee',email:'employee@example.com'},seed='https://example.gov/forms';
 async function fixture(){
  const first=await scanOfficialPermittingPages({seedUrl:seed,maxPages:1,fetchPage:async()=>({html:'<a href="/permits">Sign permit department</a>',finalUrl:seed})});
@@ -109,4 +109,19 @@ test('retry rejects arbitrary, stale, duplicate and malformed selections without
 test('retry cannot overwrite a concurrently saved original receipt',async()=>{
  const f=await failedFixture();f.options.fetchPage=async url=>{f.patch({documents:[{...f.row().documents[0],archive_state:{status:'uploaded'}}]});return {html:'',finalUrl:url};};
  await assert.rejects(continueOwnedAddressDiscovery(f.options),/another session/);assert.equal(f.row().documents[0].archive_state.status,'uploaded');assert.equal(f.row().discovery_scan_state.gaps[0].reason,'page_fetch_failed');
+});
+
+test('failed-page batch snapshots once without a manual overall cap or repeated failure loop',async()=>{
+ const gaps=Array.from({length:105},(_,i)=>({url:'page-'+i,reason:'page_fetch_failed'})),collection={id:'c',discovery:{gaps,pending_pages:[{url:'waiting'}]}};let calls=0,active=0,max=0;const progress=[];
+ const result=await retryAddressFailedPages({collection,stopped:()=>false,onProgress:p=>progress.push(p),retryPage:async(current,url)=>{active++;max=Math.max(max,active);calls++;await Promise.resolve();active--;return {success:true,attempted_pages:1,pages:[{url,status:'failed'}],collection:current};}});
+ assert.equal(calls,105);assert.equal(max,1);assert.equal(result.failed,105);assert.equal(result.processed,105);assert.equal(progress.at(-1).total,105);assert.equal(result.collection.discovery.pending_pages.length,1);
+});
+test('failed-page batch stops after current page and stops on uncertain responses',async()=>{
+ const collection={id:'c',discovery:{gaps:[{url:'first',reason:'page_fetch_failed'},{url:'second',reason:'page_fetch_failed'}]}};let stop=false,calls=0;
+ const result=await retryAddressFailedPages({collection,stopped:()=>stop,onProgress:()=>{},retryPage:async current=>{calls++;stop=true;return {success:true,attempted_pages:1,pages:[],collection:current};}});assert.equal(calls,1);assert.equal(result.stopped,true);assert.equal(result.processed,1);
+ for(const mode of ['missing','review','throw']){calls=0;await assert.rejects(retryAddressFailedPages({collection,stopped:()=>false,onProgress:()=>{},retryPage:async current=>{calls++;if(mode==='throw')throw Error('ack lost');return mode==='missing'?{}:{success:false,error:'review required',collection:current};}}));assert.equal(calls,1);}
+});
+test('failed-page batch excludes other gap types and new failures created during the pass',async()=>{
+ const collection={id:'c',discovery:{gaps:[{url:'first',reason:'page_fetch_failed'},{url:'depth',reason:'depth_frontier'}]}};
+ let calls=0;const result=await retryAddressFailedPages({collection,stopped:()=>false,onProgress:()=>{},retryPage:async current=>{calls++;return {success:true,attempted_pages:1,pages:[],collection:{...current,discovery:{gaps:[{url:'new',reason:'page_fetch_failed'}]}}};}});assert.equal(calls,1);assert.equal(result.total,1);
 });
