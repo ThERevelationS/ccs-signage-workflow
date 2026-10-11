@@ -24,8 +24,8 @@ function geocodingRejection(raw:unknown){
  if(/billing/.test(message))return {diagnostic_code:'BILLING_REQUIRED',message:'Google rejected address lookup because billing needs attention in the map project. An administrator must check the project billing status.'+suffix};
  if(/api key.*(?:invalid|expired)|(?:invalid|expired).*api key/.test(message))return {diagnostic_code:'KEY_INVALID',message:'Google rejected the server geocoding key as invalid or expired. An administrator must check the configured server key.'+suffix};
  if(/(?:api|service).*(?:not been used|disabled|not enabled)/.test(message))return {diagnostic_code:'API_DISABLED',message:'Google reports that Geocoding API access is disabled. An administrator must check Geocoding API access in the map project.'+suffix};
- if(/not authorized to use this api|api.*not authorized/.test(message))return {diagnostic_code:'API_ACCESS_DENIED',message:'Google does not allow this server key to use Geocoding API. An administrator must check the enabled API and key API restrictions.'+suffix};
  if(/(?:ip|site|application).*not authorized|ip.*restrict/.test(message))return {diagnostic_code:'APPLICATION_RESTRICTION',message:'Google rejected the server request under the key application restrictions. An administrator must check the server key restrictions.'+suffix};
+ if(/not authorized to use this api|api.*not authorized/.test(message))return {diagnostic_code:'API_ACCESS_DENIED',message:'Google does not allow this server key to use Geocoding API. An administrator must check the enabled API and key API restrictions.'+suffix};
  return {diagnostic_code:'REQUEST_DENIED',message:'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing.'+suffix};
 }
 function addressResponse(data:any,init:any={}){
