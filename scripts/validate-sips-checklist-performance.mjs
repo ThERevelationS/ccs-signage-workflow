@@ -855,4 +855,55 @@ check("rapid successive status warnings preserve popup draft and focus until eac
   assert.equal(dismissed.current, true);
 });
 
+check("Work Order switch and reload cancel stale warning focus and drafts", () => {
+  const resetSource = source.slice(source.indexOf("  const resetOtherPopupForReload = () => {"),
+    source.indexOf("  useEffect(() => {\n    resetOtherPopupForReload();"));
+  const reset = new Function("staleValidationFocusRef", "validationFocusItemIdRef",
+    "customStatusDraftsByItemIdRef", "otherPopupValidationReturnRef",
+    "otherPopupValidationPendingRef", "otherPopupFocusItemIdRef",
+    "otherPopupDismissedRef", "setCustomDropdownValue", "setShowOtherPopup",
+    "setValidationDialog", resetSource + "\nreturn resetOtherPopupForReload;");
+  const stale = { current: false }, item = { current: "old-row" };
+  const drafts = { current: new Map([["old-row", "Do not carry"]] ) };
+  const returnTarget = { current: { focus() { throw Error("Stale focus"); } } };
+  const pending = { current: true }, popupItem = { current: "old-row" };
+  const dismissed = { current: true };
+  const updates = [];
+  reset(stale, item, drafts, returnTarget, pending, popupItem, dismissed,
+    value => updates.push(["draft", value]), value => updates.push(["popup", value]),
+    value => updates.push(["warning", value]))();
+  assert.equal(stale.current, true);
+  assert.equal(item.current, null);
+  assert.equal(returnTarget.current, null);
+  assert.equal(pending.current, false);
+  assert.equal(popupItem.current, null);
+  assert.equal(dismissed.current, false);
+  assert.equal(drafts.current.size, 0);
+  assert.deepEqual(updates, [["draft", ""], ["popup", null], ["warning", null]]);
+  assert.match(source, /useEffect\(\(\) => \{\s*resetOtherPopupForReload\(\);\s*\}, \[workOrder\?\.id\]\);/);
+  assert.match(source, /const loadData = async \(\) => \{\s*const requestId = \+\+loadDataRequestRef\.current;\s*resetOtherPopupForReload\(\);/);
+
+  const warning = source.slice(source.indexOf("{/* Validation guidance */}"));
+  const first = warning.indexOf("onCloseAutoFocus={(event) => {");
+  const last = warning.indexOf("\n          }}", first);
+  const code = warning.slice(first + "onCloseAutoFocus={(event) => {".length, last);
+  const close = new Function("event", "isOpen", "validationFocusItemIdRef",
+    "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
+    "showOtherPopup", "otherPopupValidationReturnRef", "customStatusInputRef",
+    "otherPopupValidationPendingRef", "isLoading", "staleValidationFocusRef", code);
+  let prevented = 0;
+  const event = { preventDefault() { prevented++; } };
+  close(event, true, item, () => { throw Error("Old row queried"); }, { current: null },
+    { current: null }, null, returnTarget, { current: null }, pending, false, stale);
+  assert.equal(prevented, 1);
+  assert.equal(item.current, null);
+  assert.equal(returnTarget.current, null);
+  item.current = "old-row";
+  close(event, true, item, () => { throw Error("Old row queried during reload"); },
+    { current: null }, { current: null }, null, returnTarget,
+    { current: null }, pending, true, { current: false });
+  assert.equal(prevented, 2);
+  assert.equal(item.current, null);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
