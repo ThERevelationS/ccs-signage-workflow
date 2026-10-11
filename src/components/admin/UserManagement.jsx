@@ -1121,9 +1121,30 @@ export default function UserManagement() {
           </div>
 
           {deletionImpactLoading ? (
-            <div role="status" className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" aria-hidden="true" />
-              Reviewing account impact...
+            <div role="status" aria-label="Account impact scan in progress"
+              className="space-y-3 rounded-xl border border-gray-200 bg-white/60 p-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2 font-medium text-gray-800">
+                <Loader2 className="w-5 h-5 animate-spin text-purple-600" aria-hidden="true" />
+                Reviewing account impact...
+              </div>
+              <p>Checking these read-only areas before showing any findings:</p>
+              <ul aria-label="Impact checks included" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {[
+                  "User identity and account match",
+                  "Payroll and timekeeping history",
+                  "Account state and credentials",
+                  "Estimator record ownership",
+                  "Work order, task and calendar references",
+                ].map((category) => (
+                  <li key={category} className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                    {category}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-500">
+                The server returns one complete, verified report. Individual completion percentages are unavailable.
+                You can close this scan without changing any records.
+              </p>
             </div>
           ) : deletionImpactError ? (
             <div role="alert" aria-label="Account deletion impact unavailable" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
