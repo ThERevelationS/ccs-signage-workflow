@@ -2,7 +2,7 @@ import {continuePermittingDocumentArchiveBacklog} from '../base44/shared/permitt
 import {archiveDocumentEligible} from '../base44/shared/jurisdictionArchiveContinuation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {retainAddressResearchFiles,archiveOwnedAddressResearchFile,continueAddressResearchArchives} from '../base44/shared/permittingAddressArchive.mjs';
+import {retainAddressResearchFiles,archiveOwnedAddressResearchFile,archiveOwnedAddressResearchReferral,continueAddressResearchArchives} from '../base44/shared/permittingAddressArchive.mjs';
 const actor={id:'employee',email:'Employee@example.com'},pdf='%PDF-1.7 sample';
 function fixture(){
  let rows=[],version=0;const calls={uploads:0,source:0,stored:0,hosts:[]},state={failReadback:false,failUpload:false,html:false};
@@ -55,7 +55,7 @@ test('owner change during upload prevents receipt writes and result disclosure u
 function backgroundFixture(f){
  const actions=new Map(),sourceRun={id:'run-id',status:'complete',action_kind:'address',owner_id:actor.id,owner_email:actor.email.toLowerCase()};
  const scanEntity={get:async id=>id==='run-id'?structuredClone(sourceRun):structuredClone(actions.get(id)),filter:async q=>[...actions.values()].filter(row=>row.action_token===q.action_token),create:async data=>{const row={id:'action-'+actions.size,...structuredClone(data)};actions.set(row.id,row);return row;},update:async(id,patch)=>{const row={...actions.get(id),...structuredClone(patch)};actions.set(id,row);return row;}};
- const entity={...f.entity,filter:async(q,...args)=>typeof q.state==='string'?structuredClone(f.rows().filter(row=>row.state===q.state&&row.auto_refresh===true&&row.documents.some(doc=>archiveDocumentEligible(doc,{now:Date.parse(q.documents?.$elemMatch?.$and?.[0]?.$or?.[1]?.['archive_state.retry_after']?.$lte || '') || Date.now()})))):f.entity.filter(q,...args)};
+ const entity={...f.entity,filter:async(q,...args)=>typeof q.state==='string'?structuredClone(f.rows().filter(row=>row.state===q.state&&row.auto_refresh===true&&row.documents.some(doc=>archiveDocumentEligible(doc,{scopedExternal:true,now:Date.parse((q.documents || q.$or?.[0]?.documents)?.$elemMatch?.$and?.[0]?.$or?.[1]?.['archive_state.retry_after']?.$lte || '') || Date.now()})))):f.entity.filter(q,...args)};
  return {entity,scanEntity,sourceRun,actions,fetchSource:f.options.fetchSource,uploadFile:f.options.uploadFile,state:'OH'};
 }
 test('automatic continuation archives the pending original with owner-scoped per-file activity and no research call',async()=>{
