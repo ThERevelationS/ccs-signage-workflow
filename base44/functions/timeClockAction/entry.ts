@@ -5100,7 +5100,23 @@ Deno.serve(async (req) => {
                     String(row.server_timestamp || '') === String(semanticAfter.clock_in || '');
                   return false;
                 };
-                const cause = candidates.find(semanticallyMatches);
+                // v28: a uniquely reconstructable chain of direct manager
+                // corrections may explain the generation delta without a single
+                // generation-spanning audit. Ambiguous suffixes still fail closed.
+                const orderedCorrections = candidates.filter((row: any) => String(row.action || '') === 'admin_correction')
+                  .sort((a: any, b: any) => Date.parse(String(a.server_timestamp || '')) - Date.parse(String(b.server_timestamp || '')) ||
+                    String(a.id || '').localeCompare(String(b.id || '')));
+                const terminalCorrection = orderedCorrections[orderedCorrections.length - 1];
+                const multiDirect = snapshotVersion >= 28 && change.change_type === 'changed' &&
+                  orderedCorrections.length > 1 && terminalCorrection &&
+                  !String(terminalCorrection.details?.correction_request_id || '');
+                const uniqueDirectSuffix = multiDirect
+                  ? uniqueAdminCorrectionSemanticSuffix(orderedCorrections, semanticBefore, semanticAfter)
+                  : null;
+                if (multiDirect && (!uniqueDirectSuffix || String(uniqueDirectSuffix.terminal?.id || '') !== String(terminalCorrection.id || ''))) {
+                  return Response.json({ success: false, error: `Payroll shift ${id} has missing or ambiguous direct-manager correction history. Admin investigation is required before finalization.` }, { status: 409 });
+                }
+                const cause = uniqueDirectSuffix?.terminal || candidates.find(semanticallyMatches);
                 if (!cause?.id) return Response.json({ success: false, error: `Payroll ${change.change_type} shift ${id} has no authoritative Time Clock audit whose result matches the payroll delta. Admin investigation is required before finalization.` }, { status: 409 });
                 const linkedCorrectionRequestId = String(cause.action === 'admin_correction' ? cause.details?.correction_request_id || '' : '');
                 if (linkedCorrectionRequestId) {
@@ -5167,6 +5183,10 @@ Deno.serve(async (req) => {
                     semantic_after_clock_in: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_in || '' : change.after?.clock_in || ''),
                     semantic_after_clock_out: String(cause.action === 'admin_correction' ? cause.details?.corrected?.clock_out || '' : change.after?.clock_out || ''),
                     semantic_after_total_hours: Number(cause.action === 'admin_correction' ? cause.details?.corrected?.total_hours || 0 : change.after?.total_hours || 0),
+                    ...(uniqueDirectSuffix ? {
+                      unique_direct_semantic_suffix: true,
+                      semantic_suffix_start_audit_id: String(uniqueDirectSuffix.start_audit_id || ''),
+                    } : {}),
                   };
                 }
               }
