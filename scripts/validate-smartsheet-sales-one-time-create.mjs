@@ -91,9 +91,23 @@ lost.setFailReservation(true);
 await throws(()=>createSalesSmartsheetRowWithGuard(lost.opts),/changed before the create reservation/);
 eq(lost.posts(),0,'Lost CAS reservation never sends POST.');
 const sourceChanged=fixture();
-sourceChanged.opts.postRow=async(r)=>{sourceChanged.edit({title:'Newer user task'});return {message:'SUCCESS',resultCode:0,result:[{id:'5678'}]};};
-await throws(()=>createSalesSmartsheetRowWithGuard(sourceChanged.opts),/cannot be verified against the reserved snapshot/);
-eq(sourceChanged.posts(),0,'Mock did not send a fake remote write.');
+const originalGet=sourceChanged.entity.get;
+let sourceReadCount=0;
+sourceChanged.entity.get=async(key)=>{
+  sourceReadCount++;
+  if(sourceReadCount===2)sourceChanged.edit({title:'Newer user task'});
+  return originalGet(key);
+};
+await throws(()=>createSalesSmartsheetRowWithGuard(sourceChanged.opts),/reservation could not be verified/);
+eq(sourceChanged.posts(),0,'Concurrent local edit after reservation blocks POST before it is sent.');
+eq(sourceChanged.view().smartsheet_create_attempt.status,'reserved',
+  'Uncertain prewrite reservation stays held after concurrent local edit.');
+const lostRowId=fixture();
+lostRowId.setFailMarker(true);
+await throws(()=>createSalesSmartsheetRowWithGuard(lostRowId.opts),/could not preserve the permanent ID/);
+eq(lostRowId.posts(),1,'Remote create whose row ID cannot be persisted was sent only once.');
+await throws(()=>createSalesSmartsheetRowWithGuard(lostRowId.opts),/unresolved or previously linked/);
+eq(lostRowId.posts(),1,'Subsequent retry cannot duplicate a create with lost local row-ID evidence.');
 const newerLocal=fixture();
 newerLocal.opts.postRow=async(current)=>{newerLocal.edit({title:'Updated during POST'});
   newerLocal.mutateRemote({id:'5678',snapshot:newerLocal.opts.makeSnapshot(current)});
