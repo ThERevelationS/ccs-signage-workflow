@@ -1595,8 +1595,16 @@ export default function ProductChecklistDialog({
     const target = unfinishedDraftTargetRef.current;
     unfinishedDraftTargetRef.current = null;
     if (!target || !isOpen || isLoading) return;
+    const focusFallback = () => {
+      const fallback = [checklistSearchInputRef.current, checklistCloseButtonRef.current]
+        .find(element => element?.isConnected && !element.disabled && element.getClientRects().length);
+      fallback?.focus();
+    };
     const item = target.itemId ? checklistItemById.get(target.itemId) : null;
-    if (target.itemId && !item) return;
+    if (target.itemId && !item) {
+      focusFallback();
+      return;
+    }
     const productName = target.productName || item?.product_name;
     if (productName) setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
     if (item) {
@@ -1613,7 +1621,10 @@ export default function ProductChecklistDialog({
     }
     scheduleNavigationFocus(() => {
       if (target.kind === "custom") {
-        if (!findRenderedChecklistItemElement([target.itemId])?.getClientRects().length) return;
+        if (!findRenderedChecklistItemElement([target.itemId])?.getClientRects().length) {
+          focusFallback();
+          return;
+        }
         focusCustomDraftOnOpenRef.current = true;
         openOtherPopup(target.itemId);
         return;
@@ -1622,7 +1633,10 @@ export default function ProductChecklistDialog({
       const input = Array.from(candidates).find(node =>
         node.isConnected && !node.disabled && node.getClientRects().length
       );
-      if (!input) return;
+      if (!input) {
+        focusFallback();
+        return;
+      }
       input.focus({ preventScroll: true });
       input.scrollIntoView({ behavior: "smooth", block: "center" });
     });
