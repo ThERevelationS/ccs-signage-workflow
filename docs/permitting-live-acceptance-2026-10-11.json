@@ -538,5 +538,29 @@
     "frontend_published": false,
     "production_records_modified": false,
     "phase_10_complete": false
+  },
+  "preview_startup_screen_diagnosis": {
+    "checked_at": "2026-10-11T21:15:20.945609+00:00",
+    "user_screen": "Base44 Preview is starting up placeholder; app UI not loaded.",
+    "local_checks": {
+      "vite_port": 5173,
+      "bind_address": "0.0.0.0",
+      "root_http_status": 200,
+      "permitting_http_status": 200,
+      "startup_module_http_status": 200,
+      "build_status": {
+        "ok": true,
+        "error": null
+      }
+    },
+    "readiness_check": "The managed Vite readiness check uses localhost HTTP readiness; the same local check returned 200.",
+    "restart_attempt": "Touched vite.config.js to trigger Vite config watcher restart without changing source contents. Local build status returned ok true after three one-second checks.",
+    "public_preview_repaired_verified": false,
+    "browser_action": "None; prior browser recovery required stop.",
+    "repository_source_changes": false,
+    "frontend_published": false,
+    "production_records_modified": false,
+    "phase_10_complete": false,
+    "next_check": "User refresh of the public preview following the restart; if placeholder persists, platform preview routing/startup remains unresolved."
   }
 }
