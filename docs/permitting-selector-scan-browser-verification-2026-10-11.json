@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T06:03:56.570Z",
+  "tested_at": "2026-10-11T07:03:14.931Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -100,6 +100,16 @@
     },
     {
       "name": "administrator inspects employee originals with provenance and no approval or save controls",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "retained outside original has individual save progress and referring-page provenance",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "retained outside original has individual save progress and referring-page provenance",
       "width": 1280,
       "passed": true
     }

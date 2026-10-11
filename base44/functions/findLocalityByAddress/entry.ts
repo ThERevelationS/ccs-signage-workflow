@@ -47,7 +47,7 @@ Deno.serve(async req=>{
    fetchPage:async(url:string)=>{const response=await safeExternalFetch(url,{method:'GET',signal:AbortSignal.timeout(15000),headers:{'User-Agent':'CCS-Permitting-Address/1.0'}},3);return readPermittingResourceResponse(response);}
   });
   const addressArchives=await retainAddressResearchFiles({entity:base44.asServiceRole.entities.PermittingAddressArchive,scanRunId:reporter.id,actor,resolution,automatic,onProgress:progress,
-   fetchSource:(url:string,init:any,host:string|null)=>safeExternalFetch(url,init,3,host?(candidate:any)=>candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),
+   fetchSource:(url:string,init:any,host:string|null)=>safeExternalFetch(url,init,3,host?(candidate:any)=>candidate.protocol==='https:'&&candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),
    uploadFile:(data:any)=>base44.asServiceRole.integrations.Core.UploadFile(data)});
   const reason=matched?resolution.reason:resolution.status==='location_verified'?`Location is ${resolution.target.name}, but its saved office setup is missing or ambiguous. Automatic research is ready for administrator review.`:resolution.reason;
   await reporter.emit({kind:'address_findings',detail:reason},{stage:applyAllowed?'Ready to use':'Administrator review needed',processed:1,total:1,indeterminate:false});

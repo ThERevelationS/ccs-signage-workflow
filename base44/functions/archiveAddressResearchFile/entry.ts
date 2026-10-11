@@ -13,7 +13,7 @@ Deno.serve(async req=>{
   if(collection?.owner_id!==actor.id||collection.owner_email!==String(actor.email).toLowerCase()||collection.reference_only!==true||collection.authority_established!==false)return Response.json({error:'This research collection is not available to your account.'},{status:403});
   if(body.action_token)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:collection.id,targetName:collection.name,kind:'address_archive',label:'Save original research file — '+collection.name});
   const options={entity,collectionId:body.collection_id,documentId:body.document_id,actor,
-   fetchSource:(url:string,init:any,host:string|null)=>safeExternalFetch(url,init,3,host?(candidate:any)=>candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),
+   fetchSource:(url:string,init:any,host:string|null)=>safeExternalFetch(url,init,3,host?(candidate:any)=>candidate.protocol==='https:'&&candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),
    uploadFile:(data:any)=>client.asServiceRole.integrations.Core.UploadFile(data),
    onProgress:(event:any)=>reporter.emit(event,event.progress || {})};
   const result=referral?await archiveOwnedAddressResearchReferral({...options,selection:{url:body.referral_url,source_page_url:body.source_page_url}}):await archiveOwnedAddressResearchFile(options);
