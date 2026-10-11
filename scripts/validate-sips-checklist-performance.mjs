@@ -712,4 +712,62 @@ check("successful Other application clears draft and requests post-close focus",
   assert.ok(closeFlag > 0 && clearDraft > closeFlag && closeModal > clearDraft);
 });
 
+check("Other popup closure skips collapsed rows and uses visible fallback controls", () => {
+  const handlers = source.slice(
+    source.indexOf("  const openOtherPopup = (itemId) => {"),
+    source.indexOf("  const handleCreateCustomValue = (itemId) => {")
+  );
+  assert.match(handlers, /const openOtherPopup = \(itemId\) => \{\s*[\s\S]*?cancelPendingNavigationFocus\(\)/);
+  const make = new Function(
+    "customStatusDraftsByItemIdRef", "otherPopupFocusItemIdRef",
+    "otherPopupDismissedRef", "otherPopupValidationReturnRef",
+    "showOtherPopup", "validationDialog", "setCustomDropdownValue",
+    "setShowOtherPopup", "isOpen", "findRenderedChecklistItemElement",
+    "checklistSearchInputRef", "checklistCloseButtonRef",
+    "cancelPendingNavigationFocus",
+    handlers + "\nreturn { openOtherPopup, dismissOtherPopup, handleOtherPopupCloseAutoFocus };"
+  );
+  const focusId = { current: null };
+  const dismissed = { current: false };
+  const status = { isConnected: true, disabled: false, getClientRects: () => [],
+    focus: () => { throw Error("Collapsed status must not receive focus"); } };
+  let focusSearch = 0, focusClose = 0, cancelTimer = 0, prevented = 0;
+  const search = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { focusSearch++; } };
+  const close = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { focusClose++; } };
+  let rowVisible = true;
+  const create = (isOpen = true) => make(
+    { current: new Map() }, focusId, dismissed, { current: null }, null,
+    null, () => {}, () => {}, isOpen,
+    () => rowVisible ? { querySelector: () => status } : null,
+    { current: search }, { current: close }, () => { cancelTimer++; }
+  );
+  const event = { preventDefault() { prevented++; } };
+
+  create().openOtherPopup("A");
+  assert.equal(cancelTimer, 1);
+  create().dismissOtherPopup();
+  create().handleOtherPopupCloseAutoFocus(event);
+  assert.equal(focusSearch, 1); // Collapsed product: status still mounted but hidden.
+  assert.equal(focusClose, 0);
+  assert.equal(prevented, 1);
+
+  rowVisible = false; // Completed section collapsed/unmounted while popup was open.
+  search.disabled = true;
+  create().openOtherPopup("B");
+  create().dismissOtherPopup();
+  create().handleOtherPopupCloseAutoFocus(event);
+  assert.equal(focusClose, 1);
+  assert.equal(focusSearch, 1);
+  assert.equal(prevented, 2);
+
+  create().openOtherPopup("B");
+  create().dismissOtherPopup();
+  create(false).handleOtherPopupCloseAutoFocus(event);
+  assert.equal(focusClose, 1); // Parent closing must not refocus a background control.
+  assert.equal(prevented, 2);
+  assert.match(source, /showRevisitPopup \|\| showOtherPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
