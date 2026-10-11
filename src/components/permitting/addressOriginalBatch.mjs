@@ -34,7 +34,7 @@ export function originalFileStatus(doc,now=Date.now()){
  if(verifiedOriginal(doc))return {kind:'saved',label:'Saved original — source and stored bytes verified.'};
  const state=doc.archive_state || {},active=Date.parse(state.lease_expires_at || '')>now;
  if(state.status==='upload_uncertain')return {kind:'review',label:'Upload outcome needs review; automatic re-upload blocked.'};
- if(active)return {kind:'active',label:state.status==='uploading'?'Saving file to storage.':state.file_url?'Checking saved file bytes.':'Downloading original file.'};
+ if(active&&['downloading','uploading','uploaded','verification_blocked'].includes(state.status))return {kind:'active',label:state.status==='uploading'?'Saving file to storage.':state.file_url?'Checking saved file bytes.':'Downloading original file.'};
  if(state.status==='uploading')return {kind:'review',label:'Upload did not confirm; review is needed before another upload.'};
  if(state.status==='complete'||doc.file_url||doc.source_sha256)return {kind:'review',label:'Saved-file evidence is incomplete or inconsistent; review is needed.'};
  if(state.file_url)return {kind:'verify',label:'File uploaded; verification still needed.',retryAfter:validFuture(state.retry_after,now)};

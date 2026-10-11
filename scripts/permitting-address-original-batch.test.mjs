@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {remainingOriginals,saveOriginalBatch} from '../src/components/permitting/addressOriginalBatch.mjs';
+import {remainingOriginals,saveOriginalBatch,originalFileStatus,originalCollectionCounts} from '../src/components/permitting/addressOriginalBatch.mjs';
 const doc=(id,extra={})=>({id,url:'https://example.gov/'+id+'.pdf',...extra});
 test('batch excludes saved, uncertain, active leases, protected and duplicate identities',()=>{
  const documents=[doc('pending'),doc('saved',{file_url:'https://stored.gov/a.pdf'}),doc('uncertain',{archive_state:{status:'upload_uncertain'}}),doc('uploading',{archive_state:{status:'uploading'}}),doc('leased',{archive_state:{lease_expires_at:'2099-01-01'}}),doc('pinned',{pinned:true}),doc('duplicate'),doc('duplicate')];
@@ -21,4 +21,30 @@ test('stop allows current file to finish and prevents next file',async()=>{
 });
 test('lost acknowledgement halts without retry or starting another file',async()=>{
  const calls=[];await assert.rejects(saveOriginalBatch({files:[doc('1'),doc('2')],stopped:()=>false,onProgress:()=>{},save:async file=>{calls.push(file.id);throw Error('network');}}),/network/);assert.deepEqual(calls,['1']);
+});
+
+test('file status distinguishes verified originals from misleading complete receipts',()=>{
+ const saved=doc('a',{file_url:'https://stored.gov/a.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:15,stored_bytes:15,archive_state:{status:'complete'}});
+ assert.equal(originalFileStatus(saved).kind,'saved');
+ assert.equal(originalFileStatus({...saved,stored_sha256:'b'.repeat(64)}).kind,'review');
+ assert.equal(originalFileStatus(doc('bad',{archive_state:{status:'complete'}})).kind,'review');
+});
+test('file status distinguishes active work, interrupted download and uncertain upload',()=>{
+ const future='2099-01-01T00:00:00Z';
+ assert.equal(originalFileStatus(doc('d',{archive_state:{status:'downloading',lease_expires_at:future}})).kind,'active');
+ assert.equal(originalFileStatus(doc('u',{archive_state:{status:'uploading',lease_expires_at:future}})).kind,'active');
+ assert.equal(originalFileStatus(doc('u',{archive_state:{status:'uploading'}})).kind,'review');
+ assert.equal(originalFileStatus(doc('u',{archive_state:{status:'upload_uncertain',lease_expires_at:future}})).kind,'review');
+ assert.match(originalFileStatus(doc('d',{archive_state:{status:'downloading'}})).label,/Previous download stopped/);
+});
+test('verification receipts retain future retry times without claiming a file is saved',()=>{
+ const state={status:'verification_blocked',file_url:'https://stored.gov/file.pdf',retry_after:'2099-01-01T00:00:00Z'};
+ const status=originalFileStatus(doc('v',{archive_state:state}));
+ assert.equal(status.kind,'verify');assert.equal(status.retryAfter,state.retry_after);
+ assert.equal(originalFileStatus(doc('v',{archive_state:{...state,retry_after:'invalid'}})).retryAfter,null);
+});
+test('collection status counts outside originals once and never hides blocked files',()=>{
+ const collection={documents:[doc('p'),doc('b',{archive_state:{status:'blocked'}}),doc('v',{archive_state:{status:'uploaded',file_url:'https://stored.gov/file.pdf'}})],external_referrals:[{url:'https://cdn.gov/a.pdf'},{url:'https://cdn.gov/a.pdf'},{url:'https://example.gov/p.pdf'}]};
+ assert.deepEqual(originalCollectionCounts(collection),{saved:0,waiting:2,active:0,verify:1,review:1,total:4});
+ assert.equal(originalFileStatus(doc('r',{archive_state:{attempts:3}})).kind,'review');
 });
