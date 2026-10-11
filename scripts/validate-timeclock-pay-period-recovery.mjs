@@ -5528,6 +5528,22 @@ async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline, thirdG
   const tamperedRetired = await ok(historyVerify(prefix + '-third-tampered-retired-001'));
   assert.equal(tamperedRetired.verified, false, JSON.stringify(tamperedRetired));
   auditC.details.corrected.clock_in = savedClock;
+
+  // The frozen second-generation suffix pointer itself is payroll evidence:
+  // a later generation must not make an altered pointer appear trustworthy.
+  const priorSuffix = retiredSecond.generation_changes[0].action_provenance;
+  const savedStartId = priorSuffix.semantic_suffix_start_audit_id;
+  assert.equal(savedStartId, auditC.id);
+  priorSuffix.semantic_suffix_start_audit_id = auditF.id;
+  const alteredFrozenStart = await ok(historyVerify(prefix + '-third-altered-frozen-start-001'));
+  assert.equal(alteredFrozenStart.verified, false, JSON.stringify(alteredFrozenStart));
+  priorSuffix.semantic_suffix_start_audit_id = savedStartId;
+
+  const savedTerminalOriginal = auditF.details.original.clock_in;
+  auditF.details.original.clock_in = '2026-09-28T12:56:00.000Z';
+  const alteredCurrentTerminal = await ok(historyVerify(prefix + '-third-altered-terminal-001'));
+  assert.equal(alteredCurrentTerminal.verified, false, JSON.stringify(alteredCurrentTerminal));
+  auditF.details.original.clock_in = savedTerminalOriginal;
   const restored = await ok(historyVerify(prefix + '-third-restored-001'));
   assert.equal(restored.verified, true, JSON.stringify(restored));
 }
