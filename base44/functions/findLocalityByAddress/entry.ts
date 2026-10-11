@@ -14,15 +14,21 @@ async function fixedJSON(url:string){
  if(!response.ok)throw Error('Location service returned HTTP '+response.status);
  const text=await response.text();if(text.length>8*1024*1024)throw Error('Location response exceeds its limit.');return JSON.parse(text);
 }
+const ADDRESS_LOOKUP_REVISION='address-geocode-v3';
+function addressResponse(data:any,init:any={}){
+ const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION},init);
+ response.headers.set('X-CCS-Address-Revision',ADDRESS_LOOKUP_REVISION);
+ return response;
+}
 Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
  try{
   const base44=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(base44,body?.session_token);
   const address=typeof body.address==='string'?body.address.trim():'';
-  if(!address||address.length>500)return Response.json({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
+  if(!address||address.length>500)return addressResponse({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
   if(body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
   const progress=async(event:any)=>{const {progress,...item}=event;await reporter.emit(item,progress || {});};
-  await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}.`},{stage:'Finding the building on the map',indeterminate:true});
+  await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.`},{stage:'Finding the building on the map',indeterminate:true});
   let geocode:any=null;
   try{
    const key=Deno.env.get('GOOGLE_MAPS_API_KEY');
@@ -57,6 +63,6 @@ Deno.serve(async req=>{
    uploadFile:(data:any)=>base44.asServiceRole.integrations.Core.UploadFile(data)});
   const reason=matched?resolution.reason:resolution.status==='location_verified'?`Location is ${resolution.target.name}, but its saved office setup is missing or ambiguous. Automatic research is ready for administrator review.`:resolution.reason;
   await reporter.emit({kind:'address_findings',detail:reason},{stage:applyAllowed?'Ready to use':'Administrator review needed',processed:1,total:1,indeterminate:false});
-  return Response.json({success:true,scan_run:await reporter.finish(addressArchives?.status==='needs_review'?'completed_with_errors':'complete'),geocode,location_resolution:resolution,automatic_scan:automatic,address_archives:addressArchives,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
- }catch(error){const status=[400,401,409,503].includes(Number(error?.status))?Number(error.status):500;return Response.json({success:false,scan_run:await reporter.finish('failed','Address lookup could not finish safely.'),error:status===500?'Address lookup could not finish safely. Please try again.':error.message},{status});}
+  return addressResponse({success:true,scan_run:await reporter.finish(addressArchives?.status==='needs_review'?'completed_with_errors':'complete'),geocode,location_resolution:resolution,automatic_scan:automatic,address_archives:addressArchives,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
+ }catch(error){const status=[400,401,409,503].includes(Number(error?.status))?Number(error.status):500;return addressResponse({success:false,scan_run:await reporter.finish('failed','Address lookup could not finish safely.'),error:status===500?'Address lookup could not finish safely. Please try again.':error.message},{status});}
 });
