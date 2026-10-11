@@ -7,7 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
-import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent } from '../../shared/smartsheetSalesConflictResolution.mjs';
+import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -1841,6 +1841,16 @@ async function pushDataset(
             })));
           }
         }
+        // A prior Keep App task approval may already have been written remotely
+        // even if the Base44 snapshot CAS failed. On retry, both task values
+        // agree so the normal diff planner reports no decision. Recover only
+        // an exact approved nonterminal task outcome; never issue that PUT again.
+        const recoveredTaskDecisionIds = dataset === 'sales' && !fieldPlan.taskStageHeld && !fieldPlan.unresolved.length
+          ? recoverCompletedApprovedSalesTaskDecisionIds(record, buildSalesPullSnapshot(currentRows[0], bindings), salesReviews, bindings)
+          : [];
+        if (recoveredTaskDecisionIds.length) {
+          fieldPlan = { ...fieldPlan, decisions: [...new Set([...(fieldPlan.decisions || []), ...recoveredTaskDecisionIds])] };
+        }
         if(fieldPlan.unresolved.length) {
           conflicts.push(record.id);
           if (dataset === 'orders') {
@@ -1880,7 +1890,9 @@ async function pushDataset(
           deferredSalesVerification.set(String(record.id), {
             rowId: existingRowId,
             expectedSnapshot: verifiedRemoteColumns,
-            requiresRemoteWrite: fieldPlan.outgoing.length > 0,
+            // Recovery is read-only remotely, but requires fresh remote
+            // post-plan read-back before any snapshot or review resolves.
+            requiresRemoteWrite: fieldPlan.outgoing.length > 0 || recoveredTaskDecisionIds.length > 0,
           });
         }
         if (dataset === 'orders') {
