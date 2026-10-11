@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T01:55:59.536Z",
+  "tested_at": "2026-10-11T02:19:41.722Z",
   "mode": "isolated Chromium, actual React map and loader, production CSS, simulated Google SDK; live API configuration and imagery not verified",
   "production_writes": 0,
   "checks": [
@@ -30,6 +30,11 @@
     },
     {
       "name": "failed map loading is visible and retry recovers",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "stalled configuration times out, late response stays ignored and retry recovers",
       "width": 390,
       "passed": true
     }
