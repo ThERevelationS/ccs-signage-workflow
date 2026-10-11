@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T01:16:52.785Z",
+  "tested_at": "2026-10-11T01:18:40.418Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -30,6 +30,11 @@
     },
     {
       "name": "concurrent office and source scans remain visible and never change selection",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "missing research starts only on explicit request and does not apply the job",
       "width": 390,
       "passed": true
     },

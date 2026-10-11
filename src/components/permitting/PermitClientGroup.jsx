@@ -330,17 +330,18 @@ export default function PermitClientGroup({
       {/* EXPANDED BODY */}
       {expanded && (
         <div>
+          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Check jurisdiction…</Button></div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs text-gray-500">Select a locality to apply its configured line items:</span>
+              <span className="text-xs text-gray-500">Choose the jurisdiction for this job:</span>
               <Button
                 onClick={() => setShowLocalityPicker(true)}
                 disabled={!isRegistered}
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+                className="min-h-11 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
               >
-                <MapPin className="w-3.5 h-3.5" /> Select Locality…
+                <MapPin className="w-3.5 h-3.5" /> Choose jurisdiction…
               </Button>
             </div>
           ) : (

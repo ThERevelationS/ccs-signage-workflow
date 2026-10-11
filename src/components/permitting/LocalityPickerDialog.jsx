@@ -217,10 +217,11 @@ export default function LocalityPickerDialog({
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
-            <Label className="text-xs">Job address</Label>
+            <Label htmlFor="jurisdiction-job-address" className="text-xs">Job address</Label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
+                id="jurisdiction-job-address"
                 ref={inputRef}
                 value={address}
                 onChange={(e) => {searchVersion.current++;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
@@ -260,8 +261,8 @@ export default function LocalityPickerDialog({
                 {/* Locality override — allow manual pick */}
                 {localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
-                    <Label className="text-xs">Choose a jurisdiction</Label>
-                    <select
+                    <Label htmlFor="jurisdiction-choice" className="text-xs">Choose a jurisdiction</Label>
+                    <select id="jurisdiction-choice"
                       value={selectedLocalityId}
                       onChange={(e) => {searchVersion.current++;setSearching(false);setSelectedLocalityId(e.target.value);}}
                       className="w-full min-h-11 text-sm border rounded px-2 mt-1"
