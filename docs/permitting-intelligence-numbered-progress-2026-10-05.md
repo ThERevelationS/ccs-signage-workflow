@@ -1,3 +1,7 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: bounded map loading recovery
+
+The browser inventory has no signed-in CCS tab, so live map/key/address-flow acceptance remains pending. Fixed an independently reproducible map-loading stall: both the authenticated key request and geometry-library import now have a 20-second timeout. A late timed-out key response cannot start an abandoned map load. Shared retries recover normally. Seven isolated Chromium map checks passed, including stalled configuration, late response and retry; no production records changed or publication performed.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: address map, location checks and automatic scans
 
 Implemented the requested selector feature in the draft: authenticated map loading, responsive canvas, early/late address pins, native map controls and optional layers/outlines/measurement. Address searches use strict rooftop identity and government boundary intersections in Ohio/Kentucky. Uncertain/border/conflicting results cannot be applied; employees cannot bypass address checks with a manual selection. No usable match or missing reviewed sign/zoning offices starts source research automatically. Literal activity and individual progress remain visible in the selector. Reference scans do not approve authority or apply Work Orders.
