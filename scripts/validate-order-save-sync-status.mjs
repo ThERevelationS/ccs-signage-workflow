@@ -38,7 +38,7 @@ assert.match(page, /flex flex-wrap items-center gap-2/);
 assert.match(page, /max-w-full items-center/);
 assert.match(page, /Loader2 className="w-4 h-4 mr-1 animate-spin"/);
 assert.doesNotMatch(page, /Save & Sync"\}\s*\(\$\{saveStatus\.pendingSyncCount\}/);
-assert.match(sheet, /isSyncing, pendingSyncCount, lastSynced, syncMessage, saveError/);
+assert.match(sheet, /isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError/);
 assert.match(sheet, /const durablePendingIds = new Set\(durablePendingOrderIds\(ordersData\)\)/);
 assert.match(sheet, /pendingSyncIdsRef\.current\.add\(id\)/);
 assert.match(sheet, /pendingSyncVersionRef\.current\.set\(id, \(pendingSyncVersionRef\.current\.get\(id\) \|\| 0\) \+ 1\)/);
