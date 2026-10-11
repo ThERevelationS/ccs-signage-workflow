@@ -1,132 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { Loader2 } from "lucide-react";
-
-// Shared loader so the Google Maps script is only injected once
-let gmapsLoaderPromise = null;
-
-function loadGoogleMaps() {
-  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
-  if (window.google?.maps) return Promise.resolve(window.google.maps);
-  if (gmapsLoaderPromise) return gmapsLoaderPromise;
-
-  gmapsLoaderPromise = (async () => {
-    const { data } = await base44.functions.invoke("getGoogleMapsKey", {});
-    if (!data?.apiKey) throw new Error(data?.error || "Missing Google Maps API key");
-
-    return new Promise((resolve, reject) => {
-      const existing = document.getElementById("google-maps-script");
-      if (existing) {
-        existing.addEventListener("load", () => resolve(window.google.maps));
-        existing.addEventListener("error", reject);
-        return;
-      }
-      const script = document.createElement("script");
-      script.id = "google-maps-script";
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=weekly&loading=async`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => resolve(window.google.maps);
-      script.onerror = () => reject(new Error("Failed to load Google Maps"));
-      document.head.appendChild(script);
-    });
-  })();
-
-  return gmapsLoaderPromise;
-}
-
-/**
- * Lightweight Google Maps view with an optional marker.
- * Props:
- *   position: { lat, lng } | null
- *   defaultCenter: { lat, lng }
- *   markerTitle: string
- */
-export default function GoogleMapView({ position, defaultCenter = { lat: 39.1031, lng: -84.5120 }, markerTitle }) {
-  const containerRef = useRef(null);
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  // Initialize map once
-  useEffect(() => {
-    let cancelled = false;
-    loadGoogleMaps()
-      .then((maps) => {
-        if (cancelled || !containerRef.current) return;
-        mapRef.current = new maps.Map(containerRef.current, {
-          center: position || defaultCenter,
-          zoom: position ? 16 : 10,
-          disableDefaultUI: false,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-        });
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError(e.message || "Map failed to load");
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Update marker + center whenever position changes
-  useEffect(() => {
-    const maps = window.google?.maps;
-    if (!maps || !mapRef.current) return;
-
-    if (position) {
-      mapRef.current.panTo(position);
-      mapRef.current.setZoom(17);
-      if (markerRef.current) {
-        markerRef.current.setPosition(position);
-        markerRef.current.setTitle(markerTitle || "");
-      } else {
-        markerRef.current = new maps.Marker({
-          position,
-          map: mapRef.current,
-          title: markerTitle || "",
-        });
-      }
-    } else if (markerRef.current) {
-      markerRef.current.setMap(null);
-      markerRef.current = null;
-    }
-  }, [position, markerTitle]);
-
-  // Trigger resize when the container size changes (dialogs, splits, etc.)
-  useEffect(() => {
-    if (!containerRef.current || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(() => {
-      const maps = window.google?.maps;
-      if (maps && mapRef.current) {
-        maps.event.trigger(mapRef.current, "resize");
-        mapRef.current.setCenter(position || defaultCenter);
-      }
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [position, defaultCenter]);
-
-  return (
-    <div className="relative w-full h-full">
-      <div ref={containerRef} className="absolute inset-0" />
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 pointer-events-none">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        </div>
-      )}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-red-50 text-red-700 text-sm p-4 text-center">
-          {error}
-        </div>
-      )}
-    </div>
-  );
+import {useEffect,useRef,useState} from 'react';
+import {useAuth} from '@/components/auth/EmailGate';
+import {loadGoogleMaps} from './googleMapsLoader';
+const DEFAULT_CENTER={lat:39.1031,lng:-84.5120};
+export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,markerTitle='',boundaries=[]}){
+ const {sessionToken}=useAuth(),container=useRef(null),map=useRef(null),marker=useRef(null),line=useRef(null),layers=useRef({}),measure=useRef(false),latest=useRef({position,markerTitle}),[ready,setReady]=useState(false),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[measuring,setMeasuring]=useState(false),[distance,setDistance]=useState(''),[boundaryVisible,setBoundaryVisible]=useState(true);
+ latest.current={position,markerTitle};
+ function locate(){const point=latest.current.position;if(point&&map.current){map.current.panTo(point);map.current.setZoom(17);}}
+ useEffect(()=>{let cancelled=false,listener,observer;setError('');setReady(false);const oldAuthFailure=window.gm_authFailure;const authFailure=()=>{if(!cancelled)setError('Google rejected the map configuration. An administrator needs to check the map key and enabled APIs.');};window.gm_authFailure=authFailure;
+  loadGoogleMaps(sessionToken).then(maps=>{if(cancelled||!container.current)return;const current=latest.current;map.current=new maps.Map(container.current,{center:current.position || defaultCenter,zoom:current.position?17:10,disableDefaultUI:false,cameraControl:true,zoomControl:true,mapTypeControl:true,mapTypeControlOptions:{mapTypeIds:['roadmap','satellite','hybrid','terrain']},streetViewControl:true,fullscreenControl:true,rotateControl:true,scaleControl:true,keyboardShortcuts:true,gestureHandling:'greedy',clickableIcons:true});
+   layers.current={traffic:new maps.TrafficLayer(),transit:new maps.TransitLayer(),bicycle:new maps.BicyclingLayer()};line.current=new maps.Polyline({map:map.current,strokeColor:'#7c3aed',strokeWeight:3});listener=map.current.addListener('click',e=>{if(!measure.current)return;const path=line.current.getPath();path.push(e.latLng);const meters=maps.geometry.spherical.computeLength(path);setDistance(`${(meters*3.28084).toFixed(1)} ft`);});
+   if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(()=>maps.event.trigger(map.current,'resize'));observer.observe(container.current);}setReady(true);
+  }).catch(()=>{if(!cancelled)setError('The map could not load. Try again, or open the address in Google Maps.');});
+  return()=>{cancelled=true;observer?.disconnect();listener?.remove();marker.current?.setMap(null);line.current?.setMap(null);Object.values(layers.current).forEach(layer=>layer.setMap(null));if(map.current)window.google?.maps?.event?.clearInstanceListeners(map.current);map.current=null;marker.current=null;if(window.gm_authFailure===authFailure)window.gm_authFailure=oldAuthFailure;};
+ },[sessionToken,attempt,defaultCenter]);
+ useEffect(()=>{if(!ready||!map.current)return;const maps=window.google.maps;if(position){map.current.panTo(position);map.current.setZoom(17);if(marker.current){marker.current.setMap(map.current);marker.current.setPosition(position);marker.current.setTitle(markerTitle);}else marker.current=new maps.Marker({position,map:map.current,title:markerTitle});}else{marker.current?.setMap(null);marker.current=null;}},[ready,position?.lat,position?.lng,markerTitle]);
+ useEffect(()=>{if(!ready||!map.current)return;const data=map.current.data;data.forEach(feature=>data.remove(feature));for(const feature of boundaries || [])data.addGeoJson(feature);data.setStyle({visible:boundaryVisible,strokeColor:'#7c3aed',strokeWeight:2,fillOpacity:0.08,clickable:false});},[ready,boundaries,boundaryVisible]);
+ const destination=position?`${position.lat},${position.lng}`:markerTitle,external=destination?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(destination):'https://www.google.com/maps';
+ return <section aria-label="Job address map" className="w-full min-w-0 bg-white">
+  <div className="flex flex-wrap gap-2 p-2 border-b"><button type="button" disabled={!ready||!position} className="min-h-11 rounded border px-3 text-sm" onClick={locate}>Back to address</button><a className="min-h-11 inline-flex items-center rounded border px-3 text-sm" href={external} target="_blank" rel="noopener noreferrer">Open Google Maps</a>{position&&<a className="min-h-11 inline-flex items-center rounded border px-3 text-sm" href={'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)} target="_blank" rel="noopener noreferrer">Directions</a>}</div>
+  <div className="relative h-[360px] sm:h-[480px] w-full min-h-[360px]"><div ref={container} className="absolute inset-0" aria-label="Interactive map"/>{!ready&&!error&&<div role="status" className="absolute inset-0 grid place-items-center bg-gray-100">Loading map…</div>}{error&&<div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 bg-white text-sm text-center"><p>{error}</p><button type="button" className="min-h-11 border rounded px-3" onClick={()=>setAttempt(n=>n+1)}>Try map again</button></div>}</div>
+  <details className="border-t p-2"><summary className="min-h-11 py-2 cursor-pointer text-sm">More map tools</summary><div className="flex flex-wrap gap-3 text-sm py-2">{['traffic','transit','bicycle'].map(kind=><label key={kind} className="min-h-11 flex items-center gap-2"><input type="checkbox" disabled={!ready} onChange={e=>layers.current[kind]?.setMap(e.target.checked?map.current:null)}/>{kind==='bicycle'?'Bike routes':kind==='transit'?'Public transit':'Traffic'}</label>)}<label className="min-h-11 flex items-center gap-2"><input type="checkbox" checked={boundaryVisible} onChange={e=>setBoundaryVisible(e.target.checked)}/>Jurisdiction outline</label><button type="button" disabled={!ready} aria-pressed={measuring} className="min-h-11 border rounded px-3" onClick={()=>{measure.current=!measuring;setMeasuring(!measuring);line.current.getPath().clear();setDistance('');}}>Measure distance</button></div>{measuring&&<p className="text-xs">Click map points to measure. {distance} Map measurements are approximate.</p>}</details>
+ </section>;
 }
