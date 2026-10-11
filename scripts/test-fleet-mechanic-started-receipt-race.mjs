@@ -51,9 +51,10 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
     waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
     pauseWorkRead:false,pendingWorkReads:[],sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
     pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],
-    pauseFinalReceiptReadAt:0,receiptReadNumbers:new Map(),pendingFinalReceiptReads:[],release:null};
+    pauseFinalReceiptReadAt:0,receiptReadNumbers:new Map(),pendingFinalReceiptReads:[],
+    grantRevision:1,pauseGrantMutationWrite:false,pendingGrantMutationWrites:[],release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
-  const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
+  const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",updated_date:"grant-version-1",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
   let receiptSequence=0;
   const matches=(row,filter)=>Object.entries(filter||{}).every(([key,value])=>{
@@ -124,7 +125,16 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
       }
       return snapshot;
     },
-    async update(_id,patch){Object.assign(grant,patch);return clone(grant);}
+    async update(_id,patch){Object.assign(grant,clone(patch),{updated_date:"grant-version-"+(++store.grantRevision)});return clone(grant);},
+    async updateMany(filter,operators){
+      if(store.pauseGrantMutationWrite){
+        store.pauseGrantMutationWrite=false;
+        await new Promise(resolve=>store.pendingGrantMutationWrites.push(resolve));
+      }
+      if(!matches(grant,filter))return {updated:0};
+      Object.assign(grant,clone(operators.$set||{}),{updated_date:"grant-version-"+(++store.grantRevision)});
+      return {updated:1};
+    }
   };
   const WorkOrder={
     async get(id){
@@ -161,6 +171,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
   };
   const client={asServiceRole:{
     entities:{FleetMechanicAccess:access,FleetSystemLog:{async create(){}},
+      FleetEquipment:{async list(){return [{id:"eq-race",name:"Synthetic Fleet Equipment"}];}},
       FleetMaintenanceWorkOrder:WorkOrder,FleetOperationReceipt:receipts},
     functions:{invoke},
     integrations:{Core:{UploadFile:async()=> {
