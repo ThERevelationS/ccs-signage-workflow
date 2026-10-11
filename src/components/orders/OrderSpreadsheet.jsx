@@ -98,6 +98,7 @@ import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
+import { classifyUncertainOrderSyncReadback } from "@/components/orders/orderUncertainSyncReadback.mjs";
 import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
@@ -575,8 +576,28 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       // user to retry so an acknowledged-on-server sync is not pushed again.
       let partialResultMessage = '';
       try {
+        // The visible spreadsheet excludes soft-deleted Orders and may be
+        // filtered. A missing row in that view is NOT proof it was synced.
+        // Independently read back every exact requested permanent ID before
+        // interpreting a cleared local queue marker as a successful push.
+        const exactRows = await loadAllEntityRows({
+          entity: Order, query: { id: { $in: orderIds } }, sort: "id",
+          pageSize: Math.min(500, Math.max(20, orderIds.length)),
+          maxRows: Math.max(1000, orderIds.length + 500),
+          label: "Order Form uncertain Save & Sync permanent-ID read-back",
+        });
+        const exact = classifyUncertainOrderSyncReadback(orderIds, exactRows);
         const verificationLoaded = await loadData(false);
         if (!verificationLoaded) throw new Error('Authoritative Order verification reload failed.');
+        // Preserve pending IDs even if the visible list omitted them. Do not
+        // remove newer local edits or infer completion from list membership.
+        for (const id of exact.pendingIds) {
+          pendingSyncIdsRef.current.add(id);
+          if (!pendingSyncVersionRef.current.has(id)) {
+            pendingSyncVersionRef.current.set(id, syncTargets.find(target => target.id === id)?.version ?? 0);
+          }
+        }
+        setPendingSyncCount(pendingSyncIdsRef.current.size);
         const unresolvedTargets = syncTargets.filter(({ id }) => pendingSyncIdsRef.current.has(id));
         if (unresolvedTargets.length === 0) {
           setLastSynced(new Date());
