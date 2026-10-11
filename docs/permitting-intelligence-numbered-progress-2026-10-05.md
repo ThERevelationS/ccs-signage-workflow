@@ -2,7 +2,7 @@
 
 Automatic address scan findings now show categorized forms/rules/reference links, external application/source destinations with referring-page provenance, actual checked-page failures, pending page URLs and individual scan gaps. Unsafe URL schemes are displayed without clickable links. The simple surface remains collapsed per jurisdiction. File links are explicitly not downloaded/saved; outside destinations remain unscanned/unapproved. Existing authority/apply guards are unchanged.
 
-Fourteen selector Chromium checks passed, including mobile/desktop findings, portal access, unsafe links, gap detail, pending electrical page and blocked uncertain apply. Targeted frontend lint passed. No production records changed or publication performed. Live signed-in address/map acceptance and archival of these automatic address findings remain pending; retained repository archive infrastructure is separate from this read-only discovery result.
+Fourteen selector Chromium checks passed, including mobile/desktop findings, portal access, unsafe links, gap detail, pending electrical page and blocked uncertain apply. Sixty-five focused location/authority regressions and targeted frontend lint passed. No production records changed or publication performed. Live signed-in address/map acceptance and archival of these automatic address findings remain pending; retained repository archive infrastructure is separate from this read-only discovery result.
 
 ## 2026-10-11 — Phase 10, milestone 2 of 3: bounded map loading recovery
 
