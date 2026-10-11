@@ -5372,7 +5372,7 @@ test('v28 direct-terminal payroll delta cannot bypass dual semantic suffix rejec
   await exerciseV28AmbiguousCorrectionSuffix({ withDirectD: false });
 });
 
-async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline }) {
+async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline, thirdGeneration = false }) {
   // All audits come from legitimate synthetic backend actions.
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   const period = h.period();
@@ -5481,10 +5481,63 @@ async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline }) {
   const tampered = await ok(historyVerify(prefix + '-tampered-001'));
   assert.equal(tampered.verified, false, JSON.stringify(tampered));
   auditC.details.corrected.clock_in = savedClock;
+  if (!thirdGeneration) return;
+
+  // Preserve both older snapshots while a third payroll generation is formed
+  // by another independently verified pair of direct manager corrections.
+  const firstRetired = clone(period.finalized_summary_history[0]);
+  const secondGeneration = clone(period.finalized_summary);
+  await ok(h.action('reopen', prefix + '-reopen-third-period', 'Review third-generation corrections'));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: prefix + '-reopen-third-shift', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen',
+    note: 'Third-generation audited corrections',
+  }));
+  const auditE = await direct('e', '2026-09-28T12:55:00.000Z', 7, 5);
+  const auditF = await direct('f', '2026-09-28T13:05:00.000Z', 6, 55);
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: prefix + '-approve-f', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve terminal F',
+  }));
+  await ok(h.action('finalize', prefix + '-finalize-f'));
+  await ok(h.action('finalize', prefix + '-finalize-f'));
+  assert.equal(period.finalized_summary_history.length, 2);
+  assert.deepEqual(period.finalized_summary_history[0], firstRetired,
+    'First-generation frozen history must remain unchanged');
+  const retiredSecond = period.finalized_summary_history[1];
+  assert.deepEqual(retiredSecond.shift_manifest, secondGeneration.shift_manifest);
+  assert.deepEqual(retiredSecond.generation_changes, secondGeneration.generation_changes);
+  assert.equal(retiredSecond.generation_changes_hash, secondGeneration.generation_changes_hash);
+  assert.equal(retiredSecond.snapshot_chain_hash, secondGeneration.snapshot_chain_hash);
+  const thirdChange = period.finalized_summary.generation_changes[0];
+  assert.equal(period.finalized_summary.generation_changes.length, 1);
+  assert.equal(thirdChange.action_provenance.audit_id, auditF.id);
+  assert.equal(thirdChange.action_provenance.unique_direct_semantic_suffix, true);
+  assert.equal(thirdChange.action_provenance.semantic_suffix_start_audit_id, auditE.id);
+  assert.deepEqual(thirdChange.causal_chain.filter((link) => link.action === 'admin_correction')
+    .map((link) => link.audit_id).slice(-2), [auditE.id, auditF.id]);
+  const thirdVerify = await ok(historyVerify(prefix + '-third-verify-001'));
+  assert.equal(thirdVerify.verified, true, JSON.stringify(thirdVerify));
+  const thirdRetry = await ok(historyVerify(prefix + '-third-verify-001'));
+  assert.equal(thirdRetry.verified, true, JSON.stringify(thirdRetry));
+  // An old correction from the retired second generation must still be
+  // authenticated after the third generation has become active.
+  auditC.details.corrected.clock_in = '2026-09-28T12:31:00.000Z';
+  const tamperedRetired = await ok(historyVerify(prefix + '-third-tampered-retired-001'));
+  assert.equal(tamperedRetired.verified, false, JSON.stringify(tamperedRetired));
+  auditC.details.corrected.clock_in = savedClock;
+  const restored = await ok(historyVerify(prefix + '-third-restored-001'));
+  assert.equal(restored.verified, true, JSON.stringify(restored));
 }
 
 test('v28 uniquely reconstructable multi-direct manager correction finalizes with auditable semantic suffix', async () => {
   await exerciseV28DirectManagerSemanticSuffix({ returnToBaseline: false });
+});
+
+test('v28 three generations preserve and verify retired direct-manager semantic suffix evidence', async () => {
+  await exerciseV28DirectManagerSemanticSuffix({ returnToBaseline: false, thirdGeneration: true });
 });
 
 test('v28 manager-only return-to-baseline correction cannot bypass missed-punch provenance finalization gate', async () => {
