@@ -1,0 +1,52 @@
+{
+  "tested_at": "2026-10-11T01:16:52.785Z",
+  "mode": "isolated Chromium; actual component and production CSS; mock API only",
+  "production_writes": 0,
+  "checks": [
+    {
+      "name": "manual selection exposes scan without address lookup",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "manual selection exposes scan without address lookup",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "manual selection exposes scan without address lookup",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "address lookup selects candidate and exposes scans in dialog",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "changed address ignores stale lookup",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "concurrent office and source scans remain visible and never change selection",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "reader sees controls with preserved permissions",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "duplicate profiles cannot start a scan",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "broken canonical link does not borrow a same-name profile",
+      "width": 390,
+      "passed": true
+    }
+  ]
+}
