@@ -1,6 +1,13 @@
 // Order Form only. An uncertain Save & Sync response is not proof of success.
 // Verify every requested permanent Base44 Order ID, including records that may
 // have disappeared from the current filtered/active Order Form view.
+export async function verifyUncertainOrderSyncReadback(requestedIds, readRecords) {
+  if (typeof readRecords !== 'function') {
+    throw new Error('Uncertain Order sync has no authenticated read-back operation.');
+  }
+  return classifyUncertainOrderSyncReadback(requestedIds, await readRecords(requestedIds));
+}
+
 export function classifyUncertainOrderSyncReadback(requestedIds, records) {
   if (!Array.isArray(requestedIds) || !requestedIds.length ||
       !requestedIds.every(id => typeof id === 'string' && id.trim() === id && id.length > 0) ||
