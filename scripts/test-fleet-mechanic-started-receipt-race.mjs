@@ -239,7 +239,7 @@ test("scope narrowing during final evidence verification prevents the work-order
   store.pendingFinalReceiptReads.shift()();
   const result=await saving;
   assert.equal(result.code,403);
-  assert.match(result.body.error,/outside|allowed/i);
+  assert.match(result.body.error,/no longer includes this Fleet equipment/i);
   const receipt=[...store.receipts.values()][0];
   assert.equal(receipt.status,"started");
   assert.deepEqual(receipt.result_summary.uploaded_photo_urls,store.uploads);
