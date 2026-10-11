@@ -61,6 +61,8 @@ export default function ProductChecklistDialog({
   const [incompleteWarning, setIncompleteWarning] = useState(null);
   const [unfinishedEditsWarning, setUnfinishedEditsWarning] = useState(null);
   const unfinishedEditsActionRef = useRef(null);
+  const unfinishedDraftTargetRef = useRef(null);
+  const focusCustomDraftOnOpenRef = useRef(false);
   const [noChecklistWarning, setNoChecklistWarning] = useState(null);
   const [, setProductTypes] = useState([]);
   const [showOtherPopup, setShowOtherPopup] = useState(null);
@@ -1564,11 +1566,63 @@ export default function ProductChecklistDialog({
     JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot) ||
     hasUnsubmittedDrafts
   );
+  const getUnsubmittedDraftTarget = () => {
+    if (newItemInput.show && newItemText.trim()) {
+      return { kind: "new-item", itemId: newItemInput.parentId, productName: newItemInput.productName };
+    }
+    if (showAddGeneralChecklist && newGeneralChecklistText.trim()) return { kind: "general" };
+    if (editingItemId !== null && editingItemText.trim() !== (checklistItemById.get(editingItemId)?.text || "").trim()) {
+      return { kind: "edit-item", itemId: editingItemId };
+    }
+    if (editingProductName !== null && editingProductNameText.trim() !== editingProductName.trim()) {
+      return { kind: "edit-product", productName: editingProductName };
+    }
+    const customItemId = Array.from(customStatusDraftsByItemIdRef.current.entries())
+      .find(([, value]) => Boolean(value?.trim()))?.[0];
+    return customItemId ? { kind: "custom", itemId: customItemId } : null;
+  };
   const blockOnUnsubmittedDrafts = (action) => {
     if (!hasUnsubmittedDrafts) return false;
+    unfinishedDraftTargetRef.current = getUnsubmittedDraftTarget();
     unfinishedEditsActionRef.current = action;
     setUnfinishedEditsWarning(action);
     return true;
+  };
+  const focusUnsubmittedDraft = () => {
+    const target = unfinishedDraftTargetRef.current;
+    unfinishedDraftTargetRef.current = null;
+    if (!target || !isOpen || isLoading) return;
+    const item = target.itemId ? checklistItemById.get(target.itemId) : null;
+    if (target.itemId && !item) return;
+    const productName = target.productName || item?.product_name;
+    if (productName) setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
+    if (item) {
+      const expand = {};
+      let cursor = item;
+      const visited = new Set();
+      while (cursor && !visited.has(cursor.id)) {
+        visited.add(cursor.id);
+        expand[cursor.id] = true;
+        cursor = checklistItemById.get(cursor.parent_id);
+      }
+      setExpandedItems(prev => ({ ...prev, ...expand }));
+      if (needsInputNavigationIndex.completedIds.has(item.id)) setShowCompletedItems(true);
+    }
+    scheduleNavigationFocus(() => {
+      if (target.kind === "custom") {
+        if (!findRenderedChecklistItemElement([target.itemId])?.getClientRects().length) return;
+        focusCustomDraftOnOpenRef.current = true;
+        openOtherPopup(target.itemId);
+        return;
+      }
+      const candidates = document.querySelectorAll('[data-sips-unsubmitted-draft="' + target.kind + '"]');
+      const input = Array.from(candidates).find(node =>
+        node.isConnected && !node.disabled && node.getClientRects().length
+      );
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
 
   const requestClose = () => {
@@ -2963,9 +3017,8 @@ export default function ProductChecklistDialog({
           onCloseAutoFocus={(event) => {
             if (!isOpen) return;
             event.preventDefault();
-            const control = unfinishedEditsActionRef.current === "complete" ? completeButtonRef.current : saveRevisitButtonRef.current;
             unfinishedEditsActionRef.current = null;
-            if (control?.isConnected && !control.disabled && control.getClientRects().length) control.focus();
+            focusUnsubmittedDraft();
           }}
         >
           <AlertDialogHeader>
@@ -3175,6 +3228,15 @@ export default function ProductChecklistDialog({
       <OtherDialog open={!!showOtherPopup} onOpenChange={(open) => { if (!open) dismissOtherPopup(); }}>
         <OtherDialogContent
           className="max-w-md clay-card border-none [&>button]:h-11 [&>button]:w-11 [&>button]:inline-flex [&>button]:items-center [&>button]:justify-center sm:[&>button]:h-9 sm:[&>button]:w-9"
+          onOpenAutoFocus={(event) => {
+            if (!focusCustomDraftOnOpenRef.current) return;
+            focusCustomDraftOnOpenRef.current = false;
+            const input = customStatusInputRef.current;
+            if (input?.isConnected && !input.disabled) {
+              event.preventDefault();
+              input.focus();
+            }
+          }}
           onCloseAutoFocus={handleOtherPopupCloseAutoFocus}
         >
           <OtherDialogHeader>
