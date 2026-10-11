@@ -5491,6 +5491,86 @@ test('v28 manager-only return-to-baseline correction cannot bypass missed-punch 
   await exerciseV28DirectManagerSemanticSuffix({ returnToBaseline: true });
 });
 
+test('v28 manager-only ambiguous semantic suffix blocks payroll finalization for a normal server shift', async () => {
+  // A normal (non-missed-punch) shift ensures the suffix ambiguity check,
+  // rather than an unrelated missed-punch gate, rejects B→C→B→D.
+  const h = setup({ entryCount: 1, serverNow: '2026-09-20T22:00:00.000Z' });
+  const period = h.period();
+  const entry = h.rows.TimeEntry[0];
+  entry.approval_status = 'unreviewed';
+  const ok = async (call) => {
+    const result = await call;
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    return result.body;
+  };
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-normal-amb-approve-b', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve original B',
+  }));
+  await ok(h.action('finalize', 'v28-normal-amb-finalize-b'));
+  await ok(h.action('reopen', 'v28-normal-amb-reopen-period', 'Review auditable direct corrections'));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-normal-amb-reopen-shift', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen', note: 'Reopen shift for corrections',
+  }));
+  const direct = async (letter, clockIn, hours, minutes) => {
+    const request = {
+      action: 'admin_correct_entry', target_email: employee.email,
+      request_id: 'v28-normal-amb-' + letter, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: 'Manager verifies ' + letter,
+      correction: {
+        clock_in: clockIn, clock_out: entry.clock_out, lunch_minutes: 0,
+        notes: 'Direct ' + letter,
+        job_allocations: [{ hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+      },
+    };
+    const result = await ok(h.invoke(request));
+    assert.equal((await h.invoke(request)).status, 200);
+    return h.rows.TimeClockAudit.find((row) => row.id === result.audit_id);
+  };
+  const c = await direct('c', '2026-09-20T14:30:00.000Z', 7, 30);
+  const backB = await direct('back-b', '2026-09-20T14:00:00.000Z', 8, 0);
+  const d = await direct('d', '2026-09-20T14:45:00.000Z', 7, 15);
+  assert.equal(c.details.original.clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(c.details.corrected.clock_in, backB.details.original.clock_in);
+  assert.equal(backB.details.corrected.clock_in, d.details.original.clock_in);
+  const normalized = (value) => [value?.clock_in || '', value?.clock_out || '', Number(value?.total_hours || 0)];
+  const audits = [c, backB, d];
+  const before = { clock_in: '2026-09-20T14:00:00.000Z', clock_out: entry.clock_out, total_hours: 8 };
+  const after = { clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: entry.total_hours };
+  let matchingSuffixes = 0;
+  for (let start = 0; start < audits.length; start++) {
+    let state = normalized(before);
+    let matches = true;
+    for (let index = start; index < audits.length; index++) {
+      if (normalized(audits[index].details.original).some((value, j) => value !== state[j])) {
+        matches = false;
+        break;
+      }
+      state = normalized(audits[index].details.corrected);
+    }
+    if (matches && state.every((value, j) => value === normalized(after)[j])) matchingSuffixes++;
+  }
+  assert.equal(matchingSuffixes, 2, 'Fixture must contain two distinct valid suffixes');
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-normal-amb-approve-d', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Review D',
+  }));
+  const summaryBefore = clone(period.finalized_summary);
+  const historyBefore = clone(period.finalized_summary_history);
+  const attempt = () => h.action('finalize', 'v28-normal-amb-finalize-d');
+  for (let retry = 0; retry < 2; retry++) {
+    const blocked = await attempt();
+    assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+    assert.match(String(blocked.body.error || ''), /ambiguous direct-manager correction history/i);
+    assert.deepEqual(period.finalized_summary, summaryBefore);
+    assert.deepEqual(period.finalized_summary_history, historyBefore);
+  }
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
