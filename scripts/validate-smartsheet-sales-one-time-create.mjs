@@ -82,6 +82,8 @@ for (const body of [
   {message:'ERROR',resultCode:1,result:[{id:12}]},
   {message:'SUCCESS',resultCode:0,result:[{id:12},{id:13}]},
   {message:'SUCCESS',resultCode:0,result:[{id:'not-an-id'}]},
+  {message:'SUCCESS',resultCode:0,result:[{id:Number.MAX_SAFE_INTEGER+1}]},
+  {message:'SUCCESS',resultCode:0,result:[{id:{value:'5678'}}]},
   {message:'SUCCESS',resultCode:0,result:[]},
 ]) await throws(async()=>createdSalesSmartsheetRowId(body),/Sales|Smartsheet/);
 eq(createdSalesSmartsheetRowId({message:'SUCCESS',resultCode:0,result:[{id:12345}]}),'12345',
