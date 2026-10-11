@@ -1,3 +1,4 @@
+import {addressResearchCollection} from '../../shared/permittingAddressDiscoveryContinuation.mjs';
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 Deno.serve(async req=>{
@@ -21,9 +22,9 @@ Deno.serve(async req=>{
   for(const id of ids){
    const row=await entity.get(id);
    if(!inScope(row))return Response.json({error:'This research collection is not available to your account.'},{status:403});
-   collections.push({id:row.id,target:row.location_target,name:row.name,...(review?{owner_email:row.owner_email,location_verified:row.location_verified===true,source_url:row.permitting_url,created_date:row.created_date}:{}),documents:row.documents || [],external_referrals:row.discovery_scan_state?.external_referrals || [],auto_refresh:row.auto_refresh,reference_only:true,authority_established:false});
-   const runs=await client.asServiceRole.entities.PermittingScanRun.filter({target_id:id,owner_id:row.owner_id,owner_email:row.owner_email,action_kind:'address_archive'},'-created_date',10);
-   actions.push(...runs.filter(run=>run.owner_id===row.owner_id&&run.owner_email===row.owner_email&&run.target_id===id&&run.action_kind==='address_archive'));
+   collections.push({...addressResearchCollection(row),...(review?{owner_email:row.owner_email,location_verified:row.location_verified===true,source_url:row.permitting_url,created_date:row.created_date}:{})});
+   const runs=await client.asServiceRole.entities.PermittingScanRun.filter({target_id:id,owner_id:row.owner_id,owner_email:row.owner_email,action_kind:{$in:['address_archive','address_discovery']}},'-created_date',10);
+   actions.push(...runs.filter(run=>run.owner_id===row.owner_id&&run.owner_email===row.owner_email&&run.target_id===id&&['address_archive','address_discovery'].includes(run.action_kind)));
   }
   return Response.json({collections,actions,next_cursor:nextCursor,review_mode:review});
  }catch(error){const status=[400,401,403,409,503].includes(Number(error?.status))?Number(error.status):500;return Response.json({error:status===500?'Saved research files could not be checked safely.':error.message},{status});}

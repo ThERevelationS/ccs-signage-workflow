@@ -46,6 +46,7 @@
       "additionalProperties": true
     },
     "discovery_scan_state": {"type":"object","additionalProperties":true,"description":"Retained exact direct-document referrals and checked-page provenance for owner-scoped external archival."},
+    "discovery_last_scan":{"type":"object","additionalProperties":true,"description":"Latest manual page results and resource links, separate from saved-file receipts."},
     "documents": {
       "type": "array",
       "items": {

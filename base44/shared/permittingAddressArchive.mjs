@@ -1,3 +1,4 @@
+import {addressResearchCollection} from './permittingAddressDiscoveryContinuation.mjs';
 import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferralArchive.mjs';
 import {validateExternalPermittingReferral} from './permittingExternalReferrals.mjs';
 import {createScanReporter,silentScanReporter} from './permittingScanReporter.mjs';
@@ -28,7 +29,7 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
    if(root.protocol!=='https:'||root.username||root.password)throw Error('Original-file retention requires an HTTPS source.');
    const allowed=docs.filter(doc=>{try{const u=new URL(doc.url);return u.protocol==='https:'&&!u.username&&!u.password&&u.hostname.replace(/^www\./,'')===root.hostname.replace(/^www\./,'')&&u.port===root.port;}catch{return false;}});
    const referrals=(scan.external_referrals || []).filter(ref=>{try{validateExternalPermittingReferral(ref,seed);return ref.referral_kind==='downloadable_document'&&new URL(ref.url).protocol==='https:'&&new URL(ref.source_page_url).protocol==='https:'&&scan.continuation_state?.visited_urls?.includes(ref.source_page_url);}catch{return false;}});
-   if(!allowed.length&&!referrals.length)continue;
+   if(!allowed.length&&!referrals.length&&!scan.continuation_state?.pending_pages?.length&&!scan.continuation_state?.gaps?.length)continue;
    const collectionKey=scanRunId+':'+index;
    const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.scan_run_id===scanRunId&&row.reference_only===true&&row.authority_established===false&&row.permitting_url===seed;
    let rows=await entity.filter({collection_key:collectionKey},'created_date',2);
@@ -44,9 +45,9 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
    // Remaining originals are explicitly pending; no artificial coverage claim.
    const workerEntity={get:async id=>{const row=await entity.get(id);if(!own(row))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:scanRunId,reference_only:true,authority_established:false,permitting_url:seed},patch)};
    let archive=null;
-   if(started<archiveLimit){started++;archive=allowed.length?await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:scopedArchiveFetch(workerEntity,collection.id,seed,fetchSource),uploadFile,onProgress,manual:false}):await archiveOwnedAddressResearchReferral({entity,collectionId:collection.id,actor,selection:{url:referrals[0].url,source_page_url:referrals[0].source_page_url},automatic:true,fetchSource,uploadFile,onProgress});}
+   if((allowed.length||referrals.length)&&started<archiveLimit){started++;archive=allowed.length?await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:scopedArchiveFetch(workerEntity,collection.id,seed,fetchSource),uploadFile,onProgress,manual:false}):await archiveOwnedAddressResearchReferral({entity,collectionId:collection.id,actor,selection:{url:referrals[0].url,source_page_url:referrals[0].source_page_url},automatic:true,fetchSource,uploadFile,onProgress});}
    const current=await workerEntity.get(collection.id);
-   collections.push({id:current.id,target:scan.target,documents:current.documents,external_referrals:current.discovery_scan_state?.external_referrals || [],archive,reference_only:true,authority_established:false});
+   collections.push({...addressResearchCollection(current),archive});
    await onProgress({kind:'address_file_collection',collection_id:current.id,resources:current.documents.filter(d=>d.archive_state?.status==='complete').map(d=>({url:d.file_url,title:'Saved original: '+(d.title || d.url),doc_type:'saved_original'})),detail:`Retained ${current.documents.filter(d=>d.archive_state?.status==='complete').length} originals for ${scan.target.name}; ${current.documents.filter(d=>d.archive_state?.status!=='complete').length+(current.discovery_scan_state?.external_referrals || []).filter(ref=>!current.documents.some(doc=>doc.url===ref.url)).length} files still need download or verification. Research only; no authority approved.`});
   }catch(error){collections.push({target:scan.target,error:String(error.message || error),reference_only:true,authority_established:false});await onProgress({kind:'address_archive_failed',detail:String(error.message || error)});}
  }
