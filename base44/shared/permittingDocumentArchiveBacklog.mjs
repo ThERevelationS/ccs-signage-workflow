@@ -23,7 +23,7 @@ export async function continuePermittingDocumentArchiveBacklog(options){
    try{
     const result=await archiveExternalJurisdictionReferral({...options,jurisdictionId:profile.id,manual:false,automaticScopedResume:true,
      selection:{url:doc.url,source_page_url:doc.external_referral_provenance.source_page_url}});
-    if(!result.skipped)return {...result,archive_queue:'jurisdiction',archive_queue:'jurisdiction',external_profiles_checked:checked};
+    if(!result.skipped)return {...result,archive_queue:'jurisdiction',external_profiles_checked:checked};
    }catch(error){review.push({jurisdiction_id:profile.id,error:String(error.message || error).slice(0,500)});}
   }
   const freshProfiles=await options.entity.filter({state,auto_refresh:true,_manual_documents:{$ne:true},
