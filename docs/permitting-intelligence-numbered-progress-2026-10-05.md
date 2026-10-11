@@ -1,3 +1,7 @@
+## 2026-10-11 — Phase 10 current preview login and address scan verified
+
+User refresh restored the public sandbox preview. User explicitly authorized separate Sign Shop login; visible Logout Brett confirms success. Live Mason address scan 6acba2c69f03aa845daff0db reports address-geocode-v3 and Google REQUEST_DENIED. Per-action progress and 14 literal activity events rendered; automatic research scanned one OpenGov page with zero resources. Map canvas and controls load, but address pin and exact match remain unverified because server geocoding is denied. Apply stayed disabled. Need fix server Geocoding configuration and avoid asking for a complete address on a service configuration failure. No frontend publication or Work Order assignment.
+
 ## 2026-10-11 — Phase 10 preview repair activated locally
 
 Restarted only the verified stale Vite dev process with the same managed wrapper. The running server now returns the electrical UI and virtual helper with HTTP 200; backend function source and manifest remain HTTP 403. Two frontend boundary tests pass. The browser-facing sandbox preview still displays Base44 startup after reload, so local dev repair activation is verified but public routing and authenticated address/map acceptance remain open. Google is the user’s only sign-in method. No frontend publication or live scan.

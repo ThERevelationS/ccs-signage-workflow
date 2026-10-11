@@ -132,5 +132,39 @@
     "remaining": "Restore browser Google connection and Base44 preview routing; authenticated current-revision address/map and scan acceptance.",
     "frontend_published": false,
     "live_scan_submitted": false
+  },
+  "current_preview_authenticated_scan": {
+    "date": "2026-10-11",
+    "phase_10_complete": false,
+    "preview_host": "preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app",
+    "preview_loaded": true,
+    "app_sign_in": "Brett confirmed through visible Logout Brett after user-authorized secure app login. Google Base44 login is separate.",
+    "scan_run_id": "6acba2c69f03aa845daff0db",
+    "address": "4900 Parkway Dr, Mason, OH 45040",
+    "revision": "address-geocode-v3",
+    "geocoding_status": "REQUEST_DENIED",
+    "events": 14,
+    "automatic_research": {
+      "pages_attempted": 1,
+      "source": "https://masonoh.portal.opengov.com/",
+      "resources": 0,
+      "external_referrals": 0
+    },
+    "ui_verified": [
+      "Per-action progress indicator during submission",
+      "Completed stage progress 1/1",
+      "Expanded activity includes literal address search, service status, visited page and findings",
+      "Google map renders with standard controls",
+      "Use this jurisdiction remains disabled for unresolved location"
+    ],
+    "not_verified": [
+      "Successful address pin and exact jurisdiction",
+      "Multiple concurrent action bars",
+      "Archive download acceptance"
+    ],
+    "configuration_note": "Backend Google Geocoding rejects deployed server key. Sandbox shell does not have GOOGLE_MAPS_API_KEY; this does not imply backend secret is missing. No secret value read or printed. Precise provider rejection reason beyond REQUEST_DENIED is not established.",
+    "remaining_ui_issue": "Failure currently asks to enter a complete address although the service rejected the request; must distinguish service configuration failure from address error.",
+    "frontend_published": false,
+    "data_writes": "Normal live address scan produced saved scan/research; no Work Order assignment, office approval or dummy data."
   }
 }
