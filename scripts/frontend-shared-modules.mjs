@@ -15,8 +15,12 @@ export function frontendSharedModules(root = process.cwd()) {
   return {
     name: 'ccs-frontend-shared-modules', enforce: 'pre',
     resolveId(source, importer) {
-      if (!importer || !source.startsWith('.')) return null;
-      const file = path.resolve(path.dirname(importer.split('?')[0]), source);
+      if (!importer) return null;
+      const clean = source.split('?')[0];
+      const file = clean.startsWith('/base44/shared/')
+        ? path.resolve(root, clean.slice(1))
+        : path.isAbsolute(clean) ? clean
+        : clean.startsWith('.') ? path.resolve(path.dirname(importer.split('?')[0]), clean) : '';
       return allowed(file) ? prefix + file : null;
     },
     async load(id) {
