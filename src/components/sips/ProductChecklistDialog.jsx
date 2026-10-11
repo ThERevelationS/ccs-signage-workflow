@@ -373,6 +373,13 @@ export default function ProductChecklistDialog({
   };
 
   const handleOtherPopupCloseAutoFocus = (event) => {
+    // Reload/switch clears the source row before Radix finishes closing.
+    // Never use native trigger restoration for that now-stale popup.
+    if (isLoading || !otherPopupFocusItemIdRef.current) {
+      event.preventDefault();
+      otherPopupDismissedRef.current = false;
+      return;
+    }
     if (!isOpen || !otherPopupDismissedRef.current) return;
     otherPopupDismissedRef.current = false;
     event.preventDefault();
