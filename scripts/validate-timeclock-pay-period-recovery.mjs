@@ -5243,9 +5243,9 @@ test('v28 two direct corrections before later employee approve_modified preserve
   directDAudit.details.corrected.clock_in = originalD;
 });
 
-test('v28 two complete semantic suffixes fail closed after correction returns to baseline', async () => {
-  // Actual audited path: B → C → B → D → E. Both suffixes beginning
-  // at C and D start at B and finish at E; the verifier must reject both.
+async function exerciseV28AmbiguousCorrectionSuffix({ withDirectD }) {
+  // Both B → C → B → D → E and B → C → B → E have two valid
+  // generation-before → generation-after suffixes, including the direct-terminal case.
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   const period = h.period();
   Object.assign(period, { start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '' });
@@ -5305,7 +5305,7 @@ test('v28 two complete semantic suffixes fail closed after correction returns to
   };
   const auditC = await direct('c', '2026-09-28T12:30:00.000Z', 7, 30);
   const auditReturnB = await direct('return-b', '2026-09-28T12:15:00.000Z', 7, 45);
-  const auditD = await direct('d', '2026-09-28T12:35:00.000Z', 7, 25);
+  const auditD = withDirectD ? await direct('d', '2026-09-28T12:35:00.000Z', 7, 25) : null;
 
   await ok(h.invokeAs(employee, {
     action: 'submit_correction_request', target_email: employee.email,
@@ -5335,7 +5335,8 @@ test('v28 two complete semantic suffixes fail closed after correction returns to
   assert.equal(change.correction_provenance.applied_audit_id, auditE.id);
   const correctionIds = change.causal_chain
     .filter((link) => link.action === 'admin_correction').map((link) => link.audit_id);
-  assert.deepEqual(correctionIds.slice(-4), [auditC.id, auditReturnB.id, auditD.id, auditE.id]);
+  const expectedIds = [auditC.id, auditReturnB.id, ...(auditD ? [auditD.id] : []), auditE.id];
+  assert.deepEqual(correctionIds.slice(-expectedIds.length), expectedIds);
   const audits = correctionIds.map((id) => h.rows.TimeClockAudit.find((row) => row.id === id));
   const semantic = (value) =>
     [String(value?.clock_in || ''), String(value?.clock_out || ''), Number(value?.total_hours || 0)];
@@ -5361,6 +5362,14 @@ test('v28 two complete semantic suffixes fail closed after correction returns to
   assert.equal(first.verified, false, JSON.stringify(first));
   const retry = await ok(verify('v28-amb-verify-001'));
   assert.equal(retry.verified, false, JSON.stringify(retry));
+}
+
+test('v28 two complete semantic suffixes fail closed after correction returns to baseline', async () => {
+  await exerciseV28AmbiguousCorrectionSuffix({ withDirectD: true });
+});
+
+test('v28 direct-terminal payroll delta cannot bypass dual semantic suffix rejection', async () => {
+  await exerciseV28AmbiguousCorrectionSuffix({ withDirectD: false });
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
