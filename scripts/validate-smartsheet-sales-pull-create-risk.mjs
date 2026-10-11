@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { salesRunRequiresReview } from '../base44/shared/smartsheetSalesSafety.mjs';
 import {
   classifySalesPullCreateAttemptRisks,
   readSalesPullCreateAttemptRisks,
@@ -101,4 +102,21 @@ yes(backend.includes('const toUpdate: any[] = []') &&
   'Linked updates remain on their existing independent pull path.');
 const orderGuard=backend.indexOf('if (dataset === \'orders\') {\n    const unresolved = existingRecords.filter(orderSmartsheetCreateNeedsReview)');
 yes(orderGuard>=0,'Existing Order Form uncertainty protection is preserved.');
+yes(salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:3,
+  create_attempts_need_review:1,new_workorder_imports_held_for_create_review:0,errors:0}]),
+  'Even when no new imports were planned, an unresolved Sales creation attempt marks the run Needs Review.');
+yes(salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:3,
+  create_attempts_need_review:1,new_workorder_imports_held_for_create_review:2,errors:1}]),
+  'Partial linked updates plus held imports still report overall Sales sync as needing review.');
+yes(!salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:3,
+  create_attempts_need_review:0,new_workorder_imports_held_for_create_review:0,errors:0}]),
+  'A clean Sales pull is not mislabeled Needs Review by the new guard.');
+const admin=readFileSync('src/components/admin/SmartsheetSyncSettings.jsx','utf8');
+yes(admin.includes('r.direction === "pull" && Number(r.create_attempts_need_review) > 0') &&
+  admin.includes('new_workorder_imports_held_for_create_review'),
+  'Admin sync result displays held new-workorder count only for affected Sales pull.');
+yes(admin.includes('create_attempt_workorder_ids.join(", ")') &&
+  admin.includes('create_attempt_known_row_ids.join(", ")') &&
+  admin.includes('Object.entries(r.create_attempt_states)'),
+  'Admin result exposes bounded IDs and attempt states without guessing permanent ownership.');
 console.log('Sales pull unresolved-create duplicate prevention: '+checks+'/'+checks+' PASS.');
