@@ -1,3 +1,9 @@
+## Phase 10 — saved-status sign-in recovery (2026-10-11)
+
+Milestone 2 of 3 remains incomplete. Saved-status HTTP 401 now pauses automatic checking with a clear sign-in message while preserving the scan's last known state, progress and findings. Manual Check saved action status handles failures inline. Successful retry resumes checking the same action; it never resubmits the scan. Network failures retain uncertainty. The source of the previously reported browser “session ended” remains unconfirmed; this is not a claim that the browser connection or Google geocoding configuration has been repaired.
+
+Validation: 12 session recovery tests passed, 24 address scan tests passed, production build exited 0. No browser live test, frontend publication, or production-record mutation occurred in this unit. Exact location/map/progress live verification remains pending an authenticated v5 preview scan.
+
 ## Phase 10 — session-status recovery (2026-10-11)
 
 Milestone 2 of 3 remains incomplete. A read-only check of the approved Mason test address found no newer saved scan: the latest is `6acbaf19beacb55b547d9ab5`, revision v3, with Google `REQUEST_DENIED`. No authenticated v5 result or exact location/map verification is claimed. The prior browser recovery and manual handoff ended with an explicit stop; no further browser action was attempted. The source of the user's reported “session ended” is unconfirmed.

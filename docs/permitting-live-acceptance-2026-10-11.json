@@ -396,5 +396,35 @@
       "Frontend publication only after explicit authorization"
     ],
     "phase_10_complete": false
+  },
+  "saved_status_sign_in_recovery": {
+    "verified_at": "2026-10-11T19:35:00.730559+00:00",
+    "phase": "Phase 10 \u2014 live testing, milestone 2 of 3",
+    "behavior": [
+      "HTTP 401 during saved-status retrieval pauses background checking and displays a sign-in message.",
+      "Last known scan state, progress, and activity evidence are preserved.",
+      "Manual Check saved action status handles failures inline without unhandled promise rejection.",
+      "Successful retry clears the pause and resumes status tracking without resubmitting the scan.",
+      "Network failures retain uncertain execution and retry access."
+    ],
+    "validation": {
+      "session_recovery_tests": {
+        "passed": 12,
+        "failed": 0
+      },
+      "address_scan_tests": {
+        "passed": 24,
+        "failed": 0
+      },
+      "production_build_exit": 0
+    },
+    "frontend_published": false,
+    "production_records_modified": false,
+    "browser_live_test_completed": false,
+    "phase_10_complete": false,
+    "files": [
+      "src/components/permitting/ResearchProgressContext.jsx",
+      "scripts/permitting-progress-session-recovery.test.mjs"
+    ]
   }
 }
