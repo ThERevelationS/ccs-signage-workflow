@@ -1,3 +1,4 @@
+import {attachScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
@@ -154,6 +155,10 @@ Before returning:
 ☐ null is used when data cannot be verified
 ☐ Parent county information is accurate if included`;
 
+    if(body?.scan_run_id && user.role==='admin'){
+      const row=await base44.asServiceRole.entities.PermittingScanRun.get(body.scan_run_id);
+      if(row?.owner_id===user.id && row.target_name===jurisdictionName && row.status==='running')await attachScanReporter(base44.asServiceRole.entities.PermittingScanRun,row.id).emit({kind:'search_instructions',detail:researchPrompt},{stage:'AI research — instructions submitted',indeterminate:true});
+    }
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: researchPrompt,
       add_context_from_internet: true,

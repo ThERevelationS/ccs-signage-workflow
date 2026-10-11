@@ -121,7 +121,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
   throw new Error('Archive write repeatedly conflicted; newer work was preserved.');
 }
 
-export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, knownPdf = null, externalReferralAuthorized = false, token = crypto.randomUUID(), now = () => Date.now() }) {
+export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, knownPdf = null, externalReferralAuthorized = false, onProgress = async()=>{}, token = crypto.randomUUID(), now = () => Date.now() }) {
   if (knownPdf && (!manual || !documentId || !/^[a-f0-9]{64}$/.test(knownPdf.sha256 || '') ||
       !Number.isInteger(knownPdf.bytes) || knownPdf.bytes < 5 || knownPdf.bytes > MAX_BYTES)) {
     throw new Error('A selected manual PDF requires its retained SHA-256 and bounded byte count.');
@@ -158,6 +158,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   })(), RESEARCH_FETCH_TIMEOUT_MS, 'Archive fetch/read');
   try {
     if (!resumeUpload) {
+      await onProgress({kind:'download',url:doc.url,detail:`Downloading ${doc.title || 'document'}.`,progress:{stage:'Downloading original',current_url:doc.url,processed:0,total:3,indeterminate:false}});
       const sourceResponse = await fetchBytes(doc.url, Boolean(knownPdf || classifiedPdf));
       if(doc.external_referral_provenance && (sourceResponse.referralRecheck?.source_page_url!==doc.external_referral_provenance.source_page_url || !/^[a-f0-9]{64}$/.test(sourceResponse.referralRecheck?.source_page_sha256 || '')))throw new Error('External source link recheck receipt is missing.');
       const bytes = sourceResponse.bytes;
@@ -172,6 +173,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
       await transition(entity, jurisdictionId, doc, state, uploading);
       state = uploading;
       stage = 'upload';
+      await onProgress({kind:'upload',url:doc.url,detail:`Validated ${bytes.length} source bytes; uploading archive.`,progress:{stage:'Uploading archive',processed:1,total:3}});
       const types = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', txt: 'text/plain' };
       let name = new URL(doc.url).pathname.split('/').filter(Boolean).pop() || 'official-resource.' + ext;
@@ -186,6 +188,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
       state = uploaded;
     }
     stage = 'verify';
+    await onProgress({kind:'readback',url:state.file_url,detail:'Reading stored file to verify matching bytes and SHA-256.',progress:{stage:'Verifying stored archive',current_url:state.file_url,processed:2,total:3}});
     const verifying = { ...state, verification_attempts: (Number(state.verification_attempts) || 0) + 1 };
     await transition(entity, jurisdictionId, doc, state, verifying);
     state = verifying;
@@ -200,6 +203,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
       file_url: state.file_url, source_sha256: state.source_sha256, source_bytes: state.source_bytes,
       stored_sha256: storedSha, stored_bytes: stored.length, downloaded_at: state.uploaded_at,
     });
+    await onProgress({kind:'archive_complete',url:doc.url,detail:`Verified ${stored.length} stored bytes; SHA-256 ${storedSha}.`,progress:{stage:'Registering verified archive',processed:3,total:3}});
     const catalog = catalogEntity ? await registerJurisdictionArchive({ entity, catalogEntity, jurisdictionId, documentId: doc.id, automatic: !manual })
       .catch(error => ({ success: false, status: 'registration_conflict', error: String(error.message || error) })) : null;
     // Catalog failure cannot reverse a verified archive or trigger re-upload.

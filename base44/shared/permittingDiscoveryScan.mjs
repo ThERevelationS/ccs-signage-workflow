@@ -41,7 +41,7 @@ function validateCursor(cursor, seedUrl, maxDepth) {
   } catch (error) { throw frontierError(error.message || 'Saved discovery frontier requires review.'); }
 }
 
-export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null }) {
+export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null, onProgress = async()=>{} }) {
   seedUrl = scopedUrl(seedUrl, seedUrl);
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 30 ||
       !Number.isInteger(maxDepth) || maxDepth < 0 || maxDepth > 5) throw Error('Invalid discovery request size.');
@@ -77,6 +77,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
     if (!recoveryGap && visited.has(nextKey)) continue;
     visited.add(nextKey); attempted++;
     try {
+      await onProgress({kind:'page_start',url:next.url,detail:`Scanning page at depth ${next.depth}.`,progress:{stage:'Scanning official pages',current_url:next.url,processed:attempted-1,total:maxPages,indeterminate:false}});
       const response = await fetchPage(next.url);
       const finalUrl = scopedUrl(response.finalUrl || next.url, seedUrl), finalKey = key(finalUrl);
       if (!recoveryGap && finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); continue; }
@@ -104,6 +105,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         ...pageReferrals.map(row=>({...row,source_page_sha256:pageSha}))];
       const batch = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100, offset });
       const found = batch;
+      await onProgress({kind:'found',url:finalUrl,detail:`Found ${found.length} same-host resources and ${pageReferrals.length} external referrals.`,resources:[...found,...pageReferrals],progress:{processed:attempted,total:maxPages,indeterminate:false}});
       if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
       pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length, ...(recoveryGap ? {recovered_link_offset:offset} : {}) });
       if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', depth:next.depth, link_offset:offset + found.length, link_content_sha256:contentHash, link_hash_method:'ordered-resource-list-v1', requires_review: true });
@@ -122,12 +124,14 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
     } catch (error) {
       if(error.frontier_review_required)throw error;
       const reason = String(error?.message || error).slice(0, 300);
+      await onProgress({kind:'page_failed',url:next.url,detail:reason,progress:{processed:attempted,total:maxPages}});
       pages.push({ ...next, status: 'failed', error: reason });
       if (!recoveryGap) gaps.push({ url: next.url, reason: 'page_fetch_failed', depth: next.depth, detail: reason, requires_review: true });
       // Retain the recovery gap and offset after failures; no false completion.
       if (recoveryGap) break;
     }
   }
+  await onProgress({kind:'discovery_summary',detail:`${attempted} pages attempted; ${documents.size} resources found; ${gaps.length} review gaps.`,resources:[...documents.values()],progress:{processed:attempted,total:attempted,indeterminate:false}});
   const pendingPages = pending.filter(p => !visited.has(key(p.url)));
   const continuationState = { external_initial_collection_drained:false, method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
     visited_urls: [...visited], pending_pages: pendingPages, gaps, external_referrals:referrals,

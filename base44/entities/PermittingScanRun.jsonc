@@ -1,0 +1,8 @@
+{
+ "name":"PermittingScanRun","type":"object",
+ "properties":{
+  "action_token":{"type":"string"},"owner_id":{"type":"string"},"target_id":{"type":"string"},"target_name":{"type":"string"},"action_kind":{"type":"string"},"label":{"type":"string"},
+  "status":{"type":"string","enum":["running","complete","completed_with_errors","failed"]},"stage":{"type":"string"},"current_url":{"type":"string"},"processed":{"type":"integer"},"total":{"type":"integer"},"indeterminate":{"type":"boolean"},"started_at":{"type":"string"},"finished_at":{"type":"string"},"last_event_at":{"type":"string"},"error":{"type":"string"},"events":{"type":"array","items":{"type":"object","additionalProperties":true}},"omitted_events":{"type":"integer"}
+ },"required":["action_token","owner_id","target_id","label","status"],
+ "rls":{"create":{"user_condition":{"role":"admin"}},"read":{"user_condition":{"role":"admin"}},"update":{"user_condition":{"role":"admin"}},"delete":{"user_condition":{"role":"admin"}}}
+}

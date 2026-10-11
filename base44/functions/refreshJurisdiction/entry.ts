@@ -1,3 +1,4 @@
+import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { readPermittingResourceResponse } from '../../shared/permittingResourceResponse.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
@@ -13,6 +14,7 @@ import { RESEARCH_FETCH_TIMEOUT_MS } from '../../shared/jurisdictionResearchArch
 import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 
 Deno.serve(async (req) => {
+  let reporter:any=silentScanReporter;
   try {
     const base44 = createClientFromRequest(req);
 
@@ -47,8 +49,14 @@ Deno.serve(async (req) => {
     if (id || settings || discoveryOnly) {
       if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
       if (!id) return Response.json({ error: 'Jurisdiction id is required for a targeted refresh' }, { status: 400 });
-      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl);
-      return Response.json(result);
+      if(body.action_token){
+        if(!user || isScheduledRun || isTargetedAutomation)return Response.json({error:'Tracked manual scans require an authenticated admin'},{status:403});
+        const target=await base44.asServiceRole.entities.JurisdictionProfile.get(id);
+        reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:id,targetName:target.name,kind:discoveryOnly?'discovery':'research',label:`${discoveryOnly?'Rescan':'Research'} ${target.name}, ${target.state}`});
+      }
+      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter);
+      const scanRun=await reporter.finish(result.archival?.success===false || result.discovery_scan?.success===false?'completed_with_errors':'complete');
+      return Response.json({...result,scan_run:scanRun});
     }
 
     if (isTargetedAutomation) {
@@ -73,8 +81,9 @@ Deno.serve(async (req) => {
     }
     return Response.json({ batch: true, processed: results.length, results });
   } catch (error) {
+    await reporter.finish('failed',String(error?.message || error));
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 404].includes(status) ? status : 500;
+    const safeStatus = [400, 404,409].includes(status) ? status : 500;
     console.error('refreshJurisdiction error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Jurisdiction refresh could not be completed safely' : error.message,
@@ -82,7 +91,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null) {
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null,reporter:any=silentScanReporter) {
     const startedAt = Date.now();
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
@@ -107,12 +116,15 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     if (discoveryOnly) {
       researchData = { permitting_url: jurisdiction.permitting_url, documents: [] };
     } else {
+      await reporter.emit({kind:'search',detail:`Researching ${jurisdiction.name}, ${jurisdiction.state}: official permitting/zoning pages, sign rules, applications, fees, portals and contacts. Internal AI web queries are not exposed.`},{stage:'AI research',indeterminate:true});
       const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
         jurisdictionName: jurisdiction.name,
         jurisdictionState: jurisdiction.state,
         jurisdictionType: jurisdiction.type,
-        includeParentCounty
+        includeParentCounty,
+        ...(reporter.id?{scan_run_id:reporter.id}:{})
       });
+      await reporter.emit({kind:'found',detail:'AI returned source candidates; discovery and authority review still required.',resources:(agentResult?.data?.data?.documents || [])});
       researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
     }
     if (!researchData) throw Object.assign(new Error('No research data returned'), { status: 400 });
@@ -123,6 +135,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     if (researchData.permitting_url && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
       try {
         discoveryScan = await scanOfficialPermittingPages({
+          onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
           seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
           resume: jurisdiction.discovery_scan_state || null, existingDocuments: jurisdiction.documents || [],
           fetchPage: async (url: string) => {
@@ -210,6 +223,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
     const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, authorityGate.updateData);
 
+    await reporter.emit({kind:'saving',detail:'Saving discovered sources with concurrency and manual-data protections.'},{stage:'Saving findings',indeterminate:true,current_url:''});
     let updated = await replaceJurisdictionFieldsIfUnchanged({
       entity: base44.asServiceRole.entities.JurisdictionProfile,
       jurisdiction,
@@ -230,7 +244,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,
           fetchSource: safeExternalFetch,
           uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
-          manual: false,
+          manual: true,onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
         });
         const { jurisdiction: archivedProfile, ...summary } = result;
         archival = summary;
