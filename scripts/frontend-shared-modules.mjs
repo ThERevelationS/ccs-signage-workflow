@@ -23,6 +23,7 @@ export function frontendSharedModules(root = process.cwd()) {
       if (!id.startsWith(prefix)) return null;
       const file = id.slice(prefix.length);
       if (!allowed(file)) throw new Error('Unapproved frontend shared module');
+      const watch = (file) => this.addWatchFile(file);
       const result = await build({
         entryPoints: [file], bundle: true, write: false, format: 'esm', platform: 'browser',
         plugins: [{ name: 'shared-module-boundary', setup(builder) {
@@ -31,7 +32,7 @@ export function frontendSharedModules(root = process.cwd()) {
             if (!allowed(resolved)) return { errors: [{ text: 'Frontend shared helper imports an unapproved module' }] };
             return { path: resolved };
           });
-          builder.onLoad({ filter: /.*/ }, (args) => { this.addWatchFile(args.path); return null; });
+          builder.onLoad({ filter: /.*/ }, (args) => { watch(args.path); return null; });
         }}],
       });
       return result.outputFiles[0].text;
