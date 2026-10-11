@@ -1,3 +1,12 @@
+import { salesSnapshotsEqual } from './smartsheetSalesSafety.mjs';
+
+// A human approved the values seen when planning the write. A newer remote
+// snapshot requires fresh review, even when the Base44 WorkOrder is unchanged.
+// This is a pre-write check, not an atomic Smartsheet conditional update.
+export function approvedSalesRemoteSnapshotStillCurrent(planned, freshlyRead, assigneeColumnId = '') {
+  return salesSnapshotsEqual(planned, freshlyRead, assigneeColumnId);
+}
+
 // The approval is for particular Sales values, not permission to overwrite
 // a newer WorkOrder revision. A batched preflight checks the planned record
 // before remote writes; an exact version CAS checks again on Base44 commit.
