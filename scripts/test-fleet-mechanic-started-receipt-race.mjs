@@ -208,6 +208,91 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("revocation after durable photo upload but before final receipt verification blocks Save",async()=>{
+  const {store,client}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseFinalReceiptReadAt=2;
+  const saving=call(payload("request-photo-revoked-final-123456",{photos:[photoPayload]}),client);
+  await until("final photo receipt verification",()=>store.pendingFinalReceiptReads.length===1);
+  const receipt=[...store.receipts.values()][0];
+  assert.equal(receipt.status,"started");
+  assert.equal(receipt.result_summary.uploaded_photo_urls.length,1);
+  const revoke=await call({action:"admin_revoke_link",id:grantId},client);
+  assert.equal(revoke.code,200);
+  assert.equal(revoke.body.reconciled_cancelled,1);
+  store.pendingFinalReceiptReads.shift()();
+  const result=await saving;
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/receipt or photo evidence changed/i);
+  assert.equal(store.receipts.get(receipt.id).status,"cancelled");
+  assert.deepEqual(store.receipts.get(receipt.id).result_summary.uploaded_photo_urls,store.uploads);
+  assert.equal(store.updates,0);
+  assert.equal(store.updateAttempts,0);
+});
+test("scope narrowing during final evidence verification prevents the work-order update",async()=>{
+  const {store,client,grant}=setup();
+  store.pauseFinalReceiptReadAt=2;
+  const saving=call(payload("request-final-scope-change-123456",{photos:[photoPayload]}),client);
+  await until("final receipt read before grant recheck",()=>store.pendingFinalReceiptReads.length===1);
+  grant.scope_mode="selected_equipment";
+  grant.allowed_equipment_ids=["eq-other"];
+  store.pendingFinalReceiptReads.shift()();
+  const result=await saving;
+  assert.equal(result.code,403);
+  assert.match(result.body.error,/outside|allowed/i);
+  const receipt=[...store.receipts.values()][0];
+  assert.equal(receipt.status,"started");
+  assert.deepEqual(receipt.result_summary.uploaded_photo_urls,store.uploads);
+  assert.equal(store.updateAttempts,0);
+  assert.equal(store.updates,0);
+});
+test("final evidence verification rejects a changed photo URL after upload",async()=>{
+  const {store,client,receipts}=setup();
+  store.pauseFinalReceiptReadAt=2;
+  const saving=call(payload("request-final-photo-change-123456",{photos:[photoPayload]}),client);
+  await until("final receipt evidence read",()=>store.pendingFinalReceiptReads.length===1);
+  const receipt=[...store.receipts.values()][0];
+  await receipts.update(receipt.id,{result_summary:{...receipt.result_summary,
+    uploaded_photo_urls:["https://files.example/other-evidence.jpg"],
+    admin_review_note:"Different evidence was recorded",
+  }});
+  store.pendingFinalReceiptReads.shift()();
+  const result=await saving;
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/receipt or photo evidence changed/i);
+  const final=store.receipts.get(receipt.id);
+  assert.equal(final.status,"failed");
+  assert.deepEqual(final.result_summary.uploaded_photo_urls,["https://files.example/other-evidence.jpg"]);
+  assert.equal(final.result_summary.admin_review_note,"Different evidence was recorded");
+  assert.equal(store.updateAttempts,0);
+  assert.equal(store.updates,0);
+});
+test("final evidence check rejects a photo retry whose source reservation changed",async()=>{
+  const attempted=payload("request-final-retry-owner-123456",{photos:[photoPayload,photoPayload]});
+  const previous=makeReceipt(attempted,{status:"failed",count:2,photos:["https://files.example/old-a.jpg"]});
+  const {store,client,receipts}=setup({receipt:previous});
+  store.pauseFinalReceiptReadAt=2;
+  const saving=call(attempted,client);
+  await until("final reused-photo evidence read",()=>store.pendingFinalReceiptReads.length===1);
+  const source=store.receipts.get(previous.id);
+  const retry=[...store.receipts.values()].find(row=>row.id!==previous.id);
+  assert.equal(source.status,"started");
+  assert.deepEqual(retry.result_summary.uploaded_photo_urls,["https://files.example/old-a.jpg","https://files.example/new-1.jpg"]);
+  await receipts.update(previous.id,{result_summary:{
+    ...source.result_summary,retry_reserved_by_request_id:"request-other-owner-987654",
+  }});
+  store.pendingFinalReceiptReads.shift()();
+  const result=await saving;
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/reused-photo reservation changed/i);
+  assert.equal(store.receipts.get(retry.id).status,"failed");
+  assert.equal(store.receipts.get(previous.id).status,"started");
+  assert.equal(store.receipts.get(previous.id).result_summary.retry_reserved_by_request_id,"request-other-owner-987654");
+  assert.equal(store.uploads.length,1);
+  assert.equal(store.updateAttempts,0);
+  assert.equal(store.updates,0);
+});
+
 test("incremental upload retains newer admin provenance instead of replacing the receipt summary",async()=>{
   const {store,client,receipts}=setup();
   store.pausePhotoEvidenceWrite=true;
