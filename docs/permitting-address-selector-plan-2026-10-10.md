@@ -1,3 +1,9 @@
+## Phase 10, milestone 2 — retry all saved failed pages (2026-10-11)
+
+Added **Retry failed pages** beside Scan remaining pages in the jurisdiction selector and My saved research. A progress bar shows the finite retry list, alongside separate tracked page actions with exact server activity and findings. Staff can stop after the current page. Each saved failure is attempted once per pass, with no arbitrary manual overall cap. Repeated failures remain saved; newly created failures do not extend the running batch. Missing acknowledgements, request errors or blocked progress halt the pass. Waiting pages and original file receipts remain intact. Administrator inspection does not expose retry controls.
+
+Synthetic regression covers 105 failures, sequential requests, repeated failures, stopping, uncertain responses and snapshot boundaries. Backend ownership, saved-gap validation and conditional persistence reuse the previously verified endpoint. This unit does not change automatic queue budgets, jurisdiction authority or source-depth bounds. Live map and scheduler acceptance, plus depth/link-limit recovery, remain outstanding.
+
 ## Phase 10, milestone 2 — failed address page retry (2026-10-11)
 
 The jurisdiction selector and My saved research now show **Retry this page** for saved page-fetch failures. Each click attempts only that retained failed page, preserving its saved depth and all other waiting pages. The existing separate action progress reports the exact backend page and findings. Successful reads remove the selected failure; failed reads keep it and expose the latest error. Original file receipts remain protected by conditional persistence. Stale, duplicate, malformed, foreign-owner and arbitrary unsaved selections are rejected. Administrator inspection remains read-only for page retries.
