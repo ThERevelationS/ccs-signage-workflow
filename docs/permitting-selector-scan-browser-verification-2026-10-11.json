@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T02:33:02.775Z",
+  "tested_at": "2026-10-11T02:41:46.170Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -66,6 +66,11 @@
     {
       "name": "automatic findings expose portals, pending pages and failures without pretending files are saved",
       "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "owner research files expose verified originals, manual save progress and uncertain-upload protection",
+      "width": 390,
       "passed": true
     },
     {
