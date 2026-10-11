@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { aiResearchOffice } from "@/functions/aiResearchOffice";
+import {useResearchProgress} from "./ResearchProgressContext";
 import { useAuth } from "@/components/auth/EmailGate";
 
 /**
@@ -13,6 +13,7 @@ import { useAuth } from "@/components/auth/EmailGate";
  */
 export default function AIOfficeResearchDialog({ isOpen, onClose, onCreate, officeTypes }) {
   const { sessionToken } = useAuth();
+  const {runAction}=useResearchProgress();
   const [query, setQuery] = useState("");
   const [state, setState] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,12 +34,12 @@ export default function AIOfficeResearchDialog({ isOpen, onClose, onCreate, offi
     setError("");
     setResult(null);
     try {
-      const res = await aiResearchOffice({
+      const res = await runAction('aiResearchOffice',{
         query: query.trim(),
         state: state.trim(),
         existing_office_types: officeTypes || [],
         session_token: sessionToken,
-      });
+      },`Office research: ${query.trim()}`);
       if (res?.data?.success && res.data.office) {
         setResult(res.data.office);
       } else {

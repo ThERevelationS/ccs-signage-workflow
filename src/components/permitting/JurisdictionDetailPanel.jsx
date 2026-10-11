@@ -20,7 +20,6 @@ import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw,
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
-import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
@@ -233,7 +232,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           } else if (current.source_sha256 !== doc.source_sha256 || current.source_bytes !== doc.source_bytes) {
             throw new Error("Official source fingerprint changed; recheck before uploading");
           } else {
-            await downloadPermitPDF({ jurisdiction_id: targetId, document_url: doc.url, document_title: doc.title });
+            await runAction('downloadPermitPDF',{jurisdiction_id:targetId,document_url:doc.url,document_title:doc.title},`Download ${doc.title} — ${jurisdiction.name}`);
             const saved = await base44.entities.JurisdictionProfile.get(targetId);
             const stored = (saved.documents || []).find(item => item.id === doc.id && item.url === doc.url);
             if (!isVerifiedPermitPDFArchive(stored)) throw new Error("Stored PDF checksum or byte count could not be verified");
@@ -548,11 +547,11 @@ Answer only from the provided excerpts and cite the document title and official 
     if (!doc.url || doc.file_url) return; // Already downloaded or no URL
     setDownloadingDocId(doc.id);
     try {
-      const res = await downloadPermitPDF({
+      const res = await runAction('downloadPermitPDF',{
         jurisdiction_id: jurisdiction.id,
         document_url: doc.url,
         document_title: doc.title
-      });
+      },`Download ${doc.title}`);
       if (res.data?.jurisdiction?.id) {
         onUpdate(res.data.jurisdiction);
       } else if (res.data?.file_url) {

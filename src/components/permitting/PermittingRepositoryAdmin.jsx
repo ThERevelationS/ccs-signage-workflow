@@ -18,7 +18,6 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { assertJurisdictionCatalogStable, createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 
 const PDF_DOWNLOAD_BATCH_LIMIT = 25;
@@ -212,7 +211,7 @@ export default function PermittingRepositoryAdmin() {
             }
             skipped++;
           } else {
-            const res = await downloadPermitPDF({ jurisdiction_id: item.jurisdictionId, document_url: item.url, document_title: item.title });
+            const res = await runAction('downloadPermitPDF',{jurisdiction_id:item.jurisdictionId,document_url:item.url,document_title:item.title},`Download ${item.title}`);
             // A returned URL alone is not enough: confirm the correct source now
             // has a stored file in the latest record before counting a success.
             const saved = await base44.entities.JurisdictionProfile.get(item.jurisdictionId);

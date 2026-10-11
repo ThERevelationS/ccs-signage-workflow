@@ -1,3 +1,4 @@
+import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { validatePermitDocumentBytes } from '../../shared/permittingDocumentValidation.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { patchJurisdictionDocuments } from '../../shared/jurisdictionPersistence.mjs';
@@ -73,27 +74,30 @@ async function readResponseBytes(response: Response) {
 }
 
 Deno.serve(async (req) => {
+  let reporter:any=silentScanReporter;
+  async function respond(data:any,options:any={}){return Response.json({...data,scan_run:await reporter.finish(data.error?'failed':'complete',data.error || '')},options);}
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return respond({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { jurisdiction_id, document_url, document_title } = await req.json();
+    const { jurisdiction_id, document_url, document_title,action_token } = await req.json();
 
     if (!jurisdiction_id || !document_url) {
-      return Response.json({ error: 'Missing jurisdiction_id or document_url' }, { status: 400 });
+      return respond({ error: 'Missing jurisdiction_id or document_url' }, { status: 400 });
     }
 
     // Re-read the live document before downloading. A source that has already
     // been archived and fingerprinted must match that exact archive before it can
     // be copied into live File Storage.
     const jurisdiction = await base44.entities.JurisdictionProfile.get(jurisdiction_id);
+    if(action_token && user.role==='admin')reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:action_token,user,targetId:jurisdiction_id,targetName:jurisdiction.name,kind:'document',label:`Download ${document_title || document_url}`});
     const sourceDocument = (jurisdiction?.documents || []).find(doc => doc.url === document_url);
     if (!sourceDocument) {
-      return Response.json({ error: 'Document source is no longer present on this jurisdiction' }, { status: 409 });
+      return respond({ error: 'Document source is no longer present on this jurisdiction' }, { status: 409 });
     }
     const expectedSha256 = String(sourceDocument.source_sha256 || '').trim().toLowerCase();
     const expectedBytes = Number(sourceDocument.source_bytes || 0);
@@ -101,10 +105,10 @@ Deno.serve(async (req) => {
     // This prevents an unpinned link (or a partially populated fingerprint) from
     // being silently treated as a collected document.
     if (!expectedSha256 || !Number.isSafeInteger(expectedBytes) || expectedBytes <= 0) {
-      return Response.json({ error: 'Document has not been fully archived and fingerprinted; live ingest was blocked' }, { status: 409 });
+      return respond({ error: 'Document has not been fully archived and fingerprinted; live ingest was blocked' }, { status: 409 });
     }
     if (!/^[a-f0-9]{64}$/.test(expectedSha256)) {
-      return Response.json({ error: 'Stored source SHA-256 is invalid; live ingest was blocked' }, { status: 409 });
+      return respond({ error: 'Stored source SHA-256 is invalid; live ingest was blocked' }, { status: 409 });
     }
 
     // Make retries idempotent at the backend boundary, not just in the UI. A
@@ -115,14 +119,14 @@ Deno.serve(async (req) => {
       const storedSha256 = String(sourceDocument.stored_sha256 || '').trim().toLowerCase();
       const storedBytes = Number(sourceDocument.stored_bytes || 0);
       if (storedSha256 === expectedSha256 && storedBytes === expectedBytes) {
-        return Response.json({
+        return respond({
           success: true,
           already_stored: true,
           file_url: sourceDocument.file_url,
           jurisdiction,
         });
       }
-      return Response.json({
+      return respond({
         error: 'Document already has a File Storage URL without matching stored fingerprint proof; live ingest was blocked',
       }, { status: 409 });
     }
@@ -133,6 +137,7 @@ Deno.serve(async (req) => {
       'Accept': '*/*'
     };
 
+    await reporter.emit({kind:'download',url:document_url,detail:'Downloading original for comparison with its saved fingerprint.'},{stage:'Downloading original',current_url:document_url,processed:0,total:3,indeterminate:false});
     let fileResponse;
     try {
       fileResponse = await safeExternalFetch(document_url, { headers });
@@ -142,7 +147,7 @@ Deno.serve(async (req) => {
     }
 
     if (!fileResponse.ok) {
-      return Response.json({ error: `Failed to download file (HTTP ${fileResponse.status})` }, { status: 400 });
+      return respond({ error: `Failed to download file (HTTP ${fileResponse.status})` }, { status: 400 });
     }
 
     const contentType = fileResponse.headers.get('content-type') || '';
@@ -151,20 +156,20 @@ Deno.serve(async (req) => {
     // A removed form may redirect to an HTTP 200 HTML error page. Never store it
     // as a downloaded permit document or report the source file as complete.
     if (/\b(?:text\/html|application\/xhtml\+xml)\b/i.test(contentType)) {
-      return Response.json({ error: 'Source returned a web page instead of a downloadable document' }, { status: 415 });
+      return respond({ error: 'Source returned a web page instead of a downloadable document' }, { status: 415 });
     }
     const fileBytes = await readResponseBytes(fileResponse);
     if (fileBytes.byteLength === 0) {
-      return Response.json({ error: 'Downloaded file is empty' }, { status: 400 });
+      return respond({ error: 'Downloaded file is empty' }, { status: 400 });
     }
     validatePermitDocumentBytes(fileBytes, {format: ext, contentType});
 
     if (expectedBytes > 0 && fileBytes.byteLength !== expectedBytes) {
-      return Response.json({ error: `Official source changed size since archival (${fileBytes.byteLength} bytes received; ${expectedBytes} expected). Re-verify before live ingest.` }, { status: 409 });
+      return respond({ error: `Official source changed size since archival (${fileBytes.byteLength} bytes received; ${expectedBytes} expected). Re-verify before live ingest.` }, { status: 409 });
     }
     const sourceSha256 = await permitDocumentSha256(fileBytes);
     if (expectedSha256 && sourceSha256 !== expectedSha256) {
-      return Response.json({ error: 'Official source SHA-256 changed since archival. Re-verify before live ingest.' }, { status: 409 });
+      return respond({ error: 'Official source SHA-256 changed since archival. Re-verify before live ingest.' }, { status: 409 });
     }
 
     const safeTitle = (document_title || 'document').replace(/[^a-zA-Z0-9_\- ]/g, '_');
@@ -173,14 +178,16 @@ Deno.serve(async (req) => {
     const file = new File([fileBytes], fileName, { type: mimeType });
 
     // Upload to app's file system
+    await reporter.emit({kind:'upload',detail:`Validated ${fileBytes.byteLength} source bytes; uploading file.`},{stage:'Uploading file',processed:1,total:3});
     const uploadResult = await base44.integrations.Core.UploadFile({ file });
 
     if (!uploadResult?.file_url) {
-      return Response.json({ error: 'Failed to upload file' }, { status: 500 });
+      return respond({ error: 'Failed to upload file' }, { status: 500 });
     }
 
     // Patch only the matching document against the latest Jurisdiction snapshot so
     // concurrent document additions/edits are preserved instead of replacing the array.
+    await reporter.emit({kind:'saving',detail:'Saving file URL and fingerprint against the current document identity.'},{stage:'Saving document receipt',processed:2,total:3});
     const downloadedAt = new Date().toISOString();
     const updatedJurisdiction = await patchJurisdictionDocuments({
       entity: base44.entities.JurisdictionProfile,
@@ -195,7 +202,7 @@ Deno.serve(async (req) => {
       label: `Jurisdiction document download ${document_title || document_url}`,
     });
 
-    return Response.json({ 
+    return respond({ 
       success: true, 
       file_url: uploadResult.file_url,
       jurisdiction: updatedJurisdiction,
@@ -204,7 +211,7 @@ Deno.serve(async (req) => {
     const status = Number(error?.status || 500);
     const safeStatus = [400, 401, 409, 413, 415].includes(status) ? status : 500;
     console.error('downloadPermitPDF error:', error?.message || error);
-    return Response.json({
+    return respond({
       error: safeStatus === 500 ? 'Permit document could not be downloaded safely' : error.message,
     }, { status: safeStatus });
   }

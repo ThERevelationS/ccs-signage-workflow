@@ -1,13 +1,15 @@
+import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // AI-powered office research — takes a rough office name + optional state,
 // returns corrected name, office type, contact info, and suggested workflow steps.
 Deno.serve(async (req) => {
+  let reporter:any=silentScanReporter;
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    await authenticateSignShopSession(base44, body?.session_token);
+    const actor=await authenticateSignShopSession(base44, body?.session_token);
     const { query, state, existing_office_types } = body || {};
     if (!query || !String(query).trim()) {
       return Response.json({ error: 'Missing query' }, { status: 400 });
@@ -34,6 +36,10 @@ Task:
 
 Return ONLY valid data. If you cannot find something, leave the field empty (""). Do not invent phone numbers or emails.`;
 
+    if(body.action_token && actor.role==='admin'){
+      reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'office-search',targetName:query,kind:'office_research',label:`Office research: ${query}`});
+      await reporter.emit({kind:'search_instructions',detail:prompt},{stage:'AI office research — instructions submitted',indeterminate:true});
+    }
     const result = await base44.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: true,
@@ -75,8 +81,10 @@ Return ONLY valid data. If you cannot find something, leave the field empty ("")
       }
     });
 
-    return Response.json({ success: true, office: result });
+    await reporter.emit({kind:'found',detail:'Returned office candidate; identity and office responsibilities require review.',resources:result.contact_website?[{url:result.contact_website,title:result.name}]:[]});
+    return Response.json({ success: true, office: result,scan_run:await reporter.finish() });
   } catch (error) {
+    await reporter.finish('failed',String(error?.message || error));
     const status = Number(error?.status || 500);
     const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
     console.error('aiResearchOffice error:', error?.message || error);

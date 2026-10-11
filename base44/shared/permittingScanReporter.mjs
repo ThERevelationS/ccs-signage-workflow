@@ -6,7 +6,7 @@ export async function createScanReporter({entity,token,user,targetId,targetName,
  const existing=await entity.filter({action_token:token},'created_date',2);
  if(existing.length)throw Object.assign(Error('This scan action already exists. Check its saved activity instead of starting it again.'),{status:409});
  const stamp=new Date().toISOString();
- const row=await entity.create({action_token:token,owner_id:user.id,target_id:targetId,target_name:targetName,action_kind:kind,label,status:'running',stage:'Starting',processed:0,total:0,indeterminate:true,started_at:stamp,last_event_at:stamp,events:[],omitted_events:0});
+ const row=await entity.create({action_token:token,owner_id:user.id,owner_email:String(user.email || '').toLowerCase(),target_id:targetId,target_name:targetName,action_kind:kind,label,status:'running',stage:'Starting',processed:0,total:0,indeterminate:true,started_at:stamp,last_event_at:stamp,events:[],omitted_events:0});
  return attachScanReporter(entity,row.id);
 }
 export function attachScanReporter(entity,id){

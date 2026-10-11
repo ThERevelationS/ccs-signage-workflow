@@ -10,8 +10,9 @@ export function ResearchProgressProvider({children}){
  const clearProgress=useCallback(id=>setActions(prev=>{const next={...prev};delete next[id];return next;}),[]);
  const runAction=useCallback(async(name,payload,label)=>{
   const id=crypto.randomUUID();put(id,{id,label,status:'running',stage:'Submitting action',indeterminate:true,events:[],started_at:new Date().toISOString()});
-  let stopped=false,polling=false;
-  async function poll(){if(stopped||polling)return;polling=true;try{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id});const run=res?.data?.run;if(run)put(id,{...run,id,label});}catch(e){put(id,{activity_warning:'Live activity temporarily unavailable; request may still be running.'});}finally{polling=false;}}
+  let stopped=false,polling=false,lastRun=null;
+  const statusPayload=()=>({action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});
+  async function poll(){if(stopped||polling)return;polling=true;try{const res=await base44.functions.invoke('permittingScanStatus',statusPayload());const run=res?.data?.run;if(run){lastRun=run;put(id,{...run,id,label});}}catch(_e){put(id,{activity_warning:'Live activity temporarily unavailable; request may still be running.'});}finally{polling=false;}}
   const timer=setInterval(()=>void poll(),1500);
   try{
    const res=await base44.functions.invoke(name,{...payload,action_token:id});const data=res?.data || res;
@@ -19,7 +20,7 @@ export function ResearchProgressProvider({children}){
    if(data.error || data.success===false){put(id,{status:'failed',stage:'Failed',error:data.error || 'Action incomplete',indeterminate:false});throw Error(data.error || 'Action incomplete');}
    if(!data.scan_run)put(id,{status:'complete',stage:'Complete',indeterminate:false});
    return res;
-  }catch(error){await poll();put(id,{activity_warning:error?.response?.data?.error || error.message || 'Request response was lost; check saved activity.',response_lost:true});throw error;
+  }catch(error){await poll();put(id,{...(lastRun?{}:{status:'unknown',stage:'Execution unconfirmed — check saved status'}),activity_warning:error?.response?.data?.error || error.message || 'Request response was lost; check saved activity.',response_lost:true});throw error;
   }finally{stopped=true;clearInterval(timer);}
  },[put]);
  const refreshAction=useCallback(async id=>{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id});if(res?.data?.run)put(id,{...res.data.run,id,response_lost:false,activity_warning:null});},[put]);
