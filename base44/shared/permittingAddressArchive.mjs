@@ -54,6 +54,7 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
 }
 
 export async function archiveOwnedAddressResearchFile({entity,collectionId,documentId,actor,fetchSource,uploadFile,onProgress,automatic=false,automaticState,now}){
+ automatic=automatic===true;
  const current=await entity.get(collectionId);
  const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===current.scan_run_id&&row.permitting_url===current.permitting_url;
  if(!own(current))throw Object.assign(Error('This research collection is not available to your account.'),{status:403});
@@ -72,6 +73,7 @@ export async function archiveOwnedAddressResearchFile({entity,collectionId,docum
 }
 
 export async function archiveOwnedAddressResearchReferral({entity,collectionId,actor,selection,automatic=false,automaticState,now,fetchSource,uploadFile,onProgress}){
+ automatic=automatic===true;
  const current=await entity.get(collectionId);
  const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===current.scan_run_id&&row.permitting_url===current.permitting_url;
  if(!own(current))throw Object.assign(Error('This research collection is not available to your account.'),{status:403});
