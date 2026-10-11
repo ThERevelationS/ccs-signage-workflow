@@ -30,11 +30,26 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
    // Remaining originals are explicitly pending; no artificial coverage claim.
    const workerEntity={get:async id=>{const row=await entity.get(id);if(!own(row))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:scanRunId,reference_only:true,authority_established:false,permitting_url:seed},patch)};
    let archive=null;
-   if(started<archiveLimit){started++;archive=await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource,uploadFile,onProgress,manual:false});}
+   if(started<archiveLimit){started++;archive=await archiveKnownJurisdictionSource({entity:workerEntity,jurisdictionId:collection.id,fetchSource:(url,init)=>fetchSource(url,init,allowed.some(doc=>doc.url===url)?root.hostname.replace(/^www\./,''):null),uploadFile,onProgress,manual:false});}
    const current=await workerEntity.get(collection.id);
    collections.push({id:current.id,target:scan.target,documents:current.documents,archive,reference_only:true,authority_established:false});
    await onProgress({kind:'address_file_collection',detail:`Retained ${current.documents.filter(d=>d.archive_state?.status==='complete').length} originals for ${scan.target.name}; ${current.documents.filter(d=>d.archive_state?.status!=='complete').length} files still need download or verification. Research only; no authority approved.`});
   }catch(error){collections.push({target:scan.target,error:String(error.message || error),reference_only:true,authority_established:false});await onProgress({kind:'address_archive_failed',detail:String(error.message || error)});}
  }
  return {status:collections.some(c=>c.error||c.archive?.success===false)?'needs_review':'retained',collections,reference_only:true,authority_established:false,automatic_archive_limit:archiveLimit};
+}
+
+export async function archiveOwnedAddressResearchFile({entity,collectionId,documentId,actor,fetchSource,uploadFile,onProgress}){
+ const current=await entity.get(collectionId);
+ const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===current.scan_run_id&&row.permitting_url===current.permitting_url;
+ if(!own(current))throw Object.assign(Error('This research collection is not available to your account.'),{status:403});
+ if(!(current.documents || []).some(doc=>doc.id===documentId))throw Object.assign(Error('Select a saved research file.'),{status:400});
+ const rows=await entity.filter({collection_key:current.collection_key},'created_date',2);
+ if(rows.length!==1||rows[0].id!==current.id)throw Object.assign(Error('Duplicate research collection requires review.'),{status:409});
+ const seed=new URL(current.permitting_url);
+ const source=current.documents.find(doc=>doc.id===documentId),url=new URL(source.url);
+ if(seed.protocol!=='https:'||url.protocol!=='https:'||url.username||url.password||url.hostname.replace(/^www\./,'')!==seed.hostname.replace(/^www\./,'')||url.port!==seed.port)throw Object.assign(Error('Research source is outside the saved host.'),{status:400});
+ const adapter={get:async id=>{const row=await entity.get(id);if(!own(row))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url},patch)};
+ const result=await archiveKnownJurisdictionSource({entity:adapter,jurisdictionId:collectionId,documentId,manual:true,fetchSource:(value,init)=>fetchSource(value,init,value===source.url?seed.hostname.replace(/^www\./,''):null),uploadFile,onProgress});
+ return {...result,collection:await adapter.get(collectionId)};
 }
