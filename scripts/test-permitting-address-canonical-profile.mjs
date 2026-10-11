@@ -60,14 +60,21 @@ test('address resolver treats Google administrative level 3 as township-only evi
 });
 
 test('unmatched or unconfigured geographic identity does not assert verified authority', () => {
-  assert.deepEqual(summarizeMatchedLocalityAuthority(null), {
+  const unresolved=summarizeMatchedLocalityAuthority(null);
+  assert.equal(unresolved.electrical_coverage.applicability_verified,false);
+  assert.deepEqual(unresolved.electrical_coverage.missing_roles,['electrical_permit','electrical_inspection']);
+  const {electrical_coverage:unresolvedElectrical,...unresolvedBase}=unresolved;
+  assert.deepEqual(unresolvedBase, {
     status: 'unresolved', verified_roles: [], verified_office_count: 0, other_office_count: 0,
     coverage_status: 'unresolved', roles_needing_review: [],
   });
-  assert.deepEqual(summarizeMatchedLocalityAuthority({ id: 'loc-1', offices: [
+  const unreviewed=summarizeMatchedLocalityAuthority({ id: 'loc-1', offices: [
     { office_type: 'Zoning', authority_roles: ['zoning'] },
     { office_type: 'Building' },
-  ] }), {
+  ] });
+  assert.equal(unreviewed.electrical_coverage.complete_legal_coverage,false);
+  const {electrical_coverage:unreviewedElectrical,...unreviewedBase}=unreviewed;
+  assert.deepEqual(unreviewedBase, {
     status: 'no_staff_verified_roles', verified_roles: [], verified_office_count: 0, other_office_count: 2,
     coverage_status: 'not_verified', roles_needing_review: ['zoning'],
   });
