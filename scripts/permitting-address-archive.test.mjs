@@ -91,3 +91,9 @@ test('Ohio address originals precede Kentucky repository files even on a reposit
  const r=await continuePermittingDocumentArchiveBacklog({entity:empty,addressEntity:address.entity,scanEntity:address.scanEntity,fetchAddressSource:address.fetchSource,fetchSource:address.fetchSource,uploadFile:address.uploadFile,preferAddressArchives:false});
  assert.equal(r.archive_queue,'address');assert.equal(f.calls.uploads,1);
 });
+
+test('automatic pause during upload preserves the pause and prevents a second file attempt in the cycle',async()=>{
+ const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});await f.entity.create({...f.rows()[0],collection_key:'run-id:1'});const options=backgroundFixture(f),upload=options.uploadFile;
+ const r=await continueAddressResearchArchives({...options,uploadFile:async data=>{const result=await upload(data);f.patch({auto_refresh:false});return result;}});
+ assert.equal(r.success,false);assert.equal(f.calls.uploads,1);assert.equal(f.rows()[0].auto_refresh,false);assert.equal(f.rows()[1].documents[0].archive_state,undefined);
+});

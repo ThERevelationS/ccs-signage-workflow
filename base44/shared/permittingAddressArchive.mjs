@@ -50,10 +50,11 @@ export async function retainAddressResearchFiles({entity,scanRunId,actor,resolut
  return {status:collections.some(c=>c.error||c.archive?.success===false)?'needs_review':'retained',collections,reference_only:true,authority_established:false,automatic_archive_limit:archiveLimit};
 }
 
-export async function archiveOwnedAddressResearchFile({entity,collectionId,documentId,actor,fetchSource,uploadFile,onProgress,automatic=false,now}){
+export async function archiveOwnedAddressResearchFile({entity,collectionId,documentId,actor,fetchSource,uploadFile,onProgress,automatic=false,automaticState,now}){
  const current=await entity.get(collectionId);
  const own=row=>row?.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===current.scan_run_id&&row.permitting_url===current.permitting_url;
  if(!own(current))throw Object.assign(Error('This research collection is not available to your account.'),{status:403});
+ if(automatic&&automaticState&&current.state!==automaticState)return {success:true,skipped:true,reason:'state_changed'};
  if(automatic&&current.auto_refresh!==true)return {success:true,skipped:true,reason:'auto_refresh_disabled'};
  if(!(current.documents || []).some(doc=>doc.id===documentId))throw Object.assign(Error('Select a saved research file.'),{status:400});
  const rows=await entity.filter({collection_key:current.collection_key},'created_date',2);
@@ -61,7 +62,7 @@ export async function archiveOwnedAddressResearchFile({entity,collectionId,docum
  const seed=new URL(current.permitting_url);
  const source=current.documents.find(doc=>doc.id===documentId),url=new URL(source.url);
  if(seed.protocol!=='https:'||url.protocol!=='https:'||url.username||url.password||url.hostname.replace(/^www\./,'')!==seed.hostname.replace(/^www\./,'')||url.port!==seed.port)throw Object.assign(Error('Research source is outside the saved host.'),{status:400});
- const adapter={get:async id=>{const row=await entity.get(id);if(!own(row)||(automatic&&row.auto_refresh!==true))throw Error('Research collection owner, automatic setting or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,...(automatic?{auto_refresh:true}:{}),owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url},patch)};
+ const adapter={get:async id=>{const row=await entity.get(id);if(!own(row)||(automatic&&(row.auto_refresh!==true||row.state!==current.state)))throw Error('Research collection owner, automatic setting or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,...(automatic?{auto_refresh:true,state:current.state}:{}),owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url},patch)};
  const result=await archiveKnownJurisdictionSource({entity:adapter,jurisdictionId:collectionId,documentId,manual:!automatic,now,fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress});
  return {...result,collection:await adapter.get(collectionId)};
 }
@@ -83,7 +84,7 @@ export async function continueAddressResearchArchives({entity,scanEntity,state,f
    const actor={id:collection.owner_id,email:collection.owner_email};
    reporter=await createScanReporter({entity:scanEntity,token:crypto.randomUUID(),user:actor,targetId:collection.id,targetName:collection.name,kind:'address_archive',label:'Automatic original download — '+(document.title || collection.name)});
    attempted=true;
-   const result=await archiveOwnedAddressResearchFile({entity,collectionId:collection.id,documentId:document.id,actor,automatic:true,now,fetchSource,uploadFile,onProgress:event=>reporter.emit(event,event.progress || {})});
+   const result=await archiveOwnedAddressResearchFile({entity,collectionId:collection.id,documentId:document.id,actor,automatic:true,automaticState:state,now,fetchSource,uploadFile,onProgress:event=>reporter.emit(event,event.progress || {})});
    if(result.skipped){await reporter.finish('complete',result.reason);continue;}
    const saved=result.collection?.documents?.find(doc=>doc.id===document.id);
    if(saved?.archive_state?.status==='complete')await reporter.emit({kind:'saved_original',resources:[{url:saved.file_url,title:'Saved original: '+(saved.title || saved.url),doc_type:'saved_original'}],detail:'Source and stored byte counts and SHA-256 matched.'});

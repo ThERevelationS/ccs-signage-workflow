@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T02:43:54.100Z",
+  "tested_at": "2026-10-11T02:57:09.167Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -70,6 +70,11 @@
     },
     {
       "name": "owner research files expose verified originals, manual save progress and uncertain-upload protection",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "checking saved files adopts a background download and refreshes verified original status",
       "width": 390,
       "passed": true
     },
