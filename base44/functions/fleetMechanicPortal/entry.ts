@@ -1222,8 +1222,12 @@ Deno.serve(async (req) => {
         }
         const upload = await uploadPhotos(base44,Receipt,receipt,decoded.photos,reusable.urls,assertAuthorized);
         receipt = upload.receipt;
+        await assertAuthorized();
+        receipt = await requireCurrentMechanicSaveEvidence(Receipt,receipt,upload.urls,String(grant.id || ''),id,expected);
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
         if (!recovery.recoverable) throw new Error('Mechanic progress recovery plan could not be constructed safely.');
+        // A second authorization check covers a grant change during the evidence read.
+        // In-flight dispatches still depend on the work-order version guard.
         await assertAuthorized();
         const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
           action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
