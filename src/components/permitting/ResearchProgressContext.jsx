@@ -15,7 +15,7 @@ export function ResearchProgressProvider({children}){
   async function poll(){if(stopped||polling)return;polling=true;try{const res=await base44.functions.invoke('permittingScanStatus',statusPayload());const run=res?.data?.run;if(run){lastRun=run;put(id,{...run,id,label});}}catch{put(id,{activity_warning:'Live activity temporarily unavailable; request may still be running.'});}finally{polling=false;}}
   const timer=setInterval(()=>void poll(),1500);
   try{
-   const res=await base44.functions.invoke(name,{...payload,action_token:id});const data=res?.data || res;
+   const res=await base44.functions.invoke(name,{...statusPayload(),...payload,action_token:id});const data=res?.data || res;
    await poll();if(data.scan_run)put(id,{...data.scan_run,id,label});
    if(data.error || data.success===false){knownFailure=true;put(id,{status:'failed',stage:'Failed',error:data.error || 'Action incomplete',indeterminate:false});throw Error(data.error || 'Action incomplete');}
    if(!data.scan_run)put(id,{status:'complete',stage:'Complete',indeterminate:false});

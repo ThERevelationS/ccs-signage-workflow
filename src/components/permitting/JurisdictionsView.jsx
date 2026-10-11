@@ -33,6 +33,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const [refreshingIds, setRefreshingIds] = useState(new Set());
   const [aiDiscoverLoading, setAiDiscoverLoading] = useState(false);
   const [aiDiscoverQuery, setAiDiscoverQuery] = useState("");
+  const [aiDiscoverState,setAiDiscoverState]=useState("OH");
   const [trustFilter, setTrustFilter] = useState("all");
   const [repositoryNotice, setRepositoryNotice] = useState(null);
 
@@ -189,16 +190,16 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   };
 
   const aiDiscover = async () => {
-    if (!aiDiscoverQuery.trim()) return;
+    if (!aiDiscoverQuery.trim()||!aiDiscoverState.trim()) return;
     setAiDiscoverLoading(true);
 
     try {
       const placeholderResult = await createJurisdictionIfAbsent({
         entity: JurisdictionProfile,
         data: {
-          name: aiDiscoverQuery,
-          state: "",
-          type: "city",
+          name: aiDiscoverQuery.trim(),
+          state: aiDiscoverState.trim().toUpperCase(),
+          type: /county/i.test(aiDiscoverQuery)?"county":"city",
           ai_summary: "Research in progress...",
           last_updated: new Date().toISOString(),
           auto_refresh: true
@@ -210,7 +211,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
       setJurisdictions(prev => prev.some(j => j.id === placeholder.id) ? prev : [placeholder, ...prev]);
       setSelectedJurisdiction(placeholder);
 
-      const response=await runAction('refreshJurisdiction',{jurisdiction_id:placeholder.id},`Discover ${aiDiscoverQuery}`);
+      const response=await runAction('refreshJurisdiction',{jurisdiction_id:placeholder.id},`Discover ${aiDiscoverQuery}, ${aiDiscoverState}`);
       const updated=response.data?.jurisdiction || await JurisdictionProfile.get(placeholder.id);
       setJurisdictions(prev=>prev.map(j=>j.id===placeholder.id?updated:j));
       setSelectedJurisdiction(current=>current?.id===placeholder.id?updated:current);
@@ -283,15 +284,16 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               value={aiDiscoverQuery}
               onChange={e => setAiDiscoverQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && aiDiscover()}
-              placeholder="AI Discover: e.g. Jefferson County Kentucky..."
+              placeholder="AI Discover: e.g. Jefferson County"
               className="min-h-11 text-sm"
             />
-            <Button onClick={aiDiscover} disabled={aiDiscoverLoading || !aiDiscoverQuery.trim()} size="sm" className="min-h-11 w-full flex-shrink-0 gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto">
+            <Input aria-label="Discovery state" value={aiDiscoverState} onChange={e=>setAiDiscoverState(e.target.value)} placeholder="State" className="min-h-11 sm:w-20" />
+            <Button onClick={aiDiscover} disabled={aiDiscoverLoading || !aiDiscoverQuery.trim() || !aiDiscoverState.trim()} size="sm" className="min-h-11 w-full flex-shrink-0 gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto">
               {aiDiscoverLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
               {aiDiscoverLoading ? "Researching..." : "Discover"}
             </Button>
           </div>
-          <p className="text-[10px] text-gray-500 mb-2">AI validates all discovered document URLs to prevent 404 errors</p>
+          <p className="text-[10px] text-gray-500 mb-2">Search instructions, source-page scans and discovered links appear in Scan activity.</p>
 
           <Input
             value={searchTerm}
