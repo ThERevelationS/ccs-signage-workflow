@@ -193,5 +193,20 @@
       "Google Geocoding returns REQUEST_DENIED; exact location and address pin unverified."
     ],
     "version_routing_note": "Current SDK forwards appParams.functionsVersion as Base44-Functions-Version; no global client/version configuration changed."
+  },
+  "preview_revision_isolation": {
+    "deployed_endpoint_probe": {
+      "status": 401,
+      "lookup_revision": "address-geocode-v4",
+      "X-CCS-Address-Revision": "address-geocode-v4",
+      "production_records_written": false
+    },
+    "sandbox_file_sync_attempt": "MCP edit_file comment-only revision documentation; committed ece582f4aaca160ac5fdbe922ca067962dae8b72",
+    "endpoint_tests_passed": 21,
+    "authenticated_preview_scan_local": "11:27:03\u201311:27:08 EDT",
+    "preview_revision": "address-geocode-v3",
+    "provider_status": "REQUEST_DENIED",
+    "outcome": "Deployed v4 runtime verified. Preview remains v3 after reload and sandbox resource sync. Preview refresh/reopen through editor remains necessary; precise Google configuration cause unverified.",
+    "shared_sdk_routing_changed": false
   }
 }

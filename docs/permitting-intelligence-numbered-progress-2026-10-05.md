@@ -1,3 +1,7 @@
+## Phase 10 — deployed runtime v4 confirmed; preview isolation (2026-10-11 11:28 EDT)
+
+Read-only unauthenticated endpoint probe returns 401 with lookup_revision and X-CCS-Address-Revision both address-geocode-v4. This proves deployed runtime activation without research records. MCP sandbox edit_file resource sync followed by one real authenticated scan still returns v3 (11:27:03–11:27:08 EDT) and Google REQUEST_DENIED. The 21 endpoint tests pass. Shared client routing was preserved. Further repeated deployment/scan attempts are not justified; refresh/reopen the preview from the Base44 editor before the next live scan. Phase 10 remains incomplete.
+
 ## Phase 10 — deployment login restored and v4 uploaded (2026-10-11 11:24 EDT)
 
 CLI authentication confirmed for brettheinlein1@gmail.com. Exactly one function, findLocalityByAddress, deployed; scoped pull verifies address-geocode-v4. Two authenticated preview scans, including one after reload, still execute v3 and receive REQUEST_DENIED. Deployment access is resolved; preview function-version routing and Google service configuration remain unresolved. No frontend publication, Work Order assignment, or authority approval occurred. Existing 633-test/build evidence remains applicable.
