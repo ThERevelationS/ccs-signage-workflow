@@ -242,5 +242,21 @@
     "additional_scans_started": 0,
     "frontend_published": false,
     "phase_10_complete": false
+  },
+  "unlocated_map_safeguard": {
+    "notice": "Your address has not been located yet. This map shows a general area.",
+    "boundary_control": "Disabled and unchecked when boundary data is unavailable; label explicitly says not available.",
+    "google_maps_fallback": "Typed address retained in URL search query when geocoding has no position; no fake marker or assignment.",
+    "live_verified": [
+      "Visible warning above map",
+      "Disabled unavailable boundary checkbox",
+      "Typed Mason address in fallback link",
+      "Use this jurisdiction remains disabled"
+    ],
+    "build_exit": 0,
+    "additional_scans_started": 0,
+    "frontend_published": false,
+    "screenshot": "permitting-unlocated-map-warning.jpg",
+    "phase_10_complete": false
   }
 }

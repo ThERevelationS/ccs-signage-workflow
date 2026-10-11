@@ -1,3 +1,7 @@
+## Phase 10 — unlocated map accuracy safeguard (2026-10-11)
+
+Added a visible notice above the map when no address position exists so the general Cincinnati view cannot be mistaken for the searched property. Jurisdiction outline is disabled/unchecked and labeled unavailable without boundary data. Open Google Maps now retains the typed address as a search fallback when geocoding fails; no position or verified jurisdiction is invented. Preview verifies warning, unavailable control, address query and disabled application gate. Build passes. No new scans or frontend publication. Geocoding denial and preview backend-version mismatch remain unresolved; Phase 10 stays open.
+
 ## Phase 10 — live map controls and reachable tools (2026-10-11)
 
 Verified zoom, satellite, fullscreen, layer toggles and a two-point distance calculation in feet. Live testing found lower map tools/measurement clipped by the dialog footer. Changed only the desktop map pane flex sizing to stretch with min-h-0 and scrolling; preview screenshot confirms controls and result are reachable above footer. Measurement and optional layers were reset afterward. Production build passes. No additional scans, Work Order assignments or frontend publication. Exact property pin and boundary remain blocked by geocoding/preview revision issues; Phase 10 stays open.
