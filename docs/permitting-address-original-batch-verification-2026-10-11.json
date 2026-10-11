@@ -1,0 +1,17 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Manual save-all address research originals",
+  "focused_tests_passed": 48,
+  "chromium_checks_passed": 26,
+  "targeted_lint": "passed",
+  "production_build": "passed",
+  "production_test_writes": 0,
+  "published": false,
+  "live_signed_in_acceptance": "pending",
+  "observed_scheduler_acceptance": "pending",
+  "manual_overall_cap": null,
+  "concurrent_batch_file_requests": 1,
+  "stop_behavior": "finish current request, then stop",
+  "request_error_behavior": "halt without blind retry"
+}

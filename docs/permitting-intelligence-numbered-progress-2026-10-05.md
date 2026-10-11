@@ -1,3 +1,11 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: manual save-all research originals
+
+Own address collections now offer Save all remaining originals in the selector and saved research browser. A finite selection snapshot runs one owner-authorized manual file request at a time, with no arbitrary overall file cap. It includes same-host originals and retained direct external referrals; does not crawl new websites. Saved/protected/uncertain/actively leased originals and duplicate identities are excluded. Each file retains the existing scoped download, lease, upload and byte-verification protections.
+
+The UI shows the current filename, overall checked-file progress, saved/review counts and the existing separate progress action for every file. Stop after current file, research-page changes and component unmount prevent subsequent selections while leaving the in-flight request to complete. Failed file outcomes remain for review; a request error halts without blind retry. Manual individual buttons remain, and administrator inspection cannot batch-download another employee's collection. Automatic scheduler budgets are unchanged.
+
+Verification: 48 focused tests passed (address archive, compiled selector endpoints and five new manual-batch checks), 26 isolated Chromium checks at phone/desktop widths, targeted lint and final production build. The browser harness now waits for dialog animation before checking the existing 44px touch-target requirement. Synthetic services only; no production test writes and nothing published. Live signed-in address/map/archive/link and actual scheduler-cycle acceptance remain pending.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: owner-scoped outside-host originals
 
 New address research collections now retain exact HTTPS direct-document referrals with referring-page visits and discovery hashes. Collections are retained even when all downloadable originals are outside the candidate website. The first pass still attempts at most one original; the enabled scheduler continues same-host files and direct external selections through the same one-file-per-cycle budget, with Ohio before Kentucky. No migration of older collections or forced live scheduler run was performed.
