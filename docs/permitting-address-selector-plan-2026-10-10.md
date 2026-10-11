@@ -34,3 +34,7 @@ The build, lint, backend bundles, 315 focused regression tests and 15 selector C
 Pending address originals now continue through the enabled scheduler, sharing its one-original-per-cycle archive budget with jurisdiction collections. Ohio is processed before Kentucky; queue preference rotates between address and jurisdiction work. Each original has its own owner-scoped activity and progress. The open selector refreshes saved originals every ten seconds and includes Check saved files. Verified completion updates the saved-original link. Manual individual save and readback verification remain available.
 
 324 regression tests, 16 selector browser checks, 7 activity browser checks, targeted lint, six backend bundles and production build passed with simulated services. Live signed-in Google and the actual scheduled production cycle remain unverified.
+
+## Return to earlier files
+
+Open My saved research in the jurisdiction selector, then Show my research. Open Original files to see verified originals or individual save/verify controls. Show older research continues through your collections without another address scan. Access remains scoped to the signed-in employee. This does not approve sources or select a jurisdiction.

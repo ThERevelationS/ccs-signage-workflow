@@ -1,3 +1,9 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: return to saved address research
+
+Added My saved research inside the jurisdiction selector. Employees can reopen their own retained collections after leaving an address result, open verified originals, save pending originals and check readback status with existing individual progress controls. Show older research pages through ten collections at a time using a stable ID cursor; this is a page size, not an overall manual history cap. Listing checks owner ID, email and reference-only scope, then rechecks each collection before returning documents. Session changes/unmount invalidate pending list responses. Browsing makes no research call and never applies a jurisdiction.
+
+Remaining: administrator review/link workflow, external document scopes and live signed-in acceptance. No publication or production test writes.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: automatic original-download continuation
 
 Pending owner-scoped address originals now join the enabled scheduled archive dispatcher. Each cycle attempts at most one original across address and jurisdiction queues, preserves Ohio-before-Kentucky ordering, and rotates queue preference using persisted cycle state. Owner identity, completed originating scan, source host, pause/state changes, retry backoff and existing upload/readback safeguards are checked before processing. No research call or authority/profile write is added by this continuation.
