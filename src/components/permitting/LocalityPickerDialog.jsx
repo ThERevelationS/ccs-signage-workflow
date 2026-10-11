@@ -1,3 +1,6 @@
+import SelectorScanActions from './SelectorScanActions';
+import ResearchProgressBar from './ResearchProgressBar';
+import {useResearchProgress} from './ResearchProgressContext';
 import ElectricalAuthorityCoverage from './ElectricalAuthorityCoverage';
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
@@ -58,7 +61,10 @@ export default function LocalityPickerDialog({
   localities,
   onApply,  // (localityId, { excludeElectrical }) => void
 }) {
-  const { sessionToken } = useAuth();
+  const { sessionToken,currentUser } = useAuth();
+  const {runAction}=useResearchProgress();
+  const searchVersion=useRef(0);
+  const openRef=useRef(isOpen);openRef.current=isOpen;
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null); // full AI result
@@ -74,8 +80,10 @@ export default function LocalityPickerDialog({
   const inputRef = useRef(null);
 
   useEffect(() => {
+    searchVersion.current++;
     if (isOpen) {
       setAddress("");
+      setSearching(false);
       setResult(null);
       setError("");
       setSelectedLocalityId("");
@@ -110,14 +118,19 @@ export default function LocalityPickerDialog({
 
   const runSearch = async () => {
     if (!address.trim()) return;
+    if(searching)return;
+    const version=++searchVersion.current;
+    setSelectedLocalityId("");
     setSearching(true);
     setError("");
     setResult(null);
     try {
-      const { data } = await base44.functions.invoke('findLocalityByAddress', {
+      const invoke=currentUser?.role==='admin'?runAction:(name,payload)=>base44.functions.invoke(name,payload);
+      const { data } = await invoke('findLocalityByAddress', {
         address: address.trim(),
         session_token: sessionToken,
-      });
+      },`Find jurisdiction for ${address.trim()}`);
+      if(version!==searchVersion.current||!openRef.current)return;
       if (data?.success === false) {
         setError(data.error || "Search failed");
       } else {
@@ -127,9 +140,10 @@ export default function LocalityPickerDialog({
         }
       }
     } catch (e) {
+      if(version!==searchVersion.current||!openRef.current)return;
       setError(e.message || "Search failed");
     }
-    setSearching(false);
+    if(version===searchVersion.current&&openRef.current)setSearching(false);
   };
 
   const selectedLocality = localities.find(locality => locality.id === selectedLocalityId);
@@ -196,36 +210,36 @@ export default function LocalityPickerDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-purple-600" />
-            Select Locality for this Project
+            Choose your jurisdiction
           </DialogTitle>
         </DialogHeader>
 
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
-            <Label className="text-xs">Address (AI will identify the locality, zoning, and parcel info)</Label>
+            <Label className="text-xs">Job address</Label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
                 ref={inputRef}
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {searchVersion.current++;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
                 placeholder="e.g. 4900 Parkway Dr, Mason, OH 45040"
-                className="h-9 pl-8 text-sm"
+                className="min-h-11 pl-8 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && !searching && runSearch()}
               />
             </div>
           </div>
-          <Button onClick={runSearch} disabled={searching || !address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 h-9 w-full sm:w-auto">
+          <Button onClick={runSearch} disabled={searching || !address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
             {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            {searching ? "Searching…" : "AI Lookup"}
+            {searching ? "Searching…" : "Find my jurisdiction"}
           </Button>
 
           {/* Electrical inspector toggle */}
           <Button
             variant="outline"
             onClick={() => setExcludeElectrical(v => !v)}
-            className={`gap-1 h-9 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+            className={`gap-1 min-h-11 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
             {excludeElectrical ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
@@ -243,16 +257,67 @@ export default function LocalityPickerDialog({
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
         <div className="flex flex-1 flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden min-h-0 lg:h-[680px]">
           <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto space-y-3 pr-1">
-            {!result && !searching && (
+                {/* Locality override — allow manual pick */}
+                {localities.length > 0 && (
+                  <div className="border rounded-lg p-3 bg-white">
+                    <Label className="text-xs">Choose a jurisdiction</Label>
+                    <select
+                      value={selectedLocalityId}
+                      onChange={(e) => setSelectedLocalityId(e.target.value)}
+                      className="w-full min-h-11 text-sm border rounded px-2 mt-1"
+                    >
+                      <option value="">— Select —</option>
+                      {localities.map(l => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}{l.state ? ` (${l.state})` : ''}{l.zip ? ` ${l.zip}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedLocality && (
+                      selectedAuthority.officeCount > 0 ? (
+                        <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
+                          <div className="flex items-center gap-1 font-semibold">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {selectedAuthority.officeCount} staff-verified authorit{selectedAuthority.officeCount === 1 ? "y" : "ies"}
+                          </div>
+                          <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
+                          <p className="mt-1 text-emerald-800">Only these roles are confirmed authority relationships; other configured offices remain workflow references.</p>
+                          {selectedAuthority.coverage_status === "partial" && (
+                            <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
+                              <p className="font-semibold">Partial office-authority review: {selectedAuthority.other_office_count} configured office(s) still need review.</p>
+                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Roles on offices awaiting review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                            </div>
+                          )}
+                          {selectedAuthority.coverage_status === "configured_offices_reviewed" && (
+                            <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
+                          <div className="flex items-center gap-1 font-semibold">
+                            <AlertTriangle className="h-3.5 w-3.5" /> No staff-verified office authority
+                          </div>
+                          <p className="mt-1">Configured offices can still be applied with the existing workflow, but none are confirmed here as the legal authority for this locality.</p>
+                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Configured roles awaiting staff review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                        </div>
+                      )
+                    )}
+                    {selectedLocality && <ElectricalAuthorityCoverage authority={selectedAuthority} />}
+                  </div>
+                )}
+
+            <SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/>
+            <ResearchProgressBar inline />
+            {!result && !searching && !selectedLocalityId && (
               <div className="h-full flex items-center justify-center text-gray-400 text-sm p-8 text-center border border-dashed rounded">
-                Enter an address above and click <strong>AI Lookup</strong> to get locality, zoning, and parcel info.
+                Enter an address above and click <strong>Find my jurisdiction</strong> to get locality, zoning, and parcel info.
               </div>
             )}
 
             {searching && (
               <div className="h-full flex flex-col items-center justify-center text-gray-500 p-8">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-2" />
-                <p className="text-sm">Looking up locality, zoning & parcel data…</p>
+                <p className="text-sm">Finding the address and checking saved information…</p>
               </div>
             )}
 
@@ -266,7 +331,7 @@ export default function LocalityPickerDialog({
                     ) : (
                       <AlertTriangle className="w-4 h-4 text-amber-600" />
                     )}
-                    <h4 className="font-semibold text-sm">Locality Match</h4>
+                    <h4 className="font-semibold text-sm">Suggested jurisdiction</h4>
                   </div>
                   {result.suggested_locality ? (
                     <div>
@@ -417,55 +482,6 @@ export default function LocalityPickerDialog({
                   </div>
                 )}
 
-                {/* Locality override — allow manual pick */}
-                {localities.length > 0 && (
-                  <div className="border rounded-lg p-3 bg-white">
-                    <Label className="text-xs">Choose locality to apply</Label>
-                    <select
-                      value={selectedLocalityId}
-                      onChange={(e) => setSelectedLocalityId(e.target.value)}
-                      className="w-full h-8 text-sm border rounded px-2 mt-1"
-                    >
-                      <option value="">— Select —</option>
-                      {localities.map(l => (
-                        <option key={l.id} value={l.id}>
-                          {l.name}{l.state ? ` (${l.state})` : ''}{l.zip ? ` ${l.zip}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedLocality && (
-                      selectedAuthority.officeCount > 0 ? (
-                        <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
-                          <div className="flex items-center gap-1 font-semibold">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            {selectedAuthority.officeCount} staff-verified authorit{selectedAuthority.officeCount === 1 ? "y" : "ies"}
-                          </div>
-                          <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
-                          <p className="mt-1 text-emerald-800">Only these roles are confirmed authority relationships; other configured offices remain workflow references.</p>
-                          {selectedAuthority.coverage_status === "partial" && (
-                            <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                              <p className="font-semibold">Partial office-authority review: {selectedAuthority.other_office_count} configured office(s) still need review.</p>
-                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Roles on offices awaiting review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
-                            </div>
-                          )}
-                          {selectedAuthority.coverage_status === "configured_offices_reviewed" && (
-                            <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
-                          <div className="flex items-center gap-1 font-semibold">
-                            <AlertTriangle className="h-3.5 w-3.5" /> No staff-verified office authority
-                          </div>
-                          <p className="mt-1">Configured offices can still be applied with the existing workflow, but none are confirmed here as the legal authority for this locality.</p>
-                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Configured roles awaiting staff review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
-                        </div>
-                      )
-                    )}
-                    {selectedLocality && <ElectricalAuthorityCoverage authority={selectedAuthority} />}
-                  </div>
-                )}
-
                 {/* Zoning */}
                 {(result.zoning?.district_code || result.zoning?.district_name || result.zoning?.summary) && (
                   <div className="border rounded-lg p-3 bg-blue-50 border-blue-200">
@@ -557,7 +573,7 @@ export default function LocalityPickerDialog({
               disabled={!selectedLocalityId}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
-              <Save className="w-4 h-4" /> Save & Apply
+              <Save className="w-4 h-4" /> Use this jurisdiction
             </Button>
           </div>
         </div>
