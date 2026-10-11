@@ -21,23 +21,6 @@ import { useAuth } from "@/components/auth/EmailGate";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
-async function permittingProxy(action, payload) {
-  const response = await base44.functions.invoke('permittingProxy', { action, payload });
-  const result = response?.data || response;
-  if (result?.error) {
-    throw new Error(result.detail ? `${result.error}: ${result.detail}` : result.error);
-  }
-  return result;
-}
-
-async function createResearchRequest(payload) {
-  return permittingProxy('create', payload);
-}
-
-async function pollResearchRequest(id) {
-  return permittingProxy('poll', { id });
-}
-
 export default function JurisdictionsView({ focusJurisdiction = null }) {
   const { currentUser } = useAuth();
   const {runAction}=useResearchProgress();
@@ -227,31 +210,11 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
       setJurisdictions(prev => prev.some(j => j.id === placeholder.id) ? prev : [placeholder, ...prev]);
       setSelectedJurisdiction(placeholder);
 
-      const request = await createResearchRequest({
-        jurisdiction_name: aiDiscoverQuery,
-        state: "",
-        city: aiDiscoverQuery,
-        county: "",
-        ccs_jurisdiction_id: placeholder.id,
-        status: 'pending',
-        requested_by: 'ccs_app'
-      });
-
-      const maxWait = 180000;
-      const start = Date.now();
-      while (Date.now() - start < maxWait) {
-        await new Promise(r => setTimeout(r, 5000));
-        const record = await pollResearchRequest(request.id);
-        const data = record.data || record;
-        if (data.status === 'completed') {
-          const updated = await JurisdictionProfile.get(placeholder.id);
-          setJurisdictions(prev => prev.map(j => j.id === placeholder.id ? updated : j));
-          setSelectedJurisdiction(updated);
-          setAiDiscoverQuery("");
-          break;
-        }
-        if (data.status === 'failed') throw new Error(`Research failed: ${data.error}`);
-      }
+      const response=await runAction('refreshJurisdiction',{jurisdiction_id:placeholder.id},`Discover ${aiDiscoverQuery}`);
+      const updated=response.data?.jurisdiction || await JurisdictionProfile.get(placeholder.id);
+      setJurisdictions(prev=>prev.map(j=>j.id===placeholder.id?updated:j));
+      setSelectedJurisdiction(current=>current?.id===placeholder.id?updated:current);
+      setAiDiscoverQuery("");
 
     } catch (e) {
       console.error("AI Discover error:", e);

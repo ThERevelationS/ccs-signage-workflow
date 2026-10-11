@@ -126,7 +126,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         includeParentCounty,
         ...(reporter.id?{scan_run_id:reporter.id}:{})
       });
-      await reporter.emit({kind:'found',detail:'AI returned source candidates; discovery and authority review still required.',resources:(agentResult?.data?.data?.documents || [])});
+      await reporter.emit({kind:'found',detail:'AI returned source candidates; discovery and authority review still required.',resources:((agentResult?.data?.data || agentResult?.data || agentResult)?.documents || [])});
+      if(agentResult?.data?.research_instructions)await reporter.emit({kind:'search_instructions',detail:agentResult.data.research_instructions});
       researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
     }
     if (!researchData) throw Object.assign(new Error('No research data returned'), { status: 400 });

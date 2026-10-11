@@ -204,6 +204,7 @@ Before returning:
     return Response.json({ 
       success: true, 
       data,
+      ...(body?.scan_run_id?{research_instructions:researchPrompt}:{}),
       timestamp: new Date().toISOString()
     });
   } catch (error) {
