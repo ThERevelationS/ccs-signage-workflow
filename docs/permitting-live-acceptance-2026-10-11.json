@@ -44,5 +44,20 @@
     "Exact address/government boundary agreement and map centering",
     "Retained-original download/readback and reviewed repository link",
     "Scheduled text size-block review and complete-cycle acceptance"
-  ]
+  ],
+  "runtime_alignment_followup": {
+    "tested_at": "2026-10-11T12:41:29Z",
+    "scan_run_id": "6acb83f9ad250214b481ca93",
+    "address": "4900 Parkway Dr, Mason, OH 45040",
+    "saved_source_diagnostics_visible_in_builder": true,
+    "builder_function_logs": "No logs found",
+    "live_event_count": 12,
+    "live_geocode_failed_event_present": false,
+    "live_geocode_result": "No map location found.",
+    "cause_confirmed": false,
+    "cli_authentication": "whoami entered device authentication; timed out without authentication; no further CLI commands executed",
+    "source_changes_this_followup": false,
+    "published": false,
+    "acceptance_complete": false
+  }
 }

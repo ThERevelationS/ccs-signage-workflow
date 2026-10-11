@@ -1,3 +1,7 @@
+## Live acceptance follow-up — October 11, 2026, 12:41 UTC
+
+Phase 10 remains open. The authenticated builder code panel shows the current safe Google status diagnostics and address archive import. Its function log panel shows no logs. A new live public-address scan for 4900 Parkway Dr, Mason, OH 45040 produced saved run 6acb83f9ad250214b481ca93 with 12 events, no geocode_failed diagnostic, and no map location. Saved source visibility does not verify deployed execution. CLI whoami entered device authentication and timed out without approval; no further CLI operations were run. Geocoder cause remains unconfirmed, and there was no publication or work-order assignment. Next: authenticate the supported CLI or obtain a supported function deployment/status surface, verify this specific backend function, then repeat exact-location and retained-original acceptance.
+
 ## Phase 10, milestone 2 — authenticated live acceptance (2026-10-11)
 
 Verified Base44 and separate Sign Shop sign-in. Latest-code preview uses production data; nothing published. Live map tiles, satellite imagery, traffic layer and zoom work. Each real address request shows separate progress and literal search/page/resource activity. Automatic no-match research ran, and Cincinnati research scanned three pages and classified the outdoor sign application PDF. Own saved research retrieval returned an empty collection list. No Work Order assignment or authority approval was made.
