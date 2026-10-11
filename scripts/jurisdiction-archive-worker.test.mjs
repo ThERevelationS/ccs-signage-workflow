@@ -16,11 +16,11 @@ const worker=await compile('continueJurisdictionArchives');
 const dispatcher=await compile('permittingResearchBacklogDispatch');
 function setup({role='admin',enabled=true,atCap=false}={}) {
   const calls={scans:0,textScans:0,research:0,writes:0};
-  const settings={filter:async query=>[{
-    id:query.setting_key,updated_date:'v1',setting_key:query.setting_key,
-    setting_value:query.setting_key.endsWith('config')?{enabled,interval_minutes:15,daily_dispatch_limit:40}:
-      {daily_day_key:new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date()),dispatched_today:atCap?40:0,last_cycle_at:'2000-01-01T00:00:00Z'},
-  }]};
+  calls.stateWrites=0;calls.statePatches=[];
+  let version=1;
+  let state={id:'state',updated_date:'v1',setting_key:'permitting_research_dispatch_state',setting_value:{daily_day_key:new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date()),dispatched_today:atCap?40:0,last_cycle_at:'2000-01-01T00:00:00Z'}};
+  const settings={filter:async query=>[query.setting_key.endsWith('config')?{id:'config',updated_date:'v1',setting_key:query.setting_key,setting_value:{enabled,interval_minutes:15,daily_dispatch_limit:40}}:structuredClone(state)],get:async()=>structuredClone(state),
+   updateMany:async(q,p)=>{if(q.updated_date!==state.updated_date)return {updated:0};calls.stateWrites++;calls.statePatches.push(structuredClone(p.$set.setting_value));state={...state,...p.$set,updated_date:'v'+(++version)};return {updated:1};}};
   globalThis.workerFixture={auth:{me:async()=>role?{role}:null},asServiceRole:{
     entities:{PermittingSourceDocument:{filter:async(q,s,l)=>{assert.ok(q.source_registration_key);assert.equal(l,20);calls.textScans++;return[];},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents?.$elemMatch || query['discovery_scan_state.external_referrals']?.$elemMatch);calls.scans++;return[];},
       get:async()=>({id:'j',documents:[],updated_date:'v1'}),updateMany:async()=>{calls.writes++;return{updated:1};}}},
@@ -47,13 +47,13 @@ test('automatic backlog scan is bounded and requires no research',async()=>{
   const calls=setup();assert.equal((await invoke(worker,{automatic:true})).data.profiles_checked,0);
   assert.equal(calls.scans,8);assert.equal(calls.research,0);
 });
-test('dispatcher at its daily LLM limit still runs archival and makes no research/state writes',async()=>{
+test('dispatcher at its daily LLM limit saves collection receipts without research/counter debits',async()=>{
   const calls=setup({atCap:true});
   const r=await invoke(dispatcher,{});
   assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.dispatched_today,40);
   assert.equal(r.data.archive_continuation.reason,'no_eligible_file');
   assert.equal(r.data.text_continuation.reason,'no_eligible_text_source');assert.equal(calls.textScans,1);
-  assert.equal(calls.scans,8);assert.equal(calls.research,0);assert.equal(calls.writes,0);
+  assert.equal(calls.scans,8);assert.equal(calls.research,0);assert.equal(calls.writes,0);assert.equal(calls.stateWrites,2);assert.ok(calls.statePatches.every(p=>p.dispatched_today===40));assert.equal(r.data.collection_cycle.status,'complete');
 });
 
 test('catalog route requires a stable manual target and denies automated caller-selected targets',async()=>{
@@ -99,3 +99,6 @@ test('text-parser failure is reported without interrupting credit-capped researc
  assert.equal(r.status,200);assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.text_continuation.status,'text_continuation_failed');
  assert.equal(calls.research,0);assert.equal(calls.writes,0);
 });
+
+test('collection interval prevents repeat scans after credit-capped receipt while preserving research count',async()=>{const calls=setup({atCap:true});await invoke(dispatcher,{});const before=calls.scans;const r=await invoke(dispatcher,{});assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.collection_reason,'collection_interval');assert.equal(calls.scans,before);assert.equal(calls.stateWrites,2);assert.equal(r.data.dispatched_today,40);});
+test('disabled and manual research calls do not claim automatic collection',async()=>{const calls=setup({enabled:false,atCap:true});await invoke(dispatcher,{});await invoke(dispatcher,{manual:true});assert.equal(calls.stateWrites,0);assert.equal(calls.scans,0);});

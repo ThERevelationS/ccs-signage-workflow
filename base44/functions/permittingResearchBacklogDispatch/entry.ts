@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     let stateRecord=loadedStateRecord;
     const config = normalizePermittingResearchConfig(configRecord?.setting_value || {});
     const now = new Date();
-    const decision = researchCycleDecision({
+    let decision = researchCycleDecision({
       config,
       state: stateRecord?.setting_value || {},
       now,
@@ -177,6 +177,7 @@ Deno.serve(async (req) => {
         results:{discovery:discoveryContinuation,archive:archiveContinuation,text:textContinuation}});
     }else if(collectionDecision && stateRecord?.id){stateRecord=await Settings.get(stateRecord.id);}
 
+    decision=researchCycleDecision({config,state:stateRecord?.setting_value || {},now,manual});
     if (!decision.due) {
       return Response.json({
         success: true,
