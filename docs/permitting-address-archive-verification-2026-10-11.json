@@ -1,0 +1,24 @@
+{
+  "tested_at": "2026-10-11T02:44:46.758447+00:00",
+  "regression_tests": 315,
+  "regression_passed": 315,
+  "selector_chromium_checks": 15,
+  "frontend_lint": "passed",
+  "backend_bundles": [
+    "findLocalityByAddress",
+    "archiveAddressResearchFile",
+    "permittingScanStatus"
+  ],
+  "production_build": "passed",
+  "schema_validated": true,
+  "mode": "Actual helpers, compiled endpoint handlers and actual selector with simulated API/upload responses; no live signed-in flow or production upload tested",
+  "production_test_record_changes": 0,
+  "production_test_uploads": 0,
+  "published": false,
+  "remaining": [
+    "Automatic dispatcher continuation for pending address originals",
+    "Dedicated retained collection browser and reviewed jurisdiction attachment",
+    "Scoped external-document archival",
+    "Signed-in live map/address/original-file acceptance"
+  ]
+}
