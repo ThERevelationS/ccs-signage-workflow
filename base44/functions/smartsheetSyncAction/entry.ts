@@ -2158,7 +2158,11 @@ async function pushDataset(
           detail: 'Submitting the verified permanent-row updates to Smartsheet',
         });
       }
-      await (dataset === 'orders' ? smartsheetWriteNoTimeoutRetry : smartsheetWrite)(
+      // A timed-out Sales PUT may already have committed remotely. Never
+      // resend an uncertain mutation: rely on the existing fresh Smartsheet
+      // read-back and verified Base44 CAS before any review is resolved.
+      // Orders already use the same no-timeout-retry transport.
+      await smartsheetWriteNoTimeoutRetry(
         'PUT', '/sheets/' + sheetId + '/rows', token, eligibleSmartsheetWrites,
         ...(dataset === 'orders' ? [{
           onRateLimitWait: async ({ attempt, waitSeconds }: any) => reportOrderProgress({
