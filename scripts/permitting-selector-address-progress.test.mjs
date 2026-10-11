@@ -40,3 +40,14 @@ test('saved address collection endpoint exposes only the authenticated owner and
  const c={asServiceRole:{entities:{PermittingAddressArchive:{get:async()=>row},PermittingScanRun:{filter:async()=>[{action_token:token,owner_id:'reader',owner_email:'reader@example.com',target_id:'c',action_kind:'address_archive'},{action_token:'foreign',owner_id:'other',owner_email:'other@example.com',target_id:'c',action_kind:'address_archive'}]}}}};
  const run=handler('getAddressResearchCollections',c,{authenticateSignShopSession:async()=>({id:'reader',email:'reader@example.com'})});const res=await run({collection_ids:['c']});assert.equal(res.status,200);assert.equal((await res.json()).actions.length,1);row.owner_id='other';assert.equal((await run({collection_ids:['c']})).status,403);assert.equal((await run({collection_ids:['c','c']})).status,400);
 });
+
+
+test('saved research browsing is owner scoped, cursor paginated and rejects mixed or invalid requests',async()=>{
+ const owner={id:'reader',email:'reader@example.com'},rows=Array.from({length:11},(_,i)=>({id:String(99-i),owner_id:owner.id,owner_email:owner.email,reference_only:true,authority_established:false,documents:[]}));let query;
+ const c={asServiceRole:{entities:{PermittingAddressArchive:{filter:async(q,sort,limit)=>{query=q;assert.equal(sort,'-id');assert.equal(limit,11);return rows;},get:async id=>rows.find(row=>row.id===id)},PermittingScanRun:{filter:async()=>[]}}}};
+ const run=handler('getAddressResearchCollections',c,{authenticateSignShopSession:async()=>owner});let response=await run({browse:true});let data=await response.json();assert.equal(response.status,200);assert.equal(data.collections.length,10);assert.equal(data.next_cursor,'90');assert.equal(query.owner_id,'reader');assert.equal(query.owner_email,owner.email);
+ await run({browse:true,cursor:'90'});assert.deepEqual(query.id,{$lt:'90'});
+ for(const body of [{browse:true,cursor:{}},{browse:true,collection_ids:['99']}])assert.equal((await run(body)).status,400);
+ rows[0].owner_id='foreign';assert.equal((await run({browse:true})).status,403);
+ rows.length=0;data=await (await run({browse:true})).json();assert.deepEqual(data,{collections:[],actions:[],next_cursor:null});
+});

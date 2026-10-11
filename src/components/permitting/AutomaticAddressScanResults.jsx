@@ -12,7 +12,7 @@ function SourceLink({url,label}){
 const verifiedOriginal=doc=>doc?.archive_state?.status==='complete'&&doc.file_url&&/^[a-f0-9]{64}$/.test(doc.source_sha256 || '')&&doc.source_sha256===doc.stored_sha256&&Number.isInteger(doc.source_bytes)&&doc.source_bytes>0&&doc.source_bytes===doc.stored_bytes;
 const TYPE_LABELS={permit_application:'Application or form',fee_schedule:'Fees',checklist:'Checklist',sign_ordinance:'Sign rules',zoning_code:'Zoning or code',other:'Reference'};
 const GAP_LABELS={page_fetch_failed:'Page could not be read',depth_frontier:'More pages need scanning',page_link_limit:'More links remain on this page',oversized_resource_url:'Link needs review'};
-export default function AutomaticAddressScanResults({scanResult,archives}){
+export default function AutomaticAddressScanResults({scanResult,archives,savedOnly=false}){
  const {sessionToken}=useAuth(),{runAction,trackAction}=useResearchProgress(),[collections,setCollections]=useState(archives?.collections || []),[busy,setBusy]=useState(new Set()),[error,setError]=useState(''),[checking,setChecking]=useState(false);
  useEffect(()=>{setCollections(archives?.collections || []);},[archives]);
  async function checkFiles(){const ids=collections.map(row=>row.id).filter(Boolean);if(!ids.length)return;setChecking(true);try{const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,session_token:sessionToken});if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}catch{setError('Saved file status could not update. Use Check saved files to try again.');}finally{setChecking(false);}}
@@ -20,7 +20,7 @@ export default function AutomaticAddressScanResults({scanResult,archives}){
  async function saveFile(collection,doc){setBusy(previous=>new Set([...previous,doc.id]));setError('');try{const response=await runAction('archiveAddressResearchFile',{collection_id:collection.id,document_id:doc.id},'Save original — '+(doc.title || 'research file'));if(response.data?.collection)setCollections(previous=>previous.map(row=>row.id===collection.id?{...row,documents:response.data.collection.documents}:row));if(response.data?.success===false)setError(response.data.error || 'The file still needs verification.');}catch(e){setError(e.message);}finally{setBusy(previous=>{const next=new Set(previous);next.delete(doc.id);return next;});}}
  if(!scanResult?.started)return null;
  return <section className="rounded-lg border bg-white p-3 space-y-2" aria-label="Automatic address scan results">
-  <h4 className="font-semibold text-sm">What we checked</h4>
+  <h4 className="font-semibold text-sm">{savedOnly?'Saved research files':'What we checked'}</h4>
   <p className="text-xs text-gray-700">Sources and saved originals are research, not approved permitting instructions. An administrator must review them.</p>
   {archives?.error&&<p role="alert" className="text-xs text-amber-800">{archives.error}</p>}
   {error&&<p role="alert" className="text-xs text-amber-800">{error}</p>}
