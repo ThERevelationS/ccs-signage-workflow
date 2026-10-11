@@ -1,3 +1,7 @@
+## 2026-10-11 — Phase 10 preview repair activated locally
+
+Restarted only the verified stale Vite dev process with the same managed wrapper. The running server now returns the electrical UI and virtual helper with HTTP 200; backend function source and manifest remain HTTP 403. Two frontend boundary tests pass. The browser-facing sandbox preview still displays Base44 startup after reload, so local dev repair activation is verified but public routing and authenticated address/map acceptance remain open. Google is the user’s only sign-in method. No frontend publication or live scan.
+
 ## 2026-10-11 — Phase 10 managed preview activation check
 
 Read-only local dev-server probe confirms the existing managed server still serves old blocked shared imports, although saved source and production build contain the virtual-helper repair. Browser builder session expired; secure Google method choice reached a 502 connection-refused page. Fresh Base44 verification returned sign-in, so browser access is not restored. No live scan or frontend publication this unit. Acceptance remains open; do not classify the saved repair as activated in the managed server.

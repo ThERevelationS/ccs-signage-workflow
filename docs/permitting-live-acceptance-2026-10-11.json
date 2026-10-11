@@ -112,5 +112,25 @@
     "authentication": "Existing builder session expired. Secure sign-in method request selected Google; Google navigation returned 502 Bad Gateway / connection refused. Fresh canonical Base44 verification tab returned sign-in page, confirming builder access not restored. No credentials entered by agent and no authentication bypass.",
     "changes": "Evidence documentation only this unit. No frontend publication or live address scan.",
     "remaining": "Restore builder browser access; activate managed dev-server repair; verify authenticated current-revision address scan, map pin and scan activity."
+  },
+  "managed_preview_restart_verified": {
+    "date": "2026-10-11",
+    "phase_10_complete": false,
+    "action": "Restarted only verified stale Vite process with same managed security wrapper, host and port. No managed files edited.",
+    "checks": {
+      "electrical_component_http_status": 200,
+      "uses_virtual_helper": true,
+      "blocked_runtime_import": false,
+      "virtual_helper_http_status": 200,
+      "virtual_helper_exports_coverage": true,
+      "backend_function_source_http_status": 403,
+      "backend_manifest_http_status": 403,
+      "boundary_tests_passed": 2
+    },
+    "browser": "After reload sandbox preview still shows Base44 Preview is starting up; public routing/startup remains separate blocker. Google-only sign-in acknowledged; no email fallback attempted.",
+    "cli": "Offline CLI whoami command timed out; not treated as proof authentication was revoked.",
+    "remaining": "Restore browser Google connection and Base44 preview routing; authenticated current-revision address/map and scan acceptance.",
+    "frontend_published": false,
+    "live_scan_submitted": false
   }
 }
