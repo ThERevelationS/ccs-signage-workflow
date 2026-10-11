@@ -9,7 +9,7 @@ export default function AddressResearchPages({collection,review,disabled,onUpdat
  const {runAction,actions}=useResearchProgress(),[pass,setPass]=useState(null),[error,setError]=useState(''),control=useRef(null);
  useEffect(()=>()=>{if(control.current)control.current.stop=true;onBusyChange(collection.id,false);},[collection.id]); // Stop future pages when this research view leaves.
  const discovery=collection.discovery;
- const currentSource=Object.values(actions).filter(action=>action.target_id===collection.id&&action.status==='running'&&action.current_url).at(-1)?.current_url;
+ const currentSource=Object.values(actions).filter(action=>action.target_id===collection.id&&action.action_kind==='address_discovery'&&action.status==='running'&&action.current_url).at(-1)?.current_url;
  if(!discovery)return null;
  async function scan(){
   if(control.current||disabled)return;
