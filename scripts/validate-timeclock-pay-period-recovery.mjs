@@ -5243,6 +5243,126 @@ test('v28 two direct corrections before later employee approve_modified preserve
   directDAudit.details.corrected.clock_in = originalD;
 });
 
+test('v28 two complete semantic suffixes fail closed after correction returns to baseline', async () => {
+  // Actual audited path: B → C → B → D → E. Both suffixes beginning
+  // at C and D start at B and finish at E; the verifier must reject both.
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  const period = h.period();
+  Object.assign(period, { start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '' });
+  const ok = async (promise) => {
+    const result = await promise;
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    return result.body;
+  };
+  const recovered = await ok(h.invokeAs(employee, {
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'v28-amb-source-001', claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  }));
+  const entry = h.rows.TimeEntry.find((row) => row.id === recovered.entry.id);
+  await ok(h.invokeAs(employee, {
+    action: 'clock_out', target_email: employee.email,
+    request_id: 'v28-amb-out-001', lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+  }));
+  await ok(h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'v28-amb-b-submit-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Original arrival correction B',
+    requested_changes: { clock_in: '2026-09-28T12:15:00.000Z', clock_out: entry.clock_out, lunch_minutes: 0 },
+  }));
+  const requestB = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === 'v28-amb-b-submit-001');
+  await ok(h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'v28-amb-b-review-001', correction_request_id: requestB.id,
+    expected_request_updated_date: requestB.updated_date, decision: 'approve',
+    reason: 'Verified original payroll baseline B',
+  }));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-amb-b-approve-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve B',
+  }));
+  await ok(h.action('finalize', 'v28-amb-b-finalize-001'));
+  await ok(h.action('reopen', 'v28-amb-reopen-001', 'Review subsequent corrections'));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-amb-shift-reopen-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen', note: 'Allow audited corrections',
+  }));
+
+  const direct = async (letter, clockIn, hours, minutes) => {
+    const result = await ok(h.invoke({
+      action: 'admin_correct_entry', target_email: employee.email,
+      request_id: 'v28-amb-direct-' + letter, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: 'Manager verified intermediate time ' + letter,
+      correction: {
+        clock_in: clockIn, clock_out: entry.clock_out, lunch_minutes: 0,
+        notes: 'Direct manager correction ' + letter,
+        job_allocations: [{ hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+      },
+    }));
+    return h.rows.TimeClockAudit.find((row) => row.id === result.audit_id);
+  };
+  const auditC = await direct('c', '2026-09-28T12:30:00.000Z', 7, 30);
+  const auditReturnB = await direct('return-b', '2026-09-28T12:15:00.000Z', 7, 45);
+  const auditD = await direct('d', '2026-09-28T12:35:00.000Z', 7, 25);
+
+  await ok(h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'v28-amb-e-submit-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Request final arrival time E',
+    requested_changes: { clock_in: '2026-09-28T12:40:00.000Z', clock_out: entry.clock_out, lunch_minutes: 0 },
+  }));
+  const requestE = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === 'v28-amb-e-submit-001');
+  const reviewedE = await ok(h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'v28-amb-e-review-001', correction_request_id: requestE.id,
+    expected_request_updated_date: requestE.updated_date, decision: 'approve_modified',
+    reason: 'Verified employee final time E',
+    correction: { clock_in: '2026-09-28T12:45:00.000Z', clock_out: entry.clock_out, lunch_minutes: 0 },
+  }));
+  const auditE = h.rows.TimeClockAudit.find((row) => row.id === reviewedE.audit_id);
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-amb-e-approve-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve E',
+  }));
+  await ok(h.action('finalize', 'v28-amb-e-finalize-001'));
+
+  assert.equal(period.finalized_summary.generation_changes.length, 1);
+  const change = period.finalized_summary.generation_changes[0];
+  assert.equal(change.change_type, 'changed');
+  assert.equal(change.correction_provenance.applied_audit_id, auditE.id);
+  const correctionIds = change.causal_chain
+    .filter((link) => link.action === 'admin_correction').map((link) => link.audit_id);
+  assert.deepEqual(correctionIds.slice(-4), [auditC.id, auditReturnB.id, auditD.id, auditE.id]);
+  const audits = correctionIds.map((id) => h.rows.TimeClockAudit.find((row) => row.id === id));
+  const semantic = (value) =>
+    [String(value?.clock_in || ''), String(value?.clock_out || ''), Number(value?.total_hours || 0)];
+  // Confirm exactly two independently valid suffixes, not merely an unrelated
+  // verifier failure such as missing audits or malformed causal-chain entries.
+  const starts = [];
+  for (let start = 0; start < audits.length; start += 1) {
+    let state = semantic(change.before);
+    let valid = true;
+    for (let i = start; i < audits.length; i += 1) {
+      const original = semantic(audits[i].details.original);
+      if (original.some((part, j) => part !== state[j])) { valid = false; break; }
+      state = semantic(audits[i].details.corrected);
+    }
+    if (valid && state.every((part, j) => part === semantic(change.after)[j])) starts.push(start);
+  }
+  assert.equal(starts.length, 2, 'fixture requires exactly two valid B-to-E suffixes');
+  assert.ok(starts[0] < starts[1]);
+  const verify = (request_id) => h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id,
+  });
+  const first = await ok(verify('v28-amb-verify-001'));
+  assert.equal(first.verified, false, JSON.stringify(first));
+  const retry = await ok(verify('v28-amb-verify-001'));
+  assert.equal(retry.verified, false, JSON.stringify(retry));
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
