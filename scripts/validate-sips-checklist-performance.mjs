@@ -1042,6 +1042,23 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
   assert.match(warning, /onClick=\{confirmDiscardChanges\}/);
   assert.match(warning, /Discard edits and reload latest\?/);
   assert.match(warning, /Discard & Reload/);
+  assert.match(warning, /onOpenChange=\{\(open\) => \{ if \(!open\) setDiscardWarning\(null\); \}\}/);
+  const focusStart = warning.indexOf("onCloseAutoFocus={(event) => {");
+  const focusEnd = warning.indexOf("\n          }}", focusStart);
+  const focusBody = warning.slice(focusStart + "onCloseAutoFocus={(event) => {".length, focusEnd);
+  const focusOnCancel = new Function("event", "returnToReloadRef", "reloadLatestButtonRef",
+    "isOpen", focusBody);
+  let focusCount = 0, preventCount = 0;
+  const reloadButton = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus: () => { focusCount++; } };
+  const restore = { current: true };
+  focusOnCancel({ preventDefault: () => { preventCount++; } }, restore, { current: reloadButton }, true);
+  assert.equal(focusCount, 1);
+  assert.equal(preventCount, 1);
+  assert.equal(restore.current, false);
+  focusOnCancel({ preventDefault: () => { preventCount++; } }, restore, { current: reloadButton }, true);
+  assert.equal(focusCount, 1);
+  assert.equal(preventCount, 1);
   assert.match(source, /ref=\{reloadLatestButtonRef\}[^\n]*onClick=\{requestReloadLatest\}/);
   assert.match(source, /\}, \[isOpen, workOrder\?\.id\]\);/);
 });
