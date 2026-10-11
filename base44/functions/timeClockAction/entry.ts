@@ -3507,7 +3507,9 @@ Deno.serve(async (req) => {
               String(change.after?.clock_out || '') === String(corrected.clock_out || '') &&
               Number(change.after?.total_hours || 0) === Number(corrected.total_hours || 0);
         let deltaMatches = directDeltaMatches;
-        if (!deltaMatches && strictV28 && change.change_type === 'changed' && Array.isArray(change.causal_chain)) {
+        // For v28, a direct terminal match must not bypass the unique semantic
+        // suffix check when earlier corrections returned to the prior payroll state.
+        if (strictV28 && change.change_type === 'changed' && Array.isArray(change.causal_chain)) {
           const correctionLinks = change.causal_chain.filter((link: any) => String(link?.action || '') === 'admin_correction');
           if (correctionLinks.length > 1 &&
               String(correctionLinks[correctionLinks.length - 1]?.audit_id || '') === String(provenance.applied_audit_id || '')) {
@@ -3555,6 +3557,10 @@ Deno.serve(async (req) => {
               }
             }
             deltaMatches = matchingSuffixes === 1;
+          } else if (correctionLinks.length > 1) {
+            // Multiple correction audits without the frozen terminal cause are invalid,
+            // even if the terminal's original times happen to match generation-before.
+            deltaMatches = false;
           }
         }
         return Boolean(correction && appliedAudit &&
