@@ -1,4 +1,4 @@
-// Standalone replacement for findLocalityByAddress, bundled without changing lookup rules.
+// Standalone replacement for findLocalityByAddress; same authentication and exact-location rules.
 // base44/shared/permittingExternalReferrals.mjs
 var EXTERNAL_REFERRAL_METHOD = "official-page-external-link-v1";
 var host = (value) => value.toLowerCase().replace(/^www\./, "");
