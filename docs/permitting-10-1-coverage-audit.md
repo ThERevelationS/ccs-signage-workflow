@@ -4,6 +4,8 @@ The Permitting Repository admin panel now includes Employee research to review. 
 
 The saved-collection endpoint requires an authenticated administrator for cross-employee review. Ordinary browsing and file refresh retain exact owner ID/email scope. The server rechecks reference-only/authority-unestablished scope on every returned collection, and limits archive activity to that collection and its recorded owner. Review-mode refresh stays administrator-gated.
 
+Verification: 570 permitting regression tests, 20 isolated Chromium selector/review checks, targeted lint (zero errors; one existing unused-variable warning), production build and endpoint bundle passed. Services and uploads were simulated. Live signed-in acceptance remains pending. Verification record: docs/permitting-admin-research-review-verification-2026-10-11.json.
+
 This completes the inspection entry point, not approval or repository linking. Remaining: a guarded reviewed-document link action and review history, external source scopes, and live signed-in acceptance. Nothing published; no production records/files used in tests.
 
 ## 2026-10-11 — Phase 10, milestone 2 of 3: return to saved address research

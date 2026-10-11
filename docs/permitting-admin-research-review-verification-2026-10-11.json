@@ -1,0 +1,15 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Administrator employee-research inspection",
+  "regression_passed": 570,
+  "chromium_passed": 20,
+  "targeted_lint_errors": 0,
+  "existing_lint_warnings": 1,
+  "production_build": "passed",
+  "backend_bundle": "passed",
+  "production_test_writes": 0,
+  "published": false,
+  "approval_or_link_action_implemented": false,
+  "live_signed_in_acceptance": "pending"
+}
