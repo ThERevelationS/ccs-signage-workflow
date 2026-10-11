@@ -5,7 +5,7 @@ const norm=value=>String(value || '').trim().toLowerCase().replace(/^(city|villa
 export function boundaryPosition(rings,point){
  if(!Array.isArray(rings)||!rings.length||!Number.isFinite(point?.lat)||!Number.isFinite(point?.lng))throw Error('Invalid boundary geometry.');
  let inside=false,distance=Infinity,count=0;const x=point.lng,y=point.lat,sx=111320*Math.cos(y*Math.PI/180),sy=111320;
- for(const ring of rings){if(!Array.isArray(ring)||ring.length<4)throw Error('Incomplete boundary geometry.');for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+ for(const ring of rings){if(!Array.isArray(ring)||ring.length<4||ring[0]?.[0]!==ring[ring.length-1]?.[0]||ring[0]?.[1]!==ring[ring.length-1]?.[1])throw Error('Incomplete boundary geometry.');for(let i=0,j=ring.length-1;i<ring.length;j=i++){
   const a=ring[j],b=ring[i];if(!Array.isArray(a)||a.length<2||!Array.isArray(b)||b.length<2||!a.slice(0,2).every(Number.isFinite)||!b.slice(0,2).every(Number.isFinite)||Math.abs(a[0])>180||Math.abs(a[1])>90)throw Error('Invalid boundary coordinates.');if(++count>100000)throw Error('Boundary geometry too large.');
   if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;
   const ax=(a[0]-x)*sx,ay=(a[1]-y)*sy,bx=(b[0]-x)*sx,by=(b[1]-y)*sy,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy || 1)));distance=Math.min(distance,Math.hypot(ax+t*dx,ay+t*dy));
@@ -16,9 +16,12 @@ export function strictGeocode(results,address=''){
  const part=type=>parts.find(c=>c.types?.includes(type))?.long_name || '';
  const street=value=>String(value).toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean).map(w=>({street:'st',road:'rd',drive:'dr',avenue:'ave',boulevard:'blvd',lane:'ln',court:'ct',parkway:'pkwy',highway:'hwy',north:'n',south:'s',east:'e',west:'w'}[w] || w)).join(' ');
  const requested=street(address.split(',')[0].replace(/\s+(apt|suite|unit|#)\s*.*$/i,'')),found=street(part('street_number')+' '+part('route'));
+ const stateMatch=address.match(/\b(Ohio|Kentucky|OH|KY)\b/i),zipMatch=address.match(/\b([0-9]{5})(?:-[0-9]{4})?\s*$/);
+ const stateMatches=stateMatch?normalizeAddressState(stateMatch[1])===normalizeAddressState(part('administrative_area_level_1')):Boolean(zipMatch);
+ const zipMatches=!zipMatch||zipMatch[1]===part('postal_code');
  const city=street(part('locality') || part('postal_town'));
  const streetMatches=requested===found || (!address.includes(',')&&city&&requested.startsWith(found+' '+city+' '));
- return Boolean(address)&&streetMatches&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
+ return Boolean(address)&&stateMatches&&zipMatches&&streetMatches&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
 }
 export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async()=>{}}){
  const state=normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase(),point={lat:geocode?.lat,lng:geocode?.lon};
