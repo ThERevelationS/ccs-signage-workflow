@@ -966,4 +966,84 @@ await (async () => {
   passed++;
 })();
 
+check("Reload latest confirms unsaved edits and preserves them when cancelled", () => {
+  const dirtyBody = source.slice(source.indexOf("  const hasUnsubmittedDrafts = ("),
+    source.indexOf("  const requestClose = () => {"));
+  const calculateDirty = new Function("newItemInput", "newItemText",
+    "showAddGeneralChecklist", "newGeneralChecklistText", "editingItemId",
+    "editingItemText", "checklistItemById", "editingProductName", "editingProductNameText",
+    "customStatusDraftsByItemIdRef", "isLoading", "checklist", "loadedUiChecklistSnapshot",
+    "products", "loadedUiProductsSnapshot",
+    dirtyBody + "\nreturn hasUnsavedChanges;");
+  const clean = [{ id: "item-1", text: "Existing" }];
+  const dirtyArgs = [ { show: false }, "", false, "", null, "",
+    new Map([["item-1", clean[0]]]), null, "", { current: new Map() },
+    false, clean, clean, [], [] ];
+  assert.equal(calculateDirty(...dirtyArgs), false);
+  dirtyArgs[11] = [{ id: "item-1", text: "Changed" }];
+  assert.equal(calculateDirty(...dirtyArgs), true);
+  dirtyArgs[11] = clean;
+  dirtyArgs[13] = [{ description: "New product" }];
+  assert.equal(calculateDirty(...dirtyArgs), true);
+  dirtyArgs[13] = [];
+  dirtyArgs[0] = { show: true }; dirtyArgs[1] = "Unadded task";
+  assert.equal(calculateDirty(...dirtyArgs), true);
+  dirtyArgs[0] = { show: false }; dirtyArgs[1] = "";
+  dirtyArgs[4] = "item-1"; dirtyArgs[5] = "Editing this task";
+  assert.equal(calculateDirty(...dirtyArgs), true);
+  dirtyArgs[4] = null;
+  dirtyArgs[9] = { current: new Map([["item-1", "Custom draft"]]) };
+  assert.equal(calculateDirty(...dirtyArgs), true);
+
+  const actionBody = source.slice(source.indexOf("  const requestClose = () => {"),
+    source.indexOf("  return (\n    <>", source.indexOf("  const requestClose = () => {")));
+  const createActions = new Function("isSaving", "isLoading", "hasUnsavedChanges",
+    "setDiscardWarning", "cancelPendingNavigationFocus", "onClose", "returnToReloadRef",
+    "loadData", "discardWarning", "setEditingItemId", "setEditingItemText",
+    "setEditingProductName", "setEditingProductNameText", "setNewItemInput",
+    "setNewItemText", "setShowAddGeneralChecklist", "setNewGeneralChecklistText",
+    actionBody + "\nreturn { requestClose, requestReloadLatest, confirmDiscardChanges };");
+  const calls = [], focusFlag = { current: false };
+  const make = (dirty, action = null, saving = false, loading = false) =>
+    createActions(saving, loading, dirty, value => calls.push(["warning", value]),
+      () => calls.push("cancel nav"), () => calls.push("close"), focusFlag,
+      () => calls.push("reload"), action,
+      value => calls.push(["editor", value]),
+      value => calls.push(["text", value]), () => {}, () => {}, () => {},
+      () => {}, () => {}, () => {});
+  make(true).requestReloadLatest();
+  assert.deepEqual(calls, [["warning", "reload"]]);
+  assert.equal(focusFlag.current, true);
+  // Cancelling the confirmation changes no loaded record or draft.
+  calls.length = 0;
+  assert.deepEqual(calls, []);
+  make(true, "reload").confirmDiscardChanges();
+  assert.equal(calls.filter(entry => entry === "reload").length, 1);
+  assert.equal(calls.includes("close"), false);
+  assert.ok(calls.some(entry => Array.isArray(entry) && entry[0] === "editor"));
+  assert.equal(focusFlag.current, false);
+  calls.length = 0;
+  make(false).requestReloadLatest();
+  assert.deepEqual(calls, ["reload"]);
+  calls.length = 0;
+  make(true, null, true).requestReloadLatest();
+  make(true, null, false, true).requestReloadLatest();
+  assert.deepEqual(calls, []);
+  make(true).requestClose();
+  assert.deepEqual(calls, [["warning", "close"]]);
+  calls.length = 0;
+  make(true, "close").confirmDiscardChanges();
+  assert.equal(calls.includes("close"), true);
+  assert.equal(calls.includes("reload"), false);
+
+  const warning = source.slice(source.indexOf("{/* Unsaved changes warning */}"),
+    source.indexOf("{/* Checklist item deletion */}"));
+  assert.match(warning, /open=\{!!discardWarning\}/);
+  assert.match(warning, /onClick=\{confirmDiscardChanges\}/);
+  assert.match(warning, /Discard edits and reload latest\?/);
+  assert.match(warning, /Discard & Reload/);
+  assert.match(source, /ref=\{reloadLatestButtonRef\}[^\n]*onClick=\{requestReloadLatest\}/);
+  assert.match(source, /\}, \[isOpen, workOrder\?\.id\]\);/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
