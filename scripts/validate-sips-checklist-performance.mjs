@@ -771,4 +771,88 @@ check("Other popup closure skips collapsed rows and uses visible fallback contro
   assert.match(source, /showRevisitPopup \|\| showOtherPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
 });
 
+check("rapid successive status warnings preserve popup draft and focus until each warning closes", () => {
+  const statusBody = source.slice(source.indexOf("  const applyChecklistStatus = (itemId, value"),
+    source.indexOf("  const checkIfComplete ="));
+  const customBody = source.slice(source.indexOf("  const handleCreateCustomValue = (itemId) => {"),
+    source.indexOf("  // Apply only genuinely new template content"));
+  const warningSource = source.slice(source.indexOf("{/* Validation guidance */}"));
+  const focusStart = warningSource.indexOf("onCloseAutoFocus={(event) => {");
+  const focusEnd = warningSource.indexOf("\n          }}", focusStart);
+  const focusBody = warningSource.slice(focusStart + "onCloseAutoFocus={(event) => {".length, focusEnd);
+  const createStatus = new Function("checklistItemById", "dropdownConditionByName",
+    "areChildrenComplete", "validationFocusItemIdRef", "setValidationDialog",
+    "setFocusedSearchId", "setFocusedNeedsInputId", "setChecklistSearchIndex",
+    "scheduleNavigationFocus", "checklistSearchInputRef", "updateChecklistItem",
+    "otherPopupValidationPendingRef", statusBody + "\nreturn applyChecklistStatus;");
+  const createCustom = new Function("customDropdownValue", "otherPopupValidationReturnRef",
+    "customStatusInputRef", "applyChecklistStatus", "otherPopupDismissedRef",
+    "customStatusDraftsByItemIdRef", "setCustomDropdownValue", "setShowOtherPopup",
+    "otherPopupValidationPendingRef", "validationDialog",
+    customBody + "\nreturn handleCreateCustomValue;");
+  const closeWarning = new Function("event", "isOpen", "validationFocusItemIdRef",
+    "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
+    "showOtherPopup", "otherPopupValidationReturnRef", "customStatusInputRef",
+    "otherPopupValidationPendingRef", focusBody);
+  assert.match(source, /const dismissOtherPopup = \(\) => \{\s*if \(validationDialog \|\| otherPopupValidationPendingRef\.current\) return;/);
+  assert.match(source, /const openOtherPopup = \(itemId\) => \{\s*if \(otherPopupValidationPendingRef\.current \|\| validationDialog\) return;/);
+  assert.match(source, /otherPopupValidationPendingRef\.current = false;[\s\S]*?if \(!isOpen\) return;/);
+  assert.match(source, /otherPopupValidationPendingRef\.current = false;[\s\S]*?\}, \[workOrder\?\.id\]\);/);
+
+  const item = { id: "item-1", type: "detail", approved_by: null,
+    custom_dropdown_value: "Continued" };
+  let childrenComplete = false, cleared = 0, closed = 0, focused = 0;
+  const warnings = [];
+  const pending = { current: false }, focusItem = { current: null };
+  const input = { isConnected: true, disabled: false, getClientRects: () => [1],
+    focus() { focused++; } };
+  const returnRef = { current: null }, draftRef = { current: new Map([["item-1", "Completed"]]) };
+  const dismissed = { current: false };
+  const apply = createStatus(new Map([["item-1", item]]),
+    new Map([["Completed", { is_completed: true }]]), () => childrenComplete,
+    focusItem, value => warnings.push(value), () => {}, () => {}, () => {},
+    () => {}, { current: null }, () => {}, pending);
+  // Retain a stale null validationDialog closure to exercise same-tick double clicks.
+  const submit = createCustom("  Completed  ", returnRef, { current: input },
+    apply, dismissed, draftRef, () => { cleared++; }, () => { closed++; },
+    pending, null);
+  const dismiss = () => closeWarning({ preventDefault() {} }, true, focusItem,
+    () => { throw Error("Do not focus behind the popup"); },
+    { current: null }, { current: null }, { itemId: "item-1" }, returnRef,
+    { current: input }, pending);
+
+  submit("item-1"); // Approver Required.
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0].title, "Approver Required");
+  assert.equal(pending.current, true);
+  assert.equal(returnRef.current, input);
+  submit("item-1"); // Must not overwrite the first warning or its target.
+  assert.equal(warnings.length, 1);
+  assert.equal(returnRef.current, input);
+  assert.equal(draftRef.current.get("item-1"), "Completed");
+  assert.equal(closed, 0);
+  dismiss();
+  assert.equal(pending.current, false);
+  assert.equal(focused, 1);
+  assert.equal(returnRef.current, null);
+
+  item.approved_by = "Reviewer";
+  submit("item-1"); // Tasks Still Open on the next attempt.
+  assert.equal(warnings.length, 2);
+  assert.equal(warnings[1].title, "Tasks Still Open");
+  submit("item-1");
+  assert.equal(warnings.length, 2);
+  dismiss();
+  assert.equal(focused, 2);
+  assert.equal(draftRef.current.has("item-1"), true);
+
+  childrenComplete = true;
+  submit("item-1");
+  assert.equal(warnings.length, 2);
+  assert.equal(draftRef.current.has("item-1"), false);
+  assert.equal(closed, 1);
+  assert.equal(cleared, 1);
+  assert.equal(dismissed.current, true);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
