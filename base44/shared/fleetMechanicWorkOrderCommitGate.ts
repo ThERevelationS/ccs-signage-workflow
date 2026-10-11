@@ -7,7 +7,7 @@ const deny = (detail:string) => {
 };
 
 export async function verifyFleetMechanicWorkOrderCommit({
-  Access, Receipt, workOrder, patch, expectedUpdatedAt, nowMs = Date.now(),
+  Access, Receipt, workOrder, patch, expectedUpdatedAt, nowMs,
 }: {
   Access:any; Receipt:any; workOrder:any; patch:Record<string,any>;
   expectedUpdatedAt:string; nowMs?:number;
@@ -74,6 +74,6 @@ export async function verifyFleetMechanicWorkOrderCommit({
   // Last service-side read immediately before the versioned WorkOrder CAS.
   // A subsequent cross-entity revocation remains non-atomic with that CAS.
   const grant = await Access.get(grantId).catch(()=>null);
-  const permission = mechanicGrantAllowsMutation(grant,action,String(workOrder.equipment_id || ''),nowMs);
+  const permission = mechanicGrantAllowsMutation(grant,action,String(workOrder.equipment_id || ''),nowMs ?? Date.now());
   if (!permission.allowed) throw deny(`the mechanic link is ${permission.reason || 'not authorized'}`);
 }

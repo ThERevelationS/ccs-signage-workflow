@@ -314,6 +314,7 @@ export default function LocalityPickerDialog({
 
             <SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/>
             <ResearchProgressBar inline />
+            {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this jurisdiction.</p>}
             {!result && !searching && !selectedLocalityId && (
               <div className="h-full flex items-center justify-center text-gray-400 text-sm p-8 text-center border border-dashed rounded">
                 Enter the job address. Press <strong>Find my jurisdiction</strong>. We will check the map and look for the right office.
@@ -357,6 +358,7 @@ export default function LocalityPickerDialog({
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
+                      <details><summary className="min-h-11 py-2 text-sm cursor-pointer">See office checks</summary>
                       <div className={`mt-2 rounded border px-2.5 py-2 text-[11px] ${addressAuthority?.status === 'staff_verified_roles' ? 'border-emerald-200 bg-white/70 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         <div className="flex items-center gap-1 font-semibold">
                           {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
@@ -386,6 +388,7 @@ export default function LocalityPickerDialog({
                           <p className="mt-2 text-amber-900">Configured roles awaiting staff review: {addressRolesNeedingReview.join(" • ")}</p>
                         )}
                       </div>
+                      </details>
                     </div>
                   ) : (
                     <div>
