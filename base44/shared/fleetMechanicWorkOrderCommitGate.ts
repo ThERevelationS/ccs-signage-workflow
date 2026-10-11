@@ -90,7 +90,10 @@ export async function verifyFleetMechanicWorkOrderCommit({
       String(finalSummary.grant_id || '') !== grantId ||
       String(finalSummary.request_id || '') !== requestId ||
       String(finalSummary.action || '') !== action ||
-      String(finalSummary.expected_updated_date || '') !== String(expectedUpdatedAt || '')) {
+      String(finalSummary.expected_updated_date || '') !== String(expectedUpdatedAt || '') ||
+      finalSummary.retry_reservation_required !== summary.retry_reservation_required ||
+      String(finalSummary.reused_upload_receipt_id || '') !== String(summary.reused_upload_receipt_id || '') ||
+      finalSummary.photo_count !== summary.photo_count) {
     throw deny('the mechanic receipt changed during authorization');
   }
   const finalRecovery = buildMechanicRecoveryPatch(workOrder,finalReceipt,String(patch.mechanic_operation_applied_at));
