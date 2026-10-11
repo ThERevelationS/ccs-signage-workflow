@@ -3,6 +3,7 @@ import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventor
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { resolveFleetMeterReading } from '../../shared/fleetMeterReading.ts';
+import { verifyFleetMechanicWorkOrderCommit } from '../../shared/fleetMechanicWorkOrderCommitGate.ts';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -872,6 +873,13 @@ Deno.serve(async (req) => {
           return Response.json({ error: 'Maintenance task belongs to different Fleet equipment.' }, { status: 409 });
         }
       }
+      // Revalidate mechanic grant, receipt, saved plan, and photo ownership at
+      // the receiving service edge, just before the versioned Fleet write.
+      await verifyFleetMechanicWorkOrderCommit({
+        Access:base44.asServiceRole.entities.FleetMechanicAccess,
+        Receipt,workOrder:existing,patch,
+        expectedUpdatedAt:String(body?.expected_updated_date || existing.updated_date || ''),
+      });
       const updated = await updateFleetRecordIfCurrent({
         entity: WorkOrder,
         id,
