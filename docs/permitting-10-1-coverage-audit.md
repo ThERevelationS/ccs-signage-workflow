@@ -1,3 +1,13 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: automatic original-download continuation
+
+Pending owner-scoped address originals now join the enabled scheduled archive dispatcher. Each cycle attempts at most one original across address and jurisdiction queues, preserves Ohio-before-Kentucky ordering, and rotates queue preference using persisted cycle state. Owner identity, completed originating scan, source host, pause/state changes, retry backoff and existing upload/readback safeguards are checked before processing. No research call or authority/profile write is added by this continuation.
+
+The address selector refreshes its own saved collections, adopts each background download as a separate progress action, shows literal activity, and updates verified original links. Staff can also use Check saved files or the existing individual Save original/Verify controls.
+
+Verification passed: 324 focused regression tests, 16 selector Chromium checks, 7 activity Chromium checks, targeted lint, six backend bundles and production build. API/upload responses were simulated; no production records or files were used. The live scheduler was not forced and signed-in live Google/address/download acceptance remains unverified. Nothing published. Verification record: docs/permitting-address-queue-verification-2026-10-11.json.
+
+Remaining for this milestone: retained-collection browsing and review/link workflow, external document scopes, and signed-in live acceptance. Parcel verification, full authority applicability and complete statewide coverage remain outside this completed unit.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: original files from automatic address scans
 
 Connected server-generated address findings to the existing validated durable archive worker using a separate PermittingAddressArchive collection scoped to the searching employee and scan run. The first automatic pass attempts one same-host HTTPS original. All eligible source descriptors remain saved; staff can save each remaining original without an overall manual collection cap. External referrals remain separately visible and unscanned.
@@ -6,7 +16,7 @@ The selector offers Open saved original only after matching original/stored SHA-
 
 Fifteen selector Chromium checks and targeted frontend lint passed. Final rerun: all 315 focused regressions and 15 selector Chromium checks passed, including owner-change and source-host scope. Backend bundles and the final production build passed. Durable verification summary: docs/permitting-address-archive-verification-2026-10-11.json. No production file uploads, record creation or authority writes were used for tests; uploads/API responses were simulated. Nothing published.
 
-Remaining: connect pending address collections to automatic dispatcher continuation, add a dedicated collection browser/review-and-link flow, establish external document scopes, and verify signed-in live Google/complete address/file flow. This is not complete statewide coverage, parcel verification or legal office applicability.
+Remaining after this original-file integration (automatic continuation completed in the newer entry above): add a dedicated collection browser/review-and-link flow, establish external document scopes, and verify signed-in live Google/complete address/file flow. This is not complete statewide coverage, parcel verification or legal office applicability.
 
 ## 2026-10-11 — Phase 10, milestone 2 of 3: usable automatic scan findings
 
