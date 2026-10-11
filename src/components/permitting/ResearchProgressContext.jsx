@@ -23,10 +23,11 @@ export function ResearchProgressProvider({children}){
   }catch(error){if(knownFailure)throw error;await poll();put(id,{...(lastRun?{}:{status:'unknown',stage:'Execution unconfirmed — check saved status'}),activity_warning:error?.response?.data?.error || error.message || 'Request response was lost; check saved activity.',response_lost:true});throw error;
   }finally{stopped=true;clearInterval(timer);}
  },[put]);
+ const trackAction=useCallback(run=>{const id=run?.action_token;if(typeof id==='string'&&/^[a-f0-9-]{36}$/i.test(id))put(id,{...run,id,background:true});},[put]);
  const actionRows=useRef(actions);actionRows.current=actions;
  const refreshAction=useCallback(async id=>{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});if(res?.data?.run)put(id,{...res.data.run,id,response_lost:false,activity_warning:null});else put(id,{status:'unknown',stage:'No saved activity found — execution unconfirmed',response_lost:true});},[put]);
  useEffect(()=>{try{sessionStorage.setItem('permitting_scan_actions',JSON.stringify(Object.values(actions).filter(row=>!row.local_batch).slice(-50).map(({id,label})=>({id,label}))))}catch{}},[actions]);
- useEffect(()=>{let polling=false;async function sync(){if(polling)return;polling=true;try{await Promise.allSettled(Object.values(actionRows.current).filter(row=>row.status==='unknown'||(row.status==='running'&&row.response_lost)).map(row=>refreshAction(row.id)));}finally{polling=false;}}void sync();const timer=setInterval(()=>void sync(),2000);return()=>clearInterval(timer);},[refreshAction]);
- return <ResearchProgressContext.Provider value={{actions,runAction,refreshAction,startResearch,updateProgress,completeResearch,clearProgress}}>{children}</ResearchProgressContext.Provider>;
+ useEffect(()=>{let polling=false;async function sync(){if(polling)return;polling=true;try{await Promise.allSettled(Object.values(actionRows.current).filter(row=>row.status==='unknown'||(row.status==='running'&&(row.response_lost||row.background))).map(row=>refreshAction(row.id)));}finally{polling=false;}}void sync();const timer=setInterval(()=>void sync(),2000);return()=>clearInterval(timer);},[refreshAction]);
+ return <ResearchProgressContext.Provider value={{actions,runAction,refreshAction,trackAction,startResearch,updateProgress,completeResearch,clearProgress}}>{children}</ResearchProgressContext.Provider>;
 }
 export function useResearchProgress(){const context=React.useContext(ResearchProgressContext);if(!context)throw Error('useResearchProgress must be used within ResearchProgressProvider');return context;}

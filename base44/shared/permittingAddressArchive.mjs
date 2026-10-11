@@ -72,7 +72,7 @@ export async function continueAddressResearchArchives({entity,scanEntity,state,f
  Object.assign(query,{reference_only:true,authority_established:false,owner_id:{$nin:[null,'']},owner_email:{$nin:[null,'']},scan_run_id:{$nin:[null,'']}});
  const candidates=await entity.filter(query,'updated_date',20,0),review=[];
  for(const listed of candidates){
-  let reporter=silentScanReporter;
+  let reporter=silentScanReporter,attempted=false;
   try{
    const collection=await entity.get(listed.id);
    if(collection.state!==state||collection.auto_refresh!==true||collection.reference_only!==true||collection.authority_established!==false)continue;
@@ -82,6 +82,7 @@ export async function continueAddressResearchArchives({entity,scanEntity,state,f
    if(!document)continue;
    const actor={id:collection.owner_id,email:collection.owner_email};
    reporter=await createScanReporter({entity:scanEntity,token:crypto.randomUUID(),user:actor,targetId:collection.id,targetName:collection.name,kind:'address_archive',label:'Automatic original download — '+(document.title || collection.name)});
+   attempted=true;
    const result=await archiveOwnedAddressResearchFile({entity,collectionId:collection.id,documentId:document.id,actor,automatic:true,now,fetchSource,uploadFile,onProgress:event=>reporter.emit(event,event.progress || {})});
    if(result.skipped){await reporter.finish('complete',result.reason);continue;}
    const saved=result.collection?.documents?.find(doc=>doc.id===document.id);
@@ -89,7 +90,7 @@ export async function continueAddressResearchArchives({entity,scanEntity,state,f
    await reporter.finish(result.success===false?'completed_with_errors':'complete',result.error || '');
    const {collection:privateCollection,jurisdiction,...publicResult}=result;
    return {...publicResult,archive_queue:'address',collection_id:collection.id,document_id:document.id,collections_checked:candidates.length};
-  }catch(error){await reporter.finish('failed','Automatic research download could not finish safely.');review.push({collection_id:listed.id,error:String(error.message || error).slice(0,300)});}
+  }catch(error){await reporter.finish('failed','Automatic research download could not finish safely.');review.push({collection_id:listed.id,error:String(error.message || error).slice(0,300)});if(attempted)return {success:false,status:'address_archive_conflict',archive_queue:'address',error:'Automatic research download requires review.',review};}
  }
  return {success:true,skipped:true,reason:'no_eligible_address_file',collections_checked:candidates.length,review};
 }
