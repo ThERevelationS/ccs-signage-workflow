@@ -27,6 +27,7 @@ import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBacku
 import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorContactAppend, orderRequestorOptionsPreserved } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
+import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegrity.mjs';
@@ -1982,41 +1983,43 @@ async function pushDataset(
         }
         continue;
       } else {
-        // Sales create must produce one usable permanent row ID before Base44
-        // can claim the record was created or advance its sync metadata. An
-        // acknowledged POST with an unreadable/missing ID is an uncertain
-        // remote create and must fail closed to avoid a silently unlinked row.
-        const result = await smartsheetWrite('POST', `/sheets/${sheetId}/rows`, token, [{
-          toTop: true,
-          cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
-        }]);
-        const newRowId = String(result?.body?.result?.id || result?.body?.id || '').trim();
-        if (!/^\d+$/.test(newRowId)) {
-          throw new Error('Sales Smartsheet create returned no usable permanent row ID. The remote create is uncertain; Base44 link and sync metadata were not advanced. Review Smartsheet before retrying.');
-        }
-        await base44.asServiceRole.entities.WorkOrder.update(record.id, {
-          smartsheet_row_id: newRowId,
-          smartsheet_sheet_id: sheetId,
-        });
-        // A successful Base44 update acknowledgement is not sufficient evidence
-        // that the permanent Sales link persisted. Verify the exact record before
-        // advancing snapshot/timestamp metadata; otherwise a later retry could
-        // create a duplicate Smartsheet row while the first remote row still exists.
-        const verifiedLinkRows = await loadAllEntityRows({
+        // Persist a write-ahead WorkOrder reservation before one no-retry POST.
+        // A returned permanent row ID can be recovered after a failed Base44
+        // link, but an unknown remote outcome is held for manual reconciliation.
+        const result = await createSalesSmartsheetRowWithGuard({
           entity: base44.asServiceRole.entities.WorkOrder,
-          query: { id: record.id },
-          sort: 'id',
-          label: 'Sales create permanent link verification',
+          record, sheetId,
+          assertOwner: options?.assertRunOwnership,
+          makeSnapshot: (current: any) => buildSnapshot(current, bindings, 'sales'),
+          postRow: async (current: any) => {
+            const currentCells = buildCells(current, bindings, 'sales');
+            if (!currentCells.length) throw new Error('Sales record has no mapped Smartsheet values.');
+            const sent = await smartsheetWriteNoTimeoutRetry('POST', `/sheets/${sheetId}/rows`, token, [{
+              toTop: true,
+              cells: currentCells.map((c: any) => ({columnId:c.columnId,value:c.value,
+                ...(c.displayValue ? {displayValue:c.displayValue} : {})})),
+            }]);
+            return sent.body;
+          },
+          verifyCreatedRow: async ({rowId,expectedSnapshot}: any) => {
+            const columns = [...new Set(Object.values(bindings)
+              .map((value: any) => String(value).trim()).filter((value: string) => /^\d+$/.test(value)))];
+            const query = new URLSearchParams({
+              rowIds: String(rowId),columnIds: columns.join(','),exclude:'nonexistentCells',
+            });
+            const remote = await smartsheetGet('/sheets/' + sheetId + '?' + query.toString(), token);
+            if (String(remote.body?.id ?? '') !== sheetId) return false;
+            const rows = normalizeSheetRows(remote.body);
+            return rows.length === 1 && String(rows[0]?.id ?? '') === String(rowId) &&
+              salesSnapshotsEqual(expectedSnapshot,buildSalesPullSnapshot(rows[0],bindings),
+                cleanText(bindings?.current_task_assigned_to,40));
+          },
         });
-        const verifiedLink = verifiedLinkRows.length === 1 ? verifiedLinkRows[0] : null;
-        if (!verifiedLink ||
-            cleanText(verifiedLink?.smartsheet_row_id, 40) !== newRowId ||
-            cleanText(verifiedLink?.smartsheet_sheet_id, 40) !== sheetId) {
-          throw new Error(
-            'Sales permanent Smartsheet link could not be verified after create. The remote row may exist; Base44 sync metadata was not advanced. Review Smartsheet before retrying.'
-          );
+        created.push(record.id);
+        if (result.newerLocalEditsRemain) {
+          errors.push(record.id + ': Sales row ' + result.rowId + ' linked, but newer local edits remain queued for the next verified sync.');
         }
-        salesSuccessfulWrite = 'created';
+        continue;
       }
       // Store only verified field baselines; held values keep their old evidence.
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
