@@ -14,7 +14,7 @@ function harness({error,run=null,result=null,statusError=null,invoke=null}={}){
  vm.runInNewContext(compiled,sandbox);
  function render(){refIndex=0;effects=[];return sandbox.module.exports.ResearchProgressProvider({children:null}).props.value;}
  const context=render();
- return {context,render,get effects(){return effects;},row:()=>Object.values(state)[0],timers,calls,setStatus:(error,run=null)=>{statusState.error=error;statusState.run=run;}};
+ return {context,render,get effects(){return effects;},row:()=>Object.values(state)[0],rows:()=>Object.values(state),timers,calls,setStatus:(error,run=null)=>{statusState.error=error;statusState.run=run;}};
 }
 for(const error of [{status:401,message:'raw auth rejection'},{response:{status:401,data:{error:'raw auth rejection'}},message:'Request failed'}]){
  test('confirmed sign-in rejection stops scan tracking with a useful message',async()=>{
@@ -111,4 +111,23 @@ test('an in-flight poll cannot regress an action after its final response arrive
  action.resolve({data:{success:true,scan_run:{status:'complete',stage:'Complete',processed:5,total:5}}});await executing;
  status.resolve({data:{run:{status:'running',stage:'Old page',processed:1,total:5}}});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(h.row().status,'complete');assert.equal(h.row().processed,5);assert.equal(h.timers.size,0);
+});
+test('a manually confirmed scan stays complete when the original request later loses sign-in',async()=>{
+ const action=deferred(),status=deferred();let checks=0;
+ const h=harness({invoke:name=>name==='permittingScanStatus'?(++checks===1?Promise.resolve({data:{run:{status:'complete',stage:'Complete',processed:5,total:5}}}):status.promise):action.promise});
+ const executing=h.context.runAction('resolvePermittingAddress',{},'Address scan');const outcome=assert.rejects(executing);
+ await h.context.refreshAction(savedToken);
+ h.timers.values().next().value();
+ action.reject({status:401});await outcome;
+ status.reject({status:401});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.row().status,'complete');assert.equal(h.row().processed,5);assert.notEqual(h.row().stage,'Sign in to scan');
+});
+test('different simultaneous scan actions do not invalidate each other',async()=>{
+ const pending=[],secondToken='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+ const h=harness({invoke:(name,payload)=>{const request=deferred();pending.push({request,id:payload.action_token});return request.promise;}});
+ seedRunning(h);h.context.trackAction({action_token:secondToken,status:'running'});
+ const first=h.context.refreshAction(savedToken),second=h.context.refreshAction(secondToken);
+ pending[1].request.resolve({data:{run:{status:'complete',stage:'Second complete'}}});await second;
+ pending[0].request.resolve({data:{run:{status:'running',stage:'First still scanning',processed:3,total:5}}});await first;
+ assert.equal(h.rows().find(row=>row.id===savedToken).processed,3);assert.equal(h.rows().find(row=>row.id===secondToken).status,'complete');
 });
