@@ -37,7 +37,7 @@ export function originalFileStatus(doc,now=Date.now()){
  if(active&&['downloading','uploading','uploaded','verification_blocked'].includes(state.status))return {kind:'active',label:state.status==='uploading'?'Saving file to storage.':state.file_url?'Checking saved file bytes.':'Downloading original file.'};
  if(state.status==='uploading')return {kind:'review',label:'Upload did not confirm; review is needed before another upload.'};
  if(state.status==='complete'||doc.file_url||doc.source_sha256)return {kind:'review',label:'Saved-file evidence is incomplete or inconsistent; review is needed.'};
- if(state.file_url)return {kind:'verify',label:'File uploaded; verification still needed.',retryAfter:validFuture(state.retry_after,now)};
+ if(state.file_url)return state.status==='verification_blocked'?{kind:'verify',label:'File uploaded; automatic verification stopped. Review the error, then use Verify saved file.'}:{kind:'verify',label:'File uploaded; verification still needed.',retryAfter:validFuture(state.retry_after,now)};
  if(state.status==='blocked'||Number(state.attempts || 0)>=3)return {kind:'review',label:'Automatic download stopped after a problem; review the error before retrying.'};
  return {kind:'waiting',label:state.status==='downloading'?'Previous download stopped; original still needs downloading.':'Original still needs downloading.',retryAfter:validFuture(state.retry_after,now)};
 }

@@ -38,9 +38,9 @@ test('file status distinguishes active work, interrupted download and uncertain 
  assert.match(originalFileStatus(doc('d',{archive_state:{status:'downloading'}})).label,/Previous download stopped/);
 });
 test('verification receipts retain future retry times without claiming a file is saved',()=>{
- const state={status:'verification_blocked',file_url:'https://stored.gov/file.pdf',retry_after:'2099-01-01T00:00:00Z'};
+ const state={status:'uploaded',file_url:'https://stored.gov/file.pdf',retry_after:'2099-01-01T00:00:00Z'};
  const status=originalFileStatus(doc('v',{archive_state:state}));
- assert.equal(status.kind,'verify');assert.equal(status.retryAfter,state.retry_after);
+ assert.equal(status.kind,'verify');assert.equal(status.retryAfter,new Date(state.retry_after).toISOString());
  assert.equal(originalFileStatus(doc('v',{archive_state:{...state,retry_after:'invalid'}})).retryAfter,null);
 });
 test('collection status counts outside originals once and never hides blocked files',()=>{
@@ -48,3 +48,5 @@ test('collection status counts outside originals once and never hides blocked fi
  assert.deepEqual(originalCollectionCounts(collection),{saved:0,waiting:2,active:0,verify:1,review:1,total:4});
  assert.equal(originalFileStatus(doc('r',{archive_state:{attempts:3}})).kind,'review');
 });
+
+test('blocked verification never advertises an automatic retry',()=>{const status=originalFileStatus(doc('blocked',{archive_state:{status:'verification_blocked',file_url:'https://stored.gov/a.pdf',retry_after:'2099-01-01'}}));assert.equal(status.kind,'verify');assert.equal(status.retryAfter,undefined);assert.match(status.label,/automatic verification stopped/);});
