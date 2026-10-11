@@ -366,5 +366,35 @@
     },
     "remaining": "One signed-in preview scan to obtain the safe provider diagnostic; Google Cloud project inspection/configuration remains blocked by access. Frontend not published. Exact pin and jurisdiction use still unverified.",
     "phase_10_complete": false
+  },
+  "session_recovery_resume": {
+    "checked_at": "2026-10-11T19:21:02.383742+00:00",
+    "phase": "Phase 10 \u2014 live testing, milestone 2 of 3",
+    "latest_saved_test_scan_id": "6acbaf19beacb55b547d9ab5",
+    "latest_saved_test_scan_created_at": "2026-10-11T15:45:29.661000",
+    "latest_saved_test_scan_revision": "address-geocode-v3",
+    "latest_saved_geocoding_status": "REQUEST_DENIED",
+    "new_v5_authenticated_test_found": false,
+    "browser_action": "No further browser action after the documented recovery and manual handoff failed with next_action stop.",
+    "reported_session_ended_source": "Unconfirmed; no claim that app authentication itself expired.",
+    "preview_fix": "A confirmed HTTP 401 with no saved run ends local action tracking as failed with a sign-in message. Saved running/completed evidence and uncertainty after lost responses remain preserved.",
+    "files": [
+      "src/components/permitting/ResearchProgressContext.jsx",
+      "scripts/permitting-progress-session-recovery.test.mjs"
+    ],
+    "validation": {
+      "focused_session_recovery_tests": {
+        "passed": 6,
+        "failed": 0,
+        "command": "node --test scripts/permitting-progress-session-recovery.test.mjs"
+      }
+    },
+    "frontend_published": false,
+    "remaining": [
+      "Authenticated v5 preview scan and exact location/map/progress verification",
+      "Confirm and resolve Google geocoding rejection using the new safe diagnostic or approved Cloud inspection",
+      "Frontend publication only after explicit authorization"
+    ],
+    "phase_10_complete": false
   }
 }
