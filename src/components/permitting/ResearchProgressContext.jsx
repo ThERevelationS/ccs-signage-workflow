@@ -20,7 +20,7 @@ export function ResearchProgressProvider({children}){
    if(data.error || data.success===false){knownFailure=true;put(id,{status:'failed',stage:'Failed',error:data.error || 'Action incomplete',indeterminate:false});throw Error(data.error || 'Action incomplete');}
    if(!data.scan_run)put(id,{status:'complete',stage:'Complete',indeterminate:false});
    return res;
-  }catch(error){if(knownFailure)throw error;await poll();put(id,{...(lastRun?{}:{status:'unknown',stage:'Execution unconfirmed — check saved status'}),activity_warning:error?.response?.data?.error || error.message || 'Request response was lost; check saved activity.',response_lost:true});throw error;
+  }catch(error){if(knownFailure)throw error;await poll();const signInRejected=error?.status===401||error?.response?.status===401;if(signInRejected&&!lastRun){const message='Your sign-in ended. Sign in again, then try this scan.';put(id,{status:'failed',stage:'Sign in to scan',error:message,indeterminate:false,response_lost:false,activity_warning:null});throw Object.assign(new Error(message),{status:401});}put(id,{...(lastRun?{}:{status:'unknown',stage:'Execution unconfirmed — check saved status'}),activity_warning:error?.response?.data?.error || error.message || 'Request response was lost; check saved activity.',response_lost:true});throw error;
   }finally{stopped=true;clearInterval(timer);}
  },[put]);
  const trackAction=useCallback(run=>{const id=run?.action_token;if(typeof id==='string'&&/^[a-f0-9-]{36}$/i.test(id))put(id,{...run,id,background:true});},[put]);
