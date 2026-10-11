@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T09:07:25.678Z",
+  "tested_at": "2026-10-11T10:10:31.206Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -140,6 +140,26 @@
     },
     {
       "name": "file status shows waiting, verification, review and retry details honestly",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "saved waiting pages continue with individual progress and stop after current page",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "saved waiting pages continue with individual progress and stop after current page",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "page continuation drains the saved frontier sequentially and reveals new files",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "page continuation drains the saved frontier sequentially and reveals new files",
       "width": 1280,
       "passed": true
     }
