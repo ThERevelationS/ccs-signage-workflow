@@ -504,7 +504,7 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   const validationHandler = new Function("event", "isOpen", "validationFocusItemIdRef",
     "findRenderedChecklistItemElement", "checklistSearchInputRef",
     "checklistCloseButtonRef", "showOtherPopup", "otherPopupValidationReturnRef",
-    "customStatusInputRef", "otherPopupValidationPendingRef", validationBody);
+    "customStatusInputRef", "otherPopupValidationPendingRef", "isLoading", "staleValidationFocusRef", validationBody);
   const findRow = ([id]) => {
     assert.equal(id, "item-1");
     return { querySelector: (selector) => {
@@ -513,13 +513,13 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
     } };
   };
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, null, { current: null }, { current: null }, { current: false });
+    { current: null }, null, { current: null }, { current: null }, { current: false }, false, { current: false });
   assert.equal(statusFocus, 1);
   assert.equal(validationItemRef.current, null);
   validationItemRef.current = "item-1";
   statusControl.disabled = true;
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, null, { current: null }, { current: null }, { current: false });
+    { current: null }, null, { current: null }, { current: null }, { current: false }, false, { current: false });
   assert.equal(statusFocus, 1);
   assert.equal(searchFocus, 1);
 
@@ -534,13 +534,13 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   statusControl.disabled = false;
   validationItemRef.current = "item-1";
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false });
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false }, false, { current: false });
   assert.equal(optionFocus, 1);
   assert.equal(statusFocus, 1);
   assert.equal(optionReturnRef.current, null);
   validationItemRef.current = "item-1";
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false });
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false }, false, { current: false });
   assert.equal(inputFocus, 1);
   assert.equal(statusFocus, 1);
   // Unmounted preset option falls back to the still-visible custom input.
@@ -548,7 +548,7 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   optionReturnRef.current = selectedOption;
   validationItemRef.current = "item-1";
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false });
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false }, false, { current: false });
   assert.equal(optionFocus, 1);
   assert.equal(inputFocus, 2);
   assert.equal(statusFocus, 1);
@@ -659,7 +659,7 @@ check("Other status transitions defer focus until popup close, including Complet
     { current: null }, () => events.push("warning"),
     () => events.push("clear search"), () => events.push("clear needs"),
     () => events.push("reset index"), () => events.push("timer"),
-    { current: { focus() {} } }, (id, updates) => { assert.equal(id, "A"); setValue(updates); }, { current: false });
+    { current: { focus() {} } }, (id, updates) => { assert.equal(id, "A"); setValue(updates); }, { current: false }, { current: false });
 
   assert.equal(apply("A", "Completed", { fromOtherPopup: true }), true);
   assert.ok(events.includes("clear search"));
@@ -784,7 +784,7 @@ check("rapid successive status warnings preserve popup draft and focus until eac
     "areChildrenComplete", "validationFocusItemIdRef", "setValidationDialog",
     "setFocusedSearchId", "setFocusedNeedsInputId", "setChecklistSearchIndex",
     "scheduleNavigationFocus", "checklistSearchInputRef", "updateChecklistItem",
-    "otherPopupValidationPendingRef", statusBody + "\nreturn applyChecklistStatus;");
+    "otherPopupValidationPendingRef", "staleValidationFocusRef", statusBody + "\nreturn applyChecklistStatus;");
   const createCustom = new Function("customDropdownValue", "otherPopupValidationReturnRef",
     "customStatusInputRef", "applyChecklistStatus", "otherPopupDismissedRef",
     "customStatusDraftsByItemIdRef", "setCustomDropdownValue", "setShowOtherPopup",
@@ -793,10 +793,10 @@ check("rapid successive status warnings preserve popup draft and focus until eac
   const closeWarning = new Function("event", "isOpen", "validationFocusItemIdRef",
     "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
     "showOtherPopup", "otherPopupValidationReturnRef", "customStatusInputRef",
-    "otherPopupValidationPendingRef", focusBody);
+    "otherPopupValidationPendingRef", "isLoading", "staleValidationFocusRef", focusBody);
   assert.match(source, /const dismissOtherPopup = \(\) => \{\s*if \(validationDialog \|\| otherPopupValidationPendingRef\.current\) return;/);
   assert.match(source, /const openOtherPopup = \(itemId\) => \{\s*if \(otherPopupValidationPendingRef\.current \|\| validationDialog\) return;/);
-  assert.match(source, /otherPopupValidationPendingRef\.current = false;[\s\S]*?if \(!isOpen\) return;/);
+  assert.match(source, /otherPopupValidationPendingRef\.current = false;[\s\S]*?if \(!isOpen \|\| isLoading \|\| staleValidationFocusRef\.current\) \{/);
   assert.match(source, /otherPopupValidationPendingRef\.current = false;[\s\S]*?\}, \[workOrder\?\.id\]\);/);
 
   const item = { id: "item-1", type: "detail", approved_by: null,
@@ -811,7 +811,7 @@ check("rapid successive status warnings preserve popup draft and focus until eac
   const apply = createStatus(new Map([["item-1", item]]),
     new Map([["Completed", { is_completed: true }]]), () => childrenComplete,
     focusItem, value => warnings.push(value), () => {}, () => {}, () => {},
-    () => {}, { current: null }, () => {}, pending);
+    () => {}, { current: null }, () => {}, pending, { current: false });
   // Retain a stale null validationDialog closure to exercise same-tick double clicks.
   const submit = createCustom("  Completed  ", returnRef, { current: input },
     apply, dismissed, draftRef, () => { cleared++; }, () => { closed++; },
@@ -819,7 +819,7 @@ check("rapid successive status warnings preserve popup draft and focus until eac
   const dismiss = () => closeWarning({ preventDefault() {} }, true, focusItem,
     () => { throw Error("Do not focus behind the popup"); },
     { current: null }, { current: null }, { itemId: "item-1" }, returnRef,
-    { current: input }, pending);
+    { current: input }, pending, false, { current: false });
 
   submit("item-1"); // Approver Required.
   assert.equal(warnings.length, 1);
