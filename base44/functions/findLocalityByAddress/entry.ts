@@ -14,6 +14,7 @@ async function fixedJSON(url:string){
  if(!response.ok)throw Error('Location service returned HTTP '+response.status);
  const text=await response.text();if(text.length>8*1024*1024)throw Error('Location response exceeds its limit.');return JSON.parse(text);
 }
+// Keep this revision in responses and scan events so preview/live routing can be verified.
 const ADDRESS_LOOKUP_REVISION='address-geocode-v4';
 function addressResponse(data:any,init:any={}){
  const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION},init);
