@@ -124,3 +124,9 @@ test('automatic address archives do not attempt HTTP-only outside referrals',asy
  const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});f.patch({documents:[],discovery_scan_state:{...f.rows()[0].discovery_scan_state,external_referrals:[{referral_kind:'downloadable_document',url:'http://cdn.gov/sign.pdf',source_page_url:'https://government.example.com/forms'}]}});
  const options=backgroundFixture(f),r=await continueAddressResearchArchives(options);assert.equal(r.skipped,true);assert.equal(f.calls.source,0);assert.equal(f.calls.uploads,0);assert.equal(options.actions.size,0);
 });
+
+test('mixed HTTP and HTTPS outside links drain only the valid original queue without losing reference links',async()=>{
+ const f=await externalFixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});const c=f.rows()[0],ref=c.discovery_scan_state.external_referrals[0],http={...ref,url:'http://outside.example.com/other.pdf',linked_href:'http://outside.example.com/other.pdf'};
+ f.patch({discovery_scan_state:{...c.discovery_scan_state,external_referrals:[ref,http]}});
+ const result=await archiveOwnedAddressResearchReferral({...f.options,collectionId:c.id,selection:ref});assert.equal(result.success,true);assert.equal(f.rows()[0].discovery_scan_state.external_initial_collection_drained,true);assert.equal(f.rows()[0].discovery_scan_state.external_referrals.length,2);assert.equal(f.calls.uploads,1);
+});

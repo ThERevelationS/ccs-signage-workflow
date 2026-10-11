@@ -7,6 +7,10 @@ export function isAddressDirectOriginalReferral(ref){
  try{const url=new URL(ref.url),source=new URL(ref.source_page_url);return ref.referral_kind==='downloadable_document'&&url.protocol==='https:'&&source.protocol==='https:'&&!url.username&&!url.password&&!source.username&&!source.password;}catch{return false;}
 }
 
+export function addressDiscoveryCursor(cursor,documents){
+ return {...cursor,external_initial_collection_drained:!(cursor.external_referrals || []).some(ref=>isAddressDirectOriginalReferral(ref)&&!(documents || []).some(doc=>doc.url===ref.url))};
+}
+
 export function addressResearchCollection(row){
  const cursor=row.discovery_scan_state;
  return {id:row.id,target:row.location_target,name:row.name,documents:row.documents || [],
@@ -46,8 +50,9 @@ export async function continueOwnedAddressDiscovery({entity,scanEntity,collectio
   return {success:false,error:'Saved page progress needs review: '+error.message,collection:addressResearchCollection(await checked(collectionId))};
  }
  const docs=scan.documents.filter(isDownloadableResearchDocument).filter(doc=>{const u=new URL(doc.url);return u.protocol==='https:'&&!u.username&&!u.password&&u.hostname.toLowerCase().replace(/^www\./,'')===host&&u.port===seed.port;}).map(doc=>({...doc,id:doc.id || crypto.randomUUID()}));
+ const merged=mergeJurisdictionResearchDocuments(row.documents,docs);
  await replaceJurisdictionFieldsIfUnchanged({entity:adapter,jurisdiction:row,guardFields:guards,
-  nextFields:{documents:mergeJurisdictionResearchDocuments(row.documents,docs),discovery_scan_state:scan.continuation_state,discovery_last_scan:{pages:scan.pages,resources:scan.documents,checked_at:new Date().toISOString()}},label:'Address discovery continuation'});
+  nextFields:{documents:merged,discovery_scan_state:addressDiscoveryCursor(scan.continuation_state,merged),discovery_last_scan:{pages:scan.pages,resources:scan.documents,checked_at:new Date().toISOString()}},label:'Address discovery continuation'});
  const saved=await checked(collectionId);
  return {success:true,attempted_pages:scan.attempted_pages,pages:scan.pages,discovered_resources:scan.documents.length,pending_pages:scan.pending_pages.length,unresolved_gaps:scan.gaps.length,collection:addressResearchCollection(saved),authority_established:false,jurisdiction_coverage_complete:false,llm_calls:0,uploads:0};
 }

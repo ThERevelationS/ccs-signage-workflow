@@ -1,4 +1,4 @@
-import {addressResearchCollection,isAddressDirectOriginalReferral} from './permittingAddressDiscoveryContinuation.mjs';
+import {addressResearchCollection,isAddressDirectOriginalReferral,addressDiscoveryCursor} from './permittingAddressDiscoveryContinuation.mjs';
 import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferralArchive.mjs';
 import {validateExternalPermittingReferral} from './permittingExternalReferrals.mjs';
 import {createScanReporter,silentScanReporter} from './permittingScanReporter.mjs';
@@ -83,7 +83,7 @@ export async function archiveOwnedAddressResearchReferral({entity,collectionId,a
  const refs=(current.discovery_scan_state?.external_referrals || []).filter(ref=>ref.url===selection?.url&&ref.source_page_url===selection?.source_page_url);
  if(refs.length!==1||refs[0].referral_kind!=='downloadable_document'||new URL(refs[0].url).protocol!=='https:'||new URL(refs[0].source_page_url).protocol!=='https:')throw Object.assign(Error('Select one retained HTTPS document referral.'),{status:400});
  const adapter={get:async id=>{const row=await entity.get(id);if(!own(row)||(automatic&&(row.auto_refresh!==true||row.state!==current.state)))throw Error('Research collection owner or scope changed.');return row;},updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:current.scan_run_id,reference_only:true,authority_established:false,permitting_url:current.permitting_url,...(automatic?{auto_refresh:true,state:current.state}:{})},patch)};
- const result=await archiveExternalJurisdictionReferral({entity:adapter,jurisdictionId:collectionId,selection,manual:!automatic,automaticScopedResume:automatic,automaticInitialCollection:automatic,now,fetchScopedSource:async(url,init,host)=>{await adapter.get(collectionId);return fetchSource(url,init,host);},fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress,invalidateProfile:(_row,fields)=>fields});
+ const result=await archiveExternalJurisdictionReferral({entity:adapter,jurisdictionId:collectionId,selection,manual:!automatic,automaticScopedResume:automatic,automaticInitialCollection:automatic,now,fetchScopedSource:async(url,init,host)=>{await adapter.get(collectionId);return fetchSource(url,init,host);},fetchSource:scopedArchiveFetch(adapter,collectionId,current.permitting_url,fetchSource),uploadFile,onProgress,invalidateProfile:(_row,fields)=>fields.discovery_scan_state?{...fields,discovery_scan_state:addressDiscoveryCursor(fields.discovery_scan_state,fields.documents || _row.documents)}:fields});
  return {...result,collection:await adapter.get(collectionId)};
 }
 
