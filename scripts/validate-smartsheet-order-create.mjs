@@ -282,5 +282,6 @@ assert.match(source, /verifyCreatedRow: async \(\{ rowId, expectedSnapshot, reco
 assert.match(source, /Recovering previously created Smartsheet row \$\{rowId\} without sending another POST/);
 assert.match(source, /postRow: async \(freshOrder: any\)/);
 assert.match(source, /if \(dataset === 'orders'\)/);
-assert.match(source, /Sales create must produce one usable permanent row ID/);
+assert.match(source, /createSalesSmartsheetRowWithGuard\(\{/);
+assert.match(source, /smartsheetWriteNoTimeoutRetry\('POST', `\/sheets\/\$\{sheetId\}\/rows`/);
 console.log('PASS pull/background paths still block unresolved creates while explicit Order Save & Sync may recover only a durable permanent-row marker');
