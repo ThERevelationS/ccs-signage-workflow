@@ -906,4 +906,53 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
   assert.equal(item.current, null);
 });
 
+await (async () => {
+  const body = source.slice(source.indexOf("  const loadData = async () => {"),
+    source.indexOf("  const getDropdownName = (dropdownId) => {"));
+  assert.match(source, /return \(\) => \{ loadDataRequestRef\.current \+= 1; \};/);
+  assert.match(body, /if \(requestId !== loadDataRequestRef\.current\) return;/);
+  assert.match(body, /if \(requestId === loadDataRequestRef\.current\) setIsLoading\(false\)/);
+  const makeLoad = new Function("scope", "with(scope) { " + body + "\nreturn loadData; }");
+  const requestRef = { current: 0 }, pending = [];
+  const checklists = [], loading = [], errors = [];
+  let invalidations = 0;
+  const shared = {
+    loadDataRequestRef: requestRef,
+    resetOtherPopupForReload: () => { invalidations++; },
+    setIsLoading: value => loading.push(value),
+    WorkOrder: { filter: ({ id }) => new Promise(resolve => pending.push({ id, resolve })) },
+    AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
+    loadAllEntityRows: async () => [],
+    loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
+    setUsers: () => {}, setLoadedProductsSnapshot: () => {},
+    setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
+    setSaveError: value => errors.push(value), setProducts: () => {},
+    setLoadedUiProductsSnapshot: () => {}, setLoadedChecklistSnapshot: () => {},
+    setChecklist: items => checklists.push(items.map(item => item.id)),
+    setLoadedUiChecklistSnapshot: () => {}, setDropdownConditions: () => {},
+    setProductTypes: () => {}
+  };
+  const loadA = makeLoad({ ...shared, workOrder: { id: "WO-A" } });
+  const loadB = makeLoad({ ...shared, workOrder: { id: "WO-B" } });
+  const oldRequest = loadA();
+  const newRequest = loadB();
+  assert.deepEqual(pending.map(call => call.id), ["WO-A", "WO-B"]);
+  pending[1].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
+  await newRequest;
+  pending[0].resolve([{ id: "WO-A", sip_checklist: [{ id: "row-A", type: "checklist" }] }]);
+  await oldRequest;
+  assert.deepEqual(checklists, [["row-B"]]);
+  assert.deepEqual(loading, [true, true, false]);
+  assert.equal(invalidations, 2);
+  assert.deepEqual(errors, [""]);
+
+  const missing = loadB();
+  pending[2].resolve([]); // Missing Work Order must not leave loading stuck.
+  await missing;
+  assert.equal(loading.at(-1), false);
+  assert.match(errors.at(-1), /Work Order no longer available/);
+  console.log("PASS overlapping Work Order reloads ignore stale results and missing records release loading");
+  passed++;
+})();
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
