@@ -109,6 +109,6 @@ test('an in-flight poll cannot regress an action after its final response arrive
  const executing=h.context.runAction('resolvePermittingAddress',{},'Address scan');
  h.timers.values().next().value();
  action.resolve({data:{success:true,scan_run:{status:'complete',stage:'Complete',processed:5,total:5}}});await executing;
- status.resolve({data:{run:{status:'running',stage:'Old page',processed:1,total:5}}});await Promise.resolve();await Promise.resolve();
+ status.resolve({data:{run:{status:'running',stage:'Old page',processed:1,total:5}}});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(h.row().status,'complete');assert.equal(h.row().processed,5);assert.equal(h.timers.size,0);
 });
