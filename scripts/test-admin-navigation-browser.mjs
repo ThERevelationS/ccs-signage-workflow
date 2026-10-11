@@ -782,6 +782,35 @@ try {
       await dialog.waitFor({ state: 'detached' });
     });
 
+  await check('Read-only impact scan shows its scope without fabricated completion percentages', 375,
+    '/?tab=users&real_users=1&deletion_rows=1', async page => {
+      await page.evaluate(() => { window.__adminImpactDelay = true; });
+      await page.getByRole('button', { name: 'Review Impact' }).click();
+      const dialog = page.getByRole('dialog', { name: /Account Deletion Impact/ });
+      const progress = dialog.getByRole('status', { name: 'Account impact scan in progress' });
+      await progress.waitFor();
+      const included = progress.getByRole('list', { name: 'Impact checks included' });
+      assert.equal(await included.getByRole('listitem').count(), 5);
+      for (const label of [
+        'User identity and account match',
+        'Payroll and timekeeping history',
+        'Account state and credentials',
+        'Estimator record ownership',
+        'Work order, task and calendar references',
+      ]) assert.equal(await included.getByText(label).count(), 1);
+      assert.match(await progress.innerText(), /Individual completion percentages are unavailable/);
+      assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
+      assert.equal(await dialog.getByRole('button', { name: 'Close' }).first().isEnabled(), true);
+      await dialog.getByRole('button', { name: 'Close' }).first().click();
+      await dialog.waitFor({ state: 'detached' });
+      await page.evaluate(() => {
+        const pending = window.__adminImpactPending.shift();
+        window.__adminImpactDelay = false;
+        pending.resolve(pending.report);
+      });
+      assert.equal(await page.getByRole('dialog', { name: /Account Deletion Impact/ }).count(), 0);
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
