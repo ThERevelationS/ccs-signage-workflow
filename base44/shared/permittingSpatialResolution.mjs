@@ -16,8 +16,8 @@ export function strictGeocode(results,address=''){
  const part=type=>parts.find(c=>c.types?.includes(type))?.long_name || '';
  const street=value=>String(value).toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean).map(w=>({street:'st',road:'rd',drive:'dr',avenue:'ave',boulevard:'blvd',lane:'ln',court:'ct',parkway:'pkwy',highway:'hwy',north:'n',south:'s',east:'e',west:'w'}[w] || w)).join(' ');
  const requested=street(address.split(',')[0].replace(/\s+(apt|suite|unit|#)\s*.*$/i,'')),found=street(part('street_number')+' '+part('route'));
- const stateMatch=address.match(/\b(Ohio|Kentucky|OH|KY)\b/i),zipMatch=address.match(/\b([0-9]{5})(?:-[0-9]{4})?\s*$/);
- const stateMatches=stateMatch?normalizeAddressState(stateMatch[1])===normalizeAddressState(part('administrative_area_level_1')):Boolean(zipMatch);
+ const stateMatch=address.match(/(?:,\s*|\s)(Ohio|Kentucky|OH|KY)(?:\s+[0-9]{5}(?:-[0-9]{4})?)?(?:,?\s+(?:USA|United States))?\s*$/i),zipMatch=address.match(/\b([0-9]{5})(?:-[0-9]{4})?\s*$/);
+ const stateMatches=stateMatch?normalizeAddressState(stateMatch[1])===normalizeAddressState(part('administrative_area_level_1')):false;
  const zipMatches=!zipMatch||zipMatch[1]===part('postal_code');
  const city=street(part('locality') || part('postal_town'));
  const streetMatches=requested===found || (!address.includes(',')&&city&&requested.startsWith(found+' '+city+' '));
