@@ -695,6 +695,22 @@ function decodePhotos(raw: unknown) {
   return {photos,error:''};
 }
 
+async function updateMechanicGrantIfCurrent(Access:any,found:any,patch:Record<string,any>) {
+  // Scope and action updates must not silently race revocation or another
+  // admin edit. This fences one grant row, NOT a Fleet work-order commit.
+  const expected = String(found?.updated_date || '').trim();
+  if (!found?.id || !expected || found.enabled !== true) {
+    throw Object.assign(new Error('This mechanic link is revoked or its version is unavailable. Refresh Fleet Settings before editing.'),{status:409});
+  }
+  const result = await Access.updateMany({id:found.id,updated_date:expected,enabled:true},{$set:patch});
+  if (result?.updated !== 1) {
+    throw Object.assign(new Error('This mechanic link changed while its permissions were being edited. Refresh Fleet Settings and review the current link.'),{status:409});
+  }
+  const updated = await Access.get(found.id).catch(()=>null);
+  if (!updated) throw Object.assign(new Error('The updated mechanic link could not be verified. Refresh Fleet Settings.'),{status:409});
+  return updated;
+}
+
 async function uploadPhotos(base44: any, Receipt: any, receipt: any, photos: Uint8Array[], initialUrls: string[] = [], assertAuthorized?:()=>Promise<unknown>) {
   const urls = [...initialUrls];
   let currentReceipt = receipt;
@@ -770,7 +786,7 @@ Deno.serve(async (req) => {
         const currentActions = Array.isArray(found.allowed_actions) && found.allowed_actions.length ? found.allowed_actions : ['bootstrap','start','save'];
         const retained = currentActions.filter((item:string)=>!['estimate_save','estimate_submit'].includes(item));
         const allowedActions = [...new Set([...retained,...(allowEstimates?['estimate_save','estimate_submit']:[])])];
-        const updated = await Access.update(id,{allowed_actions:allowedActions});
+        const updated = await updateMechanicGrantIfCurrent(Access,found,{allowed_actions:allowedActions});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:`Standalone Fleet mechanic estimate permission ${allowEstimates?'enabled':'disabled'}.`,details:{grant_id:id,name:found.name || '',changed_by:auth.user.email || ''}}).catch(()=>null);
         return json({success:true,link:publicGrant(updated)});
       }
@@ -788,7 +804,7 @@ Deno.serve(async (req) => {
           const missing = requestedEquipmentIds.filter(equipmentId=>!knownIds.has(equipmentId));
           if (missing.length) return json({error:'One or more selected Fleet equipment records no longer exist. Refresh Fleet Settings and choose the scope again.'},{status:409});
         }
-        const updated = await Access.update(id,{scope_mode:scopeMode,allowed_equipment_ids:scopeMode === 'selected_equipment' ? requestedEquipmentIds : []});
+        const updated = await updateMechanicGrantIfCurrent(Access,found,{scope_mode:scopeMode,allowed_equipment_ids:scopeMode === 'selected_equipment' ? requestedEquipmentIds : []});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic work scope updated.',details:{grant_id:id,name:found.name || '',scope_mode:scopeMode,equipment_count:scopeMode === 'selected_equipment' ? requestedEquipmentIds.length : 0,changed_by:auth.user.email || ''}}).catch(()=>null);
         return json({success:true,link:publicGrant(updated)});
       }
