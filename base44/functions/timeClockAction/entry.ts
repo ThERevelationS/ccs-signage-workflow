@@ -82,6 +82,43 @@ function constantTimeEqual(a: string, b: string) {
   return diff === 0;
 }
 
+// A payroll delta can be backed by a chain, but only if exactly one
+// contiguous audit suffix explains its before and after state.
+function uniqueAdminCorrectionSemanticSuffix(audits: any[], before: any, after: any) {
+  if (!Array.isArray(audits) || audits.length < 2) return null;
+  const semantic = (row: any) => ({
+    clock_in: String(row?.clock_in || ''),
+    clock_out: String(row?.clock_out || ''),
+    total_hours: Number(row?.total_hours || 0),
+  });
+  const same = (left: any, right: any) =>
+    left.clock_in === right.clock_in && left.clock_out === right.clock_out &&
+    left.total_hours === right.total_hours;
+  let matches = 0;
+  let selected = null;
+  for (let start = 0; start < audits.length; start += 1) {
+    let state = semantic(before);
+    let valid = true;
+    for (let index = start; index < audits.length; index += 1) {
+      const row = audits[index];
+      if (!row?.id || String(row.action || '') !== 'admin_correction' ||
+          !['confirmed', 'recovered'].includes(String(row.outcome || '')) ||
+          !row.details?.original || !row.details?.corrected ||
+          !same(semantic(row.details.original), state)) {
+        valid = false;
+        break;
+      }
+      state = semantic(row.details.corrected);
+    }
+    if (valid && same(state, semantic(after))) {
+      matches += 1;
+      selected = { start_audit_id: String(audits[start].id), terminal: audits[audits.length - 1] };
+      if (matches > 1) return null;
+    }
+  }
+  return matches === 1 ? selected : null;
+}
+
 function authenticationMethodFor(actor: any, target: any) {
   if (actor?.role === 'badge') return 'badge';
   return asEmail(actor?.email) === asEmail(target?.email) ? 'session' : 'admin_kiosk';
