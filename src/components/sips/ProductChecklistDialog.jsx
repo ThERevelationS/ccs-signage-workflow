@@ -333,6 +333,8 @@ export default function ProductChecklistDialog({
   };
 
   const openOtherPopup = (itemId) => {
+    // Modal owns focus until it closes, including any stale Search/Needs Input timer.
+    cancelPendingNavigationFocus();
     otherPopupFocusItemIdRef.current = itemId;
     otherPopupDismissedRef.current = false;
     otherPopupValidationReturnRef.current = null;
@@ -358,9 +360,10 @@ export default function ProductChecklistDialog({
     event.preventDefault();
     const row = findRenderedChecklistItemElement([otherPopupFocusItemIdRef.current]);
     const statusControl = row?.querySelector('[aria-label^="Status for "]');
-    const fallback = checklistSearchInputRef.current || checklistCloseButtonRef.current;
-    const destination = [statusControl, fallback].find(target =>
-      target?.isConnected && !target.disabled && target.getClientRects().length);
+    // The row may have moved, been collapsed, or unmounted while the modal
+    // was open. Try each visible, enabled fallback independently.
+    const destination = [statusControl, checklistSearchInputRef.current, checklistCloseButtonRef.current]
+      .find(target => target?.isConnected && !target.disabled && target.getClientRects().length);
     destination?.focus();
   };
 
@@ -962,9 +965,11 @@ export default function ProductChecklistDialog({
   // Cancel queued focus before the checklist closes, switches work orders,
   // reloads, or yields to Template Builder / the Revisit confirmation.
   useLayoutEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup) cancelPendingNavigationFocus();
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup || showOtherPopup) {
+      cancelPendingNavigationFocus();
+    }
     return cancelPendingNavigationFocus;
-  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, workOrder?.id]);
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, showOtherPopup, workOrder?.id]);
 
   // Warning dialogs must keep focus inside their modal while displayed.
   useLayoutEffect(() => {
@@ -1300,7 +1305,7 @@ export default function ProductChecklistDialog({
   // When checklist edits remove a navigated match, clear the stale cursor and
   // highlight. Keep focus in place when its row remains visible.
   useEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup ||
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup || showOtherPopup ||
         incompleteWarning || validationDialog || noChecklistWarning) return;
 
     if (focusedSearchId && !checklistSearchResults.some(({ item }) => item.id === focusedSearchId)) {
@@ -1319,7 +1324,7 @@ export default function ProductChecklistDialog({
         (needsInputPrimaryCount > 0 ? needsInputSummaryRef.current : checklistSearchInputRef.current)?.focus();
       }
     }
-  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup,
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, showOtherPopup,
     incompleteWarning, validationDialog, noChecklistWarning, focusedSearchId,
     checklistSearchResults, needsInputNavigationIndex, focusedNeedsInputId,
     needsInputPrimaryItems, needsInputPrimaryCount]);
@@ -1328,7 +1333,7 @@ export default function ProductChecklistDialog({
   // row without a reliable blur event. Clear only a hidden result; do not take
   // focus away from a visible collapse button or another editor control.
   useEffect(() => {
-    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup ||
+    if (!isOpen || isLoading || showTemplateBuilder || showRevisitPopup || showOtherPopup ||
         incompleteWarning || validationDialog || noChecklistWarning) return;
     const hiddenSearch = focusedSearchId &&
       !findRenderedChecklistItemElement([focusedSearchId])?.getClientRects().length;
@@ -1351,7 +1356,7 @@ export default function ProductChecklistDialog({
         : checklistSearchInputRef.current || checklistCloseButtonRef.current;
       destination?.focus();
     }
-  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup,
+  }, [isOpen, isLoading, showTemplateBuilder, showRevisitPopup, showOtherPopup,
     incompleteWarning, validationDialog, noChecklistWarning, collapsedProducts,
     expandedItems, showCompletedItems, focusedSearchId, focusedNeedsInputId,
     needsInputPrimaryCount]);
