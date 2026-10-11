@@ -81,6 +81,9 @@ export default function ProductChecklistDialog({
   const resetOtherPopupForReload = () => {
     staleValidationFocusRef.current = true;
     validationFocusItemIdRef.current = null;
+    unfinishedDraftTargetRef.current = null;
+    focusCustomDraftOnOpenRef.current = false;
+    setUnfinishedEditsWarning(null);
     customStatusDraftsByItemIdRef.current.clear();
     otherPopupValidationReturnRef.current = null;
     otherPopupValidationPendingRef.current = false;
