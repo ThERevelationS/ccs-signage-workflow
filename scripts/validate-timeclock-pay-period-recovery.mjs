@@ -5372,6 +5372,107 @@ test('v28 direct-terminal payroll delta cannot bypass dual semantic suffix rejec
   await exerciseV28AmbiguousCorrectionSuffix({ withDirectD: false });
 });
 
+async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline }) {
+  // All audits come from legitimate synthetic backend actions.
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  const period = h.period();
+  Object.assign(period, { start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '' });
+  const prefix = returnToBaseline ? 'v28-mgr-amb' : 'v28-mgr-unique';
+  const ok = async (call) => {
+    const result = await call;
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    return result.body;
+  };
+  const recovered = await ok(h.invokeAs(employee, {
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: prefix + '-source', claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  }));
+  const entry = h.rows.TimeEntry.find((row) => row.id === recovered.entry.id);
+  await ok(h.invokeAs(employee, {
+    action: 'clock_out', target_email: employee.email, request_id: prefix + '-out',
+    lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+  }));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: prefix + '-approve-b', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve B',
+  }));
+  await ok(h.action('finalize', prefix + '-finalize-b'));
+  await ok(h.action('reopen', prefix + '-reopen-period', 'Review manager corrections'));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: prefix + '-reopen-shift', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen', note: 'Prepare corrections',
+  }));
+  const direct = async (letter, clockIn, hours, minutes) => {
+    const request = {
+      action: 'admin_correct_entry', target_email: employee.email,
+      request_id: prefix + '-' + letter, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: 'Manager verifies ' + letter,
+      correction: {
+        clock_in: clockIn, clock_out: entry.clock_out, lunch_minutes: 0,
+        notes: 'Direct ' + letter,
+        job_allocations: [{ hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+      },
+    };
+    const result = await ok(h.invoke(request));
+    assert.equal((await h.invoke(request)).status, 200, 'Exact retry must be idempotent');
+    return h.rows.TimeClockAudit.find((row) => row.id === result.audit_id);
+  };
+  const auditC = await direct('c', '2026-09-28T12:30:00.000Z', 7, 30);
+  const auditReturnB = returnToBaseline
+    ? await direct('return-b', '2026-09-28T12:00:00.000Z', 8, 0)
+    : null;
+  const auditD = await direct('d', '2026-09-28T12:45:00.000Z', 7, 15);
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: prefix + '-approve-d', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve terminal D',
+  }));
+  await ok(h.action('finalize', prefix + '-finalize-d'));
+  assert.equal(period.finalized_summary.generation_changes.length, 1);
+  const change = period.finalized_summary.generation_changes[0];
+  assert.equal(change.change_type, 'changed');
+  assert.equal(change.action_provenance.audit_id, auditD.id);
+  assert.equal(change.correction_provenance, undefined);
+  const correctionLinks = change.causal_chain.filter((link) => link.action === 'admin_correction');
+  const expected = [auditC.id, ...(auditReturnB ? [auditReturnB.id] : []), auditD.id];
+  assert.deepEqual(correctionLinks.slice(-expected.length).map((link) => link.audit_id), expected);
+  const audits = correctionLinks.map((link) => h.rows.TimeClockAudit.find((row) => row.id === link.audit_id));
+  const state = (value) =>
+    [String(value?.clock_in || ''), String(value?.clock_out || ''), Number(value?.total_hours || 0)];
+  let validSuffixes = 0;
+  for (let start = 0; start < audits.length; start += 1) {
+    let current = state(change.before);
+    let valid = true;
+    for (let index = start; index < audits.length; index += 1) {
+      if (state(audits[index].details.original).some((part, j) => part !== current[j])) {
+        valid = false;
+        break;
+      }
+      current = state(audits[index].details.corrected);
+    }
+    if (valid && current.every((part, j) => part === state(change.after)[j])) validSuffixes += 1;
+  }
+  assert.equal(validSuffixes, returnToBaseline ? 2 : 1, 'Prove exact suffix count independently');
+  const verify = () => ok(h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id: prefix + '-verify',
+  }));
+  const first = await verify();
+  assert.equal(first.verified, !returnToBaseline, 'Only unique direct-manager suffix may verify');
+  const repeat = await verify();
+  assert.equal(repeat.verified, first.verified, 'Exact verify retry must agree');
+}
+
+test('v28 unique manager-only multi-correction suffix verifies', async () => {
+  await exerciseV28DirectManagerSemanticSuffix({ returnToBaseline: false });
+});
+
+test('v28 ambiguous manager-only return-to-baseline suffix fails closed', async () => {
+  await exerciseV28DirectManagerSemanticSuffix({ returnToBaseline: true });
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
