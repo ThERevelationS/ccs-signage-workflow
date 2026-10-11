@@ -77,3 +77,36 @@ test('new HTTP direct referrals remain outside links rather than queued original
  const result=await continueOwnedAddressDiscovery(f.options);assert.equal(result.collection.external_referrals.length,0);assert.equal(result.collection.discovery.outside_links.length,1);assert.equal(result.collection.discovery.outside_links[0].url,'http://cdn.gov/sign.pdf');
  assert.equal(f.row().discovery_scan_state.external_referrals[0].referral_kind,'downloadable_document');assert.equal(f.row().discovery_scan_state.external_initial_collection_drained,true);
 });
+
+async function failedFixture(){
+ const f=await fixture();f.options.fetchPage=async()=>{throw Error('HTTP 503');};await continueOwnedAddressDiscovery(f.options);
+ const cursor=f.row().discovery_scan_state;
+ f.patch({discovery_scan_state:{...cursor,pending_pages:[{url:'https://example.gov/other',depth:1}]}});
+ f.options.retryPageUrl='https://example.gov/permits';return f;
+}
+test('selected failed-page retry preserves depth, pending frontier and originals',async()=>{
+ const f=await failedFixture(),old=structuredClone(f.row().documents),pending=structuredClone(f.row().discovery_scan_state.pending_pages);let calls=0;
+ f.options.fetchPage=async url=>{calls++;assert.equal(url,f.options.retryPageUrl);return {html:'<a href="/new-page">Sign permit information</a><a href="/new.pdf">Sign permit form</a>',finalUrl:url};};
+ const result=await continueOwnedAddressDiscovery(f.options);assert.equal(calls,1);assert.equal(result.pages[0].depth,1);assert.equal(result.attempted_pages,1);assert.equal(result.collection.discovery.gaps.filter(g=>g.reason==='page_fetch_failed').length,0);
+ assert.deepEqual(f.row().documents[0],old[0]);assert.deepEqual(f.row().discovery_scan_state.pending_pages[0],pending[0]);assert.equal(f.row().discovery_scan_state.pending_pages.find(p=>p.url.endsWith('/new-page')).depth,2);
+ await assert.rejects(continueOwnedAddressDiscovery(f.options),/changed/);assert.equal(calls,1);
+});
+test('failed retry keeps selected gap and does not consume pending pages',async()=>{
+ const f=await failedFixture(),pending=structuredClone(f.row().discovery_scan_state.pending_pages);const result=await continueOwnedAddressDiscovery(f.options);
+ assert.equal(result.pages[0].status,'failed');assert.equal(result.attempted_pages,1);assert.equal(result.collection.discovery.gaps.filter(g=>g.reason==='page_fetch_failed').length,1);assert.deepEqual(f.row().discovery_scan_state.pending_pages,pending);
+});
+test('retry rejects arbitrary, stale, duplicate and malformed selections without fetching',async()=>{
+ for(const mode of ['outside','stale','duplicate','malformed','owner']){
+  const f=await failedFixture();let calls=0;f.options.fetchPage=async()=>{calls++;return {html:'',finalUrl:f.options.retryPageUrl};};
+  if(mode==='outside')f.options.retryPageUrl='https://outside.gov/permits';
+  if(mode==='stale')f.patch({discovery_scan_state:{...f.row().discovery_scan_state,gaps:[]}});
+  if(mode==='duplicate')f.patch({discovery_scan_state:{...f.row().discovery_scan_state,gaps:[...f.row().discovery_scan_state.gaps,...f.row().discovery_scan_state.gaps]}});
+  if(mode==='malformed')f.options.retryPageUrl={url:'x'};
+  if(mode==='owner')f.patch({owner_id:'foreign'});
+  await assert.rejects(continueOwnedAddressDiscovery(f.options));assert.equal(calls,0);
+ }
+});
+test('retry cannot overwrite a concurrently saved original receipt',async()=>{
+ const f=await failedFixture();f.options.fetchPage=async url=>{f.patch({documents:[{...f.row().documents[0],archive_state:{status:'uploaded'}}]});return {html:'',finalUrl:url};};
+ await assert.rejects(continueOwnedAddressDiscovery(f.options),/another session/);assert.equal(f.row().documents[0].archive_state.status,'uploaded');assert.equal(f.row().discovery_scan_state.gaps[0].reason,'page_fetch_failed');
+});
