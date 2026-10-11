@@ -426,5 +426,36 @@
       "src/components/permitting/ResearchProgressContext.jsx",
       "scripts/permitting-progress-session-recovery.test.mjs"
     ]
+  },
+  "scan_progress_display_recovery": {
+    "verified_at": "2026-10-11T20:08:04.400268+00:00",
+    "phase": "Phase 10 \u2014 live testing, milestone 2 of 3",
+    "behavior": [
+      "Paused saved-status tracking displays Live updates paused and the last saved scan step.",
+      "Paused and response-lost scans freeze at the last saved progress rather than showing indeterminate active animation.",
+      "Unknown totals do not invent a completion percentage.",
+      "Concurrent scan cards retain independent progress, sources, findings, and saved-status retry controls.",
+      "Evidenced completed scans remain complete after a lost response.",
+      "The summary counts action cards rather than incorrectly counting paused scans as active."
+    ],
+    "validation": {
+      "display_tests": {
+        "passed": 4,
+        "failed": 0
+      },
+      "session_recovery_tests": {
+        "passed": 12,
+        "failed": 0
+      },
+      "production_build_exit": 0
+    },
+    "frontend_published": false,
+    "production_records_modified": false,
+    "browser_live_test_completed": false,
+    "phase_10_complete": false,
+    "files": [
+      "src/components/permitting/ResearchProgressBar.jsx",
+      "scripts/permitting-progress-display-recovery.test.mjs"
+    ]
   }
 }

@@ -1,3 +1,9 @@
+## Phase 10 — paused scan progress display (2026-10-11)
+
+Milestone 2 of 3 remains incomplete. Progress cards now distinguish live updates from a paused or lost connection, freeze stale progress, and label the last saved step and progress. Unknown totals do not imply a percentage or active animation. Simultaneous scans keep independent progress, sources, findings and saved-status controls. Completed scan evidence remains complete when a response is lost. The summary counts action cards rather than implying that paused scans are active.
+
+Validation: 4 display behavior tests and 12 session recovery tests passed; production build exited 0. No browser action, frontend publication or production-record mutation. Live exact location/map verification and confirmation of Google's geocoding rejection remain outstanding. The browser session is still unavailable; these display fixes do not resolve that connection or the map service configuration.
+
 ## Phase 10 — saved-status sign-in recovery (2026-10-11)
 
 Milestone 2 of 3 remains incomplete. Saved-status HTTP 401 now pauses automatic checking with a clear sign-in message while preserving the scan's last known state, progress and findings. Manual Check saved action status handles failures inline. Successful retry resumes checking the same action; it never resubmits the scan. Network failures retain uncertainty. The source of the previously reported browser “session ended” remains unconfirmed; this is not a claim that the browser connection or Google geocoding configuration has been repaired.
