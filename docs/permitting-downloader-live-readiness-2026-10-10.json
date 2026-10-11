@@ -1,0 +1,44 @@
+{
+  "observed_at": "2026-10-11T00:21:22.326864+00:00",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "mode": "read-only Base44 connector entity queries",
+  "config": {
+    "enabled": true,
+    "interval_minutes": 15,
+    "max_dispatch_per_cycle": 5,
+    "max_in_flight": 20,
+    "daily_dispatch_limit": 40,
+    "retry_limit": 3
+  },
+  "last_saved_research_state": {
+    "last_cycle_at": "2026-10-10T07:01:52.155Z",
+    "daily_day_key": "2026-10-10",
+    "dispatched_today": 40,
+    "last_result_backlog_before": 1187
+  },
+  "eligible_external_direct_document_profiles": {
+    "query": {
+      "state": {
+        "$in": [
+          "OH",
+          "KY"
+        ]
+      },
+      "auto_refresh": true,
+      "discovery_scan_state.external_referrals": {
+        "$elemMatch": {
+          "referral_kind": "downloadable_document"
+        }
+      }
+    },
+    "returned_count": 0
+  },
+  "production_test_writes": 0,
+  "real_external_collection_cycle_executed": false,
+  "limitations": [
+    "No eligible external direct-document profile found for a real collection cycle.",
+    "Available browser inventory had only an about:blank tab, not an authenticated application tab.",
+    "Current Base44 connector has no backend-function invocation operation.",
+    "last_cycle_at records research dispatch state; credit-capped continuation returns without refreshing it, so this timestamp alone does not prove the scheduler is stopped."
+  ]
+}

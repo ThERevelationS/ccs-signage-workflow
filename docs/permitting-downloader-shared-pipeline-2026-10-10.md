@@ -79,3 +79,13 @@ The saved discovery cursor records when its direct-document initial inventory is
 Validation: 210 isolated automated tests passed; archive endpoint, research dispatcher and refresh backend bundles passed; Git whitespace check passed. No live scheduled cycle, production test-record writes or publication.
 
 Next: live browser verification and a controlled real scheduled-cycle check, then assess remaining Downloader coverage gaps. Ohio/Kentucky locality coverage and the overall Permitting project remain incomplete.
+
+
+### 2026-10-10 — Downloader Chromium verification and live readiness
+Phase 10, milestone 2 of 3 remains active. Added a reusable real-Chromium acceptance harness for the actual external referral component with production CSS. All 8 checks passed: 320/390/1280-pixel layouts and source links; keyboard collection and duplicate fencing; reader/protected/uncertain-receipt controls; lost-acknowledgement reload and retry; locality-switch response isolation; pagination retaining later referrals. Harness APIs are synthetic and outside network requests are blocked. Saved evidence: permitting-external-referral-browser-verification-2026-10-10.json. Full app build passed before browser checks.
+
+Read-only live readiness inspection verified enabled dispatcher settings: 15-minute interval, 5 research dispatches/cycle, 20 in flight, 40/day, 3 retries. Saved research state reported 40 dispatched today and last_cycle_at 2026-10-10T07:01:52.155Z. This timestamp alone does not establish a stalled scheduler: the current daily-cap continuation branch returns without updating research state. The last recorded backlog count of 1187 is historical, not a fresh backlog count.
+
+Live OH/KY query returned zero explicitly enabled profiles containing a downloadable_document external referral. Therefore a real external collection cycle was not executed or claimed. The available browser had only about:blank; the current Base44 connector does not expose backend function invocation. No artificial production records, opt-in changes, publication or production test writes. Saved readiness evidence: permitting-downloader-live-readiness-2026-10-10.json.
+
+Next: obtain a real eligible direct-document referral through normal discovery and verify its scheduled collection receipt, then assess remaining Downloader coverage gaps. Authenticated production-browser verification remains distinct from the completed isolated Chromium acceptance checks.
