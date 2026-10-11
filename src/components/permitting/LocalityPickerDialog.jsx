@@ -205,7 +205,7 @@ export default function LocalityPickerDialog({
   };
 
   const mapPosition = Number.isFinite(result?.geocode?.lat)&&Number.isFinite(result?.geocode?.lon) ? { lat: result.geocode.lat, lng: result.geocode.lon } : null;
-  const markerTitle = result?.geocode?.display_name || "";
+  const markerTitle = result?.geocode?.display_name || address.trim();
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
