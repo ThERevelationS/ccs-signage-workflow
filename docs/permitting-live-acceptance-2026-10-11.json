@@ -81,5 +81,21 @@
     "published_frontend": false,
     "work_order_assignments": 0,
     "acceptance_complete": false
+  },
+  "preview_shared_module_followup": {
+    "date": "2026-10-11",
+    "phase_10_complete": false,
+    "finding": "Base44 Vite plugin 1.0.44 denies base44/**; frontend imports of pure shared helpers trigger dev serving failures.",
+    "repair": "Allowlisted virtual ESM bundles for eight existing pure helper modules; dependency boundary rejects backend and all unapproved paths. No Vite fs protection changed.",
+    "validation": {
+      "permitting_tests_passed": 632,
+      "frontend_boundary_tests_passed": 2,
+      "production_build_exit": 0,
+      "vite_transform": "ElectricalAuthorityCoverage transformed to virtual helper import; auxiliary middleware server cleanup exit 13 after HMR address error, not classified as complete live verification."
+    },
+    "runtime_evidence": "Scoped deployed endpoint returns address-geocode-v3 on unauthenticated 401; prior regular preview scan did not include that revision.",
+    "browser": "Previous browser session was unavailable on resume. Current sandbox preview remained on Base44 Preview is starting up after one reload. No address scan submitted this unit.",
+    "remaining": "Current preview startup and authenticated v3 address scan; map pin, accurate jurisdiction and concurrent scan activity acceptance remain open.",
+    "frontend_published": false
   }
 }
