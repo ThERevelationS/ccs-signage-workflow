@@ -4,6 +4,8 @@ Address research and saved research now show per-collection saved/waiting/workin
 
 Actively leased originals show Working and disable duplicate manual save clicks. Existing archive claim, owner scope and byte-verification protections remain in the backend. Verification-blocked receipts explicitly require error review and manual Verify saved file rather than promising a scheduled retry. A paused collection's automatic setting is disclosed without claiming the global scheduler is active.
 
+Verification passed: 53 focused tests, 28 isolated Chromium checks, targeted lint and final production build. Browser checks include the status counts, active-file disabled control, paused-setting disclosure, retry timestamp and absence of saved links for unverified originals on 320px and 1280px screens. No production records/files used in tests; nothing published. Live signed-in map/address/archive/link and actual scheduler-cycle acceptance remain pending.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: manual save-all research originals
 
 Own address collections now offer Save all remaining originals in the selector and saved research browser. A finite selection snapshot runs one owner-authorized manual file request at a time, with no arbitrary overall file cap. It includes same-host originals and retained direct external referrals; does not crawl new websites. Saved/protected/uncertain/actively leased originals and duplicate identities are excluded. Each file retains the existing scoped download, lease, upload and byte-verification protections.

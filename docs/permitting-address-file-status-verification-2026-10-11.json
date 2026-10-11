@@ -1,0 +1,15 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Clear original-file status and verified-file progress",
+  "focused_tests_passed": 53,
+  "chromium_checks_passed": 28,
+  "targeted_lint": "passed",
+  "production_build": "passed",
+  "production_test_writes": 0,
+  "published": false,
+  "live_signed_in_acceptance": "pending",
+  "observed_scheduler_acceptance": "pending",
+  "progress_basis": "matching source and stored hashes and byte counts; not crawl coverage",
+  "backend_changes": false
+}
