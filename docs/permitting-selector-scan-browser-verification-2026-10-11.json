@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T10:14:09.822Z",
+  "tested_at": "2026-10-11T11:13:18.306Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -160,6 +160,16 @@
     },
     {
       "name": "page continuation drains the saved frontier sequentially and reveals new files",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "failed-page retry targets one retained gap with exact activity and preserves waiting pages",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "failed-page retry targets one retained gap with exact activity and preserves waiting pages",
       "width": 1280,
       "passed": true
     }
