@@ -97,7 +97,7 @@ test('geocode service failures report safe actionable status without leaking pro
  for(const status of ['REQUEST_DENIED','ZERO_RESULTS','OVER_QUERY_LIMIT','OVER_DAILY_LIMIT','INVALID_REQUEST','UNKNOWN_ERROR']){
   const scans=ledger();
   const data=await (await handler('findLocalityByAddress',client(scans),{Deno:{env:{get:()=> 'SECRET-KEY'}},fetch:async()=>new Response(JSON.stringify({status,error_message:'SECRET-KEY provider internals',results:[]}))})({address:'123 Main St',action_token:token})).json();
-  assert.equal(data.apply_allowed,false);assert.equal(data.suggested_locality,null);const event=data.scan_run.events.find(e=>e.kind==='geocode_failed');assert(event);assert(!JSON.stringify(data).includes('SECRET-KEY'));if(status==='REQUEST_DENIED')assert.match(event.detail,/server key/);if(status==='ZERO_RESULTS')assert.match(event.detail,/ZERO_RESULTS/);if(status.includes('LIMIT'))assert.match(event.detail,/service limit/);
+  assert.equal(data.apply_allowed,false);assert.equal(data.suggested_locality,null);assert.equal(data.geocoding_service.status,status);assert.equal(data.scan_run.status,status==='ZERO_RESULTS'?'complete':'completed_with_errors');if(status==='REQUEST_DENIED')assert.match(data.match_reason,/do not need to re-enter/);const event=data.scan_run.events.find(e=>e.kind==='geocode_failed');assert(event);assert(!JSON.stringify(data).includes('SECRET-KEY'));if(status==='REQUEST_DENIED')assert.match(event.detail,/server key/);if(status==='ZERO_RESULTS')assert.match(event.detail,/ZERO_RESULTS/);if(status.includes('LIMIT'))assert.match(event.detail,/service limit/);
  }
 });
 
