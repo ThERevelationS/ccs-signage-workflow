@@ -3,12 +3,13 @@ export default function ResearchProgressBar({inline=false}){
  const {actions,clearProgress,refreshAction}=useResearchProgress(),rows=Object.values(actions);
  if(!rows.length)return null;
  return <aside aria-label="Scan activity" className={inline?"rounded-lg border bg-white p-3 space-y-3 min-w-0":"fixed bottom-3 right-3 z-40 w-[calc(100vw-1.5rem)] max-w-md max-h-[70vh] overflow-y-auto rounded-lg border bg-white p-3 shadow-lg space-y-3"}>
-  <h2 className="text-sm font-semibold">Scan activity · {rows.filter(r=>r.status==='running').length} active</h2>
-  {rows.map(row=>{const active=row.status==='running',total=row.total || 0,value=Math.min(row.processed || 0,total);return <section key={row.id} aria-label={row.label} className="min-w-0 rounded border p-2 space-y-2 text-xs">
+  <h2 className="text-sm font-semibold">Scan activity · {rows.length} {rows.length===1?'action':'actions'}</h2>
+  {rows.map(row=>{const active=row.status==='running',stale=row.tracking_paused===true||(row.response_lost===true&&(active||row.status==='unknown')),total=row.total || 0,value=Math.min(row.processed || 0,total);return <section key={row.id} aria-label={row.label} className="min-w-0 rounded border p-2 space-y-2 text-xs">
    <div className="flex justify-between gap-2"><h3 className="font-semibold break-words">{row.label}</h3>{!active&&<button className="shrink-0 min-h-8 px-2" onClick={()=>clearProgress(row.id)} aria-label={`Dismiss ${row.label}`}>Dismiss</button>}</div>
-   <p role="status">{(row.stage || row.status)?.replaceAll('_',' ')}</p>
-   <progress aria-label={`${row.label} progress`} max={total || 1} {...(!row.indeterminate&&total?{value}:!active?{value:row.status==='complete'?total || 1:value}:{})} className="w-full h-3" />
-   <p>{active&&row.indeterminate?'In progress — total not exposed':total?`${value}/${total} steps or pages in the current stage`:'Action status: '+row.status}</p>
+   <p role="status">{stale?(row.tracking_paused?'Live updates paused — sign in to check this scan':'Live updates unavailable — check saved status'):(row.stage || row.status)?.replaceAll('_',' ')}</p>
+   {stale&&<p>Last saved step: {(row.stage || row.status)?.replaceAll('_',' ')}</p>}
+   <progress aria-label={`${row.label} progress`} max={total || 1} {...(stale?{value}:!row.indeterminate&&total?{value}:!active?{value:row.status==='complete'?total || 1:value}:{})} className="w-full h-3" />
+   <p>{stale?(total?`Last saved progress: ${value}/${total} steps or pages`:'Progress is unavailable until saved status can be checked'):active&&row.indeterminate?'Scanning — total steps are not known yet':total?`${value}/${total} steps or pages in the current stage`:'Action status: '+row.status}</p>
    {row.current_url&&<p className="break-all">Current source: {row.current_url}</p>}
    {row.error&&<p className="text-red-700 break-words">{row.error}</p>}
    {(row.activity_warning || row.tracking_error)&&<p className="text-amber-800">{row.activity_warning || row.tracking_error}</p>}
