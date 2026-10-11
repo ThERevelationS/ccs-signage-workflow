@@ -88,7 +88,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       await onProgress({kind:'page_start',url:next.url,detail:`Scanning page at depth ${next.depth}.`,progress:{stage:'Scanning official pages',current_url:next.url,processed:attempted-1,total:maxPages,indeterminate:false}});
       const response = await fetchPage(next.url);
       const finalUrl = scopedUrl(response.finalUrl || next.url, seedUrl), finalKey = key(finalUrl);
-      if (!recoveryGap && finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); continue; }
+      if (!recoveryGap && finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); await onProgress({kind:'redirect_duplicate',url:finalUrl,detail:'Redirect reached a page already scanned; skipped duplicate parsing.',progress:{processed:attempted,total:maxPages}});continue; }
       visited.add(finalKey);
       if (response.resource_kind === 'pdf' && response.classification_method === PDF_RESOURCE_METHOD) {
         const existing = documents.get(nextKey) || priorDocuments.get(nextKey) || { title: 'Official PDF resource', url: next.url, doc_type: 'other', source: 'official_page_harvest' };
@@ -97,6 +97,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
           ' PDF MIME type and signature checked; full-byte archival and authority review remain required.' });
         if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
         pages.push({ ...next, final_url: finalUrl, status: 'classified_pdf' });
+        await onProgress({kind:'classified_pdf',url:finalUrl,detail:'PDF MIME and signature verified; full-byte archival and authority review still required.',resources:[documents.get(nextKey)],progress:{processed:attempted,total:maxPages}});
         continue;
       }
       if (typeof response.html !== 'string' || !response.html.trim()) throw Error('Official page returned no usable static HTML.');
@@ -113,6 +114,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         ...pageReferrals.map(row=>({...row,source_page_sha256:pageSha}))];
       const batch = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100, offset });
       const found = batch;
+      if(rescanUrl!==null&&nextKey===key(rescanUrl))for(let i=gaps.length-1;i>=0;i--)if(key(gaps[i].url)===nextKey&&['page_fetch_failed','page_link_limit'].includes(gaps[i].reason))gaps.splice(i,1);
       await onProgress({kind:'found',url:finalUrl,detail:`Found ${found.length} same-host resources and ${pageReferrals.length} external referrals.`,resources:[...found,...pageReferrals],progress:{processed:attempted,total:maxPages,indeterminate:false}});
       if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
       pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length, ...(recoveryGap ? {recovered_link_offset:offset} : {}) });
