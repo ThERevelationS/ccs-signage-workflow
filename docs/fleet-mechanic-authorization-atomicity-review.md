@@ -21,6 +21,12 @@ This is **not** an atomic revocation barrier. An extra `get` can narrow the inte
 
 `fleetMechanicWorkOrderCommitGate.ts` now rereads the receipt and saved patch after the first grant check, verifies the operation and photo-retry ownership again, and makes one final grant check before the versioned write. This catches receipt cancellation, photo plan changes, reservation reassignment, and grant changes while the receiving service is validating. It preserves ordinary CCS Work Order updates without mechanic markers and does not change Bouncie or Fleet maintenance entity identity.
 
+## Single-grant administrative concurrency guard (2026-10-11)
+
+The mechanic link's `scope_mode` / `allowed_equipment_ids` and estimate `allowed_actions` administration now use `FleetMechanicAccess.updateMany` conditioned on the exact reviewed `updated_date`, `id`, and `enabled:true`. Revocation continues to set `enabled:false` without waiting for an admin edit. Therefore a delayed scope/permission edit cannot succeed after the revocation or another committed grant edit; a stale editor receives a 409 and must refresh. This preserves existing token hashes, grant IDs, receipt provenance and live work orders. The isolated race suite covers ordinary edits, revoke-before-CAS, competing admin edits and revoked/unversioned fail-closed behavior.
+
+This conditional update concerns **one grant record only**. It does not reserve a work order, drain in-flight mechanic operations, protect a commit already past the last grant read, or establish an authorization transaction. Do not present it as a stronger cross-entity guarantee.
+
 ## Future atomicity evaluation
 
 Only consider a stronger guarantee after identifying and verifying a Base44-supported transactional primitive or designing an explicit **server-enforced** fencing scheme encompassing *all* grant mutations (revoke, scope, permissions, expiration) and actual Fleet work-order commits. Any such change must address crashes, retries, lease expiry, in-flight writes, per-grant concurrency, durable operation receipts, and compatibility with existing bearer links. A simple in-memory mutex, more polling, or a CAS on just one of these entities is not sufficient. No production records should be used to test the design; do not publish until explicitly authorized.
