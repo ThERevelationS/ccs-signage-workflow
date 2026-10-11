@@ -71,9 +71,51 @@ export async function verifyFleetMechanicWorkOrderCommit({
     throw deny('the requested work-order fields differ from the durable mechanic plan');
   }
 
-  // Last service-side read immediately before the versioned WorkOrder CAS.
-  // A subsequent cross-entity revocation remains non-atomic with that CAS.
+  // An admin can cancel the receipt while the grant read is in flight. Verify
+  // the durable receipt and recovery plan again after that asynchronous read.
+  // This narrows the window, but does not make two entities transactional.
   const grant = await Access.get(grantId).catch(()=>null);
   const permission = mechanicGrantAllowsMutation(grant,action,String(workOrder.equipment_id || ''),nowMs ?? Date.now());
   if (!permission.allowed) throw deny(`the mechanic link is ${permission.reason || 'not authorized'}`);
+
+  const finalReceipt = await Receipt.get(receipt.id).catch(()=>null);
+  const finalSummary = finalReceipt?.result_summary || {};
+  if (!finalReceipt || finalReceipt.status !== 'started' ||
+      String(finalReceipt.operation_key || '') !== key ||
+      String(finalReceipt.payload_fingerprint || '') !== String(patch.mechanic_operation_fingerprint || '') ||
+      String(finalReceipt.actor_user_id || '') !== grantId ||
+      finalReceipt.operation_type !== receipt.operation_type ||
+      finalReceipt.target_entity !== receipt.target_entity ||
+      String(finalReceipt.target_id || '') !== workOrderId ||
+      String(finalSummary.grant_id || '') !== grantId ||
+      String(finalSummary.request_id || '') !== requestId ||
+      String(finalSummary.action || '') !== action ||
+      String(finalSummary.expected_updated_date || '') !== String(expectedUpdatedAt || '')) {
+    throw deny('the mechanic receipt changed during authorization');
+  }
+  const finalRecovery = buildMechanicRecoveryPatch(workOrder,finalReceipt,String(patch.mechanic_operation_applied_at));
+  if (!finalRecovery.recoverable ||
+      JSON.stringify(Object.keys(finalRecovery.patch).sort()) !== JSON.stringify(actualFields) ||
+      actualFields.some(field=>JSON.stringify(patch[field]) !== JSON.stringify(finalRecovery.patch[field]))) {
+    throw deny('the mechanic mutation plan or photo evidence changed during authorization');
+  }
+  if (action === 'save' && finalSummary.retry_reservation_required === true) {
+    const source = await Receipt.get(String(finalSummary.reused_upload_receipt_id || '')).catch(()=>null);
+    const sourceUrls = source?.result_summary?.uploaded_photo_urls;
+    const savedUrls = finalSummary.uploaded_photo_urls;
+    if (!source || source.status !== 'started' ||
+        String(source.payload_fingerprint || '') !== String(finalReceipt.payload_fingerprint || '') ||
+        String(source.result_summary?.grant_id || '') !== grantId ||
+        String(source.result_summary?.retry_reserved_by_request_id || '') !== requestId ||
+        !Array.isArray(sourceUrls) || !Array.isArray(savedUrls) ||
+        sourceUrls.length > savedUrls.length ||
+        !sourceUrls.every((url:any,index:number)=>url === savedUrls[index])) {
+      throw deny('the photo reservation changed during authorization');
+    }
+  }
+  // Keep the grant read last after the receipt/source rechecks. Revocation
+  // after this read and before WorkOrder.updateMany remains a cross-entity gap.
+  const finalGrant = await Access.get(grantId).catch(()=>null);
+  const finalPermission = mechanicGrantAllowsMutation(finalGrant,action,String(workOrder.equipment_id || ''),nowMs ?? Date.now());
+  if (!finalPermission.allowed) throw deny(`the mechanic link changed to ${finalPermission.reason || 'not authorized'}`);
 }
