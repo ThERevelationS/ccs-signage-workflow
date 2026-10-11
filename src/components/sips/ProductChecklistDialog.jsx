@@ -2974,7 +2974,7 @@ export default function ProductChecklistDialog({
               Finish unfinished checklist text first
             </AlertDialogTitle>
             <AlertDialogDescription>
-              A checklist item, product name, or custom status still has unsubmitted text. Add or apply it, or cancel the unfinished edit, before {unfinishedEditsWarning === "complete" ? "completing this SIP" : "saving and choosing a Revisit date"}. Your entered text and saved checklist changes have not been discarded.
+              A checklist item, product name, or custom status still has unfinished text. Add or apply the inline edit (or cancel it) before {unfinishedEditsWarning === "complete" ? "completing this SIP" : "saving and choosing a Revisit date"}. To clear an earlier custom-status draft, reopen Other for that row and erase the text. Nothing has been discarded.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
