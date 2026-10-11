@@ -1,3 +1,9 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: clear original-file status
+
+Address research and saved research now show per-collection saved/waiting/working/verification/review counts plus a verified-original progress bar. It counts only matching source/stored hashes and byte counts, not crawl completeness or estimated time. Per-file explanations distinguish live download/storage/readback work, expired download attempts, stalled/uncertain uploads, verification receipts, retry delays, blocked retry attempts and inconsistent completion evidence.
+
+Actively leased originals show Working and disable duplicate manual save clicks. Existing archive claim, owner scope and byte-verification protections remain in the backend. Verification-blocked receipts explicitly require error review and manual Verify saved file rather than promising a scheduled retry. A paused collection's automatic setting is disclosed without claiming the global scheduler is active.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: manual save-all research originals
 
 Own address collections now offer Save all remaining originals in the selector and saved research browser. A finite selection snapshot runs one owner-authorized manual file request at a time, with no arbitrary overall file cap. It includes same-host originals and retained direct external referrals; does not crawl new websites. Saved/protected/uncertain/actively leased originals and duplicate identities are excluded. Each file retains the existing scoped download, lease, upload and byte-verification protections.
