@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {build} from 'esbuild';
+import {writeFile,unlink} from 'node:fs/promises';
+const path=new URL('../node_modules/.permitting-cycle-ui.mjs',import.meta.url);
+const output=await build({entryPoints:['src/components/admin/PermittingCollectionCycleStatus.jsx'],bundle:true,write:false,platform:'node',format:'esm',jsx:'automatic',external:['react','react/jsx-runtime']});await writeFile(path,output.outputFiles[0].text);const {default:Status}=await import(path.href);await unlink(path);
+const render=cycle=>renderToStaticMarkup(React.createElement(Status,{cycle}));
+test('missing collection receipt reports no saved cycle',()=>assert.match(render(null),/No saved document collection cycle/));
+test('active collection shows running, independent from research allowance',()=>{const html=render({status:'running',started_at:new Date().toISOString(),lease_expires_at:new Date(Date.now()+60000).toISOString()});assert.match(html,/running/);assert.match(html,/separately from the daily AI research allowance/);});
+test('expired or malformed running lease is reported as interrupted',()=>{for(const lease_expires_at of ['2000-01-01','bad'])assert.match(render({status:'running',started_at:'2000-01-01',lease_expires_at}),/interrupted; lease expired/);});
+test('stage failures and catalog outcome remain visible without claiming coverage',()=>{const html=render({status:'completed_with_errors',started_at:'2026-10-10',completed_at:'2026-10-10',stages:{archive:{status:'complete',archived:1,catalog_status:'registration_conflict',error:'Review receipt'}}});assert.match(html,/completed with errors/);assert.match(html,/catalog: registration conflict/);assert.match(html,/Review receipt/);assert.match(html,/does not establish locality coverage/);});

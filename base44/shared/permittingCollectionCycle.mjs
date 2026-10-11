@@ -19,9 +19,10 @@ export async function claimPermittingCollectionCycle({entity,record,now=new Date
 }
 function summary(result){
  if(!result)return {status:'not_run'};
- return {success:result.success!==false,status:String(result.status || result.reason || (result.skipped?'skipped':'complete')).slice(0,100),
+ return {success:result.success!==false && result.catalog?.success!==false,status:String(result.status || result.reason || (result.skipped?'skipped':'complete')).slice(0,100),
   archived:Number(result.archived)||0,attempted_pages:Number(result.attempted_pages)||0,
-  ...(result.error?{error:String(result.error).slice(0,300)}:{})};
+  ...(result.catalog?.status?{catalog_status:String(result.catalog.status).slice(0,100)}:{}),
+  ...(result.error || result.catalog?.error?{error:String(result.error || result.catalog.error).slice(0,300)}:{})};
 }
 export async function finishPermittingCollectionCycle({entity,recordId,token,results,now=new Date()}){
  const current=await entity.get(recordId),prior=current?.setting_value?.collection_cycle;
