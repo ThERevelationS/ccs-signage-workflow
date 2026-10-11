@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
     ]);
 
     let stateRecord=loadedStateRecord;
+    const preferAddressArchives=loadedStateRecord?.setting_value?.collection_cycle?.stages?.archive?.archive_queue!=='address';
     const config = normalizePermittingResearchConfig(configRecord?.setting_value || {});
     const now = new Date();
     let decision = researchCycleDecision({
@@ -153,6 +154,8 @@ Deno.serve(async (req) => {
         });
       } catch(error) { discoveryContinuation = {success:false,status:'discovery_continuation_failed',llm_calls:0}; }
       try { archiveContinuation = await continuePermittingDocumentArchiveBacklog({
+        addressEntity:base44.asServiceRole.entities.PermittingAddressArchive,scanEntity:base44.asServiceRole.entities.PermittingScanRun,preferAddressArchives,
+        fetchAddressSource:(url,init,host)=>safeExternalFetch(url,init,3,host?candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),
         invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
         fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,

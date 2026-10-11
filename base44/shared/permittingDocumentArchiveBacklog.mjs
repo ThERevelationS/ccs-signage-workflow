@@ -1,3 +1,4 @@
+import {continueAddressResearchArchives} from './permittingAddressArchive.mjs';
 import {continueJurisdictionArchiveBacklog,archiveDocumentEligible,archiveBacklogQuery} from './jurisdictionArchiveContinuation.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
 import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferralArchive.mjs';
@@ -6,8 +7,10 @@ import {archiveExternalJurisdictionReferral} from './jurisdictionExternalReferra
 export async function continuePermittingDocumentArchiveBacklog(options){
  let regular,checked=0;const review=[];
  for(const state of ['OH','KY']){
+  const address=()=>continueAddressResearchArchives({entity:options.addressEntity,scanEntity:options.scanEntity,state,fetchSource:options.fetchAddressSource,uploadFile:options.uploadFile,now:options.now});
+  if(options.preferAddressArchives!==false){const result=await address();if(!result.skipped)return result;}
   regular=await continueJurisdictionArchiveBacklog({...options,state});
-  if(!regular.skipped)return regular;
+  if(!regular.skipped)return {...regular,archive_queue:'jurisdiction'};
   const query=archiveBacklogQuery(options.now?.() || Date.now());
   query.state=state;query.auto_refresh=true;
   query.documents.$elemMatch.external_referral_provenance={$ne:null};
@@ -20,7 +23,7 @@ export async function continuePermittingDocumentArchiveBacklog(options){
    try{
     const result=await archiveExternalJurisdictionReferral({...options,jurisdictionId:profile.id,manual:false,automaticScopedResume:true,
      selection:{url:doc.url,source_page_url:doc.external_referral_provenance.source_page_url}});
-    if(!result.skipped)return {...result,external_profiles_checked:checked};
+    if(!result.skipped)return {...result,archive_queue:'jurisdiction',archive_queue:'jurisdiction',external_profiles_checked:checked};
    }catch(error){review.push({jurisdiction_id:profile.id,error:String(error.message || error).slice(0,500)});}
   }
   const freshProfiles=await options.entity.filter({state,auto_refresh:true,_manual_documents:{$ne:true},
@@ -39,9 +42,10 @@ export async function continuePermittingDocumentArchiveBacklog(options){
      continue;
     }
     return {...await archiveExternalJurisdictionReferral({...options,jurisdictionId:profile.id,manual:false,
-     automaticScopedResume:true,automaticInitialCollection:true,selection:{url:referral.url,source_page_url:referral.source_page_url}}),external_profiles_checked:checked};
+     automaticScopedResume:true,automaticInitialCollection:true,selection:{url:referral.url,source_page_url:referral.source_page_url}}),archive_queue:'jurisdiction',external_profiles_checked:checked};
    }catch(error){review.push({jurisdiction_id:listed.id,error:String(error.message || error).slice(0,500)});}
   }
+  if(options.preferAddressArchives===false){const result=await address();if(!result.skipped)return result;}
 
  }
  return {...regular,external_profiles_checked:checked,external_review_gaps:review};

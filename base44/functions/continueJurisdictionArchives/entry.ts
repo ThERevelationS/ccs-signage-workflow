@@ -55,7 +55,8 @@ Deno.serve(async req => {
     const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);
     if (configs.length > 1) throw new Error('Duplicate dispatcher settings; automatic archival stopped.');
     if (configs[0]?.setting_value?.enabled === false) return Response.json({ success: true, skipped: true, reason: 'disabled' });
-    return Response.json(await continuePermittingDocumentArchiveBacklog({...options,invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
+    return Response.json(await continuePermittingDocumentArchiveBacklog({...options,addressEntity:base44.asServiceRole.entities.PermittingAddressArchive,scanEntity:base44.asServiceRole.entities.PermittingScanRun,
+      fetchAddressSource:(url,init,host)=>safeExternalFetch(url,init,3,host?candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===host:undefined),invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
       fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost)}));
   } catch (error) {
     await reporter.finish('failed',String(error?.message || error));
