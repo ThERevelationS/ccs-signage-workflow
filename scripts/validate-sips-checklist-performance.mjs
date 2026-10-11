@@ -591,7 +591,7 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
     "otherPopupDismissedRef", "otherPopupValidationReturnRef", "showOtherPopup",
     "validationDialog", "setCustomDropdownValue", "setShowOtherPopup", "isOpen",
     "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
-    "cancelPendingNavigationFocus", "otherPopupValidationPendingRef",
+    "cancelPendingNavigationFocus", "otherPopupValidationPendingRef", "isLoading",
     handlers + "\nreturn { openOtherPopup, updateCustomStatusDraft, dismissOtherPopup, handleOtherPopupCloseAutoFocus };");
   const drafts = { current: new Map() }, focusItem = { current: null };
   const dismissed = { current: false }, validationReturn = { current: null };
@@ -604,7 +604,7 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
     validationReturn, activePopup, warning, value => { shownDraft = value; },
     value => { activePopup = value; }, true,
     ([itemId]) => itemId === "A" ? { querySelector: () => status } : null,
-    search, { current: null }, () => {}, { current: false });
+    search, { current: null }, () => {}, { current: false }, false);
   const closingEvent = { preventDefault() { prevented++; } };
 
   create().openOtherPopup("A");
@@ -725,7 +725,7 @@ check("Other popup closure skips collapsed rows and uses visible fallback contro
     "showOtherPopup", "validationDialog", "setCustomDropdownValue",
     "setShowOtherPopup", "isOpen", "findRenderedChecklistItemElement",
     "checklistSearchInputRef", "checklistCloseButtonRef",
-    "cancelPendingNavigationFocus", "otherPopupValidationPendingRef",
+    "cancelPendingNavigationFocus", "otherPopupValidationPendingRef", "isLoading",
     handlers + "\nreturn { openOtherPopup, dismissOtherPopup, handleOtherPopupCloseAutoFocus };"
   );
   const focusId = { current: null };
@@ -738,11 +738,12 @@ check("Other popup closure skips collapsed rows and uses visible fallback contro
   const close = { isConnected: true, disabled: false, getClientRects: () => [1],
     focus: () => { focusClose++; } };
   let rowVisible = true;
-  const create = (isOpen = true) => make(
+  const create = (isOpen = true, isLoading = false) => make(
     { current: new Map() }, focusId, dismissed, { current: null }, null,
     null, () => {}, () => {}, isOpen,
     () => rowVisible ? { querySelector: () => status } : null,
-    { current: search }, { current: close }, () => { cancelTimer++; }, { current: false }
+    { current: search }, { current: close }, () => { cancelTimer++; }, { current: false },
+    isLoading
   );
   const event = { preventDefault() { prevented++; } };
 
@@ -768,6 +769,16 @@ check("Other popup closure skips collapsed rows and uses visible fallback contro
   create(false).handleOtherPopupCloseAutoFocus(event);
   assert.equal(focusClose, 1); // Parent closing must not refocus a background control.
   assert.equal(prevented, 2);
+  focusId.current = null; // Work Order reload invalidated the original trigger.
+  dismissed.current = true;
+  create().handleOtherPopupCloseAutoFocus(event);
+  assert.equal(prevented, 3);
+  assert.equal(focusClose, 1);
+  create().openOtherPopup("B");
+  create().dismissOtherPopup();
+  create(true, true).handleOtherPopupCloseAutoFocus(event);
+  assert.equal(prevented, 4); // Loading suppresses native stale-trigger restoration.
+  assert.equal(focusClose, 1);
   assert.match(source, /showRevisitPopup \|\| showOtherPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
 });
 
