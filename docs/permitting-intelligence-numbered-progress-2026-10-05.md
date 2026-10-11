@@ -1,3 +1,7 @@
+## Phase 10 — documented editor activation path identified (2026-10-11 12:04 EDT)
+
+Official Base44 Redeploy a backend function documentation describes coding/redeploy-function as the editor Save & Redeploy operation, including outdated deployment recovery even with identical source. This differs from CLI PUT backend-functions used earlier. Connected tools do not expose it; documented API requires personal API key with editor access. No credentials extracted or cross-app PAT introduced. Next action: verify v4 source and Save & Redeploy only findLocalityByAddress in editor, then read-only app-domain revision probe. No full publication or additional scan performed.
+
 ## Phase 10 — production app-domain mismatch proven (2026-10-11 11:46 EDT)
 
 Published app URL retrieved through Base44 site open; signed into Sign Shop as Brett securely. One real production address scan (6acbaf19beacb55b547d9ab5) executes v3 and Google returns REQUEST_DENIED. Subsequent read-only unauthenticated probes prove published app-domain function endpoint returns v3 in response/header, whereas unversioned SDK returns v4 in response/header. This supersedes the preview-only diagnosis and recommendation that browser refresh alone would fix activation. No frontend published or Work Order assigned. Resolve Base44 app-domain function activation/routing, then Google configuration; Phase 10 is not complete.

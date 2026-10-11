@@ -284,5 +284,15 @@
     "work_orders_changed": false,
     "screenshot": "permitting-production-v3-evidence.jpg",
     "phase_10_complete": false
+  },
+  "editor_activation_path": {
+    "official_reference": "https://docs.base44.com/api-reference/redeploy-a-backend-function",
+    "operation": "POST /api/apps/{app_id}/coding/redeploy-function/{function_name}",
+    "semantics": "Same as editor Save & Redeploy; deploys supplied code, saves source, and runs even for identical source to recover outdated deployments.",
+    "scope": "findLocalityByAddress only, revision address-geocode-v4",
+    "contrast": "CLI uses PUT backend-functions/{name}; that path produced v4 at unversioned SDK route while app domains remained v3. Different documented editor route has not been executed.",
+    "authorization_requirement": "Documented API accepts personal API key with editor access; connected tool operation unavailable. No credential extraction or new cross-app PAT used.",
+    "next_step": "In Base44 editor verify address-geocode-v4 source for findLocalityByAddress then Save & Redeploy only that function; do not publish entire app.",
+    "phase_10_complete": false
   }
 }
