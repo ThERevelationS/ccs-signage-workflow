@@ -1063,4 +1063,69 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
   assert.match(source, /\}, \[isOpen, workOrder\?\.id\]\);/);
 });
 
+check("unfinished inline text blocks Save & Revisit and Complete before any write", () => {
+  const guardBody = source.slice(source.indexOf("  const blockOnUnsubmittedDrafts = (action) => {"),
+    source.indexOf("  const requestClose = () => {"));
+  const makeGuard = new Function("hasUnsubmittedDrafts", "unfinishedEditsActionRef",
+    "setUnfinishedEditsWarning", guardBody + "\nreturn blockOnUnsubmittedDrafts;");
+  let notices = [], persisted = 0, revisitOpens = 0, validated = 0;
+  const actionRef = { current: null };
+  const block = makeGuard(true, actionRef, value => notices.push(value));
+  assert.equal(block("save"), true);
+  assert.deepEqual(notices, ["save"]);
+  assert.equal(actionRef.current, "save");
+  assert.equal(makeGuard(false, actionRef, value => notices.push(value))("complete"), false);
+  assert.deepEqual(notices, ["save"]);
+
+  const saveClickSource = source.slice(source.indexOf("  const handleSaveClick = () => {"),
+    source.indexOf("  // Called after user picks (or skips) a revisit date"));
+  const makeClick = new Function("isRegistered", "isSaving", "blockOnUnsubmittedDrafts",
+    "cancelPendingNavigationFocus", "setPendingRevisitDate", "loadedRevisitDateSnapshot",
+    "setShowRevisitPopup", saveClickSource + "\nreturn handleSaveClick;");
+  makeClick(true, false, block, () => {}, () => {}, "2099-03-21",
+    () => { revisitOpens++; })();
+  assert.equal(revisitOpens, 0);
+  const completeSource = source.slice(source.indexOf("  const handleCheckOff = async () => {"),
+    source.indexOf("  const proceedWithCheckOff = async () => {"));
+  const makeComplete = new Function("isSaving", "blockOnUnsubmittedDrafts",
+    "checkIfComplete", "completingWithoutChecklistRef", "setNoChecklistWarning",
+    "setIncompleteWarning", "saveChecklist",
+    completeSource + "\nreturn handleCheckOff;");
+  makeComplete(false, block, () => { validated++; return { complete: true, hasChecklist: true }; },
+    { current: false }, () => {}, () => {}, () => { persisted++; })();
+  assert.equal(validated, 0);
+  assert.equal(persisted, 0);
+  assert.deepEqual(notices.slice(-2), ["save", "complete"]);
+
+  const overrideSource = source.slice(source.indexOf("  const proceedWithCheckOff = async () => {"),
+    source.indexOf("  // Called when Save button is clicked"));
+  const makeOverride = new Function("isSaving", "blockOnUnsubmittedDrafts",
+    "completingWithoutChecklistRef", "setNoChecklistWarning", "saveChecklist",
+    overrideSource + "\nreturn proceedWithCheckOff;");
+  const overrideRef = { current: false };
+  makeOverride(false, block, overrideRef, () => { throw Error("Override warning must remain open"); },
+    () => { persisted++; })();
+  assert.equal(overrideRef.current, false);
+  assert.equal(persisted, 0);
+
+  const directSaveStart = source.slice(source.indexOf("  const saveChecklist = async"),
+    source.indexOf("    try {", source.indexOf("  const saveChecklist = async")));
+  const makeSaveGuard = new Function("isSaving", "blockOnUnsubmittedDrafts", "setIsSaving",
+    directSaveStart + "\n  };\nreturn saveChecklist;");
+  makeSaveGuard(false, block, () => { persisted++; })(null, { markComplete: true });
+  assert.equal(persisted, 0);
+  assert.equal(notices.at(-1), "complete");
+
+  const clean = makeGuard(false, actionRef, value => notices.push(value));
+  makeClick(true, false, clean, () => {}, () => {}, "2099-03-21",
+    () => { revisitOpens++; })();
+  assert.equal(revisitOpens, 1); // Still requires the Revisit date popup on a clean save.
+  const popup = source.slice(source.indexOf("{/* Unsubmitted text must be applied or cancelled"));
+  assert.match(popup, /Finish unfinished checklist text first/);
+  assert.match(popup, /onClick=\{\(\) => setUnfinishedEditsWarning\(null\)\}/);
+  assert.match(popup, /unfinishedEditsActionRef\.current === "complete"/);
+  assert.match(source, /onClick=\{handleSaveClick\}/);
+  assert.match(source, /onClick=\{handleCheckOff\}/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
