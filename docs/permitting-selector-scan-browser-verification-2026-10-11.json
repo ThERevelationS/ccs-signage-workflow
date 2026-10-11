@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T02:05:48.821Z",
+  "tested_at": "2026-10-11T02:33:02.775Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -56,6 +56,16 @@
     {
       "name": "uncertain address cannot be manually overridden or applied",
       "width": 390,
+      "passed": true
+    },
+    {
+      "name": "automatic findings expose portals, pending pages and failures without pretending files are saved",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "automatic findings expose portals, pending pages and failures without pretending files are saved",
+      "width": 1280,
       "passed": true
     },
     {

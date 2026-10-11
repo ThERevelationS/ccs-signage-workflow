@@ -1,3 +1,4 @@
+import AutomaticAddressScanResults from './AutomaticAddressScanResults';
 import SelectorScanActions from './SelectorScanActions';
 import ResearchProgressBar from './ResearchProgressBar';
 import {useResearchProgress} from './ResearchProgressContext';
@@ -401,15 +402,7 @@ export default function LocalityPickerDialog({
                   )}
                 </div>
 
-                {result.automatic_scan?.started && <div className="rounded-lg border bg-white p-3 space-y-2" aria-label="Automatic address scan results">
-                  <h4 className="font-semibold text-sm">What we checked</h4>
-                  {result.automatic_scan.scans.map((scan,index)=><details key={index} className="border rounded p-2"><summary className="min-h-11 text-sm cursor-pointer">{scan.target.name}: {scan.documents?.length || 0} resources found</summary>
-                    {scan.error&&<p className="text-xs text-amber-800">{scan.error}</p>}
-                    {(scan.pages || []).map((page,i)=><p key={i} className="text-xs my-2 break-all"><a className="underline text-blue-700" href={page.url} target="_blank" rel="noopener noreferrer">{page.url}</a> — {page.status}</p>)}
-                    {(scan.documents || []).map((doc,i)=><p key={i} className="text-xs my-2"><a className="underline text-blue-700" href={doc.url} target="_blank" rel="noopener noreferrer">{doc.title || doc.url}</a></p>)}
-                    <p className="text-xs text-amber-800">{scan.pending_pages?.length || 0} pages still pending; {scan.gaps?.length || 0} scan gaps. Findings need administrator review.</p>
-                  </details>)}
-                </div>}
+                <AutomaticAddressScanResults scanResult={result.automatic_scan}/>
                 {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">The location was found. An administrator must confirm the sign and zoning offices before you can use it.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
