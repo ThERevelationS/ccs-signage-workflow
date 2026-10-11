@@ -59,5 +59,27 @@
     "source_changes_this_followup": false,
     "published": false,
     "acceptance_complete": false
+  },
+  "cli_authenticated_followup": {
+    "account": "brettheinlein1@gmail.com",
+    "device_approval_verified": true,
+    "whoami_verified": true,
+    "remote_source_files_compared": 29,
+    "remote_source_matches_before_v2": true,
+    "v2_change": "Allowlisted Google status and result count logged and emitted; OK without results fails closed",
+    "compiled_endpoint_tests_passed": 20,
+    "regression_tests_passed": 821,
+    "backend_bundle_passed": true,
+    "scoped_function_deploy": "findLocalityByAddress: 1 deployed",
+    "first_deploy_error": "CLI nested entry point not found; retried with tested self-contained entry bundle",
+    "live_scan_run_id": "6acb86d7264d3294b037d0d6",
+    "live_result": "No map location found",
+    "new_service_result_event_observed": false,
+    "cli_logs_after_deploy": "No logs found matching filters",
+    "runtime_alignment_verified": false,
+    "version_routing_investigation": "SDK supports Base44-Functions-Version; builder exposes sandbox and regular preview hosts; causal link not established",
+    "published_frontend": false,
+    "work_order_assignments": 0,
+    "acceptance_complete": false
   }
 }
