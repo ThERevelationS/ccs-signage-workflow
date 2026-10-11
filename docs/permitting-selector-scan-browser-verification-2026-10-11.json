@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T07:03:14.931Z",
+  "tested_at": "2026-10-11T08:08:16.045Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -110,6 +110,26 @@
     },
     {
       "name": "retained outside original has individual save progress and referring-page provenance",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "manual save-all stops after current file and keeps per-file progress",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "manual save-all stops after current file and keeps per-file progress",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "manual save-all completes same-host and linked originals sequentially",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "manual save-all completes same-host and linked originals sequentially",
       "width": 1280,
       "passed": true
     }

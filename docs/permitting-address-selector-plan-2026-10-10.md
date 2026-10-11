@@ -50,3 +50,9 @@ In administrator employee research inspection, open a verified original and revi
 ## Direct files hosted elsewhere
 
 Original files includes retained HTTPS direct-document referrals, even when no same-host file exists. Staff can use Save linked original, see the source-page recheck and file progress, and open the original only after stored bytes verify. The enabled scheduler shares its existing archive budget across these files and other pending originals. Outside websites are not broadly crawled; portals stay links. Older collections are not silently rewritten to add referrals; new scans retain this inventory.
+
+## Manual save-all originals
+
+Each own research collection includes **Save all remaining originals** in the selector and My saved research. It takes a finite snapshot of remaining same-host originals and retained direct external referrals, then calls the existing owner-authorized file endpoint once per selection, sequentially. There is no arbitrary overall manual file cap. Existing source scope, exact external-link recheck, archive leases, uncertain-upload protection and stored-byte verification remain in the backend.
+
+The screen shows the current filename, an overall checked-file progress bar, saved/review counts, and a separate tracked progress action for each file. **Stop after current file** lets the current request finish and prevents another file from starting. Navigating to another research page or unmounting the results also stops remaining selections. Keep the window open for the manual batch. Request errors halt without blind retry; check saved files before restarting. Per-file unsuccessful outcomes are counted for review, with no automatic loop inside the manual action. Saved/protected/uncertain-upload/actively leased files and duplicate identities are excluded from the batch. Administrator cross-employee review remains read-only for downloads. This does not scan new pages or approve jurisdictions.
