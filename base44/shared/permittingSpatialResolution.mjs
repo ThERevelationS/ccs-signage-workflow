@@ -21,7 +21,10 @@ export function strictGeocode(results,address=''){
  const zipMatches=!zipMatch||zipMatch[1]===part('postal_code');
  const city=street(part('locality') || part('postal_town'));
  const streetMatches=requested===found || (!address.includes(',')&&city&&requested.startsWith(found+' '+city+' '));
- return Boolean(address)&&stateMatches&&zipMatches&&streetMatches&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
+ const enteredCity=address.includes(',')?address.split(',')[1].replace(/\s+(OH|Ohio|KY|Kentucky)(?:\s+[0-9]{5}(?:-[0-9]{4})?)?\s*$/i,'').trim():'';
+ const formattedCity=String(g.formatted_address || '').split(',')[1]?.replace(/\s+(OH|Ohio|KY|Kentucky)(?:\s+[0-9]{5}(?:-[0-9]{4})?)?\s*$/i,'').trim();
+ const cityMatches=!enteredCity||[part('locality'),part('postal_town'),formattedCity].some(value=>value&&norm(value)===norm(enteredCity));
+ return Boolean(address)&&stateMatches&&zipMatches&&streetMatches&&cityMatches&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
 }
 export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async()=>{}}){
  const state=normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase(),point={lat:geocode?.lat,lng:geocode?.lon};
