@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { runDeletionImpactChecks } from '../../shared/deletionImpactBoundedChecks.mjs';
 
 const ROLES = new Set(['user', 'admin']);
 const EMPLOYMENT_TYPES = new Set(['hourly', 'salary']);
@@ -264,29 +265,46 @@ async function deletionImpactReport(base44: any, Request: any, requestId: string
   const base44Users = base44UsersRaw.filter((row: any) => cleanEmail(row?.email) === email);
   const base44UserIds = [...new Set(base44Users.map((row: any) => String(row?.id || '').trim()).filter(Boolean))];
 
-  const history = await Promise.all(DELETION_HISTORY_ENTITIES.map(async (entity) => ({
-    entity,
-    count: await countEntityRows(base44, entity, { user_email: email }),
-  })));
-
-  const accountState = await Promise.all(DELETION_ACCOUNT_STATE_ENTITIES.map(async (entity) => ({
-    entity,
-    count: await countEntityRows(base44, entity, { user_email: email }),
-  })));
-
-  const ownership = base44UserIds.length
-    ? await Promise.all(DELETION_OWNER_ENTITIES.map(async (entity) => ({
-        entity,
-        count: await countEntityRows(base44, entity, { created_by_id: { $in: base44UserIds } }),
-      })))
-    : DELETION_OWNER_ENTITIES.map((entity) => ({ entity, count: 0 }));
-
-  const assignmentKeys = new Set([...WORK_ORDER_IDENTITY_KEYS]);
-  const [workOrders, generalTasks, calendarEvents] = await Promise.all([
-    countIdentityReferences(base44, 'WorkOrder', identities, assignmentKeys),
-    countIdentityReferences(base44, 'GeneralTask', identities, new Set(['assigned_to', 'created_by_name'])),
-    countIdentityReferences(base44, 'CalendarEvent', identities, new Set(['assigned_to', 'created_by'])),
-  ]);
+  // Run independent read-only count operations together, but limit in-flight
+  // entity queries. This avoids large ownership fan-outs and preserves every
+  // category's order and all-or-nothing report semantics.
+  const checks = [
+    ...DELETION_HISTORY_ENTITIES.map(entity => async () => ({
+      group: 'history', entity,
+      count: await countEntityRows(base44, entity, { user_email: email }),
+    })),
+    ...DELETION_ACCOUNT_STATE_ENTITIES.map(entity => async () => ({
+      group: 'account_state', entity,
+      count: await countEntityRows(base44, entity, { user_email: email }),
+    })),
+    ...DELETION_OWNER_ENTITIES.map(entity => async () => ({
+      group: 'ownership', entity,
+      count: base44UserIds.length
+        ? await countEntityRows(base44, entity, { created_by_id: { $in: base44UserIds } })
+        : 0,
+    })),
+    async () => ({
+      group: 'assignments', entity: 'WorkOrder',
+      count: await countIdentityReferences(base44, 'WorkOrder', identities, new Set(WORK_ORDER_IDENTITY_KEYS)),
+    }),
+    async () => ({
+      group: 'assignments', entity: 'GeneralTask',
+      count: await countIdentityReferences(base44, 'GeneralTask', identities, new Set(['assigned_to', 'created_by_name'])),
+    }),
+    async () => ({
+      group: 'assignments', entity: 'CalendarEvent',
+      count: await countIdentityReferences(base44, 'CalendarEvent', identities, new Set(['assigned_to', 'created_by'])),
+    }),
+  ];
+  const completed = await runDeletionImpactChecks(checks, 5);
+  const reportRows = (group: string) => completed
+    .filter((item) => item.group === group)
+    .map(({ entity, count }) => ({ entity, count }));
+  const history = reportRows('history');
+  const accountState = reportRows('account_state');
+  const ownership = reportRows('ownership');
+  const [workOrders, generalTasks, calendarEvents] =
+    reportRows('assignments').map((item) => item.count);
 
   const blockers: string[] = [];
   if (!authorizedMatches) blockers.push('The AuthorizedEmail record no longer matches this request.');
