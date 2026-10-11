@@ -15,7 +15,19 @@ async function fixedJSON(url:string){
  const text=await response.text();if(text.length>8*1024*1024)throw Error('Location response exceeds its limit.');return JSON.parse(text);
 }
 // Keep this revision in responses and scan events so preview/live routing can be verified.
-const ADDRESS_LOOKUP_REVISION='address-geocode-v4';
+const ADDRESS_LOOKUP_REVISION='address-geocode-v5';
+// Interpret provider text internally; only fixed diagnostic codes/messages leave this function.
+function geocodingRejection(raw:unknown){
+ const message=typeof raw==='string'?raw.slice(0,2000).toLowerCase():'';
+ const suffix=' You do not need to re-enter this address.';
+ if(/refer(?:r)?er restrictions/.test(message))return {diagnostic_code:'BROWSER_KEY_RESTRICTION',message:'Google rejected a website-restricted key for server address lookup. An administrator needs a separate server geocoding key.'+suffix};
+ if(/billing/.test(message))return {diagnostic_code:'BILLING_REQUIRED',message:'Google rejected address lookup because billing needs attention in the map project. An administrator must check the project billing status.'+suffix};
+ if(/api key.*(?:invalid|expired)|(?:invalid|expired).*api key/.test(message))return {diagnostic_code:'KEY_INVALID',message:'Google rejected the server geocoding key as invalid or expired. An administrator must check the configured server key.'+suffix};
+ if(/(?:api|service).*(?:not been used|disabled|not enabled)/.test(message))return {diagnostic_code:'API_DISABLED',message:'Google reports that Geocoding API access is disabled. An administrator must check Geocoding API access in the map project.'+suffix};
+ if(/not authorized to use this api|api.*not authorized/.test(message))return {diagnostic_code:'API_ACCESS_DENIED',message:'Google does not allow this server key to use Geocoding API. An administrator must check the enabled API and key API restrictions.'+suffix};
+ if(/(?:ip|site|application).*not authorized|ip.*restrict/.test(message))return {diagnostic_code:'APPLICATION_RESTRICTION',message:'Google rejected the server request under the key application restrictions. An administrator must check the server key restrictions.'+suffix};
+ return {diagnostic_code:'REQUEST_DENIED',message:'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing.'+suffix};
+}
 function addressResponse(data:any,init:any={}){
  const response=Response.json({...data,lookup_revision:ADDRESS_LOOKUP_REVISION},init);
  response.headers.set('X-CCS-Address-Revision',ADDRESS_LOOKUP_REVISION);
@@ -31,19 +43,21 @@ Deno.serve(async req=>{
   const progress=async(event:any)=>{const {progress,...item}=event;await reporter.emit(item,progress || {});};
   await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.`},{stage:'Finding the building on the map',indeterminate:true});
   let geocode:any=null,geocodingService:any=null;
-  const serviceFailure=(status:string,message:string)=>geocodingService={status,issue:true,message};
+  const serviceFailure=(status:string,message:string,diagnostic_code?:string)=>geocodingService={status,issue:true,message,...(diagnostic_code?{diagnostic_code}:{})};
   try{
-   const key=Deno.env.get('GOOGLE_MAPS_API_KEY');
+   // Never return the dedicated server key through getGoogleMapsKey.
+   const key=Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim() || Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim();
    if(!key){serviceFailure('NOT_CONFIGURED','The map location service is not configured. An administrator needs to check its server key. You do not need to re-enter this address.');throw Error('Map geocoding is not configured.');}
    await reporter.emit({kind:'geocode_lookup',url:'https://maps.googleapis.com/maps/api/geocode/json',detail:`Searching for ${address}.`});
    const data=await fixedJSON(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${encodeURIComponent(key)}`);
    const serviceStatus=['OK','ZERO_RESULTS','REQUEST_DENIED','OVER_QUERY_LIMIT','OVER_DAILY_LIMIT','INVALID_REQUEST','UNKNOWN_ERROR'].includes(data.status)?data.status:'UNKNOWN_STATUS';
    const serviceResultCount=Array.isArray(data.results)?data.results.length:0;
-   console.info('CCS address geocoder v4',{status:serviceStatus,result_count:serviceResultCount});
+   console.info('CCS address geocoder v5',{status:serviceStatus,result_count:serviceResultCount});
    await reporter.emit({kind:'geocode_service_result',detail:`Google Geocoding responded: ${serviceStatus}; ${serviceResultCount} address results.`});
    if(serviceStatus==='OK'&&!serviceResultCount)serviceFailure('EMPTY_RESULT','The map service returned an empty response. Try again later; no jurisdiction has been selected.');
    else if(serviceStatus==='ZERO_RESULTS')geocodingService={status:serviceStatus,issue:false,message:'No address match was returned. Check the street address.'};
-   else if(serviceStatus!=='OK')serviceFailure(serviceStatus,serviceStatus==='REQUEST_DENIED'?'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing. You do not need to re-enter this address.':serviceStatus==='OVER_QUERY_LIMIT'||serviceStatus==='OVER_DAILY_LIMIT'?'Google Geocoding reached its service limit. Try again later or ask an administrator to check quota and billing.':serviceStatus==='INVALID_REQUEST'?'The map service rejected the lookup request. An administrator needs to check the request setup.':'The map location service is temporarily unavailable. Try again later.');
+   else if(serviceStatus==='REQUEST_DENIED'){const rejection=geocodingRejection(data.error_message);serviceFailure(serviceStatus,rejection.message,rejection.diagnostic_code);}
+   else if(serviceStatus!=='OK')serviceFailure(serviceStatus,serviceStatus==='OVER_QUERY_LIMIT'||serviceStatus==='OVER_DAILY_LIMIT'?'Google Geocoding reached its service limit. Try again later or ask an administrator to check quota and billing.':serviceStatus==='INVALID_REQUEST'?'The map service rejected the lookup request. An administrator needs to check the request setup.':'The map location service is temporarily unavailable. Try again later.');
    if(geocodingService)await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});
    if(data.status==='OK'&&data.results?.length){const g=data.results[0];geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:strictGeocode(data.results,address),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
   }catch{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}

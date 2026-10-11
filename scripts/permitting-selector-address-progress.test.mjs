@@ -101,4 +101,21 @@ test('geocode service failures report safe actionable status without leaking pro
  }
 });
 
- test('missing geocoder configuration is a service failure, retains research and never blames address',async()=>{const data=await (await handler('findLocalityByAddress',client(ledger()))({address:'123 Main St',action_token:token})).json();assert.equal(data.geocoding_service.status,'NOT_CONFIGURED');assert.equal(data.scan_run.status,'completed_with_errors');assert.equal(data.apply_allowed,false);assert.equal(data.automatic_scan.started,true);assert.match(data.match_reason,/do not need to re-enter/);assert.equal(data.location_resolution.reason,data.match_reason);assert.equal(data.lookup_revision,'address-geocode-v4');});
+ test('missing geocoder configuration is a service failure, retains research and never blames address',async()=>{const data=await (await handler('findLocalityByAddress',client(ledger()))({address:'123 Main St',action_token:token})).json();assert.equal(data.geocoding_service.status,'NOT_CONFIGURED');assert.equal(data.scan_run.status,'completed_with_errors');assert.equal(data.apply_allowed,false);assert.equal(data.automatic_scan.started,true);assert.match(data.match_reason,/do not need to re-enter/);assert.equal(data.location_resolution.reason,data.match_reason);assert.equal(data.lookup_revision,'address-geocode-v5');});
+
+
+test('server geocoding key is preferred and never exposed through results or activity',async()=>{
+ let requested='';
+ const data=await (await handler('findLocalityByAddress',client(ledger()),{Deno:{env:{get:name=>name==='GOOGLE_GEOCODING_API_KEY'?'SERVER-PRIVATE':name==='GOOGLE_MAPS_API_KEY'?'BROWSER-PRIVATE':undefined}},fetch:async url=>{requested=url;return new Response(JSON.stringify({status:'REQUEST_DENIED',results:[]}));}})({address:'123 Main St',action_token:token})).json();
+ assert.equal(new URL(requested).searchParams.get('key'),'SERVER-PRIVATE');assert(!JSON.stringify(data).includes('PRIVATE'));assert.equal(data.apply_allowed,false);
+});
+test('blank server key preserves existing map key fallback without changing browser key endpoint',async()=>{
+ let requested='';
+ await handler('findLocalityByAddress',client(ledger()),{Deno:{env:{get:name=>name==='GOOGLE_GEOCODING_API_KEY'?'  ':'LEGACY-PRIVATE'}},fetch:async url=>{requested=url;return new Response(JSON.stringify({status:'ZERO_RESULTS',results:[]}));}})({address:'123 Main St'});
+ assert.equal(new URL(requested).searchParams.get('key'),'LEGACY-PRIVATE');
+ const browser=fs.readFileSync('base44/functions/getGoogleMapsKey/entry.ts','utf8');assert(!browser.includes('GOOGLE_GEOCODING_API_KEY'));
+});
+test('rejected geocoder classifies known causes without echoing provider internals or weakening exact matching',async()=>{
+ const examples=[['API keys with referer restrictions cannot be used with this API.','BROWSER_KEY_RESTRICTION'],['You must enable Billing on the Google Cloud Project.','BILLING_REQUIRED'],['The provided API key is invalid.','KEY_INVALID'],['Geocoding API has not been used in project before or it is disabled.','API_DISABLED'],['This API project is not authorized to use this API.','API_ACCESS_DENIED'],['This IP, site or mobile application is not authorized to use this API key.','APPLICATION_RESTRICTION'],['Unknown rejection.','REQUEST_DENIED']];
+ for(const [error_message,code] of examples){const data=await (await handler('findLocalityByAddress',client(ledger()),{Deno:{env:{get:()=> 'SECRET-KEY'}},fetch:async()=>new Response(JSON.stringify({status:'REQUEST_DENIED',error_message:error_message+' SECRET-KEY project-internals',results:[]}))})({address:'123 Main St',action_token:token})).json();assert.equal(data.geocoding_service.diagnostic_code,code);assert.equal(data.scan_run.status,'completed_with_errors');assert.equal(data.apply_allowed,false);assert.equal(data.suggested_locality,null);assert(!JSON.stringify(data).includes('SECRET-KEY'));assert(!JSON.stringify(data).includes('project-internals'));assert.match(data.match_reason,/do not need to re-enter/);}
+});
