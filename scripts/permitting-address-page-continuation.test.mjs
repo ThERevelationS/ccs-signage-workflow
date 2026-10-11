@@ -88,7 +88,7 @@ test('selected failed-page retry preserves depth, pending frontier and originals
  const f=await failedFixture(),old=structuredClone(f.row().documents),pending=structuredClone(f.row().discovery_scan_state.pending_pages);let calls=0;
  f.options.fetchPage=async url=>{calls++;assert.equal(url,f.options.retryPageUrl);return {html:'<a href="/new-page">Sign permit information</a><a href="/new.pdf">Sign permit form</a>',finalUrl:url};};
  const result=await continueOwnedAddressDiscovery(f.options);assert.equal(calls,1);assert.equal(result.pages[0].depth,1);assert.equal(result.attempted_pages,1);assert.equal(result.collection.discovery.gaps.filter(g=>g.reason==='page_fetch_failed').length,0);
- assert.deepEqual(f.row().documents[0],old[0]);assert.deepEqual(f.row().discovery_scan_state.pending_pages[0],pending[0]);assert.equal(f.row().discovery_scan_state.pending_pages.find(p=>p.url.endsWith('/new-page')).depth,2);
+ assert.deepEqual(f.row().documents[0],old[0]);assert.deepEqual(f.row().discovery_scan_state.pending_pages.find(p=>p.url===pending[0].url),pending[0]);assert.equal(f.row().discovery_scan_state.pending_pages.find(p=>p.url.endsWith('/new-page')).depth,2);
  await assert.rejects(continueOwnedAddressDiscovery(f.options),/changed/);assert.equal(calls,1);
 });
 test('failed retry keeps selected gap and does not consume pending pages',async()=>{
