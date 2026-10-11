@@ -18,8 +18,8 @@ export function classifySalesPullCreateAttemptRisks(records = [], sheetId = '') 
     const linkedSheet = id(record.smartsheet_sheet_id);
     // A malformed/missing marker sheet identity cannot prove the attempt
     // belongs to a DIFFERENT sheet; conservatively hold imports for review.
-    if (markerSheet && markerSheet !== sheet) continue;
-    if (!markerSheet && linkedSheet && linkedSheet !== sheet) continue;
+    if (/^\d+$/.test(markerSheet) && markerSheet !== sheet) continue;
+    if (!/^\d+$/.test(markerSheet) && /^\d+$/.test(linkedSheet) && linkedSheet !== sheet) continue;
     review.push({
       workorder_id: id(record.id),
       status: id(record.smartsheet_create_attempt?.status) || 'unknown',
