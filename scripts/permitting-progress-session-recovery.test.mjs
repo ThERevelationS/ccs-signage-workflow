@@ -6,10 +6,10 @@ import { transform } from 'esbuild';
 
 const source=await fs.readFile('src/components/permitting/ResearchProgressContext.jsx','utf8');
 const compiled=(await transform(source,{loader:'jsx',format:'cjs',target:'es2022'})).code;
-function harness({error,run=null,result=null,statusError=null}={}){
+function harness({error,run=null,result=null,statusError=null,invoke=null}={}){
  let state,initialized=false,refIndex=0,refs=[],effects=[],timers=new Set(),calls=[];const statusState={error:statusError,run};
  const React={createContext:()=>({Provider:'provider'}),createElement:(type,props)=>({type,props}),useState:init=>{if(!initialized){state=typeof init==='function'?init():init;initialized=true;}return [state,update=>{state=typeof update==='function'?update(state):update;}];},useCallback:fn=>fn,useRef:value=>{const index=refIndex++;return refs[index] ||= {current:value};},useEffect:effect=>effects.push(effect)};
- const base44={functions:{invoke:async(name,payload)=>{calls.push({name,payload});if(name==='permittingScanStatus'){if(statusState.error)throw statusState.error;return {data:{run:statusState.run}};}if(error)throw error;return {data:result || {success:true}};}}};
+ const base44={functions:{invoke:async(name,payload)=>{calls.push({name,payload});if(invoke)return invoke(name,payload);if(name==='permittingScanStatus'){if(statusState.error)throw statusState.error;return {data:{run:statusState.run}};}if(error)throw error;return {data:result || {success:true}};}}};
  const sandbox={module:{exports:{}},require:name=>{if(name==='react')return React;if(name==='@/api/base44Client')return {base44};throw Error(name);},sessionStorage:{getItem:()=>null},window:{localStorage:{getItem:()=>null}},crypto:{randomUUID:()=> 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'},setInterval:fn=>{timers.add(fn);return fn;},clearInterval:fn=>timers.delete(fn),console};
  vm.runInNewContext(compiled,sandbox);
  function render(){refIndex=0;effects=[];return sandbox.module.exports.ResearchProgressProvider({children:null}).props.value;}
@@ -77,4 +77,38 @@ test('automatic recovery skips paused rows and resumes checks after a successful
  h.setStatus(null,{status:'running',stage:'Scanning',processed:3,total:5});await h.context.refreshAction(savedToken);
  h.render();const afterManual=h.calls.length;cleanup=h.effects[1]();await Promise.resolve();await Promise.resolve();
  assert.equal(h.calls.length,afterManual+1);cleanup();assert.equal(h.timers.size,0);
+});
+
+function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
+function queuedStatus(){const pending=[];const h=harness({invoke:()=>{const request=deferred();pending.push(request);return request.promise;}});seedRunning(h);return {h,pending};}
+test('an older status response cannot replace a newer completed result',async()=>{
+ const {h,pending}=queuedStatus(),older=h.context.refreshAction(savedToken),newer=h.context.refreshAction(savedToken);
+ pending[1].resolve({data:{run:{status:'complete',stage:'Complete',processed:5,total:5}}});await newer;
+ pending[0].resolve({data:{run:{status:'running',stage:'Old source',processed:1,total:5}}});await older;
+ assert.equal(h.row().status,'complete');assert.equal(h.row().processed,5);
+});
+test('an older sign-in rejection cannot pause tracking after a successful retry',async()=>{
+ const {h,pending}=queuedStatus(),older=h.context.refreshAction(savedToken),newer=h.context.refreshAction(savedToken);
+ pending[1].resolve({data:{run:{status:'running',stage:'New source',processed:4,total:5}}});await newer;
+ pending[0].reject({status:401});await older;
+ assert.equal(h.row().tracking_paused,false);assert.equal(h.row().response_lost,false);assert.equal(h.row().activity_warning,null);assert.equal(h.row().processed,4);
+});
+test('dismissing a scan card discards an outstanding status response',async()=>{
+ const {h,pending}=queuedStatus(),check=h.context.refreshAction(savedToken);
+ h.context.clearProgress(savedToken);pending[0].resolve({data:{run:{status:'complete',stage:'Complete'}}});await check;
+ assert.equal(h.row(),undefined);
+});
+test('dismissing a scan card discards an outstanding status failure and later background tracking',async()=>{
+ const {h,pending}=queuedStatus(),check=h.context.refreshAction(savedToken);
+ h.context.clearProgress(savedToken);pending[0].reject({status:401});await check;
+ assert.equal(h.row(),undefined);h.context.trackAction({action_token:savedToken,status:'complete'});assert.equal(h.row(),undefined);
+});
+test('an in-flight poll cannot regress an action after its final response arrives',async()=>{
+ const action=deferred(),status=deferred();
+ const h=harness({invoke:name=>name==='permittingScanStatus'?status.promise:action.promise});
+ const executing=h.context.runAction('resolvePermittingAddress',{},'Address scan');
+ h.timers.values().next().value()();
+ action.resolve({data:{success:true,scan_run:{status:'complete',stage:'Complete',processed:5,total:5}}});await executing;
+ status.resolve({data:{run:{status:'running',stage:'Old page',processed:1,total:5}}});await Promise.resolve();await Promise.resolve();
+ assert.equal(h.row().status,'complete');assert.equal(h.row().processed,5);assert.equal(h.timers.size,0);
 });
