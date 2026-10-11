@@ -29,3 +29,23 @@ export async function saveOriginalBatch({files,save,stopped,onProgress}){
  result.stopped=stopped()&&result.checked<result.total;
  return result;
 }
+
+export function originalFileStatus(doc,now=Date.now()){
+ if(verifiedOriginal(doc))return {kind:'saved',label:'Saved original — source and stored bytes verified.'};
+ const state=doc.archive_state || {},active=Date.parse(state.lease_expires_at || '')>now;
+ if(state.status==='upload_uncertain')return {kind:'review',label:'Upload outcome needs review; automatic re-upload blocked.'};
+ if(active)return {kind:'active',label:state.status==='uploading'?'Saving file to storage.':state.file_url?'Checking saved file bytes.':'Downloading original file.'};
+ if(state.status==='uploading')return {kind:'review',label:'Upload did not confirm; review is needed before another upload.'};
+ if(state.status==='complete'||doc.file_url||doc.source_sha256)return {kind:'review',label:'Saved-file evidence is incomplete or inconsistent; review is needed.'};
+ if(state.file_url)return {kind:'verify',label:'File uploaded; verification still needed.',retryAfter:validFuture(state.retry_after,now)};
+ if(state.status==='blocked'||Number(state.attempts || 0)>=3)return {kind:'review',label:'Automatic download stopped after a problem; review the error before retrying.'};
+ return {kind:'waiting',label:state.status==='downloading'?'Previous download stopped; original still needs downloading.':'Original still needs downloading.',retryAfter:validFuture(state.retry_after,now)};
+}
+function validFuture(value,now){return Date.parse(value || '')>now?new Date(value).toISOString():null;}
+export function originalCollectionCounts(collection,now=Date.now()){
+ const counts={saved:0,waiting:0,active:0,verify:0,review:0};
+ for(const doc of collection.documents || [])counts[originalFileStatus(doc,now).kind]++;
+ const seen=new Set((collection.documents || []).map(doc=>doc.url));
+ for(const ref of collection.external_referrals || [])if(!seen.has(ref.url)){seen.add(ref.url);counts.waiting++;}
+ return {...counts,total:Object.values(counts).reduce((a,b)=>a+b,0)};
+}
