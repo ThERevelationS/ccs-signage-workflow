@@ -20,7 +20,7 @@ export function addressResearchCollection(row){
 }
 
 // One durable page per request; the staff-controlled UI may continue without an overall page cap.
-export async function continueOwnedAddressDiscovery({entity,scanEntity,collectionId,actor,fetchPage,onProgress=async()=>{}}){
+export async function continueOwnedAddressDiscovery({entity,scanEntity,collectionId,actor,fetchPage,retryPageUrl=null,onProgress=async()=>{}}){
  const original=await entity.get(collectionId);
  const own=row=>Boolean(row&&row.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.collection_key===original?.collection_key&&row.scan_run_id===original?.scan_run_id&&row.permitting_url===original?.permitting_url);
  const reject=()=>Object.assign(Error('This research collection is not available to your account.'),{status:403});
@@ -33,7 +33,11 @@ export async function continueOwnedAddressDiscovery({entity,scanEntity,collectio
  const row=await checked(collectionId),cursor=row.discovery_scan_state;
  const duplicates=await entity.filter({collection_key:row.collection_key},'created_date',2);
  if(duplicates.length!==1||duplicates[0].id!==row.id)throw Object.assign(Error('Duplicate research collection requires review.'),{status:409});
- if(!cursor||cursor.blocked||!cursor.pending_pages?.length)return {success:true,skipped:true,reason:cursor?.blocked?'frontier_requires_review':'no_pending_pages',collection:addressResearchCollection(row),attempted_pages:0};
+ if(retryPageUrl!==null&&(typeof retryPageUrl!=='string'||!retryPageUrl||retryPageUrl.length>4096))throw Object.assign(Error('Select a saved failed page.'),{status:400});
+ const retryGaps=retryPageUrl===null?[]:(cursor?.gaps || []).filter(gap=>gap.reason==='page_fetch_failed'&&gap.url===retryPageUrl);
+ if(retryPageUrl!==null&&retryGaps.length!==1)throw Object.assign(Error('This failed page changed. Refresh saved research before retrying.'),{status:409});
+ const resume=retryPageUrl===null?cursor:{...cursor,gaps:[retryGaps[0],...cursor.gaps.filter(gap=>gap!==retryGaps[0])]};
+ if(!cursor||cursor.blocked||(retryPageUrl===null&&!cursor.pending_pages?.length))return {success:true,skipped:true,reason:cursor?.blocked?'frontier_requires_review':'no_pending_pages',collection:addressResearchCollection(row),attempted_pages:0};
  const seed=new URL(row.permitting_url);
  if(seed.protocol!=='https:'||seed.username||seed.password)throw Object.assign(Error('Saved research source must use HTTPS.'),{status:400});
  const host=seed.hostname.toLowerCase().replace(/^www\./,'');
@@ -41,7 +45,7 @@ export async function continueOwnedAddressDiscovery({entity,scanEntity,collectio
  const guards=Object.fromEntries(['owner_id','owner_email','collection_key','scan_run_id','reference_only','authority_established','permitting_url','website_url','name','state','type','location_target','location_verified'].map(key=>[key,row[key]]));
  let scan;
  try{
-  scan=await scanOfficialPermittingPages({seedUrl:row.permitting_url,resume:cursor,existingDocuments:row.documents || [],maxPages:1,maxDepth:2,onProgress,
+  scan=await scanOfficialPermittingPages({seedUrl:row.permitting_url,resume,recoverFetchFailures:retryPageUrl!==null,existingDocuments:row.documents || [],maxPages:1,maxDepth:2,onProgress,
    fetchPage:async url=>{await checked(collectionId);const target=new URL(url);if(target.protocol!=='https:'||target.username||target.password||target.hostname.toLowerCase().replace(/^www\./,'')!==host||target.port!==seed.port)throw Error('Saved research page is outside the HTTPS source host.');return fetchPage(url,host,seed.port);}
   });
  }catch(error){
