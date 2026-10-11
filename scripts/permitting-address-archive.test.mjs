@@ -1,6 +1,8 @@
+import {continuePermittingDocumentArchiveBacklog} from '../base44/shared/permittingDocumentArchiveBacklog.mjs';
+import {archiveDocumentEligible} from '../base44/shared/jurisdictionArchiveContinuation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {retainAddressResearchFiles,archiveOwnedAddressResearchFile} from '../base44/shared/permittingAddressArchive.mjs';
+import {retainAddressResearchFiles,archiveOwnedAddressResearchFile,continueAddressResearchArchives} from '../base44/shared/permittingAddressArchive.mjs';
 const actor={id:'employee',email:'Employee@example.com'},pdf='%PDF-1.7 sample';
 function fixture(){
  let rows=[],version=0;const calls={uploads:0,source:0,stored:0,hosts:[]},state={failReadback:false,failUpload:false,html:false};
@@ -48,4 +50,44 @@ test('www aliases retain source scope and a changed external source is rejected 
 });
 test('owner change during upload prevents receipt writes and result disclosure under old owner',async()=>{
  const f=fixture();const upload=f.options.uploadFile;const r=await retainAddressResearchFiles({...f.options,uploadFile:async data=>{const result=await upload(data);f.patch({owner_id:'other'});return result;}});assert.equal(r.status,'needs_review');assert.equal(r.collections[0].documents,undefined);assert.equal(f.rows()[0].documents[0].file_url,undefined);assert.equal(f.rows()[0].owner_id,'other');
+});
+
+function backgroundFixture(f){
+ const actions=new Map(),sourceRun={id:'run-id',status:'complete',action_kind:'address',owner_id:actor.id,owner_email:actor.email.toLowerCase()};
+ const scanEntity={get:async id=>id==='run-id'?structuredClone(sourceRun):structuredClone(actions.get(id)),filter:async q=>[...actions.values()].filter(row=>row.action_token===q.action_token),create:async data=>{const row={id:'action-'+actions.size,...structuredClone(data)};actions.set(row.id,row);return row;},update:async(id,patch)=>{const row={...actions.get(id),...structuredClone(patch)};actions.set(id,row);return row;}};
+ const entity={...f.entity,filter:async(q,...args)=>typeof q.state==='string'?structuredClone(f.rows().filter(row=>row.state===q.state&&row.auto_refresh===true&&row.documents.some(doc=>archiveDocumentEligible(doc)))):f.entity.filter(q,...args)};
+ return {entity,scanEntity,sourceRun,actions,fetchSource:f.options.fetchSource,uploadFile:f.options.uploadFile,state:'OH'};
+}
+test('automatic continuation archives the pending original with owner-scoped per-file activity and no research call',async()=>{
+ const f=fixture();await retainAddressResearchFiles(f.options);const options=backgroundFixture(f),r=await continueAddressResearchArchives(options);assert.equal(r.archived,1);assert.equal(r.archive_queue,'address');assert.equal(r.collection,undefined);assert.equal(r.jurisdiction,undefined);assert.equal(f.calls.uploads,2);const run=[...options.actions.values()][0];assert.equal(run.owner_id,actor.id);assert.equal(run.action_kind,'address_archive');assert.equal(run.status,'complete');assert(run.events.some(e=>e.kind==='saved_original'));assert(run.events.some(e=>e.kind==='download'));
+});
+test('automatic continuation refuses changed origin owners, active initial scans and disabled collections',async()=>{
+ for(const mode of ['foreign','running','disabled']){
+  const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});const options=backgroundFixture(f);
+  if(mode==='foreign')options.sourceRun.owner_id='foreign';
+  if(mode==='running')options.sourceRun.status='running';
+  if(mode==='disabled')f.patch({auto_refresh:false});
+  const r=await continueAddressResearchArchives(options);assert.equal(r.skipped,true);assert.equal(f.calls.uploads,0);assert.equal(options.actions.size,0);
+ }
+});
+test('automatic readback recovery respects backoff and reuses the durable uploaded receipt',async()=>{
+ const f=fixture();f.state.failReadback=true;await retainAddressResearchFiles(f.options);const options=backgroundFixture(f);f.state.failReadback=false;f.patch({documents:[f.rows()[0].documents[0]]});const r=await continueAddressResearchArchives({...options,now:()=>Date.now()+24*60*60*1000});assert.equal(r.archived,1);assert.equal(f.calls.uploads,1);assert.equal(f.calls.source,1);
+});
+test('duplicate collections cannot upload in the automatic worker',async()=>{
+ const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});await f.entity.create({...f.rows()[0],id:undefined});const options=backgroundFixture(f),r=await continueAddressResearchArchives(options);assert.equal(r.success,false);assert.equal(f.calls.uploads,0);
+});
+function repositoryFixture(){
+ let row={id:'repository',name:'Repository',state:'OH',updated_date:'v1',documents:[{id:'repo-file',url:'https://government.example.com/repo.pdf',title:'Repository form',source:'official_page_harvest'}]},version=1;
+ return {filter:async q=>q.state===row.state&&row.documents.some(doc=>archiveDocumentEligible(doc))?[structuredClone(row)]:[],get:async()=>structuredClone(row),updateMany:async(q,patch)=>{if(q.updated_date!==row.updated_date)return {updated:0};row={...row,...structuredClone(patch.$set),updated_date:'v'+(++version)};return {updated:1};}};
+}
+test('queue rotation selects one address or repository original without expanding the one-file cycle budget',async()=>{
+ for(const preferAddressArchives of [true,false]){
+  const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});const address=backgroundFixture(f),r=await continuePermittingDocumentArchiveBacklog({entity:repositoryFixture(),addressEntity:address.entity,scanEntity:address.scanEntity,fetchAddressSource:address.fetchSource,fetchSource:address.fetchSource,uploadFile:address.uploadFile,preferAddressArchives});
+  assert.equal(r.archive_queue,preferAddressArchives?'address':'jurisdiction');assert.equal(f.calls.uploads,1);
+ }
+});
+test('Ohio address originals precede Kentucky repository files even on a repository-preferred turn',async()=>{
+ const f=fixture();await retainAddressResearchFiles({...f.options,archiveLimit:0});const address=backgroundFixture(f),empty={filter:async()=>[]};
+ const r=await continuePermittingDocumentArchiveBacklog({entity:empty,addressEntity:address.entity,scanEntity:address.scanEntity,fetchAddressSource:address.fetchSource,fetchSource:address.fetchSource,uploadFile:address.uploadFile,preferAddressArchives:false});
+ assert.equal(r.archive_queue,'address');assert.equal(f.calls.uploads,1);
 });

@@ -34,3 +34,9 @@ test('address file endpoint rejects foreign collections before worker calls and 
  collection.owner_id='foreign';assert.equal((await run({collection_id:'c',document_id:'doc'})).status,403);assert.equal(calls,1);
  assert.equal((await run({collection_id:'c',document_id:''})).status,400);
 });
+
+test('saved address collection endpoint exposes only the authenticated owner and own archive activity',async()=>{
+ const row={id:'c',owner_id:'reader',owner_email:'reader@example.com',reference_only:true,authority_established:false,documents:[]};
+ const c={asServiceRole:{entities:{PermittingAddressArchive:{get:async()=>row},PermittingScanRun:{filter:async()=>[{action_token:token,owner_id:'reader',owner_email:'reader@example.com',target_id:'c',action_kind:'address_archive'},{action_token:'foreign',owner_id:'other',owner_email:'other@example.com',target_id:'c',action_kind:'address_archive'}]}}}};
+ const run=handler('getAddressResearchCollections',c,{authenticateSignShopSession:async()=>({id:'reader',email:'reader@example.com'})});const res=await run({collection_ids:['c']});assert.equal(res.status,200);assert.equal((await res.json()).actions.length,1);row.owner_id='other';assert.equal((await run({collection_ids:['c']})).status,403);assert.equal((await run({collection_ids:['c','c']})).status,400);
+});
