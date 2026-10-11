@@ -59,6 +59,8 @@ export default function ProductChecklistDialog({
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [incompleteWarning, setIncompleteWarning] = useState(null);
+  const [unfinishedEditsWarning, setUnfinishedEditsWarning] = useState(null);
+  const unfinishedEditsActionRef = useRef(null);
   const [noChecklistWarning, setNoChecklistWarning] = useState(null);
   const [, setProductTypes] = useState([]);
   const [showOtherPopup, setShowOtherPopup] = useState(null);
@@ -660,6 +662,7 @@ export default function ProductChecklistDialog({
   };
 
   const handleCheckOff = async () => {
+    if (isSaving || blockOnUnsubmittedDrafts("complete")) return;
     const status = checkIfComplete();
     
     if (!status.hasChecklist) {
@@ -679,7 +682,7 @@ export default function ProductChecklistDialog({
   };
 
   const proceedWithCheckOff = async () => {
-    if (isSaving) return;
+    if (isSaving || blockOnUnsubmittedDrafts("complete")) return;
     completingWithoutChecklistRef.current = true;
     setNoChecklistWarning(false);
     // Preserve any local product edits and complete the SIP in the same
@@ -690,7 +693,7 @@ export default function ProductChecklistDialog({
 
   // Called when Save button is clicked - first show revisit date popup
   const handleSaveClick = () => {
-    if (!isRegistered) return;
+    if (!isRegistered || isSaving || blockOnUnsubmittedDrafts("save")) return;
     // The Revisit confirmation owns keyboard focus until it closes.
     // Do not allow a queued checklist navigation callback behind it.
     cancelPendingNavigationFocus();
@@ -700,12 +703,16 @@ export default function ProductChecklistDialog({
 
   // Called after user picks (or skips) a revisit date
   const handleRevisitSave = async (dateString) => {
+    if (blockOnUnsubmittedDrafts("save")) {
+      setShowRevisitPopup(false);
+      return;
+    }
     setShowRevisitPopup(false);
     await saveChecklist(dateString);
   };
 
   const saveChecklist = async (revisitDate, { markComplete = false } = {}) => {
-    if (isSaving) return;
+    if (isSaving || blockOnUnsubmittedDrafts(markComplete ? "complete" : "save")) return;
     setIsSaving(true);
     try {
       // Build a map for quick parent lookup
@@ -1006,8 +1013,8 @@ export default function ProductChecklistDialog({
 
   // Warning dialogs must keep focus inside their modal while displayed.
   useLayoutEffect(() => {
-    if (incompleteWarning || validationDialog || noChecklistWarning) cancelPendingNavigationFocus();
-  }, [incompleteWarning, validationDialog, noChecklistWarning]);
+    if (incompleteWarning || validationDialog || noChecklistWarning || unfinishedEditsWarning) cancelPendingNavigationFocus();
+  }, [incompleteWarning, validationDialog, noChecklistWarning, unfinishedEditsWarning]);
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -1557,6 +1564,12 @@ export default function ProductChecklistDialog({
     JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot) ||
     hasUnsubmittedDrafts
   );
+  const blockOnUnsubmittedDrafts = (action) => {
+    if (!hasUnsubmittedDrafts) return false;
+    unfinishedEditsActionRef.current = action;
+    setUnfinishedEditsWarning(action);
+    return true;
+  };
 
   const requestClose = () => {
     if (isSaving) return;
@@ -2942,6 +2955,33 @@ export default function ProductChecklistDialog({
         currentDate={pendingRevisitDate}
         returnFocusRef={saveRevisitButtonRef}
       />
+
+      {/* Unsubmitted text must be applied or cancelled before any SIP save. */}
+      <AlertDialog open={!!unfinishedEditsWarning} onOpenChange={(open) => { if (!open) setUnfinishedEditsWarning(null); }}>
+        <AlertDialogContent
+          className="clay-card border-none"
+          onCloseAutoFocus={(event) => {
+            if (!isOpen) return;
+            event.preventDefault();
+            const control = unfinishedEditsActionRef.current === "complete" ? completeButtonRef.current : saveRevisitButtonRef.current;
+            unfinishedEditsActionRef.current = null;
+            if (control?.isConnected && !control.disabled && control.getClientRects().length) control.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              Finish unfinished checklist text first
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              A checklist item, product name, or custom status still has unsubmitted text. Add or apply it, or cancel the unfinished edit, before {unfinishedEditsWarning === "complete" ? "completing this SIP" : "saving and choosing a Revisit date"}. Your entered text and saved checklist changes have not been discarded.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setUnfinishedEditsWarning(null)} className="h-11 sm:h-9">Keep Editing</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Incomplete Warning */}
       <AlertDialog open={!!incompleteWarning} onOpenChange={() => setIncompleteWarning(null)}>
