@@ -98,7 +98,7 @@ import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
-import { classifyUncertainOrderSyncReadback } from "@/components/orders/orderUncertainSyncReadback.mjs";
+import { verifyUncertainOrderSyncReadback } from "@/components/orders/orderUncertainSyncReadback.mjs";
 import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
@@ -580,13 +580,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         // filtered. A missing row in that view is NOT proof it was synced.
         // Independently read back every exact requested permanent ID before
         // interpreting a cleared local queue marker as a successful push.
-        const exactRows = await loadAllEntityRows({
-          entity: Order, query: { id: { $in: orderIds } }, sort: "id",
-          pageSize: Math.min(500, Math.max(20, orderIds.length)),
-          maxRows: Math.max(1000, orderIds.length + 500),
-          label: "Order Form uncertain Save & Sync permanent-ID read-back",
-        });
-        const exact = classifyUncertainOrderSyncReadback(orderIds, exactRows);
+        const exact = await verifyUncertainOrderSyncReadback(orderIds, (ids) =>
+          loadAllEntityRows({
+            entity: Order, query: { id: { $in: ids } }, sort: "id",
+            pageSize: Math.min(500, Math.max(20, ids.length)),
+            maxRows: Math.max(1000, ids.length + 500),
+            label: "Order Form uncertain Save & Sync permanent-ID read-back",
+          }),
+        );
         const verificationLoaded = await loadData(false);
         if (!verificationLoaded) throw new Error('Authoritative Order verification reload failed.');
         // Preserve pending IDs even if the visible list omitted them. Do not
