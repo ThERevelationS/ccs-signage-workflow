@@ -370,21 +370,21 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   const saveClick = source.slice(source.indexOf("  const handleSaveClick = () => {"),
     source.indexOf("  // Called after user picks (or skips) a revisit date"));
   const calls = [];
-  const makeClick = new Function("isRegistered", "cancelPendingNavigationFocus",
-    "setPendingRevisitDate", "loadedRevisitDateSnapshot", "setShowRevisitPopup",
-    saveClick + "\nreturn handleSaveClick;");
+  const makeClick = new Function("isRegistered", "isSaving", "blockOnUnsubmittedDrafts",
+    "cancelPendingNavigationFocus", "setPendingRevisitDate", "loadedRevisitDateSnapshot",
+    "setShowRevisitPopup", saveClick + "\nreturn handleSaveClick;");
   const cancel = () => calls.push("cancel focus");
   const setDate = date => calls.push(["revisit date", date]);
   const setOpen = open => calls.push(["confirmation open", open]);
-  makeClick(false, cancel, setDate, "2099-02-17", setOpen)();
+  makeClick(false, false, () => false, cancel, setDate, "2099-02-17", setOpen)();
   assert.deepEqual(calls, []);
-  makeClick(true, cancel, setDate, "2099-02-17", setOpen)();
+  makeClick(true, false, () => false, cancel, setDate, "2099-02-17", setOpen)();
   assert.deepEqual(calls, [
     "cancel focus", ["revisit date", "2099-02-17"], ["confirmation open", true]
   ]);
   assert.match(source, /<RevisitDatePopup\s+isOpen=\{showRevisitPopup\}/);
   assert.match(source, /onSave=\{handleRevisitSave\}/);
-  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
+  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*if \(blockOnUnsubmittedDrafts\("save"\)\) \{\s*setShowRevisitPopup\(false\);\s*return;\s*\}\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
 
   const searchRecovery = source.slice(source.indexOf("// When checklist edits remove a navigated match"),
     source.indexOf("// A collapsed product, hierarchy, or Completed section"));
@@ -460,7 +460,7 @@ check("cancelled Revisit confirmation returns focus to Save & Revisit without sa
 
 check("warning dialogs restore keyboard focus to editing after dismissal", () => {
   assert.match(source, /ref=\{completeButtonRef\}\s*onClick=\{handleCheckOff\}/);
-  assert.match(source, /if \(incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) cancelPendingNavigationFocus\(\)/);
+  assert.match(source, /if \(incompleteWarning \|\| validationDialog \|\| noChecklistWarning \|\| unfinishedEditsWarning\) cancelPendingNavigationFocus\(\)/);
   const getFocusBody = (comment) => {
     const section = source.slice(source.indexOf(comment));
     const start = section.indexOf("onCloseAutoFocus={(event) => {");
