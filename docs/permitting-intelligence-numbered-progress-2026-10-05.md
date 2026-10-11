@@ -1,3 +1,7 @@
+## 2026-10-11 — Phase 10 managed preview activation check
+
+Read-only local dev-server probe confirms the existing managed server still serves old blocked shared imports, although saved source and production build contain the virtual-helper repair. Browser builder session expired; secure Google method choice reached a 502 connection-refused page. Fresh Base44 verification returned sign-in, so browser access is not restored. No live scan or frontend publication this unit. Acceptance remains open; do not classify the saved repair as activated in the managed server.
+
 ## 2026-10-11 — Phase 10 live preview shared helpers
 
 Fixed frontend access to approved pure shared helpers with virtual ESM bundles while preserving Base44 backend deny rules. 632 permitting tests and two frontend boundary tests pass; production build exits 0. Deployed address endpoint independently reports address-geocode-v3, whereas the earlier regular preview scan did not. Current sandbox browser remains on Base44 startup page after one reload, so live address/map/scan acceptance is still open. No frontend publication.

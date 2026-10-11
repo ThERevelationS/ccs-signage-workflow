@@ -97,5 +97,20 @@
     "browser": "Previous browser session was unavailable on resume. Current sandbox preview remained on Base44 Preview is starting up after one reload. No address scan submitted this unit.",
     "remaining": "Current preview startup and authenticated v3 address scan; map pin, accurate jurisdiction and concurrent scan activity acceptance remain open.",
     "frontend_published": false
+  },
+  "managed_preview_activation_followup": {
+    "date": "2026-10-11",
+    "phase_10_complete": false,
+    "fresh_head_before_work": "1ec4abf789d8df8ce1e1c32e85d8a1c22d4c6480",
+    "managed_server_probe": {
+      "url": "http://127.0.0.1:5173/src/components/permitting/ElectricalAuthorityCoverage.jsx",
+      "status": 200,
+      "uses_virtual_helper": false,
+      "still_returns_blocked_shared_import": true
+    },
+    "conclusion": "Saved and build-tested repair is not active in the existing managed dev server; refresh/restart through builder remains necessary.",
+    "authentication": "Existing builder session expired. Secure sign-in method request selected Google; Google navigation returned 502 Bad Gateway / connection refused. Fresh canonical Base44 verification tab returned sign-in page, confirming builder access not restored. No credentials entered by agent and no authentication bypass.",
+    "changes": "Evidence documentation only this unit. No frontend publication or live address scan.",
+    "remaining": "Restore builder browser access; activate managed dev-server repair; verify authenticated current-revision address scan, map pin and scan activity."
   }
 }
