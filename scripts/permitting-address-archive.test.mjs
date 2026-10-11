@@ -101,7 +101,7 @@ test('automatic pause during upload preserves the pause and prevents a second fi
 
 async function externalFixture(){
  const f=fixture(),html='<a href="https://outside.example.com/sign.pdf">Sign form</a><a href="https://portal.example.com/apply">Apply online</a>';
- const scan=await scanOfficialPermittingPages({seedUrl:'https://government.example.com/forms',fetchPage:async()=>new Response(html,{headers:{'content-type':'text/html'}}),maxPages:1,maxDepth:1});
+ const scan=await scanOfficialPermittingPages({seedUrl:'https://government.example.com/forms',fetchPage:async()=>({html,finalUrl:'https://government.example.com/forms'}),maxPages:1,maxDepth:1});
  f.options.automatic.scans=[{target:{name:'Example',state:'OH',type:'municipality'},...scan}];
  const fetch=f.options.fetchSource;f.state.linkPresent=true;f.options.fetchSource=async(url,init,host)=>{if(url==='https://government.example.com/forms'){f.calls.source++;f.calls.hosts.push(host);return new Response(f.state.linkPresent?html:'<p>No form remains</p>',{headers:{'content-type':'text/html'}});}return fetch(url,init,host);};
  return f;
