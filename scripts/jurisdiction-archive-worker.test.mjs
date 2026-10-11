@@ -22,7 +22,7 @@ function setup({role='admin',enabled=true,atCap=false}={}) {
   const settings={filter:async query=>[query.setting_key.endsWith('config')?{id:'config',updated_date:'v1',setting_key:query.setting_key,setting_value:{enabled,interval_minutes:15,daily_dispatch_limit:40}}:structuredClone(state)],get:async()=>structuredClone(state),
    updateMany:async(q,p)=>{if(q.updated_date!==state.updated_date)return {updated:0};calls.stateWrites++;calls.statePatches.push(structuredClone(p.$set.setting_value));state={...state,...p.$set,updated_date:'v'+(++version)};return {updated:1};}};
   globalThis.workerFixture={auth:{me:async()=>role?{role}:null},asServiceRole:{
-    entities:{PermittingSourceDocument:{filter:async(q,s,l)=>{assert.ok(q.source_registration_key);assert.equal(l,20);calls.textScans++;return[];},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents?.$elemMatch || query['discovery_scan_state.external_referrals']?.$elemMatch);calls.scans++;return[];},
+    entities:{PermittingSourceDocument:{filter:async(q,s,l)=>{assert.ok(q.source_registration_key);assert.equal(l,20);calls.textScans++;return[];},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents?.$elemMatch || query['discovery_scan_state.external_referrals']?.$elemMatch || query['discovery_scan_state.pending_pages.0']);calls.scans++;return[];},
       get:async()=>({id:'j',documents:[],updated_date:'v1'}),updateMany:async()=>{calls.writes++;return{updated:1};}}},
     integrations:{Core:{UploadFile:async()=>{throw Error('Unexpected upload');}}},
     functions:{invoke:async()=>{calls.research++;throw Error('Unexpected research');}},
@@ -53,7 +53,7 @@ test('dispatcher at its daily LLM limit saves collection receipts without resear
   assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.dispatched_today,40);
   assert.equal(r.data.archive_continuation.reason,'no_eligible_file');
   assert.equal(r.data.text_continuation.reason,'no_eligible_text_source');assert.equal(calls.textScans,1);
-  assert.equal(calls.scans,8);assert.equal(calls.research,0);assert.equal(calls.writes,0);assert.equal(calls.stateWrites,2);assert.ok(calls.statePatches.every(p=>p.dispatched_today===40));assert.equal(r.data.collection_cycle.status,'complete');
+  assert.equal(calls.scans,9);assert.equal(calls.research,0);assert.equal(calls.writes,0);assert.equal(calls.stateWrites,2);assert.ok(calls.statePatches.every(p=>p.dispatched_today===40));assert.equal(r.data.collection_cycle.status,'complete');
 });
 
 test('catalog route requires a stable manual target and denies automated caller-selected targets',async()=>{
