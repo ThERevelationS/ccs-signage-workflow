@@ -42,3 +42,10 @@ test('duplicate collection and unavailable activity refuse collection creation o
 test('unconfirmed location retains reference-only originals without manufacturing geographic verification',async()=>{
  const f=fixture();await retainAddressResearchFiles({...f.options,resolution:{status:'needs_review'}});assert.equal(f.rows()[0].location_verified,false);assert.equal(f.rows()[0].authority_established,false);
 });
+
+test('www aliases retain source scope and a changed external source is rejected before fetch',async()=>{
+ const f=fixture();f.options.automatic.scans[0].documents[0].url='https://www.government.example.com/sign.pdf';const r=await retainAddressResearchFiles({...f.options,archiveLimit:0});assert.equal(r.collections[0].documents.length,2);const row=f.rows()[0];f.patch({documents:row.documents.map((d,i)=>i?d:{...d,url:'https://outside.example.com/sign.pdf'})});await assert.rejects(archiveOwnedAddressResearchFile({...f.options,collectionId:row.id,documentId:row.documents[0].id}),/outside the saved host/);assert.equal(f.calls.source,0);
+});
+test('owner change during upload prevents receipt writes and result disclosure under old owner',async()=>{
+ const f=fixture();const upload=f.options.uploadFile;const r=await retainAddressResearchFiles({...f.options,uploadFile:async data=>{const result=await upload(data);f.patch({owner_id:'other'});return result;}});assert.equal(r.status,'needs_review');assert.equal(r.collections[0].documents,undefined);assert.equal(f.rows()[0].documents[0].file_url,undefined);assert.equal(f.rows()[0].owner_id,'other');
+});
