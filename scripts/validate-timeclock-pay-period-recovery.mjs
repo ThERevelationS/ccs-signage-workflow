@@ -5430,9 +5430,8 @@ async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline }) {
     request_id: prefix + '-approve-d', entry_id: entry.id,
     expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve terminal D',
   }));
-  // Both paths are presently rejected by existing pre-finalization protections.
-  // The ordinary C→D path has no single terminal audit spanning the generation
-  // delta; B→C→B→D reaches an earlier late-punch provenance integrity gate.
+  // A unique manager correction chain must finalize and verify; an ambiguous
+  // return-to-baseline chain must remain fail-closed.
   assert.equal(auditC.details.original.clock_in, '2026-09-28T12:00:00.000Z');
   assert.equal(auditC.details.corrected.clock_in, '2026-09-28T12:30:00.000Z');
   if (returnToBaseline) {
@@ -5448,24 +5447,43 @@ async function exerciseV28DirectManagerSemanticSuffix({ returnToBaseline }) {
   const frozenHistory = clone(period.finalized_summary_history);
   const beforeStatus = period.status;
   const attempt = () => h.action('finalize', prefix + '-finalize-d');
-  const expectedError = returnToBaseline
-    ? /employee-attested missed clock in evidence could not be verified/i
-    : /no authoritative time clock audit whose result matches the payroll delta/i;
-  const blocked = await attempt();
-  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
-  assert.match(String(blocked.body.error || ''), expectedError);
-  assert.equal(blocked.body.success, false);
-  assert.deepEqual(period.finalized_summary, frozenSummary, 'Finalized payroll must not be replaced');
-  assert.deepEqual(period.finalized_summary_history, frozenHistory, 'Historical generations must not change');
-  assert.equal(period.status, beforeStatus, 'Blocked finalization must preserve pay-period state');
-  const retry = await attempt();
-  assert.equal(retry.status, 409, JSON.stringify(retry.body));
-  assert.match(String(retry.body.error || ''), expectedError);
-  assert.deepEqual(period.finalized_summary, frozenSummary);
-  assert.deepEqual(period.finalized_summary_history, frozenHistory);
+  if (returnToBaseline) {
+    const blocked = await attempt();
+    assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+    assert.equal(blocked.body.success, false);
+    assert.deepEqual(period.finalized_summary, frozenSummary, 'Finalized payroll must not be replaced');
+    assert.deepEqual(period.finalized_summary_history, frozenHistory, 'Historical generations must not change');
+    assert.equal(period.status, beforeStatus, 'Blocked finalization must preserve pay-period state');
+    const retry = await attempt();
+    assert.equal(retry.status, 409, JSON.stringify(retry.body));
+    assert.deepEqual(period.finalized_summary, frozenSummary);
+    assert.deepEqual(period.finalized_summary_history, frozenHistory);
+    return;
+  }
+  await ok(attempt());
+  await ok(attempt());
+  assert.equal(period.finalized_summary.generation_changes.length, 1);
+  const change = period.finalized_summary.generation_changes[0];
+  assert.equal(change.change_type, 'changed');
+  assert.equal(change.action_provenance.audit_id, auditD.id);
+  assert.equal(change.correction_provenance, undefined);
+  assert.equal(change.action_provenance.unique_direct_semantic_suffix, true);
+  const directIds = change.causal_chain.filter((link) => link.action === 'admin_correction')
+    .map((link) => link.audit_id);
+  assert.deepEqual(directIds.slice(-2), [auditC.id, auditD.id]);
+  const historyVerify = (request_id) => h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id,
+  });
+  const verified = await ok(historyVerify(prefix + '-verify-001'));
+  assert.equal(verified.verified, true, JSON.stringify(verified));
+  const savedClock = auditC.details.corrected.clock_in;
+  auditC.details.corrected.clock_in = '2026-09-28T12:31:00.000Z';
+  const tampered = await ok(historyVerify(prefix + '-tampered-001'));
+  assert.equal(tampered.verified, false, JSON.stringify(tampered));
+  auditC.details.corrected.clock_in = savedClock;
 }
 
-test('v28 multi-direct manager correction without a terminal generation-spanning audit blocks finalization', async () => {
+test('v28 uniquely reconstructable multi-direct manager correction finalizes with auditable semantic suffix', async () => {
   await exerciseV28DirectManagerSemanticSuffix({ returnToBaseline: false });
 });
 
