@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T01:18:40.418Z",
+  "tested_at": "2026-10-11T01:41:45.881Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -50,6 +50,16 @@
     },
     {
       "name": "broken canonical link does not borrow a same-name profile",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "uncertain address cannot be manually overridden or applied",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "employee address action has inline progress and confirmed apply",
       "width": 390,
       "passed": true
     }

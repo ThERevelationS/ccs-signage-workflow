@@ -164,7 +164,7 @@ test('manual locality selection uses the same partial authority coverage languag
 test('address result visually separates geographic confidence from staff-verified authority', () => {
   assert.match(ui, /const addressAuthority = result\?\.authority_review/);
   assert.match(ui, /Permitting authority:/);
-  assert.match(ui, /locality match confidence above identifies geography only/);
+  assert.match(ui, /boundary check identifies the building location/);
   assert.match(ui, /These roles come separately from staff-reviewed office relationships/);
   assert.match(ui, /address can match this locality without proving which office has sign, zoning, building, or electrical authority/);
 });
@@ -178,7 +178,7 @@ test('address result authority labels come from backend verified roles, not AI t
 test('address result visually separates geographic confidence from staff-verified authority', () => {
   assert.match(ui, /const addressAuthority = result\?\.authority_review/);
   assert.match(ui, /Permitting authority:/);
-  assert.match(ui, /locality match confidence above identifies geography only/);
+  assert.match(ui, /boundary check identifies the building location/);
   assert.match(ui, /These roles come separately from staff-reviewed office relationships/);
   assert.match(ui, /address can match this locality without proving which office has sign, zoning, building, or electrical authority/);
 });
