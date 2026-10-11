@@ -1,0 +1,122 @@
+{
+  "tested_at": "2026-10-11T01:56:34.839Z",
+  "mode": "live government GIS at fixed public test coordinates; precision flag injected; Google geocoding, parcels and office authority not verified",
+  "production_writes": 0,
+  "checks": [
+    {
+      "name": "Ohio municipal test point",
+      "point": {
+        "lat": 39.34,
+        "lon": -84.32
+      },
+      "status": "location_verified",
+      "target": {
+        "name": "Mason",
+        "state": "OH",
+        "type": "municipality",
+        "geoid": "3948188",
+        "county": "Warren County",
+        "county_geoid": "39165",
+        "source_url": "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.32%2C%22y%22%3A39.34%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10"
+      },
+      "reason": "Building location is inside the checked Mason government boundary. Office responsibility is checked separately.",
+      "sources": [
+        {
+          "kind": "county",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.32%2C%22y%22%3A39.34%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.817Z"
+        },
+        {
+          "kind": "municipality",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/4/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.32%2C%22y%22%3A39.34%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.817Z"
+        },
+        {
+          "kind": "state municipality",
+          "url": "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.32%2C%22y%22%3A39.34%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.817Z"
+        }
+      ]
+    },
+    {
+      "name": "Ohio township test point",
+      "point": {
+        "lat": 39.355,
+        "lon": -84.251
+      },
+      "status": "location_verified",
+      "target": {
+        "name": "Deerfield township",
+        "state": "OH",
+        "type": "township",
+        "geoid": "3916521238",
+        "county": "Warren County",
+        "county_geoid": "39165",
+        "source_url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.251%2C%22y%22%3A39.355%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10"
+      },
+      "reason": "Building location is inside the checked Deerfield township government boundary. Office responsibility is checked separately.",
+      "sources": [
+        {
+          "kind": "county",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.251%2C%22y%22%3A39.355%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.834Z"
+        },
+        {
+          "kind": "municipality",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/4/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.251%2C%22y%22%3A39.355%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.834Z"
+        },
+        {
+          "kind": "state municipality",
+          "url": "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.251%2C%22y%22%3A39.355%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.834Z"
+        },
+        {
+          "kind": "township",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/1/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.251%2C%22y%22%3A39.355%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.834Z"
+        },
+        {
+          "kind": "state township",
+          "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.251%2C%22y%22%3A39.355%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.834Z"
+        }
+      ]
+    },
+    {
+      "name": "Kentucky municipal test point",
+      "point": {
+        "lat": 38.998,
+        "lon": -84.626
+      },
+      "status": "location_verified",
+      "target": {
+        "name": "Florence",
+        "state": "KY",
+        "type": "municipality",
+        "geoid": "2127982",
+        "county": "Boone County",
+        "county_geoid": "21015",
+        "source_url": "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.626%2C%22y%22%3A38.998%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10"
+      },
+      "reason": "Building location is inside the checked Florence government boundary. Office responsibility is checked separately.",
+      "sources": [
+        {
+          "kind": "county",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.626%2C%22y%22%3A38.998%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.837Z"
+        },
+        {
+          "kind": "municipality",
+          "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/4/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.626%2C%22y%22%3A38.998%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.837Z"
+        },
+        {
+          "kind": "state municipality",
+          "url": "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0/query?f=json&where=1%3D1&geometry=%7B%22x%22%3A-84.626%2C%22y%22%3A38.998%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=25&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=10",
+          "checked_at": "2026-10-11T01:56:34.837Z"
+        }
+      ]
+    }
+  ]
+}
