@@ -1,0 +1,47 @@
+{
+  "tested_at": "2026-10-11T00:20:24.831Z",
+  "mode": "isolated Chromium; actual component and production CSS; mock API only",
+  "production_writes": 0,
+  "checks": [
+    {
+      "name": "layout and source links",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "layout and source links",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "layout and source links",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "keyboard collection and duplicate fencing",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "reader and protected receipts",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "lost acknowledgement reload and retry",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "locality switch suppresses old response",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "pagination retains later resources",
+      "width": 320,
+      "passed": true
+    }
+  ]
+}
