@@ -1,3 +1,13 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: guarded original-document repository linking
+
+Administrator inspection now offers Preview jurisdiction link for originals with verified source/stored bytes and verified collection location. The backend verifies completed originating address-scan ownership, reference-only collection scope, safe HTTPS file/source URLs and one matching jurisdiction by normalized name/state/type plus government ID or non-county parent-county context. Missing/duplicate identities and existing source/file entries block the append. The preview supplies evidence digest and jurisdiction version; confirmation must match both.
+
+Confirmation appends a pinned manual document with an immutable original/provenance snapshot and reviewer/time receipt, preserves prior documents and sets the existing manual-document protection flag. The jurisdiction write uses updated-date CAS; the exact copied receipt is read back, including reconciliation after lost acknowledgement. Each confirmation has a separate tracked action/progress. No source collection ownership, WorkOrder, rules or office authority is changed, and no download or LLM call is made.
+
+This is review of a retained document snapshot, not approval of legal applicability. The destination write is conditional; source collection/scan/catalog reads are not a multi-entity transaction. Later source changes do not rewrite the pinned snapshot. Concurrent creation of another jurisdiction identity elsewhere is not atomically fenced by this operation. Rules and office authority retain their own review gates. Originals from unresolved collections must resolve location before this link path is available.
+
+Remaining: external document scopes, live signed-in map/address/archive/link acceptance, and project-specific authority/parcel validation. Nothing published; tests use synthetic services/records only.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: administrator employee-research inspection
 
 The Permitting Repository admin panel now includes Employee research to review. It browses retained employee collections, ten per page with an older-page cursor, and shows collector email, state/county context, source website, original links and whether location was verified when collected. Verified stored originals remain separate from pending or uncertain uploads. The inspection view exposes no manual save or jurisdiction-apply control and writes no collection/profile/authority data.

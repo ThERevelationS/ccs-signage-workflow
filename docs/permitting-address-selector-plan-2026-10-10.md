@@ -42,3 +42,7 @@ Open My saved research in the jurisdiction selector, then Show my research. Open
 ## Administrator inspection
 
 Permitting Repository admin includes Employee research to review. It shows retained employee originals, source and collector provenance, and location-verification status. This is read-only inspection; it does not approve findings, change ownership, apply a jurisdiction or import documents into its authoritative repository.
+
+## Link a reviewed original
+
+In administrator employee research inspection, open a verified original and review its source. For a location-verified collection, choose Preview jurisdiction link. Only one matching repository jurisdiction is accepted. Confirm I reviewed it — link original to append a pinned manual original with reviewer/provenance history. Existing documents remain, and automatic document replacement is protected. This does not approve rules or office roles. Changed previews or duplicate sources must be reviewed again. Unresolved location collections cannot use this link action.
