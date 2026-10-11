@@ -50,7 +50,7 @@ function context(action="save"){
   const Access={async get(id){return id===grantId?structuredClone(grant):null;}};
   const Receipt={
     async filter(filter){return rows.filter(item=>item.operation_key===filter.operation_key).map(item=>structuredClone(item));},
-    async get(id){return id===source.id?structuredClone(source):null;},
+    async get(id){return id===source.id?structuredClone(source):id===row.id?structuredClone(row):null;},
   };
   const patch=buildMechanicRecoveryPatch(current,row,"2026-10-10T22:00:00.000Z").patch;
   const args={Access,Receipt,workOrder:current,patch,expectedUpdatedAt:expected,nowMs:Date.parse("2026-10-10T22:00:00Z")};
