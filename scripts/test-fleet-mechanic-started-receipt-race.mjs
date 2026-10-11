@@ -50,7 +50,8 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
     waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
     pauseWorkRead:false,pendingWorkReads:[],sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
-    pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],release:null};
+    pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],
+    pauseFinalReceiptReadAt:0,receiptReadNumbers:new Map(),pendingFinalReceiptReads:[],release:null};
   if(receipt)store.receipts.set(receipt.id,clone(receipt));
   const grant={id:grantId,enabled:true,token_hash:sha(token),name:"Synthetic",
     allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",expires_at:"2099-01-01T00:00:00.000Z"};
@@ -62,6 +63,13 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
   });
   const receipts={
     async get(id){
+      if(id.startsWith('new-receipt-')){
+        const count=(store.receiptReadNumbers.get(id)||0)+1;
+        store.receiptReadNumbers.set(id,count);
+        if(count===store.pauseFinalReceiptReadAt){
+          await new Promise(resolve=>store.pendingFinalReceiptReads.push(resolve));
+        }
+      }
       const record=clone(store.receipts.get(id)||null);
       if(id==='old-receipt' && ++store.sourceReadNumber===store.pauseSourceReadAt){
         await new Promise(resolve=>store.pendingSourceReads.push(resolve));
