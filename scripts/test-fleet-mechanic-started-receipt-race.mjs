@@ -988,6 +988,73 @@ test("status reconciliation racing another status check reports the same applied
   assert.equal(store.receipts.get(old.id).status,"applied");
   assert.equal(store.receipts.size,1);
 });
+function strandedStartReceipt(){
+  const requestId="request-start-crashed-123456";
+  const note="Start saved before dispatch";
+  return {
+    id:"stranded-start-receipt",
+    operation_key:`mechanic:${grantId}:${workId}:start:${requestId}`,
+    operation_type:"mechanic_start",target_entity:"FleetMaintenanceWorkOrder",target_id:workId,
+    actor_user_id:grantId,payload_fingerprint:sha(JSON.stringify({action:"start",note})),
+    status:"started",created_date:"2026-10-11T00:00:00.000Z",
+    result_summary:{grant_id:grantId,action:"start",request_id:requestId,
+      expected_updated_date:"version-1",mutation_plan:{started_date:"2026-10-11",
+        appended_note:"[Mechanic – Synthetic]\\nStart saved before dispatch"}},
+  };
+}
+
+test("stranded Start receipt with no prior dispatch can recover after an interrupted request",async()=>{
+  const prior=strandedStartReceipt();
+  const {store,client}=setup({receipt:prior});
+  assert.equal(store.updateAttempts,0);
+  const input={action:"mutation_status",token,work_order_id:workId,mutation_action:"start",
+    request_id:prior.result_summary.request_id};
+  const recovered=await call(input,client);
+  assert.equal(recovered.code,200);
+  assert.equal(recovered.body.status,"applied");
+  assert.equal(store.updates,1);
+  assert.equal(store.work.mechanic_operation_key,prior.operation_key);
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  const repeated=await call(input,client);
+  assert.equal(repeated.body.status,"applied");
+  assert.equal(store.updates,1,"Recovery stays idempotent after proving the marker");
+});
+
+test("stranded Start admin and status redispatch race commits once, then narrowed scope withholds mechanic data",async()=>{
+  const prior=strandedStartReceipt();
+  const {store,client,grant}=setup({receipt:prior,holdUpdates:true});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const status=call({action:"mutation_status",token,work_order_id:workId,mutation_action:"start",
+    request_id:prior.result_summary.request_id},client);
+  const admin=call({action:"admin_reconcile_mechanic_mutation",receipt_id:prior.id},client);
+  await until("simultaneous Start recovery dispatches",()=>store.pendingUpdates.length===2);
+  grant.scope_mode="selected_equipment";
+  grant.allowed_equipment_ids=["eq-other"];
+  for(const release of store.pendingUpdates.splice(0))release();
+  const [mechanicResult,adminResult]=await Promise.all([status,admin]);
+  assert.equal(store.updates,1,"Fleet work-order version CAS limits racing dispatches to one write");
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(adminResult.body.status,"applied");
+  assert.equal(mechanicResult.code,403,"Current scope must block mechanic's committed response");
+  assert.ok(!mechanicResult.body.work_order,"No work-order data escapes after scope is narrowed");
+});
+
+test("revoked interrupted Start without a work-order marker cannot be redispatched",async()=>{
+  const prior=strandedStartReceipt();
+  const {store,client,grant}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const revoked=await call({action:"admin_revoke_link",id:grantId},client);
+  assert.equal(revoked.code,200);
+  assert.equal(revoked.body.reconciled_cancelled,1);
+  assert.equal(grant.enabled,false);
+  assert.equal(store.receipts.get(prior.id).status,"cancelled");
+  const status=await call({action:"mutation_status",token,work_order_id:workId,mutation_action:"start",
+    request_id:prior.result_summary.request_id},client);
+  assert.equal(status.code,403);
+  assert.equal(store.updateAttempts,0);
+  assert.equal(store.updates,0);
+});
+
 test("concurrent distinct new request ids cannot apply same started receipt twice",async()=>{
   const old=makeReceipt(payload("request-original-123456"));
   const {store,client}=setup({receipt:old,barrier:true});
