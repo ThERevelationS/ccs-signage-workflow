@@ -1,3 +1,9 @@
+## Phase 10 — live verification access check (2026-10-11)
+
+Milestone 2 of 3 remains incomplete. Fresh HEAD was a66fca1df0135e3e61aecf6704fea8be4ac7c9a9 and the working tree was clean. The approved Mason test address has no newer saved scan; the latest is still the v3 REQUEST_DENIED run at 2026-10-11T15:45:29.661000. Current direct probes to both address endpoints on both app domains returned non-JSON HTTP 403, so current runtime revisions cannot be confirmed by those probes. This does not establish a new app authentication failure.
+
+The browser session remains stopped after supported recovery and manual handoff failed. No further browser action was attempted. The next required acceptance action is a signed-in preview search for 4900 Parkway Dr, Mason, OH 45040 using Find my jurisdiction in a job jurisdiction selector, without applying the result. Saved scan activity can then be read through Base44 for the v5 diagnostic. No additional source-code change, frontend publication or production-record mutation in this check.
+
 ## Phase 10 — delayed scan-status response guards (2026-10-11)
 
 Milestone 2 of 3 remains incomplete. Four delayed-response problems were reproduced in executable tests before the fix: old running status overwriting completion, stale sign-in rejection re-pausing a successful retry, and delayed saved-status success/failure recreating a dismissed card. Each action now guards status-response ordering independently, suppresses updates to dismissed cards for the current provider session, and stops outstanding polls from regressing the final result. Saved scan evidence confirmed manually remains authoritative when the original action response later loses sign-in. Dismissal affects local display only; it does not cancel execution or delete saved records.

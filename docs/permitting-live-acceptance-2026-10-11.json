@@ -494,5 +494,49 @@
       "src/components/permitting/ResearchProgressContext.jsx",
       "scripts/permitting-progress-session-recovery.test.mjs"
     ]
+  },
+  "live_verification_resume_check": {
+    "checked_at": "2026-10-11T20:17:38.469637+00:00",
+    "phase": "Phase 10 \u2014 live testing, milestone 2 of 3",
+    "repository_head_before_check": "a66fca1df0135e3e61aecf6704fea8be4ac7c9a9",
+    "working_tree_before_check": "clean",
+    "test_address": "4900 Parkway Dr, Mason, OH 45040",
+    "latest_saved_scan": {
+      "id": "6acbaf19beacb55b547d9ab5",
+      "created_date": "2026-10-11T15:45:29.661000",
+      "revision": "address-geocode-v3",
+      "geocoding_status": "REQUEST_DENIED"
+    },
+    "new_saved_scan_found": false,
+    "direct_revision_checks": {
+      "functions": [
+        "findLocalityByAddress",
+        "resolvePermittingAddress"
+      ],
+      "domains": [
+        "clay-flow-signage-suite-387da97c.base44.app",
+        "preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app"
+      ],
+      "http_status": 403,
+      "body_format": "non-JSON",
+      "revision_currently_confirmed": false,
+      "interpretation": "The probe could not establish endpoint revision or application authentication status."
+    },
+    "browser_action": "None. Prior supported recovery and manual handoff failed and explicitly required stop.",
+    "next_required_live_action": {
+      "preview_url": "https://preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app/permitting",
+      "steps": [
+        "Sign in with Google if prompted.",
+        "Open a permitting job jurisdiction selector.",
+        "Enter 4900 Parkway Dr, Mason, OH 45040.",
+        "Press Find my jurisdiction.",
+        "Leave the result open; do not apply it to a Work Order."
+      ],
+      "follow_up": "Read the saved scan activity through Base44 to inspect the v5 safe diagnostic and location/progress evidence."
+    },
+    "code_changes_in_this_check": false,
+    "frontend_published": false,
+    "production_records_modified": false,
+    "phase_10_complete": false
   }
 }
