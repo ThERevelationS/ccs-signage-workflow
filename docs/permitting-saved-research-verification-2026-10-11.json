@@ -1,0 +1,13 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Owner-scoped saved research browsing",
+  "regression_passed": 569,
+  "selector_chromium_passed": 18,
+  "lint": "passed",
+  "production_build": "passed",
+  "backend_bundle": "passed",
+  "production_test_writes": 0,
+  "published": false,
+  "live_signed_in_acceptance": "pending"
+}

@@ -2,6 +2,8 @@
 
 Added My saved research inside the jurisdiction selector. Employees can reopen their own retained collections after leaving an address result, open verified originals, save pending originals and check readback status with existing individual progress controls. Show older research pages through ten collections at a time using a stable ID cursor; this is a page size, not an overall manual history cap. Listing checks owner ID, email and reference-only scope, then rechecks each collection before returning documents. Session changes/unmount invalidate pending list responses. Browsing makes no research call and never applies a jurisdiction.
 
+Verification: all 569 permitting regression tests and 18 isolated selector Chromium checks passed, including saved-history retrieval at 320px and 1280px. Targeted lint, production build and the saved-collection endpoint bundle passed. Test services were simulated; no production records/files were changed. Live signed-in acceptance remains pending.
+
 Remaining: administrator review/link workflow, external document scopes and live signed-in acceptance. No publication or production test writes.
 
 ## 2026-10-11 — Phase 10, milestone 2 of 3: automatic original-download continuation
