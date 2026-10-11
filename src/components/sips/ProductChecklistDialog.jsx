@@ -1875,7 +1875,7 @@ export default function ProductChecklistDialog({
                         <div className="flex items-center gap-1 min-w-0 flex-1">
                           <span className="text-lg shrink-0" aria-hidden="true">📦</span>
                           <Input
-                            value={editingProductNameText}
+                            data-sips-unsubmitted-draft="edit-product" value={editingProductNameText}
                             onChange={(e) => setEditingProductNameText(e.target.value)}
                             className="h-11 sm:h-9 text-base sm:text-sm font-bold flex-1 min-w-0 max-w-none sm:max-w-xs"
                             aria-label={`Product name for ${productName}`}
@@ -1939,7 +1939,7 @@ export default function ProductChecklistDialog({
                     <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex flex-wrap items-center gap-2">
                         <Input
-                          value={newItemText}
+                          data-sips-unsubmitted-draft="new-item" value={newItemText}
                           onChange={(e) => setNewItemText(e.target.value)}
                           placeholder="New checklist item..."
                           className="h-11 md:h-7 text-sm flex-1 min-w-0"
@@ -1987,7 +1987,7 @@ export default function ProductChecklistDialog({
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
                             {editingItemId === displayItem.id ? (
                               <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-sm flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') { setEditingItemId(null); } }} />
+                                <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-sm flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') { setEditingItemId(null); } }} />
                                 <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                 <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                               </div>
@@ -2114,7 +2114,7 @@ export default function ProductChecklistDialog({
                                   <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-600 font-medium">T</span>
                                   {editingItemId === task.id ? (
                                     <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                      <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                      <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                       <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                       <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                     </div>
@@ -2171,7 +2171,7 @@ export default function ProductChecklistDialog({
                                     <span className="px-0.5 py-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                                     {editingItemId === subtask.id ? (
                                       <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                         <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                         <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
@@ -2194,7 +2194,7 @@ export default function ProductChecklistDialog({
                                 {newItemInput.show && newItemInput.parentId === task.id && newItemInput.type === 'subtask' && (
                                   <div className="ml-1 sm:ml-4 mt-0.5 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-yellow-50 p-0.5 rounded">
                                     <Input
-                                      value={newItemText}
+                                      data-sips-unsubmitted-draft="new-item" value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New subtask..."
                                       className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2216,7 +2216,7 @@ export default function ProductChecklistDialog({
                               {newItemInput.show && newItemInput.parentId === displayItem.id && newItemInput.type === 'task' && (
                               <div className="flex flex-wrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
                                 <Input
-                                  value={newItemText}
+                                  data-sips-unsubmitted-draft="new-item" value={newItemText}
                                   onChange={(e) => setNewItemText(e.target.value)}
                                   placeholder="New task..."
                                   className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2237,7 +2237,7 @@ export default function ProductChecklistDialog({
                                 <div className="bg-gray-50 p-2 rounded border">
                                   <div className="flex flex-wrap items-center justify-end sm:justify-start gap-2">
                                     <Input
-                                      value={newItemText}
+                                      data-sips-unsubmitted-draft="new-item" value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New detail..."
                                       className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2265,7 +2265,7 @@ export default function ProductChecklistDialog({
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     {editingItemId === detail.id ? (
                                       <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-sm flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-sm flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                         <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                         <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
@@ -2357,7 +2357,7 @@ export default function ProductChecklistDialog({
                                   {newItemInput.show && newItemInput.parentId === detail.id && newItemInput.type === 'task' && (
                                     <div className="ml-1 sm:ml-4 mt-2 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-1.5 rounded">
                                       <Input
-                                        value={newItemText}
+                                        data-sips-unsubmitted-draft="new-item" value={newItemText}
                                         onChange={(e) => setNewItemText(e.target.value)}
                                         placeholder="New task..."
                                         className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2392,7 +2392,7 @@ export default function ProductChecklistDialog({
                                             <span className="text-xs px-0.5 py-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                                <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                                <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                                 <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                                 <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                               </div>
@@ -2447,7 +2447,7 @@ export default function ProductChecklistDialog({
                                               <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                                               {editingItemId === subtask.id ? (
                                       <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                         <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                         <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
@@ -2470,7 +2470,7 @@ export default function ProductChecklistDialog({
                                           {newItemInput.show && newItemInput.parentId === task.id && newItemInput.type === 'subtask' && (
                                             <div className="ml-1 sm:ml-3 mt-0.5 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-yellow-50 p-0.5 rounded">
                                               <Input
-                                                value={newItemText}
+                                                data-sips-unsubmitted-draft="new-item" value={newItemText}
                                                 onChange={(e) => setNewItemText(e.target.value)}
                                                 placeholder="New subtask..."
                                                 className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2529,7 +2529,7 @@ export default function ProductChecklistDialog({
                               <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
                               {editingItemId === stDisplayItem.id ? (
                                 <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                  <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-sm flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                  <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-sm flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                   <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                   <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                 </div>
@@ -2652,7 +2652,7 @@ export default function ProductChecklistDialog({
                                     <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
                                     {editingItemId === task.id ? (
                                       <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                         <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                         <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
@@ -2686,7 +2686,7 @@ export default function ProductChecklistDialog({
                                 {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'task' && (
                                   <div className="flex flex-wrap items-center justify-end sm:justify-start gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
                                     <Input
-                                      value={newItemText}
+                                      data-sips-unsubmitted-draft="new-item" value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New task..."
                                       className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2708,7 +2708,7 @@ export default function ProductChecklistDialog({
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                       {editingItemId === detail.id ? (
                                         <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                          <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                          <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                           <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                           <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                         </div>
@@ -2741,7 +2741,7 @@ export default function ProductChecklistDialog({
                                     {newItemInput.show && newItemInput.parentId === detail.id && newItemInput.type === 'task' && (
                                       <div className="ml-1 sm:ml-4 mt-1 flex flex-wrap sm:flex-nowrap items-center justify-end sm:justify-start gap-1 bg-orange-50 p-1 rounded">
                                         <Input
-                                          value={newItemText}
+                                          data-sips-unsubmitted-draft="new-item" value={newItemText}
                                           onChange={(e) => setNewItemText(e.target.value)}
                                           placeholder="New task..."
                                           className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2774,7 +2774,7 @@ export default function ProductChecklistDialog({
                                             <span className="px-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 basis-full sm:basis-auto flex gap-1 min-w-0">
-                                                <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                                <Input data-sips-unsubmitted-draft="edit-item" value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-11 md:h-7 text-xs flex-1 min-w-0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
                                                 <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
                                                 <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                               </div>
@@ -2803,7 +2803,7 @@ export default function ProductChecklistDialog({
                                   <div className="bg-gray-50 p-1.5 rounded border">
                                     <div className="flex flex-wrap items-center justify-end sm:justify-start gap-1">
                                       <Input
-                                        value={newItemText}
+                                        data-sips-unsubmitted-draft="new-item" value={newItemText}
                                         onChange={(e) => setNewItemText(e.target.value)}
                                         placeholder="New detail..."
                                         className="h-11 md:h-7 text-xs flex-1 min-w-0 basis-full sm:basis-auto"
@@ -2870,7 +2870,7 @@ export default function ProductChecklistDialog({
             <div className="p-3 bg-gray-50 rounded-lg border mb-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Input
-                  value={newGeneralChecklistText}
+                  data-sips-unsubmitted-draft="general" value={newGeneralChecklistText}
                   onChange={(e) => setNewGeneralChecklistText(e.target.value)}
                   placeholder="New general checklist item..."
                   className="h-11 sm:h-8 text-sm flex-1 min-w-0"
