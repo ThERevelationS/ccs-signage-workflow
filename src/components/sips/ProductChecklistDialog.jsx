@@ -65,6 +65,8 @@ export default function ProductChecklistDialog({
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   const customStatusInputRef = useRef(null);
   const otherPopupValidationReturnRef = useRef(null);
+  // A rejected status keeps its focus target until the warning actually closes.
+  const otherPopupValidationPendingRef = useRef(false);
   const customStatusDraftsByItemIdRef = useRef(new Map());
   const otherPopupFocusItemIdRef = useRef(null);
   const otherPopupDismissedRef = useRef(false);
@@ -72,6 +74,7 @@ export default function ProductChecklistDialog({
   useEffect(() => {
     customStatusDraftsByItemIdRef.current.clear();
     otherPopupValidationReturnRef.current = null;
+    otherPopupValidationPendingRef.current = false;
     otherPopupFocusItemIdRef.current = null;
     otherPopupDismissedRef.current = false;
     setCustomDropdownValue("");
@@ -333,6 +336,7 @@ export default function ProductChecklistDialog({
   };
 
   const openOtherPopup = (itemId) => {
+    if (otherPopupValidationPendingRef.current || validationDialog) return;
     // Modal owns focus until it closes, including any stale Search/Needs Input timer.
     cancelPendingNavigationFocus();
     otherPopupFocusItemIdRef.current = itemId;
@@ -348,7 +352,7 @@ export default function ProductChecklistDialog({
   };
 
   const dismissOtherPopup = () => {
-    if (validationDialog) return; // Do not close behind an active validation warning.
+    if (validationDialog || otherPopupValidationPendingRef.current) return; // Keep the parent open until validation fully closes.
     otherPopupDismissedRef.current = true;
     otherPopupValidationReturnRef.current = null;
     setShowOtherPopup(null);
@@ -368,6 +372,7 @@ export default function ProductChecklistDialog({
   };
 
   const handleCreateCustomValue = (itemId) => {
+    if (otherPopupValidationPendingRef.current || validationDialog) return;
     const value = customDropdownValue.trim();
     if (!value) return;
     otherPopupValidationReturnRef.current = customStatusInputRef.current;
@@ -565,6 +570,7 @@ export default function ProductChecklistDialog({
 
     const itemLabel = item.type === 'detail' ? 'detail' : 'checklist item';
     if (!item.approved_by) {
+      if (fromOtherPopup) otherPopupValidationPendingRef.current = true;
       validationFocusItemIdRef.current = itemId;
       setValidationDialog({
         title: "Approver Required",
@@ -575,6 +581,7 @@ export default function ProductChecklistDialog({
 
     const selectedCondition = dropdownConditionByName.get(value);
     if (selectedCondition?.is_completed && !areChildrenComplete(itemId)) {
+      if (fromOtherPopup) otherPopupValidationPendingRef.current = true;
       validationFocusItemIdRef.current = itemId;
       setValidationDialog({
         title: "Tasks Still Open",
@@ -2969,6 +2976,9 @@ export default function ProductChecklistDialog({
         <AlertDialogContent
           className="clay-card border-none"
           onCloseAutoFocus={(event) => {
+            // Release only after the warning fully closes, never on an early OK
+            // click: otherwise a rapid second attempt can replace this target.
+            otherPopupValidationPendingRef.current = false;
             if (!isOpen) return;
             event.preventDefault();
             const itemId = validationFocusItemIdRef.current;
@@ -3071,7 +3081,7 @@ export default function ProductChecklistDialog({
                       type="button"
                       key={dd.id}
                       onClick={(event) => {
-                        if (!showOtherPopup?.itemId) return;
+                        if (!showOtherPopup?.itemId || otherPopupValidationPendingRef.current || validationDialog) return;
                         otherPopupValidationReturnRef.current = event.currentTarget;
                         if (applyChecklistStatus(showOtherPopup.itemId, dd.name, { fromOtherPopup: true })) {
                           otherPopupValidationReturnRef.current = null;
