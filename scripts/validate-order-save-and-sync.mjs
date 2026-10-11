@@ -47,6 +47,27 @@ const savedOrderAction = backend.slice(
 );
 assert.doesNotMatch(savedOrderAction, /push_enabled/);
 assert.doesNotMatch(savedOrderAction, /create_smartsheet_from_base44/);
+// Keep the production intent explicit: push_enabled and automatic Order row
+// creation can stay OFF while an authenticated, targeted Save & Sync is allowed.
+// The explicit path still obeys the global kill switch and observation mode.
+for (const guard of [
+  /if \(!configured\)/,
+  /if \(!config\)/,
+  /if \(!config\.global_enabled\)/,
+  /if \(config\.observation_mode\)/,
+  /if \(!profile\?\.mirror_enabled\)/,
+  /orderIds\.length > massLimit/,
+  /requireOrderPendingMarker: true/,
+  /allowExplicitOrderCreate: true/,
+  /recordIds: orderIds/,
+]) assert.match(savedOrderAction, guard);
+const genericSyncAction = backend.slice(backend.indexOf("if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset')"));
+assert.match(genericSyncAction, /action === 'run_sync' && dataset !== 'orders' && profile\.push_enabled/);
+assert.match(genericSyncAction, /action === 'run_sync' && profile\.pull_enabled/);
+assert.match(genericSyncAction, /const wantPull = action === 'pull_dataset'/);
+assert.match(genericSyncAction, /const wantPush = action === 'push_dataset'/);
+assert.match(page, /hasLocalOrderChanges \? "Save & Sync" : "Sync"/);
+console.log('PASS Order Save & Sync ignores disabled background push/create flags but keeps global safety gates and exact pending-Order scope');
 assert.match(backend, /const pushResult = await pushDataset\(base44, token, dataset, profile, config,[\s\S]*?dataset === 'orders' \? \{/);
 assert.match(backend, /onlyPendingOrderRecords: action === 'run_sync'/);
 assert.match(backend, /existing\?\.smartsheet_pending_local_sync === true[\s\S]*?orderLocalPendingConflicts\.push\(existing\.id\)[\s\S]*?continue/);
