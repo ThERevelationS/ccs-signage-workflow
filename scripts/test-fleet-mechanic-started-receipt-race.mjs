@@ -219,6 +219,75 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   return {source,retry,body};
 }
 
+test("admin scope and estimate permission edits preserve existing mechanic link identity",async()=>{
+  const {client,grant}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const scope=await call({action:"admin_update_scope",id:grantId,scope_mode:"selected_equipment",
+    allowed_equipment_ids:["eq-race"]},client);
+  assert.equal(scope.code,200);
+  assert.equal(grant.scope_mode,"selected_equipment");
+  assert.deepEqual(grant.allowed_equipment_ids,["eq-race"]);
+  const estimate=await call({action:"admin_update_estimate_permission",id:grantId,allow_estimates:true},client);
+  assert.equal(estimate.code,200);
+  assert.ok(grant.allowed_actions.includes("estimate_save"));
+  assert.ok(grant.allowed_actions.includes("estimate_submit"));
+  assert.equal(grant.token_hash,sha(token),"Existing bearer-link token must remain unchanged");
+  assert.equal(grant.enabled,true);
+  assert.equal(grant.updated_date,"grant-version-3");
+});
+test("revocation wins against a delayed scope change without restoring access",async()=>{
+  const {store,client,grant}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseGrantMutationWrite=true;
+  const pending=call({action:"admin_update_scope",id:grantId,scope_mode:"selected_equipment",
+    allowed_equipment_ids:["eq-race"]},client);
+  await until("scope edit conditional write",()=>store.pendingGrantMutationWrites.length===1);
+  const revoked=await call({action:"admin_revoke_link",id:grantId},client);
+  assert.equal(revoked.code,200);
+  assert.equal(grant.enabled,false);
+  store.pendingGrantMutationWrites.shift()();
+  const result=await pending;
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/changed while its permissions were being edited/i);
+  assert.equal(grant.scope_mode,"all_active");
+  assert.equal(grant.enabled,false);
+  assert.equal(grant.token_hash,sha(token));
+});
+test("concurrent admin edits cannot replace an already-saved scope with stale permissions",async()=>{
+  const {store,client,grant}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseGrantMutationWrite=true;
+  const delayed=call({action:"admin_update_estimate_permission",id:grantId,allow_estimates:true},client);
+  await until("stale estimate permission edit",()=>store.pendingGrantMutationWrites.length===1);
+  const changed=await call({action:"admin_update_scope",id:grantId,scope_mode:"selected_equipment",
+    allowed_equipment_ids:["eq-race"]},client);
+  assert.equal(changed.code,200);
+  store.pendingGrantMutationWrites.shift()();
+  const result=await delayed;
+  assert.equal(result.code,409);
+  assert.equal(grant.scope_mode,"selected_equipment");
+  assert.deepEqual(grant.allowed_equipment_ids,["eq-race"]);
+  assert.ok(!grant.allowed_actions.includes("estimate_save"),"The stale admin edit did not apply");
+  assert.equal(grant.token_hash,sha(token));
+});
+test("revoked or unversioned mechanic grants fail closed on permission editing",async()=>{
+  for(const variant of ["revoked","unversioned"]){
+    const {client,grant}=setup();
+    client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+    if(variant==="revoked")grant.enabled=false;
+    else delete grant.updated_date;
+    for(const action of [
+      {action:"admin_update_estimate_permission",id:grantId,allow_estimates:true},
+      {action:"admin_update_scope",id:grantId,scope_mode:"all_active"},
+    ]){
+      const result=await call(action,client);
+      assert.equal(result.code,409,variant);
+      assert.match(result.body.error,/revoked or its version is unavailable/i);
+    }
+    assert.equal(grant.token_hash,sha(token));
+  }
+});
+
 test("revocation after durable photo upload but before final receipt verification blocks Save",async()=>{
   const {store,client}=setup();
   client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
