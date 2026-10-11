@@ -125,7 +125,7 @@ export default function LocalityPickerDialog({
     setError("");
     setResult(null);
     try {
-      const invoke=currentUser?.role==='admin'?runAction:(name,payload)=>base44.functions.invoke(name,payload);
+      const invoke=runAction;
       const { data } = await invoke('findLocalityByAddress', {
         address: address.trim(),
         session_token: sessionToken,
@@ -152,8 +152,9 @@ export default function LocalityPickerDialog({
   const addressAuthorityLabels = (addressAuthority?.verified_roles || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
   const addressRolesNeedingReview = (addressAuthority?.roles_needing_review || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
 
+  const addressCanApply=address.trim()?Boolean(result?.apply_allowed===true&&result?.location_resolution?.status==='location_verified'&&selectedLocalityId===result?.suggested_locality?.id):currentUser?.role==='admin';
   const handleApply = () => {
-    if (!selectedLocalityId || searching) return;
+    if (!selectedLocalityId || searching || !addressCanApply) return;
     onApply(selectedLocalityId, { excludeElectrical });
     onClose();
   };
@@ -172,7 +173,7 @@ export default function LocalityPickerDialog({
   };
 
   const confirmDraftFromRepository = async () => {
-    if (!draftCandidate || creatingDraft) return;
+    if (!draftCandidate || creatingDraft || address.trim()) return;
     setCreatingDraft(true);
     setDraftCreateError("");
 
@@ -264,6 +265,7 @@ export default function LocalityPickerDialog({
                     <Label htmlFor="jurisdiction-choice" className="text-xs">Choose a jurisdiction</Label>
                     <select id="jurisdiction-choice"
                       value={selectedLocalityId}
+                      disabled={Boolean(address.trim())}
                       onChange={(e) => {searchVersion.current++;setSearching(false);setSelectedLocalityId(e.target.value);}}
                       className="w-full min-h-11 text-sm border rounded px-2 mt-1"
                     >
@@ -314,14 +316,14 @@ export default function LocalityPickerDialog({
             <ResearchProgressBar inline />
             {!result && !searching && !selectedLocalityId && (
               <div className="h-full flex items-center justify-center text-gray-400 text-sm p-8 text-center border border-dashed rounded">
-                Enter an address above and click <strong>Find my jurisdiction</strong> to get locality, zoning, and parcel info.
+                Enter the job address. Press <strong>Find my jurisdiction</strong>. We will check the map and look for the right office.
               </div>
             )}
 
             {searching && (
               <div className="h-full flex flex-col items-center justify-center text-gray-500 p-8">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-2" />
-                {currentUser?.role!=='admin'&&<progress aria-label="Find my jurisdiction progress" className="w-full h-3 mb-2"/>}
+                
                 <p className="text-sm">Finding the address and checking saved information…</p>
               </div>
             )}
@@ -336,7 +338,7 @@ export default function LocalityPickerDialog({
                     ) : (
                       <AlertTriangle className="w-4 h-4 text-amber-600" />
                     )}
-                    <h4 className="font-semibold text-sm">Suggested jurisdiction</h4>
+                    <h4 className="font-semibold text-sm">{result.suggested_locality ? "Location checked" : "We need to check this address"}</h4>
                   </div>
                   {result.suggested_locality ? (
                     <div>
@@ -346,7 +348,7 @@ export default function LocalityPickerDialog({
                           {result.suggested_locality.state && ` (${result.suggested_locality.state})`}
                         </p>
                         <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${result.match_confidence === 'high' ? 'border-green-300 bg-green-100 text-green-800' : 'border-amber-300 bg-amber-100 text-amber-800'}`}>
-                          {result.match_confidence === 'high' ? 'High confidence' : 'Medium confidence'}
+                          Government boundaries checked
                         </span>
                       </div>
                       {result.match_reason && (
@@ -363,7 +365,7 @@ export default function LocalityPickerDialog({
                         {addressAuthority?.status === 'staff_verified_roles' ? (
                           <>
                             <p className="mt-0.5">{addressAuthorityLabels.join(" • ")}</p>
-                            <p className="mt-1 text-emerald-800">The locality match confidence above identifies geography only. These roles come separately from staff-reviewed office relationships.</p>
+                            <p className="mt-1 text-emerald-800">The boundary check identifies the building location. These roles come separately from staff-reviewed office relationships.</p>
                           </>
                         ) : (
                           <p className="mt-1">The address can match this locality without proving which office has sign, zoning, building, or electrical authority.</p>
@@ -387,19 +389,8 @@ export default function LocalityPickerDialog({
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-amber-900">
-                        <strong>No match found in your system.</strong>
-                      </p>
-                      {result.ai_locality_name && (
-                        <p className="text-xs text-amber-800 mt-1">
-                          AI suggests: <strong>{result.ai_locality_name}</strong>
-                          {result.ai_state && `, ${result.ai_state}`}
-                          {result.ai_county && ` (${result.ai_county} County)`}
-                        </p>
-                      )}
-                      <p className="text-[11px] text-amber-700 mt-1 italic">
-                        No configured tracker locality matches yet. Check the Jurisdiction Repository match below, or choose an existing locality manually.
-                      </p>
+                      <p className="text-sm text-amber-900"><strong>{result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
+                      <p className="text-xs text-amber-800 mt-2">We started website research automatically. An administrator needs to review the results. You do not need to choose a place or guess.</p>
                       {result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
@@ -407,6 +398,16 @@ export default function LocalityPickerDialog({
                   )}
                 </div>
 
+                {result.automatic_scan?.started && <div className="rounded-lg border bg-white p-3 space-y-2" aria-label="Automatic address scan results">
+                  <h4 className="font-semibold text-sm">What we checked</h4>
+                  {result.automatic_scan.scans.map((scan,index)=><details key={index} className="border rounded p-2"><summary className="min-h-11 text-sm cursor-pointer">{scan.target.name}: {scan.documents?.length || 0} resources found</summary>
+                    {scan.error&&<p className="text-xs text-amber-800">{scan.error}</p>}
+                    {(scan.pages || []).map((page,i)=><p key={i} className="text-xs my-2 break-all"><a className="underline text-blue-700" href={page.url} target="_blank" rel="noopener noreferrer">{page.url}</a> — {page.status}</p>)}
+                    {(scan.documents || []).map((doc,i)=><p key={i} className="text-xs my-2"><a className="underline text-blue-700" href={doc.url} target="_blank" rel="noopener noreferrer">{doc.title || doc.url}</a></p>)}
+                    <p className="text-xs text-amber-800">{scan.pending_pages?.length || 0} pages still pending; {scan.gaps?.length || 0} scan gaps. Findings need administrator review.</p>
+                  </details>)}
+                </div>}
+                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">The location was found. An administrator must confirm the sign and zoning offices before you can use it.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
                   <div className="border rounded-lg p-3 bg-violet-50 border-violet-200 space-y-2">
@@ -458,7 +459,7 @@ export default function LocalityPickerDialog({
                               type="button"
                               size="sm"
                               variant="outline"
-                              disabled={duplicate || creatingDraft}
+                              disabled={duplicate || creatingDraft || Boolean(address.trim())}
                               onClick={() => requestDraftFromRepository(jurisdiction)}
                               className="h-7 text-xs border-violet-300 text-violet-800 hover:bg-violet-100 flex-shrink-0"
                             >
@@ -527,8 +528,8 @@ export default function LocalityPickerDialog({
           </div>
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
-          <div className="rounded-lg overflow-hidden border relative w-full min-h-[280px] lg:min-h-0 lg:flex-1 lg:aspect-square lg:self-start lg:max-h-[680px] bg-gray-100">
-            <GoogleMapView position={mapPosition} markerTitle={markerTitle} />
+          <div className="rounded-lg border relative w-full min-w-0 lg:flex-1 lg:self-start bg-gray-100">
+            <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} />
           </div>
         </div>
 
@@ -575,7 +576,7 @@ export default function LocalityPickerDialog({
             </Button>
             <Button
               onClick={handleApply}
-              disabled={!selectedLocalityId || searching}
+              disabled={!selectedLocalityId || searching || !addressCanApply}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
               <Save className="w-4 h-4" /> Use this jurisdiction
