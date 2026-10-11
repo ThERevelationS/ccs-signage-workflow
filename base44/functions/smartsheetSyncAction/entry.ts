@@ -7,7 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
-import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent } from '../../shared/smartsheetSalesConflictResolution.mjs';
+import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -1718,6 +1718,7 @@ async function pushDataset(
   const deferredConflictRecordIds: string[] = [];
   const deferredSalesConflictDecisions = new Map<string, string[]>();
   const approvedSalesPlanSnapshots = new Map<string, any>();
+  const approvedSalesRemotePlans = new Map<string, {rowId: string; snapshot: Record<string, any>}>();
   const deferredOrderConflictDecisions = new Map<string, string[]>();
   const deferredSalesVerification = new Map<string, {
     rowId: string;
@@ -1895,6 +1896,9 @@ async function pushDataset(
           else {
             deferredSalesConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
             approvedSalesPlanSnapshots.set(String(record.id), record);
+            approvedSalesRemotePlans.set(String(record.id), {
+              rowId: existingRowId, snapshot: buildSalesPullSnapshot(currentRows[0], bindings),
+            });
           }
         }
         // Never auto-resolve the task review simply because another Sales
