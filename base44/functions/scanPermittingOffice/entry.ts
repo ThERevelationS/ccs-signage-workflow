@@ -5,7 +5,7 @@ import {safeExternalFetch} from '../../shared/safeExternalFetch.ts';
 import {readPermittingResourceResponse} from '../../shared/permittingResourceResponse.mjs';
 Deno.serve(async req=>{let reporter:any=silentScanReporter;try{
  const client=createClientFromRequest(req),user=await client.auth.me().catch(()=>null);if(user?.role!=='admin')return Response.json({error:'Admin access required'},{status:403});
- const body=await req.json(),locality=await client.asServiceRole.entities.PermitLocality.get(body.locality_id);
+ const body=await req.json();if(typeof body.locality_id!=='string'||!body.locality_id||typeof body.office_id!=='string'||!body.office_id)return Response.json({error:'Select a saved locality and office.'},{status:400});const locality=await client.asServiceRole.entities.PermitLocality.get(body.locality_id);
  const matches=(locality?.offices || []).filter(office=>office.id===body.office_id);if(matches.length!==1 || !matches[0].contact_website)return Response.json({error:'Select a saved office with a website. Save office edits before rescanning.'},{status:400});
  const office=matches[0],url=office.contact_website;
  reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:locality.id,targetName:office.name || locality.name,kind:'office',label:`Rescan ${office.name || 'office'} — ${locality.name}`});
