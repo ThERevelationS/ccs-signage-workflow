@@ -1,0 +1,22 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Owner-scoped saved address page continuation",
+  "regression_tests_passed": 813,
+  "chromium_checks_passed": 32,
+  "targeted_lint": "passed",
+  "backend_bundles_passed": 7,
+  "production_build": "passed",
+  "production_test_writes": 0,
+  "published": false,
+  "live_signed_in_acceptance": "pending",
+  "observed_scheduler_acceptance": "pending",
+  "manual_overall_page_cap": null,
+  "pages_per_request": 1,
+  "crawl_scope": "existing saved same-host frontier, depth two; gaps remain for review",
+  "current_page_url": "own server-reported address_discovery activity only",
+  "llm_calls_per_page": 0,
+  "uploads_per_page": 0,
+  "old_collection_migration": false,
+  "authority_established": false
+}
