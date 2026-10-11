@@ -327,7 +327,7 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
   assert.match(scheduler, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\| showOtherPopup\) \{\s*cancelPendingNavigationFocus\(\)/);
   assert.match(scheduler, /return cancelPendingNavigationFocus;/);
   assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, showRevisitPopup, showOtherPopup, workOrder\?\.id\]/);
-  assert.equal((source.match(/scheduleNavigationFocus\(\(\) => \{/g) || []).length, 3);
+  assert.equal((source.match(/scheduleNavigationFocus\(\(\) => \{/g) || []).length, 4);
   assert.match(source, /const clearChecklistSearch = \(\) => \{\s*cancelPendingNavigationFocus\(\)/);
   assert.match(source, /onClick=\{\(\) => \{\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\)/);
 
@@ -1067,14 +1067,18 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const guardBody = source.slice(source.indexOf("  const blockOnUnsubmittedDrafts = (action) => {"),
     source.indexOf("  const requestClose = () => {"));
   const makeGuard = new Function("hasUnsubmittedDrafts", "unfinishedEditsActionRef",
-    "setUnfinishedEditsWarning", guardBody + "\nreturn blockOnUnsubmittedDrafts;");
+    "setUnfinishedEditsWarning", "unfinishedDraftTargetRef", "getUnsubmittedDraftTarget",
+    guardBody + "\nreturn blockOnUnsubmittedDrafts;");
   let notices = [], persisted = 0, revisitOpens = 0, validated = 0;
-  const actionRef = { current: null };
-  const block = makeGuard(true, actionRef, value => notices.push(value));
+  const actionRef = { current: null }, targetRef = { current: null };
+  const block = makeGuard(true, actionRef, value => notices.push(value), targetRef,
+    () => ({ kind: "new-item", itemId: "row-1" }));
   assert.equal(block("save"), true);
   assert.deepEqual(notices, ["save"]);
   assert.equal(actionRef.current, "save");
-  assert.equal(makeGuard(false, actionRef, value => notices.push(value))("complete"), false);
+  assert.deepEqual(targetRef.current, { kind: "new-item", itemId: "row-1" });
+  assert.equal(makeGuard(false, actionRef, value => notices.push(value), targetRef,
+    () => null)("complete"), false);
   assert.deepEqual(notices, ["save"]);
 
   const saveClickSource = source.slice(source.indexOf("  const handleSaveClick = () => {"),
@@ -1116,7 +1120,8 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   assert.equal(persisted, 0);
   assert.equal(notices.at(-1), "complete");
 
-  const clean = makeGuard(false, actionRef, value => notices.push(value));
+  const clean = makeGuard(false, actionRef, value => notices.push(value), targetRef,
+    () => null);
   makeClick(true, false, clean, () => {}, () => {}, "2099-03-21",
     () => { revisitOpens++; })();
   assert.equal(revisitOpens, 1); // Still requires the Revisit date popup on a clean save.
@@ -1139,7 +1144,7 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const popup = source.slice(source.indexOf("{/* Unsubmitted text must be applied or cancelled"));
   assert.match(popup, /Finish unfinished checklist text first/);
   assert.match(popup, /onClick=\{\(\) => setUnfinishedEditsWarning\(null\)\}/);
-  assert.match(popup, /unfinishedEditsActionRef\.current === "complete"/);
+  assert.match(popup, /focusUnsubmittedDraft\(\)/);
   assert.match(source, /onClick=\{handleSaveClick\}/);
   assert.match(source, /onClick=\{handleCheckOff\}/);
 });
