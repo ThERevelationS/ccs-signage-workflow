@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T08:08:16.045Z",
+  "tested_at": "2026-10-11T09:05:05.940Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -130,6 +130,16 @@
     },
     {
       "name": "manual save-all completes same-host and linked originals sequentially",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "file status shows waiting, verification, review and retry details honestly",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "file status shows waiting, verification, review and retry details honestly",
       "width": 1280,
       "passed": true
     }
