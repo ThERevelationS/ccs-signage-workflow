@@ -1,3 +1,4 @@
+import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import { archiveExternalJurisdictionReferral } from '../../shared/jurisdictionExternalReferralArchive.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
@@ -8,6 +9,7 @@ import { registerJurisdictionArchive } from '../../shared/jurisdictionArchiveCat
 import { PERMITTING_RESEARCH_CONFIG_KEY } from '../../shared/permittingResearchDispatchConfig.mjs';
 
 Deno.serve(async req => {
+  let reporter:any=silentScanReporter;
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -26,29 +28,37 @@ Deno.serve(async req => {
         typeof body.external_referral.url !== 'string' || typeof body.external_referral.source_page_url !== 'string'))
       return Response.json({ error: 'External referral collection requires only a selected source page and document URL.' }, { status: 400 });
     const entity = base44.asServiceRole.entities.JurisdictionProfile;
+    if(body.action_token){
+      if(automatic)return Response.json({error:'Manual activity tokens cannot select automatic work'},{status:400});
+      const profile=await entity.get(jurisdictionId);
+      reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:jurisdictionId,targetName:profile.name,kind:'archive',label:`Archive document — ${profile.name}`});
+    }
+    async function respond(result:any){return Response.json({...result,scan_run:await reporter.finish(result.success===false?'completed_with_errors':'complete',result.error || '')});}
     const options = {
+      onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
       entity,
       catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,
       fetchSource: safeExternalFetch,
       uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
       manual: !automatic,
     };
-    if (body.external_referral) return Response.json(await archiveExternalJurisdictionReferral({
+    if (body.external_referral) return respond(await archiveExternalJurisdictionReferral({
       ...options,jurisdictionId,selection:body.external_referral,invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
       fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,
         candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
     }));
     if (body.catalog_only === true) {
       if (!body.document_id) return Response.json({ error: 'Catalog reconciliation requires a stable document id.' }, { status: 400 });
-      return Response.json(await registerJurisdictionArchive({ ...options, jurisdictionId, documentId: String(body.document_id), automatic: false }));
+      return respond(await registerJurisdictionArchive({ ...options, jurisdictionId, documentId: String(body.document_id), automatic: false }));
     }
-    if (!automatic) return Response.json(await archiveKnownJurisdictionSource({ ...options, jurisdictionId, documentId: String(body.document_id || ''), knownPdf: body.known_pdf || null }));
+    if (!automatic) return respond(await archiveKnownJurisdictionSource({ ...options, jurisdictionId, documentId: String(body.document_id || ''), knownPdf: body.known_pdf || null }));
     const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);
     if (configs.length > 1) throw new Error('Duplicate dispatcher settings; automatic archival stopped.');
     if (configs[0]?.setting_value?.enabled === false) return Response.json({ success: true, skipped: true, reason: 'disabled' });
     return Response.json(await continuePermittingDocumentArchiveBacklog({...options,invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
       fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost)}));
   } catch (error) {
+    await reporter.finish('failed',String(error?.message || error));
     console.error('continueJurisdictionArchives:', error?.message || error);
     const status=[400,409].includes(Number(error?.status))?Number(error.status):500;
     return Response.json({ error: status===500?'Document archival could not complete safely.':error.message }, { status });

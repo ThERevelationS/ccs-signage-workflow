@@ -680,6 +680,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                           <div key={office.id} className="space-y-1">
                             <OfficeSourceStatus provenance={resolveCatalogOfficeProvenance(officeCatalog, office)} />
                             <LocalityOfficeEditor
+                              localityId={editingLocality !== "new" ? editingLocality : null}
                               office={office}
                               officeTypes={officeTypes}
                               verificationActor={verificationActor}

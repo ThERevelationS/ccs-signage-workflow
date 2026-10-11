@@ -24,6 +24,8 @@ Deno.serve(async (req) => {
     const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');
     const { jurisdiction_id, jurisdictionId, settings } = body;
     const discoveryOnly = body?.discovery_only === true;
+    const rescanSourceUrl=body.rescan_source_url ?? null;
+    if(rescanSourceUrl!==null && (!discoveryOnly || typeof rescanSourceUrl!=='string'))return Response.json({error:'Source rescan requires discovery-only mode and a saved URL'},{status:400});
     const recoverDepthUrl = body.recover_depth_url ?? null;
     if (recoverDepthUrl !== null && (!discoveryOnly || typeof recoverDepthUrl !== 'string')) return Response.json({error:'Depth recovery requires discovery-only mode and a selected URL'}, {status:400});
     if (recoverDepthUrl !== null && (body.recover_fetch_failures === true || body.recover_link_limits === true)) return Response.json({error:'Select one recovery mode'}, {status:400});
@@ -54,7 +56,7 @@ Deno.serve(async (req) => {
         const target=await base44.asServiceRole.entities.JurisdictionProfile.get(id);
         reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:id,targetName:target.name,kind:discoveryOnly?'discovery':'research',label:`${discoveryOnly?'Rescan':'Research'} ${target.name}, ${target.state}`});
       }
-      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter);
+      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter,rescanSourceUrl);
       const scanRun=await reporter.finish(result.archival?.success===false || result.discovery_scan?.success===false?'completed_with_errors':'complete');
       return Response.json({...result,scan_run:scanRun});
     }
@@ -91,7 +93,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null,reporter:any=silentScanReporter) {
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null,reporter:any=silentScanReporter,rescanSourceUrl:string|null=null) {
     const startedAt = Date.now();
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
@@ -136,7 +138,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       try {
         discoveryScan = await scanOfficialPermittingPages({
           onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
-          seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
+          seedUrl: researchData.permitting_url, maxPages: rescanSourceUrl?1:discoveryOnly ? 3 : 1,rescanUrl:rescanSourceUrl, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
           resume: jurisdiction.discovery_scan_state || null, existingDocuments: jurisdiction.documents || [],
           fetchPage: async (url: string) => {
             const response = await safeExternalFetch(url, {

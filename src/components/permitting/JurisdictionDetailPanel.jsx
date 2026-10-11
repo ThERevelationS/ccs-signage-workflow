@@ -1,3 +1,4 @@
+import OfficialSourceRescans from "./OfficialSourceRescans";
 import ExternalPermittingReferrals from "./ExternalPermittingReferrals";
 import LocalityApprovedEvidence from "./LocalityApprovedEvidence";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -960,6 +961,7 @@ Answer only from the provided excerpts and cite the document title and official 
           </div>
         )}
 
+        {currentUser?.role === "admin" && <OfficialSourceRescans key={jurisdiction.id} jurisdiction={jurisdiction} onUpdate={onUpdate} />}
         <ExternalPermittingReferrals key={jurisdiction.id} jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} onUpdate={onUpdate} disabled={isResearching || Boolean(downloadingDocId)} />
 
         {/* Documents */}

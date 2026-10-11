@@ -1,3 +1,4 @@
+import OfficeRescanButton from "./OfficeRescanButton";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ const ADDON_DEFS = [
   { key: 'has_text', label: '📝 Text', color: 'bg-blue-50 border-blue-300 text-blue-700' },
 ];
 
-export default function LocalityOfficeEditor({ office, officeTypes, onChange, onDelete, verificationActor }) {
+export default function LocalityOfficeEditor({ office, officeTypes, onChange, onDelete, verificationActor,localityId }) {
   const [expanded, setExpanded] = useState(true);
   const [newStepName, setNewStepName] = useState("");
   const [newStepType, setNewStepType] = useState("checkbox");
@@ -66,6 +67,7 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
 
   return (
     <div className="bg-white border rounded-lg overflow-hidden">
+      {localityId && <OfficeRescanButton localityId={localityId} office={office} />}
       {/* Office header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-50 to-white border-b">
         <button onClick={() => setExpanded(!expanded)} className="p-0.5">

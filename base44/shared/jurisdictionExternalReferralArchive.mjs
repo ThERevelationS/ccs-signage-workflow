@@ -38,6 +38,7 @@ export async function archiveExternalJurisdictionReferral(options){
  let document=existing;
  let linkChecked=false,recheckReceipt=null;
  async function recheckLink(){
+  await options.onProgress?.({kind:'official_link_recheck',url:referral.source_page_url,detail:`Checking the exact official-page link to ${referral.url}.`,progress:{stage:'Rechecking official link',current_url:referral.source_page_url,indeterminate:true}});
   const response=await withResearchArchiveTimeout(fetchScopedSource(referral.source_page_url,{
    signal:AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),headers:{'User-Agent':'Mozilla/5.0'}},
    host(referral.source_page_url)),RESEARCH_FETCH_TIMEOUT_MS,'External referral source recheck');

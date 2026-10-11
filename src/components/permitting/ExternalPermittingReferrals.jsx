@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import {ResearchProgressContext} from "./ResearchProgressContext";
+import { useEffect, useRef, useState,useContext } from 'react';
 import { base44 } from '@/api/base44Client';
 const labels={downloadable_document:'Document',online_form:'Online form',code_publisher:'Code publisher',department_reference:'Department',other_permitting_resource:'Other resource'};
 function webLink(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch{return null;}}
 export default function ExternalPermittingReferrals({jurisdiction,isAdmin,onUpdate,disabled=false}){
+ const activity=useContext(ResearchProgressContext);
  const [busy,setBusy]=useState(null),[message,setMessage]=useState(''),[page,setPage]=useState(0);
  const lock=useRef(false),alive=useRef(true),identity=useRef(jurisdiction.id);identity.current=jurisdiction.id;
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
@@ -13,7 +15,7 @@ export default function ExternalPermittingReferrals({jurisdiction,isAdmin,onUpda
   if(lock.current||disabled||blocked||!isAdmin)return;
   const id=jurisdiction.id;lock.current=true;setBusy(row.url);setMessage('Rechecking the official link and collecting the selected file…');
   let result,error;
-  try{result=(await base44.functions.invoke('continueJurisdictionArchives',{jurisdiction_id:id,external_referral:{url:row.url,source_page_url:row.source_page_url}})).data;}catch(e){error=e?.response?.data?.error || e?.message || 'Collection could not complete.';}
+  try{result=(await (activity?.runAction || base44.functions.invoke.bind(base44.functions))('continueJurisdictionArchives',{jurisdiction_id:id,external_referral:{url:row.url,source_page_url:row.source_page_url}},`Collect ${row.title || row.url} — ${jurisdiction.name}`)).data;}catch(e){error=e?.response?.data?.error || e?.message || 'Collection could not complete.';}
   // Refresh durable receipts even when the request acknowledgement was lost.
   let latest;try{latest=await base44.entities.JurisdictionProfile.get(id);}catch{error=error || 'Could not reload the saved document status. Refresh this locality before retrying.';}
   if(alive.current&&identity.current===id){

@@ -41,7 +41,7 @@ function validateCursor(cursor, seedUrl, maxDepth) {
   } catch (error) { throw frontierError(error.message || 'Saved discovery frontier requires review.'); }
 }
 
-export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null, onProgress = async()=>{} }) {
+export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null, onProgress = async()=>{}, rescanUrl=null }) {
   seedUrl = scopedUrl(seedUrl, seedUrl);
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 30 ||
       !Number.isInteger(maxDepth) || maxDepth < 0 || maxDepth > 5) throw Error('Invalid discovery request size.');
@@ -59,6 +59,14 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   // Apply current resource ranking to a saved frontier as well as new links.
   // The saved URLs/depths remain intact; no pages or review gaps are reset.
   pending.sort((a, b) => permittingResourcePriority(priorDocuments.get(key(b.url)) || {url:b.url}) - permittingResourcePriority(priorDocuments.get(key(a.url)) || {url:a.url}));
+  if(rescanUrl!==null){
+    const selected=scopedUrl(rescanUrl,seedUrl),selectedKey=key(selected);
+    if(selectedKey!==key(seedUrl) && !resume?.visited_urls?.some(url=>key(url)===selectedKey) && !resume?.pending_pages?.some(page=>key(page.url)===selectedKey))throw frontierError('Rescan source is not a saved official discovery page.');
+    if(recoverLinkLimits || recoverFetchFailures || recoverDepthUrl!==null)throw frontierError('Select one rescan or recovery mode.');
+    visited.delete(selectedKey);
+    for(let i=pending.length-1;i>=0;i--)if(key(pending[i].url)===selectedKey)pending.splice(i,1);
+    pending.unshift({url:selected,depth:0});
+  }
   if (Number(recoverLinkLimits) + Number(recoverFetchFailures) + Number(recoverDepthUrl !== null) > 1) throw frontierError('Select one discovery recovery mode.');
   const selectedDepthKey = recoverDepthUrl !== null ? key(scopedUrl(recoverDepthUrl, seedUrl)) : null;
   if (selectedDepthKey && !gaps.some(g => g.reason === 'depth_frontier' && key(g.url) === selectedDepthKey))
