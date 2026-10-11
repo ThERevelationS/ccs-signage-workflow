@@ -1,3 +1,9 @@
+## Phase 10 — delayed scan-status response guards (2026-10-11)
+
+Milestone 2 of 3 remains incomplete. Four delayed-response problems were reproduced in executable tests before the fix: old running status overwriting completion, stale sign-in rejection re-pausing a successful retry, and delayed saved-status success/failure recreating a dismissed card. Each action now guards status-response ordering independently, suppresses updates to dismissed cards for the current provider session, and stops outstanding polls from regressing the final result. Saved scan evidence confirmed manually remains authoritative when the original action response later loses sign-in. Dismissal affects local display only; it does not cancel execution or delete saved records.
+
+Validation: 19 session recovery tests and 4 progress display tests passed; production build exited 0. No browser action, frontend publication or production-record mutation. Live exact location/map/progress verification remains blocked by the unavailable browser session and the unresolved Google geocoding rejection.
+
 ## Phase 10 — paused scan progress display (2026-10-11)
 
 Milestone 2 of 3 remains incomplete. Progress cards now distinguish live updates from a paused or lost connection, freeze stale progress, and label the last saved step and progress. Unknown totals do not imply a percentage or active animation. Simultaneous scans keep independent progress, sources, findings and saved-status controls. Completed scan evidence remains complete when a response is lost. The summary counts action cards rather than implying that paused scans are active.

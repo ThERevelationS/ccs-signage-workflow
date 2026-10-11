@@ -457,5 +457,42 @@
       "src/components/permitting/ResearchProgressBar.jsx",
       "scripts/permitting-progress-display-recovery.test.mjs"
     ]
+  },
+  "scan_status_response_ordering": {
+    "verified_at": "2026-10-11T20:15:22.043922+00:00",
+    "phase": "Phase 10 \u2014 live testing, milestone 2 of 3",
+    "reproduced_before_fix": [
+      "Older running status replacing a newer complete result",
+      "Older sign-in rejection re-pausing a successful status retry",
+      "Delayed saved-status success recreating a dismissed card",
+      "Delayed saved-status failure recreating a dismissed card"
+    ],
+    "behavior": [
+      "Each scan action has independent status-request ordering guards.",
+      "Older saved-status success and failure responses are discarded after a newer check starts.",
+      "Dismissed action cards stay dismissed for the current provider session, including later background rediscovery.",
+      "Outstanding action polls cannot overwrite the final action response after execution tracking stops.",
+      "Saved evidence confirmed by manual status checks is preserved if the original action response later loses sign-in.",
+      "Local dismissal never cancels server execution or deletes saved scan records."
+    ],
+    "validation": {
+      "session_recovery_tests": {
+        "passed": 19,
+        "failed": 0
+      },
+      "progress_display_tests": {
+        "passed": 4,
+        "failed": 0
+      },
+      "production_build_exit": 0
+    },
+    "frontend_published": false,
+    "production_records_modified": false,
+    "browser_live_test_completed": false,
+    "phase_10_complete": false,
+    "files": [
+      "src/components/permitting/ResearchProgressContext.jsx",
+      "scripts/permitting-progress-session-recovery.test.mjs"
+    ]
   }
 }
