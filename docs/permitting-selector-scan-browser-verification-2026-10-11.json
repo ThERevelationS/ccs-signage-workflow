@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T04:05:02.530Z",
+  "tested_at": "2026-10-11T05:07:13.252Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -90,6 +90,16 @@
     },
     {
       "name": "saved research returns earlier originals without another address scan",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "administrator inspects employee originals with provenance and no approval or save controls",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "administrator inspects employee originals with provenance and no approval or save controls",
       "width": 1280,
       "passed": true
     }
