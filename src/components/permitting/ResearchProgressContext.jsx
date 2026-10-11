@@ -1,8 +1,8 @@
-import React, { createContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useState, useCallback, useRef,useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 export const ResearchProgressContext=createContext(null);
 export function ResearchProgressProvider({children}){
- const [actions,setActions]=useState({});const legacy=useRef(null);
+ const [actions,setActions]=useState(()=>{try{return Object.fromEntries(JSON.parse(sessionStorage.getItem('permitting_scan_actions') || '[]').map(row=>[row.id,{...row,status:'unknown',stage:'Restoring saved action status',indeterminate:true,events:[]}]))}catch{return {}}});const legacy=useRef(null);
  const put=useCallback((id,patch)=>setActions(prev=>({...prev,[id]:{...prev[id],...patch}})),[]);
  const startResearch=useCallback((total,label='Locality research batch')=>{const id=crypto.randomUUID();legacy.current=id;put(id,{id,label,total,processed:0,updated:0,skipped:0,status:'running',stage:'Starting',events:[],indeterminate:false});return id;},[put]);
  const updateProgress=useCallback((updates,id=legacy.current)=>{if(id)put(id,{...updates,stage:updates.currentJurisdiction || updates.stage || 'Researching'});},[put]);
@@ -12,7 +12,7 @@ export function ResearchProgressProvider({children}){
   const id=crypto.randomUUID();put(id,{id,label,status:'running',stage:'Submitting action',indeterminate:true,events:[],started_at:new Date().toISOString()});
   let stopped=false,polling=false,lastRun=null;
   const statusPayload=()=>({action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});
-  async function poll(){if(stopped||polling)return;polling=true;try{const res=await base44.functions.invoke('permittingScanStatus',statusPayload());const run=res?.data?.run;if(run){lastRun=run;put(id,{...run,id,label});}}catch(_e){put(id,{activity_warning:'Live activity temporarily unavailable; request may still be running.'});}finally{polling=false;}}
+  async function poll(){if(stopped||polling)return;polling=true;try{const res=await base44.functions.invoke('permittingScanStatus',statusPayload());const run=res?.data?.run;if(run){lastRun=run;put(id,{...run,id,label});}}catch{put(id,{activity_warning:'Live activity temporarily unavailable; request may still be running.'});}finally{polling=false;}}
   const timer=setInterval(()=>void poll(),1500);
   try{
    const res=await base44.functions.invoke(name,{...payload,action_token:id});const data=res?.data || res;
@@ -23,7 +23,9 @@ export function ResearchProgressProvider({children}){
   }catch(error){await poll();put(id,{...(lastRun?{}:{status:'unknown',stage:'Execution unconfirmed — check saved status'}),activity_warning:error?.response?.data?.error || error.message || 'Request response was lost; check saved activity.',response_lost:true});throw error;
   }finally{stopped=true;clearInterval(timer);}
  },[put]);
- const refreshAction=useCallback(async id=>{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id});if(res?.data?.run)put(id,{...res.data.run,id,response_lost:false,activity_warning:null});},[put]);
+ const refreshAction=useCallback(async id=>{const res=await base44.functions.invoke('permittingScanStatus',{action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});if(res?.data?.run)put(id,{...res.data.run,id,response_lost:false,activity_warning:null});else put(id,{status:'unknown',stage:'No saved activity found — execution unconfirmed',response_lost:true});},[put]);
+ useEffect(()=>{try{sessionStorage.setItem('permitting_scan_actions',JSON.stringify(Object.values(actions).slice(-50).map(({id,label})=>({id,label}))))}catch{}},[actions]);
+ useEffect(()=>{for(const id of Object.keys(actions))void refreshAction(id);},[]);
  return <ResearchProgressContext.Provider value={{actions,runAction,refreshAction,startResearch,updateProgress,completeResearch,clearProgress}}>{children}</ResearchProgressContext.Provider>;
 }
 export function useResearchProgress(){const context=React.useContext(ResearchProgressContext);if(!context)throw Error('useResearchProgress must be used within ResearchProgressProvider');return context;}

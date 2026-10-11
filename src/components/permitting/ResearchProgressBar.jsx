@@ -8,7 +8,7 @@ export default function ResearchProgressBar(){
    <div className="flex justify-between gap-2"><h3 className="font-semibold break-words">{row.label}</h3>{!active&&<button className="shrink-0 min-h-8 px-2" onClick={()=>clearProgress(row.id)} aria-label={`Dismiss ${row.label}`}>Dismiss</button>}</div>
    <p role="status">{row.stage || row.status}</p>
    <progress aria-label={`${row.label} progress`} max={total || 1} {...(!row.indeterminate&&total?{value}:!active?{value:row.status==='complete'?total || 1:value}:{})} className="w-full h-3" />
-   <p>{active&&row.indeterminate?'In progress — total not exposed':total?`${value}/${total} steps or pages in this action`:'Action status: '+row.status}</p>
+   <p>{active&&row.indeterminate?'In progress — total not exposed':total?`${value}/${total} steps or pages in the current stage`:'Action status: '+row.status}</p>
    {row.current_url&&<p className="break-all">Current source: {row.current_url}</p>}
    {row.error&&<p className="text-red-700 break-words">{row.error}</p>}
    {(row.activity_warning || row.tracking_error)&&<p className="text-amber-800">{row.activity_warning || row.tracking_error}</p>}
