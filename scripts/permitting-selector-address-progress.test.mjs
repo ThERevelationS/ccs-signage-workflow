@@ -51,3 +51,15 @@ test('saved research browsing is owner scoped, cursor paginated and rejects mixe
  rows[0].owner_id='foreign';assert.equal((await run({browse:true})).status,403);
  rows.length=0;data=await (await run({browse:true})).json();assert.deepEqual(data,{collections:[],actions:[],next_cursor:null});
 });
+
+
+test('administrator review can inspect employee collections but employees cannot broaden their scope',async()=>{
+ const row={id:'c',owner_id:'employee',owner_email:'employee@example.com',reference_only:true,authority_established:false,location_verified:false,documents:[]};let filters=0;
+ const c={asServiceRole:{entities:{PermittingAddressArchive:{filter:async query=>{filters++;assert.equal(query.owner_id,undefined);return [row];},get:async()=>row},PermittingScanRun:{filter:async query=>{assert.equal(query.owner_id,'employee');return []}}}}};
+ const employee=handler('getAddressResearchCollections',c,{authenticateSignShopSession:async()=>({id:'reader',email:'reader@example.com',role:'user'})});
+ for(const body of [{browse:true,review:true},{collection_ids:['c'],review:true}])assert.equal((await employee(body)).status,403);assert.equal(filters,0);
+ const admin=handler('getAddressResearchCollections',c,{authenticateSignShopSession:async()=>({id:'admin',email:'admin@example.com',role:'admin'})});
+ let data=await (await admin({browse:true,review:true})).json();assert.equal(data.review_mode,true);assert.equal(data.collections[0].owner_email,row.owner_email);assert.equal(data.collections[0].location_verified,false);
+ assert.equal((await admin({collection_ids:['c'],review:true})).status,200);assert.equal((await admin({collection_ids:['c']})).status,403);
+ row.authority_established=true;assert.equal((await admin({browse:true,review:true})).status,403);
+});

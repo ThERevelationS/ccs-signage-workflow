@@ -1,3 +1,4 @@
+import SavedAddressResearch from './SavedAddressResearch';
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
@@ -391,6 +392,7 @@ export default function PermittingRepositoryAdmin() {
 
   return (
     <div className="space-y-6">
+      <SavedAddressResearch review />
       {/* Protection Rules Info */}
       <div className="clay-card border-l-4 border-l-blue-400 p-4 bg-blue-50">
         <div className="flex gap-3">
