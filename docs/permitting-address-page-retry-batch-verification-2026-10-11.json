@@ -1,0 +1,22 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Manual saved failed-page retry batch",
+  "verified_at": "2026-10-11T12:07:01.047073+00:00",
+  "regression_tests_passed": 820,
+  "chromium_checks_passed": 38,
+  "production_build_passed": true,
+  "changed_files_lint_passed": true,
+  "manual_overall_cap": null,
+  "snapshot_failures_once": true,
+  "single_attempt_per_snapshot_url": true,
+  "sequential_requests": true,
+  "stop_after_current_page": true,
+  "pending_frontier_preserved": true,
+  "new_failure_does_not_extend_batch": true,
+  "uncertain_response_halts": true,
+  "production_test_writes": 0,
+  "published": false,
+  "live_map_acceptance_verified": false,
+  "scheduler_acceptance_verified": false
+}
