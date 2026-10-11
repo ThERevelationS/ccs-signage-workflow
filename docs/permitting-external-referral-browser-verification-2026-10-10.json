@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T00:20:24.831Z",
+  "tested_at": "2026-10-11T00:56:17.280Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
