@@ -6,9 +6,10 @@ function PageLink({url,label}){
  return href?<a href={href} target="_blank" rel="noopener noreferrer" className="underline text-blue-700 break-all">{label || href}</a>:<span>Link unavailable</span>;
 }
 export default function AddressResearchPages({collection,review,disabled,onUpdate,onBusyChange}){
- const {runAction}=useResearchProgress(),[pass,setPass]=useState(null),[error,setError]=useState(''),control=useRef(null);
+ const {runAction,actions}=useResearchProgress(),[pass,setPass]=useState(null),[error,setError]=useState(''),control=useRef(null);
  useEffect(()=>()=>{if(control.current)control.current.stop=true;onBusyChange(collection.id,false);},[collection.id]); // Stop future pages when this research view leaves.
  const discovery=collection.discovery;
+ const currentSource=Object.values(actions).filter(action=>action.target_id===collection.id&&action.status==='running'&&action.current_url).at(-1)?.current_url;
  if(!discovery)return null;
  async function scan(){
   if(control.current||disabled)return;
@@ -24,7 +25,7 @@ export default function AddressResearchPages({collection,review,disabled,onUpdat
   <p>This continues saved pages on the source website. Each page has its own action progress and findings. New originals appear in the file list; use Save all remaining originals to download them.</p>
   {discovery.blocked&&<p className="text-amber-800">Saved page progress needs review: {discovery.block_reason || 'The source or progress changed.'}</p>}
   {!review&&<button type="button" className="min-h-11 border rounded px-3" disabled={disabled||pass?.running||discovery.blocked||!discovery.pending_pages.length} onClick={scan}>Scan remaining pages</button>}
-  {pass&&<div role="status"><p>{pass.running?'Scanning saved pages':pass.halted?'Scan stopped after a request error':pass.stopped?'Stopped after this page':'Remaining-page scan finished'}: {pass.checked} checked · {pass.failed} failed.</p>{pass.current&&<p className="break-all">Checking: {pass.current}</p>}{pass.running&&<button type="button" className="min-h-11 border rounded px-3" disabled={pass.stopRequested} onClick={()=>{if(control.current)control.current.stop=true;setPass(previous=>({...previous,stopRequested:true}));}}>{pass.stopRequested?'Stopping after this page…':'Stop after this page'}</button>}</div>}
+  {pass&&<div role="status"><p>{pass.running?'Scanning saved pages':pass.halted?'Scan stopped after a request error':pass.stopped?'Stopped after this page':'Remaining-page scan finished'}: {pass.checked} checked · {pass.failed} failed.</p>{pass.running&&<p className="break-all">{currentSource?'Checking: '+currentSource:'Waiting for page activity…'}</p>}{pass.running&&<button type="button" className="min-h-11 border rounded px-3" disabled={pass.stopRequested} onClick={()=>{if(control.current)control.current.stop=true;setPass(previous=>({...previous,stopRequested:true}));}}>{pass.stopRequested?'Stopping after this page…':'Stop after this page'}</button>}</div>}
   {error&&<p role="alert" className="text-amber-800">{error}</p>}
   <p>Keep this window open. This is source research; it does not approve an office, assign a jurisdiction or establish complete coverage. Failed and depth-limited pages remain for review.</p>
   {!!discovery.pending_pages.length&&<details><summary className="min-h-11 cursor-pointer">Waiting page URLs ({discovery.pending_pages.length})</summary><ul>{discovery.pending_pages.map((page,index)=><li key={page.url+index}><PageLink url={page.url}/></li>)}</ul></details>}

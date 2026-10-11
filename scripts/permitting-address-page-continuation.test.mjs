@@ -66,3 +66,8 @@ test('stop and lost response never start another manual page request',async()=>{
  assert.equal(result.stopped,true);assert.equal(calls,1);
  calls=0;await assert.rejects(runAddressPageScan({collection,stopped:()=>false,onProgress:()=>{},scanPage:async()=>{calls++;throw Error('ack lost');}}),/ack lost/);assert.equal(calls,1);
 });
+
+test('collection key changes during fetch cannot reparent discovery progress',async()=>{
+ const f=await fixture(),fetch=f.options.fetchPage;f.options.fetchPage=async(...args)=>{const result=await fetch(...args);f.patch({collection_key:'changed-origin:0'});return result;};
+ await assert.rejects(continueOwnedAddressDiscovery(f.options),/not available/);assert.equal(f.row().documents.length,1);assert.equal(f.row().discovery_scan_state.pending_pages.length,1);
+});

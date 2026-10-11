@@ -14,7 +14,7 @@ export function addressResearchCollection(row){
 // One durable page per request; the staff-controlled UI may continue without an overall page cap.
 export async function continueOwnedAddressDiscovery({entity,scanEntity,collectionId,actor,fetchPage,onProgress=async()=>{}}){
  const original=await entity.get(collectionId);
- const own=row=>Boolean(row&&row.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.scan_run_id===original?.scan_run_id&&row.permitting_url===original?.permitting_url);
+ const own=row=>Boolean(row&&row.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase()&&row.reference_only===true&&row.authority_established===false&&row.collection_key===original?.collection_key&&row.scan_run_id===original?.scan_run_id&&row.permitting_url===original?.permitting_url);
  const reject=()=>Object.assign(Error('This research collection is not available to your account.'),{status:403});
  async function checked(id){
   const row=await entity.get(id);if(!own(row))throw reject();
@@ -29,8 +29,8 @@ export async function continueOwnedAddressDiscovery({entity,scanEntity,collectio
  const seed=new URL(row.permitting_url);
  if(seed.protocol!=='https:'||seed.username||seed.password)throw Object.assign(Error('Saved research source must use HTTPS.'),{status:400});
  const host=seed.hostname.toLowerCase().replace(/^www\./,'');
- const adapter={get:checked,updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:original.scan_run_id,reference_only:true,authority_established:false,permitting_url:original.permitting_url},patch)};
- const guards=Object.fromEntries(['owner_id','owner_email','scan_run_id','reference_only','authority_established','permitting_url','website_url','name','state','type','location_target','location_verified'].map(key=>[key,row[key]]));
+ const adapter={get:checked,updateMany:(query,patch)=>entity.updateMany({...query,owner_id:actor.id,owner_email:String(actor.email).toLowerCase(),scan_run_id:original.scan_run_id,collection_key:original.collection_key,reference_only:true,authority_established:false,permitting_url:original.permitting_url},patch)};
+ const guards=Object.fromEntries(['owner_id','owner_email','collection_key','scan_run_id','reference_only','authority_established','permitting_url','website_url','name','state','type','location_target','location_verified'].map(key=>[key,row[key]]));
  let scan;
  try{
   scan=await scanOfficialPermittingPages({seedUrl:row.permitting_url,resume:cursor,existingDocuments:row.documents || [],maxPages:1,maxDepth:2,onProgress,
