@@ -294,5 +294,21 @@
     "authorization_requirement": "Documented API accepts personal API key with editor access; connected tool operation unavailable. No credential extraction or new cross-app PAT used.",
     "next_step": "In Base44 editor verify address-geocode-v4 source for findLocalityByAddress then Save & Redeploy only that function; do not publish entire app.",
     "phase_10_complete": false
+  },
+  "standalone_activation_repair_attempt": {
+    "date": "2026-10-11",
+    "scope": "findLocalityByAddress only",
+    "method": "Bundled shared dependencies into standalone entry, verified unauthenticated 401/v4 locally, wrote via sandbox and issued MCP edit to trigger resource synchronization.",
+    "source_commits": [
+      "57370cde68c7e23ad34df6d7c3cfd1b28e6e5aa3",
+      "60ba33f740f17c94642112cee26f34527f609318"
+    ],
+    "live_result": "Published domain, preview domain and SDK REST API all remained address-geocode-v3; no authenticated scans created.",
+    "outcome": "Did not fix deployment activation. Original maintainable source restored after exact-content concurrency check; 21 endpoint tests passed.",
+    "remaining_blockers": [
+      "Editor function activation unavailable through connected tools; protected editor automation cannot be bypassed.",
+      "Google Geocoding REQUEST_DENIED remains unresolved; v4 provides correct failure reporting, not an API configuration repair."
+    ],
+    "phase_10_complete": false
   }
 }

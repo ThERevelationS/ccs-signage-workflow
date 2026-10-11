@@ -1,3 +1,7 @@
+## Phase 10 — standalone activation repair tested, unavailable platform operation remains (2026-10-11)
+
+A standalone bundled v4 entry was tested and written through the sandbox, followed by an MCP edit to trigger synchronization. Both app domains and the SDK REST route continued to return v3. The bundled experiment was restored using an exact-content concurrency check; the original endpoint tests passed 21/21. This rules out shared-file imports as the activation remedy in this attempt. No authenticated research scans or frontend publication occurred. Phase 10 remains incomplete. Save & Redeploy in the editor remains the documented activation path not available through current tools. Google Geocoding REQUEST_DENIED is a separate unresolved configuration failure; v4 does not itself repair it.
+
 ## Phase 10 — documented editor activation path identified (2026-10-11 12:04 EDT)
 
 Official Base44 Redeploy a backend function documentation describes coding/redeploy-function as the editor Save & Redeploy operation, including outdated deployment recovery even with identical source. This differs from CLI PUT backend-functions used earlier. Connected tools do not expose it; documented API requires personal API key with editor access. No credentials extracted or cross-app PAT introduced. Next action: verify v4 source and Save & Redeploy only findLocalityByAddress in editor, then read-only app-domain revision probe. No full publication or additional scan performed.
