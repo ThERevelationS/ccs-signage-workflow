@@ -1,3 +1,4 @@
+import {normalizeAddressState} from '../../shared/permittingAddressState.js';
 const PLACEHOLDER_VALUES = new Set([
   "information not found",
   "not found",
@@ -25,7 +26,7 @@ export function normalizePermitJurisdictionName(value) {
 }
 
 function normalizeState(value) {
-  return cleanText(value).toLowerCase();
+  return normalizeAddressState(cleanText(value));
 }
 
 function possibleResultNames(result) {

@@ -1,3 +1,4 @@
+import {normalizeAddressState} from '../../shared/permittingAddressState.js';
 import {useState,useRef,useEffect} from 'react';
 import {base44} from '@/api/base44Client';
 import {useAuth} from '@/components/auth/EmailGate';
@@ -6,13 +7,13 @@ import OfficialSourceRescans from './OfficialSourceRescans';
 import OfficeRescanButton from './OfficeRescanButton';
 import {findRepositoryJurisdictionMatches,hasDuplicateRepositoryIdentity} from './jurisdictionPermitBridge';
 import {createJurisdictionIfAbsent} from './jurisdictionPersistence';
-export default function SelectorScanActions({locality,result,profiles,onProfileUpdated,loading}){
+export default function SelectorScanActions({locality,result,profiles,onProfileUpdated,loading,unavailable}){
  const {currentUser}=useAuth(),{runAction}=useResearchProgress(),[busy,setBusy]=useState(new Set()),[error,setError]=useState('');
  const alive=useRef(true);useEffect(()=>()=>{alive.current=false;},[]);
  const matches=findRepositoryJurisdictionMatches(profiles,locality?{suggested_locality:locality,ai_state:locality.state}:result);
- const name=locality?.name || result?.ai_locality_name,state=locality?.state || result?.ai_state;
- const brokenLink=Boolean(locality?.jurisdiction_profile_id)&&matches.length===0;
- const canScan=currentUser?.role==='admin';
+ const name=locality?.name || result?.ai_locality_name,state=normalizeAddressState(locality?.state || result?.ai_state).toUpperCase();
+ const brokenLink=Boolean(locality?.jurisdiction_profile_id || result?.suggested_locality?.jurisdiction_profile_id)&&matches.length===0;
+ const canScan=currentUser?.role==='admin'&&!unavailable;
  async function scan(profile,research=false){const key=profile?.id || 'new';if(busy.has(key))return;setBusy(prev=>new Set([...prev,key]));setError('');try{
   let target=profile;
   if(!target){const created=await createJurisdictionIfAbsent({entity:base44.entities.JurisdictionProfile,data:{name,state,type:/township/i.test(name)?'township':/county/i.test(name)?'county':'city',auto_refresh:false,ai_summary:'Research requested from project jurisdiction selector.'},label:`Selector research ${name}, ${state}`});target=created.record;}
@@ -23,7 +24,8 @@ export default function SelectorScanActions({locality,result,profiles,onProfileU
  return <section aria-label="Scan this jurisdiction" className="rounded-lg border bg-white p-3 space-y-3 min-w-0">
   <h3 className="font-semibold text-sm">Check this place</h3>
   <p className="text-xs text-gray-600">Scan for forms and links. Use “Find missing information” to research contacts and requirements. Findings still need review.</p>
-  {!canScan&&<p className="text-xs">An administrator can start scans here. You can still choose a jurisdiction.</p>}
+  {currentUser?.role!=='admin'&&<p className="text-xs">An administrator can start scans here. You can still choose a jurisdiction.</p>}
+  {unavailable&&<p role="alert" className="text-xs text-red-700">Saved information could not load. Close and reopen this window to try again.</p>}
   {loading&&<p role="status" className="text-xs">Loading saved information…</p>}
   {error&&<p role="alert" className="text-xs text-red-700">{error}</p>}
   {brokenLink&&<p className="text-xs text-amber-800">This place’s saved information link is missing. Ask an administrator to repair it before scanning.</p>}

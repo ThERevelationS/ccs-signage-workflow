@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
     try {
       const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
       if (apiKey) {
+        await reporter.emit({kind:'geocode_lookup',url:'https://maps.googleapis.com/maps/api/geocode/json',detail:`Searching the map for ${address}.`});
         const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
         const geoRes = await fetch(geoUrl);
         if (geoRes.ok) {
