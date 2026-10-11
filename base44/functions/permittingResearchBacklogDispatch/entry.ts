@@ -1,3 +1,4 @@
+import {claimPermittingCollectionCycle,finishPermittingCollectionCycle} from '../../shared/permittingCollectionCycle.mjs';
 import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import {continueDiscoveryBacklog} from '../../shared/permittingDiscoveryContinuation.mjs';
 import {readPermittingResourceResponse} from '../../shared/permittingResourceResponse.mjs';
@@ -114,11 +115,12 @@ Deno.serve(async (req) => {
     const Profiles = base44.asServiceRole.entities.JurisdictionProfile;
     const Settings = base44.asServiceRole.entities.GlobalSettings;
 
-    const [configRecord, stateRecord] = await Promise.all([
+    const [configRecord, loadedStateRecord] = await Promise.all([
       loadSingleton(Settings, PERMITTING_RESEARCH_CONFIG_KEY),
       loadSingleton(Settings, PERMITTING_RESEARCH_STATE_KEY),
     ]);
 
+    let stateRecord=loadedStateRecord;
     const config = normalizePermittingResearchConfig(configRecord?.setting_value || {});
     const now = new Date();
     const decision = researchCycleDecision({
@@ -133,8 +135,12 @@ Deno.serve(async (req) => {
     let discoveryContinuation: any = null;
     let archiveContinuation: any = null;
     let textContinuation: any = null;
-    const elapsedArchiveCycle = now.getTime() - Date.parse(stateRecord?.setting_value?.last_cycle_at || "");
-    if (!manual && config.enabled && (!Number.isFinite(elapsedArchiveCycle) || elapsedArchiveCycle >= config.interval_minutes * 60000)) {
+    let collectionDecision:any=null;
+    if(!manual && config.enabled){
+      collectionDecision=await claimPermittingCollectionCycle({entity:Settings,record:stateRecord,now,intervalMinutes:config.interval_minutes});
+    }
+    if(collectionDecision?.claimed){
+      stateRecord=collectionDecision.record;
       // One saved official page per cycle; no new AI discovery or research debit.
       // Failure cannot suppress independent archive/text/research work.
       try {
@@ -146,12 +152,13 @@ Deno.serve(async (req) => {
           },
         });
       } catch(error) { discoveryContinuation = {success:false,status:'discovery_continuation_failed',llm_calls:0}; }
-      archiveContinuation = await continuePermittingDocumentArchiveBacklog({
+      try { archiveContinuation = await continuePermittingDocumentArchiveBacklog({
         invalidateProfile:invalidateVerifiedJurisdictionAfterResearch,
         fetchScopedSource:(url,init,allowedHost)=>safeExternalFetch(url,init,5,candidate=>candidate.hostname.toLowerCase().replace(/^www\./,'')===allowedHost),
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
       });
+      } catch(error) { archiveContinuation={success:false,status:'archive_continuation_failed',error:String(error?.message || error)}; }
       // Isolate parser loading/failure from the research dispatcher. No LLM call.
       try {
         const { readAndExtractSourcePdf } = await import('../../shared/jurisdictionSourceTextRuntime.ts');
@@ -165,11 +172,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    if(collectionDecision?.claimed){
+      stateRecord=await finishPermittingCollectionCycle({entity:Settings,recordId:stateRecord.id,token:collectionDecision.token,
+        results:{discovery:discoveryContinuation,archive:archiveContinuation,text:textContinuation}});
+    }else if(collectionDecision && stateRecord?.id){stateRecord=await Settings.get(stateRecord.id);}
+
     if (!decision.due) {
       return Response.json({
         success: true,
         skipped: true,
         reason: decision.reason,
+        collection_cycle:stateRecord?.setting_value?.collection_cycle || null,
+        collection_reason:collectionDecision?.reason || null,
         archive_continuation: archiveContinuation,
         text_continuation: textContinuation,
         discovery_continuation: discoveryContinuation,
@@ -377,6 +391,7 @@ Deno.serve(async (req) => {
 
     const previous = normalizedResearchState(stateRecord?.setting_value || {}, now);
     const nextState = {
+      ...stateRecord?.setting_value,
       last_cycle_at: now.toISOString(),
       daily_day_key: previous.daily_day_key,
       dispatched_today: previous.dispatched_today + attempted,

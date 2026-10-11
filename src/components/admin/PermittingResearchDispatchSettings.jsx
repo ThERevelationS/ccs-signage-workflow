@@ -1,3 +1,4 @@
+import PermittingCollectionCycleStatus from "./PermittingCollectionCycleStatus";
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,9 @@ export default function PermittingResearchDispatchSettings() {
             <div className="rounded-lg border p-3"><div className="text-xs text-gray-500">Released today</div><div className="text-xl font-semibold">{stateInfo?.dispatched_today ?? 0}</div></div>
           </div>
 
-          {stateInfo?.last_cycle_at && <p className="text-xs text-gray-500">Last controlled cycle: {new Date(stateInfo.last_cycle_at).toLocaleString()}</p>}
+          {stateInfo?.last_cycle_at && <p className="text-xs text-gray-500">Last AI research cycle: {new Date(stateInfo.last_cycle_at).toLocaleString()}</p>}
+
+          <PermittingCollectionCycleStatus cycle={stateInfo?.collection_cycle} />
 
           {message && (
             <div className={"flex items-start gap-2 rounded-lg border p-3 text-sm " + (message.type === "success" ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800")}>
