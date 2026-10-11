@@ -1,0 +1,16 @@
+{
+  "phase": 10,
+  "milestone": 2,
+  "unit": "Owner-scoped outside-host direct originals",
+  "regression_passed": 596,
+  "chromium_passed": 22,
+  "targeted_lint": "passed",
+  "backend_bundles_passed": 5,
+  "production_build": "passed",
+  "production_test_writes": 0,
+  "published": false,
+  "old_collection_migration": false,
+  "live_signed_in_acceptance": "pending",
+  "observed_scheduler_acceptance": "pending",
+  "scope": "Retained direct HTTPS files only; exact referring-page recheck; no broad external crawl or authority approval"
+}

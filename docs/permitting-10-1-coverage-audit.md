@@ -6,6 +6,8 @@ External archival reuses the existing scoped referral worker: it rereads the exa
 
 Original files includes pending external selections with Save linked original and referring-page provenance. Existing per-file Save original/Verify controls handle staged external files. Saved research and administrator inspection retain these referrals. Portals, code websites, HTTP or invalid-provenance links remain outside this downloader; there is no broad outside-site crawl or portal submission. Findings still require review before jurisdiction linking or authority use.
 
+Verification passed: 596 permitting regression tests, 22 isolated Chromium checks, targeted frontend lint, five backend bundles and production build. Synthetic API/file responses only; no production records/files changed by tests. Live signed-in and actual scheduled-cycle acceptance remain pending. Verification record: docs/permitting-address-external-originals-verification-2026-10-11.json.
+
 Remaining: live signed-in map/address/archive/link acceptance and observed scheduler acceptance, broader publisher/department crawl scopes, project-specific parcel/authority validation and statewide coverage. Nothing published; tests use synthetic services/files only.
 
 ## 2026-10-11 — Phase 10, milestone 2 of 3: guarded original-document repository linking
