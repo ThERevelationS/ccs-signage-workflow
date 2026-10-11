@@ -46,3 +46,7 @@ Permitting Repository admin includes Employee research to review. It shows retai
 ## Link a reviewed original
 
 In administrator employee research inspection, open a verified original and review its source. For a location-verified collection, choose Preview jurisdiction link. Only one matching repository jurisdiction is accepted. Confirm I reviewed it — link original to append a pinned manual original with reviewer/provenance history. Existing documents remain, and automatic document replacement is protected. This does not approve rules or office roles. Changed previews or duplicate sources must be reviewed again. Unresolved location collections cannot use this link action.
+
+## Direct files hosted elsewhere
+
+Original files includes retained HTTPS direct-document referrals, even when no same-host file exists. Staff can use Save linked original, see the source-page recheck and file progress, and open the original only after stored bytes verify. The enabled scheduler shares its existing archive budget across these files and other pending originals. Outside websites are not broadly crawled; portals stay links. Older collections are not silently rewritten to add referrals; new scans retain this inventory.

@@ -1,3 +1,13 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: owner-scoped outside-host originals
+
+New address research collections now retain exact HTTPS direct-document referrals with referring-page visits and discovery hashes. Collections are retained even when all downloadable originals are outside the candidate website. The first pass still attempts at most one original; the enabled scheduler continues same-host files and direct external selections through the same one-file-per-cycle budget, with Ohio before Kentucky. No migration of older collections or forced live scheduler run was performed.
+
+External archival reuses the existing scoped referral worker: it rereads the exact source-page link before fetching original bytes, stages a durable source identity, limits original redirects to HTTPS on the selected host, verifies original/stored hashes and byte counts, respects leases/backoff/paused collections, and never repeats uncertain uploads. Readback recovery uses the retained stored-file receipt without another source fetch or upload. Every collection read and conditional write retains owner/reference scope; no shared authority or profile is written by downloads.
+
+Original files includes pending external selections with Save linked original and referring-page provenance. Existing per-file Save original/Verify controls handle staged external files. Saved research and administrator inspection retain these referrals. Portals, code websites, HTTP or invalid-provenance links remain outside this downloader; there is no broad outside-site crawl or portal submission. Findings still require review before jurisdiction linking or authority use.
+
+Remaining: live signed-in map/address/archive/link acceptance and observed scheduler acceptance, broader publisher/department crawl scopes, project-specific parcel/authority validation and statewide coverage. Nothing published; tests use synthetic services/files only.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: guarded original-document repository linking
 
 Administrator inspection now offers Preview jurisdiction link for originals with verified source/stored bytes and verified collection location. The backend verifies completed originating address-scan ownership, reference-only collection scope, safe HTTPS file/source URLs and one matching jurisdiction by normalized name/state/type plus government ID or non-county parent-county context. Missing/duplicate identities and existing source/file entries block the append. The preview supplies evidence digest and jurisdiction version; confirmation must match both.
