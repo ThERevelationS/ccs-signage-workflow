@@ -1,3 +1,9 @@
+## Phase 10, milestone 2 — failed address page retry (2026-10-11)
+
+The jurisdiction selector and My saved research now show **Retry this page** for saved page-fetch failures. Each click attempts only that retained failed page, preserving its saved depth and all other waiting pages. The existing separate action progress reports the exact backend page and findings. Successful reads remove the selected failure; failed reads keep it and expose the latest error. Original file receipts remain protected by conditional persistence. Stale, duplicate, malformed, foreign-owner and arbitrary unsaved selections are rejected. Administrator inspection remains read-only for page retries.
+
+Verified with synthetic records only: 817 regression tests, focused endpoint checks, changed-component lint, backend bundle and production build. Repository-wide lint still reports existing errors outside this component. Phone and desktop Chromium checks are recorded in the browser verification file. No publication, production test writes, AI calls or file uploads were performed by this retry action. Depth/link-limit recovery and live map/scheduler acceptance remain outstanding.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: continue saved address website pages
 
 Address research now retains page-only collections when the first scan finds waiting pages or review gaps before finding originals. Website pages controls sit directly in selector results and My saved research. Scan remaining pages continues one saved page per tracked request until the frontier drains or staff select Stop after this page. There is no arbitrary overall manual page count cap; existing saved depth scope, link-review gaps and cursor storage bounds remain visible. This does not establish exhaustive locality coverage.
