@@ -208,5 +208,14 @@
     "provider_status": "REQUEST_DENIED",
     "outcome": "Deployed v4 runtime verified. Preview remains v3 after reload and sandbox resource sync. Preview refresh/reopen through editor remains necessary; precise Google configuration cause unverified.",
     "shared_sdk_routing_changed": false
+  },
+  "blocked_live_followup_1130": {
+    "cli_login": "confirmed brettheinlein1@gmail.com",
+    "authenticated_scan_local": "11:30:46\u201311:30:51 EDT",
+    "preview_revision": "address-geocode-v3",
+    "google_status": "REQUEST_DENIED",
+    "exec_probe": "GOOGLE_MAPS_API_KEY unavailable in exec context; does not establish whether deployed function key exists",
+    "phase_10_complete": false,
+    "next_required_action": "Refresh/reopen Preview from Base44 editor; inspect server Geocoding API configuration before further repeat scans."
   }
 }
