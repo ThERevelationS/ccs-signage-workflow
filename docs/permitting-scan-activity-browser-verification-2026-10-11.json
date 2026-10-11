@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-11T00:58:14.292Z",
+  "tested_at": "2026-10-11T00:59:17.804Z",
   "mode": "isolated Chromium; actual component and production CSS; mock API only",
   "production_writes": 0,
   "checks": [
@@ -25,6 +25,11 @@
     },
     {
       "name": "lost response continues polling to completion",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "reload restores status without replaying the action",
       "width": 390,
       "passed": true
     },
