@@ -1120,6 +1120,22 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   makeClick(true, false, clean, () => {}, () => {}, "2099-03-21",
     () => { revisitOpens++; })();
   assert.equal(revisitOpens, 1); // Still requires the Revisit date popup on a clean save.
+
+  const revisitSave = source.slice(source.indexOf("  const handleRevisitSave = async (dateString) => {"),
+    source.indexOf("  const saveChecklist = async"));
+  const makeRevisitSave = new Function("blockOnUnsubmittedDrafts", "setShowRevisitPopup",
+    "saveChecklist", revisitSave + "\nreturn handleRevisitSave;");
+  const savedDates = [], popupStates = [];
+  makeRevisitSave(block, value => popupStates.push(value),
+    value => savedDates.push(value))("2099-04-12");
+  assert.deepEqual(savedDates, []);
+  assert.deepEqual(popupStates, [false]); // Stale Revisit submission must not write.
+  popupStates.length = 0;
+  makeRevisitSave(clean, value => popupStates.push(value),
+    value => savedDates.push(value))("2099-04-12");
+  assert.deepEqual(savedDates, ["2099-04-12"]);
+  assert.deepEqual(popupStates, [false]);
+
   const popup = source.slice(source.indexOf("{/* Unsubmitted text must be applied or cancelled"));
   assert.match(popup, /Finish unfinished checklist text first/);
   assert.match(popup, /onClick=\{\(\) => setUnfinishedEditsWarning\(null\)\}/);
