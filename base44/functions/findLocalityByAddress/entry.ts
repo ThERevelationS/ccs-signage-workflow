@@ -1,3 +1,4 @@
+import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
@@ -44,16 +45,19 @@ function localityIdentityMatches(locality: any, name: unknown, state: unknown) {
  * }
  */
 Deno.serve(async (req) => {
+  let reporter:any=silentScanReporter;
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    await authenticateSignShopSession(base44, body?.session_token);
-    const address = (body.address || "").trim();
+    const actor=await authenticateSignShopSession(base44, body?.session_token);
+    const address = typeof body.address==='string'?body.address.trim():'';
 
-    if (!address) {
-      return Response.json({ success: false, error: "Address is required" }, { status: 400 });
+    if (!address || address.length>500) {
+      return Response.json({ success: false, error: "Enter a job address of 500 characters or fewer" }, { status: 400 });
     }
 
+    if(body.action_token&&actor.role==='admin')reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
+    await reporter.emit({kind:'address_lookup',detail:`Looking up job address: ${address}`},{stage:'Finding address on the map',processed:0,total:4,indeterminate:false});
     // 1) Geocode with Google Maps Geocoding API
     let geocode = null;
     try {
@@ -83,8 +87,10 @@ Deno.serve(async (req) => {
       }
     } catch (e) {
       console.warn('Geocoding failed:', e.message);
+      await reporter.emit({kind:'geocode_warning',detail:'Map lookup failed. AI suggestions still need address confirmation.'});
     }
 
+    await reporter.emit({kind:'geocode_result',detail:geocode?`Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. This is a geographic suggestion, not verified office coverage.`:'No map result available. The place must be confirmed before relying on it.'},{stage:'Checking saved jurisdictions',processed:1,total:4});
     // 2) Pull existing localities so AI can match
     const localities = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.PermitLocality,
@@ -98,6 +104,7 @@ Deno.serve(async (req) => {
       zip: l.zip || ""
     }));
 
+    await reporter.emit({kind:'catalog_check',detail:`Checking ${localities.length} saved jurisdictions against the address.`},{processed:2,total:4});
     // First prefer deterministic geocoder locality components when they uniquely
     // match a configured tracker locality. AI is only a fallback, never the sole
     // authority for accepting an arbitrary locality id.
@@ -128,6 +135,7 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
 4. Return parcel info (owner name, lot size in acres, parcel/APN number) if you can find it from CAGIS, county auditor sites, or other public records. Also include a source_url when possible.
 5. Be factual. If unknown, leave fields empty strings. Do not fabricate owner names or parcel numbers.`;
 
+    await reporter.emit({kind:'search_instructions',detail:prompt+'\nInternal AI searches and visited pages are not exposed by the service.'},{stage:'Researching this address',indeterminate:true});
     const aiResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: true,
@@ -212,8 +220,10 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
       }
     }
 
+    await reporter.emit({kind:'address_findings',detail:`Suggested place: ${aiResult.ai_locality_name || 'unknown'}, ${aiResult.ai_state || geocodeState || 'unknown'}. ${matchReason} Zoning: ${aiResult.zoning?.district_code || 'not found'}. Parcel: ${aiResult.parcel?.parcel_number || 'not found'}.`,resources:aiResult.parcel?.source_url?[{url:aiResult.parcel.source_url,title:'Parcel source'}]:[]},{stage:'Address lookup complete',processed:4,total:4,indeterminate:false});
     return Response.json({
       success: true,
+      scan_run:await reporter.finish(),
       geocode,
       suggested_locality: matchedLocality,
       // A geographic identity match is not a verified permitting-authority claim.
@@ -240,6 +250,7 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
     console.error('findLocalityByAddress error:', error?.message || error);
     return Response.json({
       success: false,
+      scan_run:await reporter.finish('failed',String(error?.message || error)),
       error: safeStatus === 500 ? 'Address research could not be completed safely' : error.message,
     }, { status: safeStatus });
   }

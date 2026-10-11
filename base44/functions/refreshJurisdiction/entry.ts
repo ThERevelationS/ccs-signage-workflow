@@ -1,3 +1,4 @@
+import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { readPermittingResourceResponse } from '../../shared/permittingResourceResponse.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
@@ -40,6 +41,7 @@ Deno.serve(async (req) => {
     let user: any = null;
     if (!isScheduledRun && !isTargetedAutomation) {
       user = await base44.auth.me().catch(() => null);
+      if(!user&&body.session_token)user=await authenticateSignShopSession(base44,body.session_token);
       if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -85,7 +87,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     await reporter.finish('failed',String(error?.message || error));
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 404,409].includes(status) ? status : 500;
+    const safeStatus = [400,401,403,404,409,503].includes(status) ? status : 500;
     console.error('refreshJurisdiction error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Jurisdiction refresh could not be completed safely' : error.message,
