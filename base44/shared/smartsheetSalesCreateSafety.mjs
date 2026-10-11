@@ -1,7 +1,9 @@
 import { salesSnapshotsEqual } from './smartsheetSalesSafety.mjs';
 
 const id = (value) => {
-  const text = String(value ?? '').trim();
+  if (typeof value === 'number' && (!Number.isSafeInteger(value) || value <= 0)) return '';
+  if (typeof value !== 'number' && typeof value !== 'string') return '';
+  const text = String(value).trim();
   return /^\d+$/.test(text) && text !== '0' ? text : '';
 };
 const equalSnapshot = (left, right) =>
