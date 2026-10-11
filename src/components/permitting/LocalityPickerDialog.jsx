@@ -67,7 +67,7 @@ export default function LocalityPickerDialog({
   const openRef=useRef(isOpen);openRef.current=isOpen;
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
-  const [result, setResult] = useState(null); // full AI result
+  const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(false);
   const [selectedLocalityId, setSelectedLocalityId] = useState("");
@@ -202,7 +202,7 @@ export default function LocalityPickerDialog({
     }
   };
 
-  const mapPosition = result?.geocode ? { lat: result.geocode.lat, lng: result.geocode.lon } : null;
+  const mapPosition = Number.isFinite(result?.geocode?.lat)&&Number.isFinite(result?.geocode?.lon) ? { lat: result.geocode.lat, lng: result.geocode.lon } : null;
   const markerTitle = result?.geocode?.display_name || "";
 
   return (
@@ -259,7 +259,7 @@ export default function LocalityPickerDialog({
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
         <div className="flex flex-1 flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden min-h-0 lg:h-[680px]">
           <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto space-y-3 pr-1">
-                {/* Locality override — allow manual pick */}
+                {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
                     <Label htmlFor="jurisdiction-choice" className="text-xs">Choose a jurisdiction</Label>

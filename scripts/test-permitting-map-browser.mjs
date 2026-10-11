@@ -8,6 +8,7 @@ import react from '@vitejs/plugin-react';
 const {chromium}=await import(process.env.PERMITTING_PLAYWRIGHT_PATH || '/tmp/permitting-browser-check/node_modules/playwright/index.mjs');
 const root=process.cwd(),scratch=await mkdtemp(path.join(tmpdir(),'permitting-map-browser-'));let vite,browser;const checks=[];
 const sdk=`
+(()=>{
 const f=window.fixture;
 class Map {constructor(node,options){f.options=options;f.canvasHeight=node.getBoundingClientRect().height;f.listeners={};this.data={forEach:()=>{},remove:()=>{},addGeoJson:feature=>f.outlines.push(feature),setStyle:style=>f.style=style};}panTo(p){f.pans.push(p);}setZoom(z){f.zoom=z;}addListener(name,cb){f.listeners[name]=cb;return {remove:()=>{delete f.listeners[name];}};}}
 class Marker {constructor(options){f.marker=options.position;f.markerVisible=true;}setPosition(p){f.marker=p;}setTitle(t){f.markerTitle=t;}setMap(map){f.markerVisible=Boolean(map);}}
@@ -15,6 +16,7 @@ class Polyline {constructor(){this.path=[];this.path.clear=()=>this.path.splice(
 const layer=name=>class {setMap(map){f.layers[name]=Boolean(map);}};
 window.google={maps:{Map,Marker,Polyline,TrafficLayer:layer('traffic'),TransitLayer:layer('transit'),BicyclingLayer:layer('bicycle'),geometry:{spherical:{computeLength:path=>path.length*10}},event:{trigger:()=>{},clearInstanceListeners:()=>{}}}};
 window.permittingMapsReady();
+})();
 `;
 try{
  await symlink(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
