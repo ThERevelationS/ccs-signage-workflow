@@ -166,5 +166,20 @@
     "remaining_ui_issue": "Failure currently asks to enter a complete address although the service rejected the request; must distinguish service configuration failure from address error.",
     "frontend_published": false,
     "data_writes": "Normal live address scan produced saved scan/research; no Work Order assignment, office approval or dummy data."
+  },
+  "geocoding_service_error_v4": {
+    "revision": "address-geocode-v4",
+    "implementation": "Service failures are distinguished from invalid addresses; completed_with_errors and clear administrator guidance; automatic research continues; unverified jurisdiction application remains disabled.",
+    "validation": {
+      "endpoint_tests_passed": 21,
+      "permitting_tests_passed": 633,
+      "production_build_exit": 0,
+      "backend_bundle": "passed"
+    },
+    "live_backend_revision": "address-geocode-v3",
+    "live_provider_status": "REQUEST_DENIED",
+    "v4_deployed": false,
+    "deployment_blocker": "CLI whoami requires fresh authentication; Google device approval browser observation blocked by credential protection.",
+    "phase_10_complete": false
   }
 }

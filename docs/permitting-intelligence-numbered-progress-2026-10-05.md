@@ -1,3 +1,7 @@
+## Phase 10 — service failure correction prepared (2026-10-11)
+
+Address lookup v4 now reports provider/configuration failures as completed with errors, explains that employees do not need to re-enter a valid address, and preserves automatic research and the location verification gate. Endpoint tests: 21 passed; permitting tests: 633 passed; production build and backend bundle passed. Live scans still run v3 and return Google REQUEST_DENIED. v4 activation is blocked by expired CLI authentication and browser credential protection. Exact location, address pin, and remaining live acceptance are not yet verified; phase 10 remains open.
+
 ## 2026-10-11 — Phase 10 current preview login and address scan verified
 
 User refresh restored the public sandbox preview. User explicitly authorized separate Sign Shop login; visible Logout Brett confirms success. Live Mason address scan 6acba2c69f03aa845daff0db reports address-geocode-v3 and Google REQUEST_DENIED. Per-action progress and 14 literal activity events rendered; automatic research scanned one OpenGov page with zero resources. Map canvas and controls load, but address pin and exact match remain unverified because server geocoding is denied. Apply stayed disabled. Need fix server Geocoding configuration and avoid asking for a complete address on a service configuration failure. No frontend publication or Work Order assignment.
