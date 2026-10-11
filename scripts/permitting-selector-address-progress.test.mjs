@@ -92,3 +92,11 @@ test('page endpoint uses HTTPS same-host same-port redirect guards and resource 
  const extra={authenticateSignShopSession:async()=>({id:'reader',email:'reader@example.com'}),safeExternalFetch:async(url,init,redirects,guard)=>{assert.equal(init.method,'GET');assert.equal(redirects,3);assert(guard(new URL('https://example.gov/next')));assert(!guard(new URL('http://example.gov/next')));assert(!guard(new URL('https://outside.gov/next')));assert(!guard(new URL('https://example.gov:8443/next')));return new Response('<html>Page</html>',{headers:{'content-type':'text/html'}});},continueOwnedAddressDiscovery:async options=>{const page=await options.fetchPage('https://example.gov/next','example.gov','');assert.match(page.html,/Page/);return {success:true,pages:[]};}};
  assert.equal((await handler('continueAddressResearchDiscovery',c,extra)({collection_id:'c'})).status,200);
 });
+
+test('geocode service failures report safe actionable status without leaking provider error or key',async()=>{
+ for(const status of ['REQUEST_DENIED','ZERO_RESULTS','OVER_QUERY_LIMIT','OVER_DAILY_LIMIT','INVALID_REQUEST','UNKNOWN_ERROR']){
+  const scans=ledger();let run;
+  const data=await (await handler('findLocalityByAddress',client(scans),{Deno:{serve:fn=>run=fn,env:{get:()=> 'SECRET-KEY'}},fetch:async()=>new Response(JSON.stringify({status,error_message:'SECRET-KEY provider internals',results:[]}))})({address:'123 Main St',action_token:token})).json();
+  assert.equal(data.apply_allowed,false);assert.equal(data.suggested_locality,null);const event=data.scan_run.events.find(e=>e.kind==='geocode_failed');assert(event);assert(!JSON.stringify(data).includes('SECRET-KEY'));if(status==='REQUEST_DENIED')assert.match(event.detail,/server key/);if(status==='ZERO_RESULTS')assert.match(event.detail,/ZERO_RESULTS/);if(status.includes('LIMIT'))assert.match(event.detail,/service limit/);assert(run);
+ }
+});
