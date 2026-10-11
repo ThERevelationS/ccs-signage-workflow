@@ -12,7 +12,7 @@ Deno.serve(async req=>{
   if(body.retry_page_url!==undefined&&(typeof body.retry_page_url!=='string'||!body.retry_page_url||body.retry_page_url.length>4096))return Response.json({error:'Select a saved failed page.'},{status:400});
   const entity=client.asServiceRole.entities.PermittingAddressArchive,row=await entity.get(body.collection_id);
   if(!row||row.owner_id!==actor.id||row.owner_email!==String(actor.email).toLowerCase()||row.reference_only!==true||row.authority_established!==false)return Response.json({error:'This research collection is not available to your account.'},{status:403});
-  if(body.action_token)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:row.id,targetName:row.name,kind:'address_discovery',label:'Continue address website scan — '+row.name});
+  if(body.action_token)reporter=await createScanReporter({entity:client.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:row.id,targetName:row.name,kind:'address_discovery',label:(body.retry_page_url?'Retry research page — ':'Continue address website scan — ')+row.name});
   const result=await continueOwnedAddressDiscovery({entity,scanEntity:client.asServiceRole.entities.PermittingScanRun,collectionId:row.id,actor,retryPageUrl:body.retry_page_url ?? null,
    fetchPage:async(url:string,host:string,port:string)=>readPermittingResourceResponse(await safeExternalFetch(url,{method:'GET',signal:AbortSignal.timeout(15000),headers:{'User-Agent':'CCS-Permitting-Address/1.0'}},3,candidate=>candidate.protocol==='https:'&&candidate.hostname.toLowerCase().replace(/^www\./,'')===host&&candidate.port===port)),
    onProgress:(event:any)=>reporter.emit(event,event.progress || {})});
