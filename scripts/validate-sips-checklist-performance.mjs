@@ -294,7 +294,7 @@ check("collapsing products, details, or Completed clears only hidden navigation 
     source.indexOf("// A collapsed product, hierarchy, or Completed section"),
     source.indexOf("// Search typing and inline editor state")
   );
-  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
+  assert.match(collapseGuard, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\| showOtherPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
   assert.match(collapseGuard, /focusedSearchId &&\s*!findRenderedChecklistItemElement\(\[focusedSearchId\]\)\?\.getClientRects\(\)\.length/);
   assert.match(collapseGuard, /focusedNeedsInputId &&\s*!findRenderedChecklistItemElement\(\[focusedNeedsInputId\]\)\?\.getClientRects\(\)\.length/);
   assert.match(collapseGuard, /if \(!hiddenSearch && !hiddenNeedsInput\) return;/);
@@ -324,9 +324,9 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
   assert.match(scheduler, /window\.clearTimeout\(pendingNavigationFocusTimerRef\.current\)/);
   assert.match(scheduler, /if \(navigationFocusVersionRef\.current !== version\) return;/);
   assert.match(scheduler, /useLayoutEffect\(\(\) => \{/);
-  assert.match(scheduler, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup\) cancelPendingNavigationFocus\(\)/);
+  assert.match(scheduler, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\| showOtherPopup\) \{\s*cancelPendingNavigationFocus\(\)/);
   assert.match(scheduler, /return cancelPendingNavigationFocus;/);
-  assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, showRevisitPopup, workOrder\?\.id\]/);
+  assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, showRevisitPopup, showOtherPopup, workOrder\?\.id\]/);
   assert.equal((source.match(/scheduleNavigationFocus\(\(\) => \{/g) || []).length, 3);
   assert.match(source, /const clearChecklistSearch = \(\) => \{\s*cancelPendingNavigationFocus\(\)/);
   assert.match(source, /onClick=\{\(\) => \{\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\)/);
@@ -341,12 +341,12 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
     clearTimeout(id) { pending.delete(id); }
   };
   const createHarness = new Function(
-    "window", "useLayoutEffect", "isOpen", "isLoading", "showTemplateBuilder", "showRevisitPopup", "workOrder",
+    "window", "useLayoutEffect", "isOpen", "isLoading", "showTemplateBuilder", "showRevisitPopup", "showOtherPopup", "workOrder",
     "pendingNavigationFocusTimerRef", "navigationFocusVersionRef",
     scheduler + "\nreturn { scheduleNavigationFocus, cancelPendingNavigationFocus };"
   );
   const harness = createHarness(fakeWindow, callback => { cleanup = callback(); },
-    true, false, false, false, { id: "test-order" }, { current: null }, { current: 0 });
+    true, false, false, false, null, { id: "test-order" }, { current: null }, { current: 0 });
   const focused = [];
   harness.scheduleNavigationFocus(() => focused.push("old"));
   const staleCallback = [...pending.values()][0];
@@ -391,7 +391,7 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   const collapseRecovery = source.slice(source.indexOf("// A collapsed product, hierarchy, or Completed section"),
     source.indexOf("// Search typing and inline editor state"));
   for (const effect of [searchRecovery, collapseRecovery]) {
-    assert.match(effect, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
+    assert.match(effect, /if \(!isOpen \|\| isLoading \|\| showTemplateBuilder \|\| showRevisitPopup \|\| showOtherPopup \|\|\s*incompleteWarning \|\| validationDialog \|\| noChecklistWarning\) return;/);
     assert.match(effect, /showRevisitPopup/);
   }
 });
@@ -591,6 +591,7 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
     "otherPopupDismissedRef", "otherPopupValidationReturnRef", "showOtherPopup",
     "validationDialog", "setCustomDropdownValue", "setShowOtherPopup", "isOpen",
     "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
+    "cancelPendingNavigationFocus",
     handlers + "\nreturn { openOtherPopup, updateCustomStatusDraft, dismissOtherPopup, handleOtherPopupCloseAutoFocus };");
   const drafts = { current: new Map() }, focusItem = { current: null };
   const dismissed = { current: false }, validationReturn = { current: null };
@@ -603,7 +604,7 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
     validationReturn, activePopup, warning, value => { shownDraft = value; },
     value => { activePopup = value; }, true,
     ([itemId]) => itemId === "A" ? { querySelector: () => status } : null,
-    search, { current: null });
+    search, { current: null }, () => {});
   const closingEvent = { preventDefault() { prevented++; } };
 
   create().openOtherPopup("A");
