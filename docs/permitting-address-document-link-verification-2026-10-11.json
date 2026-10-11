@@ -5,8 +5,11 @@
   "regression_passed": 586,
   "targeted_lint": "passed",
   "backend_bundle": "passed",
-  "browser": "pending",
-  "final_production_build": "pending",
+  "browser": {
+    "chromium_passed": 20,
+    "services": "simulated"
+  },
+  "final_production_build": "passed",
   "production_test_writes": 0,
   "published": false,
   "semantics": "Pinned retained snapshot copy with administrator receipt; not legal authority approval",
@@ -15,5 +18,6 @@
     "External document scopes",
     "Live signed-in address/map/archive/link acceptance",
     "Project-specific parcel/authority validation"
-  ]
+  ],
+  "live_signed_in_acceptance": "pending"
 }

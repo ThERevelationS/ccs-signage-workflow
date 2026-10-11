@@ -6,6 +6,8 @@ Confirmation appends a pinned manual document with an immutable original/provena
 
 This is review of a retained document snapshot, not approval of legal applicability. The destination write is conditional; source collection/scan/catalog reads are not a multi-entity transaction. Later source changes do not rewrite the pinned snapshot. Concurrent creation of another jurisdiction identity elsewhere is not atomically fenced by this operation. Rules and office authority retain their own review gates. Originals from unresolved collections must resolve location before this link path is available.
 
+Verification passed: 586 permitting regression tests, 20 isolated Chromium checks (including administrator preview, cancel, confirm and action progress at 320px/1280px), targeted lint, backend endpoint bundle and final production build. No production records/files used in tests. Live signed-in acceptance remains pending. Verification record: docs/permitting-address-document-link-verification-2026-10-11.json.
+
 Remaining: external document scopes, live signed-in map/address/archive/link acceptance, and project-specific authority/parcel validation. Nothing published; tests use synthetic services/records only.
 
 ## 2026-10-11 — Phase 10, milestone 2 of 3: administrator employee-research inspection
