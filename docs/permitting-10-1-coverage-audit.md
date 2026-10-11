@@ -1,3 +1,13 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: original files from automatic address scans
+
+Connected server-generated address findings to the existing validated durable archive worker using a separate PermittingAddressArchive collection scoped to the searching employee and scan run. The first automatic pass attempts one same-host HTTPS original. All eligible source descriptors remain saved; staff can save each remaining original without an overall manual collection cap. External referrals remain separately visible and unscanned.
+
+The selector offers Open saved original only after matching original/stored SHA-256 and byte counts, Save original for pending files and Verify saved file after an incomplete readback. Upload uncertainty blocks repeat upload. Each action uses its own activity/progress; completed original links are retained in saved scan activity. Owner/scope checks guard every collection read and conditional write; source redirects stay on the selected host. Collections never write a WorkOrder, JurisdictionProfile, approved office role or shared authority catalog.
+
+Fifteen selector Chromium checks and targeted frontend lint passed. The full prior regression/bundle/build pass included 313 tests; two additional owner-change/host-scope tests passed afterward. Final rerun records follow in verification logs. No production file uploads, record creation or authority writes were used for tests; uploads/API responses were simulated. Nothing published.
+
+Remaining: connect pending address collections to automatic dispatcher continuation, add a dedicated collection browser/review-and-link flow, establish external document scopes, and verify signed-in live Google/complete address/file flow. This is not complete statewide coverage, parcel verification or legal office applicability.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: usable automatic scan findings
 
 Automatic address scan findings now show categorized forms/rules/reference links, external application/source destinations with referring-page provenance, actual checked-page failures, pending page URLs and individual scan gaps. Unsafe URL schemes are displayed without clickable links. The simple surface remains collapsed per jurisdiction. File links are explicitly not downloaded/saved; outside destinations remain unscanned/unapproved. Existing authority/apply guards are unchanged.
