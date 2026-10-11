@@ -504,7 +504,7 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   const validationHandler = new Function("event", "isOpen", "validationFocusItemIdRef",
     "findRenderedChecklistItemElement", "checklistSearchInputRef",
     "checklistCloseButtonRef", "showOtherPopup", "otherPopupValidationReturnRef",
-    "customStatusInputRef", validationBody);
+    "customStatusInputRef", "otherPopupValidationPendingRef", validationBody);
   const findRow = ([id]) => {
     assert.equal(id, "item-1");
     return { querySelector: (selector) => {
@@ -513,13 +513,13 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
     } };
   };
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, null, { current: null }, { current: null });
+    { current: null }, null, { current: null }, { current: null }, { current: false });
   assert.equal(statusFocus, 1);
   assert.equal(validationItemRef.current, null);
   validationItemRef.current = "item-1";
   statusControl.disabled = true;
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, null, { current: null }, { current: null });
+    { current: null }, null, { current: null }, { current: null }, { current: false });
   assert.equal(statusFocus, 1);
   assert.equal(searchFocus, 1);
 
@@ -534,13 +534,13 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   statusControl.disabled = false;
   validationItemRef.current = "item-1";
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false });
   assert.equal(optionFocus, 1);
   assert.equal(statusFocus, 1);
   assert.equal(optionReturnRef.current, null);
   validationItemRef.current = "item-1";
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false });
   assert.equal(inputFocus, 1);
   assert.equal(statusFocus, 1);
   // Unmounted preset option falls back to the still-visible custom input.
@@ -548,7 +548,7 @@ check("warning dialogs restore keyboard focus to editing after dismissal", () =>
   optionReturnRef.current = selectedOption;
   validationItemRef.current = "item-1";
   validationHandler(event, true, validationItemRef, findRow, searchInputRef,
-    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput });
+    { current: null }, { itemId: "item-1" }, optionReturnRef, { current: customInput }, { current: false });
   assert.equal(optionFocus, 1);
   assert.equal(inputFocus, 2);
   assert.equal(statusFocus, 1);
@@ -569,7 +569,7 @@ check("rejected custom-status entries retain draft and popup selection", () => {
 
   const popup = source.slice(source.indexOf("{/* Other Dropdown Popup */}"));
   assert.match(popup, /ref=\{customStatusInputRef\}/);
-  assert.match(popup, /onClick=\{\(event\) => \{\s*if \(!showOtherPopup\?\.itemId\) return;\s*otherPopupValidationReturnRef\.current = event\.currentTarget;/);
+  assert.match(popup, /onClick=\{\(event\) => \{\s*if \(!showOtherPopup\?\.itemId \|\| otherPopupValidationPendingRef\.current \|\| validationDialog\) return;\s*otherPopupValidationReturnRef\.current = event\.currentTarget;/);
   assert.ok(popup.includes("if (applyChecklistStatus(showOtherPopup.itemId, dd.name, { fromOtherPopup: true })) {"));
   assert.match(popup, /otherPopupDismissedRef\.current = true;[\s\S]*customStatusDraftsByItemIdRef\.current\.delete\(showOtherPopup\.itemId\);/);
   assert.match(popup, /value=\{customDropdownValue\}/);
@@ -591,7 +591,7 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
     "otherPopupDismissedRef", "otherPopupValidationReturnRef", "showOtherPopup",
     "validationDialog", "setCustomDropdownValue", "setShowOtherPopup", "isOpen",
     "findRenderedChecklistItemElement", "checklistSearchInputRef", "checklistCloseButtonRef",
-    "cancelPendingNavigationFocus",
+    "cancelPendingNavigationFocus", "otherPopupValidationPendingRef",
     handlers + "\nreturn { openOtherPopup, updateCustomStatusDraft, dismissOtherPopup, handleOtherPopupCloseAutoFocus };");
   const drafts = { current: new Map() }, focusItem = { current: null };
   const dismissed = { current: false }, validationReturn = { current: null };
@@ -604,7 +604,7 @@ check("custom-status Cancel, Escape and close preserve per-row drafts and restor
     validationReturn, activePopup, warning, value => { shownDraft = value; },
     value => { activePopup = value; }, true,
     ([itemId]) => itemId === "A" ? { querySelector: () => status } : null,
-    search, { current: null }, () => {});
+    search, { current: null }, () => {}, { current: false });
   const closingEvent = { preventDefault() { prevented++; } };
 
   create().openOtherPopup("A");
@@ -646,7 +646,7 @@ check("Other status transitions defer focus until popup close, including Complet
   const makeStatus = new Function("checklistItemById", "dropdownConditionByName",
     "areChildrenComplete", "validationFocusItemIdRef", "setValidationDialog",
     "setFocusedSearchId", "setFocusedNeedsInputId", "setChecklistSearchIndex",
-    "scheduleNavigationFocus", "checklistSearchInputRef", "updateChecklistItem",
+    "scheduleNavigationFocus", "checklistSearchInputRef", "updateChecklistItem", "otherPopupValidationPendingRef",
     statusBody + "\nreturn applyChecklistStatus;");
   const item = { id: "A", approved_by: "Reviewer", custom_dropdown_value: "Continued" };
   const conditions = new Map([
@@ -659,7 +659,7 @@ check("Other status transitions defer focus until popup close, including Complet
     { current: null }, () => events.push("warning"),
     () => events.push("clear search"), () => events.push("clear needs"),
     () => events.push("reset index"), () => events.push("timer"),
-    { current: { focus() {} } }, (id, updates) => { assert.equal(id, "A"); setValue(updates); });
+    { current: { focus() {} } }, (id, updates) => { assert.equal(id, "A"); setValue(updates); }, { current: false });
 
   assert.equal(apply("A", "Completed", { fromOtherPopup: true }), true);
   assert.ok(events.includes("clear search"));
@@ -682,13 +682,14 @@ check("successful Other application clears draft and requests post-close focus",
   const makeCustom = new Function("customDropdownValue", "otherPopupValidationReturnRef",
     "customStatusInputRef", "applyChecklistStatus", "otherPopupDismissedRef",
     "customStatusDraftsByItemIdRef", "setCustomDropdownValue", "setShowOtherPopup",
+    "otherPopupValidationPendingRef", "validationDialog",
     customBody + "\nreturn handleCreateCustomValue;");
   const draftMap = { current: new Map([["A", "draft"]]) };
   const dismissFlag = { current: false };
   let cleared = 0, closed = 0;
   const args = [ "  Completed  ", { current: null }, { current: {} },
     () => false, dismissFlag, draftMap,
-    () => { cleared++; }, () => { closed++; } ];
+    () => { cleared++; }, () => { closed++; }, { current: false }, null ];
   makeCustom(...args)("A");
   assert.equal(draftMap.current.get("A"), "draft");
   assert.equal(cleared, 0);
@@ -724,7 +725,7 @@ check("Other popup closure skips collapsed rows and uses visible fallback contro
     "showOtherPopup", "validationDialog", "setCustomDropdownValue",
     "setShowOtherPopup", "isOpen", "findRenderedChecklistItemElement",
     "checklistSearchInputRef", "checklistCloseButtonRef",
-    "cancelPendingNavigationFocus",
+    "cancelPendingNavigationFocus", "otherPopupValidationPendingRef",
     handlers + "\nreturn { openOtherPopup, dismissOtherPopup, handleOtherPopupCloseAutoFocus };"
   );
   const focusId = { current: null };
@@ -741,7 +742,7 @@ check("Other popup closure skips collapsed rows and uses visible fallback contro
     { current: new Map() }, focusId, dismissed, { current: null }, null,
     null, () => {}, () => {}, isOpen,
     () => rowVisible ? { querySelector: () => status } : null,
-    { current: search }, { current: close }, () => { cancelTimer++; }
+    { current: search }, { current: close }, () => { cancelTimer++; }, { current: false }
   );
   const event = { preventDefault() { prevented++; } };
 
