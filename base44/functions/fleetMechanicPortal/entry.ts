@@ -179,6 +179,45 @@ async function recordMechanicUploadedPhoto(Receipt:any, receipt:any, priorUrls:s
   return latest;
 }
 
+async function requireCurrentMechanicSaveEvidence(
+  Receipt:any, receipt:any, uploadedUrls:string[], grantId:string, workOrderId:string, expectedVersion:string,
+) {
+  // Verify durable evidence once more after upload and before committing Fleet
+  // work. Reading from the receipt avoids replaying cancelled or superseded work.
+  const latest = await Receipt.get(receipt.id).catch(()=>null);
+  const summary = latest?.result_summary || {};
+  const original = receipt?.result_summary || {};
+  if (!latest || latest.status !== 'started' ||
+      latest.operation_key !== receipt.operation_key ||
+      latest.payload_fingerprint !== receipt.payload_fingerprint ||
+      latest.operation_type !== 'mechanic_progress_save' ||
+      latest.target_entity !== 'FleetMaintenanceWorkOrder' ||
+      String(latest.target_id || '') !== workOrderId ||
+      String(summary.grant_id || '') !== grantId ||
+      String(summary.request_id || '') !== String(original.request_id || '') ||
+      String(summary.expected_updated_date || '') !== expectedVersion ||
+      summary.photo_count !== original.photo_count ||
+      summary.retry_reservation_required !== original.retry_reservation_required ||
+      String(summary.reused_upload_receipt_id || '') !== String(original.reused_upload_receipt_id || '') ||
+      !Array.isArray(summary.uploaded_photo_urls) ||
+      summary.uploaded_photo_urls.length !== uploadedUrls.length ||
+      !uploadedUrls.every((url,index)=>url === summary.uploaded_photo_urls[index])) {
+    throw Object.assign(new Error('Fleet mechanic Save receipt or photo evidence changed before the work-order update. Nothing was replayed; CCS review is required.'),{status:409});
+  }
+  if (summary.retry_reservation_required === true) {
+    const source = await Receipt.get(String(summary.reused_upload_receipt_id || '')).catch(()=>null);
+    if (!source || source.status !== 'started' ||
+        String(source.result_summary?.retry_reserved_by_request_id || '') !== String(summary.request_id || '') ||
+        String(source.payload_fingerprint || '') !== String(latest.payload_fingerprint || '') ||
+        String(source.result_summary?.grant_id || '') !== grantId ||
+        !Array.isArray(source.result_summary?.uploaded_photo_urls) ||
+        !source.result_summary.uploaded_photo_urls.every((url:any,index:number)=>url === uploadedUrls[index])) {
+      throw Object.assign(new Error('Fleet mechanic reused-photo reservation changed before the work-order update. Nothing was replayed; CCS review is required.'),{status:409});
+    }
+  }
+  return latest;
+}
+
 async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
   const sourceId = String(receipt?.result_summary?.reused_upload_receipt_id || '').trim();
   if (!sourceId) return;
