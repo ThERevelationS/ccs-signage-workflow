@@ -17,7 +17,7 @@ One non-partial Google ROOFTOP result must match the typed house number, street,
 
 Conflicting/overlapping polygons, incomplete query results, unsupported states, invalid geometry, unavailable services and locations within 25 meters of a returned relevant boundary fail closed. Saved matching requires exact normalized name/state/kind and a matching government ID when available, or county context for municipalities/townships. A canonical link does not resolve duplicate locality identities. Research prompts include the county and geographic ID; a same-named profile from another county cannot supply its website.
 
-Government source URLs and the check timestamp are retained in the response; activity records retain the actual queries and findings. Website discovery is a bounded first pass of up to three static same-host pages per target. Remaining pages, external referrals and scan gaps are disclosed. Candidate sites and harvested resources remain reference material.
+Government source URLs and the check timestamp are retained in the response; activity records retain the actual queries and findings. Website discovery is a bounded first pass of up to three static same-host pages per target. Remaining page URLs, external referral destinations/source pages and individual scan gaps are disclosed in the selector. File links are clearly labeled as not downloaded or saved; external destinations remain unscanned and unapproved. Candidate sites and harvested resources remain reference material.
 
 ## Map behavior
 
