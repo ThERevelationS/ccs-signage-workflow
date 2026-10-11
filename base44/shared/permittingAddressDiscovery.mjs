@@ -1,3 +1,4 @@
+import {normalizeAddressState} from './permittingAddressState.js';
 import {scanOfficialPermittingPages} from './permittingDiscoveryScan.mjs';
 // Address research is read-only. Location targets come from government geometry;
 // searched sites and discovered resources never establish office authority.
@@ -5,10 +6,12 @@ export async function discoverUnmatchedAddress({address,resolution,profiles=[],r
  const targets=resolution.targets?.length?resolution.targets:[{name:address,state:resolution.state,type:'unconfirmed address'}];
  const scans=[];
  for(const target of targets){
-  const prompt=`Find the official government website and permitting department for ${target.name}, ${target.state || ''}, ${target.type}. Address context: ${address}. Return website_url and permitting_url only when sourced; otherwise empty. Do not decide the jurisdiction from the postal city. This is reference research, not a verified authority assignment.`;
+  const prompt=`Find the official government website and permitting department for ${target.name}, ${target.state || ''}, ${target.type}. County: ${target.county || 'unconfirmed'}. Government geographic ID: ${target.geoid || 'unconfirmed'}. Address context: ${address}. Return website_url and permitting_url only when sourced; otherwise empty. Do not decide the jurisdiction from the postal city. This is reference research, not a verified authority assignment.`;
   await onProgress({kind:'automatic_search',detail:prompt+' Internal search queries and visited pages are not exposed by the research service.',progress:{stage:`Finding official sources for ${target.name}`,indeterminate:true}});
   try{
-   let candidate=profiles.find(p=>p.name?.toLowerCase()===target.name?.toLowerCase()&&p.state?.toUpperCase()===target.state?.toUpperCase());
+   const countyName=value=>String(value || '').trim().toLowerCase().replace(/\s+county$/,'');
+   const candidates=profiles.filter(p=>p.name?.trim().toLowerCase()===target.name?.trim().toLowerCase()&&normalizeAddressState(p.state)===normalizeAddressState(target.state)&&(target.type==='county'||Boolean(target.county)&&countyName(p.parent_county?.name)===countyName(target.county)));
+   let candidate=candidates.length===1?candidates[0]:null;
    if(!candidate?.website_url&&!candidate?.permitting_url)candidate=await research(prompt);
    const seed=candidate?.permitting_url || candidate?.website_url;
    if(!seed){scans.push({target,status:'needs_review',error:'No official website could be located.'});await onProgress({kind:'automatic_no_source',detail:`No official website found for ${target.name}.`});continue;}

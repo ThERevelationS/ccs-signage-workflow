@@ -36,15 +36,15 @@ Deno.serve(async req=>{
   const localities=await loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,sort:'created_date',label:'Location matching catalog'});
   const profiles=await loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,sort:'created_date',label:'Location county identities'});
   const matched=exactConfiguredLocality(localities,resolution,profiles);
-  await reporter.emit({kind:'catalog_check',detail:`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}.`:'No unique confirmed match. Starting automatic website research.'}`});
+  await reporter.emit({kind:'catalog_check',detail:`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; starting research.'}`:'No unique confirmed match. Starting automatic website research.'}`});
   // Never ask an LLM to choose a locality ID; never write research into approved
   // profiles or a Work Order. Research starts even when location needs review.
-  const automatic=matched?null:await discoverUnmatchedAddress({address,resolution,profiles,onProgress:progress,
+  const authority=summarizeMatchedLocalityAuthority(matched);
+  const applyAllowed=Boolean(matched&&authority.verified_roles.includes('sign_permit')&&authority.verified_roles.includes('zoning'));
+  const automatic=applyAllowed?null:await discoverUnmatchedAddress({address,resolution,profiles,onProgress:progress,
    research:async(prompt:string)=>base44.asServiceRole.integrations.Core.InvokeLLM({prompt,add_context_from_internet:true,model:'gemini_3_flash',response_json_schema:{type:'object',properties:{website_url:{type:'string'},permitting_url:{type:'string'}}}}),
    fetchPage:async(url:string)=>{const response=await safeExternalFetch(url,{method:'GET',signal:AbortSignal.timeout(15000),headers:{'User-Agent':'CCS-Permitting-Address/1.0'}},3);return readPermittingResourceResponse(response);}
   });
-  const authority=summarizeMatchedLocalityAuthority(matched);
-  const applyAllowed=Boolean(matched&&authority.verified_roles.includes('sign_permit')&&authority.verified_roles.includes('zoning'));
   const reason=matched?resolution.reason:resolution.status==='location_verified'?`Location is ${resolution.target.name}, but its saved office setup is missing or ambiguous. Automatic research is ready for administrator review.`:resolution.reason;
   await reporter.emit({kind:'address_findings',detail:reason},{stage:applyAllowed?'Ready to use':'Administrator review needed',processed:1,total:1,indeterminate:false});
   return Response.json({success:true,scan_run:await reporter.finish(),geocode,location_resolution:resolution,automatic_scan:automatic,suggested_locality:matched?{id:matched.id,name:matched.name,state:matched.state,zip:matched.zip,jurisdiction_profile_id:matched.jurisdiction_profile_id}:null,authority_review:authority,apply_allowed:applyAllowed,not_matched:!matched,ai_locality_name:resolution.target?.name || '',ai_state:resolution.state || '',ai_county:resolution.target?.county || '',match_confidence:matched?'high':'unresolved',match_method:matched?'government_boundary_intersection':'none',match_reason:reason,notes:!applyAllowed?'An administrator must confirm the location and sign/zoning office setup before this address is used.':''});
