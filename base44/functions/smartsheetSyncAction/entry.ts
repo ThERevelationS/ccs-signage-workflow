@@ -28,6 +28,7 @@ import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorCo
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
+import { readSalesPullCreateAttemptRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegrity.mjs';
@@ -595,9 +596,30 @@ async function pullDataset(
   let updatedCount = 0;
   const errors: string[] = [];
 
+  // An unlinked/reserved Sales POST may be absent from the normal
+  // smartsheet_sheet_id WorkOrder lookup. Read creation evidence independently
+  // just before ANY Sales import creation; never guess row ownership from
+  // matching names or cell values. Still allow linked WorkOrders to pull.
+  let salesCreateAttemptReview: any = { count: 0, workorder_ids: [], attempt_states: {}, known_permanent_row_ids: [] };
+  let salesImportCreatesHeld = 0;
+  if (dataset === 'sales') {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    salesCreateAttemptReview = await readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId);
+  }
   // Bulk create in batches of 100 to avoid rate limits
   for (let i = 0; i < toCreate.length; i += 100) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    if (dataset === 'sales') {
+      // Recheck between batches too: a new POST reservation may have appeared
+      // while the previous batch was being written.
+      if (i > 0) salesCreateAttemptReview = await readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId);
+      if (salesCreateAttemptReview.count > 0) {
+        salesImportCreatesHeld = toCreate.length - i;
+        errors.push(salesCreateAttemptReview.count + ' unresolved Sales Smartsheet create attempt(s) on this sheet. ' +
+          salesImportCreatesHeld + ' new Base44 WorkOrder import(s) held for manual permanent-row reconciliation; existing linked records remain eligible for pull.');
+        break;
+      }
+    }
     const batch = toCreate.slice(i, i + 100);
     try {
       const result = await base44.asServiceRole.entities[entityName].bulkCreate(batch);
@@ -1095,6 +1117,12 @@ async function pullDataset(
     unchanged_skipped: unchangedSkipped,
     ...(dataset === 'sales' ? {
       missing_customer_rows_skipped: salesMissingCustomerRowsSkipped,
+      create_attempts_need_review: salesCreateAttemptReview.count,
+      create_attempt_workorder_ids: salesCreateAttemptReview.workorder_ids,
+      create_attempt_states: salesCreateAttemptReview.attempt_states,
+      create_attempt_known_row_ids: salesCreateAttemptReview.known_permanent_row_ids,
+      new_workorder_imports_held_for_create_review: salesImportCreatesHeld,
+      automatic_create_relink_attempted: false,
       assignee_translation_review_required: salesAssigneeTranslationIssues.length,
       assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
       local_pending_preserved: salesLocalPendingPreserved.length,
