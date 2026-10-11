@@ -526,7 +526,7 @@ export default function LocalityPickerDialog({
           </div>
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
-          <div className="rounded-lg border relative w-full min-w-0 lg:flex-1 lg:self-start lg:max-h-full lg:overflow-y-auto bg-gray-100">
+          <div className="rounded-lg border relative w-full min-w-0 lg:flex-1 lg:self-stretch lg:min-h-0 lg:overflow-y-auto bg-gray-100">
             <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} />
           </div>
         </div>
