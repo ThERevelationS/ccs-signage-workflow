@@ -16,7 +16,9 @@ export function strictGeocode(results,address=''){
  const part=type=>parts.find(c=>c.types?.includes(type))?.long_name || '';
  const street=value=>String(value).toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean).map(w=>({street:'st',road:'rd',drive:'dr',avenue:'ave',boulevard:'blvd',lane:'ln',court:'ct',parkway:'pkwy',highway:'hwy',north:'n',south:'s',east:'e',west:'w'}[w] || w)).join(' ');
  const requested=street(address.split(',')[0].replace(/\s+(apt|suite|unit|#)\s*.*$/i,'')),found=street(part('street_number')+' '+part('route'));
- return Boolean(address)&&requested===found&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
+ const city=street(part('locality') || part('postal_town'));
+ const streetMatches=requested===found || (!address.includes(',')&&city&&requested.startsWith(found+' '+city+' '));
+ return Boolean(address)&&streetMatches&&g.partial_match!==true&&g.geometry?.location_type==='ROOFTOP'&&g.types?.some(t=>['street_address','premise','subpremise'].includes(t))&&['street_number','route','administrative_area_level_1'].every(type=>parts.some(c=>c.types?.includes(type)));
 }
 export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async()=>{}}){
  const state=normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase(),point={lat:geocode?.lat,lng:geocode?.lon};
@@ -43,13 +45,13 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   const relevant=[...counties,...places,...statePlaces,...(cities.length===0?[...townships,...stateTownships]:[])];
   if(!geocode.location_exact)return {...base,status:'needs_review',reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
   if(relevant.some(f=>f.distance_m<=25))return {...base,status:'needs_review',reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
-  return {...base,status:'location_verified',reason:`Building location is inside the ${target.name} boundary in both government datasets. Office responsibility is checked separately.`,target:base.targets[0]};
+  return {...base,status:'location_verified',reason:`Building location is inside the checked ${target.name} government boundary. Office responsibility is checked separately.`,target:base.targets[0]};
  }catch(error){await onProgress({kind:'boundary_failed',detail:String(error.message || error)});return {...base,reason:'Government location data could not confirm this address. No jurisdiction was selected.',error:String(error.message || error)};}
 }
 export function exactConfiguredLocality(localities,resolution,profiles=[]){
  if(resolution?.status!=='location_verified'||!resolution.target)return null;const target=resolution.target;
  const matches=localities.filter(row=>{if(normalizeAddressState(row.state).toUpperCase()!==target.state||norm(row.name)!==norm(target.name))return false;
-  const township=/township/i.test(row.name);if(target.type==='township'&&!township||target.type!=='township'&&township)return false;
+  const township=/township/i.test(row.name),county=/county$/i.test(String(row.name).trim());if(target.type==='county'&&!county||target.type!=='county'&&county)return false;if(target.type==='township'&&!township||target.type!=='township'&&township)return false;
   if(row.geographic_identity?.geoid)return row.geographic_identity.geoid===target.geoid;
   if(target.type==='township'){const profile=profiles.find(p=>p.id===row.jurisdiction_profile_id),county=row.county || row.parent_county?.name || profile?.parent_county?.name;return norm(county)===norm(target.county);}
   return true;});return matches.length===1?matches[0]:null;
