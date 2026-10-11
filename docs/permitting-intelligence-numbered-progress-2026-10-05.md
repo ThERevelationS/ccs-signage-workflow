@@ -1,3 +1,7 @@
+## Phase 10 — deployment login restored and v4 uploaded (2026-10-11 11:24 EDT)
+
+CLI authentication confirmed for brettheinlein1@gmail.com. Exactly one function, findLocalityByAddress, deployed; scoped pull verifies address-geocode-v4. Two authenticated preview scans, including one after reload, still execute v3 and receive REQUEST_DENIED. Deployment access is resolved; preview function-version routing and Google service configuration remain unresolved. No frontend publication, Work Order assignment, or authority approval occurred. Existing 633-test/build evidence remains applicable.
+
 ## Phase 10 — service failure correction prepared (2026-10-11)
 
 Address lookup v4 now reports provider/configuration failures as completed with errors, explains that employees do not need to re-enter a valid address, and preserves automatic research and the location verification gate. Endpoint tests: 21 passed; permitting tests: 633 passed; production build and backend bundle passed. Live scans still run v3 and return Google REQUEST_DENIED. v4 activation is blocked by expired CLI authentication and browser credential protection. Exact location, address pin, and remaining live acceptance are not yet verified; phase 10 remains open.

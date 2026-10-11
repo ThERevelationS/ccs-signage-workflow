@@ -178,8 +178,20 @@
     },
     "live_backend_revision": "address-geocode-v3",
     "live_provider_status": "REQUEST_DENIED",
-    "v4_deployed": false,
-    "deployment_blocker": "CLI whoami requires fresh authentication; Google device approval browser observation blocked by credential protection.",
-    "phase_10_complete": false
+    "v4_deployed": true,
+    "deployment_blocker": null,
+    "phase_10_complete": false,
+    "deployment_verified": "CLI deployed exactly one function; scoped pull returned address-geocode-v4 unchanged.",
+    "cli_authenticated_account": "brettheinlein1@gmail.com",
+    "live_preview_revision_after_reload": "address-geocode-v3",
+    "live_preview_scan_times_local": [
+      "11:22:02\u201311:22:09",
+      "11:23:27\u201311:23:33"
+    ],
+    "remaining_blockers": [
+      "Preview still executes v3 despite scoped v4 deployment and reload.",
+      "Google Geocoding returns REQUEST_DENIED; exact location and address pin unverified."
+    ],
+    "version_routing_note": "Current SDK forwards appParams.functionsVersion as Base44-Functions-Version; no global client/version configuration changed."
   }
 }
