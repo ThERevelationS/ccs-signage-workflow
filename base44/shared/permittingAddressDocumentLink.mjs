@@ -17,15 +17,17 @@ function destination(rows,target){
   (p.geographic_identity?.geoid?p.geographic_identity.geoid===target.geoid:target.type==='county'||Boolean(norm(target.county))&&norm(p.parent_county?.name)===norm(target.county)));
  if(matches.length!==1)fail('No unique jurisdiction match. Resolve missing or duplicate identities first.');return matches[0];
 }
-export async function linkAddressDocument({collections,profiles,loadProfiles,actor,body,onProgress=async()=>{},now=()=>new Date().toISOString()}){
+export async function linkAddressDocument({collections,profiles,scans,loadProfiles,actor,body,onProgress=async()=>{},now=()=>new Date().toISOString()}){
  if(actor?.role!=='admin')throw Object.assign(Error('Administrator review is required.'),{status:403});
  for(const key of ['collection_id','document_id'])if(typeof body[key]!=='string'||!body[key]||body[key].length>100)throw Object.assign(Error('Select a saved original.'),{status:400});
  await onProgress('Checking saved original and jurisdiction identity',0);
  const snapshot=sourceSnapshot(await collections.get(body.collection_id),body.document_id),profile=destination(await loadProfiles(),snapshot.target);
+ const origin=await scans.get(snapshot.scan_run_id);
+ if(origin?.action_kind!=='address'||!['complete','completed_with_errors'].includes(origin.status)||origin.owner_id!==snapshot.owner_id||origin.owner_email!==snapshot.owner_email)fail('Originating address scan provenance changed or is incomplete.');
  const evidence=await digest({snapshot,destination:identity(profile)}),id='address-link-'+evidence;
  const old=profile.documents || [];if(!Array.isArray(old)||!profile.updated_date)fail('Jurisdiction document state is unavailable.');
  const existing=old.filter(d=>d.id===id);
- if(existing.length===1&&equal(existing[0].address_research_review?.snapshot,snapshot))return {success:true,status:'already_linked',jurisdiction_id:profile.id,document_id:id};
+ if(existing.length===1&&equal(existing[0].address_research_review?.snapshot,snapshot)&&existing[0].address_research_review?.evidence_digest===evidence&&existing[0].address_research_review?.authority_established===false&&existing[0].archive_pinned===true&&['url','file_url','source_sha256','stored_sha256','source_bytes','stored_bytes'].every(k=>existing[0][k]===snapshot.document[k]))return {success:true,status:'already_linked',jurisdiction_id:profile.id,document_id:id};
  if(existing.length||old.some(d=>d.url===snapshot.document.url||d.file_url===snapshot.document.file_url))fail('This source already has a repository entry. Review it instead of creating a duplicate.');
  const preview={success:true,dry_run:true,jurisdiction_id:profile.id,jurisdiction_name:profile.name,state:profile.state,document_title:snapshot.document.title,source_url:snapshot.document.url,file_url:snapshot.document.file_url,expected_evidence_digest:evidence,expected_updated_date:profile.updated_date};
  if(body.dry_run===true)return preview;
