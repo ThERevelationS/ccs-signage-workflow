@@ -67,12 +67,13 @@ try{
   assert.equal(await page.evaluate(()=>window.fixture.applies.length),0);
  },'reader');
  for(const width of [320,1280])await check('file status shows waiting, verification, review and retry details honestly',width,async page=>{
-  await page.evaluate(()=>{window.fixture.savedPage={collections:[{id:'status',auto_refresh:false,target:{name:'County'},documents:[{id:'waiting',title:'Waiting form',url:'https://county.gov/wait.pdf',archive_state:{status:'failed',retry_after:'2099-01-01T00:00:00Z'}},{id:'verify',title:'Uploaded form',url:'https://county.gov/verify.pdf',archive_state:{status:'uploaded',file_url:'https://stored.gov/verify.pdf'}},{id:'uncertain',title:'Uncertain form',url:'https://county.gov/uncertain.pdf',archive_state:{status:'upload_uncertain'}},{id:'bad',title:'Incomplete receipt',url:'https://county.gov/bad.pdf',archive_state:{status:'complete'}}]}],actions:[],next_cursor:null};});
-  await page.getByText('My saved research',{exact:true}).click();await page.getByRole('button',{name:'Show my research',exact:true}).click();await page.getByText('Original files (4)',{exact:true}).click();
-  await page.getByText('0 saved · 1 waiting · 0 working · 1 need verification · 2 need review',{exact:true}).waitFor();
+  await page.evaluate(()=>{window.fixture.savedPage={collections:[{id:'status',auto_refresh:false,target:{name:'County'},documents:[{id:'waiting',title:'Waiting form',url:'https://county.gov/wait.pdf',archive_state:{status:'failed',retry_after:'2099-01-01T00:00:00Z'}},{id:'verify',title:'Uploaded form',url:'https://county.gov/verify.pdf',archive_state:{status:'uploaded',file_url:'https://stored.gov/verify.pdf'}},{id:'uncertain',title:'Uncertain form',url:'https://county.gov/uncertain.pdf',archive_state:{status:'upload_uncertain'}},{id:'bad',title:'Incomplete receipt',url:'https://county.gov/bad.pdf',archive_state:{status:'complete'}},{id:'working',title:'Active upload',url:'https://county.gov/working.pdf',archive_state:{status:'uploading',lease_expires_at:'2099-01-01T00:00:00Z'}}]}],actions:[],next_cursor:null};});
+  await page.getByText('My saved research',{exact:true}).click();await page.getByRole('button',{name:'Show my research',exact:true}).click();await page.getByText('Original files (5)',{exact:true}).click();
+  await page.getByText('0 saved · 1 waiting · 1 working · 1 need verification · 2 need review',{exact:true}).waitFor();
   assert.equal(await page.getByRole('progressbar',{name:'Verified saved originals',exact:true}).getAttribute('value'),'0');
   await page.getByText(/Automatic downloads are paused for this collection/).waitFor();
   await page.getByText('File uploaded; verification still needed.',{exact:true}).waitFor();
+  await page.getByText('Saving file to storage.',{exact:true}).waitFor();
   await page.getByText('Upload outcome needs review; automatic re-upload blocked.',{exact:true}).waitFor();
   assert.equal(await page.locator('time').getAttribute('datetime'),'2099-01-01T00:00:00.000Z');
   assert.equal(await page.getByRole('link',{name:'Open saved original',exact:true}).count(),0);
