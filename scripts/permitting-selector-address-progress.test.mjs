@@ -77,12 +77,14 @@ test('owned external source fetching forbids host changes and HTTPS downgrade on
 test('page endpoint scopes employee selection and refuses caller-supplied URLs or limits',async()=>{
  const scans=ledger(),row={id:'c',name:'Example',owner_id:'reader',owner_email:'reader@example.com',reference_only:true,authority_established:false};
  const c={asServiceRole:{entities:{PermittingAddressArchive:{get:async()=>row},PermittingScanRun:scans}}};let calls=0;
- const extra={authenticateSignShopSession:async()=>({id:'reader',email:'reader@example.com',role:'user'}),continueOwnedAddressDiscovery:async options=>{calls++;assert.equal(options.collectionId,'c');return {success:true,collection:row,attempted_pages:1,pages:[]};}};
+ const extra={authenticateSignShopSession:async()=>({id:'reader',email:'reader@example.com',role:'user'}),continueOwnedAddressDiscovery:async options=>{calls++;assert.equal(options.collectionId,'c');assert.equal(options.retryPageUrl,calls===1?null:'https://example.gov/broken');return {success:true,collection:row,attempted_pages:1,pages:[]};}};
  const run=handler('continueAddressResearchDiscovery',c,extra);
  const result=await (await run({collection_id:'c',action_token:token})).json();assert.equal(result.success,true);assert.equal((await scans.get()).action_kind,'address_discovery');
  assert.equal((await run({collection_id:'c',url:'https://outside.gov'})).status,400);
  assert.equal((await run({collection_id:'c',max_pages:999})).status,400);
- row.owner_id='other';assert.equal((await run({collection_id:'c'})).status,403);assert.equal(calls,1);
+ assert.equal((await run({collection_id:'c',retry_page_url:123})).status,400);
+ assert.equal((await run({collection_id:'c',retry_page_url:'https://example.gov/broken'})).status,200);
+ row.owner_id='other';assert.equal((await run({collection_id:'c'})).status,403);assert.equal(calls,2);
 });
 test('page endpoint uses HTTPS same-host same-port redirect guards and resource reader',async()=>{
  const row={id:'c',owner_id:'reader',owner_email:'reader@example.com',reference_only:true,authority_established:false};
