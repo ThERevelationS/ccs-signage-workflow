@@ -164,6 +164,23 @@ test("changed receipt plan after initial verification cannot be committed",async
     await reject(ctx,/mutation plan or photo evidence changed during authorization/);
   }
 });
+test("photo-retry reservation identity cannot disappear after the initial service check",async()=>{
+  for(const change of [
+    ctx=>{ctx.row.result_summary.retry_reservation_required=false;},
+    ctx=>{ctx.row.result_summary.reused_upload_receipt_id="different-source";},
+    ctx=>{ctx.row.result_summary.photo_count=1;},
+  ]){
+    const ctx=context();
+    ctx.row.result_summary.retry_reservation_required=true;
+    ctx.row.result_summary.reused_upload_receipt_id=ctx.source.id;
+    const originalGet=ctx.args.Receipt.get;
+    ctx.args.Receipt.get=async id=>{
+      if(id===ctx.row.id)change(ctx);
+      return originalGet(id);
+    };
+    await reject(ctx,/receipt changed during authorization/);
+  }
+});
 test("reused-photo owner changed during grant authorization blocks receipt reconciliation",async()=>{
   const ctx=context();
   ctx.row.result_summary.retry_reservation_required=true;
