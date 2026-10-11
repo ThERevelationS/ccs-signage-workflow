@@ -192,7 +192,8 @@
       "Preview still executes v3 despite scoped v4 deployment and reload.",
       "Google Geocoding returns REQUEST_DENIED; exact location and address pin unverified."
     ],
-    "version_routing_note": "Current SDK forwards appParams.functionsVersion as Base44-Functions-Version; no global client/version configuration changed."
+    "version_routing_note": "Current SDK forwards appParams.functionsVersion as Base44-Functions-Version; no global client/version configuration changed.",
+    "published_app_runtime_v4_verified": false
   },
   "preview_revision_isolation": {
     "deployed_endpoint_probe": {
@@ -257,6 +258,31 @@
     "additional_scans_started": 0,
     "frontend_published": false,
     "screenshot": "permitting-unlocated-map-warning.jpg",
+    "phase_10_complete": false
+  },
+  "published_app_route_comparison": {
+    "url": "https://clay-flow-signage-suite-387da97c.base44.app/permitting",
+    "signed_in": "Brett, visible Logout Brett",
+    "scan_run_id": "6acbaf19beacb55b547d9ab5",
+    "scan_local": "11:45:29\u201311:45:37 EDT",
+    "revision": "address-geocode-v3",
+    "google_status": "REQUEST_DENIED",
+    "events": 14,
+    "published_domain_read_only_probe": {
+      "status": 401,
+      "revision": "address-geocode-v3",
+      "header": "address-geocode-v3"
+    },
+    "unversioned_sdk_read_only_probe": {
+      "status": 401,
+      "revision": "address-geocode-v4",
+      "header": "address-geocode-v4"
+    },
+    "conclusion": "Mismatch is not preview-only or stale browser state: published app-domain route itself executes v3, while unversioned SDK executes v4. Refresh preview alone is not sufficient.",
+    "remaining": "Base44 app-domain function activation/routing needs resolution; server Google Geocoding configuration remains denied. Do not bypass shared routing or publish entire concurrent app without authorization.",
+    "frontend_published": false,
+    "work_orders_changed": false,
+    "screenshot": "permitting-production-v3-evidence.jpg",
     "phase_10_complete": false
   }
 }

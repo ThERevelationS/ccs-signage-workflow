@@ -1,3 +1,7 @@
+## Phase 10 — production app-domain mismatch proven (2026-10-11 11:46 EDT)
+
+Published app URL retrieved through Base44 site open; signed into Sign Shop as Brett securely. One real production address scan (6acbaf19beacb55b547d9ab5) executes v3 and Google returns REQUEST_DENIED. Subsequent read-only unauthenticated probes prove published app-domain function endpoint returns v3 in response/header, whereas unversioned SDK returns v4 in response/header. This supersedes the preview-only diagnosis and recommendation that browser refresh alone would fix activation. No frontend published or Work Order assigned. Resolve Base44 app-domain function activation/routing, then Google configuration; Phase 10 is not complete.
+
 ## Phase 10 — unlocated map accuracy safeguard (2026-10-11)
 
 Added a visible notice above the map when no address position exists so the general Cincinnati view cannot be mistaken for the searched property. Jurisdiction outline is disabled/unchecked and labeled unavailable without boundary data. Open Google Maps now retains the typed address as a search fallback when geocoding fails; no position or verified jurisdiction is invented. Preview verifies warning, unavailable control, address query and disabled application gate. Build passes. No new scans or frontend publication. Geocoding denial and preview backend-version mismatch remain unresolved; Phase 10 stays open.
