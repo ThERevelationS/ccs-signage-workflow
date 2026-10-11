@@ -1,3 +1,11 @@
+## 2026-10-11 — Phase 10, milestone 2 of 3: administrator employee-research inspection
+
+The Permitting Repository admin panel now includes Employee research to review. It browses retained employee collections, ten per page with an older-page cursor, and shows collector email, state/county context, source website, original links and whether location was verified when collected. Verified stored originals remain separate from pending or uncertain uploads. The inspection view exposes no manual save or jurisdiction-apply control and writes no collection/profile/authority data.
+
+The saved-collection endpoint requires an authenticated administrator for cross-employee review. Ordinary browsing and file refresh retain exact owner ID/email scope. The server rechecks reference-only/authority-unestablished scope on every returned collection, and limits archive activity to that collection and its recorded owner. Review-mode refresh stays administrator-gated.
+
+This completes the inspection entry point, not approval or repository linking. Remaining: a guarded reviewed-document link action and review history, external source scopes, and live signed-in acceptance. Nothing published; no production records/files used in tests.
+
 ## 2026-10-11 — Phase 10, milestone 2 of 3: return to saved address research
 
 Added My saved research inside the jurisdiction selector. Employees can reopen their own retained collections after leaving an address result, open verified originals, save pending originals and check readback status with existing individual progress controls. Show older research pages through ten collections at a time using a stable ID cursor; this is a page size, not an overall manual history cap. Listing checks owner ID, email and reference-only scope, then rechecks each collection before returning documents. Session changes/unmount invalidate pending list responses. Browsing makes no research call and never applies a jurisdiction.

@@ -38,3 +38,7 @@ Pending address originals now continue through the enabled scheduler, sharing it
 ## Return to earlier files
 
 Open My saved research in the jurisdiction selector, then Show my research. Open Original files to see verified originals or individual save/verify controls. Show older research continues through your collections without another address scan. Access remains scoped to the signed-in employee. This does not approve sources or select a jurisdiction.
+
+## Administrator inspection
+
+Permitting Repository admin includes Employee research to review. It shows retained employee originals, source and collector provenance, and location-verification status. This is read-only inspection; it does not approve findings, change ownership, apply a jurisdiction or import documents into its authoritative repository.
