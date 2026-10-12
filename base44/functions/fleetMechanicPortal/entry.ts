@@ -333,7 +333,7 @@ async function reconcileReservedMechanicPhotoRetry(
     return {status:'applied',work_order:current};
   }
   if (retry.status === 'failed') {
-    await releaseReservedMechanicUpload(Receipt,String(source.id),owner);
+    await releaseReservedMechanicUpload(Receipt,String(source.id),retry);
     const released = await Receipt.get(source.id).catch(()=>null);
     return {status:released?.status === 'failed' ? 'released' : 'blocked',work_order:current};
   }
@@ -402,7 +402,7 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
       return {status:'applied',recovered:false,work_order:current};
     }
     if (retry.status === 'failed') {
-      await releaseReservedMechanicUpload(Receipt,String(source.id),String(source.result_summary.retry_reserved_by_request_id || ''));
+      await releaseReservedMechanicUpload(Receipt,String(source.id),retry);
       return {status:'blocked',recovered:false,work_order:current,
         error_message:'The photo retry failed. Its original upload evidence was released for review; no work was replayed.'};
     }
@@ -1302,7 +1302,7 @@ Deno.serve(async (req) => {
           // Release it only when the retry receipt is durably confirmed failed.
           const latest = await Receipt.get(receipt.id).catch(()=>null);
           if (latest?.status === 'failed') {
-            await releaseReservedMechanicUpload(Receipt,reusable.receipt_id,mechanicMutation.requestId);
+            await releaseReservedMechanicUpload(Receipt,reusable.receipt_id,latest);
           }
         }
       }
