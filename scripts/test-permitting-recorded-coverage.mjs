@@ -35,8 +35,14 @@ try{
  assert.doesNotMatch(JSON.stringify(tree.toJSON()),/obsolete-before-save|Read completed/);
  await act(async()=>newRead({...snapshot,checked_at:'fresh-after-save'}));
  assert.match(JSON.stringify(tree.toJSON()),/fresh-after-save/);
- await act(async()=>globalThis.coverageReviewDialog.onClose());
- await act(async()=>savedCallback('locality'));assert.equal(calls,3);
+ const deletedCallback=globalThis.coverageReviewDialog.onLocalityDeleted;
+ await act(async()=>{deletedCallback('locality');deletedCallback('locality');});assert.equal(calls,4);
+ assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
+ assert.equal(tree.root.findAll(node=>node.type?.name==='Dialog').length,0);
+ await act(async()=>savedCallback('locality'));assert.equal(calls,4);
+ await act(async()=>resolveRead({...snapshot,checked_at:'fresh-after-delete',electrical_offices:reconcileElectricalOfficeCoverage([])}));
+ assert.match(JSON.stringify(tree.toJSON()),/fresh-after-delete/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Office gap fixture/);
+
 
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:async()=>{throw Error('Fixture failure');}})));
  await act(async()=>click());assert.match(JSON.stringify(tree.toJSON()),/Fixture failure/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);
