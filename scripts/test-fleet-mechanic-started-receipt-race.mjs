@@ -473,7 +473,7 @@ test("upload evidence is not written to a receipt whose immutable operation iden
   assert.equal(response.code,409);
   assert.match(response.body.error,/photo evidence changed during upload/i);
   const latest=store.receipts.get(receipt.id);
-  assert.equal(latest.status,"failed");
+  assert.equal(latest.status,"started","A newer operation identity must not inherit the old failure decision");
   assert.equal(latest.payload_fingerprint,"different-operation-fingerprint");
   assert.equal(latest.result_summary.admin_review_note,"Operation identity conflict");
   assert.deepEqual(latest.result_summary.uploaded_photo_urls,[]);
