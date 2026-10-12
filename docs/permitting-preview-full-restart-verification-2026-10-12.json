@@ -1,0 +1,60 @@
+{
+  "checked_at": "2026-10-12T02:48:17.688580+00:00",
+  "phase": 10,
+  "milestone": 2,
+  "milestone_total": 3,
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "repository_head_before_record": "4365b26c6f43749f2ed85c4bf6eace523686b032",
+  "recovery": {
+    "mechanism": "Existing Base44 NpmSandboxDriver restart_dev operation",
+    "dev_server_port": 5173,
+    "install_deps": false,
+    "force_optimize": false,
+    "inject_hmr_gate": true,
+    "bundled_dev": false,
+    "use_cli": false,
+    "success": true,
+    "dev_server_port_freed": true,
+    "dev_server_ready": true,
+    "attempts_made": 2,
+    "hmr_gate_bypassed": false
+  },
+  "local_checks_after_restart": [
+    {
+      "route": "/permitting",
+      "http_status": 200,
+      "content_type": "text/html",
+      "bytes": 1031
+    },
+    {
+      "route": "/src/main.jsx",
+      "http_status": 200,
+      "content_type": "text/javascript",
+      "bytes": 5421
+    },
+    {
+      "route": "/__build_status",
+      "http_status": 200,
+      "content_type": "application/json",
+      "bytes": 24,
+      "body": {
+        "ok": true,
+        "error": null
+      }
+    }
+  ],
+  "public_browser_check": {
+    "url": "https://preview-sandbox--68dfcc5e57bbbc35387da97c.base44.app/permitting",
+    "action": "One reload after full server restart",
+    "title": "Preview Loading - Base44",
+    "visible_heading": "Preview is starting up",
+    "app_loaded": false,
+    "authenticated_scan_submitted": false
+  },
+  "conclusion": "A full managed dev-server restart restored local readiness but did not clear the public preview startup placeholder. Public preview provisioning/routing remains unresolved; its exact platform cause is unconfirmed. Repeating Vite restarts or changing Permitting UI is not supported by this evidence.",
+  "next_required_action": "Recover or recreate the preview through the Base44 platform/editor, then sign in and test resolvePermittingAddress v5 for 4900 Parkway Dr, Mason, OH 45040 without applying it to a Work Order.",
+  "source_code_modified": false,
+  "frontend_published": false,
+  "production_records_modified": false,
+  "phase_10_complete": false
+}
