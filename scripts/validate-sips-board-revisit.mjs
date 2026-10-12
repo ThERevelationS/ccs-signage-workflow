@@ -715,4 +715,46 @@ await check('clear confirmation renders inline accessible failure and requires r
   assert.match(dialog, /setRevisitClearFailure\(null\)/);
 });
 
+await check('an open checklist cannot be replaced by another Work Order', async () => {
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const getChecklistProgress');
+  const makeOpen = new Function('checklistDialog', 'setChecklistDialog', 'setActionError',
+    handler + '\nreturn openChecklist;');
+  let current = { open: false, workOrder: null };
+  const notices = [];
+  const update = value => { current = typeof value === 'function' ? value(current) : value; };
+  const warn = value => notices.push(value);
+  const first = { id: 'A', client_name: 'First', sip_checklist: [{ id: 'draft-row' }] };
+  const other = { id: 'B', client_name: 'Second' };
+  makeOpen(current, update, warn)(first);
+  assert.strictEqual(current.workOrder, first);
+  const stillMounted = current;
+  makeOpen(current, update, warn)(other);
+  assert.strictEqual(current, stillMounted);
+  assert.strictEqual(current.workOrder, first);
+  assert.equal(notices.length, 1);
+  assert.match(notices[0].message, /Save & Revisit/);
+  assert.match(notices[0].message, /Cancel/);
+  makeOpen(current, update, warn)(first);
+  assert.strictEqual(current, stillMounted);
+  assert.equal(notices.length, 1, 'reopening the same checklist is a no-op');
+
+  // React batches state updates: stale render closures must not replace
+  // a first request that has already been queued by a different trigger.
+  current = { open: false, workOrder: null };
+  const staleClosure = makeOpen(current, update, warn);
+  staleClosure(first);
+  staleClosure(other);
+  assert.strictEqual(current.workOrder, first);
+  assert.equal(current.open, true);
+
+  // Normal close, including its unsaved-edit confirmation, remains authoritative.
+  current = { open: false, workOrder: null };
+  makeOpen(current, update, warn)(other);
+  assert.strictEqual(current.workOrder, other);
+  makeOpen(current, update, warn)(null);
+  assert.strictEqual(current.workOrder, other);
+  assert.match(board, /onClose=\{\(\) => setChecklistDialog\(\{ open: false, workOrder: null \}\)\}/);
+  assert.match(board, /<ProductChecklistDialog[\s\S]*?workOrder=\{checklistDialog\.workOrder\}/);
+});
+
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
