@@ -36,7 +36,7 @@ export function salesSmartsheetCreateNeedsReview(record) {
 // syncs. A reserved-but-unknown remote POST is never automatically repeated.
 export async function createSalesSmartsheetRowWithGuard({
   entity, record, sheetId, postRow, makeSnapshot, verifyCreatedRow, assertOwner,
-  attemptId, startedAt,
+  readCompetingClaims, attemptId, startedAt,
 }) {
   const recordId = String(record?.id ?? '').trim();
   const target = id(sheetId);
