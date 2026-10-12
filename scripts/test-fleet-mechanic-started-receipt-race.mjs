@@ -494,6 +494,82 @@ test("admin marker recovery preserves photo evidence and cancellation provenance
   assert.equal(final.result_summary.recovered_from_work_order_marker,true);
   assert.equal(store.updates,0);
 });
+test("work-order marker reconciliation rejects receipt identity switched before applied CAS",async()=>{
+  const mutations=[
+    row=>{row.actor_user_id="different-mechanic";},
+    row=>{row.target_id="different-fleet-work";},
+    row=>{row.payload_fingerprint="different-fingerprint";},
+    row=>{row.result_summary.grant_id="different-mechanic";},
+    row=>{row.result_summary.request_id="different-request-123456";},
+    row=>{row.result_summary.expected_updated_date="different-version";},
+  ];
+  for(const mutate of mutations){
+    const original=makeReceipt(payload("request-original-123456"));
+    const {store,client,receipts}=setup({receipt:original});
+    client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+    store.work.mechanic_operation_key=original.operation_key;
+    store.work.mechanic_operation_fingerprint=original.payload_fingerprint;
+    store.pauseAppliedWrite=true;
+    const reconciling=call({action:"admin_reconcile_mechanic_mutation",receipt_id:original.id},client);
+    await until("applied receipt identity check",()=>store.pendingAppliedWrites.length===1);
+    const changed=clone(store.receipts.get(original.id));
+    mutate(changed);
+    changed.result_summary.forensic_review_note="Identity conflict preserved";
+    await receipts.update(original.id,changed);
+    store.pendingAppliedWrites.shift()();
+    const result=await reconciling;
+    assert.equal(result.code,409,"Mismatched source must not be marked applied");
+    assert.match(result.body.error,/identity or status changed/i);
+    const saved=store.receipts.get(original.id);
+    assert.equal(saved.status,"started");
+    assert.equal(saved.result_summary.forensic_review_note,"Identity conflict preserved");
+    assert.equal(saved.result_summary.work_order_updated_date,undefined);
+    assert.equal(store.updates,0);
+  }
+});
+
+test("applied receipt marker CAS preserves concurrently added audit evidence",async()=>{
+  const original=makeReceipt(payload("request-original-123456"));
+  const {store,client,receipts}=setup({receipt:original});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.work.mechanic_operation_key=original.operation_key;
+  store.work.mechanic_operation_fingerprint=original.payload_fingerprint;
+  store.pauseAppliedWrite=true;
+  const reconciling=call({action:"admin_reconcile_mechanic_mutation",receipt_id:original.id},client);
+  await until("applied receipt forensic CAS",()=>store.pendingAppliedWrites.length===1);
+  const changed=store.receipts.get(original.id);
+  await receipts.update(original.id,{result_summary:{...changed.result_summary,
+    admin_review_note:"Preserve newer evidence on committed marker"}});
+  store.pendingAppliedWrites.shift()();
+  const result=await reconciling;
+  assert.equal(result.code,200);
+  assert.equal(result.body.status,"applied");
+  const saved=store.receipts.get(original.id);
+  assert.equal(saved.status,"applied");
+  assert.equal(saved.result_summary.admin_review_note,"Preserve newer evidence on committed marker");
+  assert.equal(store.updates,0);
+});
+
+test("mechanic status and admin reconciliation reject forged applied receipt identity",async()=>{
+  for(const status of ["applied","started"]){
+    const original=makeReceipt(payload("request-original-123456"),{status});
+    original.actor_user_id="another-grant";
+    const {store,client}=setup({receipt:original});
+    client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+    store.work.mechanic_operation_key=original.operation_key;
+    store.work.mechanic_operation_fingerprint=original.payload_fingerprint;
+    const statusResult=await call({action:"mutation_status",token,work_order_id:workId,
+      mutation_action:"save",request_id:"request-original-123456"},client);
+    assert.equal(statusResult.code,409);
+    assert.match(statusResult.body.error,/identity is inconsistent/i);
+    const admin=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:original.id},client);
+    assert.equal(admin.code,409);
+    assert.match(admin.body.error,/conflicting operation identity/i);
+    assert.equal(store.receipts.get(original.id).status,status);
+    assert.equal(store.updates,0);
+  }
+});
+
 test("reused photo receipt resolution preserves newer forensic evidence despite stale source read",async()=>{
   const {store,client,receipts}=setup();
   client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
