@@ -967,6 +967,7 @@ await (async () => {
   pending[2].resolve([]); // Missing Work Order must not leave loading stuck.
   await missing;
   assert.equal(loading.at(-1), false);
+  assert.equal(shared.loadInFlightRef.current, false);
   assert.match(errors.at(-1), /Work Order no longer available/);
   console.log("PASS overlapping Work Order reloads ignore stale results and missing records release loading");
   passed++;
