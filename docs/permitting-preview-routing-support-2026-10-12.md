@@ -44,3 +44,13 @@ Prior Google sign-in in the shared browser returned 502 Bad Gateway / connection
 6. Do not apply the result to a WorkOrder or mark office authority verified for testing.
 
 The last historical saved address test used v3 and reported REQUEST_DENIED. Successful geocoding and exact jurisdiction acceptance remain unverified; preview recovery alone does not establish their success.
+
+## Evening follow-up — October 12, approximately 7 PM America/New_York
+
+Fresh repository HEAD: e65cf926dfa4dc52ad28f3020ce75d2b08d064d6; working tree clean before inspection.
+
+A single new public preview navigation timed out, but the resulting tab was inspected successfully. Its title remained “Preview Loading - Base44”, with the visible heading “Preview is starting up” and message “Your app preview is being prepared.” Permitting UI did not load.
+
+Internal /permitting returned HTTP 200; /__build_status returned {"ok":true,"error":null}. The public/internal readiness discrepancy therefore remains observable. Its platform cause remains unconfirmed.
+
+No restart, login attempt, frontend publication, or production data mutation was performed. Support report remains prepared, not sent. Address/map/authority live acceptance remains pending. The repository draft source freshness safeguard was separately verified at checkpoint 6acd58cdd85279ba6d87b053 with 38 focused tests and a successful build; that does not satisfy browser acceptance.
