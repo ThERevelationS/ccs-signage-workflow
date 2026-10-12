@@ -1,0 +1,39 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import vm from 'node:vm';
+import {createRequire} from 'node:module';
+import {transform} from 'esbuild';
+import React from 'react';
+import Renderer,{act} from 'react-test-renderer';
+const require=createRequire(import.meta.url),code=(await transform(await fs.readFile('src/components/permitting/LocalityPickerDialog.jsx','utf8'),{loader:'jsx',jsx:'automatic',format:'cjs'})).code;
+async function harness(){
+ let auth={currentUser:{id:'first',role:'admin'},sessionToken:'same'},tree;const requests=[],applied=[],module={exports:{}};
+ const ui=new Proxy({}, {get:(_,name)=>props=>{if((name==='Dialog'||name==='AlertDialog')&&!props.open)return null;return React.createElement(name==='Input'?'input':name==='Button'?'button':'div',props,name==='Input'?undefined:props.children);}});
+ vm.runInNewContext(code,{module,console,setTimeout:()=>0,require:name=>{
+  if(name==='react'||name==='react/jsx-runtime')return require(name);
+  if(name==='@/components/auth/EmailGate')return {useAuth:()=>auth};
+  if(name==='@/api/base44Client')return {base44:{entities:{JurisdictionProfile:{},PermitLocality:{}}}};
+  if(name.includes('/ui/'))return ui;
+  if(name==='lucide-react')return new Proxy({}, {get:()=>()=>null});
+  if(name==='./ResearchProgressContext')return {useResearchProgress:()=>({runAction:()=>new Promise((resolve,reject)=>requests.push({resolve,reject}))})};
+  if(name.includes('loadAllEntityRows'))return {loadAllEntityRows:async()=>[]};
+  if(name.includes('permittingAddressLocality'))return {summarizeMatchedLocalityAuthority:()=>({verified_office_count:0,verified_roles:[],roles_needing_review:[]})};
+  if(name==='./jurisdictionPermitBridge')return {findRepositoryJurisdictionMatches:()=>[],hasDuplicateRepositoryIdentity:()=>false};
+  if(name==='./jurisdictionTrust')return {assessJurisdictionTrust:()=>({})};
+  return {__esModule:true,default:()=>null};
+ }});
+ const render=()=>React.createElement(module.exports.default,{isOpen:true,onClose:()=>{},localities:[],onApply:(...args)=>applied.push(args)});
+ await act(async()=>{tree=Renderer.create(render());});
+ return {tree,requests,applied,async type(){await act(async()=>tree.root.findAllByType('input').find(n=>n.props.placeholder?.startsWith('e.g.')).props.onChange({target:{value:'Private address'}}));},
+ async search(){await act(async()=>{tree.root.findAllByType('button').find(n=>n.children.includes('Find my jurisdiction')).props.onClick();});},
+ async change(actor){auth=actor;await act(async()=>tree.update(render()));},async close(){await act(async()=>tree.unmount());}};
+}
+test('account and role changes reset the entered address and discard late search results',async()=>{
+ for(const actor of [{currentUser:{id:'second',role:'admin'},sessionToken:'same'},{currentUser:{id:'first',role:'staff'},sessionToken:'same'}]){
+  const h=await harness();try{await h.type();await h.search();await h.change(actor);assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/Private address/);await act(async()=>h.requests[0].resolve({data:{success:false,error:'OLD SEARCH ERROR'}}));assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD SEARCH ERROR/);assert.equal(h.applied.length,0);}finally{await h.close();}
+ }
+});
+test('same-account rerender preserves entered address; signout hides picker',async()=>{
+ const h=await harness();try{await h.type();await h.change({currentUser:{id:'first',role:'admin'},sessionToken:'same'});assert.match(JSON.stringify(h.tree.toJSON()),/Private address/);await h.change({currentUser:null,sessionToken:''});assert.equal(h.tree.toJSON(),null);}finally{await h.close();}
+});
