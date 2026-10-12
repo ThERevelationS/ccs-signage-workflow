@@ -20,6 +20,7 @@ function destination(rows,target){
 export async function linkAddressDocument({collections,profiles,scans,loadProfiles,actor,body,onProgress=async()=>{},now=()=>new Date().toISOString()}){
  if(actor?.role!=='admin')throw Object.assign(Error('Administrator review is required.'),{status:403});
  for(const key of ['collection_id','document_id'])if(typeof body[key]!=='string'||!body[key]||body[key].length>100)throw Object.assign(Error('Select a saved original.'),{status:400});
+ if(!/^[A-Za-z0-9_-]{1,100}$/.test(body.collection_id))throw Object.assign(Error('Select a saved original.'),{status:400});
  await onProgress('Checking saved original and jurisdiction identity',0);
  const snapshot=sourceSnapshot(await collections.get(body.collection_id),body.document_id),profile=destination(await loadProfiles(),snapshot.target);
  const origin=await scans.get(snapshot.scan_run_id);

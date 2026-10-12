@@ -23,3 +23,17 @@ test('unknown outcome without durable receipt cannot claim success',async()=>{co
 
 test('changed scan ownership and incomplete scan prevent linking',async()=>{for(const run of [{action_kind:'address',status:'running',owner_id:'employee',owner_email:'employee@example.com'},{action_kind:'address',status:'complete',owner_id:'other',owner_email:'employee@example.com'}]){const f=fixture();f.options.scans.get=async()=>run;await assert.rejects(linkAddressDocument(f.options),/provenance/);assert.equal(f.writes,0);}});
 test('tampered linked file cannot be treated as successful replay',async()=>{const f=fixture();await confirm(f);await linkAddressDocument(f.options);f.profile.documents[1].file_url='https://stored.example/wrong.pdf';await assert.rejects(linkAddressDocument(f.options),/duplicate/);assert.equal(f.writes,1);});
+
+test('path-like collection references are rejected before any read or progress action',async()=>{
+ for(const id of ['../other','a/b','a?query','a#fragment','%2e%2e',' spaced ','https://example.org']){
+  const f=fixture();let reads=0,progress=0;f.options.body.collection_id=id;f.options.collections.get=async()=>{reads++;throw Error('Unexpected read');};f.options.onProgress=async()=>{progress++;};
+  await assert.rejects(linkAddressDocument(f.options),e=>e.status===400);assert.equal(reads,0);assert.equal(progress,0);assert.equal(f.writes,0);
+ }
+});
+test('unsafe retained links and inexact byte counts are blocked on preview and confirmed save',async()=>{
+ for(const patch of [{file_url:'https://user:secret@stored.example/sign.pdf'},{file_url:'data:text/plain,original'},{source_bytes:Number.MAX_SAFE_INTEGER+1,stored_bytes:Number.MAX_SAFE_INTEGER+1}]){
+  const f=fixture();await confirm(f);Object.assign(f.collection.documents[0],patch);
+  await assert.rejects(linkAddressDocument(f.options),/Original bytes must be verified/);assert.equal(f.writes,0);
+  f.options.body.dry_run=true;await assert.rejects(linkAddressDocument(f.options),/Original bytes must be verified/);assert.equal(f.writes,0);
+ }
+});
