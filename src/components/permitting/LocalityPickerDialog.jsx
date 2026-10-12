@@ -57,7 +57,13 @@ function verifiedAuthoritySummary(locality) {
   };
 }
 
-export default function LocalityPickerDialog({
+export default function LocalityPickerDialog(props) {
+  const {sessionToken,currentUser}=useAuth();
+  if(!sessionToken||!(currentUser?.id||currentUser?.email))return null;
+  const scope=JSON.stringify([currentUser.id || currentUser.email,currentUser.role,sessionToken]);
+  return <LocalityPickerSession key={scope} {...props} />;
+}
+function LocalityPickerSession({
   isOpen,
   onClose,
   localities,
@@ -67,6 +73,7 @@ export default function LocalityPickerDialog({
   const {runAction}=useResearchProgress();
   const searchVersion=useRef(0);
   const openRef=useRef(isOpen);openRef.current=isOpen;
+  useEffect(()=>()=>{openRef.current=false;searchVersion.current++;},[]);
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null); // address location and reference research
@@ -156,7 +163,7 @@ export default function LocalityPickerDialog({
 
   const addressCanApply=address.trim()?Boolean(result?.apply_allowed===true&&result?.location_resolution?.status==='location_verified'&&selectedLocalityId===result?.suggested_locality?.id):currentUser?.role==='admin';
   const handleApply = () => {
-    if (!selectedLocalityId || searching || !addressCanApply) return;
+    if (!openRef.current || !selectedLocalityId || searching || !addressCanApply) return;
     onApply(selectedLocalityId, { excludeElectrical });
     onClose();
   };
@@ -175,7 +182,8 @@ export default function LocalityPickerDialog({
   };
 
   const confirmDraftFromRepository = async () => {
-    if (!draftCandidate || creatingDraft || address.trim()) return;
+    if (!openRef.current || !draftCandidate || creatingDraft || address.trim()) return;
+    const draftVersion=searchVersion.current;
     setCreatingDraft(true);
     setDraftCreateError("");
 
@@ -191,12 +199,14 @@ export default function LocalityPickerDialog({
         }),
         label: `Permit locality draft ${payload.name}`,
       });
+      if(!openRef.current||draftVersion!==searchVersion.current)return;
       const locality = createResult.record;
       setSelectedLocalityId(locality.id);
       setDraftCandidate(null);
       onApply(locality.id, { excludeElectrical, locality });
       onClose();
     } catch (e) {
+      if(!openRef.current||draftVersion!==searchVersion.current)return;
       console.error("Could not create Permit locality draft from repository:", e);
       setDraftCreateError(e?.message || "The draft locality could not be created safely. Nothing was applied to this Work Order.");
     } finally {
