@@ -5826,7 +5826,15 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
     assert.ok(c.id.localeCompare(d.id) > 0, 'IDs must sort opposite to actual correction sequence');
     assert.equal(c.server_timestamp === d.server_timestamp, tied);
     assert.equal(c.details.corrected.clock_in, d.details.original.clock_in);
+    h.setServerNow('2026-09-20T22:04:00.000Z');
+    await ok(h.invoke({
+      action: 'admin_set_entry_approval', target_email: employee.email,
+      request_id: prefix + '-approve-d', entry_id: entry.id,
+      expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve D',
+    }));
     if (includeDuplicates) {
+      // Insert conflicting immutable evidence after manager review to test
+      // finalization independently of the earlier approval protection.
       const source = scenario === 'duplicate-d' ? d : c;
       const duplicate = { ...clone(source), id: prefix + '-extra-confirmed' };
       if (scenario === 'conflicting-c') {
@@ -5838,13 +5846,6 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
         'Fixture requires two confirmed rows with one exact request ID and timestamp');
       assert.equal(duplicate.server_timestamp, source.server_timestamp);
     }
-
-    h.setServerNow('2026-09-20T22:04:00.000Z');
-    await ok(h.invoke({
-      action: 'admin_set_entry_approval', target_email: employee.email,
-      request_id: prefix + '-approve-d', entry_id: entry.id,
-      expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve D',
-    }));
     const previousSnapshot = clone(period.finalized_summary);
     const previousHistory = clone(period.finalized_summary_history);
     const previousStatus = period.status;
