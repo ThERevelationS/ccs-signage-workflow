@@ -108,6 +108,10 @@ export default function ProductChecklistDialog({
   const [loadedRevisitDateSnapshot, setLoadedRevisitDateSnapshot] = useState(undefined);
   const [loadedSipCompletedSnapshot, setLoadedSipCompletedSnapshot] = useState(undefined);
   const [saveError, setSaveError] = useState("");
+  const saveErrorAlertRef = useRef(null);
+  const saveFailureFocusPendingRef = useRef(false);
+  // Preserve a failed Revisit choice for the next confirmation, not an auto-retry.
+  const failedRevisitSelectionRef = useRef(undefined);
   const [validationDialog, setValidationDialog] = useState(null);
   const [showCompletedItems, setShowCompletedItems] = useState(false);
   const [discardWarning, setDiscardWarning] = useState(null); // "close" or "reload"
@@ -234,6 +238,8 @@ export default function ProductChecklistDialog({
 
   const loadData = async () => {
     if (saveInFlightRef.current) return;
+    saveFailureFocusPendingRef.current = false;
+    failedRevisitSelectionRef.current = undefined;
     const requestId = ++loadDataRequestRef.current;
     loadInFlightRef.current = true;
     resetOtherPopupForReload();
@@ -710,7 +716,9 @@ export default function ProductChecklistDialog({
     // The Revisit confirmation owns keyboard focus until it closes.
     // Do not allow a queued checklist navigation callback behind it.
     cancelPendingNavigationFocus();
-    setPendingRevisitDate(loadedRevisitDateSnapshot || null);
+    setPendingRevisitDate(failedRevisitSelectionRef.current !== undefined
+      ? failedRevisitSelectionRef.current
+      : (loadedRevisitDateSnapshot || null));
     setShowRevisitPopup(true);
   };
 
@@ -729,6 +737,7 @@ export default function ProductChecklistDialog({
     if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current ||
         blockOnUnsubmittedDrafts(markComplete ? "complete" : "save")) return;
     saveInFlightRef.current = true;
+    saveFailureFocusPendingRef.current = false;
     setIsSaving(true);
     try {
       // Build a map for quick parent lookup
@@ -833,16 +842,35 @@ export default function ProductChecklistDialog({
       if (markComplete) setLoadedSipCompletedSnapshot(saved.sip_completed);
       setChecklist(savedChecklist);
       setProducts(savedProducts);
+      failedRevisitSelectionRef.current = undefined;
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error("Error saving checklist:", error);
+      if (revisitDate !== undefined) failedRevisitSelectionRef.current = revisitDate;
+      saveFailureFocusPendingRef.current = true;
       setSaveError(error?.message || "SIP product checklist could not be saved. Reload the latest Work Order and try again.");
     } finally {
       saveInFlightRef.current = false;
       setIsSaving(false);
     }
   };
+
+  // Radix can restore focus while a Revisit dialog is closing. Focus a rejected
+  // save's error only when saving and modal cleanup allow it, and never on load
+  // errors or after the employee switches Work Orders.
+  const focusSaveFailureIfReady = () => {
+    if (!saveFailureFocusPendingRef.current || !isOpen || isLoading || isSaving ||
+        showRevisitPopup || showTemplateBuilder || showOtherPopup) return;
+    const target = saveErrorAlertRef.current;
+    if (!target?.isConnected || !target.getClientRects().length) return;
+    saveFailureFocusPendingRef.current = false;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: "nearest" });
+  };
+  useEffect(() => {
+    if (saveError) focusSaveFailureIfReady();
+  }, [isOpen, isLoading, isSaving, saveError, showRevisitPopup, showTemplateBuilder, showOtherPopup, workOrder?.id]);
 
   // Group checklist items only when checklist data changes. Search/navigation,
   // expansion, and inline editor state should not rebuild the entire product hierarchy.
@@ -2971,7 +2999,7 @@ export default function ProductChecklistDialog({
             </div>
           )}
           {saveError && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div ref={saveErrorAlertRef} role="alert" tabIndex={-1} aria-label="SIP checklist save error" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
               <div className="font-medium">SIP product checklist save blocked</div>
               <div className="mt-1 text-xs">{saveError}</div>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
@@ -3049,6 +3077,7 @@ export default function ProductChecklistDialog({
         onSave={handleRevisitSave}
         currentDate={pendingRevisitDate}
         returnFocusRef={saveRevisitButtonRef}
+        onSubmittedCloseAutoFocus={focusSaveFailureIfReady}
       />
 
       {/* Unsubmitted text must be applied or cancelled before any SIP save. */}
