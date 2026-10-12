@@ -108,6 +108,20 @@ export async function recoverVerifiedSalesCreateLink({
       !salesSnapshotsEqual(snapshot,persisted?.smartsheet_sync_snapshot,value(bindings.current_task_assigned_to))) {
     fail('Sales permanent link was submitted but cannot be read back. Inspect the original WorkOrder before any retry.');
   }
+  // The pre-CAS check narrows the race but cannot prove post-commit
+  // uniqueness. Re-read all permanent-row claims before recording a clean
+  // recovery event. A conflict or incomplete read leaves the already-linked
+  // WorkOrder and its durable attribution intact for administrator review.
+  await assertRunOwnership();
+  const committedClaims = await readCompetingClaims();
+  if (!committedClaims || !Array.isArray(committedClaims.linked) ||
+      !Array.isArray(committedClaims.attempts)) {
+    fail('Sales link was committed, but post-save ownership could not be completely verified. Review the linked WorkOrder; do not retry.');
+  }
+  if ([...committedClaims.linked, ...committedClaims.attempts].some(r =>
+      !value(r?.id) || value(r.id) !== value(workorderId))) {
+    fail('Sales link was committed, but another WorkOrder claims the same permanent row. Review both links; do not retry.');
+  }
   // Regular-user provenance: record ONLY the verified link (not private
   // mapped cells or pricing). WorkOrder marker above preserves attribution
   // even if CellHistory is temporarily unavailable.
