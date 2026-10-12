@@ -101,6 +101,36 @@ eq(historyDown.state().smartsheet_create_attempt.manual_recovery.confirmed_row_i
  'WorkOrder retains durable administrator recovery attribution after history outage.');
 await rejects(()=>recoverVerifiedSalesCreateLink(historyDown.args),/changed since review/);
 eq(historyDown.counts().writes,1,'History failure cannot cause a duplicate recovery.');
+const missingInitialClaims=setup();
+missingInitialClaims.args.readCompetingClaims=async()=>null;
+await rejects(()=>recoverVerifiedSalesCreateLink(missingInitialClaims.args),
+  /ownership could not be completely verified/);
+eq(missingInitialClaims.counts().writes,0,
+  'Missing initial ownership result cannot authorize a manual permanent link.');
+const incompleteInitialClaims=setup();
+incompleteInitialClaims.args.readCompetingClaims=async()=>({linked:[],attempts:null});
+await rejects(()=>recoverVerifiedSalesCreateLink(incompleteInitialClaims.args),
+  /ownership could not be completely verified/);
+eq(incompleteInitialClaims.counts().writes,0,
+  'Incomplete initial ownership result cannot authorize a manual permanent link.');
+const missingLateClaims=setup();
+const validLateClaims=missingLateClaims.args.readCompetingClaims;
+let lateClaimReads=0;
+missingLateClaims.args.readCompetingClaims=async()=>
+  ++lateClaimReads===1 ? validLateClaims() : null;
+await rejects(()=>recoverVerifiedSalesCreateLink(missingLateClaims.args),
+  /ownership could not be completely verified immediately before recovery/);
+eq(missingLateClaims.counts().writes,0,
+  'Missing final ownership result cannot authorize the final WorkOrder CAS.');
+const malformedLateClaims=setup();
+const validMalformedClaims=malformedLateClaims.args.readCompetingClaims;
+let malformedClaimReads=0;
+malformedLateClaims.args.readCompetingClaims=async()=>
+  ++malformedClaimReads===1 ? validMalformedClaims() : {linked:[],attempts:[{}]};
+await rejects(()=>recoverVerifiedSalesCreateLink(malformedLateClaims.args),
+  /Another WorkOrder claims/);
+eq(malformedLateClaims.counts().writes,0,
+  'Unidentified permanent-row claimant fails closed immediately before CAS.');
 const midFlight=setup();const originalClaims=midFlight.args.readCompetingClaims;
 let claimNo=0;midFlight.args.readCompetingClaims=async()=>{
   claimNo++;return claimNo===1?originalClaims():{linked:[{id:'other'}],attempts:[{id:workorderId}]};
