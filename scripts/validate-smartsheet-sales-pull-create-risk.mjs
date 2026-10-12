@@ -4,6 +4,8 @@ import { salesRunRequiresReview } from '../base44/shared/smartsheetSalesSafety.m
 import {
   classifySalesPullCreateAttemptRisks,
   readSalesPullCreateAttemptRisks,
+  classifySalesPullLinkedRowRisks,
+  readSalesPullLinkedRowRisks,
 } from '../base44/shared/smartsheetSalesPullCreateRisk.mjs';
 
 let checks = 0;
@@ -78,6 +80,45 @@ await assert.rejects(readSalesPullCreateAttemptRisks({async filter(){return {ite
   /could not be verified completely/);
 checks++;
 
+const planned=['90555','90556'];
+const legacyLinked={id:'legacy-linked',smartsheet_row_id:'90555',smartsheet_sheet_id:''};
+const malformedSheetLinked={id:'legacy-malformed',smartsheet_row_id:'90556',smartsheet_sheet_id:'unknown'};
+const unrelatedSheetLinked={id:'other-sheet',smartsheet_row_id:'90555',smartsheet_sheet_id:alternateSheet};
+const softDeletedLinked={id:'deleted-linked',smartsheet_row_id:'90555',deleted:true};
+const linkRisks=classifySalesPullLinkedRowRisks([
+  legacyLinked,malformedSheetLinked,unrelatedSheetLinked,softDeletedLinked,
+  {id:'unrelated-row',smartsheet_row_id:'99999',smartsheet_sheet_id:sheetId},
+],sheetId,planned);
+equal(linkRisks.count,3,'Legacy, malformed-sheet, and deleted linked WorkOrders block duplicate Sales imports.');
+equal(linkRisks.workorder_ids,['legacy-linked','legacy-malformed','deleted-linked'],
+  'Linked claim review includes bounded permanent WorkOrder identities.');
+equal(linkRisks.known_permanent_row_ids,planned,
+  'Only exact planned permanent row IDs are reported.');
+equal(classifySalesPullLinkedRowRisks([unrelatedSheetLinked],sheetId,['90555']).count,0,
+  'A verified other-sheet row with the same numeric ID does not block this sheet.');
+equal(classifySalesPullLinkedRowRisks([linked],sheetId,['90888']).count,1,
+  'A matching configured-sheet link is never duplicated during import.');
+equal(classifySalesPullLinkedRowRisks([],sheetId,planned).count,0,
+  'Clean complete linked scan permits normal Sales import.');
+assert.throws(()=>classifySalesPullLinkedRowRisks([{}],sheetId,['']),/exact permanent row IDs/);checks++;
+assert.throws(()=>classifySalesPullLinkedRowRisks([{}],sheetId,['123']),/Unidentified WorkOrder/);
+checks=checks+0; // Nonmatching unlinked records do not constitute permanent row claims.
+const linkedCalls=[];
+const linkedEntity={async filter(query,sort,limit,skip){
+  linkedCalls.push({query,sort,limit,skip});
+  return [...Array.from({length:500},(_,i)=>({id:'other-'+i,smartsheet_row_id:String(80000+i)})),
+    legacyLinked].slice(skip,skip+limit);
+}};
+const linkedPaged=await readSalesPullLinkedRowRisks(linkedEntity,sheetId,['90555']);
+equal(linkedPaged.count,1,'Legacy permanent row on page two blocks import.');
+yes(linkedCalls.length===2 && linkedCalls[1].skip===500,
+  'Existing link scan requires all pages, not just the first 500 records.');
+equal(linkedCalls[0].query,{smartsheet_row_id:{$exists:true}},
+  'Linked owner scan includes missing-sheet legacy WorkOrders.');
+await assert.rejects(readSalesPullLinkedRowRisks({async filter(){return {items:[]};}},sheetId,planned),
+  /could not be verified completely/);checks++;
+await assert.rejects(readSalesPullLinkedRowRisks({async filter(){throw Error('read unavailable');}},sheetId,planned),
+  /read unavailable/);checks++;
 const backend=readFileSync('base44/functions/smartsheetSyncAction/entry.ts','utf8');
 yes(backend.includes('readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId)'),
   'Production pull reads unresolved Sales create markers independently of linked WorkOrders.');
