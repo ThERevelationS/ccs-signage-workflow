@@ -863,7 +863,8 @@ try {
       // Synchronous duplicate activation before React rerender is the risk.
       await confirm.evaluate(button => { button.click(); button.click(); });
       await page.waitForFunction(() => window.__adminDecisionCalls === 1);
-      assert.equal(await confirm.isEnabled(), false);
+      assert.equal(await page.getByRole('button', { name: 'Refresh' }).isEnabled(), false,
+        'Refresh remains disabled while resolution is awaiting the response');
       assert.equal(await page.evaluate(() => window.__adminDecisionCalls), 1);
       await page.evaluate(() => {
         window.__adminDecisionHold = false;
