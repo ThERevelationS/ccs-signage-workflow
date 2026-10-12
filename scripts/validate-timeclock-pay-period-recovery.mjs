@@ -5888,6 +5888,23 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
     assert.deepEqual(period.finalized_summary_history, frozenHistory);
     h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(duplicate), 1);
     assert.equal((await ok(verify(prefix + '-verify-restored'))).verified, true);
+
+    // The end boundary is intentionally exclusive for unknown new IDs.
+    // A repeated confirmed request at that exact boundary must nevertheless
+    // invalidate the frozen correction evidence rather than be ignored.
+    const boundaryDuplicate = {
+      ...clone(c), id: prefix + '-post-finalize-equal-time-duplicate',
+      server_timestamp: String(period.finalized_summary.lock_timestamp || ''),
+    };
+    assert.ok(boundaryDuplicate.server_timestamp);
+    h.rows.TimeClockAudit.push(boundaryDuplicate);
+    const boundaryVerification = await ok(verify(prefix + '-verify-equal-finalize-boundary'));
+    assert.equal(boundaryVerification.verified, false,
+      'A repeated confirmed correction request at the finalization timestamp must not escape verification');
+    assert.deepEqual(period.finalized_summary, frozenCurrent);
+    assert.deepEqual(period.finalized_summary_history, frozenHistory);
+    h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(boundaryDuplicate), 1);
+    assert.equal((await ok(verify(prefix + '-verify-boundary-restored'))).verified, true);
   }
 }
 
