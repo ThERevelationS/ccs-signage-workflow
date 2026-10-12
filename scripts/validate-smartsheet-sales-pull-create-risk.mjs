@@ -131,6 +131,14 @@ yes(scanIndex>=0 && gateIndex>scanIndex && bulkCreateIndex>gateIndex,
   'Unresolved attempt review gates Sales bulkCreate before any new WorkOrder mutation.');
 yes(backend.includes('if (i > 0) salesCreateAttemptReview = await readSalesPullCreateAttemptRisks'),
   'Later Sales create batches recheck durable markers rather than trusting one old preflight.');
+yes(backend.includes('salesLinkedClaimReview = await readSalesPullLinkedRowRisks(') &&
+  backend.indexOf('salesLinkedClaimReview = await readSalesPullLinkedRowRisks(') <
+  backend.indexOf('bulkCreate(batch);',scanIndex),
+  'Every Sales import batch independently verifies legacy-aware permanent row ownership before creating.');
+yes(backend.includes('if (salesLinkedClaimReview.count > 0)') &&
+  backend.includes('new_workorder_imports_held_for_link_review: salesImportLinkedCreatesHeld') &&
+  backend.includes('existing_link_claim_workorder_ids: salesLinkedClaimReview.workorder_ids'),
+  'Linked-row overlaps hold new imports and expose bounded exact-ID review evidence.');
 yes(backend.includes('salesImportCreatesHeld = toCreate.length - i') &&
   backend.includes('new_workorder_imports_held_for_create_review: salesImportCreatesHeld'),
   'Blocked new Sales imports are counted and surfaced explicitly.');
@@ -151,6 +159,9 @@ yes(salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:
 yes(salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:3,
   create_attempts_need_review:1,new_workorder_imports_held_for_create_review:2,errors:1}]),
   'Partial linked updates plus held imports still report overall Sales sync as needing review.');
+yes(salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:3,
+  existing_link_claims_need_review:1,new_workorder_imports_held_for_link_review:2,errors:0}]),
+  'Overlapping legacy permanent links make the Sales pull require review.');
 yes(!salesRunRequiresReview([{dataset:'sales',direction:'pull',created:0,updated:3,
   create_attempts_need_review:0,new_workorder_imports_held_for_create_review:0,errors:0}]),
   'A clean Sales pull is not mislabeled Needs Review by the new guard.');
@@ -162,4 +173,8 @@ yes(admin.includes('create_attempt_workorder_ids.join(", ")') &&
   admin.includes('create_attempt_known_row_ids.join(", ")') &&
   admin.includes('Object.entries(r.create_attempt_states)'),
   'Admin result exposes bounded IDs and attempt states without guessing permanent ownership.');
+yes(admin.includes('r.existing_link_claims_need_review') &&
+  admin.includes('r.existing_link_claim_workorder_ids.join(", ")') &&
+  admin.includes('r.existing_link_claim_row_ids.join(", ")'),
+  'Admin Sales sync result displays permanent-row overlap without offering automatic relinking.');
 console.log('Sales pull unresolved-create duplicate prevention: '+checks+'/'+checks+' PASS.');
