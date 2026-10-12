@@ -40,10 +40,11 @@ function harness(){
  const text=()=>JSON.stringify(renderer.toJSON());
  async function mount(){await act(async()=>{renderer=TestRenderer.create(React.createElement(Component,props),{createNodeMock:()=>({})});});}
  async function measure(){await act(async()=>button('Measure distance').props.onClick());await act(async()=>listeners.at(-1).callback({latLng:{lat:39.34,lng:-84.32}}));assert.equal(button('Measure distance').props['aria-pressed'],true);assert.match(text(),/32.8 ft/);}
+ async function updateAddress(){await act(async()=>renderer.update(React.createElement(Component,{...props,position:{lat:39.4,lng:-84.4}})));}
  async function refreshSession(){sessionToken='session-b';await act(async()=>renderer.update(React.createElement(Component,props)));}
  async function retry(){await act(async()=>window.gm_authFailure());await act(async()=>button('Try map again').props.onClick());}
  async function close(){await act(async()=>renderer?.unmount());}
- return {mount,measure,refreshSession,retry,close,button,text,mapsCreated,lines,listeners};
+ return {mount,measure,updateAddress,refreshSession,retry,close,button,text,mapsCreated,lines,listeners};
 }
 for(const recovery of ['session refresh','map retry'])test(`${recovery} clears measurements from the disposed map`,async()=>{
  const h=harness();try{
@@ -60,5 +61,5 @@ for(const recovery of ['session refresh','map retry'])test(`${recovery} clears m
  }finally{await h.close();}
 });
 test('ordinary address changes preserve an active measurement on the same map',async()=>{
- const h=harness();try{await h.mount();await h.measure();assert.equal(h.mapsCreated.length,1);assert.equal(h.button('Measure distance').props['aria-pressed'],true);}finally{await h.close();}
+ const h=harness();try{await h.mount();await h.measure();await h.updateAddress();assert.equal(h.mapsCreated.length,1);assert.equal(h.button('Measure distance').props['aria-pressed'],true);}finally{await h.close();}
 });
