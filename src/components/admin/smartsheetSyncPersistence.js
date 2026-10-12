@@ -86,6 +86,29 @@ export async function previewSmartsheetSalesEstInv({ sessionToken, sampleOffset 
   return result;
 }
 
+export async function auditSalesSmartsheetCreateAttempts({ sessionToken } = {}) {
+  const result = await invokeSmartsheet("audit_sales_create_attempts", sessionToken);
+  if (result.read_only !== true || result.writes_attempted !== false ||
+      result.dataset !== "sales" || !Array.isArray(result.cases)) {
+    throw new Error("Sales creation audit did not confirm its read-only evidence.");
+  }
+  return result;
+}
+
+export async function reviewSalesSmartsheetCreateCandidate({ sessionToken, workOrderId, rowId } = {}) {
+  const result = await invokeSmartsheet("review_sales_create_candidate", sessionToken, {
+    workorder_id: String(workOrderId || "").trim(),
+    smartsheet_row_id: String(rowId || "").trim(),
+  });
+  if (result.read_only !== true || result.writes_attempted !== false ||
+      result.dataset !== "sales" || !result.classification ||
+      String(result.workorder_id) !== String(workOrderId || "").trim() ||
+      String(result.entered_row_id) !== String(rowId || "").trim()) {
+    throw new Error("Sales create candidate did not return verified read-only evidence.");
+  }
+  return result;
+}
+
 export async function runSmartsheetSync({ sessionToken, dataset } = {}) {
   return invokeSmartsheet("run_sync", sessionToken, dataset ? { dataset } : {});
 }
