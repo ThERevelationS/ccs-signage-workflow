@@ -1073,6 +1073,81 @@ try {
       assert.equal(await page.evaluate(() => window.__adminInviteFunctionCalls.length), 2);
     });
 
+  await check('Old role update cannot begin password follow-up or overwrite new Admin editor', 375,
+    '/?tab=users&real_users=1&user_rows=1', async page => {
+      await page.evaluate(() => { window.__adminEditHoldStage = 'update'; });
+      await page.getByRole('button', { name: 'Edit Synthetic Directory User' }).click();
+      const oldDialog = page.getByRole('dialog', { name: /Edit User: Synthetic Directory User/ });
+      await oldDialog.getByPlaceholder('Set password').fill('synthetic-only-123');
+      await oldDialog.getByRole('button', { name: 'Save Changes' }).evaluate(button => {
+        button.click(); button.click();
+      });
+      await page.waitForFunction(() => window.__adminEditUpdateCalls?.length === 1 && !!window.__adminEditPendingUpdate);
+      await page.evaluate(() => {
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.getByText('New Admin Directory User').waitFor();
+      await oldDialog.waitFor({ state: 'detached' });
+      await page.getByRole('button', { name: 'Edit New Admin Directory User' }).click();
+      const newDialog = page.getByRole('dialog', { name: /Edit User: New Admin Directory User/ });
+      await newDialog.getByPlaceholder('Enter full name').fill('Current Admin Draft');
+      const readsBefore = await page.evaluate(() => window.__adminUserDirectoryAttempts);
+      await page.evaluate(() => { window.__adminEditPendingUpdate(); });
+      await page.waitForTimeout(50);
+      assert.equal(await newDialog.getByPlaceholder('Enter full name').inputValue(), 'Current Admin Draft');
+      assert.equal(await page.evaluate(() => (window.__adminEditPasswordCalls||[]).length), 0);
+      assert.equal(await page.evaluate(() => window.__adminUserDirectoryAttempts), readsBefore);
+      assert.equal(await page.evaluate(() => window.__adminEditUpdateCalls.length), 1);
+      await newDialog.getByRole('button', { name: 'Save Changes' }).click();
+      await newDialog.waitFor({ state: 'detached' });
+      assert.deepEqual(await page.evaluate(() => window.__adminEditUpdateCalls.map(call => call.session)),
+        ['synthetic', 'synthetic-new']);
+    });
+
+  await check('Old password-save failure cannot alert or clear new session draft', 375,
+    '/?tab=users&real_users=1&user_rows=1', async page => {
+      const dialogs = [];
+      page.on('dialog', dialog => { dialogs.push(dialog.message()); void dialog.dismiss(); });
+      await page.evaluate(() => {
+        window.__adminEditHoldStage = 'password';
+        window.__adminEditRejectStage = 'password';
+      });
+      await page.getByRole('button', { name: 'Edit Synthetic Directory User' }).click();
+      const oldDialog = page.getByRole('dialog', { name: /Edit User: Synthetic Directory User/ });
+      await oldDialog.getByPlaceholder('Set password').fill('synthetic-only-123');
+      await oldDialog.getByRole('button', { name: 'Save Changes' }).click();
+      await page.waitForFunction(() => !!window.__adminEditPendingPassword);
+      assert.deepEqual(await page.evaluate(() => window.__adminEditPasswordCalls), ['synthetic']);
+      await page.evaluate(() => {
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.getByText('New Admin Directory User').waitFor();
+      await oldDialog.waitFor({ state: 'detached' });
+      await page.getByRole('button', { name: 'Edit New Admin Directory User' }).click();
+      const newDialog = page.getByRole('dialog', { name: /Edit User: New Admin Directory User/ });
+      await newDialog.getByPlaceholder('Enter full name').fill('New Session Still Editing');
+      await page.evaluate(() => { window.__adminEditPendingPassword(); });
+      await page.waitForTimeout(60);
+      assert.equal(dialogs.length, 0, 'Old password failure must not show an alert');
+      assert.equal(await newDialog.getByPlaceholder('Enter full name').inputValue(), 'New Session Still Editing');
+      assert.equal(await page.getByText('synthetic-private-old-password-failure').count(), 0);
+      assert.equal(await newDialog.getByRole('button', { name: 'Save Changes' }).isEnabled(), true);
+      assert.equal(await page.evaluate(() => (window.__adminEditPasswordCalls||[]).length), 1);
+    });
+
+  await check('Ordinary user edit still saves once and invokes its own password step', 375,
+    '/?tab=users&real_users=1&user_rows=1', async page => {
+      await page.getByRole('button', { name: 'Edit Synthetic Directory User' }).click();
+      const dialog = page.getByRole('dialog', { name: /Edit User: Synthetic Directory User/ });
+      await dialog.getByPlaceholder('Set password').fill('synthetic-only-123');
+      await dialog.getByRole('button', { name: 'Save Changes' }).click();
+      await dialog.waitFor({ state: 'detached' });
+      assert.deepEqual(await page.evaluate(() => (window.__adminEditUpdateCalls||[]).map(call => call.session)), ['synthetic']);
+      assert.deepEqual(await page.evaluate(() => window.__adminEditPasswordCalls), ['synthetic']);
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
