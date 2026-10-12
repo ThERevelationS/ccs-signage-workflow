@@ -45,7 +45,10 @@ function context(action="save"){
   const grant={id:grantId,enabled:true,scope_mode:"all_active",allowed_actions:["bootstrap","start","save"],
     expires_at:"2099-01-01T00:00:00.000Z"};
   const source={id:"source-one",status:"started",payload_fingerprint:row.payload_fingerprint,
-    result_summary:{grant_id:grantId,retry_reserved_by_request_id:requestId,uploaded_photo_urls:[urls[0]]}};
+    operation_type:"mechanic_progress_save",target_entity:"FleetMaintenanceWorkOrder",
+    target_id:workId,actor_user_id:grantId,
+    result_summary:{grant_id:grantId,action:"save",expected_updated_date:expected,
+      retry_reserved_by_request_id:requestId,uploaded_photo_urls:[urls[0]]}};
   const rows=[row];
   const Access={async get(id){return id===grantId?structuredClone(grant):null;}};
   const Receipt={
