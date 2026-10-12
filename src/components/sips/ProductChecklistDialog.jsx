@@ -1718,9 +1718,11 @@ export default function ProductChecklistDialog({
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      if (saveInFlightRef.current || loadInFlightRef.current || isSaving || isLoading) return;
                       cancelPendingNavigationFocus();
                       setShowTemplateBuilder(true);
                     }}
+                    disabled={isSaving || isLoading}
                     className="w-full h-11 sm:w-auto sm:h-8"
                   >
                     <Pencil className="w-4 h-4 mr-1" />
@@ -1869,6 +1871,8 @@ export default function ProductChecklistDialog({
           {/* Checklist Items */}
           <div
             className="flex-1 overflow-y-auto space-y-3 pr-0.5"
+            inert={isSaving ? "" : undefined}
+            aria-busy={isSaving}
             onKeyDown={handleChecklistResultKeyDown}
             onBlurCapture={handleChecklistResultBlurCapture}
           >
@@ -2897,7 +2901,7 @@ export default function ProductChecklistDialog({
 
           {/* Add General Checklist Item */}
           {showAddGeneralChecklist && (
-            <div className="p-3 bg-gray-50 rounded-lg border mb-3">
+            <div className="p-3 bg-gray-50 rounded-lg border mb-3" inert={isSaving ? "" : undefined}>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
                   data-sips-unsubmitted-draft="general" value={newGeneralChecklistText}
@@ -2960,6 +2964,12 @@ export default function ProductChecklistDialog({
           )}
 
           {/* Actions */}
+          {isSaving && (
+            <div role="status" aria-live="polite" className="flex items-center gap-2 text-sm text-blue-700">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Saving SIP checklist… Editing is temporarily unavailable.
+            </div>
+          )}
           {saveError && (
             <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <div className="font-medium">SIP product checklist save blocked</div>
@@ -2980,7 +2990,8 @@ export default function ProductChecklistDialog({
             {isRegistered && (
               <Button
                 variant="outline"
-                onClick={() => setShowAddGeneralChecklist(true)}
+                onClick={() => { if (!saveInFlightRef.current && !loadInFlightRef.current && !isSaving && !isLoading) setShowAddGeneralChecklist(true); }}
+                disabled={isSaving || isLoading}
                 className="sm:flex-1 h-11 sm:h-10"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -3005,7 +3016,7 @@ export default function ProductChecklistDialog({
               className="sm:flex-1 h-11 sm:h-10 bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save & Revisit
+              {isSaving ? "Saving…" : "Save & Revisit"}
             </Button>
           </div>
         </DialogContent>
@@ -3257,6 +3268,7 @@ export default function ProductChecklistDialog({
       {/* Other Dropdown Popup */}
       <OtherDialog open={!!showOtherPopup} onOpenChange={(open) => { if (!open) dismissOtherPopup(); }}>
         <OtherDialogContent
+          inert={isSaving ? "" : undefined}
           className="max-w-md clay-card border-none [&>button]:h-11 [&>button]:w-11 [&>button]:inline-flex [&>button]:items-center [&>button]:justify-center sm:[&>button]:h-9 sm:[&>button]:w-9"
           onOpenAutoFocus={(event) => {
             if (!focusCustomDraftOnOpenRef.current) return;
