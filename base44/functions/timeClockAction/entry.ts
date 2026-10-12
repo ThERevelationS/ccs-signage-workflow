@@ -3757,6 +3757,19 @@ Deno.serve(async (req) => {
         const authoritative = await auditEntity.filter({ time_entry_id: String(change.time_entry_id || '') });
         if (!Array.isArray(authoritative)) return false;
         const frozenAuditIds = new Set(chain.map((link: any) => String(link?.audit_id || '')).filter(Boolean));
+        if (snapshotVersion >= 28) {
+          // A later duplicate of an already-frozen correction request remains
+          // conflicting evidence even if its timestamp falls exactly on the
+          // finalization boundary (excluded from the immutable causal window).
+          // Do not expand the window: unrelated later actions must remain valid.
+          const frozenCorrectionRequests = new Set(chain.filter((link: any) =>
+            String(link?.action || '') === 'admin_correction'
+          ).map((link: any) => String(link?.request_id || '')).filter(Boolean));
+          if (frozenCorrectionRequests.size && hasDuplicateConfirmedAdminCorrectionRequests(authoritative.filter((row: any) =>
+            String(row?.action || '') === 'admin_correction' &&
+            frozenCorrectionRequests.has(String(row?.request_id || ''))
+          ))) return false;
+        }
         const startTime = Date.parse(windowStart);
         const endTime = Date.parse(windowEnd);
         const inFrozenCausalWindow = (row: any) => {
