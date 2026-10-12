@@ -19,7 +19,7 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
  const {sessionToken,currentUser}=useAuth(),{runAction,trackAction}=useResearchProgress(),[collections,setCollections]=useState(archives?.collections || []),[busy,setBusy]=useState(new Set()),[error,setError]=useState(''),[checking,setChecking]=useState(false),[batch,setBatch]=useState(null),batchRef=useRef(null),[scanning,setScanning]=useState(new Set()),discoveryBusyRef=useRef(new Set()),refreshVersion=useRef(0);
  const refreshScope=JSON.stringify([currentUser?.id || currentUser?.email || '',currentUser?.role || '',sessionToken || '']);
  const refreshScopeRef=useRef(refreshScope),manualCheckRef=useRef(null);refreshScopeRef.current=refreshScope;
- useEffect(()=>{manualCheckRef.current=null;setChecking(false);},[refreshScope]);
+ useEffect(()=>{refreshVersion.current++;manualCheckRef.current=null;setChecking(false);},[refreshScope]);
  useEffect(()=>()=>{refreshVersion.current++;manualCheckRef.current=null;refreshScopeRef.current=null;},[]);
  function discoveryBusy(id,active){refreshVersion.current++;const next=new Set(discoveryBusyRef.current);if(active)next.add(id);else next.delete(id);discoveryBusyRef.current=next;setScanning(next);}
  function updateCollection(updated){setCollections(previous=>previous.map(row=>row.id===updated.id?{...row,...updated}:row));}
@@ -28,7 +28,7 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
  async function checkFiles(){
   const ids=collections.map(row=>row.id).filter(Boolean);
   if(!ids.length||manualCheckRef.current||batchRef.current||discoveryBusyRef.current.size)return;
-  const request={scope:refreshScope,version:refreshVersion.current};manualCheckRef.current=request;
+  const request={scope:refreshScope,version:++refreshVersion.current};manualCheckRef.current=request;
   const current=()=>manualCheckRef.current===request&&refreshScopeRef.current===request.scope&&refreshVersion.current===request.version;
   setChecking(true);setError('');
   try{
@@ -38,7 +38,24 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
   finally{if(manualCheckRef.current===request){manualCheckRef.current=null;if(refreshScopeRef.current===request.scope)setChecking(false);}}
  }
 
- useEffect(()=>{const ids=(archives?.collections || []).map(row=>row.id).filter(Boolean);if(!ids.length)return;let stopped=false,polling=false;async function sync(){if(stopped||polling||batchRef.current||discoveryBusyRef.current.size)return;polling=true;const version=refreshVersion.current;try{const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});if(!stopped&&version===refreshVersion.current&&!discoveryBusyRef.current.size){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}}catch{if(!stopped)setError('Saved file status could not update. Use Check saved files to try again.');}finally{polling=false;}}const timer=setInterval(()=>void sync(),10000);return()=>{stopped=true;clearInterval(timer);};},[archives,sessionToken,trackAction]);
+ useEffect(()=>{
+  const ids=(archives?.collections || []).map(row=>row.id).filter(Boolean);
+  if(!ids.length||!sessionToken)return;
+  let stopped=false,polling=false;
+  async function sync(){
+   if(stopped||polling||manualCheckRef.current||batchRef.current||discoveryBusyRef.current.size)return;
+   polling=true;const version=refreshVersion.current;
+   const current=()=>!stopped&&refreshScopeRef.current===refreshScope&&version===refreshVersion.current&&!manualCheckRef.current&&!discoveryBusyRef.current.size;
+   try{
+    const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});
+    if(current()){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}
+   }catch{if(current())setError('Saved file status could not update. Use Check saved files to try again.');}
+   finally{polling=false;}
+  }
+  const timer=setInterval(()=>void sync(),10000);
+  return()=>{stopped=true;clearInterval(timer);};
+ },[archives,sessionToken,refreshScope,trackAction]);
+
  async function saveFile(collection,doc,forBatch=false){
   refreshVersion.current++;setBusy(previous=>new Set([...previous,doc.id]));setError('');
   try{
