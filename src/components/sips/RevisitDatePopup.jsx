@@ -13,10 +13,12 @@ import { addDays, format, startOfDay } from "date-fns";
  *   isOpen       – boolean
  *   onClose      – () => void  (cancel, don't save revisit date)
  *   onSave       – (dateString | null) => void  (save with or without date)
- *   currentDate  – existing sip_revisit_date value (yyyy-MM-dd string or null)
+ *   currentDate  – existing saved sip_revisit_date value (yyyy-MM-dd or null)
+ *   retryDate    – attempted date from a rejected save (undefined = no retry)
  *   returnFocusRef – Save & Revisit button to refocus on cancellation only
+ *   onSubmittedCloseAutoFocus – invoked after submit closes (for save-error focus)
  */
-export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate, returnFocusRef }) {
+export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate, retryDate, returnFocusRef, onSubmittedCloseAutoFocus }) {
   const parseDate = (ds) => {
     if (!ds) return undefined;
     try {
@@ -26,7 +28,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate,
   };
 
   const [selected, setSelected] = useState(() => {
-    const parsed = parseDate(currentDate);
+    const parsed = parseDate(retryDate !== undefined ? retryDate : currentDate);
     return parsed && parsed > startOfDay(new Date()) ? parsed : undefined;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,12 +39,12 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate,
   // Reset whenever popup opens so it shows fresh state
   React.useEffect(() => {
     if (isOpen) {
-      const parsed = parseDate(currentDate);
+      const parsed = parseDate(retryDate !== undefined ? retryDate : currentDate);
       setSelected(parsed && parsed > startOfDay(new Date()) ? parsed : undefined);
       setIsSubmitting(false);
       restoreFocusAfterCancelRef.current = false;
     }
-  }, [isOpen, currentDate]);
+  }, [isOpen, currentDate, retryDate]);
 
   const submitDate = (date) => {
     if (isSubmitting) return;
@@ -58,7 +60,13 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate,
   };
 
   const handleRevisitCloseAutoFocus = (event) => {
-    if (!restoreFocusAfterCancelRef.current) return;
+    if (!restoreFocusAfterCancelRef.current) {
+      // After submitting, keep Radix from stealing focus from a save-failure
+      // alert. On success the parent checklist dialog will close anyway.
+      event.preventDefault();
+      onSubmittedCloseAutoFocus?.();
+      return;
+    }
     restoreFocusAfterCancelRef.current = false;
     event.preventDefault();
     const returnTarget = returnFocusRef?.current;
@@ -94,6 +102,12 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate,
         <div className="rounded-lg border border-purple-100 bg-purple-50 p-3 text-xs text-purple-900">
           A future revisit date moves this job to <strong>Revisit Later</strong>. It returns to the active SIPs queue when that date arrives, so this choice directly controls meeting workflow and sorting.
         </div>
+
+        {retryDate !== undefined && (
+          <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Your previous save did not complete. Your last Revisit choice is restored for review; confirm it and save again.
+          </div>
+        )}
 
         {currentParsedDate && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border bg-white px-3 py-2 text-xs text-gray-600">
