@@ -22,11 +22,13 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
 export default function PermittingRecordedCoverage({ readCoverage = readRecordedCoverage }) {
   const officeReview=useLocalityOfficeGapReview();
+  const reviewRecordRef=useRef(null);
+  reviewRecordRef.current=officeReview.record;
   const [result, setResult] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [progress, setProgress] = useState('');
   const generation = useRef(0), inFlight = useRef(false);
   useEffect(() => () => { generation.current++; }, []);
-  async function load() {
-    if (inFlight.current) return;
+  async function load(afterSavedReview = false) {
+    if (inFlight.current && afterSavedReview !== true) return;
     inFlight.current = true; const request = ++generation.current;
     const current = () => generation.current === request;
     setBusy(true); setResult(null); setError(''); setProgress('Reading recorded inventory…');
@@ -80,6 +82,6 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
       </section>}
 
 </>}
-    {officeReview.record && <PermitSettingsDialog key={officeReview.record.id} isOpen={true} onClose={officeReview.close} localities={[officeReview.record]} initialSelectedLocalityId={officeReview.record.id} />}
+    {officeReview.record && <PermitSettingsDialog key={officeReview.record.id} isOpen={true} onClose={officeReview.close} onLocalitySaved={() => { if (reviewRecordRef.current === officeReview.record) void load(true); }} localities={[officeReview.record]} initialSelectedLocalityId={officeReview.record.id} />}
   </section>;
 }

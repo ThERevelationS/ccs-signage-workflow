@@ -45,7 +45,7 @@ function OfficeSourceStatus({ provenance }) {
   );
 }
 
-export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes, initialSelectedLocalityId = '' }) {
+export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes, initialSelectedLocalityId = '', onLocalitySaved }) {
   const { currentUser } = useAuth();
   const verificationActor = currentUser?.full_name || currentUser?.email || "CCS Staff";
   const initialReviewSelectionHandled = useRef(false);
@@ -199,6 +199,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     localitySaveInFlightRef.current = true;
     setLocalitySaveError("");
     const payload = { ...form };
+    let savedLocalityId;
 
     try {
       if (editingLocality === "new") {
@@ -236,6 +237,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
         setSelectedLocality(created.id);
         setEditingLocality(created.id);
         loadFormFromLocality(created);
+        savedLocalityId = created.id;
       } else {
         const loaded = localities.find(loc => loc.id === editingLocality);
         if (!loaded?.id) throw new Error("The locality being edited is no longer loaded. Reopen it before saving.");
@@ -247,9 +249,14 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           label: `Permit locality ${loaded.name || loaded.id}`,
         });
         setLocalities(prev => prev.map(l => l.id === saved.id ? saved : l));
+        savedLocalityId = saved.id;
       }
       cleanSnapshot.current = JSON.stringify(form);
       setIsDirty(false);
+      // A coverage refresh failure must not turn a confirmed save into a failed save.
+      try { onLocalitySaved?.(savedLocalityId); } catch (notificationError) {
+        console.error("Locality saved, but the coverage notification failed:", notificationError);
+      }
       return true;
     } catch (error) {
       console.error("Permit locality save blocked:", error);
