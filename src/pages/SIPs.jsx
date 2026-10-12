@@ -902,7 +902,7 @@ export default function SIPs() {
                         mode="single"
                         required
                         selected={parseLocalDate(wo.sip_revisit_date)}
-                        disabled={{ before: addDays(today, 1) }}
+                        disabled={savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id) ? true : { before: addDays(today, 1) }}
                         onSelect={(date) => {
                           if (!date) return;
                           updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
@@ -911,7 +911,7 @@ export default function SIPs() {
                       />
                       {wo.sip_revisit_date && (
                         <div className="p-2 border-t">
-                          <button type="button" onClick={() => requestClearRevisit(wo)} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear revisit date</button>
+                          <button type="button" disabled={!isRegistered || savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id)} onClick={() => requestClearRevisit(wo)} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">Clear revisit date</button>
                         </div>
                       )}
                     </PopoverContent>
@@ -1210,7 +1210,7 @@ export default function SIPs() {
                             mode="single"
                             required
                             selected={parseLocalDate(wo.sip_revisit_date)}
-                            disabled={{ before: addDays(today, 1) }}
+                            disabled={savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id) ? true : { before: addDays(today, 1) }}
                             onSelect={(date) => {
                               if (!date) return;
                               updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
@@ -1220,8 +1220,10 @@ export default function SIPs() {
                           {wo.sip_revisit_date && (
                             <div className="p-2 border-t">
                               <button
+                                type="button"
+                                disabled={!isRegistered || savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id)}
                                 onClick={() => requestClearRevisit(wo)}
-                                className="text-xs text-red-500 hover:underline w-full text-center"
+                                className="text-xs text-red-500 hover:underline w-full text-center disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 Clear date
                               </button>
@@ -1326,7 +1328,7 @@ export default function SIPs() {
                           mode="single"
                           required
                           selected={parseLocalDate(wo.sip_revisit_date)}
-                          disabled={{ before: addDays(today, 1) }}
+                          disabled={savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id) ? true : { before: addDays(today, 1) }}
                           onSelect={(date) => {
                             if (!date) return;
                             updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
@@ -1334,7 +1336,7 @@ export default function SIPs() {
                           }}
                         />
                         <div className="p-2 border-t">
-                          <button type="button" onClick={() => requestClearRevisit(wo)} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear date & return to active</button>
+                          <button type="button" disabled={!isRegistered || savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id)} onClick={() => requestClearRevisit(wo)} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed">Clear date & return to active</button>
                         </div>
                       </PopoverContent>
                     </Popover>
@@ -1406,7 +1408,7 @@ export default function SIPs() {
                               mode="single"
                               required
                               selected={parseLocalDate(wo.sip_revisit_date)}
-                              disabled={{ before: addDays(today, 1) }}
+                              disabled={savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id) ? true : { before: addDays(today, 1) }}
                               onSelect={(date) => {
                                 if (!date) return;
                                 updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
@@ -1414,7 +1416,7 @@ export default function SIPs() {
                               }}
                             />
                             <div className="p-2 border-t">
-                              <button onClick={() => requestClearRevisit(wo)} className="text-xs text-red-500 hover:underline w-full text-center">Clear date</button>
+                              <button type="button" disabled={!isRegistered || savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id)} onClick={() => requestClearRevisit(wo)} className="text-xs text-red-500 hover:underline w-full text-center disabled:opacity-50 disabled:cursor-not-allowed">Clear date</button>
                             </div>
                           </PopoverContent>
                         </Popover>
