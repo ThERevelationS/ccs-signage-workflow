@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import {
   auditSalesSmartsheetCreateAttempts,
   reviewSalesSmartsheetCreateCandidate,
+  recoverVerifiedSalesSmartsheetCreate,
 } from "@/components/admin/smartsheetSyncPersistence";
 
 export default function SalesCreateAttemptReview({ sessionToken }) {
@@ -12,12 +13,16 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
   const [workOrderId, setWorkOrderId] = useState("");
   const [rowId, setRowId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [recovery, setRecovery] = useState(null);
   const [error, setError] = useState("");
   if (!sessionToken) return null;
   const load = async () => {
     setBusy(true);
     setError("");
     setResult(null);
+    setRecovery(null);
+    setConfirmed(false);
     try {
       setAudit(await auditSalesSmartsheetCreateAttempts({ sessionToken }));
     } catch (err) {
@@ -32,6 +37,8 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
     setBusy(true);
     setError("");
     setResult(null);
+    setRecovery(null);
+    setConfirmed(false);
     try {
       setResult(await reviewSalesSmartsheetCreateCandidate({ sessionToken, workOrderId, rowId }));
     } catch (err) {
@@ -40,8 +47,36 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
       setBusy(false);
     }
   };
+  const canRecover = !busy && result?.classification === "verified_candidate" &&
+    result?.eligible_for_future_guarded_recovery === true &&
+    result?.workorder_id === workOrderId.trim() &&
+    result?.entered_row_id === rowId.trim() &&
+    result?.recorded_row_id === rowId.trim() &&
+    Boolean(result?.workorder_version && result?.attempt_id) && !recovery;
+  const recover = async () => {
+    if (!canRecover || !confirmed) return;
+    setBusy(true);
+    setError("");
+    setRecovery(null);
+    try {
+      const saved = await recoverVerifiedSalesSmartsheetCreate({
+        sessionToken, workOrderId: result.workorder_id, rowId: result.entered_row_id,
+        expectedVersion: result.workorder_version, expectedAttemptId: result.attempt_id,
+      });
+      setRecovery(saved);
+      setResult(null);
+      setConfirmed(false);
+      setAudit(null);
+    } catch (err) {
+      setResult(null);
+      setConfirmed(false);
+      setError(err?.message || "Recovery was not verified. Reload the creation attempt and original WorkOrder.");
+    } finally {
+      setBusy(false);
+    }
+  };
   const note = result?.classification === "verified_candidate"
-    ? "Exact recorded row ID and saved mapped values match. This is read-only evidence for a future guarded recovery; no link was changed."
+    ? "Exact recorded row ID and mapped values match. A guarded recovery is available after explicit confirmation; it rechecks all evidence and the WorkOrder version before saving."
     : result?.classification === "uncertain_attempt"
       ? "The row contents may match, but an unconfirmed POST has no trustworthy permanent row ID. Never link by matching values alone."
       : "The candidate is not verified for recovery. Review the permanent IDs and saved creation evidence; nothing was changed.";
@@ -65,7 +100,7 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
               <div key={item.workorder_id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2">
                 <span className="break-all font-mono">{item.workorder_id} · {item.status} {item.recorded_row_id && `· Row ${item.recorded_row_id}`}</span>
                 <Button type="button" variant="outline" size="sm" disabled={busy}
-                  onClick={() => { setWorkOrderId(item.workorder_id); setRowId(item.recorded_row_id || ""); setResult(null); }}>
+                  onClick={() => { setWorkOrderId(item.workorder_id); setRowId(item.recorded_row_id || ""); setResult(null); setRecovery(null); setConfirmed(false); }}>
                   Inspect
                 </Button>
               </div>
@@ -74,11 +109,11 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
         )}
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <label className="text-xs text-slate-700">WorkOrder ID
-            <Input className="mt-1" value={workOrderId} onChange={(e) => { setWorkOrderId(e.target.value); setResult(null); }}
+            <Input className="mt-1" value={workOrderId} onChange={(e) => { setWorkOrderId(e.target.value); setResult(null); setRecovery(null); setConfirmed(false); }}
               placeholder="Exact WorkOrder ID" />
           </label>
           <label className="text-xs text-slate-700">Smartsheet permanent row ID
-            <Input className="mt-1" inputMode="numeric" value={rowId} onChange={(e) => { setRowId(e.target.value); setResult(null); }}
+            <Input className="mt-1" inputMode="numeric" value={rowId} onChange={(e) => { setRowId(e.target.value); setResult(null); setRecovery(null); setConfirmed(false); }}
               placeholder="Enter a permanent row ID" />
           </label>
         </div>
@@ -87,6 +122,10 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
           Inspect exact row (no changes)
         </Button>
         {error && <p role="alert" className="mt-2 text-xs text-red-700">{error}</p>}
+        {recovery && <p role="status" className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-900">
+          Confirmed: WorkOrder {recovery.workorder_id} now links to permanent Smartsheet row {recovery.row_id}.
+          CellHistory event {recovery.history_id} was verified. No Smartsheet write was sent.
+        </p>
         {result && (
           <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" role="status">
             <p className="font-semibold">Result: {result.classification.replaceAll("_", " ")}</p>
@@ -96,7 +135,21 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
               Competing claims: {result.competing_claim_count}</p>
             {result.competing_workorder_ids?.length > 0 &&
               <p className="mt-1 break-all font-mono">Other WorkOrders: {result.competing_workorder_ids.join(", ")}</p>}
-            <p className="mt-1 font-medium">Read-only check complete. No relinking or writes attempted.</p>
+            {canRecover && (
+              <div className="mt-3 space-y-2 rounded-md border border-amber-300 bg-white p-3">
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)}
+                    className="mt-0.5" />
+                  <span>I confirm that this recorded permanent Smartsheet row belongs to the original WorkOrder.
+                    Recover only the verified link; do not create a new Smartsheet row.</span>
+                </label>
+                <Button type="button" variant="outline" size="sm"
+                  disabled={!confirmed || busy} onClick={recover}>
+                  {busy ? "Verifying…" : "Recover verified Sales link"}
+                </Button>
+              </div>
+            )}
+            <p className="mt-1 font-medium">Read-only inspection complete. No changes occur unless you explicitly confirm recovery.</p>
           </div>
         )}
       </details>
