@@ -125,7 +125,7 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
         {recovery && <p role="status" className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-900">
           Confirmed: WorkOrder {recovery.workorder_id} now links to permanent Smartsheet row {recovery.row_id}.
           CellHistory event {recovery.history_id} was verified. No Smartsheet write was sent.
-        </p>
+        </p>}
         {result && (
           <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" role="status">
             <p className="font-semibold">Result: {result.classification.replaceAll("_", " ")}</p>
