@@ -2037,6 +2037,7 @@ async function pushDataset(
           entity: base44.asServiceRole.entities.WorkOrder,
           record, sheetId,
           assertOwner: options?.assertRunOwnership,
+          readCompetingClaims: async (rowId: string) => readSalesCreateRowClaims(base44, sheetId, rowId),
           makeSnapshot: (current: any) => buildSnapshot(current, bindings, 'sales'),
           postRow: async (current: any) => {
             const currentCells = buildCells(current, bindings, 'sales');
