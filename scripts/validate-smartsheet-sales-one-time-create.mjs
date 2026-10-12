@@ -52,6 +52,7 @@ eq(linked,{rowId:'5678',recovered:false,newerLocalEditsRemain:false},
 eq(clean.posts(),1,'Success sends exactly one POST.');
 eq(clean.view().smartsheet_create_attempt.status,'linked','Linked marker completes lifecycle.');
 eq(clean.view().smartsheet_row_id,'5678','Permanent row ID verified.');
+eq(clean.claimReads(),2,'Permanent row ownership is checked before and after link CAS.');
 eq(clean.view().smartsheet_sync_snapshot,{'111':'Survey','222':150},
  'Verified exact mapped snapshot persisted.');
 ok(!salesSmartsheetCreateNeedsReview(clean.view()),'Linked marker is not a pending review.');
@@ -70,6 +71,26 @@ eq(await createSalesSmartsheetRowWithGuard(interrupted.opts),
  {rowId:'5678',recovered:true,newerLocalEditsRemain:false},
  'Unlinked permanent row recovered after exact remote verification.');
 eq(interrupted.posts(),1,'Recovery never sends another POST.');
+const conflictingLinked=fixture();
+const originalLinkedPost=conflictingLinked.opts.postRow;
+conflictingLinked.opts.postRow=async current=>{
+ const result=await originalLinkedPost(current);
+ conflictingLinked.claimLinked([{id:'another-workorder'}]);
+ return result;
+};
+await throws(()=>createSalesSmartsheetRowWithGuard(conflictingLinked.opts),/Another WorkOrder claims/);
+eq(conflictingLinked.posts(),1,'Competing linked WorkOrder never triggers a duplicate POST.');
+eq(conflictingLinked.view().smartsheet_create_attempt.status,'created_unlinked',
+ 'Competing linked owner blocks permanent link CAS and retains durable row evidence.');
+const conflictingAttempt=fixture();
+conflictingAttempt.setFailLink(true);
+await throws(()=>createSalesSmartsheetRowWithGuard(conflictingAttempt.opts),/changed during permanent link save/);
+conflictingAttempt.setFailLink(false);
+conflictingAttempt.claimAttempts([{id:'other-unlinked'}]);
+await throws(()=>createSalesSmartsheetRowWithGuard(conflictingAttempt.opts),/Another WorkOrder claims/);
+eq(conflictingAttempt.posts(),1,'Competing durable attempt blocks recovery without another POST.');
+eq(conflictingAttempt.view().smartsheet_create_attempt.status,'created_unlinked',
+ 'Conflicting recovery retains the exact permanent row for manual review.');
 const timeout=fixture();
 timeout.opts.postRow=async(current)=>{timeout.mutateRemote({id:'5678',
   snapshot:timeout.opts.makeSnapshot(current)});throw Object.assign(new Error('timeout'),{timedOut:true});};
