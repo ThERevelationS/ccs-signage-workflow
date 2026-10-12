@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   auditSalesSmartsheetCreateAttempts,
+  auditSalesSmartsheetPermanentOwnership,
   reviewSalesSmartsheetCreateCandidate,
   recoverVerifiedSalesSmartsheetCreate,
 } from "@/components/admin/smartsheetSyncPersistence";
 
 export default function SalesCreateAttemptReview({ sessionToken }) {
   const [audit, setAudit] = useState(null);
+  const [ownership, setOwnership] = useState(null);
   const [result, setResult] = useState(null);
   const [workOrderId, setWorkOrderId] = useState("");
   const [rowId, setRowId] = useState("");
@@ -17,6 +19,15 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
   const [recovery, setRecovery] = useState(null);
   const [error, setError] = useState("");
   if (!sessionToken) return null;
+  const auditOwnership = async () => {
+    if(busy) return;
+    setBusy(true);setError("");setOwnership(null);
+    try {
+      setOwnership(await auditSalesSmartsheetPermanentOwnership({sessionToken}));
+    } catch(err) {
+      setError(err?.message || "Permanent row ownership audit was incomplete.");
+    } finally {setBusy(false);}
+  };
   const load = async () => {
     setBusy(true);
     setError("");
@@ -92,6 +103,27 @@ export default function SalesCreateAttemptReview({ sessionToken }) {
         <Button className="mt-3" type="button" variant="outline" size="sm" disabled={busy} onClick={load}>
           {busy ? "Checking…" : "Check unresolved Sales creates"}
         </Button>
+        <Button className="mt-3 ml-2" type="button" variant="outline" size="sm"
+          disabled={busy} onClick={auditOwnership}>
+          {busy ? "Checking…" : "Audit permanent row ownership"}
+        </Button>
+        {ownership && (
+          <div className="mt-3 space-y-2 rounded-md border border-slate-300 p-3 text-xs" role="status">
+            <p><strong>Read-only ownership review:</strong> {ownership.review_count} row identit{ownership.review_count===1?"y":"ies"} need review,
+              including {ownership.competing_row_count} with competing WorkOrders.</p>
+            <p>Linked records examined: {ownership.linked_records_examined};
+              creation markers examined: {ownership.attempt_records_examined}.
+              No uniqueness constraint has been verified.</p>
+            {ownership.cases_truncated && <p className="text-amber-800">First 30 findings shown; total count covers the verified scan.</p>}
+            {ownership.cases.map(item=>(
+              <div key={item.row_id} className="rounded border border-amber-200 p-2 break-all">
+                <strong>Permanent row {item.row_id}</strong> — {item.types.join(", ")}
+                <p className="font-mono">WorkOrder IDs: {item.workorder_ids.join(", ")}{item.owners_truncated?" (more omitted)":""}</p>
+              </div>
+            ))}
+            <p>Findings require manual permanent-ID verification. No links or production records were changed.</p>
+          </div>
+        )}
         {audit && (
           <div className="mt-3 space-y-2 text-xs">
             <p><strong>{audit.count}</strong> unresolved Sales create attempt(s) for sheet {audit.sheet_id}.</p>
