@@ -16,12 +16,28 @@ function SourceLink({url,label}){
 const TYPE_LABELS={permit_application:'Application or form',fee_schedule:'Fees',checklist:'Checklist',sign_ordinance:'Sign rules',zoning_code:'Zoning or code',other:'Reference'};
 const GAP_LABELS={page_fetch_failed:'Page could not be read',depth_frontier:'More pages need scanning',page_link_limit:'More links remain on this page',oversized_resource_url:'Link needs review'};
 export default function AutomaticAddressScanResults({scanResult,archives,savedOnly=false}){
- const {sessionToken}=useAuth(),{runAction,trackAction}=useResearchProgress(),[collections,setCollections]=useState(archives?.collections || []),[busy,setBusy]=useState(new Set()),[error,setError]=useState(''),[checking,setChecking]=useState(false),[batch,setBatch]=useState(null),batchRef=useRef(null),[scanning,setScanning]=useState(new Set()),discoveryBusyRef=useRef(new Set()),refreshVersion=useRef(0);
+ const {sessionToken,currentUser}=useAuth(),{runAction,trackAction}=useResearchProgress(),[collections,setCollections]=useState(archives?.collections || []),[busy,setBusy]=useState(new Set()),[error,setError]=useState(''),[checking,setChecking]=useState(false),[batch,setBatch]=useState(null),batchRef=useRef(null),[scanning,setScanning]=useState(new Set()),discoveryBusyRef=useRef(new Set()),refreshVersion=useRef(0);
+ const refreshScope=JSON.stringify([currentUser?.id || currentUser?.email || '',currentUser?.role || '',sessionToken || '']);
+ const refreshScopeRef=useRef(refreshScope),manualCheckRef=useRef(null);refreshScopeRef.current=refreshScope;
+ useEffect(()=>{manualCheckRef.current=null;setChecking(false);},[refreshScope]);
+ useEffect(()=>()=>{refreshVersion.current++;manualCheckRef.current=null;refreshScopeRef.current=null;},[]);
  function discoveryBusy(id,active){refreshVersion.current++;const next=new Set(discoveryBusyRef.current);if(active)next.add(id);else next.delete(id);discoveryBusyRef.current=next;setScanning(next);}
  function updateCollection(updated){setCollections(previous=>previous.map(row=>row.id===updated.id?{...row,...updated}:row));}
  useEffect(()=>()=>{if(batchRef.current)batchRef.current.stop=true;},[archives]);
  useEffect(()=>{refreshVersion.current++;setCollections(archives?.collections || []);},[archives]);
- async function checkFiles(){const ids=collections.map(row=>row.id).filter(Boolean);if(!ids.length||batchRef.current||discoveryBusyRef.current.size)return;const version=refreshVersion.current;setChecking(true);try{const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});if(version===refreshVersion.current&&response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}catch{setError('Saved file status could not update. Use Check saved files to try again.');}finally{setChecking(false);}}
+ async function checkFiles(){
+  const ids=collections.map(row=>row.id).filter(Boolean);
+  if(!ids.length||manualCheckRef.current||batchRef.current||discoveryBusyRef.current.size)return;
+  const request={scope:refreshScope,version:refreshVersion.current};manualCheckRef.current=request;
+  const current=()=>manualCheckRef.current===request&&refreshScopeRef.current===request.scope&&refreshVersion.current===request.version;
+  setChecking(true);setError('');
+  try{
+   const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});
+   if(current()){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}
+  }catch{if(current())setError('Saved file status could not update. Use Check saved files to try again.');}
+  finally{if(manualCheckRef.current===request){manualCheckRef.current=null;if(refreshScopeRef.current===request.scope)setChecking(false);}}
+ }
+
  useEffect(()=>{const ids=(archives?.collections || []).map(row=>row.id).filter(Boolean);if(!ids.length)return;let stopped=false,polling=false;async function sync(){if(stopped||polling||batchRef.current||discoveryBusyRef.current.size)return;polling=true;const version=refreshVersion.current;try{const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});if(!stopped&&version===refreshVersion.current&&!discoveryBusyRef.current.size){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}}catch{if(!stopped)setError('Saved file status could not update. Use Check saved files to try again.');}finally{polling=false;}}const timer=setInterval(()=>void sync(),10000);return()=>{stopped=true;clearInterval(timer);};},[archives,sessionToken,trackAction]);
  async function saveFile(collection,doc,forBatch=false){
   refreshVersion.current++;setBusy(previous=>new Set([...previous,doc.id]));setError('');
