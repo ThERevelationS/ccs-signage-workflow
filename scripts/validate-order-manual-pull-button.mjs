@@ -35,7 +35,7 @@ assert.match(grid, /const orderLoadGenerationRef = useRef\(0\)/);
 assert.match(grid, /const manualPullInFlightRef = useRef\(false\)/);
 assert.match(grid, /const requestGeneration = \+\+orderLoadGenerationRef\.current/);
 assert.match(grid, /orderLoadGenerationRef\.current \+= 1/);
-assert.match(grid, /if \(manualPullInFlightRef\.current && !manualPullReload\) return false/);
+assert.match(grid, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
 assert.match(grid, /loadData\(false, \{ manualPullReload: true \}\)/);
 assert.match(grid, /if \(!canCommitOrderReload\(\{/);
 assert.match(grid, /manualPullInFlightRef\.current = false/);
