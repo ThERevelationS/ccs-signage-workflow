@@ -137,6 +137,41 @@ function hasDuplicateConfirmedAdminCorrectionRequests(audits: any[]) {
   return false;
 }
 
+// Finalization and history verification must reject even the first payroll
+// generation when two completed corrections reuse one request ID across
+// employees. Changed-generation causal chains alone are not sufficient.
+async function payrollCorrectionRequestIdentityIsUnique(auditEntity: any, entries: any[], lockTimestamp: string) {
+  const cutoff = Date.parse(String(lockTimestamp || ''));
+  if (!Number.isFinite(cutoff) || !Array.isArray(entries)) return false;
+  const checked = new Set<string>();
+  for (const entry of entries) {
+    const entryId = String(entry?.id || '');
+    if (!entryId) return false;
+    const audits = await auditEntity.filter({ time_entry_id: entryId });
+    if (!Array.isArray(audits)) return false;
+    for (const audit of audits) {
+      if (String(audit?.action || '') !== 'admin_correction' ||
+          !['confirmed', 'recovered'].includes(String(audit?.outcome || ''))) continue;
+      const timestamp = Date.parse(String(audit.server_timestamp || ''));
+      if (!Number.isFinite(timestamp)) return false;
+      if (timestamp > cutoff) continue;
+      const requestId = String(audit.request_id || '');
+      if (!requestId) return false;
+      if (checked.has(requestId)) continue;
+      checked.add(requestId);
+      const matching = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
+      if (!Array.isArray(matching)) return false;
+      const completed = matching.filter((row: any) =>
+        ['confirmed', 'recovered'].includes(String(row?.outcome || '')));
+      if (completed.length !== 1 ||
+          String(completed[0]?.id || '') !== String(audit.id || '') ||
+          String(completed[0]?.time_entry_id || '') !== entryId ||
+          asEmail(completed[0]?.user_email) !== asEmail(entry.user_email)) return false;
+    }
+  }
+  return true;
+}
+
 function authenticationMethodFor(actor: any, target: any) {
   if (actor?.role === 'badge') return 'badge';
   return asEmail(actor?.email) === asEmail(target?.email) ? 'session' : 'admin_kiosk';
@@ -3308,6 +3343,10 @@ Deno.serve(async (req) => {
         }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
+        if (Number(summary.snapshot_version || 0) >= 28 &&
+            !await payrollCorrectionRequestIdentityIsUnique(auditEntity, summary.shift_manifest, String(summary.lock_timestamp || ''))) {
+          return { verified: false, legacy: false, error: `${label} contains duplicate or conflicting confirmed manager-correction request identity.` };
+        }
         return { verified: true, legacy: false };
       };
       const reconcileShiftEvidence = (shifts: any[], summary: any) => {
@@ -4917,6 +4956,13 @@ Deno.serve(async (req) => {
           for (const row of snapshotRows) {
             if (row.approval_evidence) row.approval_evidence = { id: row.approval_evidence.id, request_id: row.approval_evidence.request_id, outcome: row.approval_evidence.outcome };
           }
+        }
+        if (snapshotVersion >= 28 &&
+            !await payrollCorrectionRequestIdentityIsUnique(auditEntity, snapshotRows, lockTimestamp)) {
+          if (!await releaseStagedPeriodLocks()) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Conflicting manager-correction audit identity blocked payroll, but staged locks need recovery. Retry the same finalization.' }, { status: 409 });
+          }
+          return Response.json({ success: false, error: 'Duplicate or conflicting confirmed manager-correction request IDs require investigation before payroll finalization.' }, { status: 409 });
         }
         const entrySnapshotHash = await payloadHash(snapshotRows);
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
