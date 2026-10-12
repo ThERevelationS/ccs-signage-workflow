@@ -5771,6 +5771,100 @@ test('v28 manager-only ambiguous semantic suffix blocks payroll finalization for
   }
 });
 
+test('v28 direct correction ordering uses server time, never opaque IDs, and equal-time reversal fails closed', async () => {
+  for (const tied of [false, true]) {
+    const prefix = tied ? 'v28-opaque-tied' : 'v28-opaque-ordered';
+    const h = setup({
+      entryCount: 1, serverNow: '2026-09-20T22:00:00.000Z',
+      auditIdForRequest: (id) => id === prefix + '-c' ? prefix + '-z-first' :
+        id === prefix + '-d' ? prefix + '-a-second' : null,
+    });
+    const entry = h.rows.TimeEntry[0];
+    const period = h.period();
+    entry.approval_status = 'unreviewed';
+    const ok = async (promise) => {
+      const result = await promise;
+      assert.equal(result.status, 200, JSON.stringify(result.body));
+      return result.body;
+    };
+    await ok(h.invoke({
+      action: 'admin_set_entry_approval', target_email: employee.email,
+      request_id: prefix + '-approve-b', entry_id: entry.id,
+      expected_updated_date: entry.updated_date, decision: 'approve', note: 'Original B',
+    }));
+    await ok(h.action('finalize', prefix + '-finalize-b'));
+    h.setServerNow('2026-09-20T22:01:00.000Z');
+    await ok(h.action('reopen', prefix + '-reopen-period', 'Audited manager corrections'));
+    await ok(h.invoke({
+      action: 'admin_set_entry_approval', target_email: employee.email,
+      request_id: prefix + '-reopen-shift', entry_id: entry.id,
+      expected_updated_date: entry.updated_date, decision: 'reopen', note: 'Reopen B',
+    }));
+    const direct = async (letter, clockIn, hours, minutes) => {
+      const request = {
+        action: 'admin_correct_entry', target_email: employee.email,
+        request_id: prefix + '-' + letter, entry_id: entry.id,
+        expected_updated_date: entry.updated_date, reason: 'Verify ' + letter,
+        correction: {
+          clock_in: clockIn, clock_out: entry.clock_out, lunch_minutes: 0,
+          notes: 'Direct ' + letter,
+          job_allocations: [{ hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+        },
+      };
+      const result = await ok(h.invoke(request));
+      await ok(h.invoke(request));
+      const auditRows = h.rows.TimeClockAudit.filter((row) => row.request_id === request.request_id);
+      assert.equal(auditRows.length, 1, 'Exact retry must not duplicate the correction');
+      assert.equal(result.audit_id, auditRows[0].id);
+      return auditRows[0];
+    };
+    h.setServerNow('2026-09-20T22:02:00.000Z');
+    const c = await direct('c', '2026-09-20T14:30:00.000Z', 7, 30);
+    if (!tied) h.setServerNow('2026-09-20T22:03:00.000Z');
+    const d = await direct('d', '2026-09-20T14:45:00.000Z', 7, 15);
+    assert.ok(c.id.localeCompare(d.id) > 0, 'IDs must sort opposite to actual correction sequence');
+    assert.equal(c.server_timestamp === d.server_timestamp, tied);
+    assert.equal(c.details.corrected.clock_in, d.details.original.clock_in);
+
+    h.setServerNow('2026-09-20T22:04:00.000Z');
+    await ok(h.invoke({
+      action: 'admin_set_entry_approval', target_email: employee.email,
+      request_id: prefix + '-approve-d', entry_id: entry.id,
+      expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve D',
+    }));
+    const previousSnapshot = clone(period.finalized_summary);
+    const previousHistory = clone(period.finalized_summary_history);
+    const previousStatus = period.status;
+    h.setServerNow('2026-09-20T22:05:00.000Z');
+    const finalize = () => h.action('finalize', prefix + '-finalize-d');
+    if (tied) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const denied = await finalize();
+        assert.equal(denied.status, 409, JSON.stringify(denied.body));
+        assert.match(String(denied.body.error || ''), /ambiguous direct-manager correction history/i);
+        assert.deepEqual(period.finalized_summary, previousSnapshot);
+        assert.deepEqual(period.finalized_summary_history, previousHistory);
+        assert.equal(period.status, previousStatus);
+      }
+      continue;
+    }
+    await ok(finalize());
+    await ok(finalize());
+    const change = period.finalized_summary.generation_changes[0];
+    assert.equal(period.finalized_summary.generation_changes.length, 1);
+    assert.equal(change.action_provenance.unique_direct_semantic_suffix, true);
+    assert.equal(change.action_provenance.semantic_suffix_start_audit_id, c.id);
+    assert.equal(change.action_provenance.audit_id, d.id);
+    assert.deepEqual(change.causal_chain.filter((row) => row.action === 'admin_correction')
+      .map((row) => row.audit_id), [c.id, d.id]);
+    const checked = await ok(h.invoke({
+      action: 'pay_period_history_verify', pay_period_id: period.id,
+      request_id: prefix + '-verify',
+    }));
+    assert.equal(checked.verified, true, JSON.stringify(checked));
+  }
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
