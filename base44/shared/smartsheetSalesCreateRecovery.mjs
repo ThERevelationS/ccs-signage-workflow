@@ -11,21 +11,23 @@ const numberId = x => /^\d+$/.test(value(x)) && value(x) !== '0';
 export async function recoverVerifiedSalesCreateLink({
   entity, historyEntity, workorderId, sheetId, rowId, expectedVersion,
   expectedAttemptId, bindings, readRemoteSnapshot, readCompetingClaims, actor,
-  recoveredAt,
+  assertRunOwnership, recoveredAt,
 }) {
   const fail = message => { throw new Error(message); };
   if (!entity?.get || !entity?.updateMany || !historyEntity?.create || !historyEntity?.get ||
-      !readRemoteSnapshot || !readCompetingClaims || !value(workorderId) ||
+      !readRemoteSnapshot || !readCompetingClaims || typeof assertRunOwnership !== 'function' || !value(workorderId) ||
       !numberId(sheetId) || !numberId(rowId) || !value(expectedVersion) ||
       !value(expectedAttemptId) || !value(actor?.email)) {
     fail('Sales manual recovery requires an authenticated actor and exact versioned permanent identities.');
   }
+  await assertRunOwnership();
   const current = await entity.get(value(workorderId));
   if (!current || current.deleted || current.updated_date !== expectedVersion ||
       current.smartsheet_create_attempt?.attempt_id !== expectedAttemptId) {
     fail('Sales WorkOrder or create attempt changed since review. Reload the read-only preflight.');
   }
   // These checks run freshly on the action, not against a saved client preview.
+  await assertRunOwnership();
   const claims = await readCompetingClaims();
   const remote = await readRemoteSnapshot();
   const review = classifySalesCreateReview({
@@ -46,6 +48,7 @@ export async function recoverVerifiedSalesCreateLink({
   if (!local || !salesSnapshotsEqual(snapshot,local,value(bindings.current_task_assigned_to))) {
     fail('Sales fields changed since creation. Preserve local edits; manual recovery is not eligible.');
   }
+  await assertRunOwnership();
   const latest = await entity.get(value(workorderId));
   if (!latest || latest.deleted || latest.updated_date !== expectedVersion ||
       latest.smartsheet_create_attempt?.attempt_id !== expectedAttemptId ||
@@ -56,6 +59,7 @@ export async function recoverVerifiedSalesCreateLink({
   }
   // A final read narrows (but cannot eliminate) the nontransactional
   // cross-record race. No row ownership is ever inferred from similar values.
+  await assertRunOwnership();
   const finalClaims = await readCompetingClaims();
   if ((finalClaims?.linked || []).some(r => value(r?.id) !== value(workorderId)) ||
       (finalClaims?.attempts || []).some(r => value(r?.id) !== value(workorderId))) {
@@ -71,6 +75,10 @@ export async function recoverVerifiedSalesCreateLink({
       attempt_id:expectedAttemptId,
     },
   };
+  // All coordinated Smartsheet mutations share one run coordinator. Losing
+  // its ownership immediately before CAS stops this recovery from competing
+  // with a newer sync. This is not a global WorkOrder uniqueness constraint.
+  await assertRunOwnership();
   const changed = await entity.updateMany(
     {id:value(workorderId),updated_date:expectedVersion},
     {$set:{
@@ -82,6 +90,7 @@ export async function recoverVerifiedSalesCreateLink({
   if (changed?.updated !== 1) {
     fail('Sales recovery failed its final WorkOrder version CAS. Reload; no link was claimed.');
   }
+  await assertRunOwnership();
   const persisted = await entity.get(value(workorderId));
   if (value(persisted?.smartsheet_sheet_id) !== value(sheetId) ||
       value(persisted?.smartsheet_row_id) !== value(rowId) ||
