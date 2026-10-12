@@ -18,18 +18,18 @@ export default function AddressResearchPages({collection,review,disabled,onUpdat
  if(!discovery)return null;
  async function scan(retryPageUrl=null,batch=false){
   if(control.current||disabled||review||!sessionToken||scopeRef.current!==scope)return;
-  const request={stop:false};control.current=request;const current=()=>control.current===request&&scopeRef.current===scope;onBusyChange(collection.id,true);setError('');setPass({running:true,retry:retryPageUrl!==null,batch,processed:0,total:(discovery.gaps || []).filter(gap=>gap.reason==='page_fetch_failed').length,checked:0,failed:0});
+  const request={stop:false};control.current=request;const isCurrent=()=>control.current===request&&scopeRef.current===scope;onBusyChange(collection.id,true);setError('');setPass({running:true,retry:retryPageUrl!==null,batch,processed:0,total:(discovery.gaps || []).filter(gap=>gap.reason==='page_fetch_failed').length,checked:0,failed:0});
   try{
-   const result=batch?await retryAddressFailedPages({collection,stopped:()=>request.stop||!current(),onProgress:progress=>{if(current())setPass(previous=>({...previous,...progress}));},retryPage:async(current,url)=>{const response=await runAction('continueAddressResearchDiscovery',{collection_id:current.id,retry_page_url:url},'Retry research page — '+(current.target?.name || current.name || 'address research'));if(current()&&response.data?.collection)onUpdate(response.data.collection);return response.data;}}):retryPageUrl!==null?await retryPage(retryPageUrl,current):await runAddressPageScan({collection,stopped:()=>request.stop||!current(),onProgress:progress=>{if(current())setPass(previous=>({...previous,...progress}));},
-    scanPage:async current=>{const response=await runAction('continueAddressResearchDiscovery',{collection_id:current.id},'Scan research page — '+(current.target?.name || current.name || 'address research'));if(current()&&response.data?.collection)onUpdate(response.data.collection);return response.data;}});
-   if(current())setPass({...result,retry:retryPageUrl!==null,batch,running:false});
-  }catch(e){if(current()){setError(e.response?.data?.error || e.message || 'Page result could not be confirmed. Check saved research before retrying.');setPass(previous=>({...previous,running:false,halted:true}));}}
-  finally{if(current()){control.current=null;onBusyChange(collection.id,false);}}
+   const result=batch?await retryAddressFailedPages({collection,stopped:()=>request.stop||!isCurrent(),onProgress:progress=>{if(isCurrent())setPass(previous=>({...previous,...progress}));},retryPage:async(current,url)=>{const response=await runAction('continueAddressResearchDiscovery',{collection_id:current.id,retry_page_url:url},'Retry research page — '+(current.target?.name || current.name || 'address research'));if(isCurrent()&&response.data?.collection)onUpdate(response.data.collection);return response.data;}}):retryPageUrl!==null?await retryPage(retryPageUrl,isCurrent):await runAddressPageScan({collection,stopped:()=>request.stop||!isCurrent(),onProgress:progress=>{if(isCurrent())setPass(previous=>({...previous,...progress}));},
+    scanPage:async current=>{const response=await runAction('continueAddressResearchDiscovery',{collection_id:current.id},'Scan research page — '+(current.target?.name || current.name || 'address research'));if(isCurrent()&&response.data?.collection)onUpdate(response.data.collection);return response.data;}});
+   if(isCurrent())setPass({...result,retry:retryPageUrl!==null,batch,running:false});
+  }catch(e){if(isCurrent()){setError(e.response?.data?.error || e.message || 'Page result could not be confirmed. Check saved research before retrying.');setPass(previous=>({...previous,running:false,halted:true}));}}
+  finally{if(isCurrent()){control.current=null;onBusyChange(collection.id,false);}}
  }
- async function retryPage(url,current){
+ async function retryPage(url,isCurrent){
   const response=await runAction('continueAddressResearchDiscovery',{collection_id:collection.id,retry_page_url:url},'Retry research page — '+(collection.target?.name || collection.name || 'address research'));
   const result=response.data;if(!result?.collection)throw Error('Page retry result could not be confirmed. Refresh saved research before retrying.');
-  if(current())onUpdate(result.collection);
+  if(isCurrent())onUpdate(result.collection);
   if(result.success===false)throw Error(result.error || 'Saved page progress needs review.');
   return {checked:result.attempted_pages || 0,failed:(result.pages || []).filter(page=>page.status==='failed').length,stopped:false};
  }
