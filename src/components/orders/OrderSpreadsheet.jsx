@@ -1600,12 +1600,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     setCustomerSearch(val);
                     setShowCustomerDropdown(order.id);
                   }}
-                  onBlur={() => {
-                    const currentOrder = orders.find(o => o.id === order.id);
-                    if (currentOrder && currentOrder.customer_name !== originalOrdersRef.current[order.id]?.customer_name) {
+                  onBlur={(event) => {
+                    // Use the actual departing input value, not an older
+                    // React render captured by a delayed refresh/click.
+                    const customerName = event.currentTarget.value;
+                    if (customerName !== (originalOrdersRef.current[order.id]?.customer_name || "")) {
                       pendingChangesRef.current[order.id] = {
                         ...pendingChangesRef.current[order.id],
-                        customer_name: currentOrder.customer_name
+                        customer_name: customerName
                       };
                       setHasUnsavedChanges(true);
                     }
