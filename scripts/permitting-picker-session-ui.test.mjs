@@ -37,3 +37,19 @@ test('account and role changes reset the entered address and discard late search
 test('same-account rerender preserves entered address; signout hides picker',async()=>{
  const h=await harness();try{await h.type();await h.change({currentUser:{id:'first',role:'admin'},sessionToken:'same'});assert.match(JSON.stringify(h.tree.toJSON()),/Private address/);await h.change({currentUser:null,sessionToken:''});assert.equal(h.tree.toJSON(),null);}finally{await h.close();}
 });
+
+test('two immediate address-search clicks start one scan',async()=>{
+ const h=await harness();try{
+  await h.type();const click=h.tree.root.findAllByType('button').find(n=>n.children.includes('Find my jurisdiction')).props.onClick;
+  await act(async()=>{click();click();});assert.equal(h.requests.length,1);
+  await act(async()=>h.requests[0].resolve({data:{success:false,error:'Current error'}}));assert.match(JSON.stringify(h.tree.toJSON()),/Current error/);
+  await h.search();assert.equal(h.requests.length,2);await act(async()=>h.requests[1].resolve({data:{success:false,error:'Retry error'}}));
+ }finally{await h.close();}
+});
+test('editing the address permits a new scan and the old result cannot release its busy state',async()=>{
+ const h=await harness();try{
+  await h.type();await h.search();await h.type();await h.search();assert.equal(h.requests.length,2);
+  await act(async()=>h.requests[0].resolve({data:{success:false,error:'OLD RESULT'}}));assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD RESULT/);assert.match(JSON.stringify(h.tree.toJSON()),/Searching/);
+  await act(async()=>h.requests[1].resolve({data:{success:false,error:'NEW RESULT'}}));assert.match(JSON.stringify(h.tree.toJSON()),/NEW RESULT/);
+ }finally{await h.close();}
+});

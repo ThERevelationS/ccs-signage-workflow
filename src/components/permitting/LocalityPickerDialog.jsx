@@ -72,6 +72,7 @@ function LocalityPickerSession({
   const { sessionToken,currentUser } = useAuth();
   const {runAction}=useResearchProgress();
   const searchVersion=useRef(0);
+  const pendingSearch=useRef(null);
   const openRef=useRef(isOpen);openRef.current=isOpen;
   useEffect(()=>()=>{openRef.current=false;searchVersion.current++;},[]);
   const [address, setAddress] = useState("");
@@ -89,7 +90,7 @@ function LocalityPickerSession({
   const inputRef = useRef(null);
 
   useEffect(() => {
-    searchVersion.current++;
+    searchVersion.current++;pendingSearch.current=null;
     if (isOpen) {
       setAddress("");
       setSearching(false);
@@ -127,8 +128,8 @@ function LocalityPickerSession({
 
   const runSearch = async () => {
     if (!address.trim()) return;
-    if(searching)return;
-    const version=++searchVersion.current;
+    if(searching||pendingSearch.current!==null||!openRef.current)return;
+    const version=++searchVersion.current;pendingSearch.current=version;
     setSelectedLocalityId("");
     setSearching(true);
     setError("");
@@ -152,6 +153,7 @@ function LocalityPickerSession({
       if(version!==searchVersion.current||!openRef.current)return;
       setError(e.message || "Search failed");
     }
+    if(pendingSearch.current===version)pendingSearch.current=null;
     if(version===searchVersion.current&&openRef.current)setSearching(false);
   };
 
@@ -237,7 +239,7 @@ function LocalityPickerSession({
                 id="jurisdiction-job-address"
                 ref={inputRef}
                 value={address}
-                onChange={(e) => {searchVersion.current++;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
+                onChange={(e) => {searchVersion.current++;pendingSearch.current=null;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
                 placeholder="e.g. 4900 Parkway Dr, Mason, OH 45040"
                 className="min-h-11 pl-8 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && !searching && runSearch()}
