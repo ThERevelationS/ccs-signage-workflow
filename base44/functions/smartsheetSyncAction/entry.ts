@@ -2638,7 +2638,8 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         sort:'id',label:'Sales create candidate permanent-link conflict review',
       });
       const otherAttempts = attempts.filter((candidate:any)=>
-        String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')===sheetId &&
+        (!/^\d+$/.test(String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')) ||
+          String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')===sheetId) &&
         String(candidate?.smartsheet_create_attempt?.row_id ?? '')===rowId);
       const params = new URLSearchParams({
         rowIds:rowId,columnIds:columnIds.join(','),exclude:'nonexistentCells',
