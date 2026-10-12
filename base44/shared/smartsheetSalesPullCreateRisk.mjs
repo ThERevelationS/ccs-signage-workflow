@@ -38,6 +38,31 @@ export function classifySalesPullCreateAttemptRisks(records = [], sheetId = '') 
   };
 }
 
+export function classifySalesPullLinkedRowRisks(records = [], sheetId = '', plannedRowIds = []) {
+  const sheet = id(sheetId);
+  if (!/^\d+$/.test(sheet) || !Array.isArray(records) || !Array.isArray(plannedRowIds) ||
+      plannedRowIds.some(row => !/^\d+$/.test(id(row)) || id(row) === '0')) {
+    throw new Error('Sales import requires complete linked records and exact permanent row IDs.');
+  }
+  const planned = new Set(plannedRowIds.map(id));
+  const claims = new Map();
+  for (const record of records) {
+    const row = id(record?.smartsheet_row_id);
+    if (!planned.has(row)) continue;
+    const owner = id(record?.id);
+    if (!owner) throw new Error('Unidentified WorkOrder owns a planned Sales import row.');
+    const linkedSheet = id(record?.smartsheet_sheet_id);
+    if (/^\d+$/.test(linkedSheet) && linkedSheet !== sheet) continue;
+    claims.set(owner + ':' + row, {workorder_id:owner,row_id:row});
+  }
+  const review = [...claims.values()];
+  return {
+    count: review.length,
+    workorder_ids: [...new Set(review.map(item => item.workorder_id))].slice(0,20),
+    known_permanent_row_ids: [...new Set(review.map(item => item.row_id))].slice(0,20),
+  };
+}
+
 export async function readSalesPullCreateAttemptRisks(entity, sheetId) {
   // Server-scoped indexed-style filtering, not a legacy WorkOrder archive
   // download. A failed/incomplete paged read fails closed before bulkCreate.
