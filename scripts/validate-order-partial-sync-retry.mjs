@@ -24,7 +24,11 @@ const phase2 = backend.slice(
 assert.match(phase2, /if \(dataset === 'orders'\) orderBatchWriteError/);
 assert.match(phase2, /if \(dataset === 'orders'\) \{/);
 assert.match(phase2, /const verifiedSalesUpdates = deferredBase44Updates\.filter/);
-assert.match(phase2, /await base44\.asServiceRole\.entities\[entityName\]\.bulkUpdate\(verifiedSalesUpdates\)/);
+// Shared Sales now partitions ordinary bulk updates from approved CAS updates.
+// Check the existing partition rather than expecting the superseded all-rows bulk path.
+assert.match(phase2, /if \(ordinaryUpdates\.length\) await base44\.asServiceRole\.entities\[entityName\]\.bulkUpdate\(ordinaryUpdates\)/);
+assert.match(phase2, /const approvedUpdates = verifiedSalesUpdates\.filter/);
+assert.match(phase2, /await base44\.asServiceRole\.entities\.WorkOrder\.updateMany\(/);
 assert.doesNotMatch(
   phase2.slice(phase2.indexOf("if (dataset === 'orders')"), phase2.indexOf('} else {', phase2.indexOf("if (dataset === 'orders')"))),
   /bulkUpdate\(deferredBase44Updates\)/
