@@ -73,7 +73,7 @@ await afterCompletion.claim(afterCompletion.base44,recovery());
 same(afterCompletion.writes(),1,
   'A reviewed or completed recovery can be followed by another verified recovery.');
 const lockMissing=fixture({status:'running',action:'push_saved_orders'});
-await rejects(()=>lockMissing.claim(lockMissing.base44,recovery()),/Order Save & Sync already running/);
+await rejects(()=>lockMissing.claim(lockMissing.base44,recovery()),/Order Save & Sync is already running/);
 same(lockMissing.writes(),0,'Order Save & Sync lock remains intact.');
 const backendRecovery=text.slice(text.indexOf("if (action === 'recover_verified_sales_create')"),
  text.indexOf("if (action === 'audit_sales_recovery_history'"));
