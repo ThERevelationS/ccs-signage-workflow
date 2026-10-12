@@ -30,7 +30,9 @@ export function auditSalesPermanentRowOwners(links,attempts,sheetId) {
     if(s!==sheet)g.missingSheet.add(val(record.id));
     const owner=val(record.id);
     const markers=[record.smartsheet_create_attempt,...(markersByOwner.get(owner)||[])].filter(Boolean);
-    if(markers.some(marker=>val(marker.row_id)!==row||val(marker.sheet_id)!==sheet))
+    if(markers.some(marker=>val(marker.row_id)!==row ||
+        (s===sheet ? val(marker.sheet_id)!==sheet :
+          num(marker.sheet_id)&&val(marker.sheet_id)!==sheet)))
       g.mismatch.add(owner);
   }
   for(const record of attempts) {
