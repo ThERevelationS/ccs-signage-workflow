@@ -54,7 +54,7 @@ assert.equal(orderSaveSyncStatus({ lastSynced: new Date(), lastSyncDirection: "p
 assert.equal(orderSaveSyncStatus({ lastSynced: new Date(), lastSyncDirection: "push" }).text, "Saved & synced");
 assert.equal(orderSaveSyncStatus({ saveError: "Smartsheet pull needs review." }).text, "Smartsheet pull needs attention");
 assert.match(page, /md:hidden/);
-assert.match(grid, /if \(!isRegistered \|\| addInFlightRef\.current \|\| isPulling\) return/);
+assert.match(grid, /if \(!isRegistered \|\| readError \|\| addInFlightRef\.current \|\| isPulling\) return/);
 assert.match(grid, /if \(!target \|\| deleteInFlightRef\.current \|\| isPulling\) return/);
 assert.equal(orderSaveSyncStatus({ pendingSyncCount: 1 }).kind, "pending");
 assert.equal(orderSaveSyncStatus({ hasUnsavedChanges: true }).kind, "unsaved");
