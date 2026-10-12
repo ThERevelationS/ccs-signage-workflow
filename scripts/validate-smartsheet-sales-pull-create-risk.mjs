@@ -101,8 +101,10 @@ equal(classifySalesPullLinkedRowRisks([linked],sheetId,['90888']).count,1,
 equal(classifySalesPullLinkedRowRisks([],sheetId,planned).count,0,
   'Clean complete linked scan permits normal Sales import.');
 assert.throws(()=>classifySalesPullLinkedRowRisks([{}],sheetId,['']),/exact permanent row IDs/);checks++;
-assert.throws(()=>classifySalesPullLinkedRowRisks([{}],sheetId,['123']),/Unidentified WorkOrder/);
-checks=checks+0; // Nonmatching unlinked records do not constitute permanent row claims.
+assert.throws(()=>classifySalesPullLinkedRowRisks([{smartsheet_row_id:'123'}],sheetId,['123']),
+  /Unidentified WorkOrder/);checks++;
+equal(classifySalesPullLinkedRowRisks([{}],sheetId,['123']).count,0,
+  'Unlinked records do not constitute permanent row claims.');
 const linkedCalls=[];
 const linkedEntity={async filter(query,sort,limit,skip){
   linkedCalls.push({query,sort,limit,skip});
