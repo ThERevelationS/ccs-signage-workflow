@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../base44/shared/smartsheetSalesCreateReview.mjs';
 
 let n=0;
@@ -70,8 +71,48 @@ yes(backend.includes("if (action === 'audit_sales_create_attempts' || action ===
   backend.includes("!hasSessionToken || adminActor?.role !== 'admin'"),
   'Both review actions demand authenticated administrator session.');
 yes(backend.includes("query:{smartsheet_create_attempt:{$exists:true}}") &&
-  backend.includes('query:{smartsheet_sheet_id:sheetId,smartsheet_row_id:rowId}'),
-  'Read-only evidence requires durable markers and exact existing permanent-ID link checks.');
+  backend.includes('query:{smartsheet_row_id:rowId}') &&
+  backend.includes('await readSalesCreateRowClaims(base44, sheetId, rowId)') &&
+  backend.includes('const readCompetingClaims = async () => readSalesCreateRowClaims(base44, sheetId, rowId)'),
+  'Read-only review and guarded recovery share automatic creation’s legacy-aware permanent-row claim lookup.');
+const helperStart=backend.indexOf('async function readSalesCreateRowClaims(');
+const helperEnd=backend.indexOf('\nasync function pushDataset(',helperStart);
+yes(helperStart>=0 && helperEnd>helperStart,'Production permanent-row claims helper can be exercised directly.');
+const helper=backend.slice(helperStart,helperEnd)
+  .replace('base44: any, sheetId: string, rowId: string','base44, sheetId, rowId')
+  .replace('(candidate: any)','(candidate)');
+const claimQueries=[];
+const competingLinks=[{id:'legacy-other',smartsheet_sheet_id:'',smartsheet_row_id:row}];
+const durableClaims=[
+  {id:'legacy-attempt',smartsheet_create_attempt:{row_id:row}},
+  {id:'same-sheet-attempt',smartsheet_create_attempt:{sheet_id:sheet,row_id:row}},
+  {id:'different-sheet-attempt',smartsheet_create_attempt:{sheet_id:'1119',row_id:row}},
+  {id:'different-row-attempt',smartsheet_create_attempt:{sheet_id:sheet,row_id:'9191'}},
+];
+const syntheticRead=vm.runInNewContext(helper+'\nreadSalesCreateRowClaims',{
+  loadAllEntityRows:async ({query})=>{
+    claimQueries.push(query);
+    if(Object.hasOwn(query,'smartsheet_row_id')) return competingLinks;
+    return durableClaims;
+  },
+});
+const foundClaims=await syntheticRead({asServiceRole:{entities:{WorkOrder:{}}}},sheet,row);
+same(foundClaims.linked.map(r=>r.id),['legacy-other'],
+  'Legacy permanent row link without a saved sheet ID remains visible to administrator review.');
+same(foundClaims.attempts.map(r=>r.id),['legacy-attempt','same-sheet-attempt'],
+  'Legacy/same-sheet durable claims are retained without accepting another sheet or row.');
+yes(claimQueries.length===2 && claimQueries.every(q=>!Object.hasOwn(q,'smartsheet_sheet_id')) &&
+  claimQueries.some(q=>q.smartsheet_row_id===row),
+  'Permanent link ownership is queried by exact row ID without excluding missing sheet IDs.');
+same(preview(record,{otherLinkedRecords:foundClaims.linked,
+  otherAttempts:foundClaims.attempts}).classification,'competing_claim',
+  'Read-only manual preflight reports a competing legacy row owner instead of permitting recovery.');
+const incompleteRead=vm.runInNewContext(helper+'\nreadSalesCreateRowClaims',{
+  loadAllEntityRows:async ()=>{throw new Error('incomplete paged ownership read');},
+});
+await assert.rejects(()=>incompleteRead({asServiceRole:{entities:{WorkOrder:{}}}},sheet,row),
+  /incomplete paged ownership read/);
+n++;
 yes(backend.includes("const remote = await smartsheetGet('/sheets/'+sheetId+'?'+params.toString(),token)") &&
   backend.includes('remote.body?.columns') &&
   backend.includes('normalizeSheetRows(remote.body)'),
