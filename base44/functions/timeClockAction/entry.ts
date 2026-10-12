@@ -119,6 +119,24 @@ function uniqueAdminCorrectionSemanticSuffix(audits: any[], before: any, after: 
   return matches === 1 ? selected : null;
 }
 
+// A single idempotent manager correction request may have only one
+// authoritative completed audit. Duplicate completed audit evidence cannot
+// be disambiguated by timestamps or opaque audit IDs.
+function hasDuplicateConfirmedAdminCorrectionRequests(audits: any[]) {
+  const seen = new Set<string>();
+  for (const audit of Array.isArray(audits) ? audits : []) {
+    if (String(audit?.action || '') !== 'admin_correction' ||
+        !['confirmed', 'recovered'].includes(String(audit?.outcome || ''))) continue;
+    const entryId = String(audit?.time_entry_id || '');
+    const requestId = String(audit?.request_id || '');
+    if (!entryId || !requestId) return true;
+    const key = JSON.stringify([entryId, requestId]);
+    if (seen.has(key)) return true;
+    seen.add(key);
+  }
+  return false;
+}
+
 function authenticationMethodFor(actor: any, target: any) {
   if (actor?.role === 'badge') return 'badge';
   return asEmail(actor?.email) === asEmail(target?.email) ? 'session' : 'admin_kiosk';
@@ -3733,7 +3751,7 @@ Deno.serve(async (req) => {
         const semanticTerminalId = String(change.correction_provenance?.applied_audit_id || change.action_provenance?.audit_id || '');
         return semanticTerminalId === terminalAuditId;
       };
-      const verifyCausalChainCompleteness = async (change: any, windowStart = '', windowEnd = '') => {
+      const verifyCausalChainCompleteness = async (change: any, windowStart = '', windowEnd = '', snapshotVersion = 0) => {
         const chain = change?.causal_chain;
         if (!Array.isArray(chain) || !windowStart || !windowEnd) return false;
         const authoritative = await auditEntity.filter({ time_entry_id: String(change.time_entry_id || '') });
@@ -3755,7 +3773,8 @@ Deno.serve(async (req) => {
           const timeOrder = Date.parse(String(a.server_timestamp || '')) - Date.parse(String(b.server_timestamp || ''));
           return timeOrder || String(a.id || '').localeCompare(String(b.id || ''));
         });
-        if (expected.length !== chain.length) return false;
+        if (expected.length !== chain.length ||
+            (snapshotVersion >= 28 && hasDuplicateConfirmedAdminCorrectionRequests(expected))) return false;
         return expected.every((row: any, index: number) =>
           String(row.id || '') === String(chain[index]?.audit_id || '') &&
           Number(chain[index]?.sequence || 0) === index + 1
@@ -3992,7 +4011,7 @@ Deno.serve(async (req) => {
             if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd, Number(summary.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd, Number(summary.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} non-correction change provenance failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 15 && !await verifyCausalChain(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} ordered causal chain failed verification.`, pay_period_id: period.id, generations: [] });
-            if (Number(summary.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} causal chain is incomplete against authoritative audit history.`, pay_period_id: period.id, generations: [] });
+            if (Number(summary.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd, Number(summary.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} causal chain is incomplete against authoritative audit history.`, pay_period_id: period.id, generations: [] });
           }
         }
         generations.push({
@@ -4060,7 +4079,7 @@ Deno.serve(async (req) => {
             if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd, Number(current.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd, Number(current.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll non-correction change provenance failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 15 && !await verifyCausalChain(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll ordered causal chain failed verification.', pay_period_id: period.id, generations: [] });
-            if (Number(current.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll causal chain is incomplete against authoritative audit history.', pay_period_id: period.id, generations: [] });
+            if (Number(current.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd, Number(current.snapshot_version || 0))) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll causal chain is incomplete against authoritative audit history.', pay_period_id: period.id, generations: [] });
           }
         }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
@@ -5089,6 +5108,9 @@ Deno.serve(async (req) => {
                     ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
                     (!supersededGeneration || (Number.isFinite(occurredAt) && occurredAt >= Date.parse(generationCausalWindowStart) && occurredAt <= Date.parse(generationCausalWindowEnd)));
                 }).sort((a: any, b: any) => String(b.server_timestamp || b.updated_date || '').localeCompare(String(a.server_timestamp || a.updated_date || '')));
+                if (snapshotVersion >= 28 && hasDuplicateConfirmedAdminCorrectionRequests(candidates)) {
+                  return Response.json({ success: false, error: `Payroll shift ${id} has duplicate confirmed manager-correction audit requests. Admin investigation is required before finalization.` }, { status: 409 });
+                }
                 const semanticBefore = change.before || {};
                 const semanticAfter = change.after || {};
                 const semanticallyMatches = (row: any) => {
