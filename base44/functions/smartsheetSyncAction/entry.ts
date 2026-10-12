@@ -31,6 +31,7 @@ import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesC
 import { readSalesPullCreateAttemptRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
+import { classifySalesRecoveryHistory, acknowledgeVerifiedSalesRecoveryHistory } from '../../shared/smartsheetSalesRecoveryHistory.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegrity.mjs';
@@ -2596,7 +2597,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'audit_sales_create_attempts', 'review_sales_create_candidate', 'recover_verified_sales_create', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'audit_sales_create_attempts', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -2728,6 +2729,48 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       } catch (error:any) {
         return Response.json({success:false,needs_review:true,
           error:error?.message || 'The Sales recovery could not be verified. Review before trying again.'},{status:409});
+      }
+    }
+
+    if (action === 'audit_sales_recovery_history' || action === 'acknowledge_sales_recovery_history') {
+      // An uncertain CellHistory write is never blindly repeated. These
+      // admin-only actions inspect exact existing history and optionally
+      // acknowledge the one verified event on the WorkOrder with a CAS.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({success:false,error:'An authenticated Sales administrator is required.'},{status:403});
+      }
+      const workorderId = cleanText(body?.workorder_id,100);
+      if (!workorderId) return Response.json({
+        success:false,error:'The exact recovered WorkOrder ID is required.'},{status:400});
+      const entity = base44.asServiceRole.entities.WorkOrder;
+      const historyEntity = base44.asServiceRole.entities.CellHistory;
+      const readEvents = async (id:string) => loadAllEntityRows({
+        entity:historyEntity,
+        query:{entity_type:'WorkOrder',entity_id:id,field_name:'smartsheet_row_id'},
+        sort:'id',label:'Sales verified link recovery CellHistory events',
+      });
+      try {
+        if (action === 'audit_sales_recovery_history') {
+          const record = await entity.get(workorderId);
+          const evidence = classifySalesRecoveryHistory(record,await readEvents(workorderId));
+          return Response.json({success:true,dataset:'sales',read_only:true,writes_attempted:false,...evidence});
+        }
+        if (body?.confirm_existing_event !== true ||
+            !cleanText(body?.expected_updated_date,100) ||
+            !cleanText(body?.expected_attempt_id,130) ||
+            !cleanText(body?.expected_history_event_id,100)) {
+          return Response.json({success:false,error:'Explicit confirmation and the exact reviewed WorkOrder version, attempt and history event IDs are required.'},{status:400});
+        }
+        const result = await acknowledgeVerifiedSalesRecoveryHistory({
+          entity,historyEntity,workorderId,actor:adminActor,readEvents,
+          expectedVersion:cleanText(body.expected_updated_date,100),
+          expectedAttemptId:cleanText(body.expected_attempt_id,130),
+          expectedEventId:cleanText(body.expected_history_event_id,100),
+        });
+        return Response.json({success:true,dataset:'sales',...result});
+      } catch(error:any) {
+        return Response.json({success:false,needs_review:true,
+          error:error?.message || 'Sales recovery history was not fully verified. Reload the review.'},{status:409});
       }
     }
 
