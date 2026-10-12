@@ -551,8 +551,28 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
     setIsSyncing(true);
     try {
-      const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds });
-      const summary = summarizeSavedOrderSync(result, { expectedOrderCount: orderIds.length });
+      // A previous response can be lost after Base44 has already confirmed
+      // some rows. Re-read the EXACT requested permanent IDs before Retry
+      // Sync; do not re-submit stale, already completed Orders alongside the
+      // genuinely pending ones (which would reject the whole backend batch).
+      const preflight = await verifyUncertainOrderSyncReadback(orderIds, (ids) =>
+        loadAllEntityRows({
+          entity: Order, query: { id: { $in: ids } }, sort: "id",
+          pageSize: Math.min(500, Math.max(20, ids.length)),
+          maxRows: Math.max(1000, ids.length + 500),
+          label: "Order Form Save & Sync pending-only permanent-ID preflight",
+        }),
+      );
+      // New edits made while the read was in flight must be saved first; the
+      // backend independently verifies each durable pending marker too.
+      if (Object.keys(pendingChangesRef.current).length) {
+        throw new Error('New Order edits need saving before Retry Sync. No Smartsheet rows were submitted.');
+      }
+      const pendingOrderIds = preflight.pendingIds;
+      // An empty pending set is acknowledged locally; this helper performs
+      // no network request when no Order IDs remain to be pushed.
+      const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds: pendingOrderIds });
+      const summary = summarizeSavedOrderSync(result, { expectedOrderCount: pendingOrderIds.length });
       if (!summary.ok) throw new Error(summary.message);
       clearSyncedOrderIds(syncTargets);
       const safelySyncedIds = new Set(syncTargets
