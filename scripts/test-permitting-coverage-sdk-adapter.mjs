@@ -12,14 +12,17 @@ const queue={id:'q',state:'OH',jurisdiction_name:'Miami Township',jurisdiction_t
 const profile={id:'p',state:'OH',name:'Miami Township',type:'township',parent_county:{name:'Hamilton County'}};
 const api={entities:{
 SourceCollectionQueue:{filter:async(query,options)=>{calls.push({entity:'queue',query,options});return options.cursor?{items:[queue],has_more:false,next_cursor:null}:{items:[queue],has_more:true,next_cursor:'queue-next'};}},
-JurisdictionProfile:{filter:async(query,options)=>{calls.push({entity:'profile',query,options});return {items:[profile],has_more:false,next_cursor:null};}}
+JurisdictionProfile:{filter:async(query,options)=>{calls.push({entity:'profile',query,options});return {items:[profile],has_more:false,next_cursor:null};}},
+PermitLocality:{filter:async(query,options)=>{calls.push({entity:'locality',query,options});return options.cursor?{items:[{id:'ky-locality',state:'KY',name:'Kentucky fixture'}],has_more:false}:{items:[{id:'locality',state:'OH',name:'Office gap fixture',offices:[{authority_roles:['electrical_permit'],authority_verification_status:'staff_verified'}]}],has_more:true,next_cursor:'locality-next'};}}
 }};
 const result=await readRecordedCoverage(()=>true,value=>progress.push(value),api);
-assert.equal(calls.length,3);assert.equal(calls[1].options.cursor,'queue-next');assert.equal(calls[2].options.cursor,undefined);
+assert.equal(calls.length,5);assert.equal(calls[4].options.cursor,'locality-next');assert.equal(calls[1].options.cursor,'queue-next');assert.equal(calls[2].options.cursor,undefined);
 for(const c of calls){assert.deepEqual(c.query,{state:{$in:['OH','KY']}});assert.equal(c.options.limit,500);assert.equal(c.options.sort,'id');assert.ok(c.options.fields.includes('id'));assert.ok(!c.options.fields.includes('documents'));}
+assert.equal(result.electrical_offices.states.OH.roles.electrical_permit.staff_verified,1);assert.equal(result.electrical_offices.states.KY.roles.electrical_inspection.missing,1);assert.equal(result.electrical_offices.inventory_complete,false);assert.ok(progress.includes('Read 2 saved locality office setups'));
 assert.equal(result.items.length,1);assert.deepEqual(result.official.candidate_counts,{OH:2318,KY:530});assert.ok(progress.includes('Read 1 queue records'));
 let current=true,profilesRead=0;
 await assert.rejects(readRecordedCoverage(()=>current,()=>{}, {entities:{SourceCollectionQueue:{filter:async()=>{current=false;return {items:[],has_more:false};}},JurisdictionProfile:{filter:async()=>{profilesRead++;}}}}),/superseded/);assert.equal(profilesRead,0);
 await assert.rejects(readRecordedCoverage(()=>true,()=>{}, {entities:{SourceCollectionQueue:{filter:async()=>({items:[],has_more:false})},JurisdictionProfile:{filter:async()=>{throw Error('Profile access unavailable');}}}}),/Profile access unavailable/);
+await assert.rejects(readRecordedCoverage(()=>true,()=>{}, {entities:{SourceCollectionQueue:{filter:async()=>({items:[],has_more:false})},JurisdictionProfile:{filter:async()=>({items:[],has_more:false})},PermitLocality:{filter:async()=>{throw Error('Office access unavailable');}}}}),/Office access unavailable/);
 console.log('SDK adapter acceptance passed: OH/KY scope, projected identity fields, cursor handoff/dedupe, cancellation before next entity and failure propagation. Mocked SDK only.');
 }finally{delete globalThis.window;await rm(dir,{recursive:true,force:true});}

@@ -1,3 +1,5 @@
+import { summarizeMatchedLocalityAuthority } from '../../../base44/shared/permittingAddressLocality.js';
+
 // Read-only snapshot traversal. Page size is a request unit, never a total cap.
 export async function readAllCoveragePages(readPage, { isCurrent = () => true, onProgress = () => {} } = {}) {
   const rows = new Map(), cursors = new Set();
@@ -80,4 +82,32 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
     geographic_snapshot_accounted_for:true,inventory_complete_for_permitting:false,authority_verified:false,
     gaps:['Geographic candidates are not verified permitting authorities.','Incorporated-place county relationships and consolidated/status-review entities remain explicit review items.','Forms, archives, electrical permit issuance, electrical inspection and staff approval require separate evidence review.'],
     notice:'Missing means no name/type candidate in this permission-scoped read; it does not prove absent government or authority.' };
+}
+
+export function reconcileElectricalOfficeCoverage(localities) {
+  if (!Array.isArray(localities)) throw Error('Invalid electrical office coverage records');
+  const roles = ['electrical_permit', 'electrical_inspection'];
+  const states = Object.fromEntries(['OH','KY'].map(state => [state, {
+    locality_count: 0, both_roles_reviewed: 0, legacy_broad_role_count: 0,
+    roles: Object.fromEntries(roles.map(role => [role, {staff_verified:0, needs_review:0, missing:0}]))
+  }]));
+  const seen = new Set(), gaps = [], excluded_record_ids = [];
+  for (const row of localities) {
+    if (!row?.id || seen.has(row.id)) throw Error('Electrical office coverage identity missing or duplicated');
+    seen.add(row.id);
+    const state = String(row.state || '').trim().toUpperCase();
+    if (!states[state]) { excluded_record_ids.push(row.id); continue; }
+    const coverage = summarizeMatchedLocalityAuthority(row).electrical_coverage;
+    const counts = states[state]; counts.locality_count++;
+    for (const role of roles) counts.roles[role][coverage.roles[role]]++;
+    if (!coverage.missing_roles.length) counts.both_roles_reviewed++;
+    if (coverage.legacy_broad_role_present) counts.legacy_broad_role_count++;
+    if (coverage.missing_roles.length) gaps.push({
+      id:row.id, name:String(row.name || 'Unnamed locality'), state, roles:coverage.roles,
+      legacy_broad_role_present:coverage.legacy_broad_role_present
+    });
+  }
+  gaps.sort((a,b) => ['OH','KY'].indexOf(a.state)-['OH','KY'].indexOf(b.state) || a.name.localeCompare(b.name));
+  return {states, gaps, excluded_record_ids, inventory_complete:false, applicability_verified:false,
+    notice:'Saved locality office relationships within your read permissions only. This does not establish statewide electrical coverage, jurisdiction identity or project applicability.'};
 }
