@@ -1443,3 +1443,36 @@ test("admin will not release pending photo source based solely on unverified app
   assert.equal(store.receipts.get(retry.id).status,"applied");
   assert.equal(store.updates,0);
 });
+
+
+test("status reconciliation does not certify an unverified applied owner retry or release its source",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"applied",urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  delete store.receipts.get(retry.id).result_summary.work_order_updated_date;
+  const status=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:source.result_summary.request_id},client);
+  assert.equal(status.code,200);
+  assert.equal(status.body.status,"started");
+  assert.match(status.body.error_message,/still being verified/i);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});
+
+test("new Save request cannot resolve unverified applied photo owner as prior success",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"applied",urls:[
+    "https://files.example/old-a.jpg","https://files.example/owner-b.jpg",
+  ]});
+  delete store.receipts.get(retry.id).result_summary.work_order_updated_date;
+  const result=await call(payload("request-new-def-789012"),client);
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/still being verified/i);
+  assert.equal(result.body.recovered_previous,undefined);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.updates,0);
+  assert.equal(store.uploads.length,0);
+});

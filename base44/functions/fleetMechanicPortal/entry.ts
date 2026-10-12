@@ -426,6 +426,12 @@ async function reconcileReservedMechanicPhotoRetry(
     return {status:'applied',work_order:current};
   }
   if (retry.status === 'applied') {
+    // Receipt state alone cannot prove a delayed retry committed Fleet work.
+    // A later legitimate update may replace its marker, so accept verified
+    // persisted commit provenance as well as the current work-order marker.
+    if (!await verifiedMechanicAppliedReceipt(Receipt,retry,current)) {
+      return {status:'blocked',work_order:current};
+    }
     await resolveReusedUploadReceipt(Receipt,retry);
     return {status:'applied',work_order:current};
   }
