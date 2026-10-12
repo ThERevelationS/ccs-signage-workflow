@@ -977,6 +977,7 @@ export default function UserManagement() {
                     variant="ghost"
                     size="icon"
                     onClick={() => openEditUser(user)}
+                    aria-label={`Edit ${user.full_name || user.email}`}
                     className="h-8 w-8"
                   >
                     <Edit className="w-4 h-4 text-blue-600" />
