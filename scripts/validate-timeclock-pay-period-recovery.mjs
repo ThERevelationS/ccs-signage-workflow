@@ -5771,9 +5771,10 @@ test('v28 manager-only ambiguous semantic suffix blocks payroll finalization for
   }
 });
 
-test('v28 direct correction ordering uses server time, never opaque IDs, and equal-time reversal fails closed', async () => {
-  for (const tied of [false, true]) {
-    const prefix = tied ? 'v28-opaque-tied' : 'v28-opaque-ordered';
+async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }) {
+  for (const scenario of includeDuplicates ? ['duplicate-c', 'duplicate-d', 'conflicting-c'] : ['ordered', 'tied']) {
+    const tied = scenario === 'tied';
+    const prefix = 'v28-opaque-' + scenario;
     const h = setup({
       entryCount: 1, serverNow: '2026-09-20T22:00:00.000Z',
       auditIdForRequest: (id) => id === prefix + '-c' ? prefix + '-z-first' :
@@ -5825,6 +5826,18 @@ test('v28 direct correction ordering uses server time, never opaque IDs, and equ
     assert.ok(c.id.localeCompare(d.id) > 0, 'IDs must sort opposite to actual correction sequence');
     assert.equal(c.server_timestamp === d.server_timestamp, tied);
     assert.equal(c.details.corrected.clock_in, d.details.original.clock_in);
+    if (includeDuplicates) {
+      const source = scenario === 'duplicate-d' ? d : c;
+      const duplicate = { ...clone(source), id: prefix + '-extra-confirmed' };
+      if (scenario === 'conflicting-c') {
+        duplicate.details.corrected.clock_in = '2026-09-20T14:31:00.000Z';
+        duplicate.details.corrected.total_hours = 7.483333333333333;
+      }
+      h.rows.TimeClockAudit.push(duplicate);
+      assert.equal(h.rows.TimeClockAudit.filter((row) => row.request_id === source.request_id).length, 2,
+        'Fixture requires two confirmed rows with one exact request ID and timestamp');
+      assert.equal(duplicate.server_timestamp, source.server_timestamp);
+    }
 
     h.setServerNow('2026-09-20T22:04:00.000Z');
     await ok(h.invoke({
@@ -5837,11 +5850,11 @@ test('v28 direct correction ordering uses server time, never opaque IDs, and equ
     const previousStatus = period.status;
     h.setServerNow('2026-09-20T22:05:00.000Z');
     const finalize = () => h.action('finalize', prefix + '-finalize-d');
-    if (tied) {
+    if (tied || includeDuplicates) {
       for (let attempt = 0; attempt < 2; attempt++) {
         const denied = await finalize();
         assert.equal(denied.status, 409, JSON.stringify(denied.body));
-        assert.match(String(denied.body.error || ''), /ambiguous direct-manager correction history/i);
+        if (tied) assert.match(String(denied.body.error || ''), /ambiguous direct-manager correction history/i);
         assert.deepEqual(period.finalized_summary, previousSnapshot);
         assert.deepEqual(period.finalized_summary_history, previousHistory);
         assert.equal(period.status, previousStatus);
@@ -5863,6 +5876,14 @@ test('v28 direct correction ordering uses server time, never opaque IDs, and equ
     }));
     assert.equal(checked.verified, true, JSON.stringify(checked));
   }
+}
+
+test('v28 direct correction ordering uses server time, never opaque IDs, and equal-time reversal fails closed', async () => {
+  await exerciseV28OpaqueCorrectionOrdering({ includeDuplicates: false });
+});
+
+test('v28 duplicate or conflicting confirmed correction audits with same request and timestamp fail closed', async () => {
+  await exerciseV28OpaqueCorrectionOrdering({ includeDuplicates: true });
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
