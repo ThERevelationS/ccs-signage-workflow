@@ -1274,6 +1274,13 @@ async function claimSyncRun(base44: any, status: any) {
     throw Object.assign(new Error(detail), { status: 409 });
   }
 
+  // A manual link recovery must never take over another running sync just
+  // because it stopped reporting progress for two minutes. That older sync
+  // may still be writing the same permanent Smartsheet row identity.
+  if (status?.action === 'recover_verified_sales_create' && current?.status === 'running') {
+    throw Object.assign(new Error('Another Smartsheet sync still owns the coordinator. Review or explicitly recover its stale run before attempting a Sales permanent-row link.'), {status:409});
+  }
+
   // Manually verified Sales permanent-row recovery shares this SAME
   // coordinator with Sales/Order pull, push and Save & Sync. Never
   // automatically supersede an old recovery after the 2-minute generic
