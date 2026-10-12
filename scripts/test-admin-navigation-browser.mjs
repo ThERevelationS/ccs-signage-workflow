@@ -966,6 +966,97 @@ try {
       assert.equal(await page.evaluate(() => window.__adminSyntheticDeletionRowNew.id), 'synthetic-new-request');
     });
 
+  await check('Invite session switch stops old create follow-ups and keeps new success', 375,
+    '/?tab=users&real_users=1', async page => {
+      await page.evaluate(() => { window.__adminInviteHoldStage = 'create'; });
+      const email = page.getByPlaceholder('colleague@company.com');
+      await email.fill('old-create@example.invalid');
+      await page.getByRole('button', { name: 'Add User' }).evaluate(button => {
+        button.click(); button.click();
+      });
+      await page.waitForFunction(() => window.__adminInviteCreateCalls?.length === 1 &&
+        !!window.__adminInvitePendingCreate);
+      await page.evaluate(() => {
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.waitForFunction(() => {
+        const form = document.querySelector('input[placeholder="colleague@company.com"]');
+        return form?.value === '';
+      });
+      await page.getByRole('button', { name: 'Add User' }).waitFor();
+      await email.fill('new-create@example.invalid');
+      await page.getByRole('button', { name: 'Add User' }).click();
+      await page.getByText(/User authorized and invitation email sent to new-create@example.invalid/).waitFor();
+      assert.equal(await page.evaluate(() => window.__adminInviteCreateCalls.length), 2);
+      await page.evaluate(() => { window.__adminInvitePendingCreate(); });
+      await page.waitForTimeout(50);
+      assert.equal(await page.evaluate(() => window.__adminInviteFunctionCalls.length), 2,
+        'Only the new session may issue onboarding and Smartsheet actions');
+      assert.deepEqual(await page.evaluate(() => window.__adminInviteFunctionCalls.map(call => call.session)),
+        ['synthetic-new', 'synthetic-new']);
+      assert.equal(await page.getByText(/old-create@example.invalid/).count(), 0);
+      assert.equal(await page.getByText(/new-create@example.invalid/).count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Add User' }).isEnabled(), true);
+    });
+
+  await check('Late old onboarding failure cannot change new invitation or call old Smartsheet', 375,
+    '/?tab=users&real_users=1', async page => {
+      await page.evaluate(() => {
+        window.__adminInviteHoldStage = 'onboardingAccountAction';
+        window.__adminInviteRejectStage = 'onboardingAccountAction';
+      });
+      const email = page.getByPlaceholder('colleague@company.com');
+      await email.fill('old-mail@example.invalid');
+      await page.getByRole('button', { name: 'Add User' }).click();
+      await page.waitForFunction(() => !!window.__adminInvitePendingFunction);
+      await page.evaluate(() => {
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.waitForFunction(() =>
+        document.querySelector('input[placeholder="colleague@company.com"]')?.value === '');
+      await email.fill('new-mail@example.invalid');
+      await page.getByRole('button', { name: 'Add User' }).click();
+      await page.getByText(/User authorized and invitation email sent to new-mail@example.invalid/).waitFor();
+      await page.evaluate(() => { window.__adminInvitePendingFunction(); });
+      await page.waitForTimeout(50);
+      assert.equal(await page.getByText(/old-mail@example.invalid/).count(), 0);
+      assert.equal(await page.getByText(/synthetic-private-old-invite-error/).count(), 0);
+      assert.deepEqual(await page.evaluate(() => window.__adminInviteFunctionCalls.map(
+        call => [call.name, call.session])),
+        [['onboardingAccountAction', 'synthetic'],
+         ['onboardingAccountAction', 'synthetic-new'],
+         ['smartsheetSyncAction', 'synthetic-new']]);
+      assert.equal(await page.getByText(/new-mail@example.invalid/).count(), 1);
+    });
+
+  await check('Late old Smartsheet response cannot erase the current invitation form draft', 375,
+    '/?tab=users&real_users=1', async page => {
+      await page.evaluate(() => {
+        window.__adminInviteHoldStage = 'smartsheetSyncAction';
+        window.__adminInviteRejectStage = 'smartsheetSyncAction';
+      });
+      const email = page.getByPlaceholder('colleague@company.com');
+      await email.fill('old-sync@example.invalid');
+      await page.getByRole('button', { name: 'Add User' }).click();
+      await page.waitForFunction(() => !!window.__adminInvitePendingFunction);
+      await page.evaluate(() => {
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.waitForFunction(() =>
+        document.querySelector('input[placeholder="colleague@company.com"]')?.value === '');
+      await email.fill('new-draft@example.invalid');
+      await page.evaluate(() => { window.__adminInvitePendingFunction(); });
+      await page.waitForTimeout(50);
+      assert.equal(await email.inputValue(), 'new-draft@example.invalid');
+      assert.equal(await page.getByText(/old-sync@example.invalid/).count(), 0);
+      assert.equal(await page.getByText(/synthetic-private-old-invite-error/).count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Add User' }).isEnabled(), true);
+      assert.equal(await page.evaluate(() => window.__adminInviteFunctionCalls.length), 2);
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
