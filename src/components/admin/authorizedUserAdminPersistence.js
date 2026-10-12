@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { validateDeletionImpactReport } from "./deletionImpactValidation.js";
+import { withDeletionImpactDeadline } from "./deletionImpactDeadline.js";
 
 function requireSessionToken(sessionToken) {
   const token = String(sessionToken || "").trim();
@@ -43,11 +44,11 @@ export async function getAccountDeletionImpactAdmin({ request, sessionToken } = 
     throw new Error("Deletion request identity is incomplete. Reload before reviewing its impact.");
   }
 
-  const result = await invokeAdminUsers({
+  const result = await withDeletionImpactDeadline(() => invokeAdminUsers({
     action: "deletion_impact",
     request_id: request.id,
     session_token: requireSessionToken(sessionToken),
-  });
+  }));
   if (result?.success !== true) {
     throw new Error("Account deletion impact could not be verified safely.");
   }
