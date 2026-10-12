@@ -29,6 +29,7 @@ import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContact
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
 import { readSalesPullCreateAttemptRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
+import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegrity.mjs';
@@ -2594,9 +2595,70 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'audit_sales_create_attempts', 'review_sales_create_candidate', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
+    }
+
+    if (action === 'audit_sales_create_attempts' || action === 'review_sales_create_candidate') {
+      // Never expose unverified Sales creation evidence to a regular user or a
+      // scheduled/background invocation. Neither action claims the coordinator,
+      // writes WorkOrders or edits a Smartsheet row.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({success:false,error:'An authenticated Sales administrator is required.'},{status:403});
+      }
+      const {config,duplicateCount} = await loadSyncConfig(base44);
+      const profile = config?.sales || {};
+      const sheetId = cleanText(profile.smartsheet_sheet_id,40);
+      const bindings = filterSalesColumnBindings(profile.column_bindings || {});
+      const columnIds = [...new Set(Object.values(bindings)
+        .map((value:any)=>String(value).trim()).filter((value:string)=>/^\d+$/.test(value)))];
+      if (duplicateCount !== 1 || !/^\d+$/.test(sheetId) || !columnIds.length) {
+        return Response.json({success:false,error:'The Sales Smartsheet configuration cannot be verified.'},{status:409});
+      }
+      const attempts = await loadAllEntityRows({
+        entity:base44.asServiceRole.entities.WorkOrder,
+        query:{smartsheet_create_attempt:{$exists:true}},
+        sort:'id',label:'Admin read-only Sales create attempts',
+      });
+      if (action === 'audit_sales_create_attempts') {
+        return Response.json({success:true,read_only:true,writes_attempted:false,
+          dataset:'sales',sheet_id:sheetId,...summarizeSalesCreateAttempts(attempts,sheetId)});
+      }
+      const workorderId = cleanText(body?.workorder_id,100);
+      const rowId = cleanText(body?.smartsheet_row_id,40);
+      if (!workorderId || !/^\d+$/.test(rowId)) return Response.json({
+        success:false,error:'A WorkOrder ID and explicit numeric permanent Smartsheet row ID are required.'},{status:400});
+      const record = await base44.asServiceRole.entities.WorkOrder.get(workorderId);
+      if (!record || !record.smartsheet_create_attempt) return Response.json({
+        success:false,error:'No saved Sales create attempt was found for that WorkOrder.'},{status:409});
+      const rowsAlreadyLinked = await loadAllEntityRows({
+        entity:base44.asServiceRole.entities.WorkOrder,
+        query:{smartsheet_sheet_id:sheetId,smartsheet_row_id:rowId},
+        sort:'id',label:'Sales create candidate permanent-link conflict review',
+      });
+      const otherAttempts = attempts.filter((candidate:any)=>
+        String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')===sheetId &&
+        String(candidate?.smartsheet_create_attempt?.row_id ?? '')===rowId);
+      const params = new URLSearchParams({
+        rowIds:rowId,columnIds:columnIds.join(','),exclude:'nonexistentCells',
+      });
+      const remote = await smartsheetGet('/sheets/'+sheetId+'?'+params.toString(),token);
+      if (String(remote.body?.id ?? '')!==sheetId ||
+          !Array.isArray(remote.body?.rows) ||
+          !columnIds.every((id:string)=>remote.body?.columns?.some((col:any)=>String(col.id)===id))) {
+        throw new Error('Smartsheet sheet, row, or column metadata could not be verified; no conclusion was accepted.');
+      }
+      const rows = normalizeSheetRows(remote.body);
+      if (rows.some((row:any)=>String(row.id)!==rowId) || rows.length>1) {
+        throw new Error('Smartsheet returned unexpected or duplicate permanent row IDs.');
+      }
+      const candidate = classifySalesCreateReview({
+        record,sheetId,rowId,bindings,otherLinkedRecords:rowsAlreadyLinked,
+        otherAttempts,remoteVerified:rows.length===1,
+        remoteSnapshot:rows.length===1 ? buildSalesPullSnapshot(rows[0],bindings) : null,
+      });
+      return Response.json({success:true,dataset:'sales',...candidate});
     }
 
     if (action === 'recover_stale_sales_run') {
