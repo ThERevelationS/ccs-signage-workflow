@@ -814,6 +814,34 @@ try {
       assert.equal(await page.getByRole('dialog', { name: /Account Deletion Impact/ }).count(), 0);
     });
 
+  await check('Stalled impact scan times out, retries safely and rejects the late first response', 375,
+    '/?tab=users&real_users=1&deletion_rows=1&impact_timeout=1', async page => {
+      await page.evaluate(() => { window.__adminImpactDelay = true; });
+      await page.getByRole('button', { name: 'Review Impact' }).click();
+      const dialog = page.getByRole('dialog', { name: /Account Deletion Impact/ });
+      const error = dialog.getByRole('alert', { name: 'Account deletion impact unavailable' });
+      await error.waitFor();
+      assert.match(await error.innerText(), /impact scan took too long/i);
+      assert.match(await error.innerText(), /previous read may still be finishing/);
+      assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Mark Reviewed' }).count(), 1,
+        'Request decisions remain separate from impact scan read status');
+      await page.evaluate(() => { window.__adminImpactDelay = false; });
+      await error.getByRole('button', { name: 'Retry impact scan' }).click();
+      await dialog.getByText('Synthetic review verified').waitFor();
+      assert.equal(await error.count(), 0);
+      await page.evaluate(() => {
+        const old = window.__adminImpactPending.shift();
+        old.report.blockers = ['Stale first scan should not appear'];
+        old.resolve(old.report);
+      });
+      await page.waitForTimeout(30);
+      assert.equal(await dialog.getByText('Stale first scan should not appear').count(), 0);
+      assert.equal(await dialog.getByText('Synthetic review verified').count(), 1);
+      await dialog.getByRole('button', { name: 'Close' }).first().click();
+      await dialog.waitFor({ state: 'detached' });
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
