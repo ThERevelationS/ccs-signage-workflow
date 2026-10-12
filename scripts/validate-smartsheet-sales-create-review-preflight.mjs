@@ -80,8 +80,9 @@ yes(backend.includes('classifySalesCreateReview({') &&
   backend.includes('read_only:true,writes_attempted:false'),
   'Backend uses tested evidence classification and explicit read-only summary.');
 yes(ui.includes('Inspect exact row (no changes)') &&
-  ui.includes('No relinking or writes attempted'),
-  'UI cannot claim to perform a write or final recovery.');
+  ui.includes('No changes occur unless you explicitly confirm recovery.') &&
+  ui.includes('result?.classification === "verified_candidate"'),
+  'Read-only inspection remains separate from explicitly confirmed guarded recovery.');
 yes(settings.includes('<SalesCreateAttemptReview sessionToken={sessionToken} />') &&
   persistence.includes('result.writes_attempted !== false'),
   'Admin panel renders reviewer and client rejects non-read-only responses.');
