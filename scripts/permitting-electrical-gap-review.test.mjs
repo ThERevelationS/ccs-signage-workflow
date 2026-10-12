@@ -117,7 +117,7 @@ test('confirmed locality save notifies once and notification failure does not un
   await act(async()=>{tree=Renderer.create(React.createElement(h.Component,{isOpen:true,onClose:()=>{},localities:[row],initialSelectedLocalityId:row.id,onLocalitySaved:id=>{notifications.push(id);throw Error('Fixture refresh failure');}}));});
   const input=tree.root.findAllByType('input').find(node=>node.props.value===row.name);
   await act(async()=>input.props.onChange({target:{value:'Changed locality'}}));
-  const save=tree.root.findAllByType('button').find(node=>node.children.some(child=>child==='Save'));
+  const save=tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&child.trim()==='Save Locality'));
   await act(async()=>save.props.onClick());assert.deepEqual(notifications,[row.id]);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Unsaved changes|Fixture refresh failure/);
  }finally{await act(async()=>tree?.unmount());}
 });
@@ -125,7 +125,7 @@ test('failed locality save does not notify coverage',async()=>{
  const notifications=[],h=dialogHarness({save:async()=>{throw Error('Fixture save rejected');}});let tree;
  try{
   await act(async()=>{tree=Renderer.create(React.createElement(h.Component,{isOpen:true,onClose:()=>{},localities:[row],initialSelectedLocalityId:row.id,onLocalitySaved:id=>notifications.push(id)}));});
-  const save=tree.root.findAllByType('button').find(node=>node.children.some(child=>child==='Save'));
+  const save=tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&child.trim()==='Save Locality'));
   await act(async()=>save.props.onClick());assert.deepEqual(notifications,[]);
  }finally{await act(async()=>tree?.unmount());}
 });

@@ -42,7 +42,7 @@ function matches(row, query = {}) {
     return actual === value || (actual == null && value == null);
   });
 }
-function setup({ entryCount = 1, serverNow = null } = {}) {
+function setup({ entryCount = 1, serverNow = null, auditIdForRequest = null } = {}) {
   revision = 0;
   // Inject only the backend wall-clock constructor for company-day boundary
   // acceptance; retain real Date.now() for session validation and lock ages.
@@ -83,6 +83,15 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
     async create(data) {
       const item = { ...clone(data), id: 'synthetic-' + entityName + '-' + (++revision),
         updated_date: new Date(Date.now() + revision).toISOString() };
+      // Opaque Base44 IDs are not chronological. Fixture-only overrides test
+      // same-time ordering without fabricating any actual audit payloads.
+      if (entityName === 'TimeClockAudit' && typeof auditIdForRequest === 'function') {
+        const opaqueId = auditIdForRequest(String(data.request_id || ''));
+        if (opaqueId) {
+          assert.equal((rows.TimeClockAudit || []).some((audit) => audit.id === opaqueId), false);
+          item.id = opaqueId;
+        }
+      }
       (rows[entityName] ||= []).push(item);
       return clone(item);
     },
