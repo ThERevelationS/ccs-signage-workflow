@@ -72,18 +72,51 @@ async function mechanicMutationFingerprint(action: string, body: any) {
   }));
 }
 
+function mechanicReceiptMarkerIdentityMatches(current:any, receipt:any) {
+  const key = String(receipt?.operation_key || '');
+  const match = /^mechanic:([^:]+):([^:]+):(start|save):([A-Za-z0-9_-]{16,120})$/.exec(key);
+  if (!match) return false;
+  const [,grantId,workOrderId,action,requestId] = match;
+  const summary = receipt?.result_summary || {};
+  return !!receipt?.id && !!receipt?.payload_fingerprint &&
+    String(current?.id || '') === workOrderId &&
+    String(current?.mechanic_operation_key || '') === key &&
+    String(current?.mechanic_operation_fingerprint || '') === String(receipt.payload_fingerprint) &&
+    receipt.operation_type === MECHANIC_MUTATION_TYPES[action] &&
+    receipt.target_entity === 'FleetMaintenanceWorkOrder' &&
+    String(receipt.target_id || '') === workOrderId &&
+    String(receipt.actor_user_id || '') === grantId &&
+    String(summary.grant_id || '') === grantId &&
+    summary.action === action &&
+    String(summary.request_id || '') === requestId &&
+    !!String(summary.expected_updated_date || '');
+}
+
+function mechanicReceiptIdentitySelector(receipt:any) {
+  const summary = receipt.result_summary;
+  return {id:receipt.id,operation_key:receipt.operation_key,
+    operation_type:receipt.operation_type,target_entity:receipt.target_entity,
+    target_id:receipt.target_id,actor_user_id:receipt.actor_user_id,
+    payload_fingerprint:receipt.payload_fingerprint,
+    'result_summary.grant_id':summary.grant_id,
+    'result_summary.action':summary.action,
+    'result_summary.request_id':summary.request_id,
+    'result_summary.expected_updated_date':summary.expected_updated_date};
+}
+
 function workOrderHasMechanicReceipt(current: any, receipt: any) {
-  return !!receipt?.operation_key &&
-    String(current?.mechanic_operation_key || '') === String(receipt.operation_key || '') &&
-    String(current?.mechanic_operation_fingerprint || '') === String(receipt.payload_fingerprint || '');
+  return mechanicReceiptMarkerIdentityMatches(current,receipt);
 }
 
 async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: any, recovered = false) {
+  if (!mechanicReceiptMarkerIdentityMatches(current,receipt)) {
+    throw Object.assign(new Error('Fleet mechanic receipt identity does not match the committed work-order marker. CCS review is required.'),{status:409});
+  }
   if (receipt?.status === 'applied') return receipt;
   // A proven Fleet work-order commit wins over an earlier admin cancellation,
   // but never replace newer upload evidence or reconciliation provenance.
   const changed = await Receipt.updateMany(
-    {id:receipt.id,status:{$in:['started','failed','cancelled']}},
+    {...mechanicReceiptIdentitySelector(receipt),status:{$in:['started','failed','cancelled']}}, 
     {$set:{
       status:'applied',
       applied_at:receipt?.applied_at || nowIso(),
@@ -96,8 +129,8 @@ async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: a
   );
   if (changed?.updated === 1) return {...receipt,status:'applied'};
   const latest = await Receipt.get(receipt.id).catch(()=>null);
-  if (latest?.status === 'applied') return latest;
-  throw Object.assign(new Error('Fleet mechanic receipt changed before committed work evidence could be recorded. CCS review is required.'),{status:409});
+  if (latest?.status === 'applied' && mechanicReceiptMarkerIdentityMatches(current,latest)) return latest;
+  throw Object.assign(new Error('Fleet mechanic receipt identity or status changed before committed work evidence could be recorded. CCS review is required.'),{status:409});
 }
 
 async function claimMechanicReceipt(Receipt: any, data: any) {
