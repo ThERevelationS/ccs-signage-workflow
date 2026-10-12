@@ -31,6 +31,7 @@ import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesC
 import { readSalesPullCreateAttemptRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
+import { auditSalesPermanentRowOwners } from '../../shared/smartsheetSalesPermanentOwnershipAudit.mjs';
 import { classifySalesRecoveryHistory, acknowledgeVerifiedSalesRecoveryHistory } from '../../shared/smartsheetSalesRecoveryHistory.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
@@ -2632,9 +2633,31 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'audit_sales_create_attempts', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
+    }
+
+    if (action === 'audit_sales_permanent_ownership') {
+      // Read-only, admin-session-only complete linked/marker scan. A failed
+      // or capped page read fails closed; this is NOT a unique-index guarantee.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({success:false,error:'An authenticated Sales administrator is required.'},{status:403});
+      }
+      const {config,duplicateCount} = await loadSyncConfig(base44);
+      const sheetId = cleanText(config?.sales?.smartsheet_sheet_id,40);
+      if (duplicateCount !== 1 || !/^\d+$/.test(sheetId)) {
+        return Response.json({success:false,error:'The configured Sales sheet identity could not be verified.'},{status:409});
+      }
+      const entity = base44.asServiceRole.entities.WorkOrder;
+      const [links,attempts] = await Promise.all([
+        loadAllEntityRows({entity,query:{smartsheet_row_id:{$exists:true}},sort:'id',
+          label:'Sales permanent row ownership linked records'}),
+        loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},sort:'id',
+          label:'Sales permanent row ownership durable attempt records'}),
+      ]);
+      return Response.json({success:true,dataset:'sales',
+        ...auditSalesPermanentRowOwners(links,attempts,sheetId)});
     }
 
     if (action === 'audit_sales_create_attempts' || action === 'review_sales_create_candidate') {
