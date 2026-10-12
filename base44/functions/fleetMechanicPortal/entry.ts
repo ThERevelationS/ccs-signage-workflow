@@ -108,6 +108,12 @@ function mechanicReceiptIdentitySelector(receipt:any) {
     'result_summary.expected_updated_date':summary.expected_updated_date};
 }
 
+function mechanicReceiptIdentityUnchanged(previous:any, latest:any) {
+  const selector = mechanicReceiptIdentitySelector(previous);
+  return Object.entries(selector).every(([key,value]) =>
+    String(key.split('.').reduce((row:any,part)=>row?.[part],latest) ?? '') === String(value ?? ''));
+}
+
 function workOrderHasMechanicReceipt(current: any, receipt: any) {
   return mechanicReceiptMarkerIdentityMatches(current,receipt);
 }
@@ -150,46 +156,71 @@ async function claimMechanicReceipt(Receipt: any, data: any) {
 }
 
 async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
-  // Another reconciler may have committed this receipt while this request lost CAS.
-  // Never downgrade a durable applied/cancelled receipt based on a stale snapshot.
-  await Receipt.updateMany(
-    {id:receipt.id,status:'started'},
-    {$set:{
-      status:'failed',
-      failed_at:nowIso(),
-      error_message:clean(error instanceof Error ? error.message : error,1200),
-    }},
-  ).catch(()=>null);
+  // Failure must not relabel a changed operation or downgrade applied/cancelled evidence.
+  if (!mechanicReceiptOperationIdentityValid(receipt)) {
+    throw Object.assign(new Error('Fleet mechanic failure receipt identity is inconsistent. CCS review is required.'),{status:409});
+  }
+  let changed: any = null;
+  try {
+    changed = await Receipt.updateMany(
+      {...mechanicReceiptIdentitySelector(receipt),status:'started'},
+      {$set:{
+        status:'failed',
+        failed_at:nowIso(),
+        error_message:clean(error instanceof Error ? error.message : error,1200),
+      }},
+    );
+  } catch {
+    // An uncertain acknowledgment is not evidence of failure. Verify below.
+  }
+  if (changed?.updated === 1) return;
+  const latest = await Receipt.get(receipt.id).catch(()=>null);
+  if (latest?.status === 'failed' && mechanicReceiptOperationIdentityValid(latest) &&
+      mechanicReceiptIdentityUnchanged(receipt,latest)) return;
+  throw Object.assign(new Error('Fleet mechanic receipt changed while failure was being recorded. Verify its current operation and work-order evidence before retrying.'),{status:409});
 }
 
 async function cancelMechanicReceipt(Receipt:any, receipt:any, reason:string, adminEmail='') {
   const resolvedAt = nowIso();
-  // A mechanic may commit after the admin read but before cancellation.
-  // Only transition the state we actually reviewed; never downgrade applied.
-  // Update nested provenance fields without replacing concurrent photo evidence.
-  const update = await Receipt.updateMany({id:receipt.id,status:receipt.status},{$set:{
-    status:'cancelled',
-    error_message:clean(reason,1200),
-    'result_summary.admin_reconciled_not_applied':true,
-    'result_summary.admin_reconciled_at':resolvedAt,
-    'result_summary.admin_reconciled_by':adminEmail || '',
-  }});
-  if (update?.updated === 1) return {...receipt,status:'cancelled'};
+  // Bind admin cancellation to reviewed identity and status. Preserve photo and audit notes.
+  if (!mechanicReceiptOperationIdentityValid(receipt)) {
+    throw Object.assign(new Error('Fleet mechanic cancellation receipt identity is inconsistent. CCS review is required.'),{status:409});
+  }
+  let update: any = null;
+  try {
+    update = await Receipt.updateMany({...mechanicReceiptIdentitySelector(receipt),status:receipt.status},{$set:{
+      status:'cancelled',
+      error_message:clean(reason,1200),
+      'result_summary.admin_reconciled_not_applied':true,
+      'result_summary.admin_reconciled_at':resolvedAt,
+      'result_summary.admin_reconciled_by':adminEmail || '',
+    }});
+  } catch {
+    // Lost acknowledgment may still have committed; inspect current state.
+  }
+  if (update?.updated === 1) return {...receipt,status:'cancelled',error_message:clean(reason,1200)};
   const latest = await Receipt.get(receipt.id).catch(()=>null);
-  if (!latest) throw Object.assign(new Error('Fleet mechanic receipt changed during admin reconciliation and could not be verified.'),{status:409});
+  if (!latest || !mechanicReceiptOperationIdentityValid(latest) ||
+      !mechanicReceiptIdentityUnchanged(receipt,latest)) return {status:'blocked'};
   return latest;
 }
 
-async function adminCancelMechanicReceiptResult(Receipt:any, receipt:any, reason:string, adminEmail:string, workOrder:any) {
+async function adminCancelMechanicReceiptResult(Receipt:any, WorkOrder:any, receipt:any, reason:string, adminEmail:string, workOrder:any) {
   const resolved = await cancelMechanicReceipt(Receipt,receipt,reason,adminEmail);
   if (resolved.status === 'applied') {
-    return {status:'applied',recovered:false,work_order:workOrder};
+    // Concurrent receipt state alone is not proof of a Fleet work-order commit.
+    const latestWorkOrder = await WorkOrder.get(String(receipt.target_id || '')).catch(()=>null);
+    if (latestWorkOrder && workOrderHasMechanicReceipt(latestWorkOrder,resolved)) {
+      return {status:'applied',recovered:false,work_order:latestWorkOrder};
+    }
+    return {status:'blocked',recovered:false,work_order:latestWorkOrder || workOrder,
+      error_message:'The mechanic receipt became applied during admin review, but its Fleet work-order marker could not be verified. CCS review is required.'};
   }
   if (resolved.status !== 'cancelled') {
     return {status:'blocked',recovered:false,work_order:workOrder,
       error_message:'The Fleet mechanic receipt changed during admin review. Verify its latest work-order evidence before another reconciliation.'};
   }
-  return {status:'cancelled',recovered:false,work_order:workOrder,error_message:reason};
+  return {status:'cancelled',recovered:false,work_order:workOrder,error_message:resolved.error_message || reason};
 }
 
 async function recordMechanicUploadedPhoto(Receipt:any, receipt:any, priorUrls:string[], url:string) {
@@ -469,7 +500,7 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
   if (receipt.status === 'cancelled') return {status:'cancelled',recovered:false,work_order:current,error_message:receipt.error_message || ''};
   if (receipt.status === 'failed') {
     const reason = receipt.error_message || 'CCS reviewed this failed mechanic operation and chose not to replay it.';
-    return await adminCancelMechanicReceiptResult(Receipt,receipt,reason,adminEmail,current);
+    return await adminCancelMechanicReceiptResult(Receipt,WorkOrder,receipt,reason,adminEmail,current);
   }
   if (receipt.status !== 'started') throw Object.assign(new Error('This Fleet operation receipt is not in a reconcilable state.'),{status:409});
 
@@ -478,23 +509,23 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
   const authorization = mechanicGrantAllowsMutation(grant,action,String(current.equipment_id || ''),Date.now());
   if (!authorization.allowed) {
     const message = `Mechanic access is ${authorization.reason || 'no longer authorized'}. Admin reconciliation did not replay the interrupted operation.`;
-    return await adminCancelMechanicReceiptResult(Receipt,receipt,message,adminEmail,current);
+    return await adminCancelMechanicReceiptResult(Receipt,WorkOrder,receipt,message,adminEmail,current);
   }
   if (!ACTIVE.has(current.status)) {
     const message = 'The Fleet work order is no longer active. Admin reconciliation did not replay the interrupted mechanic operation.';
-    return await adminCancelMechanicReceiptResult(Receipt,receipt,message,adminEmail,current);
+    return await adminCancelMechanicReceiptResult(Receipt,WorkOrder,receipt,message,adminEmail,current);
   }
   const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
   if (!recovery.recoverable) {
     const message = `The interrupted mechanic operation cannot be safely replayed (${recovery.reason || 'unknown recovery state'}).`;
-    return await adminCancelMechanicReceiptResult(Receipt,receipt,message,adminEmail,current);
+    return await adminCancelMechanicReceiptResult(Receipt,WorkOrder,receipt,message,adminEmail,current);
   }
   try {
     const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
       action:'update',id:current.id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
     });
     if (result?.data?.error) {
-      return await adminCancelMechanicReceiptResult(Receipt,receipt,result.data.error,adminEmail,current);
+      return await adminCancelMechanicReceiptResult(Receipt,WorkOrder,receipt,result.data.error,adminEmail,current);
     }
     const updated = result?.data?.work_order || await WorkOrder.get(current.id);
     await markMechanicReceiptApplied(Receipt,receipt,updated,true);
@@ -508,7 +539,7 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
       return {status:'applied',recovered:true,work_order:fresh,admin_email:adminEmail};
     }
     const message = clean(error instanceof Error ? error.message : error,1200) || 'Admin reconciliation could not prove the mechanic operation applied.';
-    return await adminCancelMechanicReceiptResult(Receipt,receipt,message,adminEmail,fresh || current);
+    return await adminCancelMechanicReceiptResult(Receipt,WorkOrder,receipt,message,adminEmail,fresh || current);
   }
 }
 
