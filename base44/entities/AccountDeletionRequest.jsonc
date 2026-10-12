@@ -43,6 +43,10 @@
       "type": "string",
       "description": "Administrator email that later resolved the request"
     },
+    "resolution_source_updated_date": {
+      "type": "string",
+      "description": "Pending record version used for the administrator's conditional resolution; supports safe duplicate retries."
+    },
     "admin_notes": {
       "type": "string",
       "description": "Administrative processing notes"
