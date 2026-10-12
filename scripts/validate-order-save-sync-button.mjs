@@ -7,7 +7,7 @@ const sheet = fs.readFileSync('src/components/orders/OrderSpreadsheet.jsx', 'utf
 assert.match(sheet, /React\.useImperativeHandle\(ref,[\s\S]*?saveAndSync,/, 'OrderSpreadsheet must expose saveAndSync through its page ref');
 assert.match(page, /onClick=\{\(\) => hasLocalOrderChanges\s*\? spreadsheetRef\.current\?\.saveAndSync\?\.\(\)\s*: spreadsheetRef\.current\?\.pullFromSmartsheet\?\.\(\)\}/, 'Order Form must choose guarded Save & Sync for local edits and pull-only Sync when clean');
 assert.match(page, /saveStatus\.isPulling \? "Checking Smartsheet\.\.\."[\s\S]*?saveStatus\.isSyncing \? "Syncing\.\.\."[\s\S]*?saveStatus\.isSaving \? "Saving\.\.\."[\s\S]*?hasLocalOrderChanges \? "Save & Sync" : "Sync"/, 'Button must display both modes and truthful save/pull progress');
-assert.match(page, /disabled=\{saveStatus\.isSaving \|\| saveStatus\.isSyncing \|\| saveStatus\.isLoading\}/, 'Save/Sync button must block duplicate clicks and unfinished initial loading');
+assert.match(page, /disabled=\{saveStatus\.isSaving \|\| saveStatus\.isSyncing \|\| saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/, 'Save/Sync button must block duplicate clicks, unfinished loading, and unverified Order reads');
 assert.match(page, /onSaveStatusChange=\{setSaveStatus\}/, 'Order Form must consume authoritative save status');
 assert.match(sheet, /const saveResult = await saveAllChanges\(\);[\s\S]*?if \(!saveResult\?\.complete\) \{[\s\S]*?return false;[\s\S]*?pushSavedOrdersToSmartsheet/, 'Smartsheet push must happen only after Base44 save completes');
 const saveAndSyncBody = sheet.slice(sheet.indexOf('const saveAndSync = async () =>'), sheet.indexOf('// Existing internal/manual callers'));
