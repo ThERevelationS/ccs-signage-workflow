@@ -66,7 +66,7 @@ const cases=[
   ['different recorded ID',{smartsheet_create_attempt:{status:'created_unlinked',
     sheet_id:sheetId,row_id:'9002',attempt_id:'attempt-a',expected_snapshot:snapshot}},null,/no longer independently verified/],
   ['deleted WorkOrder',{deleted:true},null,/changed since review/],
-  ['already linked',{smartsheet_row_id:rowId},null,/no longer independently verified/],
+  ['already linked',{smartsheet_row_id:rowId},null,/already has a permanent row ID/],
   ['other sheet',{smartsheet_sheet_id:'111111'},null,/belongs to another sheet/],
   ['missing attempt',{smartsheet_create_attempt:null},null,/changed since review/],
 ];
