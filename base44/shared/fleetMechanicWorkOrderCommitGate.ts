@@ -67,15 +67,7 @@ export async function verifyFleetMechanicWorkOrderCommit({
   if (action === 'save' && summary.retry_reservation_required === true) {
     const sourceId = String(summary.reused_upload_receipt_id || '');
     const source = sourceId ? await Receipt.get(sourceId).catch(()=>null) : null;
-    const sourceUrls = source?.result_summary?.uploaded_photo_urls;
-    const urls = summary.uploaded_photo_urls;
-    if (!source || source.status !== 'started' ||
-        String(source.payload_fingerprint || '') !== String(receipt.payload_fingerprint || '') ||
-        String(source.result_summary?.grant_id || '') !== grantId ||
-        String(source.result_summary?.retry_reserved_by_request_id || '') !== requestId ||
-        !Array.isArray(sourceUrls) || !Array.isArray(urls) ||
-        sourceUrls.length > urls.length ||
-        !sourceUrls.every((url:any,index:number)=>url === urls[index])) {
+    if (!validReusedPhotoSource(source,receipt,grantId,workOrderId,requestId,String(expectedUpdatedAt || ''))) {
       throw deny('the reused-photo reservation is no longer owned by this request');
     }
   }
@@ -123,15 +115,7 @@ export async function verifyFleetMechanicWorkOrderCommit({
   }
   if (action === 'save' && finalSummary.retry_reservation_required === true) {
     const source = await Receipt.get(String(finalSummary.reused_upload_receipt_id || '')).catch(()=>null);
-    const sourceUrls = source?.result_summary?.uploaded_photo_urls;
-    const savedUrls = finalSummary.uploaded_photo_urls;
-    if (!source || source.status !== 'started' ||
-        String(source.payload_fingerprint || '') !== String(finalReceipt.payload_fingerprint || '') ||
-        String(source.result_summary?.grant_id || '') !== grantId ||
-        String(source.result_summary?.retry_reserved_by_request_id || '') !== requestId ||
-        !Array.isArray(sourceUrls) || !Array.isArray(savedUrls) ||
-        sourceUrls.length > savedUrls.length ||
-        !sourceUrls.every((url:any,index:number)=>url === savedUrls[index])) {
+    if (!validReusedPhotoSource(source,finalReceipt,grantId,workOrderId,requestId,String(expectedUpdatedAt || ''))) {
       throw deny('the photo reservation changed during authorization');
     }
   }
