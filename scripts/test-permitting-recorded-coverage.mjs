@@ -63,6 +63,13 @@ try{
  // A replacement user object for the same session keeps its results.
  globalThis.coverageReviewAuth={...globalThis.coverageReviewAuth,currentUser:{...globalThis.coverageReviewAuth.currentUser}};
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));assert.match(JSON.stringify(tree.toJSON()),/current-account/);
+ await act(async()=>{click();});const previousSession=pending.at(-1);
+ globalThis.coverageReviewAuth={...globalThis.coverageReviewAuth,sessionToken:'replacement-session'};
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));assert.equal(previousSession.current(),false);
+ await act(async()=>previousSession.resolve({...snapshot,checked_at:'obsolete-session-result'}));assert.doesNotMatch(JSON.stringify(tree.toJSON()),/obsolete-session-result|Read completed/);
+ await act(async()=>{click();});await act(async()=>pending.at(-1).resolve({...snapshot,checked_at:'before-role-change'}));
+ globalThis.coverageReviewAuth={...globalThis.coverageReviewAuth,currentUser:{...globalThis.coverageReviewAuth.currentUser,role:'staff'}};
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));assert.doesNotMatch(JSON.stringify(tree.toJSON()),/before-role-change/);
  globalThis.coverageReviewAuth={currentUser:null,isRegistered:false};
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));
  assert.doesNotMatch(JSON.stringify(tree.toJSON()),/current-account/);const before=pending.length;
