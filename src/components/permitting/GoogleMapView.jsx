@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {useAuth} from '@/components/auth/EmailGate';
 import {loadGoogleMaps} from './googleMapsLoader';
+import {subscribeGoogleMapsAuthFailure} from './googleMapsAuthFailure';
 const DEFAULT_CENTER={lat:39.1031,lng:-84.5120};
 export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,markerTitle='',boundaries=[]}){
  const {sessionToken}=useAuth(),container=useRef(null),map=useRef(null),marker=useRef(null),line=useRef(null),layers=useRef({}),measure=useRef(false),latest=useRef({position,markerTitle}),[layerState,setLayerState]=useState({}),[ready,setReady]=useState(false),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[measuring,setMeasuring]=useState(false),[distance,setDistance]=useState(''),[boundaryVisible,setBoundaryVisible]=useState(true);
@@ -10,13 +11,13 @@ export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,mar
   // Measurements belong to this map instance; retries and session changes replace it.
   measure.current=false;setMeasuring(false);setDistance('');
   const fail=message=>{if(cancelled)return;failed=true;setReady(false);measure.current=false;setMeasuring(false);setDistance('');setError(message);};
-  const oldAuthFailure=window.gm_authFailure;const authFailure=()=>fail('Google rejected the map configuration. An administrator needs to check the map key and enabled APIs.');window.gm_authFailure=authFailure;
+  const unsubscribeAuthFailure=subscribeGoogleMapsAuthFailure(()=>fail('Google rejected the map configuration. An administrator needs to check the map key and enabled APIs.'));
   loadGoogleMaps(sessionToken).then(maps=>{if(cancelled||failed||!container.current)return;const current=latest.current;map.current=new maps.Map(container.current,{center:current.position || defaultCenter,zoom:current.position?17:10,disableDefaultUI:false,cameraControl:true,zoomControl:true,mapTypeControl:true,mapTypeControlOptions:{mapTypeIds:['roadmap','satellite','hybrid','terrain']},streetViewControl:true,fullscreenControl:true,rotateControl:true,scaleControl:true,keyboardShortcuts:true,gestureHandling:'greedy',clickableIcons:true});
    if(cancelled||failed)return;
    layers.current={traffic:new maps.TrafficLayer(),transit:new maps.TransitLayer(),bicycle:new maps.BicyclingLayer()};line.current=new maps.Polyline({map:map.current,strokeColor:'#7c3aed',strokeWeight:3});listener=map.current.addListener('click',e=>{if(!measure.current)return;const path=line.current.getPath();path.push(e.latLng);const meters=maps.geometry.spherical.computeLength(path);setDistance(`${(meters*3.28084).toFixed(1)} ft`);});
    if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(()=>maps.event.trigger(map.current,'resize'));observer.observe(container.current);}setReady(true);
   }).catch(()=>{if(!failed)fail('The map could not load. Try again, or open the address in Google Maps.');});
-  return()=>{cancelled=true;observer?.disconnect();listener?.remove();marker.current?.setMap(null);line.current?.setMap(null);Object.values(layers.current).forEach(layer=>layer.setMap(null));if(map.current)window.google?.maps?.event?.clearInstanceListeners(map.current);map.current=null;marker.current=null;if(window.gm_authFailure===authFailure)window.gm_authFailure=oldAuthFailure;};
+  return()=>{cancelled=true;unsubscribeAuthFailure();observer?.disconnect();listener?.remove();marker.current?.setMap(null);line.current?.setMap(null);Object.values(layers.current).forEach(layer=>layer.setMap(null));if(map.current)window.google?.maps?.event?.clearInstanceListeners(map.current);map.current=null;marker.current=null;};
  },[sessionToken,attempt,defaultCenter]);
  useEffect(()=>{if(!ready||!map.current)return;const maps=window.google.maps;if(position){map.current.panTo(position);map.current.setZoom(17);if(marker.current){marker.current.setMap(map.current);marker.current.setPosition(position);marker.current.setTitle(markerTitle);}else marker.current=new maps.Marker({position,map:map.current,title:markerTitle});}else{marker.current?.setMap(null);marker.current=null;}},[ready,position?.lat,position?.lng,markerTitle]);
  useEffect(()=>{if(!ready||!map.current)return;const data=map.current.data;data.forEach(feature=>data.remove(feature));for(const feature of boundaries || [])data.addGeoJson(feature);data.setStyle({visible:boundaryVisible,strokeColor:'#7c3aed',strokeWeight:2,fillOpacity:0.08,clickable:false});},[ready,boundaries,boundaryVisible]);
