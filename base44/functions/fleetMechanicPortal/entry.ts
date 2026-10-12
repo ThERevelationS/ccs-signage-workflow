@@ -179,6 +179,41 @@ async function recordMechanicUploadedPhoto(Receipt:any, receipt:any, priorUrls:s
   return latest;
 }
 
+function mechanicPhotoSourceMatchesRetry(source:any, retry:any) {
+  const original = source?.result_summary || {};
+  const attempt = retry?.result_summary || {};
+  const sourceUrls = original.uploaded_photo_urls;
+  const retryUrls = attempt.uploaded_photo_urls;
+  return !!source?.id && !!retry?.id && source.id !== retry.id &&
+    source.operation_type === 'mechanic_progress_save' &&
+    retry.operation_type === 'mechanic_progress_save' &&
+    source.target_entity === 'FleetMaintenanceWorkOrder' &&
+    retry.target_entity === 'FleetMaintenanceWorkOrder' &&
+    !!source.target_id && String(source.target_id) === String(retry.target_id || '') &&
+    !!source.actor_user_id && String(source.actor_user_id) === String(retry.actor_user_id || '') &&
+    !!source.payload_fingerprint && String(source.payload_fingerprint) === String(retry.payload_fingerprint || '') &&
+    original.action === 'save' && attempt.action === 'save' &&
+    String(original.grant_id || '') === String(source.actor_user_id) &&
+    String(attempt.grant_id || '') === String(source.actor_user_id) &&
+    !!original.expected_updated_date && String(original.expected_updated_date) === String(attempt.expected_updated_date || '') &&
+    attempt.retry_reservation_required === true &&
+    String(attempt.reused_upload_receipt_id || '') === String(source.id) &&
+    (!attempt.reused_upload_operation_key || String(attempt.reused_upload_operation_key) === String(source.operation_key || '')) &&
+    Array.isArray(sourceUrls) && Array.isArray(retryUrls) && sourceUrls.length <= retryUrls.length &&
+    sourceUrls.every((url:any,index:number)=>/^https:\/\//i.test(String(url || '')) && url === retryUrls[index]);
+}
+
+function mechanicPhotoSourceSelector(source:any) {
+  return {id:source.id,operation_key:source.operation_key,
+    operation_type:source.operation_type,target_entity:source.target_entity,
+    target_id:source.target_id,actor_user_id:source.actor_user_id,
+    payload_fingerprint:source.payload_fingerprint,
+    'result_summary.action':source.result_summary.action,
+    'result_summary.grant_id':source.result_summary.grant_id,
+    'result_summary.expected_updated_date':source.result_summary.expected_updated_date,
+    'result_summary.uploaded_photo_urls':source.result_summary.uploaded_photo_urls};
+}
+
 async function requireCurrentMechanicSaveEvidence(
   Receipt:any, receipt:any, uploadedUrls:string[], grantId:string, workOrderId:string, expectedVersion:string,
 ) {
