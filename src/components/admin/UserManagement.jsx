@@ -213,11 +213,14 @@ export default function UserManagement() {
       if (requestSequence === deletionImpactSequence.current) {
         setDeletionImpactReport(impact);
       }
-    } catch {
+    } catch (error) {
       if (requestSequence === deletionImpactSequence.current) {
-        // Do not display backend error details: impact errors may mention
-        // confidential employee identities or historical account references.
-        setDeletionImpactError("The read-only impact scan could not be verified. No records were changed. Retry the scan or close this review.");
+        // Never display arbitrary backend details that may expose identities.
+        // The known client deadline has a distinct, safe recovery explanation.
+        const timedOut = error?.message === "Account deletion impact scan timed out. No report was verified.";
+        setDeletionImpactError(timedOut
+          ? "The impact scan took too long. No report was verified. You can retry, although the previous read may still be finishing. No records were changed."
+          : "The read-only impact scan could not be verified. No records were changed. Retry the scan or close this review.");
       }
     } finally {
       if (requestSequence === deletionImpactSequence.current) {
