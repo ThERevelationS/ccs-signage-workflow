@@ -8,16 +8,25 @@ import Renderer,{act} from 'react-test-renderer';
 const dir=resolve('node_modules/.cache/coverage-panel');await mkdir(dir,{recursive:true});
 globalThis.window={self:null,top:null};
 try{
- await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client|EmailGate|PermitSettingsDialog/},args=>({path:args.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path.includes('EmailGate')?'export const useAuth=()=>({currentUser:null,isRegistered:false});':args.path.includes('PermitSettingsDialog')?'export default function Dialog(){return null;}':'export const base44={};'}));}}]});
+ await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client|EmailGate|PermitSettingsDialog/},args=>({path:args.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path.includes('EmailGate')?'export const useAuth=()=>globalThis.coverageReviewAuth || ({currentUser:null,isRegistered:false});':args.path.includes('PermitSettingsDialog')?'export default function Dialog(props){globalThis.coverageReviewDialog=props;return null;}':'export const base44={get entities(){return globalThis.coverageReviewApi?.entities;}};'}));}}]});
  const {default:Panel}=await import(dir+'/panel.mjs');let calls=0,resolveRead;
  const readCoverage=()=>{calls++;return new Promise(r=>resolveRead=r);};let tree;
  await act(async()=>{tree=Renderer.create(React.createElement(Panel,{readCoverage}));});
- assert.equal(calls,0);const click=()=>tree.root.findByType('button').props.onClick();
+ assert.equal(calls,0);const click=()=>tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&/^(Read recorded|Refresh recorded|Reading coverage)/.test(child))).props.onClick();
  await act(async()=>{click();click();});assert.equal(calls,1);
  await act(async()=>resolveRead({items:[{state:'profile_missing'}],invalid_profile_ids:[],unmatched_profile_ids:[],checked_at:'fixture',electrical_offices:reconcileElectricalOfficeCoverage([{id:'locality',state:'OH',name:'Office gap fixture',offices:[{authority_roles:['electrical_permit'],authority_verification_status:'staff_verified'}]}]),official:{source_vintage:'fixture',source_rows:3647,candidate_counts:{OH:2318,KY:530},status_review_count:25,statistical_reference_count:774,queue:{missing:[{state:'OH',type:'township',name:'Miami',county_name:'Hamilton'}]},profiles:{missing:[]},notice:'Permission-scoped candidates only.'}}));
  assert.match(JSON.stringify(tree.toJSON()),/Recorded identity matches do not establish/);assert.match(JSON.stringify(tree.toJSON()),/Official geographic inventory/);assert.match(JSON.stringify(tree.toJSON()),/Miami/);assert.match(JSON.stringify(tree.toJSON()),/Hamilton County/);
  assert.match(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);assert.match(JSON.stringify(tree.toJSON()),/Office gap fixture/);assert.match(JSON.stringify(tree.toJSON()),/Inspection provider not established/);assert.match(JSON.stringify(tree.toJSON()),/State \/ role/);
+ assert.equal(tree.root.findAllByType('button').filter(node=>node.props['aria-label']?.startsWith('Review office setup')).length,0);
+ globalThis.coverageReviewAuth={currentUser:{id:'admin-fixture',role:'admin'},isRegistered:true};
+ const reviewGets=[],fresh={id:'locality',state:'OH',name:'Fresh office setup',offices:[{id:'office',authority_verification_status:'needs_verification'}]};
+ globalThis.coverageReviewApi={entities:{PermitLocality:{get:async id=>{reviewGets.push(id);return fresh;}}}};
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage})));
+ const reviewButton=tree.root.findAllByType('button').find(node=>node.props['aria-label']==='Review office setup for Office gap fixture');
+ await act(async()=>{reviewButton.props.onClick();reviewButton.props.onClick();});
+ assert.deepEqual(reviewGets,['locality']);assert.equal(globalThis.coverageReviewDialog.initialSelectedLocalityId,'locality');assert.equal(globalThis.coverageReviewDialog.localities.length,1);assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);assert.equal(fresh.offices[0].authority_verification_status,'needs_verification');
+ await act(async()=>globalThis.coverageReviewDialog.onClose());
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:async()=>{throw Error('Fixture failure');}})));
  await act(async()=>click());assert.match(JSON.stringify(tree.toJSON()),/Fixture failure/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);
  await act(async()=>tree.unmount());console.log('Coverage panel passed: manual only, duplicate-click guard, explicit uncertainty and failed-refresh clearing. No live API calls.');
-}finally{delete globalThis.window;await rm(dir,{recursive:true,force:true});}
+}finally{delete globalThis.coverageReviewAuth;delete globalThis.coverageReviewApi;delete globalThis.coverageReviewDialog;delete globalThis.window;await rm(dir,{recursive:true,force:true});}
