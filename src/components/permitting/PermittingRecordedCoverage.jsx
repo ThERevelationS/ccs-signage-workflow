@@ -26,7 +26,7 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
   reviewRecordRef.current=officeReview.record;
   const [result, setResult] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [progress, setProgress] = useState('');
   const generation = useRef(0), inFlight = useRef(false);
-  useEffect(() => () => { generation.current++; }, []);
+  useEffect(() => () => { generation.current++; reviewRecordRef.current=null; }, []);
   async function load(afterSavedReview = false) {
     if (inFlight.current && afterSavedReview !== true) return;
     inFlight.current = true; const request = ++generation.current;

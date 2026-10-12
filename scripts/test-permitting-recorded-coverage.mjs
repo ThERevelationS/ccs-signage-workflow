@@ -14,7 +14,8 @@ try{
  await act(async()=>{tree=Renderer.create(React.createElement(Panel,{readCoverage}));});
  assert.equal(calls,0);const click=()=>tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&/^(Read recorded|Refresh recorded|Reading coverage)/.test(child))).props.onClick();
  await act(async()=>{click();click();});assert.equal(calls,1);
- await act(async()=>resolveRead({items:[{state:'profile_missing'}],invalid_profile_ids:[],unmatched_profile_ids:[],checked_at:'fixture',electrical_offices:reconcileElectricalOfficeCoverage([{id:'locality',state:'OH',name:'Office gap fixture',offices:[{authority_roles:['electrical_permit'],authority_verification_status:'staff_verified'}]}]),official:{source_vintage:'fixture',source_rows:3647,candidate_counts:{OH:2318,KY:530},status_review_count:25,statistical_reference_count:774,queue:{missing:[{state:'OH',type:'township',name:'Miami',county_name:'Hamilton'}]},profiles:{missing:[]},notice:'Permission-scoped candidates only.'}}));
+ const snapshot={items:[{state:'profile_missing'}],invalid_profile_ids:[],unmatched_profile_ids:[],checked_at:'fixture',electrical_offices:reconcileElectricalOfficeCoverage([{id:'locality',state:'OH',name:'Office gap fixture',offices:[{authority_roles:['electrical_permit'],authority_verification_status:'staff_verified'}]}]),official:{source_vintage:'fixture',source_rows:3647,candidate_counts:{OH:2318,KY:530},status_review_count:25,statistical_reference_count:774,queue:{missing:[{state:'OH',type:'township',name:'Miami',county_name:'Hamilton'}]},profiles:{missing:[]},notice:'Permission-scoped candidates only.'}};
+ await act(async()=>resolveRead(snapshot));
  assert.match(JSON.stringify(tree.toJSON()),/Recorded identity matches do not establish/);assert.match(JSON.stringify(tree.toJSON()),/Official geographic inventory/);assert.match(JSON.stringify(tree.toJSON()),/Miami/);assert.match(JSON.stringify(tree.toJSON()),/Hamilton County/);
  assert.match(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);assert.match(JSON.stringify(tree.toJSON()),/Office gap fixture/);assert.match(JSON.stringify(tree.toJSON()),/Inspection provider not established/);assert.match(JSON.stringify(tree.toJSON()),/State \/ role/);
  assert.equal(tree.root.findAllByType('button').filter(node=>node.props['aria-label']?.startsWith('Review office setup')).length,0);
@@ -25,7 +26,18 @@ try{
  const reviewButton=tree.root.findAllByType('button').find(node=>node.props['aria-label']==='Review office setup for Office gap fixture');
  await act(async()=>{reviewButton.props.onClick();reviewButton.props.onClick();});
  assert.deepEqual(reviewGets,['locality']);assert.equal(globalThis.coverageReviewDialog.initialSelectedLocalityId,'locality');assert.equal(globalThis.coverageReviewDialog.localities.length,1);assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);assert.equal(fresh.offices[0].authority_verification_status,'needs_verification');
+ const savedCallback=globalThis.coverageReviewDialog.onLocalitySaved;
+ await act(async()=>click());const oldRead=resolveRead;assert.equal(calls,2);
+ await act(async()=>savedCallback('locality'));const newRead=resolveRead;assert.equal(calls,3);
+ assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
+ assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);
+ await act(async()=>oldRead({...snapshot,checked_at:'obsolete-before-save'}));
+ assert.doesNotMatch(JSON.stringify(tree.toJSON()),/obsolete-before-save|Read completed/);
+ await act(async()=>newRead({...snapshot,checked_at:'fresh-after-save'}));
+ assert.match(JSON.stringify(tree.toJSON()),/fresh-after-save/);
  await act(async()=>globalThis.coverageReviewDialog.onClose());
+ await act(async()=>savedCallback('locality'));assert.equal(calls,3);
+
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:async()=>{throw Error('Fixture failure');}})));
  await act(async()=>click());assert.match(JSON.stringify(tree.toJSON()),/Fixture failure/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);
  await act(async()=>tree.unmount());console.log('Coverage panel passed: manual only, duplicate-click guard, explicit uncertainty and failed-refresh clearing. No live API calls.');
