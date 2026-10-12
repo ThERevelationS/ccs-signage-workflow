@@ -46,8 +46,10 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
   revision = 0;
   // Inject only the backend wall-clock constructor for company-day boundary
   // acceptance; retain real Date.now() for session validation and lock ages.
+  // Tests spanning generations can advance the synthetic server timestamp.
+  let syntheticServerNow = serverNow;
   const ServerDate = serverNow ? class extends Date {
-    constructor(...args) { super(...(args.length ? args : [serverNow])); }
+    constructor(...args) { super(...(args.length ? args : [syntheticServerNow])); }
     static now() { return Date.now(); }
   } : Date;
   const rows = {
@@ -136,6 +138,12 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
   }
   return {
     rows, action, clockIn, invoke, invokeAs,
+    setServerNow(value) {
+      if (!serverNow || !Number.isFinite(Date.parse(String(value || '')))) {
+        throw new Error('A valid synthetic server time is required');
+      }
+      syntheticServerNow = String(value);
+    },
     setBeforeUpdate(fn) { beforeUpdate = fn; },
     setAfterRowUpdate(fn) { afterRowUpdate = fn; },
     period: () => rows.TimeClockPayPeriod[0],
@@ -4917,6 +4925,7 @@ async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = fa
     assert.equal(result.status, 200, JSON.stringify(result.body));
     return result.body;
   };
+  h.setServerNow('2026-09-28T20:01:00.000Z');
   await ok(h.action('reopen', 'v28-mixed-g3-reopen-period', 'Audit third-generation manager adjustments'));
   await ok(h.invoke({
     action: 'admin_set_entry_approval', target_email: employee.email,
@@ -4939,13 +4948,17 @@ async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = fa
     await ok(h.invoke(request));
     return h.rows.TimeClockAudit.find((row) => row.id === response.audit_id);
   };
+  h.setServerNow('2026-09-28T20:02:00.000Z');
   const auditE = await direct('e', '2026-09-28T12:55:00.000Z', 7, 5);
+  h.setServerNow('2026-09-28T20:03:00.000Z');
   const auditF = await direct('f', '2026-09-28T13:05:00.000Z', 6, 55);
+  h.setServerNow('2026-09-28T20:04:00.000Z');
   await ok(h.invoke({
     action: 'admin_set_entry_approval', target_email: employee.email,
     request_id: 'v28-mixed-g3-approve-f', entry_id: entry.id,
     expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve terminal F',
   }));
+  h.setServerNow('2026-09-28T20:05:00.000Z');
   await ok(h.action('finalize', 'v28-mixed-g3-finalize-f'));
   await ok(h.action('finalize', 'v28-mixed-g3-finalize-f'));
   assert.equal(period.finalized_summary_history.length, 2);
