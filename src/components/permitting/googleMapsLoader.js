@@ -1,5 +1,6 @@
 import {base44} from '@/api/base44Client';
-let pending=null;
+let scriptPending=null;
+const configurationRequests=new Map();
 function bounded(promise,message){
  let timer;
  return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(message)),20000);})]).finally(()=>clearTimeout(timer));
@@ -12,8 +13,17 @@ async function ensureMapTools(maps){
 }
 export function loadGoogleMaps(sessionToken){
  if(window.google?.maps?.Map)return ensureMapTools(window.google.maps);
- if(pending)return pending;
- pending=(async()=>{const response=await bounded(base44.functions.invoke('getGoogleMapsKey',{session_token:sessionToken}),'Map configuration connection timed out.');const key=response?.data?.apiKey;if(!key)throw Error('Map configuration is unavailable.');
+ if(configurationRequests.has(sessionToken))return configurationRequests.get(sessionToken);
+ // A refreshed sign-in must not inherit a request made with an expired token.
+ const request=(async()=>{const response=await bounded(base44.functions.invoke('getGoogleMapsKey',{session_token:sessionToken}),'Map configuration connection timed out.');const key=response?.data?.apiKey;if(!key)throw Error('Map configuration is unavailable.');
+  return loadMapScript(key);
+ })().finally(()=>{if(configurationRequests.get(sessionToken)===request)configurationRequests.delete(sessionToken);});
+ configurationRequests.set(sessionToken,request);return request;
+}
+function loadMapScript(key){
+ if(window.google?.maps?.Map)return ensureMapTools(window.google.maps);
+ if(scriptPending)return scriptPending;
+ scriptPending=(async()=>{
   await new Promise((resolve,reject)=>{const id='permitting-google-maps-script',old=document.getElementById(id);old?.remove();const script=document.createElement('script');script.id=id;
    // A timed-out script may still execute; its callback must never target a retry.
    const callback='permittingMapsReady_'+crypto.randomUUID().replace(/-/g,'');let timer;
@@ -21,5 +31,5 @@ export function loadGoogleMaps(sessionToken){
    window[callback]=()=>{cleanup();window.google?.maps?.Map?resolve():reject(Error('Map did not initialize.'));};
    script.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&libraries=geometry&callback=${callback}`;script.async=true;script.onerror=()=>{cleanup();script.remove();reject(Error('Map could not connect.'));};timer=setTimeout(()=>{cleanup();script.remove();reject(Error('Map connection timed out.'));},20000);document.head.appendChild(script);
   });return ensureMapTools(window.google.maps);
- })().catch(error=>{pending=null;throw error;});return pending;
+ })().catch(error=>{scriptPending=null;throw error;});return scriptPending;
 }
