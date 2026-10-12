@@ -109,6 +109,26 @@ export async function reviewSalesSmartsheetCreateCandidate({ sessionToken, workO
   return result;
 }
 
+export async function recoverVerifiedSalesSmartsheetCreate({
+  sessionToken,workOrderId,rowId,expectedVersion,expectedAttemptId,
+} = {}) {
+  const result = await invokeSmartsheet("recover_verified_sales_create",sessionToken,{
+    workorder_id:String(workOrderId || "").trim(),
+    smartsheet_row_id:String(rowId || "").trim(),
+    expected_updated_date:String(expectedVersion || "").trim(),
+    expected_attempt_id:String(expectedAttemptId || "").trim(),
+    confirm_exact_recorded_row:true,
+  });
+  if (!result?.recovered || result?.dataset !== "sales" ||
+      result.remote_writes_attempted !== false || result.history_verified !== true ||
+      String(result.workorder_id) !== String(workOrderId || "").trim() ||
+      String(result.row_id) !== String(rowId || "").trim() ||
+      String(result.reviewed_workorder_version) !== String(expectedVersion || "").trim()) {
+    throw new Error("Sales recovery did not return a fully verified link and history acknowledgment. Reload and inspect the original WorkOrder.");
+  }
+  return result;
+}
+
 export async function runSmartsheetSync({ sessionToken, dataset } = {}) {
   return invokeSmartsheet("run_sync", sessionToken, dataset ? { dataset } : {});
 }
