@@ -5963,6 +5963,59 @@ test('v28 duplicate or conflicting confirmed correction audits with same request
   await exerciseV28OpaqueCorrectionOrdering({ includeDuplicates: true });
 });
 
+test('v28 manager correction request IDs cannot be reused across shifts or employees', async () => {
+  for (const differentEmployee of [false, true]) {
+    const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
+    const [first, second] = h.rows.TimeEntry;
+    const prefix = differentEmployee ? 'v28-cross-employee-request' : 'v28-cross-shift-request';
+    second.clock_in = '2026-09-21T14:00:00.000Z';
+    second.clock_out = '2026-09-21T22:00:00.000Z';
+    if (differentEmployee) {
+      const other = { id: 'synthetic-other-employee', email: 'other-worker@synthetic.invalid',
+        full_name: 'Other Worker', role: 'employee' };
+      h.rows.AuthorizedEmail.push(other);
+      h.rows.TimeClockEmployeeState.push({
+        id: 'state-' + other.id, user_email: other.email, status: 'clocked_out',
+        break_status: 'working', work_pause_status: 'working', labor_status: 'idle',
+        correction_create_status: 'idle', updated_date: '2026-09-20T00:00:00.000Z',
+      });
+      second.user_email = other.email;
+    }
+    const request_id = prefix + '-same-request';
+    const correctionFor = (entry, clockIn, ownRequestId) => ({
+      action: 'admin_correct_entry', target_email: entry.user_email,
+      request_id: ownRequestId, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: 'Manager confirmed original punch',
+      correction: {
+        clock_in: clockIn, clock_out: entry.clock_out, lunch_minutes: 0,
+        notes: 'Manager synthetic adjustment',
+        job_allocations: [{ hours: 7, minutes: 30, is_inhouse: true,
+          inhouse_task: 'Synthetic shop work' }],
+      },
+    });
+    const firstRequest = correctionFor(first, '2026-09-20T14:30:00.000Z', request_id);
+    const firstResult = await h.invoke(firstRequest);
+    assert.equal(firstResult.status, 200, JSON.stringify(firstResult.body));
+    assert.equal((await h.invoke(firstRequest)).status, 200, 'Exact same-entry retry remains idempotent');
+    const savedOther = clone(second);
+    const secondRequest = correctionFor(second, '2026-09-21T14:30:00.000Z', request_id);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const blocked = await h.invoke(secondRequest);
+      assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+      assert.match(String(blocked.body.error || ''), /another employee or shift/i);
+      assert.deepEqual(second, savedOther, 'Cross-entry request collision cannot change time');
+      const confirmed = h.rows.TimeClockAudit.filter((row) =>
+        row.action === 'admin_correction' && row.request_id === request_id);
+      assert.equal(confirmed.length, 1, 'Cross-entry request collision cannot create a second audit');
+      assert.equal(confirmed[0].time_entry_id, first.id);
+    }
+    const independent = correctionFor(second, '2026-09-21T14:30:00.000Z', prefix + '-new-request');
+    const allowed = await h.invoke(independent);
+    assert.equal(allowed.status, 200, JSON.stringify(allowed.body));
+    assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
+  }
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
