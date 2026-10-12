@@ -1,4 +1,5 @@
 import OfficeRescanButton from "./OfficeRescanButton";
+import LocalityOfficeReviewEvidence from "./LocalityOfficeReviewEvidence";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ const ADDON_DEFS = [
   { key: 'has_text', label: '📝 Text', color: 'bg-blue-50 border-blue-300 text-blue-700' },
 ];
 
-export default function LocalityOfficeEditor({ office, officeTypes, onChange, onDelete, verificationActor,localityId }) {
+export default function LocalityOfficeEditor({ office, officeTypes, onChange, onDelete, verificationActor,localityId, provenance }) {
   const [expanded, setExpanded] = useState(true);
   const [newStepName, setNewStepName] = useState("");
   const [newStepType, setNewStepType] = useState("checkbox");
@@ -149,6 +150,7 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
                 </div>
               </div>
             )}
+            <LocalityOfficeReviewEvidence office={office} provenance={provenance} />
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
               {LOCALITY_AUTHORITY_ROLES.map(([value, label]) => (
                 <label key={value} className="flex items-center gap-1.5 text-xs cursor-pointer">

@@ -697,6 +697,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                               office={office}
                               officeTypes={officeTypes}
                               verificationActor={verificationActor}
+                              provenance={resolveCatalogOfficeProvenance(officeCatalog, office)}
                               onChange={(updated) => updateOffice(office.id, updated)}
                               onDelete={() => requestDeleteOffice(office.id)}
                             />
