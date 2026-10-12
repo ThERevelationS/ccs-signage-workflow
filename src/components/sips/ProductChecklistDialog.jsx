@@ -56,6 +56,9 @@ export default function ProductChecklistDialog({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  // React state can lag rapid clicks: fence saves synchronously before the first await.
+  const saveInFlightRef = useRef(false);
+  const loadInFlightRef = useRef(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [incompleteWarning, setIncompleteWarning] = useState(null);
@@ -230,7 +233,9 @@ export default function ProductChecklistDialog({
   }, [isOpen, workOrder?.id]);
 
   const loadData = async () => {
+    if (saveInFlightRef.current) return;
     const requestId = ++loadDataRequestRef.current;
+    loadInFlightRef.current = true;
     resetOtherPopupForReload();
     setIsLoading(true);
     try {
@@ -344,7 +349,10 @@ export default function ProductChecklistDialog({
       console.error("Error loading data:", error);
       setSaveError(error?.message || "This SIP checklist could not be loaded. Close and reopen it, or reload the latest Work Order.");
     } finally {
-      if (requestId === loadDataRequestRef.current) setIsLoading(false);
+      if (requestId === loadDataRequestRef.current) {
+        loadInFlightRef.current = false;
+        setIsLoading(false);
+      }
     }
   };
 
@@ -667,7 +675,7 @@ export default function ProductChecklistDialog({
   };
 
   const handleCheckOff = async () => {
-    if (isSaving || blockOnUnsubmittedDrafts("complete")) return;
+    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("complete")) return;
     const status = checkIfComplete();
     
     if (!status.hasChecklist) {
@@ -687,7 +695,7 @@ export default function ProductChecklistDialog({
   };
 
   const proceedWithCheckOff = async () => {
-    if (isSaving || blockOnUnsubmittedDrafts("complete")) return;
+    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("complete")) return;
     completingWithoutChecklistRef.current = true;
     setNoChecklistWarning(false);
     // Preserve any local product edits and complete the SIP in the same
@@ -698,7 +706,7 @@ export default function ProductChecklistDialog({
 
   // Called when Save button is clicked - first show revisit date popup
   const handleSaveClick = () => {
-    if (!isRegistered || isSaving || blockOnUnsubmittedDrafts("save")) return;
+    if (!isRegistered || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("save")) return;
     // The Revisit confirmation owns keyboard focus until it closes.
     // Do not allow a queued checklist navigation callback behind it.
     cancelPendingNavigationFocus();
@@ -708,6 +716,7 @@ export default function ProductChecklistDialog({
 
   // Called after user picks (or skips) a revisit date
   const handleRevisitSave = async (dateString) => {
+    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current) return;
     if (blockOnUnsubmittedDrafts("save")) {
       setShowRevisitPopup(false);
       return;
@@ -717,7 +726,9 @@ export default function ProductChecklistDialog({
   };
 
   const saveChecklist = async (revisitDate, { markComplete = false } = {}) => {
-    if (isSaving || blockOnUnsubmittedDrafts(markComplete ? "complete" : "save")) return;
+    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current ||
+        blockOnUnsubmittedDrafts(markComplete ? "complete" : "save")) return;
+    saveInFlightRef.current = true;
     setIsSaving(true);
     try {
       // Build a map for quick parent lookup
@@ -828,6 +839,7 @@ export default function ProductChecklistDialog({
       console.error("Error saving checklist:", error);
       setSaveError(error?.message || "SIP product checklist could not be saved. Reload the latest Work Order and try again.");
     } finally {
+      saveInFlightRef.current = false;
       setIsSaving(false);
     }
   };
@@ -1643,7 +1655,7 @@ export default function ProductChecklistDialog({
   };
 
   const requestClose = () => {
-    if (isSaving) return;
+    if (isSaving || saveInFlightRef.current) return;
     if (hasUnsavedChanges) {
       setDiscardWarning("close");
       return;
@@ -1652,7 +1664,7 @@ export default function ProductChecklistDialog({
     onClose();
   };
   const requestReloadLatest = () => {
-    if (isSaving || isLoading) return;
+    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current) return;
     if (hasUnsavedChanges) {
       returnToReloadRef.current = true;
       setDiscardWarning("reload");
@@ -1661,6 +1673,7 @@ export default function ProductChecklistDialog({
     loadData();
   };
   const confirmDiscardChanges = () => {
+    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current) return;
     const action = discardWarning;
     returnToReloadRef.current = false;
     setDiscardWarning(null);
