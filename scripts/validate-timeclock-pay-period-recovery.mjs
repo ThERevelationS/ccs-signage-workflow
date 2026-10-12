@@ -5772,7 +5772,9 @@ test('v28 manager-only ambiguous semantic suffix blocks payroll finalization for
 });
 
 async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }) {
-  for (const scenario of includeDuplicates ? ['duplicate-c', 'duplicate-d', 'conflicting-c'] : ['ordered', 'tied']) {
+  for (const scenario of includeDuplicates
+    ? ['duplicate-c', 'duplicate-d', 'conflicting-c', 'cross-entry-c']
+    : ['ordered', 'tied']) {
     const tied = scenario === 'tied';
     const prefix = 'v28-opaque-' + scenario;
     const h = setup({
@@ -5837,6 +5839,10 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
       // finalization independently of the earlier approval protection.
       const source = scenario === 'duplicate-d' ? d : c;
       const duplicate = { ...clone(source), id: prefix + '-extra-confirmed' };
+      if (scenario === 'cross-entry-c') {
+        duplicate.time_entry_id = prefix + '-other-shift';
+        duplicate.user_email = 'other-worker@synthetic.invalid';
+      }
       if (scenario === 'conflicting-c') {
         duplicate.details.corrected.clock_in = '2026-09-20T14:31:00.000Z';
         duplicate.details.corrected.total_hours = 7.483333333333333;
