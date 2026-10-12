@@ -983,6 +983,40 @@ test("fresh new-id Save with incomplete original photo evidence reuses prefix fo
   assert.equal(store.receipts.get(original.id).result_summary.resolved_by_retry,true);
   assert.equal([...store.receipts.values()].filter(row=>row.status==="applied").length,2);
 });
+test("photo retry reservation preserves audit details recorded after selecting a failed source",async()=>{
+  const retry=payload("request-new-abc-123456",{photos:[photoPayload,photoPayload]});
+  const previous=makeReceipt(retry,{status:"failed",photos:["https://files.example/old-a.jpg"],count:2});
+  const {store,client,receipts}=setup({receipt:previous});
+  store.pauseGrantCheck=true;
+  const saving=call(retry,client);
+  await until("photo reservation authorization",()=>store.pendingGrantChecks.length===1);
+  const source=store.receipts.get(previous.id);
+  await receipts.update(previous.id,{result_summary:{...source.result_summary,
+    forensic_review_note:"Added while retry authorization was paused"}});
+  store.pendingGrantChecks.shift()();
+  const result=await saving;
+  assert.equal(result.code,200);
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,1);
+  const saved=store.receipts.get(previous.id);
+  assert.equal(saved.status,"applied");
+  assert.equal(saved.result_summary.forensic_review_note,"Added while retry authorization was paused");
+  assert.deepEqual(saved.result_summary.uploaded_photo_urls,["https://files.example/old-a.jpg"]);
+});
+
+test("failed photo evidence from a different grant actor is never reused",async()=>{
+  const retry=payload("request-new-abc-123456",{photos:[photoPayload,photoPayload]});
+  const previous=makeReceipt(retry,{status:"failed",photos:["https://files.example/old-a.jpg"],count:2});
+  previous.actor_user_id="different-grant";
+  const {store,client}=setup({receipt:previous});
+  const result=await call(retry,client);
+  assert.equal(result.code,200);
+  assert.equal(store.updates,1);
+  assert.equal(store.uploads.length,2,"Cross-actor evidence must not avoid an upload");
+  assert.equal(store.receipts.get(previous.id).status,"failed");
+  assert.equal(store.receipts.get(previous.id).result_summary.retry_reserved_by_request_id,undefined);
+});
+
 test("simultaneous identical partial-photo retries upload the missing photo at most once",async()=>{
   const retry=payload("request-new-abc-123456",{photos:[photoPayload,photoPayload]});
   const original=makeReceipt(retry,{photos:["https://files.example/old-a.jpg"],count:2});
