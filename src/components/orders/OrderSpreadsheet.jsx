@@ -1665,12 +1665,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         onClick={async () => {
                           if (customerSelectionInFlightRef.current) return;
                           customerSelectionInFlightRef.current = true;
-                          orderLocalEditGenerationRef.current += 1;
+                          const selectionEditGeneration = ++orderLocalEditGenerationRef.current;
                           setCheckingCustomerJobId(wo.id);
                           try {
                             // A job may have been closed since the latest 60-second refresh.
                             // Never link a stale suggestion without a fresh read.
                             const { latest, eligible } = await verifyActiveOrderCustomerJob(WorkOrder, wo.id);
+                            // A newer edit during this async verification must
+                            // never be replaced by an older customer/job choice.
+                            if (orderLocalEditGenerationRef.current !== selectionEditGeneration) {
+                              setSaveError("The Order changed while this job was checked. Review the customer and select the job again.");
+                              return;
+                            }
                             if (!eligible) {
                               if (latest?.id === wo.id) {
                                 setWorkOrders(prev => prev.map(w => w.id === latest.id ? latest : w));
@@ -1688,6 +1694,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                               work_order_id: latest.id
                             };
                             setHasUnsavedChanges(true);
+                            // Picker clicks preserve input focus, so blur may
+                            // never fire. The verified association is now queued
+                            // for autosave; release just this draft latch.
+                            if (customerNameDraftOrderRef.current === order.id) {
+                              customerNameDraftOrderRef.current = null;
+                            }
                             setShowCustomerDropdown(null);
                             setEditingCustomerName(null);
                           } catch (error) {
