@@ -91,6 +91,25 @@ await throws(()=>createSalesSmartsheetRowWithGuard(conflictingAttempt.opts),/Ano
 eq(conflictingAttempt.posts(),1,'Competing durable attempt blocks recovery without another POST.');
 eq(conflictingAttempt.view().smartsheet_create_attempt.status,'created_unlinked',
  'Conflicting recovery retains the exact permanent row for manual review.');
+const lateClaim=fixture();
+lateClaim.onClaimRead(count=>{if(count===2)lateClaim.claimLinked([{id:'late-owner'}]);});
+await throws(()=>createSalesSmartsheetRowWithGuard(lateClaim.opts),/Another WorkOrder claims/);
+eq(lateClaim.view().smartsheet_create_attempt.status,'linked',
+ 'Late post-CAS collision reports review without undoing a committed link.');
+eq(lateClaim.posts(),1,'Post-CAS collision never retries the Smartsheet POST.');
+const incompleteClaims=fixture();
+incompleteClaims.opts.readCompetingClaims=async()=>null;
+await throws(()=>createSalesSmartsheetRowWithGuard(incompleteClaims.opts),/ownership could not be completely verified/);
+eq(incompleteClaims.view().smartsheet_create_attempt.status,'created_unlinked',
+ 'Incomplete claim verification fails closed with durable row evidence.');
+const missingClaimReader=fixture();
+missingClaimReader.opts.readCompetingClaims=undefined;
+await throws(()=>createSalesSmartsheetRowWithGuard(missingClaimReader.opts),/requires run ownership and permanent-row claim verification/);
+eq(missingClaimReader.posts(),0,'Missing ownership reader cannot send a Smartsheet POST.');
+const missingCoordinator=fixture();
+missingCoordinator.opts.assertOwner=undefined;
+await throws(()=>createSalesSmartsheetRowWithGuard(missingCoordinator.opts),/requires run ownership and permanent-row claim verification/);
+eq(missingCoordinator.posts(),0,'Missing run coordinator cannot send a Smartsheet POST.');
 const timeout=fixture();
 timeout.opts.postRow=async(current)=>{timeout.mutateRemote({id:'5678',
   snapshot:timeout.opts.makeSnapshot(current)});throw Object.assign(new Error('timeout'),{timedOut:true});};
@@ -162,6 +181,10 @@ const code=readFileSync('base44/functions/smartsheetSyncAction/entry.ts','utf8')
 const schema=readFileSync('base44/entities/WorkOrder.jsonc','utf8');
 ok(schema.includes('"smartsheet_create_attempt"'),'WorkOrder stores durable attempt marker.');
 ok(code.includes('createSalesSmartsheetRowWithGuard({'),'Production routes Sales creation through durable reservation.');
+ok(code.includes('readSalesCreateRowClaims(base44, sheetId, rowId)') &&
+   code.includes('Sales create permanent-row linked owner verification') &&
+   code.includes('Sales create permanent-row durable attempt verification'),
+ 'Production Sales create checks both permanent linked and durable-attempt owners.');
 ok(code.includes("smartsheetWriteNoTimeoutRetry('POST'"),'Production Sales POST disables timeout retry.');
 ok(!code.includes("smartsheetWrite('POST', `/sheets/${sheetId}/rows`"),
  'Old risky Sales create transport is no longer called.');
