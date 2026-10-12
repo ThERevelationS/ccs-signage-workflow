@@ -18,6 +18,7 @@ import { getMappableFields } from "@/components/admin/smartsheetSyncFields";
 import SmartsheetSalesSnapshotReview from "@/components/admin/SmartsheetSalesSnapshotReview";
 import OrderReviewTools from "@/components/orders/OrderReviewTools";
 import SalesCreateAttemptReview from "@/components/sales/SalesCreateAttemptReview";
+import SalesRecoveryHistoryReview from "@/components/sales/SalesRecoveryHistoryReview";
 import SmartsheetSyncTraces from "@/components/admin/SmartsheetSyncTraces";
 import SyncAlertSettings from "@/components/admin/SyncAlertSettings";
 import {
@@ -802,6 +803,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       />
 
       <SalesCreateAttemptReview sessionToken={sessionToken} />
+      <SalesRecoveryHistoryReview sessionToken={sessionToken} />
       <OrderReviewTools sessionToken={sessionToken} />
       <SmartsheetSyncTraces sessionToken={sessionToken} refreshKey={syncResult} />
 
