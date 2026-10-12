@@ -103,7 +103,14 @@ try {
     'createRoot(document.getElementById("root")).render(<BrowserRouter><AdminSettings /></BrowserRouter>);',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockData.js'), [
-    'export const base44={entities:{AutomationRule:{},EmailGroup:{},AuthorizedEmail:{}},functions:{invoke(){throw Error("Unexpected live API call")}}};',
+    'export const base44={entities:{AutomationRule:{},EmailGroup:{},AuthorizedEmail:{}},functions:{async invoke(name,payload){',
+    'if(!["onboardingAccountAction","smartsheetSyncAction"].includes(name))throw Error("Unexpected live API call");',
+    '(window.__adminInviteFunctionCalls??=[]).push({name,session:payload.session_token,email:payload.target_email||payload.user_email});',
+    'if(window.__adminInviteHoldStage===name&&payload.session_token==="synthetic")',
+    'await new Promise(resolve=>{window.__adminInvitePendingFunction=resolve;});',
+    'if(window.__adminInviteRejectStage===name&&payload.session_token==="synthetic")throw Error("synthetic-private-old-invite-error");',
+    'return {data:{success:true}};',
+    '}}};',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockAuth.js'), [
     'import React from "react";',
@@ -151,8 +158,15 @@ try {
     'import { validateDeletionImpactReport } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactValidation.js') + '";',
     'import { runCoordinatedDeletionImpact } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactRetryCoordinator.js') + '";',
     'const fail=()=>{throw Error("Unexpected synthetic user mutation");};',
-    'export const createAuthorizedUserAdmin=fail, deleteAuthorizedUserAdmin=fail;',
+    'export const deleteAuthorizedUserAdmin=fail;',
     'export const updateAuthorizedUserAdmin=fail, updateAuthorizedUserHrAdmin=fail;',
+    'export async function createAuthorizedUserAdmin({data,sessionToken}={}){',
+    '(window.__adminInviteCreateCalls??=[]).push({email:data.email,session:sessionToken});',
+    'if(window.__adminInviteHoldStage==="create"&&sessionToken==="synthetic")',
+    'await new Promise(resolve=>{window.__adminInvitePendingCreate=resolve;});',
+    'if(window.__adminInviteRejectStage==="create"&&sessionToken==="synthetic")throw Error("synthetic-private-old-invite-error");',
+    'return {status:"created",record:{id:"synthetic-"+data.email,...data}};',
+    '}',
     'export async function resolveAccountDeletionRequestAdmin({request,resolution,sessionToken}={}){',
     ' window.__adminDecisionCalls=(window.__adminDecisionCalls||0)+1;',
     ' if(window.__adminDecisionHold)await new Promise(resolve=>{window.__adminDecisionPending=resolve;});',
