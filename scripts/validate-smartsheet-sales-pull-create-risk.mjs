@@ -6,6 +6,7 @@ import {
   readSalesPullCreateAttemptRisks,
   classifySalesPullLinkedRowRisks,
   readSalesPullLinkedRowRisks,
+  classifySalesPullDuplicateLinkedRowRisks,
 } from '../base44/shared/smartsheetSalesPullCreateRisk.mjs';
 
 let checks = 0;
@@ -121,7 +122,52 @@ await assert.rejects(readSalesPullLinkedRowRisks({async filter(){return {items:[
   /could not be verified completely/);checks++;
 await assert.rejects(readSalesPullLinkedRowRisks({async filter(){throw Error('read unavailable');}},sheetId,planned),
   /read unavailable/);checks++;
+const duplicateLinked = classifySalesPullDuplicateLinkedRowRisks([
+  {id:'first',smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555'},
+  {id:'second',smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555',deleted:true},
+  {id:'third',smartsheet_sheet_id:sheetId,smartsheet_row_id:'90556'},
+  {id:'other-sheet',smartsheet_sheet_id:alternateSheet,smartsheet_row_id:'90555'},
+],sheetId);
+equal(duplicateLinked.count,1,
+  'Two distinct Sales WorkOrders linked to one permanent row block pull, including deleted ownership.');
+equal(duplicateLinked.permanent_row_ids,['90555'],
+  'Only exact conflicting permanent IDs appear in review evidence.');
+equal(duplicateLinked.workorder_ids,['first','second'],
+  'Review exposes bounded exact WorkOrder owners, not customer-name guesses.');
+equal(classifySalesPullDuplicateLinkedRowRisks([
+  {id:'first',smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555'},
+  {id:'first',smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555'},
+],sheetId).count,0,'Repeated projection of the same WorkOrder is not a competing owner.');
+equal(classifySalesPullDuplicateLinkedRowRisks([
+  {id:'first',smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555'},
+  {id:'second',smartsheet_sheet_id:alternateSheet,smartsheet_row_id:'90555'},
+],sheetId).count,0,'Different verified sheet identity does not create a false collision.');
+assert.throws(()=>classifySalesPullDuplicateLinkedRowRisks([
+  {smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555'},
+],sheetId),/missing an ID/);checks++;
+assert.throws(()=>classifySalesPullDuplicateLinkedRowRisks({},sheetId),/complete linked WorkOrders/);checks++;
+assert.throws(()=>classifySalesPullDuplicateLinkedRowRisks([],'invalid'),/numeric sheet ID/);checks++;
+const manyDuplicates=Array.from({length:26},(_,i)=>[
+  {id:'a-'+i,smartsheet_sheet_id:sheetId,smartsheet_row_id:String(90000+i)},
+  {id:'b-'+i,smartsheet_sheet_id:sheetId,smartsheet_row_id:String(90000+i)},
+]).flat();
+const boundedDuplicates=classifySalesPullDuplicateLinkedRowRisks(manyDuplicates,sheetId);
+equal(boundedDuplicates.count,26,'Complete collision count is preserved.');
+equal(boundedDuplicates.permanent_row_ids.length,20,'Review row ID samples are bounded.');
+yes(boundedDuplicates.rows_truncated,'Truncated collision samples are disclosed.');
 const backend=readFileSync('base44/functions/smartsheetSyncAction/entry.ts','utf8');
+const duplicateGateIndex=backend.indexOf('const duplicateSalesLinks = classifySalesPullDuplicateLinkedRowRisks(existingRecords, sheetId)');
+const deletedFilterIndex=backend.indexOf('existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter');
+const matchingIndex=backend.indexOf('const recordsByRowId: Record<string, any> = {}');
+yes(duplicateGateIndex>=0 && deletedFilterIndex>duplicateGateIndex &&
+  matchingIndex>duplicateGateIndex &&
+  backend.includes('if (duplicateSalesLinks.count) return {') &&
+  backend.includes('duplicate_sales_row_links: duplicateSalesLinks.count') &&
+  backend.includes('automatic_relink_attempted:false'),
+  'Production Sales pull refuses ambiguous permanent row links before filtering deleted/targeted records or matching writes.');
+yes(salesRunRequiresReview([{dataset:'sales',direction:'pull',skipped:true,
+  duplicate_sales_row_links:1,errors:0}]),
+  'A blocked ambiguous Sales pull is surfaced as Needs Review, not success.');
 yes(backend.includes('readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId)'),
   'Production pull reads unresolved Sales create markers independently of linked WorkOrders.');
 const scanIndex=backend.indexOf('salesCreateAttemptReview = await readSalesPullCreateAttemptRisks');
