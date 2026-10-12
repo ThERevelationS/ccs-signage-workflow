@@ -72,16 +72,13 @@ async function mechanicMutationFingerprint(action: string, body: any) {
   }));
 }
 
-function mechanicReceiptMarkerIdentityMatches(current:any, receipt:any) {
+function mechanicReceiptOperationIdentityValid(receipt:any) {
   const key = String(receipt?.operation_key || '');
   const match = /^mechanic:([^:]+):([^:]+):(start|save):([A-Za-z0-9_-]{16,120})$/.exec(key);
   if (!match) return false;
   const [,grantId,workOrderId,action,requestId] = match;
   const summary = receipt?.result_summary || {};
   return !!receipt?.id && !!receipt?.payload_fingerprint &&
-    String(current?.id || '') === workOrderId &&
-    String(current?.mechanic_operation_key || '') === key &&
-    String(current?.mechanic_operation_fingerprint || '') === String(receipt.payload_fingerprint) &&
     receipt.operation_type === MECHANIC_MUTATION_TYPES[action] &&
     receipt.target_entity === 'FleetMaintenanceWorkOrder' &&
     String(receipt.target_id || '') === workOrderId &&
@@ -90,6 +87,13 @@ function mechanicReceiptMarkerIdentityMatches(current:any, receipt:any) {
     summary.action === action &&
     String(summary.request_id || '') === requestId &&
     !!String(summary.expected_updated_date || '');
+}
+
+function mechanicReceiptMarkerIdentityMatches(current:any,receipt:any) {
+  return mechanicReceiptOperationIdentityValid(receipt) &&
+    String(current?.id || '') === String(receipt.target_id || '') &&
+    String(current?.mechanic_operation_key || '') === String(receipt.operation_key || '') &&
+    String(current?.mechanic_operation_fingerprint || '') === String(receipt.payload_fingerprint || '');
 }
 
 function mechanicReceiptIdentitySelector(receipt:any) {
