@@ -370,21 +370,21 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   const saveClick = source.slice(source.indexOf("  const handleSaveClick = () => {"),
     source.indexOf("  // Called after user picks (or skips) a revisit date"));
   const calls = [];
-  const makeClick = new Function("isRegistered", "isSaving", "blockOnUnsubmittedDrafts",
-    "cancelPendingNavigationFocus", "setPendingRevisitDate", "loadedRevisitDateSnapshot",
-    "setShowRevisitPopup", saveClick + "\nreturn handleSaveClick;");
+  const makeClick = new Function("isRegistered", "isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
+    "blockOnUnsubmittedDrafts", "cancelPendingNavigationFocus", "setPendingRevisitDate",
+    "loadedRevisitDateSnapshot", "setShowRevisitPopup", saveClick + "\nreturn handleSaveClick;");
   const cancel = () => calls.push("cancel focus");
   const setDate = date => calls.push(["revisit date", date]);
   const setOpen = open => calls.push(["confirmation open", open]);
-  makeClick(false, false, () => false, cancel, setDate, "2099-02-17", setOpen)();
+  makeClick(false, false, { current: false }, false, { current: false }, () => false, cancel, setDate, "2099-02-17", setOpen)();
   assert.deepEqual(calls, []);
-  makeClick(true, false, () => false, cancel, setDate, "2099-02-17", setOpen)();
+  makeClick(true, false, { current: false }, false, { current: false }, () => false, cancel, setDate, "2099-02-17", setOpen)();
   assert.deepEqual(calls, [
     "cancel focus", ["revisit date", "2099-02-17"], ["confirmation open", true]
   ]);
   assert.match(source, /<RevisitDatePopup\s+isOpen=\{showRevisitPopup\}/);
   assert.match(source, /onSave=\{handleRevisitSave\}/);
-  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*if \(blockOnUnsubmittedDrafts\("save"\)\) \{\s*setShowRevisitPopup\(false\);\s*return;\s*\}\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
+  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*if \(isSaving \|\| saveInFlightRef\.current \|\| isLoading \|\| loadInFlightRef\.current\) return;\s*if \(blockOnUnsubmittedDrafts\("save"\)\) \{\s*setShowRevisitPopup\(false\);\s*return;\s*\}\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
 
   const searchRecovery = source.slice(source.indexOf("// When checklist edits remove a navigated match"),
     source.indexOf("// A collapsed product, hierarchy, or Completed section"));
@@ -927,13 +927,14 @@ await (async () => {
     source.indexOf("  const getDropdownName = (dropdownId) => {"));
   assert.match(source, /return \(\) => \{ loadDataRequestRef\.current \+= 1; \};/);
   assert.match(body, /if \(requestId !== loadDataRequestRef\.current\) return;/);
-  assert.match(body, /if \(requestId === loadDataRequestRef\.current\) setIsLoading\(false\)/);
+  assert.match(body, /if \(requestId === loadDataRequestRef\.current\) \{\s*loadInFlightRef\.current = false;\s*setIsLoading\(false\)/);
   const makeLoad = new Function("scope", "with(scope) { " + body + "\nreturn loadData; }");
   const requestRef = { current: 0 }, pending = [];
   const checklists = [], loading = [], errors = [];
   let invalidations = 0;
   const shared = {
     loadDataRequestRef: requestRef,
+    saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     resetOtherPopupForReload: () => { invalidations++; },
     setIsLoading: value => loading.push(value),
     WorkOrder: { filter: ({ id }) => new Promise(resolve => pending.push({ id, resolve })) },
@@ -1002,15 +1003,15 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
 
   const actionBody = source.slice(source.indexOf("  const requestClose = () => {"),
     source.indexOf("  return (\n    <>", source.indexOf("  const requestClose = () => {")));
-  const createActions = new Function("isSaving", "isLoading", "hasUnsavedChanges",
-    "setDiscardWarning", "cancelPendingNavigationFocus", "onClose", "returnToReloadRef",
+  const createActions = new Function("isSaving", "isLoading", "saveInFlightRef", "loadInFlightRef",
+    "hasUnsavedChanges", "setDiscardWarning", "cancelPendingNavigationFocus", "onClose", "returnToReloadRef",
     "loadData", "discardWarning", "setEditingItemId", "setEditingItemText",
     "setEditingProductName", "setEditingProductNameText", "setNewItemInput",
     "setNewItemText", "setShowAddGeneralChecklist", "setNewGeneralChecklistText",
     actionBody + "\nreturn { requestClose, requestReloadLatest, confirmDiscardChanges };");
   const calls = [], focusFlag = { current: false };
   const make = (dirty, action = null, saving = false, loading = false) =>
-    createActions(saving, loading, dirty, value => calls.push(["warning", value]),
+    createActions(saving, loading, { current: false }, { current: false }, dirty, value => calls.push(["warning", value]),
       () => calls.push("cancel nav"), () => calls.push("close"), focusFlag,
       () => calls.push("reload"), action,
       value => calls.push(["editor", value]),
@@ -1088,19 +1089,19 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
 
   const saveClickSource = source.slice(source.indexOf("  const handleSaveClick = () => {"),
     source.indexOf("  // Called after user picks (or skips) a revisit date"));
-  const makeClick = new Function("isRegistered", "isSaving", "blockOnUnsubmittedDrafts",
-    "cancelPendingNavigationFocus", "setPendingRevisitDate", "loadedRevisitDateSnapshot",
-    "setShowRevisitPopup", saveClickSource + "\nreturn handleSaveClick;");
-  makeClick(true, false, block, () => {}, () => {}, "2099-03-21",
+  const makeClick = new Function("isRegistered", "isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
+    "blockOnUnsubmittedDrafts", "cancelPendingNavigationFocus", "setPendingRevisitDate",
+    "loadedRevisitDateSnapshot", "setShowRevisitPopup", saveClickSource + "\nreturn handleSaveClick;");
+  makeClick(true, false, { current: false }, false, { current: false }, block, () => {}, () => {}, "2099-03-21",
     () => { revisitOpens++; })();
   assert.equal(revisitOpens, 0);
   const completeSource = source.slice(source.indexOf("  const handleCheckOff = async () => {"),
     source.indexOf("  const proceedWithCheckOff = async () => {"));
-  const makeComplete = new Function("isSaving", "blockOnUnsubmittedDrafts",
+  const makeComplete = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef", "blockOnUnsubmittedDrafts",
     "checkIfComplete", "completingWithoutChecklistRef", "setNoChecklistWarning",
     "setIncompleteWarning", "saveChecklist",
     completeSource + "\nreturn handleCheckOff;");
-  makeComplete(false, block, () => { validated++; return { complete: true, hasChecklist: true }; },
+  makeComplete(false, { current: false }, false, { current: false }, block, () => { validated++; return { complete: true, hasChecklist: true }; },
     { current: false }, () => {}, () => {}, () => { persisted++; })();
   assert.equal(validated, 0);
   assert.equal(persisted, 0);
@@ -1108,40 +1109,40 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
 
   const overrideSource = source.slice(source.indexOf("  const proceedWithCheckOff = async () => {"),
     source.indexOf("  // Called when Save button is clicked"));
-  const makeOverride = new Function("isSaving", "blockOnUnsubmittedDrafts",
+  const makeOverride = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef", "blockOnUnsubmittedDrafts",
     "completingWithoutChecklistRef", "setNoChecklistWarning", "saveChecklist",
     overrideSource + "\nreturn proceedWithCheckOff;");
   const overrideRef = { current: false };
-  makeOverride(false, block, overrideRef, () => { throw Error("Override warning must remain open"); },
+  makeOverride(false, { current: false }, false, { current: false }, block, overrideRef, () => { throw Error("Override warning must remain open"); },
     () => { persisted++; })();
   assert.equal(overrideRef.current, false);
   assert.equal(persisted, 0);
 
   const directSaveStart = source.slice(source.indexOf("  const saveChecklist = async"),
     source.indexOf("    try {", source.indexOf("  const saveChecklist = async")));
-  const makeSaveGuard = new Function("isSaving", "blockOnUnsubmittedDrafts", "setIsSaving",
-    directSaveStart + "\n  };\nreturn saveChecklist;");
-  makeSaveGuard(false, block, () => { persisted++; })(null, { markComplete: true });
+  const makeSaveGuard = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
+    "blockOnUnsubmittedDrafts", "setIsSaving", directSaveStart + "\n  };\nreturn saveChecklist;");
+  makeSaveGuard(false, { current: false }, false, { current: false }, block, () => { persisted++; })(null, { markComplete: true });
   assert.equal(persisted, 0);
   assert.equal(notices.at(-1), "complete");
 
   const clean = makeGuard(false, actionRef, value => notices.push(value), targetRef,
     () => null);
-  makeClick(true, false, clean, () => {}, () => {}, "2099-03-21",
+  makeClick(true, false, { current: false }, false, { current: false }, clean, () => {}, () => {}, "2099-03-21",
     () => { revisitOpens++; })();
   assert.equal(revisitOpens, 1); // Still requires the Revisit date popup on a clean save.
 
   const revisitSave = source.slice(source.indexOf("  const handleRevisitSave = async (dateString) => {"),
     source.indexOf("  const saveChecklist = async"));
-  const makeRevisitSave = new Function("blockOnUnsubmittedDrafts", "setShowRevisitPopup",
-    "saveChecklist", revisitSave + "\nreturn handleRevisitSave;");
+  const makeRevisitSave = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
+    "blockOnUnsubmittedDrafts", "setShowRevisitPopup", "saveChecklist", revisitSave + "\nreturn handleRevisitSave;");
   const savedDates = [], popupStates = [];
-  makeRevisitSave(block, value => popupStates.push(value),
+  makeRevisitSave(false, { current: false }, false, { current: false }, block, value => popupStates.push(value),
     value => savedDates.push(value))("2099-04-12");
   assert.deepEqual(savedDates, []);
   assert.deepEqual(popupStates, [false]); // Stale Revisit submission must not write.
   popupStates.length = 0;
-  makeRevisitSave(clean, value => popupStates.push(value),
+  makeRevisitSave(false, { current: false }, false, { current: false }, clean, value => popupStates.push(value),
     value => savedDates.push(value))("2099-04-12");
   assert.deepEqual(savedDates, ["2099-04-12"]);
   assert.deepEqual(popupStates, [false]);
