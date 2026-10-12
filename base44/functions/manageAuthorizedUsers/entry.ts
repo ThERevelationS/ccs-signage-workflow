@@ -346,6 +346,7 @@ function adminDeletionRequestView(row: any) {
     requested_at: row?.requested_at ?? null,
     processed_at: row?.processed_at ?? null,
     processed_by: row?.processed_by ?? null,
+    resolution_source_updated_date: row?.resolution_source_updated_date ?? null,
     admin_notes: row?.admin_notes ?? '',
     created_date: row?.created_date,
     updated_date: row?.updated_date,
@@ -355,11 +356,13 @@ function adminDeletionRequestView(row: any) {
 async function resolveDeletionRequest(Request: any, actor: any, body: any) {
   const id = String(body?.request_id || '').trim();
   const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+  const expectedEmail = cleanEmail(body?.expected_user_email);
+  const expectedAuthorizedId = String(body?.expected_authorized_email_id || '').trim();
   const resolution = String(body?.resolution || '').trim().toLowerCase();
   const adminNotes = cleanText(body?.admin_notes, 2000);
 
-  if (!id || !expectedUpdatedDate) {
-    throw Object.assign(new Error('Deletion request version is required.'), { status: 400 });
+  if (!id || !expectedUpdatedDate || !expectedEmail || !expectedAuthorizedId) {
+    throw Object.assign(new Error('Deletion request identity and version are required.'), { status: 400 });
   }
   if (!['processed', 'cancelled'].includes(resolution)) {
     throw Object.assign(new Error('Deletion request resolution is invalid.'), { status: 400 });
@@ -367,10 +370,18 @@ async function resolveDeletionRequest(Request: any, actor: any, body: any) {
 
   const current = await Request.get(id).catch(() => null);
   if (!current?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+  if (cleanEmail(current.user_email) !== expectedEmail ||
+      String(current.authorized_email_id || '').trim() !== expectedAuthorizedId) {
+    throw Object.assign(new Error('Deletion request identity changed. Reload before resolving it.'), { status: 409 });
+  }
 
   const actorEmail = cleanEmail(actor?.email);
+  if (!actorEmail) {
+    throw Object.assign(new Error('Administrator identity could not be verified.'), { status: 403 });
+  }
   if (
     current.status === resolution &&
+    String(current.resolution_source_updated_date || '') === expectedUpdatedDate &&
     cleanEmail(current.processed_by) === actorEmail &&
     String(current.admin_notes || '') === adminNotes
   ) {
@@ -388,10 +399,15 @@ async function resolveDeletionRequest(Request: any, actor: any, body: any) {
     status: resolution,
     processed_at: new Date().toISOString(),
     processed_by: actorEmail,
+    resolution_source_updated_date: expectedUpdatedDate,
     admin_notes: adminNotes,
   };
   const result = await Request.updateMany(
-    { id, updated_date: expectedUpdatedDate, status: 'pending' },
+    {
+      id, updated_date: expectedUpdatedDate, status: 'pending',
+      user_email: current.user_email,
+      authorized_email_id: current.authorized_email_id,
+    },
     { $set: patch },
   );
   if (!result || result.updated !== 1) {
@@ -402,6 +418,9 @@ async function resolveDeletionRequest(Request: any, actor: any, body: any) {
   if (
     !saved?.id ||
     saved.status !== resolution ||
+    cleanEmail(saved.user_email) !== expectedEmail ||
+    String(saved.authorized_email_id || '').trim() !== expectedAuthorizedId ||
+    String(saved.resolution_source_updated_date || '') !== expectedUpdatedDate ||
     cleanEmail(saved.processed_by) !== actorEmail ||
     String(saved.admin_notes || '') !== adminNotes
   ) {
