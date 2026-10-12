@@ -822,18 +822,22 @@ try {
       const error = dialog.getByRole('alert', { name: 'Account deletion impact unavailable' });
       await error.waitFor();
       assert.match(await error.innerText(), /impact scan took too long/i);
-      assert.match(await error.innerText(), /previous read may still be finishing/);
+      assert.match(await error.innerText(), /Retry is paused/);
       assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
-      assert.equal(await dialog.getByRole('button', { name: 'Retry impact scan' }).isEnabled(), true);
-      await page.evaluate(() => { window.__adminImpactDelay = false; });
-      await error.getByRole('button', { name: 'Retry impact scan' }).click();
-      await dialog.getByText('Synthetic review verified').waitFor();
-      assert.equal(await error.count(), 0);
+      const retry = error.getByRole('button', { name: 'Retry impact scan' });
+      assert.equal(await retry.isEnabled(), false, 'The original SDK request is still pending');
+      assert.equal(await page.evaluate(() => window.__adminImpactAttempts), 1);
       await page.evaluate(() => {
+        window.__adminImpactDelay = false;
         const old = window.__adminImpactPending.shift();
         old.report.blockers = ['Stale first scan should not appear'];
         old.resolve(old.report);
       });
+      assert.equal(await retry.isEnabled(), false, 'Cooldown remains after the SDK response completes');
+      await retry.click({ timeout: 6500 });
+      await dialog.getByText('Synthetic review verified').waitFor();
+      assert.equal(await error.count(), 0);
+      assert.equal(await page.evaluate(() => window.__adminImpactAttempts), 2);
       await page.waitForTimeout(30);
       assert.equal(await dialog.getByText('Stale first scan should not appear').count(), 0);
       assert.equal(await dialog.getByText('Synthetic review verified').count(), 1);
