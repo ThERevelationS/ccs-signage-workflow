@@ -28,7 +28,7 @@ import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorCo
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
-import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
+import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks, classifySalesPullDuplicateLinkedRowRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
 import { auditSalesPermanentRowOwners } from '../../shared/smartsheetSalesPermanentOwnershipAudit.mjs';
@@ -278,6 +278,22 @@ async function pullDataset(
       sort: 'id',
       label: 'Order Form Smartsheet pull linked Orders',
     });
+  }
+  if (dataset === 'sales') {
+    // Before filtering deleted records or targeted IDs, verify the complete
+    // configured-sheet ownership set. Otherwise recordsByRowId silently picks
+    // the last of multiple WorkOrders and may overwrite the wrong Sales job.
+    const duplicateSalesLinks = classifySalesPullDuplicateLinkedRowRisks(existingRecords, sheetId);
+    if (duplicateSalesLinks.count) return {
+      dataset, direction:'pull', sheet_id:sheetId, skipped:true,
+      reason: duplicateSalesLinks.count + ' permanent Sales Smartsheet row link(s) have competing WorkOrders. ' +
+        'No Sales records were changed; inspect exact IDs in the administrator ownership audit.',
+      duplicate_sales_row_links: duplicateSalesLinks.count,
+      duplicate_sales_row_ids: duplicateSalesLinks.permanent_row_ids,
+      duplicate_sales_workorder_ids: duplicateSalesLinks.workorder_ids,
+      duplicate_sales_row_ids_truncated: duplicateSalesLinks.rows_truncated,
+      automatic_relink_attempted:false,
+    };
   }
   const deletedOrderTombstones = dataset === 'orders'
     ? classifyOrderDeletedLinkTombstones(Array.isArray(existingRecords) ? existingRecords : [], sheetId)
