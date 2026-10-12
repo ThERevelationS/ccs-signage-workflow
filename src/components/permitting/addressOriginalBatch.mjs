@@ -1,4 +1,8 @@
-export const verifiedOriginal=doc=>doc?.archive_state?.status==='complete'&&Boolean(doc.file_url)&&/^[a-f0-9]{64}$/.test(doc.source_sha256 || '')&&doc.source_sha256===doc.stored_sha256&&Number.isInteger(doc.source_bytes)&&doc.source_bytes>0&&doc.source_bytes===doc.stored_bytes;
+function usableOriginalLink(value){
+ if(typeof value!=='string'||!value.trim())return false;
+ try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password;}catch{return false;}
+}
+export const verifiedOriginal=doc=>doc?.archive_state?.status==='complete'&&usableOriginalLink(doc.file_url)&&/^[a-f0-9]{64}$/.test(doc.source_sha256 || '')&&doc.source_sha256===doc.stored_sha256&&Number.isSafeInteger(doc.source_bytes)&&doc.source_bytes>0&&doc.source_bytes===doc.stored_bytes;
 
 export function remainingOriginals(collection,now=Date.now()){
  const docs=collection.documents || [],seen=new Set();

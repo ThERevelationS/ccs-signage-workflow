@@ -50,3 +50,16 @@ test('collection status counts outside originals once and never hides blocked fi
 });
 
 test('blocked verification never advertises an automatic retry',()=>{const status=originalFileStatus(doc('blocked',{archive_state:{status:'verification_blocked',file_url:'https://stored.gov/a.pdf',retry_after:'2099-01-01'}}));assert.equal(status.kind,'verify');assert.equal(status.retryAfter,undefined);assert.match(status.label,/automatic verification stopped/);});
+
+test('unusable archive links cannot display a verified saved original or enter automatic re-upload',()=>{
+ const hash='a'.repeat(64);
+ for(const file_url of ['javascript:alert(1)','data:text/plain,bytes','file:///tmp/original','//stored.example/file','https://user:secret@stored.example/file','invalid','   ']){
+  const record={id:'retained',url:'https://official.example/file.pdf',file_url,source_sha256:hash,stored_sha256:hash,source_bytes:123,stored_bytes:123,archive_state:{status:'complete'}};
+  assert.equal(originalFileStatus(record).kind,'review');assert.deepEqual(remainingOriginals({documents:[record]}),[]);
+ }
+});
+test('inexact byte counts cannot establish source/stored byte equality',()=>{
+ const hash='a'.repeat(64),record={id:'retained',url:'https://official.example/file.pdf',file_url:'https://stored.example/file',source_sha256:hash,stored_sha256:hash,source_bytes:Number.MAX_SAFE_INTEGER+1,stored_bytes:Number.MAX_SAFE_INTEGER+1,archive_state:{status:'complete'}};
+ assert.equal(originalFileStatus(record).kind,'review');assert.deepEqual(remainingOriginals({documents:[record]}),[]);
+ assert.equal(originalFileStatus({...record,source_bytes:123,stored_bytes:123}).kind,'saved');
+});
