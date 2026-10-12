@@ -180,7 +180,12 @@ async function compare(options) {
   const currentFixture = makeFixture(options);
   const oldReport = normalized(await oldFixture.legacy(oldFixture.base44, oldFixture.Request, oldFixture.request.id));
   const currentReport = normalized(await currentFixture.bounded(currentFixture.base44, currentFixture.Request, currentFixture.request.id));
-  assert.deepEqual(currentReport, oldReport, "Full report and blocker text/order must match legacy backend");
+  // The Admin request view now exposes an optional decision-provenance field;
+  // compare the legacy scan contract without dropping any counts or blockers.
+  const { resolution_source_updated_date, ...legacyCompatibleRequest } = currentReport.request;
+  assert.equal(resolution_source_updated_date, null);
+  assert.deepEqual({ ...currentReport, request: legacyCompatibleRequest }, oldReport,
+    "Complete counts, blockers, identities and scan sections must match legacy backend");
   assert.deepEqual(describeReads(currentFixture.reads), describeReads(oldFixture.reads),
     "Actual entity/read query scopes and result counts must match baseline");
   assert.equal(currentFixture.active, 0);
