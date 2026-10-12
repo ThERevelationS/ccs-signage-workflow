@@ -103,6 +103,7 @@ export default function UserManagement() {
   const deletionRequestLoadSequence = useRef(0);
   const [deletionRequestConfirm, setDeletionRequestConfirm] = useState(null);
   const [deletionRequestSaving, setDeletionRequestSaving] = useState(false);
+  const deletionResolutionInFlight = useRef(false);
   const [deletionImpactRequest, setDeletionImpactRequest] = useState(null);
   const [deletionImpactReport, setDeletionImpactReport] = useState(null);
   const [deletionImpactLoading, setDeletionImpactLoading] = useState(false);
@@ -256,13 +257,23 @@ export default function UserManagement() {
   const handleResolveDeletionRequest = async () => {
     const request = deletionRequestConfirm?.request;
     const resolution = deletionRequestConfirm?.resolution;
-    if (!request?.id || !resolution || deletionRequestSaving || deletionRequestsLoading || deletionRequestsError || !sessionToken) return;
+    const verifiedRequest = deletionRequests.find(item =>
+      item.id === request?.id &&
+      item.updated_date === request?.updated_date &&
+      item.authorized_email_id === request?.authorized_email_id &&
+      item.user_email === request?.user_email &&
+      item.status === "pending");
+    if (!verifiedRequest || !resolution || deletionResolutionInFlight.current ||
+        deletionRequestsLoading || deletionRequestsError || !sessionToken) return;
 
+    // React state updates may not render before a second click; this ref guards
+    // the actual synchronous submit boundary.
+    deletionResolutionInFlight.current = true;
     setDeletionRequestSaving(true);
     setUserMutationError("");
     try {
       await resolveAccountDeletionRequestAdmin({
-        request,
+        request: verifiedRequest,
         resolution,
         sessionToken,
       });
@@ -274,6 +285,7 @@ export default function UserManagement() {
       setDeletionRequestConfirm(null);
       await loadDeletionRequests();
     } finally {
+      deletionResolutionInFlight.current = false;
       setDeletionRequestSaving(false);
     }
   };
