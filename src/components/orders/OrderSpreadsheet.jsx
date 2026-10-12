@@ -565,7 +565,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       );
       // New edits made while the read was in flight must be saved first; the
       // backend independently verifies each durable pending marker too.
-      if (Object.keys(pendingChangesRef.current).length) {
+      if (Object.keys(pendingChangesRef.current).length ||
+          syncTargets.some(({ id, version }) => pendingSyncVersionRef.current.has(id) &&
+            pendingSyncVersionRef.current.get(id) !== version)) {
         throw new Error('New Order edits need saving before Retry Sync. No Smartsheet rows were submitted.');
       }
       const pendingOrderIds = preflight.pendingIds;
