@@ -65,6 +65,9 @@ import { getDeletionImpactRetryState } from "@/components/admin/deletionImpactRe
 
 export default function UserManagement() {
   const { sessionToken } = useAuth();
+  // Track the identity on render, before effects run, to fence late responses.
+  const activeSessionToken = useRef(sessionToken);
+  activeSessionToken.current = sessionToken;
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userDirectoryError, setUserDirectoryError] = useState(false);
@@ -104,6 +107,7 @@ export default function UserManagement() {
   const [deletionRequestConfirm, setDeletionRequestConfirm] = useState(null);
   const [deletionRequestSaving, setDeletionRequestSaving] = useState(false);
   const deletionResolutionInFlight = useRef(false);
+  const deletionResolutionOwner = useRef(null);
   const [deletionImpactRequest, setDeletionImpactRequest] = useState(null);
   const [deletionImpactReport, setDeletionImpactReport] = useState(null);
   const [deletionImpactLoading, setDeletionImpactLoading] = useState(false);
@@ -122,6 +126,13 @@ export default function UserManagement() {
   }, [deletionImpactRequest?.id, deletionImpactError]);
 
   useEffect(() => {
+    // Revoke UI ownership from a pending previous-session resolution.
+    // The backend's authorized CAS may finish, but it cannot update this UI.
+    deletionResolutionOwner.current = null;
+    deletionResolutionInFlight.current = false;
+    setDeletionRequestSaving(false);
+    setDeletionRequestConfirm(null);
+    setUserMutationError("");
     // Every session change invalidates read-only scans from the previous
     // identity, even when a new session token replaces the old one directly.
     ++deletionImpactSequence.current;
@@ -177,7 +188,12 @@ export default function UserManagement() {
   };
 
   const loadDeletionRequests = async () => {
+    // A completion from an older auth token must not start a read or invalidate
+    // the current session's request list.
+    if (activeSessionToken.current !== sessionToken) return null;
     const requestSequence = ++deletionRequestLoadSequence.current;
+    const ownsRead = () => requestSequence === deletionRequestLoadSequence.current &&
+      activeSessionToken.current === sessionToken;
     // A prior confirmation or impact scan cannot survive a refresh of its
     // source record, including refreshes that fail or return a newer version.
     ++deletionImpactSequence.current;
@@ -194,18 +210,18 @@ export default function UserManagement() {
     setDeletionRequestsLoading(true);
     try {
       const requests = await listAccountDeletionRequestsAdmin({ sessionToken });
-      if (requestSequence === deletionRequestLoadSequence.current) {
+      if (ownsRead()) {
         setDeletionRequests(requests);
         setDeletionRequestsError(false);
       }
-      return requests;
+      return ownsRead() ? requests : null;
     } catch {
       // An incomplete authenticated read cannot prove there are no requests.
       // Retain the last verified list internally, but block all stale actions.
-      if (requestSequence === deletionRequestLoadSequence.current) setDeletionRequestsError(true);
+      if (ownsRead()) setDeletionRequestsError(true);
       return null;
     } finally {
-      if (requestSequence === deletionRequestLoadSequence.current) setDeletionRequestsLoading(false);
+      if (ownsRead()) setDeletionRequestsLoading(false);
     }
   };
 
