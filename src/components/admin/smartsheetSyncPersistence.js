@@ -86,6 +86,17 @@ export async function previewSmartsheetSalesEstInv({ sessionToken, sampleOffset 
   return result;
 }
 
+export async function auditSalesSmartsheetPermanentOwnership({sessionToken}={}) {
+  const result=await invokeSmartsheet("audit_sales_permanent_ownership",sessionToken);
+  if (result?.read_only!==true || result?.writes_attempted!==false ||
+      result?.dataset!=="sales" || !Array.isArray(result.cases) ||
+      !Number.isFinite(Number(result.review_count)) ||
+      result.unique_constraint_verified!==false) {
+    throw new Error("Sales ownership audit did not confirm a complete read-only result.");
+  }
+  return result;
+}
+
 export async function auditSalesSmartsheetCreateAttempts({ sessionToken } = {}) {
   const result = await invokeSmartsheet("audit_sales_create_attempts", sessionToken);
   if (result.read_only !== true || result.writes_attempted !== false ||
