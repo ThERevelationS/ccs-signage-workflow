@@ -63,6 +63,21 @@ export function classifySalesPullLinkedRowRisks(records = [], sheetId = '', plan
   };
 }
 
+// Legacy linked rows may have no sheet ID, so scan permanent row links
+// independently of the normal sheet-scoped Sales lookup before import.
+export async function readSalesPullLinkedRowRisks(entity, sheetId, plannedRowIds) {
+  if (!Array.isArray(plannedRowIds) || !plannedRowIds.length) {
+    return classifySalesPullLinkedRowRisks([], sheetId, plannedRowIds);
+  }
+  const linked = await loadAllEntityRows({
+    entity,
+    query: { smartsheet_row_id: { $exists: true } },
+    sort: 'id',
+    label: 'Sales pull permanent row ownership pre-import verification',
+  });
+  return classifySalesPullLinkedRowRisks(linked, sheetId, plannedRowIds);
+}
+
 export async function readSalesPullCreateAttemptRisks(entity, sheetId) {
   // Server-scoped indexed-style filtering, not a legacy WorkOrder archive
   // download. A failed/incomplete paged read fails closed before bulkCreate.
