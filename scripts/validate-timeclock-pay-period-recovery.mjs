@@ -4739,7 +4739,7 @@ test('v28 later rejected employee request cannot displace prior direct correctio
   assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
 });
 
-test('v28 later employee approve_modified supersedes prior direct correction in same reopened generation', async () => {
+async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = false }) {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   const period = h.period();
   Object.assign(period, { start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '' });
@@ -4906,6 +4906,99 @@ test('v28 later employee approve_modified supersedes prior direct correction in 
   assert.equal(tampered.status, 200, JSON.stringify(tampered.body));
   assert.equal(tampered.body.verified, false, JSON.stringify(tampered.body));
   directCAudit.details.corrected.clock_in = originalIntermediateClock;
+  if (!thirdGeneration) return;
+
+  // Direct manager corrections follow the employee-reviewed generation;
+  // original employee submission and review evidence stays frozen in history.
+  const generationBHistory = clone(period.finalized_summary_history[0]);
+  const generationD = clone(period.finalized_summary);
+  const ok = async (call) => {
+    const result = await call;
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    return result.body;
+  };
+  await ok(h.action('reopen', 'v28-mixed-g3-reopen-period', 'Audit third-generation manager adjustments'));
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-mixed-g3-reopen-shift', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'reopen',
+    note: 'Reopen for third-generation corrections',
+  }));
+  const direct = async (letter, clockIn, hours, minutes) => {
+    const request = {
+      action: 'admin_correct_entry', target_email: employee.email,
+      request_id: 'v28-mixed-g3-' + letter, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: 'Review third-generation ' + letter,
+      correction: {
+        clock_in: clockIn, clock_out: entry.clock_out, lunch_minutes: 0,
+        notes: 'Manager adjustment ' + letter,
+        job_allocations: [{ hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+      },
+    };
+    const response = await ok(h.invoke(request));
+    await ok(h.invoke(request));
+    return h.rows.TimeClockAudit.find((row) => row.id === response.audit_id);
+  };
+  const auditE = await direct('e', '2026-09-28T12:55:00.000Z', 7, 5);
+  const auditF = await direct('f', '2026-09-28T13:05:00.000Z', 6, 55);
+  await ok(h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'v28-mixed-g3-approve-f', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve terminal F',
+  }));
+  await ok(h.action('finalize', 'v28-mixed-g3-finalize-f'));
+  await ok(h.action('finalize', 'v28-mixed-g3-finalize-f'));
+  assert.equal(period.finalized_summary_history.length, 2);
+  assert.deepEqual(period.finalized_summary_history[0], generationBHistory);
+  const retiredD = period.finalized_summary_history[1];
+  assert.deepEqual(retiredD.shift_manifest, generationD.shift_manifest);
+  assert.deepEqual(retiredD.generation_changes, generationD.generation_changes);
+  assert.equal(retiredD.generation_changes_hash, generationD.generation_changes_hash);
+  assert.equal(retiredD.snapshot_chain_hash, generationD.snapshot_chain_hash);
+  const thirdChange = period.finalized_summary.generation_changes[0];
+  assert.equal(period.finalized_summary.generation_changes.length, 1);
+  assert.equal(thirdChange.action_provenance.audit_id, auditF.id);
+  assert.equal(thirdChange.action_provenance.unique_direct_semantic_suffix, true);
+  assert.equal(thirdChange.action_provenance.semantic_suffix_start_audit_id, auditE.id);
+  assert.deepEqual(thirdChange.causal_chain.filter((row) => row.action === 'admin_correction')
+    .map((row) => row.audit_id).slice(-2), [auditE.id, auditF.id]);
+  const verifyG3 = async (request_id) => {
+    const result = await verify(request_id);
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    return result.body;
+  };
+  const verifiedG3 = await verifyG3('v28-mixed-g3-verify-001');
+  assert.equal(verifiedG3.verified, true, JSON.stringify(verifiedG3));
+  assert.equal((await verifyG3('v28-mixed-g3-verify-001')).verified, true);
+
+  const originalHash = reviewDAudit.details.review_payload_hash;
+  assert.ok(originalHash);
+  reviewDAudit.details.review_payload_hash = 'f'.repeat(64);
+  assert.equal((await verifyG3('v28-mixed-g3-tamper-retired-review')).verified, false);
+  reviewDAudit.details.review_payload_hash = originalHash;
+
+  const originalSubmissionHash = submissionD.details?.payload_hash;
+  assert.ok(originalSubmissionHash);
+  submissionD.details.payload_hash = 'e'.repeat(64);
+  assert.equal((await verifyG3('v28-mixed-g3-tamper-retired-submission')).verified, false);
+  submissionD.details.payload_hash = originalSubmissionHash;
+
+  const frozenProvenance = retiredD.generation_changes[0].correction_provenance;
+  const savedAppliedAuditId = frozenProvenance.applied_audit_id;
+  assert.equal(savedAppliedAuditId, appliedD.id);
+  frozenProvenance.applied_audit_id = auditF.id;
+  assert.equal((await verifyG3('v28-mixed-g3-tamper-frozen-applied-id')).verified, false);
+  frozenProvenance.applied_audit_id = savedAppliedAuditId;
+
+  assert.equal((await verifyG3('v28-mixed-g3-restored')).verified, true);
+}
+
+test('v28 later employee approve_modified supersedes prior direct correction in same reopened generation', async () => {
+  await exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration: false });
+});
+
+test('v28 mixed employee and manager corrections across three generations preserve retired approval evidence', async () => {
+  await exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration: true });
 });
 
 test('v28 later employee approve exact supersedes prior direct correction in same reopened generation', async () => {
