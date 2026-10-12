@@ -49,7 +49,8 @@ function makeReceipt(body,{status="started",photos=[],count=0}={}){
 function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false}={}){
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
     waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
-    pauseWorkRead:false,pendingWorkReads:[],sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
+    pauseWorkRead:false,pendingWorkReads:[],pauseAppliedWrite:false,pendingAppliedWrites:[],
+    sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
     pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],
     pauseFinalReceiptReadAt:0,receiptReadNumbers:new Map(),pendingFinalReceiptReads:[],
     grantRevision:1,pauseGrantMutationWrite:false,pendingGrantMutationWrites:[],release:null};
@@ -87,6 +88,10 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
       const next={...prior,...clone(patch)};store.receipts.set(id,next);return clone(next);
     },
     async updateMany(filter,operators){
+      if(operators?.$set?.status==='applied' && store.pauseAppliedWrite){
+        store.pauseAppliedWrite=false;
+        await new Promise(resolve=>store.pendingAppliedWrites.push(resolve));
+      }
       if(operators?.$set?.status==='cancelled' && store.pauseCancelWrite){
         store.pauseCancelWrite=false;
         await new Promise(resolve=>store.pendingCancelWrites.push(resolve));
