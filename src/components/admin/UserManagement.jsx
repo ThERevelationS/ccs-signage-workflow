@@ -61,6 +61,7 @@ import {
   updateAuthorizedUserAdmin,
   updateAuthorizedUserHrAdmin,
 } from "@/components/admin/authorizedUserAdminPersistence";
+import { getDeletionImpactRetryState } from "@/components/admin/deletionImpactRetryCoordinator";
 
 export default function UserManagement() {
   const { sessionToken } = useAuth();
@@ -107,6 +108,17 @@ export default function UserManagement() {
   const [deletionImpactLoading, setDeletionImpactLoading] = useState(false);
   const [deletionImpactError, setDeletionImpactError] = useState("");
   const deletionImpactSequence = useRef(0);
+  const [deletionImpactRetry, setDeletionImpactRetry] = useState({ inFlight: false, retryInMs: 0 });
+
+  // A timed-out SDK request may still be running. Show when retry is safe,
+  // and keep the control disabled until both ownership and cooldown clear.
+  useEffect(() => {
+    if (!deletionImpactRequest || !deletionImpactError) return;
+    const refreshRetry = () => setDeletionImpactRetry(getDeletionImpactRetryState());
+    refreshRetry();
+    const refreshTimer = setInterval(refreshRetry, 1000);
+    return () => clearInterval(refreshTimer);
+  }, [deletionImpactRequest?.id, deletionImpactError]);
 
   useEffect(() => {
     // Every session change invalidates read-only scans from the previous
@@ -219,7 +231,7 @@ export default function UserManagement() {
         // The known client deadline has a distinct, safe recovery explanation.
         const timedOut = error?.message === "Account deletion impact scan timed out. No report was verified.";
         setDeletionImpactError(timedOut
-          ? "The impact scan took too long. No report was verified. You can retry, although the previous read may still be finishing. No records were changed."
+          ? "The impact scan took too long. No report was verified. Retry is paused to avoid overlapping requests. No records were changed."
           : "The read-only impact scan could not be verified. No records were changed. Retry the scan or close this review.");
       }
     } finally {
@@ -1152,8 +1164,16 @@ export default function UserManagement() {
           ) : deletionImpactError ? (
             <div role="alert" aria-label="Account deletion impact unavailable" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
               <p>{deletionImpactError}</p>
+              {(deletionImpactRetry.inFlight || deletionImpactRetry.retryInMs > 0) && (
+                <p role="status" className="mt-2 text-xs text-amber-900">
+                  {deletionImpactRetry.inFlight
+                    ? "A previous server response is still pending. Retry will be enabled after it finishes and the safety pause ends."
+                    : `Retry available in ${Math.ceil(deletionImpactRetry.retryInMs / 1000)} seconds.`}
+                </p>
+              )}
               <Button type="button" size="sm" variant="outline"
-                disabled={!sessionToken || deletionRequestsLoading || deletionRequestsError}
+                disabled={!sessionToken || deletionRequestsLoading || deletionRequestsError ||
+                  deletionImpactRetry.inFlight || deletionImpactRetry.retryInMs > 0}
                 onClick={() => { void handleLoadDeletionImpact(deletionImpactRequest); }}
                 className="mt-3 min-h-10 border-amber-500 bg-white text-amber-950">
                 Retry impact scan
