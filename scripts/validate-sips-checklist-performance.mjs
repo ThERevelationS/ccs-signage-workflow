@@ -1233,4 +1233,96 @@ check("unfinished edit warning returns focus to the exact draft, reopening neste
   assert.match(source, /unfinishedDraftTargetRef\.current = null;[\s\S]*focusCustomDraftOnOpenRef\.current = false;[\s\S]*setUnfinishedEditsWarning\(null\);/);
 });
 
+await (async () => {
+  // Run the real save handler with a deferred persistence response to expose
+  // React's same-tick state gap. All records and IO are synthetic.
+  const saveBody = source.slice(source.indexOf("  const saveChecklist = async ("),
+    source.indexOf("  // Group checklist items only when checklist data changes."));
+  const actionsBody = source.slice(source.indexOf("  const requestClose = () => {"),
+    source.indexOf("  return (\n    <>", source.indexOf("  const requestClose = () => {")));
+  const makeSave = new Function("scope", "with (scope) {\n" + saveBody + "\nreturn saveChecklist;\n}");
+  const makeActions = new Function("scope", "with (scope) {\n" + actionsBody +
+    "\nreturn { requestClose, requestReloadLatest, confirmDiscardChanges };\n}");
+  let resolveWrite, rejectWrite;
+  const writes = [], loadingFlags = [], savingFlags = [], closed = [], errors = [];
+  const record = { id: "WO-A", sip_checklist: [], products: [], sip_revisit_date: "", sip_completed: false };
+  const scope = {
+    isSaving: false, isLoading: false,
+    saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+    blockOnUnsubmittedDrafts: () => false,
+    setIsSaving(value) { savingFlags.push(value); }, setIsLoading(value) { loadingFlags.push(value); },
+    checklist: [], products: [], workOrder: record,
+    loadedChecklistSnapshot: [], loadedProductsSnapshot: [],
+    loadedRevisitDateSnapshot: "", loadedSipCompletedSnapshot: false,
+    isFutureRevisitDate: () => false,
+    setSaveError(message) { errors.push(message); },
+    replaceWorkOrderFieldsIfUnchanged(args) {
+      writes.push(args);
+      return new Promise((resolve, reject) => { resolveWrite = resolve; rejectWrite = reject; });
+    },
+    onUpdate: () => {}, onClose: () => { closed.push("closed"); },
+    setLoadedChecklistSnapshot: () => {}, setLoadedProductsSnapshot: () => {},
+    setLoadedUiChecklistSnapshot: () => {}, setLoadedUiProductsSnapshot: () => {},
+    setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
+    setChecklist: () => {}, setProducts: () => {},
+    hasUnsavedChanges: true, discardWarning: "reload",
+    returnToReloadRef: { current: false },
+    setDiscardWarning: () => { throw Error("Discard warning changed while save in flight"); },
+    cancelPendingNavigationFocus: () => { throw Error("Focus cleanup interrupted save"); },
+    loadData: () => { throw Error("Reload interrupted save"); },
+    setEditingItemId: () => {}, setEditingItemText: () => {},
+    setEditingProductName: () => {}, setEditingProductNameText: () => {},
+    setNewItemInput: () => {}, setNewItemText: () => {},
+    setShowAddGeneralChecklist: () => {}, setNewGeneralChecklistText: () => {},
+    console: { error: () => {} }
+  };
+  const save = makeSave(scope);
+  const actions = makeActions(scope);
+  const first = save("2099-02-17");
+  assert.equal(scope.saveInFlightRef.current, true);
+  assert.equal(writes.length, 1);
+  // Second save, completion, reload and discard must do nothing even though
+  // the captured isSaving/isLoading state remains false until React re-renders.
+  await save("2099-02-18", { markComplete: true });
+  actions.requestClose();
+  actions.requestReloadLatest();
+  actions.confirmDiscardChanges();
+  assert.equal(writes.length, 1);
+  assert.deepEqual(closed, []);
+  assert.equal(writes[0].workOrderId, "WO-A");
+  assert.equal(writes[0].nextFields.sip_revisit_date, "2099-02-17");
+  assert.equal(writes[0].nextFields.sip_completed, undefined);
+  resolveWrite({ sip_checklist: [], products: [], sip_revisit_date: "2099-02-17", updated_date: "2" });
+  await first;
+  assert.equal(scope.saveInFlightRef.current, false);
+  assert.deepEqual(closed, ["closed"]);
+  assert.deepEqual(savingFlags, [true, false]);
+
+  // A rejected conditional write must release the guard for an explicit retry,
+  // without closing the checklist or overwriting the previous record.
+  closed.length = 0;
+  const failed = save("2099-02-18");
+  assert.equal(writes.length, 2);
+  rejectWrite(Error("Another session changed the checklist"));
+  await failed;
+  assert.deepEqual(closed, []);
+  assert.equal(scope.saveInFlightRef.current, false);
+  assert.match(errors.at(-1), /Another session changed/);
+  const retry = save("2099-02-19");
+  assert.equal(writes.length, 3);
+  resolveWrite({ sip_checklist: [], products: [], sip_revisit_date: "2099-02-19", updated_date: "3" });
+  await retry;
+  assert.deepEqual(closed, ["closed"]);
+  assert.equal(scope.saveInFlightRef.current, false);
+
+  // Load in flight blocks a save even when isLoading has not rendered yet.
+  scope.loadInFlightRef.current = true;
+  await save("2099-02-20");
+  assert.equal(writes.length, 3);
+  assert.match(source, /const loadData = async \(\) => \{\s*if \(saveInFlightRef\.current\) return;/);
+  assert.match(source, /saveInFlightRef\.current = false;\s*setIsSaving\(false\);/);
+  console.log("PASS same-tick SIPS saves, Cancel and Reload serialize with retry-safe guards");
+  passed++;
+})();
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
