@@ -427,6 +427,14 @@ export default function UserManagement() {
       setUserMutationError("Password must be at least 8 characters, or leave it blank to keep the existing password.");
       return;
     }
+    // Capture a unique save owner before the first await. A session change
+    // revokes only UI ownership; server-side changes remain server-controlled.
+    const owner = { sessionToken };
+    userUpdateOwner.current = owner;
+    const ownsUpdate = () => userUpdateOwner.current === owner &&
+      activeSessionToken.current === sessionToken;
+    userUpdateInFlight.current = true;
+    const record = editingUser;
     setUserMutationSaving(true);
     try {
       const dataToSave = { ...formData };
@@ -434,36 +442,47 @@ export default function UserManagement() {
       // Never send password_hash directly — use secure backend
       delete dataToSave.password_hash;
       const savedUser = await updateAuthorizedUserAdmin({
-        record: editingUser,
+        record,
         nextFields: dataToSave,
         sessionToken,
       });
+      // Never continue follow-up changes from a superseded Admin session.
+      if (!ownsUpdate()) return;
 
       // If a new password was entered, save it securely via backend function
       if (newPassword) {
         try {
           const res = await setPasswordFn({
             user_email: savedUser.email,
-            username: savedUser.username || editingUser.username,
+            username: savedUser.username || record.username,
             new_password: newPassword,
             session_token: sessionToken,
           });
+          if (!ownsUpdate()) return;
           if (!res?.data?.success) {
             alert(`Password not saved: ${res?.data?.error || 'Unknown error'}`);
           }
         } catch (e) {
+          if (!ownsUpdate()) return;
           alert(`Password save failed: ${e?.response?.data?.error || e?.message}`);
         }
       }
+      if (!ownsUpdate()) return;
       await loadUsers();
+      if (!ownsUpdate()) return;
       setIsDialogOpen(false);
       setEditingUser(null);
     } catch (error) {
+      if (!ownsUpdate()) return;
       console.error("User update blocked:", error);
       setUserMutationError(error?.message || "This user changed in another session. Reload before saving.");
       await loadUsers();
     } finally {
-      setUserMutationSaving(false);
+      if (ownsUpdate()) {
+        userUpdateOwner.current = null;
+        userUpdateInFlight.current = false;
+        setUserMutationSaving(false);
+      }
     }
   };
 
