@@ -1403,6 +1403,23 @@ async function saveSyncStatusForRun(base44: any, status: any, startedAt: string)
   }
 }
 
+// Read both durable claim surfaces before a Sales POST result becomes a
+// permanent WorkOrder link. Incomplete paged reads fail closed.
+async function readSalesCreateRowClaims(base44: any, sheetId: string, rowId: string) {
+  const entity = base44.asServiceRole.entities.WorkOrder;
+  const [linked, allAttempts] = await Promise.all([
+    loadAllEntityRows({entity,query:{smartsheet_sheet_id:sheetId,smartsheet_row_id:rowId},
+      sort:'id',label:'Sales create permanent-row linked owner verification'}),
+    loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},
+      sort:'id',label:'Sales create permanent-row durable attempt verification'}),
+  ]);
+  const attempts = allAttempts.filter((candidate: any) =>
+    (!/^\d+$/.test(String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')) ||
+      String(candidate.smartsheet_create_attempt.sheet_id) === sheetId) &&
+    String(candidate?.smartsheet_create_attempt?.row_id ?? '') === rowId);
+  return {linked,attempts};
+}
+
 async function pushDataset(
   base44: any,
   token: string,
