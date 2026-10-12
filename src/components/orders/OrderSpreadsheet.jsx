@@ -347,10 +347,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (onSaveStatusChange) {
       onSaveStatusChange({
         hasUnsavedChanges, isSaving, lastSaved, isLoading,
-        isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError,
+        isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, readError,
       });
     }
-  }, [hasUnsavedChanges, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, onSaveStatusChange]);
+  }, [hasUnsavedChanges, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, readError, onSaveStatusChange]);
 
   const loadData = async (showLoading = true, { manualPullReload = false } = {}) => {
     // A focus/timer refresh must not race a manual Smartsheet pull.
@@ -358,7 +358,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return false;
     const requestGeneration = ++orderLoadGenerationRef.current;
     if (showLoading && orders.length === 0) setIsLoading(true);
-    setReadError("");
+    // Keep an unverified-read error visible until a complete current reload
+    // succeeds. Starting a retry must not make the toolbar Sync actionable.
     try {
       const [ordersData, workOrdersData, usersData] = await Promise.all([
         loadAllEntityRows({
@@ -401,6 +402,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       // durable Base44 marker instead of trusting stale in-memory browser state.
       pendingSyncIdsRef.current = durablePendingIds;
       setPendingSyncCount(durablePendingIds.size);
+      setReadError("");
       // Store original data for comparison
       ordersData.forEach(order => {
         originalOrdersRef.current[order.id] = { ...order };
@@ -524,7 +526,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const saveAndSync = async () => {
-    if (syncInFlightRef.current || saveInFlightRef.current || dateNeededSaveInFlightRef.current) return false;
+    if (readError || syncInFlightRef.current || saveInFlightRef.current || dateNeededSaveInFlightRef.current) return false;
     // Reserve the full Save & Sync operation before the first await. Without this,
     // two rapid clicks can both pass the guard when there are no unsaved Base44
     // fields, then both push the same durable pending Orders after the await yields.
@@ -644,7 +646,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const pullFromSmartsheet = async () => {
-    if (!isRegistered || syncInFlightRef.current || saveInFlightRef.current ||
+    if (readError || !isRegistered || syncInFlightRef.current || saveInFlightRef.current ||
         dateNeededSaveInFlightRef.current || addInFlightRef.current ||
         deleteInFlightRef.current || importInFlightRef.current) return false;
     // Never mix a manual remote pull with local unsaved edits or the durable
