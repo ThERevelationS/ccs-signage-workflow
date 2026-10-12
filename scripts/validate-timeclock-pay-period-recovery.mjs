@@ -5905,6 +5905,28 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
     assert.deepEqual(period.finalized_summary_history, frozenHistory);
     h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(boundaryDuplicate), 1);
     assert.equal((await ok(verify(prefix + '-verify-boundary-restored'))).verified, true);
+
+    // Reopening retires the finalized second generation. Its exact reopen
+    // boundary must not hide a duplicate of an earlier frozen request.
+    h.setServerNow('2026-09-20T22:06:00.000Z');
+    await ok(h.action('reopen', prefix + '-reopen-third',
+      'Verify historic correction evidence across reopen timestamp'));
+    assert.equal(period.finalized_summary_history.length, 2);
+    const retiredSecond = period.finalized_summary_history[1];
+    const frozenReopenedHistory = clone(period.finalized_summary_history);
+    assert.equal((await ok(verify(prefix + '-verify-retired-before-duplicate'))).verified, true);
+    const reopenDuplicate = {
+      ...clone(c), id: prefix + '-equal-reopen-boundary-duplicate',
+      server_timestamp: String(retiredSecond.invalidated_at || ''),
+    };
+    assert.ok(reopenDuplicate.server_timestamp);
+    h.rows.TimeClockAudit.push(reopenDuplicate);
+    for (let retry = 0; retry < 2; retry += 1) {
+      assert.equal((await ok(verify(prefix + '-verify-equal-reopen-boundary-' + retry))).verified, false);
+      assert.deepEqual(period.finalized_summary_history, frozenReopenedHistory);
+    }
+    h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(reopenDuplicate), 1);
+    assert.equal((await ok(verify(prefix + '-verify-reopen-boundary-restored'))).verified, true);
   }
 }
 
