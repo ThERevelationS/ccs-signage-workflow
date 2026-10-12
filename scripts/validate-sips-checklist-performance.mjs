@@ -372,15 +372,33 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   const calls = [];
   const makeClick = new Function("isRegistered", "isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
     "blockOnUnsubmittedDrafts", "cancelPendingNavigationFocus", "setPendingRevisitDate",
-    "loadedRevisitDateSnapshot", "setShowRevisitPopup", saveClick + "\nreturn handleSaveClick;");
+    "loadedRevisitDateSnapshot", "setShowRevisitPopup", "setPendingRevisitRetry",
+    "failedRevisitSelectionRef", saveClick + "\nreturn handleSaveClick;");
   const cancel = () => calls.push("cancel focus");
   const setDate = date => calls.push(["revisit date", date]);
   const setOpen = open => calls.push(["confirmation open", open]);
-  makeClick(false, false, { current: false }, false, { current: false }, () => false, cancel, setDate, "2099-02-17", setOpen)();
+  const setRetry = date => calls.push(["retry date", date]);
+  const failedChoice = { current: undefined };
+  const click = () => makeClick(true, false, { current: false }, false, { current: false }, () => false,
+    cancel, setDate, "2099-02-17", setOpen, setRetry, failedChoice)();
+  makeClick(false, false, { current: false }, false, { current: false }, () => false,
+    cancel, setDate, "2099-02-17", setOpen, setRetry, failedChoice)();
   assert.deepEqual(calls, []);
-  makeClick(true, false, { current: false }, false, { current: false }, () => false, cancel, setDate, "2099-02-17", setOpen)();
+  click();
   assert.deepEqual(calls, [
-    "cancel focus", ["revisit date", "2099-02-17"], ["confirmation open", true]
+    "cancel focus", ["revisit date", "2099-02-17"], ["retry date", undefined], ["confirmation open", true]
+  ]);
+  calls.length = 0;
+  failedChoice.current = "2099-03-18";
+  click();
+  assert.deepEqual(calls, [
+    "cancel focus", ["revisit date", "2099-02-17"], ["retry date", "2099-03-18"], ["confirmation open", true]
+  ]);
+  calls.length = 0;
+  failedChoice.current = null;
+  click();
+  assert.deepEqual(calls, [
+    "cancel focus", ["revisit date", "2099-02-17"], ["retry date", null], ["confirmation open", true]
   ]);
   assert.match(source, /<RevisitDatePopup\s+isOpen=\{showRevisitPopup\}/);
   assert.match(source, /onSave=\{handleRevisitSave\}/);
@@ -412,10 +430,10 @@ check("cancelled Revisit confirmation returns focus to Save & Revisit without sa
   );
   const makeHandlers = new Function(
     "isSubmitting", "restoreFocusAfterCancelRef", "setIsSubmitting",
-    "onSave", "onClose", "format", "returnFocusRef",
+    "onSave", "onClose", "format", "returnFocusRef", "onSubmittedCloseAutoFocus",
     section + "\nreturn { submitDate, cancelDateSelection, handleRevisitCloseAutoFocus };"
   );
-  let closed = 0, focused = 0, prevented = 0;
+  let closed = 0, focused = 0, prevented = 0, saveCloseCallbacks = 0;
   const saved = [], submitting = [];
   const focusRef = { current: {
     isConnected: true, disabled: false, focus: () => { focused += 1; }
@@ -423,7 +441,7 @@ check("cancelled Revisit confirmation returns focus to Save & Revisit without sa
   const restoreRef = { current: false };
   const handler = makeHandlers(false, restoreRef,
     value => submitting.push(value), value => saved.push(value),
-    () => { closed += 1; }, () => "2099-03-15", focusRef);
+    () => { closed += 1; }, () => "2099-03-15", focusRef, () => { saveCloseCallbacks += 1; });
 
   handler.cancelDateSelection();
   assert.equal(closed, 1);
@@ -436,6 +454,7 @@ check("cancelled Revisit confirmation returns focus to Save & Revisit without sa
   assert.deepEqual(submitting, []);
   handler.handleRevisitCloseAutoFocus({ preventDefault: () => { prevented += 1; } });
   assert.equal(focused, 1);
+  assert.equal(saveCloseCallbacks, 1);
 
   handler.submitDate(new Date(2099, 2, 15));
   assert.deepEqual(saved, ["2099-03-15"]);
@@ -443,6 +462,8 @@ check("cancelled Revisit confirmation returns focus to Save & Revisit without sa
   assert.equal(restoreRef.current, false);
   handler.handleRevisitCloseAutoFocus({ preventDefault: () => { prevented += 1; } });
   assert.equal(focused, 1); // Saving must not shift focus behind the closing workflow.
+  assert.equal(saveCloseCallbacks, 2);
+  assert.equal(prevented, 3);
 
   const blocked = makeHandlers(true, { current: false }, () => {}, () => {
     throw new Error("Saving twice must be blocked");
