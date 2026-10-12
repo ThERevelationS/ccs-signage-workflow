@@ -447,24 +447,29 @@ export default function UserManagement() {
   };
 
   const handleInvite = async () => {
-    if (isInviting || isLoading || userDirectoryError || !sessionToken) return;
+    if (inviteInFlight.current || isLoading || userDirectoryError || !sessionToken ||
+        activeSessionToken.current !== sessionToken) return;
     if (!inviteEmail.trim()) {
       setInviteError("Please enter an email address");
       return;
     }
 
+    // Ownership is captured before the first await. Session changes revoke it
+    // so late completions cannot mutate a different administrator's form.
+    const owner = { sessionToken };
+    inviteOwner.current = owner;
+    const ownsInvite = () => inviteOwner.current === owner &&
+      activeSessionToken.current === sessionToken;
+    inviteInFlight.current = true;
     setIsInviting(true);
     setInviteError("");
     setInviteSuccess("");
 
     try {
       const email = inviteEmail.trim().toLowerCase();
-      
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
 
-      // Add the authorized user first through the signed sign-shop admin boundary.
-      // The server issues the invitation token only after this guarded identity create
-      // succeeds, so no onboarding secret ever needs to exist in browser state.
+      // Keep the established server-side identity create and invitation order.
       const inviteResult = await createAuthorizedUserAdmin({
         data: {
           email,
@@ -477,9 +482,11 @@ export default function UserManagement() {
         },
         sessionToken,
       });
+      // The create may have committed server-side. Do not start any follow-up
+      // action under an invalidated session, even if its response arrived late.
+      if (!ownsInvite()) return;
       if (inviteResult.status === "existing") {
         setInviteError("This email is already authorized");
-        setIsInviting(false);
         return;
       }
 
@@ -489,43 +496,54 @@ export default function UserManagement() {
           session_token: sessionToken,
           target_email: email,
         });
+        if (!ownsInvite()) return;
         const result = response?.data || response;
         if (!result?.success) throw new Error(result?.error || "Invitation email could not be sent.");
         setInviteSuccess(`User authorized and invitation email sent to ${email}`);
       } catch (emailError) {
+        if (!ownsInvite()) return;
         const message = emailError?.response?.data?.error || emailError?.data?.error || emailError?.message || "Invitation email could not be sent.";
         setInviteSuccess(`User authorized! Invitation email failed: ${message}`);
       }
 
       // Order Form only: append the saved user to the Smartsheet Requestor
-      // CONTACT_LIST. Do not change the account/invitation outcome if the
-      // independent dropdown sync fails.
+      // CONTACT_LIST, preserving the existing independent sync outcome.
+      if (!ownsInvite()) return;
       try {
         const contactResponse = await base44.functions.invoke("smartsheetSyncAction", {
           action: "order_requestor_contact_sync",
           session_token: sessionToken,
           user_email: email,
         });
+        if (!ownsInvite()) return;
         const contactResult = contactResponse?.data || contactResponse;
         if (!contactResult?.success) {
           throw new Error(contactResult?.error || "Requestor contact update could not be verified.");
         }
-        setInviteSuccess((previous) => `${previous} · Order Requestor verified in Smartsheet.`);
+        setInviteSuccess((previous) => ownsInvite()
+          ? `${previous} · Order Requestor verified in Smartsheet.` : previous);
       } catch (contactError) {
+        if (!ownsInvite()) return;
         const detail = contactError?.response?.data?.error || contactError?.data?.error ||
           contactError?.message || "Could not verify the Smartsheet Requestor dropdown.";
-        setInviteSuccess((previous) =>
-          `${previous} · Order Requestor Smartsheet sync needs attention: ${detail}`);
+        setInviteSuccess((previous) => ownsInvite()
+          ? `${previous} · Order Requestor Smartsheet sync needs attention: ${detail}` : previous);
       }
+      if (!ownsInvite()) return;
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
       setInviteRole("user");
-      loadUsers();
+      void loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to add user");
+      if (ownsInvite()) setInviteError(error?.message || "Failed to add user");
+    } finally {
+      if (ownsInvite()) {
+        inviteOwner.current = null;
+        inviteInFlight.current = false;
+        setIsInviting(false);
+      }
     }
-    setIsInviting(false);
   };
 
   const handleDelete = async (user) => {
