@@ -538,6 +538,57 @@ test("reservation release cannot clear a different retry owner after a racing re
   assert.equal(final.result_summary.retry_reservation_released_at,undefined);
   assert.equal(store.updates,0);
 });
+test("photo reservation release fails closed if source work-order identity changes during CAS",async()=>{
+  const {store,client,receipts}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"failed"});
+  store.pauseReleaseWrite=true;
+  const reconciling=call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  await until("photo source identity CAS",()=>store.pendingReleaseWrites.length===1);
+  const live=store.receipts.get(source.id);
+  await receipts.update(source.id,{target_id:"unrelated-fleet-work",result_summary:{
+    ...live.result_summary,forensic_review_note:"Source identity changed during release",
+  }});
+  store.pendingReleaseWrites.shift()();
+  const result=await reconciling;
+  assert.equal(result.body.status,"blocked");
+  const final=store.receipts.get(source.id);
+  assert.equal(final.status,"started");
+  assert.equal(final.target_id,"unrelated-fleet-work");
+  assert.equal(final.result_summary.retry_reserved_by_request_id,retry.result_summary.request_id);
+  assert.equal(final.result_summary.retry_reservation_released_at,undefined);
+  assert.equal(store.updates,0);
+});
+
+test("proven retry marker does not resolve a different work-order photo source",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store);
+  store.work.mechanic_operation_key=retry.operation_key;
+  store.work.mechanic_operation_fingerprint=retry.payload_fingerprint;
+  store.receipts.get(source.id).target_id="unrelated-fleet-work";
+  const result=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:retry.result_summary.request_id},client);
+  assert.equal(result.body.status,"applied");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.receipts.get(source.id).status,"started",
+    "A proven retry cannot mark a source for another work order applied");
+  assert.equal(store.updates,0);
+});
+
+test("admin refuses mismatched photo source actor and preserves the paired receipts",async()=>{
+  const {store,client}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{urls:[
+    "https://files.example/old-a.jpg","https://files.example/second.jpg",
+  ]});
+  store.receipts.get(source.id).actor_user_id="different-grant";
+  const response=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:retry.id},client);
+  assert.equal(response.body.status,"blocked");
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"started");
+  assert.equal(store.updates,0);
+});
+
 test("successful reservation release preserves forensic metadata added while it was pending",async()=>{
   const {store,client,receipts}=setup();
   client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
