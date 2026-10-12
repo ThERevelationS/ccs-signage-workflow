@@ -1,4 +1,4 @@
-import { localityOfficeReviewEvidence } from "./localityOfficeReviewEvidence";
+import { localityOfficeReviewEvidence } from "./localityOfficeReviewEvidence.js";
 
 export default function LocalityOfficeReviewEvidence({ office, provenance }) {
   const evidence = localityOfficeReviewEvidence(office, provenance);
