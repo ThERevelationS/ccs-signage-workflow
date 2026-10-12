@@ -105,6 +105,7 @@ export default function SIPs() {
   const [sortMode, setSortMode] = useState("meeting");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [savingRevisitIds, setSavingRevisitIds] = useState(() => new Set());
+  const [savingQuickEditKeys, setSavingQuickEditKeys] = useState(() => new Set());
   const [reopeningWipIds, setReopeningWipIds] = useState(() => new Set());
   const [reopenedFocusWorkOrderId, setReopenedFocusWorkOrderId] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -285,6 +286,10 @@ export default function SIPs() {
     }
   };
 
+  // Mirror the synchronous per-field save lock in UI state so only the editor
+  // being saved is disabled; other jobs and fields stay usable.
+  const isQuickEditSaving = (orderId, field) => savingQuickEditKeys.has(JSON.stringify([orderId, field]));
+
   const updateWorkOrder = async (orderId, field, value) => {
     const currentWo = workOrders.find((wo) => wo.id === orderId);
     if (!currentWo) return;
@@ -305,6 +310,8 @@ export default function SIPs() {
     quickEditsInFlightRef.current.set(editKey, value);
     if (field === "sip_revisit_date") {
       setSavingRevisitIds(prev => new Set(prev).add(orderId));
+    } else {
+      setSavingQuickEditKeys(prev => new Set(prev).add(editKey));
     }
     const expectedValue = currentWo[field];
     setQuickEditError("");
@@ -327,6 +334,12 @@ export default function SIPs() {
         setSavingRevisitIds(prev => {
           const next = new Set(prev);
           next.delete(orderId);
+          return next;
+        });
+      } else {
+        setSavingQuickEditKeys(prev => {
+          const next = new Set(prev);
+          next.delete(editKey);
           return next;
         });
       }
@@ -1053,17 +1066,20 @@ export default function SIPs() {
                         open={openDatePopover === `deadline-${wo.id}`} 
                         onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}
                       >
-                        <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="min-h-8 w-full text-sm text-left px-1 py-1 hover:bg-gray-100 rounded font-medium flex flex-col items-start justify-center gap-0.5">
+                        <PopoverTrigger asChild disabled={!isRegistered || isQuickEditSaving(wo.id, "current_task_deadline")}>
+                          <button type="button" disabled={isQuickEditSaving(wo.id, "current_task_deadline")} aria-busy={isQuickEditSaving(wo.id, "current_task_deadline")} className="min-h-8 w-full text-sm text-left px-1 py-1 hover:bg-gray-100 rounded font-medium flex flex-col items-start justify-center gap-0.5 disabled:opacity-60">
                             <span>{wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}</span>
                             {deadlineStatus?.label && <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${deadlineStatus.className}`}>{deadlineStatus.label}</Badge>}
+                            {isQuickEditSaving(wo.id, "current_task_deadline") && <span className="text-[10px] text-blue-700">Saving…</span>}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
                             selected={parseLocalDate(wo.current_task_deadline)}
+                            disabled={isQuickEditSaving(wo.id, "current_task_deadline")}
                             onSelect={(date) => {
+                              if (isQuickEditSaving(wo.id, "current_task_deadline")) return;
                               updateWorkOrder(wo.id, "current_task_deadline", date ? format(date, "yyyy-MM-dd") : "");
                               setOpenDatePopover(null);
                             }}
@@ -1077,9 +1093,10 @@ export default function SIPs() {
                       <Select
                         value={wo.current_task_assigned_to || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
-                        disabled={!isRegistered}
+                        disabled={!isRegistered || isQuickEditSaving(wo.id, "current_task_assigned_to")}
                       >
-                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                        <SelectTrigger aria-busy={isQuickEditSaving(wo.id, "current_task_assigned_to")} aria-label={isQuickEditSaving(wo.id, "current_task_assigned_to") ? "Saving task assigned…" : undefined} className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                          {isQuickEditSaving(wo.id, "current_task_assigned_to") && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-blue-600" aria-hidden="true" />}
                           <SelectValue placeholder="-">{wo.current_task_assigned_to || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -1096,9 +1113,10 @@ export default function SIPs() {
                       <Select
                         value={wo.designer || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
-                        disabled={!isRegistered}
+                        disabled={!isRegistered || isQuickEditSaving(wo.id, "designer")}
                       >
-                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                        <SelectTrigger aria-busy={isQuickEditSaving(wo.id, "designer")} aria-label={isQuickEditSaving(wo.id, "designer") ? "Saving designer…" : undefined} className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                          {isQuickEditSaving(wo.id, "designer") && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-blue-600" aria-hidden="true" />}
                           <SelectValue placeholder="-">{wo.designer || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -1114,9 +1132,10 @@ export default function SIPs() {
                       <Select
                         value={wo.project_manager || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
-                        disabled={!isRegistered}
+                        disabled={!isRegistered || isQuickEditSaving(wo.id, "project_manager")}
                       >
-                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                        <SelectTrigger aria-busy={isQuickEditSaving(wo.id, "project_manager")} aria-label={isQuickEditSaving(wo.id, "project_manager") ? "Saving project manager…" : undefined} className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                          {isQuickEditSaving(wo.id, "project_manager") && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-blue-600" aria-hidden="true" />}
                           <SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -1132,9 +1151,10 @@ export default function SIPs() {
                       <Select
                         value={wo.estimator || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
-                        disabled={!isRegistered}
+                        disabled={!isRegistered || isQuickEditSaving(wo.id, "estimator")}
                       >
-                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                        <SelectTrigger aria-busy={isQuickEditSaving(wo.id, "estimator")} aria-label={isQuickEditSaving(wo.id, "estimator") ? "Saving estimator…" : undefined} className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
+                          {isQuickEditSaving(wo.id, "estimator") && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-blue-600" aria-hidden="true" />}
                           <SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -1176,16 +1196,18 @@ export default function SIPs() {
                         open={openDatePopover === `survey-${wo.id}`} 
                         onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}
                       >
-                        <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="h-8 w-full text-sm text-left px-1 hover:bg-gray-100 rounded font-medium">
-                            {wo.site_survey_date ? (() => { const d = parseLocalDate(wo.site_survey_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
+                        <PopoverTrigger asChild disabled={!isRegistered || isQuickEditSaving(wo.id, "site_survey_date")}>
+                          <button type="button" disabled={isQuickEditSaving(wo.id, "site_survey_date")} aria-busy={isQuickEditSaving(wo.id, "site_survey_date")} className="h-8 w-full text-sm text-left px-1 hover:bg-gray-100 rounded font-medium disabled:opacity-60">
+                            {isQuickEditSaving(wo.id, "site_survey_date") ? "Saving…" : (wo.site_survey_date ? (() => { const d = parseLocalDate(wo.site_survey_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-")}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
                             selected={parseLocalDate(wo.site_survey_date)}
+                            disabled={isQuickEditSaving(wo.id, "site_survey_date")}
                             onSelect={(date) => {
+                              if (isQuickEditSaving(wo.id, "site_survey_date")) return;
                               updateWorkOrder(wo.id, "site_survey_date", date ? format(date, "yyyy-MM-dd") : "");
                               setOpenDatePopover(null);
                             }}
