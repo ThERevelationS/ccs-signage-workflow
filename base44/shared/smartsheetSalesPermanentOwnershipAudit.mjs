@@ -7,6 +7,16 @@ export function auditSalesPermanentRowOwners(links,attempts,sheetId) {
   if (!num(sheet)||!Array.isArray(links)||!Array.isArray(attempts))
     throw Error('Complete Sales claim sets and a numeric configured sheet are required.');
   const groups=new Map();
+  // Linked and durable-attempt scans can return separate projections of the
+  // same WorkOrder. Compare both claims by owner ID, not just within one row.
+  const markersByOwner=new Map();
+  for(const record of attempts) {
+    if(!record?.id)throw Error('Unidentified creation-attempt WorkOrder found.');
+    const owner=val(record.id);
+    if(!markersByOwner.has(owner))markersByOwner.set(owner,[]);
+    if(record.smartsheet_create_attempt)
+      markersByOwner.get(owner).push(record.smartsheet_create_attempt);
+  }
   const get=row=>{
     if(!groups.has(row))groups.set(row,{row_id:row,owners:new Set(),linked:new Set(),
       attempts:new Set(),missingSheet:new Set(),mismatch:new Set()});
@@ -18,8 +28,10 @@ export function auditSalesPermanentRowOwners(links,attempts,sheetId) {
     if(!num(row)||(num(s)&&s!==sheet))continue;
     const g=get(row);g.owners.add(val(record.id));g.linked.add(val(record.id));
     if(s!==sheet)g.missingSheet.add(val(record.id));
-    const marker=record.smartsheet_create_attempt;
-    if(marker&&(val(marker.row_id)!==row||val(marker.sheet_id)!==sheet))g.mismatch.add(val(record.id));
+    const owner=val(record.id);
+    const markers=[record.smartsheet_create_attempt,...(markersByOwner.get(owner)||[])].filter(Boolean);
+    if(markers.some(marker=>val(marker.row_id)!==row||val(marker.sheet_id)!==sheet))
+      g.mismatch.add(owner);
   }
   for(const record of attempts) {
     if(!record?.id)throw Error('Unidentified creation-attempt WorkOrder found.');
