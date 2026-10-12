@@ -134,6 +134,42 @@ test("reused-photo source reservation remains bound to exact operation and URL p
     change(ctx);await reject(ctx,/reused-photo reservation/);
   }
 });
+test("photo source receipt must belong to the same grant, work order, and saved version",async()=>{
+  const changes=[
+    ctx=>{ctx.source.operation_type="mechanic_start";},
+    ctx=>{ctx.source.target_entity="WorkOrder";},
+    ctx=>{ctx.source.target_id="different-fleet-work";},
+    ctx=>{ctx.source.actor_user_id="different-mechanic-grant";},
+    ctx=>{ctx.source.result_summary.action="start";},
+    ctx=>{ctx.source.result_summary.expected_updated_date="different-version";},
+  ];
+  for(const change of changes){
+    const ctx=context();
+    ctx.row.result_summary.retry_reservation_required=true;
+    ctx.row.result_summary.reused_upload_receipt_id=ctx.source.id;
+    change(ctx);
+    await reject(ctx,/reused-photo reservation/);
+  }
+});
+
+test("photo source receipt identity changed during grant check blocks final receiving dispatch",async()=>{
+  for(const change of [
+    ctx=>{ctx.source.target_id="different-fleet-work";},
+    ctx=>{ctx.source.actor_user_id="different-mechanic-grant";},
+    ctx=>{ctx.source.result_summary.expected_updated_date="different-version";},
+  ]){
+    const ctx=context();
+    ctx.row.result_summary.retry_reservation_required=true;
+    ctx.row.result_summary.reused_upload_receipt_id=ctx.source.id;
+    const previousGet=ctx.args.Access.get;
+    ctx.args.Access.get=async id=>{
+      change(ctx);
+      return previousGet(id);
+    };
+    await reject(ctx,/photo reservation changed during authorization/);
+  }
+});
+
 test("admin cancellation during receiving-service grant read stops the pending work write",async()=>{
   for(const action of ["start","save"]){
     const ctx=context(action);
