@@ -99,6 +99,7 @@ import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/ord
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
 import { verifyUncertainOrderSyncReadback } from "@/components/orders/orderUncertainSyncReadback.mjs";
+import { canClearCompletedOrderSyncTarget } from "@/components/orders/orderSyncCompletionSafety.mjs";
 import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
@@ -327,8 +328,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       // An edit typed while the remote request was in flight has not yet
       // acquired a durable sync version. Never clear its pending queue marker
       // before the next Base44 autosave marks the newer version.
-      if (!id || pendingSyncVersionRef.current.get(id) !== target?.version ||
-          Object.keys(pendingChangesRef.current[id] || {}).length > 0) continue;
+      if (!canClearCompletedOrderSyncTarget({
+        target, currentVersion: pendingSyncVersionRef.current.get(id),
+        pendingFields: pendingChangesRef.current[id] || {},
+      })) continue;
       pendingSyncIdsRef.current.delete(id);
       pendingSyncVersionRef.current.delete(id);
     }
