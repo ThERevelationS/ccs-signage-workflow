@@ -21,6 +21,9 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
  const refreshScopeRef=useRef(refreshScope),manualCheckRef=useRef(null);refreshScopeRef.current=refreshScope;
  useEffect(()=>{refreshVersion.current++;manualCheckRef.current=null;setChecking(false);},[refreshScope]);
  useEffect(()=>()=>{refreshVersion.current++;manualCheckRef.current=null;refreshScopeRef.current=null;},[]);
+ const saveEpoch=useRef(0),saveRequests=useRef(new Map());
+ useEffect(()=>{saveEpoch.current++;saveRequests.current.clear();if(batchRef.current)batchRef.current.stop=true;setBusy(new Set());setBatch(null);},[refreshScope,archives]);
+ useEffect(()=>()=>{saveEpoch.current++;if(batchRef.current)batchRef.current.stop=true;},[]);
  function discoveryBusy(id,active){refreshVersion.current++;const next=new Set(discoveryBusyRef.current);if(active)next.add(id);else next.delete(id);discoveryBusyRef.current=next;setScanning(next);}
  function updateCollection(updated){setCollections(previous=>previous.map(row=>row.id===updated.id?{...row,...updated}:row));}
  useEffect(()=>()=>{if(batchRef.current)batchRef.current.stop=true;},[archives]);
@@ -57,26 +60,33 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
  },[archives,sessionToken,refreshScope,trackAction]);
 
  async function saveFile(collection,doc,forBatch=false){
+  const key=collection.id+'|'+doc.id;
+  if(!sessionToken||refreshScopeRef.current!==refreshScope||saveRequests.current.has(key))return false;
+  const request={epoch:saveEpoch.current,scope:refreshScope};saveRequests.current.set(key,request);
+  const current=()=>saveEpoch.current===request.epoch&&refreshScopeRef.current===request.scope&&saveRequests.current.get(key)===request;
   refreshVersion.current++;setBusy(previous=>new Set([...previous,doc.id]));setError('');
   try{
    const response=await runAction('archiveAddressResearchFile',{collection_id:collection.id,...(doc.referral?{referral_url:doc.url,source_page_url:doc.source_page_url}:{document_id:doc.id})},'Save original — '+(doc.title || 'research file'));
+   if(!current())return false;
    if(response.data?.collection)setCollections(previous=>previous.map(row=>row.id===collection.id?{...row,documents:response.data.collection.documents}:row));
    if(response.data?.success===false)setError(response.data.error || 'The file still needs verification.');
    return Boolean(response.data?.collection?.documents?.some(file=>file.url===doc.url&&verifiedOriginal(file)));
-  }catch(e){setError(e.message);if(forBatch)throw e;return false;}
-  finally{setBusy(previous=>{const next=new Set(previous);next.delete(doc.id);return next;});}
+  }catch(e){if(current()){setError(e.message);if(forBatch)throw e;}return false;}
+  finally{if(current()){saveRequests.current.delete(key);setBusy(previous=>{const next=new Set(previous);next.delete(doc.id);return next;});}}
  }
  async function saveAll(collection){
-  if(batchRef.current||busy.size||discoveryBusyRef.current.size)return;
-  const control={stop:false},files=remainingOriginals(collection);batchRef.current=control;
+  if(!sessionToken||refreshScopeRef.current!==refreshScope||batchRef.current||saveRequests.current.size||discoveryBusyRef.current.size)return;
+  const control={stop:false,epoch:saveEpoch.current,scope:refreshScope},files=remainingOriginals(collection);batchRef.current=control;
+  const current=()=>batchRef.current===control&&saveEpoch.current===control.epoch&&refreshScopeRef.current===control.scope;
   const initial={collectionId:collection.id,total:files.length,checked:0,saved:0,needsReview:0,running:true};
   setBatch(initial);
   try{
-   const result=await saveOriginalBatch({files,save:doc=>saveFile(collection,doc,true),stopped:()=>control.stop,onProgress:progress=>setBatch({...initial,...progress})});
-   setBatch({...initial,...result,running:false});
-  }catch{setBatch(previous=>({...previous,running:false,halted:true}));}
-  finally{batchRef.current=null;}
+   const result=await saveOriginalBatch({files,save:doc=>saveFile(collection,doc,true),stopped:()=>control.stop||!current(),onProgress:progress=>{if(current())setBatch({...initial,...progress});}});
+   if(current())setBatch({...initial,...result,running:false});
+  }catch{if(current())setBatch(previous=>({...previous,running:false,halted:true}));}
+  finally{if(batchRef.current===control)batchRef.current=null;}
  }
+
  if(!scanResult?.started)return null;
  return <section className="rounded-lg border bg-white p-3 space-y-2" aria-label="Automatic address scan results">
   <h4 className="font-semibold text-sm">{savedOnly?'Saved research files':'What we checked'}</h4>

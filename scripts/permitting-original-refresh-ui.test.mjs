@@ -8,21 +8,21 @@ import React from 'react';
 import Renderer,{act} from 'react-test-renderer';
 import * as batch from '../src/components/permitting/addressOriginalBatch.mjs';
 const require=createRequire(import.meta.url),code=(await transform(await fs.readFile('src/components/permitting/AutomaticAddressScanResults.jsx','utf8'),{loader:'jsx',jsx:'automatic',format:'cjs'})).code;
-async function harness(){
- let auth={currentUser:{id:'first',role:'admin'},sessionToken:'first'},archives={collections:[{id:'c',target:{name:'Original collection'},documents:[]}]},tree;
- const reads=[],tracked=[],timers=new Map(),module={exports:{}};let timerId=0;
+async function harness({files=[]}={}){
+ let auth={currentUser:{id:'first',role:'admin'},sessionToken:'first'},archives={collections:[{id:'c',target:{name:'Original collection'},documents:files}]},tree;
+ const reads=[],writes=[],tracked=[],timers=new Map(),module={exports:{}};let timerId=0;
  const trackAction=run=>tracked.push(run);
  vm.runInNewContext(code,{module,URL,Date,setInterval:fn=>{timers.set(++timerId,fn);return timerId;},clearInterval:id=>timers.delete(id),require:name=>{
   if(name==='react'||name==='react/jsx-runtime')return require(name);
   if(name==='@/components/auth/EmailGate')return {useAuth:()=>auth};
   if(name==='@/api/base44Client')return {base44:{functions:{invoke:()=>new Promise((resolve,reject)=>reads.push({resolve,reject}))}}};
-  if(name==='./ResearchProgressContext')return {useResearchProgress:()=>({runAction:()=>{throw Error('Unexpected write');},trackAction})};
+  if(name==='./ResearchProgressContext')return {useResearchProgress:()=>({runAction:(_name,input)=>new Promise((resolve,reject)=>writes.push({input,resolve,reject})),trackAction})};
   if(name==='./addressOriginalBatch.mjs')return batch;
   return {__esModule:true,default:()=>null,OriginalCollectionStatus:()=>null};
  }});
  const props=()=>({scanResult:{started:true,scans:[]},archives});
  await act(async()=>{tree=Renderer.create(React.createElement(module.exports.default,props()));});
- return {tree,reads,tracked,tick:()=>{for(const fn of timers.values())fn();},click:()=>tree.root.findAllByType('button').find(n=>n.children.includes('Check saved files')).props.onClick(),
+ return {tree,reads,writes,tracked,tick:()=>{for(const fn of timers.values())fn();},click:()=>tree.root.findAllByType('button').find(n=>n.children.includes('Check saved files')).props.onClick(),
  async update({actor,data}={}){if(actor)auth=actor;if(data)archives=data;await act(async()=>tree.update(React.createElement(module.exports.default,props())));},
  async close(){await act(async()=>tree.unmount());}};
 }
@@ -68,4 +68,22 @@ test('manual check supersedes earlier poll and blocks overlapping timer reads',a
 });
 test('signed-out sessions do not start background reads',async()=>{
  const h=await harness();try{await h.update({actor:{currentUser:null,sessionToken:''}});await act(async()=>{h.tick();});assert.equal(h.reads.length,0);}finally{await h.close();}
+});
+
+const pendingFile=id=>({id,title:id,url:'https://official.example/'+id+'.pdf'});
+test('duplicate save clicks start one original action and old-account completion cannot publish files',async()=>{
+ const h=await harness({files:[pendingFile('d')]});try{
+  const click=h.tree.root.findAllByType('button').find(n=>n.children.includes('Save original')).props.onClick;
+  await act(async()=>{click();click();});assert.equal(h.writes.length,1);
+  await h.update({actor:{currentUser:{id:'second',role:'admin'},sessionToken:'second'}});
+  const doc={...pendingFile('d'),title:'OLD SAVED FILE',file_url:'https://stored.example/d.pdf',source_sha256:'a'.repeat(64),stored_sha256:'a'.repeat(64),source_bytes:10,stored_bytes:10,archive_state:{status:'complete'}};
+  await act(async()=>h.writes[0].resolve({data:{collection:{documents:[doc]}}}));assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD SAVED FILE/);
+ }finally{await h.close();}
+});
+test('account change stops batch after its outstanding file without starting another',async()=>{
+ const h=await harness({files:[pendingFile('d'),pendingFile('e')]});try{
+  await act(async()=>{h.tree.root.findAllByType('button').find(n=>n.children.includes('Save all remaining originals')).props.onClick();});assert.equal(h.writes.length,1);
+  await h.update({actor:{currentUser:{id:'second',role:'admin'},sessionToken:'second'}});
+  await act(async()=>h.writes[0].reject(Error('OLD SAVE ERROR')));assert.equal(h.writes.length,1);assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD SAVE ERROR|File pass finished|Stopped after current file/);
+ }finally{await h.close();}
 });
