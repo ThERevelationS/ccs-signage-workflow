@@ -231,6 +231,8 @@ export function salesRunRequiresReview(results = []) {
       Number(result?.snapshot_write_failures || 0) > 0 ||
       Number(result?.create_attempts_need_review || 0) > 0 ||
       Number(result?.new_workorder_imports_held_for_create_review || 0) > 0 ||
+      Number(result?.existing_link_claims_need_review || 0) > 0 ||
+      Number(result?.new_workorder_imports_held_for_link_review || 0) > 0 ||
       Number(result?.orphans_flagged_for_review || 0) > 0 ||
       Number(result?.missing_remote_rows_preserved || 0) > 0 ||
       Number(result?.duplicate_groups_flagged_for_review || 0) > 0
