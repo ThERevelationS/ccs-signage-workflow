@@ -129,6 +129,38 @@ export async function recoverVerifiedSalesSmartsheetCreate({
   return result;
 }
 
+export async function auditSalesSmartsheetRecoveryHistory({sessionToken,workOrderId}={}) {
+  const result = await invokeSmartsheet("audit_sales_recovery_history",sessionToken,{
+    workorder_id:String(workOrderId || "").trim(),
+  });
+  if (result?.read_only !== true || result?.writes_attempted !== false ||
+      result?.dataset !== "sales" || !result.status ||
+      String(result.workorder_id) !== String(workOrderId || "").trim()) {
+    throw new Error("Sales history review did not confirm exact read-only evidence.");
+  }
+  return result;
+}
+
+export async function acknowledgeSalesSmartsheetRecoveryHistory({
+  sessionToken,workOrderId,expectedVersion,expectedAttemptId,eventId,
+}={}) {
+  const result = await invokeSmartsheet("acknowledge_sales_recovery_history",sessionToken,{
+    workorder_id:String(workOrderId || "").trim(),
+    expected_updated_date:String(expectedVersion || "").trim(),
+    expected_attempt_id:String(expectedAttemptId || "").trim(),
+    expected_history_event_id:String(eventId || "").trim(),
+    confirm_existing_event:true,
+  });
+  if (!result?.reconciled || result?.dataset !== "sales" ||
+      result.history_created !== false || result.smartsheet_writes_attempted !== false ||
+      result.workorder_link_unchanged !== true ||
+      String(result.workorder_id) !== String(workOrderId || "").trim() ||
+      String(result.history_event_id) !== String(eventId || "").trim()) {
+    throw new Error("Sales history acknowledgment could not be fully verified. Reload; do not retry blindly.");
+  }
+  return result;
+}
+
 export async function runSmartsheetSync({ sessionToken, dataset } = {}) {
   return invokeSmartsheet("run_sync", sessionToken, dataset ? { dataset } : {});
 }
