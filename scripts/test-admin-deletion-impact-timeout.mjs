@@ -92,9 +92,9 @@ test("Only deletion-impact invocation receives client deadline, without changing
   const proxy = readFileSync("src/components/admin/authorizedUserAdminPersistence.js", "utf8");
   const scoped = proxy.slice(proxy.indexOf("export async function getAccountDeletionImpactAdmin"),
     proxy.indexOf("export async function resolveAccountDeletionRequestAdmin"));
-  assert.match(scoped, /await withDeletionImpactDeadline\(\(\) => invokeAdminUsers\(\{/);
+  assert.match(scoped, /await runCoordinatedDeletionImpact\(\(\) => invokeAdminUsers\(\{/);
   assert.match(scoped, /return validateDeletionImpactReport\(result\.impact, request\)/);
-  assert.equal((proxy.match(/withDeletionImpactDeadline\(\(\) =>/g) || []).length, 1);
+  assert.equal((proxy.match(/runCoordinatedDeletionImpact\(\(\) =>/g) || []).length, 1);
   const backend = readFileSync("base44/shared/deletionImpactBoundedChecks.mjs", "utf8");
   assert.match(backend, /deadlineMs = 60_000/);
   assert.match(backend, /stopped = true;\s*reject\(new Error\("Deletion impact scan deadline exceeded/);
