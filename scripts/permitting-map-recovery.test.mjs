@@ -12,6 +12,8 @@ import TestRenderer, {act} from 'react-test-renderer';
 const require=createRequire(import.meta.url);
 const source=await fs.readFile('src/components/permitting/GoogleMapView.jsx','utf8');
 const compiled=(await transform(source,{loader:'jsx',format:'cjs',jsx:'automatic',target:'es2022'})).code;
+const authSource=await fs.readFile('src/components/permitting/googleMapsAuthFailure.js','utf8');
+const authCompiled=(await transform(authSource,{format:'cjs',target:'es2022'})).code;
 function harness({deferred=false,authOnConstruction=false}={}){
  let sessionToken='session-a',renderer,releaseMaps;
  const mapsCreated=[],lines=[],listeners=[],roots=[];let previousAuthCalls=0;
@@ -31,10 +33,13 @@ function harness({deferred=false,authOnConstruction=false}={}){
   geometry:{spherical:{computeLength:path=>path.length*10}},event:{clearInstanceListeners(){},trigger(){}}};
  const window={google:{maps},gm_authFailure:previousAuth};
  const loaded=deferred?new Promise(resolve=>{releaseMaps=()=>resolve(maps);}):Promise.resolve(maps);
+ const authModule={exports:{}};
+ vm.runInNewContext(authCompiled,{module:authModule,window});
  const module={exports:{}};
  vm.runInNewContext(compiled,{module,window,console,require:name=>{
   if(name==='@/components/auth/EmailGate')return {useAuth:()=>({sessionToken})};
   if(name==='./googleMapsLoader')return {loadGoogleMaps:()=>loaded};
+  if(name==='./googleMapsAuthFailure')return authModule.exports;
   return require(name);
  }});
  const Component=module.exports.default,props={position:{lat:39.34,lng:-84.32},markerTitle:'Synthetic address',boundaries:[]};
