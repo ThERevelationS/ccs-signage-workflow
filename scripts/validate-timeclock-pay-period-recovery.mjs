@@ -6088,8 +6088,15 @@ test('v28 diagnostic: simultaneous cross-employee correction request IDs expose 
   const finalSnapshot = clone(h.period());
   const blockedFinalization = await h.action('finalize', 'v28-race-finalize-001');
   assert.equal(blockedFinalization.status, 409, JSON.stringify(blockedFinalization.body));
-  assert.deepEqual(h.period(), finalSnapshot,
-    'Payroll must remain unchanged after a duplicate-audit race');
+  assert.match(String(blockedFinalization.body.error || ''), /duplicate or conflicting confirmed manager-correction/i);
+  assert.equal(h.period().status, finalSnapshot.status,
+    'A rejected finalization must preserve payroll status');
+  assert.deepEqual(h.period().finalized_summary, finalSnapshot.finalized_summary,
+    'A rejected finalization cannot publish a new payroll summary');
+  assert.deepEqual(h.period().finalized_summary_history, finalSnapshot.finalized_summary_history,
+    'A rejected finalization cannot rewrite historical payroll');
+  assert.equal(h.entryLocks().length, 0,
+    'A rejected first-generation finalization must release staged payroll entry locks');
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {

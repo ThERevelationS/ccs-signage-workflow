@@ -5,7 +5,7 @@ import test from "node:test";
 const source = readFileSync("src/components/admin/UserManagement.jsx", "utf8");
 const handler = source.slice(source.indexOf("  const handleInvite = async () => {"),
   source.indexOf("  const handleDelete = async"));
-const sessionEffect = source.slice(source.indexOf("  useEffect(() => {\n    // A prior session may still"),
+const sessionEffect = source.slice(source.indexOf("  useEffect(() => {\n    // A previous Admin session"),
   source.indexOf("  const loadUsers = async"));
 
 test("Session changes revoke old invitation ownership and clear private form state", () => {
