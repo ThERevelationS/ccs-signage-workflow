@@ -897,7 +897,7 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
   assert.equal(reopen.current, false);
   assert.deepEqual(updates, [["unfinished", null], ["draft", ""], ["popup", null], ["warning", null]]);
   assert.match(source, /useEffect\(\(\) => \{\s*resetOtherPopupForReload\(\);\s*\}, \[workOrder\?\.id\]\);/);
-  assert.match(source, /const loadData = async \(\) => \{\s*const requestId = \+\+loadDataRequestRef\.current;\s*resetOtherPopupForReload\(\);/);
+  assert.match(source, /const loadData = async \(\) => \{\s*if \(saveInFlightRef\.current\) return;\s*const requestId = \+\+loadDataRequestRef\.current;\s*loadInFlightRef\.current = true;\s*resetOtherPopupForReload\(\);/);
 
   const warning = source.slice(source.indexOf("{/* Validation guidance */}"));
   const first = warning.indexOf("onCloseAutoFocus={(event) => {");
