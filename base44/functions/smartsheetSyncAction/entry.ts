@@ -28,7 +28,7 @@ import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorCo
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
-import { readSalesPullCreateAttemptRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
+import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
 import { auditSalesPermanentRowOwners } from '../../shared/smartsheetSalesPermanentOwnershipAudit.mjs';
@@ -606,6 +606,8 @@ async function pullDataset(
   // matching names or cell values. Still allow linked WorkOrders to pull.
   let salesCreateAttemptReview: any = { count: 0, workorder_ids: [], attempt_states: {}, known_permanent_row_ids: [] };
   let salesImportCreatesHeld = 0;
+  let salesImportLinkedCreatesHeld = 0;
+  let salesLinkedClaimReview: any = {count:0,workorder_ids:[],known_permanent_row_ids:[]};
   if (dataset === 'sales') {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     salesCreateAttemptReview = await readSalesPullCreateAttemptRisks(base44.asServiceRole.entities.WorkOrder, sheetId);
