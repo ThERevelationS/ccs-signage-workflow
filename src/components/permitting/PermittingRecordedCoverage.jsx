@@ -6,6 +6,7 @@ import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInven
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
 import useLocalityOfficeGapReview from './useLocalityOfficeGapReview';
+import { useAuth } from '@/components/auth/EmailGate';
 
 export async function readRecordedCoverage(isCurrent, onProgress, api = base44) {
   const queue = await readAllCoveragePages(cursor => api.entities.SourceCollectionQueue.filter(
@@ -21,6 +22,13 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
 export default function PermittingRecordedCoverage({ readCoverage = readRecordedCoverage }) {
+  const {currentUser,isRegistered,sessionToken}=useAuth();
+  const authorized=Boolean(isRegistered && (currentUser?.id || currentUser?.email));
+  // Remount clears visible results immediately and cancels all previous read generations.
+  const scope=JSON.stringify(authorized ? [currentUser.id || '',currentUser.email || '',currentUser.role || '',sessionToken || ''] : ['signed-out']);
+  return <RecordedCoverageSession key={scope} readCoverage={readCoverage} authorized={authorized} />;
+}
+function RecordedCoverageSession({readCoverage,authorized}) {
   const officeReview=useLocalityOfficeGapReview();
   const reviewRecordRef=useRef(null);
   reviewRecordRef.current=officeReview.record;
@@ -28,7 +36,7 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
   const generation = useRef(0), inFlight = useRef(false);
   useEffect(() => () => { generation.current++; reviewRecordRef.current=null; }, []);
   async function load(afterSavedReview = false) {
-    if (inFlight.current && afterSavedReview !== true) return;
+    if (!authorized || (inFlight.current && afterSavedReview !== true)) return;
     inFlight.current = true; const request = ++generation.current;
     const current = () => generation.current === request;
     setBusy(true); setResult(null); setError(''); setProgress('Reading recorded inventory…');
@@ -41,7 +49,7 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
   return <section aria-label="Recorded OH/KY coverage" className="clay-card space-y-3 p-4">
     <h3 className="font-semibold">Recorded Ohio/Kentucky identity coverage</h3>
     <p className="text-sm">Compares all recorded queue and profile pages. This is a sequence of reads, not an atomic snapshot. It does not establish statewide inventory, office authority, current documents or approved requirements.</p>
-    <Button className="min-h-11 h-auto whitespace-normal" disabled={busy} onClick={load}>{busy ? 'Reading coverage…' : result ? 'Refresh recorded coverage' : 'Read recorded coverage'}</Button>
+    <Button className="min-h-11 h-auto whitespace-normal" disabled={busy || !authorized} onClick={load}>{busy ? 'Reading coverage…' : result ? 'Refresh recorded coverage' : 'Read recorded coverage'}</Button>
     {progress && <p role="status">{progress}</p>}{error && <p role="alert" className="text-red-700">{error}</p>}
     {officeReview.error && <p role="alert" className="text-red-700">{officeReview.error}</p>}
     {result && <><p className="text-xs">Read completed {result.checked_at}. Refresh after inventory changes.</p>

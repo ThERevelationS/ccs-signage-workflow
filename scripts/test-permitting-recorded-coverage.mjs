@@ -9,6 +9,7 @@ const dir=resolve('node_modules/.cache/coverage-panel');await mkdir(dir,{recursi
 globalThis.window={self:null,top:null};
 try{
  await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client|EmailGate|PermitSettingsDialog/},args=>({path:args.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path.includes('EmailGate')?'export const useAuth=()=>globalThis.coverageReviewAuth || ({currentUser:null,isRegistered:false});':args.path.includes('PermitSettingsDialog')?'export default function Dialog(props){globalThis.coverageReviewDialog=props;return null;}':'export const base44={get entities(){return globalThis.coverageReviewApi?.entities;}};'}));}}]});
+ globalThis.coverageReviewAuth={currentUser:{id:'staff-fixture',role:'staff'},isRegistered:true};
  const {default:Panel}=await import(dir+'/panel.mjs');let calls=0,resolveRead;
  const readCoverage=()=>{calls++;return new Promise(r=>resolveRead=r);};let tree;
  await act(async()=>{tree=Renderer.create(React.createElement(Panel,{readCoverage}));});
@@ -23,12 +24,14 @@ try{
  const reviewGets=[],fresh={id:'locality',state:'OH',name:'Fresh office setup',offices:[{id:'office',authority_verification_status:'needs_verification'}]};
  globalThis.coverageReviewApi={entities:{PermitLocality:{get:async id=>{reviewGets.push(id);return fresh;}}}};
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage})));
+ assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
+ await act(async()=>{click();});await act(async()=>resolveRead(snapshot));
  const reviewButton=tree.root.findAllByType('button').find(node=>node.props['aria-label']==='Review office setup for Office gap fixture');
  await act(async()=>{reviewButton.props.onClick();reviewButton.props.onClick();});
  assert.deepEqual(reviewGets,['locality']);assert.equal(globalThis.coverageReviewDialog.initialSelectedLocalityId,'locality');assert.equal(globalThis.coverageReviewDialog.localities.length,1);assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);assert.equal(fresh.offices[0].authority_verification_status,'needs_verification');
  const savedCallback=globalThis.coverageReviewDialog.onLocalitySaved;
- await act(async()=>{click();});const oldRead=resolveRead;assert.equal(calls,2);
- await act(async()=>savedCallback('locality'));const newRead=resolveRead;assert.equal(calls,3);
+ await act(async()=>{click();});const oldRead=resolveRead;assert.equal(calls,3);
+ await act(async()=>savedCallback('locality'));const newRead=resolveRead;assert.equal(calls,4);
  assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
  assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);
  await act(async()=>oldRead({...snapshot,checked_at:'obsolete-before-save'}));
@@ -36,15 +39,33 @@ try{
  await act(async()=>newRead({...snapshot,checked_at:'fresh-after-save'}));
  assert.match(JSON.stringify(tree.toJSON()),/fresh-after-save/);
  const deletedCallback=globalThis.coverageReviewDialog.onLocalityDeleted;
- await act(async()=>{deletedCallback('locality');deletedCallback('locality');});assert.equal(calls,4);
+ await act(async()=>{deletedCallback('locality');deletedCallback('locality');});assert.equal(calls,5);
  assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
  assert.equal(tree.root.findAll(node=>node.type?.name==='Dialog').length,0);
- await act(async()=>savedCallback('locality'));assert.equal(calls,4);
+ await act(async()=>savedCallback('locality'));assert.equal(calls,5);
  await act(async()=>resolveRead({...snapshot,checked_at:'fresh-after-delete',electrical_offices:reconcileElectricalOfficeCoverage([])}));
  assert.match(JSON.stringify(tree.toJSON()),/fresh-after-delete/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Office gap fixture/);
 
 
  await act(async()=>tree.update(React.createElement(Panel,{readCoverage:async()=>{throw Error('Fixture failure');}})));
  await act(async()=>click());assert.match(JSON.stringify(tree.toJSON()),/Fixture failure/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);
+ // Pending responses, errors and progress belong only to the account/session that started them.
+ const pending=[];const scopedRead=(current,progress)=>new Promise((resolve,reject)=>pending.push({current,progress,resolve,reject}));
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));
+ await act(async()=>{click();});const old=pending.at(-1);
+ globalThis.coverageReviewAuth={currentUser:{id:'other-admin',role:'admin'},isRegistered:true,sessionToken:'new-session'};
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));
+ assert.equal(old.current(),false);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Fixture failure|Read completed/);
+ await act(async()=>{click();});const active=pending.at(-1);
+ await act(async()=>{old.progress('Old account progress');old.reject(Error('Old account error'));});
+ assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Old account/);assert.equal(active.current(),true);
+ await act(async()=>active.resolve({...snapshot,checked_at:'current-account'}));assert.match(JSON.stringify(tree.toJSON()),/current-account/);
+ // A replacement user object for the same session keeps its results.
+ globalThis.coverageReviewAuth={...globalThis.coverageReviewAuth,currentUser:{...globalThis.coverageReviewAuth.currentUser}};
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));assert.match(JSON.stringify(tree.toJSON()),/current-account/);
+ globalThis.coverageReviewAuth={currentUser:null,isRegistered:false};
+ await act(async()=>tree.update(React.createElement(Panel,{readCoverage:scopedRead})));
+ assert.doesNotMatch(JSON.stringify(tree.toJSON()),/current-account/);const before=pending.length;
+ await act(async()=>{click();});assert.equal(pending.length,before);assert(tree.root.findAllByType('button').find(node=>node.children.includes('Read recorded coverage')).props.disabled);
  await act(async()=>tree.unmount());console.log('Coverage panel passed: manual only, duplicate-click guard, explicit uncertainty and failed-refresh clearing. No live API calls.');
 }finally{delete globalThis.coverageReviewAuth;delete globalThis.coverageReviewApi;delete globalThis.coverageReviewDialog;delete globalThis.window;await rm(dir,{recursive:true,force:true});}
