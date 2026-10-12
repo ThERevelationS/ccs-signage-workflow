@@ -62,8 +62,9 @@ export async function resolveAccountDeletionRequestAdmin({
   adminNotes = "",
   sessionToken,
 } = {}) {
-  if (!request?.id || !request?.updated_date) {
-    throw new Error("Deletion request is missing its loaded version. Reload before resolving it.");
+  if (!request?.id || !request?.updated_date || !request?.user_email || !request?.authorized_email_id ||
+      request?.status !== "pending") {
+    throw new Error("Deletion request is missing its verified pending identity or version. Reload before resolving it.");
   }
   if (!["processed", "cancelled"].includes(resolution)) {
     throw new Error("Deletion request resolution is invalid.");
@@ -73,11 +74,17 @@ export async function resolveAccountDeletionRequestAdmin({
     action: "resolve_deletion_request",
     request_id: request.id,
     expected_updated_date: request.updated_date,
+    expected_user_email: request.user_email,
+    expected_authorized_email_id: request.authorized_email_id,
     resolution,
     admin_notes: adminNotes,
     session_token: requireSessionToken(sessionToken),
   });
-  if (!result?.success || !result?.record?.id || result.record.status !== resolution) {
+  if (!result?.success || result.record?.id !== request.id ||
+      result.record?.status !== resolution ||
+      String(result.record.resolution_source_updated_date || "") !== String(request.updated_date) ||
+      String(result.record.authorized_email_id || "") !== String(request.authorized_email_id) ||
+      String(result.record.user_email || "").trim().toLowerCase() !== String(request.user_email).trim().toLowerCase()) {
     throw new Error("Deletion request resolution could not be verified.");
   }
   return result.record;
