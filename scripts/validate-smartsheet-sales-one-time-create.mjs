@@ -12,6 +12,7 @@ const start={id:'synthetic-wo',title:'Survey',estimate_amount:150,
 function fixture(changes={}) {
  let row={...structuredClone(start),...changes}, sequence=1, posts=0, remote=null;
  let failReservation=false,failLink=false,failMarker=false;
+ let competingLinked=[],competingAttempts=[],claimReads=0,onClaimRead=null;
  const entity={
    async get(id) {return id===row.id?structuredClone(row):null;},
    async updateMany(query,update) {
@@ -26,6 +27,9 @@ function fixture(changes={}) {
  };
  const snapshot=r=>({'111':r.title,'222':r.estimate_amount});
  const opts={entity,record:row,sheetId,attemptId:'test-attempt',startedAt:'2026-10-11T01:00:00Z',
+   assertOwner:async()=>{},
+   readCompetingClaims:async()=>{claimReads++;if(onClaimRead)onClaimRead(claimReads);
+     return {linked:structuredClone(competingLinked),attempts:structuredClone(competingAttempts)};},
    makeSnapshot:snapshot,
    postRow:async(current)=>{posts++;remote={id:'5678',snapshot:snapshot(current)};
      return {message:'SUCCESS',resultCode:0,result:[{id:5678}]};},
@@ -35,6 +39,8 @@ function fixture(changes={}) {
  return {opts,entity,view:()=>row,posts:()=>posts,remote:()=>remote,
   setFailReservation:v=>failReservation=v,setFailLink:v=>failLink=v,
   setFailMarker:v=>failMarker=v,
+  claimLinked:v=>competingLinked=v,claimAttempts:v=>competingAttempts=v,
+  onClaimRead:v=>onClaimRead=v,claimReads:()=>claimReads,
   edit:v=>{row={...row,...v,updated_date:'rev-'+(++sequence)};},
   mutateRemote:v=>{remote=v;},
  };
