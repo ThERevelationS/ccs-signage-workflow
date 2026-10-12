@@ -411,6 +411,7 @@ function mechanicActionForReceipt(receipt:any) {
 async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:any, receipt:any, adminEmail = '') {
   const action = mechanicActionForReceipt(receipt);
   if (!action || receipt?.target_entity !== 'FleetMaintenanceWorkOrder') throw Object.assign(new Error('Only Fleet mechanic Start/Save receipts can be reconciled here.'),{status:400});
+  if (!mechanicReceiptOperationIdentityValid(receipt)) throw Object.assign(new Error('The Fleet mechanic receipt has conflicting operation identity. CCS review is required before reconciliation.'),{status:409});
   const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
   const current = await WorkOrder.get(String(receipt?.target_id || '')).catch(()=>null);
   if (!current) throw Object.assign(new Error('The Fleet work order for this receipt no longer exists.'),{status:404});
@@ -943,6 +944,9 @@ Deno.serve(async (req) => {
       const rows = await Receipt.filter({operation_key:operationKey});
       if ((rows || []).length > 1) return json({error:'Duplicate mechanic operation receipts exist. CCS must review Fleet integrity before this request can continue.'},{status:409});
       const receipt = canonicalReceipt(rows || []);
+      if (receipt && (!mechanicReceiptOperationIdentityValid(receipt) || String(receipt.operation_key || '') !== operationKey)) {
+        return json({error:'Fleet mechanic status receipt identity is inconsistent. CCS review is required.'},{status:409});
+      }
       if (!receipt) return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'not_found',request_id:requestId});
       if (workOrderHasMechanicReceipt(current,receipt)) {
         await markMechanicReceiptApplied(Receipt,receipt,current,receipt.status !== 'applied');
@@ -1028,6 +1032,9 @@ Deno.serve(async (req) => {
       if ((exactRows || []).length > 1) return json({error:'Duplicate mechanic operation receipts exist. CCS must review Fleet integrity before retrying this request.'},{status:409});
       const exactReceipt = canonicalReceipt(exactRows || []);
       if (exactReceipt) {
+        if (!mechanicReceiptOperationIdentityValid(exactReceipt) || String(exactReceipt.operation_key || '') !== operationKey) {
+          return json({error:'Fleet mechanic request receipt identity is inconsistent. CCS review is required.'},{status:409});
+        }
         if (String(exactReceipt.payload_fingerprint || '') !== fingerprint) return json({error:'This mechanic request id was already used with different data. Nothing was replayed.'},{status:409});
         if (workOrderHasMechanicReceipt(current,exactReceipt)) {
           await markMechanicReceiptApplied(Receipt,exactReceipt,current,exactReceipt.status !== 'applied');
@@ -1045,6 +1052,9 @@ Deno.serve(async (req) => {
         operation_type:{$in:Object.values(MECHANIC_MUTATION_TYPES)},
       });
       for (const receipt of (unresolved || [])) {
+        if (!mechanicReceiptOperationIdentityValid(receipt)) {
+          return json({error:'A prior Fleet mechanic receipt has conflicting operation identity. CCS review is required before another update.'},{status:409});
+        }
         if (workOrderHasMechanicReceipt(current,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,current,true);
           await resolveReusedUploadReceipt(Receipt,receipt);
