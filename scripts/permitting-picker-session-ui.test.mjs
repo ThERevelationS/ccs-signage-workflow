@@ -76,3 +76,17 @@ test('address entry and staff role do not offer manual repository draft creation
   await h.change({currentUser:{id:'staff',role:'staff'},sessionToken:'staff'});assert.equal(h.tree.root.findAllByType('select').length,0);
  }finally{await h.close();}
 });
+
+test('confirmation reloads the repository and blocks changed or deleted reviewed profiles',async()=>{
+ for(const deleted of [false,true]){
+  const profiles=[{id:'oh',name:'Fixture',state:'OH',type:'city'}],h=await harness({profiles});
+  try{
+   await act(async()=>h.tree.root.findByType('select').props.onChange({target:{value:'oh'}}));
+   await act(async()=>h.tree.root.findAllByType('button').find(n=>n.children.includes('Review draft creation')).props.onClick());
+   profiles.splice(0,1,...(deleted?[]:[{id:'oh',name:'Changed',state:'OH',type:'city'}]));
+   const confirm=h.tree.root.findAll(n=>typeof n.props.onClick==='function'&&n.children.some(child=>typeof child==='string'&&child.trim()==='Create Draft & Apply')).at(-1).props.onClick;
+   await act(async()=>confirm({preventDefault:()=>{}}));
+   assert.equal(h.drafts.length,0);assert.equal(h.applied.length,0);assert.match(JSON.stringify(h.tree.toJSON()),/review it again/);
+  }finally{await h.close();}
+ }
+});
