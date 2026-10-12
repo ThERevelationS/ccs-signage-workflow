@@ -86,6 +86,7 @@ function LocalityPickerSession({
   const [repositoryLoading, setRepositoryLoading] = useState(false);
   const [repositoryError, setRepositoryError] = useState("");
   const [draftCandidate, setDraftCandidate] = useState(null);
+  const [repositoryDraftId,setRepositoryDraftId]=useState("");
   const [draftCreateError, setDraftCreateError] = useState("");
   const [creatingDraft, setCreatingDraft] = useState(false);
   const inputRef = useRef(null);
@@ -99,7 +100,7 @@ function LocalityPickerSession({
       setError("");
       setSelectedLocalityId("");
       setExcludeElectrical(false);
-      setDraftCandidate(null);
+      setDraftCandidate(null);setRepositoryDraftId("");
       setDraftCreateError("");
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -176,6 +177,7 @@ function LocalityPickerSession({
     : [];
 
   const requestDraftFromRepository = (jurisdiction) => {
+    if(currentUser?.role!=="admin"||address.trim()||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
     if (hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction)) {
       setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Review and resolve the duplicate profiles before creating a permit locality.`);
@@ -185,7 +187,7 @@ function LocalityPickerSession({
   };
 
   const confirmDraftFromRepository = async () => {
-    if (!openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || address.trim()) return;
+    if (currentUser?.role!=="admin" || !openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || address.trim()) return;
     const draftVersion=searchVersion.current;
     setCreatingDraft(true);
     setDraftCreateError("");
@@ -344,6 +346,18 @@ function LocalityPickerSession({
               </div>
             )}
 
+            {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
+              <h4 className="font-semibold text-sm">Create a tracker from the repository</h4>
+              <p className="text-xs">Manual selection creates a draft workflow reference. It does not verify the job location or office authority.</p>
+              {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError}</p>}
+              <label className="block text-xs">Repository jurisdiction
+                <select aria-label="Repository jurisdiction for draft" className="block w-full min-h-11 border rounded bg-white" value={repositoryDraftId} disabled={repositoryLoading||Boolean(repositoryError)||creatingDraft} onChange={event=>{setRepositoryDraftId(event.target.value);setDraftCandidate(null);}}>
+                  <option value="">{repositoryLoading?'Loading repository…':'Select a repository jurisdiction'}</option>
+                  {repositoryJurisdictions.map(row=><option key={row.id} value={row.id} disabled={hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)}>{row.name} · {row.state || 'State unknown'} · {row.type || 'Type unknown'}{row.parent_county?.name?' · '+row.parent_county.name+' County':''}{hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)?' · Duplicate — needs review':''}</option>)}
+                </select>
+              </label>
+              <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Review draft creation</Button>
+            </section>}
             {result && (
               <>
                 {/* Locality match */}
