@@ -7743,10 +7743,14 @@ Deno.serve(async (req) => {
           job_allocations: normalizedAllocations.map((job: any) => allocationForStorage(job)),
         },
       });
-      const priorCorrectionAudits = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
+      const priorCorrectionAudits = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
       if (!Array.isArray(priorCorrectionAudits)) throw new Error('Administrative correction audit lookup did not return a record list.');
       if (priorCorrectionAudits.length > 1) return Response.json({ success: false, error: 'This administrative correction request has multiple audit records. Admin investigation is required.' }, { status: 409 });
       let intent = priorCorrectionAudits[0] || null;
+      if (intent?.id && (String(intent.time_entry_id || '') !== String(entry.id || '') ||
+          asEmail(intent.user_email) !== target.email)) {
+        return Response.json({ success: false, error: 'This administrative correction request id belongs to another employee or shift. Submit a new request id.' }, { status: 409 });
+      }
       const priorPayloadHash = String(intent?.details?.payload_hash || '');
       if (intent && (!priorPayloadHash || !constantTimeEqual(priorPayloadHash, correctionPayloadHash))) {
         return Response.json({ success: false, error: 'This correction request id is already bound to different correction details. Submit a new correction request.' }, { status: 409 });
