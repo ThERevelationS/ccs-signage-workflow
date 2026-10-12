@@ -241,12 +241,9 @@ async function requireCurrentMechanicSaveEvidence(
   }
   if (summary.retry_reservation_required === true) {
     const source = await Receipt.get(String(summary.reused_upload_receipt_id || '')).catch(()=>null);
-    if (!source || source.status !== 'started' ||
-        String(source.result_summary?.retry_reserved_by_request_id || '') !== String(summary.request_id || '') ||
-        String(source.payload_fingerprint || '') !== String(latest.payload_fingerprint || '') ||
-        String(source.result_summary?.grant_id || '') !== grantId ||
-        !Array.isArray(source.result_summary?.uploaded_photo_urls) ||
-        !source.result_summary.uploaded_photo_urls.every((url:any,index:number)=>url === uploadedUrls[index])) {
+    if (source?.status !== 'started' ||
+        !mechanicPhotoSourceMatchesRetry(source,latest) ||
+        String(source.result_summary?.retry_reserved_by_request_id || '') !== String(summary.request_id || '')) {
       throw Object.assign(new Error('Fleet mechanic reused-photo reservation changed before the work-order update. Nothing was replayed; CCS review is required.'),{status:409});
     }
   }
@@ -261,8 +258,8 @@ async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
   const requestId = String(receipt?.result_summary?.request_id || '');
   if (!source || !['failed','started'].includes(source.status) ||
       (source.status === 'started' && (!owner || owner !== requestId)) ||
-      String(source.payload_fingerprint || '') !== String(receipt.payload_fingerprint || '')) return;
-  const selector:any = {id:source.id,status:source.status};
+      !mechanicPhotoSourceMatchesRetry(source,receipt)) return;
+  const selector:any = {...mechanicPhotoSourceSelector(source),status:source.status};
   if (source.status === 'started') selector['result_summary.retry_reserved_by_request_id'] = requestId;
   await Receipt.updateMany(selector,{$set:{
     status:'applied',applied_at:nowIso(),failed_at:null,error_message:'',
@@ -271,11 +268,13 @@ async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
   }}).catch(()=>null);
 }
 
-async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, requestId:string) {
-  if (!sourceId || !requestId) return;
+async function releaseReservedMechanicUpload(Receipt:any, sourceId:string, retry:any) {
+  const requestId = String(retry?.result_summary?.request_id || '');
+  if (!sourceId || !mechanicRequestId(requestId) || retry?.status !== 'failed') return;
   const source = await Receipt.get(sourceId).catch(()=>null);
-  if (source?.status !== 'started' || String(source?.result_summary?.retry_reserved_by_request_id || '') !== requestId) return;
-  await Receipt.updateMany({id:source.id,status:'started',
+  if (source?.status !== 'started' || !mechanicPhotoSourceMatchesRetry(source,retry) ||
+      String(source?.result_summary?.retry_reserved_by_request_id || '') !== requestId) return;
+  await Receipt.updateMany({...mechanicPhotoSourceSelector(source),status:'started',
     'result_summary.retry_reserved_by_request_id':requestId},{$set:{
     status:'failed',
     'result_summary.retry_reserved_by_request_id':'',
@@ -293,21 +292,17 @@ async function findReservedMechanicPhotoRetry(
       source?.operation_type !== 'mechanic_progress_save' ||
       source?.target_entity !== 'FleetMaintenanceWorkOrder' ||
       String(source?.target_id || '') !== workOrderId ||
+      String(source?.actor_user_id || '') !== grantId ||
+      summary.action !== 'save' ||
       String(summary.grant_id || '') !== grantId) return null;
 
   const key = mechanicOperationKey(grantId,workOrderId,'save',owner);
   const matches = await Receipt.filter({operation_key:key});
   if ((matches || []).length !== 1) return null;
   const retry = matches[0];
-  if (retry.operation_type !== 'mechanic_progress_save' ||
-      retry.target_entity !== 'FleetMaintenanceWorkOrder' ||
-      String(retry.target_id || '') !== workOrderId ||
-      String(retry.payload_fingerprint || '') !== String(source.payload_fingerprint || '') ||
-      String(retry?.result_summary?.grant_id || '') !== grantId ||
-      String(retry?.result_summary?.request_id || '') !== owner ||
-      String(retry?.result_summary?.expected_updated_date || '') !== String(summary.expected_updated_date || '') ||
-      String(retry?.result_summary?.reused_upload_receipt_id || '') !== String(source.id) ||
-      retry?.result_summary?.retry_reservation_required !== true) return null;
+  if (!mechanicPhotoSourceMatchesRetry(source,retry) ||
+      String(retry?.actor_user_id || '') !== grantId ||
+      String(retry?.result_summary?.request_id || '') !== owner) return null;
 
   const priorUrls = summary.uploaded_photo_urls;
   const retriedUrls = retry?.result_summary?.uploaded_photo_urls;
