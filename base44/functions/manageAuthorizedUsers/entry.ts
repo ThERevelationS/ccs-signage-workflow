@@ -379,12 +379,15 @@ async function resolveDeletionRequest(Request: any, actor: any, body: any) {
   if (!actorEmail) {
     throw Object.assign(new Error('Administrator identity could not be verified.'), { status: 403 });
   }
-  if (
-    current.status === resolution &&
-    String(current.resolution_source_updated_date || '') === expectedUpdatedDate &&
-    cleanEmail(current.processed_by) === actorEmail &&
-    String(current.admin_notes || '') === adminNotes
-  ) {
+  const isSameDecision = (row: any) =>
+    row?.status === resolution &&
+    cleanEmail(row?.user_email) === expectedEmail &&
+    String(row?.authorized_email_id || '').trim() === expectedAuthorizedId &&
+    String(row?.resolution_source_updated_date || '') === expectedUpdatedDate &&
+    cleanEmail(row?.processed_by) === actorEmail &&
+    String(row?.admin_notes || '') === adminNotes;
+
+  if (isSameDecision(current)) {
     return { record: adminDeletionRequestView(current), reused: true };
   }
 
@@ -411,6 +414,12 @@ async function resolveDeletionRequest(Request: any, actor: any, body: any) {
     { $set: patch },
   );
   if (!result || result.updated !== 1) {
+    // Two identical submissions can race after reading the same pending row.
+    // Recover only the exact decision from that original pending version.
+    const afterConflict = await Request.get(id).catch(() => null);
+    if (isSameDecision(afterConflict)) {
+      return { record: adminDeletionRequestView(afterConflict), reused: true };
+    }
     throw Object.assign(new Error('Deletion request changed while it was being resolved. Reload before retrying.'), { status: 409 });
   }
 
