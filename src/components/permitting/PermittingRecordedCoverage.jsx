@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory, reconcileElectricalOfficeCoverage } from './permittingCoverageReader.mjs';
 
 import officialInventory from './officialGeographicInventory.json';
+import PermitSettingsDialog from './PermitSettingsDialog';
+import useLocalityOfficeGapReview from './useLocalityOfficeGapReview';
 
 export async function readRecordedCoverage(isCurrent, onProgress, api = base44) {
   const queue = await readAllCoveragePages(cursor => api.entities.SourceCollectionQueue.filter(
@@ -19,6 +21,7 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
 export default function PermittingRecordedCoverage({ readCoverage = readRecordedCoverage }) {
+  const officeReview=useLocalityOfficeGapReview();
   const [result, setResult] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [progress, setProgress] = useState('');
   const generation = useRef(0), inFlight = useRef(false);
   useEffect(() => () => { generation.current++; }, []);
@@ -38,6 +41,7 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
     <p className="text-sm">Compares all recorded queue and profile pages. This is a sequence of reads, not an atomic snapshot. It does not establish statewide inventory, office authority, current documents or approved requirements.</p>
     <Button className="min-h-11 h-auto whitespace-normal" disabled={busy} onClick={load}>{busy ? 'Reading coverage…' : result ? 'Refresh recorded coverage' : 'Read recorded coverage'}</Button>
     {progress && <p role="status">{progress}</p>}{error && <p role="alert" className="text-red-700">{error}</p>}
+    {officeReview.error && <p role="alert" className="text-red-700">{officeReview.error}</p>}
     {result && <><p className="text-xs">Read completed {result.checked_at}. Refresh after inventory changes.</p>
       <dl className="space-y-2">{Object.entries(labels).map(([state, label]) => <div key={state} className="flex justify-between gap-3"><dt>{label}</dt><dd>{result.items.filter(row => row.state === state).length}</dd></div>)}
         <div>Profiles with incomplete/unsupported identities: {result.invalid_profile_ids.length}</div>
@@ -68,6 +72,7 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
           <ul className="space-y-2 text-sm">{result.electrical_offices.gaps.map(row => <li key={row.id}>
             <strong>{row.state} {row.name}</strong>: {row.roles.electrical_permit==='staff_verified'?'Permit issuer staff reviewed':row.roles.electrical_permit==='needs_review'?'Permit issuer needs review':'Permit issuer not established'}; {row.roles.electrical_inspection==='staff_verified'?'Inspection provider staff reviewed':row.roles.electrical_inspection==='needs_review'?'Inspection provider needs review':'Inspection provider not established'}.
             {row.legacy_broad_role_present && ' Broad electrical role recorded; separate responsibilities remain unresolved.'}
+            {officeReview.canReview && <Button type="button" variant="outline" aria-label={'Review office setup for '+row.name} className="mt-2 min-h-11 h-auto whitespace-normal" disabled={Boolean(officeReview.openingId||officeReview.record)} onClick={()=>officeReview.open(row.id)}>{officeReview.openingId===row.id?'Opening saved locality…':'Review office setup'}</Button>}
           </li>)}</ul>
           {!result.electrical_offices.gaps.length && <p className="text-sm">No gaps found in these saved role relationships. This does not establish statewide completeness.</p>}
         </details>
@@ -75,5 +80,6 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
       </section>}
 
 </>}
+    {officeReview.record && <PermitSettingsDialog key={officeReview.record.id} isOpen={true} onClose={officeReview.close} localities={[officeReview.record]} initialSelectedLocalityId={officeReview.record.id} />}
   </section>;
 }

@@ -5,7 +5,7 @@ import {resolve} from 'node:path';
 const dir=resolve('node_modules/.cache/coverage-sdk-acceptance');await mkdir(dir,{recursive:true});
 globalThis.window={self:null,top:null};
 try{
-await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client/},()=>({path:'mock',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const base44={};'}));}}]});
+await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client|EmailGate|PermitSettingsDialog/},args=>({path:args.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path.includes('EmailGate')?'export const useAuth=()=>({currentUser:null,isRegistered:false});':args.path.includes('PermitSettingsDialog')?'export default function Dialog(){return null;}':'export const base44={};'}));}}]});
 const {readRecordedCoverage}=await import(dir+'/panel.mjs');
 let calls=[],progress=[];
 const queue={id:'q',state:'OH',jurisdiction_name:'Miami Township',jurisdiction_type:'township',parent_county_name:'Hamilton County'};

@@ -8,7 +8,7 @@ import Renderer,{act} from 'react-test-renderer';
 const dir=resolve('node_modules/.cache/coverage-panel');await mkdir(dir,{recursive:true});
 globalThis.window={self:null,top:null};
 try{
- await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client/},()=>({path:'mock',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const base44={};'}));}}]});
+ await build({entryPoints:['src/components/permitting/PermittingRecordedCoverage.jsx'],outfile:dir+'/panel.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',alias:{'@':resolve('src')},external:['react','react/jsx-runtime'],plugins:[{name:'no-api',setup(b){b.onResolve({filter:/base44Client|EmailGate|PermitSettingsDialog/},args=>({path:args.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path.includes('EmailGate')?'export const useAuth=()=>({currentUser:null,isRegistered:false});':args.path.includes('PermitSettingsDialog')?'export default function Dialog(){return null;}':'export const base44={};'}));}}]});
  const {default:Panel}=await import(dir+'/panel.mjs');let calls=0,resolveRead;
  const readCoverage=()=>{calls++;return new Promise(r=>resolveRead=r);};let tree;
  await act(async()=>{tree=Renderer.create(React.createElement(Panel,{readCoverage}));});

@@ -45,9 +45,10 @@ function OfficeSourceStatus({ provenance }) {
   );
 }
 
-export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes }) {
+export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes, initialSelectedLocalityId = '' }) {
   const { currentUser } = useAuth();
   const verificationActor = currentUser?.full_name || currentUser?.email || "CCS Staff";
+  const initialReviewSelectionHandled = useRef(false);
   const [activeTab, setActiveTab] = useState("localities");
   const [localities, setLocalities] = useState(initialLocalities || []);
   const [officeTypes, setOfficeTypes] = useState(initialOfficeTypes || []);
@@ -180,6 +181,17 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const selectLocality = (loc) => requestNavigation({ type: "select_locality", id: loc.id });
 
   const newLocality = () => requestNavigation({ type: "new_locality" });
+
+  useEffect(() => {
+    if (!initialSelectedLocalityId || initialReviewSelectionHandled.current) return;
+    initialReviewSelectionHandled.current = true;
+    const matches = localities.filter(row => row.id === initialSelectedLocalityId);
+    if (matches.length !== 1) {
+      setLocalitySaveError('The requested saved locality is unavailable or ambiguous. Close and refresh coverage before reviewing it.');
+      return;
+    }
+    applyNavigation({ type: 'select_locality', id: initialSelectedLocalityId });
+  }, [initialSelectedLocalityId, localities]);
 
   const saveLocality = async () => {
     if (!form.name.trim() || localitySaveInFlightRef.current) return false;
