@@ -627,6 +627,21 @@ async function pullDataset(
       }
     }
     const batch = toCreate.slice(i, i + 100);
+    if (dataset === 'sales') {
+      // The normal sheet-scoped lookup can miss legacy linked WorkOrders
+      // whose permanent row ID was saved without a sheet ID. A complete,
+      // fresh row-ownership scan is required before EACH import batch.
+      salesLinkedClaimReview = await readSalesPullLinkedRowRisks(
+        base44.asServiceRole.entities.WorkOrder, sheetId,
+        batch.map((record: any) => record.smartsheet_row_id),
+      );
+      if (salesLinkedClaimReview.count > 0) {
+        salesImportLinkedCreatesHeld = toCreate.length - i;
+        errors.push(salesLinkedClaimReview.count + ' existing WorkOrder permanent-row claim(s) overlap planned Sales imports. ' +
+          salesImportLinkedCreatesHeld + ' new imports held for exact-ID review; no automatic relinking or duplicate creation.');
+        break;
+      }
+    }
     try {
       const result = await base44.asServiceRole.entities[entityName].bulkCreate(batch);
       createdCount += Array.isArray(result) ? result.length : 0;
