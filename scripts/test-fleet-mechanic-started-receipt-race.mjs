@@ -50,6 +50,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
   const store={work:baseWork(),receipts:new Map(),uploads:[],updates:0,updateAttempts:0,revision:1,barrier,uploadBarrier,holdUpdates,failUploads:0,
     waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
     pauseWorkRead:false,pendingWorkReads:[],pauseAppliedWrite:false,pendingAppliedWrites:[],
+    pauseFailureWrite:false,pendingFailureWrites:[],loseFailureAckOnce:false,loseCancelAckOnce:false,
     sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
     pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],
     pauseFinalReceiptReadAt:0,receiptReadNumbers:new Map(),pendingFinalReceiptReads:[],
@@ -92,6 +93,10 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
         store.pauseAppliedWrite=false;
         await new Promise(resolve=>store.pendingAppliedWrites.push(resolve));
       }
+      if(operators?.$set?.status==='failed' && store.pauseFailureWrite){
+        store.pauseFailureWrite=false;
+        await new Promise(resolve=>store.pendingFailureWrites.push(resolve));
+      }
       if(operators?.$set?.status==='cancelled' && store.pauseCancelWrite){
         store.pauseCancelWrite=false;
         await new Promise(resolve=>store.pendingCancelWrites.push(resolve));
@@ -114,6 +119,14 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
           target[parts.at(-1)]=clone(value);
         }
         store.receipts.set(row.id,next);
+      }
+      if(operators?.$set?.status==='failed' && store.loseFailureAckOnce){
+        store.loseFailureAckOnce=false;
+        throw new Error('Synthetic failure CAS response lost after commit');
+      }
+      if(operators?.$set?.status==='cancelled' && store.loseCancelAckOnce){
+        store.loseCancelAckOnce=false;
+        throw new Error('Synthetic admin cancellation CAS response lost after commit');
       }
       return {updated:found.length};
     },
@@ -1233,4 +1246,109 @@ test("concurrent distinct new request ids cannot apply same started receipt twic
   assert.ok([...store.receipts.values()].every(row=>row.id===old.id || row.status!=="applied"),"No competing new mutation may be applied");
   assert.equal(store.receipts.get(old.id).status,"applied","Race loser must not downgrade already applied receipt");
   assert.equal((store.work.notes.match(/Synthetic note/g)||[]).length,1);
+});
+
+
+// Receipt terminalization races: synthetic entities only; no production writes.
+test("failure CAS rejects operation identity changed during a stale status check",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client,receipts}=setup({receipt:prior});
+  store.work.status="completed";
+  store.pauseFailureWrite=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("failure identity conditional write",()=>store.pendingFailureWrites.length===1);
+  const live=store.receipts.get(prior.id);
+  await receipts.update(prior.id,{target_id:"different-work-order",
+    result_summary:{...live.result_summary,forensic_review_note:"Preserve conflicting target"}});
+  store.pendingFailureWrites.shift()();
+  const result=await pending;
+  assert.equal(result.code,409);
+  assert.match(result.body.error,/receipt changed while failure was being recorded/i);
+  assert.equal(store.receipts.get(prior.id).status,"started");
+  assert.equal(store.receipts.get(prior.id).target_id,"different-work-order");
+  assert.equal(store.receipts.get(prior.id).result_summary.forensic_review_note,"Preserve conflicting target");
+  assert.equal(store.updates,0);
+});
+
+test("failure CAS losing to an applied receipt cannot claim failed",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client,receipts}=setup({receipt:prior});
+  store.work.status="completed";
+  store.pauseFailureWrite=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("failure versus applied CAS",()=>store.pendingFailureWrites.length===1);
+  await receipts.update(prior.id,{status:"applied"});
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.pendingFailureWrites.shift()();
+  const result=await pending;
+  assert.equal(result.code,409);
+  assert.notEqual(result.body.status,"failed");
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.updates,0);
+});
+
+test("admin cancellation CAS refuses a concurrently reidentified receipt",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client,receipts}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseCancelWrite=true;
+  const revocation=call({action:"admin_revoke_link",id:grantId},client);
+  await until("admin cancellation identity conditional write",()=>store.pendingCancelWrites.length===1);
+  const live=store.receipts.get(prior.id);
+  await receipts.update(prior.id,{payload_fingerprint:"different-operation-payload",
+    result_summary:{...live.result_summary,forensic_review_note:"Keep changed operation"}});
+  store.pendingCancelWrites.shift()();
+  const result=await revocation;
+  assert.equal(result.code,200);
+  assert.equal(result.body.reconciled_blocked,1);
+  assert.equal(result.body.reconciled_cancelled,0);
+  assert.equal(store.receipts.get(prior.id).status,"started");
+  assert.equal(store.receipts.get(prior.id).result_summary.admin_reconciled_not_applied,undefined);
+  assert.equal(store.receipts.get(prior.id).result_summary.forensic_review_note,"Keep changed operation");
+  assert.equal(store.updates,0);
+});
+
+test("admin cancellation CAS does not report applied without a work-order marker",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client,receipts}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseCancelWrite=true;
+  const revocation=call({action:"admin_revoke_link",id:grantId},client);
+  await until("admin cancellation versus unproven applied state",()=>store.pendingCancelWrites.length===1);
+  await receipts.update(prior.id,{status:"applied"});
+  store.pendingCancelWrites.shift()();
+  const result=await revocation;
+  assert.equal(result.body.reconciled_applied,0);
+  assert.equal(result.body.reconciled_cancelled,0);
+  assert.equal(result.body.reconciled_blocked,1);
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.work.mechanic_operation_key,undefined);
+  assert.equal(store.updates,0);
+});
+
+test("lost terminalization acknowledgments are reconciled from matching durable receipt identity",async()=>{
+  const failed=makeReceipt(payload("request-original-123456"));
+  const first=setup({receipt:failed});
+  first.store.work.status="completed";
+  first.store.loseFailureAckOnce=true;
+  const failure=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:failed.result_summary.request_id},first.client);
+  assert.equal(failure.code,200);
+  assert.equal(failure.body.status,"failed");
+  assert.equal(first.store.receipts.get(failed.id).status,"failed");
+  assert.equal(first.store.updates,0);
+
+  const prior=makeReceipt(payload("request-original-123456"));
+  const second=setup({receipt:prior});
+  second.client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  second.store.loseCancelAckOnce=true;
+  const revoked=await call({action:"admin_revoke_link",id:grantId},second.client);
+  assert.equal(revoked.code,200);
+  assert.equal(revoked.body.reconciled_cancelled,1);
+  assert.equal(second.store.receipts.get(prior.id).status,"cancelled");
+  assert.equal(second.store.receipts.get(prior.id).result_summary.admin_reconciled_not_applied,true);
+  assert.equal(second.store.updates,0);
 });
