@@ -32,7 +32,7 @@ export default function OrderForm() {
   const [filterLoaded, setFilterLoaded] = useState(false);
   const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, isSaving: false, isSyncing: false, isLoading: true, pendingSyncCount: 0, saveError: "" });
+  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, isSaving: false, isSyncing: false, isLoading: true, pendingSyncCount: 0, saveError: "", readError: "" });
   const spreadsheetRef = useRef(null);
   const hasLocalOrderChanges = saveStatus.hasUnsavedChanges || saveStatus.pendingSyncCount > 0;
   const saveSyncIndicator = orderSaveSyncStatus(saveStatus);
@@ -136,8 +136,8 @@ export default function OrderForm() {
                   : spreadsheetRef.current?.pullFromSmartsheet?.()}
                 size="sm"
                 className="h-8 px-3"
-                disabled={saveStatus.isSaving || saveStatus.isSyncing || saveStatus.isLoading}
-                title={hasLocalOrderChanges ? "Save local Order changes and push them to Smartsheet" : "Check Smartsheet and pull changed Orders into this app"}
+                disabled={saveStatus.isSaving || saveStatus.isSyncing || saveStatus.isLoading || Boolean(saveStatus.readError)}
+                title={saveStatus.readError ? "Reload Orders successfully before saving or syncing." : hasLocalOrderChanges ? "Save local Order changes and push them to Smartsheet" : "Check Smartsheet and pull changed Orders into this app"}
               >
                 {saveStatus.isSaving || saveStatus.isSyncing
                   ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -166,7 +166,7 @@ export default function OrderForm() {
                 size="sm" 
                 className="h-8 px-3"
                 variant="ghost"
-                disabled={saveStatus.isSyncing || saveStatus.isSaving || saveStatus.isLoading}
+                disabled={saveStatus.isSyncing || saveStatus.isSaving || saveStatus.isLoading || Boolean(saveStatus.readError)}
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -176,6 +176,7 @@ export default function OrderForm() {
             {canOrderExport && (
               <Button 
                 onClick={() => spreadsheetRef.current?.exportToExcel()}
+                disabled={saveStatus.isLoading || Boolean(saveStatus.readError)}
                 size="sm" 
                 className="h-8 px-3"
                 variant="ghost"
