@@ -276,6 +276,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const syncInFlightRef = useRef(false);
   const manualPullInFlightRef = useRef(false);
   const orderLoadGenerationRef = useRef(0);
+  const orderLocalEditGenerationRef = useRef(0); // Fence reads begun before a local edit/save.
+  const customerNameDraftOrderRef = useRef(null); // Typing does not enter pendingChanges until blur.
   const dateNeededSaveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
@@ -316,6 +318,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const markOrderNeedsSync = useCallback((orderId) => {
     const id = String(orderId || '').trim();
     if (!id) return;
+    orderLocalEditGenerationRef.current += 1;
     pendingSyncIdsRef.current.add(id);
     pendingSyncVersionRef.current.set(id, (pendingSyncVersionRef.current.get(id) || 0) + 1);
     setPendingSyncCount(pendingSyncIdsRef.current.size);
@@ -359,11 +362,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   }, [hasUnsavedChanges, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, readError, onSaveStatusChange]);
 
+  const hasActiveOrderEdits = () => Boolean(
+    customerNameDraftOrderRef.current || customerSelectionInFlightRef.current ||
+    saveInFlightRef.current || dateNeededSaveInFlightRef.current ||
+    Object.keys(pendingChangesRef.current).length > 0
+  );
+
   const loadData = async (showLoading = true, { manualPullReload = false } = {}) => {
-    // A focus/timer refresh must not race a manual Smartsheet pull.
-    if (manualPullInFlightRef.current && !manualPullReload) return false;
-    if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return false;
+    // Even explicit/loading refreshes must never replace a focused customer
+    // name draft (recorded only on blur) or edits still awaiting Base44 save.
+    if ((manualPullInFlightRef.current && !manualPullReload) || hasActiveOrderEdits()) return false;
     const requestGeneration = ++orderLoadGenerationRef.current;
+    const startedEditGeneration = orderLocalEditGenerationRef.current;
     if (showLoading && orders.length === 0) setIsLoading(true);
     // Keep an unverified-read error visible until a complete current reload
     // succeeds. Starting a retry must not make the toolbar Sync actionable.
@@ -392,9 +402,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         latestGeneration: orderLoadGenerationRef.current,
         manualPullInFlight: manualPullInFlightRef.current,
         manualPullReload,
+        startedEditGeneration,
+        latestEditGeneration: orderLocalEditGenerationRef.current,
+        localEditInProgress: hasActiveOrderEdits(),
       })) return false;
-      // An edit can begin after the read started; preserve its local baseline.
-      if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return false;
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
@@ -423,6 +434,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         latestGeneration: orderLoadGenerationRef.current,
         manualPullInFlight: manualPullInFlightRef.current,
         manualPullReload,
+        startedEditGeneration,
+        latestEditGeneration: orderLocalEditGenerationRef.current,
+        localEditInProgress: hasActiveOrderEdits(),
       })) return false;
       console.error("Error loading data:", error);
       setReadError(error?.message || "Orders could not be verified completely.");
@@ -802,6 +816,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
     const currentOrder = orders.find(o => o.id === orderId);
     if (!currentOrder) return;
+    orderLocalEditGenerationRef.current += 1;
     const oldValue = currentOrder[field];
 
     setOrders((current) => current.map((order) => order.id === orderId
@@ -892,6 +907,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         deletedBy: currentUser?.email || "unknown",
         label: "Order Spreadsheet delete",
       });
+      orderLocalEditGenerationRef.current += 1;
       setOrders((current) => current.filter(o => o.id !== target.id));
       delete pendingChangesRef.current[target.id];
       delete originalOrdersRef.current[target.id];
@@ -1578,6 +1594,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   value={order.customer_name || ""}
                   onChange={(e) => {
                     const val = e.target.value;
+                    customerNameDraftOrderRef.current = order.id;
+                    orderLocalEditGenerationRef.current += 1;
                     setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
                     setCustomerSearch(val);
                     setShowCustomerDropdown(order.id);
@@ -1591,8 +1609,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       };
                       setHasUnsavedChanges(true);
                     }
+                    if (customerNameDraftOrderRef.current === order.id) customerNameDraftOrderRef.current = null;
                   }}
                   onFocus={(e) => {
+                    customerNameDraftOrderRef.current = order.id;
+                    orderLocalEditGenerationRef.current += 1;
                     setCustomerSearch(e.target.value);
                     setShowCustomerDropdown(order.id);
                   }}
@@ -1642,6 +1663,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         onClick={async () => {
                           if (customerSelectionInFlightRef.current) return;
                           customerSelectionInFlightRef.current = true;
+                          orderLocalEditGenerationRef.current += 1;
                           setCheckingCustomerJobId(wo.id);
                           try {
                             // A job may have been closed since the latest 60-second refresh.
