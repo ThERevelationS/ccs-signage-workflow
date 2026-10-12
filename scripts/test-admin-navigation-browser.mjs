@@ -887,6 +887,71 @@ try {
         '2026-01-01T00:00:00Z');
     });
 
+  await check('Old session resolution cannot refresh or change the newly authenticated request list', 375,
+    '/?tab=users&real_users=1&deletion_rows=1', async page => {
+      await page.evaluate(() => { window.__adminDecisionHold = true; });
+      await page.getByRole('button', { name: 'Mark Reviewed' }).click();
+      await page.getByRole('alertdialog', { name: /Mark deletion request reviewed/ })
+        .getByRole('button', { name: 'Mark Reviewed' }).click();
+      await page.waitForFunction(() => window.__adminDecisionCalls === 1 && !!window.__adminDecisionPending);
+      await page.evaluate(() => {
+        window.__adminOldDecisionPending = window.__adminDecisionPending;
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.getByText('New Session Request').waitFor();
+      assert.equal(await page.getByText('Synthetic Review Request').count(), 0);
+      const readsAfterChange = await page.evaluate(() => window.__adminDeletionListAttempts);
+      await page.evaluate(() => { window.__adminOldDecisionPending(); });
+      await page.waitForFunction(() => !!window.__adminSyntheticDeletionRow);
+      await page.waitForTimeout(30);
+      assert.equal(await page.evaluate(() => window.__adminDeletionListAttempts), readsAfterChange,
+        'Old mutation completion must not invoke an old-token refresh');
+      assert.equal(await page.getByText('New Session Request').count(), 1);
+      assert.equal(await page.getByText('1 pending review').count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Refresh' }).isEnabled(), true);
+      assert.equal(await page.getByRole('alertdialog').count(), 0);
+      assert.equal(await page.evaluate(() => window.__adminSyntheticDeletionRowNew ?? null), null);
+    });
+
+  await check('Old session failure cannot overwrite a new decision still saving', 375,
+    '/?tab=users&real_users=1&deletion_rows=1', async page => {
+      await page.evaluate(() => {
+        window.__adminDecisionHold = true;
+        window.__adminDecisionReject = true;
+      });
+      await page.getByRole('button', { name: 'Mark Reviewed' }).click();
+      await page.getByRole('alertdialog', { name: /Mark deletion request reviewed/ })
+        .getByRole('button', { name: 'Mark Reviewed' }).click();
+      await page.waitForFunction(() => window.__adminDecisionCalls === 1 && !!window.__adminDecisionPending);
+      await page.evaluate(() => {
+        window.__adminOldDecisionPending = window.__adminDecisionPending;
+        window.__adminSyntheticSessionToken = 'synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await page.getByText('New Session Request').waitFor();
+      await page.getByRole('button', { name: 'Cancel Request' }).click();
+      await page.getByRole('alertdialog', { name: /Cancel deletion request/ })
+        .getByRole('button', { name: 'Cancel Request' }).click();
+      await page.waitForFunction(() => window.__adminDecisionCalls === 2 &&
+        window.__adminDecisionPending !== window.__adminOldDecisionPending);
+      await page.evaluate(() => { window.__adminOldDecisionPending(); });
+      await page.waitForTimeout(40);
+      assert.equal(await page.getByRole('button', { name: 'Refresh' }).isEnabled(), false,
+        'Old completion cannot clear current session saving state');
+      assert.equal(await page.getByText('New Session Request').count(), 1);
+      assert.equal(await page.getByText('synthetic-private-old-session-resolution').count(), 0);
+      await page.evaluate(() => {
+        window.__adminDecisionHold = false;
+        window.__adminDecisionPending();
+      });
+      await page.getByText('Cancelled', { exact: true }).waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Refresh' }).isEnabled(), true);
+      assert.equal(await page.evaluate(() => window.__adminDecisionCalls), 2);
+      assert.equal(await page.evaluate(() => window.__adminSyntheticDeletionRowNew.status), 'cancelled');
+      assert.equal(await page.evaluate(() => window.__adminSyntheticDeletionRowNew.id), 'synthetic-new-request');
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
