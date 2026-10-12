@@ -102,6 +102,8 @@ export default function UserManagement() {
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
+  const userUpdateInFlight = useRef(false);
+  const userUpdateOwner = useRef(null);
   const [deletionRequests, setDeletionRequests] = useState([]);
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestsError, setDeletionRequestsError] = useState(false);
@@ -128,6 +130,20 @@ export default function UserManagement() {
   }, [deletionImpactRequest?.id, deletionImpactError]);
 
   useEffect(() => {
+    // A previous Admin session may still have a user update or password save in
+    // flight. Revoke its editor ownership, clear any password draft, and let
+    // only the new session control the loading/error UI.
+    userUpdateOwner.current = null;
+    userUpdateInFlight.current = false;
+    setUserMutationSaving(false);
+    setEditingUser(null);
+    setIsDialogOpen(false);
+    setFormData({
+      full_name: "", username: "", password_hash: "", role: "user",
+      sales_roles: ["Task Assigned"], can_import_export: false,
+      can_order_export: false, can_view_resources: false,
+      employment_type: "hourly", can_work_pause: false,
+    });
     // A prior session may still have an invitation in flight. Release only its
     // UI ownership; never let it resume onboarding or Smartsheet actions.
     inviteOwner.current = null;
@@ -176,7 +192,11 @@ export default function UserManagement() {
   }, [sessionToken]);
 
   const loadUsers = async () => {
+    // A stale mutation must not even start a read with its previous token.
+    if (activeSessionToken.current !== sessionToken) return null;
     const requestSequence = ++userLoadSequence.current;
+    const ownsRead = () => requestSequence === userLoadSequence.current &&
+      activeSessionToken.current === sessionToken;
     if (!sessionToken) {
       setUserDirectoryError(true);
       setIsLoading(false);
@@ -185,18 +205,18 @@ export default function UserManagement() {
     setIsLoading(true);
     try {
       const allUsers = await listAuthorizedUsersAdmin({ sessionToken });
-      if (requestSequence === userLoadSequence.current) {
+      if (ownsRead()) {
         setUsers(allUsers);
         setUserDirectoryError(false);
       }
-      return allUsers;
+      return ownsRead() ? allUsers : null;
     } catch {
       // A failed authenticated read is not an empty directory. Preserve the
       // previously verified rows internally but never offer them for editing.
-      if (requestSequence === userLoadSequence.current) setUserDirectoryError(true);
+      if (ownsRead()) setUserDirectoryError(true);
       return null;
     } finally {
-      if (requestSequence === userLoadSequence.current) setIsLoading(false);
+      if (ownsRead()) setIsLoading(false);
     }
   };
 
