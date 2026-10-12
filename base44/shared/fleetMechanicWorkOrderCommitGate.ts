@@ -6,6 +6,25 @@ const deny = (detail:string) => {
   return error;
 };
 
+function validReusedPhotoSource(source:any, receipt:any, grantId:string, workOrderId:string, requestId:string, expectedUpdatedAt:string) {
+  const sourceSummary = source?.result_summary || {};
+  const sourceUrls = sourceSummary.uploaded_photo_urls;
+  const retryUrls = receipt?.result_summary?.uploaded_photo_urls;
+  return source?.status === 'started' &&
+    source.operation_type === 'mechanic_progress_save' &&
+    source.target_entity === 'FleetMaintenanceWorkOrder' &&
+    String(source.target_id || '') === workOrderId &&
+    String(source.actor_user_id || '') === grantId &&
+    String(source.payload_fingerprint || '') === String(receipt?.payload_fingerprint || '') &&
+    String(sourceSummary.grant_id || '') === grantId &&
+    sourceSummary.action === 'save' &&
+    String(sourceSummary.expected_updated_date || '') === expectedUpdatedAt &&
+    String(sourceSummary.retry_reserved_by_request_id || '') === requestId &&
+    Array.isArray(sourceUrls) && Array.isArray(retryUrls) &&
+    sourceUrls.length <= retryUrls.length &&
+    sourceUrls.every((url:any,index:number)=>url === retryUrls[index]);
+}
+
 export async function verifyFleetMechanicWorkOrderCommit({
   Access, Receipt, workOrder, patch, expectedUpdatedAt, nowMs,
 }: {
