@@ -521,7 +521,17 @@ export default function SIPs() {
   };
 
   const openChecklist = (wo) => {
-    setChecklistDialog({ open: true, workOrder: wo });
+    if (!wo?.id) return;
+    if (checklistDialog.open && checklistDialog.workOrder?.id === wo.id) return;
+    if (checklistDialog.open && checklistDialog.workOrder?.id !== wo.id) {
+      setActionError({
+        title: "Finish the open SIPS checklist first",
+        message: "Another Work Order cannot replace the checklist you are editing. Save & Revisit (including its date confirmation), or use Cancel and review the unsaved-changes warning. Then open the other Work Order.",
+      });
+    }
+    // A second same-tick request must not bypass the open-dialog guard.
+    // Keep the mounted checklist and its local drafts intact until it closes.
+    setChecklistDialog(current => current.open ? current : { open: true, workOrder: wo });
   };
 
   const getChecklistProgress = (wo) => {
