@@ -324,7 +324,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const clearSyncedOrderIds = useCallback((syncTargets) => {
     for (const target of syncTargets || []) {
       const id = String(target?.id || '').trim();
-      if (!id || pendingSyncVersionRef.current.get(id) !== target?.version) continue;
+      // An edit typed while the remote request was in flight has not yet
+      // acquired a durable sync version. Never clear its pending queue marker
+      // before the next Base44 autosave marks the newer version.
+      if (!id || pendingSyncVersionRef.current.get(id) !== target?.version ||
+          Object.keys(pendingChangesRef.current[id] || {}).length > 0) continue;
       pendingSyncIdsRef.current.delete(id);
       pendingSyncVersionRef.current.delete(id);
     }
@@ -578,6 +582,20 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds: pendingOrderIds });
       const summary = summarizeSavedOrderSync(result, { expectedOrderCount: pendingOrderIds.length });
       if (!summary.ok) throw new Error(summary.message);
+      // The backend's success is scoped to its completed revision. A second
+      // browser can save a newer revision while that response is in transit.
+      // Verify exact permanent IDs again before clearing any local queue flag.
+      const postflight = await verifyUncertainOrderSyncReadback(orderIds, (ids) =>
+        loadAllEntityRows({
+          entity: Order, query: { id: { $in: ids } }, sort: "id",
+          pageSize: Math.min(500, Math.max(20, ids.length)),
+          maxRows: Math.max(1000, ids.length + 500),
+          label: "Order Form post-sync current-revision confirmation",
+        }),
+      );
+      if (postflight.pendingIds.length) {
+        throw new Error(`${postflight.pendingIds.length} Order${postflight.pendingIds.length === 1 ? '' : 's'} changed in another session or still await verified sync. Keep the newer changes queued for Retry Sync.`);
+      }
       clearSyncedOrderIds(syncTargets);
       const safelySyncedIds = new Set(syncTargets
         .filter(({ id, version }) => pendingSyncVersionRef.current.get(id) === undefined || pendingSyncVersionRef.current.get(id) === version)
