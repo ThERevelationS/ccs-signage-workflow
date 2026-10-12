@@ -134,7 +134,9 @@ assert.match(ui, /pendingSyncVersionRef\.current\.set\(id, \(pendingSyncVersionR
 assert.match(ui, /const syncTargets = \[\.\.\.pendingSyncIdsRef\.current\]\.map/);
 assert.match(ui, /const orderIds = syncTargets\.map\(\(\{ id \}\) => id\)/);
 assert.match(ui, /pushSavedOrdersToSmartsheet\(\{ sessionToken, orderIds: pendingOrderIds \}\)/);
-assert.match(ui, /pendingSyncVersionRef\.current\.get\(id\) !== target\?\.version/);
+assert.match(ui, /canClearCompletedOrderSyncTarget\(\{/);
+assert.match(ui, /currentVersion: pendingSyncVersionRef\.current\.get\(id\)/);
+assert.match(ui, /pendingFields: pendingChangesRef\.current\[id\] \|\| \{\}/);
 assert.match(ui, /clearSyncedOrderIds\(syncTargets\)/);
 assert.match(ui, /catch \(error\) \{[\s\S]*?await loadData\(false\);[\s\S]*?unresolvedTargets = syncTargets\.filter\(\(\{ id \}\) => pendingSyncIdsRef\.current\.has\(id\)\)/);
 assert.match(ui, /unresolvedTargets\.length === 0[\s\S]*?setLastSynced\(new Date\(\)\)[\s\S]*?Saved changes are synchronized/);
