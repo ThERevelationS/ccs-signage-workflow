@@ -1408,7 +1408,8 @@ async function saveSyncStatusForRun(base44: any, status: any, startedAt: string)
 async function readSalesCreateRowClaims(base44: any, sheetId: string, rowId: string) {
   const entity = base44.asServiceRole.entities.WorkOrder;
   const [linked, allAttempts] = await Promise.all([
-    loadAllEntityRows({entity,query:{smartsheet_sheet_id:sheetId,smartsheet_row_id:rowId},
+    // A legacy linked row with a missing sheet ID is still a competing claim.
+    loadAllEntityRows({entity,query:{smartsheet_row_id:rowId},
       sort:'id',label:'Sales create permanent-row linked owner verification'}),
     loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},
       sort:'id',label:'Sales create permanent-row durable attempt verification'}),
