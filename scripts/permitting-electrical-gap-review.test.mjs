@@ -61,7 +61,7 @@ test('a response from a previous account cannot reopen its editor',async()=>{
 test('invalid references are rejected before any API call',async()=>{
  const h=await hookHarness();try{for(const id of ['',null,'../another-record'])await assert.rejects(h.read(id,{get:async()=>{throw Error('should not call API');}}),/reference is invalid/);}finally{await h.close();}
 });
-function dialogHarness({save}={}){
+function dialogHarness({save,remove}={}){
  const uiCache=new Map(),writes=[],offices=[],module={exports:{}};
  const ui=new Proxy({}, {get(_,name){
   if(uiCache.has(name))return uiCache.get(name);
@@ -80,7 +80,7 @@ function dialogHarness({save}={}){
   if(name==='@/components/auth/EmailGate')return {useAuth:()=>admin};
   if(name==='./LocalityOfficeEditor')return {__esModule:true,default:props=>{offices.push(props);return null;}};
   if(name==='./OfficeCatalogEditor')return {__esModule:true,default:()=>null};
-  if(name.includes('builderEntityPersistence'))return {deleteEntityIfUnchanged:refuseWrite,expectedEntityFields:()=>({}),replaceEntityFieldsIfUnchanged:save || refuseWrite};
+  if(name.includes('builderEntityPersistence'))return {deleteEntityIfUnchanged:remove || refuseWrite,expectedEntityFields:()=>({}),replaceEntityFieldsIfUnchanged:save || refuseWrite};
   if(name==='./permitGlobalSettingsPersistence')return {loadSingleGlobalSetting:async()=>null,saveGlobalSettingValueIfUnchanged:refuseWrite};
   if(name==='./permitLocalityPersistence')return {createPermitLocalityIfAbsent:refuseWrite};
   if(name==='./localityOfficeCatalogBridge')return {copyCatalogOfficeToLocality:refuseWrite,resolveCatalogOfficeProvenance:()=>null};
@@ -127,5 +127,24 @@ test('failed locality save does not notify coverage',async()=>{
   await act(async()=>{tree=Renderer.create(React.createElement(h.Component,{isOpen:true,onClose:()=>{},localities:[row],initialSelectedLocalityId:row.id,onLocalitySaved:id=>notifications.push(id)}));});
   const save=tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&child.trim()==='Save Locality'));
   await act(async()=>save.props.onClick());assert.deepEqual(notifications,[]);
+ }finally{await act(async()=>tree?.unmount());}
+});
+
+test('locality deletion waits for confirmation and confirmed completion before notifying',async()=>{
+ let release;const calls=[],notifications=[],h=dialogHarness({remove:args=>{calls.push(args);return new Promise(resolve=>release=resolve);}});let tree;
+ try{
+  await act(async()=>{tree=Renderer.create(React.createElement(h.Component,{isOpen:true,onClose:()=>{},localities:[row],initialSelectedLocalityId:row.id,onLocalityDeleted:id=>{notifications.push(id);throw Error('Fixture delete notification failure');}}));});
+  const button=label=>tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&child.trim()===label));
+  await act(async()=>button('Delete').props.onClick());assert.equal(calls.length,0);assert.deepEqual(notifications,[]);
+  await act(async()=>{button('Delete Locality').props.onClick();});assert.equal(calls.length,1);assert.equal(calls[0].record.id,row.id);assert.equal(calls[0].guardFields.name,row.name);assert.deepEqual(notifications,[]);
+  await act(async()=>release());assert.deepEqual(notifications,[row.id]);assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Fixture delete notification failure/);assert.equal(tree.root.findAllByType('input').filter(node=>node.props.value===row.name).length,0);
+ }finally{await act(async()=>tree?.unmount());}
+});
+test('rejected locality deletion leaves the record visible and does not notify',async()=>{
+ const notifications=[],h=dialogHarness({remove:async()=>{throw Error('Fixture delete rejected');}});let tree;
+ try{
+  await act(async()=>{tree=Renderer.create(React.createElement(h.Component,{isOpen:true,onClose:()=>{},localities:[row],initialSelectedLocalityId:row.id,onLocalityDeleted:id=>notifications.push(id)}));});
+  const button=label=>tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&child.trim()===label));
+  await act(async()=>button('Delete').props.onClick());await act(async()=>button('Delete Locality').props.onClick());assert.deepEqual(notifications,[]);assert.match(JSON.stringify(tree.toJSON()),/Fixture delete rejected/);assert(tree.root.findAllByType('input').some(node=>node.props.value===row.name));
  }finally{await act(async()=>tree?.unmount());}
 });

@@ -82,6 +82,6 @@ export default function PermittingRecordedCoverage({ readCoverage = readRecorded
       </section>}
 
 </>}
-    {officeReview.record && <PermitSettingsDialog key={officeReview.record.id} isOpen={true} onClose={officeReview.close} onLocalitySaved={() => { if (reviewRecordRef.current === officeReview.record) void load(true); }} localities={[officeReview.record]} initialSelectedLocalityId={officeReview.record.id} />}
+    {officeReview.record && <PermitSettingsDialog key={officeReview.record.id} isOpen={true} onClose={officeReview.close} onLocalitySaved={() => { if (reviewRecordRef.current === officeReview.record) void load(true); }} onLocalityDeleted={() => { if (reviewRecordRef.current === officeReview.record) { officeReview.close(); void load(true); } }} localities={[officeReview.record]} initialSelectedLocalityId={officeReview.record.id} />}
   </section>;
 }

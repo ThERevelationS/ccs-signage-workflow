@@ -45,7 +45,7 @@ function OfficeSourceStatus({ provenance }) {
   );
 }
 
-export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes, initialSelectedLocalityId = '', onLocalitySaved }) {
+export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes, initialSelectedLocalityId = '', onLocalitySaved, onLocalityDeleted }) {
   const { currentUser } = useAuth();
   const verificationActor = currentUser?.full_name || currentUser?.email || "CCS Staff";
   const initialReviewSelectionHandled = useRef(false);
@@ -300,6 +300,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       if (selectedLocality === id) {
         setSelectedLocality(null);
         setEditingLocality(null);
+      }
+      try { onLocalityDeleted?.(id); } catch (notificationError) {
+        console.error("Locality deleted, but the coverage notification failed:", notificationError);
       }
     } catch (error) {
       console.error("Permit locality deletion blocked:", error);
