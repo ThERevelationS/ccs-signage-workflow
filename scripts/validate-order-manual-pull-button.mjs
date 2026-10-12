@@ -18,7 +18,9 @@ assert.match(grid, /const pull = await pullOrdersFromSmartsheet\(\{ sessionToken
 assert.match(grid, /const reloaded = await loadData\(false, \{ manualPullReload: true \}\)/);
 assert.match(grid, /syncInFlightRef\.current = true/);
 assert.match(grid, /pullFromSmartsheet,\s*exportToExcel/);
-assert.match(grid, /if \(!showLoading && \(saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current \|\| Object\.keys\(pendingChangesRef\.current\)\.length > 0\)\) return false/);
+assert.match(grid, /const hasActiveOrderEdits = \(\) => Boolean\(/);
+assert.match(grid, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
+assert.match(grid, /localEditInProgress: hasActiveOrderEdits\(\)/);
 console.log("PASS Order button swaps modes based on unsaved or durable pending changes; pull guards in-flight data");
 
 // A timer/focus refresh may begin before Sync and finish after it. The older
