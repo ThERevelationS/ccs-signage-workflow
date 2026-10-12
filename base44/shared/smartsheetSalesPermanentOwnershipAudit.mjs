@@ -5,7 +5,7 @@ const num=x=>/^\d+$/.test(val(x)) && val(x)!=='0';
 export function auditSalesPermanentRowOwners(links,attempts,sheetId) {
   const sheet=val(sheetId);
   if (!num(sheet)||!Array.isArray(links)||!Array.isArray(attempts))
-    throw Error('Complete Sales claim sets and a numeric configured sheet are required.');
+    throw Error('Complete linked and durable Sales claim sets and a numeric configured sheet are required.');
   const groups=new Map();
   // Linked and durable-attempt scans can return separate projections of the
   // same WorkOrder. Compare both claims by owner ID, not just within one row.
