@@ -10,14 +10,14 @@ import {transform} from 'esbuild';
 const source=await fs.readFile('src/components/permitting/googleMapsLoader.js','utf8');
 const compiled=(await transform(source,{format:'cjs',target:'es2022'})).code;
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function harness(){
+function harness({deferredConfiguration=false}={}){
  const scripts=[],timers=new Map(),calls=[],window={};let timerId=0;
  const document={getElementById:id=>scripts.find(script=>script.id===id&&!script.removed),
   createElement:()=>({removed:false,remove(){this.removed=true;}}),head:{appendChild:script=>scripts.push(script)}};
  const module={exports:{}};
  vm.runInNewContext(compiled,{module,window,document,console,crypto:webcrypto,
   setTimeout:callback=>{const id=++timerId;timers.set(id,callback);return id;},clearTimeout:id=>timers.delete(id),
-  require:name=>{assert.equal(name,'@/api/base44Client');return {base44:{functions:{invoke:async(name,body)=>{calls.push({name,body});return {data:{apiKey:'synthetic-map-key'}};}}}};}});
+  require:name=>{assert.equal(name,'@/api/base44Client');return {base44:{functions:{invoke:async(name,body)=>{const call={name,body};calls.push(call);if(deferredConfiguration)return new Promise((resolve,reject)=>{call.resolve=resolve;call.reject=reject;});return {data:{apiKey:'synthetic-map-key'}};}}}};}});
  const callback=script=>new URL(script.src).searchParams.get('callback');
  const sdk=()=>{window.google={maps:{Map:class {},geometry:{spherical:{computeLength:()=>0}}}};};
  return {load:module.exports.loadGoogleMaps,window,scripts,timers,calls,callback,sdk,
@@ -43,6 +43,29 @@ test('concurrent map instances share one configuration and SDK request',async()=
  const h=harness(),first=h.load('synthetic-session'),second=h.load('synthetic-session');
  assert.equal(first,second);await flush();assert.equal(h.calls.length,1);assert.equal(h.scripts.length,1);
  h.sdk();h.window[h.callback(h.scripts[0])]();const [a,b]=await Promise.all([first,second]);assert.equal(a,b);assert.equal(h.timers.size,0);
+});
+test('a refreshed session does not inherit the expired session configuration request',async()=>{
+ const h=harness({deferredConfiguration:true}),old=h.load('old-synthetic-session'),oldRejection=assert.rejects(old,/synthetic expired session/),current=h.load('new-synthetic-session');await flush();
+ assert.equal(h.calls.length,2);assert.notEqual(old,current);assert.equal(h.calls[1].body.session_token,'new-synthetic-session');
+ h.calls[0].reject(Error('synthetic expired session'));await oldRejection;
+ assert.equal(h.load('new-synthetic-session'),current,'old rejection must not clear the current request');assert.equal(h.calls.length,2);
+ h.calls[1].resolve({data:{apiKey:'synthetic-map-key'}});await flush();h.sdk();h.window[h.callback(h.scripts[0])]();await current;assert.equal(h.timers.size,0);
+});
+test('different sessions validate their own configuration but share one SDK script',async()=>{
+ const h=harness({deferredConfiguration:true}),first=h.load('first-synthetic-session'),second=h.load('second-synthetic-session');await flush();assert.equal(h.calls.length,2);
+ for(const call of h.calls)call.resolve({data:{apiKey:'synthetic-map-key'}});await flush();assert.equal(h.scripts.length,1);
+ h.sdk();h.window[h.callback(h.scripts[0])]();const [a,b]=await Promise.all([first,second]);assert.equal(a,b);assert.equal(h.timers.size,0);
+});
+test('an old configuration success arriving after recovery does not reload the SDK',async()=>{
+ const h=harness({deferredConfiguration:true}),old=h.load('old-synthetic-session'),current=h.load('new-synthetic-session');await flush();assert.equal(h.calls.length,2);
+ h.calls[1].resolve({data:{apiKey:'synthetic-map-key'}});await flush();h.sdk();h.window[h.callback(h.scripts[0])]();const maps=await current;
+ h.calls[0].resolve({data:{apiKey:'synthetic-map-key'}});assert.equal(await old,maps);assert.equal(h.scripts.length,1);assert.equal(h.timers.size,0);
+});
+test('timed-out configuration can retry without a late response starting another script',async()=>{
+ const h=harness({deferredConfiguration:true}),old=h.load('synthetic-session'),rejection=assert.rejects(old,/Map configuration connection timed out/);await flush();h.timeout();await rejection;
+ const current=h.load('synthetic-session');await flush();assert.equal(h.calls.length,2);
+ h.calls[0].resolve({data:{apiKey:'synthetic-map-key'}});await flush();assert.equal(h.scripts.length,0);
+ h.calls[1].resolve({data:{apiKey:'synthetic-map-key'}});await flush();h.sdk();h.window[h.callback(h.scripts[0])]();await current;assert.equal(h.scripts.length,1);assert.equal(h.timers.size,0);
 });
 test('cached SDK without geometry cannot claim full map readiness',async()=>{
  const h=harness();h.window.google={maps:{Map:class {}}};
