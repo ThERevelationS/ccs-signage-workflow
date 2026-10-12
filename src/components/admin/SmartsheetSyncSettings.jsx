@@ -854,6 +854,14 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                   <p className="mt-1">Check the original WorkOrder creation marker and exact permanent Smartsheet row before manually resolving the attempt.</p>
                 </div>
               )}
+              {r.dataset === "sales" && r.direction === "pull" && Number(r.existing_link_claims_need_review) > 0 && (
+                <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-amber-950" role="alert">
+                  <strong>{r.existing_link_claims_need_review} existing permanent-row claim(s) overlap planned Sales imports.</strong>
+                  <p className="mt-1">{r.new_workorder_imports_held_for_link_review} new WorkOrder import(s) held for exact-ID review. A legacy link may lack its sheet ID. No duplicate import or automatic relinking was attempted.</p>
+                  {r.existing_link_claim_workorder_ids?.length > 0 && <p className="mt-1 break-words font-mono">WorkOrder IDs: {r.existing_link_claim_workorder_ids.join(", ")}</p>}
+                  {r.existing_link_claim_row_ids?.length > 0 && <p className="mt-1 break-words font-mono">Permanent Smartsheet row IDs: {r.existing_link_claim_row_ids.join(", ")}</p>}
+                </div>
+              )}
               {r.dataset === "orders" && Number(r.missing_permanent_row_links) > 0 && (
                 <div className="mt-2 rounded-lg border border-red-300 bg-red-50 p-2 text-red-950" role="alert">
                   <strong>{r.missing_permanent_row_links} linked Base44 Order{Number(r.missing_permanent_row_links) === 1 ? "" : "s"} point to permanent Smartsheet row IDs that are missing.</strong>
