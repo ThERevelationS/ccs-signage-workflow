@@ -63,13 +63,18 @@ for (const [index, pickerLine] of pickers.entries()) {
     handler(new Date(2099, 0, 2, 23, 30));
     assert.deepEqual(calls, [['synthetic-order', 'sip_revisit_date', '2099-01-02']]);
     assert.deepEqual(closes, [[null]]);
-    assert.match(lines[pickerLine + 1], /disabled=\{\{ before: addDays\(today, 1\) \}\}/);
+    assert.ok(
+      lines[pickerLine + 1].includes('disabled={savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id) ? true : { before: addDays(today, 1) }}'),
+      location + ' disables date choices during Revisit saves and WIP reopening, while preserving the future-date boundary',
+    );
   });
 
   check(location + ': explicit clear still opens confirmation', () => {
+    const clearControl = lines.slice(pickerLine + 7, pickerLine + 25).join('\n');
+    assert.ok(clearControl.includes('requestClearRevisit(wo)'), location + ' has the explicit Clear Revisit route');
     assert.ok(
-      lines.slice(pickerLine + 7, pickerLine + 25).some(line => line.includes('requestClearRevisit(wo)')),
-      location + ' has the explicit Clear Revisit route',
+      clearControl.includes('disabled={!isRegistered || savingRevisitIds.has(wo.id) || reopeningWipIds.has(wo.id)}'),
+      location + ' cannot clear during a save, WIP reopening, or without authorization',
     );
   });
 
