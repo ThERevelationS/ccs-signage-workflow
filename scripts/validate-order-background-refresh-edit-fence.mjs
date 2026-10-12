@@ -67,6 +67,8 @@ const input = source.slice(source.indexOf('{/* Customer Name with Work Order Lin
 assert.match(input, /customerNameDraftOrderRef\.current = order\.id/);
 assert.match(input, /orderLocalEditGenerationRef\.current \+= 1/);
 assert.match(input, /customerNameDraftOrderRef\.current === order\.id\) customerNameDraftOrderRef\.current = null/);
+assert.match(input, /const customerName = event\.currentTarget\.value/);
+assert.match(input, /customer_name: customerName/);
 assert.match(source, /const markOrderNeedsSync = useCallback\([\s\S]*?orderLocalEditGenerationRef\.current \+= 1/);
 assert.match(source, /const updateOrder = \(orderId, field, value, skipHistory = false\) => \{[\s\S]*?orderLocalEditGenerationRef\.current \+= 1/);
 console.log('PASS customer-name typing remains save-on-blur but blocks stale refresh, and saved edits invalidate older reads');
