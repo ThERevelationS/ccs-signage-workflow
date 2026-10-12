@@ -41,11 +41,25 @@ export async function createSalesSmartsheetRowWithGuard({
   const recordId = String(record?.id ?? '').trim();
   const target = id(sheetId);
   if (!recordId || !target || !entity?.get || !entity?.updateMany ||
-      !postRow || !makeSnapshot || !verifyCreatedRow) {
-    throw new Error('Sales create reservation could not initialize. No Smartsheet POST was sent.');
+      !postRow || !makeSnapshot || !verifyCreatedRow ||
+      typeof assertOwner !== 'function' || typeof readCompetingClaims !== 'function') {
+    throw new Error('Sales create reservation requires run ownership and permanent-row claim verification. No Smartsheet POST was sent.');
   }
-  const owner = typeof assertOwner === 'function' ? assertOwner : async () => {};
+  const owner = assertOwner;
   const fail = (message) => { throw new Error(message); };
+  // Run coordination serializes in-app Sales sync writers, but does not create
+  // a database-wide uniqueness constraint for permanent Smartsheet rows.
+  const assertNoCompetingRowClaim = async (rowId) => {
+    await owner();
+    const claims = await readCompetingClaims(rowId);
+    if (!claims || !Array.isArray(claims.linked) || !Array.isArray(claims.attempts)) {
+      fail('Sales permanent-row ownership could not be completely verified. Keep the row for review; never repeat POST.');
+    }
+    if ([...claims.linked, ...claims.attempts].some((claim) =>
+      !String(claim?.id ?? '').trim() || String(claim.id).trim() !== recordId)) {
+      fail('Another WorkOrder claims this permanent Sales Smartsheet row. Keep the attempt for review; never repeat POST.');
+    }
+  };
   const finalize = async (marker, rowId, recovered) => {
     await owner();
     if (await verifyCreatedRow({rowId, expectedSnapshot: marker.expected_snapshot, recovered}) !== true) {
