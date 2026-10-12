@@ -280,10 +280,15 @@ export default function UserManagement() {
       item.user_email === request?.user_email &&
       item.status === "pending");
     if (!verifiedRequest || !resolution || deletionResolutionInFlight.current ||
-        deletionRequestsLoading || deletionRequestsError || !sessionToken) return;
+        deletionRequestsLoading || deletionRequestsError || !sessionToken ||
+        activeSessionToken.current !== sessionToken) return;
 
-    // React state updates may not render before a second click; this ref guards
-    // the actual synchronous submit boundary.
+    // A unique owner prevents late completion from a previous Admin session
+    // from clearing the new session's saving state, error or request list.
+    const owner = { sessionToken };
+    deletionResolutionOwner.current = owner;
+    const ownsResolution = () => deletionResolutionOwner.current === owner &&
+      activeSessionToken.current === sessionToken;
     deletionResolutionInFlight.current = true;
     setDeletionRequestSaving(true);
     setUserMutationError("");
@@ -293,16 +298,21 @@ export default function UserManagement() {
         resolution,
         sessionToken,
       });
+      if (!ownsResolution()) return;
       setDeletionRequestConfirm(null);
       await loadDeletionRequests();
     } catch (error) {
+      if (!ownsResolution()) return;
       console.error("Deletion request resolution blocked:", error);
       setUserMutationError(error?.message || "The deletion request changed in another session. Reload before resolving it.");
       setDeletionRequestConfirm(null);
       await loadDeletionRequests();
     } finally {
-      deletionResolutionInFlight.current = false;
-      setDeletionRequestSaving(false);
+      if (ownsResolution()) {
+        deletionResolutionOwner.current = null;
+        deletionResolutionInFlight.current = false;
+        setDeletionRequestSaving(false);
+      }
     }
   };
 
