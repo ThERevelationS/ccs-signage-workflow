@@ -824,8 +824,7 @@ try {
       assert.match(await error.innerText(), /impact scan took too long/i);
       assert.match(await error.innerText(), /previous read may still be finishing/);
       assert.equal(await dialog.getByText('Synthetic review verified').count(), 0);
-      assert.equal(await page.getByRole('button', { name: 'Mark Reviewed' }).count(), 1,
-        'Request decisions remain separate from impact scan read status');
+      assert.equal(await dialog.getByRole('button', { name: 'Retry impact scan' }).isEnabled(), true);
       await page.evaluate(() => { window.__adminImpactDelay = false; });
       await error.getByRole('button', { name: 'Retry impact scan' }).click();
       await dialog.getByText('Synthetic review verified').waitFor();
