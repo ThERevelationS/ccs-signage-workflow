@@ -52,9 +52,9 @@ const confirmed=await recoverVerifiedSalesCreateLink(pass.args);
 eq(confirmed,{workorder_id:workorderId,sheet_id:sheetId,row_id:rowId,recovered:true,
   remote_writes_attempted:false,history_verified:true,history_id:'history-1',
   reviewed_workorder_version:'v1'},'Confirmed single-record recovery returns exact IDs and verified history.');
-eq(pass.counts(),{writes:1,historyCount:1,remoteReads:1,claimReads:2},
- 'Recovery does a single CAS, one CellHistory write and two competing-claim checks.');
-eq(pass.ownershipReads(),6,'Recovery asserts active shared coordinator six times through verification.');
+eq(pass.counts(),{writes:1,historyCount:1,remoteReads:1,claimReads:3},
+ 'Recovery does a single CAS, one CellHistory write and three competing-claim checks.');
+eq(pass.ownershipReads(),7,'Recovery asserts active shared coordinator through post-CAS ownership verification.');
 eq(pass.state().smartsheet_create_attempt.manual_recovery.recovered_by_email,'admin@example.test',
  'Recovery attribution persists atomically with permanent link.');
 eq(pass.state().smartsheet_create_attempt.manual_recovery.confirmed_row_id,rowId,
@@ -137,6 +137,33 @@ let claimNo=0;midFlight.args.readCompetingClaims=async()=>{
 };
 await rejects(()=>recoverVerifiedSalesCreateLink(midFlight.args),/Another WorkOrder claims/);
 eq(midFlight.counts().writes,0,'Late competing link before CAS cancels recovery.');
+const postCommitCollision=setup();
+const postCommitRead=postCommitCollision.args.readCompetingClaims;
+let postCommitReadCount=0;
+postCommitCollision.args.readCompetingClaims=async()=>
+  ++postCommitReadCount===3 ? {linked:[{id:'other'}],attempts:[{id:workorderId}]} : postCommitRead();
+await rejects(()=>recoverVerifiedSalesCreateLink(postCommitCollision.args),
+  /link was committed, but another WorkOrder claims/);
+eq(postCommitCollision.counts().writes,1,
+  'Post-CAS competing owner is reported without undoing the already-committed link.');
+eq(postCommitCollision.counts().historyCount,0,
+  'Post-CAS ownership collision cannot produce a clean recovery CellHistory event.');
+eq(postCommitCollision.state().smartsheet_create_attempt.status,'linked',
+  'Post-CAS collision preserves permanent row evidence for explicit review.');
+await rejects(()=>recoverVerifiedSalesCreateLink(postCommitCollision.args),/changed since review/);
+eq(postCommitCollision.counts().writes,1,
+  'Committed collision cannot trigger a second manual recovery CAS.');
+const postCommitUnknown=setup();
+const postCommitUnknownRead=postCommitUnknown.args.readCompetingClaims;
+let postCommitUnknownCount=0;
+postCommitUnknown.args.readCompetingClaims=async()=>
+  ++postCommitUnknownCount===3 ? {linked:[],attempts:null} : postCommitUnknownRead();
+await rejects(()=>recoverVerifiedSalesCreateLink(postCommitUnknown.args),
+  /post-save ownership could not be completely verified/);
+eq(postCommitUnknown.counts().writes,1,
+  'Incomplete post-CAS ownership read requires review without discarding the link.');
+eq(postCommitUnknown.counts().historyCount,0,
+  'Incomplete post-CAS ownership evidence cannot be marked as clean recovery history.');
 const changedMidway=setup();const firstRemote=changedMidway.args.readRemoteSnapshot;
 changedMidway.args.readRemoteSnapshot=async()=>{
   const result=await firstRemote();
@@ -161,10 +188,12 @@ const missingCoordinator=setup();
 missingCoordinator.args.assertRunOwnership=undefined;
 await rejects(()=>recoverVerifiedSalesCreateLink(missingCoordinator.args),/authenticated actor and exact versioned permanent identities/);
 eq(missingCoordinator.counts().writes,0,'Recovery without coordinator assertion callback fails closed.');
-const ownerGonePostCAS=setup();ownerGonePostCAS.loseOwnershipOn(6);
-await rejects(()=>recoverVerifiedSalesCreateLink(ownerGonePostCAS.args),/lost shared Smartsheet run ownership/);
-eq(ownerGonePostCAS.counts().writes,1,'Loss after CAS does not falsely revert the verified link.');
-eq(ownerGonePostCAS.counts().historyCount,0,'Loss after CAS holds history reconciliation for explicit review.');
+for (const at of [6,7]) {
+  const ownerGonePostCAS=setup();ownerGonePostCAS.loseOwnershipOn(at);
+  await rejects(()=>recoverVerifiedSalesCreateLink(ownerGonePostCAS.args),/lost shared Smartsheet run ownership/);
+  eq(ownerGonePostCAS.counts().writes,1,'Loss after CAS does not falsely revert the verified link.');
+  eq(ownerGonePostCAS.counts().historyCount,0,'Loss after CAS holds history reconciliation for explicit review.');
+}
 const bad=setup();bad.args.actor={email:''};
 await rejects(()=>recoverVerifiedSalesCreateLink(bad.args),/authenticated actor/);
 eq(bad.counts().writes,0,'No unauthenticated recovery write.');
