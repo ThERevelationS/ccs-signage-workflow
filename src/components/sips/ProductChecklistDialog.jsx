@@ -101,6 +101,7 @@ export default function ProductChecklistDialog({
   }, [workOrder?.id]);
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
+  const [pendingRevisitRetry, setPendingRevisitRetry] = useState(undefined);
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
   const [loadedProductsSnapshot, setLoadedProductsSnapshot] = useState(undefined);
   const [loadedUiChecklistSnapshot, setLoadedUiChecklistSnapshot] = useState([]);
@@ -716,9 +717,8 @@ export default function ProductChecklistDialog({
     // The Revisit confirmation owns keyboard focus until it closes.
     // Do not allow a queued checklist navigation callback behind it.
     cancelPendingNavigationFocus();
-    setPendingRevisitDate(failedRevisitSelectionRef.current !== undefined
-      ? failedRevisitSelectionRef.current
-      : (loadedRevisitDateSnapshot || null));
+    setPendingRevisitDate(loadedRevisitDateSnapshot || null);
+    setPendingRevisitRetry(failedRevisitSelectionRef.current);
     setShowRevisitPopup(true);
   };
 
@@ -3076,6 +3076,7 @@ export default function ProductChecklistDialog({
         onClose={() => setShowRevisitPopup(false)}
         onSave={handleRevisitSave}
         currentDate={pendingRevisitDate}
+        retryDate={pendingRevisitRetry}
         returnFocusRef={saveRevisitButtonRef}
         onSubmittedCloseAutoFocus={focusSaveFailureIfReady}
       />
