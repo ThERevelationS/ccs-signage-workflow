@@ -6074,6 +6074,22 @@ test('v28 diagnostic: simultaneous cross-employee correction request IDs expose 
   assert.notEqual(persisted[0].time_entry_id, persisted[1].time_entry_id);
   assert.equal(first.clock_in, '2026-09-20T14:30:00.000Z');
   assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
+
+  // The write race is real, but duplicate evidence must not make either
+  // correction silently payroll-ready. Verify the reviewer/finalizer gates.
+  const managerApprovals = await Promise.all([first, second].map((entry, index) =>
+    h.invoke({
+      action: 'admin_set_entry_approval', target_email: entry.user_email,
+      request_id: 'v28-race-approval-' + index, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, decision: 'approve',
+      note: 'Investigate duplicate request provenance',
+    })));
+  assert.ok(managerApprovals.every((result) => [200, 409].includes(result.status)));
+  const finalSnapshot = clone(h.period());
+  const blockedFinalization = await h.action('finalize', 'v28-race-finalize-001');
+  assert.equal(blockedFinalization.status, 409, JSON.stringify(blockedFinalization.body));
+  assert.deepEqual(h.period(), finalSnapshot,
+    'Payroll must remain unchanged after a duplicate-audit race');
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
