@@ -10,7 +10,7 @@ import * as batch from '../src/components/permitting/addressOriginalBatch.mjs';
 const require=createRequire(import.meta.url),code=(await transform(await fs.readFile('src/components/permitting/AutomaticAddressScanResults.jsx','utf8'),{loader:'jsx',jsx:'automatic',format:'cjs'})).code;
 async function harness({files=[]}={}){
  let auth={currentUser:{id:'first',role:'admin'},sessionToken:'first'},archives={collections:[{id:'c',target:{name:'Original collection'},documents:files}]},tree;
- const reads=[],writes=[],tracked=[],timers=new Map(),module={exports:{}};let timerId=0;
+ const reads=[],writes=[],tracked=[],children=[],timers=new Map(),module={exports:{}};let timerId=0;
  const trackAction=run=>tracked.push(run);
  vm.runInNewContext(code,{module,URL,Date,setInterval:fn=>{timers.set(++timerId,fn);return timerId;},clearInterval:id=>timers.delete(id),require:name=>{
   if(name==='react'||name==='react/jsx-runtime')return require(name);
@@ -18,11 +18,12 @@ async function harness({files=[]}={}){
   if(name==='@/api/base44Client')return {base44:{functions:{invoke:()=>new Promise((resolve,reject)=>reads.push({resolve,reject}))}}};
   if(name==='./ResearchProgressContext')return {useResearchProgress:()=>({runAction:(_name,input)=>new Promise((resolve,reject)=>writes.push({input,resolve,reject})),trackAction})};
   if(name==='./addressOriginalBatch.mjs')return batch;
+  if(name==='./AddressResearchPages')return {__esModule:true,default:props=>{children.push(props);return null;}};
   return {__esModule:true,default:()=>null,OriginalCollectionStatus:()=>null};
  }});
  const props=()=>({scanResult:{started:true,scans:[]},archives});
  await act(async()=>{tree=Renderer.create(React.createElement(module.exports.default,props()));});
- return {tree,reads,writes,tracked,tick:()=>{for(const fn of timers.values())fn();},click:()=>tree.root.findAllByType('button').find(n=>n.children.includes('Check saved files')).props.onClick(),
+ return {tree,reads,writes,tracked,children,tick:()=>{for(const fn of timers.values())fn();},click:()=>tree.root.findAllByType('button').find(n=>n.children.includes('Check saved files')).props.onClick(),
  async update({actor,data}={}){if(actor)auth=actor;if(data)archives=data;await act(async()=>tree.update(React.createElement(module.exports.default,props())));},
  async close(){await act(async()=>tree.unmount());}};
 }
@@ -86,4 +87,21 @@ test('account change stops batch after its outstanding file without starting ano
   await h.update({actor:{currentUser:{id:'second',role:'admin'},sessionToken:'second'}});
   await act(async()=>h.writes[0].reject(Error('OLD SAVE ERROR')));assert.equal(h.writes.length,1);assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/OLD SAVE ERROR|File pass finished|Stopped after current file/);
  }finally{await h.close();}
+});
+
+test('stale discovery callbacks cannot merge files or release newer discovery busy state',async()=>{
+ for(const change of ['account','archives']){
+  const h=await harness();try{
+   const old=h.children.at(-1);
+   await h.update(change==='account'?{actor:{currentUser:{id:'other',role:'admin'},sessionToken:'other'}}:{data:{collections:[{id:'c',target:{name:'New archive scope'},documents:[]}]}});
+   const current=h.children.at(-1);
+   await act(async()=>current.onBusyChange('c',true));
+   await act(async()=>{old.onUpdate({id:'c',target:{name:'STALE DISCOVERY'}});old.onBusyChange('c',false);});
+   assert.doesNotMatch(JSON.stringify(h.tree.toJSON()),/STALE DISCOVERY/);
+   assert(h.tree.root.findAllByType('button').find(n=>n.children.includes('Check saved files')).props.disabled);
+   await act(async()=>{current.onUpdate({id:'c',target:{name:'CURRENT DISCOVERY'}});current.onBusyChange('c',false);});
+   assert.match(JSON.stringify(h.tree.toJSON()),/CURRENT DISCOVERY/);
+   assert.equal(h.tree.root.findAllByType('button').find(n=>n.children.includes('Check saved files')).props.disabled,false);
+  }finally{await h.close();}
+ }
 });

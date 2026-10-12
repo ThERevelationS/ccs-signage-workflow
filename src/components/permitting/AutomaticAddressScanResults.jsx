@@ -3,7 +3,7 @@ import AddressDocumentLink from './AddressDocumentLink';
 import OriginalFileStatus,{OriginalCollectionStatus} from './OriginalFileStatus';
 import {base44} from '@/api/base44Client';
 import {useAuth} from '@/components/auth/EmailGate';
-import {useState,useEffect,useRef} from 'react';
+import {useState,useEffect,useRef,useMemo} from 'react';
 import {verifiedOriginal,remainingOriginals,saveOriginalBatch,originalFileStatus} from './addressOriginalBatch.mjs';
 import {useResearchProgress} from './ResearchProgressContext';
 function webUrl(value){
@@ -24,8 +24,11 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
  const saveEpoch=useRef(0),saveRequests=useRef(new Map());
  useEffect(()=>{saveEpoch.current++;saveRequests.current.clear();if(batchRef.current)batchRef.current.stop=true;setBusy(new Set());setBatch(null);},[refreshScope,archives]);
  useEffect(()=>()=>{saveEpoch.current++;if(batchRef.current)batchRef.current.stop=true;},[]);
- function discoveryBusy(id,active){refreshVersion.current++;const next=new Set(discoveryBusyRef.current);if(active)next.add(id);else next.delete(id);discoveryBusyRef.current=next;setScanning(next);}
- function updateCollection(updated){setCollections(previous=>previous.map(row=>row.id===updated.id?{...row,...updated}:row));}
+ const discoveryScope=useMemo(()=>({}),[refreshScope,archives]),discoveryScopeRef=useRef(discoveryScope);discoveryScopeRef.current=discoveryScope;
+ useEffect(()=>{discoveryBusyRef.current=new Set();setScanning(new Set());},[discoveryScope]);
+ useEffect(()=>()=>{discoveryScopeRef.current=null;},[]);
+ function discoveryBusy(id,active){if(discoveryScopeRef.current!==discoveryScope)return;refreshVersion.current++;const next=new Set(discoveryBusyRef.current);if(active)next.add(id);else next.delete(id);discoveryBusyRef.current=next;setScanning(next);}
+ function updateCollection(updated){if(discoveryScopeRef.current!==discoveryScope)return;refreshVersion.current++;setCollections(previous=>previous.map(row=>row.id===updated.id?{...row,...updated}:row));}
  useEffect(()=>()=>{if(batchRef.current)batchRef.current.stop=true;},[archives]);
  useEffect(()=>{refreshVersion.current++;setCollections(archives?.collections || []);},[archives]);
  async function checkFiles(){
