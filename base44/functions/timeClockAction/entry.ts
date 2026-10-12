@@ -3769,6 +3769,18 @@ Deno.serve(async (req) => {
             String(row?.action || '') === 'admin_correction' &&
             frozenCorrectionRequests.has(String(row?.request_id || ''))
           ))) return false;
+          for (const requestId of frozenCorrectionRequests) {
+            // Request IDs identify an action, not an employee or entry. A
+            // second completed correction on another shift is still a
+            // collision, even outside this frozen generation's time window.
+            const matching = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
+            if (!Array.isArray(matching)) return false;
+            const completed = matching.filter((row: any) =>
+              ['confirmed', 'recovered'].includes(String(row?.outcome || '')));
+            if (completed.length !== 1 ||
+                String(completed[0]?.time_entry_id || '') !== String(change.time_entry_id || '') ||
+                !frozenAuditIds.has(String(completed[0]?.id || ''))) return false;
+          }
         }
         const startTime = Date.parse(windowStart);
         const endTime = Date.parse(windowEnd);
@@ -5260,6 +5272,20 @@ Deno.serve(async (req) => {
                 const timeOrder = Date.parse(String(a.server_timestamp || '')) - Date.parse(String(b.server_timestamp || ''));
                 return timeOrder || String(a.id || '').localeCompare(String(b.id || ''));
               });
+              if (snapshotVersion >= 28) {
+                const corrections = orderedChain.filter((row: any) => String(row.action || '') === 'admin_correction');
+                for (const requestId of new Set(corrections.map((row: any) => String(row.request_id || '')))) {
+                  if (!requestId) return Response.json({ success: false, error: 'Payroll correction is missing its idempotent request ID.' }, { status: 409 });
+                  const matching = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
+                  if (!Array.isArray(matching)) return Response.json({ success: false, error: 'Global payroll correction audit lookup failed.' }, { status: 409 });
+                  const completed = matching.filter((row: any) =>
+                    ['confirmed', 'recovered'].includes(String(row.outcome || '')));
+                  if (completed.length !== 1 || String(completed[0]?.time_entry_id || '') !== id ||
+                      !corrections.some((row: any) => String(row.id || '') === String(completed[0]?.id || ''))) {
+                    return Response.json({ success: false, error: `Payroll shift ${id} has a conflicting manager-correction request ID across shifts or generations. Admin investigation is required before finalization.` }, { status: 409 });
+                  }
+                }
+              }
               const terminalAuditId = String(change.correction_provenance?.applied_audit_id || change.action_provenance?.audit_id || '');
               if (!terminalAuditId || !orderedChain.some((row: any) => String(row.id || '') === terminalAuditId)) {
                 return Response.json({ success: false, error: `Payroll change for shift ${id} is missing its semantic terminal cause from the authoritative causal chain.` }, { status: 409 });
