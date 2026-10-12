@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
 import {transform} from 'esbuild';
 
 // Execute the actual loader against simulated DOM, SDK and timers. No browser,
@@ -14,7 +15,7 @@ function harness(){
  const document={getElementById:id=>scripts.find(script=>script.id===id&&!script.removed),
   createElement:()=>({removed:false,remove(){this.removed=true;}}),head:{appendChild:script=>scripts.push(script)}};
  const module={exports:{}};
- vm.runInNewContext(compiled,{module,window,document,console,
+ vm.runInNewContext(compiled,{module,window,document,console,crypto:webcrypto,
   setTimeout:callback=>{const id=++timerId;timers.set(id,callback);return id;},clearTimeout:id=>timers.delete(id),
   require:name=>{assert.equal(name,'@/api/base44Client');return {base44:{functions:{invoke:async(name,body)=>{calls.push({name,body});return {data:{apiKey:'synthetic-map-key'}};}}}};}});
  const callback=script=>new URL(script.src).searchParams.get('callback');
