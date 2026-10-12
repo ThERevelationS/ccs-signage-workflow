@@ -320,7 +320,6 @@ async function reconcileReservedMechanicPhotoRetry(
 ) {
   const retry = await findReservedMechanicPhotoRetry(Receipt,current,source,grantId);
   if (!retry) return {status:'blocked'};
-  const owner = String(source.result_summary.retry_reserved_by_request_id || '');
   const workOrderId = String(current.id || '');
 
   if (workOrderHasMechanicReceipt(current,retry)) {
@@ -1220,7 +1219,14 @@ Deno.serve(async (req) => {
       const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
       const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
       const priorFailed = decoded.photos.length ? await Receipt.filter({target_entity:'FleetMaintenanceWorkOrder',target_id:id,status:'failed',operation_type:'mechanic_progress_save'}) : [];
-      const sameGrantFailed = (priorFailed || []).filter((row:any)=>String(row?.result_summary?.grant_id || '') === String(grant.id || ''));
+      const sameGrantFailed = (priorFailed || []).filter((row:any)=>
+        String(row?.result_summary?.grant_id || '') === String(grant.id || '') &&
+        String(row?.actor_user_id || '') === String(grant.id || '') &&
+        row?.result_summary?.action === 'save' &&
+        String(row?.result_summary?.expected_updated_date || '') === expected &&
+        row?.operation_type === 'mechanic_progress_save' &&
+        row?.target_entity === 'FleetMaintenanceWorkOrder' &&
+        String(row?.target_id || '') === id);
       const reusable = selectReusableMechanicUploads(sameGrantFailed,mechanicMutation.fingerprint,decoded.photos.length);
       const claim = await claimMechanicReceipt(Receipt,{
         operation_key:mechanicMutation.operationKey,
@@ -1253,13 +1259,17 @@ Deno.serve(async (req) => {
         if (reusable.receipt_id) {
           await assertAuthorized();
           const source = sameGrantFailed.find((row:any)=>String(row.id) === reusable.receipt_id);
-          if (!source) {
-            await failMechanicReceipt(Receipt,receipt,'Previous photo evidence is unavailable.');
-            return json({error:'The previous photo evidence is unavailable. CCS must review this retry.'},{status:409});
+          if (!mechanicPhotoSourceMatchesRetry(source,receipt) || source.status !== 'failed' ||
+              source.result_summary?.retry_reserved_by_request_id) {
+            await failMechanicReceipt(Receipt,receipt,'Previous photo evidence has conflicting source identity or reservation.');
+            return json({error:'The previous photo evidence cannot be safely reserved. CCS must review this retry.'},{status:409});
           }
-          const reservation = await Receipt.updateMany({id:source.id,status:'failed'},{$set:{
+          // Retain newer forensic metadata; never overwrite the entire summary
+          // from a stale read. Bind the claim to the source receipt identity.
+          const reservation = await Receipt.updateMany({...mechanicPhotoSourceSelector(source),status:'failed'},{$set:{
             status:'started',
-            result_summary:{...(source.result_summary || {}),retry_reserved_by_request_id:mechanicMutation.requestId,retry_reserved_at:nowIso()},
+            'result_summary.retry_reserved_by_request_id':mechanicMutation.requestId,
+            'result_summary.retry_reserved_at':nowIso(),
           }});
           if (reservation?.updated !== 1) {
             await failMechanicReceipt(Receipt,receipt,'Another mechanic request reserved the same interrupted photo upload.');
