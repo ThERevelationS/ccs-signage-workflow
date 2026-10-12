@@ -118,6 +118,33 @@ function workOrderHasMechanicReceipt(current: any, receipt: any) {
   return mechanicReceiptMarkerIdentityMatches(current,receipt);
 }
 
+// A later legitimate maintenance update may replace the latest work-order marker.
+// Accept a superseded commit only when its receipt contains the durable evidence
+// written during marker-based reconciliation; a bare "applied" status is not proof.
+function hasRecordedMechanicCommitEvidence(receipt:any) {
+  return receipt?.status === 'applied' && mechanicReceiptOperationIdentityValid(receipt) &&
+    !!String(receipt.applied_at || '') &&
+    !!String(receipt.result_summary?.work_order_updated_date || '') &&
+    typeof receipt.result_summary?.recovered_from_work_order_marker === 'boolean';
+}
+
+async function verifiedMechanicAppliedReceipt(Receipt:any, receipt:any, current:any) {
+  if (receipt?.status !== 'applied' || !mechanicReceiptOperationIdentityValid(receipt)) return false;
+  if (workOrderHasMechanicReceipt(current,receipt) || hasRecordedMechanicCommitEvidence(receipt)) return true;
+  // A source photo receipt is resolved by a different retry's work-order commit.
+  // Require exact source/retry provenance plus that retry's durable commit proof.
+  const summary = receipt.result_summary || {};
+  const resolvedKey = String(summary.resolved_by_operation_key || '');
+  if (summary.resolved_by_retry !== true || !resolvedKey) return false;
+  const rows = await Receipt.filter({operation_key:resolvedKey}).catch(()=>[]);
+  if (rows.length !== 1) return false;
+  const retry = rows[0];
+  return retry?.status === 'applied' &&
+    mechanicReceiptOperationIdentityValid(retry) &&
+    mechanicPhotoSourceMatchesRetry(receipt,retry) &&
+    (workOrderHasMechanicReceipt(current,retry) || hasRecordedMechanicCommitEvidence(retry));
+}
+
 async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: any, recovered = false) {
   if (!mechanicReceiptMarkerIdentityMatches(current,receipt)) {
     throw Object.assign(new Error('Fleet mechanic receipt identity does not match the committed work-order marker. CCS review is required.'),{status:409});
@@ -213,7 +240,7 @@ async function adminCancelMechanicReceiptResult(Receipt:any, WorkOrder:any, rece
   if (resolved.status === 'applied') {
     // Concurrent receipt state alone is not proof of a Fleet work-order commit.
     const latestWorkOrder = await WorkOrder.get(String(receipt.target_id || '')).catch(()=>null);
-    if (latestWorkOrder && workOrderHasMechanicReceipt(latestWorkOrder,resolved)) {
+    if (latestWorkOrder && await verifiedMechanicAppliedReceipt(Receipt,resolved,latestWorkOrder)) {
       return {status:'applied',recovered:false,work_order:latestWorkOrder};
     }
     return {status:'blocked',recovered:false,work_order:latestWorkOrder || workOrder,
@@ -469,6 +496,10 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
       return {status:'applied',recovered:true,work_order:current};
     }
     if (retry.status === 'applied') {
+      if (!await verifiedMechanicAppliedReceipt(Receipt,retry,current)) {
+        return {status:'blocked',recovered:false,work_order:current,
+          error_message:'The applied photo retry lacks verifiable Fleet work-order commit evidence. CCS review is required.'};
+      }
       await resolveReusedUploadReceipt(Receipt,retry);
       return {status:'applied',recovered:false,work_order:current};
     }
@@ -499,7 +530,12 @@ async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:
     await resolveReusedUploadReceipt(Receipt,receipt);
     return {status:'applied',recovered:true,work_order:current};
   }
-  if (receipt.status === 'applied') return {status:'applied',recovered:false,work_order:current};
+  if (receipt.status === 'applied') {
+    if (await verifiedMechanicAppliedReceipt(Receipt,receipt,current))
+      return {status:'applied',recovered:false,work_order:current};
+    return {status:'blocked',recovered:false,work_order:current,
+      error_message:'The applied Fleet mechanic receipt lacks verifiable work-order commit evidence. CCS review is required.'};
+  }
   if (receipt.status === 'cancelled') return {status:'cancelled',recovered:false,work_order:current,error_message:receipt.error_message || ''};
   if (receipt.status === 'failed') {
     const reason = receipt.error_message || 'CCS reviewed this failed mechanic operation and chose not to replay it.';
@@ -1053,6 +1089,9 @@ Deno.serve(async (req) => {
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh || current,{success:true,status:'failed',request_id:requestId,error_message:message});
         }
       }
+      if (receipt.status === 'applied' && !await verifiedMechanicAppliedReceipt(Receipt,receipt,current)) {
+        return json({error:'The applied Fleet mechanic receipt lacks verifiable work-order commit evidence. CCS review is required.'},{status:409});
+      }
       return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:receipt.status || 'failed',request_id:requestId,error_message:receipt.error_message || ''});
     }
 
@@ -1074,7 +1113,11 @@ Deno.serve(async (req) => {
           await markMechanicReceiptApplied(Receipt,exactReceipt,current,exactReceipt.status !== 'applied');
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,recovered:exactReceipt.status !== 'applied',request_id:requestId});
         }
-        if (exactReceipt.status === 'applied') return await mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,request_id:requestId});
+        if (exactReceipt.status === 'applied') {
+          if (!await verifiedMechanicAppliedReceipt(Receipt,exactReceipt,current))
+            return json({error:'This applied mechanic request lacks verified Fleet work-order commit evidence. CCS review is required.'},{status:409});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,request_id:requestId});
+        }
         if (exactReceipt.status === 'started') return json({error:'This mechanic request is still being verified. Check current server state before retrying.'},{status:409});
         return json({error:'This mechanic request previously failed and was not replayed. Check current server state before trying again.'},{status:409});
       }
@@ -1259,7 +1302,11 @@ Deno.serve(async (req) => {
           await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
         }
-        if (claim.receipt?.status === 'applied') return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
+        if (claim.receipt?.status === 'applied') {
+          if (!await verifiedMechanicAppliedReceipt(Receipt,claim.receipt,fresh || current))
+            return json({error:'The previous applied Start receipt lacks verified Fleet commit evidence. CCS review is required.'},{status:409});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
+        }
         return json({error:'This mechanic start request is already in progress. Check current server state before retrying.'},{status:409});
       }
       const receipt = claim.receipt;
@@ -1331,7 +1378,11 @@ Deno.serve(async (req) => {
           await resolveReusedUploadReceipt(Receipt,claim.receipt);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
         }
-        if (claim.receipt?.status === 'applied') return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
+        if (claim.receipt?.status === 'applied') {
+          if (!await verifiedMechanicAppliedReceipt(Receipt,claim.receipt,fresh || current))
+            return json({error:'The previous applied Save receipt lacks verified Fleet commit evidence. CCS review is required.'},{status:409});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
+        }
         return json({error:'This mechanic progress request is already in progress. Check current server state before retrying.'},{status:409});
       }
       let receipt = claim.receipt;

@@ -419,7 +419,8 @@ export default function UserManagement() {
   };
 
   const handleSave = async () => {
-    if (!editingUser || userMutationSaving || isLoading || userDirectoryError || !sessionToken) return;
+    if (!editingUser || userUpdateInFlight.current || isLoading || userDirectoryError ||
+        !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
     const requestedPassword = String(formData.password_hash || "");
     if (requestedPassword && requestedPassword.length < 8) {
