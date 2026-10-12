@@ -27,7 +27,7 @@ try{
  await act(async()=>{reviewButton.props.onClick();reviewButton.props.onClick();});
  assert.deepEqual(reviewGets,['locality']);assert.equal(globalThis.coverageReviewDialog.initialSelectedLocalityId,'locality');assert.equal(globalThis.coverageReviewDialog.localities.length,1);assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);assert.equal(fresh.offices[0].authority_verification_status,'needs_verification');
  const savedCallback=globalThis.coverageReviewDialog.onLocalitySaved;
- await act(async()=>click());const oldRead=resolveRead;assert.equal(calls,2);
+ await act(async()=>{click();});const oldRead=resolveRead;assert.equal(calls,2);
  await act(async()=>savedCallback('locality'));const newRead=resolveRead;assert.equal(calls,3);
  assert.doesNotMatch(JSON.stringify(tree.toJSON()),/Read completed/);
  assert.equal(globalThis.coverageReviewDialog.localities[0],fresh);
