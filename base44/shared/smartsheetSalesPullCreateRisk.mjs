@@ -3,6 +3,35 @@ import { salesSmartsheetCreateNeedsReview } from './smartsheetSalesCreateSafety.
 
 const id = (value) => String(value ?? '').trim();
 
+// A complete configured-sheet linked read must never pick an arbitrary Sales
+// WorkOrder when multiple records own the same permanent Smartsheet row.
+// Include soft-deleted records: their old permanent IDs remain ownership
+// evidence. This is a prewrite safety gate, NOT database-enforced uniqueness.
+export function classifySalesPullDuplicateLinkedRowRisks(records = [], sheetId = '') {
+  const sheet = id(sheetId);
+  if (!/^\d+$/.test(sheet) || sheet === '0' || !Array.isArray(records)) {
+    throw new Error('Sales duplicate-link review requires a numeric sheet ID and complete linked WorkOrders.');
+  }
+  const ownersByRow = new Map();
+  for (const record of records) {
+    const rowId = id(record?.smartsheet_row_id);
+    if (!/^\d+$/.test(rowId) || rowId === '0' ||
+        id(record?.smartsheet_sheet_id) !== sheet) continue;
+    const ownerId = id(record?.id);
+    if (!ownerId) throw new Error('Sales linked WorkOrder ownership is missing an ID. No pull is safe.');
+    if (!ownersByRow.has(rowId)) ownersByRow.set(rowId, new Set());
+    ownersByRow.get(rowId).add(ownerId);
+  }
+  const duplicates = [...ownersByRow.entries()].filter(([,owners]) => owners.size > 1)
+    .sort(([a],[b]) => a.localeCompare(b, undefined, {numeric:true}));
+  return {
+    count: duplicates.length,
+    permanent_row_ids: duplicates.map(([rowId]) => rowId).slice(0,20),
+    workorder_ids: [...new Set(duplicates.flatMap(([,owners]) => [...owners]))].slice(0,20),
+    rows_truncated: duplicates.length > 20,
+  };
+}
+
 // Unresolved Sales POSTs cannot be matched to Smartsheet rows by customer,
 // title, Notes, row position, or cell values. A reservation may have NO
 // top-level smartsheet_sheet_id or smartsheet_row_id, so the normal linked
