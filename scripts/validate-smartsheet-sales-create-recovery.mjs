@@ -16,6 +16,7 @@ function setup(change={}) {
       attempt_id:'attempt-a',expected_snapshot:snapshot},...change};
   let history={},historyCount=0,writes=0,remoteReads=0,claimReads=0,remoteData={...snapshot};
   let claimed=[],attemptClaims=[{id:workorderId}],historyFail=false,casFail=false;
+  let ownershipReads=0, loseOwnershipOn=0;
   const entity={
     async get(id){return id===workorderId?structuredClone(record):null},
     async updateMany(filter,update){
@@ -36,12 +37,15 @@ function setup(change={}) {
     readRemoteSnapshot:async()=>{remoteReads++;return {verified:!remoteMissing,
       snapshot:remoteData,localSnapshot:localChange?{'111':'Newer local task','222':150}:snapshot}},
     readCompetingClaims:async()=>{claimReads++;return {linked:claimed,attempts:attemptClaims}},
+    assertRunOwnership:async()=>{ownershipReads++;
+      if(loseOwnershipOn && ownershipReads >= loseOwnershipOn) throw new Error('Recovery lost shared Smartsheet run ownership');}, 
   };
   return {args,state:()=>record,counts:()=>({writes,historyCount,remoteReads,claimReads}),
     claim:rows=>claimed=rows,attempts:rows=>attemptClaims=rows,
     remote:x=>remoteData=x,remoteMissing:()=>remoteMissing=true,
     localChanged:()=>localChange=true,historyFailure:()=>historyFail=true,
-    casFailure:()=>casFail=true,mutate:x=>{record={...record,...x}}};
+    casFailure:()=>casFail=true,mutate:x=>{record={...record,...x}},
+    loseOwnershipOn:n=>loseOwnershipOn=n,ownershipReads:()=>ownershipReads};
 }
 const pass=setup();
 const confirmed=await recoverVerifiedSalesCreateLink(pass.args);
@@ -50,6 +54,7 @@ eq(confirmed,{workorder_id:workorderId,sheet_id:sheetId,row_id:rowId,recovered:t
   reviewed_workorder_version:'v1'},'Confirmed single-record recovery returns exact IDs and verified history.');
 eq(pass.counts(),{writes:1,historyCount:1,remoteReads:1,claimReads:2},
  'Recovery does a single CAS, one CellHistory write and two competing-claim checks.');
+eq(pass.ownershipReads(),6,'Recovery asserts active shared coordinator six times through verification.');
 eq(pass.state().smartsheet_create_attempt.manual_recovery.recovered_by_email,'admin@example.test',
  'Recovery attribution persists atomically with permanent link.');
 eq(pass.state().smartsheet_create_attempt.manual_recovery.confirmed_row_id,rowId,
@@ -110,6 +115,26 @@ changedMidway.args.readRemoteSnapshot=async()=>{
 };
 await rejects(()=>recoverVerifiedSalesCreateLink(changedMidway.args),/changed during recovery checks/);
 eq(changedMidway.counts().writes,0,'Concurrent WorkOrder edit between fresh remote read and save blocks CAS.');
+for(const [name,at] of [
+  ['before WorkOrder read',1],
+  ['before remote and competing reads',2],
+  ['before current WorkOrder reread',3],
+  ['before last competing-claim read',4],
+  ['immediately before WorkOrder CAS',5],
+]) {
+  const gone=setup();gone.loseOwnershipOn(at);
+  await rejects(()=>recoverVerifiedSalesCreateLink(gone.args),/lost shared Smartsheet run ownership/);
+  eq(gone.counts().writes,0,'Lost coordinator '+name+' prevents permanent row-link mutation.');
+  eq(gone.counts().historyCount,0,'Lost coordinator '+name+' produces no CellHistory event.');
+}
+const missingCoordinator=setup();
+missingCoordinator.args.assertRunOwnership=undefined;
+await rejects(()=>recoverVerifiedSalesCreateLink(missingCoordinator.args),/authenticated actor and exact versioned permanent identities/);
+eq(missingCoordinator.counts().writes,0,'Recovery without coordinator assertion callback fails closed.');
+const ownerGonePostCAS=setup();ownerGonePostCAS.loseOwnershipOn(6);
+await rejects(()=>recoverVerifiedSalesCreateLink(ownerGonePostCAS.args),/lost shared Smartsheet run ownership/);
+eq(ownerGonePostCAS.counts().writes,1,'Loss after CAS does not falsely revert the verified link.');
+eq(ownerGonePostCAS.counts().historyCount,0,'Loss after CAS holds history reconciliation for explicit review.');
 const bad=setup();bad.args.actor={email:''};
 await rejects(()=>recoverVerifiedSalesCreateLink(bad.args),/authenticated actor/);
 eq(bad.counts().writes,0,'No unauthenticated recovery write.');
@@ -133,6 +158,15 @@ ok(ui.includes('result?.classification === "verified_candidate"') &&
   ui.includes('disabled={!confirmed || busy}') &&
   ui.includes('setConfirmed(false)'),
   'Recovery button requires exact reviewed identity, explicit confirmation and resets stale review state.');
+ok(source.includes("current?.action === 'recover_verified_sales_create'") &&
+  source.includes('Explicit stale Sales run recovery is required before another claim'),
+  'Running manual recovery cannot be automatically superseded by another sync.');
+ok(source.includes("await claimInvocationRun({\n          status:'running',started_at:recoveryRunStartedAt") &&
+  source.includes("assertRunOwnership:()=>assertSyncRunOwnership(base44,recoveryRunStartedAt)"),
+  'Recovery claims the existing run coordinator before execution and passes its run identity.');
+ok(source.includes("await saveSyncStatusForRun(base44,{\n          status:'completed'") &&
+  source.includes("status:'needs_review',needs_review:true,action,"),
+  'Recovery must finish the shared coordinator or leave an explicit review-required result.');
 ok(!source.slice(source.indexOf("if (action === 'recover_verified_sales_create')"),
   source.indexOf("if (action === 'recover_stale_sales_run')")).includes('smartsheetWrite('),
   'Admin recovery cannot issue a Smartsheet mutation.');
