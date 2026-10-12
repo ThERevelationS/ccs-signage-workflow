@@ -120,7 +120,7 @@ async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: a
   // A proven Fleet work-order commit wins over an earlier admin cancellation,
   // but never replace newer upload evidence or reconciliation provenance.
   const changed = await Receipt.updateMany(
-    {...mechanicReceiptIdentitySelector(receipt),status:{$in:['started','failed','cancelled']}}, 
+    {...mechanicReceiptIdentitySelector(receipt),status:{$in:['started','failed','cancelled']}},
     {$set:{
       status:'applied',
       applied_at:receipt?.applied_at || nowIso(),
