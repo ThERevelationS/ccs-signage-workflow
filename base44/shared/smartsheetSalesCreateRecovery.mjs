@@ -29,6 +29,9 @@ export async function recoverVerifiedSalesCreateLink({
   // These checks run freshly on the action, not against a saved client preview.
   await assertRunOwnership();
   const claims = await readCompetingClaims();
+  if (!claims || !Array.isArray(claims.linked) || !Array.isArray(claims.attempts)) {
+    fail('Sales permanent-row ownership could not be completely verified. No recovery was committed.');
+  }
   const remote = await readRemoteSnapshot();
   const review = classifySalesCreateReview({
     record: current, sheetId, rowId, bindings,
@@ -61,8 +64,12 @@ export async function recoverVerifiedSalesCreateLink({
   // cross-record race. No row ownership is ever inferred from similar values.
   await assertRunOwnership();
   const finalClaims = await readCompetingClaims();
-  if ((finalClaims?.linked || []).some(r => value(r?.id) !== value(workorderId)) ||
-      (finalClaims?.attempts || []).some(r => value(r?.id) !== value(workorderId))) {
+  if (!finalClaims || !Array.isArray(finalClaims.linked) ||
+      !Array.isArray(finalClaims.attempts)) {
+    fail('Sales permanent-row ownership could not be completely verified immediately before recovery. No link was committed.');
+  }
+  if ([...finalClaims.linked, ...finalClaims.attempts].some(r =>
+      !value(r?.id) || value(r.id) !== value(workorderId))) {
     fail('Another WorkOrder claims this permanent Smartsheet row. No recovery was committed.');
   }
   const at = recoveredAt || new Date().toISOString();
