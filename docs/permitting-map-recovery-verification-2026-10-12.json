@@ -1,0 +1,30 @@
+{
+  "checked_at": "2026-10-12T04:10:23.311168+00:00",
+  "phase": 10,
+  "milestone": 2,
+  "milestone_total": 3,
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "head_before_checkpoint": "fc0d642c1fad502b994193b8f0185422bd3e8c58",
+  "change": "Clear measurement mode, active click measurement flag and displayed distance when map retry or session refresh replaces the map instance. Ordinary address updates retain the existing map measurement.",
+  "reproduction_before_fix": {
+    "failed": 2,
+    "passed": 1,
+    "failure": "Replacement maps retained stale measurement mode and distance."
+  },
+  "validation": {
+    "focused_test": "node --test scripts/permitting-map-recovery.test.mjs",
+    "passed": 3,
+    "failed": 0,
+    "production_build_exit": 0,
+    "diff_check_exit": 0,
+    "mode": "Actual React component and in-memory Google SDK; no browser or provider requests."
+  },
+  "live_verification": {
+    "complete": false,
+    "blocker": "Secure Base44 sign-in request timed out and its prior tab expired. Authentication success is unknown. Public preview startup and Google geocoding rejection remain unresolved."
+  },
+  "frontend_published": false,
+  "production_records_modified": false,
+  "phase_10_complete": false,
+  "next_chunk": "Restore authenticated Base44 preview and run the approved Mason v5 location/map acceptance test without applying a locality to a Work Order."
+}
