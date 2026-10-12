@@ -14,7 +14,8 @@ const source=await fs.readFile('src/components/permitting/GoogleMapView.jsx','ut
 const compiled=(await transform(source,{loader:'jsx',format:'cjs',jsx:'automatic',target:'es2022'})).code;
 function harness({deferred=false,authOnConstruction=false}={}){
  let sessionToken='session-a',renderer,releaseMaps;
- const mapsCreated=[],lines=[],listeners=[];
+ const mapsCreated=[],lines=[],listeners=[],roots=[];let previousAuthCalls=0;
+ const previousAuth=()=>{previousAuthCalls++;};
  class Map {
   constructor(){mapsCreated.push(this);if(authOnConstruction)window.gm_authFailure();this.data={forEach(){},remove(){},addGeoJson(){},setStyle(){}};}
   panTo(){} setZoom(){}
@@ -28,7 +29,7 @@ function harness({deferred=false,authOnConstruction=false}={}){
  const maps={Map,Polyline,TrafficLayer:Layer,TransitLayer:Layer,BicyclingLayer:Layer,
   Marker:class {setMap(){} setPosition(){} setTitle(){}},
   geometry:{spherical:{computeLength:path=>path.length*10}},event:{clearInstanceListeners(){},trigger(){}}};
- const window={google:{maps}};
+ const window={google:{maps},gm_authFailure:previousAuth};
  const loaded=deferred?new Promise(resolve=>{releaseMaps=()=>resolve(maps);}):Promise.resolve(maps);
  const module={exports:{}};
  vm.runInNewContext(compiled,{module,window,console,require:name=>{
@@ -39,15 +40,17 @@ function harness({deferred=false,authOnConstruction=false}={}){
  const Component=module.exports.default,props={position:{lat:39.34,lng:-84.32},markerTitle:'Synthetic address',boundaries:[]};
  const button=name=>renderer.root.findAllByType('button').find(node=>node.children.includes(name));
  const text=()=>JSON.stringify(renderer.toJSON());
- async function mount(){await act(async()=>{renderer=TestRenderer.create(React.createElement(Component,props),{createNodeMock:()=>({})});});}
+ async function mount(){await act(async()=>{renderer=TestRenderer.create(React.createElement(Component,props),{createNodeMock:()=>({})});roots.push(renderer);});}
+ async function mountAnother(){let other;await act(async()=>{other=TestRenderer.create(React.createElement(Component,props),{createNodeMock:()=>({})});roots.push(other);});return {button:name=>other.root.findAllByType('button').find(node=>node.children.includes(name)),text:()=>JSON.stringify(other.toJSON()),close:async()=>{await act(async()=>other.unmount());}};}
  async function measure(){await act(async()=>button('Measure distance').props.onClick());await act(async()=>listeners.at(-1).callback({latLng:{lat:39.34,lng:-84.32}}));assert.equal(button('Measure distance').props['aria-pressed'],true);assert.match(text(),/32.8 ft/);}
  async function updateAddress(){await act(async()=>renderer.update(React.createElement(Component,{...props,position:{lat:39.4,lng:-84.4}})));}
  async function refreshSession(){sessionToken='session-b';await act(async()=>renderer.update(React.createElement(Component,props)));}
  async function failAuth(){await act(async()=>window.gm_authFailure());}
  async function release(){await act(async()=>releaseMaps());}
  async function retry(){await act(async()=>window.gm_authFailure());await act(async()=>button('Try map again').props.onClick());}
- async function close(){await act(async()=>renderer?.unmount());}
- return {mount,measure,updateAddress,refreshSession,failAuth,release,retry,close,button,text,mapsCreated,lines,listeners,inputs:()=>renderer.root.findAllByType('input')};
+ async function closeFirst(){await act(async()=>renderer?.unmount());}
+ async function close(){await act(async()=>roots.forEach(root=>root.unmount()));}
+ return {mount,mountAnother,closeFirst,getAuth:()=>window.gm_authFailure,previousAuth,previousAuthCalls:()=>previousAuthCalls,measure,updateAddress,refreshSession,failAuth,release,retry,close,button,text,mapsCreated,lines,listeners,inputs:()=>renderer.root.findAllByType('input')};
 }
 for(const recovery of ['session refresh','map retry'])test(`${recovery} clears measurements from the disposed map`,async()=>{
  const h=harness();try{
@@ -91,6 +94,23 @@ test('authentication rejection during map construction cannot enable its tools',
   await h.mount();assert.equal(h.mapsCreated.length,1);
   assert.equal(h.button('Measure distance').props.disabled,true);
   assert.match(h.text(),/Google rejected the map configuration/);
+ }finally{await h.close();}
+});
+test('simultaneous maps both receive Google authentication failure',async()=>{
+ const h=harness();try{
+  await h.mount();const other=await h.mountAnother();await h.failAuth();
+  assert.equal(h.button('Measure distance').props.disabled,true);
+  assert.equal(other.button('Measure distance').props.disabled,true);
+  assert.match(h.text(),/Google rejected the map configuration/);
+  assert.match(other.text(),/Google rejected the map configuration/);
+  assert.equal(h.previousAuthCalls(),1,'existing map consumers must also receive the failure');
+ }finally{await h.close();}
+});
+test('closing maps in mounting order restores the existing authentication callback',async()=>{
+ const h=harness();try{
+  await h.mount();const other=await h.mountAnother();await h.closeFirst();
+  await h.failAuth();assert.equal(other.button('Measure distance').props.disabled,true);
+  await other.close();assert.equal(h.getAuth(),h.previousAuth);
  }finally{await h.close();}
 });
 test('ordinary address changes preserve an active measurement on the same map',async()=>{
