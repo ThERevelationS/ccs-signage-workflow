@@ -381,6 +381,79 @@ await check('conflict refresh is deferred until another field finishes saving', 
 });
 
 
+await check('non-Revisit quick edit locks only its own field and releases after saving', async () => {
+  const h = fixture(yesterday);
+  const releaseGet = h.holdGet();
+  const first = h.updateWorkOrder(h.record.id, 'designer', 'Designer A');
+  const designerKey = JSON.stringify([h.record.id, 'designer']);
+  const estimatorKey = JSON.stringify([h.record.id, 'estimator']);
+  assert.equal(h.ctx.savingQuickEditKeys.has(designerKey), true);
+  assert.equal(h.ctx.savingQuickEditKeys.has(estimatorKey), false);
+  assert.equal(h.ctx.savingRevisitIds.size, 0);
+  assert.equal(h.ctx.workOrders[0].designer, 'Designer A');
+
+  await h.updateWorkOrder(h.record.id, 'designer', 'Designer B');
+  assert.match(h.ctx.quickEditError, /still saving/);
+  assert.equal(h.ctx.savingQuickEditKeys.size, 1, 'Repeated selection creates no second save');
+
+  await h.updateWorkOrder(h.record.id, 'estimator', 'Estimator A');
+  assert.equal(h.record.estimator, 'Estimator A', 'Independent field remains editable');
+  assert.equal(h.ctx.savingQuickEditKeys.has(estimatorKey), false);
+  assert.equal(h.ctx.savingQuickEditKeys.has(designerKey), true);
+
+  releaseGet();
+  await first;
+  assert.equal(h.ctx.savingQuickEditKeys.size, 0);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+  assert.equal(h.record.designer, 'Designer A');
+  assert.equal(h.record.estimator, 'Estimator A');
+  assert.equal(h.writes, 2);
+});
+
+await check('conflicted non-Revisit edit remains busy through reload, then unlocks', async () => {
+  const h = fixture(yesterday);
+  h.externalUpdate({ site_survey_date: '2099-11-03' });
+  const busyKey = JSON.stringify([h.record.id, 'site_survey_date']);
+  const saving = h.updateWorkOrder(h.record.id, 'site_survey_date', '2099-11-04');
+  assert.equal(h.ctx.savingQuickEditKeys.has(busyKey), true);
+  for (let i = 0; i < 25 && h.reads.length === 0; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1, 'Conflict requests a fresh board');
+  assert.equal(h.ctx.savingQuickEditKeys.has(busyKey), true, 'Date stays locked during refresh');
+  h.reads[0].finish();
+  await saving;
+  assert.equal(h.ctx.savingQuickEditKeys.size, 0);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+  assert.equal(h.ctx.workOrders[0].site_survey_date, '2099-11-03');
+  assert.match(h.ctx.quickEditError, /changed in another session/);
+  assert.equal(h.writes, 0);
+});
+
+await check('all six desktop non-Revisit quick editors expose per-field busy UI', async () => {
+  for (const field of ['current_task_assigned_to', 'designer', 'project_manager', 'estimator']) {
+    const start = board.indexOf(`onValueChange={(val) => updateWorkOrder(wo.id, "${field}", val)}`);
+    assert.ok(start > 0, `${field} selection handler exists`);
+    const editor = board.slice(start, start + 650);
+    assert.ok(editor.includes(`disabled={!isRegistered || isQuickEditSaving(wo.id, "${field}")}`),
+      `${field} is disabled while saving`);
+    assert.ok(editor.includes(`aria-busy={isQuickEditSaving(wo.id, "${field}")}`),
+      `${field} reports busy state`);
+    assert.ok(editor.includes('animate-spin'), `${field} displays visible saving feedback`);
+  }
+  for (const field of ['current_task_deadline', 'site_survey_date']) {
+    const start = board.indexOf(`selected={parseLocalDate(wo.${field})}`);
+    assert.ok(start > 0, `${field} calendar exists`);
+    const calendar = board.slice(start, start + 380);
+    assert.ok(calendar.includes(`disabled={isQuickEditSaving(wo.id, "${field}")}`),
+      `${field} calendar cannot select dates while saving`);
+    assert.ok(calendar.includes(`if (isQuickEditSaving(wo.id, "${field}")) return;`),
+      `${field} handler also rejects busy selection`);
+    const trigger = board.slice(start - 650, start);
+    assert.ok(trigger.includes(`aria-busy={isQuickEditSaving(wo.id, "${field}")}`),
+      `${field} trigger reports busy state`);
+    assert.ok(trigger.includes('Saving…'), `${field} shows saving text`);
+  }
+});
+
 await check('Revisit quick edit shows pending state until save completes', async () => {
   const h = fixture(yesterday);
   const releaseGet = h.holdGet();
