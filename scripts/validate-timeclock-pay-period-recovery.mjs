@@ -5871,11 +5871,23 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
     assert.equal(change.action_provenance.audit_id, d.id);
     assert.deepEqual(change.causal_chain.filter((row) => row.action === 'admin_correction')
       .map((row) => row.audit_id), [c.id, d.id]);
-    const checked = await ok(h.invoke({
-      action: 'pay_period_history_verify', pay_period_id: period.id,
-      request_id: prefix + '-verify',
-    }));
+    const verify = (request_id) => h.invoke({
+      action: 'pay_period_history_verify', pay_period_id: period.id, request_id,
+    });
+    const checked = await ok(verify(prefix + '-verify'));
     assert.equal(checked.verified, true, JSON.stringify(checked));
+
+    // A duplicate appearing after a valid snapshot must invalidate historical
+    // verification, not silently rewrite any frozen payroll generation.
+    const frozenCurrent = clone(period.finalized_summary);
+    const frozenHistory = clone(period.finalized_summary_history);
+    const duplicate = { ...clone(c), id: prefix + '-post-finalization-duplicate-c' };
+    h.rows.TimeClockAudit.push(duplicate);
+    assert.equal((await ok(verify(prefix + '-verify-post-duplicate'))).verified, false);
+    assert.deepEqual(period.finalized_summary, frozenCurrent);
+    assert.deepEqual(period.finalized_summary_history, frozenHistory);
+    h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(duplicate), 1);
+    assert.equal((await ok(verify(prefix + '-verify-restored'))).verified, true);
   }
 }
 
