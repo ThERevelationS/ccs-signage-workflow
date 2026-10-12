@@ -1,3 +1,4 @@
+import {runPickerDraftAction} from './pickerDraftAction.mjs';
 import SavedAddressResearch from './SavedAddressResearch';
 import AutomaticAddressScanResults from './AutomaticAddressScanResults';
 import SelectorScanActions from './SelectorScanActions';
@@ -72,7 +73,7 @@ function LocalityPickerSession({
   const { sessionToken,currentUser } = useAuth();
   const {runAction}=useResearchProgress();
   const searchVersion=useRef(0);
-  const pendingSearch=useRef(null);
+  const pendingSearch=useRef(null),pendingDraft=useRef(null);
   const openRef=useRef(isOpen);openRef.current=isOpen;
   useEffect(()=>()=>{openRef.current=false;searchVersion.current++;},[]);
   const [address, setAddress] = useState("");
@@ -184,14 +185,14 @@ function LocalityPickerSession({
   };
 
   const confirmDraftFromRepository = async () => {
-    if (!openRef.current || !draftCandidate || creatingDraft || address.trim()) return;
+    if (!openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || address.trim()) return;
     const draftVersion=searchVersion.current;
     setCreatingDraft(true);
     setDraftCreateError("");
 
     try {
       const payload = jurisdictionToDraftPermitLocality(draftCandidate);
-      const createResult = await createPermitLocalityIfAbsent({
+      await runPickerDraftAction({pending:pendingDraft,isCurrent:()=>openRef.current&&draftVersion===searchVersion.current,create:()=>createPermitLocalityIfAbsent({
         entity: base44.entities.PermitLocality,
         data: payload,
         readCurrentLocalities: () => loadAllEntityRows({
@@ -200,19 +201,18 @@ function LocalityPickerSession({
           label: "Permit locality repository bridge identity",
         }),
         label: `Permit locality draft ${payload.name}`,
-      });
-      if(!openRef.current||draftVersion!==searchVersion.current)return;
-      const locality = createResult.record;
+      }),apply:locality=>{
       setSelectedLocalityId(locality.id);
       setDraftCandidate(null);
       onApply(locality.id, { excludeElectrical, locality });
       onClose();
+      }});
     } catch (e) {
       if(!openRef.current||draftVersion!==searchVersion.current)return;
       console.error("Could not create Permit locality draft from repository:", e);
       setDraftCreateError(e?.message || "The draft locality could not be created safely. Nothing was applied to this Work Order.");
     } finally {
-      setCreatingDraft(false);
+      if(openRef.current&&draftVersion===searchVersion.current)setCreatingDraft(false);
     }
   };
 
