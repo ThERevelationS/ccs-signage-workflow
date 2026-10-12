@@ -2669,15 +2669,10 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const record = await base44.asServiceRole.entities.WorkOrder.get(workorderId);
       if (!record || !record.smartsheet_create_attempt) return Response.json({
         success:false,error:'No saved Sales create attempt was found for that WorkOrder.'},{status:409});
-      const rowsAlreadyLinked = await loadAllEntityRows({
-        entity:base44.asServiceRole.entities.WorkOrder,
-        query:{smartsheet_sheet_id:sheetId,smartsheet_row_id:rowId},
-        sort:'id',label:'Sales create candidate permanent-link conflict review',
-      });
-      const otherAttempts = attempts.filter((candidate:any)=>
-        (!/^\d+$/.test(String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')) ||
-          String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')===sheetId) &&
-        String(candidate?.smartsheet_create_attempt?.row_id ?? '')===rowId);
+      // Use the same complete claim surfaces as automatic creation. Legacy
+      // WorkOrders missing a sheet ID must still block a conflicting row link.
+      const {linked:rowsAlreadyLinked, attempts:otherAttempts} =
+        await readSalesCreateRowClaims(base44, sheetId, rowId);
       const params = new URLSearchParams({
         rowIds:rowId,columnIds:columnIds.join(','),exclude:'nonexistentCells',
       });
@@ -2723,19 +2718,9 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({success:false,error:'The Sales sheet or its mapped columns could not be verified.'},{status:409});
       }
       const entity = base44.asServiceRole.entities.WorkOrder;
-      const readCompetingClaims = async () => {
-        const [linked,allAttempts] = await Promise.all([
-          loadAllEntityRows({entity,query:{smartsheet_sheet_id:sheetId,smartsheet_row_id:rowId},
-            sort:'id',label:'Admin Sales recovery permanent row claims'}),
-          loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},
-            sort:'id',label:'Admin Sales recovery durable create attempt claims'}),
-        ]);
-        const attempts = allAttempts.filter((candidate:any)=>
-          (!/^\d+$/.test(String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')) ||
-            String(candidate.smartsheet_create_attempt.sheet_id)===sheetId) &&
-          String(candidate?.smartsheet_create_attempt?.row_id ?? '')===rowId);
-        return {linked,attempts};
-      };
+      // Share automatic creation's legacy-aware, fully paged ownership read.
+      // Narrow sheet+row queries miss old links whose sheet ID was never saved.
+      const readCompetingClaims = async () => readSalesCreateRowClaims(base44, sheetId, rowId);
       const readRemoteSnapshot = async () => {
         const params = new URLSearchParams({
           rowIds:rowId,columnIds:columnIds.join(','),exclude:'nonexistentCells',
