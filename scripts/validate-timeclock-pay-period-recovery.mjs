@@ -6099,6 +6099,59 @@ test('v28 diagnostic: simultaneous cross-employee correction request IDs expose 
     'A rejected first-generation finalization must release staged payroll entry locks');
 });
 
+test('v28 first-generation payroll history rejects later cross-employee reuse of a frozen manager request', async () => {
+  const h = setup({ entryCount: 2, serverNow: '2026-09-20T22:00:00.000Z' });
+  const [first, second] = h.rows.TimeEntry;
+  const period = h.period();
+  const correctionId = 'v28-first-history-correction';
+  const corrected = await h.invoke({
+    action: 'admin_correct_entry', request_id: correctionId,
+    target_email: first.user_email, entry_id: first.id,
+    expected_updated_date: first.updated_date, reason: 'Verify original shift',
+    correction: {
+      clock_in: '2026-09-20T14:30:00.000Z',
+      clock_out: first.clock_out, lunch_minutes: 0,
+      notes: 'Synthetic first generation correction',
+      job_allocations: [{ hours: 7, minutes: 30, is_inhouse: true,
+        inhouse_task: 'Synthetic shop work' }],
+    },
+  });
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  const approval = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: first.user_email,
+    request_id: 'v28-first-history-approve', entry_id: first.id,
+    expected_updated_date: first.updated_date, decision: 'approve',
+    note: 'Verified synthetic correction',
+  });
+  assert.equal(approval.status, 200, JSON.stringify(approval.body));
+  const finalized = await h.action('finalize', 'v28-first-history-finalize');
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+  const verified = (request_id) => h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: period.id, request_id,
+  });
+  const before = await verified('v28-first-history-before');
+  assert.equal(before.status, 200, JSON.stringify(before.body));
+  assert.equal(before.body.verified, true, JSON.stringify(before.body));
+  const immutableSnapshot = clone(period.finalized_summary);
+  const original = h.rows.TimeClockAudit.find((row) =>
+    row.action === 'admin_correction' && row.request_id === correctionId);
+  assert.ok(original?.id);
+  const collision = { ...clone(original),
+    id: 'v28-first-history-foreign-confirmed-duplicate',
+    time_entry_id: second.id,
+    server_timestamp: String(period.finalized_summary.lock_timestamp),
+  };
+  h.rows.TimeClockAudit.push(collision);
+  const rejected = await verified('v28-first-history-cross-entry-collision');
+  assert.equal(rejected.status, 200, JSON.stringify(rejected.body));
+  assert.equal(rejected.body.verified, false, JSON.stringify(rejected.body));
+  assert.deepEqual(period.finalized_summary, immutableSnapshot);
+  h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(collision), 1);
+  const restored = await verified('v28-first-history-restored');
+  assert.equal(restored.status, 200, JSON.stringify(restored.body));
+  assert.equal(restored.body.verified, true, JSON.stringify(restored.body));
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
