@@ -75,6 +75,8 @@ export async function createSalesSmartsheetRowWithGuard({
       fail('Sales row exists, but the Base44 create evidence or WorkOrder changed. Review the attempt; never repeat POST.');
     }
     const newerLocalEditsRemain = !equalSnapshot(makeSnapshot(current), marker.expected_snapshot);
+    await assertNoCompetingRowClaim(rowId);
+    await owner();
     const syncedAt = new Date().toISOString();
     const updated = await entity.updateMany({id: recordId, updated_date: current.updated_date}, {
       $set: {
@@ -95,6 +97,8 @@ export async function createSalesSmartsheetRowWithGuard({
         saved?.smartsheet_last_synced_at !== syncedAt) {
       fail('Sales permanent Smartsheet link could not be verified after create. Review before retrying; never POST again.');
     }
+    // Late conflicts must require review; never undo or repeat the committed link.
+    await assertNoCompetingRowClaim(rowId);
     return {rowId, recovered, newerLocalEditsRemain};
   };
 
