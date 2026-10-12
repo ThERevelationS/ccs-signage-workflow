@@ -144,6 +144,7 @@ try {
   }
   await writeFile(path.join(scratch, 'mockAuthorizedUserPersistence.js'), [
     'import { validateDeletionImpactReport } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactValidation.js') + '";',
+    'import { withDeletionImpactDeadline } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactDeadline.js') + '";',
     'const fail=()=>{throw Error("Unexpected synthetic user mutation");};',
     'export const createAuthorizedUserAdmin=fail, deleteAuthorizedUserAdmin=fail;',
     'export const updateAuthorizedUserAdmin=fail, updateAuthorizedUserHrAdmin=fail;',
@@ -151,6 +152,7 @@ try {
     'export async function getAccountDeletionImpactAdmin({request}={}){',
     ' window.__adminImpactAttempts=(window.__adminImpactAttempts||0)+1;',
     ' const params=new URLSearchParams(location.search);',
+    ' return withDeletionImpactDeadline(async()=>{',
     ' if(window.__adminImpactFailure===true||(window.__adminImpactFailure!==false&&params.get("impact_fail")==="1"))',
     ' throw Error("secret-synthetic-impact-diagnostic");',
     ' const entities=list=>list.split(",").map(entity=>({entity,count:0}));',
@@ -167,6 +169,7 @@ try {
     ' if(invalid==="partial")report.ownership.pop();',
     ' if(window.__adminImpactDelay===true)await new Promise(resolve=>{(window.__adminImpactPending??=[]).push({resolve,report});});',
     ' return validateDeletionImpactReport(report,request);',
+    ' },params.get("impact_timeout")==="1"?110:75000);',
     '}',
     'export async function listAccountDeletionRequestsAdmin(){',
     ' window.__adminDeletionListAttempts=(window.__adminDeletionListAttempts||0)+1;',
