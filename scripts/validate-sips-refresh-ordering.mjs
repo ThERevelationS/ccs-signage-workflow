@@ -447,7 +447,9 @@ await check('all six desktop non-Revisit quick editors expose per-field busy UI'
       `${field} calendar cannot select dates while saving`);
     assert.ok(calendar.includes(`if (isQuickEditSaving(wo.id, "${field}")) return;`),
       `${field} handler also rejects busy selection`);
-    const trigger = board.slice(start - 650, start);
+    const triggerStart = board.lastIndexOf('<PopoverTrigger asChild', start);
+    assert.ok(triggerStart > 0, `${field} trigger exists`);
+    const trigger = board.slice(triggerStart, start);
     assert.ok(trigger.includes(`aria-busy={isQuickEditSaving(wo.id, "${field}")}`),
       `${field} trigger reports busy state`);
     assert.ok(trigger.includes('Saving…'), `${field} shows saving text`);
