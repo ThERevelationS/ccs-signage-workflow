@@ -232,6 +232,13 @@ function strandReservedPhotoRetry(store,{status="started",urls=["https://files.e
   retry.result_summary.request_id=owner;
   retry.result_summary.reused_upload_receipt_id=source.id;
   retry.result_summary.retry_reservation_required=true;
+  if(status==="applied"){
+    // Synthetic prior work-order commit whose current marker may be superseded.
+    retry.applied_at="2026-10-12T12:00:00.000Z";
+    retry.result_summary.work_order_updated_date="version-2";
+    retry.result_summary.work_order_status="in_progress";
+    retry.result_summary.recovered_from_work_order_marker=true;
+  }
   store.receipts.set(source.id,clone(source));
   store.receipts.set(retry.id,clone(retry));
   return {source,retry,body};
@@ -1351,4 +1358,88 @@ test("lost terminalization acknowledgments are reconciled from matching durable 
   assert.equal(second.store.receipts.get(prior.id).status,"cancelled");
   assert.equal(second.store.receipts.get(prior.id).result_summary.admin_reconciled_not_applied,true);
   assert.equal(second.store.updates,0);
+});
+
+
+test("bare applied receipt status does not certify a Fleet work-order commit",async()=>{
+  const requestId="request-original-123456";
+  const previous=makeReceipt(payload(requestId),{status:"applied"});
+  const {store,client}=setup({receipt:previous});
+  const status=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:requestId},client);
+  assert.equal(status.code,409);
+  assert.match(status.body.error,/lacks verifiable work-order commit evidence/i);
+  const replay=await call(payload(requestId),client);
+  assert.equal(replay.code,409);
+  assert.match(replay.body.error,/lacks verified Fleet work-order commit evidence/i);
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const admin=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:previous.id},client);
+  assert.equal(admin.code,200);
+  assert.equal(admin.body.status,"blocked");
+  assert.match(admin.body.error_message,/lacks verifiable work-order commit evidence/i);
+  assert.equal(store.receipts.get(previous.id).status,"applied","Do not erase ambiguous evidence");
+  assert.equal(store.updates,0);
+});
+
+test("superseded work-order marker still accepts a genuinely recorded prior applied receipt",async()=>{
+  const requestId="request-original-123456";
+  const previous=makeReceipt(payload(requestId),{status:"applied"});
+  previous.applied_at="2026-10-12T12:00:00.000Z";
+  previous.result_summary.work_order_updated_date="version-2";
+  previous.result_summary.work_order_status="in_progress";
+  previous.result_summary.recovered_from_work_order_marker=false;
+  const {store,client}=setup({receipt:previous});
+  store.work.updated_date="version-3";
+  store.work.mechanic_operation_key="mechanic:other:unrelated:save:request-overwritten-123456";
+  store.work.mechanic_operation_fingerprint="unrelated";
+  const status=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:requestId},client);
+  assert.equal(status.code,200);
+  assert.equal(status.body.status,"applied");
+  const retry=await call(payload(requestId),client);
+  assert.equal(retry.code,200);
+  assert.equal(retry.body.reused,true);
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const admin=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:previous.id},client);
+  assert.equal(admin.body.status,"applied");
+  assert.equal(store.updates,0);
+});
+
+test("resolved photo source requires exact applied retry identity and recorded commit evidence",async()=>{
+  const {store,client}=setup();
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"applied",urls:[
+    "https://files.example/old-a.jpg","https://files.example/completed-b.jpg",
+  ]});
+  const sourceReceipt=store.receipts.get(source.id);
+  sourceReceipt.status="applied";
+  sourceReceipt.applied_at="2026-10-12T12:10:00.000Z";
+  sourceReceipt.result_summary.resolved_by_retry=true;
+  sourceReceipt.result_summary.resolved_by_operation_key=retry.operation_key;
+  let status=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:source.result_summary.request_id},client);
+  assert.equal(status.code,200);
+  assert.equal(status.body.status,"applied");
+  const retryReceipt=store.receipts.get(retry.id);
+  delete retryReceipt.result_summary.work_order_updated_date;
+  status=await call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:source.result_summary.request_id},client);
+  assert.equal(status.code,409);
+  assert.match(status.body.error,/lacks verifiable work-order commit evidence/i);
+  assert.equal(store.receipts.get(source.id).status,"applied");
+  assert.equal(store.updates,0);
+});
+
+test("admin will not release pending photo source based solely on unverified applied retry",async()=>{
+  const {store,client}=setup();
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  const {source,retry}=strandReservedPhotoRetry(store,{status:"applied",urls:[
+    "https://files.example/old-a.jpg","https://files.example/completed-b.jpg",
+  ]});
+  delete store.receipts.get(retry.id).result_summary.work_order_updated_date;
+  const result=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:source.id},client);
+  assert.equal(result.body.status,"blocked");
+  assert.match(result.body.error_message,/lacks verifiable Fleet work-order commit evidence/i);
+  assert.equal(store.receipts.get(source.id).status,"started");
+  assert.equal(store.receipts.get(retry.id).status,"applied");
+  assert.equal(store.updates,0);
 });
