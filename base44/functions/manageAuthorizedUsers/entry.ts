@@ -590,11 +590,16 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Invalid user administration action.' }, { status: 400 });
   } catch (error) {
+    // The bounded read-only impact scanner has a known, non-sensitive timeout.
+    // Surface only this exact deadline failure to coordinate safe UI retries.
+    const impactTimedOut = error?.message === 'Deletion impact scan deadline exceeded; no report was verified.';
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = impactTimedOut ? 503 : [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
     console.error('manageAuthorizedUsers error:', error?.message || error);
     return Response.json({
-      error: safeStatus === 500 ? 'Authorized user administration could not be completed safely.' : error?.message,
+      error: impactTimedOut
+        ? 'Account deletion impact scan timed out. No report was verified.'
+        : safeStatus === 500 ? 'Authorized user administration could not be completed safely.' : error?.message,
     }, { status: safeStatus });
   }
 });
