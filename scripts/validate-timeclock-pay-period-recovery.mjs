@@ -5906,6 +5906,25 @@ async function exerciseV28OpaqueCorrectionOrdering({ includeDuplicates = false }
     h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(boundaryDuplicate), 1);
     assert.equal((await ok(verify(prefix + '-verify-boundary-restored'))).verified, true);
 
+    // A confirmed admin_correction with the same idempotency request ID
+    // must not be accepted as a different shift's unrelated audit.
+    // Keep the duplicate at the exact lock boundary so ordinary generation
+    // reconciliation does not accidentally detect it for a separate reason.
+    const otherShiftDuplicate = {
+      ...clone(c), id: prefix + '-other-shift-equal-finalize-duplicate',
+      time_entry_id: prefix + '-foreign-shift',
+      user_email: 'different-worker@synthetic.invalid',
+      server_timestamp: String(period.finalized_summary.lock_timestamp || ''),
+    };
+    h.rows.TimeClockAudit.push(otherShiftDuplicate);
+    const crossShift = await ok(verify(prefix + '-verify-cross-shift-request-collision'));
+    assert.equal(crossShift.verified, false,
+      'A confirmed correction request ID reused for another shift must invalidate frozen provenance');
+    assert.deepEqual(period.finalized_summary, frozenCurrent);
+    assert.deepEqual(period.finalized_summary_history, frozenHistory);
+    h.rows.TimeClockAudit.splice(h.rows.TimeClockAudit.indexOf(otherShiftDuplicate), 1);
+    assert.equal((await ok(verify(prefix + '-verify-cross-shift-restored'))).verified, true);
+
     // Reopening retires the finalized second generation. Its exact reopen
     // boundary must not hide a duplicate of an earlier frozen request.
     h.setServerNow('2026-09-20T22:06:00.000Z');
