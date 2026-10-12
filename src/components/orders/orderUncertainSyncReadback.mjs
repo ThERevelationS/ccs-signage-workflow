@@ -28,9 +28,14 @@ export function classifyUncertainOrderSyncReadback(requestedIds, records) {
       pendingIds.push(id);
       continue;
     }
+    const sheetId = String(record.smartsheet_sheet_id ?? '').trim();
+    const rowId = String(record.smartsheet_row_id ?? '').trim();
+    const createMarker = record.smartsheet_create_attempt;
     if (record.smartsheet_pending_local_sync !== false ||
-        !/^\d+$/.test(String(record.smartsheet_sheet_id ?? '').trim()) ||
-        !/^\d+$/.test(String(record.smartsheet_row_id ?? '').trim()) ||
+        !/^\d+$/.test(sheetId) || !/^\d+$/.test(rowId) ||
+        (createMarker && (createMarker.status !== 'linked' ||
+          String(createMarker.sheet_id ?? '').trim() !== sheetId ||
+          String(createMarker.row_id ?? '').trim() !== rowId)) ||
         !record.smartsheet_last_synced_at ||
         !record.smartsheet_sync_snapshot ||
         typeof record.smartsheet_sync_snapshot !== 'object' ||
