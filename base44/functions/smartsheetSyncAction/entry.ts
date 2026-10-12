@@ -1274,6 +1274,15 @@ async function claimSyncRun(base44: any, status: any) {
     throw Object.assign(new Error(detail), { status: 409 });
   }
 
+  // Manually verified Sales permanent-row recovery shares this SAME
+  // coordinator with Sales/Order pull, push and Save & Sync. Never
+  // automatically supersede an old recovery after the 2-minute generic
+  // timeout: it may have committed a WorkOrder link before the reply failed.
+  // Explicit stale Sales run recovery is required before another claim.
+  if (current?.status === 'running' && current?.action === 'recover_verified_sales_create') {
+    throw Object.assign(new Error('A Sales permanent-row recovery still owns the Smartsheet coordinator. If stalled, review the original WorkOrder and explicitly recover the stale Sales run before any retry.'), {status:409});
+  }
+
   // A new Order pull must not erase prior permanent-ID evidence after an
   // interrupted or review-required pull. This is read-only preflight: no
   // coordinator reset, Base44 Order write, or Smartsheet retry occurs.
@@ -2719,14 +2728,44 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return {verified:true,snapshot:buildSalesPullSnapshot(rows[0],bindings),
           localSnapshot:latest ? buildSnapshot(latest,bindings,'sales') : null};
       };
+      const recoveryRunStartedAt = new Date().toISOString();
+      // Acquire the existing singleton run CAS before any recovery writes.
+      // Another manual recovery, Save & Sync, or scheduled pull/push cannot
+      // simultaneously own it. No separate locks or permanent entities.
       try {
+        await claimInvocationRun({
+          status:'running',started_at:recoveryRunStartedAt,
+          action:'recover_verified_sales_create',
+          progress_dataset:'sales',progress_direction:'recovery',
+          current_step_label:'Sales Pipeline permanent-row recovery',
+          total_steps:1,completed_steps:0,results:[],
+        });
         const result = await recoverVerifiedSalesCreateLink({
           entity,historyEntity:base44.asServiceRole.entities.CellHistory,
           workorderId,sheetId,rowId,expectedVersion,expectedAttemptId,
           bindings,readCompetingClaims,readRemoteSnapshot,actor:adminActor,
+          assertRunOwnership:()=>assertSyncRunOwnership(base44,recoveryRunStartedAt),
         });
+        const completed = await saveSyncStatusForRun(base44,{
+          status:'completed',needs_review:false,action,
+          total_steps:1,completed_steps:1,current_step_label:'',
+          completed_at:new Date().toISOString(),
+          results:[{dataset:'sales',direction:'recovery',workorder_id:workorderId,
+            row_id:rowId,recovered:true,history_verified:true}],
+        },recoveryRunStartedAt);
+        if (!completed) throw new Error('Sales row was recovered, but the run coordinator completion could not be verified. Review its status and WorkOrder before any further action.');
         return Response.json({success:true,dataset:'sales',...result});
       } catch (error:any) {
+        if (claimedRunStartedAt === recoveryRunStartedAt) {
+          await saveSyncStatusForRun(base44,{
+            status:'needs_review',needs_review:true,action,
+            total_steps:1,completed_steps:1,current_step_label:'',
+            completed_at:new Date().toISOString(),
+            results:[{dataset:'sales',direction:'recovery',workorder_id:workorderId,
+              row_id:rowId,skipped:true,outcome_unverified:true,errors:1,
+              reason:'Permanent-row recovery requires inspection of the original WorkOrder and coordinator before retry.'}],
+          },recoveryRunStartedAt);
+        }
         return Response.json({success:false,needs_review:true,
           error:error?.message || 'The Sales recovery could not be verified. Review before trying again.'},{status:409});
       }
