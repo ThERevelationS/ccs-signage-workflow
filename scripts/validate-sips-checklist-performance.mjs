@@ -329,7 +329,7 @@ check("delayed focus callbacks cancel on dialog close or Template Builder switch
   assert.match(scheduler, /\[isOpen, isLoading, showTemplateBuilder, showRevisitPopup, showOtherPopup, workOrder\?\.id\]/);
   assert.equal((source.match(/scheduleNavigationFocus\(\(\) => \{/g) || []).length, 4);
   assert.match(source, /const clearChecklistSearch = \(\) => \{\s*cancelPendingNavigationFocus\(\)/);
-  assert.match(source, /onClick=\{\(\) => \{\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\)/);
+  assert.match(source, /onClick=\{\(\) => \{\s*if \(saveInFlightRef\.current \|\| loadInFlightRef\.current \|\| isSaving \|\| isLoading\) return;\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\)/);
 
   // Execute the actual scheduler with fake timers. Even a late callback
   // must not focus a stale result after replacement or dialog cleanup.
@@ -1324,5 +1324,26 @@ await (async () => {
   console.log("PASS same-tick SIPS saves, Cancel and Reload serialize with retry-safe guards");
   passed++;
 })();
+
+check("checklist editor and custom status controls are inert only while saving", () => {
+  assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5"\s+inert=\{isSaving \? "" : undefined\}\s+aria-busy=\{isSaving\}/);
+  assert.match(source, /showAddGeneralChecklist && \(\s*<div className="p-3 bg-gray-50 rounded-lg border mb-3" inert=\{isSaving \? "" : undefined\}/);
+  assert.match(source, /<OtherDialogContent\s+inert=\{isSaving \? "" : undefined\}/);
+  assert.match(source, /saveInFlightRef\.current = true;\s*setIsSaving\(true\);/);
+  assert.match(source, /saveInFlightRef\.current = false;\s*setIsSaving\(false\);/);
+});
+
+check("checklist builder and Add Item actions cannot start during loading or saving", () => {
+  assert.match(source, /if \(saveInFlightRef\.current \|\| loadInFlightRef\.current \|\| isSaving \|\| isLoading\) return;\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\);\s*\}\}\s*disabled=\{isSaving \|\| isLoading\}/);
+  assert.match(source, /if \(!saveInFlightRef\.current && !loadInFlightRef\.current && !isSaving && !isLoading\) setShowAddGeneralChecklist\(true\);/);
+  assert.match(source, /disabled=\{isSaving \|\| isLoading\}\s+className="sm:flex-1 h-11 sm:h-10"\s*>\s*<Plus/);
+});
+
+check("save feedback is announced and Save & Revisit label recovers after save", () => {
+  assert.match(source, /\{isSaving && \(\s*<div role="status" aria-live="polite"/);
+  assert.match(source, /Saving SIP checklist… Editing is temporarily unavailable\./);
+  assert.match(source, /\{isSaving \? "Saving…" : "Save & Revisit"\}/);
+  assert.match(source, /onClick=\{handleSaveClick\}\s+disabled=\{isSaving \|\| !isRegistered\}/);
+});
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
