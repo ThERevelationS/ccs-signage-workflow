@@ -183,15 +183,16 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const newLocality = () => requestNavigation({ type: "new_locality" });
 
   useEffect(() => {
-    if (!initialSelectedLocalityId || initialReviewSelectionHandled.current) return;
+    if (initialReviewSelectionHandled.current) return;
     initialReviewSelectionHandled.current = true;
+    if (!initialSelectedLocalityId) return;
     const matches = localities.filter(row => row.id === initialSelectedLocalityId);
     if (matches.length !== 1) {
       setLocalitySaveError('The requested saved locality is unavailable or ambiguous. Close and refresh coverage before reviewing it.');
       return;
     }
     applyNavigation({ type: 'select_locality', id: initialSelectedLocalityId });
-  }, [initialSelectedLocalityId, localities]);
+  }, [initialSelectedLocalityId, localities, applyNavigation]);
 
   const saveLocality = async () => {
     if (!form.name.trim() || localitySaveInFlightRef.current) return false;
