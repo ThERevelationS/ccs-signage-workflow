@@ -697,7 +697,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const addNewRow = async () => {
-    if (!isRegistered || addInFlightRef.current || isPulling) return;
+    if (!isRegistered || readError || addInFlightRef.current || isPulling) return;
     addInFlightRef.current = true;
     setSaveError("");
     try {
@@ -1008,6 +1008,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const exportToExcel = async () => {
+    if (readError) return; // Never export an unverified/partially loaded Order list.
     if (!canOrderExport || !canUseOrderExport(currentUser)) {
       setSaveError("Order Form export is available only to admins explicitly assigned this permission.");
       return;
