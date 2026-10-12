@@ -6016,6 +6016,66 @@ test('v28 manager correction request IDs cannot be reused across shifts or emplo
   }
 });
 
+test('v28 diagnostic: simultaneous cross-employee correction request IDs expose uncoordinated writes', async () => {
+  // DOCUMENTED OPEN CONCURRENCY GAP. This intentionally asserts the current
+  // unsafe result for reproducible diagnosis, not acceptable production behavior.
+  // Replace with a one-winner invariant when a shared CAS/unique key is added.
+  const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
+  const [first, second] = h.rows.TimeEntry;
+  const other = { id: 'synthetic-race-worker', email: 'race-worker@synthetic.invalid',
+    full_name: 'Synthetic Race Worker', role: 'employee' };
+  h.rows.AuthorizedEmail.push(other);
+  h.rows.TimeClockEmployeeState.push({
+    id: 'state-' + other.id, user_email: other.email, status: 'clocked_out',
+    break_status: 'working', work_pause_status: 'working', labor_status: 'idle',
+    correction_create_status: 'idle', updated_date: '2026-09-20T00:00:00.000Z',
+  });
+  second.user_email = other.email;
+  second.clock_in = '2026-09-21T14:00:00.000Z';
+  second.clock_out = '2026-09-21T22:00:00.000Z';
+  const request_id = 'v28-race-shared-admin-request';
+  let claimed = 0;
+  let releaseBoth;
+  const bothClaimed = new Promise((resolve) => { releaseBoth = resolve; });
+  h.setAfterRowUpdate(async (name, _query, _update, row) => {
+    if (name !== 'TimeClockEmployeeState' ||
+        row.correction_create_status !== 'creating' ||
+        row.correction_create_request_id !== request_id) return;
+    claimed += 1;
+    if (claimed === 2) releaseBoth();
+    await Promise.race([
+      bothClaimed,
+      new Promise((_resolve, reject) => setTimeout(() => reject(new Error(
+        'Race harness failed to reach two independent correction gates')), 3000)),
+    ]);
+  });
+  const correct = (entry, clock_in) => h.invoke({
+    action: 'admin_correct_entry', request_id, target_email: entry.user_email,
+    entry_id: entry.id, expected_updated_date: entry.updated_date,
+    reason: 'Synthetic concurrent admin correction',
+    correction: { clock_in, clock_out: entry.clock_out, lunch_minutes: 0,
+      notes: 'Race fixture', job_allocations: [
+        { hours: 7, minutes: 30, is_inhouse: true, inhouse_task: 'Synthetic shop work' },
+      ] },
+  });
+  const [a, b] = await Promise.all([
+    correct(first, '2026-09-20T14:30:00.000Z'),
+    correct(second, '2026-09-21T14:30:00.000Z'),
+  ]);
+  assert.equal(claimed, 2, 'Both employees passed separate CAS locks');
+  const successful = [a, b].filter((result) => result.status === 200);
+  const persisted = h.rows.TimeClockAudit.filter((audit) =>
+    audit.action === 'admin_correction' && audit.request_id === request_id &&
+    ['confirmed', 'recovered'].includes(audit.outcome));
+  assert.equal(successful.length, 2,
+    'Current unsafe baseline: both conflicting submissions report success');
+  assert.equal(persisted.length, 2,
+    'Current unsafe baseline: duplicate cross-employee correction evidence exists');
+  assert.notEqual(persisted[0].time_entry_id, persisted[1].time_entry_id);
+  assert.equal(first.clock_in, '2026-09-20T14:30:00.000Z');
+  assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
