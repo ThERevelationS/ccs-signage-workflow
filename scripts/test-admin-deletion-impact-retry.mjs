@@ -24,7 +24,8 @@ test("Closing an in-progress scan cancels its UI ownership and clears confidenti
 });
 
 test("Impact scan failure uses a generic alert with a read-only retry and no raw backend error", () => {
-  assert.match(scanner, /catch \{\s*if \(requestSequence === deletionImpactSequence\.current\)/);
+  assert.match(scanner, /catch \(error\) \{\s*if \(requestSequence === deletionImpactSequence\.current\)/);
+  assert.match(scanner, /error\?\.message === "Account deletion impact scan timed out. No report was verified."/);
   assert.match(scanner, /setDeletionImpactError\("The read-only impact scan could not be verified/);
   assert.doesNotMatch(scanner, /setDeletionImpactError\(error\?\.message/);
   assert.match(page, /role="alert" aria-label="Account deletion impact unavailable"/);
