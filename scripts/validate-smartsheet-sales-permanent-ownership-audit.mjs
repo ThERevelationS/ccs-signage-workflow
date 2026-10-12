@@ -52,6 +52,27 @@ eq(auditSalesPermanentRowOwners([linked('a','555')],[attempt('a','666')],sheet).
   1,'WorkOrder marker and top-level linked identity disagreement is flagged.');
 eq(auditSalesPermanentRowOwners([linked('a','555')],[attempt('a','666')],sheet).review_count,
   1,'Linked ID inconsistency is reported at the linked identity.');
+const splitMismatch=auditSalesPermanentRowOwners(
+  [linked('a','555')],[attempt('a','666')],sheet);
+eq(splitMismatch.cases[0].row_id,'555',
+  'Mismatch from separate linked/attempt scans is attached to the authoritative linked row.');
+eq(splitMismatch.cases[0].types,['inconsistent_create_marker'],
+  'Separate scans with one owner do not manufacture a competing-WorkOrders collision.');
+eq(auditSalesPermanentRowOwners(
+  [linked('a','555')],[attempt('a','555',sheet)],sheet).review_count,0,
+  'Matching split-projection identities do not produce false positives.');
+eq(auditSalesPermanentRowOwners(
+  [linked('a','555','')],[attempt('a','555','')],sheet).cases[0].types,
+  ['missing_sheet_identity'],
+  'Two legacy missing-sheet projections are a missing identity, not a marker disagreement.');
+eq(auditSalesPermanentRowOwners(
+  [linked('a','555')],[attempt('a','555','999')],sheet).cases[0].types,
+  ['inconsistent_create_marker'],
+  'Wrong-sheet durable marker is detected even if its row is filtered from configured-sheet groups.');
+eq(auditSalesPermanentRowOwners(
+  [linked('a','555','')],[attempt('a','555',sheet)],sheet).cases[0].types,
+  ['missing_sheet_identity'],
+  'A known marker sheet does not falsely contradict an unknown legacy link sheet.');
 eq(auditSalesPermanentRowOwners([], [attempt('m','100','')],sheet).missing_sheet_count,
   1,'Missing marker sheet identity is visible even without a linked WorkOrder.');
 const all=Array.from({length:45},(_,i)=>linked('owner-'+i,'99'));
