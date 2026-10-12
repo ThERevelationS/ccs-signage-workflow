@@ -4747,7 +4747,7 @@ test('v28 later rejected employee request cannot displace prior direct correctio
   assert.equal(verified.body.verified, true, JSON.stringify(verified.body));
 });
 
-async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = false }) {
+async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = false, sameTimestampThirdGeneration = false }) {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   const period = h.period();
   Object.assign(period, { start_date: '2026-09-28', end_date: '2026-09-28', status: 'review', last_request_id: '' });
@@ -4925,7 +4925,7 @@ async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = fa
     assert.equal(result.status, 200, JSON.stringify(result.body));
     return result.body;
   };
-  h.setServerNow('2026-09-28T20:01:00.000Z');
+  if (!sameTimestampThirdGeneration) h.setServerNow('2026-09-28T20:01:00.000Z');
   await ok(h.action('reopen', 'v28-mixed-g3-reopen-period', 'Audit third-generation manager adjustments'));
   await ok(h.invoke({
     action: 'admin_set_entry_approval', target_email: employee.email,
@@ -4948,16 +4948,28 @@ async function exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration = fa
     await ok(h.invoke(request));
     return h.rows.TimeClockAudit.find((row) => row.id === response.audit_id);
   };
-  h.setServerNow('2026-09-28T20:02:00.000Z');
+  if (!sameTimestampThirdGeneration) h.setServerNow('2026-09-28T20:02:00.000Z');
   const auditE = await direct('e', '2026-09-28T12:55:00.000Z', 7, 5);
-  h.setServerNow('2026-09-28T20:03:00.000Z');
+  if (!sameTimestampThirdGeneration) h.setServerNow('2026-09-28T20:03:00.000Z');
   const auditF = await direct('f', '2026-09-28T13:05:00.000Z', 6, 55);
-  h.setServerNow('2026-09-28T20:04:00.000Z');
+  if (!sameTimestampThirdGeneration) h.setServerNow('2026-09-28T20:04:00.000Z');
   await ok(h.invoke({
     action: 'admin_set_entry_approval', target_email: employee.email,
     request_id: 'v28-mixed-g3-approve-f', entry_id: entry.id,
     expected_updated_date: entry.updated_date, decision: 'approve', note: 'Approve terminal F',
   }));
+  if (sameTimestampThirdGeneration) {
+    // Ambiguous audit ordering must not permit an unverified payroll snapshot.
+    const prior = clone(period.finalized_summary);
+    const history = clone(period.finalized_summary_history);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const denied = await h.action('finalize', 'v28-mixed-g3-finalize-f');
+      assert.equal(denied.status, 409, JSON.stringify(denied.body));
+      assert.deepEqual(period.finalized_summary, prior);
+      assert.deepEqual(period.finalized_summary_history, history);
+    }
+    return;
+  }
   h.setServerNow('2026-09-28T20:05:00.000Z');
   await ok(h.action('finalize', 'v28-mixed-g3-finalize-f'));
   await ok(h.action('finalize', 'v28-mixed-g3-finalize-f'));
@@ -5012,6 +5024,10 @@ test('v28 later employee approve_modified supersedes prior direct correction in 
 
 test('v28 mixed employee and manager corrections across three generations preserve retired approval evidence', async () => {
   await exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration: true });
+});
+
+test('v28 mixed multi-generation corrections with indistinguishable timestamps remain fail-closed', async () => {
+  await exerciseV28MixedEmployeeManagerGenerations({ thirdGeneration: true, sameTimestampThirdGeneration: true });
 });
 
 test('v28 later employee approve exact supersedes prior direct correction in same reopened generation', async () => {
