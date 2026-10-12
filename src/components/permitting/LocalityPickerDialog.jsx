@@ -1,4 +1,4 @@
-import {runPickerDraftAction} from './pickerDraftAction.mjs';
+import {runPickerDraftAction,requireReviewedRepositoryProfile} from './pickerDraftAction.mjs';
 import SavedAddressResearch from './SavedAddressResearch';
 import AutomaticAddressScanResults from './AutomaticAddressScanResults';
 import SelectorScanActions from './SelectorScanActions';
@@ -193,8 +193,13 @@ function LocalityPickerSession({
     setDraftCreateError("");
 
     try {
-      const payload = jurisdictionToDraftPermitLocality(draftCandidate);
-      await runPickerDraftAction({pending:pendingDraft,isCurrent:()=>openRef.current&&draftVersion===searchVersion.current,create:()=>createPermitLocalityIfAbsent({
+      await runPickerDraftAction({pending:pendingDraft,isCurrent:()=>openRef.current&&draftVersion===searchVersion.current,
+      prepare:async()=>requireReviewedRepositoryProfile({
+        reviewed:draftCandidate,
+        rows:await loadAllEntityRows({entity:base44.entities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck"}),
+        hasDuplicate:hasDuplicateRepositoryIdentity,
+        toDraft:jurisdictionToDraftPermitLocality,
+      }),create:payload=>createPermitLocalityIfAbsent({
         entity: base44.entities.PermitLocality,
         data: payload,
         readCurrentLocalities: () => loadAllEntityRows({
