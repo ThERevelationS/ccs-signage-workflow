@@ -853,6 +853,30 @@ try {
       await dialog.waitFor({ state: 'detached' });
     });
 
+  await check('Deletion request double-click submits one decision and refreshes verified result', 375,
+    '/?tab=users&real_users=1&deletion_rows=1', async page => {
+      await page.evaluate(() => { window.__adminDecisionHold = true; });
+      await page.getByRole('button', { name: 'Mark Reviewed' }).click();
+      const dialog = page.getByRole('alertdialog', { name: /Mark deletion request reviewed/ });
+      await dialog.waitFor();
+      const confirm = dialog.getByRole('button', { name: 'Mark Reviewed' });
+      // Synchronous duplicate activation before React rerender is the risk.
+      await confirm.evaluate(button => { button.click(); button.click(); });
+      await page.waitForFunction(() => window.__adminDecisionCalls === 1);
+      assert.equal(await confirm.isEnabled(), false);
+      assert.equal(await page.evaluate(() => window.__adminDecisionCalls), 1);
+      await page.evaluate(() => {
+        window.__adminDecisionHold = false;
+        window.__adminDecisionPending();
+      });
+      await dialog.waitFor({ state: 'detached' });
+      await page.getByText('Reviewed — no deletion performed').waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Mark Reviewed' }).count(), 0);
+      assert.equal(await page.evaluate(() => window.__adminDecisionCalls), 1);
+      assert.equal(await page.evaluate(() => window.__adminSyntheticDeletionRow.resolution_source_updated_date),
+        '2026-01-01T00:00:00Z');
+    });
+
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
