@@ -7,12 +7,14 @@ const load = page.slice(page.indexOf("  const loadUsers = async () => {"), page.
 
 test("User directory tracks latest request and preserves verified data on errors", () => {
   assert.match(load, /requestSequence = \+\+userLoadSequence\.current/);
+  assert.match(load, /activeSessionToken\.current !== sessionToken/);
   assert.match(load, /await listAuthorizedUsersAdmin\(\{ sessionToken \}\)/);
-  assert.match(load, /if \(requestSequence === userLoadSequence\.current\)/);
+  assert.match(load, /if \(ownsRead\(\)\)/);
   assert.match(load, /setUsers\(allUsers\)/);
   assert.match(load, /setUserDirectoryError\(false\)/);
   assert.match(load, /catch \{/);
   assert.match(load, /setUserDirectoryError\(true\)/);
+  assert.match(load, /return ownsRead\(\) \? allUsers : null/);
   assert.match(load, /return null/);
   assert.match(load, /finally \{/);
   assert.match(load, /setIsLoading\(false\)/);
