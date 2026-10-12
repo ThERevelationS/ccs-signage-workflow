@@ -59,7 +59,7 @@ assert.match(reload, /const startedEditGeneration = orderLocalEditGenerationRef\
 assert.equal((reload.match(/latestEditGeneration: orderLocalEditGenerationRef\.current/g) || []).length, 2);
 assert.equal((reload.match(/localEditInProgress: hasActiveOrderEdits\(\)/g) || []).length, 2);
 assert.match(reload, /pendingSyncIdsRef\.current = durablePendingIds/);
-assert.match(reload, /setReadError\("Orders could not/); // Sanity check of error handling below can be evaluated by source
+assert.match(reload, /setReadError\(error\?\.message \|\| "Orders could not be verified completely\."\)/);
 console.log('PASS timer, focus, explicit retry, and load-error branches share the Order edit-generation fence');
 
 const input = source.slice(source.indexOf('{/* Customer Name with Work Order Link */}'),
