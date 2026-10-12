@@ -177,6 +177,9 @@ async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
   const latest = await Receipt.get(receipt.id).catch(()=>null);
   if (latest?.status === 'failed' && mechanicReceiptOperationIdentityValid(latest) &&
       mechanicReceiptIdentityUnchanged(receipt,latest)) return;
+  // Preserve a specific already-safe 409 (notably photo evidence conflicts)
+  // instead of hiding it behind a generic receipt-terminalization conflict.
+  if (Number((error as any)?.status) === 409) throw error;
   throw Object.assign(new Error('Fleet mechanic receipt changed while failure was being recorded. Verify its current operation and work-order evidence before retrying.'),{status:409});
 }
 

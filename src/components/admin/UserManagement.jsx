@@ -80,6 +80,8 @@ export default function UserManagement() {
   const [inviteLastName, setInviteLastName] = useState("");
   const [inviteRole, setInviteRole] = useState("user");
   const [isInviting, setIsInviting] = useState(false);
+  const inviteInFlight = useRef(false);
+  const inviteOwner = useRef(null);
   const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState("");
 
@@ -126,6 +128,17 @@ export default function UserManagement() {
   }, [deletionImpactRequest?.id, deletionImpactError]);
 
   useEffect(() => {
+    // A prior session may still have an invitation in flight. Release only its
+    // UI ownership; never let it resume onboarding or Smartsheet actions.
+    inviteOwner.current = null;
+    inviteInFlight.current = false;
+    setIsInviting(false);
+    setInviteError("");
+    setInviteSuccess("");
+    setInviteEmail("");
+    setInviteFirstName("");
+    setInviteLastName("");
+    setInviteRole("user");
     // Revoke UI ownership from a pending previous-session resolution.
     // The backend's authorized CAS may finish, but it cannot update this UI.
     deletionResolutionOwner.current = null;
