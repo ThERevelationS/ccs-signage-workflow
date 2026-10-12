@@ -96,6 +96,7 @@ function harness(initialDate = tomorrow) {
     boardRefreshDeferredRef: { current: false },
     quickEditsInFlightRef: { current: new Map() },
     savingRevisitIds: new Set(),
+    savingQuickEditKeys: new Set(),
     reopeningWipIds: new Set(),
     reopenedFocusWorkOrderId: null,
     reopeningWipInFlightRef: { current: new Set() },
@@ -116,6 +117,9 @@ function harness(initialDate = tomorrow) {
   ctx.setQuickEditError = (value) => { ctx.quickEditError = value; };
   ctx.setSavingRevisitIds = (updater) => {
     ctx.savingRevisitIds = typeof updater === 'function' ? updater(ctx.savingRevisitIds) : updater;
+  };
+  ctx.setSavingQuickEditKeys = (updater) => {
+    ctx.savingQuickEditKeys = typeof updater === 'function' ? updater(ctx.savingQuickEditKeys) : updater;
   };
   ctx.setReopeningWipIds = (updater) => {
     ctx.reopeningWipIds = typeof updater === 'function' ? updater(ctx.reopeningWipIds) : updater;
