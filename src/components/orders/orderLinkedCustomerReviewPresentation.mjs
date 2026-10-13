@@ -17,13 +17,17 @@ export function normalizeOrderLinkedCustomerReviews(items, count) {
         typeof workOrderId !== 'string' || !workOrderId.trim() ||
         seenOrders.has(orderId) || seenRows.has(rowId) ||
         typeof item.local_customer_name !== 'string' ||
-        typeof item.smartsheet_customer_name !== 'string') continue;
+        typeof item.smartsheet_customer_name !== 'string' ||
+        typeof item.order_updated_date !== 'string' || !item.order_updated_date ||
+        typeof item.remote_modified_at !== 'string' || !item.remote_modified_at) continue;
     seenOrders.add(orderId);
     seenRows.add(rowId);
     normalized.push({
       orderId, sheetId, rowId, workOrderId: workOrderId.slice(0, 100),
       localCustomerName: item.local_customer_name.slice(0, 160),
       smartsheetCustomerName: item.smartsheet_customer_name.slice(0, 160),
+      orderUpdatedDate: item.order_updated_date.slice(0, 90),
+      remoteModifiedAt: item.remote_modified_at.slice(0, 90),
     });
   }
   return normalized;
@@ -36,7 +40,8 @@ export function orderCustomerReviewRowState(review, loadedOrder) {
       String(loadedOrder.work_order_id ?? '') !== review?.workOrderId) {
     return 'changed_or_unavailable';
   }
-  if (String(loadedOrder.customer_name ?? '') !== review.localCustomerName ||
+  if (String(loadedOrder.updated_date ?? '') !== review.orderUpdatedDate ||
+      String(loadedOrder.customer_name ?? '') !== review.localCustomerName ||
       loadedOrder.smartsheet_pending_local_sync === true) return 'changed_or_unavailable';
   return 'matches_review';
 }
