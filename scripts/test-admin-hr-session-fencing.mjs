@@ -32,16 +32,23 @@ function adminFixture() {
     activeEditingUser:{current:older},
     hrSaveOwner:{current:null},
     hrSaveInFlight:{current:false},
+    userLoadSequence:{current:0},
     userUpdateInFlight:{current:false},
     deletionInFlight:{current:false},
   };
-  const state = { calls:[], loading:false, error:false, saving:false };
+  const state = { calls:[], loading:false, error:false, saving:false, users:[older], editingUser:older };
   const common = {
     ...refs, userMutationSaving:false,
     get isLoading(){return state.loading;},
     get userDirectoryError(){return state.error;},
     isDialogOpen:true,
     setHrMutationSaving:value=>{state.saving=value;},
+    setUserDirectoryError:value=>{state.error=value;},
+    setUsers:updater=>{state.users=updater(state.users);},
+    setEditingUser:updater=>{
+      state.editingUser=updater(state.editingUser);
+      refs.activeEditingUser.current=state.editingUser;
+    },
     updateAuthorizedUserHrAdmin:({record,hrData,sessionToken})=>
       new Promise((resolve,reject)=>state.calls.push({record,hrData,sessionToken,resolve,reject}))
   };
@@ -51,6 +58,8 @@ function adminFixture() {
   const change = (token,record) => {
     refs.activeSessionToken.current=token;
     refs.activeEditingUser.current=record;
+    state.editingUser=record;
+    state.users=[record];
     refs.hrSaveOwner.current=null;
     refs.hrSaveInFlight.current=false;
     state.saving=false;
@@ -110,7 +119,7 @@ test("Admin double submit starts one authorized HR write",async()=>{
   assert.equal(f.state.saving,true);
   assert.equal(f.state.calls[0].record,older);
   assert.equal(f.state.calls[0].sessionToken,"old-session");
-  f.state.calls[0].resolve({id:older.id});
+  f.state.calls[0].resolve({...older, updated_date:"v1-saved", hr_data:draft});
   assert.deepEqual(await Promise.all([first,duplicate]),[true,undefined]);
   assert.equal(f.state.saving,false);
 });
@@ -122,12 +131,12 @@ for (const outcome of ["success","failure"]) {
     f.change("new-session",newer);
     const newPending=f.handler("new-session",newer)(draft,newer);
     assert.equal(f.state.calls.length,2);
-    if(outcome==="success")f.state.calls[0].resolve({id:older.id});
+    if(outcome==="success")f.state.calls[0].resolve({...older, updated_date:"v1-saved", hr_data:draft});
     else f.state.calls[0].reject(new Error("private-old-hr-error"));
     assert.equal(await oldPending,false);
     assert.equal(f.state.saving,true);
     assert.equal(f.refs.hrSaveInFlight.current,true);
-    f.state.calls[1].resolve({id:newer.id});
+    f.state.calls[1].resolve({...newer, updated_date:"v2-saved", hr_data:draft});
     assert.equal(await newPending,true);
     assert.equal(f.state.saving,false);
   });
@@ -160,7 +169,7 @@ test("Current Admin HR error releases owner and permits retry",async()=>{
   assert.equal(f.refs.hrSaveInFlight.current,false);
   const next=f.handler("old-session",older)(draft,older);
   assert.equal(f.state.calls.length,2);
-  f.state.calls[1].resolve({id:older.id});
+  f.state.calls[1].resolve({...older, updated_date:"v1-saved", hr_data:draft});
   assert.equal(await next,true);
 });
 
