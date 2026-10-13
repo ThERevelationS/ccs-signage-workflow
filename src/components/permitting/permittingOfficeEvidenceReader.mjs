@@ -16,7 +16,7 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
   const counters = () => ({
     locality_count:0, office_count:0, recorded_staff_verified_offices:0,
     office_identity_review:0, profile_link_review:0, canonical_office_identity_missing:0,
-    verification_provenance_review:0, authority_roles_review:0,
+    verification_provenance_review:0, authority_roles_review:0, canonical_electrical_role_copy_review:0,
     electrical_issuer_assignments:0, electrical_inspection_assignments:0
   });
   const states = { OH:counters(), KY:counters() }, reviews = [];
@@ -37,6 +37,18 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
       const id = clean(office?.id);
       if (id) countsById.set(id, (countsById.get(id) || 0) + 1);
     }
+    // Compare exact canonical IDs only within one locality and one distinct electrical role.
+    // A shared provider across different roles or localities is not a duplicate-copy finding.
+    const canonicalRoleCopies = new Map();
+    for (const [index,office] of offices.entries()) {
+      const canonical = office?.government_office_id;
+      if (typeof canonical !== 'string' || !canonical.trim() || canonical !== canonical.trim()) continue;
+      for (const role of specificElectrical) if (Array.isArray(office?.authority_roles) && office.authority_roles.includes(role)) {
+        const key = JSON.stringify([canonical,role]);
+        if (!canonicalRoleCopies.has(key)) canonicalRoleCopies.set(key, []);
+        canonicalRoleCopies.get(key).push(index);
+      }
+    }
     for (const [index,office] of offices.entries()) {
       tally.office_count++;
       const id = clean(office?.id), name = clean(office?.name);
@@ -45,7 +57,12 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
       if (verified) tally.recorded_staff_verified_offices++;
       for (const role of specificElectrical) if (roles.includes(role))
         tally[role === 'electrical_permit' ? 'electrical_issuer_assignments' : 'electrical_inspection_assignments']++;
+      const duplicateElectricalRoles = [...specificElectrical].filter(role =>
+        roles.includes(role) && (canonicalRoleCopies.get(JSON.stringify([office?.government_office_id,role]))?.length || 0) > 1);
+      const conflictingOfficeIndexes = [...new Set(duplicateElectricalRoles.flatMap(role =>
+        canonicalRoleCopies.get(JSON.stringify([office.government_office_id,role]))))].filter(other => other !== index);
       const flags = [];
+      if (duplicateElectricalRoles.length) flags.push('canonical_electrical_role_copy_review');
       if (!id || id !== office?.id || countsById.get(id) > 1 || !name)
         flags.push('office_identity_review');
       if (verified && flaggedLinks.has(locality.id))
@@ -63,6 +80,8 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
       if (flags.length) reviews.push({
         locality_id:locality.id, locality_name:clean(locality.name) || 'Unnamed locality',state,
         office_index:index,office_id:id,office_name:name || 'Unnamed office',
+        government_office_id:clean(office?.government_office_id),duplicate_electrical_roles:duplicateElectricalRoles,
+        conflicting_office_indexes:conflictingOfficeIndexes,
         recorded_staff_verified:verified,
         authority_roles:roles.filter(role => typeof role === 'string'),
         link_flags:flags.includes('profile_link_review') ? flaggedLinks.get(locality.id) : [],
@@ -80,5 +99,5 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
     || a.locality_name.localeCompare(b.locality_name) || a.locality_id.localeCompare(b.locality_id)
     || a.office_index-b.office_index);
   return {states,reviews,authority_verified:false,completeness_verified:false,
-    notice:'Read-only saved office relationship audit. Staff-verified is a recorded flag, not independently corroborated evidence. Missing notes, canonical IDs and profile links require review; existing office review status is never changed. Contact websites and shared office IDs do not establish permitting authority, legal applicability or exact address boundaries.'};
+    notice:'Read-only saved office relationship audit. Staff-verified is a recorded flag, not independently corroborated evidence. Missing notes, canonical IDs, repeated canonical copies for the same electrical role and profile links require review; existing office review status is never changed. Contact websites and shared office IDs do not establish permitting authority, legal applicability or exact address boundaries.'};
 }
