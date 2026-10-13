@@ -28,7 +28,8 @@ export function reconcileReviewedOfficesWithoutSavedCopies(localities, profiles,
       throw Error('Malformed saved office copies in authority-review mirror');
     if (!stable(locality.jurisdiction_profile_id)) continue;
     const id = locality.jurisdiction_profile_id;
-    copies.set(id,[...(copies.get(id)||[]),locality]);
+    if (!copies.has(id)) copies.set(id,[]);
+    copies.get(id).push(locality);
   }
   const grouped = new Map(), excluded_event_ids = [];
   for (const event of events) {
@@ -41,10 +42,11 @@ export function reconcileReviewedOfficesWithoutSavedCopies(localities, profiles,
     if (!statesInScope.has(state)) {excluded_event_ids.push(event.id);continue;}
     // Missing relation keys are individual review items, never clustered into an invented relationship.
     const key = JSON.stringify([event.jurisdiction_id,string(event.relation_key) || 'invalid:'+event.id]);
-    grouped.set(key,[...(grouped.get(key)||[]),event]);
+    if (!grouped.has(key)) grouped.set(key,[]);
+    grouped.get(key).push(event);
   }
   const counts = () => ({relation_histories:0, saved_copy_reference_only:0, no_saved_locality:0,
-    no_saved_office:0, role_not_assigned:0, office_needs_review:0,
+    no_saved_office:0, ambiguous_office_copy:0, role_not_assigned:0, office_needs_review:0,
     shared_locality_reference:0, locality_state_conflict:0, revoked:0,
     uncommitted_or_uncertain:0, ambiguous_history:0, invalid_review_identity:0,
     target_profile_unavailable:0});
@@ -63,7 +65,7 @@ export function reconcileReviewedOfficesWithoutSavedCopies(localities, profiles,
     if (!profile) status='target_profile_unavailable';
     else if (pending || !eligible.length) status='uncommitted_or_uncertain';
     else {
-      const top=Math.max(...eligible.map(e=>e.sequence));
+      const top=eligible.reduce((max,e)=>Math.max(max,e.sequence),0);
       const heads=eligible.filter(e=>e.sequence===top);
       if (heads.length!==1) status='ambiguous_history';
       else {
@@ -96,6 +98,7 @@ export function reconcileReviewedOfficesWithoutSavedCopies(localities, profiles,
           string(office?.government_office_id)===row.canonical_office_id);
         row.office_copy_ids=matchingOffices.map(office=>string(office.id));
         if (!matchingOffices.length) status='no_saved_office';
+        else if (matchingOffices.length>1) status='ambiguous_office_copy';
         else if (!matchingOffices.some(office=>Array.isArray(office.authority_roles) && office.authority_roles.includes(row.role)))
           status='role_not_assigned';
         else if (!matchingOffices.some(office=>Array.isArray(office.authority_roles) &&
