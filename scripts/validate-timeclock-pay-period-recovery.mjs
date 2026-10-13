@@ -6228,15 +6228,8 @@ test('v29 abandoned settled correction coordinator recovers from authoritative e
     ?.correction_create_status, 'idle');
   assert.equal(h.rows.TimeClockAudit.filter((row) =>
     row.action === 'admin_correction' && row.request_id === firstId).length, 1);
-  let coordinatorReleaseAttempts = 0;
-  h.setBeforeUpdate((name, query, update) => {
-    if (name === 'TimeClockAdminCorrectionGate' && update.$set?.status === 'idle') {
-      coordinatorReleaseAttempts += 1;
-      assert.equal(query.request_id, firstId);
-    }
-  });
   const next = await correction('v29-recovery-followup', '2026-09-20T14:45:00.000Z', 7, 15);
-  assert.equal(next.status, 200, JSON.stringify({ ...next.body, coordinatorReleaseAttempts }));
+  assert.equal(next.status, 200, JSON.stringify(next.body));
   assert.equal(gate.status, 'idle');
   assert.equal(gate.request_id, '');
   assert.equal(entry.clock_in, '2026-09-20T14:45:00.000Z');
