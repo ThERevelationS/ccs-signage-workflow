@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {summarizeSavedSelectorSources} from './selectorSavedSourceEvidence.mjs';
 import {summarizeSelectorElectricalOfficeHandoff} from './selectorElectricalOfficeHandoff.mjs';
+import SelectorSourceOfficeReviewLookup from './SelectorSourceOfficeReviewLookup';
 
 export default function SelectorSavedSourceReview({profile,locality}){
   const [limit,setLimit]=useState(10);
@@ -10,7 +11,7 @@ export default function SelectorSavedSourceReview({profile,locality}){
     <summary className="min-h-11 cursor-pointer py-2 font-semibold">Review saved source links ({sources.length})</summary>
     <p>Saved on profile ID {profile?.id||'unknown'}. Research links do not verify electrical issuers, inspectors, local authority, or current adopted code. Check exact office IDs, geography and county overlays with official sources.</p>
     {!sources.length&&<p>No saved links. Inspect Scan activity and request official permit/inspection materials; do not guess an office.</p>}
-    <ul className="space-y-2">{sources.slice(0,limit).map(source=><li key={source.key} className="rounded border p-2">
+    <ul className="space-y-2">{sources.slice(0,limit).map((source,index)=><li key={source.key} className="rounded border p-2">
       <p className="font-semibold break-words">{source.title}</p>
       <p>{source.category} · {source.provenance}{source.protected?' · Protected/manual evidence — preserve':''}</p>
       <div className="flex flex-wrap gap-3">
@@ -22,6 +23,7 @@ export default function SelectorSavedSourceReview({profile,locality}){
       {source.archive_status==='archive_not_verified'&&<p>A stored file exists but its PDF fingerprint has not been verified; keep it for staff review.</p>}
       {source.archive_status==='archive_not_recorded'&&<p>No verified PDF archive recorded. Retain HTML forms and portals as links.</p>}
       {source.archive_status==='verified_pdf_fingerprint'&&<p>Stored PDF fingerprint matches. Legal authority and applicability are not confirmed.</p>}
+      <SelectorSourceOfficeReviewLookup key={source.key+':'+profile?.id} profile={profile} document={profile?.documents?.[index]}/>
     </li>)}</ul>
     {sources.length>limit&&<button type="button" className="min-h-11 underline" onClick={()=>setLimit(n=>n+10)}>Show next saved links ({sources.length-limit} remaining)</button>}
     <section aria-label="Electrical office source-to-review checklist" className="mt-3 space-y-2 rounded border border-amber-200 bg-amber-50 p-2">
