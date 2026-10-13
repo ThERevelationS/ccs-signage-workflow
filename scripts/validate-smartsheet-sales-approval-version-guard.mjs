@@ -61,8 +61,9 @@ check(backend.includes('heldApprovedSalesRowIds') && backend.includes('eligibleS
   backend.includes('!heldApprovedSalesRowIds.has(String(row.id))'),
   'Failed preflight approved records are excluded from remote Smartsheet PUT.');
 check(backend.includes('const approvedUpdates = verifiedSalesUpdates.filter(') &&
-  backend.includes('const ordinaryUpdates = verifiedSalesUpdates.filter('),
-  'Unapproved Sales records remain on the original batched update path.');
+  backend.includes('const ordinaryUpdates = verifiedSalesUpdates.filter(') &&
+  backend.includes('await commitVerifiedSalesMetadata({'),
+  'Ordinary Sales records use versioned metadata CAS while approved review writes retain their existing guard.');
 check(backend.includes('{ id, updated_date: planned.updated_date }, { $set: fields }') &&
   backend.includes('if (committed?.updated !== 1)'),
   'Approved Sales metadata uses a final version matched updateMany CAS.');
