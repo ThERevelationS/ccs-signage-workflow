@@ -3144,6 +3144,93 @@ Deno.serve(async (req) => {
     target.email = asEmail(target.email);
     const actorEmail = asEmail(actor.email);
 
+    // Read-only operational diagnostics must run before ensureState and all
+    // clock-state recovery hooks: viewing coordinator health may never mutate
+    // payroll, attendance, audit, or employee state.
+    if (action === 'admin_correction_gate_diagnostics') {
+      if (!actor?.id || actor.role !== 'admin' || String(actor.id).startsWith('badge:')) {
+        return Response.json({ success: false, error: 'Administrator session is required for correction coordinator diagnostics.' }, { status: 403 });
+      }
+      const gates = await adminCorrectionGateEntity.filter({});
+      if (!Array.isArray(gates)) throw new Error('Manager-correction coordinator diagnostics could not read its records.');
+      if (gates.length !== 1) {
+        return Response.json({ success: true, coordinator_state: 'invalid_setup',
+          record_count: gates.length, attention: 'Exactly one backend-provisioned company coordinator record is required.',
+          read_only: true });
+      }
+      const gate = gates[0];
+      const cleanIdle = gate?.scope === 'company' && gate?.status === 'idle' &&
+        !gate.request_id && !gate.time_entry_id && !gate.payload_hash &&
+        !gate.claim_token && !gate.started_at;
+      if (cleanIdle) {
+        return Response.json({ success: true, coordinator_state: 'ready',
+          record_count: 1, read_only: true, attention: null });
+      }
+      if (gate?.scope !== 'company' || gate?.status !== 'creating' ||
+          !gate.request_id || !gate.time_entry_id || !gate.payload_hash ||
+          !gate.claim_token || !Number.isFinite(Date.parse(String(gate.started_at || '')))) {
+        return Response.json({ success: true, coordinator_state: 'invalid_state',
+          record_count: 1, read_only: true,
+          attention: 'Coordinator has malformed claim or idle metadata. Investigate without clearing it.' });
+      }
+      const heldReview = String(gate.time_entry_id).startsWith('review:');
+      const correctionRequestId = heldReview ? String(gate.time_entry_id).slice('review:'.length) : '';
+      const request = heldReview && correctionRequestId
+        ? await correctionRequestEntity.get(correctionRequestId).catch(() => null) : null;
+      const entryId = heldReview ? String(request?.time_entry_id || '') : String(gate.time_entry_id);
+      const entry = entryId ? await entryEntity.get(entryId).catch(() => null) : null;
+      const correctionAudits = await auditEntity.filter({ action: 'admin_correction', request_id: gate.request_id });
+      const reviewAudits = heldReview
+        ? await auditEntity.filter({ action: 'correction_review', request_id: gate.request_id }) : [];
+      if (!Array.isArray(correctionAudits) || !Array.isArray(reviewAudits)) {
+        throw new Error('Manager-correction coordinator diagnostics could not read authoritative audit evidence.');
+      }
+      const auditEvidence = (rows: any[]) => ({
+        count: rows.length,
+        outcomes: rows.map((row: any) => String(row.outcome || 'unknown')),
+        ownership_matches: rows.length <= 1 && rows.every((row: any) =>
+          row?.id && entry?.id && String(row.time_entry_id || '') === String(entry.id) &&
+          asEmail(row.user_email) === asEmail(entry.user_email) &&
+          (!heldReview || (String(row.details?.correction_request_id || '') === correctionRequestId &&
+            constantTimeEqual(String(row.details?.review_payload_hash || ''), String(gate.payload_hash))))
+        ),
+      });
+      const correction = correctionAudits[0] || null;
+      const applied = correction?.details?.corrected || {};
+      const entrySnapshotMatches = Boolean(entry?.id && correction?.id &&
+        String(applied.id || '') === String(entry.id) &&
+        asEmail(applied.user_email) === asEmail(entry.user_email) &&
+        String(applied.clock_in || '') === String(entry.clock_in || '') &&
+        String(applied.clock_out || '') === String(entry.clock_out || '') &&
+        Number(applied.lunch_minutes || 0) === Number(entry.lunch_minutes || 0) &&
+        Number(applied.total_hours || 0) === Number(entry.total_hours || 0) &&
+        String(applied.status || '') === String(entry.status || '') &&
+        String(applied.notes || '') === String(entry.notes || ''));
+      const correctionEvidence = auditEvidence(correctionAudits);
+      const reviewEvidence = auditEvidence(reviewAudits);
+      // These flags describe observed evidence only. Never infer a stale lease
+      // is safe to release, and never expose claim tokens or payload hashes.
+      return Response.json({
+        success: true, coordinator_state: 'claimed', read_only: true, record_count: 1,
+        claim_kind: heldReview ? 'manager_review' : 'direct_manager_correction',
+        request_id: String(gate.request_id), started_at: String(gate.started_at),
+        ...(heldReview ? { correction_request_id: correctionRequestId,
+          correction_request_status: request?.id ? String(request.status || 'unknown') : 'missing',
+          review_request_binding_matches: Boolean(request?.id &&
+            String(request.review_request_id || '') === String(gate.request_id) &&
+            constantTimeEqual(String(request.review_payload_hash || ''), String(gate.payload_hash))),
+        } : {}),
+        time_entry_id: entryId || null, entry_found: Boolean(entry?.id),
+        entry_request_marker_matches: Boolean(entry?.id &&
+          String(entry.last_correction_request_id || '') ===
+            (heldReview ? correctionRequestId : String(gate.request_id))),
+        applied_entry_snapshot_matches: entrySnapshotMatches,
+        correction_audit: correctionEvidence,
+        ...(heldReview ? { review_audit: reviewEvidence } : {}),
+        attention: 'A company correction claim is held. Inspect the request, audits, TimeEntry and employee state; never clear or time out the coordinator without authoritative reconciliation.',
+      });
+    }
+
     let state = await ensureState(stateEntity, target);
     state = await recoverTransition({ stateEntity, entryEntity, auditEntity, laborEntity, state, target, actor });
     state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
