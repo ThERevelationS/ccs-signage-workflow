@@ -22,7 +22,7 @@ test("User directory tracks latest request and preserves verified data on errors
 });
 
 test("Session changes revoke the previous directory's pending reads", () => {
-  assert.match(page, /return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
+  assert.match(page, /return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrDraftStatus\.current = null;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
   assert.match(page, /if \(sessionToken\) \{[\s\S]*?void loadUsers\(\)/);
   assert.match(page, /setUsers\(\[\]\);\s*setUserDirectoryError\(true\)/);
 });
