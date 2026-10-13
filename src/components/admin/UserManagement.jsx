@@ -111,6 +111,11 @@ export default function UserManagement() {
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const userUpdateInFlight = useRef(false);
   const userUpdateOwner = useRef(null);
+  const hrSaveInFlight = useRef(false);
+  const hrSaveOwner = useRef(null);
+  const [hrMutationSaving, setHrMutationSaving] = useState(false);
+  const activeEditingUser = useRef(editingUser);
+  activeEditingUser.current = editingUser;
   const [deletionRequests, setDeletionRequests] = useState([]);
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestsError, setDeletionRequestsError] = useState(false);
@@ -143,6 +148,9 @@ export default function UserManagement() {
     userUpdateOwner.current = null;
     userUpdateInFlight.current = false;
     setUserMutationSaving(false);
+    hrSaveOwner.current = null;
+    hrSaveInFlight.current = false;
+    setHrMutationSaving(false);
     // A previous session may have a deletion in flight. The server decides
     // its outcome; only the owning session may change this confirmation UI.
     deletionOwner.current = null;
@@ -206,6 +214,8 @@ export default function UserManagement() {
     // Revoke ownership on both session transitions and component unmounts;
     // a pending email callback cannot alert after Admin is left behind.
     return () => {
+      hrSaveOwner.current = null;
+      hrSaveInFlight.current = false;
       deletionOwner.current = null;
       deletionInFlight.current = false;
       passwordResetOwner.current = null;
@@ -382,7 +392,9 @@ export default function UserManagement() {
   };
 
   const openEditUser = (user) => {
-    if (isLoading || userDirectoryError || !sessionToken) return;
+    if (isLoading || userDirectoryError || !sessionToken || hrSaveInFlight.current ||
+        userUpdateInFlight.current || deletionInFlight.current ||
+        activeSessionToken.current !== sessionToken) return;
     setEditingUser(user);
     setFormData({
       full_name: user.full_name || "",
@@ -474,7 +486,7 @@ export default function UserManagement() {
   };
 
   const handleSave = async () => {
-    if (!editingUser || userUpdateInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
+    if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
     const requestedPassword = String(formData.password_hash || "");
