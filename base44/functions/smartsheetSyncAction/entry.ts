@@ -384,7 +384,7 @@ async function pullDataset(
   const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
   const orderLocalPendingConflicts: string[] = [];
-  const orderLinkedCustomerNameReviews: { order_id: string; row_id: string; work_order_id: string; local_customer_name: string; smartsheet_customer_name: string }[] = [];
+  const orderLinkedCustomerNameReviews: { order_id: string; sheet_id: string; row_id: string; work_order_id: string; local_customer_name: string; smartsheet_customer_name: string }[] = [];
   let orderDeletedLinkTombstonesPreserved = 0;
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
@@ -517,7 +517,7 @@ async function pullDataset(
         // Do not update the customer, job link, other row fields OR snapshot:
         // the remote row is retained verbatim for exact-ID admin review.
         orderLinkedCustomerNameReviews.push({
-          order_id: String(existing.id), row_id: rowId,
+          order_id: String(existing.id), sheet_id: sheetId, row_id: rowId,
           work_order_id: String(existing.work_order_id),
           local_customer_name: cleanText(existing.customer_name, 160),
           smartsheet_customer_name: cleanText(remoteName, 160),
