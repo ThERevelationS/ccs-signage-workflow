@@ -15,7 +15,7 @@ test('Session transition revokes user-update owner and clears sensitive editor s
 });
 
 test('Existing-user save fences duplicate clicks and captures immutable session ownership',()=>{
-  assert.match(save,/userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| deletionInFlight\.current \|\| isLoading \|\| userDirectoryError/);
+  assert.match(save,/userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| hrReloadInFlight\.current \|\| deletionInFlight\.current \|\| isLoading \|\| userDirectoryError/);
   assert.match(save,/activeSessionToken\.current !== sessionToken\) return/);
   assert.match(save,/const owner = \{ sessionToken \};\s*userUpdateOwner\.current = owner/);
   assert.match(save,/const ownsUpdate = \(\) => userUpdateOwner\.current === owner &&\s*activeSessionToken\.current === sessionToken/);
