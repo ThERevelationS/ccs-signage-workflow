@@ -2353,6 +2353,88 @@ async function pushDataset(
     ? deferredSmartsheetWrites.filter((row: any) => !heldApprovedSalesRowIds.has(String(row.id)))
     : deferredSmartsheetWrites;
 
+  // Smartsheet has no documented conditional PUT/If-Match. A definitive 429
+  // can safely retry only if its previously approved local and remote state
+  // remains unchanged AFTER Retry-After. Uncertainty holds the whole PUT.
+  const revalidateSalesRateLimitedPut = async () => {
+    try {
+      if (dataset !== 'sales' || typeof options?.assertRunOwnership !== 'function') {
+        throw new Error('Sales run coordinator unavailable');
+      }
+      await options.assertRunOwnership();
+      const rowIds = eligibleSmartsheetWrites.map((row: any) => String(row.id ?? ''));
+      const uniqueRows = new Set(rowIds);
+      if (!rowIds.length || uniqueRows.size !== rowIds.length ||
+          rowIds.some((id) => !/^[0-9]+$/.test(id))) {
+        throw new Error('Missing or duplicate Sales permanent row IDs');
+      }
+      const claims = new Map<string, [string, any][]>();
+      for (const [id, verification] of deferredSalesVerification) {
+        const rowId = String(verification.rowId ?? '');
+        if (!uniqueRows.has(rowId)) continue;
+        const prior = claims.get(rowId) || [];
+        prior.push([id, verification]);
+        claims.set(rowId, prior);
+      }
+      const plans: [string, any][] = [];
+      for (const rowId of rowIds) {
+        const matching = claims.get(rowId) || [];
+        if (matching.length !== 1 || salesRemotePutPlans.get(matching[0][0])?.rowId !== rowId) {
+          throw new Error('Sales PUT ownership cannot be uniquely verified');
+        }
+        plans.push(matching[0]);
+      }
+      const plannedById = new Map(pendingRecords.map((record: any) => [String(record.id), record]));
+      const columnIds = [...new Set(Object.values(bindings)
+        .map((value: any) => String(value).trim()).filter((id: string) => /^[0-9]+$/.test(id)))];
+      if (!columnIds.length) throw new Error('Sales column bindings unavailable');
+      const assigneeColumnId = cleanText(bindings?.current_task_assigned_to, 40);
+      for (let start = 0; start < plans.length; start += 100) {
+        const batch = plans.slice(start, start + 100);
+        const batchRowIds = batch.map(([, verification]) => String(verification.rowId));
+        await options.assertRunOwnership();
+        const current = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          query: {id: {$in: batch.map(([id]) => id)}}, sort: 'id',
+          label: 'Sales rate-limited PUT fresh WorkOrder verification',
+        });
+        const latest = new Map(current.map((record: any) => [String(record.id), record]));
+        if (staleSalesRemotePutPlans(batch, plannedById, latest, sheetId).length) {
+          throw new Error('Sales WorkOrder changed during rate limit wait');
+        }
+        const params = new URLSearchParams({
+          rowIds: batchRowIds.join(','), columnIds: columnIds.join(','),
+          exclude: 'nonexistentCells',
+        });
+        const remote = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+        if (String(remote.body?.id ?? '') !== sheetId || !Array.isArray(remote.body?.rows) ||
+            !columnIds.every((id: string) =>
+              remote.body?.columns?.some((column: any) => String(column.id) === id))) {
+          throw new Error('Smartsheet sheet/column evidence incomplete');
+        }
+        const freshRows = normalizeSheetRows(remote.body);
+        const batchIds = new Set(batchRowIds);
+        if (freshRows.some((row: any) => !batchIds.has(String(row.id))) ||
+            new Set(freshRows.map((row: any) => String(row.id))).size !== freshRows.length) {
+          throw new Error('Smartsheet returned conflicting row identities');
+        }
+        const freshByRowId = new Map(freshRows.map((row: any) =>
+          [String(row.id), buildSalesPullSnapshot(row, bindings)]));
+        const remotePlans = batch.map(([id]) => [id, salesRemotePutPlans.get(id)]);
+        if (staleSalesRemotePutSnapshotIds(remotePlans, freshByRowId, assigneeColumnId).length) {
+          throw new Error('Smartsheet values changed during rate limit wait');
+        }
+      }
+      await options.assertRunOwnership();
+    } catch {
+      // A held definitive 429 batch cannot count as synchronized even if a
+      // different editor independently entered the same desired values.
+      throw Object.assign(new Error(
+        'Sales rate-limit retry stopped: fresh local and Smartsheet row evidence could not be verified. Review before retrying.'
+      ), {salesRateLimitRecheckBlocked: true});
+    }
+  };
+
   // Phase 2: Batch Smartsheet write. Neither Sales nor Order rows are
   // considered complete from the write acknowledgement alone; affected
   // permanent rows are freshly read back before Base44 sync metadata advances.
