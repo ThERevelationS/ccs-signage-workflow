@@ -9,6 +9,7 @@ import {
   classifySalesPullDuplicateLinkedRowRisks,
   classifySalesPushRowOwnershipRisks,
   readSalesPushRowOwnershipRisks,
+  verifySalesPushWriteOwnership,
 } from '../base44/shared/smartsheetSalesPullCreateRisk.mjs';
 
 let checks = 0;
@@ -287,4 +288,87 @@ yes(pushGuardIndex>=0 && salesPushPlanIndex>pushGuardIndex &&
 yes(salesRunRequiresReview([{dataset:'sales',direction:'push',skipped:true,
   duplicate_sales_push_row_links:1}]),
   'Blocked Sales push is surfaced as needs review, not successful sync.');
-console.log('Sales pull/create and Phase 5V push ownership: '+checks+'/'+checks+' PASS.');
+// Phase 5W: a clean Phase 5V ownership preflight is NOT durable authority
+// for an in-flight PUT after backups, approvals, or a rate-limit wait.
+const phase5vWrites = [{id:'90555',cells:[{columnId:'111',value:'Updated'}]}];
+let currentClaims = [pushOwner];
+const lateOwnershipQueries = [];
+const lateEntity = {async filter(query,sort,limit,skip) {
+  lateOwnershipQueries.push({query,sort,limit,skip});
+  return currentClaims.slice(skip,skip+limit);
+}};
+equal(await verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,phase5vWrites),
+  {verified:true,row_count:1},
+  'Fresh ownership verified immediately before first Sales PUT.');
+currentClaims = [pushOwner,pushOther];
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,phase5vWrites),
+  /ownership changed/,
+  'An off-pipeline claim arriving after initial preflight blocks late Sales PUT.');
+checks++;
+currentClaims = [pushOwner,pushDeleted];
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,phase5vWrites),
+  /ownership changed/,
+  'A deleted legacy claimant arriving during sync blocks the next Sales PUT.');
+checks++;
+currentClaims = [pushOwner];
+equal(await verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,phase5vWrites),
+  {verified:true,row_count:1},
+  'An independent fresh read after a resolved claim permits the correct row.');
+yes(lateOwnershipQueries.every(call =>
+  JSON.stringify(call.query) === JSON.stringify({smartsheet_row_id:{$in:['90555']}})),
+  'Late ownership rechecks use exact row filters, not full WorkOrder archives.');
+currentClaims = [{...pushOwner,smartsheet_row_id:'90556'}];
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,phase5vWrites),
+  /ownership changed/,
+  'Selected WorkOrder missing its claimed row in current datastore is held.');
+checks++;
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,
+    [{id:'90555'},{id:'90555'}]),
+  /duplicated/,
+  'Duplicate outgoing Smartsheet row writes fail before a query or PUT.');
+checks++;
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,[{id:'invalid'}]),
+  /invalid/,
+  'Invalid outgoing Smartsheet row identity fails before any write.');
+checks++;
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,pushSelected,[{id:'90556'}]),
+  /missing or competing planned/,
+  'PUT row without an exact planned WorkOrder owner is held.');
+checks++;
+await assert.rejects(
+  verifySalesPushWriteOwnership(lateEntity,sheetId,[...pushSelected,pushOther],
+    phase5vWrites),
+  /missing or competing planned/,
+  'Two planned owners cannot authorize the same outgoing PUT.');
+checks++;
+await assert.rejects(
+  verifySalesPushWriteOwnership({async filter(){return {items:[]};}},
+    sheetId,pushSelected,phase5vWrites),
+  /could not be verified completely/,
+  'Incomplete read response fails the fresh authorization preflight.');
+checks++;
+await assert.rejects(
+  verifySalesPushWriteOwnership({async filter(){throw Error('offline');}},
+    sheetId,pushSelected,phase5vWrites),
+  /offline/,
+  'Read failure blocks remote PUT instead of falling back to stale claims.');
+checks++;
+const retryGuard = backend.indexOf('const revalidateSalesRateLimitedPut = async () =>');
+const retryOwnership = backend.indexOf('await verifySalesPushWriteOwnership(',retryGuard);
+const firstPutOwnership = backend.indexOf('await verifySalesPushWriteOwnership(',retryOwnership+1);
+const putSubmit = backend.indexOf("await smartsheetWriteNoTimeoutRetry(\n        'PUT', '/sheets/' + sheetId + '/rows'");
+yes(retryGuard>=0 && retryOwnership>retryGuard &&
+  firstPutOwnership>retryOwnership && putSubmit>firstPutOwnership,
+  'Fresh ownership verification runs both after rate limit and just before the initial Sales PUT.');
+yes(backend.includes('salesOwnershipRecheckBlocked: true') &&
+  backend.includes('err?.salesRateLimitRecheckBlocked || err?.salesOwnershipRecheckBlocked') &&
+  backend.includes('salesFailedRecordIds.add(recordId)') &&
+  backend.includes('Matching remote values do not clear the ownership/retry hold'),
+  'An unauthorized or rate-limited blocked PUT cannot advance metadata or silently report success.');
+console.log('Sales pull/create and Phase 5V/5W late push ownership: '+checks+'/'+checks+' PASS.');
