@@ -60,6 +60,7 @@ function formFixture(){
   setSaveError:v=>{state.savedError=v;},
   setHrRecovery:update=>{state.recovery=typeof update==="function"?update(state.recovery):update;},
   setConfirmOverwrite:v=>{state.confirmed=v;},
+  setHrPreviewChoice:v=>{state.previewChoice=v;},
   setHrData:v=>{state.draft=v;},
   setDraftNotice:v=>{state.notice=v;}
  };
