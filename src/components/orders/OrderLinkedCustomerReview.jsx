@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { orderCustomerReviewRowState } from '@/components/orders/orderLinkedCustomerReviewPresentation.mjs';
 
-// Read-only snapshot of the last authenticated Order pull; no mutation buttons
-// or inferred job reassignment. Reviewers reconcile in their normal workflows.
+// Snapshot of the last authenticated Order pull. Only an administrator can
+// explicitly apply the separately reverified and audited unlink resolution;
+// the comparison and preflight themselves never mutate production records.
 export default function OrderLinkedCustomerReview({
   count = 0, items = [], orders = [], workOrders = [], isAdmin = false, sessionToken = '',
   canResolve = false, onResolutionApplied = null,
@@ -109,7 +110,7 @@ export default function OrderLinkedCustomerReview({
       <Dialog open={open} onOpenChange={closeReview}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order customer-name conflicts · review only</DialogTitle>
+            <DialogTitle>Order customer-name conflicts · review and resolve</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-700">
             These values were captured during the last manual Smartsheet pull. No customer,
