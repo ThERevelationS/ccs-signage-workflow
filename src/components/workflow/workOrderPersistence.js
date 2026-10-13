@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
+import { stripInheritedWorkOrderSyncIdentity } from './workOrderCreationIdentity.mjs';
 
 const SYSTEM_FIELDS = new Set([
   "id",
@@ -40,7 +41,10 @@ export function workOrderPatchMatches(record, patch) {
 }
 
 export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = base44.entities.WorkOrder } = {}) {
-  const payload = sanitizeWorkOrderFormPatch(data || {});
+  // All UI-driven new WorkOrders, including Duplicate Client, must start
+  // unlinked. Never copy an existing job's permanent Smartsheet row ownership
+  // or durable POST/import evidence into a newly created record.
+  const payload = stripInheritedWorkOrderSyncIdentity(sanitizeWorkOrderFormPatch(data || {}));
   const title = String(payload.title || "").trim();
   if (!title || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
     throw new Error(`${label} could not initialize its retry-safe create.`);
