@@ -31,3 +31,16 @@ r=reconcileOfficialInventory([],[{...p,parent_county:null}],single);
 assert.equal(r.profiles.assessments[0].state,'single_geographic_candidate');
 assert.equal(r.profiles.identity_review.length,1);
 r=reconcileOfficialInventory([],[p],single);assert.equal(r.profiles.identity_review.length,0);
+
+r=reconcileOfficialInventory([],[p,{...p,id:'p2'}],base);
+assert.deepEqual(r.profiles.identity_review.map(row=>row.id),['p','p2']);
+assert.deepEqual(r.profiles.identity_review[0].overlapping_record_ids,['p2']);
+assert.deepEqual(r.profiles.identity_review[1].overlapping_record_ids,['p']);
+assert.equal(r.profiles.assessments[0].canonical_identity_verified,false);
+r=reconcileOfficialInventory([],[p,{...p,id:'other-county',parent_county:{name:'Montgomery County'}},{...p,id:'other-state',state:'KY',type:'city'}],base);
+assert.equal(r.profiles.identity_review.length,0);
+r=reconcileOfficialInventory([],[p,{...p,id:'ambiguous',parent_county:null}],base);
+assert.deepEqual(r.profiles.assessments[0].overlapping_record_ids,['ambiguous']);
+const q={id:'queue-one',state:'OH',jurisdiction_name:'Miami Township',jurisdiction_type:'township',parent_county_name:'Hamilton County'};
+r=reconcileOfficialInventory([q,{...q,id:'queue-two'}],[p],base);
+assert.equal(r.queue.identity_review.length,2);assert.equal(r.profiles.identity_review.length,0);

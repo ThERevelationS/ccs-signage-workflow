@@ -72,8 +72,15 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       return { id:row.id, name:String((profile ? row.name : row.jurisdiction_name) || 'Unnamed record'), record_state:state, type, state:!hits.length?'unmatched':hits.length>1?'ambiguous':'single_geographic_candidate',
         candidate_keys:hits.map(r=>r.key), review_flags, canonical_identity_verified:false };
     });
+    const candidateRecords = new Map();
+    for (const row of assessments) for (const key of row.candidate_keys)
+      candidateRecords.set(key, [...(candidateRecords.get(key) || []), row.id]);
+    for (const row of assessments) {
+      row.overlapping_record_ids = [...new Set(row.candidate_keys.flatMap(key=>candidateRecords.get(key)).filter(id=>id!==row.id))];
+      if (row.overlapping_record_ids.length) row.review_flags.push('shared_geographic_candidate');
+    }
     const represented = new Set(assessments.flatMap(r=>r.candidate_keys));
-    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.includes('parent_county_missing')), missing:candidates.filter(r=>!represented.has(r.key)) };
+    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.includes('parent_county_missing') || row.review_flags.includes('shared_geographic_candidate')), missing:candidates.filter(r=>!represented.has(r.key)) };
   }
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),
