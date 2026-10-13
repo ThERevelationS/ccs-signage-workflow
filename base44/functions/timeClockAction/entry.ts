@@ -1848,6 +1848,7 @@ async function acquirePayPeriodCreateGate(gateEntity: any, auditEntity: any, per
 async function claimAdminCorrectionGate(
   gateEntity: any, auditEntity: any, entryEntity: any, stateEntity: any,
   requestId: string, entryId: string, hash: string,
+  correctionRequestEntity: any = null,
 ) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const rows = await gateEntity.filter({});
@@ -1857,6 +1858,17 @@ async function claimAdminCorrectionGate(
     const gate = rows[0];
     if (gate.status === 'creating' && gate.request_id && gate.time_entry_id &&
         gate.payload_hash && gate.claim_token) {
+      if (String(gate.time_entry_id).startsWith('review:')) {
+        const heldReviewId = String(gate.time_entry_id).slice('review:'.length);
+        if (correctionRequestEntity && heldReviewId &&
+            await releaseManagerReviewDecisionGate(
+              gateEntity, auditEntity, correctionRequestEntity, entryEntity,
+              gate.id, gate.request_id, heldReviewId,
+              gate.payload_hash, gate.claim_token,
+            )) continue;
+        return { acquired: false, retry_same_request: gate.request_id === requestId,
+          error: 'The company manager-review coordinator is still processing or has uncertain outcome. Admin investigation or verified review recovery is required.' };
+      }
       // Recover only after the originating employee mutation gate is idle and
       // the saved TimeEntry + completed/blocked audit prove a settled result.
       // A stale timestamp alone is never permission to take over a write.
