@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { approvedSalesRemoteSnapshotStillCurrent, verifiedSalesConflictResolutionTargets } from '../base44/shared/smartsheetSalesConflictResolution.mjs';
+import { approvedSalesRemoteSnapshotStillCurrent, verifiedSalesConflictResolutionTargets, staleSalesRemotePutSnapshotIds } from '../base44/shared/smartsheetSalesConflictResolution.mjs';
 import { buildSalesPullSnapshot } from '../base44/shared/smartsheetSyncFields.ts';
 
 let checks=0;
@@ -89,4 +89,48 @@ yes(backend.includes('salesRemoteVerifiedIds.has(String(update.id)) && !salesFai
 yes(backend.includes('verifiedWorkOrderIds: updated') &&
  backend.includes('approvedSalesRecordStillCurrent(planned, latestById.get(id))'),
  'Prior Base44 revision fencing and review-resolution gates remain wired.');
-console.log('Sales approved Smartsheet prewrite remote value guard: '+checks+'/'+checks+' PASS.');
+// Synthetic ordinary PUT planning: fresh remote evidence is necessary before
+// any stale planned values can be considered safe to write to Smartsheet.
+const ordinaryPlans=[
+ ['ordinary-a',{rowId:'90001',snapshot:planned}],
+ ['ordinary-b',{rowId:'90002',snapshot:planned}],
+ ['ordinary-c',{rowId:'90003',snapshot:planned}],
+];
+const freshOrdinary=new Map([['90001',exact],['90002',exact],['90003',exact]]);
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,freshOrdinary,assignedCol),[],
+ 'Unchanged ordinary remote snapshots remain eligible.');
+const remoteEdited=new Map(freshOrdinary);
+remoteEdited.set('90002',concurrentTask);
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,remoteEdited,assignedCol),['ordinary-b'],
+ 'Remote task edit holds only its affected ordinary PUT.');
+remoteEdited.set('90002',concurrentAmount);
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,remoteEdited,assignedCol),['ordinary-b'],
+ 'Remote estimate edit holds only its affected ordinary PUT.');
+remoteEdited.set('90002',concurrentAssignee);
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,remoteEdited,assignedCol),['ordinary-b'],
+ 'Remote assignee edit holds only its affected ordinary PUT.');
+const eligibleOrdinary=new Set(staleSalesRemotePutSnapshotIds(
+ ordinaryPlans,remoteEdited,assignedCol));
+eq(ordinaryPlans.filter(([id])=>!eligibleOrdinary.has(id)).map(([id])=>id),
+ ['ordinary-a','ordinary-c'],
+ 'Unchanged ordinary PUTs can proceed independently of a changed row.');
+const remoteMissing=new Map(freshOrdinary);remoteMissing.delete('90003');
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,remoteMissing,assignedCol),['ordinary-c'],
+ 'A deleted or missing permanent remote row is held.');
+const remotePartial=new Map(freshOrdinary);
+remotePartial.set('90001',Object.fromEntries(Object.entries(exact).filter(([id])=>id!==taskCol)));
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,remotePartial,assignedCol),['ordinary-a'],
+ 'Incomplete mapped remote values are not evidence of an unchanged row.');
+const unknownPlan=[['ordinary-a',{rowId:'90001',snapshot:{}}]];
+eq(staleSalesRemotePutSnapshotIds(unknownPlan,freshOrdinary,assignedCol),['ordinary-a'],
+ 'Missing original remote snapshot cannot authorize an ordinary PUT.');
+const wrongRow=[['ordinary-a',{rowId:'invalid',snapshot:planned}]];
+eq(staleSalesRemotePutSnapshotIds(wrongRow,freshOrdinary,assignedCol),['ordinary-a'],
+ 'Invalid permanent remote row ID fails closed.');
+const equivalent=new Map(freshOrdinary);
+equivalent.set('90001',{...exact,[amountCol]:'125',[assignedCol]:'Brett Heinlein'});
+eq(staleSalesRemotePutSnapshotIds(ordinaryPlans,equivalent,assignedCol),[],
+ 'Equivalent numeric formatting and canonical assignee names do not create false holds.');
+assert.throws(()=>staleSalesRemotePutSnapshotIds(ordinaryPlans,null,assignedCol),
+ /requires complete fresh Smartsheet evidence/);checks++;
+console.log('Sales approved and ordinary Smartsheet remote prewrite safety: '+checks+'/'+checks+' PASS.');
