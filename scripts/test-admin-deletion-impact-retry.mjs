@@ -20,7 +20,7 @@ test("Closing an in-progress scan cancels its UI ownership and clears confidenti
   assert.match(scanner, /setDeletionImpactRequest\(null\);\s*setDeletionImpactReport\(null\);\s*setDeletionImpactError\(""\);\s*setDeletionImpactLoading\(false\)/);
   assert.match(page, /<Button type="button" variant="outline" onClick=\{closeDeletionImpact\}>/);
   assert.match(refresher, /\+\+deletionImpactSequence\.current;\s*setDeletionImpactRequest\(null\);\s*setDeletionImpactReport\(null\)/);
-  assert.match(page, /return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
+  assert.match(page, /return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
 });
 
 test("Impact scan failure uses a generic alert with a read-only retry and no raw backend error", () => {
