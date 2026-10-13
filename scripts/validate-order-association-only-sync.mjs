@@ -105,7 +105,9 @@ const pushBlock = push.slice(push.indexOf('const pendingRecords ='), push.indexO
 assert.match(push, /!orderPushRecordUnchanged\(record, sheetId, buildSnapshot\(record, bindings, 'orders'\)\)/);
 assert.match(push, /if \(fieldPlan\.outgoing\.length\) \{\s*deferredSmartsheetWrites\.push/);
 assert.match(push, /requiresRemoteWrite: fieldPlan\.outgoing\.length > 0/);
-assert.match(push, /if \(!verification\.requiresRemoteWrite\) orderRemoteVerifiedIds\.add\(recordId\)/);
+assert.match(push, /const remoteChecks = \[\.\.\.deferredOrderVerification\.entries\(\)\]/);
+assert.doesNotMatch(push, /if \(!verification\.requiresRemoteWrite\) orderRemoteVerifiedIds\.add\(recordId\)/);
+assert.match(push, /freshRows\.size !== requestedRowIds\.size/);
 assert.match(push, /if \(eligibleSmartsheetWrites\.length\) \{/);
 assert.match(push, /\{ id: recordId, updated_date: verification\.originalUpdatedDate, smartsheet_pending_local_sync: true \}/);
 assert.match(push, /record\?\.smartsheet_pending_local_sync !== false/);
