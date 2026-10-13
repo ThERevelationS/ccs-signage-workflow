@@ -6594,7 +6594,7 @@ test('v29 completed manager review recovers a lost company coordinator release',
     payload_hash: reviewEvidence.details.review_payload_hash,
     claim_token: 'synthetic-ack-lost-review', started_at: '2026-09-22T20:00:00.000Z',
   });
-  const next = await h.invoke({
+  const nextPayload = {
     action: 'admin_correct_entry', target_email: employee.email,
     request_id: 'v29-review-after-recovered-ack',
     entry_id: entry.id, expected_updated_date: entry.updated_date,
@@ -6604,7 +6604,18 @@ test('v29 completed manager review recovers a lost company coordinator release',
       notes: 'Independent post-review time change',
       job_allocations: [{ hours: 7, minutes: 15, is_inhouse: true,
         inhouse_task: 'Synthetic shop work' }] },
-  });
+  };
+  const applied = h.rows.TimeClockAudit.find((a) =>
+    a.action === 'admin_correction' && a.request_id === reviewId);
+  assert.ok(applied?.details?.corrected);
+  const originalClockIn = applied.details.corrected.clock_in;
+  applied.details.corrected.clock_in = '2026-09-20T14:59:00.000Z';
+  const rejected = await h.invoke(nextPayload);
+  assert.equal(rejected.status, 409, JSON.stringify(rejected.body));
+  assert.equal(gate.status, 'creating', 'Mismatched applied audit cannot release review coordinator');
+  assert.equal(entry.clock_in, '2026-09-20T14:30:00.000Z');
+  applied.details.corrected.clock_in = originalClockIn;
+  const next = await h.invoke(nextPayload);
   assert.equal(next.status, 200, JSON.stringify(next.body));
   assert.equal(gate.status, 'idle');
   assert.equal(gate.request_id, '');
