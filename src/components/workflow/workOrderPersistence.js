@@ -393,7 +393,11 @@ export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, l
     throw new Error(`${label} is missing its loaded version. Reload it before saving.`);
   }
 
-  const patch = sanitizeWorkOrderFormPatch(formData);
+  // WorkOrderForm is prefilled from the entire loaded record, including
+  // hidden Smartsheet link/create/import evidence. A regular job edit must
+  // never rewrite those sync-owned fields from its potentially stale draft.
+  // Preserve the existing exact-version CAS for ordinary editable fields.
+  const patch = stripInheritedWorkOrderSyncIdentity(sanitizeWorkOrderFormPatch(formData));
   let result;
   try {
     result = await entity.updateMany(
