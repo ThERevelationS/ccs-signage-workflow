@@ -642,23 +642,47 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (user) => {
-    if (!user?.id || userMutationSaving || isLoading || userDirectoryError || !sessionToken) return;
+    // The confirmed row must still be present in the verified directory at
+    // the exact version shown to this administrator.
+    const verifiedUser = users.find(row =>
+      row.id === user?.id && row.email === user?.email &&
+      row.updated_date === user?.updated_date);
+    if (!verifiedUser || !user?.updated_date || !deleteConfirm ||
+        deleteConfirm.id !== user.id || deleteConfirm.email !== user.email ||
+        deleteConfirm.updated_date !== user.updated_date ||
+        deletionInFlight.current || userUpdateInFlight.current || userMutationSaving ||
+        isLoading || userDirectoryError || !sessionToken ||
+        activeSessionToken.current !== sessionToken) return;
+
+    // An old response can finish server-side, but never own the next
+    // session's confirmation, error, loading state, or directory refresh.
+    const owner = { sessionToken };
+    deletionOwner.current = owner;
+    const ownsDeletion = () => deletionOwner.current === owner &&
+      activeSessionToken.current === sessionToken;
+    deletionInFlight.current = true;
+    setDeletionSaving(true);
     setUserMutationError("");
-    setUserMutationSaving(true);
     try {
       await deleteAuthorizedUserAdmin({
-        record: user,
+        record: verifiedUser,
         sessionToken,
       });
+      if (!ownsDeletion()) return;
       setDeleteConfirm(null);
       await loadUsers();
     } catch (error) {
+      if (!ownsDeletion()) return;
       console.error("User deletion blocked:", error);
       setUserMutationError(error?.message || "This user changed in another session and was not removed.");
       setDeleteConfirm(null);
       await loadUsers();
     } finally {
-      setUserMutationSaving(false);
+      if (ownsDeletion()) {
+        deletionOwner.current = null;
+        deletionInFlight.current = false;
+        setDeletionSaving(false);
+      }
     }
   };
 
@@ -1040,7 +1064,8 @@ export default function UserManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setDeleteConfirm(user)}
+                    onClick={() => { if (!deletionInFlight.current && !userUpdateInFlight.current) setDeleteConfirm(user); }}
+                    disabled={deletionSaving || userMutationSaving || isLoading || userDirectoryError || !sessionToken}
                     className="h-8 w-8"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
@@ -1489,7 +1514,7 @@ export default function UserManagement() {
       </AlertDialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open && !deletionInFlight.current) setDeleteConfirm(null); }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove User?</AlertDialogTitle>
@@ -1499,13 +1524,13 @@ export default function UserManagement() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletionSaving} className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleDelete(deleteConfirm)}
-              disabled={userMutationSaving || isLoading || userDirectoryError || !sessionToken}
+              disabled={deletionSaving || userMutationSaving || isLoading || userDirectoryError || !sessionToken}
               className="bg-red-600 text-white"
             >
-              Remove User
+              {deletionSaving ? "Removing..." : "Remove User"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
