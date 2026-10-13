@@ -47,7 +47,7 @@ function harness() {
     };
     return {
       reset: compileHandler("handleSendPasswordReset", "handleResendOnboarding", scope),
-      resend: compileHandler("handleResendOnboarding", "handleSave", scope),
+      resend: compileHandler("handleResendOnboarding", "handleSaveHrData", scope),
     };
   };
   const switchSession = token => {
