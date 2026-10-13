@@ -80,6 +80,20 @@ test("every Start/Save response helper projects a newly loaded Fleet row and che
   assert.equal(helpers.includes("sanitizeWorkOrder(workOrder)"),false,"never project the original snapshot");
 });
 
+test("repair-estimate writes reread Fleet version and equipment around the live grant check", () => {
+  const helper = between("async function requireCurrentMechanicEstimateWriteTarget(", "\n\nasync function mechanicCommittedEstimateResponse",0);
+  assert.match(helper,/WorkOrder\.get\(id\)\.catch\(\(\)=>null\)/);
+  assert.match(helper,/String\(latest\.updated_date \|\| ''\) !== version/);
+  assert.match(helper,/String\(latest\.equipment_id \|\| ''\) !== equipmentId/);
+  assert.match(helper,/!ACTIVE\.has\(latest\.status\)/);
+  assert.match(helper,/const beforeGrant = await verify\(\);[\s\S]*await requireCurrentMechanicGrant\(Access,grantId,action,String\(beforeGrant\.equipment_id \|\| ''\)\);[\s\S]*return await verify\(\);/);
+  const branch = between("if (action === 'estimate_save' || action === 'estimate_submit') {","\n\n    if (action === 'start') {");
+  assert.match(branch,/beforeCreate:\(\)=>requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_save',current\)/);
+  assert.match(branch,/await requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_save',current\);[\s\S]*estimate=await updateFleetRecordIfCurrent/);
+  assert.match(branch,/await requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_submit',current\);[\s\S]*const updated=await updateFleetRecordIfCurrent/);
+  assert.match(branch,/conflicting Fleet equipment link/);
+});
+
 test("repair-estimate Save/Submit revalidate fresh work order and estimate ownership after commit", () => {
   const estimateBlock = between("if (action === 'estimate_save' || action === 'estimate_submit') {", "\n\n    if (action === 'start') {");
   assert.match(estimateBlock, /await mechanicCommittedEstimateResponse\(Access,WorkOrder,Estimate,String\(grant\.id \|\| ''\),'estimate_save',id,estimate,/);
