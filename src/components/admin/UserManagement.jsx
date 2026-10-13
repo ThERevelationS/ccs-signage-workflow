@@ -479,20 +479,13 @@ export default function UserManagement() {
       });
       return;
     }
-    clearHrDraftTracking();
+    clearEditorDraftTracking();
+    const initialAccountDraft = createAdminAccountDraft(user);
+    accountDraftBaseline.current = {
+      sessionToken, id: user.id, email: user.email, values: initialAccountDraft
+    };
     setEditingUser(user);
-    setFormData({
-      full_name: user.full_name || "",
-      username: user.username || "",
-      password_hash: "", // Don't show existing password
-      role: user.role || "user",
-      sales_roles: user.sales_roles || ["Task Assigned"],
-      can_import_export: user.can_import_export || false,
-      can_order_export: user.role === "admin" && user.can_order_export === true,
-      can_view_resources: user.role === 'admin' || user.can_view_resources || false,
-      employment_type: user.employment_type || "hourly",
-      can_work_pause: user.can_work_pause === true
-    });
+    setFormData(initialAccountDraft);
     setIsDialogOpen(true);
   };
 
@@ -1533,11 +1526,14 @@ export default function UserManagement() {
             </div>
           </Tabs>
 
-          {hasUnsavedHrData && (
+          {(hasUnsavedHrData || hasUnsavedAccountData) && (
             <p role="status" className="text-sm text-amber-800">
-              Unsaved HR changes are protected. Save HR data in its tab before saving account changes, or use Cancel to review discarding the draft.
+              {hasUnsavedHrData
+                ? "Unsaved HR changes are protected. Save HR data in its tab before saving account changes."
+                : "Unsaved Account changes are protected, including roles, permissions and a newly entered password."}
+              {" "}Use Cancel to review discarding any unsaved editor changes.
             </p>
-          )}
+          )
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
             <Button variant="outline" disabled={hrMutationSaving || hrReloadLoading}
               onClick={requestCloseUserEditor}>
@@ -1555,14 +1551,14 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Explicit discard gate for HR drafts, including an employee switch. */}
+      {/* Explicit discard gate for HR and Account drafts, including an employee switch. */}
       <AlertDialog open={!!pendingHrExit} onOpenChange={open => { if (!open) setPendingHrExit(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard unsaved HR changes?</AlertDialogTitle>
+            <AlertDialogTitle>Discard unsaved employee changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              This employee has HR changes that have not been saved. If you continue,
-              the unsaved HR draft will be discarded.
+              Unsaved Account or HR changes (including a new password) will be
+              discarded if you continue. Nothing will be saved automatically.
               {pendingHrExit?.kind === "switch"
                 ? " The other employee will open after you confirm."
                 : " The employee editor will close after you confirm."}
@@ -1573,7 +1569,7 @@ export default function UserManagement() {
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDiscardHrDraft}
               className="bg-red-700 text-white hover:bg-red-800">
-              Discard HR draft
+              Discard unsaved changes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
