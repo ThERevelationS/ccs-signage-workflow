@@ -1692,3 +1692,44 @@ test("lost applied receipt acknowledgment cannot accept bare applied status with
   assert.equal(store.receipts.get(prior.id).result_summary.work_order_updated_date,undefined);
   assert.equal(store.updates,0);
 });
+
+test("mutation status returns the latest work-order details after receipt application is superseded",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  store.pauseAppliedWrite=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("receipt applied CAS after mechanic update",()=>store.pendingAppliedWrites.length===1);
+  assert.equal(store.updates,1);
+  const committedVersion=store.work.updated_date;
+  store.work={...store.work,updated_date:"version-3",
+    corrective_action:"Newer independent CCS maintenance update",
+    mechanic_operation_key:"mechanic:another-grant:work-race:save:newer-action-123456",
+    mechanic_operation_fingerprint:"newer-fingerprint"};
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.status,"applied");
+  assert.equal(outcome.body.work_order.updated_date,"version-3");
+  assert.equal(outcome.body.work_order.corrective_action,"Newer independent CCS maintenance update");
+  assert.equal(store.receipts.get(prior.id).result_summary.work_order_updated_date,committedVersion);
+  assert.equal(store.updates,1,"Later CCS update is synthetic; no mechanic replay");
+});
+
+test("mutation status checks current equipment scope after later work-order reassignment",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client,grant}=setup({receipt:prior});
+  grant.scope_mode="selected_equipment";
+  grant.allowed_equipment_ids=["eq-race"];
+  store.pauseAppliedWrite=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("receipt CAS before reassignment to out-of-scope Fleet equipment",()=>store.pendingAppliedWrites.length===1);
+  store.work={...store.work,updated_date:"version-3",equipment_id:"eq-other"};
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,403);
+  assert.ok(!outcome.body.work_order,"No Fleet data may escape an out-of-scope final read");
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.updates,1);
+});
