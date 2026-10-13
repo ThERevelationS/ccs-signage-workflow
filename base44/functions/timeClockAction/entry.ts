@@ -7211,9 +7211,8 @@ Deno.serve(async (req) => {
 
       let correctionRequest = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
       if (!correctionRequest?.id || asEmail(correctionRequest.user_email) !== target.email) return Response.json({ success: false, error: 'Correction request was not found.' }, { status: 404 });
-      // Review IDs identify a manager action globally, never just an entry.
-      // Check both the applied correction and the review decision before any
-      // review claim, including reject and same-request recovery paths.
+      // Review IDs identify one manager action across all employees.
+      // Preflight both applied-correction and review-decision audit ownership.
       for (const auditAction of ['admin_correction', 'correction_review']) {
         const owned = await auditEntity.filter({ action: auditAction, request_id: requestId });
         if (!Array.isArray(owned) || owned.length > 1 || owned.some((row: any) =>
@@ -7495,17 +7494,10 @@ Deno.serve(async (req) => {
 
         const staleEntry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
         const staleAudits = previousRequestId
-          ? await auditEntity.filter({ action: 'admin_correction', request_id: previousRequestId })
+          ? await auditEntity.filter({ action: 'admin_correction', request_id: previousRequestId, time_entry_id: correctionRequest.time_entry_id })
           : [];
         if (!Array.isArray(staleAudits)) throw new Error('Stale correction audit recovery lookup did not return a record list.');
-        if (staleAudits.length > 1 || staleAudits.some((row: any) =>
-          !row?.id || String(row.time_entry_id || '') !== String(correctionRequest.time_entry_id || '') ||
-          asEmail(row.user_email) !== target.email ||
-          String(row.details?.correction_request_id || '') !== correctionRequest.id ||
-          !constantTimeEqual(String(row.details?.review_payload_hash || ''), previousReviewHash)
-        )) {
-          return Response.json({ success: false, error: 'An abandoned manager review has conflicting global correction audit identity. Admin investigation is required.' }, { status: 409 });
-        }
+        if (staleAudits.length > 1) return Response.json({ success: false, error: 'The abandoned review has multiple correction audits. Admin investigation is required.' }, { status: 409 });
         const staleAudit = staleAudits[0] || null;
         if (staleAudit?.id && !adminCorrectionAuditMatches(staleAudit, previousReviewHash)) {
           return Response.json({ success: false, error: 'The abandoned correction audit does not match the employee, correction request, or review payload. Admin investigation is required.' }, { status: 409 });
@@ -7652,16 +7644,9 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before applying a correction.' }, { status: 409 });
       }
 
-      const auditRows = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
+      const auditRows = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
       if (!Array.isArray(auditRows)) throw new Error('Correction audit recovery lookup did not return a record list.');
-      if (auditRows.length > 1 || auditRows.some((row: any) =>
-        !row?.id || String(row.time_entry_id || '') !== String(entry.id) ||
-        asEmail(row.user_email) !== target.email ||
-        String(row.details?.correction_request_id || '') !== correctionRequest.id ||
-        !constantTimeEqual(String(row.details?.review_payload_hash || ''), reviewHash)
-      )) {
-        return Response.json({ success: false, error: 'Manager review correction audit has conflicting global request ownership. Admin investigation is required.' }, { status: 409 });
-      }
+      if (auditRows.length > 1) return Response.json({ success: false, error: 'Multiple correction audit records exist for this review request. Admin investigation is required.' }, { status: 409 });
       let correctionAudit: any = auditRows[0] || null;
       if (correctionAudit?.id && !adminCorrectionAuditMatches(correctionAudit, reviewHash)) {
         return Response.json({ success: false, error: 'This correction audit does not match the employee, correction request, or manager-review payload. Admin investigation is required.' }, { status: 409 });
