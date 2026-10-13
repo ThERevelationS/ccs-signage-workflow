@@ -822,9 +822,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (!currentOrder) return;
     orderLocalEditGenerationRef.current += 1;
     const oldValue = currentOrder[field];
+    const unlinkCustomerJob = field === 'customer_name' &&
+      shouldUnlinkOrderJobForTypedCustomer(currentOrder, value);
+    if (unlinkCustomerJob) {
+      verifiedCustomerSelectionRef.current.delete(orderId);
+      manuallyUnlinkedCustomerOrderIdsRef.current.delete(orderId);
+    }
 
     setOrders((current) => current.map((order) => order.id === orderId
-      ? { ...order, [field]: value }
+      ? { ...order, [field]: value, ...(unlinkCustomerJob ? { work_order_id: '' } : {}) }
       : order));
 
     if (!skipHistory && oldValue !== value) {
@@ -833,7 +839,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
     pendingChangesRef.current[orderId] = {
       ...pendingChangesRef.current[orderId],
-      [field]: value
+      [field]: value,
+      ...(unlinkCustomerJob ? { work_order_id: '' } : {}),
     };
     setHasUnsavedChanges(true);
   };
