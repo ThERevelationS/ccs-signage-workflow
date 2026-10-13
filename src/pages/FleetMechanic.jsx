@@ -432,12 +432,29 @@ export default function FleetMechanic() {
       const saved = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
       if (saved?.data?.error) throw new Error(saved.data.error);
       let finalEstimate = saved?.data?.estimate;
-      let resultMessage = "Estimate draft saved.";
+      let resultMessage = saved?.data?.concurrently_updated
+        ? "CCS updated this estimate after Save Draft. Review its current status before editing again."
+        : "Estimate draft saved.";
       if (submit) {
+        // Submit is a second independent write. Never automatically submit the
+        // newer CCS version when it displaced the version just saved.
+        if (saved?.data?.concurrently_updated) {
+          throw new Error("CCS updated the estimate during Save Draft. Submit was not attempted; review current server state before submitting.");
+        }
         const submitted = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
         if (submitted?.data?.error) throw new Error(submitted.data.error);
         finalEstimate = submitted?.data?.estimate;
-        resultMessage = submitted?.data?.auto_approved ? "Estimate submitted and automatically approved by CCS Fleet policy." : "Estimate submitted to CCS for approval.";
+        if (submitted?.data?.concurrently_updated) {
+          resultMessage = "CCS updated the estimate during submission. Review the current status before making another change.";
+        } else if (submitted?.data?.auto_approved) {
+          resultMessage = "Estimate submitted and automatically approved by CCS Fleet policy.";
+        } else if (finalEstimate?.status === "approved") {
+          resultMessage = "Estimate is approved by CCS.";
+        } else if (finalEstimate?.status === "submitted") {
+          resultMessage = "Estimate submitted to CCS for approval.";
+        } else {
+          resultMessage = "Estimate submission completed, but its current status changed. Review the CCS estimate before proceeding.";
+        }
       }
       setSavedMessage(resultMessage);
       setEstimateForm(estimateSeed({...finalEstimate,visibility:"mechanic"}));
