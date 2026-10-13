@@ -93,6 +93,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
+import OrderLinkedCustomerReview from "@/components/orders/OrderLinkedCustomerReview";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { isStaleVerifiedOrderCustomerBlur } from "@/components/orders/orderCustomerBlurSafety.mjs";
 import { shouldUnlinkOrderJobForTypedCustomer, orderAfterTypedCustomerName, pendingAfterManualCustomerBlur } from "@/components/orders/orderCustomerAssociationSafety.mjs";
@@ -163,6 +164,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [saveError, setSaveError] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
+  const [linkedNameReview, setLinkedNameReview] = useState({ count: 0, items: [] });
   const [lastSaved, setLastSaved] = useState(null);
   const [lastSynced, setLastSynced] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
@@ -709,6 +711,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setLastSynced(new Date());
       setLastSyncDirection('pull');
       const count = pull.updated;
+      setLinkedNameReview({ count: pull.linkedCustomerNameReviewCount, items: pull.linkedCustomerNameReviewItems });
       setSyncMessage(pull.linkedCustomerNameReviewCount > 0
         ? `Smartsheet updated ${count} other Order${count === 1 ? '' : 's'}; ${pull.linkedCustomerNameReviewCount} linked customer name${pull.linkedCustomerNameReviewCount === 1 ? '' : 's'} held for review.`
         : pull.needsReview
@@ -1323,12 +1326,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   // Mobile card view
   if (isMobile) {
     return (
-      <OrderMobileCards
-        orders={filteredOrders}
-        separateHistory={historyLayout.split}
-        openCount={historyLayout.openCount}
-        onOpenDetails={(order) => alert(`Order: ${order.description}`)}
-      />
+      <>
+        <OrderLinkedCustomerReview count={linkedNameReview.count} items={linkedNameReview.items}
+          orders={orders} workOrders={workOrders} />
+        <OrderMobileCards
+          orders={filteredOrders}
+          separateHistory={historyLayout.split}
+          openCount={historyLayout.openCount}
+          onOpenDetails={(order) => alert(`Order: ${order.description}`)}
+        />
+      </>
     );
   }
 
@@ -1356,6 +1363,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       }}
       onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}
     >
+      <OrderLinkedCustomerReview count={linkedNameReview.count} items={linkedNameReview.items}
+        orders={orders} workOrders={workOrders} />
       {saveError && (
         <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-2">
           <span>{saveError}</span>
