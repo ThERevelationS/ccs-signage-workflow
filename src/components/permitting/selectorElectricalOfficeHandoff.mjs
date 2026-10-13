@@ -1,0 +1,39 @@
+import {safeOfficeEvidenceUrl} from './localityOfficeReviewEvidence.js';
+import {summarizeLocalityOfficeAuthority} from './localityAuthorityVerification.js';
+
+const clean=value=>typeof value==='string'?value.trim():'';
+const roles=[['electrical_permit','Electrical permit issuer'],['electrical_inspection','Electrical inspection provider']];
+
+/** Read-only handoff: source links can inform office review only for an exact
+ * locality -> repository ID AND state. Never match offices by name, website or county.
+ * Review labels are historical local tracker flags, not proof of current authority.
+ */
+export function summarizeSelectorElectricalOfficeHandoff(profile,locality){
+  const exact=Boolean(clean(profile?.id)&&clean(locality?.id)&&
+    clean(locality.jurisdiction_profile_id)===profile.id&&
+    ['OH','KY'].includes(profile.state)&&locality.state===profile.state);
+  const empty=roles.map(([role,label])=>({role,label,status:'not_assessed',offices:[]}));
+  if(!exact)return {status:'exact_link_required',roles:empty,legacy_broad_role_present:false,
+    notice:'An exact saved locality-to-repository profile ID and state are required before these office records can be compared. Similar names, ZIP codes and county labels are not links.'};
+  if(!Array.isArray(locality.offices))return {status:'offices_unavailable',roles:empty,legacy_broad_role_present:false,
+    notice:'The linked locality office collection is not readable. Do not infer an issuing or inspection office.'};
+  const all=locality.offices,ids=new Map();
+  for(const office of all)if(clean(office?.id))ids.set(office.id,(ids.get(office.id)||0)+1);
+  const legacy=all.some(office=>Array.isArray(office?.authority_roles)&&office.authority_roles.includes('electrical'));
+  const reviewed=roles.map(([role,label])=>{
+    const matching=all.filter(office=>Array.isArray(office?.authority_roles)&&office.authority_roles.includes(role));
+    const offices=matching.map(office=>{
+      const id=clean(office?.id),unique=Boolean(id&&ids.get(id)===1),summary=summarizeLocalityOfficeAuthority(office);
+      return {id,name:clean(office?.name)||'Unnamed configured office',
+        canonical_id:clean(office?.government_office_id),recorded_review:summary.verified&&unique?'staff_reviewed':'requires_review',
+        identity_unique:unique,has_review_notes:Boolean(clean(office?.authority_verification_notes)),
+        has_reviewer:Boolean(clean(office?.authority_verified_by)&&clean(office?.authority_verified_at)),
+        website:safeOfficeEvidenceUrl(office?.contact_website)};
+    });
+    return {role,label,status:matching.length===0?'not_recorded':matching.length>1?'multiple_saved_offices':
+      !offices[0].identity_unique?'office_identity_conflict':offices[0].recorded_review==='staff_reviewed'?
+        'staff_review_reference':'needs_staff_review',offices};
+  });
+  return {status:'exact_link_read',roles:reviewed,legacy_broad_role_present:legacy,
+    notice:'These are configured tracker-office records, not official source or geographic authority verification. Staff must reconcile exact office IDs, separate issuing/inspection responsibility, service areas, current adopted documents and applicable parent-county overlays before using a role.'};
+}
