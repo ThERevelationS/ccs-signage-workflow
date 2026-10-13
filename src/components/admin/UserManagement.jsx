@@ -50,6 +50,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
+import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
@@ -119,7 +120,9 @@ export default function UserManagement() {
   const [hrReloadLoading, setHrReloadLoading] = useState(false);
   const [hasUnsavedHrData, setHasUnsavedHrData] = useState(false);
   const hrDraftStatus = useRef(null);
+  // Exit confirmation guards both confidential HR and Account-tab drafts.
   const [pendingHrExit, setPendingHrExit] = useState(null);
+  const accountDraftBaseline = useRef(null);
   const activeEditingUser = useRef(editingUser);
   activeEditingUser.current = editingUser;
   const recordHrDraftStatus = useCallback(status => {
@@ -169,6 +172,7 @@ export default function UserManagement() {
     hrReloadInFlight.current = false;
     setHrReloadLoading(false);
     hrDraftStatus.current = null;
+    accountDraftBaseline.current = null;
     setHasUnsavedHrData(false);
     setPendingHrExit(null);
     // A previous session may have a deletion in flight. The server decides
@@ -237,6 +241,7 @@ export default function UserManagement() {
       hrReloadOwner.current = null;
       hrReloadInFlight.current = false;
       hrDraftStatus.current = null;
+      accountDraftBaseline.current = null;
       hrSaveOwner.current = null;
       hrSaveInFlight.current = false;
       deletionOwner.current = null;
@@ -422,23 +427,40 @@ export default function UserManagement() {
       status.sessionToken === activeSessionToken.current);
   };
 
+  const hasProtectedAccountDraft = () => {
+    const current = activeEditingUser.current;
+    const baseline = accountDraftBaseline.current;
+    return !!(baseline && current &&
+      baseline.id === current.id && baseline.email === current.email &&
+      baseline.sessionToken === activeSessionToken.current &&
+      hasUnsavedAdminAccountDraft(baseline.values, formData));
+  };
+
   const clearHrDraftTracking = () => {
     hrDraftStatus.current = null;
     setHasUnsavedHrData(false);
   };
 
+  const clearEditorDraftTracking = () => {
+    clearHrDraftTracking();
+    accountDraftBaseline.current = null;
+  };
+
+  const hasProtectedEditorDraft = () => hasProtectedHrDraft() || hasProtectedAccountDraft();
+  const hasUnsavedAccountData = isDialogOpen && hasProtectedAccountDraft();
+
   const requestCloseUserEditor = () => {
     if (!isDialogOpen || hrSaveInFlight.current || hrReloadInFlight.current ||
         userUpdateInFlight.current || deletionInFlight.current ||
         activeSessionToken.current !== sessionToken) return;
-    if (hasProtectedHrDraft()) {
+    if (hasProtectedEditorDraft()) {
       setPendingHrExit({
         kind: "close", sessionToken,
         sourceId: editingUser?.id, sourceEmail: editingUser?.email
       });
       return;
     }
-    clearHrDraftTracking();
+    clearEditorDraftTracking();
     setEditingUser(null);
     setIsDialogOpen(false);
   };
@@ -449,7 +471,7 @@ export default function UserManagement() {
         userUpdateInFlight.current || deletionInFlight.current ||
         activeSessionToken.current !== sessionToken) return;
     if (isDialogOpen && editingUser?.id === user.id && editingUser?.email === user.email) return;
-    if (isDialogOpen && hasProtectedHrDraft() && !discardConfirmed) {
+    if (isDialogOpen && hasProtectedEditorDraft() && !discardConfirmed) {
       setPendingHrExit({
         kind: "switch", sessionToken, sourceId: editingUser?.id,
         sourceEmail: editingUser?.email,
@@ -495,7 +517,7 @@ export default function UserManagement() {
       openEditUser(verifiedTarget, true);
     } else if (pending.kind === "close") {
       setPendingHrExit(null);
-      clearHrDraftTracking();
+      clearEditorDraftTracking();
       setEditingUser(null);
       setIsDialogOpen(false);
     }
@@ -739,7 +761,7 @@ export default function UserManagement() {
       if (!ownsUpdate()) return;
       await loadUsers();
       if (!ownsUpdate()) return;
-      clearHrDraftTracking();
+      clearEditorDraftTracking();
       setIsDialogOpen(false);
       setEditingUser(null);
     } catch (error) {
