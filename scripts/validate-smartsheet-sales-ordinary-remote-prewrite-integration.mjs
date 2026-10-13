@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { transformSync } from 'esbuild';
 import { staleSalesRemotePutSnapshotIds } from '../base44/shared/smartsheetSalesConflictResolution.mjs';
 import { buildSalesPullSnapshot } from '../base44/shared/smartsheetSyncFields.ts';
 import { normalizeSheetRows } from '../base44/shared/smartsheetSyncUtils.ts';
@@ -11,7 +12,9 @@ const backend=readFileSync('base44/functions/smartsheetSyncAction/entry.ts','utf
 const begin=backend.indexOf("  if (dataset === 'sales' && salesRemotePutPlans.size) {");
 const end=backend.indexOf('\n  // Phase 2: Batch Smartsheet write.',begin);
 assert.ok(begin>0 && end>begin,'Production ordinary remote prewrite block must be wired immediately before PUT.');
-const snippet=backend.slice(begin,end).replaceAll(': any','').replaceAll(': string','');
+// This slice now includes the typed post-429 retry guard: transpile rather
+// than trying to remove TypeScript annotations with fragile string replaces.
+const snippet=transformSync(backend.slice(begin,end),{loader:'ts'}).code;
 const columnBindings={current_task_description:'111',estimate_amount:'222',current_task_assigned_to:'333'};
 const sheetId='8702703019812740';
 const columns=Object.values(columnBindings).map(id=>({id:Number(id)}));
