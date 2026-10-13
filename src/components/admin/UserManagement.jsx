@@ -704,7 +704,7 @@ export default function UserManagement() {
     if (!verifiedUser || !user?.updated_date || !deleteConfirm ||
         deleteConfirm.id !== user.id || deleteConfirm.email !== user.email ||
         deleteConfirm.updated_date !== user.updated_date ||
-        deletionInFlight.current || userUpdateInFlight.current || userMutationSaving ||
+        deletionInFlight.current || userUpdateInFlight.current || hrSaveInFlight.current || userMutationSaving ||
         isLoading || userDirectoryError || !sessionToken ||
         activeSessionToken.current !== sessionToken) return;
 
@@ -1119,7 +1119,7 @@ export default function UserManagement() {
                     variant="ghost"
                     size="icon"
                     onClick={() => { if (!deletionInFlight.current && !userUpdateInFlight.current) setDeleteConfirm(user); }}
-                    disabled={deletionSaving || userMutationSaving || isLoading || userDirectoryError || !sessionToken}
+                    disabled={deletionSaving || userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken}
                     className="h-8 w-8"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
@@ -1333,15 +1333,11 @@ export default function UserManagement() {
                   </p>
                 </div>
                 {editingUser && (
-                  <UserHRDataForm 
-                    userData={editingUser} 
-                    onUpdate={loadUsers}
-                    onSave={(hrData) => {
-                      if (isLoading || userDirectoryError || !sessionToken) {
-                        throw new Error("The user directory must be reloaded before saving HR data.");
-                      }
-                      return updateAuthorizedUserHrAdmin({ record: editingUser, hrData, sessionToken });
-                    }}
+                  <UserHRDataForm
+                    userData={editingUser}
+                    saveScope={sessionToken}
+                    onUpdate={() => { if (activeSessionToken.current === sessionToken) void loadUsers(); }}
+                    onSave={(hrData) => handleSaveHrData(hrData, editingUser)}
                     section="all"
                     isAdmin={true}
                   />
@@ -1351,12 +1347,12 @@ export default function UserManagement() {
           </Tabs>
 
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" disabled={hrMutationSaving} onClick={() => { if (!hrSaveInFlight.current) setIsDialogOpen(false); }}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving || isLoading || userDirectoryError || !sessionToken}
+              disabled={userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
@@ -1581,7 +1577,7 @@ export default function UserManagement() {
             <AlertDialogCancel disabled={deletionSaving} className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleDelete(deleteConfirm)}
-              disabled={deletionSaving || userMutationSaving || isLoading || userDirectoryError || !sessionToken}
+              disabled={deletionSaving || userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken}
               className="bg-red-600 text-white"
             >
               {deletionSaving ? "Removing..." : "Remove User"}
