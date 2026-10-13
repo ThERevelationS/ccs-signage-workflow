@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { approvedSalesRecordStillCurrent, verifiedSalesConflictResolutionTargets } from '../base44/shared/smartsheetSalesConflictResolution.mjs';
+import { commitVerifiedSalesMetadata } from '../base44/shared/smartsheetSalesMetadataCAS.mjs';
 
 let checks = 0;
 const check = (value, msg) => { assert.ok(value, msg); checks++; };
