@@ -2546,6 +2546,8 @@ async function pushDataset(
           for (const [recordId, verification] of deferredSalesVerification) {
             if (blockedRows.has(String(verification.rowId))) salesFailedRecordIds.add(recordId);
           }
+          errors.push('Sales remote PUT held before an authorized write or rate-limit retry: ' +
+            salesBatchWriteError + '. Matching remote values do not clear the ownership/retry hold.');
         }
       }
     }
