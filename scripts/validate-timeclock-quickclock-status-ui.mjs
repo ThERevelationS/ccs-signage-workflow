@@ -110,5 +110,34 @@ assert.doesNotMatch(visible(renderer), /older-second-shift/,
   'Older same-session response must not reopen already closed clock-out dialog');
 console.log('PASS overlapping status refreshes accept only latest request');
 
+await act(async () => { events.get('focus')(); });
+assert.equal(calls.length, 5);
+await act(async () => { calls[4].resolve(status(second, 'shift-ready-to-close')); });
+assert.match(visible(renderer), /shift-ready-to-close/);
+const dialog = renderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+assert.ok(dialog, 'Expected a clock-out dialog connected to the authoritative active shift');
+
+await act(async () => { events.get('focus')(); });
+assert.equal(calls.length, 6, 'Passive status refresh should be in flight before punch');
+const finish = dialog.props.onClockOut({
+  lunchMinutes: 0, jobAllocations: [], notes: 'Synthetic clock-out acceptance',
+});
+assert.equal(calls.length, 7);
+assert.equal(calls[6].payload.action, 'clock_out');
+await act(async () => { events.get('focus')(); });
+assert.equal(calls.length, 7,
+  'Passive status request must not launch while authoritative Clock Out is underway');
+await act(async () => { calls[6].resolve({ data: {
+  success: true, user: second, status: 'clocked_out', entry: {
+    id: 'shift-ready-to-close', clock_out: '2026-10-13T21:00:00.000Z',
+  },
+} }); await finish; });
+assert.doesNotMatch(visible(renderer), /shift-ready-to-close/,
+  'Confirmed Clock Out must close the shift dialog');
+await act(async () => { calls[5].resolve(status(second, 'stale-before-clock-out')); });
+assert.doesNotMatch(visible(renderer), /stale-before-clock-out/,
+  'Pre-punch status response must not reopen clock-out after a confirmed action');
+console.log('PASS in-flight Clock Out suppresses passive refresh and fences old status replies');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 2/2 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 3/3 Time Clock Quick Clock async status acceptance cases');
