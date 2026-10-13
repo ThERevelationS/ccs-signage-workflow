@@ -686,6 +686,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   };
 
+  const handleCustomerResolutionApplied = async saved => {
+    // Only authoritative Base44 reload may refresh the persistent Save & Sync
+    // queue after an administrator's exact-ID customer-link decision.
+    const reloaded = await loadData(true);
+    const current = originalOrdersRef.current[saved?.order_id];
+    if (!reloaded || !current || current.smartsheet_pending_local_sync !== true ||
+        String(current.customer_name ?? '') !== String(saved.customer_name ?? '') ||
+        String(current.work_order_id ?? '') !== '' ||
+        String(current.smartsheet_sheet_id ?? '') !== String(saved.sheet_id ?? '') ||
+        String(current.smartsheet_row_id ?? '') !== String(saved.row_id ?? '')) {
+      setSaveError('The customer decision may be saved, but the current Order reload was not verified. Reload Orders; do not apply the decision again.');
+      throw new Error('Authoritative Order reload was not verified. Reload before trying anything else.');
+    }
+    setLinkedNameReview({ count: 0, items: [] });
+    setSaveError('');
+    setSyncMessage('Smartsheet customer adopted and old job unlinked in Base44. This Order is queued for Save & Sync.');
+  };
+
   const pullFromSmartsheet = async () => {
     if (readError || !isRegistered || syncInFlightRef.current || saveInFlightRef.current ||
         dateNeededSaveInFlightRef.current || addInFlightRef.current ||
@@ -1329,7 +1347,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       <>
         <OrderLinkedCustomerReview count={linkedNameReview.count} items={linkedNameReview.items}
           orders={orders} workOrders={workOrders}
-          isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken} />
+          isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken}
+          canResolve={!readError && !hasActiveOrderEdits() && !pendingSyncIdsRef.current.size && !isSaving && !isSyncing}
+          onResolutionApplied={handleCustomerResolutionApplied} />
         <OrderMobileCards
           orders={filteredOrders}
           separateHistory={historyLayout.split}
@@ -1366,7 +1386,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     >
       <OrderLinkedCustomerReview count={linkedNameReview.count} items={linkedNameReview.items}
         orders={orders} workOrders={workOrders}
-        isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken} />
+        isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken}
+        canResolve={!readError && !hasActiveOrderEdits() && !pendingSyncIdsRef.current.size && !isSaving && !isSyncing}
+        onResolutionApplied={handleCustomerResolutionApplied} />
       {saveError && (
         <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-2">
           <span>{saveError}</span>
