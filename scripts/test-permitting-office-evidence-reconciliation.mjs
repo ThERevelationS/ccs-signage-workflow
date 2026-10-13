@@ -82,6 +82,42 @@ test('canonical office ID is provenance only; missing canonical ID is explicit n
  assert.equal(r.reviews[0].flags.includes('canonical_office_identity_missing'),true);
 });
 
+test('pending issuer and inspector assignments expose missing canonical identity without promotion',()=>{
+ for(const role of ['electrical_permit','electrical_inspection']){
+  for(const canonical of [undefined,null,'','   ']){
+   const rows=[locality('oh',[reviewed({authority_roles:[role],authority_verification_status:'needs_verification',government_office_id:canonical,catalog_office_id:'catalog'})])];
+   const before=JSON.stringify(rows),r=run(rows);
+   assert.equal(r.states.OH.canonical_office_identity_missing,1);
+   assert.equal(r.states.OH.canonical_office_identity_malformed,0);
+   assert.equal(r.states.OH.recorded_staff_verified_offices,0);
+   assert.equal(r.reviews[0].missing_canonical_office_id,true);
+   assert.equal(r.reviews[0].recorded_staff_verified,false);
+   assert.deepEqual(r.reviews[0].authority_roles,[role]);
+   assert.equal(JSON.stringify(rows),before);
+  }
+ }
+});
+test('padded or nonstring canonical identity is malformed for historical and pending roles',()=>{
+ for(const status of ['staff_verified','needs_verification']){
+  for(const canonical of [' canonical-office ',12,{},[]]){
+   const rows=[locality('oh',[reviewed({authority_verification_status:status,government_office_id:canonical})])];
+   const before=JSON.stringify(rows),r=run(rows);
+   assert.equal(r.states.OH.canonical_office_identity_malformed,1);
+   assert.equal(r.states.OH.canonical_office_identity_missing,0);
+   assert.equal(r.states.OH.canonical_electrical_role_copy_review,0);
+   assert.equal(r.reviews[0].malformed_canonical_office_id,true);
+   assert.equal(r.reviews[0].recorded_staff_verified,status==='staff_verified');
+   assert.equal(JSON.stringify(rows),before);
+  }
+ }
+});
+test('unassigned legacy categories do not become electrical assignments through identity flags',()=>{
+ const r=run([locality('oh',[reviewed({authority_roles:[],authority_verification_status:'needs_verification',government_office_id:undefined,office_type:'Electrical Inspectors'})])]);
+ assert.equal(r.states.OH.canonical_office_identity_missing,0);
+ assert.equal(r.states.OH.electrical_issuer_assignments,0);
+ assert.equal(r.states.OH.electrical_inspection_assignments,0);
+ assert.deepEqual(r.reviews,[]);
+});
 test('duplicates, missing scoped office ID and missing name remain review items',()=>{
  const r=run([locality('oh',[reviewed({id:'same'}),reviewed({id:'same'}),reviewed({id:' ',name:''})])]);
  assert.equal(r.states.OH.office_identity_review,3);
