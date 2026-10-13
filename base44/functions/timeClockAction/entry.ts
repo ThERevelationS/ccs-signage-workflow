@@ -1955,6 +1955,73 @@ async function releaseAdminCorrectionGate(
   return released.updated === 1;
 }
 
+// The same company coordinator also serializes employee-request reviews.
+// A review claim is tagged by its correction-request ID, not a TimeEntry ID.
+// Release an interrupted claim only when the reviewed request and BOTH audit
+// streams prove a completely finalized decision; never expire an uncertain
+// review based only on its age.
+async function releaseManagerReviewDecisionGate(
+  gateEntity: any, auditEntity: any, correctionRequestEntity: any, entryEntity: any,
+  gateId: string, requestId: string, correctionRequestId: string, hash: string,
+  token: string, allowPrewriteRelease = false,
+) {
+  const gate = await gateEntity.get(gateId).catch(() => null);
+  if (!gate?.id || gate.scope !== 'company' || gate.status !== 'creating' ||
+      String(gate.request_id || '') !== requestId ||
+      String(gate.time_entry_id || '') !== `review:${correctionRequestId}` ||
+      !constantTimeEqual(String(gate.payload_hash || ''), hash) ||
+      String(gate.claim_token || '') !== token) return false;
+  const request = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
+  const reviewAudits = await auditEntity.filter({ action: 'correction_review', request_id: requestId });
+  const appliedAudits = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
+  if (!request?.id || !Array.isArray(reviewAudits) || !Array.isArray(appliedAudits) ||
+      reviewAudits.length > 1 || appliedAudits.length > 1) return false;
+
+  const status = String(request.status || '');
+  const terminal = ['approved', 'approved_modified', 'rejected'].includes(status);
+  if (terminal) {
+    const audit = reviewAudits[0];
+    if (String(request.review_request_id || '') !== requestId ||
+        !constantTimeEqual(String(request.review_payload_hash || ''), hash) ||
+        !audit?.id || !['confirmed', 'recovered'].includes(String(audit.outcome || '')) ||
+        String(audit.time_entry_id || '') !== String(request.time_entry_id || '') ||
+        asEmail(audit.user_email) !== asEmail(request.user_email) ||
+        String(audit.details?.correction_request_id || '') !== correctionRequestId ||
+        !constantTimeEqual(String(audit.details?.review_payload_hash || ''), hash) ||
+        String(audit.details?.decision || '') !== status) return false;
+    if (status === 'rejected') {
+      if (appliedAudits.length !== 0) return false;
+    } else {
+      const applied = appliedAudits[0];
+      const entry = await entryEntity.get(request.time_entry_id).catch(() => null);
+      if (!applied?.id || !['confirmed', 'recovered'].includes(String(applied.outcome || '')) ||
+          String(applied.time_entry_id || '') !== String(request.time_entry_id || '') ||
+          asEmail(applied.user_email) !== asEmail(request.user_email) ||
+          String(applied.details?.correction_request_id || '') !== correctionRequestId ||
+          !constantTimeEqual(String(applied.details?.review_payload_hash || ''), hash) ||
+          String(request.applied_audit_id || '') !== String(applied.id || '') ||
+          String(audit.details?.applied_audit_id || '') !== String(applied.id || '') ||
+          !entry?.id || String(entry.last_correction_request_id || '') !== correctionRequestId ||
+          String(entry.status || '') !== 'clocked_out' ||
+          String(entry.approval_status || '') !== 'needs_review') return false;
+    }
+  } else if (!(allowPrewriteRelease && status === 'pending' &&
+      !request.review_request_id && !request.review_payload_hash &&
+      reviewAudits.length === 0 && appliedAudits.length === 0)) {
+    return false;
+  }
+
+  const released = await gateEntity.updateMany(
+    { id: gateId, updated_date: gate.updated_date, scope: 'company', status: 'creating',
+      request_id: requestId, time_entry_id: `review:${correctionRequestId}`,
+      payload_hash: hash, claim_token: token },
+    { $set: { status: 'idle', request_id: '', time_entry_id: '',
+      payload_hash: '', claim_token: '', started_at: null } },
+  );
+  if (!released || typeof released.updated !== 'number') throw new Error('Manager-review coordinator release was not verified.');
+  return released.updated === 1;
+}
+
 async function releasePayPeriodCreateGate(gateEntity: any, id: string, requestId: string, hash: string, token: string) {
   const gate = await gateEntity.get(id);
   if (!gate?.id) return false;
