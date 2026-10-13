@@ -115,9 +115,10 @@ test('no saved offices never means permitting authority complete',()=>{
 });
 
 test('six thousand saved offices have no total cap and remain read-only',()=>{
- const rows=Array.from({length:6000},(_,i)=>locality('loc'+i,[reviewed({id:'off'+i})]));
+ const rows=Array.from({length:6000},(_,i)=>locality('loc'+i,[reviewed({id:'off'+i})],{jurisdiction_profile_id:'p'+i}));
+ const profiles=Array.from({length:6000},(_,i)=>({id:'p'+i,state:'OH',name:'Example City'}));
  const before=JSON.stringify(rows);
- const r=run(rows);
+ const r=run(rows,profiles);
  assert.equal(r.states.OH.office_count,6000);assert.equal(r.reviews.length,0);
  assert.equal(JSON.stringify(rows),before);
 });
