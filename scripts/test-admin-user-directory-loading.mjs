@@ -22,7 +22,7 @@ test("User directory tracks latest request and preserves verified data on errors
 });
 
 test("Session changes revoke the previous directory's pending reads", () => {
-  assert.match(page, /return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
+  assert.match(page, /return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
   assert.match(page, /if \(sessionToken\) \{[\s\S]*?void loadUsers\(\)/);
   assert.match(page, /setUsers\(\[\]\);\s*setUserDirectoryError\(true\)/);
 });
@@ -37,7 +37,7 @@ test("Failed directory reads cannot appear as zero users or permit invites", () 
 });
 
 test("User writes and HR changes require a verified directory", () => {
-  assert.match(page, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| deletionInFlight\.current \|\| isLoading \|\| userDirectoryError \|\|\s*!sessionToken \|\| activeSessionToken\.current !== sessionToken\) return/);
+  assert.match(page, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| hrReloadInFlight\.current \|\| deletionInFlight\.current \|\| isLoading \|\| userDirectoryError \|\|\s*!sessionToken \|\| activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /if \(inviteInFlight\.current \|\| isLoading \|\| userDirectoryError \|\| !sessionToken \|\|\s*activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /if \(!verifiedUser \|\| !user\?\.updated_date \|\| !deleteConfirm \|\|[\s\S]*?deletionInFlight\.current \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| userMutationSaving \|\|[\s\S]*?isLoading \|\| userDirectoryError \|\| !sessionToken \|\|[\s\S]*?activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /const handleSaveHrData = async \(hrData, record\) => \{[\s\S]*?if \(!verifiedUser \|\| !isDialogOpen \|\| isLoading \|\| userDirectoryError \|\|[\s\S]*?!sessionToken \|\| activeSessionToken\.current !== sessionToken/);
