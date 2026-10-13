@@ -182,7 +182,7 @@ async function claimMechanicReceipt(Receipt: any, data: any) {
   return { receipt:created, owner:true };
 }
 
-async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
+async function failMechanicReceipt(Receipt: any, WorkOrder:any, receipt: any, error: unknown) {
   // Failure must not relabel a changed operation or downgrade applied/cancelled evidence.
   if (!mechanicReceiptOperationIdentityValid(receipt)) {
     throw Object.assign(new Error('Fleet mechanic failure receipt identity is inconsistent. CCS review is required.'),{status:409});
@@ -200,14 +200,28 @@ async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
   } catch {
     // An uncertain acknowledgment is not evidence of failure. Verify below.
   }
-  if (changed?.updated === 1) return;
   const latest = await Receipt.get(receipt.id).catch(()=>null);
-  if (latest?.status === 'failed' && mechanicReceiptOperationIdentityValid(latest) &&
-      mechanicReceiptIdentityUnchanged(receipt,latest)) return;
-  // Preserve a specific already-safe 409 (notably photo evidence conflicts)
-  // instead of hiding it behind a generic receipt-terminalization conflict.
-  if (Number((error as any)?.status) === 409) throw error;
-  throw Object.assign(new Error('Fleet mechanic receipt changed while failure was being recorded. Verify its current operation and work-order evidence before retrying.'),{status:409});
+  if (!latest || latest.status !== 'failed' ||
+      !mechanicReceiptOperationIdentityValid(latest) ||
+      !mechanicReceiptIdentityUnchanged(receipt,latest)) {
+    // Preserve a specific already-safe 409 (notably photo evidence conflicts)
+    // instead of hiding it behind a generic receipt-terminalization conflict.
+    if (Number((error as any)?.status) === 409) throw error;
+    throw Object.assign(new Error('Fleet mechanic receipt changed while failure was being recorded. Verify its current operation and work-order evidence before retrying.'),{status:409});
+  }
+  // A dispatched Fleet write may have committed before the failure CAS, or
+  // before a lost CAS acknowledgment was reconciled. Do not return "failed"
+  // until a fresh work-order read rules out the matching operation marker.
+  const current = await WorkOrder.get(String(receipt.target_id || '')).catch(()=>null);
+  if (!current) {
+    throw Object.assign(new Error('Fleet mechanic failure could not verify the current work order. CCS review is required.'),{status:409});
+  }
+  if (workOrderHasMechanicReceipt(current,latest)) {
+    await markMechanicReceiptApplied(Receipt,latest,current,true);
+    throw Object.assign(new Error('Fleet mechanic work was committed during failure reconciliation. Refresh and check the saved operation status.'),{status:409});
+  }
+  // A successful CAS or a verified lost acknowledgment both need the same
+  // post-terminalization Fleet read; CAS success alone is not proof of failure.
 }
 
 async function cancelMechanicReceipt(Receipt:any, receipt:any, reason:string, adminEmail='') {
@@ -1073,7 +1087,7 @@ Deno.serve(async (req) => {
         }
         if (!ACTIVE.has(current.status)) {
           const message = 'The Fleet work order is no longer active, so this interrupted mechanic request was not resumed.';
-          await failMechanicReceipt(Receipt,receipt,message);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,message);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'failed',request_id:requestId,error_message:message});
         }
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
@@ -1083,7 +1097,7 @@ Deno.serve(async (req) => {
             : recovery.reason === 'incomplete_upload_evidence'
               ? 'The mechanic photo upload was interrupted before all photo evidence was recorded. Recorded uploads will be reused by an identical retry.'
               : 'The interrupted mechanic request does not contain enough durable evidence to resume automatically.';
-          await failMechanicReceipt(Receipt,receipt,reason);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,reason);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'failed',request_id:requestId,error_message:reason});
         }
         try {
@@ -1098,7 +1112,7 @@ Deno.serve(async (req) => {
               await resolveReusedUploadReceipt(Receipt,receipt);
               return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh,{success:true,status:'applied',request_id:requestId,recovered:true});
             }
-            await failMechanicReceipt(Receipt,receipt,result.data.error);
+            await failMechanicReceipt(Receipt,WorkOrder,receipt,result.data.error);
             return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh || current,{success:true,status:'failed',request_id:requestId,error_message:result.data.error});
           }
           const updated = result?.data?.work_order || await WorkOrder.get(id);
@@ -1114,7 +1128,7 @@ Deno.serve(async (req) => {
             return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh,{success:true,status:'applied',request_id:requestId,recovered:true});
           }
           const message = clean(error instanceof Error ? error.message : error,1200) || 'Interrupted mechanic request recovery failed.';
-          await failMechanicReceipt(Receipt,receipt,message);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,message);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh || current,{success:true,status:'failed',request_id:requestId,error_message:message});
         }
       }
@@ -1186,7 +1200,7 @@ Deno.serve(async (req) => {
           return json({error:'An interrupted mechanic photo retry is still being verified. CCS must confirm its outcome before another Save.'},{status:409});
         }
         if (!ACTIVE.has(current.status)) {
-          await failMechanicReceipt(Receipt,receipt,'The Fleet work order is no longer active, so the interrupted mechanic request was not resumed.');
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,'The Fleet work order is no longer active, so the interrupted mechanic request was not resumed.');
           continue;
         }
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
@@ -1196,7 +1210,7 @@ Deno.serve(async (req) => {
             : recovery.reason === 'incomplete_upload_evidence'
               ? 'The mechanic photo upload was interrupted before all photo evidence was recorded. Recorded uploads will be reused by an identical retry.'
               : 'The interrupted mechanic request does not contain enough durable evidence to resume automatically.';
-          await failMechanicReceipt(Receipt,receipt,reason);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,reason);
           continue;
         }
         const receiptAction = mechanicActionForReceipt(receipt);
@@ -1212,7 +1226,7 @@ Deno.serve(async (req) => {
               await resolveReusedUploadReceipt(Receipt,receipt);
               return await mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was confirmed. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
             }
-            await failMechanicReceipt(Receipt,receipt,result.data.error);
+            await failMechanicReceipt(Receipt,WorkOrder,receipt,result.data.error);
             continue;
           }
           const updated = result?.data?.work_order || await WorkOrder.get(id);
@@ -1227,7 +1241,7 @@ Deno.serve(async (req) => {
             await resolveReusedUploadReceipt(Receipt,receipt);
             return await mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
           }
-          await failMechanicReceipt(Receipt,receipt,error);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,error);
         }
       }
       const stillUnresolved = await Receipt.filter({
@@ -1347,7 +1361,7 @@ Deno.serve(async (req) => {
           action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
         });
         if (result?.data?.error) {
-          await failMechanicReceipt(Receipt,receipt,result.data.error);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,result.data.error);
           return json({error:result.data.error},{status:409});
         }
         const updated = result?.data?.work_order || await WorkOrder.get(id);
@@ -1360,7 +1374,7 @@ Deno.serve(async (req) => {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
         }
-        await failMechanicReceipt(Receipt,receipt,error);
+        await failMechanicReceipt(Receipt,WorkOrder,receipt,error);
         throw error;
       }
     }
@@ -1422,7 +1436,7 @@ Deno.serve(async (req) => {
           const source = sameGrantFailed.find((row:any)=>String(row.id) === reusable.receipt_id);
           if (!mechanicPhotoSourceMatchesRetry(source,receipt) || source.status !== 'failed' ||
               source.result_summary?.retry_reserved_by_request_id) {
-            await failMechanicReceipt(Receipt,receipt,'Previous photo evidence has conflicting source identity or reservation.');
+            await failMechanicReceipt(Receipt,WorkOrder,receipt,'Previous photo evidence has conflicting source identity or reservation.');
             return json({error:'The previous photo evidence cannot be safely reserved. CCS must review this retry.'},{status:409});
           }
           // Retain newer forensic metadata; never overwrite the entire summary
@@ -1433,7 +1447,7 @@ Deno.serve(async (req) => {
             'result_summary.retry_reserved_at':nowIso(),
           }});
           if (reservation?.updated !== 1) {
-            await failMechanicReceipt(Receipt,receipt,'Another mechanic request reserved the same interrupted photo upload.');
+            await failMechanicReceipt(Receipt,WorkOrder,receipt,'Another mechanic request reserved the same interrupted photo upload.');
             return json({error:'Another mechanic request is already recovering these photos. Check current Fleet state before retrying.'},{status:409});
           }
         }
@@ -1450,7 +1464,7 @@ Deno.serve(async (req) => {
           action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
         });
         if (result?.data?.error) {
-          await failMechanicReceipt(Receipt,receipt,result.data.error);
+          await failMechanicReceipt(Receipt,WorkOrder,receipt,result.data.error);
           return json({error:result.data.error},{status:409});
         }
         const updated = result?.data?.work_order || await WorkOrder.get(id);
@@ -1465,7 +1479,7 @@ Deno.serve(async (req) => {
           await resolveReusedUploadReceipt(Receipt,receipt);
           return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
         }
-        await failMechanicReceipt(Receipt,receipt,error);
+        await failMechanicReceipt(Receipt,WorkOrder,receipt,error);
         throw error;
       } finally {
         if (reusable.receipt_id) {

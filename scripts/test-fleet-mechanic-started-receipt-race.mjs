@@ -1572,3 +1572,66 @@ test("admin cancellation post-commit reconciliation blocks a racing receipt iden
   assert.equal(store.receipts.get(prior.id).result_summary.forensic_review_note,"Keep identity-conflict audit note");
   assert.equal(store.updates,0);
 });
+
+test("late Fleet commit between failure snapshot and CAS cannot be reported failed",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  store.work.status="completed";
+  store.pauseFailureWrite=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("failure CAS paused before late Fleet commit",()=>store.pendingFailureWrites.length===1);
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.work.corrective_action="Mechanic work committed after old status snapshot";
+  store.pendingFailureWrites.shift()();
+  const response=await pending;
+  assert.equal(response.code,409);
+  assert.notEqual(response.body.status,"failed");
+  assert.match(response.body.error,/committed during failure reconciliation/i);
+  const latest=store.receipts.get(prior.id);
+  assert.equal(latest.status,"applied");
+  assert.equal(latest.result_summary.work_order_updated_date,"version-2");
+  assert.equal(latest.result_summary.recovered_from_work_order_marker,true);
+  assert.equal(store.updates,0,"Failure reconciliation must never replay maintenance");
+});
+
+test("failure path still reports failed with an unrelated later work-order marker",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  store.work.status="completed";
+  store.pauseFailureWrite=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("failure CAS paused for unrelated Fleet change",()=>store.pendingFailureWrites.length===1);
+  store.work.mechanic_operation_key="mechanic:another-grant:unrelated-work:save:another-valid-request-123456";
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.pendingFailureWrites.shift()();
+  const response=await pending;
+  assert.equal(response.code,200);
+  assert.equal(response.body.status,"failed");
+  assert.equal(store.receipts.get(prior.id).status,"failed");
+  assert.equal(store.updates,0);
+});
+
+test("lost failure acknowledgment with late committed marker is recovered as applied",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  store.work.status="completed";
+  store.pauseFailureWrite=true;
+  store.loseFailureAckOnce=true;
+  const pending=call({action:"mutation_status",token,work_order_id:workId,
+    mutation_action:"save",request_id:prior.result_summary.request_id},client);
+  await until("failure acknowledgment lost after late Fleet commit",()=>store.pendingFailureWrites.length===1);
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.pendingFailureWrites.shift()();
+  const response=await pending;
+  assert.equal(response.code,409);
+  assert.match(response.body.error,/committed during failure reconciliation/i);
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.updates,0);
+});
