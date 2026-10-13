@@ -1477,7 +1477,7 @@ test("new Save request cannot resolve unverified applied photo owner as prior su
   assert.equal(store.uploads.length,0);
 });
 
- 
+
 test("admin revocation detects a work-order commit that lands before its receipt cancellation CAS",async()=>{
   const prior=makeReceipt(payload("request-original-123456"));
   const {store,client}=setup({receipt:prior});
