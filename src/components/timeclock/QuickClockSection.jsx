@@ -734,6 +734,7 @@ export default function QuickClockSection({
       setPersistenceError("A Time Clock punch is still being finalized by the server. Wait for authoritative status to settle before starting another punch.");
       return;
     }
+    cancelDisplayReset();
     setPersistenceError("");
     setUsernameInput("");
     setManualPassword("");
