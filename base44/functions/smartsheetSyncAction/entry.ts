@@ -30,7 +30,7 @@ import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContact
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
 import { commitVerifiedSalesMetadata } from '../../shared/smartsheetSalesMetadataCAS.mjs';
-import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks, classifySalesPullDuplicateLinkedRowRisks, readSalesPushRowOwnershipRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
+import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks, classifySalesPullDuplicateLinkedRowRisks, readSalesPushRowOwnershipRisks, verifySalesPushWriteOwnership } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
 import { auditSalesPermanentRowOwners } from '../../shared/smartsheetSalesPermanentOwnershipAudit.mjs';
@@ -2470,6 +2470,11 @@ async function pushDataset(
           throw new Error('Smartsheet values changed during rate limit wait');
         }
       }
+      // The initial ownership preflight may also expire during Retry-After.
+      // Re-read every exact outgoing row's claims after the wait, not just the
+      // planned WorkOrders' own versions and Smartsheet cell values.
+      await verifySalesPushWriteOwnership(
+        base44.asServiceRole.entities.WorkOrder, sheetId, pendingRecords, eligibleSmartsheetWrites);
       await options.assertRunOwnership();
     } catch {
       // A held definitive 429 batch cannot count as synchronized even if a
@@ -2495,6 +2500,22 @@ async function pushDataset(
           detail: 'Submitting the verified permanent-row updates to Smartsheet',
         });
       }
+      // A newer off-pipeline or deleted WorkOrder can claim a permanent row
+      // while backup, approvals, and remote preflights are running. Re-read
+      // exact outgoing row ownership immediately before the FIRST PUT too.
+      // An unverified claim holds the entire batch; read-back alone cannot
+      // prove that a cancelled PUT was authorized or completed.
+      if (dataset === 'sales') {
+        try {
+          await verifySalesPushWriteOwnership(
+            base44.asServiceRole.entities.WorkOrder, sheetId, pendingRecords, eligibleSmartsheetWrites);
+          if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+        } catch {
+          throw Object.assign(new Error(
+            'Sales Smartsheet PUT cancelled: permanent row ownership could not be freshly verified. Review before retrying.'
+          ), {salesOwnershipRecheckBlocked: true});
+        }
+      }
       // A timed-out Sales PUT may already have committed remotely. Never
       // resend an uncertain mutation: rely on the existing fresh Smartsheet
       // read-back and verified Base44 CAS before any review is resolved.
@@ -2517,10 +2538,10 @@ async function pushDataset(
       if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
       else {
         salesBatchWriteError = err?.message || 'unknown error';
-        if (err?.salesRateLimitRecheckBlocked) {
-          // A definitive 429 means this PUT has not committed. If its retry
-          // preflight fails, don't infer success merely because another actor
-          // independently placed the expected remote values on the sheet.
+        if (err?.salesRateLimitRecheckBlocked || err?.salesOwnershipRecheckBlocked) {
+          // A cancelled prewrite or definitive 429 has not authorized a PUT.
+          // Do not infer success from an independently matching remote row:
+          // exclude every held record from metadata advancement and reviews.
           const blockedRows = new Set(eligibleSmartsheetWrites.map((row: any) => String(row.id)));
           for (const [recordId, verification] of deferredSalesVerification) {
             if (blockedRows.has(String(verification.rowId))) salesFailedRecordIds.add(recordId);
