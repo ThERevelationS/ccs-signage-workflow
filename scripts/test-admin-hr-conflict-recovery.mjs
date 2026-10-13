@@ -202,7 +202,8 @@ test("Shipping form blocks Save until reconciliation and no direct write in relo
  assert.match(form,/saveInFlight\.current \|\| reloadInFlight\.current \|\| hrRecovery\) return/);
  assert.match(form,/disabled=\{isSaving \|\| saveInFlight\.current \|\| reloadSaving \|\| !!hrRecovery\}/);
  assert.match(form,/onClick=\{reloadHrForRecovery\}/);
- assert.match(form,/onClick=\{\(\) => resolveHrRecovery\("keep-conflicts"\)\}/);
+ assert.match(form,/onClick=\{\(\) => resolveHrRecovery\(hrPreviewChoice\)\}/);
+ assert.match(form,/onClick=\{\(\) => selectHrPreviewChoice\(option\.value\)\}/);
  assert.match(form,/onReloadLatest &&[\s\S]*?HR data changed in another session/);
  assert.match(admin,/onReloadLatest=\{\(\) => reloadHrRecord\(editingUser\)\}/);
  assert.match(admin,/hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;/);
