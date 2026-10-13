@@ -40,6 +40,6 @@ test("User writes and HR changes require a verified directory", () => {
   assert.match(page, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| deletionInFlight\.current \|\| isLoading \|\| userDirectoryError \|\|\s*!sessionToken \|\| activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /if \(inviteInFlight\.current \|\| isLoading \|\| userDirectoryError \|\| !sessionToken \|\|\s*activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /if \(!verifiedUser \|\| !user\?\.updated_date \|\| !deleteConfirm \|\|[\s\S]*?deletionInFlight\.current \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| userMutationSaving \|\|[\s\S]*?isLoading \|\| userDirectoryError \|\| !sessionToken \|\|[\s\S]*?activeSessionToken\.current !== sessionToken\) return/);
-  assert.match(page, /if \(isLoading \|\| userDirectoryError \|\| !sessionToken\) \{\s*throw new Error\("The user directory must be reloaded before saving HR data/);
+  assert.match(page, /const handleSaveHrData = async \(hrData, record\) => \{[\s\S]*?if \(!verifiedUser \|\| !isDialogOpen \|\| isLoading \|\| userDirectoryError \|\|[\s\S]*?!sessionToken \|\| activeSessionToken\.current !== sessionToken/);
   assert.match(page, /const refreshed = await loadUsers\(\); if \(refreshed\) setUserMutationError\(""\)/);
 });
