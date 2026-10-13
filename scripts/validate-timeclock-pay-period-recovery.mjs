@@ -6643,6 +6643,13 @@ test('v30 manager correction coordinator diagnostics remain read-only and sessio
   assert.equal(ready.body.read_only, true);
   assert.equal(ready.body.record_count, 1);
   assert.deepEqual(h.rows, initial, 'Idle diagnostics must not trigger state recovery writes');
+  const stateRows = h.rows.TimeClockEmployeeState;
+  h.rows.TimeClockEmployeeState = [];
+  const absentState = await diagnostic();
+  assert.equal(absentState.body.coordinator_state, 'ready');
+  assert.equal(h.rows.TimeClockEmployeeState.length, 0,
+    'Viewing diagnostics must not initialize or recover employee state');
+  h.rows.TimeClockEmployeeState = stateRows;
 
   const gate = h.rows.TimeClockAdminCorrectionGate[0];
   h.rows.TimeClockAdminCorrectionGate = [];
@@ -6708,7 +6715,9 @@ test('v30 manager correction coordinator diagnostics remain read-only and sessio
   assert.equal(review.body.correction_request_status, 'reviewing');
   assert.equal(review.body.review_request_binding_matches, true);
   assert.equal(review.body.correction_audit.count, 0);
+  assert.equal(review.body.correction_audit.ownership_matches, false);
   assert.equal(review.body.review_audit.count, 0);
+  assert.equal(review.body.review_audit.ownership_matches, false);
   assert.deepEqual(h.rows, heldReviewBefore, 'Review diagnostics never complete a pending review');
 });
 
