@@ -12,17 +12,22 @@ const raw = {
   work_order_id: 'job-permanent-55',
   local_customer_name: 'Original customer',
   smartsheet_customer_name: 'Different Smartsheet customer',
+  order_updated_date: '2026-10-13T10:00:00.000Z',
+  remote_modified_at: '2026-10-13T10:01:00.000Z',
 };
 const [review] = normalizeOrderLinkedCustomerReviews([raw], 1);
 assert.deepEqual(review, {
   orderId: raw.order_id, sheetId: raw.sheet_id, rowId: raw.row_id,
   workOrderId: raw.work_order_id, localCustomerName: raw.local_customer_name,
   smartsheetCustomerName: raw.smartsheet_customer_name,
+  orderUpdatedDate: raw.order_updated_date,
+  remoteModifiedAt: raw.remote_modified_at,
 });
 const loaded = {
   id: raw.order_id, smartsheet_sheet_id: raw.sheet_id,
   smartsheet_row_id: raw.row_id, work_order_id: raw.work_order_id,
   customer_name: raw.local_customer_name, smartsheet_pending_local_sync: false,
+  updated_date: raw.order_updated_date,
 };
 assert.equal(orderCustomerReviewRowState(review, loaded), 'matches_review');
 for (const change of [
@@ -31,6 +36,7 @@ for (const change of [
   { smartsheet_pending_local_sync: true },
   { smartsheet_row_id: '888' },
   { smartsheet_sheet_id: '777' },
+  { updated_date: '2026-10-14T10:00:00.000Z' },
 ]) {
   assert.equal(orderCustomerReviewRowState(review, { ...loaded, ...change }), 'changed_or_unavailable');
 }
@@ -44,6 +50,8 @@ const invalid = [
   { ...raw, work_order_id: '' },
   { ...raw, local_customer_name: null },
   { ...raw, smartsheet_customer_name: null },
+  { ...raw, remote_modified_at: '' },
+  { ...raw, order_updated_date: null },
 ];
 assert.deepEqual(normalizeOrderLinkedCustomerReviews(invalid, 6), []);
 assert.deepEqual(normalizeOrderLinkedCustomerReviews([raw], 0), []);
@@ -71,6 +79,9 @@ assert.match(panel, /Smartsheet customer at pull/);
 assert.match(panel, /Linked job in Base44/);
 assert.match(panel, /Job not in active-job list/);
 assert.match(panel, /This Order has changed since the review or is not loaded/);
-assert.match(panel, /This comparison does not approve or apply either decision/);
+assert.match(panel, /separate version-protected commit is required/);
+assert.match(panel, /Verify decision safely/);
+assert.match(panel, /isAdmin &&/);
+assert.match(panel, /previewEpochRef\.current \+= 1/);
 assert.doesNotMatch(panel, /\.update\(|\.create\(|pushSavedOrdersToSmartsheet|pullOrdersFromSmartsheet|onClick=\{\(\) => .*save/);
 console.log('PASS Order pull includes capped names, client validates IDs, and desktop/mobile read-only review wiring exists');
