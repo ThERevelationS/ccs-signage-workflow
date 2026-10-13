@@ -3105,17 +3105,16 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       // The only business mutation: adopt the confirmed Smartsheet customer,
       // remove the previous permanent job association, and durably queue the
       // Order for reconciled metadata confirmation. No remote write here.
-      let committed;
+      let saved;
       try {
-        committed = await entity.updateMany(plan.selector, { $set: plan.patch });
+        // Reuse the existing audited full-version Order CAS save. Its only
+        // business write is one updateMany for all three fields together.
+        saved = await trackedConditionalSave(base44, 'Order', latestOrder,
+          plan.patch, adminActor, 'admin');
       } catch {
         return Response.json({ success: false, state: 'save_acknowledgement_uncertain',
-          error: 'The Order save acknowledgement was lost. Reload the Order to determine whether it was saved; do not submit again blindly.' }, { status: 409 });
+          error: 'The Order save or its audit acknowledgement was not verified. Reload the Order to determine whether it was saved; do not submit again blindly.' }, { status: 409 });
       }
-      if (committed?.updated !== 1) return Response.json({ success: false, state: 'version_conflict',
-        error: 'The Order changed before the atomic save. Reload and review; no blind retry.' }, { status: 409 });
-      let saved;
-      try { saved = await entity.get(orderId); } catch {}
       if (!saved || String(saved.customer_name ?? '') !== plan.patch.customer_name ||
           String(saved.work_order_id ?? '') !== '' ||
           saved.smartsheet_pending_local_sync !== true ||
