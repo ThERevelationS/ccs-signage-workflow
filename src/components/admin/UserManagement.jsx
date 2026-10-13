@@ -1533,7 +1533,7 @@ export default function UserManagement() {
                 : "Unsaved Account changes are protected, including roles, permissions and a newly entered password."}
               {" "}Use Cancel to review discarding any unsaved editor changes.
             </p>
-          )
+          )}
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
             <Button variant="outline" disabled={hrMutationSaving || hrReloadLoading}
               onClick={requestCloseUserEditor}>
