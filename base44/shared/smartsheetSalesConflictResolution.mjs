@@ -52,6 +52,23 @@ export function approvedSalesRecordStillCurrent(planned, latest) {
     String(latest.current_task_description ?? '') === String(planned.current_task_description ?? ''));
 }
 
+// A fresh remote snapshot is also required for ordinary Sales PUTs. An
+// employee may have updated Smartsheet after the initial sheet cache was
+// fetched; a stale plan must not silently overwrite that remote edit.
+// This is a bounded prewrite check, not an atomic Smartsheet conditional PUT.
+export function staleSalesRemotePutSnapshotIds(plans, freshByRowId, assigneeColumnId = '') {
+  if (!Array.isArray(plans) || !(freshByRowId instanceof Map)) {
+    throw new Error('Sales remote PUT requires complete fresh Smartsheet evidence.');
+  }
+  return plans.filter(([recordId, plan]) => {
+    const id = String(recordId ?? '').trim();
+    const rowId = String(plan?.rowId ?? '').trim();
+    return !id || !/^\d+$/.test(rowId) ||
+      !approvedSalesRemoteSnapshotStillCurrent(
+        plan?.snapshot, freshByRowId.get(rowId), assigneeColumnId);
+  }).map(([recordId]) => String(recordId));
+}
+
 // A planned ordinary Sales PUT is no more authoritative than an approved
 // one. Before any remote batch write, independently check the latest local
 // WorkOrder revision and permanent identity; unknown evidence fails closed.
