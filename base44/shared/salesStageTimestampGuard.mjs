@@ -14,7 +14,7 @@ export function validateSalesStageTimestampPatch(record = {}, patch = {}, equiva
   }
   const stamp = patch.sales_stage_changed_at;
   if (typeof stamp !== 'string' ||
-      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/.test(stamp) ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(stamp) ||
       !Number.isFinite(Date.parse(stamp)) ||
       new Date(stamp).toISOString() !== stamp) {
     throw Object.assign(new Error('Sales stage change timestamp must be a valid UTC ISO date-time.'), {status:400});
