@@ -194,15 +194,15 @@ export default function SIPs() {
     return () => clearInterval(interval);
   }, []);
 
-  const loadWorkOrders = async (showLoading = true) => {
+  const loadWorkOrders = async (showLoading = true, { clearQuickEditErrorOnSuccess = false } = {}) => {
     const loadSequence = ++boardLoadSequenceRef.current;
     const saveEpochAtStart = boardSaveEpochRef.current;
     const isCurrentBoardSnapshot = () => loadSequence === boardLoadSequenceRef.current &&
       saveEpochAtStart === boardSaveEpochRef.current && boardSavesPendingRef.current === 0;
     if (showLoading) setIsLoading(true);
     if (!showLoading) setIsRefreshing(true);
-    setBoardError("");
-    setChecklistConfigWarning("");
+    // Leave existing failure messages visible while Retry is pending. Only
+    // a successful, current snapshot proves that the issue has recovered.
     try {
       const [orders, usersData, taskDescSetting, dropdownsSetting] = await Promise.all([
         loadAllEntityRows({
@@ -254,10 +254,13 @@ export default function SIPs() {
         });
       }
       setWipTaskDescriptions(wipDescs);
+      setBoardError("");
+      if (clearQuickEditErrorOnSuccess) setQuickEditError("");
       if (dropdownsSetting?.error) {
         console.error("Error loading SIPs checklist dropdown conditions:", dropdownsSetting.error);
         setChecklistConfigWarning("Checklist status definitions could not refresh. Work Orders are current, but checklist progress may use the last loaded rules.");
       } else {
+        setChecklistConfigWarning("");
         setDropdownConditions(dropdownsSetting?.setting?.setting_value?.items || []);
       }
       
@@ -830,7 +833,7 @@ export default function SIPs() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={async () => { setQuickEditError(""); await loadWorkOrders(false); }}
+              onClick={() => loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true })}
               disabled={isRefreshing}
               className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 touch-manipulation sm:h-8 sm:w-auto"
             >
