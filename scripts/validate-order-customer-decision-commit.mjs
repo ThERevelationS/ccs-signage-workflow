@@ -40,6 +40,7 @@ const after = { ...order, ...proposal.patch };
 assert.equal(after.vendor, order.vendor);
 assert.deepEqual(after.smartsheet_sync_snapshot, order.smartsheet_sync_snapshot);
 assert.equal(after.work_order_id,'');
+assert.equal(planOrderSmartsheetCustomerUnlink({...args,remoteCustomerName:'  New remote customer  '}).patch.customer_name,review.smartsheet_customer_name);
 assert.equal(after.smartsheet_pending_local_sync,true);
 assert.equal(planOrderSmartsheetCustomerUnlink({...args, order:after}).ok,false);
 console.log('PASS exact-revision proposal atomically adopts customer, unlinks job, queues durable sync without modifying snapshot or other fields');
