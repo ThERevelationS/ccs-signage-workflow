@@ -110,6 +110,12 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
  if(related.some(e=>!ROLES.includes(e.role))||
    [...keys].some(key=>new Set(related.filter(e=>e.relation_key===key).map(e=>e.role)).size!==1))
    throw Error('Conflicting roles share a historical relationship key. Resolve identity before reviewing');
+ for(const key of keys){
+   const history=related.filter(e=>e.relation_key===key);
+   const officeIds=history.map(e=>e.office_snapshot?.government_office_id);
+   if(officeIds.some(id=>!valid(id))||new Set(officeIds).size!==1)
+     throw Error('Conflicting or missing canonical office IDs share a historical relationship key. Ask authorized staff to resolve source/office identity and inspect exact review event IDs: '+history.map(e=>e.id).join(' · ')+'. Do not select an office by its name.');
+ }
  const audit=reconcileRecordedElectricalEvidence([fresh],related,[source]);
  const items=[...malformed];
  for(const key of [...keys].sort()){
