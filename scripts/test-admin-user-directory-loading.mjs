@@ -37,7 +37,7 @@ test("Failed directory reads cannot appear as zero users or permit invites", () 
 });
 
 test("User writes and HR changes require a verified directory", () => {
-  assert.match(page, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| isLoading \|\| userDirectoryError \|\|\s*!sessionToken \|\| activeSessionToken\.current !== sessionToken\) return/);
+  assert.match(page, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| deletionInFlight\.current \|\| isLoading \|\| userDirectoryError \|\|\s*!sessionToken \|\| activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /if \(inviteInFlight\.current \|\| isLoading \|\| userDirectoryError \|\| !sessionToken \|\|\s*activeSessionToken\.current !== sessionToken\) return/);
   assert.match(page, /if \(!user\?\.id \|\| userMutationSaving \|\| isLoading \|\| userDirectoryError \|\| !sessionToken\) return/);
   assert.match(page, /if \(isLoading \|\| userDirectoryError \|\| !sessionToken\) \{\s*throw new Error\("The user directory must be reloaded before saving HR data/);
