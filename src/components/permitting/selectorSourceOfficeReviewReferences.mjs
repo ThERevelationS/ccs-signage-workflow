@@ -39,6 +39,9 @@ export function describeSourceOfficeReview(row){
  return message?{label:message[0],action:message[1]}:uncertain;
 }
 const alive=isCurrent=>{if(!isCurrent())throw Error('Saved-source relationship lookup superseded');};
+const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?
+ Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+const snapshot=value=>JSON.stringify(ordered(value));
 
 /** Manual read-only navigation across the canonical catalog bridge. No names,
  * URLs, PDF filenames or office descriptions are treated as record identities.
@@ -80,6 +83,13 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
  alive(isCurrent);
  if(events.some(e=>e.method!=='office-authority-v1'||e.jurisdiction_id!==fresh.id))
    throw Error('Relationship history escaped the selected jurisdiction scope');
+ // The explicit lookup also rereads the profile once after history traversal.
+ // Any concurrent profile/receipt/manual override change invalidates this result.
+ // This is a consistency fence, not an atomic datastore snapshot or source check.
+ const after=await api.entities.JurisdictionProfile.get(profile.id);
+ alive(isCurrent);
+ if(!after||snapshot(after)!==snapshot(fresh))
+   throw Error('Jurisdiction or review receipt changed during lookup. Refresh saved evidence and explicitly check again; no historical result was established.');
  const selected=events.filter(e=>e.source_document_id===source.id&&ROLES.includes(e.role));
  const keys=new Set(selected.map(e=>e.relation_key).filter(valid));
  const related=events.filter(e=>keys.has(e.relation_key));
