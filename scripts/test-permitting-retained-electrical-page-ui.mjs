@@ -31,9 +31,19 @@ try {
   assert.equal(buttons().length,2);
   await act(async()=>{buttons()[0].props.onClick();buttons()[0].props.onClick();buttons()[1].props.onClick();});
   assert.equal(hits,1);assert.ok(buttons().every(b=>b.props.disabled===true));
-  await act(async()=>{finish({review_id:'oh-1',physical_page:2,notice:'Retained quote matches; authority is not verified.'});});
+  await act(async()=>{finish({review_id:'oh-1',physical_page:2,profile_state:'OH',profile_name:'Pilot',profile_type:'city',profile_id:'p',role:'electrical_permit',
+    recorded_office_name:'Pilot Permits Department',canonical_office_id:'office-a',recorded_coverage_area:'Pilot City',recorded_coverage_kind:'named_jurisdiction',
+    recorded_coverage_basis:'explicit_named_service_area',source_document_id:'pdf-1',source_review_id:'scope-1',
+    recorded_quote:'Electrical permits are issued by the Pilot Permits Department.',
+    notice:'Retained quote matches; authority is not verified.'});});
   assert.ok(buttons().every(b=>b.props.disabled===false));
-  assert.match(JSON.stringify(tree.toJSON()),/Retained quote matches; authority is not verified/);
+  const rendered=JSON.stringify(tree.toJSON());
+  for(const expected of ['Retained PDF text match only','not an authority approval','Recorded jurisdiction','Claimed geographic coverage',
+    'Electrical permit issuance','Pilot Permits Department','office-a','Pilot City','explicit_named_service_area','scope-1',
+    'Electrical permits are issued by the Pilot Permits Department','Still requires verification','exact address and jurisdiction boundaries',
+    'Retained quote matches; authority is not verified'])assert.match(rendered,new RegExp(expected));
+  assert.equal(tree.root.findAll(n=>n.props?.role==='status'&&n.props?.['aria-label']?.includes('Retained PDF text result')).length,1);
+  assert.doesNotMatch(rendered,/current legal authority confirmed|office approved for this address/i);
   await act(async()=>tree.update(React.createElement(Review,{candidates:[],readPage})));
   assert.equal(buttons().length,0);
   assert.match(JSON.stringify(tree.toJSON()),/does not indicate statewide coverage/);
@@ -41,7 +51,9 @@ try {
   const rejected=async()=>{throw Error('Source access unavailable');};
   await act(async()=>{tree=Renderer.create(React.createElement(Review,{candidates:[candidates[0]],readPage:rejected}));});
   await act(async()=>{await buttons()[0].props.onClick();});
-  assert.match(JSON.stringify(tree.toJSON()),/Source access unavailable/);
+  assert.match(JSON.stringify(tree.toJSON()),/PDF evidence could not be confirmed: Source access unavailable/);
+  assert.match(JSON.stringify(tree.toJSON()),/request staff review/);
+  assert.equal(tree.root.findAll(n=>n.props?.role==='status'&&n.props?.['aria-label']?.includes('Retained PDF text result')).length,0);
   assert.ok(!/current legal authority confirmed/i.test(JSON.stringify(tree.toJSON())));
   await act(async()=>tree.unmount());
   console.log('Retained page manual UI acceptance passed: explicit one-at-a-time click, duplicate guard, session remount, read error, and no automatic authority.');
