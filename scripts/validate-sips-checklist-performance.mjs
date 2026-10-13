@@ -1137,10 +1137,13 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
     source.indexOf("  // Called after user picks (or skips) a revisit date"));
   const makeClick = new Function("isRegistered", "isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
     "blockOnUnsubmittedDrafts", "cancelPendingNavigationFocus", "setPendingRevisitDate",
-    "loadedRevisitDateSnapshot", "setShowRevisitPopup", saveClickSource + "\nreturn handleSaveClick;");
+    "loadedRevisitDateSnapshot", "setShowRevisitPopup", "setPendingRevisitRetry", "failedRevisitSelectionRef",
+    saveClickSource + "\nreturn handleSaveClick;");
+  const retrySelections = [];
   makeClick(true, false, { current: false }, false, { current: false }, block, () => {}, () => {}, "2099-03-21",
-    () => { revisitOpens++; })();
+    () => { revisitOpens++; }, value => retrySelections.push(value), { current: "2099-03-25" })();
   assert.equal(revisitOpens, 0);
+  assert.deepEqual(retrySelections, [], "Rejected save must not replace the pending Revisit retry");
   const completeSource = source.slice(source.indexOf("  const handleCheckOff = async () => {"),
     source.indexOf("  const proceedWithCheckOff = async () => {"));
   const makeComplete = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef", "blockOnUnsubmittedDrafts",
@@ -1175,8 +1178,9 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const clean = makeGuard(false, actionRef, value => notices.push(value), targetRef,
     () => null);
   makeClick(true, false, { current: false }, false, { current: false }, clean, () => {}, () => {}, "2099-03-21",
-    () => { revisitOpens++; })();
+    () => { revisitOpens++; }, value => retrySelections.push(value), { current: "2099-03-25" })();
   assert.equal(revisitOpens, 1); // Still requires the Revisit date popup on a clean save.
+  assert.deepEqual(retrySelections, ["2099-03-25"], "The explicit confirmation receives the failed Revisit selection");
 
   const revisitSave = source.slice(source.indexOf("  const handleRevisitSave = async (dateString) => {"),
     source.indexOf("  const saveChecklist = async"));
