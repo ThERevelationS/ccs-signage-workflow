@@ -918,7 +918,27 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
   assert.equal(reopen.current, false);
   assert.deepEqual(updates, [["unfinished", null], ["draft", ""], ["popup", null], ["warning", null]]);
   assert.match(source, /useEffect\(\(\) => \{\s*resetOtherPopupForReload\(\);\s*\}, \[workOrder\?\.id\]\);/);
-  assert.match(source, /const loadData = async \(\) => \{\s*if \(saveInFlightRef\.current\) return;\s*const requestId = \+\+loadDataRequestRef\.current;\s*loadInFlightRef\.current = true;\s*resetOtherPopupForReload\(\);/);
+  // The loader may clear old focus/error state before taking its request token.
+  // Verify the safety operations and their required order instead of assuming
+  // those setup steps must be adjacent in the source.
+  const loadStart = source.indexOf("  const loadData = async () => {");
+  assert.ok(loadStart >= 0, "Checklist loader exists");
+  const loaderSetup = source.slice(loadStart, source.indexOf("    try {", loadStart));
+  const safetySteps = [
+    "if (saveInFlightRef.current) return;",
+    "const requestId = ++loadDataRequestRef.current;",
+    "loadInFlightRef.current = true;",
+    "resetOtherPopupForReload();",
+    "setIsLoading(true);",
+  ];
+  let previousStepIndex = -1;
+  for (const step of safetySteps) {
+    const stepIndex = loaderSetup.indexOf(step);
+    assert.ok(stepIndex > previousStepIndex, `Checklist load safety step missing or reordered: ${step}`);
+    previousStepIndex = stepIndex;
+  }
+  assert.match(loaderSetup, /saveFailureFocusPendingRef\.current = false;/);
+  assert.match(loaderSetup, /failedRevisitSelectionRef\.current = undefined;/);
 
   const warning = source.slice(source.indexOf("{/* Validation guidance */}"));
   const first = warning.indexOf("onCloseAutoFocus={(event) => {");
