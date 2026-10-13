@@ -80,7 +80,7 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       if (row.overlapping_record_ids.length) row.review_flags.push('shared_geographic_candidate');
     }
     const represented = new Set(assessments.flatMap(r=>r.candidate_keys));
-    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.includes('parent_county_missing') || row.review_flags.includes('shared_geographic_candidate')), missing:candidates.filter(r=>!represented.has(r.key)) };
+    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.length>0), missing:candidates.filter(r=>!represented.has(r.key)) };
   }
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),

@@ -38,9 +38,22 @@ assert.deepEqual(r.profiles.identity_review[0].overlapping_record_ids,['p2']);
 assert.deepEqual(r.profiles.identity_review[1].overlapping_record_ids,['p']);
 assert.equal(r.profiles.assessments[0].canonical_identity_verified,false);
 r=reconcileOfficialInventory([],[p,{...p,id:'other-county',parent_county:{name:'Montgomery County'}},{...p,id:'other-state',state:'KY',type:'city'}],base);
-assert.equal(r.profiles.identity_review.length,0);
+assert.deepEqual(r.profiles.identity_review.map(row=>row.id),['other-state']);
+assert.deepEqual(r.profiles.assessments.map(row=>row.overlapping_record_ids),[[],[],[]]);
 r=reconcileOfficialInventory([],[p,{...p,id:'ambiguous',parent_county:null}],base);
 assert.deepEqual(r.profiles.assessments[0].overlapping_record_ids,['ambiguous']);
 const q={id:'queue-one',state:'OH',jurisdiction_name:'Miami Township',jurisdiction_type:'township',parent_county_name:'Hamilton County'};
 r=reconcileOfficialInventory([q,{...q,id:'queue-two'}],[p],base);
 assert.equal(r.queue.identity_review.length,2);assert.equal(r.profiles.identity_review.length,0);
+
+for(const type of ['city','village']) {
+ const municipal={source_rows:1,rows:[{key:'municipal',state:'OH',name:'Fixture',type,category:'candidate'}]};
+ r=reconcileOfficialInventory([{id:'q-municipal',state:'OH',jurisdiction_name:'Fixture',jurisdiction_type:type,parent_county_name:'Recorded County'}],[{id:'p-municipal',state:'OH',name:'Fixture',type,parent_county:{name:'Recorded County'}}],municipal);
+ for(const group of ['queue','profiles']){
+  assert.equal(r[group].identity_review.length,1);
+  assert.equal(r[group].identity_review[0].state,'single_geographic_candidate');
+  assert.ok(r[group].identity_review[0].review_flags.includes('official_county_relationship_pending'));
+  assert.equal(r[group].identity_review[0].canonical_identity_verified,false);
+ }
+ assert.equal(r.authority_verified,false);
+}

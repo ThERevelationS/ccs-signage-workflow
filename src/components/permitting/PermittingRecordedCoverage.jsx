@@ -69,6 +69,7 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           <ul className="space-y-2 text-sm">{(result.official[group].identity_review || []).map(row => <li key={row.id}>
             <strong>{row.record_state} {row.name}</strong> — Record ID: {row.id}. {row.state==='ambiguous'?'Multiple geographic candidates':row.state==='unmatched'?'No geographic candidate':'Single candidate requires identity review'}. {row.candidate_keys.length} candidate(s).
             {row.review_flags.includes('parent_county_missing') && ' Parent county is missing.'}
+            {row.review_flags.includes('official_county_relationship_pending') && ' Official city or village county relationship still needs confirmation; a name match does not establish county office authority.'}
             {row.review_flags.includes('unsupported_type') && ' Government type needs review.'}
             {!!row.overlapping_record_ids?.length && <span> Shares geographic candidates with record IDs: {row.overlapping_record_ids.join(', ')}. Review separately; this does not prove duplicate authority.</span>}
           </li>)}</ul>
