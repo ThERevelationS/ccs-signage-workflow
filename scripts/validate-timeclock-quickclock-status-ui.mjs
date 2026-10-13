@@ -12,6 +12,8 @@ const source = readFileSync(new URL('../src/components/timeclock/QuickClockSecti
 const compiled = transformSync(source, { loader: 'jsx', jsx: 'automatic', format: 'cjs', target: 'es2022' }).code;
 const require = createRequire(import.meta.url);
 const calls = [];
+const timers = new Map();
+let nextTimerId = 0;
 const events = new Map();
 const docEvents = new Map();
 const fakeWindow = {
@@ -59,7 +61,12 @@ vm.runInNewContext(compiled, {
   })[id] || require(id),
   console, Promise, Date, Math, crypto: globalThis.crypto,
   window: fakeWindow, document: fakeDocument,
-  setTimeout: () => 1, clearTimeout: () => {},
+  setTimeout: (callback, ms) => {
+    const id = ++nextTimerId;
+    timers.set(id, { callback, ms });
+    return id;
+  },
+  clearTimeout: (id) => { timers.delete(id); },
   setInterval: () => 1, clearInterval: () => {},
   sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
 }, { filename: 'synthetic-quick-clock-component.js' });
@@ -139,5 +146,21 @@ assert.doesNotMatch(visible(renderer), /stale-before-clock-out/,
   'Pre-punch status response must not reopen clock-out after a confirmed action');
 console.log('PASS in-flight Clock Out suppresses passive refresh and fences old status replies');
 
+const oldReset = [...timers.entries()].find(([, timer]) => timer.ms === 2500);
+assert.ok(oldReset, 'Clock Out should have scheduled a delayed display cleanup');
+await act(async () => { events.get('focus')(); });
+assert.equal(calls.length, 8);
+await act(async () => { calls[7].resolve(status(second, 'freshly-restored-new-active-shift')); });
+assert.match(visible(renderer), /freshly-restored-new-active-shift/);
+await act(async () => {
+  if (timers.has(oldReset[0])) {
+    timers.delete(oldReset[0]);
+    await oldReset[1].callback();
+  }
+});
+assert.match(visible(renderer), /freshly-restored-new-active-shift/,
+  'Cleanup from a previous Clock Out must not clear a newer server-restored active shift');
+console.log('PASS delayed prior punch cleanup preserves newly restored authoritative shift');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 3/3 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 4/4 Time Clock Quick Clock async status acceptance cases');
