@@ -54,6 +54,18 @@ No frontend publishing or backend deployment. No live production records modifie
 
 Next contained chunk: audit missing/malformed canonical identity guidance across the saved-office evidence reader and electrical handoff, especially configured but unreviewed roles. Confirm discrepancies, preserve historical flags and distinguish unresolved identity from absent roles.
 
+## Pending electrical canonical identity audit
+
+Starting HEAD 336b19ae2dc5a63814e7f715632ec17aff34ec1b; working tree clean. Source audit confirmed two inconsistencies: the dashboard evidence reader only flagged absent canonical IDs on staff-reviewed offices, and padded strings were accepted after trimming. The saved electrical handoff already treated pending assignments and malformed canonical identities as unresolved.
+
+Identity gaps now apply to all explicitly assigned electrical_permit/electrical_inspection copies, including pending copies, and retain existing checks for historically staff-reviewed offices of other roles. Undefined, null, empty and whitespace-only IDs remain missing. Nonstring or padded nonempty IDs are separately malformed; no automatic normalization or guessed office identity occurs. Unreviewed legacy categories without specific electrical roles remain unassigned, not inferred issuer/inspector records.
+
+Added canonical_office_identity_malformed counter and per-item identity flags. The dashboard displays separate missing/malformed counts and exact-identity reconciliation guidance. Historical staff flags, selected roles, notes, catalog provenance, manual overrides and original inputs remain untouched. Identity findings do not establish source authority, legal coverage or job applicability. No background reads, new API calls, schema/permission changes or production test writes.
+
+44 selected synthetic tests passed, including pending issuer/inspector missing-ID matrices, historical/pending malformed-ID matrices, legacy nonassignment, duplicate-copy separation, large fixtures, dashboard interaction/session safeguards and SDK adapter. git diff --check passed; one production build completed with captured exit 0 and the existing baseline-browser-mapping/Browserslist warnings. No frontend publication or backend deployment. Authenticated live acceptance remains pending. Phase 10 / Milestone 1 / Task 2 remains partial.
+
+Next contained chunk: audit exact locality-to-profile link handling between saved-link reconciliation and the electrical handoff, particularly malformed ID strings. Require exact IDs and states; preserve manual links and avoid namesake or county fallback.
+
 ## Validation of the preceding canonical-identity chunk
 
 33 focused synthetic tests passed across electrical handoff, saved sources, electrical research outcomes, recorded coverage and electrical role coverage. New cases exercise missing/blank/padded canonical IDs, repeated same-role canonical copies, valid cross-role shared offices, malformed local IDs and input preservation.
