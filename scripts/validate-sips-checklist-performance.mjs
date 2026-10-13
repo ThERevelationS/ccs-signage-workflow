@@ -1160,6 +1160,64 @@ await (async () => {
   passed++;
 })();
 
+check("failed-load focus waits for dialogs and prioritizes the current loading error", () => {
+  const marker = "  const focusLoadFailureIfReady = () => {";
+  const start = source.indexOf(marker);
+  assert.ok(start > 0);
+  const helper = source.slice(start, source.indexOf("  useEffect(() => {", start));
+  const makeFocus = new Function("ctx", "with(ctx) { " + helper + "\nreturn focusLoadFailureIfReady; }");
+  let focused = 0, scrolled = 0;
+  const pending = { current: true };
+  const target = {
+    isConnected: true, getClientRects: () => [1],
+    focus(options) { assert.equal(options.preventScroll, true); focused++; },
+    scrollIntoView(options) { assert.equal(options.block, "nearest"); scrolled++; }
+  };
+  const ctx = {
+    loadErrorFocusPendingRef: pending, loadErrorAlertRef: { current: target },
+    isOpen: true, isLoading: true, isSaving: false,
+    showRevisitPopup: false, showTemplateBuilder: false,
+    showOtherPopup: false, discardWarning: null,
+  };
+  const focus = makeFocus(ctx);
+  focus();
+  assert.equal(focused, 0, "Loading overlay keeps focus until its exit");
+  ctx.isLoading = false;
+  ctx.discardWarning = "reload";
+  focus();
+  assert.equal(focused, 0, "Discard confirmation retains keyboard focus");
+  ctx.discardWarning = null;
+  ctx.showRevisitPopup = true;
+  focus();
+  assert.equal(focused, 0, "Revisit confirmation retains keyboard focus");
+  ctx.showRevisitPopup = false;
+  ctx.isSaving = true;
+  focus();
+  assert.equal(focused, 0, "Saving UI cannot lose its focus");
+  ctx.isSaving = false;
+  ctx.loadErrorAlertRef.current = { ...target, isConnected: false };
+  focus();
+  assert.equal(focused, 0, "Unmounted error does not steal focus");
+  ctx.loadErrorAlertRef.current = target;
+  focus();
+  assert.equal(focused, 1);
+  assert.equal(scrolled, 1);
+  assert.equal(pending.current, false);
+  focus();
+  assert.equal(focused, 1, "One failure is only focused once");
+  pending.current = true;
+  ctx.isOpen = false;
+  focus();
+  assert.equal(focused, 1);
+  ctx.isOpen = true;
+  focus();
+  assert.equal(focused, 2, "Another failure can be focused after a subsequent retry");
+  assert.match(source, /if \(!saveFailureFocusPendingRef\.current \|\| !isOpen \|\| isLoading \|\| isSaving \|\| loadError \|\|/,
+    "A pending old save error cannot take focus from the current loading failure");
+  assert.equal((source.match(/ref=\{loadErrorAlertRef\} role="alert" tabIndex=\{-1\}/g) || []).length, 2,
+    "Initial-load and later-reload errors must be focusable");
+});
+
 check("failed-load UI separates errors, offers retry and blocks stale saves", () => {
   assert.match(source, /if \(!hasLoadedChecklist && loadError\) \{\s*return \(\s*<Dialog/);
   assert.match(source, /<DialogTitle>Could not load SIP checklist<\/DialogTitle>/);
