@@ -54,7 +54,7 @@ export function reconcileRecordedAuthorityReviewEvents(localities, profiles, eve
         states[state].saved_verified_role_assignments++;
         const officeId = str(office.government_office_id);
         const row = {state,locality_id:locality.id,locality_name:str(locality.name)||'Unnamed locality',
-          office_id:str(office.id),office_name:str(office.name)||'Unnamed office',office_index,
+          office_id:str(office.id),office_name:str(office.name)||'Unnamed office',office_index:officeIndex,
           jurisdiction_profile_id:profileId,government_office_id:officeId,role,review_id:'',sequence:null,
           status:'',source_document_id:''};
         if (!validId(locality.jurisdiction_profile_id) || !sameState || !officeId) {
