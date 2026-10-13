@@ -2958,6 +2958,74 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       });
     }
 
+    if (action === 'preview_order_customer_decision') {
+      // Order Form-only admin read-only preflight. The selected decision is
+      // informational: no CAS, PUT, snapshot, approval token or write occurs.
+      if (adminActor?.role !== 'admin' || !hasSessionToken) {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      const review = body?.review;
+      const decision = cleanText(body?.decision, 48);
+      const preliminary = checkOrderCustomerDecisionEvidence({ review, decision });
+      if (preliminary !== 'order_changed' && preliminary !== 'invalid_review') {
+        // Unknown validation outcome: preserve and fail closed.
+        return Response.json({ success: false, error: 'Order customer decision request is invalid.' }, { status: 400 });
+      }
+      if (preliminary === 'invalid_review') {
+        return Response.json({ success: false, state: preliminary,
+          error: 'The captured review lacks valid permanent IDs or source revisions. Run Sync to obtain fresh review evidence.' }, { status: 409 });
+      }
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(review.sheet_id, 40);
+      const rowId = cleanText(review.row_id, 40);
+      const orderId = cleanText(review.order_id, 80);
+      const customerColumn = cleanText(profile?.column_bindings?.customer_name, 40);
+      if (!configured || duplicateCount !== 1 || !config?.global_enabled ||
+          !profile?.mirror_enabled || cleanText(profile.smartsheet_sheet_id, 40) !== sheetId ||
+          !/^\d+$/.test(customerColumn)) {
+        return Response.json({ success: false, state: 'configuration_changed',
+          error: 'The saved Order Smartsheet mapping or configuration is unavailable. No decision was applied.' }, { status: 409 });
+      }
+      const [order, job, claims] = await Promise.all([
+        base44.asServiceRole.entities.Order.get(orderId),
+        base44.asServiceRole.entities.WorkOrder.get(cleanText(review.work_order_id, 100)),
+        loadAllEntityRows({ entity: base44.asServiceRole.entities.Order,
+          query: { smartsheet_sheet_id: sheetId, smartsheet_row_id: rowId },
+          sort: 'id', label: 'Order customer decision permanent row claim review' }),
+      ]);
+      const remoteResponse = await smartsheetGet(`/sheets/${sheetId}/rows/${rowId}`, token);
+      const remoteRow = normalizeSheetRows({ rows: [remoteResponse.body] })[0] || null;
+      const remoteName = remoteRow
+        ? buildOrderPullSnapshot(remoteRow, { customer_name: customerColumn })[customerColumn]
+        : undefined;
+      // Repeat local reads after remote network wait. This preview still
+      // cannot authorize a future write; commit must repeat ALL checks.
+      const [freshOrder, freshJob] = await Promise.all([
+        base44.asServiceRole.entities.Order.get(orderId),
+        base44.asServiceRole.entities.WorkOrder.get(cleanText(review.work_order_id, 100)),
+      ]);
+      const duplicateClaims = claims.length !== 1 || String(claims[0]?.id) !== orderId;
+      const state = checkOrderCustomerDecisionEvidence({
+        review, decision, order: freshOrder, job: freshJob,
+        remoteRow, remoteCustomerName: remoteName, duplicateClaims,
+      });
+      if (state !== 'verified_read_only' ||
+          String(order?.updated_date || '') !== String(freshOrder?.updated_date || '') ||
+          String(job?.updated_date || '') !== String(freshJob?.updated_date || '')) {
+        return Response.json({ success: false, state: state === 'verified_read_only' ? 'source_changed_during_read' : state,
+          error: 'The Order, linked job, or Smartsheet row cannot be verified against this captured review. Run Sync and review again; nothing was changed.' }, { status: 409 });
+      }
+      return Response.json({ success: true, read_only: true, writes_attempted: false,
+        state, decision, order_id: orderId, sheet_id: sheetId, row_id: rowId,
+        order_updated_date: String(freshOrder.updated_date),
+        remote_modified_at: String(remoteRow.modified_at),
+        result: decision === 'keep_linked_job'
+          ? 'A later approved action would need to verify and correct the Smartsheet customer. This preview made no changes.'
+          : 'A later approved action would need to atomically adopt the Smartsheet customer and clear the Base44 job association. This preview made no changes.',
+      });
+    }
+
     if (action === 'audit_sales_permanent_ownership') {
       // Read-only, admin-session-only complete linked/marker scan. A failed
       // or capped page read fails closed; this is NOT a unique-index guarantee.
