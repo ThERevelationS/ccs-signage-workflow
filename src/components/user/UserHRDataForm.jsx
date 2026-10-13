@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
-import { reconcileHrDraft } from "./reconcileHrDraft.js";
+import { reconcileHrDraft, formatHrFieldPath } from "./reconcileHrDraft.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -621,13 +621,13 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
           ) : (
             <div className="space-y-3">
               <p className="text-amber-900">
-                Latest HR record loaded. You changed {recoveryComparison?.editedFields.length || 0} section(s).
+                Latest HR record loaded. You changed {recoveryComparison?.editedFields.length || 0} field(s).
                 {recoveryComparison?.conflictFields.length
-                  ? ` Both administrators changed: ${recoveryComparison.conflictFields.join(", ")}.`
-                  : " No overlapping section changes were found."}
+                  ? ` Both administrators changed: ${recoveryComparison.conflictFields.map(formatHrFieldPath).join(", ")}.`
+                  : " No overlapping field changes were found."}
               </p>
               <p className="text-amber-900">
-                Each listed section is compared as a whole, including emergency contacts and clothing sizes. Choose how to resolve this locally, review the fields, and then save separately.
+                Clothing sizes and uniquely matched emergency contacts are compared field by field. If contact identities, order, or list size change, the entire contact list is treated as one change. Choose how to resolve your draft, review the fields, and then save separately.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" variant="outline"
@@ -644,7 +644,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
                   <label className="flex items-start gap-2 text-amber-950">
                     <input type="checkbox" className="mt-1" checked={confirmOverwrite}
                       onChange={event => setConfirmOverwrite(event.target.checked)} />
-                    I understand that choosing my edits for the listed conflicting sections will replace the newer values in those sections when I later save.
+                    I understand that choosing my edits for the listed conflicting fields (or entire list when contact identity is uncertain) will replace newer values when I later save.
                   </label>
                   <Button type="button" size="sm" variant="outline" disabled={!confirmOverwrite}
                     onClick={() => resolveHrRecovery("keep-conflicts")}>
