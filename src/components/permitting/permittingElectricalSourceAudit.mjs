@@ -110,7 +110,7 @@ export function reconcileRecordedElectricalEvidence(profiles,events,pdfSources){
     if(!relations.has(key))relations.set(key,[]);
     relations.get(key).push(event);
   }
-  const summary={OH:totals(),KY:totals()},items=[];
+  const summary={OH:totals(),KY:totals()},items=[],retained_page_candidates=[];
   for(const history of relations.values()){
     const initial=history[0],profile=profileMap.get(initial.jurisdiction_id);
     const state=clean(profile?.state||initial.profile_snapshot?.state).toUpperCase();
@@ -161,9 +161,17 @@ export function reconcileRecordedElectricalEvidence(profiles,events,pdfSources){
       else status='recorded_source_reference';
     }
     counts[status]++;item.status=status;
+    if(status==='recorded_source_reference'&&latest.action==='verify') retained_page_candidates.push({
+      state,role,review_id:latest.id,jurisdiction_profile_id:profile.id,profile_name:item.profile_name,
+      relation_key:latest.relation_key,source_document_id:latest.source_document_id,
+      physical_page:latest.role_proof.physical_page
+    });
     if(status!=='recorded_source_reference'&&status!=='revoked')items.push(item);
   }
   items.sort(sort);
-  return {states:summary,items,authority_verified:false,current_source_verified:false,complete:false,
+  retained_page_candidates.sort((a,b)=>states.indexOf(a.state)-states.indexOf(b.state)
+    || a.profile_name.localeCompare(b.profile_name)||a.jurisdiction_profile_id.localeCompare(b.jurisdiction_profile_id)
+    || ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||a.review_id.localeCompare(b.review_id));
+  return {states:summary,items,retained_page_candidates,authority_verified:false,current_source_verified:false,complete:false,
     notice:'Read-only source-record cross-check, not an independent document authenticity or current-law check. A matching historical source snapshot and recorded page citation cannot prove that PDF pages remain extractable or that an office issues permits or performs inspections today. Missing source IDs may be outside read permissions. Ohio is listed first; electrical issuing and inspecting are distinct roles. Recorded quotes and named service areas are screened for review only, not rechecked against retained page text. The backend alone performs fresh evidence verification.'};
 }
