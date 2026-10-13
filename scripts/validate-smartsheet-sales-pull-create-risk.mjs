@@ -7,6 +7,8 @@ import {
   classifySalesPullLinkedRowRisks,
   readSalesPullLinkedRowRisks,
   classifySalesPullDuplicateLinkedRowRisks,
+  classifySalesPushRowOwnershipRisks,
+  readSalesPushRowOwnershipRisks,
 } from '../base44/shared/smartsheetSalesPullCreateRisk.mjs';
 
 let checks = 0;
@@ -223,4 +225,66 @@ yes(admin.includes('r.existing_link_claims_need_review') &&
   admin.includes('r.existing_link_claim_workorder_ids.join(", ")') &&
   admin.includes('r.existing_link_claim_row_ids.join(", ")'),
   'Admin Sales sync result displays permanent-row overlap without offering automatic relinking.');
-console.log('Sales pull unresolved-create duplicate prevention: '+checks+'/'+checks+' PASS.');
+// Phase 5V: scoped Sales push must not trust a selected WorkOrder's linked
+// row if another WorkOrder (even off-pipeline or deleted) has claimed it.
+const pushSelected = [{id:'push-owner',smartsheet_sheet_id:sheetId,
+  smartsheet_row_id:'90555',in_pipeline:true}];
+const pushOwner = {...pushSelected[0]};
+const pushOther = {id:'outside-pipeline',smartsheet_sheet_id:sheetId,
+  smartsheet_row_id:'90555',in_pipeline:false};
+const pushDeleted = {id:'deleted-claim',smartsheet_row_id:'90555',deleted:true};
+equal(classifySalesPushRowOwnershipRisks([pushOwner],sheetId,pushSelected).count,0,
+  'One exact permanent owner permits Sales push.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,pushOther],sheetId,pushSelected).count,1,
+  'Off-pipeline direct WorkOrder link conflict holds selected Sales push.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,pushDeleted],sheetId,pushSelected).count,1,
+  'Soft-deleted legacy link still blocks a competing remote Sales write.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,legacyLinked],sheetId,pushSelected).count,1,
+  'Missing-sheet legacy WorkOrder remains competing permanent-row evidence.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,unrelatedSheetLinked],sheetId,pushSelected).count,0,
+  'Independently verified other-sheet link does not block Sales push.');
+equal(classifySalesPushRowOwnershipRisks([pushOther],sheetId,pushSelected).count,1,
+  'Missing selected owner in fresh read fails closed.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,pushOther],sheetId,pushSelected).workorder_ids,
+  ['push-owner','outside-pipeline'],'Block response includes exact WorkOrder owner IDs.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,{...pushOwner}],sheetId,pushSelected).count,0,
+  'Repeated projection of same owner is not a duplicate.');
+equal(classifySalesPushRowOwnershipRisks([pushOwner,pushOther],sheetId,
+  [...pushSelected,pushOther]).count,1,
+  'Two selected Sales WorkOrders cannot push the same permanent row.');
+equal(classifySalesPushRowOwnershipRisks([],sheetId,[{id:'unlinked',in_pipeline:true}]).count,0,
+  'Unlinked Sales creates do not invent row ownership.');
+assert.throws(()=>classifySalesPushRowOwnershipRisks([],sheetId,[{
+  smartsheet_sheet_id:sheetId,smartsheet_row_id:'90555'}]),/lacks/);checks++;
+assert.throws(()=>classifySalesPushRowOwnershipRisks([{smartsheet_row_id:'90555'}],sheetId,
+  pushSelected),/lacks/);checks++;
+assert.throws(()=>classifySalesPushRowOwnershipRisks([], 'invalid',pushSelected),/numeric/);checks++;
+const pushCalls=[];
+const pushEntity={async filter(query,sort,limit,skip) {
+  pushCalls.push({query,sort,limit,skip});
+  return [...Array.from({length:500},(_,i)=>({id:'noise-'+i,
+    smartsheet_sheet_id:alternateSheet,smartsheet_row_id:'90555'})),
+    pushOwner,pushDeleted].slice(skip,skip+limit);
+}};
+const pushPaged=await readSalesPushRowOwnershipRisks(pushEntity,sheetId,pushSelected);
+equal(pushPaged.count,1,'Scoped paginated ownership read finds conflicting deleted link past page 500.');
+equal(pushCalls[0].query,{smartsheet_row_id:{$in:['90555']}},
+  'Push ownership scan queries only exact permanent row IDs.');
+yes(pushCalls.length===2 && pushCalls[1].skip===500,
+  'Push ownership scan reads all matching pages before remote writes.');
+await assert.rejects(readSalesPushRowOwnershipRisks({
+  async filter(){return {items:[]};}},sheetId,pushSelected),
+  /could not be verified completely/);checks++;
+await assert.rejects(readSalesPushRowOwnershipRisks({
+  async filter(){throw new Error('connection unavailable');}},sheetId,pushSelected),
+  /connection unavailable/);checks++;
+const pushGuardIndex=backend.indexOf('const ownership = await readSalesPushRowOwnershipRisks(');
+const salesPushPlanIndex=backend.indexOf('const pendingRecords = dataset === \'sales\'');
+yes(pushGuardIndex>=0 && salesPushPlanIndex>pushGuardIndex &&
+  backend.includes('duplicate_sales_push_row_links: ownership.count') &&
+  backend.includes('if (ownership.count) return {'),
+  'Sales push refuses permanent-row collisions before preparing any remote writes.');
+yes(salesRunRequiresReview([{dataset:'sales',direction:'push',skipped:true,
+  duplicate_sales_push_row_links:1}]),
+  'Blocked Sales push is surfaced as needs review, not successful sync.');
+console.log('Sales pull/create and Phase 5V push ownership: '+checks+'/'+checks+' PASS.');
