@@ -1,0 +1,63 @@
+{
+  "name": "TimeClockAdminCorrectionGate",
+  "type": "object",
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": [
+        "company"
+      ],
+      "description": "Exactly one backend-provisioned company coordinator. Missing/duplicate rows block manager corrections."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "creating"
+      ],
+      "description": "Backend-only company-wide manager correction CAS status."
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "time_entry_id": {
+      "type": "string"
+    },
+    "payload_hash": {
+      "type": "string"
+    },
+    "claim_token": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "scope",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
