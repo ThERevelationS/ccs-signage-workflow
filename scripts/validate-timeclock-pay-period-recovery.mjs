@@ -6165,6 +6165,73 @@ test('v28 first-generation payroll history rejects later cross-employee reuse of
   assert.equal(restored.body.verified, true, JSON.stringify(restored.body));
 });
 
+test('v29 manager correction coordinator fails closed when missing, duplicated, or uncertain', async () => {
+  for (const mode of ['missing', 'duplicate', 'dirty-idle', 'unsettled']) {
+    const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+    const entry = h.rows.TimeEntry[0];
+    const gate = h.rows.TimeClockAdminCorrectionGate[0];
+    if (mode === 'missing') h.rows.TimeClockAdminCorrectionGate = [];
+    if (mode === 'duplicate') h.rows.TimeClockAdminCorrectionGate.push({ ...clone(gate), id: 'unexpected-second-company-coordinator' });
+    if (mode === 'dirty-idle') gate.request_id = 'stale-idle-request';
+    if (mode === 'unsettled') {
+      Object.assign(gate, { status: 'creating', request_id: 'old-uncertain-request',
+        time_entry_id: entry.id, payload_hash: 'synthetic-held-hash',
+        claim_token: 'synthetic-held-claim', started_at: '2026-09-22T20:00:00.000Z' });
+      h.rows.TimeClockAudit.push({
+        id: 'synthetic-unsettled-audit', action: 'admin_correction', outcome: 'pending',
+        request_id: gate.request_id, time_entry_id: entry.id, user_email: entry.user_email,
+        server_timestamp: '2026-09-22T20:00:00.000Z',
+        details: { payload_hash: gate.payload_hash },
+      });
+    }
+    const before = clone(entry);
+    const response = await h.invoke({
+      action: 'admin_correct_entry', target_email: entry.user_email,
+      request_id: 'v29-coordinator-fails-closed-' + mode, entry_id: entry.id,
+      expected_updated_date: entry.updated_date, reason: 'Synthetic coordinator inspection',
+      correction: { clock_in: '2026-09-20T14:30:00.000Z', clock_out: entry.clock_out,
+        lunch_minutes: 0, notes: 'Coordinator negative fixture',
+        job_allocations: [{ hours: 7, minutes: 30, is_inhouse: true, inhouse_task: 'Synthetic shop work' }] },
+    });
+    assert.equal(response.status, 409, mode + ' ' + JSON.stringify(response.body));
+    assert.deepEqual(entry, before, mode + ' cannot modify payroll time');
+    assert.equal(h.rows.TimeClockAudit.filter((audit) =>
+      audit.request_id === 'v29-coordinator-fails-closed-' + mode).length, 0);
+    assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === entry.user_email)
+      .correction_create_status, 'idle');
+  }
+});
+
+test('v29 abandoned settled correction coordinator recovers from authoritative evidence', async () => {
+  const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+  const entry = h.rows.TimeEntry[0];
+  const correction = (id, clock_in, hours, minutes) => h.invoke({
+    action: 'admin_correct_entry', target_email: entry.user_email,
+    request_id: id, entry_id: entry.id, expected_updated_date: entry.updated_date,
+    reason: 'Manager validates synthetic correction ' + id,
+    correction: { clock_in, clock_out: entry.clock_out, lunch_minutes: 0,
+      notes: 'Coordinator recovery case', job_allocations: [
+        { hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }] },
+  });
+  const firstId = 'v29-recovery-first';
+  const first = await correction(firstId, '2026-09-20T14:30:00.000Z', 7, 30);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  const audit = h.rows.TimeClockAudit.find((row) => row.request_id === firstId && row.action === 'admin_correction');
+  assert.equal(audit.outcome, 'confirmed');
+  const gate = h.rows.TimeClockAdminCorrectionGate[0];
+  assert.equal(gate.status, 'idle');
+  Object.assign(gate, { status: 'creating', request_id: firstId,
+    time_entry_id: entry.id, payload_hash: audit.details.payload_hash,
+    claim_token: 'synthetic-lost-release-ack', started_at: '2026-09-22T20:00:00.000Z' });
+  const next = await correction('v29-recovery-followup', '2026-09-20T14:45:00.000Z', 7, 15);
+  assert.equal(next.status, 200, JSON.stringify(next.body));
+  assert.equal(gate.status, 'idle');
+  assert.equal(gate.request_id, '');
+  assert.equal(entry.clock_in, '2026-09-20T14:45:00.000Z');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' &&
+    ['confirmed', 'recovered'].includes(row.outcome)).length, 2);
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
