@@ -6449,6 +6449,55 @@ test('v29 reviewed employee correction refuses a manager audit request ID alread
   assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
 });
 
+test('v29 concurrent cross-employee review IDs have exactly one authoritative winner', async () => {
+  const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
+  const [first, second] = h.rows.TimeEntry;
+  const other = { id: 'review-race-other', email: 'review-race@synthetic.invalid',
+    full_name: 'Review Race Worker', role: 'employee' };
+  h.rows.AuthorizedEmail.push(other);
+  h.rows.TimeClockEmployeeState.push({ id: 'state-' + other.id,
+    user_email: other.email, status: 'clocked_out', break_status: 'working',
+    work_pause_status: 'working', labor_status: 'idle',
+    correction_create_status: 'idle', updated_date: '2026-09-20T00:00:00.000Z' });
+  second.user_email = other.email;
+  second.clock_in = '2026-09-21T14:00:00.000Z';
+  second.clock_out = '2026-09-21T22:00:00.000Z';
+  const submit = (person, entry, suffix, desired) => h.invokeAs(person, {
+    action: 'submit_correction_request', target_email: person.email,
+    request_id: 'v29-race-submit-' + suffix, entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Synthetic correction review race',
+    requested_changes: { clock_in: desired, clock_out: entry.clock_out,
+      lunch_minutes: 0, notes: 'Synthetic review CAS' },
+  });
+  const [firstSubmit, secondSubmit] = await Promise.all([
+    submit(employee, first, 'a', '2026-09-20T14:30:00.000Z'),
+    submit(other, second, 'b', '2026-09-21T14:30:00.000Z'),
+  ]);
+  assert.equal(firstSubmit.status, 200, JSON.stringify(firstSubmit.body));
+  assert.equal(secondSubmit.status, 200, JSON.stringify(secondSubmit.body));
+  const [firstReq, secondReq] = [first, second].map((entry) =>
+    h.rows.TimeClockCorrectionRequest.find((row) => row.time_entry_id === entry.id));
+  assert.ok(firstReq?.id && secondReq?.id);
+  const shared = 'v29-concurrent-manager-review-identity';
+  const review = (person, correction) => h.invoke({
+    action: 'review_correction_request', request_id: shared, target_email: person.email,
+    correction_request_id: correction.id,
+    expected_request_updated_date: correction.updated_date,
+    decision: 'approve', reason: 'Manager confirms synthetic correction',
+  });
+  const responses = await Promise.all([review(employee, firstReq), review(other, secondReq)]);
+  assert.equal(responses.filter((r) => r.status === 200).length, 1,
+    'Only one concurrent manager review may own this request ID');
+  assert.equal(responses.filter((r) => r.status === 409).length, 1);
+  const audits = h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'admin_correction' && row.request_id === shared &&
+    ['confirmed', 'recovered'].includes(row.outcome));
+  assert.equal(audits.length, 1, 'Cross-employee review cannot produce duplicate correction audits');
+  const settledCount = [firstReq, secondReq].filter((row) =>
+    h.rows.TimeClockCorrectionRequest.find((r) => r.id === row.id)?.status === 'approved').length;
+  assert.equal(settledCount, 1);
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
