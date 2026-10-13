@@ -822,8 +822,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (!currentOrder) return;
     orderLocalEditGenerationRef.current += 1;
     const oldValue = currentOrder[field];
+    // A context-menu Clear can follow typing before blur. The visible row
+    // may already be unlinked, but its durable Base44 link still needs clearing.
     const unlinkCustomerJob = field === 'customer_name' &&
-      shouldUnlinkOrderJobForTypedCustomer(currentOrder, value);
+      (shouldUnlinkOrderJobForTypedCustomer(currentOrder, value) ||
+        manuallyUnlinkedCustomerOrderIdsRef.current.has(orderId));
     if (unlinkCustomerJob) {
       verifiedCustomerSelectionRef.current.delete(orderId);
       manuallyUnlinkedCustomerOrderIdsRef.current.delete(orderId);
