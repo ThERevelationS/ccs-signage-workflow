@@ -33,7 +33,7 @@ export function summarizeSelectorElectricalOfficeHandoff(profile,locality){
       const canonicalUnique=Boolean(canonical&&canonical===office.government_office_id&&canonicalIds.get(canonical)===1);
       return {id,name:clean(office?.name)||'Unnamed configured office',
         canonical_id:canonical,recorded_review:summary.verified&&unique?'staff_reviewed':'requires_review',
-        canonical_identity_unique:canonicalUnique,canonical_identity_issue:!canonical||canonical!==office.government_office_id?'missing_or_malformed':'duplicated',
+        canonical_identity_unique:canonicalUnique,canonical_identity_issue:canonicalUnique?'':!canonical||canonical!==office.government_office_id?'missing_or_malformed':'duplicated',
         identity_unique:unique,has_review_notes:Boolean(clean(office?.authority_verification_notes)),
         has_reviewer:Boolean(clean(office?.authority_verified_by)&&clean(office?.authority_verified_at)),
         website:safeOfficeEvidenceUrl(office?.contact_website)};
