@@ -7555,6 +7555,28 @@ Deno.serve(async (req) => {
           }, { status: 409 });
         }
       }
+      const companyReviewGate = await claimAdminCorrectionGate(
+        adminCorrectionGateEntity, auditEntity, entryEntity, stateEntity,
+        requestId, `review:${correctionRequest.id}`, reviewHash, correctionRequestEntity,
+      );
+      if (!companyReviewGate.acquired) {
+        return Response.json({ success: false, retry_same_request: companyReviewGate.retry_same_request === true,
+          error: companyReviewGate.error }, { status: 409 });
+      }
+      try {
+      // Repeat global ownership checks after company CAS: preflight alone
+      // cannot prevent two employees from writing the same request ID.
+      for (const auditAction of ['admin_correction', 'correction_review']) {
+        const owned = await auditEntity.filter({ action: auditAction, request_id: requestId });
+        if (!Array.isArray(owned) || owned.length > 1 || owned.some((row: any) =>
+          !row?.id || String(row.time_entry_id || '') !== String(correctionRequest.time_entry_id || '') ||
+          asEmail(row.user_email) !== target.email ||
+          String(row.details?.correction_request_id || '') !== correctionRequest.id ||
+          !constantTimeEqual(String(row.details?.review_payload_hash || ''), reviewHash)
+        )) {
+          return Response.json({ success: false, error: 'This manager review request ID is already owned by another employee or review. Admin investigation is required.' }, { status: 409 });
+        }
+      }
       const resumingReview = correctionRequest.status === 'reviewing' && String(correctionRequest.review_request_id || '') === requestId;
       if (correctionRequest.status === 'reviewing' && !resumingReview) {
         const previousRequestId = String(correctionRequest.review_request_id || '');
@@ -7921,6 +7943,14 @@ Deno.serve(async (req) => {
         );
         if (!released) throw new Error('The manager correction-review gate could not be released or verified after processing. Retry the same review request to recover its lock.');
       }
+      } finally {
+        const globalReleased = await releaseManagerReviewDecisionGate(
+          adminCorrectionGateEntity, auditEntity, correctionRequestEntity, entryEntity,
+          String(companyReviewGate.id || ''), requestId, correctionRequest.id, reviewHash,
+          String(companyReviewGate.token || ''), true,
+        );
+        if (!globalReleased) throw new Error('Manager-review company coordinator has an uncertain result. It remains claimed until authoritative review evidence is reconciled.');
+      }
     }
 
     if (action === 'admin_correct_entry') {
@@ -8100,7 +8130,7 @@ Deno.serve(async (req) => {
       try {
       const companyCorrectionGate = await claimAdminCorrectionGate(
         adminCorrectionGateEntity, auditEntity, entryEntity, stateEntity,
-        requestId, entry.id, correctionPayloadHash,
+        requestId, entry.id, correctionPayloadHash, correctionRequestEntity,
       );
       if (!companyCorrectionGate.acquired) {
         return Response.json({ success: false, retry_same_request: companyCorrectionGate.retry_same_request === true,
