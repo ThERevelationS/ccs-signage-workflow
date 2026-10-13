@@ -15,8 +15,10 @@ function extract(start,end){
  return page.slice(a,b).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
 }
 const code={
- protected:extract("hasProtectedHrDraft","clearHrDraftTracking"),
- clear:extract("clearHrDraftTracking","requestCloseUserEditor"),
+ protected:extract("hasProtectedHrDraft","hasProtectedAccountDraft"),
+ account:extract("hasProtectedAccountDraft","clearHrDraftTracking"),
+ clear:extract("clearHrDraftTracking","clearEditorDraftTracking"),
+ clearEditor:extract("clearEditorDraftTracking","hasProtectedEditorDraft"),
  close:extract("requestCloseUserEditor","openEditUser"),
  open:extract("openEditUser","confirmDiscardHrDraft"),
  confirm:extract("confirmDiscardHrDraft","handleSendPasswordReset")
@@ -28,6 +30,7 @@ function fixture(){
   activeSessionToken:{current:fakeScope},
   activeEditingUser:{current:old},
   hrDraftStatus:{current:null},
+  accountDraftBaseline:{current:null},
   hrSaveInFlight:{current:false},
   hrReloadInFlight:{current:false},
   userUpdateInFlight:{current:false},
@@ -47,6 +50,9 @@ function fixture(){
   get users(){return state.directory;},
   get isLoading(){return state.loading;},
   get userDirectoryError(){return state.directoryError;},
+  get formData(){return state.account;},
+  createAdminAccountDraft:record=>({ full_name:record.full_name || "" }), 
+  hasUnsavedAdminAccountDraft:()=>false,
   setPendingHrExit:v=>{state.pending=v;},
   setHasUnsavedHrData:v=>{state.hasUnsaved=typeof v==="function"?v(state.hasUnsaved):v;},
   setEditingUser:v=>{
@@ -56,16 +62,16 @@ function fixture(){
   setIsDialogOpen:v=>{state.dialog=v;},
   setFormData:v=>{state.account=v;}
  };
- for(const [key,source] of Object.entries(code)){
-  const handler=compile(source,scope);
-  scope[key==="protected"?"hasProtectedHrDraft":key==="clear"?"clearHrDraftTracking":
-    key==="close"?"requestCloseUserEditor":key==="open"?"openEditUser":"confirmDiscardHrDraft"]=handler;
- }
+ const names={protected:"hasProtectedHrDraft",account:"hasProtectedAccountDraft",
+  clear:"clearHrDraftTracking",clearEditor:"clearEditorDraftTracking",
+  close:"requestCloseUserEditor",open:"openEditUser",confirm:"confirmDiscardHrDraft"};
+ for(const [key,source] of Object.entries(code)) scope[names[key]]=compile(source,scope);
+ scope.hasProtectedEditorDraft=()=>scope.hasProtectedHrDraft()||scope.hasProtectedAccountDraft();
  const mark=(record=old,dirty=true,token=fakeScope)=>{
    refs.hrDraftStatus.current={id:record.id,email:record.email,sessionToken:token,dirty};
    state.hasUnsaved=dirty;
  };
- return {state,refs,scope,mark,...Object.fromEntries(Object.keys(code).map(key=>[key,scope[key==="protected"?"hasProtectedHrDraft":key==="clear"?"clearHrDraftTracking":key==="close"?"requestCloseUserEditor":key==="open"?"openEditUser":"confirmDiscardHrDraft"]]))};
+ return {state,refs,scope,mark,...Object.fromEntries(Object.keys(code).map(key=>[key,scope[names[key]]]))};
 }
 
 test("Draft comparison preserves semantic equality and detects edits to confidential nested fields",()=>{
@@ -214,9 +220,9 @@ test("Force-mounted HR tab survives Account tab switching and is reset for a new
  assert.match(page,/onDraftStatusChange=\{recordHrDraftStatus\}/);
  assert.match(page,/onClick=\{requestCloseUserEditor\}/);
  assert.match(page,/Unsaved HR changes are protected/);
- assert.match(page,/Discard unsaved HR changes\?/);
+ assert.match(page,/Discard unsaved employee changes\?/);
  assert.match(page,/Keep editing/);
- assert.match(page,/Discard HR draft/);
+ assert.match(page,/Discard unsaved changes/);
  assert.match(page,/onClick=\{confirmDiscardHrDraft\}/);
  assert.match(page,/hasUnsavedHrData \|\| isLoading/);
 });
@@ -234,7 +240,7 @@ test("Account save cannot close an editor with unsaved HR changes",async()=>{
 });
 
 test("Session changes revoke draft ownership and pending destructive confirmation",()=>{
- assert.match(page,/hrDraftStatus\.current = null;\s*setHasUnsavedHrData\(false\);\s*setPendingHrExit\(null\)/);
+ assert.match(page,/hrDraftStatus\.current = null;\s*accountDraftBaseline\.current = null;\s*setHasUnsavedHrData\(false\);\s*setPendingHrExit\(null\)/);
  assert.match(page,/return \(\) => \{[\s\S]*?hrDraftStatus\.current = null/);
  assert.match(page,/pending\.sessionToken !== sessionToken/);
  assert.match(page,/activeEditingUser\.current\?\.email !== pending\.sourceEmail/);
