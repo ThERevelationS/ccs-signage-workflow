@@ -6479,6 +6479,18 @@ test('v29 concurrent cross-employee review IDs have exactly one authoritative wi
     h.rows.TimeClockCorrectionRequest.find((row) => row.time_entry_id === entry.id));
   assert.ok(firstReq?.id && secondReq?.id);
   const shared = 'v29-concurrent-manager-review-identity';
+  let reviewedClaims = 0;
+  let releaseBoth;
+  const bothReviewClaims = new Promise((resolve) => { releaseBoth = resolve; });
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (entity !== 'TimeClockCorrectionRequest' ||
+        update.$set?.status !== 'reviewing' || row.review_request_id !== shared) return;
+    reviewedClaims += 1;
+    if (reviewedClaims === 2) releaseBoth();
+    await Promise.race([bothReviewClaims,
+      new Promise((_resolve, reject) => setTimeout(() => reject(new Error(
+        'Expected both reviews to pass independent review state claims')), 3500))]);
+  });
   const review = (person, correction) => h.invoke({
     action: 'review_correction_request', request_id: shared, target_email: person.email,
     correction_request_id: correction.id,
@@ -6486,6 +6498,7 @@ test('v29 concurrent cross-employee review IDs have exactly one authoritative wi
     decision: 'approve', reason: 'Manager confirms synthetic correction',
   });
   const responses = await Promise.all([review(employee, firstReq), review(other, secondReq)]);
+  assert.equal(reviewedClaims, 2, 'Baseline shows both independent review claims');
   assert.equal(responses.filter((r) => r.status === 200).length, 1,
     'Only one concurrent manager review may own this request ID');
   assert.equal(responses.filter((r) => r.status === 409).length, 1);
