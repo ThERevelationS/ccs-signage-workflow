@@ -1819,6 +1819,7 @@ async function pushDataset(
   // Batch collections: plan all records first, then write/update in bulk to
   // eliminate per-record Smartsheet GETs and Base44 reads that caused timeouts.
   const deferredSmartsheetWrites: any[] = [];
+  const deferredSalesRemotePrewritePlans = new Map<string, {rowId: string; snapshot: Record<string, any>}>();
   const deferredBase44Updates: any[] = [];
   const deferredConflictRecordIds: string[] = [];
   const deferredSalesConflictDecisions = new Map<string, string[]>();
