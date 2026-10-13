@@ -30,7 +30,7 @@ import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContact
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
 import { commitVerifiedSalesMetadata } from '../../shared/smartsheetSalesMetadataCAS.mjs';
-import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks, classifySalesPullDuplicateLinkedRowRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
+import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks, classifySalesPullDuplicateLinkedRowRisks, readSalesPushRowOwnershipRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
 import { auditSalesPermanentRowOwners } from '../../shared/smartsheetSalesPermanentOwnershipAudit.mjs';
@@ -1623,6 +1623,26 @@ async function pushDataset(
       direction: 'push',
       skipped: true,
       reason: `${records.length} records exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
+    };
+  }
+
+  // Direct WorkOrder edits can introduce a competing permanent-row claim
+  // outside the selected Sales push population. Check exact row ownership
+  // across all claimants before any remote PUT/POST or snapshot advancement.
+  // A failed/incomplete paged read throws closed; no uniqueness is assumed.
+  if (dataset === 'sales') {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    const ownership = await readSalesPushRowOwnershipRisks(
+      base44.asServiceRole.entities.WorkOrder, sheetId, records);
+    if (ownership.count) return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: `${ownership.count} permanent Sales Smartsheet row link(s) have competing or unverified WorkOrder owners. ` +
+        'No Sales records or Smartsheet rows were changed; review the administrator ownership audit.',
+      duplicate_sales_push_row_links: ownership.count,
+      duplicate_sales_push_row_ids: ownership.permanent_row_ids,
+      duplicate_sales_push_workorder_ids: ownership.workorder_ids,
+      duplicate_sales_push_row_ids_truncated: ownership.rows_truncated,
+      automatic_relink_attempted: false,
     };
   }
 
