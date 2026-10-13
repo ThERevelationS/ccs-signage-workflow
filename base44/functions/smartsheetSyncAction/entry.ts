@@ -2296,6 +2296,53 @@ async function pushDataset(
       }
     }
   }
+  // Ordinary Sales PUTs must also use freshly read Smartsheet values.
+  // A remote edit after the initial planning read is not authorization to
+  // overwrite that person's work. Approved decisions retain their separate
+  // remote review guard above. Missing or inconsistent evidence fails closed.
+  if (dataset === 'sales' && salesRemotePutPlans.size) {
+    const targets = [...salesRemotePutPlans.entries()]
+      .filter(([id]) => !approvedSalesPlanSnapshots.has(id) && !salesFailedRecordIds.has(id));
+    const columnIds = [...new Set(Object.values(bindings)
+      .map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
+    const assigneeColumnId = cleanText(bindings?.current_task_assigned_to, 40);
+    for (let start = 0; start < targets.length; start += 100) {
+      const batch = targets.slice(start, start + 100);
+      const ids = batch.map(([id]) => id);
+      try {
+        if (typeof options?.assertRunOwnership !== 'function' || !columnIds.length) {
+          throw new Error('Sales prewrite remote verification is unavailable');
+        }
+        await options.assertRunOwnership();
+        const rowIds = batch.map(([, plan]) => plan.rowId);
+        const params = new URLSearchParams({
+          rowIds: rowIds.join(','), columnIds: columnIds.join(','),
+          exclude: 'nonexistentCells',
+        });
+        const result = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+        if (String(result.body?.id ?? '') !== sheetId || !Array.isArray(result.body?.rows)) {
+          throw new Error('Smartsheet did not confirm the exact Sales sheet and requested rows');
+        }
+        const remoteRows = normalizeSheetRows(result.body);
+        const requested = new Set(rowIds);
+        if (remoteRows.some((row: any) => !requested.has(String(row.id))) ||
+            new Set(remoteRows.map((row: any) => String(row.id))).size !== remoteRows.length) {
+          throw new Error('Smartsheet returned unexpected or duplicate Sales row identities');
+        }
+        const freshByRowId = new Map(remoteRows.map((row: any) =>
+          [String(row.id), buildSalesPullSnapshot(row, bindings)]));
+        for (const id of staleSalesRemotePutSnapshotIds(batch, freshByRowId, assigneeColumnId)) {
+          salesFailedRecordIds.add(id);
+          errors.push(id + ': Smartsheet Sales row changed after sync planning or cannot be verified. No ordinary remote PUT was sent for this row; review current values before retrying.');
+        }
+      } catch {
+        for (const id of ids) {
+          salesFailedRecordIds.add(id);
+          errors.push(id + ': Fresh Smartsheet prewrite values could not be verified. Ordinary remote PUT held for safe retry.');
+        }
+      }
+    }
+  }
   const heldApprovedSalesRowIds = new Set([...salesPrewriteUnverifiedRows,
     ...[...salesFailedRecordIds].map((id) =>
       deferredSalesVerification.get(id)?.rowId ||
