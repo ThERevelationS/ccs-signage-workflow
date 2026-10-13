@@ -4,7 +4,7 @@ import {reconcileRecordedElectricalEvidence} from './permittingElectricalSourceA
 const valid=value=>typeof value==='string'&&value.trim()===value&&value.length>0;
 const sourceFields=['id','jurisdiction_id','jurisdiction_profile_doc_id','official_url',
   'archived_file_url','file_hash_sha256','file_bytes','content_status','verification_status',
-  'authority_classification','authority_review'];
+  'authority_classification','authority_review','authority_review_state','supersedes','superseded_by'];
 const eventFields=['id','method','jurisdiction_id','sequence','relation_key','role','action','office_snapshot',
   'profile_snapshot','source_document_id','source_review_id','evidence_kind','html_evidence_id',
   'coverage_area','coverage_kind','coverage_basis','source_profile_id','role_proof',
@@ -83,6 +83,15 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
  alive(isCurrent);
  if(events.some(e=>e.method!=='office-authority-v1'||e.jurisdiction_id!==fresh.id))
    throw Error('Relationship history escaped the selected jurisdiction scope');
+ // Recheck the same exact bridge after history traversal, including duplicates
+ // newly registered during the read. No name/URL fallback or automatic retry.
+ const catalogAfter=await readAllCoveragePages(cursor=>api.entities.PermittingSourceDocument.filter(
+   {jurisdiction_id:fresh.id,jurisdiction_profile_doc_id:saved.id},
+   {sort:'id',limit:50,fields:sourceFields,...(cursor?{cursor}:{})}
+ ),{isCurrent});
+ alive(isCurrent);
+ if(catalogAfter.length!==1||snapshot(catalogAfter[0])!==snapshot(source))
+   throw Error('Saved source catalog changed or is no longer uniquely visible during lookup. Refresh evidence, resolve source IDs or read permissions, and explicitly check again.');
  // The explicit lookup also rereads the profile once after history traversal.
  // Any concurrent profile/receipt/manual override change invalidates this result.
  // This is a consistency fence, not an atomic datastore snapshot or source check.
