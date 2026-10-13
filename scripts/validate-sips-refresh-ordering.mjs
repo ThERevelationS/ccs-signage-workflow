@@ -98,6 +98,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     WorkOrder: entity,
     AuthorizedEmail: authorizedEmail,
     boardLoadSequenceRef: { current: 0 },
+    boardHasLoadedRef: { current: false },
     boardLoadsInFlightRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
@@ -191,6 +192,71 @@ async function check(label, run) {
   console.log('PASS ' + label);
   passed++;
 }
+
+await check('first successful load shows initial spinner, then preserves mounted board on full reload', async () => {
+  const h = fixture();
+  const initial = h.loadWorkOrders();
+  assert.equal(h.ctx.isLoading, true, 'Before first success the page needs its loading screen');
+  assert.equal(h.ctx.isRefreshing, false);
+  assert.equal(h.ctx.boardHasLoadedRef.current, false);
+  h.reads[0].finish();
+  await initial;
+  assert.equal(h.ctx.boardHasLoadedRef.current, true);
+  assert.equal(h.ctx.isLoading, false);
+  assert.equal(h.ctx.isRefreshing, false);
+
+  // A Work Order Details onUpdate calls loadWorkOrders() with showLoading=true.
+  const previousRow = h.ctx.workOrders[0];
+  const fullReload = h.loadWorkOrders();
+  assert.equal(h.ctx.isLoading, false, 'Already-mounted checklist cannot disappear behind page spinner');
+  assert.equal(h.ctx.isRefreshing, true, 'The user still sees refresh feedback');
+  assert.equal(h.ctx.workOrders[0], previousRow, 'The old board remains visible until fresh results arrive');
+  h.reads[1].finish([{ ...h.record, notes: 'fresh detail' }]);
+  await fullReload;
+  assert.equal(h.ctx.workOrders[0].notes, 'fresh detail');
+  assert.equal(h.ctx.boardHasLoadedRef.current, true);
+  assert.equal(h.ctx.isLoading, false);
+  assert.equal(h.ctx.isRefreshing, false);
+});
+
+await check('failed Work Order Details full reload preserves mounted board and draft container', async () => {
+  const h = fixture();
+  const initial = h.loadWorkOrders();
+  h.reads[0].finish();
+  await initial;
+  const originalRow = h.ctx.workOrders[0];
+  const checklistDraft = { open: true, workOrder: originalRow, locallyEditedNote: 'unsaved synthetic draft' };
+  h.ctx.checklistDialog = checklistDraft;
+
+  const reload = h.loadWorkOrders();
+  assert.equal(h.ctx.isLoading, false, 'Subsequent full reload cannot unmount the modal');
+  h.reads[1].reject(new Error('Synthetic Work Order refresh failed'));
+  await reload;
+  assert.equal(h.ctx.isLoading, false);
+  assert.equal(h.ctx.isRefreshing, false);
+  assert.match(h.ctx.boardError, /Synthetic Work Order refresh failed/);
+  assert.equal(h.ctx.workOrders[0], originalRow);
+  assert.equal(h.ctx.checklistDialog, checklistDraft);
+  assert.equal(checklistDraft.locallyEditedNote, 'unsaved synthetic draft');
+});
+
+await check('board refresh does not replace checklist identity or bypass unsaved-edit protection', async () => {
+  const h = fixture();
+  const initial = h.loadWorkOrders();
+  h.reads[0].finish();
+  await initial;
+  const checklistDialog = { open: true, workOrder: h.ctx.workOrders[0] };
+  h.ctx.checklistDialog = checklistDialog;
+  const reload = h.loadWorkOrders(false);
+  h.reads[1].finish([{ ...h.record, notes: 'background board change' }]);
+  await reload;
+  assert.equal(h.ctx.checklistDialog.workOrder, checklistDialog.workOrder, 'Open checklist keeps original prop identity');
+  assert.equal(h.ctx.workOrders[0].notes, 'background board change');
+  assert.ok(board.includes('workOrder={checklistDialog.workOrder}'), 'Checklist prop comes from dialog state, not freshly replaced board row');
+  assert.ok(board.includes('onUpdate={() => loadWorkOrders(false)}'), 'Checklist save asks for nonblocking board reload');
+  assert.ok(board.includes('onUpdate={() => loadWorkOrders()}'), 'Work Order Details does request a full reload');
+  assert.ok(board.includes('if (isLoading) {'), 'First-load screen remains available');
+});
 
 await check('newer board refresh wins even if older request finishes last', async () => {
   const h = fixture();
