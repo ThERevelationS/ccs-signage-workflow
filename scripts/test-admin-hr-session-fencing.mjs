@@ -204,7 +204,7 @@ test("Form owns requests with employee+session identity and discards old timers"
   assert.match(form,/activeScope\.current\?\.saveScope === owner\.saveScope/);
   assert.match(form,/if \(!ownsSave\(\) \|\| result === false\) return/);
   assert.match(form,/if \(onUpdate && ownsSave\(\)\) onUpdate\(\)/);
-  assert.match(form,/return \(\) => \{\s*\+\+scopeVersion\.current;\s*saveOwner\.current = null;\s*saveInFlight\.current = false;\s*if \(successTimer\.current\) clearTimeout/);
+  assert.match(form,/return \(\) => \{\s*\+\+scopeVersion\.current;\s*saveOwner\.current = null;\s*saveInFlight\.current = false;\s*reloadOwner\.current = null;\s*reloadInFlight\.current = false;\s*if \(successTimer\.current\) clearTimeout/);
   assert.match(form,/setHrData\(userData\?\.hr_data \|\| \{\}\)/);
 });
 
