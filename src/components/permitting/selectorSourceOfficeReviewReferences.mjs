@@ -1,0 +1,89 @@
+import {readAllCoveragePages} from './permittingCoverageReader.mjs';
+import {reconcileRecordedElectricalEvidence} from './permittingElectricalSourceAudit.mjs';
+
+const valid=value=>typeof value==='string'&&value.trim()===value&&value.length>0;
+const sourceFields=['id','jurisdiction_id','jurisdiction_profile_doc_id','official_url',
+  'archived_file_url','file_hash_sha256','file_bytes','content_status','verification_status',
+  'authority_classification','authority_review'];
+const eventFields=['id','method','jurisdiction_id','sequence','relation_key','role','action','office_snapshot',
+  'profile_snapshot','source_document_id','source_review_id','evidence_kind','html_evidence_id',
+  'coverage_area','coverage_kind','coverage_basis','source_profile_id','role_proof',
+  'source_snapshot','responsibility_confirmed','address_authority_resolved'];
+const ROLES=['electrical_permit','electrical_inspection'];
+const alive=isCurrent=>{if(!isCurrent())throw Error('Saved-source relationship lookup superseded');};
+
+/** Manual read-only navigation across the canonical catalog bridge. No names,
+ * URLs, PDF filenames or office descriptions are treated as record identities.
+ * Full scoped history includes later revocations and source replacements.
+ */
+export async function readSavedSourceOfficeReviewReferences(api,profile,document,isCurrent=()=>true){
+ if(!valid(profile?.id)||!['OH','KY'].includes(profile.state)||!valid(document?.id)||!valid(document?.url))
+   throw Error('A saved jurisdiction, original document ID and source URL are required');
+ alive(isCurrent);
+ const fresh=await api.entities.JurisdictionProfile.get(profile.id);
+ alive(isCurrent);
+ if(fresh?.id!==profile.id||fresh.state!==profile.state||
+   !Array.isArray(fresh.documents)||fresh.documents.filter(d=>d?.id===document.id).length!==1)
+   throw Error('Saved jurisdiction or source document identity changed; refresh before reviewing');
+ const saved=fresh.documents.find(d=>d.id===document.id);
+ for(const key of ['url','file_url','source_sha256','source_bytes','stored_sha256','stored_bytes'])
+   if((saved[key]??null)!==(document[key]??null))
+     throw Error('Saved source record changed; reload jurisdiction documents before checking historical reviews');
+ const catalog=await readAllCoveragePages(cursor=>api.entities.PermittingSourceDocument.filter(
+   {jurisdiction_id:fresh.id,jurisdiction_profile_doc_id:saved.id},
+   {sort:'id',limit:50,fields:sourceFields,...(cursor?{cursor}:{})}
+ ),{isCurrent});
+ alive(isCurrent);
+ if(catalog.some(c=>c.jurisdiction_id!==fresh.id||c.jurisdiction_profile_doc_id!==saved.id))
+   throw Error('Catalog returned a conflicting source lineage');
+ if(catalog.length!==1)return {status:catalog.length?'ambiguous_catalog_link':'no_visible_catalog_link',
+   profile_id:fresh.id,document_id:saved.id,source_id:'',items:[],source_status_verified:false,
+   notice:catalog.length?'Multiple catalog records carry this exact saved document ID. Resolve duplicates before reviewing office relationships.':
+     'No single catalog source was visible for this exact saved document ID. This may reflect incomplete catalog registration or read permissions, not absence of official requirements.'};
+ const source=catalog[0];
+ if(!valid(source.id)||source.official_url!==saved.url)
+   return {status:'catalog_source_mismatch',profile_id:fresh.id,document_id:saved.id,
+     source_id:valid(source.id)?source.id:'',items:[],source_status_verified:false,
+     notice:'The catalog source original URL or stable ID differs from the saved document. Staff must reconcile source lineage before using relationship history.'};
+ const events=await readAllCoveragePages(cursor=>api.entities.PermittingOfficeAuthorityReview.filter(
+   {jurisdiction_id:fresh.id,method:'office-authority-v1'},
+   {sort:'id',limit:50,fields:eventFields,...(cursor?{cursor}:{})}
+ ),{isCurrent});
+ alive(isCurrent);
+ if(events.some(e=>e.method!=='office-authority-v1'||e.jurisdiction_id!==fresh.id))
+   throw Error('Relationship history escaped the selected jurisdiction scope');
+ const selected=events.filter(e=>e.source_document_id===source.id&&ROLES.includes(e.role));
+ const keys=new Set(selected.map(e=>e.relation_key).filter(valid));
+ const related=events.filter(e=>keys.has(e.relation_key));
+ // A missing relation key must never be resolved by office name or source URL.
+ const malformed=selected.filter(e=>!valid(e.relation_key)).map(e=>({
+   role:e.role,review_id:e.id,latest_review_id:e.id,office_id:e.office_snapshot?.government_office_id||'',
+   status:'invalid_relation_key',physical_page:e.role_proof?.physical_page||null,
+   latest_source_id:e.source_document_id,review_ids:[e.id]}));
+ if(related.some(e=>!ROLES.includes(e.role))||
+   [...keys].some(key=>new Set(related.filter(e=>e.relation_key===key).map(e=>e.role)).size!==1))
+   throw Error('Conflicting roles share a historical relationship key. Resolve identity before reviewing');
+ const audit=reconcileRecordedElectricalEvidence([fresh],related,[source]);
+ const items=[...malformed];
+ for(const key of [...keys].sort()){
+   const history=related.filter(e=>e.relation_key===key);
+   const first=history.find(e=>e.source_document_id===source.id);
+   const role=first.role;
+   const seq=fresh.office_authority_review_state?.committed_sequence;
+   const committed=history.filter(e=>Number.isSafeInteger(e.sequence)&&e.sequence>0&&e.sequence<=seq);
+   const max=Math.max(0,...committed.map(e=>e.sequence));
+   const heads=committed.filter(e=>e.sequence===max);
+   const latest=heads.length===1?heads[0]:null;
+   const discrepancy=audit.items.find(row=>history.some(e=>e.id===row.review_id));
+   const reference=audit.retained_page_candidates.find(row=>history.some(e=>e.id===row.review_id));
+   const status=discrepancy?.status|| (reference?'recorded_source_reference':latest?.action==='revoke'?'revoked':'history_review_required');
+   items.push({role,review_id:first.id,latest_review_id:latest?.id||'',
+     office_id:latest?.office_snapshot?.government_office_id||first.office_snapshot?.government_office_id||'',
+     status,physical_page:first.role_proof?.physical_page||null,
+     latest_source_id:latest?.source_document_id||'',review_ids:history.map(e=>e.id)});
+ }
+ items.sort((x,y)=>ROLES.indexOf(x.role)-ROLES.indexOf(y.role)||x.review_id.localeCompare(y.review_id));
+ return {status:'recorded_history_read',profile_id:fresh.id,document_id:saved.id,
+   source_id:source.id,items,source_status_verified:false,
+   notice:'Immutable relationship IDs are historical references only. Current official evidence, exact electrical issuer or inspection responsibility, county overlays and job-address applicability are not confirmed. Revocations, pending receipts and source changes require review.'};
+}
