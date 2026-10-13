@@ -38,7 +38,7 @@ test('exact profile document ID maps to exactly one catalog source, then immutab
  assert.equal(result.source_status_verified,false);
  assert.deepEqual(result.items.map(r=>[r.role,r.review_id,r.latest_review_id,r.status]),[
    ['electrical_permit','review-1','review-1','recorded_source_reference']]);
- assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews','profile']);
+ assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews','catalog','profile']);
  assert.deepEqual(f.calls[1].query,{jurisdiction_id:'oh-profile',jurisdiction_profile_doc_id:'local-doc'});
  assert.deepEqual(f.calls[2].query,{jurisdiction_id:'oh-profile',method:'office-authority-v1'});
  assert.deepEqual(f.calls[1].options.fields.includes('jurisdiction_profile_doc_id'),true);
@@ -168,7 +168,7 @@ test('receipt advancement, document removal and manual overrides during history 
    const result=await original(...args);mutate(f.p);return result;
   };
   await assert.rejects(read(f.api,profile(),document()),/changed during lookup/);
-  assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews','profile']);
+  assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews','catalog','profile']);
  }
 });
 test('final profile permission loss and cancellation never return partial history',async()=>{
@@ -193,4 +193,58 @@ test('equivalent object property order does not invalidate profile consistency',
  const r=await read(f.api,profile(),document());
  assert.equal(r.items[0].status,'recorded_source_reference');
  assert.equal(count,2);
+});
+
+test('catalog changes, new duplicates and visibility loss during history traversal refuse results',async()=>{
+ for(const mutate of [
+  rows=>{rows[0].file_hash_sha256='c'.repeat(64);},
+  rows=>{rows[0].jurisdiction_profile_doc_id='another-document';},
+  rows=>{rows[0].authority_review.status='revoked';},
+  rows=>{rows[0].authority_review_state={status:'uncertain'};},
+  rows=>{rows[0].superseded_by='new-source';},
+  rows=>{rows.push({...rows[0],id:'new-duplicate'});},
+  rows=>{rows.splice(0);}
+ ]){
+  const catalog=[source()],f=fixture({catalog});
+  const original=f.api.entities.PermittingOfficeAuthorityReview.filter;
+  f.api.entities.PermittingOfficeAuthorityReview.filter=async(...args)=>{
+   const result=await original(...args);mutate(catalog);return result;
+  };
+  await assert.rejects(read(f.api,profile(),document()),/catalog changed|uniquely visible/);
+  assert.equal(f.calls.filter(c=>c.name==='catalog').length,2);
+  assert.equal(f.calls.filter(c=>c.name==='profile').length,1);
+ }
+});
+test('catalog recheck permission errors and stale requests never return historical results',async()=>{
+ for(const cancelled of [false,true]){
+  const f=fixture();let count=0,current=true;
+  const original=f.api.entities.PermittingSourceDocument.filter;
+  f.api.entities.PermittingSourceDocument.filter=async(...args)=>{
+   count++;
+   if(count===2){
+    if(cancelled)current=false;
+    else throw Error('Catalog read permission lost');
+   }
+   return original(...args);
+  };
+  await assert.rejects(read(f.api,profile(),document(),()=>current),cancelled?/superseded/:/Catalog read permission lost/);
+  assert.equal(count,2);
+ }
+});
+test('catalog recheck is exact, paginated and accepts equivalent property ordering',async()=>{
+ const f=fixture();let count=0;
+ const original=f.api.entities.PermittingSourceDocument.filter;
+ f.api.entities.PermittingSourceDocument.filter=async(...args)=>{
+  count++;
+  const r=await original(...args);
+  if(count===2)r.items=r.items.map(row=>Object.fromEntries(Object.entries(row).reverse()));
+  return r;
+ };
+ const r=await read(f.api,profile(),document());
+ assert.equal(r.items[0].status,'recorded_source_reference');
+ const calls=f.calls.filter(c=>c.name==='catalog');
+ assert.equal(calls.length,2);
+ assert.deepEqual(calls[0].query,calls[1].query);
+ assert.deepEqual(calls[0].options,calls[1].options);
+ assert.ok(calls[0].options.fields.includes('superseded_by'));
 });
