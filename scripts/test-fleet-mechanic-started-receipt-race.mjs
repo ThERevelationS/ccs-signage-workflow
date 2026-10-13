@@ -1476,3 +1476,72 @@ test("new Save request cannot resolve unverified applied photo owner as prior su
   assert.equal(store.updates,0);
   assert.equal(store.uploads.length,0);
 });
+
+ 
+test("admin revocation detects a work-order commit that lands before its receipt cancellation CAS",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseCancelWrite=true;
+  const pending=call({action:"admin_revoke_link",id:grantId},client);
+  await until("admin cancellation about to commit after Fleet update",()=>store.pendingCancelWrites.length===1);
+  // A dispatched mechanic action committed its original operation marker;
+  // receipt terminalization has not yet run.
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.work.corrective_action="Mechanic commit landed during CCS cancellation";
+  store.pendingCancelWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.reconciled_applied,1);
+  assert.equal(outcome.body.reconciled_cancelled,0);
+  assert.equal(outcome.body.reconciled_blocked,0);
+  const current=store.receipts.get(prior.id);
+  assert.equal(current.status,"applied");
+  assert.ok(current.applied_at);
+  assert.equal(current.result_summary.work_order_updated_date,"version-2");
+  assert.equal(current.result_summary.recovered_from_work_order_marker,true);
+  assert.equal(current.result_summary.admin_reconciled_not_applied,true,
+    "Retain the historical cancellation decision as forensic provenance");
+  assert.equal(store.updates,0,"Admin reconciliation must not reapply Fleet maintenance");
+});
+
+test("admin cancellation never reports applied if the late marker belongs to another receipt",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseCancelWrite=true;
+  const pending=call({action:"admin_revoke_link",id:grantId},client);
+  await until("admin cancellation while an unrelated Fleet update commits",()=>store.pendingCancelWrites.length===1);
+  store.work.mechanic_operation_key="mechanic:another-grant:another-work:save:another-valid-request-123456";
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.pendingCancelWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.reconciled_cancelled,1);
+  assert.equal(outcome.body.reconciled_applied,0);
+  assert.equal(store.receipts.get(prior.id).status,"cancelled");
+  assert.equal(store.updates,0);
+});
+
+test("uncertain cancellation acknowledgment reconciles a concurrent committed Fleet marker",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseCancelWrite=true;
+  store.loseCancelAckOnce=true;
+  const pending=call({action:"admin_revoke_link",id:grantId},client);
+  await until("lost cancellation acknowledgment versus committed Fleet marker",()=>store.pendingCancelWrites.length===1);
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.pendingCancelWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.reconciled_applied,1);
+  assert.equal(outcome.body.reconciled_cancelled,0);
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.updates,0);
+});

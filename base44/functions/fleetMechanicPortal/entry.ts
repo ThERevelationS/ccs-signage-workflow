@@ -250,7 +250,30 @@ async function adminCancelMechanicReceiptResult(Receipt:any, WorkOrder:any, rece
     return {status:'blocked',recovered:false,work_order:workOrder,
       error_message:'The Fleet mechanic receipt changed during admin review. Verify its latest work-order evidence before another reconciliation.'};
   }
-  return {status:'cancelled',recovered:false,work_order:workOrder,error_message:resolved.error_message || reason};
+  // The Fleet commit and receipt cancellation are separate entity writes.
+  // A delayed, already-dispatched mechanic commit can land before this CAS,
+  // even though the admin began reconciliation from a pre-commit work-order
+  // snapshot. Never report cancelled without checking the latest commit marker.
+  const latestWorkOrder = await WorkOrder.get(String(receipt.target_id || '')).catch(()=>null);
+  if (!latestWorkOrder) {
+    return {status:'blocked',recovered:false,work_order:workOrder,
+      error_message:'Fleet work-order state could not be verified after cancellation. CCS review is required.'};
+  }
+  if (workOrderHasMechanicReceipt(latestWorkOrder,receipt)) {
+    try {
+      const latestReceipt = await Receipt.get(String(receipt.id || ''));
+      if (!latestReceipt || !mechanicReceiptIdentityUnchanged(receipt,latestReceipt)) {
+        throw new Error('Fleet receipt operation identity changed after admin cancellation.');
+      }
+      await markMechanicReceiptApplied(Receipt,latestReceipt,latestWorkOrder,true);
+      await resolveReusedUploadReceipt(Receipt,latestReceipt);
+      return {status:'applied',recovered:true,work_order:latestWorkOrder};
+    } catch {
+      return {status:'blocked',recovered:false,work_order:latestWorkOrder,
+        error_message:'Fleet work committed during cancellation but the receipt could not be safely reconciled. CCS review is required.'};
+    }
+  }
+  return {status:'cancelled',recovered:false,work_order:latestWorkOrder,error_message:resolved.error_message || reason};
 }
 
 async function recordMechanicUploadedPhoto(Receipt:any, receipt:any, priorUrls:string[], url:string) {
