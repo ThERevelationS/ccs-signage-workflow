@@ -107,6 +107,67 @@ export async function readSalesPullLinkedRowRisks(entity, sheetId, plannedRowIds
   return classifySalesPullLinkedRowRisks(linked, sheetId, plannedRowIds);
 }
 
+// Sales push must not PUT into a row owned by another WorkOrder, even if that
+// other record is outside Current Pipeline, soft-deleted, or missing a sheet ID.
+// This is a complete read preflight; without a database unique index it narrows
+// but cannot eliminate a concurrent cross-record claim race.
+export function classifySalesPushRowOwnershipRisks(linkedRecords = [], sheetId = '', selectedRecords = []) {
+  const sheet = id(sheetId);
+  if (!/^\d+$/.test(sheet) || sheet === '0' ||
+      !Array.isArray(linkedRecords) || !Array.isArray(selectedRecords)) {
+    throw new Error('Sales push ownership review requires a numeric sheet and complete records.');
+  }
+  const planned = new Map();
+  for (const record of selectedRecords) {
+    const rowId = id(record?.smartsheet_row_id);
+    if (id(record?.smartsheet_sheet_id) !== sheet || !/^\d+$/.test(rowId) || rowId === '0') continue;
+    const ownerId = id(record?.id);
+    if (!ownerId) throw new Error('Sales push candidate lacks a permanent WorkOrder ID.');
+    if (!planned.has(rowId)) planned.set(rowId, new Set());
+    planned.get(rowId).add(ownerId);
+  }
+  const found = new Map([...planned.keys()].map(rowId => [rowId, new Set()]));
+  for (const record of linkedRecords) {
+    const rowId = id(record?.smartsheet_row_id);
+    if (!planned.has(rowId)) continue;
+    const linkedSheet = id(record?.smartsheet_sheet_id);
+    // A known different sheet is independent. Unknown or malformed sheet
+    // identity remains competing evidence, including deleted WorkOrders.
+    if (/^\d+$/.test(linkedSheet) && linkedSheet !== sheet) continue;
+    const ownerId = id(record?.id);
+    if (!ownerId) throw new Error('Sales push row claim lacks a WorkOrder ID.');
+    found.get(rowId).add(ownerId);
+  }
+  const conflicts = [...planned.entries()].filter(([rowId, owners]) => {
+    const observed = found.get(rowId);
+    return owners.size !== 1 || observed.size !== 1 ||
+      ![...owners].every(owner => observed.has(owner));
+  });
+  return {
+    count: conflicts.length,
+    permanent_row_ids: conflicts.map(([rowId]) => rowId).slice(0, 20),
+    workorder_ids: [...new Set(conflicts.flatMap(([rowId, owners]) =>
+      [...owners, ...found.get(rowId)]))].slice(0, 20),
+    rows_truncated: conflicts.length > 20,
+  };
+}
+
+export async function readSalesPushRowOwnershipRisks(entity, sheetId, selectedRecords) {
+  if (!Array.isArray(selectedRecords)) throw new Error('Sales push selected records are incomplete.');
+  const plannedRowIds = [...new Set(selectedRecords
+    .filter(record => id(record?.smartsheet_sheet_id) === id(sheetId))
+    .map(record => id(record?.smartsheet_row_id))
+    .filter(rowId => /^\d+$/.test(rowId) && rowId !== '0'))];
+  if (!plannedRowIds.length) return classifySalesPushRowOwnershipRisks([], sheetId, selectedRecords);
+  // Scope to exact permanent rows; still includes off-pipeline and deleted
+  // claimants. Paged reader rejects incomplete response windows.
+  const linked = await loadAllEntityRows({
+    entity, query: { smartsheet_row_id: { $in: plannedRowIds } },
+    sort: 'id', label: 'Sales push permanent row ownership prewrite verification',
+  });
+  return classifySalesPushRowOwnershipRisks(linked, sheetId, selectedRecords);
+}
+
 export async function readSalesPullCreateAttemptRisks(entity, sheetId) {
   // Server-scoped indexed-style filtering, not a legacy WorkOrder archive
   // download. A failed/incomplete paged read fails closed before bulkCreate.
