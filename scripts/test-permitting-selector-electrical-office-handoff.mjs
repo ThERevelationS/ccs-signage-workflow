@@ -16,7 +16,11 @@ const office=(id,roles,status='needs_verification',extra={})=>({id,name:'Office 
 const dir=resolve('node_modules/.cache/selector-electrical-office-handoff');
 await mkdir(dir,{recursive:true});
 await build({entryPoints:['src/components/permitting/SelectorSavedSourceReview.jsx'],bundle:true,
-  outfile:dir+'/panel.mjs',format:'esm',platform:'node',jsx:'automatic',external:['react','react/jsx-runtime']});
+  outfile:dir+'/panel.mjs',format:'esm',platform:'node',jsx:'automatic',external:['react','react/jsx-runtime'],
+  plugins:[{name:'mock-readonly-base44',setup(build){
+    build.onResolve({filter:/base44Client/},args=>({path:args.path,namespace:'mock-base44'}));
+    build.onLoad({filter:/.*/,namespace:'mock-base44'},()=>({contents:'export const base44={entities:{}};'}));
+  }}]});
 const Component=(await import(dir+'/panel.mjs')).default;
 after(async()=>rm(dir,{recursive:true,force:true}));
 const render=l=>renderToStaticMarkup(React.createElement(Component,{profile:profile(),locality:l}));
