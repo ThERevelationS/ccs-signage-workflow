@@ -1015,9 +1015,9 @@ await (async () => {
   assert.equal(shared.failedRevisitSelectionRef.current, "old synthetic date", "Pending load preserves failed Revisit choice");
   assert.equal(invalidations, 0, "Pending loads must not reset unsaved drafts");
   assert.deepEqual(pending.map(call => call.id), ["WO-A", "WO-B"]);
-  pending[1].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
+  pending[1].resolve([{ id: "WO-B", current_task_assigned_to: "SIPs", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
   await newRequest;
-  pending[0].resolve([{ id: "WO-A", sip_checklist: [{ id: "row-A", type: "checklist" }] }]);
+  pending[0].resolve([{ id: "WO-A", current_task_assigned_to: "SIPs", sip_checklist: [{ id: "row-A", type: "checklist" }] }]);
   await oldRequest;
   assert.deepEqual(checklists, [["row-B"]]);
   assert.deepEqual(loading, [true, true, false]);
@@ -1040,7 +1040,7 @@ await (async () => {
   assert.deepEqual(errors, [""], "Failed loading does not masquerade as a checklist save failure");
   assert.deepEqual(loadedFlags, [true], "Failed reload cannot mark an old record freshly loaded");
   const recovery = loadB();
-  pending[3].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-recovered", type: "checklist" }] }]);
+  pending[3].resolve([{ id: "WO-B", current_task_assigned_to: "SIPs", sip_checklist: [{ id: "row-recovered", type: "checklist" }] }]);
   await recovery;
   assert.equal(loadErrors.at(-1), "", "Successful retry clears the load warning");
   assert.equal(shared.loadErrorFocusPendingRef.current, false,
@@ -1066,7 +1066,7 @@ await (async () => {
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
     loadErrorFocusPendingRef: { current: false },
     resetOtherPopupForReload: () => {}, setIsLoading: () => {},
-    WorkOrder: { filter: async () => missing ? [] : [{ id: "synthetic-initial", sip_checklist: [], products: [] }] },
+    WorkOrder: { filter: async () => missing ? [] : [{ id: "synthetic-initial", current_task_assigned_to: "SIPs", sip_checklist: [], products: [] }] },
     AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
     loadAllEntityRows: async () => [],
     loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
@@ -1111,6 +1111,7 @@ await (async () => {
   const makeLoad = new Function("scope", "with(scope) { " + loaderSource + "\nreturn loadData; }");
   let server = { id: "synthetic-status", deleted: true, completed: false, is_rider: false };
   const errors = [], checklists = [], productState = [];
+  let configuredTasks = [];
   const workflowRef = { current: { current_stage: "old-stage" } };
   const scope = {
     workOrder: { id: "synthetic-status" },
@@ -1122,7 +1123,7 @@ await (async () => {
     WorkOrder: { filter: async () => [structuredClone(server)] },
     AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
     loadAllEntityRows: async () => [],
-    loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
+    loadSingleGlobalSetting: async ({ settingKey }) => ({ setting_value: { items: settingKey === "salesTaskDescriptions" ? configuredTasks : [] } }),
     setUsers: () => {}, setLoadedProductsSnapshot: () => {},
     setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
     setSaveError: () => {}, setLoadError: value => errors.push(value),
@@ -1151,6 +1152,13 @@ await (async () => {
   assert.equal(checklists.length, 0);
   assert.equal(productState.length, 0, "Ineligible reload cannot discard previous product edits");
   assert.deepEqual(workflowRef.current, { current_stage: "old-stage" });
+  server = { ...server, is_rider: false, current_task_assigned_to: "Installation",
+    current_task_description: "Install", sip_checklist: [{ id: "existing" }], products: [{ id: "prod" }] };
+  await load();
+  assert.match(errors.at(-1), /current task no longer belongs to SIPS/);
+  assert.equal(checklists.length, 0, "Moved task must not replace the open checklist");
+  assert.equal(productState.length, 0, "Moved task must not discard product drafts");
+  assert.deepEqual(workflowRef.current, { current_stage: "old-stage" }, "Moved task does not update save baseline");
   server = { id: "synthetic-status", deleted: false, completed: false, is_rider: false,
     current_stage: "Production", current_task_assigned_to: "SIPs",
     current_task_description: "SIPs Prep", sip_completed: false, sip_checklist: [], products: [] };
@@ -1162,7 +1170,18 @@ await (async () => {
     current_task_assigned_to: "SIPs", current_task_description: "SIPs Prep", sip_completed: false,
   });
   assert.equal(scope.loadInFlightRef.current, false);
-  console.log("PASS deleted, completed and rider Work Orders refuse stale reload without losing drafts; active reload recovers");
+  server = { ...server, current_task_assigned_to: "Installation", current_task_description: "SIP Review" };
+  configuredTasks = [{ text: "SIP Review", page: "SIPs" }];
+  await load();
+  assert.equal(errors.at(-1), "", "SIPS page-configured tasks remain eligible");
+  configuredTasks = [{ text: "SIP Review", wip: true }];
+  await load();
+  assert.equal(errors.at(-1), "", "WIP-configured tasks remain eligible");
+  configuredTasks = [{ text: "Unrelated", page: "SIPs" }];
+  await load();
+  assert.match(errors.at(-1), /current task no longer belongs to SIPS/,
+    "Unrelated configured task cannot make an installation job eligible");
+  console.log("PASS deleted, completed, rider and moved-task Work Orders refuse stale reload; SIPs and WIP-configured tasks remain eligible");
   passed++;
 })();
 
@@ -1329,7 +1348,7 @@ await (async () => {
   assert.equal(warnings.at(-1), "reload", "Retry still requests explicit discard approval");
   actions.confirmDiscardChanges();
   assert.equal(pending.length, 2);
-  pending[1].resolve([{ id: "WO-synthetic", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
+  pending[1].resolve([{ id: "WO-synthetic", current_task_assigned_to: "SIPs", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
   await loads[1];
   assert.deepEqual(states.checklist, [{ id: "row-B", type: "checklist" }]);
   assert.equal(states.failure, "");
