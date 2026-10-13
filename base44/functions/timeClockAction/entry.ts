@@ -1903,53 +1903,6 @@ async function releaseAdminCorrectionGate(
   return released.updated === 1;
 }
 
-async function claimAdminCorrectionGate(gateEntity: any, requestId: string, entryId: string, hash: string) {
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const rows = await gateEntity.filter({});
-    if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.scope !== 'company' || !rows[0]?.id)
-      return { acquired: false, error: 'Manager-correction coordinator is missing or ambiguous. Admin setup is required.' };
-    const gate = rows[0];
-    if (gate.status !== 'idle') return { acquired: false, error: 'Manager correction is in progress or uncertain. Admin investigation may be required.' };
-    if (gate.request_id || gate.time_entry_id || gate.payload_hash || gate.claim_token || gate.started_at)
-      return { acquired: false, error: 'Manager-correction coordinator has stale idle metadata. Admin investigation is required.' };
-    const token = crypto.randomUUID();
-    const updated = await gateEntity.updateMany(
-      { id: gate.id, updated_date: gate.updated_date, scope: 'company', status: 'idle' },
-      { $set: { status: 'creating', request_id: requestId, time_entry_id: entryId,
-        payload_hash: hash, claim_token: token, started_at: new Date().toISOString() } },
-    );
-    if (!updated || typeof updated.updated !== 'number') throw new Error('Manager-correction coordinator CAS claim unverified.');
-    if (updated.updated === 1) return { acquired: true, id: gate.id, token };
-  }
-  return { acquired: false, error: 'Manager-correction coordinator changed concurrently. Retry.' };
-}
-
-async function releaseAdminCorrectionGate(gateEntity: any, auditEntity: any, entryEntity: any, gateId: string, requestId: string, entryId: string, hash: string, token: string) {
-  const gate = await gateEntity.get(gateId).catch(() => null);
-  if (!gate?.id || gate.status !== 'creating' || gate.scope !== 'company' ||
-      gate.request_id !== requestId || gate.time_entry_id !== entryId ||
-      !constantTimeEqual(String(gate.payload_hash || ''), hash) || gate.claim_token !== token) return false;
-  const audits = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
-  const entry = await entryEntity.get(entryId).catch(() => null);
-  if (!Array.isArray(audits) || !entry?.id || audits.length > 1) return false;
-  const marked = String(entry.last_correction_request_id || '') === requestId;
-  const audit = audits[0] || null;
-  const settled = !audit ? !marked :
-    String(audit.time_entry_id || '') === entryId &&
-    ((['confirmed', 'recovered'].includes(String(audit.outcome || '')) && marked) ||
-      (String(audit.outcome || '') === 'blocked' && !marked));
-  // Never reopen coordination on pending, mismatched, or uncertain writes.
-  if (!settled) return false;
-  const updated = await gateEntity.updateMany(
-    { id: gateId, updated_date: gate.updated_date, scope: 'company', status: 'creating',
-      request_id: requestId, time_entry_id: entryId, payload_hash: hash, claim_token: token },
-    { $set: { status: 'idle', request_id: '', time_entry_id: '', payload_hash: '',
-      claim_token: '', started_at: null } },
-  );
-  if (!updated || typeof updated.updated !== 'number') throw new Error('Manager-correction coordinator release unverified.');
-  return updated.updated === 1;
-}
-
 async function releasePayPeriodCreateGate(gateEntity: any, id: string, requestId: string, hash: string, token: string) {
   const gate = await gateEntity.get(id);
   if (!gate?.id) return false;
