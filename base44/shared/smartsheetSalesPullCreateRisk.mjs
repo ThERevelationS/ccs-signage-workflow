@@ -168,6 +168,41 @@ export async function readSalesPushRowOwnershipRisks(entity, sheetId, selectedRe
   return classifySalesPushRowOwnershipRisks(linked, sheetId, selectedRecords);
 }
 
+// The earlier push preflight can become stale during backup/planning.
+// Reconcile the EXACT outgoing PUT row IDs against their planned WorkOrder
+// identities and a new complete linked-record read immediately before write
+// (and again after any definitive rate-limit wait). No new lock is created.
+export async function verifySalesPushWriteOwnership(entity, sheetId, plannedRecords, outgoingWrites) {
+  const sheet = id(sheetId);
+  if (!/^\d+$/.test(sheet) || sheet === '0' ||
+      !Array.isArray(plannedRecords) || !Array.isArray(outgoingWrites) ||
+      outgoingWrites.length === 0) {
+    throw new Error('Sales remote PUT ownership verification requires exact planned rows and sheet.');
+  }
+  const outgoing = outgoingWrites.map(row => id(row?.id));
+  const unique = new Set(outgoing);
+  if (outgoing.some(rowId => !/^\d+$/.test(rowId) || rowId === '0') ||
+      unique.size !== outgoing.length) {
+    throw new Error('Sales remote PUT row IDs are missing, invalid, or duplicated.');
+  }
+  const selected = plannedRecords.filter(record =>
+    id(record?.smartsheet_sheet_id) === sheet && unique.has(id(record?.smartsheet_row_id)));
+  const plannedCounts = new Map(outgoing.map(rowId => [rowId, 0]));
+  for (const record of selected) {
+    const rowId = id(record.smartsheet_row_id);
+    if (!id(record.id)) throw new Error('Sales remote PUT planned WorkOrder identity is missing.');
+    plannedCounts.set(rowId, plannedCounts.get(rowId) + 1);
+  }
+  if ([...plannedCounts.values()].some(count => count !== 1)) {
+    throw new Error('Sales remote PUT has missing or competing planned WorkOrder owners.');
+  }
+  const review = await readSalesPushRowOwnershipRisks(entity, sheet, selected);
+  if (review.count) {
+    throw new Error('Sales remote PUT permanent row ownership changed or could not be uniquely verified.');
+  }
+  return { verified: true, row_count: outgoing.length };
+}
+
 export async function readSalesPullCreateAttemptRisks(entity, sheetId) {
   // Server-scoped indexed-style filtering, not a legacy WorkOrder archive
   // download. A failed/incomplete paged read fails closed before bulkCreate.
