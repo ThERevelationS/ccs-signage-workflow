@@ -252,7 +252,7 @@ export default function ProductChecklistDialog({
     // the replacement Work Order is verified. A failed reload must not erase them.
     setIsLoading(true);
     try {
-      const [freshWO, usersData, dropdownsSetting, productTypesSetting] = await Promise.all([
+      const [freshWO, usersData, dropdownsSetting, productTypesSetting, taskDescriptionsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Product checklist authorized users" }),
         loadSingleGlobalSetting({
@@ -264,6 +264,11 @@ export default function ProductChecklistDialog({
           entity: base44.entities.GlobalSettings,
           settingKey: "productTypes",
           label: "Product checklist product types",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "salesTaskDescriptions",
+          label: "Product checklist SIPS task eligibility",
         })
       ]);
 
@@ -273,6 +278,14 @@ export default function ProductChecklistDialog({
       if (currentWO.deleted === true) throw new Error("This Work Order is in Trash. Close the checklist and reload the SIPS board before continuing.");
       if (currentWO.completed === true || currentWO.is_rider === true) {
         throw new Error("This Work Order is no longer an active SIPS job. Close the checklist and reload the SIPS board before continuing.");
+      }
+      // Match the SIPS board's three queue rules. A job moved to an unrelated
+      // task cannot become saveable merely because someone reloads its checklist.
+      const configuredSipsTask = (taskDescriptionsSetting?.setting_value?.items || []).some(item =>
+        item.text === currentWO.current_task_description && (item.page === "SIPs" || item.wip)
+      );
+      if (currentWO.current_task_assigned_to !== "SIPs" && !configuredSipsTask) {
+        throw new Error("This Work Order's current task no longer belongs to SIPS. Close the checklist and refresh the SIPS board before continuing.");
       }
 
       setUsers(usersData);
