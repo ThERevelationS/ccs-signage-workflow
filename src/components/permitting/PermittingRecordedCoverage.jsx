@@ -63,6 +63,15 @@ function RecordedCoverageSession({readCoverage,authorized}) {
         <p className="text-sm">Queue candidates missing: {result.official.queue.missing.length}. Profile candidates missing: {result.official.profiles.missing.length}. These counts describe geographic name/type candidates within your read permissions.</p>
         {['queue','profiles'].map(group => <details key={group}><summary className="cursor-pointer min-h-11">View missing {group} geographic candidates</summary>
           <p className="text-sm break-words">{result.official[group].missing.map(r => r.state + ' ' + r.type + ' ' + r.name + (r.county_name ? ' (' + r.county_name + ' County)' : '')).join('; ') || 'No missing name/type candidates in this read.'}</p></details>)}
+        {['queue','profiles'].map(group => <details key={'identity-review-'+group}>
+          <summary className="cursor-pointer min-h-11">View {group} geographic identity review items ({result.official[group].identity_review?.length || 0})</summary>
+          <p className="text-sm">Ambiguous or incomplete records can have name candidates and still require identity review. Candidate counts do not resolve these items.</p>
+          <ul className="space-y-2 text-sm">{(result.official[group].identity_review || []).map(row => <li key={row.id}>
+            <strong>{row.record_state} {row.name}</strong> — Record ID: {row.id}. {row.state==='ambiguous'?'Multiple geographic candidates':row.state==='unmatched'?'No geographic candidate':'Single candidate with incomplete identity'}. {row.candidate_keys.length} candidate(s).
+            {row.review_flags.includes('parent_county_missing') && ' Parent county is missing.'}
+            {row.review_flags.includes('unsupported_type') && ' Government type needs review.'}
+          </li>)}</ul>
+        </details>)}
         <p className="text-amber-800 text-sm">{result.official.notice} County relationships, consolidated entities, forms, archives, separate electrical offices and approvals remain review gaps. This is not permitting completeness.</p>
       </div>}
 

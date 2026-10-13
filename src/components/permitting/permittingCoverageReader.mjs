@@ -69,11 +69,11 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       if (['city','village'].includes(type)) review_flags.push('official_county_relationship_pending');
       if (type === 'township' && !county) review_flags.push('parent_county_missing');
       if (!['county','city','village','township'].includes(type)) review_flags.push('unsupported_type');
-      return { id:row.id, state:!hits.length?'unmatched':hits.length>1?'ambiguous':'single_geographic_candidate',
+      return { id:row.id, name:String((profile ? row.name : row.jurisdiction_name) || 'Unnamed record'), record_state:state, type, state:!hits.length?'unmatched':hits.length>1?'ambiguous':'single_geographic_candidate',
         candidate_keys:hits.map(r=>r.key), review_flags, canonical_identity_verified:false };
     });
     const represented = new Set(assessments.flatMap(r=>r.candidate_keys));
-    return { assessments, missing:candidates.filter(r=>!represented.has(r.key)) };
+    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.includes('parent_county_missing')), missing:candidates.filter(r=>!represented.has(r.key)) };
   }
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),
