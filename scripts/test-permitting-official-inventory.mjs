@@ -117,3 +117,13 @@ for(const source of ref.sources){
  assert.equal(counts.total,ref.rows.filter(row=>row.source_file===source.file).length);
  assert.equal(counts.total,counts.candidates+counts.status_review+counts.statistical);
 }
+
+r=reconcileOfficialInventory([{...q,parent_county_name:'Wrong County'}],[{...p,parent_county:{name:'Wrong County'}}],base);
+for(const group of ['queue','profiles']){
+ const row=r[group].identity_review[0];assert.equal(row.state,'unmatched');
+ assert.equal(row.recorded_county,'Wrong County');assert.ok(row.review_flags.includes('parent_county_conflict'));
+ assert.deepEqual(row.candidate_keys,[]);assert.deepEqual(row.candidate_details,[]);
+}
+r=reconcileOfficialInventory([],[{...p,name:'Absent Township',parent_county:{name:'Wrong County'}}],base);
+assert.ok(!r.profiles.identity_review[0].review_flags.includes('parent_county_conflict'));
+r=reconcileOfficialInventory([],[p],base);assert.ok(!r.profiles.assessments[0].review_flags.includes('parent_county_conflict'));

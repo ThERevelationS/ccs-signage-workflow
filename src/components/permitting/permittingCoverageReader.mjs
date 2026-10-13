@@ -67,13 +67,14 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       const state = normalized(row.state).toUpperCase(), type = normalized(profile ? row.type : row.jurisdiction_type);
       const name = geographicName(profile ? row.name : row.jurisdiction_name);
       const county = geographicName(profile ? row.parent_county?.name : row.parent_county_name);
-      const hits = candidates.filter(r => r.state === state && r.type === type && geographicName(r.name) === name &&
-        (type !== 'township' || !county || geographicName(r.county_name) === county));
+      const nameHits = candidates.filter(r => r.state === state && r.type === type && geographicName(r.name) === name);
+      const hits = nameHits.filter(r => type !== 'township' || !county || geographicName(r.county_name) === county);
       const review_flags = [];
       if (['city','village'].includes(type)) review_flags.push('official_county_relationship_pending');
       if (type === 'township' && !county) review_flags.push('parent_county_missing');
+      if (type === 'township' && county && nameHits.length && !hits.length) review_flags.push('parent_county_conflict');
       if (!['county','city','village','township'].includes(type)) review_flags.push('unsupported_type');
-      return { id:row.id, name:String((profile ? row.name : row.jurisdiction_name) || 'Unnamed record'), record_state:state, type, state:!hits.length?'unmatched':hits.length>1?'ambiguous':'single_geographic_candidate',
+      return { id:row.id, name:String((profile ? row.name : row.jurisdiction_name) || 'Unnamed record'), record_state:state, recorded_county:String((profile ? row.parent_county?.name : row.parent_county_name) || ''), type, state:!hits.length?'unmatched':hits.length>1?'ambiguous':'single_geographic_candidate',
         candidate_keys:hits.map(r=>r.key), candidate_details:hits.map(r=>({key:r.key,state:r.state,type:r.type,name:r.name,county_name:r.county_name || ''})), review_flags, canonical_identity_verified:false };
     });
     const candidateRecords = new Map();
