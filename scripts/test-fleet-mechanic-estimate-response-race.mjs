@@ -41,14 +41,21 @@ const submitBody=()=>({
   estimate_expected_updated_date:"estimate-v1",
 });
 function setup(){
-  const store={work:baseWork(),estimate:currentEstimate(),writes:0,readBarrier:false,pendingReads:[],estimateReads:0};
+  const store={work:baseWork(),estimate:currentEstimate(),writes:0,readBarrier:false,pendingReads:[],estimateReads:0,
+    pausePolicyRead:false,pendingPolicyReads:[],pauseGrantRead:false,pendingGrantReads:[],gateClaims:0};
   const grant={id:grantId,enabled:true,name:"Synthetic mechanic",token_hash:hash(token),
     allowed_actions:["bootstrap","start","save","estimate_save","estimate_submit"],
     scope_mode:"selected_equipment",allowed_equipment_ids:["eq-allowed"],
     expires_at:"2099-01-01T00:00:00.000Z"};
   const access={
     async filter(query){return query.token_hash===grant.token_hash && grant.enabled ? [clone(grant)] : [];},
-    async get(id){return id===grantId ? clone(grant) : null;},
+    async get(id){
+      if(store.pauseGrantRead){
+        store.pauseGrantRead=false;
+        await new Promise(resolve=>store.pendingGrantReads.push(resolve));
+      }
+      return id===grantId ? clone(grant) : null;
+    },
     async update(){return clone(grant);},
   };
   const WorkOrder={async get(id){return id===workId&&store.work ? clone(store.work) : null;}};
@@ -69,11 +76,34 @@ function setup(){
       store.writes++;
       return {updated:1};
     },
+    async create(data){
+      assert.equal(store.estimate,null,"Only the empty first-draft fixture may create an estimate");
+      store.estimate={...clone(data),id:estimateId,updated_date:"estimate-v2"};
+      store.writes++;
+      return clone(store.estimate);
+    },
   };
-  const Policy={async list(){return [];}};
+  const gate={id:"synthetic-gate",scope:"fleet_repair_estimate",status:"idle",updated_date:"gate-v1"};
+  const Gate={
+    async filter(query){return query.scope===gate.scope ? [clone(gate)] : [];},
+    async get(id){return id===gate.id ? clone(gate) : null;},
+    async updateMany(query,change){
+      if(query.id!==gate.id || query.status!==gate.status || (query.updated_date && query.updated_date!==gate.updated_date) ||
+          (query.claim_token && query.claim_token!==gate.claim_token))return {updated:0};
+      Object.assign(gate,clone(change.$set),{updated_date:"gate-v"+(++store.gateClaims+1)});
+      return {updated:1};
+    },
+  };
+  const Policy={async list(){
+    if(store.pausePolicyRead){
+      store.pausePolicyRead=false;
+      await new Promise(resolve=>store.pendingPolicyReads.push(resolve));
+    }
+    return [];
+  }};
   const client={asServiceRole:{entities:{
     FleetMechanicAccess:access,FleetMaintenanceWorkOrder:WorkOrder,
-    FleetRepairEstimate:Estimate,FleetRepairEstimateCreateGate:{},FleetRepairApprovalPolicy:Policy,
+    FleetRepairEstimate:Estimate,FleetRepairEstimateCreateGate:Gate,FleetRepairApprovalPolicy:Policy,
     FleetOperationReceipt:{},FleetSystemLog:{async create(){}},
   }}};
   return {store,grant,client};
@@ -102,6 +132,69 @@ async function commitWithConcurrentEdit(request,mutate){
   store.pendingReads.shift()();
   return {...await pending,store,grant};
 }
+
+test("Save Draft rejects an equipment reassignment during approval-policy evaluation before its estimate CAS",async()=>{
+  const {store,client}=setup();
+  store.pausePolicyRead=true;
+  const pending=call(saveBody(),client);
+  await until("Save Draft approval-policy read",()=>store.pendingPolicyReads.length===1);
+  store.work={...store.work,updated_date:"work-v2",equipment_id:"eq-outside"};
+  store.pendingPolicyReads.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0,"No estimate update is allowed from a stale Fleet asset");
+  assert.equal(store.estimate.updated_date,"estimate-v1");
+});
+
+test("Submit Estimate rejects equipment reassignment during approval-policy evaluation",async()=>{
+  const {store,client}=setup();
+  store.pausePolicyRead=true;
+  const pending=call(submitBody(),client);
+  await until("Submit Estimate approval-policy read",()=>store.pendingPolicyReads.length===1);
+  store.work={...store.work,updated_date:"work-v2",equipment_id:"eq-outside"};
+  store.pendingPolicyReads.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0,"Submit must not mutate an estimate for reassigned equipment");
+  assert.equal(store.estimate.status,"draft");
+});
+
+test("first Save Draft creation rejects reassignment while the create gate waits",async()=>{
+  const {store,client}=setup();
+  store.estimate=null;
+  store.pausePolicyRead=true;
+  const pending=call(saveBody(),client);
+  await until("first Save Draft policy read",()=>store.pendingPolicyReads.length===1);
+  store.work={...store.work,updated_date:"work-v2",equipment_id:"eq-outside"};
+  store.pendingPolicyReads.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0,"No first estimate draft may be created for a reassigned work order");
+  assert.equal(store.estimate,null);
+});
+
+test("Save Draft rejects a Fleet reassignment while the final grant authorization is delayed",async()=>{
+  const {store,client}=setup();
+  store.pauseGrantRead=true;
+  const pending=call(saveBody(),client);
+  await until("Save Draft grant check",()=>store.pendingGrantReads.length===1);
+  store.work={...store.work,updated_date:"work-v2",equipment_id:"eq-outside"};
+  store.pendingGrantReads.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0,"A delayed grant read cannot authorize a stale Fleet work-order identity");
+});
+
+test("legitimate unchanged Save, Submit, and first draft creation still commit once",async()=>{
+  for(const [makeBody,firstDraft] of [[saveBody,false],[submitBody,false],[saveBody,true]]){
+    const {store,client}=setup();
+    if(firstDraft)store.estimate=null;
+    const outcome=await call(makeBody(),client);
+    assert.equal(outcome.status,200,JSON.stringify(outcome.body));
+    assert.equal(store.writes,1,"Exactly one estimate mutation per request");
+    assert.equal(outcome.body.estimate.work_order_id,workId);
+  }
+});
 
 test("Save Draft returns the latest estimate after a later legitimate CCS edit",async()=>{
   const result=await commitWithConcurrentEdit(saveBody,store=>{
