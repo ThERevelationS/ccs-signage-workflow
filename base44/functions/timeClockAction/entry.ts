@@ -1864,8 +1864,16 @@ async function claimAdminCorrectionGate(
       const owners = priorEntry?.id
         ? await stateEntity.filter({ user_email: asEmail(priorEntry.user_email) })
         : null;
-      if (Array.isArray(owners) && owners.length === 1 &&
-          String(owners[0].correction_create_status || '') === 'idle') {
+      const priorOwnerState = Array.isArray(owners) && owners.length === 1 ? owners[0] : null;
+      const ownerIdle = String(priorOwnerState?.correction_create_status || '') === 'idle';
+      // This request may already hold the same employee's newer mutation
+      // gate. That proves the older gate was released only when its request
+      // ID differs and the currently held entry/request match this caller.
+      const newerClaimHeld = gate.request_id !== requestId &&
+        String(priorOwnerState?.correction_create_status || '') === 'creating' &&
+        String(priorOwnerState?.correction_create_request_id || '') === requestId &&
+        String(priorOwnerState?.correction_create_time_entry_id || '') === entryId;
+      if (priorOwnerState && (ownerIdle || newerClaimHeld)) {
         const recovered = await releaseAdminCorrectionGate(
           gateEntity, auditEntity, entryEntity, gate.id, gate.request_id,
           gate.time_entry_id, gate.payload_hash, gate.claim_token,
