@@ -136,12 +136,12 @@ export function reconcileSavedLocalityProfileLinks(localities, profiles) {
   if (!Array.isArray(localities) || !Array.isArray(profiles)) throw Error('Invalid saved locality profile-link inventory');
   const profileById = new Map();
   for (const profile of profiles) {
-    if (typeof profile?.id !== 'string' || !profile.id.trim() || profileById.has(profile.id)) throw Error('Invalid or repeated profile link target identity');
+    if (typeof profile?.id !== 'string' || !profile.id.trim() || profile.id!==profile.id.trim() || profileById.has(profile.id)) throw Error('Invalid or repeated profile link target identity');
     profileById.set(profile.id, profile);
   }
   const linkUsers = new Map(), seen = new Set();
   for (const locality of localities) {
-    if (typeof locality?.id !== 'string' || !locality.id.trim() || seen.has(locality.id)) throw Error('Invalid or repeated saved locality link identity');
+    if (typeof locality?.id !== 'string' || !locality.id.trim() || locality.id!==locality.id.trim() || seen.has(locality.id)) throw Error('Invalid or repeated saved locality link identity');
     seen.add(locality.id);
     const link = locality.jurisdiction_profile_id;
     if (typeof link === 'string' && link.trim() && link === link.trim())
