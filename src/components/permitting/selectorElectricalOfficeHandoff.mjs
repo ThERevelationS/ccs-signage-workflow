@@ -2,6 +2,7 @@ import {safeOfficeEvidenceUrl} from './localityOfficeReviewEvidence.js';
 import {summarizeLocalityOfficeAuthority} from './localityAuthorityVerification.js';
 
 const clean=value=>typeof value==='string'?value.trim():'';
+const exactId=value=>typeof value==='string'&&Boolean(value.trim())&&value===value.trim();
 const roles=[['electrical_permit','Electrical permit issuer'],['electrical_inspection','Electrical inspection provider']];
 
 /** Read-only handoff: source links can inform office review only for an exact
@@ -9,12 +10,12 @@ const roles=[['electrical_permit','Electrical permit issuer'],['electrical_inspe
  * Review labels are historical local tracker flags, not proof of current authority.
  */
 export function summarizeSelectorElectricalOfficeHandoff(profile,locality){
-  const exact=Boolean(clean(profile?.id)&&clean(locality?.id)&&
-    clean(locality.jurisdiction_profile_id)===profile.id&&
+  const exact=Boolean(exactId(profile?.id)&&exactId(locality?.id)&&exactId(locality?.jurisdiction_profile_id)&&
+    locality.jurisdiction_profile_id===profile.id&&
     ['OH','KY'].includes(profile.state)&&locality.state===profile.state);
   const empty=roles.map(([role,label])=>({role,label,status:'not_assessed',offices:[]}));
   if(!exact)return {status:'exact_link_required',roles:empty,legacy_broad_role_present:false,
-    notice:'An exact saved locality-to-repository profile ID and state are required before these office records can be compared. Similar names, ZIP codes and county labels are not links.'};
+    notice:'An exact saved locality-to-repository profile ID and state are required before these office records can be compared. Profile, locality and saved link IDs must be nonempty and unpadded; preserve malformed saved values for staff reconciliation instead of silently trimming them. Similar names, ZIP codes and county labels are not links.'};
   if(!Array.isArray(locality.offices))return {status:'offices_unavailable',roles:empty,legacy_broad_role_present:false,
     notice:'The linked locality office collection is not readable. Do not infer an issuing or inspection office.'};
   const all=locality.offices,ids=new Map();
