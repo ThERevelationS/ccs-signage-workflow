@@ -152,21 +152,30 @@ async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: a
   if (receipt?.status === 'applied') return receipt;
   // A proven Fleet work-order commit wins over an earlier admin cancellation,
   // but never replace newer upload evidence or reconciliation provenance.
-  const changed = await Receipt.updateMany(
-    {...mechanicReceiptIdentitySelector(receipt),status:{$in:['started','failed','cancelled']}},
-    {$set:{
-      status:'applied',
-      applied_at:receipt?.applied_at || nowIso(),
-      failed_at:null,
-      error_message:'',
-      'result_summary.work_order_updated_date':current?.updated_date || '',
-      'result_summary.work_order_status':current?.status || '',
-      'result_summary.recovered_from_work_order_marker':recovered === true,
-    }},
-  );
+  let changed: any = null;
+  try {
+    changed = await Receipt.updateMany(
+      {...mechanicReceiptIdentitySelector(receipt),status:{$in:['started','failed','cancelled']}},
+      {$set:{
+        status:'applied',
+        applied_at:receipt?.applied_at || nowIso(),
+        failed_at:null,
+        error_message:'',
+        'result_summary.work_order_updated_date':current?.updated_date || '',
+        'result_summary.work_order_status':current?.status || '',
+        'result_summary.recovered_from_work_order_marker':recovered === true,
+      }},
+    );
+  } catch {
+    // A lost CAS acknowledgment may follow a durable applied write. Read it
+    // rather than retrying blindly or reporting an unverified failed commit.
+  }
   if (changed?.updated === 1) return {...receipt,status:'applied'};
   const latest = await Receipt.get(receipt.id).catch(()=>null);
-  if (latest?.status === 'applied' && mechanicReceiptMarkerIdentityMatches(current,latest)) return latest;
+  if (latest?.status === 'applied' &&
+      mechanicReceiptIdentityUnchanged(receipt,latest) &&
+      hasRecordedMechanicCommitEvidence(latest) &&
+      mechanicReceiptMarkerIdentityMatches(current,latest)) return latest;
   throw Object.assign(new Error('Fleet mechanic receipt identity or status changed before committed work evidence could be recorded. CCS review is required.'),{status:409});
 }
 

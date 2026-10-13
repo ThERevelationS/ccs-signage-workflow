@@ -51,6 +51,7 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
     waiting:[], uploadWaiting:[], pendingUpdates:[], pendingGrantChecks:[],pendingCancelWrites:[],pauseGrantCheck:false,pauseCancelWrite:false,
     pauseWorkRead:false,pendingWorkReads:[],pauseAppliedWrite:false,pendingAppliedWrites:[],
     pauseFailureWrite:false,pendingFailureWrites:[],loseFailureAckOnce:false,loseCancelAckOnce:false,
+    loseAppliedAckOnce:false,stripAppliedProofAfterCommitOnce:false,
     sourceReadNumber:0,pauseSourceReadAt:0,pendingSourceReads:[],
     pauseReleaseWrite:false,pendingReleaseWrites:[],pausePhotoEvidenceWrite:false,pendingPhotoEvidenceWrites:[],
     pauseFinalReceiptReadAt:0,receiptReadNumbers:new Map(),pendingFinalReceiptReads:[],
@@ -119,6 +120,18 @@ function setup({receipt=null,barrier=false,uploadBarrier=false,holdUpdates=false
           target[parts.at(-1)]=clone(value);
         }
         store.receipts.set(row.id,next);
+      }
+      if(operators?.$set?.status==='applied' && store.stripAppliedProofAfterCommitOnce){
+        store.stripAppliedProofAfterCommitOnce=false;
+        for(const row of found){
+          const live=store.receipts.get(row.id);
+          delete live.result_summary.work_order_updated_date;
+          delete live.result_summary.recovered_from_work_order_marker;
+        }
+      }
+      if(operators?.$set?.status==='applied' && store.loseAppliedAckOnce){
+        store.loseAppliedAckOnce=false;
+        throw new Error('Synthetic applied CAS response lost after commit');
       }
       if(operators?.$set?.status==='failed' && store.loseFailureAckOnce){
         store.loseFailureAckOnce=false;
@@ -1633,5 +1646,49 @@ test("lost failure acknowledgment with late committed marker is recovered as app
   assert.equal(response.code,409);
   assert.match(response.body.error,/committed during failure reconciliation/i);
   assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.updates,0);
+});
+
+
+test("lost applied receipt acknowledgment is recovered despite a later Fleet work-order update",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.pauseAppliedWrite=true;
+  store.loseAppliedAckOnce=true;
+  const pending=call({action:"admin_reconcile_mechanic_mutation",receipt_id:prior.id},client);
+  await until("applied receipt CAS pending while later maintenance commits",()=>store.pendingAppliedWrites.length===1);
+  store.work.mechanic_operation_key="mechanic:other-grant:work-race:save:newer-maintenance-123456";
+  store.work.mechanic_operation_fingerprint="newer-maintenance-fingerprint";
+  store.work.updated_date="version-3";
+  store.pendingAppliedWrites.shift()();
+  const response=await pending;
+  assert.equal(response.code,200);
+  assert.equal(response.body.status,"applied");
+  const latest=store.receipts.get(prior.id);
+  assert.equal(latest.status,"applied");
+  assert.equal(latest.result_summary.work_order_updated_date,"version-2");
+  assert.ok(latest.applied_at);
+  assert.equal(latest.result_summary.recovered_from_work_order_marker,true);
+  assert.equal(store.work.updated_date,"version-3");
+  assert.equal(store.updates,0,"Recovery must not replay the superseded Fleet operation");
+});
+
+test("lost applied receipt acknowledgment cannot accept bare applied status without durable commit evidence",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.loseAppliedAckOnce=true;
+  store.stripAppliedProofAfterCommitOnce=true;
+  const outcome=await call({action:"admin_reconcile_mechanic_mutation",receipt_id:prior.id},client);
+  assert.equal(outcome.code,409);
+  assert.match(outcome.body.error,/identity or status changed before committed work evidence/i);
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.receipts.get(prior.id).result_summary.work_order_updated_date,undefined);
   assert.equal(store.updates,0);
 });
