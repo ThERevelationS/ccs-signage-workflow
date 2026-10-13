@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { previewOrderCustomerDecision } from '@/components/orders/orderSaveSync';
+import { previewOrderCustomerDecision, commitOrderSmartsheetCustomerUnlink } from '@/components/orders/orderSaveSync';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { orderCustomerReviewRowState } from '@/components/orders/orderLinkedCustomerReviewPresentation.mjs';
@@ -8,12 +8,15 @@ import { orderCustomerReviewRowState } from '@/components/orders/orderLinkedCust
 // or inferred job reassignment. Reviewers reconcile in their normal workflows.
 export default function OrderLinkedCustomerReview({
   count = 0, items = [], orders = [], workOrders = [], isAdmin = false, sessionToken = '',
+  canResolve = false, onResolutionApplied = null,
 }) {
   const [open, setOpen] = useState(false);
   const [choices, setChoices] = useState({});
   const [previews, setPreviews] = useState({});
   const [busyId, setBusyId] = useState('');
   const previewEpochRef = useRef(0);
+  const commitInFlightRef = useRef(false);
+  const [commitAttemptedIds, setCommitAttemptedIds] = useState({});
   useEffect(() => {
     // A later Sync produces new evidence; invalidate all older previews and
     // in-flight replies even when the permanent Order IDs are unchanged.
@@ -21,15 +24,17 @@ export default function OrderLinkedCustomerReview({
     setBusyId('');
     setPreviews({});
     setChoices({});
+    setCommitAttemptedIds({});
   }, [items]);
   const choose = (orderId, choice) => {
+    if (commitInFlightRef.current || commitAttemptedIds[orderId]) return;
     previewEpochRef.current += 1;
     setBusyId('');
     setChoices(prev => ({ ...prev, [orderId]: choice }));
     setPreviews(prev => ({ ...prev, [orderId]: null }));
   };
   const verify = async item => {
-    if (!isAdmin || !sessionToken || busyId || !choices[item.orderId]) return;
+    if (!isAdmin || !sessionToken || busyId || commitInFlightRef.current || commitAttemptedIds[item.orderId] || !choices[item.orderId]) return;
     const epoch = ++previewEpochRef.current;
     const decision = choices[item.orderId];
     setBusyId(item.orderId);
@@ -49,12 +54,39 @@ export default function OrderLinkedCustomerReview({
       if (previewEpochRef.current === epoch) setBusyId('');
     }
   };
+  const applyAdoptAndUnlink = async item => {
+    if (!isAdmin || !canResolve || !sessionToken || busyId || commitInFlightRef.current ||
+        commitAttemptedIds[item.orderId] || choices[item.orderId] !== 'adopt_smartsheet_unlink_job' ||
+        !previews[item.orderId]?.ok || orderCustomerReviewRowState(item, orders.find(order => String(order.id) === item.orderId)) !== 'matches_review') return;
+    commitInFlightRef.current = true;
+    // Any unknown acknowledgement forbids a second attempt from this
+    // captured review. A new Sync is required to determine current state.
+    setCommitAttemptedIds(prev => ({ ...prev, [item.orderId]: true }));
+    const epoch = ++previewEpochRef.current;
+    setBusyId(item.orderId);
+    try {
+      const saved = await commitOrderSmartsheetCustomerUnlink({ sessionToken, review: item });
+      if (onResolutionApplied) await onResolutionApplied(saved);
+      if (previewEpochRef.current === epoch) setPreviews(prev => ({
+        ...prev, [item.orderId]: { ok: true, message: 'Saved in Base44 and queued for Save & Sync. The previous job was unlinked.' },
+      }));
+    } catch (error) {
+      if (previewEpochRef.current === epoch) setPreviews(prev => ({
+        ...prev, [item.orderId]: { ok: false, message: (error?.message || 'Result uncertain.') + ' Reload Orders and run a new Sync before making another decision.' },
+      }));
+    } finally {
+      commitInFlightRef.current = false;
+      if (previewEpochRef.current === epoch) setBusyId('');
+    }
+  };
   const closeReview = nextOpen => {
     if (!nextOpen) {
       previewEpochRef.current += 1;
       setBusyId('');
       setPreviews({});
       setChoices({});
+      // Keep attempted IDs locked even after closing the review. Only a fresh
+      // Sync that replaces the review evidence can unlock a new decision.
     }
     setOpen(nextOpen);
   };
@@ -124,22 +156,37 @@ export default function OrderLinkedCustomerReview({
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" size="sm"
                           variant={choices[item.orderId] === 'keep_linked_job' ? 'default' : 'outline'}
-                          disabled={Boolean(busyId)}
+                          disabled={Boolean(busyId) || Boolean(commitAttemptedIds[item.orderId])}
                           onClick={() => choose(item.orderId, 'keep_linked_job')}>
                           Keep linked job
                         </Button>
                         <Button type="button" size="sm"
                           variant={choices[item.orderId] === 'adopt_smartsheet_unlink_job' ? 'default' : 'outline'}
-                          disabled={Boolean(busyId)}
+                          disabled={Boolean(busyId) || Boolean(commitAttemptedIds[item.orderId])}
                           onClick={() => choose(item.orderId, 'adopt_smartsheet_unlink_job')}>
                           Accept Smartsheet name and unlink job
                         </Button>
                       </div>
                       <Button type="button" size="sm" variant="outline"
-                        disabled={!sessionToken || Boolean(busyId) || !choices[item.orderId] || current !== 'matches_review'}
+                        disabled={!sessionToken || Boolean(busyId) || Boolean(commitAttemptedIds[item.orderId]) || !choices[item.orderId] || current !== 'matches_review'}
                         onClick={() => verify(item)}>
                         {busyId === item.orderId ? 'Checking fresh sources…' : 'Verify decision safely'}
                       </Button>
+                      {choices[item.orderId] === 'adopt_smartsheet_unlink_job' && previews[item.orderId]?.ok &&
+                        !commitAttemptedIds[item.orderId] && (
+                        <div className="rounded-md border border-amber-300 bg-amber-50 p-2 space-y-2">
+                          <p className="text-xs text-amber-950">
+                            Applying will replace the Base44 customer name with the verified Smartsheet value,
+                            unlink the current job, and mark this Order for Save &amp; Sync.
+                            No Smartsheet cell will be edited by this action.
+                          </p>
+                          <Button type="button" size="sm" variant="destructive"
+                            disabled={!canResolve || !sessionToken || Boolean(busyId) || current !== 'matches_review'}
+                            onClick={() => applyAdoptAndUnlink(item)}>
+                            Apply verified choice: adopt name and unlink job
+                          </Button>
+                        </div>
+                      )}
                       {current === 'matches_review' && previews[item.orderId] && (
                         <p className={previews[item.orderId].ok ? 'text-xs text-green-800' : 'text-xs text-red-700'}
                           role="status">
@@ -167,7 +214,7 @@ export default function OrderLinkedCustomerReview({
               correct the Smartsheet customer name through the authorized workflow.</p>
             <p><strong>Decision: change the linked job.</strong> Verify the intended active job,
               update the Order using its job picker, and follow the protected Save &amp; Sync workflow.</p>
-            <p className="font-medium">The administrator verification step is read-only. It does not approve, queue or apply either decision. A separate version-protected commit is required.</p>
+            <p className="font-medium">Verification is read-only. Only the separate administrator Apply action can save the Smartsheet customer and unlink its previous job; keeping the existing link remains a manual correction path.</p>
           </div>
           <div className="flex justify-end">
             <Button type="button" variant="outline" onClick={() => closeReview(false)}>Close review</Button>
