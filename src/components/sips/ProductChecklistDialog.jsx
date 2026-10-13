@@ -56,6 +56,8 @@ export default function ProductChecklistDialog({
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const loadErrorAlertRef = useRef(null);
+  const loadErrorFocusPendingRef = useRef(false);
   const [hasLoadedChecklist, setHasLoadedChecklist] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   // React state can lag rapid clicks: fence saves synchronously before the first await.
@@ -382,12 +384,14 @@ export default function ProductChecklistDialog({
       };
       // Only a fully reconstructed, current checklist may replace a failed-load state.
       setHasLoadedChecklist(true);
+      loadErrorFocusPendingRef.current = false;
       setLoadError("");
     } catch (error) {
       if (requestId !== loadDataRequestRef.current) return;
       console.error("Error loading data:", error);
       // Loading failure is not an empty checklist or a failed save. Keep the
       // previous snapshot/drafts and block mutations until a successful retry.
+      loadErrorFocusPendingRef.current = true;
       setLoadError(error?.message || "This SIP checklist could not be loaded. Retry or close it.");
     } finally {
       if (requestId === loadDataRequestRef.current) {
@@ -910,6 +914,21 @@ export default function ProductChecklistDialog({
   useEffect(() => {
     if (saveError) focusSaveFailureIfReady();
   }, [isOpen, isLoading, isSaving, saveError, showRevisitPopup, showTemplateBuilder, showOtherPopup, workOrder?.id]);
+
+  // Loading errors use their own focus recovery. Defer until the loading
+  // overlay and any confirmation dialog close so focus remains in the dialog.
+  const focusLoadFailureIfReady = () => {
+    if (!loadErrorFocusPendingRef.current || !isOpen || isLoading || isSaving ||
+        showRevisitPopup || showTemplateBuilder || showOtherPopup || discardWarning) return;
+    const target = loadErrorAlertRef.current;
+    if (!target?.isConnected || !target.getClientRects().length) return;
+    loadErrorFocusPendingRef.current = false;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: "nearest" });
+  };
+  useEffect(() => {
+    if (loadError) focusLoadFailureIfReady();
+  }, [loadError, isOpen, isLoading, isSaving, showRevisitPopup, showTemplateBuilder, showOtherPopup, discardWarning, workOrder?.id]);
 
   // Group checklist items only when checklist data changes. Search/navigation,
   // expansion, and inline editor state should not rebuild the entire product hierarchy.
@@ -1517,7 +1536,7 @@ export default function ProductChecklistDialog({
           <DialogHeader>
             <DialogTitle>Could not load SIP checklist</DialogTitle>
           </DialogHeader>
-          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          <div ref={loadErrorAlertRef} role="alert" tabIndex={-1} aria-label="SIP checklist loading error" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
             <p>{loadError}</p>
             <p className="mt-2 text-xs">The checklist has not loaded. No items have been changed or saved. Retry to fetch the current Work Order.</p>
           </div>
@@ -1951,11 +1970,15 @@ export default function ProductChecklistDialog({
           )}
 
           {loadError && (
-            <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div ref={loadErrorAlertRef} role="alert" tabIndex={-1} aria-label="SIP checklist loading error" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
               <div className="font-medium">Checklist reload failed</div>
               <p className="mt-1 text-xs">{loadError}</p>
-              <p className="mt-1 text-xs">The previously loaded checklist remains here, including unsaved edits. Editing and saving are paused until the latest Work Order loads.</p>
-              <Button type="button" variant="outline" className="mt-3 min-h-11 border-red-300 bg-white text-red-800" onClick={requestReloadLatest} disabled={isLoading || isSaving}>Retry loading checklist</Button>
+              <p className="mt-1 text-xs">The previous checklist and unsaved edits are preserved, but editing and saving are paused. If this job moved or was completed, close the checklist and refresh the SIPS board.</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button type="button" variant="outline" className="min-h-11 border-red-300 bg-white text-red-800" onClick={requestReloadLatest} disabled={isLoading || isSaving}>Retry loading checklist</Button>
+                <Button type="button" variant="outline" className="min-h-11 border-red-300 bg-white text-red-800" onClick={requestClose} disabled={isLoading || isSaving}>Close checklist</Button>
+              </div>
+              {hasUnsavedChanges && <p className="mt-2 text-xs">Closing will ask you to confirm before discarding unsaved edits.</p>}
             </div>
           )}
 
