@@ -40,6 +40,20 @@ Changed only dashboard wording and synthetic UI checks. The table now labels rec
 
 Next contained chunk: audit canonical duplicate office-copy detection in saved-office relationship evidence against the role-specific handoff, preserving distinct issuer/inspector roles and historical flags. Confirm a defect before changing behavior.
 
+## Repeated canonical electrical office-copy audit
+
+Starting HEAD 54a92bdfc3638d1c77c55d33be0018f62d538d9f; working tree clean. Source comparison confirmed that the electrical handoff exposed repeated canonical IDs for the same role while the dashboard saved-office evidence reader only checked duplicate local copy IDs. Well-formed copies with distinct local IDs but the same canonical office and electrical role could therefore produce no identity review in that reader.
+
+Added canonical_electrical_role_copy_review: a count of affected office copies, counted once per copy even if both electrical roles repeat. Grouping requires the exact, nonempty, unpadded government_office_id within the same locality and the same specific electrical role. Different names do not resolve or alter identity. Different issuer/inspector roles and different localities remain independent. Pending and historically reviewed copies both receive the new identity review flag; original historical counters and flags are preserved.
+
+Review items retain locality ID, local copy ID/index, canonical ID, affected electrical roles and per-role copy counts. The dashboard exposes the count and tells staff to review each copy and its service area without merging or inferring authority from the shared ID. Duplicate findings are reconciliation prompts, not proof that separate service areas are invalid. No office records, immutable review events, permissions, manual overrides or shared backend authority behavior changed. No new API/background reads or research calls.
+
+The grouping uses per-role counts rather than all-to-all peer lists. 41 selected synthetic tests passed: exact duplicate copies, distinct role/locality separation, repeated role entries, pending copies, nonmatching/padded/empty IDs, a 4,000-copy same-locality fixture, prior 6,000-locality coverage, handoff regressions, SDK adapter and dashboard interaction/session checks. Inputs remain unchanged. git diff --check passed; one production build completed with captured exit 0 and existing baseline-browser-mapping/Browserslist warnings.
+
+No frontend publishing or backend deployment. No live production records modified for testing. Authenticated production browser acceptance remains pending; synthetic UI checks are not live acceptance. Phase 10 / Milestone 1 / Task 2 remains partial.
+
+Next contained chunk: audit missing/malformed canonical identity guidance across the saved-office evidence reader and electrical handoff, especially configured but unreviewed roles. Confirm discrepancies, preserve historical flags and distinguish unresolved identity from absent roles.
+
 ## Validation of the preceding canonical-identity chunk
 
 33 focused synthetic tests passed across electrical handoff, saved sources, electrical research outcomes, recorded coverage and electrical role coverage. New cases exercise missing/blank/padded canonical IDs, repeated same-role canonical copies, valid cross-role shared offices, malformed local IDs and input preservation.
