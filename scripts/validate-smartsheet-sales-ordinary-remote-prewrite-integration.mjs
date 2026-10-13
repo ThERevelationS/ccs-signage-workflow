@@ -55,7 +55,8 @@ async function fixture(modify=()=>{},options={}) {
       const url=new URL(path,'https://example.test');
       requested=url.searchParams.get('rowIds').split(',');
       if(options.failRead)throw new Error('Synthetic Smartsheet outage');
-      return {body:remote};
+      return {body:{...remote,rows:options.extraRows ? remote.rows :
+        remote.rows.filter(item=>requested.includes(String(item.id)))}};
     },
     normalizeSheetRows,buildSalesPullSnapshot,staleSalesRemotePutSnapshotIds,URLSearchParams,Map,Set,
     cleanText:(value,max)=>String(value??'').trim().slice(0,max),
@@ -79,7 +80,7 @@ const assignee=await fixture(remote=>{remote.rows[1]=row('90002','Conduct Site S
 equal(assignee.result.eligible,['90001','90003'],'Concurrent employee reassignment cannot be silently overwritten.');
 const absent=await fixture(remote=>{remote.rows.pop()});
 equal(absent.result.eligible,['90001','90003'],'Missing permanent remote row fails closed without blocking a different row.');
-const extra=await fixture(remote=>{remote.rows.push(row('99999'))});
+const extra=await fixture(remote=>{remote.rows.push(row('99999'))},{extraRows:true});
 equal(extra.result.eligible,['90003'],'Unexpected returned row identity fails closed for the affected read batch.');
 const duplicate=await fixture(remote=>{remote.rows.push(row('90001'))});
 equal(duplicate.result.eligible,['90003'],'Duplicate returned row identity fails closed for the batch.');
