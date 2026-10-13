@@ -3126,7 +3126,7 @@ export default function ProductChecklistDialog({
                 Add Item
               </Button>
             )}
-            {isRegistered && !workOrder.sip_completed && (
+            {isRegistered && !loadedSipCompletedSnapshot && (
               <Button
                 ref={completeButtonRef}
                 onClick={handleCheckOff}
