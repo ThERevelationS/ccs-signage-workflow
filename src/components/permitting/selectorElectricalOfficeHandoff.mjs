@@ -22,16 +22,24 @@ export function summarizeSelectorElectricalOfficeHandoff(profile,locality){
   const legacy=all.some(office=>Array.isArray(office?.authority_roles)&&office.authority_roles.includes('electrical'));
   const reviewed=roles.map(([role,label])=>{
     const matching=all.filter(office=>Array.isArray(office?.authority_roles)&&office.authority_roles.includes(role));
+    const canonicalIds=new Map();
+    for(const office of matching){
+      const id=clean(office?.government_office_id);
+      if(id)canonicalIds.set(id,(canonicalIds.get(id)||0)+1);
+    }
     const offices=matching.map(office=>{
-      const id=clean(office?.id),unique=Boolean(id&&ids.get(id)===1),summary=summarizeLocalityOfficeAuthority(office);
+      const id=clean(office?.id),unique=Boolean(id&&id===office.id&&ids.get(id)===1),summary=summarizeLocalityOfficeAuthority(office);
+      const canonical=clean(office?.government_office_id);
+      const canonicalUnique=Boolean(canonical&&canonical===office.government_office_id&&canonicalIds.get(canonical)===1);
       return {id,name:clean(office?.name)||'Unnamed configured office',
-        canonical_id:clean(office?.government_office_id),recorded_review:summary.verified&&unique?'staff_reviewed':'requires_review',
+        canonical_id:canonical,recorded_review:summary.verified&&unique?'staff_reviewed':'requires_review',
+        canonical_identity_unique:canonicalUnique,canonical_identity_issue:!canonical||canonical!==office.government_office_id?'missing_or_malformed':'duplicated',
         identity_unique:unique,has_review_notes:Boolean(clean(office?.authority_verification_notes)),
         has_reviewer:Boolean(clean(office?.authority_verified_by)&&clean(office?.authority_verified_at)),
         website:safeOfficeEvidenceUrl(office?.contact_website)};
     });
     return {role,label,status:matching.length===0?'not_recorded':matching.length>1?'multiple_saved_offices':
-      !offices[0].identity_unique?'office_identity_conflict':offices[0].recorded_review==='staff_reviewed'?
+      !offices[0].identity_unique?'office_identity_conflict':!offices[0].canonical_identity_unique?'canonical_identity_conflict':offices[0].recorded_review==='staff_reviewed'?
         'staff_review_reference':'needs_staff_review',offices};
   });
   return {status:'exact_link_read',roles:reviewed,legacy_broad_role_present:legacy,
