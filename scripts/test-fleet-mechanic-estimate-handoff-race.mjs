@@ -1,0 +1,113 @@
+// Deterministic extracted real FleetMechanic Save Draft -> Submit handler, mocked transport.
+// Purely synthetic state: does not call Base44 or touch production records.
+import assert from "node:assert/strict";
+import test from "node:test";
+import {readFileSync} from "node:fs";
+import path from "node:path";
+
+const source=readFileSync(path.join(process.cwd(),"src/pages/FleetMechanic.jsx"),"utf8");
+const begin=source.indexOf("  const saveEstimate = async (submit = false) => {");
+const finish=source.indexOf("  const saveProgress = async () => {",begin);
+assert.ok(begin>=0&&finish>begin,"Live FleetMechanic estimate handler must exist");
+const handlerBlock=source.slice(begin,finish);
+// Evaluate the exact live handler, with state and Base44 invocations replaced by
+// local test fixtures. This is not a browser acceptance test.
+const bindHandler=new Function("ctx",`with(ctx){${handlerBlock} return saveEstimate; }`);
+const defer=()=>{let resolve; const promise=new Promise(done=>{resolve=done;}); return {promise,resolve};};
+
+function harness({holdSave=false,holdSubmit=false}={}) {
+  const calls=[];
+  const saves=[],errors=[],forms=[],busy=[],refreshes=[];
+  const saveGate=defer(),submitGate=defer();
+  const initialEstimate={id:"estimate-A",work_order_id:"wo-A",visibility:"mechanic",status:"draft",
+    updated_date:"estimate-v1",estimated_labor_hours:2,labor_rate:100,notes:"Initial"};
+  const savedEstimate={...initialEstimate,updated_date:"estimate-v2",notes:"Saved"};
+  const submittedEstimate={...savedEstimate,updated_date:"estimate-v3",status:"submitted"};
+  const ctx={
+    selected:{id:"wo-A",updated_date:"work-v1"},
+    selectedWorkOrderRef:{current:"wo-A"},
+    portalAppliedEpochRef:{current:3},
+    data:{portal:{capabilities:{estimates:true}}},
+    estimateRecovery:null,
+    estimateByWorkOrder:{"wo-A":initialEstimate},
+    estimateForm:{estimated_labor_hours:"3",labor_rate:"100",misc_total:"0",notes:"Changed",
+      estimated_completion_date:"",parts_estimate:[],fluids_estimate:[]},
+    token:"synthetic-token",
+    setBusy:value=>busy.push(value),
+    setActionError:value=>errors.push(value),
+    setSavedMessage:value=>saves.push(value),
+    setEstimateForm:value=>forms.push(value),
+    estimateSeed:value=>({fromEstimate:value.updated_date,work_order_id:value.work_order_id}),
+    refreshEstimateState:async (...args)=>{refreshes.push(args);return true;},
+    base44:{functions:{invoke:async(_name,request)=>{
+      calls.push(request);
+      if(request.action==="estimate_save"){
+        if(holdSave)return await saveGate.promise;
+        return {data:{success:true,estimate:savedEstimate}};
+      }
+      if(request.action==="estimate_submit"){
+        if(holdSubmit)return await submitGate.promise;
+        return {data:{success:true,estimate:submittedEstimate,auto_approved:false}};
+      }
+      throw new Error("Unexpected synthetic portal operation");
+    }}},
+  };
+  const run=bindHandler(ctx);
+  return {ctx,run,calls,saves,errors,forms,busy,refreshes,saveGate,submitGate,savedEstimate,submittedEstimate};
+}
+
+test("switching from A to B during delayed Save Draft must not submit A or project A into B",async()=>{
+  const h=harness({holdSave:true});
+  const pending=h.run(true);
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"]);
+  // A user selects B while A's request remains in-flight. React's original
+  // callback retains selected=A, but its selectedWorkOrderRef changes.
+  h.ctx.selectedWorkOrderRef.current="wo-B";
+  h.saveGate.resolve({data:{success:true,estimate:h.savedEstimate}});
+  await pending;
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"],"Never submit stale A after B selected");
+  assert.equal(h.forms.length,0,"No A form may overwrite B's draft");
+  assert.equal(h.saves.some(x=>x&&/submitted|approved/i.test(x)),false,"No stale B success banner");
+  assert.equal(h.refreshes.some(x=>x[0]==="wo-A"),true,"Reconcile saved A without replay");
+});
+
+test("a newer portal refresh during delayed Save Draft must fence Submit's second write",async()=>{
+  const h=harness({holdSave:true});
+  const pending=h.run(true);
+  h.ctx.portalAppliedEpochRef.current+=1;
+  h.saveGate.resolve({data:{success:true,estimate:h.savedEstimate}});
+  await pending;
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"],"Do not resubmit an estimate after a later refresh");
+  assert.equal(h.forms.length,0,"Do not clobber refreshed form state");
+  assert.equal(h.refreshes.length,1,"Use read-only current-state reconciliation");
+});
+
+test("switching work orders during delayed Submit must not project stale A status into B",async()=>{
+  const h=harness({holdSubmit:true});
+  const pending=h.run(true);
+  for(let attempt=0;h.calls.length<2&&attempt<100;attempt++)await Promise.resolve();
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save","estimate_submit"]);
+  h.ctx.selectedWorkOrderRef.current="wo-B";
+  h.submitGate.resolve({data:{success:true,estimate:h.submittedEstimate,auto_approved:false}});
+  await pending;
+  assert.equal(h.forms.length,0,"No A submit response may replace B draft");
+  assert.equal(h.saves.some(x=>x&&/submitted|approved/i.test(x)),false);
+  assert.equal(h.refreshes.some(x=>x[0]==="wo-A"),true);
+});
+
+test("unchanged Save and Submit remains a valid two-write flow",async()=>{
+  const h=harness();
+  await h.run(true);
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save","estimate_submit"]);
+  assert.equal(h.forms.at(-1).fromEstimate,"estimate-v3");
+  assert.match(h.saves.at(-1),/submitted to CCS/i);
+  assert.equal(h.refreshes.length,1);
+});
+
+test("ordinary Save Draft still completes without an extra Submit",async()=>{
+  const h=harness();
+  await h.run(false);
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"]);
+  assert.equal(h.forms.at(-1).fromEstimate,"estimate-v2");
+  assert.match(h.saves.at(-1),/draft saved/i);
+});
