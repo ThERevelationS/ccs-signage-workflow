@@ -5,13 +5,15 @@ import { linkedOrderCustomerPullNeedsReview } from './smartsheetOrderLinkedCusto
 const id = v => String(v ?? '').trim();
 const exactName = v => String(v ?? '').trim().slice(0, 160);
 const revision = v => typeof v === 'string' && v.length > 4 && v.length <= 90;
+const sameCustomer = (a, b) => exactName(a).replace(/\s+/g, ' ').toLowerCase() ===
+  exactName(b).replace(/\s+/g, ' ').toLowerCase();
 const decisions = new Set(['keep_linked_job', 'adopt_smartsheet_unlink_job']);
 
 export function checkOrderCustomerDecisionEvidence({ review, decision, order, job, remoteRow, remoteCustomerName, duplicateClaims = false } = {}) {
   if (!decisions.has(decision) || !review ||
       !/^[A-Za-z0-9_-]{6,80}$/.test(id(review.order_id)) ||
       !/^\d+$/.test(id(review.sheet_id)) || !/^\d+$/.test(id(review.row_id)) ||
-      !id(review.work_order_id) || !revision(review.order_updated_date) ||
+      !/^[A-Za-z0-9_-]{6,100}$/.test(id(review.work_order_id)) || !revision(review.order_updated_date) ||
       !revision(review.remote_modified_at) ||
       typeof review.local_customer_name !== 'string' ||
       typeof review.smartsheet_customer_name !== 'string') return 'invalid_review';
@@ -24,7 +26,7 @@ export function checkOrderCustomerDecisionEvidence({ review, decision, order, jo
       id(order.updated_date) !== id(review.order_updated_date) ||
       exactName(order.customer_name) !== exactName(review.local_customer_name)) return 'order_changed';
   if (!job || id(job.id) !== id(review.work_order_id) || job.deleted === true ||
-      !exactName(job.client_name)) return 'linked_job_unverified';
+      !exactName(job.client_name) || !sameCustomer(job.client_name, order.customer_name)) return 'linked_job_unverified';
   if (!remoteRow || id(remoteRow.id) !== id(review.row_id) ||
       id(remoteRow.modified_at) !== id(review.remote_modified_at) ||
       typeof remoteCustomerName !== 'string' ||
