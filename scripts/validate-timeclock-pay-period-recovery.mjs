@@ -6223,6 +6223,11 @@ test('v29 abandoned settled correction coordinator recovers from authoritative e
   Object.assign(gate, { status: 'creating', request_id: firstId,
     time_entry_id: entry.id, payload_hash: audit.details.payload_hash,
     claim_token: 'synthetic-lost-release-ack', started_at: '2026-09-22T20:00:00.000Z' });
+  assert.equal(entry.last_correction_request_id, firstId);
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === entry.user_email)
+    ?.correction_create_status, 'idle');
+  assert.equal(h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'admin_correction' && row.request_id === firstId).length, 1);
   const next = await correction('v29-recovery-followup', '2026-09-20T14:45:00.000Z', 7, 15);
   assert.equal(next.status, 200, JSON.stringify(next.body));
   assert.equal(gate.status, 'idle');
