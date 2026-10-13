@@ -1095,6 +1095,68 @@ await (async () => {
   passed++;
 })();
 
+await (async () => {
+  // The original Work Order may be trashed, completed, or converted to a rider
+  // by another session while its checklist dialog remains mounted.
+  const loaderSource = source.slice(source.indexOf("  const loadData = async () => {"),
+    source.indexOf("  const getDropdownName = (dropdownId) => {"));
+  const makeLoad = new Function("scope", "with(scope) { " + loaderSource + "\nreturn loadData; }");
+  let server = { id: "synthetic-status", deleted: true, completed: false, is_rider: false };
+  const errors = [], checklists = [], productState = [];
+  const workflowRef = { current: { current_stage: "old-stage" } };
+  const scope = {
+    workOrder: { id: "synthetic-status" },
+    saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+    saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: workflowRef,
+    resetOtherPopupForReload: () => {}, setIsLoading: () => {},
+    WorkOrder: { filter: async () => [structuredClone(server)] },
+    AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
+    loadAllEntityRows: async () => [],
+    loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
+    setUsers: () => {}, setLoadedProductsSnapshot: () => {},
+    setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
+    setSaveError: () => {}, setLoadError: value => errors.push(value),
+    setHasLoadedChecklist: () => {},
+    setEditingItemId: () => {}, setEditingItemText: () => {},
+    setEditingProductName: () => {}, setEditingProductNameText: () => {},
+    setNewItemInput: () => {}, setNewItemText: () => {},
+    setShowAddGeneralChecklist: () => {}, setNewGeneralChecklistText: () => {},
+    setProducts: value => productState.push(value), setLoadedUiProductsSnapshot: () => {},
+    setLoadedChecklistSnapshot: () => {}, setLoadedUiChecklistSnapshot: () => {},
+    setChecklist: value => checklists.push(value), setDropdownConditions: () => {},
+    setProductTypes: () => {}, console: { error: () => {} },
+  };
+  const load = makeLoad(scope);
+  await load();
+  assert.match(errors.at(-1), /in Trash/);
+  assert.equal(workflowRef.current.current_stage, "old-stage");
+  assert.equal(checklists.length, 0);
+  server = { ...server, deleted: false, completed: true };
+  await load();
+  assert.match(errors.at(-1), /no longer an active SIPS job/);
+  assert.equal(checklists.length, 0);
+  server = { ...server, completed: false, is_rider: true };
+  await load();
+  assert.match(errors.at(-1), /no longer an active SIPS job/);
+  assert.equal(checklists.length, 0);
+  assert.equal(productState.length, 0, "Ineligible reload cannot discard previous product edits");
+  assert.deepEqual(workflowRef.current, { current_stage: "old-stage" });
+  server = { id: "synthetic-status", deleted: false, completed: false, is_rider: false,
+    current_stage: "Production", current_task_assigned_to: "SIPs",
+    current_task_description: "SIPs Prep", sip_completed: false, sip_checklist: [], products: [] };
+  await load();
+  assert.equal(errors.at(-1), "");
+  assert.deepEqual(checklists, [[]]);
+  assert.deepEqual(workflowRef.current, {
+    completed: false, is_rider: false, current_stage: "Production",
+    current_task_assigned_to: "SIPs", current_task_description: "SIPs Prep", sip_completed: false,
+  });
+  assert.equal(scope.loadInFlightRef.current, false);
+  console.log("PASS deleted, completed and rider Work Orders refuse stale reload without losing drafts; active reload recovers");
+  passed++;
+})();
+
 check("failed-load UI separates errors, offers retry and blocks stale saves", () => {
   assert.match(source, /if \(!hasLoadedChecklist && loadError\) \{\s*return \(\s*<Dialog/);
   assert.match(source, /<DialogTitle>Could not load SIP checklist<\/DialogTitle>/);
