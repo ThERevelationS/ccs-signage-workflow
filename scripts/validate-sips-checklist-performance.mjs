@@ -1285,8 +1285,10 @@ check("unfinished edit warning returns focus to the exact draft, reopening neste
 await (async () => {
   // Run the real save handler with a deferred persistence response to expose
   // React's same-tick state gap. All records and IO are synthetic.
+  // Extract only the real async save handler; focus effects and memoized
+  // rendering helpers below it require a mounted React component.
   const saveBody = source.slice(source.indexOf("  const saveChecklist = async ("),
-    source.indexOf("  // Group checklist items only when checklist data changes."));
+    source.indexOf("  // Radix can restore focus while a Revisit dialog is closing."));
   const actionsBody = source.slice(source.indexOf("  const requestClose = () => {"),
     source.indexOf("  return (\n    <>", source.indexOf("  const requestClose = () => {")));
   const makeSave = new Function("scope", "with (scope) {\n" + saveBody + "\nreturn saveChecklist;\n}");
@@ -1298,6 +1300,7 @@ await (async () => {
   const scope = {
     isSaving: false, isLoading: false,
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+    saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
     blockOnUnsubmittedDrafts: () => false,
     setIsSaving(value) { savingFlags.push(value); }, setIsLoading(value) { loadingFlags.push(value); },
     checklist: [], products: [], workOrder: record,
@@ -1329,6 +1332,7 @@ await (async () => {
   const actions = makeActions(scope);
   const first = save("2099-02-17");
   assert.equal(scope.saveInFlightRef.current, true);
+  assert.equal(scope.saveFailureFocusPendingRef.current, false);
   assert.equal(writes.length, 1);
   // Second save, completion, reload and discard must do nothing even though
   // the captured isSaving/isLoading state remains false until React re-renders.
@@ -1357,12 +1361,16 @@ await (async () => {
   assert.deepEqual(closed, []);
   assert.equal(scope.saveInFlightRef.current, false);
   assert.match(errors.at(-1), /Another session changed/);
+  assert.equal(scope.saveFailureFocusPendingRef.current, true, "Failed save requests focus once dialogs settle");
+  assert.equal(scope.failedRevisitSelectionRef.current, "2099-02-18", "Failed Revisit remains available for explicit retry");
   const retry = save("2099-02-19");
   assert.equal(writes.length, 3);
   resolveWrite({ sip_checklist: [], products: [], sip_revisit_date: "2099-02-19", updated_date: "3" });
   await retry;
   assert.deepEqual(closed, ["closed"]);
   assert.equal(scope.saveInFlightRef.current, false);
+  assert.equal(scope.failedRevisitSelectionRef.current, undefined, "Successful retry consumes the failed selection");
+  assert.equal(scope.saveFailureFocusPendingRef.current, false);
 
   // Load in flight blocks a save even when isLoading has not rendered yet.
   scope.loadInFlightRef.current = true;
