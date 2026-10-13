@@ -194,8 +194,13 @@ export default function UserManagement() {
       setIsLoading(false);
       setDeletionRequestsLoading(false);
     }
-    // Invalidate any response from a previous admin session on logout/change.
+    // Revoke ownership on both session transitions and component unmounts;
+    // a pending email callback cannot alert after Admin is left behind.
     return () => {
+      passwordResetOwner.current = null;
+      passwordResetInFlight.current = false;
+      onboardingResendOwner.current = null;
+      onboardingResendInFlight.current = false;
       ++userLoadSequence.current;
       ++deletionRequestLoadSequence.current;
       ++deletionImpactSequence.current;
