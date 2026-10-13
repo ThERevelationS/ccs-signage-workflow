@@ -6,11 +6,44 @@ const goodNumber=value=>Number.isSafeInteger(value)&&value>0;
 const states=['OH','KY'];
 const counters=()=>Object.fromEntries(['histories','recorded_source_reference','no_visible_source','source_identity_conflict',
   'source_snapshot_changed','retained_archive_missing','page_citation_incomplete','unsupported_electrical_html',
+  'scope_receipt_review','covered_area_review','role_statement_review','delegation_statement_review',
   'ambiguous_history','uncommitted_or_uncertain','revoked','malformed_review'].map(k=>[k,0]));
 const totals=()=>Object.fromEntries(ROLES.map(role=>[role,counters()]));
 const comparisonKeys=['id','jurisdiction_id','official_url','archived_file_url','file_hash_sha256','file_bytes',
   'content_status','verification_status','authority_classification','authority_review'];
 const compare=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const explicitlyDescribesRole=(role,excerpt)=>{
+  if(typeof excerpt!=='string'||excerpt.length<10||excerpt.length>1000||
+    /\b(?:not|never|no|cannot|can't|doesn't|don't|without)\b/i.test(excerpt)||
+    !/\belectric(?:al)?\b/i.test(excerpt))return false;
+  return role==='electrical_permit'
+    ? /\bpermits?\b/i.test(excerpt)&&/\b(?:issu(?:e|es|ed|ing)|permitting|process(?:es|ed|ing)?|handl(?:e|es|ed|ing))\b/i.test(excerpt)
+    : /\binspections?\b/i.test(excerpt)&&/\b(?:perform(?:s|ed|ing)?|conduct(?:s|ed|ing)?|provid(?:e|es|ed|ing)|inspect(?:s|ed|ing)|responsib(?:le|ility))\b/i.test(excerpt);
+};
+const exactDelegationStatement=(event)=>{
+  const name=event.office_snapshot?.name,excerpt=event.role_proof?.excerpt;
+  if(typeof name!=='string'||!name||typeof excerpt!=='string')return false;
+  const prefix=event.role==='electrical_permit'?'Electrical permits are issued by ':
+    event.role==='electrical_inspection'?'Electrical inspections are performed by ':null;
+  return Boolean(prefix&&excerpt===prefix+name+(name.endsWith('.')?'':'.') &&
+    !/\b(?:not|never|no|cannot|without)\b/i.test(excerpt));
+};
+const exactCoverage=(event,profile)=>{
+  const scope=event.source_snapshot?.authority_review;
+  const area=event.coverage_area,sourceAreas=scope?.named_areas;
+  if(typeof area!=='string'||!area||!Array.isArray(sourceAreas)||!sourceAreas.includes(area))return false;
+  if(profile.type==='county')return event.coverage_kind==='unincorporated'&&
+    event.coverage_basis==='same_profile_scope'&&
+    /^unincorporated\b/i.test(area)&&area.includes(profile.name);
+  if(!['city','village','municipality','township'].includes(profile.type)||area!==profile.name||
+    event.coverage_kind!=='named_jurisdiction')return false;
+  if(event.evidence_kind==='pdf_delegation')
+    return ['city','village','municipality'].includes(profile.type)&&
+      event.coverage_basis==='explicit_municipal_pdf_delegation'&&
+      event.source_profile_id===profile.id&&event.source_snapshot?.jurisdiction_id===profile.id&&
+      scope?.scope_kind==='named_jurisdiction'&&sourceAreas.length===1;
+  return ['same_profile_scope','explicit_named_service_area'].includes(event.coverage_basis);
+};
 const sort=(a,b)=>states.indexOf(a.state)-states.indexOf(b.state)
   || a.profile_name.localeCompare(b.profile_name)||a.profile_id.localeCompare(b.profile_id)
   || ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||a.review_id.localeCompare(b.review_id);
@@ -117,6 +150,14 @@ export function reconcileRecordedElectricalEvidence(profiles,events,pdfSources){
       else if(!goodNumber(latest.role_proof?.physical_page)||
         !hash(latest.role_proof?.text_sha256)||!clean(latest.role_proof?.excerpt))
         status='page_citation_incomplete';
+      else if(!stable(latest.source_review_id)||latest.source_review_id!==
+        latest.source_snapshot?.authority_review?.review_id || latest.source_snapshot.authority_review?.status!=='active')
+        status='scope_receipt_review';
+      else if(!exactCoverage(latest,profile))status='covered_area_review';
+      else if(latest.evidence_kind==='pdf_delegation'&&!exactDelegationStatement(latest))
+        status='delegation_statement_review';
+      else if(latest.evidence_kind!=='pdf_delegation'&&!explicitlyDescribesRole(latest.role,latest.role_proof.excerpt))
+        status='role_statement_review';
       else status='recorded_source_reference';
     }
     counts[status]++;item.status=status;
@@ -124,5 +165,5 @@ export function reconcileRecordedElectricalEvidence(profiles,events,pdfSources){
   }
   items.sort(sort);
   return {states:summary,items,authority_verified:false,current_source_verified:false,complete:false,
-    notice:'Read-only source-record cross-check, not an independent document authenticity or current-law check. A matching historical source snapshot and recorded page citation cannot prove that PDF pages remain extractable or that an office issues permits or performs inspections today. Missing source IDs may be outside read permissions. Ohio is listed first; electrical issuing and inspecting are distinct roles. The backend alone performs fresh evidence verification.'};
+    notice:'Read-only source-record cross-check, not an independent document authenticity or current-law check. A matching historical source snapshot and recorded page citation cannot prove that PDF pages remain extractable or that an office issues permits or performs inspections today. Missing source IDs may be outside read permissions. Ohio is listed first; electrical issuing and inspecting are distinct roles. Recorded quotes and named service areas are screened for review only, not rechecked against retained page text. The backend alone performs fresh evidence verification.'};
 }
