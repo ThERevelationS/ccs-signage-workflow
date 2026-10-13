@@ -248,3 +248,35 @@ test('catalog recheck is exact, paginated and accepts equivalent property orderi
  assert.deepEqual(calls[0].options,calls[1].options);
  assert.ok(calls[0].options.fields.includes('superseded_by'));
 });
+
+test('same relationship cannot switch canonical office identity even for a later revocation',async()=>{
+ for(const action of ['verify','revoke']){
+  const f=fixture({p:{...profile(),office_authority_review_state:{status:'complete',committed_sequence:2}},
+   events:[event(),event({id:'conflicting-later',sequence:2,action,
+    office_snapshot:{government_office_id:'different-office',name:'Electrical Office'}})]});
+  await assert.rejects(read(f.api,profile(),document()),error=>{
+   assert.match(error.message,/Conflicting or missing canonical office IDs/);
+   assert.match(error.message,/review-1/);
+   assert.match(error.message,/conflicting-later/);
+   assert.match(error.message,/Do not select an office by its name/);
+   return true;
+  });
+ }
+});
+test('missing malformed or padded canonical IDs are never repaired by office labels',async()=>{
+ for(const office_snapshot of [null,{}, {government_office_id:''}, {government_office_id:' office-1'}, {government_office_id:1}]){
+  const f=fixture({events:[event({office_snapshot})]});
+  await assert.rejects(read(f.api,profile(),document()),/missing canonical office IDs/);
+ }
+});
+test('office label changes keep exact identity, independent relationships keep distinct offices',async()=>{
+ const p={...profile(),office_authority_review_state:{status:'complete',committed_sequence:2}};
+ const f=fixture({p,events:[event(),event({id:'renamed',sequence:2,
+  office_snapshot:{government_office_id:'office-1',name:'Changed Office Label'}}),
+  event({id:'independent',relation_key:'rel-2',
+   office_snapshot:{government_office_id:'office-2',name:'Electrical Office'}})]});
+ const r=await read(f.api,profile(),document());
+ assert.equal(r.items.length,2);
+ assert.deepEqual(new Set(r.items.map(row=>row.office_id)),new Set(['office-1','office-2']));
+ assert.ok(r.items.every(row=>row.status==='recorded_source_reference'));
+});
