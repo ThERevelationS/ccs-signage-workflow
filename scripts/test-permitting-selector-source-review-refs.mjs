@@ -38,7 +38,7 @@ test('exact profile document ID maps to exactly one catalog source, then immutab
  assert.equal(result.source_status_verified,false);
  assert.deepEqual(result.items.map(r=>[r.role,r.review_id,r.latest_review_id,r.status]),[
    ['electrical_permit','review-1','review-1','recorded_source_reference']]);
- assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews']);
+ assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews','profile']);
  assert.deepEqual(f.calls[1].query,{jurisdiction_id:'oh-profile',jurisdiction_profile_doc_id:'local-doc'});
  assert.deepEqual(f.calls[2].query,{jurisdiction_id:'oh-profile',method:'office-authority-v1'});
  assert.deepEqual(f.calls[1].options.fields.includes('jurisdiction_profile_doc_id'),true);
@@ -153,4 +153,44 @@ test('replacement remains superseded and later pending event remains uncertain',
   const r=await read(f.api,profile(),document());
   assert.match(describe(r.items[0]).label,committed_sequence===1?/cannot currently be established/:/superseded/);
  }
+});
+
+test('receipt advancement, document removal and manual overrides during history read refuse stale results',async()=>{
+ for(const mutate of [
+  p=>{p.office_authority_review_state.committed_sequence=2;},
+  p=>{p.documents=[];},
+  p=>{p.manual_office_override={office_id:'different-office'};},
+  p=>{p.state='KY';}
+ ]){
+  const f=fixture();
+  const original=f.api.entities.PermittingOfficeAuthorityReview.filter;
+  f.api.entities.PermittingOfficeAuthorityReview.filter=async(...args)=>{
+   const result=await original(...args);mutate(f.p);return result;
+  };
+  await assert.rejects(read(f.api,profile(),document()),/changed during lookup/);
+  assert.deepEqual(f.calls.map(c=>c.name),['profile','catalog','reviews','profile']);
+ }
+});
+test('final profile permission loss and cancellation never return partial history',async()=>{
+ for(const cancelled of [false,true]){
+  const f=fixture();let count=0,current=true;
+  f.api.entities.JurisdictionProfile.get=async()=>{
+   count++;
+   if(count===2){
+    if(cancelled)current=false;
+    else throw Error('Read permission lost');
+   }
+   return structuredClone(f.p);
+  };
+  await assert.rejects(read(f.api,profile(),document(),()=>current),cancelled?/superseded/:/Read permission lost/);
+ }
+});
+test('equivalent object property order does not invalidate profile consistency',async()=>{
+ const f=fixture();let count=0;
+ f.api.entities.JurisdictionProfile.get=async()=>{
+  count++;return count===1?structuredClone(f.p):Object.fromEntries(Object.entries(structuredClone(f.p)).reverse());
+ };
+ const r=await read(f.api,profile(),document());
+ assert.equal(r.items[0].status,'recorded_source_reference');
+ assert.equal(count,2);
 });
