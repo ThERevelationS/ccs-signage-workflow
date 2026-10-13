@@ -1185,6 +1185,17 @@ await (async () => {
   passed++;
 })();
 
+check("fresh SIP completion status governs whether Complete stays available after reload", () => {
+  assert.match(source, /setLoadedSipCompletedSnapshot\(currentWO\.sip_completed\);/,
+    "Reload must capture the latest server SIP completion status");
+  assert.match(source, /\{isRegistered && !loadedSipCompletedSnapshot && \(\s*<Button\s+ref=\{completeButtonRef\}/,
+    "Complete must disappear if another session completed SIP before reload");
+  assert.doesNotMatch(source, /\{isRegistered && !workOrder\.sip_completed && \(/,
+    "Never use the original board row's stale SIP completion value to show Complete");
+  assert.match(source, /sip_completed: currentWO\.sip_completed \?\? null/,
+    "Save-time guards must still fence concurrent SIP completion changes");
+});
+
 check("failed-load focus waits for dialogs and prioritizes the current loading error", () => {
   const marker = "  const focusLoadFailureIfReady = () => {";
   const start = source.indexOf(marker);
