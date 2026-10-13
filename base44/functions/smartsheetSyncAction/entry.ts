@@ -42,6 +42,7 @@ import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsh
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
 import { linkedOrderCustomerPullNeedsReview } from '../../shared/smartsheetOrderLinkedCustomerReview.mjs';
+import { checkOrderCustomerDecisionEvidence } from '../../shared/smartsheetOrderCustomerDecisionSafety.mjs';
 import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue, orderStaleBatchEvidencePreserved } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
 import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBackgroundPolicy.mjs';
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
@@ -384,7 +385,7 @@ async function pullDataset(
   const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
   const orderLocalPendingConflicts: string[] = [];
-  const orderLinkedCustomerNameReviews: { order_id: string; sheet_id: string; row_id: string; work_order_id: string; local_customer_name: string; smartsheet_customer_name: string }[] = [];
+  const orderLinkedCustomerNameReviews: { order_id: string; sheet_id: string; row_id: string; work_order_id: string; local_customer_name: string; smartsheet_customer_name: string; order_updated_date: string; remote_modified_at: string }[] = [];
   let orderDeletedLinkTombstonesPreserved = 0;
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
@@ -521,6 +522,8 @@ async function pullDataset(
           work_order_id: String(existing.work_order_id),
           local_customer_name: cleanText(existing.customer_name, 160),
           smartsheet_customer_name: cleanText(remoteName, 160),
+          order_updated_date: cleanText(existing.updated_date, 90),
+          remote_modified_at: cleanText(row.modified_at, 90),
         });
         continue;
       }
@@ -2950,7 +2953,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'preview_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
