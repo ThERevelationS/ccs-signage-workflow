@@ -64,6 +64,12 @@ export async function checkRetainedElectricalPage(api, candidate, isCurrent=()=>
   return {
     status:'retained_quote_matches',review_id:latest.id,profile_id:profile.id,source_document_id:source.id,
     role:latest.role,physical_page:page.page,text_sha256:page.text_sha256,
+    profile_name:profile.name,profile_state:profile.state,profile_type:profile.type,
+    recorded_office_name:latest.office_snapshot?.name || '',
+    canonical_office_id:latest.office_snapshot?.government_office_id || '',
+    recorded_coverage_area:latest.coverage_area,recorded_coverage_kind:latest.coverage_kind,
+    recorded_coverage_basis:latest.coverage_basis,source_review_id:latest.source_review_id,
+    recorded_quote:proof.excerpt,
     address_authority_verified:false,current_official_source_verified:false,
     notice:'The exact recorded role quote was found on one cryptographically validated, committed retained PDF text page. This only cross-checks stored evidence; it does not verify the current government website, adopted law, jurisdiction boundaries, issuing office, or inspection responsibility.'
   };
