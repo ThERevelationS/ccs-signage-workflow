@@ -68,7 +68,7 @@ const newUser = { id: "new", email: "new@example.invalid" };
 test("Session effect explicitly revokes both operations and clears spinners", () => {
   assert.match(effect, /passwordResetOwner\.current = null;\s*passwordResetInFlight\.current = false;\s*setSendingPasswordReset\(null\)/);
   assert.match(effect, /onboardingResendOwner\.current = null;\s*onboardingResendInFlight\.current = false;\s*setSendingOnboardingEmail\(null\)/);
-  assert.match(effect, /return \(\) => \{\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;\s*passwordResetOwner\.current = null;\s*passwordResetInFlight\.current = false;\s*onboardingResendOwner\.current = null;\s*onboardingResendInFlight\.current = false/);
+  assert.match(effect, /return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;\s*passwordResetOwner\.current = null;\s*passwordResetInFlight\.current = false;\s*onboardingResendOwner\.current = null;\s*onboardingResendInFlight\.current = false/);
 });
 
 for (const action of ["reset", "resend"]) {
