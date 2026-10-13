@@ -6291,6 +6291,51 @@ test('v29 independent employees can retry distinct manager corrections after com
     ['confirmed', 'recovered'].includes(row.outcome)).length, 2);
 });
 
+test('v29 abandoned company coordinator does not trust missing or mismatched settled audits', async () => {
+  for (const fault of ['missing-audit', 'wrong-hash', 'wrong-owner', 'wrong-corrected-clock']) {
+    const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+    const entry = h.rows.TimeEntry[0];
+    const correction = (id, clockIn, hours, minutes) => h.invoke({
+      action: 'admin_correct_entry', target_email: entry.user_email, request_id: id,
+      entry_id: entry.id, expected_updated_date: entry.updated_date,
+      reason: 'Audited coordinator evidence fixture',
+      correction: { clock_in: clockIn, clock_out: entry.clock_out,
+        lunch_minutes: 0, notes: 'Coordinator evidence fixture',
+        job_allocations: [{ hours, minutes, is_inhouse: true, inhouse_task: 'Synthetic shop work' }] },
+    });
+    const oldRequestId = 'v29-evidence-first-' + fault;
+    const globalGate = h.rows.TimeClockAdminCorrectionGate[0];
+    if (fault === 'missing-audit') {
+      // No audit means the interrupted operation has no authoritative
+      // resolution evidence; do not assume absence proves it never wrote.
+      Object.assign(globalGate, { status: 'creating', request_id: oldRequestId,
+        time_entry_id: entry.id, payload_hash: 'unknown-pre-write-intent-hash',
+        claim_token: 'synthetic-uncertain-no-audit', started_at: '2026-09-22T20:00:00.000Z' });
+    } else {
+      const first = await correction(oldRequestId, '2026-09-20T14:30:00.000Z', 7, 30);
+      assert.equal(first.status, 200, fault + JSON.stringify(first.body));
+      const oldAudit = h.rows.TimeClockAudit.find((audit) => audit.request_id === oldRequestId);
+      assert.ok(oldAudit?.id);
+      Object.assign(globalGate, { status: 'creating', request_id: oldRequestId,
+        time_entry_id: entry.id, payload_hash: oldAudit.details.payload_hash,
+        claim_token: 'synthetic-completed-ack-lost', started_at: '2026-09-22T20:00:00.000Z' });
+      if (fault === 'wrong-hash') oldAudit.details.payload_hash = 'mismatched-hash';
+      if (fault === 'wrong-owner') oldAudit.user_email = 'different-employee@synthetic.invalid';
+      if (fault === 'wrong-corrected-clock') oldAudit.details.corrected.clock_in = '2026-09-20T15:30:00.000Z';
+    }
+    const before = clone(entry);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const result = await correction('v29-evidence-next-' + fault, '2026-09-20T14:45:00.000Z', 7, 15);
+      assert.equal(result.status, 409, fault + JSON.stringify(result.body));
+      assert.match(String(result.body.error || ''), /coordinator|uncertain|investigation/i);
+      assert.deepEqual(entry, before, fault + ' cannot change time on ambiguous recovery');
+      assert.equal(globalGate.status, 'creating');
+      assert.equal(globalGate.request_id, oldRequestId);
+      assert.equal(h.rows.TimeClockAudit.some((audit) => audit.request_id === 'v29-evidence-next-' + fault), false);
+    }
+  }
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
