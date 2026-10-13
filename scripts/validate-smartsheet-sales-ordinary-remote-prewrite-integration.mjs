@@ -57,7 +57,7 @@ async function fixture(modify=()=>{},options={}) {
       if(options.failRead)throw new Error('Synthetic Smartsheet outage');
       return {body:remote};
     },
-    normalizeSheetRows,buildSalesPullSnapshot,staleSalesRemotePutSnapshotIds,URLSearchParams,
+    normalizeSheetRows,buildSalesPullSnapshot,staleSalesRemotePutSnapshotIds,URLSearchParams,Map,Set,
     cleanText:(value,max)=>String(value??'').trim().slice(0,max),
   };
   const result=await vm.runInNewContext(
@@ -66,7 +66,6 @@ async function fixture(modify=()=>{},options={}) {
   return {result:JSON.parse(JSON.stringify(result)),readCount,ownerCount,requested};
 }
 const clean=await fixture();
-console.log('DEBUG synthetic baseline:',JSON.stringify(clean));
 equal(clean.result.eligible,['90001','90002','90003'],'Unchanged ordinary rows and separately approved row remain eligible.');
 equal(clean.requested,['90001','90002'],'Only ordinary rows are freshly read by new guard; approved review keeps its existing path.');
 equal(clean.ownerCount,1,'Prewrite checks run ownership before remote read.');
