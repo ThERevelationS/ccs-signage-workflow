@@ -80,7 +80,7 @@ function formFixture(){
 
 test("Three-way merge keeps unrelated latest changes and never writes a record",()=>{
  const answer=reconcileHrDraft({baseline:old.hr_data,latest:latest.hr_data,draft});
- assert.deepEqual(answer.editedFields,["address","clothing_sizes"]);
+ assert.deepEqual(answer.editedFields,["address","clothing_sizes.shirt"]);
  assert.deepEqual(answer.conflictFields,["address"]);
  assert.equal(answer.merged.address,"New");
  assert.equal(answer.merged.clothing_sizes.shirt,"XL");
