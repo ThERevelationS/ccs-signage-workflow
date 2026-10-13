@@ -9,9 +9,11 @@ export function normalizeOrderLinkedCustomerReviews(items, count) {
   for (const item of items.slice(0, 10)) {
     const orderId = item?.order_id;
     const rowId = item?.row_id;
+    const sheetId = item?.sheet_id;
     const workOrderId = item?.work_order_id;
     if (typeof orderId !== 'string' || !/^[A-Za-z0-9_-]{6,80}$/.test(orderId) ||
         typeof rowId !== 'string' || !/^\d+$/.test(rowId) ||
+        typeof sheetId !== 'string' || !/^\d+$/.test(sheetId) ||
         typeof workOrderId !== 'string' || !workOrderId.trim() ||
         seenOrders.has(orderId) || seenRows.has(rowId) ||
         typeof item.local_customer_name !== 'string' ||
@@ -19,7 +21,7 @@ export function normalizeOrderLinkedCustomerReviews(items, count) {
     seenOrders.add(orderId);
     seenRows.add(rowId);
     normalized.push({
-      orderId, rowId, workOrderId: workOrderId.slice(0, 100),
+      orderId, sheetId, rowId, workOrderId: workOrderId.slice(0, 100),
       localCustomerName: item.local_customer_name.slice(0, 160),
       smartsheetCustomerName: item.smartsheet_customer_name.slice(0, 160),
     });
@@ -29,6 +31,7 @@ export function normalizeOrderLinkedCustomerReviews(items, count) {
 
 export function orderCustomerReviewRowState(review, loadedOrder) {
   if (!loadedOrder || String(loadedOrder.id) !== review?.orderId ||
+      String(loadedOrder.smartsheet_sheet_id ?? '') !== review?.sheetId ||
       String(loadedOrder.smartsheet_row_id ?? '') !== review?.rowId ||
       String(loadedOrder.work_order_id ?? '') !== review?.workOrderId) {
     return 'changed_or_unavailable';
