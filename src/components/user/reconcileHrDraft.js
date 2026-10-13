@@ -10,6 +10,13 @@ const normalize = value => Array.isArray(value)
     : value;
 const equal = (a, b) => JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 
+// A local HR draft belongs to the open employee editor, never to the directory.
+// Normalize object-key ordering while retaining arrays, removals and values.
+export function hasUnsavedHrDraft(record, draft) {
+  if (!isRecord(record) || !isRecord(draft)) return true;
+  return !equal(record, draft);
+}
+
 // Define rather than assign so even an unexpected "__proto__" data key cannot
 // modify the object's prototype.
 function applyOwn(result, source, key) {
