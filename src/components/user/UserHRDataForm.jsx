@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
-import { reconcileHrDraft, formatHrFieldPath, previewHrResolution } from "./reconcileHrDraft.js";
+import { reconcileHrDraft, formatHrFieldPath, previewHrResolution, hasUnsavedHrDraft } from "./reconcileHrDraft.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +45,7 @@ const MARITAL_STATUS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" }
 ];
 
-export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null, preserveDraftOnRecordRefresh = false, onReloadLatest = null }) {
+export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null, preserveDraftOnRecordRefresh = false, onReloadLatest = null, onDraftStatusChange = null }) {
   const [hrData, setHrData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
@@ -63,6 +63,16 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
   const successTimer = useRef(null);
   const activeScope = useRef(null);
   activeScope.current = { id: userData?.id, email: userData?.email, saveScope };
+
+  useEffect(() => {
+    // Only publish scoped dirty metadata. HR field values stay in this form;
+    // session/employee ownership is enforced again by the Admin parent.
+    if (!onDraftStatusChange) return;
+    onDraftStatusChange({
+      id: userData?.id, email: userData?.email, saveScope,
+      dirty: hasUnsavedHrDraft(userData?.hr_data || {}, hrData) || !!hrRecovery
+    });
+  }, [userData?.id, userData?.email, userData?.hr_data, saveScope, hrData, hrRecovery, onDraftStatusChange]);
 
   useEffect(() => {
     // Admin refreshes the record version after each verified HR write.
