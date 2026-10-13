@@ -3031,6 +3031,107 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       });
     }
 
+    if (action === 'commit_order_customer_decision') {
+      // First explicit resolution path only. No Smartsheet PUT or automatic
+      // relinking. Never retry this action after an uncertain acknowledgement.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'Order Form administrator session required.' }, { status: 403 });
+      }
+      const review = body?.review;
+      const decision = cleanText(body?.decision, 48);
+      const preflight = planOrderSmartsheetCustomerUnlink({
+        review, decision, confirmed: body?.confirmed === true,
+      });
+      if (preflight.reason === 'explicit_admin_confirmation_required' ||
+          preflight.reason === 'invalid_review') {
+        return Response.json({ success: false,
+          error: 'A verified, explicit Order customer unlink decision is required.' }, { status: 400 });
+      }
+      const sheetId = cleanText(review?.sheet_id, 40);
+      const rowId = cleanText(review?.row_id, 40);
+      const orderId = cleanText(review?.order_id, 80);
+      const workOrderId = cleanText(review?.work_order_id, 100);
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const customerColumn = cleanText(profile?.column_bindings?.customer_name, 40);
+      if (!configured || duplicateCount !== 1 || !config?.global_enabled ||
+          !profile?.mirror_enabled || cleanText(profile?.smartsheet_sheet_id, 40) !== sheetId ||
+          !/^\d+$/.test(customerColumn)) {
+        return Response.json({ success: false, state: 'configuration_changed',
+          error: 'The current Order Smartsheet configuration was not verified. No changes made.' }, { status: 409 });
+      }
+      const entity = base44.asServiceRole.entities.Order;
+      const readOwners = () => loadAllEntityRows({
+        entity, query: { smartsheet_sheet_id: sheetId, smartsheet_row_id: rowId },
+        sort: 'id', label: 'Order conflict resolution permanent row ownership',
+      });
+      const [firstOrder, firstJob, firstClaims] = await Promise.all([
+        entity.get(orderId),
+        base44.asServiceRole.entities.WorkOrder.get(workOrderId),
+        readOwners(),
+      ]);
+      const firstRemote = await smartsheetGet(`/sheets/${sheetId}/rows/${rowId}`, token);
+      const firstRow = normalizeSheetRows({ rows: [firstRemote.body] })[0] || null;
+      const nameOf = row => row ? buildOrderPullSnapshot(row, { customer_name: customerColumn })[customerColumn] : undefined;
+      const firstPlan = planOrderSmartsheetCustomerUnlink({
+        review, decision, confirmed: true, order: firstOrder, job: firstJob,
+        remoteRow: firstRow, remoteCustomerName: nameOf(firstRow),
+        duplicateClaims: firstClaims.length !== 1 || String(firstClaims[0]?.id) !== orderId,
+      });
+      if (!firstPlan.ok) return Response.json({ success: false, state: firstPlan.reason,
+        error: 'The Order conflict evidence is stale or ambiguous. Run Sync and review before retrying.' }, { status: 409 });
+
+      // Re-read both stores directly before the single CAS write. The remote
+      // revision is not a distributed lock: preserve pending evidence for a
+      // later conflict-aware Sync rather than assume cross-system atomicity.
+      const secondRemote = await smartsheetGet(`/sheets/${sheetId}/rows/${rowId}`, token);
+      const secondRow = normalizeSheetRows({ rows: [secondRemote.body] })[0] || null;
+      const [latestOrder, latestJob, latestClaims] = await Promise.all([
+        entity.get(orderId),
+        base44.asServiceRole.entities.WorkOrder.get(workOrderId),
+        readOwners(),
+      ]);
+      const plan = planOrderSmartsheetCustomerUnlink({
+        review, decision, confirmed: true, order: latestOrder, job: latestJob,
+        remoteRow: secondRow, remoteCustomerName: nameOf(secondRow),
+        duplicateClaims: latestClaims.length !== 1 || String(latestClaims[0]?.id) !== orderId,
+      });
+      if (!plan.ok || String(firstOrder?.updated_date) !== String(latestOrder?.updated_date) ||
+          String(firstJob?.updated_date) !== String(latestJob?.updated_date) ||
+          String(firstRow?.modified_at) !== String(secondRow?.modified_at)) {
+        return Response.json({ success: false, state: plan.ok ? 'source_changed_during_verification' : plan.reason,
+          error: 'Order or Smartsheet evidence changed before the protected save. Nothing was intentionally changed.' }, { status: 409 });
+      }
+      // The only business mutation: adopt the confirmed Smartsheet customer,
+      // remove the previous permanent job association, and durably queue the
+      // Order for reconciled metadata confirmation. No remote write here.
+      let committed;
+      try {
+        committed = await entity.updateMany(plan.selector, { $set: plan.patch });
+      } catch {
+        return Response.json({ success: false, state: 'save_acknowledgement_uncertain',
+          error: 'The Order save acknowledgement was lost. Reload the Order to determine whether it was saved; do not submit again blindly.' }, { status: 409 });
+      }
+      if (committed?.updated !== 1) return Response.json({ success: false, state: 'version_conflict',
+        error: 'The Order changed before the atomic save. Reload and review; no blind retry.' }, { status: 409 });
+      let saved;
+      try { saved = await entity.get(orderId); } catch {}
+      if (!saved || String(saved.customer_name ?? '') !== plan.patch.customer_name ||
+          String(saved.work_order_id ?? '') !== '' ||
+          saved.smartsheet_pending_local_sync !== true ||
+          String(saved.smartsheet_sheet_id ?? '') !== sheetId ||
+          String(saved.smartsheet_row_id ?? '') !== rowId) {
+        return Response.json({ success: false, state: 'save_readback_uncertain',
+          error: 'The Order update may have succeeded but its saved fields could not be verified. Reload; do not blindly resubmit.' }, { status: 409 });
+      }
+      return Response.json({ success: true, verified: true, writes_attempted: true,
+        smartsheet_writes_attempted: false, state: 'saved_pending_sync',
+        order_id: orderId, sheet_id: sheetId, row_id: rowId,
+        customer_name: plan.patch.customer_name, work_order_id: '',
+        pending_sync: true,
+      });
+    }
+
     if (action === 'audit_sales_permanent_ownership') {
       // Read-only, admin-session-only complete linked/marker scan. A failed
       // or capped page read fails closed; this is NOT a unique-index guarantee.
