@@ -112,8 +112,12 @@ assert.match(pull, /\.\.\.fieldValues \}\);/);
 assert.match(pull, /const payload = ordinaryBatch\.map\(\(\{ id, _existing,[\s\S]*?return \{ id, \.\.\.withoutUnverifiedTimestamp \}/);
 assert.match(pull, /classifyOrderPullBusinessReadback\(eligible, actualRows\)/);
 assert.match(pull, /automatic_relink_attempted: false/);
-assert.doesNotMatch(pull.slice(pull.indexOf('const rawFields = parseRowToFields'),
-  pull.indexOf('// Hybrid update strategy:')), /work_order_id\s*:/);
+// Review-only diagnostics may include a linked Work Order ID. Restrict this
+// assertion to the actual incoming Order mutation payload, not review evidence.
+const orderPullPayload = pull.slice(pull.indexOf('toUpdate.push({ id: existing.id, _existing: existing,'),
+  pull.indexOf('} else if (dataset === \'sales\' && profile?.create_base44_from_smartsheet)'));
+assert.doesNotMatch(orderPullPayload, /work_order_id\s*:/);
+assert.match(pull, /linkedOrderCustomerPullNeedsReview\(\{/);
 assert.match(client, /action: "pull_dataset",\s*dataset: "orders"/);
 assert.match(ui, /if \(Object\.keys\(pendingChangesRef\.current\)\.length \|\| pendingSyncIdsRef\.current\.size\)/);
 assert.match(ui, /const reloaded = await loadData\(false, \{ manualPullReload: true \}\)/);
