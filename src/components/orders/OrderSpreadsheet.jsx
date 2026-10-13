@@ -709,13 +709,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setLastSynced(new Date());
       setLastSyncDirection('pull');
       const count = pull.updated;
-      setSyncMessage(pull.needsReview
-        ? `Smartsheet pull updated ${count} Order${count === 1 ? '' : 's'}, but some links or records need admin review.`
+      setSyncMessage(pull.linkedCustomerNameReviewCount > 0
+        ? `Smartsheet updated ${count} other Order${count === 1 ? '' : 's'}; ${pull.linkedCustomerNameReviewCount} linked customer name${pull.linkedCustomerNameReviewCount === 1 ? '' : 's'} held for review.`
+        : pull.needsReview
+          ? `Smartsheet pull updated ${count} Order${count === 1 ? '' : 's'}, but some links or records need admin review.`
         : count > 0
           ? `Pulled ${count} updated Order${count === 1 ? '' : 's'} from Smartsheet.`
           : 'Smartsheet checked. No linked Order changes found.');
       if (pull.needsReview) {
-        setSaveError('Smartsheet pull needs review. Confirm unresolved Order links in Admin → Smartsheet → Review links.');
+        setSaveError(pull.linkedCustomerNameReviewCount > 0
+          ? `Smartsheet customer names differ from ${pull.linkedCustomerNameReviewCount} linked Order job${pull.linkedCustomerNameReviewCount === 1 ? '' : 's'}. Those Orders and their remote rows were preserved without updating. Review Smartsheet row ID${pull.linkedCustomerNameReviewRowIds.length === 1 ? '' : 's'}: ${pull.linkedCustomerNameReviewRowIds.join(', ') || 'see sync results'} before changing the link.`
+          : 'Smartsheet pull needs review. Confirm unresolved Order links in Admin → Smartsheet → Review links.');
       }
       return !pull.needsReview;
     } catch (error) {
