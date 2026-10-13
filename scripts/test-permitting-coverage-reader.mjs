@@ -17,3 +17,16 @@ assert.equal(reconcileRecordedCoverage([{...q,parent_county_name:''}],[p]).items
 assert.equal(reconcileRecordedCoverage([q],[{...p,type:'municipality'}]).invalid_profile_ids.length,1);
 assert.equal(reconcileRecordedCoverage([],[]).inventory_complete,false);
 console.log('Coverage reader passed: 6000 rows without total cap, repeated cursor/malformed page rejection, stale read cancellation, ambiguous/duplicate/incomplete identities and county isolation. No live calls.');
+
+// Repeated rows must not silently replace an earlier office review snapshot.
+for (const changed of [false,true]) {
+ let pages=0;
+ const earlier={id:'locality',state:'OH',offices:[{authority_roles:['electrical_permit'],authority_verification_status:'needs_verification'}]};
+ const later=changed?{...earlier,offices:[{authority_roles:['electrical_permit','electrical_inspection'],authority_verification_status:'staff_verified'}]}:{...earlier};
+ await assert.rejects(readAllCoveragePages(async()=>++pages===1
+  ? {items:[earlier],has_more:true,next_cursor:'second'}
+  : {items:[later],has_more:false}),/repeated during pagination/);
+ assert.equal(pages,2);
+}
+await assert.rejects(readAllCoveragePages(async()=>({items:[{id:'same'},{id:'same'}],has_more:false})),/repeated during pagination/);
+console.log('Repeated identities rejected within a page and across pages, including changed electrical authority snapshots.');

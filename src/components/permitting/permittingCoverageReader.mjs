@@ -11,6 +11,7 @@ export async function readAllCoveragePages(readPage, { isCurrent = () => true, o
     if (!page || !Array.isArray(page.items) || typeof page.has_more !== 'boolean') throw Error('Invalid coverage page');
     for (const row of page.items) {
       if (!row?.id) throw Error('Coverage row has no stable identity');
+      if (rows.has(row.id)) throw Error('Coverage records repeated during pagination. Refresh recorded coverage before using these counts.');
       rows.set(row.id, row);
     }
     onProgress(rows.size);
