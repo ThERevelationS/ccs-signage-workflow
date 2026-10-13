@@ -1,4 +1,5 @@
 import { queueSmartsheetSync } from "@/components/admin/syncRequestQueue";
+import { normalizeOrderLinkedCustomerReviews } from "@/components/orders/orderLinkedCustomerReviewPresentation.mjs";
 
 function safeMessage(error, fallback) {
   return error?.response?.data?.error || error?.data?.error || error?.message || fallback;
@@ -67,16 +68,16 @@ export async function pullOrdersFromSmartsheet({ sessionToken } = {}) {
     const nameReviewCount = results[0]?.linked_customer_name_review_count;
     const linkedCustomerNameReviewCount = Number.isSafeInteger(nameReviewCount) && nameReviewCount >= 0
       ? nameReviewCount : 0;
-    const linkedCustomerNameReviewRowIds = (Array.isArray(results[0]?.linked_customer_name_review_items)
-      ? results[0].linked_customer_name_review_items : [])
-      .slice(0, 10)
-      .map(item => String(item?.row_id ?? '').trim())
-      .filter(id => /^\d+$/.test(id));
+    const linkedCustomerNameReviewItems = normalizeOrderLinkedCustomerReviews(
+      results[0]?.linked_customer_name_review_items, linkedCustomerNameReviewCount,
+    );
+    const linkedCustomerNameReviewRowIds = linkedCustomerNameReviewItems.map(item => item.rowId);
     return {
       updated: results[0].updated,
       needsReview: data.needs_review === true || data.sync_complete !== true || linkedCustomerNameReviewCount > 0,
       linkedCustomerNameReviewCount,
       linkedCustomerNameReviewRowIds,
+      linkedCustomerNameReviewItems,
     };
   } catch (error) {
     throw new Error(safeMessage(error, "Could not check Smartsheet for Order changes safely."));
