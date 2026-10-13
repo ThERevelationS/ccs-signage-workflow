@@ -1034,6 +1034,8 @@ await (async () => {
   assert.equal(loading.at(-1), false);
   assert.equal(shared.loadInFlightRef.current, false);
   assert.match(loadErrors.at(-1), /Work Order no longer available/);
+  assert.equal(shared.loadErrorFocusPendingRef.current, true,
+    'Failed reload schedules error focus only after loading finishes');
   assert.equal(invalidations, 1, "Missing record cannot discard the last local draft");
   assert.deepEqual(errors, [""], "Failed loading does not masquerade as a checklist save failure");
   assert.deepEqual(loadedFlags, [true], "Failed reload cannot mark an old record freshly loaded");
@@ -1041,6 +1043,8 @@ await (async () => {
   pending[3].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-recovered", type: "checklist" }] }]);
   await recovery;
   assert.equal(loadErrors.at(-1), "", "Successful retry clears the load warning");
+  assert.equal(shared.loadErrorFocusPendingRef.current, false,
+    'Verified recovery cancels pending error focus');
   assert.equal(invalidations, 2, "Verified retry performs cleanup once");
   assert.deepEqual(checklists, [["row-B"], ["row-recovered"]]);
   assert.equal(shared.loadInFlightRef.current, false);
@@ -1086,12 +1090,14 @@ await (async () => {
   assert.equal(successfulLoads.length, 0, "Failed load is not a valid empty checklist");
   assert.equal(rows.length, 0);
   assert.match(loadErrors.at(-1), /no longer available/);
+  assert.equal(scope.loadErrorFocusPendingRef.current, true);
   assert.deepEqual(saveErrors, [], "Load failure cannot masquerade as a save error");
   missing = false;
   await load();
   assert.deepEqual(successfulLoads, [true], "Only a successful read validates a genuine empty checklist");
   assert.deepEqual(rows, [[]]);
   assert.equal(loadErrors.at(-1), "");
+  assert.equal(scope.loadErrorFocusPendingRef.current, false);
   assert.equal(scope.loadInFlightRef.current, false);
   console.log("PASS failed initial read cannot impersonate empty checklist; retry loads valid empty data");
   passed++;
