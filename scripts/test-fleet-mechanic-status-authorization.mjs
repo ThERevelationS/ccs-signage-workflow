@@ -33,12 +33,16 @@ test("mutation status denies removed Start or Save permission before reading rec
   assert.ok(beforeReceipt.indexOf("!allowed.has(statusMutationAction)") < beforeReceipt.indexOf("const WorkOrder ="),"revoked action must fail before Fleet record access");
 });
 
-test("every mutation-status work-order payload is protected by a final live grant recheck", () => {
-  const block = between("if (action === 'mutation_status') {\n      const requestId", "\n\n    let mechanicMutation");
+test("every mutation-status work-order payload rereads the latest Fleet row and rechecks its scope", () => {
+  const currentLoad = source.indexOf("const current = await WorkOrder.get(id)",handlerStart);
+  const receiptBoundary = source.indexOf("const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;",currentLoad);
+  const block = between("if (action === 'mutation_status') {", "\n\n    let mechanicMutation",receiptBoundary);
   assert.equal(block.includes("work_order:sanitizeWorkOrder("), false, "mutation_status must not directly emit work-order state");
-  assert.ok((block.match(/await mechanicWorkOrderResponse\(/g) || []).length >= 8, "all status outcomes with work-order data must use the guarded response helper");
+  assert.match(block, /const statusWorkOrderResponse = async[\s\S]*const latest = await WorkOrder\.get\(id\)\.catch\(\(\)=>null\);/, "status responses must use a final Fleet work-order read");
+  assert.match(block, /return mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),statusMutationAction,latest,payload,init\);/, "the final live grant check must use the freshly read equipment scope");
+  assert.ok((block.match(/await statusWorkOrderResponse\(/g) || []).length >= 10, "all status outcomes with work-order data must await the latest-row scoped response");
   assert.match(block, /if \(isMechanicAccessChangedError\(error\)\) throw error;/, "live authorization failures must escape recovery handling");
-  assert.equal(/return mechanicWorkOrderResponse\(/.test(block), false, "guarded responses must be awaited so the outer handler can return 403");
+  assert.equal(/await mechanicWorkOrderResponse\(/.test(block), false, "status outcomes must not bypass the latest-row wrapper");
 });
 
 test("idempotent Start/Save retry and recovery reads revalidate before returning work-order state", () => {
