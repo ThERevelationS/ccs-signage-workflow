@@ -66,6 +66,7 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           <ul className="space-y-2 text-sm break-words">{result.official.source_references.map(source=><li key={source.file}>
             <a className="inline-flex min-h-11 items-center underline" href={source.url} target="_blank" rel="noopener noreferrer">{source.file}</a>
             <div>Retained file SHA-256: {source.sha256}</div>
+            {result.official.source_row_counts?.[source.file] && <p>Retained rows: {result.official.source_row_counts[source.file].total}; research candidates: {result.official.source_row_counts[source.file].candidates}; status/relationship review: {result.official.source_row_counts[source.file].status_review}; statistical references: {result.official.source_row_counts[source.file].statistical}.</p>}
           </li>)}</ul>
         </details>}
         <p className="text-sm">Queue candidates missing: {result.official.queue.missing.length}. Profile candidates missing: {result.official.profiles.missing.length}. These counts describe geographic name/type candidates within your read permissions.</p>

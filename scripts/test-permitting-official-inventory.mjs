@@ -105,3 +105,15 @@ assert.throws(()=>reconcileOfficialInventory([],[],{...ref,sources:[...ref.sourc
 assert.throws(()=>reconcileOfficialInventory([],[],{...ref,rows:ref.rows.map((row,index)=>index===0?{...row,source_file:'unknown.html'}:row)}),/no unique retained source reference/);
 assert.throws(()=>reconcileOfficialInventory([],[],{...ref,sources:[]}),/no unique retained source reference/);
 r=reconcileOfficialInventory([],[],ref);assert.equal(r.source_rows,3647);assert.equal(r.source_references.length,8);
+
+r=reconcileOfficialInventory([],[],ref);
+const sourceCounts=Object.values(r.source_row_counts);
+assert.equal(sourceCounts.reduce((sum,row)=>sum+row.total,0),3647);
+assert.equal(sourceCounts.reduce((sum,row)=>sum+row.candidates,0),2848);
+assert.equal(sourceCounts.reduce((sum,row)=>sum+row.status_review,0),25);
+assert.equal(sourceCounts.reduce((sum,row)=>sum+row.statistical,0),774);
+for(const source of ref.sources){
+ const counts=r.source_row_counts[source.file];
+ assert.equal(counts.total,ref.rows.filter(row=>row.source_file===source.file).length);
+ assert.equal(counts.total,counts.candidates+counts.status_review+counts.statistical);
+}

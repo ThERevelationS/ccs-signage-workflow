@@ -104,6 +104,10 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
     throw Error('Official inventory row has no unique retained source reference');
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     source_references:sourceReferences,
+    source_row_counts:Object.fromEntries(sourceReferences.map(source=>{
+      const rows=reference.rows.filter(row=>row.source_file===source.file);
+      return [source.file,{total:rows.length,candidates:rows.filter(row=>row.category==='candidate').length,status_review:rows.filter(row=>row.category==='status_relationship_review').length,statistical:rows.filter(row=>row.category==='statistical_reference').length}];
+    })),
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),
     status_review_count:reference.rows.filter(r=>r.category==='status_relationship_review').length,
     status_review_items:reference.rows.filter(r=>r.category==='status_relationship_review').map(row=>({...row})).sort((a,b)=>(a.state==='OH'?0:1)-(b.state==='OH'?0:1) || a.name.localeCompare(b.name) || a.key.localeCompare(b.key)),
