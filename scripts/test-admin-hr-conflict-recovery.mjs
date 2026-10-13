@@ -67,7 +67,7 @@ function formFixture(){
  const resolve=()=>{
   const comparison=state.recovery?.stage==="review"?reconcileHrDraft({
    baseline:state.recovery.baseline, latest:state.recovery.latest,draft:state.draft}):null;
-  return instantiate(formResolve,{...shared,hrRecovery:state.recovery,
+  return instantiate(formResolve,{...shared,reconcileHrDraft,hrRecovery:state.recovery,
     hrData:state.draft,recoveryComparison:comparison,confirmOverwrite:state.confirmed});
  };
  const change=()=>{
