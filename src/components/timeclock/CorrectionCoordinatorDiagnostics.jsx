@@ -20,6 +20,34 @@ function evidenceLine(label, evidence) {
   return { label, value: `${count} audit record(s) · ${outcomes} · ${evidence.ownership_matches === true ? "ownership verified" : "ownership missing or inconsistent"}` };
 }
 
+function investigationSteps(result) {
+  if (result?.coordinator_state === "invalid_setup") return [
+    "Confirm whether the backend company coordinator record is missing or duplicated; preserve every existing record until its origin is understood.",
+    "Have an authorized administrator reconcile provisioning using the recorded schema and deployment history. Do not add another coordinator blindly.",
+    "Refresh this panel after a separately reviewed, audited configuration repair.",
+  ];
+  if (result?.coordinator_state === "invalid_state") return [
+    "Preserve the coordinator and all existing request metadata for investigation.",
+    "Compare its stored state with backend logs and recent manager correction activity; do not change its status manually.",
+    "Escalate uncertain claims for a documented, audited resolution and refresh afterward.",
+  ];
+  if (result?.claim_kind === "manager_review") return [
+    "Locate the employee correction request and confirm the decision, review request ID, and stored review payload binding.",
+    "Inspect the correction_review audit. For an approval, also inspect admin_correction evidence and the TimeEntry; for a rejection, confirm no applied correction audit exists.",
+    "Verify approval state, punch values, and any linked Punch Exception before attempting an exact-request recovery. Never clear the coordinator based only on elapsed time.",
+  ];
+  if (result?.claim_kind === "direct_manager_correction") return [
+    "Locate the direct manager correction using the request ID and inspect the original and corrected TimeEntry evidence.",
+    "Confirm the admin_correction audit's outcome and ownership, plus the employee mutation state and finalized pay-period locks.",
+    "Treat missing, pending, mismatched or unexplained evidence as an investigation hold, not proof of a failed write. Preserve the claim until reconciled.",
+  ];
+  return [
+    "Verify the coordinator status with a fresh server check.",
+    "Compare the related backend records and immutable audits before any recovery decision.",
+    "Escalate inconsistent evidence; never manually clear a claim based only on its age.",
+  ];
+}
+
 function Field({ label, value }) {
   return (
     <div className="min-w-0">
@@ -29,7 +57,10 @@ function Field({ label, value }) {
   );
 }
 
-export function CorrectionCoordinatorDiagnosticsView({ result, status = "idle", error = "", onRefresh, checkedAt }) {
+export function CorrectionCoordinatorDiagnosticsView({
+  result, status = "idle", error = "", onRefresh, checkedAt,
+  onViewShift, onInspectAudits,
+}) {
   const state = status === "success" && result?.read_only === true ? result.coordinator_state : null;
   const ready = state === "ready";
   const concerning = state === "claimed" || state === "invalid_setup" || state === "invalid_state";
@@ -40,6 +71,10 @@ export function CorrectionCoordinatorDiagnosticsView({ result, status = "idle", 
     evidenceLine("Applied correction audit", result?.correction_audit),
     evidenceLine("Manager review audit", result?.review_audit),
   ].filter(Boolean);
+  const canInspectShift = state === "claimed" && result?.entry_found === true &&
+    Boolean(String(result?.time_entry_id || "").trim()) && typeof onViewShift === "function";
+  const canInspectAudits = state === "claimed" &&
+    Boolean(String(result?.time_entry_id || "").trim()) && typeof onInspectAudits === "function";
   const details = concerning ? [
     { label: "Coordinator records", value: result?.record_count },
     ...(state === "claimed" ? [
@@ -97,9 +132,36 @@ export function CorrectionCoordinatorDiagnosticsView({ result, status = "idle", 
             <dl className="grid grid-cols-1 gap-3 rounded-lg border border-amber-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-3">
               {details.map((item) => <Field key={item.label} label={item.label} value={item.value} />)}
             </dl>
-            <p className="text-xs text-amber-900">
-              Review the related TimeEntry and audit history. A held claim is not safe to clear solely because it is old.
-            </p>
+            <div className="rounded-lg border border-amber-200 bg-white p-3">
+              <p className="text-sm font-semibold text-amber-950">Safe investigation steps</p>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-slate-700">
+                {investigationSteps(result).map((step) => <li key={step}>{step}</li>)}
+              </ol>
+              {(canInspectShift || canInspectAudits) && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {canInspectShift && (
+                    <Button type="button" size="sm" variant="outline" className="min-h-10"
+                      onClick={() => onViewShift(result.time_entry_id)}>
+                      View shift details
+                    </Button>
+                  )}
+                  {canInspectAudits && (
+                    <Button type="button" size="sm" variant="outline" className="min-h-10"
+                      onClick={() => onInspectAudits(result.time_entry_id)}>
+                      Inspect shift audit history
+                    </Button>
+                  )}
+                </div>
+              )}
+              {state === "claimed" && !canInspectShift && !canInspectAudits && (
+                <p className="mt-2 text-xs text-amber-900">
+                  This claim has no available shift navigation. Preserve its identifiers and use authorized backend investigation.
+                </p>
+              )}
+              <p className="mt-2 text-xs font-medium text-amber-900">
+                Read-only investigation only. A held claim is not safe to clear solely because it is old.
+              </p>
+            </div>
           </div>
         )}
         {checkedAt && status === "success" && <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
@@ -110,7 +172,9 @@ export function CorrectionCoordinatorDiagnosticsView({ result, status = "idle", 
   );
 }
 
-export default function CorrectionCoordinatorDiagnostics({ sessionToken }) {
+export default function CorrectionCoordinatorDiagnostics({
+  sessionToken, onViewShift, onInspectAudits,
+}) {
   const [result, setResult] = useState({ token: null, status: "idle", data: null, error: "", checkedAt: null });
   const requestSequence = useRef(0);
   const check = useCallback(async () => {
@@ -150,5 +214,6 @@ export default function CorrectionCoordinatorDiagnostics({ sessionToken }) {
     token: sessionToken, status: "loading", data: null, error: "", checkedAt: null,
   };
   return <CorrectionCoordinatorDiagnosticsView result={current.data} status={current.status}
-    error={current.error} checkedAt={current.checkedAt} onRefresh={check} />;
+    error={current.error} checkedAt={current.checkedAt} onRefresh={check}
+    onViewShift={onViewShift} onInspectAudits={onInspectAudits} />;
 }
