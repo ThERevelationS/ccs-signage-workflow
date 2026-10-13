@@ -23,6 +23,35 @@ test('exact retained PDF metadata and citation are historical references, not ve
  assert.equal(r.current_source_verified,false);assert.equal(r.authority_verified,false);
  assert.equal(r.states.OH.electrical_inspection.histories,0);
 });
+test('historical scope receipt and named area must match the exact reviewed jurisdiction',()=>{
+ for(const patch of [{source_review_id:''},{source_review_id:'wrong'}])
+  assert.equal(run([review(patch)]).items[0].status,'scope_receipt_review');
+ for(const patch of [{coverage_area:'Other city'},{coverage_kind:'county'},{coverage_basis:'invented'}])
+  assert.equal(run([review(patch)]).items[0].status,'covered_area_review');
+ const scoped=source({authority_review:{status:'active',review_id:'source-r',scope_kind:'named_jurisdiction',named_areas:['Other city']}});
+ assert.equal(run([review({source_snapshot:scoped})],[scoped]).items[0].status,'covered_area_review');
+});
+test('issuer and inspector responsibility quotes cannot borrow evidence from the other role',()=>{
+ for(const excerpt of ['Contact us for electrical permits','Electrical inspections are performed here',
+  'Electrical permits are not issued here','Submit electrical permit questions to this office'])
+  assert.equal(run([review({role_proof:{physical_page:1,text_sha256:T,excerpt}})]).items[0].status,'role_statement_review',excerpt);
+ for(const excerpt of ['Electrical permits are issued here','Contact our office for electrical inspections',
+  'Electrical inspections are not provided here'])
+  assert.equal(run([review({role:'electrical_inspection',role_proof:{physical_page:1,text_sha256:T,excerpt}})]).items[0].status,'role_statement_review',excerpt);
+ const inspected=run([review({role:'electrical_inspection',role_proof:{physical_page:1,text_sha256:T,excerpt:'Electrical inspections are performed here'}})]);
+ assert.equal(inspected.states.OH.electrical_inspection.recorded_source_reference,1);
+});
+test('PDF delegation requires the exact named responsible office in the electrical responsibility quote',()=>{
+ const delegated=review({evidence_kind:'pdf_delegation',coverage_basis:'explicit_municipal_pdf_delegation',source_profile_id:'p',
+   office_snapshot:{government_office_id:'office',name:'Regional Agency'},
+   role_proof:{physical_page:1,text_sha256:T,excerpt:'Electrical permits are issued by Regional Agency.'}});
+ assert.equal(run([delegated]).states.OH.electrical_permit.recorded_source_reference,1);
+ for(const excerpt of ['Electrical permits are issued by Other Agency.',
+  'Contact Regional Agency for electrical permits.','Electrical inspections are performed by Regional Agency.',
+  'Electrical permits are not issued by Regional Agency.'])
+  assert.equal(run([{...delegated,role_proof:{...delegated.role_proof,excerpt}}]).items[0].status,'delegation_statement_review');
+ assert.equal(run([{...delegated,coverage_area:'Another city'}]).items[0].status,'covered_area_review');
+});
 test('missing source metadata is a permission-scoped visibility flag, not deletion',()=>{
  const r=run(undefined,[]);assert.equal(r.items[0].status,'no_visible_source');
  assert.match(r.notice,/outside read permissions/);
@@ -52,7 +81,7 @@ test('missing PDF page, quote or text checksum stays unverified',()=>{
  }
 });
 test('electrical inspection is separate from issuer even with identical source ID',()=>{
- const events=[review(),review({id:'i',sequence:2,role:'electrical_inspection',relation_key:'inspection-key'})];
+ const events=[review(),review({id:'i',sequence:2,role:'electrical_inspection',relation_key:'inspection-key',role_proof:{physical_page:1,text_sha256:T,excerpt:'Electrical inspections are performed here'}})];
  const r=run(events,undefined,[profile({office_authority_review_state:{status:'complete',committed_sequence:2}})]);
  assert.equal(r.states.OH.electrical_permit.recorded_source_reference,1);
  assert.equal(r.states.OH.electrical_inspection.recorded_source_reference,1);
