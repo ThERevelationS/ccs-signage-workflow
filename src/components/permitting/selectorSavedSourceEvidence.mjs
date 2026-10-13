@@ -1,4 +1,4 @@
-import {isVerifiedPermitPDFArchive} from './permitArchiveVerification';
+import {isVerifiedPermitPDFArchive} from './permitArchiveVerification.js';
 
 const DOC_TYPES={
   sign_ordinance:'Sign ordinance',permit_application:'Permit application',
