@@ -95,6 +95,7 @@ import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/Cell
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { isStaleVerifiedOrderCustomerBlur } from "@/components/orders/orderCustomerBlurSafety.mjs";
+import { shouldUnlinkOrderJobForTypedCustomer, orderAfterTypedCustomerName, pendingAfterManualCustomerBlur } from "@/components/orders/orderCustomerAssociationSafety.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
@@ -182,6 +183,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const activeCustomerPickerRef = useRef(null);
   const customerSelectionInFlightRef = useRef(false);
   const verifiedCustomerSelectionRef = useRef(new Map()); // Ignore old typed-name blur after verified job selection.
+  const manuallyUnlinkedCustomerOrderIdsRef = useRef(new Set()); // Stage unlink with the name on blur, never midway through typing.
   const [checkingCustomerJobId, setCheckingCustomerJobId] = useState(null);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
 
@@ -914,6 +916,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       delete pendingChangesRef.current[target.id];
       delete originalOrdersRef.current[target.id];
       verifiedCustomerSelectionRef.current.delete(target.id);
+      manuallyUnlinkedCustomerOrderIdsRef.current.delete(target.id);
       pendingSyncIdsRef.current.delete(target.id);
       pendingSyncVersionRef.current.delete(target.id);
       setPendingSyncCount(pendingSyncIdsRef.current.size);
@@ -1600,9 +1603,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     // An intentional new keystroke supersedes the previous
                     // selection; only a delayed blur without new typing is stale.
                     verifiedCustomerSelectionRef.current.delete(order.id);
+                    if (shouldUnlinkOrderJobForTypedCustomer(order, val)) {
+                      manuallyUnlinkedCustomerOrderIdsRef.current.add(order.id);
+                    }
                     customerNameDraftOrderRef.current = order.id;
                     orderLocalEditGenerationRef.current += 1;
-                    setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
+                    setOrders(prev => prev.map(o => o.id === order.id ? orderAfterTypedCustomerName(o, val) : o));
                     setCustomerSearch(val);
                     setShowCustomerDropdown(order.id);
                   }}
@@ -1614,12 +1620,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       selection: verifiedCustomerSelectionRef.current.get(order.id),
                       blurValue: customerName,
                     });
-                    if (!staleSelectedName && customerName !== (originalOrdersRef.current[order.id]?.customer_name || "")) {
-                      pendingChangesRef.current[order.id] = {
-                        ...pendingChangesRef.current[order.id],
-                        customer_name: customerName
-                      };
-                      setHasUnsavedChanges(true);
+                    if (!staleSelectedName) {
+                      const unlinkedJob = manuallyUnlinkedCustomerOrderIdsRef.current.has(order.id);
+                      const pending = pendingAfterManualCustomerBlur({
+                        baseline: originalOrdersRef.current[order.id],
+                        pending: pendingChangesRef.current[order.id],
+                        customerName,
+                        unlinkJob: unlinkedJob,
+                      });
+                      if (Object.keys(pending).length > 0) {
+                        pendingChangesRef.current[order.id] = pending;
+                        setHasUnsavedChanges(true);
+                      } else {
+                        delete pendingChangesRef.current[order.id];
+                        setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
+                      }
+                      manuallyUnlinkedCustomerOrderIdsRef.current.delete(order.id);
                     }
                     if (customerNameDraftOrderRef.current === order.id) customerNameDraftOrderRef.current = null;
                   }}
@@ -1641,6 +1657,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   }}
                   className="h-7 text-xs border-0 bg-transparent px-1 w-full"
                   placeholder="Customer..."
+                  title={order.work_order_id ? "Typing a different customer name unlinks the current job. Choose an active job to link it again." : "Choose an active job to associate this Order."}
                   disabled={!isRegistered}
                 />
                 {order.work_order_id && (
@@ -1704,6 +1721,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                               work_order_id: latest.id
                             };
                             setHasUnsavedChanges(true);
+                            manuallyUnlinkedCustomerOrderIdsRef.current.delete(order.id);
                             verifiedCustomerSelectionRef.current.set(order.id, {
                               customerName: latest.client_name,
                               workOrderId: latest.id,
