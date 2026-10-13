@@ -162,5 +162,30 @@ assert.match(visible(renderer), /freshly-restored-new-active-shift/,
   'Cleanup from a previous Clock Out must not clear a newer server-restored active shift');
 console.log('PASS delayed prior punch cleanup preserves newly restored authoritative shift');
 
+const restoredDialog = renderer.root.findAll((node) =>
+  typeof node.props?.onClockOut === 'function')[0];
+assert.ok(restoredDialog);
+const secondOut = restoredDialog.props.onClockOut({
+  lunchMinutes: 0, jobAllocations: [], notes: 'Synthetic normal cleanup acceptance',
+});
+assert.equal(calls.length, 9);
+assert.equal(calls[8].payload.action, 'clock_out');
+await act(async () => {
+  calls[8].resolve({ data: {
+    success: true, user: second, status: 'clocked_out',
+    entry: { id: 'freshly-restored-new-active-shift', clock_out: '2026-10-13T21:30:00.000Z' },
+  } });
+  await secondOut;
+});
+const normalReset = [...timers.entries()].find(([, timer]) => timer.ms === 2500);
+assert.ok(normalReset, 'Normal Clock Out must still schedule cleanup');
+await act(async () => {
+  timers.delete(normalReset[0]);
+  await normalReset[1].callback();
+});
+assert.doesNotMatch(visible(renderer), /freshly-restored-new-active-shift/,
+  'Normal post-punch cleanup should clear completed shift details');
+console.log('PASS ordinary confirmed Clock Out still resets the kiosk when no newer state exists');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 4/4 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 5/5 Time Clock Quick Clock async status acceptance cases');
