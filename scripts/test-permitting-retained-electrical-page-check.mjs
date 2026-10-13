@@ -45,6 +45,10 @@ test('one explicitly selected issuer citation matches cryptographically validate
  const result=await checkRetainedElectricalPage(f.api,f.candidate());
  assert.equal(result.status,'retained_quote_matches');assert.equal(result.physical_page,1);
  assert.equal(result.text_sha256,f.page.text_sha256);
+ assert.deepEqual([result.profile_state,result.profile_name,result.profile_type,result.profile_id],['OH','Pilot','city','profile']);
+ assert.deepEqual([result.recorded_office_name,result.canonical_office_id],['Pilot Permit Center','office-1']);
+ assert.deepEqual([result.recorded_coverage_area,result.recorded_coverage_kind,result.recorded_coverage_basis,result.source_review_id],['Pilot','named_jurisdiction','same_profile_scope','scope-1']);
+ assert.equal(result.recorded_quote,f.excerpt);
  assert.equal(result.address_authority_verified,false);assert.equal(result.current_official_source_verified,false);
  assert.deepEqual(f.calls.map(c=>c.name),['history','profile','source']);
  assert.deepEqual(f.calls[0].query,{jurisdiction_id:'profile',relation_key:'relationship',method:'office-authority-v1'});
