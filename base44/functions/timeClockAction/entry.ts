@@ -1845,18 +1845,38 @@ async function acquirePayPeriodCreateGate(gateEntity: any, auditEntity: any, per
 // Exactly one coordinator must be provisioned; never bootstrap it on demand.
 // Uncertain interrupted operations stay claimed for investigation rather than
 // allowing unsafe stale-lease takeover while the original request may run.
-async function claimAdminCorrectionGate(gateEntity: any, requestId: string, entryId: string, hash: string) {
+async function claimAdminCorrectionGate(
+  gateEntity: any, auditEntity: any, entryEntity: any, stateEntity: any,
+  requestId: string, entryId: string, hash: string,
+) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const rows = await gateEntity.filter({});
     if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.scope !== 'company' || !rows[0]?.id) {
       return { acquired: false, error: 'Company manager-correction coordinator is missing or ambiguous. Admin setup or investigation is required.' };
     }
     const gate = rows[0];
-    if (gate.status !== 'idle') {
+    if (gate.status === 'creating' && gate.request_id && gate.time_entry_id &&
+        gate.payload_hash && gate.claim_token) {
+      // Recover only after the originating employee mutation gate is idle and
+      // the saved TimeEntry + completed/blocked audit prove a settled result.
+      // A stale timestamp alone is never permission to take over a write.
+      const priorEntry = await entryEntity.get(gate.time_entry_id).catch(() => null);
+      const owners = priorEntry?.id
+        ? await stateEntity.filter({ user_email: asEmail(priorEntry.user_email) })
+        : null;
+      if (Array.isArray(owners) && owners.length === 1 &&
+          String(owners[0].correction_create_status || '') === 'idle') {
+        const recovered = await releaseAdminCorrectionGate(
+          gateEntity, auditEntity, entryEntity, gate.id, gate.request_id,
+          gate.time_entry_id, gate.payload_hash, gate.claim_token,
+        );
+        if (recovered) continue;
+      }
       return { acquired: false, retry_same_request: gate.request_id === requestId,
-        error: gate.status === 'creating' && gate.request_id && gate.claim_token
-          ? 'A manager correction is in progress or its result is uncertain. Retry after the coordinator is safely released or request admin investigation.'
-          : 'Manager-correction coordinator has invalid state. Admin investigation is required.' };
+        error: 'Manager correction is in progress or its result is uncertain. Its company coordinator cannot be reclaimed without verified completion.' };
+    }
+    if (gate.status !== 'idle') {
+      return { acquired: false, error: 'Manager-correction coordinator has invalid state. Admin investigation is required.' };
     }
     if (gate.request_id || gate.time_entry_id || gate.payload_hash || gate.claim_token || gate.started_at) {
       return { acquired: false, error: 'Idle manager-correction coordinator contains stale metadata. Admin investigation is required.' };
@@ -7939,7 +7959,10 @@ Deno.serve(async (req) => {
         }, { status: 409 });
       }
       try {
-      const companyCorrectionGate = await claimAdminCorrectionGate(adminCorrectionGateEntity, requestId, entry.id, correctionPayloadHash);
+      const companyCorrectionGate = await claimAdminCorrectionGate(
+        adminCorrectionGateEntity, auditEntity, entryEntity, stateEntity,
+        requestId, entry.id, correctionPayloadHash,
+      );
       if (!companyCorrectionGate.acquired) {
         return Response.json({ success: false, retry_same_request: companyCorrectionGate.retry_same_request === true,
           error: companyCorrectionGate.error }, { status: 409 });
