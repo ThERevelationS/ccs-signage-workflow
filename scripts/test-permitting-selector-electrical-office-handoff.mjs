@@ -1,9 +1,11 @@
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {build} from 'esbuild';
 import {readFileSync} from 'node:fs';
+import {mkdir,rm} from 'node:fs/promises';
+import {resolve} from 'node:path';
 import {summarizeSelectorElectricalOfficeHandoff as summarize} from '../src/components/permitting/selectorElectricalOfficeHandoff.mjs';
 
 const profile=()=>({id:'oh-profile',name:'Pilot Township',state:'OH',documents:[{title:'Electrical permit application',url:'https://gov.example/permit.pdf'}]});
@@ -11,9 +13,12 @@ const locality=(offices=[])=>({id:'loc',name:'Pilot Township',state:'OH',jurisdi
 const office=(id,roles,status='needs_verification',extra={})=>({id,name:'Office '+id,government_office_id:'canonical-'+id,authority_roles:roles,
   authority_verification_status:status,authority_verification_notes:'Notes retained',authority_verified_by:'Reviewer',authority_verified_at:'2026-10-10',
   contact_website:'https://gov.example/offices/'+id,...extra});
-const b=await build({entryPoints:['src/components/permitting/SelectorSavedSourceReview.jsx'],
-  bundle:true,write:false,format:'esm',platform:'node',jsx:'automatic'});
-const Component=(await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'))).default;
+const dir=resolve('node_modules/.cache/selector-electrical-office-handoff');
+await mkdir(dir,{recursive:true});
+await build({entryPoints:['src/components/permitting/SelectorSavedSourceReview.jsx'],bundle:true,
+  outfile:dir+'/panel.mjs',format:'esm',platform:'node',jsx:'automatic',external:['react','react/jsx-runtime']});
+const Component=(await import(dir+'/panel.mjs')).default;
+after(async()=>rm(dir,{recursive:true,force:true}));
 const render=l=>renderToStaticMarkup(React.createElement(Component,{profile:profile(),locality:l}));
 
 test('unlinked or wrong-state locality cannot borrow office roles by name',()=>{
