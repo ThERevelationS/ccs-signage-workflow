@@ -67,7 +67,9 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
  const items=[...malformed];
  for(const key of [...keys].sort()){
    const history=related.filter(e=>e.relation_key===key);
-   const first=history.find(e=>e.source_document_id===source.id);
+   const first=history.filter(e=>e.source_document_id===source.id).sort((a,b)=>
+     (Number.isSafeInteger(a.sequence)?a.sequence:Infinity)-(Number.isSafeInteger(b.sequence)?b.sequence:Infinity)
+     ||a.id.localeCompare(b.id))[0];
    const role=first.role;
    const seq=fresh.office_authority_review_state?.committed_sequence;
    const committed=history.filter(e=>Number.isSafeInteger(e.sequence)&&e.sequence>0&&e.sequence<=seq);
@@ -79,7 +81,8 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
    const status=discrepancy?.status|| (reference?'recorded_source_reference':latest?.action==='revoke'?'revoked':'history_review_required');
    items.push({role,review_id:first.id,latest_review_id:latest?.id||'',
      office_id:latest?.office_snapshot?.government_office_id||first.office_snapshot?.government_office_id||'',
-     status,physical_page:first.role_proof?.physical_page||null,
+     status,source_replaced:Boolean(latest&&latest.source_document_id&&latest.source_document_id!==source.id),
+     physical_page:first.role_proof?.physical_page||null,
      latest_source_id:latest?.source_document_id||'',review_ids:history.map(e=>e.id)});
  }
  items.sort((x,y)=>ROLES.indexOf(x.role)-ROLES.indexOf(y.role)||x.review_id.localeCompare(y.review_id));
