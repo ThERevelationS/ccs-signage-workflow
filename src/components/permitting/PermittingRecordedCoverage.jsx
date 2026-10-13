@@ -162,7 +162,7 @@ function RecordedCoverageSession({readCoverage,authorized}) {
             {row.missing_office_name && ' Office name is missing.'}
             {row.flags.includes('profile_link_review') && <span> Linked jurisdiction profile needs review ({row.link_flags.join(', ')}); do not infer service area.</span>}
             {row.flags.includes('canonical_office_identity_missing') && ' Canonical government office ID is not recorded.'}
-            {row.flags.includes('canonical_electrical_role_copy_review') && <span> Canonical government office ID: {row.government_office_id}. Multiple saved copies carry the same electrical role ({row.duplicate_electrical_roles.join(', ')}). Other saved office indexes (zero-based): {row.conflicting_office_indexes.join(', ')}. Review each copy and its service-area evidence; do not merge them or infer authority from a shared ID.</span>}
+            {row.flags.includes('canonical_electrical_role_copy_review') && <span> Canonical government office ID: {row.government_office_id}. Multiple saved copies carry the same electrical role ({row.duplicate_electrical_roles.map(role=>role+' — '+row.duplicate_electrical_copy_counts[role]+' saved copies').join('; ')}). This saved office index (zero-based): {row.office_index}. Review each copy and its service-area evidence; do not merge them or infer authority from a shared ID.</span>}
             {row.missing_reviewer && ' Authority reviewer is missing.'}
             {row.missing_or_invalid_date && ' Authority review date is missing or invalid.'}
             {row.missing_notes && ' Authority evidence notes are missing.'}
