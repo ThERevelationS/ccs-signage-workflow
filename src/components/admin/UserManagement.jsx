@@ -75,6 +75,9 @@ export default function UserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deletionSaving, setDeletionSaving] = useState(false);
+  const deletionInFlight = useRef(false);
+  const deletionOwner = useRef(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFirstName, setInviteFirstName] = useState("");
   const [inviteLastName, setInviteLastName] = useState("");
@@ -140,6 +143,12 @@ export default function UserManagement() {
     userUpdateOwner.current = null;
     userUpdateInFlight.current = false;
     setUserMutationSaving(false);
+    // A previous session may have a deletion in flight. The server decides
+    // its outcome; only the owning session may change this confirmation UI.
+    deletionOwner.current = null;
+    deletionInFlight.current = false;
+    setDeletionSaving(false);
+    setDeleteConfirm(null);
     setEditingUser(null);
     setIsDialogOpen(false);
     setFormData({
@@ -197,6 +206,8 @@ export default function UserManagement() {
     // Revoke ownership on both session transitions and component unmounts;
     // a pending email callback cannot alert after Admin is left behind.
     return () => {
+      deletionOwner.current = null;
+      deletionInFlight.current = false;
       passwordResetOwner.current = null;
       passwordResetInFlight.current = false;
       onboardingResendOwner.current = null;
@@ -463,7 +474,7 @@ export default function UserManagement() {
   };
 
   const handleSave = async () => {
-    if (!editingUser || userUpdateInFlight.current || isLoading || userDirectoryError ||
+    if (!editingUser || userUpdateInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
     const requestedPassword = String(formData.password_hash || "");
