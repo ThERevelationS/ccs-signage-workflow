@@ -77,6 +77,10 @@ assert.match(heldHtml, /synthetic-review-request/);
 assert.match(heldHtml, /Pending|pending/);
 assert.match(heldHtml, /ownership missing or inconsistent/);
 assert.match(heldHtml, /A held claim is not safe to clear/);
+assert.match(heldHtml, /Safe investigation steps/);
+assert.match(heldHtml, /correction_review audit/);
+assert.match(heldHtml, /linked Punch Exception/);
+assert.match(heldHtml, /read-only investigation/i);
 assert.doesNotMatch(heldHtml, /Release coordinator|Clear coordinator/);
 const invalidHtml = render({ status: "success", result: {
   success: true, read_only: true, coordinator_state: "invalid_setup",
@@ -84,6 +88,17 @@ const invalidHtml = render({ status: "success", result: {
 } });
 assert.match(invalidHtml, /Setup problem/);
 assert.match(invalidHtml, /Exactly one company coordinator required/);
+assert.match(invalidHtml, /Do not add another coordinator blindly/);
+const invalidStateHtml = render({ status: "success", result: {
+  success: true, read_only: true, coordinator_state: "invalid_state",
+  record_count: 1, attention: "Malformed coordinator metadata",
+} });
+assert.match(invalidStateHtml, /do not change its status manually/);
+const directHtml = render({ status: "success", result: {
+  ...heldData, claim_kind: "direct_manager_correction",
+} });
+assert.match(directHtml, /Confirm the admin_correction audit/);
+assert.doesNotMatch(directHtml, /linked Punch Exception/);
 const escapedHtml = render({ status: "success", result: { ...heldData,
   attention: "<script>unsafe</script>" },
 });
@@ -91,13 +106,50 @@ assert.doesNotMatch(escapedHtml, /<script>/);
 assert.match(escapedHtml, /&lt;script&gt;/);
 console.log("PASS coordinator diagnostics render ready, claimed, setup errors and safe evidence");
 
+const clicked = [];
+const investigateView = TestRenderer.create(React.createElement(View, {
+  status: "success", result: heldData,
+  availableEntryIds: ["synthetic-entry-id"],
+  onViewShift: (id) => clicked.push(["shift", id]),
+  onInspectAudits: (id) => clicked.push(["audit", id]),
+}));
+const investigateButtons = investigateView.root.findAllByType(Button);
+assert.equal(investigateButtons.length, 3);
+const viewShift = investigateButtons.find((item) =>
+  String(item.props.children).includes("View shift details"));
+const viewAudits = investigateButtons.find((item) =>
+  String(item.props.children).includes("Inspect shift audit history"));
+assert.ok(viewShift && viewAudits);
+act(() => { viewShift.props.onClick(); viewAudits.props.onClick(); });
+assert.deepEqual(clicked, [
+  ["shift", "synthetic-entry-id"], ["audit", "synthetic-entry-id"],
+]);
+investigateView.unmount();
+const unavailableShift = render({ status: "success", result: heldData,
+  availableEntryIds: [], onViewShift() {}, onInspectAudits() {} });
+assert.doesNotMatch(unavailableShift, /View shift details/);
+assert.match(unavailableShift, /Inspect shift audit history/);
+const unknownEntry = render({ status: "success",
+  result: { ...heldData, time_entry_id: "", entry_found: false },
+  availableEntryIds: [], onViewShift() {}, onInspectAudits() {} });
+assert.doesNotMatch(unknownEntry, /Inspect shift audit history/);
+assert.match(unknownEntry, /no available shift navigation/i);
+const healthyNoActions = render({ status: "success", result: {
+  success: true, read_only: true, coordinator_state: "ready", record_count: 1,
+}, availableEntryIds: ["synthetic-entry-id"], onViewShift() {}, onInspectAudits() {} });
+assert.doesNotMatch(healthyNoActions, /View shift details|Inspect shift audit history/);
+console.log("PASS coordinator investigation steps and shift/audit navigation remain strictly read-only");
+
 const adminSource = readFileSync(new URL("../src/components/timeclock/TimeClockAdmin.jsx", import.meta.url), "utf8");
 assert.match(adminSource, /import CorrectionCoordinatorDiagnostics from/);
-assert.match(adminSource, /<CorrectionCoordinatorDiagnostics sessionToken=\{sessionToken\}/);
+assert.match(adminSource, /<CorrectionCoordinatorDiagnostics[\s\S]*?sessionToken=\{sessionToken\}/);
 assert.match(adminSource, /<TimeClockExceptionCenter/);
-assert.ok(adminSource.indexOf("<CorrectionCoordinatorDiagnostics sessionToken={sessionToken}") <
+assert.ok(adminSource.indexOf("<CorrectionCoordinatorDiagnostics") <
   adminSource.indexOf("<TimeClockExceptionCenter"),
   "Coordinator must be visible before Needs Attention");
+assert.match(adminSource, /availableEntryIds=\{timeEntries\.map\(\(entry\) => entry\.id\)\}/);
+assert.match(adminSource, /onInspectAudits=\{\(entryId\) => \{[\s\S]*?mode: "integrity"/);
+assert.match(adminSource, /onViewShift=\{\(entryId\) => \{[\s\S]*?setDetailEntry\(entry\)/);
 assert.doesNotMatch(source, /base44\.entities\.TimeClockAdminCorrectionGate/);
 assert.doesNotMatch(source, /action: ["'](?:release|reset|clear|recover)/);
 console.log("PASS manager panel wired into Time Clock without client-side coordinator writes");
