@@ -19,7 +19,7 @@ const adminHandler = extract(admin,
   "  const handleSave = async () => {");
 const formHandler = extract(form,
   "  const handleSave = async () => {",
-  "  const updateField = (field, value) => {");
+  "  const reloadHrForRecovery = async () => {");
 const older = {id:"old-employee", email:"old@example.invalid", updated_date:"v1", hr_data:{city:"Old"}};
 const newer = {id:"new-employee", email:"new@example.invalid", updated_date:"v2", hr_data:{city:"New"}};
 const draft = { city:"Edited" };
@@ -68,17 +68,21 @@ function adminFixture() {
   return {refs,state,common,handler,change};
 }
 function formFixture(saveFn=()=>Promise.resolve(true)) {
-  const refs = { saveInFlight:{current:false},saveOwner:{current:null},
+  const refs = { saveInFlight:{current:false},reloadInFlight:{current:false},saveOwner:{current:null},
     scopeVersion:{current:1}, successTimer:{current:null},
     activeScope:{current:{id:older.id,email:older.email,saveScope:"old-session"}} };
   const state = { saving:false,success:"",error:"",updates:0,errors:[],saves:[] };
   const handler = (record=older,scope="old-session") => instantiate(formHandler,{
-    ...refs,userData:record,saveScope:scope,hrData:draft,
+    ...refs,userData:record,saveScope:scope,hrData:draft,hrRecovery:null,
+    preserveDraftOnRecordRefresh:false,onReloadLatest:null,
     onSave:data=>{state.saves.push(data);return saveFn(data);},
     onUpdate:()=>{state.updates++;},
     setIsSaving:value=>{state.saving=value;},
     setSaveSuccess:value=>{state.success=value;},
     setSaveError:value=>{state.error=value;},
+    setDraftNotice:()=>{},
+    setHrRecovery:()=>{},
+    setConfirmOverwrite:()=>{},
     console:{error:(...args)=>{state.errors.push(args);}}
   });
   const change = (record,scope) => {
