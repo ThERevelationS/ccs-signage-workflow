@@ -23,7 +23,7 @@ export function summarizeSelectorElectricalResearchOutcome({response,target,loca
     ?result.discovered_documents:null;
   const savedDocuments=Array.isArray(updated.documents)?updated.documents.length:null;
   const runStatus=clean(result.scan_run?.status);
-  const needsRunReview=Boolean((runStatus&&runStatus!=='complete')||
+  const needsRunReview=Boolean(!runStatus||runStatus!=='complete'||
     result.archival?.success===false||result.discovery_scan?.success===false);
   return {
     profile_id:updated.id,state:updated.state,action:action==='research'?'research':'discovery',
