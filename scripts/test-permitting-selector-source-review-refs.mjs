@@ -280,3 +280,29 @@ test('office label changes keep exact identity, independent relationships keep d
  assert.deepEqual(new Set(r.items.map(row=>row.office_id)),new Set(['office-1','office-2']));
  assert.ok(r.items.every(row=>row.status==='recorded_source_reference'));
 });
+
+test('exact service area cannot switch under one relationship key, including revocations',async()=>{
+ for(const action of ['verify','revoke']){
+  const f=fixture({p:{...profile(),office_authority_review_state:{status:'complete',committed_sequence:2}},
+   events:[event(),event({id:'changed-area',sequence:2,action,coverage_area:'Other City'})]});
+  await assert.rejects(read(f.api,profile(),document()),error=>{
+   assert.match(error.message,/Conflicting or missing recorded service areas/);
+   assert.match(error.message,/review-1.*changed-area/);
+   assert.match(error.message,/ZIP code or parent county/);
+   return true;
+  });
+ }
+});
+test('missing padded or differently cased service areas never silently merge',async()=>{
+ for(const coverage_area of [undefined,null,'',' Example City','example city',42]){
+  const f=fixture({events:[event(),event({id:'bad-area',sequence:2,coverage_area})]});
+  await assert.rejects(read(f.api,profile(),document()),/Conflicting or missing recorded service areas/);
+ }
+});
+test('independent area relationships remain separate and mismatched areas stay evidence gaps',async()=>{
+ const f=fixture({events:[event(),event({id:'other-area',relation_key:'other-rel',coverage_area:'Other City'})]});
+ const r=await read(f.api,profile(),document());
+ assert.deepEqual(new Set(r.items.map(row=>row.coverage_area)),new Set(['Example City','Other City']));
+ assert.equal(r.items.find(row=>row.coverage_area==='Other City').status,'covered_area_review');
+ assert.equal(r.source_status_verified,false);
+});

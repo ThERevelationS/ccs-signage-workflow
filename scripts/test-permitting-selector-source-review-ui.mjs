@@ -33,12 +33,15 @@ test('the exact review lookup stays dormant until explicit click and suppresses 
  await act(async()=>finish({status:'recorded_history_read',document_id:'doc-1',source_id:'catalog-1',
   notice:'Historical reference only; jurisdiction must be verified.',items:[{
    role:'electrical_permit',review_id:'verified-before',latest_review_id:'revoked-later',
-   office_id:'canonical-1',physical_page:2,status:'revoked',latest_source_id:'',
+   office_id:'canonical-1',coverage_area:'Example City',physical_page:2,status:'revoked',latest_source_id:'',
    review_ids:['verified-before','revoked-later']}] }));
  const view=JSON.stringify(tree.toJSON());
  for(const phrase of ['catalog-1','verified-before','revoked-later','canonical-1','revoked','Historical reference only'])
   assert.match(view,new RegExp(phrase));
  assert.match(view,/not current electrical office approval/);
+ assert.match(view,/Recorded service area/);
+ assert.match(view,/Example City/);
+ assert.match(view,/Job-address applicability is not verified/);
  assert.equal(buttons(tree)[0].props.disabled,false);
  await act(async()=>tree.unmount());
 });
