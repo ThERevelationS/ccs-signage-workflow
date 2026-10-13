@@ -178,6 +178,56 @@ test("first Save Draft creation rejects reassignment during approval-policy eval
   assert.equal(store.estimate,null);
 });
 
+test("first Save Draft gate claim rechecks equipment before creation",async()=>{
+  const {store,gate,client}=setup();
+  store.estimate=null;
+  store.pauseGateClaim=true;
+  const pending=call(saveBody(),client);
+  await until("first draft gate acquired",()=>store.pendingGateClaims.length===1);
+  assert.equal(gate.status,"creating");
+  assert.equal(store.writes,0);
+  store.work={...store.work,updated_date:"work-v2",equipment_id:"eq-outside"};
+  store.pendingGateClaims.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.estimate,null);
+  assert.equal(store.writes,0);
+  assert.equal(gate.status,"idle");
+});
+
+test("Save Draft rejects a same-equipment Fleet revision before the write",async()=>{
+  const {store,client}=setup();
+  store.pausePolicyRead=true;
+  const pending=call(saveBody(),client);
+  await until("Save Draft policy read before Fleet revision",()=>store.pendingPolicyReads.length===1);
+  store.work={...store.work,updated_date:"work-v2"};
+  store.pendingPolicyReads.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0);
+});
+
+test("Submit rejects Fleet completion before changing estimate status",async()=>{
+  const {store,client}=setup();
+  store.pausePolicyRead=true;
+  const pending=call(submitBody(),client);
+  await until("Submit policy read before Fleet completion",()=>store.pendingPolicyReads.length===1);
+  store.work={...store.work,status:"completed"};
+  store.pendingPolicyReads.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0);
+  assert.equal(store.estimate.status,"draft");
+});
+
+test("Save Draft refuses mismatched preexisting estimate equipment",async()=>{
+  const {store,client}=setup();
+  store.estimate.equipment_id="eq-conflict";
+  const outcome=await call(saveBody(),client);
+  assert.equal(outcome.status,409);
+  assert.equal(store.writes,0);
+});
+
 test("Save Draft rejects a Fleet reassignment while the final grant authorization is delayed",async()=>{
   const {store,client}=setup();
   store.pauseGrantRead=true;
