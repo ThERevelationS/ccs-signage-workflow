@@ -414,10 +414,49 @@ export default function UserManagement() {
     return Number.isNaN(date.getTime()) ? "Unknown date" : date.toLocaleString();
   };
 
-  const openEditUser = (user) => {
-    if (isLoading || userDirectoryError || !sessionToken || hrSaveInFlight.current ||
+  const hasProtectedHrDraft = () => {
+    const current = activeEditingUser.current;
+    const status = hrDraftStatus.current;
+    return !!(status?.dirty && current &&
+      status.id === current.id && status.email === current.email &&
+      status.sessionToken === activeSessionToken.current);
+  };
+
+  const clearHrDraftTracking = () => {
+    hrDraftStatus.current = null;
+    setHasUnsavedHrData(false);
+  };
+
+  const requestCloseUserEditor = () => {
+    if (!isDialogOpen || hrSaveInFlight.current || hrReloadInFlight.current ||
+        userUpdateInFlight.current || activeSessionToken.current !== sessionToken) return;
+    if (hasProtectedHrDraft()) {
+      setPendingHrExit({
+        kind: "close", sessionToken,
+        sourceId: editingUser?.id, sourceEmail: editingUser?.email
+      });
+      return;
+    }
+    clearHrDraftTracking();
+    setEditingUser(null);
+    setIsDialogOpen(false);
+  };
+
+  const openEditUser = (user, discardConfirmed = false) => {
+    if (!user?.id || !user.email || isLoading || userDirectoryError || !sessionToken ||
+        hrSaveInFlight.current || hrReloadInFlight.current ||
         userUpdateInFlight.current || deletionInFlight.current ||
         activeSessionToken.current !== sessionToken) return;
+    if (isDialogOpen && editingUser?.id === user.id && editingUser?.email === user.email) return;
+    if (isDialogOpen && hasProtectedHrDraft() && !discardConfirmed) {
+      setPendingHrExit({
+        kind: "switch", sessionToken, sourceId: editingUser?.id,
+        sourceEmail: editingUser?.email,
+        targetId: user.id, targetEmail: user.email, targetVersion: user.updated_date
+      });
+      return;
+    }
+    clearHrDraftTracking();
     setEditingUser(user);
     setFormData({
       full_name: user.full_name || "",
@@ -432,6 +471,33 @@ export default function UserManagement() {
       can_work_pause: user.can_work_pause === true
     });
     setIsDialogOpen(true);
+  };
+
+  const confirmDiscardHrDraft = () => {
+    const pending = pendingHrExit;
+    if (!pending || !isDialogOpen || !sessionToken ||
+        pending.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        activeEditingUser.current?.id !== pending.sourceId ||
+        activeEditingUser.current?.email !== pending.sourceEmail ||
+        hrSaveInFlight.current || hrReloadInFlight.current || userUpdateInFlight.current ||
+        deletionInFlight.current || isLoading || userDirectoryError) return;
+    if (pending.kind === "switch") {
+      const verifiedTarget = users.find(row =>
+        row.id === pending.targetId && row.email === pending.targetEmail &&
+        row.updated_date === pending.targetVersion);
+      if (!verifiedTarget) {
+        setPendingHrExit(null);
+        return;
+      }
+      setPendingHrExit(null);
+      openEditUser(verifiedTarget, true);
+    } else if (pending.kind === "close") {
+      setPendingHrExit(null);
+      clearHrDraftTracking();
+      setEditingUser(null);
+      setIsDialogOpen(false);
+    }
   };
 
   const handleSendPasswordReset = async (user) => {
@@ -616,6 +682,11 @@ export default function UserManagement() {
   };
 
   const handleSave = async () => {
+    // Account saves close the whole editor. Do not implicitly discard HR edits.
+    if (hasProtectedHrDraft()) {
+      setUserMutationError("Save your HR data separately or choose Cancel and confirm discarding it before saving account changes.");
+      return;
+    }
     if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
@@ -667,6 +738,7 @@ export default function UserManagement() {
       if (!ownsUpdate()) return;
       await loadUsers();
       if (!ownsUpdate()) return;
+      clearHrDraftTracking();
       setIsDialogOpen(false);
       setEditingUser(null);
     } catch (error) {
