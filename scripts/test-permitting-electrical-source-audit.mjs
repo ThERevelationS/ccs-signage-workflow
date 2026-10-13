@@ -6,12 +6,12 @@ const H='a'.repeat(64),T='b'.repeat(64),OH='OH';
 const source=(patch={})=>({id:'pdf',jurisdiction_id:'p',official_url:'https://gov.example/permit.pdf',
   archived_file_url:'https://files.example/retained.pdf',file_hash_sha256:H,file_bytes:150,
   content_status:'current',verification_status:'verified',authority_classification:'current_adopted',
-  authority_review:{review_id:'source-r'},...patch});
-const profile=(patch={})=>({id:'p',state:OH,name:'Example City',office_authority_review_state:{status:'complete',committed_sequence:1},...patch});
+  authority_review:{status:'active',review_id:'source-r',scope_kind:'named_jurisdiction',named_areas:['Example City']},...patch});
+const profile=(patch={})=>({id:'p',state:OH,name:'Example City',type:'city',office_authority_review_state:{status:'complete',committed_sequence:1},...patch});
 const review=(patch={})=>({id:'r',method:'office-authority-v1',jurisdiction_id:'p',sequence:1,
   relation_key:'r-key',role:'electrical_permit',action:'verify',source_document_id:'pdf',
   profile_snapshot:{id:'p',state:OH},office_snapshot:{government_office_id:'office'},
-  coverage_area:'Example City',responsibility_confirmed:true,address_authority_resolved:false,
+  coverage_area:'Example City',coverage_kind:'named_jurisdiction',coverage_basis:'same_profile_scope',source_review_id:'source-r',responsibility_confirmed:true,address_authority_resolved:false,
   source_snapshot:source(),role_proof:{physical_page:1,text_sha256:T,excerpt:'Electrical permits are issued here'},
   ...patch});
 const run=(events=[review()],docs=[source()],profiles=[profile()])=>audit(profiles,events,docs);
