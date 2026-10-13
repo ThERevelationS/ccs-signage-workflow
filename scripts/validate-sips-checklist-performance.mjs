@@ -976,6 +976,8 @@ await (async () => {
   const shared = {
     loadDataRequestRef: requestRef,
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+    saveFailureFocusPendingRef: { current: true },
+    failedRevisitSelectionRef: { current: "old synthetic date" },
     resetOtherPopupForReload: () => { invalidations++; },
     setIsLoading: value => loading.push(value),
     WorkOrder: { filter: ({ id }) => new Promise(resolve => pending.push({ id, resolve })) },
@@ -994,6 +996,8 @@ await (async () => {
   const loadB = makeLoad({ ...shared, workOrder: { id: "WO-B" } });
   const oldRequest = loadA();
   const newRequest = loadB();
+  assert.equal(shared.saveFailureFocusPendingRef.current, false, "Loading clears old failure focus");
+  assert.equal(shared.failedRevisitSelectionRef.current, undefined, "Loading resets pending failed revisit retry");
   assert.deepEqual(pending.map(call => call.id), ["WO-A", "WO-B"]);
   pending[1].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
   await newRequest;
