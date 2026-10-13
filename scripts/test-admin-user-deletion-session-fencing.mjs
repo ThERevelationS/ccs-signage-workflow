@@ -54,7 +54,7 @@ function fixture() {
 test("Changing or leaving Admin revokes delete owner and confirmation", () => {
   assert.match(source, /const \[deletionSaving, setDeletionSaving\] = useState\(false\);\s*const deletionInFlight = useRef\(false\);\s*const deletionOwner = useRef\(null\)/);
   assert.match(effect, /deletionOwner\.current = null;\s*deletionInFlight\.current = false;\s*setDeletionSaving\(false\);\s*setDeleteConfirm\(null\)/);
-  assert.match(effect, /return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false/);
+  assert.match(effect, /return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrDraftStatus\.current = null;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false/);
   assert.match(source, /onOpenChange=\{\(open\) => \{ if \(!open && !deletionInFlight\.current\) setDeleteConfirm\(null\); \}\}/);
   assert.match(source, /<AlertDialogCancel disabled=\{deletionSaving\}/);
   assert.match(source, /disabled=\{deletionSaving \|\| userMutationSaving \|\| hrMutationSaving \|\| isLoading/);
