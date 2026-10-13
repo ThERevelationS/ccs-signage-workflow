@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 import { Button } from "@/components/ui/button";
@@ -36,28 +36,64 @@ const MARITAL_STATUS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" }
 ];
 
-export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false }) {
+export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null }) {
   const [hrData, setHrData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
+  const saveInFlight = useRef(false);
+  const saveOwner = useRef(null);
+  const scopeVersion = useRef(0);
+  const successTimer = useRef(null);
+  const activeScope = useRef(null);
+  activeScope.current = { id: userData?.id, email: userData?.email, saveScope };
 
   useEffect(() => {
-    if (userData?.hr_data) {
-      setHrData(userData.hr_data);
-    }
+    setHrData(userData?.hr_data || {});
   }, [userData]);
 
+  useEffect(() => {
+    // A switched employee or Admin identity must not retain an older save,
+    // success message, error, or confidential form state.
+    ++scopeVersion.current;
+    saveOwner.current = null;
+    saveInFlight.current = false;
+    setIsSaving(false);
+    setSaveSuccess("");
+    setSaveError("");
+    setHrData(userData?.hr_data || {});
+    if (successTimer.current) clearTimeout(successTimer.current);
+    return () => {
+      ++scopeVersion.current;
+      saveOwner.current = null;
+      saveInFlight.current = false;
+      if (successTimer.current) clearTimeout(successTimer.current);
+    };
+  }, [userData?.id, userData?.email, saveScope]);
+
   const handleSave = async () => {
-    if (!userData?.id) return;
-    
+    if (!userData?.id || saveInFlight.current) return;
+    const owner = {
+      id: userData.id, email: userData.email, saveScope,
+      version: scopeVersion.current
+    };
+    saveOwner.current = owner;
+    const ownsSave = () => saveOwner.current === owner &&
+      scopeVersion.current === owner.version &&
+      activeScope.current?.id === owner.id &&
+      activeScope.current?.email === owner.email &&
+      activeScope.current?.saveScope === owner.saveScope;
+    saveInFlight.current = true;
     setIsSaving(true);
     setSaveError("");
     setSaveSuccess("");
-    
+    if (successTimer.current) clearTimeout(successTimer.current);
+
     try {
       if (onSave) {
-        await onSave(hrData);
+        const result = await onSave(hrData);
+        // Admin returns false if a different session now owns the editor.
+        if (!ownsSave() || result === false) return;
       } else {
         await updateAuthorizedEmailIfUnchanged({
           entity: base44.entities.AuthorizedEmail,
@@ -67,15 +103,27 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
           enforceIdentity: false,
           label: `HR data for ${userData.full_name || userData.email || userData.id}`
         });
+        if (!ownsSave()) return;
       }
       setSaveSuccess("Changes saved successfully!");
-      setTimeout(() => setSaveSuccess(""), 3000);
-      if (onUpdate) onUpdate();
+      successTimer.current = setTimeout(() => {
+        if (scopeVersion.current === owner.version &&
+            activeScope.current?.id === owner.id &&
+            activeScope.current?.email === owner.email &&
+            activeScope.current?.saveScope === owner.saveScope) setSaveSuccess("");
+      }, 3000);
+      if (onUpdate && ownsSave()) onUpdate();
     } catch (error) {
+      if (!ownsSave()) return;
       console.error("HR data save blocked:", error);
       setSaveError(error?.message || "Failed to save changes safely. Reload before retrying.");
+    } finally {
+      if (ownsSave()) {
+        saveOwner.current = null;
+        saveInFlight.current = false;
+        setIsSaving(false);
+      }
     }
-    setIsSaving(false);
   };
 
   const updateField = (field, value) => {
@@ -492,7 +540,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
         </div>
         <Button
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || saveInFlight.current}
           className="clay-button"
           style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
         >
