@@ -813,7 +813,28 @@ async function mechanicCommittedEstimateResponse(Access:any, WorkOrder:any, Esti
     error.status = 409;
     throw error;
   }
-  return json({...payload,estimate:sanitizeEstimate(latestEstimate)});
+  // The write-time policy and auto-approval flags may no longer describe the
+  // estimate after a legitimate CCS revision. Project status and policy fields
+  // from the same verified snapshot as the financial data, never from a
+  // potentially superseded decision. Do not re-evaluate today's policy: that
+  // would misstate the historical rule actually applied to this estimate.
+  const concurrentlyUpdated = String(latestEstimate.updated_date || '') !== String(estimate?.updated_date || '');
+  const currentApprovalRequired = latestEstimate.approval_required === true;
+  const currentApprovalTier = clean(latestEstimate.approval_tier,80);
+  const sameAppliedPolicy = !concurrentlyUpdated &&
+    payload?.policy?.approval_required === currentApprovalRequired &&
+    String(payload?.policy?.approval_tier || '') === currentApprovalTier;
+  const response:any = {...payload,estimate:sanitizeEstimate(latestEstimate)};
+  if (payload?.policy) response.policy = {
+    ...(sameAppliedPolicy ? payload.policy : {policy_id:'',policy_name:''}),
+    approval_required:currentApprovalRequired,approval_tier:currentApprovalTier,
+  };
+  if (action === 'estimate_submit') {
+    response.auto_approved = latestEstimate.status === 'approved' &&
+      !currentApprovalRequired && latestEstimate.decision_by_email === 'policy:auto';
+  }
+  if (concurrentlyUpdated) response.concurrently_updated = true;
+  return json(response);
 }
 
 function sanitizeEquipment(row: any) {
