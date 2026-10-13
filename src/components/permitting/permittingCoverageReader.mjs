@@ -89,14 +89,19 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
     const represented = new Set(assessments.flatMap(r=>r.candidate_keys));
     return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.length>0).sort(reviewOrder), missing:candidates.filter(r=>!represented.has(r.key)).sort(reviewOrder) };
   }
+  if (reference.sources!==undefined && !Array.isArray(reference.sources)) throw Error('Invalid official inventory sources');
+  const sourceFiles = new Set();
   const sourceReferences = (reference.sources || []).map(source => {
     let url;
-    try { url = new URL(source.url); } catch { throw Error('Invalid official inventory source URL'); }
+    try { url = new URL(source?.url); } catch { throw Error('Invalid official inventory source URL'); }
     if (url.protocol!=='https:' || url.username || url.password || url.hostname!=='tigerweb.geo.census.gov'
-      || typeof source.file!=='string' || !source.file.trim() || !/^[a-f0-9]{64}$/.test(source.sha256 || ''))
+      || typeof source.file!=='string' || !source.file.trim() || source.file!==source.file.trim() || sourceFiles.has(source.file) || !/^[a-f0-9]{64}$/.test(source.sha256 || ''))
       throw Error('Invalid official inventory source reference');
+    sourceFiles.add(source.file);
     return {file:source.file,url:source.url,sha256:source.sha256};
   });
+  if (reference.sources!==undefined && reference.rows.some(row=>!sourceFiles.has(row.source_file)))
+    throw Error('Official inventory row has no unique retained source reference');
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     source_references:sourceReferences,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),

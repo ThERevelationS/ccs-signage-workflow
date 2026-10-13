@@ -99,3 +99,9 @@ assert.equal(r.candidate_counts.OH+r.candidate_counts.KY+r.status_review_count+r
 r=reconcileOfficialInventory([],[],ref);assert.deepEqual(r.source_references,ref.sources);assert.equal(r.source_references.length,8);
 for(const bad of [{...ref.sources[0],url:'javascript:alert(1)'},{...ref.sources[0],url:'https://user:secret@tigerweb.geo.census.gov/source'},{...ref.sources[0],url:'https://example.com/source'},{...ref.sources[0],sha256:'missing'}])
  assert.throws(()=>reconcileOfficialInventory([],[],{...base,sources:[bad]}),/Invalid official inventory source/);
+
+for(const sources of [null,{},'sources'])assert.throws(()=>reconcileOfficialInventory([],[],{...ref,sources}),/Invalid official inventory sources/);
+assert.throws(()=>reconcileOfficialInventory([],[],{...ref,sources:[...ref.sources,ref.sources[0]]}),/Invalid official inventory source reference/);
+assert.throws(()=>reconcileOfficialInventory([],[],{...ref,rows:ref.rows.map((row,index)=>index===0?{...row,source_file:'unknown.html'}:row)}),/no unique retained source reference/);
+assert.throws(()=>reconcileOfficialInventory([],[],{...ref,sources:[]}),/no unique retained source reference/);
+r=reconcileOfficialInventory([],[],ref);assert.equal(r.source_rows,3647);assert.equal(r.source_references.length,8);
