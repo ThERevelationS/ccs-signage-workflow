@@ -206,8 +206,9 @@ test("first-draft lost create acknowledgment preserves one new draft and blocks 
   assert.equal(store.writes,1);
   assert.equal(store.estimate.status,"draft");
   const retry=await call(saveBody(),client);
-  assert.equal(retry.status,200);
-  assert.equal(store.writes,1,"Safe create gate may acknowledge exact existing draft but never duplicate it");
+  assert.equal(retry.status,409,"The portal requires the newly persisted draft version before any further edit");
+  assert.equal(retry.body.estimate,undefined);
+  assert.equal(store.writes,1,"Unverified first-draft retry must never create or overwrite a second draft");
 });
 
 test("Save Draft rejects an equipment reassignment during approval-policy evaluation before its estimate CAS",async()=>{
