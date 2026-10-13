@@ -267,6 +267,90 @@ await check('stale refresh failure does not replace newer successful board state
   assert.equal(h.queue(), 'Revisit Later');
 });
 
+await check('failed Retry preserves board and checklist warnings until a current refresh succeeds', async () => {
+  const h = fixture();
+  h.ctx.boardError = 'Earlier network failure';
+  h.ctx.checklistConfigWarning = 'Earlier checklist rules failure';
+  const failed = h.loadWorkOrders(false);
+  assert.equal(h.ctx.isRefreshing, true);
+  assert.equal(h.ctx.boardError, 'Earlier network failure', 'Retry does not prematurely hide failure');
+  assert.equal(h.ctx.checklistConfigWarning, 'Earlier checklist rules failure');
+  h.reads[0].reject(new Error('Retry still offline'));
+  await failed;
+  assert.equal(h.ctx.boardError, 'Retry still offline');
+  assert.equal(h.ctx.checklistConfigWarning, 'Earlier checklist rules failure');
+  assert.equal(h.ctx.isRefreshing, false);
+
+  const recovered = h.loadWorkOrders(false);
+  assert.equal(h.ctx.boardError, 'Retry still offline', 'Retry keeps last error until verified');
+  assert.equal(h.ctx.checklistConfigWarning, 'Earlier checklist rules failure');
+  h.reads[1].finish();
+  await recovered;
+  assert.equal(h.ctx.boardError, '');
+  assert.equal(h.ctx.checklistConfigWarning, '');
+  assert.equal(h.ctx.isRefreshing, false);
+});
+
+await check('checklist rules warning survives a failed retry, then resolves on successful rules load', async () => {
+  const h = fixture();
+  const originalSettings = h.ctx.loadSingleGlobalSetting;
+  h.ctx.loadSingleGlobalSetting = async (options) => {
+    if (options.settingKey === 'dropdownConditions') throw new Error('Synthetic rules offline');
+    return originalSettings(options);
+  };
+  const first = h.loadWorkOrders(false);
+  h.reads[0].finish();
+  await first;
+  assert.match(h.ctx.checklistConfigWarning, /could not refresh/);
+  assert.equal(h.ctx.boardError, '', 'Work Orders themselves loaded successfully');
+  const lastWarning = h.ctx.checklistConfigWarning;
+
+  const second = h.loadWorkOrders(false);
+  assert.equal(h.ctx.checklistConfigWarning, lastWarning, 'Warning persists while retry is in flight');
+  h.reads[1].finish();
+  await second;
+  assert.equal(h.ctx.checklistConfigWarning, lastWarning, 'Repeated rules failure remains visible');
+
+  h.ctx.loadSingleGlobalSetting = originalSettings;
+  const third = h.loadWorkOrders(false);
+  assert.equal(h.ctx.checklistConfigWarning, lastWarning);
+  h.reads[2].finish();
+  await third;
+  assert.equal(h.ctx.checklistConfigWarning, '', 'Verified rules recovery clears warning');
+});
+
+await check('Reload latest retains a quick-edit conflict until successful current data arrives', async () => {
+  const h = fixture();
+  h.ctx.quickEditError = 'A second session changed this Work Order';
+  const failed = h.loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true });
+  assert.match(h.ctx.quickEditError, /second session/, 'Clicking reload leaves conflict visible');
+  h.reads[0].reject(new Error('Still offline'));
+  await failed;
+  assert.match(h.ctx.quickEditError, /second session/, 'Failed reload cannot dismiss conflict');
+  assert.match(h.ctx.boardError, /Still offline/);
+
+  const recovered = h.loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true });
+  assert.match(h.ctx.quickEditError, /second session/);
+  h.reads[1].finish();
+  await recovered;
+  assert.equal(h.ctx.quickEditError, '');
+  assert.equal(h.ctx.boardError, '');
+  assert.ok(board.includes('onClick={() => loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true })}'),
+    'Reload latest action requests clear only on confirmed success');
+});
+
+await check('superseded Reload latest cannot dismiss a conflict after unrelated refresh wins', async () => {
+  const h = fixture();
+  h.ctx.quickEditError = 'Old conflict needs review';
+  const oldReload = h.loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true });
+  const newerRefresh = h.loadWorkOrders(false);
+  h.reads[1].finish();
+  await newerRefresh;
+  h.reads[0].finish();
+  await oldReload;
+  assert.match(h.ctx.quickEditError, /needs review/);
+});
+
 await check('conflicted quick edit releases save lock and refreshes latest state', async () => {
   const h = fixture();
   h.externalUpdate({ sip_revisit_date: later });
