@@ -17,6 +17,7 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
     locality_count:0, office_count:0, recorded_staff_verified_offices:0,
     office_identity_review:0, profile_link_review:0, canonical_office_identity_missing:0,
     verification_provenance_review:0, authority_roles_review:0, canonical_electrical_role_copy_review:0,
+    canonical_office_identity_malformed:0,
     electrical_issuer_assignments:0, electrical_inspection_assignments:0
   });
   const states = { OH:counters(), KY:counters() }, reviews = [];
@@ -66,9 +67,14 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
         flags.push('office_identity_review');
       if (verified && flaggedLinks.has(locality.id))
         flags.push('profile_link_review');
-      // An optional canonical government-office ID improves normalization, but does not prove authority.
-      if (verified && !clean(office?.government_office_id))
-        flags.push('canonical_office_identity_missing');
+      // Track identity gaps on reviewed offices and any explicitly assigned electrical role.
+      // Missing and malformed IDs remain unresolved; never repair them by trimming.
+      const canonical = office?.government_office_id;
+      const identityTracked = verified || [...specificElectrical].some(role => roles.includes(role));
+      const missingCanonical = canonical == null || (typeof canonical === 'string' && !canonical.trim());
+      const malformedCanonical = !missingCanonical && (typeof canonical !== 'string' || canonical !== canonical.trim());
+      if (identityTracked && missingCanonical) flags.push('canonical_office_identity_missing');
+      if (identityTracked && malformedCanonical) flags.push('canonical_office_identity_malformed');
       if (verified && (!clean(office?.authority_verified_by) || !validDateTime(office?.authority_verified_at) ||
           !clean(office?.authority_verification_notes)))
         flags.push('verification_provenance_review');
@@ -81,6 +87,8 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
         office_index:index,office_id:id,office_name:name || 'Unnamed office',
         government_office_id:clean(office?.government_office_id),duplicate_electrical_roles:duplicateElectricalRoles,
         duplicate_electrical_copy_counts:duplicateElectricalCopyCounts,
+        missing_canonical_office_id:identityTracked && missingCanonical,
+        malformed_canonical_office_id:identityTracked && malformedCanonical,
         recorded_staff_verified:verified,
         authority_roles:roles.filter(role => typeof role === 'string'),
         link_flags:flags.includes('profile_link_review') ? flaggedLinks.get(locality.id) : [],
