@@ -36,7 +36,7 @@ export default function SelectorSourceOfficeReviewLookup({profile,document,api=b
        <p>Canonical office ID: {row.office_id||'not recorded'}. Physical PDF page: {row.physical_page||'not recorded'}.</p>
        <p><strong>{describeSourceOfficeReview(row).label}</strong>. Latest review source ID: {row.latest_source_id||'not recorded'}.</p>
        <p>Next staff action: {describeSourceOfficeReview(row).action}</p>
-       <p className="text-xs">Evidence check: {row.status.replaceAll('_',' ')}. Source-linked and latest event IDs refer to the same exact relationship; an older record does not establish current authority.</p>
+       <p className="text-xs">Evidence check: {row.status.replaceAll('_',' ')}. An older record does not establish current authority. If the latest event cannot be established, do not treat the source-linked review as the latest decision.</p>
        {row.review_ids.length>1&&<p>Recorded relationship event IDs: {row.review_ids.join(' · ')}. Later events may revoke or supersede the original source relationship.</p>}
      </div>)}
      <p>Even a recorded source reference is not current electrical office approval. Ask authorized staff to examine source, office and covered-area evidence before making an official responsibility decision.</p>

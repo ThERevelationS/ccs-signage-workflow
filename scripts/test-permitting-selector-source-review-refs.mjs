@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readSavedSourceOfficeReviewReferences as read} from '../src/components/permitting/selectorSourceOfficeReviewReferences.mjs';
+import {readSavedSourceOfficeReviewReferences as read,describeSourceOfficeReview as describe} from '../src/components/permitting/selectorSourceOfficeReviewReferences.mjs';
 
 const H='a'.repeat(64),T='b'.repeat(64);
 const document=()=>({id:'local-doc',url:'https://gov.example/electrical.pdf',
@@ -125,4 +125,32 @@ test('no matching electrical review events is an explicit no-visible-review resu
  assert.deepEqual(r.items,[]);
  assert.equal(r.status,'recorded_history_read');
  assert.match(r.notice,/historical references only/);
+});
+
+test('original source-linked review follows sequence rather than record ID order',async()=>{
+ const p={...profile(),office_authority_review_state:{status:'complete',committed_sequence:2}};
+ const f=fixture({p,events:[event({id:'a-later',sequence:2}),event({id:'z-original'})]});
+ const r=await read(f.api,profile(),document());
+ assert.equal(r.items[0].review_id,'z-original');
+ assert.equal(r.items[0].latest_review_id,'a-later');
+});
+test('staff explanations preserve uncertainty and conflict ahead of source replacement',()=>{
+ for(const status of ['uncommitted_or_uncertain','ambiguous_history','source_identity_conflict','malformed_review','invalid_relation_key']){
+  assert.doesNotMatch(describe({status,source_replaced:true}).label,/superseded|recorded$/);
+ }
+ assert.match(describe({status:'revoked',source_replaced:true}).label,/revoked/);
+ assert.match(describe({status:'no_visible_source',source_replaced:true}).label,/superseded/);
+ assert.match(describe({status:'no_visible_source',source_replaced:true}).action,/not checked/);
+ assert.match(describe({status:'covered_area_review'}).action,/service area/);
+ assert.match(describe({status:'source_snapshot_changed'}).action,/Refresh/);
+ assert.match(describe({status:'unknown'}).label,/cannot currently be established/);
+ assert.match(describe({status:'recorded_source_reference'}).action,/current official evidence/);
+});
+test('replacement remains superseded and later pending event remains uncertain',async()=>{
+ for(const committed_sequence of [1,2]){
+  const f=fixture({p:{...profile(),office_authority_review_state:{status:'complete',committed_sequence}},
+   events:[event(),event({id:'later',sequence:2,source_document_id:'replacement-source'})]});
+  const r=await read(f.api,profile(),document());
+  assert.match(describe(r.items[0]).label,committed_sequence===1?/cannot currently be established/:/superseded/);
+ }
 });

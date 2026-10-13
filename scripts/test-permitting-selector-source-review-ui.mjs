@@ -65,3 +65,20 @@ test('switching exact document identity removes previous result and does not aut
  assert.equal(calls,1);
  await act(async()=>tree.unmount());
 });
+
+test('each role displays actionable superseded or conflicted history without extra reads',async()=>{
+ let calls=0,tree;
+ const read=async()=>{calls++;return {status:'recorded_history_read',document_id:'doc-1',source_id:'catalog-1',notice:'History only',items:[
+  {role:'electrical_permit',review_id:'issuer-original',latest_review_id:'issuer-later',status:'no_visible_source',source_replaced:true,latest_source_id:'replacement',review_ids:['issuer-original','issuer-later']},
+  {role:'electrical_inspection',review_id:'inspector-original',latest_review_id:'',status:'ambiguous_history',review_ids:['inspector-original','duplicate']}
+ ]};};
+ await act(async()=>{tree=Renderer.create(React.createElement(View,{profile,document,read}));});
+ assert.equal(calls,0);
+ await act(async()=>buttons(tree)[0].props.onClick());
+ const view=JSON.stringify(tree.toJSON());
+ for(const phrase of ['Electrical permit issuer','Electrical inspection provider','Original source relationship superseded','Conflicting or incomplete review identity','Next staff action','not checked','duplicate source or office IDs','Latest committed related event ID'])
+  assert.ok(view.includes(phrase),phrase);
+ assert.equal(calls,1);
+ assert.equal(tree.root.findByProps({role:'status'}).props['aria-live'],'polite');
+ await act(async()=>tree.unmount());
+});

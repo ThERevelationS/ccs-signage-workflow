@@ -2609,11 +2609,11 @@ async function pushDataset(
 
   const orderRemoteVerifiedIds = new Set<string>();
   if (dataset === 'orders' && deferredOrderVerification.size) {
-    for (const [recordId, verification] of deferredOrderVerification) {
-      if (!verification.requiresRemoteWrite) orderRemoteVerifiedIds.add(recordId);
-    }
-    const remoteChecks = [...deferredOrderVerification.entries()]
-      .filter(([, verification]) => verification.requiresRemoteWrite);
+    // An unchanged Smartsheet row still requires a NEW exact-ID read-back:
+    // the planning snapshot may be stale if an editor changed the row while
+    // Save & Sync was running. Never clear a durable local pending marker on
+    // the strength of the earlier planning GET alone.
+    const remoteChecks = [...deferredOrderVerification.entries()];
     if (remoteChecks.length) {
       try {
         if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
@@ -2627,15 +2627,22 @@ async function pushDataset(
         });
         await reportOrderProgress({
           phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.6,
-          item_label: `Verifying ${remoteChecks.length} written Order${remoteChecks.length === 1 ? '' : 's'}`,
-          detail: 'Re-reading permanent Smartsheet rows before Base44 can mark them complete',
+          item_label: `Verifying ${remoteChecks.length} Order${remoteChecks.length === 1 ? '' : 's'}`,
+          detail: 'Fresh permanent-row read-back, including Orders requiring no Smartsheet write',
         });
         const verificationResult = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
         if (String(verificationResult.body?.id ?? '') !== sheetId) {
           throw new Error('Smartsheet returned a different sheet during Order write verification.');
         }
-        const freshRows = new Map(normalizeSheetRows(verificationResult.body)
-          .map((row: any) => [String(row.id), row]));
+        const returnedRows = normalizeSheetRows(verificationResult.body);
+        const requestedRowIds = new Set(rowIds);
+        const freshRows = new Map(returnedRows.map((row: any) => [String(row.id), row]));
+        if (requestedRowIds.size !== remoteChecks.length ||
+            returnedRows.length !== requestedRowIds.size ||
+            freshRows.size !== requestedRowIds.size ||
+            returnedRows.some((row: any) => !requestedRowIds.has(String(row.id)))) {
+          throw new Error('Smartsheet returned incomplete, duplicate, or unrelated Order rows during verification.');
+        }
         for (let verifyIndex = 0; verifyIndex < remoteChecks.length; verifyIndex++) {
           const [recordId, verification] = remoteChecks[verifyIndex];
           const sourceRecord = pendingRecords.find((candidate: any) => String(candidate.id) === String(recordId));
@@ -2659,7 +2666,7 @@ async function pushDataset(
         const detail = err?.message || 'remote verification failed';
         for (const [recordId] of remoteChecks) {
           orderFailedRecordIds.add(recordId);
-          errors.push(recordId + ': Smartsheet write outcome could not be verified (' +
+          errors.push(recordId + ': Smartsheet row values could not be freshly verified (' +
             detail + '). The Order remains queued.');
         }
       }

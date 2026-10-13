@@ -85,7 +85,7 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
  const related=events.filter(e=>keys.has(e.relation_key));
  // A missing relation key must never be resolved by office name or source URL.
  const malformed=selected.filter(e=>!valid(e.relation_key)).map(e=>({
-   role:e.role,review_id:e.id,latest_review_id:e.id,office_id:e.office_snapshot?.government_office_id||'',
+   role:e.role,review_id:e.id,latest_review_id:'',office_id:e.office_snapshot?.government_office_id||'',
    status:'invalid_relation_key',physical_page:e.role_proof?.physical_page||null,
    latest_source_id:e.source_document_id,review_ids:[e.id]}));
  if(related.some(e=>!ROLES.includes(e.role))||
