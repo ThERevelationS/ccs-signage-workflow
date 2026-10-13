@@ -54,7 +54,10 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
   if (!reference || !Array.isArray(reference.rows) || reference.source_rows !== reference.rows.length) throw Error('Invalid official inventory');
   const keys = new Set();
   for (const r of reference.rows) {
-    if (!r.key || keys.has(r.key) || !['OH','KY'].includes(r.state)) throw Error('Invalid official inventory identity');
+    if (!r || typeof r.key!=='string' || !r.key.trim() || r.key!==r.key.trim() || keys.has(r.key)
+      || !['OH','KY'].includes(r.state) || typeof r.name!=='string' || !r.name.trim()) throw Error('Invalid official inventory identity');
+    if (!['candidate','status_relationship_review','statistical_reference'].includes(r.category)) throw Error('Invalid official inventory category');
+    if (r.category==='candidate' && !['county','city','village','township'].includes(r.type)) throw Error('Invalid official inventory candidate type');
     keys.add(r.key);
   }
   const candidates = reference.rows.filter(r => r.category === 'candidate');

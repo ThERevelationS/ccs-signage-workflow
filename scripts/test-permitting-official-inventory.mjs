@@ -87,3 +87,11 @@ assert.ok(r.status_review_items.every(row=>row.category==='status_relationship_r
 assert.ok(!r.profiles.missing.some(row=>r.status_review_items.some(item=>item.key===row.key)));
 assert.equal(JSON.stringify(ref),referenceBefore);
 assert.notEqual(r.status_review_items[0],ref.rows.find(row=>row.key===r.status_review_items[0].key));
+
+for(const bad of [null,{...base.rows[0],key:'  a '},{...base.rows[0],key:42},{...base.rows[0],name:''},{...base.rows[0],name:'   '},{...base.rows[0],state:'TN'}])
+ assert.throws(()=>reconcileOfficialInventory([],[],{source_rows:1,rows:[bad]}),/Invalid official inventory identity/);
+for(const category of [undefined,'candidate_typo','',null])
+ assert.throws(()=>reconcileOfficialInventory([],[],{source_rows:1,rows:[{...base.rows[0],category}]}),/Invalid official inventory category/);
+assert.throws(()=>reconcileOfficialInventory([],[],{source_rows:1,rows:[{...base.rows[0],type:'invented'}]}),/candidate type/);
+r=reconcileOfficialInventory([],[],ref);
+assert.equal(r.candidate_counts.OH+r.candidate_counts.KY+r.status_review_count+r.statistical_reference_count,r.source_rows);
