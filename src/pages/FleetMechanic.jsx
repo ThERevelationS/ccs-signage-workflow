@@ -422,6 +422,14 @@ export default function FleetMechanic() {
     if (estimateRecovery?.workOrderId === selected.id) { setActionError("Current server ownership must be checked before another estimate save or submit."); return; }
     const currentEstimate = estimateByWorkOrder[selected.id] || null;
     if (currentEstimate && currentEstimate.visibility !== "mechanic") { setActionError("This estimate is managed by CCS or another mechanic and cannot be viewed or overwritten here."); return; }
+    // A mechanic may switch work orders or a fresh portal payload may arrive
+    // while either of the two estimate writes is in flight. The original
+    // callback retains its old selected row; never let that stale callback
+    // submit again or project its estimate into another job's editor.
+    const workOrderId = selected.id;
+    const openedPortalEpoch = portalAppliedEpochRef.current;
+    const requestStillCurrent = () => selectedWorkOrderRef.current === workOrderId &&
+      portalAppliedEpochRef.current === openedPortalEpoch;
     setBusy(submit ? "estimate-submit" : "estimate-save"); setActionError(""); setSavedMessage("");
     try {
       const payloadEstimate = {
@@ -431,6 +439,10 @@ export default function FleetMechanic() {
       };
       const saved = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
       if (saved?.data?.error) throw new Error(saved.data.error);
+      if (!requestStillCurrent()) {
+        await refreshEstimateState(workOrderId, "Save Draft finished after the selected work order or portal view changed. Submit Estimate was not attempted.", true);
+        return;
+      }
       let finalEstimate = saved?.data?.estimate;
       let resultMessage = saved?.data?.concurrently_updated
         ? "CCS updated this estimate after Save Draft. Review its current status before editing again."
@@ -439,10 +451,15 @@ export default function FleetMechanic() {
         // Submit is a second independent write. Never automatically submit the
         // newer CCS version when it displaced the version just saved.
         if (saved?.data?.concurrently_updated) {
-          throw new Error("CCS updated the estimate during Save Draft. Submit was not attempted; review current server state before submitting.");
+          await refreshEstimateState(workOrderId, "Save Draft finished, but CCS updated the estimate before Submit. Submit Estimate was not attempted.", true);
+          return;
         }
         const submitted = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
         if (submitted?.data?.error) throw new Error(submitted.data.error);
+        if (!requestStillCurrent()) {
+          await refreshEstimateState(workOrderId, "Submit Estimate finished after the selected work order or portal view changed. Review the current CCS decision; nothing was resubmitted.", true);
+          return;
+        }
         finalEstimate = submitted?.data?.estimate;
         if (submitted?.data?.concurrently_updated) {
           resultMessage = "CCS updated the estimate during submission. Review the current status before making another change.";
@@ -458,11 +475,11 @@ export default function FleetMechanic() {
       }
       setSavedMessage(resultMessage);
       setEstimateForm(estimateSeed({...finalEstimate,visibility:"mechanic"}));
-      await refreshEstimateState(selected.id, `${resultMessage} Current server state could not be refreshed.`, false);
+      await refreshEstimateState(workOrderId, `${resultMessage} Current server state could not be refreshed.`, false);
     } catch (e) {
       const reason = e?.message || "Repair estimate request could not be confirmed.";
-      setSavedMessage("");
-      await refreshEstimateState(selected.id, `Repair estimate request could not be confirmed: ${reason}.`, true);
+      if (selectedWorkOrderRef.current === workOrderId) setSavedMessage("");
+      await refreshEstimateState(workOrderId, `Repair estimate request could not be confirmed: ${reason}.`, true);
     } finally { setBusy(""); }
   };
 
