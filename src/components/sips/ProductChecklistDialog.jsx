@@ -241,11 +241,10 @@ export default function ProductChecklistDialog({
 
   const loadData = async () => {
     if (saveInFlightRef.current) return;
-    saveFailureFocusPendingRef.current = false;
-    failedRevisitSelectionRef.current = undefined;
     const requestId = ++loadDataRequestRef.current;
     loadInFlightRef.current = true;
-    resetOtherPopupForReload();
+    // Keep unsaved editor text, custom status drafts and retry choices until
+    // the replacement Work Order is verified. A failed reload must not erase them.
     setIsLoading(true);
     try {
       const [freshWO, usersData, dropdownsSetting, productTypesSetting] = await Promise.all([
@@ -344,6 +343,19 @@ export default function ProductChecklistDialog({
         };
       });
       
+      // Commit reload cleanup only after the new checklist has been read and
+      // reconstructed successfully. On failure, all local drafts remain intact.
+      saveFailureFocusPendingRef.current = false;
+      failedRevisitSelectionRef.current = undefined;
+      resetOtherPopupForReload();
+      setEditingItemId(null);
+      setEditingItemText("");
+      setEditingProductName(null);
+      setEditingProductNameText("");
+      setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+      setNewItemText("");
+      setShowAddGeneralChecklist(false);
+      setNewGeneralChecklistText("");
       setChecklist(reconstructedChecklist);
       setLoadedUiChecklistSnapshot(cloneLoadedValue(reconstructedChecklist) || []);
 
@@ -1465,8 +1477,10 @@ export default function ProductChecklistDialog({
   );
 
   if (isLoading) {
+    // Previous checklist drafts may still exist while a retry runs. Do not
+    // allow Escape or backdrop dismissal to bypass discard confirmation.
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={() => {}}>
         <DialogContent className="clay-card border-none">
           <div className="flex items-center justify-center p-8">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -1734,15 +1748,8 @@ export default function ProductChecklistDialog({
     setDiscardWarning(null);
     cancelPendingNavigationFocus();
     if (action === "reload") {
-      // Reload must not leave an editor pointing to a row from the prior snapshot.
-      setEditingItemId(null);
-      setEditingItemText("");
-      setEditingProductName(null);
-      setEditingProductNameText("");
-      setNewItemInput({ show: false, parentId: null, type: null, productName: null });
-      setNewItemText("");
-      setShowAddGeneralChecklist(false);
-      setNewGeneralChecklistText("");
+      // Retain drafts through the request; only a verified replacement may
+      // discard them. If loading fails, Retry is safe to attempt again.
       loadData();
     } else if (action === "close") {
       onClose();
