@@ -516,10 +516,17 @@ export default function UserManagement() {
       if (!ownsHrSave()) return false;
       // Only a verified server receipt may advance the HR compare-and-swap
       // baseline. Without it, another save could overwrite newer HR data.
+      // Match the backend's structural comparison: object key order is not
+      // an HR change, while array order and actual values still matter.
+      const normalizeHr = value => Array.isArray(value) ? value.map(normalizeHr) :
+        value && typeof value === "object"
+          ? Object.fromEntries(Object.keys(value).sort().map(key => [key, normalizeHr(value[key])]))
+          : value;
       if (saved?.id !== record.id || saved?.email !== record.email ||
           !saved?.updated_date || !saved?.hr_data ||
           typeof saved.hr_data !== "object" || Array.isArray(saved.hr_data) ||
-          JSON.stringify(saved.hr_data) !== JSON.stringify(hrData)) {
+          JSON.stringify(normalizeHr(saved.hr_data)) !== JSON.stringify(normalizeHr(hrData))) {
+        setUserDirectoryError(true);
         throw new Error("The saved HR record could not be verified. Reload the directory before saving again.");
       }
       // A directory read started before the write must not reinstate its
