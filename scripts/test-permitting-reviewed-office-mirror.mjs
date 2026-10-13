@@ -37,6 +37,13 @@ test('exact profile link exists but canonical office copy does not',()=>{
  assert.equal(r.items[0].status,'no_saved_office');
 });
 
+test('duplicate canonical office copies do not count as a unique mirrored relationship',()=>{
+ const r=run([locality('l',{offices:[office({id:'one'}),office({id:'two'})]})]);
+ assert.equal(r.items[0].status,'ambiguous_office_copy');
+ assert.deepEqual(r.items[0].office_copy_ids,['one','two']);
+ assert.equal(r.states.OH.saved_copy_reference_only,0);
+});
+
 test('roles cannot be inferred from office name, type, broad electrical or opposite electrical responsibility',()=>{
  for (const assigned of [['electrical_inspection'],['electrical'],[]]) {
    const r=run([locality('l',{offices:[office({authority_roles:assigned})]})]);
