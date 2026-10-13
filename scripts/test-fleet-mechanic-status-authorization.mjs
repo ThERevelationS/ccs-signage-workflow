@@ -95,7 +95,7 @@ test("repair-estimate writes reread Fleet version and equipment around the live 
 });
 
 test("uncertain estimate writes preserve the existing CAS and require read-only recovery", () => {
-  const helper = between("async function mechanicEstimateWriteWithUncertainOutcome(", "\n\nasync function mechanicCommittedEstimateResponse",0);
+  const helper = between("async function mechanicEstimateWriteWithUncertainOutcome<T>(", "\n\nasync function mechanicCommittedEstimateResponse",0);
   assert.match(helper,/return await write\(\)/);
   assert.match(helper,/error\?\.code === 'FLEET_RECORD_CONFLICT'/);
   assert.match(helper,/Number\(error\?\.status\) === 409/);
