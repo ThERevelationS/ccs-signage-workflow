@@ -9,6 +9,7 @@ import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStag
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
 import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans, staleSalesRemotePutSnapshotIds } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
+import { verifiedSalesReadbackRows } from '../../shared/smartsheetSalesReadbackEvidence.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
 import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
@@ -2507,11 +2508,10 @@ async function pushDataset(
           exclude: 'nonexistentCells',
         });
         const verificationResult = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
-        if (String(verificationResult.body?.id ?? '') !== sheetId) {
-          throw new Error('Smartsheet returned a different sheet during Sales write verification.');
-        }
-        const freshRows = new Map(normalizeSheetRows(verificationResult.body)
-          .map((row: any) => [String(row.id), row]));
+        // Require exact sheet, mapped columns and unique requested rows.
+        // A partial/duplicate response is not evidence that Sales committed.
+        const freshRows = verifiedSalesReadbackRows(
+          verificationResult.body, sheetId, rowIds, columnIds);
         for (const [recordId, verification] of batch) {
           const freshRow: any = freshRows.get(verification.rowId);
           const actualSnapshot = freshRow ? buildSalesPullSnapshot(freshRow, bindings) : null;
