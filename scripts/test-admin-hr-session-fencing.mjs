@@ -32,6 +32,7 @@ function adminFixture() {
     activeEditingUser:{current:older},
     hrSaveOwner:{current:null},
     hrSaveInFlight:{current:false},
+    hrReloadInFlight:{current:false},
     userLoadSequence:{current:0},
     userUpdateInFlight:{current:false},
     deletionInFlight:{current:false},
@@ -187,7 +188,7 @@ test("Admin HR record refresh preserves the draft while other shared form consum
 test("Admin session transition revokes HR writes and prevents account saves while HR write runs",()=>{
   assert.match(admin,/const hrSaveInFlight = useRef\(false\);\s*const hrSaveOwner = useRef\(null\)/);
   assert.match(effect,/hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*setHrMutationSaving\(false\)/);
-  assert.match(effect,/return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false/);
+  assert.match(effect,/return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false/);
   assert.match(admin,/if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current/);
   assert.match(admin,/saveScope=\{sessionToken\}/);
   assert.match(admin,/disabled=\{userMutationSaving \|\| hrMutationSaving \|\| isLoading/);
