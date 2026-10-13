@@ -118,10 +118,12 @@ await act(async () => { renderer.update(React.createElement(Panel, { sessionToke
 assert.equal(calls.length, 2);
 assert.equal(calls[1].payload.session_token, "synthetic-admin-two");
 assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /One clean, idle company coordinator/);
-await act(async () => { renderer.root.findByProps({
+const pendingRefresh = renderer.root.findByProps({
   "aria-label": "Refresh manager correction coordinator status",
-}).props.onClick(); });
-assert.equal(calls.length, 2, "Refresh must be disabled while pending");
+});
+assert.equal(pendingRefresh.props.disabled, true,
+  "Refresh is disabled while a server check is pending");
+assert.equal(calls.length, 2);
 await act(async () => { calls[1].resolve({ data: heldData }); });
 assert.match(JSON.stringify(renderer.toJSON()), /Needs investigation/);
 assert.match(JSON.stringify(renderer.toJSON()), /synthetic-review-claim/);
