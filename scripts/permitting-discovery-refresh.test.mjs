@@ -20,7 +20,7 @@ function harness({profile={},ai={},pages={}}={}) {
     archiveKnownJurisdictionSource:async()=>{throw Error('test must defer archive');}};
   const fn=new Function(...Object.keys(deps),compiled+'; return refreshJurisdictionRecord;')(...Object.values(deps));
   const sdk={asServiceRole:{entities:{JurisdictionProfile:{get:async()=>initial}},functions:{invoke:async()=>{researchCalls++;return {data:ai};}}}};
-  return {run:(discovery=false, recoverFetchFailures=false)=>fn(sdk,'fixture',undefined,discovery,false,false,recoverFetchFailures),fetched,get written(){return written;},get researchCalls(){return researchCalls;},initial};
+  return {run:(discovery=false, recoverFetchFailures=false,rescanSourceUrl=null)=>fn(sdk,'fixture',undefined,discovery,false,false,recoverFetchFailures,null,silentScanReporter,rescanSourceUrl),fetched,get written(){return written;},get researchCalls(){return researchCalls;},initial};
 }
 
 test('actual refresh adds deterministic missing file even when AI already supplied one',async()=>{
@@ -80,6 +80,26 @@ test('actual refresh retry clears successful gap and preserves unrelated pending
  assert.equal(r.jurisdiction.discovery_scan_state.gaps.length,0);
  assert.equal(r.jurisdiction.discovery_scan_state.attempted_pages_total,3);
  assert.ok(r.jurisdiction.documents.some(d=>d.url.endsWith('/sign.pdf')));
+});
+
+test('retained Sharonville selected-page refresh saves guide identity and preserves protected documents on replay',async()=>{
+ const root='https://www.sharonville.org/123/Building-Zoning-and-Planning';
+ const guide='https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026';
+ const html=fs.readFileSync('docs/official-evidence/ohio-sharonville-2026-10-07/building-zoning.html','utf8');
+ const protectedDocs=['manual','pinned','archive_pinned'].map((flag,i)=>({id:'protected-'+i,url:root+'?retained='+i,title:'Staff record',source:flag==='manual'?'manual':'official_page_harvest',...(flag==='manual'?{}:{[flag]:true}),file_url:'stored-'+i,extracted_text:'preserve'}));
+ const h=harness({profile:{name:'Sharonville',permitting_url:root,documents:protectedDocs},pages:{[root]:html}});
+ const r=await h.run(true,false,root);
+ assert.deepEqual(h.fetched,[root]);assert.equal(h.researchCalls,0);assert.equal(r.archival,null);
+ const doc=r.jurisdiction.documents.find(d=>d.url===guide);
+ assert.ok(doc?.id);assert.equal(doc.source,'official_page_harvest');assert.equal(doc.discovery_page_url,root);
+ assert.equal(doc.file_url,undefined);assert.equal(r.discovery_scan.authority_established,false);
+ for(const old of protectedDocs)assert.deepEqual(r.jurisdiction.documents.find(d=>d.id===old.id),old);
+ const replay=harness({profile:r.jurisdiction,pages:{[root]:html}});
+ const second=await replay.run(true,false,root);
+ assert.deepEqual(replay.fetched,[root]);assert.equal(replay.researchCalls,0);
+ const copies=second.jurisdiction.documents.filter(d=>d.url===guide);
+ assert.equal(copies.length,1);assert.equal(copies[0].id,doc.id);
+ for(const old of protectedDocs)assert.deepEqual(second.jurisdiction.documents.find(d=>d.id===old.id),old);
 });
 
 test('failed recovery with empty pending list reports failure and persists only retained progress',async()=>{
