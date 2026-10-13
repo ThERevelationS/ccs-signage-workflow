@@ -17,7 +17,7 @@ async function fixture(role='electrical_permit') {
   const text='Chapter 34, Pilot City. '+excerpt+' Current adopted text.';
   const page={...f.page,text,text_sha256:await sha(text)};
   const review={status:'active',review_id:'scope-1',scope_kind:'named_jurisdiction',named_areas:['Pilot']};
-  f.patchSource({extracted_pages:[page],authority_review:review});
+  f.patchSource({extracted_pages:[page],extracted_text:assembledSourceText(f.source(),[page]),authority_review:review});
   const source=f.source(),profile={id:'profile',state:'OH',name:'Pilot',type:'city',
     office_authority_review_state:{status:'complete',committed_sequence:1}};
   const event={id:'review-1',method:'office-authority-v1',action:'verify',
@@ -74,8 +74,8 @@ test('retained page marked truncated or needing OCR remains unavailable for veri
  }
 });
 test('source snapshot changed, uncertain receipt or latest revocation blocks page reads',async()=>{
- const changed=await fixture();changed.source.verification_status='needs_verification';
- await assert.rejects(checkRetainedElectricalPage(changed.api,changed.candidate()),/Current recorded relationship/);
+ const changed=await fixture(),changedCandidate=changed.candidate();changed.source.verification_status='needs_verification';
+ await assert.rejects(checkRetainedElectricalPage(changed.api,changedCandidate),/Current recorded relationship/);
  const pending=await fixture();const candidate=pending.candidate();
  pending.profile.office_authority_review_state.status='uncertain';
  await assert.rejects(checkRetainedElectricalPage(pending.api,candidate),/Current recorded relationship/);
