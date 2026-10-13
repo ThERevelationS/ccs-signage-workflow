@@ -730,17 +730,34 @@ async function requireCurrentMechanicGrant(Access: any, grantId: string, action:
 }
 
 function isMechanicAccessChangedError(error: unknown) {
-  return String((error as any)?.code || '') === 'FLEET_MECHANIC_ACCESS_REVOKED';
+  return ['FLEET_MECHANIC_ACCESS_REVOKED','FLEET_MECHANIC_RESPONSE_UNVERIFIED'].includes(String((error as any)?.code || ''));
 }
 
-async function mechanicWorkOrderResponse(Access:any, grantId:string, action:string, workOrder:any, payload:any, init:ResponseInit = {}) {
-  await requireCurrentMechanicGrant(Access,grantId,action,String(workOrder?.equipment_id || ''));
-  return json({...payload,work_order:sanitizeWorkOrder(workOrder)},init);
+// Receipt reconciliation and a later legitimate CCS update can replace an
+// earlier Fleet snapshot (including its equipment identity). Never return a
+// mechanic work-order projection from that earlier snapshot.
+async function latestMechanicResponseWorkOrder(WorkOrder:any, snapshot:any) {
+  const id = String(snapshot?.id || '');
+  const latest = id ? await WorkOrder.get(id).catch(()=>null) : null;
+  if (!latest || String(latest.id || '') !== id) {
+    const error:any = new Error('Current Fleet work-order state could not be verified after the mechanic operation. It may have committed; refresh and check its status before retrying.');
+    error.code = 'FLEET_MECHANIC_RESPONSE_UNVERIFIED';
+    error.status = 409;
+    throw error;
+  }
+  return latest;
 }
 
-async function mechanicCommittedWorkOrderResponse(Access:any, grantId:string, action:string, workOrder:any, payload:any) {
-  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,String(workOrder?.equipment_id || ''));
-  return json({...payload,work_order:sanitizeWorkOrder(workOrder)});
+async function mechanicWorkOrderResponse(Access:any, WorkOrder:any, grantId:string, action:string, workOrder:any, payload:any, init:ResponseInit = {}) {
+  const latest = await latestMechanicResponseWorkOrder(WorkOrder,workOrder);
+  await requireCurrentMechanicGrant(Access,grantId,action,String(latest.equipment_id || ''));
+  return json({...payload,work_order:sanitizeWorkOrder(latest)},init);
+}
+
+async function mechanicCommittedWorkOrderResponse(Access:any, WorkOrder:any, grantId:string, action:string, workOrder:any, payload:any) {
+  const latest = await latestMechanicResponseWorkOrder(WorkOrder,workOrder);
+  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,String(latest.equipment_id || ''));
+  return json({...payload,work_order:sanitizeWorkOrder(latest)});
 }
 
 async function mechanicCommittedEstimateResponse(Access:any, grantId:string, action:string, equipmentId:string, estimate:any, payload:any) {
@@ -1068,7 +1085,7 @@ Deno.serve(async (req) => {
         if (!latest || String(latest.id || '') !== id) {
           throw Object.assign(new Error('Current Fleet work-order state could not be verified for this mechanic status response. Refresh and retry.'),{status:409});
         }
-        return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,latest,payload,init);
+        return mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),statusMutationAction,latest,payload,init);
       };
       const requestId = mechanicRequestId(body?.request_id);
       if (!requestId) return json({error:'A valid mechanic request id is required.'},{status:400});
@@ -1173,12 +1190,12 @@ Deno.serve(async (req) => {
         if (String(exactReceipt.payload_fingerprint || '') !== fingerprint) return json({error:'This mechanic request id was already used with different data. Nothing was replayed.'},{status:409});
         if (workOrderHasMechanicReceipt(current,exactReceipt)) {
           await markMechanicReceiptApplied(Receipt,exactReceipt,current,exactReceipt.status !== 'applied');
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,recovered:exactReceipt.status !== 'applied',request_id:requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),action,current,{success:true,reused:true,recovered:exactReceipt.status !== 'applied',request_id:requestId});
         }
         if (exactReceipt.status === 'applied') {
           if (!await verifiedMechanicAppliedReceipt(Receipt,exactReceipt,current))
             return json({error:'This applied mechanic request lacks verified Fleet work-order commit evidence. CCS review is required.'},{status:409});
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,request_id:requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),action,current,{success:true,reused:true,request_id:requestId});
         }
         if (exactReceipt.status === 'started') return json({error:'This mechanic request is still being verified. Check current server state before retrying.'},{status:409});
         return json({error:'This mechanic request previously failed and was not replayed. Check current server state before trying again.'},{status:409});
@@ -1208,7 +1225,7 @@ Deno.serve(async (req) => {
             base44,Access,Receipt,WorkOrder,current,source,String(grant.id || ''),
           );
           if (resolution.status === 'applied') {
-            return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',resolution.work_order || current,{
+            return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'save',resolution.work_order || current,{
               error:'An interrupted mechanic photo retry was confirmed. Refresh the work order before making another change.',
               recovered_previous:true,
             },{status:409});
@@ -1243,7 +1260,7 @@ Deno.serve(async (req) => {
             if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
               await markMechanicReceiptApplied(Receipt,receipt,fresh,true);
               await resolveReusedUploadReceipt(Receipt,receipt);
-              return await mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was confirmed. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
+              return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was confirmed. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
             }
             await failMechanicReceipt(Receipt,WorkOrder,receipt,result.data.error);
             continue;
@@ -1251,14 +1268,14 @@ Deno.serve(async (req) => {
           const updated = result?.data?.work_order || await WorkOrder.get(id);
           await markMechanicReceiptApplied(Receipt,receipt,updated,true);
           await resolveReusedUploadReceipt(Receipt,receipt);
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,updated,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),receiptAction,updated,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
         } catch (error) {
           if (isMechanicAccessChangedError(error)) throw error;
           const fresh = await WorkOrder.get(id).catch(()=>null);
           if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
             await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
             await resolveReusedUploadReceipt(Receipt,receipt);
-            return await mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
+            return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
           }
           await failMechanicReceipt(Receipt,WorkOrder,receipt,error);
         }
@@ -1287,7 +1304,7 @@ Deno.serve(async (req) => {
       const priorRows = await Receipt.filter({operation_key:String(current.mechanic_operation_key || '')});
       if ((priorRows || []).length > 1) return json({error:'Conflicting mechanic operation receipts require CCS review before Save Progress can continue.'},{status:409});
       if (isIdenticalLastAppliedMechanicSave(current,priorRows?.[0] || null,String(grant.id || ''),id,mechanicMutation.fingerprint)) {
-        return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',current,{
+        return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'save',current,{
           success:true,already_applied:true,request_id:mechanicMutation.requestId,
         });
       }
@@ -1362,12 +1379,12 @@ Deno.serve(async (req) => {
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
           await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'start',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
         }
         if (claim.receipt?.status === 'applied') {
           if (!await verifiedMechanicAppliedReceipt(Receipt,claim.receipt,fresh || current))
             return json({error:'The previous applied Start receipt lacks verified Fleet commit evidence. CCS review is required.'},{status:409});
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'start',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
         }
         return json({error:'This mechanic start request is already in progress. Check current server state before retrying.'},{status:409});
       }
@@ -1385,13 +1402,13 @@ Deno.serve(async (req) => {
         }
         const updated = result?.data?.work_order || await WorkOrder.get(id);
         await markMechanicReceiptApplied(Receipt,receipt,updated,false);
-        return await mechanicCommittedWorkOrderResponse(Access,String(grant.id || ''),'start',updated,{success:true,request_id:mechanicMutation.requestId});
+        return await mechanicCommittedWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'start',updated,{success:true,request_id:mechanicMutation.requestId});
       } catch (error) {
         if (isMechanicAccessChangedError(error)) throw error;
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'start',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
         }
         await failMechanicReceipt(Receipt,WorkOrder,receipt,error);
         throw error;
@@ -1438,12 +1455,12 @@ Deno.serve(async (req) => {
         if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
           await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
           await resolveReusedUploadReceipt(Receipt,claim.receipt);
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'save',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
         }
         if (claim.receipt?.status === 'applied') {
           if (!await verifiedMechanicAppliedReceipt(Receipt,claim.receipt,fresh || current))
             return json({error:'The previous applied Save receipt lacks verified Fleet commit evidence. CCS review is required.'},{status:409});
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'save',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
         }
         return json({error:'This mechanic progress request is already in progress. Check current server state before retrying.'},{status:409});
       }
@@ -1489,14 +1506,14 @@ Deno.serve(async (req) => {
         const updated = result?.data?.work_order || await WorkOrder.get(id);
         await markMechanicReceiptApplied(Receipt,receipt,updated,false);
         await resolveReusedUploadReceipt(Receipt,receipt);
-        return await mechanicCommittedWorkOrderResponse(Access,String(grant.id || ''),'save',updated,{success:true,request_id:mechanicMutation.requestId});
+        return await mechanicCommittedWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'save',updated,{success:true,request_id:mechanicMutation.requestId});
       } catch (error) {
         if (isMechanicAccessChangedError(error)) throw error;
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
           await resolveReusedUploadReceipt(Receipt,receipt);
-          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
+          return await mechanicWorkOrderResponse(Access,WorkOrder,String(grant.id || ''),'save',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
         }
         await failMechanicReceipt(Receipt,WorkOrder,receipt,error);
         throw error;
