@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { setPassword as setPasswordFn } from "@/functions/setPassword";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -117,8 +117,19 @@ export default function UserManagement() {
   const hrReloadOwner = useRef(null);
   const hrReloadInFlight = useRef(false);
   const [hrReloadLoading, setHrReloadLoading] = useState(false);
+  const [hasUnsavedHrData, setHasUnsavedHrData] = useState(false);
+  const hrDraftStatus = useRef(null);
+  const [pendingHrExit, setPendingHrExit] = useState(null);
   const activeEditingUser = useRef(editingUser);
   activeEditingUser.current = editingUser;
+  const recordHrDraftStatus = useCallback(status => {
+    const current = activeEditingUser.current;
+    if (!status || activeSessionToken.current !== status.saveScope ||
+        current?.id !== status.id || current?.email !== status.email) return;
+    hrDraftStatus.current = { id: status.id, email: status.email,
+      sessionToken: status.saveScope, dirty: status.dirty === true };
+    setHasUnsavedHrData(previous => previous === status.dirty ? previous : status.dirty === true);
+  }, []);
   const [deletionRequests, setDeletionRequests] = useState([]);
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestsError, setDeletionRequestsError] = useState(false);
@@ -157,6 +168,9 @@ export default function UserManagement() {
     hrReloadOwner.current = null;
     hrReloadInFlight.current = false;
     setHrReloadLoading(false);
+    hrDraftStatus.current = null;
+    setHasUnsavedHrData(false);
+    setPendingHrExit(null);
     // A previous session may have a deletion in flight. The server decides
     // its outcome; only the owning session may change this confirmation UI.
     deletionOwner.current = null;
@@ -222,6 +236,7 @@ export default function UserManagement() {
     return () => {
       hrReloadOwner.current = null;
       hrReloadInFlight.current = false;
+      hrDraftStatus.current = null;
       hrSaveOwner.current = null;
       hrSaveInFlight.current = false;
       deletionOwner.current = null;
