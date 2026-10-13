@@ -7,7 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
-import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds } from '../../shared/smartsheetSalesConflictResolution.mjs';
+import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -2246,9 +2246,55 @@ async function pushDataset(
       }
     }
   }
-  const heldApprovedSalesRowIds = new Set([...salesFailedRecordIds]
-    .map((id) => approvedSalesPlanSnapshots.get(id)?.smartsheet_row_id)
-    .filter((id) => id != null).map(String));
+  // Ordinary Sales PUTs need the same fresh local revision preflight as
+  // approved decisions. A long-running plan must not overwrite a newer
+  // employee edit in Smartsheet simply because its final Base44 CAS fails.
+  // Reads are bounded and read-only; incomplete reads hold only that batch.
+  const salesPrewriteUnverifiedRows = new Set<string>();
+  if (dataset === 'sales' && deferredSmartsheetWrites.length) {
+    const outgoingRowIds = new Set(deferredSmartsheetWrites.map((row: any) => String(row.id)));
+    const plans = [...deferredSalesVerification.entries()]
+      .filter(([, verification]) => outgoingRowIds.has(String(verification.rowId)));
+    const trackedRows = new Set(plans.map(([, verification]) => String(verification.rowId)));
+    for (const rowId of outgoingRowIds) {
+      if (!trackedRows.has(rowId)) {
+        salesPrewriteUnverifiedRows.add(rowId);
+        errors.push('Sales Smartsheet row ' + rowId +
+          ': No versioned WorkOrder prewrite plan was found. No remote PUT was sent.');
+      }
+    }
+    const plannedById = new Map(pendingRecords.map((row: any) => [String(row.id), row]));
+    for (let start = 0; start < plans.length; start += 100) {
+      const batch = plans.slice(start, start + 100);
+      const ids = batch.map(([id]) => id);
+      try {
+        if (typeof options?.assertRunOwnership !== 'function') {
+          throw new Error('Sales sync run ownership is unavailable');
+        }
+        await options.assertRunOwnership();
+        const fresh = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          query: { id: { $in: ids } }, sort: 'id',
+          label: 'Sales remote PUT local revision preflight',
+        });
+        const latestById = new Map(fresh.map((row: any) => [String(row.id), row]));
+        for (const id of staleSalesRemotePutPlans(batch, plannedById, latestById, sheetId)) {
+          salesFailedRecordIds.add(id);
+          errors.push(id + ': Sales WorkOrder changed or its permanent row identity could not be verified immediately before Smartsheet PUT. Remote write held; reload before retrying.');
+        }
+      } catch {
+        for (const id of ids) {
+          salesFailedRecordIds.add(id);
+          errors.push(id + ': Fresh Sales WorkOrder prewrite revision check was unavailable. Remote write held; retry after verifying the record.');
+        }
+      }
+    }
+  }
+  const heldApprovedSalesRowIds = new Set([...salesPrewriteUnverifiedRows,
+    ...[...salesFailedRecordIds].map((id) =>
+      deferredSalesVerification.get(id)?.rowId ||
+      approvedSalesPlanSnapshots.get(id)?.smartsheet_row_id)
+      .filter((id) => id != null).map(String)]);
   const eligibleSmartsheetWrites = dataset === 'sales'
     ? deferredSmartsheetWrites.filter((row: any) => !heldApprovedSalesRowIds.has(String(row.id)))
     : deferredSmartsheetWrites;
