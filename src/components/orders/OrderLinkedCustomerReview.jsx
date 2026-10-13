@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { previewOrderCustomerDecision } from '@/components/orders/orderSaveSync';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { orderCustomerReviewRowState } from '@/components/orders/orderLinkedCustomerReviewPresentation.mjs';
@@ -6,9 +7,49 @@ import { orderCustomerReviewRowState } from '@/components/orders/orderLinkedCust
 // Read-only snapshot of the last authenticated Order pull; no mutation buttons
 // or inferred job reassignment. Reviewers reconcile in their normal workflows.
 export default function OrderLinkedCustomerReview({
-  count = 0, items = [], orders = [], workOrders = [],
+  count = 0, items = [], orders = [], workOrders = [], isAdmin = false, sessionToken = '',
 }) {
   const [open, setOpen] = useState(false);
+  const [choices, setChoices] = useState({});
+  const [previews, setPreviews] = useState({});
+  const [busyId, setBusyId] = useState('');
+  const previewEpochRef = useRef(0);
+  const choose = (orderId, choice) => {
+    previewEpochRef.current += 1;
+    setBusyId('');
+    setChoices(prev => ({ ...prev, [orderId]: choice }));
+    setPreviews(prev => ({ ...prev, [orderId]: null }));
+  };
+  const verify = async item => {
+    if (!isAdmin || !sessionToken || busyId || !choices[item.orderId]) return;
+    const epoch = ++previewEpochRef.current;
+    const decision = choices[item.orderId];
+    setBusyId(item.orderId);
+    setPreviews(prev => ({ ...prev, [item.orderId]: null }));
+    try {
+      const result = await previewOrderCustomerDecision({ sessionToken, review: item, decision });
+      if (previewEpochRef.current === epoch) {
+        setPreviews(prev => ({ ...prev, [item.orderId]: { ok: true, message: result.result } }));
+      }
+    } catch (error) {
+      if (previewEpochRef.current === epoch) {
+        setPreviews(prev => ({ ...prev, [item.orderId]: {
+          ok: false, message: error?.response?.data?.error || error?.message || 'Fresh source verification failed.',
+        } }));
+      }
+    } finally {
+      if (previewEpochRef.current === epoch) setBusyId('');
+    }
+  };
+  const closeReview = nextOpen => {
+    if (!nextOpen) {
+      previewEpochRef.current += 1;
+      setBusyId('');
+      setPreviews({});
+      setChoices({});
+    }
+    setOpen(nextOpen);
+  };
   if (!Number.isSafeInteger(count) || count < 1) return null;
 
   return (
@@ -25,7 +66,7 @@ export default function OrderLinkedCustomerReview({
           Compare names
         </Button>
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={closeReview}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order customer-name conflicts · review only</DialogTitle>
@@ -69,6 +110,37 @@ export default function OrderLinkedCustomerReview({
                       <p className="break-all text-gray-500 mt-1">ID: {item.workOrderId}</p>
                     </div>
                   </div>
+                  {isAdmin && (
+                    <div className="border-t pt-2 space-y-2">
+                      <p className="font-semibold text-xs text-gray-700">Choose a possible resolution to verify (no changes will be applied)</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm"
+                          variant={choices[item.orderId] === 'keep_linked_job' ? 'default' : 'outline'}
+                          disabled={Boolean(busyId)}
+                          onClick={() => choose(item.orderId, 'keep_linked_job')}>
+                          Keep linked job
+                        </Button>
+                        <Button type="button" size="sm"
+                          variant={choices[item.orderId] === 'adopt_smartsheet_unlink_job' ? 'default' : 'outline'}
+                          disabled={Boolean(busyId)}
+                          onClick={() => choose(item.orderId, 'adopt_smartsheet_unlink_job')}>
+                          Accept Smartsheet name and unlink job
+                        </Button>
+                      </div>
+                      <Button type="button" size="sm" variant="outline"
+                        disabled={!sessionToken || Boolean(busyId) || !choices[item.orderId] || current !== 'matches_review'}
+                        onClick={() => verify(item)}>
+                        {busyId === item.orderId ? 'Checking fresh sources…' : 'Verify decision safely'}
+                      </Button>
+                      {previews[item.orderId] && (
+                        <p className={previews[item.orderId].ok ? 'text-xs text-green-800' : 'text-xs text-red-700'}
+                          role="status">
+                          {previews[item.orderId].ok ? 'Fresh evidence verified — preview only. ' : 'Verification blocked — no changes made. '}
+                          {previews[item.orderId].message}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -87,10 +159,10 @@ export default function OrderLinkedCustomerReview({
               correct the Smartsheet customer name through the authorized workflow.</p>
             <p><strong>Decision: change the linked job.</strong> Verify the intended active job,
               update the Order using its job picker, and follow the protected Save &amp; Sync workflow.</p>
-            <p className="font-medium">This comparison does not approve or apply either decision.</p>
+            <p className="font-medium">The administrator verification step is read-only. It does not approve, queue or apply either decision. A separate version-protected commit is required.</p>
           </div>
           <div className="flex justify-end">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Close review</Button>
+            <Button type="button" variant="outline" onClick={() => closeReview(false)}>Close review</Button>
           </div>
         </DialogContent>
       </Dialog>
