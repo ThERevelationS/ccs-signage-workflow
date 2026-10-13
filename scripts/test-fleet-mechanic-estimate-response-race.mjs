@@ -43,7 +43,7 @@ const submitBody=()=>({
 function setup(){
   const store={work:baseWork(),estimate:currentEstimate(),writes:0,readBarrier:false,pendingReads:[],estimateReads:0,
     pausePolicyRead:false,pendingPolicyReads:[],pauseGrantRead:false,pendingGrantReads:[],
-    pauseGateClaim:false,pendingGateClaims:[],gateClaims:0};
+    pauseGateClaim:false,pendingGateClaims:[],gateClaims:0,loseWriteAck:false,loseCreateAck:false,writeThenCCSEdit:null};
   const grant={id:grantId,enabled:true,name:"Synthetic mechanic",token_hash:hash(token),
     allowed_actions:["bootstrap","start","save","estimate_save","estimate_submit"],
     scope_mode:"selected_equipment",allowed_equipment_ids:["eq-allowed"],
@@ -75,12 +75,24 @@ function setup(){
       if(!store.estimate || store.estimate.id!==query.id || store.estimate.updated_date!==query.updated_date)return {updated:0};
       store.estimate={...store.estimate,...clone(change.$set),updated_date:"estimate-v2"};
       store.writes++;
+      if(store.writeThenCCSEdit){
+        store.estimate={...store.estimate,...clone(store.writeThenCCSEdit),updated_date:"estimate-v3"};
+        store.writeThenCCSEdit=null;
+      }
+      if(store.loseWriteAck){
+        store.loseWriteAck=false;
+        throw new Error("Synthetic estimate update acknowledgment lost");
+      }
       return {updated:1};
     },
     async create(data){
       assert.equal(store.estimate,null,"Only the empty first-draft fixture may create an estimate");
       store.estimate={...clone(data),id:estimateId,updated_date:"estimate-v2"};
       store.writes++;
+      if(store.loseCreateAck){
+        store.loseCreateAck=false;
+        throw new Error("Synthetic estimate create acknowledgment lost");
+      }
       return clone(store.estimate);
     },
   };
@@ -137,6 +149,66 @@ async function commitWithConcurrentEdit(request,mutate){
   store.pendingReads.shift()();
   return {...await pending,store,grant};
 }
+
+test("Save Draft lost write acknowledgment reports uncertainty without replaying or hiding saved data",async()=>{
+  const {store,client}=setup();
+  store.loseWriteAck=true;
+  const outcome=await call(saveBody(),client);
+  assert.equal(outcome.status,409);
+  assert.match(outcome.body.error,/may have (already )?(been )?committed|may have saved/i);
+  assert.equal(outcome.body.estimate,undefined);
+  assert.equal(store.writes,1);
+  assert.equal(store.estimate.estimated_total,300);
+  const retry=await call(saveBody(),client);
+  assert.equal(retry.status,409);
+  assert.equal(store.writes,1,"Stale repeated Save Draft must never reapply an uncertain commit");
+});
+
+test("Submit lost write acknowledgment reports uncertainty and cannot submit twice",async()=>{
+  const {store,client}=setup();
+  store.loseWriteAck=true;
+  const outcome=await call(submitBody(),client);
+  assert.equal(outcome.status,409);
+  assert.match(outcome.body.error,/may have (already )?(been )?committed|may have submitted/i);
+  assert.equal(outcome.body.estimate,undefined);
+  assert.equal(store.estimate.status,"approved");
+  assert.equal(store.writes,1);
+  const retry=await call(submitBody(),client);
+  assert.equal(retry.status,409);
+  assert.equal(store.writes,1,"Submit retry must never double-submit an uncertain update");
+});
+
+test("lost acknowledgment after another CCS estimate edit preserves that edit and avoids false success",async()=>{
+  const {store,client}=setup();
+  store.loseWriteAck=true;
+  store.writeThenCCSEdit={notes:"Later CCS review notes",status:"changes_requested"};
+  const outcome=await call(saveBody(),client);
+  assert.equal(outcome.status,409);
+  assert.equal(outcome.body.estimate,undefined);
+  assert.match(outcome.body.error,/may have (already )?(been )?committed|may have saved/i);
+  assert.equal(store.estimate.notes,"Later CCS review notes");
+  assert.equal(store.estimate.status,"changes_requested");
+  assert.equal(store.writes,1);
+  const retry=await call(saveBody(),client);
+  assert.equal(retry.status,409);
+  assert.equal(store.estimate.notes,"Later CCS review notes");
+  assert.equal(store.writes,1);
+});
+
+test("first-draft lost create acknowledgment preserves one new draft and blocks blind retry",async()=>{
+  const {store,client}=setup();
+  store.estimate=null;
+  store.loseCreateAck=true;
+  const outcome=await call(saveBody(),client);
+  assert.equal(outcome.status,409);
+  assert.match(outcome.body.error,/may have (already )?(been )?committed|may have saved/i);
+  assert.equal(outcome.body.estimate,undefined);
+  assert.equal(store.writes,1);
+  assert.equal(store.estimate.status,"draft");
+  const retry=await call(saveBody(),client);
+  assert.equal(retry.status,200);
+  assert.equal(store.writes,1,"Safe create gate may acknowledge exact existing draft but never duplicate it");
+});
 
 test("Save Draft rejects an equipment reassignment during approval-policy evaluation before its estimate CAS",async()=>{
   const {store,client}=setup();
