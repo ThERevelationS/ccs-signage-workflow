@@ -40,13 +40,12 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
     // Compare exact canonical IDs only within one locality and one distinct electrical role.
     // A shared provider across different roles or localities is not a duplicate-copy finding.
     const canonicalRoleCopies = new Map();
-    for (const [index,office] of offices.entries()) {
+    for (const office of offices) {
       const canonical = office?.government_office_id;
       if (typeof canonical !== 'string' || !canonical.trim() || canonical !== canonical.trim()) continue;
       for (const role of specificElectrical) if (Array.isArray(office?.authority_roles) && office.authority_roles.includes(role)) {
         const key = JSON.stringify([canonical,role]);
-        if (!canonicalRoleCopies.has(key)) canonicalRoleCopies.set(key, []);
-        canonicalRoleCopies.get(key).push(index);
+        canonicalRoleCopies.set(key, (canonicalRoleCopies.get(key) || 0) + 1);
       }
     }
     for (const [index,office] of offices.entries()) {
@@ -58,9 +57,9 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
       for (const role of specificElectrical) if (roles.includes(role))
         tally[role === 'electrical_permit' ? 'electrical_issuer_assignments' : 'electrical_inspection_assignments']++;
       const duplicateElectricalRoles = [...specificElectrical].filter(role =>
-        roles.includes(role) && (canonicalRoleCopies.get(JSON.stringify([office?.government_office_id,role]))?.length || 0) > 1);
-      const conflictingOfficeIndexes = [...new Set(duplicateElectricalRoles.flatMap(role =>
-        canonicalRoleCopies.get(JSON.stringify([office.government_office_id,role]))))].filter(other => other !== index);
+        roles.includes(role) && (canonicalRoleCopies.get(JSON.stringify([office?.government_office_id,role])) || 0) > 1);
+      const duplicateElectricalCopyCounts = Object.fromEntries(duplicateElectricalRoles.map(role =>
+        [role,canonicalRoleCopies.get(JSON.stringify([office.government_office_id,role]))]));
       const flags = [];
       if (duplicateElectricalRoles.length) flags.push('canonical_electrical_role_copy_review');
       if (!id || id !== office?.id || countsById.get(id) > 1 || !name)
@@ -81,7 +80,7 @@ export function reconcileSavedOfficeEvidence(localities, savedLinks) {
         locality_id:locality.id, locality_name:clean(locality.name) || 'Unnamed locality',state,
         office_index:index,office_id:id,office_name:name || 'Unnamed office',
         government_office_id:clean(office?.government_office_id),duplicate_electrical_roles:duplicateElectricalRoles,
-        conflicting_office_indexes:conflictingOfficeIndexes,
+        duplicate_electrical_copy_counts:duplicateElectricalCopyCounts,
         recorded_staff_verified:verified,
         authority_roles:roles.filter(role => typeof role === 'string'),
         link_flags:flags.includes('profile_link_review') ? flaggedLinks.get(locality.id) : [],
