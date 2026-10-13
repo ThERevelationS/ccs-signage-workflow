@@ -23,7 +23,7 @@ const source = [
   block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
   trackedPersistence.slice(trackedPersistence.indexOf('export async function saveTrackedFields(')).replace(/^export /, ''),
   block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged(', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
-  'this.actions = { loadWorkOrders, updateWorkOrder, isRevisitFuture, toggleSipCompleted, requestClearRevisit, confirmClearRevisit };',
+  'this.actions = { loadWorkOrders, refreshBoardWhenIdle, updateWorkOrder, isRevisitFuture, toggleSipCompleted, requestClearRevisit, confirmClearRevisit };',
 ].join('\n');
 
 const dateOnly = (date) => [
@@ -98,6 +98,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     WorkOrder: entity,
     AuthorizedEmail: authorizedEmail,
     boardLoadSequenceRef: { current: 0 },
+    boardLoadsInFlightRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
     boardRefreshDeferredRef: { current: false },
@@ -335,7 +336,7 @@ await check('Reload latest retains a quick-edit conflict until successful curren
   await recovered;
   assert.equal(h.ctx.quickEditError, '');
   assert.equal(h.ctx.boardError, '');
-  assert.ok(board.includes('onClick={() => loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true })}'),
+  assert.ok(board.includes('onClick={() => refreshBoardWhenIdle({ clearQuickEditErrorOnSuccess: true })}'),
     'Reload latest action requests clear only on confirmed success');
 });
 
