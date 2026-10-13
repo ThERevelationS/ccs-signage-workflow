@@ -6026,6 +6026,8 @@ test('v29 company coordinator permits only one simultaneous cross-employee corre
   // single company-wide CAS. Exactly one may commit the shared request ID.
   const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
   const [first, second] = h.rows.TimeEntry;
+  first.approval_status = 'unreviewed';
+  second.approval_status = 'unreviewed';
   const other = { id: 'synthetic-race-worker', email: 'race-worker@synthetic.invalid',
     full_name: 'Synthetic Race Worker', role: 'employee' };
   h.rows.AuthorizedEmail.push(other);
@@ -6104,6 +6106,8 @@ test('v29 company coordinator permits only one simultaneous cross-employee corre
 test('v28 first-generation payroll history rejects later cross-employee reuse of a frozen manager request', async () => {
   const h = setup({ entryCount: 2, serverNow: '2026-09-20T22:00:00.000Z' });
   const [first, second] = h.rows.TimeEntry;
+  first.approval_status = 'unreviewed';
+  second.approval_status = 'unreviewed';
   const period = h.period();
   const correctionId = 'v28-first-history-correction';
   const corrected = await h.invoke({
@@ -6126,6 +6130,13 @@ test('v28 first-generation payroll history rejects later cross-employee reuse of
     note: 'Verified synthetic correction',
   });
   assert.equal(approval.status, 200, JSON.stringify(approval.body));
+  const secondApproval = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: second.user_email,
+    request_id: 'v28-first-history-approve-second', entry_id: second.id,
+    expected_updated_date: second.updated_date, decision: 'approve',
+    note: 'Approve unaffected synthetic shift independently',
+  });
+  assert.equal(secondApproval.status, 200, JSON.stringify(secondApproval.body));
   const finalized = await h.action('finalize', 'v28-first-history-finalize');
   assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
   const verified = (request_id) => h.invoke({
