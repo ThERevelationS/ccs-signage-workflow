@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { build } from 'esbuild';
 import { planOrderSmartsheetCustomerUnlink } from '../base44/shared/smartsheetOrderCustomerDecisionCommit.mjs';
 
 const review = {
@@ -91,3 +92,46 @@ assert.match(grid,/handleCustomerResolutionApplied = async saved =>/);
 assert.match(grid,/current\.smartsheet_pending_local_sync !== true/);
 assert.match(grid,/queued for Save & Sync/);
 console.log('PASS admin-only single-attempt audited CAS endpoint and UI reload safeguards are wired with zero Smartsheet writes');
+
+// Exercise the existing production audited CAS mechanism against a synthetic
+// in-memory entity. There are no Base44/Smartsheet client calls here.
+const compiled = await build({entryPoints:['base44/shared/fieldAudit.ts'],bundle:true,
+  platform:'node',format:'esm',write:false,logLevel:'silent'});
+const { trackedConditionalSave } = await import('data:text/javascript;base64,' +
+  Buffer.from(compiled.outputFiles[0].text).toString('base64'));
+let row = { ...order };
+let writes = 0;
+const audit = [];
+const fake = {
+  asServiceRole:{entities:{
+    Order: {
+      async updateMany(where, mutation) {
+        if (where.id !== row.id || where.updated_date !== row.updated_date) return {updated:0};
+        assert.deepEqual(mutation.$set,proposal.patch);
+        writes++;
+        row={...row,...mutation.$set,updated_date:'2026-10-13T12:06:00Z'};
+        return {updated:1};
+      },
+      async get(key){return key===row.id?{...row}:null;},
+    },
+    FieldAudit:{
+      async bulkCreate(events){return events.map((event,i)=>({...event,id:'audit-'+i}));},
+      async bulkUpdate(events){audit.push(...events);},
+    },
+  }},
+};
+const saved = await trackedConditionalSave(fake,'Order',{...order},proposal.patch,
+  {email:'test-admin@localhost',full_name:'Synthetic Administrator'},'admin');
+assert.equal(writes,1);
+assert.equal(saved.customer_name,review.smartsheet_customer_name);
+assert.equal(saved.work_order_id,'');
+assert.equal(saved.smartsheet_pending_local_sync,true);
+assert.deepEqual(audit.map(e=>e.status),['committed','committed']);
+await assert.rejects(
+  trackedConditionalSave(fake,'Order',{...order},proposal.patch,
+    {email:'test-admin@localhost'},'admin'),
+  /record changed during saving/i,
+);
+assert.equal(writes,1);
+assert.equal(row.work_order_id,'');
+console.log('PASS real trackedConditionalSave atomically updates synthetic Order once, audits changes, and rejects stale repeat CAS');
