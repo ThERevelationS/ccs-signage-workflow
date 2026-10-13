@@ -72,6 +72,39 @@ test('absent and duplicate office IDs, plus multi-office service areas fail clos
  assert.ok(render(locality([office('one',['electrical_inspection']),office('two',['electrical_inspection'])]))
    .includes('no single office was chosen'));
 });
+test('canonical identity gaps stay separate from preserved historical review flags',()=>{
+ for(const canonical of [undefined,'','   ',' canonical-issuer ']){
+  const l=locality([office('issuer',['electrical_permit'],'staff_verified',{government_office_id:canonical})]);
+  const before=JSON.stringify(l),result=summarize(profile(),l);
+  assert.equal(result.roles[0].status,'canonical_identity_conflict');
+  assert.equal(result.roles[0].offices[0].recorded_review,'staff_reviewed');
+  assert.equal(result.roles[0].offices[0].canonical_identity_unique,false);
+  assert.equal(result.roles[1].status,'not_recorded');
+  assert.ok(render(l).includes('Reconcile exact identity before relying on the historical review flag'));
+  assert.ok(render(l).includes('staff reviewed (historical tracker flag)'));
+  assert.equal(JSON.stringify(l),before);
+ }
+});
+test('duplicate canonical copies for one role are exposed without merging them',()=>{
+ const l=locality([office('one',['electrical_inspection'],'staff_verified',{government_office_id:'shared'}),
+  office('two',['electrical_inspection'],'staff_verified',{government_office_id:'shared'})]);
+ const result=summarize(profile(),l);
+ assert.equal(result.roles[1].status,'multiple_saved_offices');
+ assert.deepEqual(result.roles[1].offices.map(o=>o.canonical_identity_unique),[false,false]);
+ assert.ok(render(l).includes('multiple saved copies for this role'));
+});
+test('same canonical office can retain distinct issuer and inspector evidence',()=>{
+ const l=locality([office('one',['electrical_permit'],'staff_verified',{government_office_id:'shared'}),
+  office('two',['electrical_inspection'],'staff_verified',{government_office_id:'shared'})]);
+ const result=summarize(profile(),l);
+ assert.deepEqual(result.roles.map(r=>r.status),['staff_review_reference','staff_review_reference']);
+ assert.ok(result.roles.every(r=>r.offices[0].canonical_identity_unique));
+ assert.ok(!render(l).includes('multiple saved copies for this role'));
+});
+test('malformed saved office ID is never silently repaired by trimming',()=>{
+ const l=locality([office(' issuer ',['electrical_permit'],'staff_verified')]);
+ assert.equal(summarize(profile(),l).roles[0].status,'office_identity_conflict');
+});
 test('malicious or credential URL cannot be an office link, but the original source link remains',()=>{
  for(const url of ['javascript:alert(document.cookie)','data:text/plain,hi','https://user:password@evil.example/']){
   const l=locality([office('issuer',['electrical_permit'],'staff_verified',{contact_website:url})]);
