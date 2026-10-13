@@ -110,6 +110,9 @@ export default function ProductChecklistDialog({
   const [loadedUiProductsSnapshot, setLoadedUiProductsSnapshot] = useState([]);
   const [loadedRevisitDateSnapshot, setLoadedRevisitDateSnapshot] = useState(undefined);
   const [loadedSipCompletedSnapshot, setLoadedSipCompletedSnapshot] = useState(undefined);
+  // A separate baseline fences checklist saves if another session moves the
+  // job, completes it, or changes SIP completion while this dialog is open.
+  const loadedWorkflowSnapshotRef = useRef(null);
   const [saveError, setSaveError] = useState("");
   const saveErrorAlertRef = useRef(null);
   const saveFailureFocusPendingRef = useRef(false);
@@ -265,6 +268,10 @@ export default function ProductChecklistDialog({
       if (requestId !== loadDataRequestRef.current) return;
       const currentWO = freshWO[0];
       if (!currentWO) throw new Error("Work Order no longer available. Close and reopen the checklist.");
+      if (currentWO.deleted === true) throw new Error("This Work Order is in Trash. Close the checklist and reload the SIPS board before continuing.");
+      if (currentWO.completed === true || currentWO.is_rider === true) {
+        throw new Error("This Work Order is no longer an active SIPS job. Close the checklist and reload the SIPS board before continuing.");
+      }
 
       setUsers(usersData);
 
@@ -365,6 +372,14 @@ export default function ProductChecklistDialog({
       const loadedProductTypes = productTypesSetting?.setting_value?.items || 
         ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
       setProductTypes(loadedProductTypes);
+      loadedWorkflowSnapshotRef.current = {
+        completed: currentWO.completed ?? null,
+        is_rider: currentWO.is_rider ?? null,
+        current_stage: currentWO.current_stage ?? null,
+        current_task_assigned_to: currentWO.current_task_assigned_to ?? null,
+        current_task_description: currentWO.current_task_description ?? null,
+        sip_completed: currentWO.sip_completed ?? null,
+      };
       // Only a fully reconstructed, current checklist may replace a failed-load state.
       setHasLoadedChecklist(true);
       setLoadError("");
@@ -842,6 +857,9 @@ export default function ProductChecklistDialog({
         workOrderId: workOrder.id,
         expectedFields,
         nextFields,
+        // Backend guard_fields compares current server state, not just fields
+        // we are writing. Reject a stale SIPS task/stage/completion context.
+        guardFields: loadedWorkflowSnapshotRef.current,
         label: markComplete ? "SIP checklist save and completion" : "SIP product checklist",
       });
       const savedChecklist = saved.sip_checklist || [];
@@ -868,7 +886,9 @@ export default function ProductChecklistDialog({
       console.error("Error saving checklist:", error);
       if (revisitDate !== undefined) failedRevisitSelectionRef.current = revisitDate;
       saveFailureFocusPendingRef.current = true;
-      setSaveError(error?.message || "SIP product checklist could not be saved. Reload the latest Work Order and try again.");
+      setSaveError(error?.message === "The record no longer matches its loaded state."
+        ? "This Work Order changed stage, task, or completion state in another session. Nothing was saved. Reload latest to review the new workflow before trying again."
+        : (error?.message || "SIP product checklist could not be saved. Reload the latest Work Order and try again."));
     } finally {
       saveInFlightRef.current = false;
       setIsSaving(false);
