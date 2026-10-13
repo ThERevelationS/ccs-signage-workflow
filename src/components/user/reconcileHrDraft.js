@@ -93,6 +93,65 @@ export function reconcileHrDraft({ baseline, latest, draft, overwriteConflicts =
   return { merged, conflictFields, editedFields };
 }
 
+// Preview the exact resolution outcome without exposing sensitive field values.
+// Use the same reconciler that applies a choice, then classify per-field changes.
+export function previewHrResolution({ baseline, latest, draft, choice = "prefer-latest" }) {
+  if (!["latest", "prefer-latest", "keep-conflicts"].includes(choice)) {
+    throw new Error("Unsupported HR resolution choice.");
+  }
+  const result = choice === "latest"
+    ? (isRecord(baseline) && isRecord(latest) && isRecord(draft)
+        ? latest : null)
+    : reconcileHrDraft({
+        baseline, latest, draft, overwriteConflicts: choice === "keep-conflicts"
+      }).merged;
+  if (!result) throw new Error("HR comparison requires verified records.");
+
+  const fields = [];
+  function inspectRecord(base, fresh, local, chosen, prefix) {
+    for (const key of new Set([
+      ...Object.keys(base || {}), ...Object.keys(fresh || {}), ...Object.keys(local || {})
+    ])) {
+      const path = prefix ? `${prefix}.${key}` : key;
+      const oldValue = ownValue(base, key);
+      const freshValue = ownValue(fresh, key);
+      const draftValue = ownValue(local, key);
+      const chosenValue = ownValue(chosen, key);
+      if (equal(oldValue, freshValue) && equal(oldValue, draftValue)) continue;
+
+      if (path === "clothing_sizes" && (isRecord(oldValue) || oldValue === undefined) &&
+          isRecord(freshValue) && isRecord(draftValue)) {
+        inspectRecord(oldValue || {}, freshValue, draftValue, chosenValue || {}, path);
+      } else if (path === "emergency_contacts" &&
+                 canCompareContacts(oldValue, freshValue, draftValue)) {
+        oldValue.forEach((contact, index) =>
+          inspectRecord(contact, freshValue[index], draftValue[index],
+            chosenValue[index], `${path}[${index}]`));
+      } else {
+        const mineChanged = !equal(oldValue, draftValue);
+        const latestChanged = !equal(oldValue, freshValue);
+        const conflict = mineChanged && latestChanged && !equal(draftValue, freshValue);
+        const outcome = mineChanged && latestChanged && !conflict ? "agreed" :
+          mineChanged && equal(chosenValue, draftValue) ? (conflict ? "overwritten" : "mine") :
+          mineChanged ? "latest-over-mine" : "latest";
+        fields.push({ path, label: formatHrFieldPath(path), outcome, conflict });
+      }
+    }
+  }
+  inspectRecord(baseline, latest, draft, result, "");
+  return {
+    choice,
+    fields,
+    counts: {
+      mine: fields.filter(field => field.outcome === "mine").length,
+      latest: fields.filter(field =>
+        field.outcome === "latest" || field.outcome === "latest-over-mine").length,
+      overwritten: fields.filter(field => field.outcome === "overwritten").length,
+      agreed: fields.filter(field => field.outcome === "agreed").length
+    }
+  };
+}
+
 export function formatHrFieldPath(path) {
   const size = /^clothing_sizes\.([^.[\]]+)$/.exec(path);
   if (size) return `Clothing size: ${size[1].replaceAll("_", " ")}`;
