@@ -1486,7 +1486,7 @@ export default function UserManagement() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="hr" className="mt-0">
+              <TabsContent value="hr" forceMount className="mt-0 data-[state=inactive]:hidden"> 
                 <div className="p-4 mb-4 bg-amber-50 rounded-lg border border-amber-200">
                   <p className="text-sm text-amber-800">
                     <strong>Admin Access Only:</strong> This HR data is confidential and only accessible by office administrators.
@@ -1494,8 +1494,10 @@ export default function UserManagement() {
                 </div>
                 {editingUser && (
                   <UserHRDataForm
+                    key={`${sessionToken}:${editingUser.id}:${editingUser.email}`}
                     userData={editingUser}
                     saveScope={sessionToken}
+                    onDraftStatusChange={recordHrDraftStatus}
                     preserveDraftOnRecordRefresh={true}
                     onReloadLatest={() => reloadHrRecord(editingUser)}
                     onUpdate={() => { if (activeSessionToken.current === sessionToken) void loadUsers(); }}
@@ -1508,13 +1510,19 @@ export default function UserManagement() {
             </div>
           </Tabs>
 
+          {hasUnsavedHrData && (
+            <p role="status" className="text-sm text-amber-800">
+              Unsaved HR changes are protected. Save HR data in its tab before saving account changes, or use Cancel to review discarding the draft.
+            </p>
+          )}
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-            <Button variant="outline" disabled={hrMutationSaving || hrReloadLoading} onClick={() => { if (!hrSaveInFlight.current && !hrReloadInFlight.current) setIsDialogOpen(false); }}>
+            <Button variant="outline" disabled={hrMutationSaving || hrReloadLoading}
+              onClick={requestCloseUserEditor}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || isLoading || userDirectoryError || !sessionToken}
+              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
@@ -1523,6 +1531,30 @@ export default function UserManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Explicit discard gate for HR drafts, including an employee switch. */}
+      <AlertDialog open={!!pendingHrExit} onOpenChange={open => { if (!open) setPendingHrExit(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved HR changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This employee has HR changes that have not been saved. If you continue,
+              the unsaved HR draft will be discarded.
+              {pendingHrExit?.kind === "switch"
+                ? " The other employee will open after you confirm."
+                : " The employee editor will close after you confirm."}
+              No saved employee records will be changed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscardHrDraft}
+              className="bg-red-700 text-white hover:bg-red-800">
+              Discard HR draft
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Account Deletion Impact Review */}
       <Dialog open={!!deletionImpactRequest} onOpenChange={(open) => { if (!open) closeDeletionImpact(); }}>
