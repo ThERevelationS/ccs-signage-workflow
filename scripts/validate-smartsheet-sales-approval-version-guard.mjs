@@ -71,4 +71,57 @@ check(backend.includes('{ id, updated_date: planned.updated_date }, { $set: fiel
 check(backend.includes('if (failedMetadataIds.has(recordId) || salesFailedRecordIds.has(recordId))') &&
   backend.includes('verifiedWorkOrderIds: updated'),
   'Failed approved records are excluded from verified success and resolution.');
-console.log('Sales approved task decision concurrent-version guard: '+checks+'/'+checks+' PASS.');
+// Ordinary Sales sync uses the same revision protection without consuming
+// or resolving approved task decisions.
+function ordinaryFixture() {
+  let record={...initial}, writes=0, coordinatorChecks=0;
+  const entity={updateMany:async(where,body)=>{
+    if(where.id!==record.id || where.updated_date!==record.updated_date ||
+      where.smartsheet_sheet_id!==record.smartsheet_sheet_id ||
+      where.smartsheet_row_id!==record.smartsheet_row_id)return {updated:0};
+    record={...record,...body.$set,updated_date:'new-version'};writes++;
+    return {updated:1};
+  }};
+  const args={entity,recordId:initial.id,plannedVersion:initial.updated_date,
+    sheetId:initial.smartsheet_sheet_id,rowId:initial.smartsheet_row_id,
+    fields:metadata,assertRunOwnership:async()=>{coordinatorChecks++;}};
+  return {args,change:next=>{record={...record,...next}},record:()=>record,
+    writes:()=>writes,coordinatorChecks:()=>coordinatorChecks};
+}
+const ordinaryClean=ordinaryFixture();
+same(await commitVerifiedSalesMetadata(ordinaryClean.args),true,
+  'Unchanged ordinary Sales metadata passes revision+permanent-row CAS.');
+same(ordinaryClean.writes(),1,'Ordinary success writes exactly once.');
+same(ordinaryClean.coordinatorChecks(),1,'Ordinary commit checks run ownership.');
+const ordinaryRace=ordinaryFixture();
+ordinaryRace.change({updated_date:'newer',current_task_description:'Lost'});
+await assert.rejects(()=>commitVerifiedSalesMetadata(ordinaryRace.args),/changed or was relinked/);
+checks++;
+same(ordinaryRace.writes(),0,'Newer ordinary Sales edit blocks stale metadata save.');
+same(ordinaryRace.record().current_task_description,'Lost','Newer task remains intact.');
+const ordinaryRelink=ordinaryFixture();
+ordinaryRelink.change({smartsheet_row_id:'90002'});
+await assert.rejects(()=>commitVerifiedSalesMetadata(ordinaryRelink.args),/changed or was relinked/);
+checks++;
+same(ordinaryRelink.writes(),0,'Changed permanent row blocks ordinary metadata.');
+const ordinarySheet=ordinaryFixture();
+ordinarySheet.change({smartsheet_sheet_id:'8702703019812741'});
+await assert.rejects(()=>commitVerifiedSalesMetadata(ordinarySheet.args),/changed or was relinked/);
+checks++;
+same(ordinarySheet.writes(),0,'Changed sheet identity blocks ordinary metadata.');
+const ordinaryMissing=ordinaryFixture();
+ordinaryMissing.args.plannedVersion='';
+await assert.rejects(()=>commitVerifiedSalesMetadata(ordinaryMissing.args),/requires a versioned/);
+checks++;
+same(ordinaryMissing.writes(),0,'Missing revision fails closed.');
+const ordinaryNoOwner=ordinaryFixture();
+ordinaryNoOwner.args.assertRunOwnership=undefined;
+await assert.rejects(()=>commitVerifiedSalesMetadata(ordinaryNoOwner.args),/requires a versioned/);
+checks++;
+same(ordinaryNoOwner.writes(),0,'Missing coordinator fails closed.');
+check(backend.includes('originalUpdatedDate: String(record.updated_date || \'\')') &&
+  backend.includes('plannedVersion: verification?.originalUpdatedDate') &&
+  backend.includes('rowId: verification?.rowId') &&
+  !backend.includes('bulkUpdate(ordinaryUpdates)'),
+  'Ordinary Sales metadata uses exact planning version and permanent row, never bulk update.');
+console.log('Sales approved and ordinary task concurrent-version guards: '+checks+'/'+checks+' PASS.');
