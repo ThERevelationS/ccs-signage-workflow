@@ -5,6 +5,7 @@ import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInven
 import { reconcileSavedOfficeEvidence } from './permittingOfficeEvidenceReader.mjs';
 import { reconcileRecordedAuthorityReviewEvents } from './permittingReviewEventReconciliation.mjs';
 import { reconcileReviewedOfficesWithoutSavedCopies } from './permittingReviewedOfficeMirror.mjs';
+import { readElectricalEvidenceSourceMetadata, reconcileRecordedElectricalEvidence } from './permittingElectricalSourceAudit.mjs';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
@@ -22,13 +23,17 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
     { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','jurisdiction_profile_id','offices'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} saved locality office setups`) });
   const reviewEvents = await readAllCoveragePages(cursor => api.entities.PermittingOfficeAuthorityReview.filter(
-    { method: 'office-authority-v1' }, { sort: 'id', limit: 500, fields: ['id','method','jurisdiction_id','sequence','relation_key','role','action','office_snapshot','profile_snapshot','source_document_id','html_evidence_id','source_review_id','evidence_kind','coverage_area','requested_by','responsibility_confirmed','address_authority_resolved'], ...(cursor ? { cursor } : {}) }
+    { method: 'office-authority-v1' }, { sort: 'id', limit: 500, fields: ['id','method','jurisdiction_id','sequence','relation_key','role','action','office_snapshot','profile_snapshot','source_document_id','html_evidence_id','source_review_id','evidence_kind','coverage_area','requested_by','responsibility_confirmed','address_authority_resolved','source_snapshot','role_proof'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} recorded office authority events`) });
+  const electricalSources = await readElectricalEvidenceSourceMetadata(api, reviewEvents, {isCurrent,
+    onProgress: counts => onProgress(`Checked ${counts.requested} referenced electrical source IDs; ${counts.found} visible source records`)});
+  if (!isCurrent()) throw Error('Electrical evidence read superseded');
   const saved_profile_links = reconcileSavedLocalityProfileLinks(localities, profiles);
   return { electrical_offices: reconcileElectricalOfficeCoverage(localities), saved_profile_links,
     office_evidence: reconcileSavedOfficeEvidence(localities, saved_profile_links),
     authority_events: reconcileRecordedAuthorityReviewEvents(localities, profiles, reviewEvents),
     unmirrored_authority_reviews: reconcileReviewedOfficesWithoutSavedCopies(localities, profiles, reviewEvents),
+    electrical_source_evidence: reconcileRecordedElectricalEvidence(profiles, reviewEvents, electricalSources),
     ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
@@ -202,6 +207,23 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           {!result.unmirrored_authority_reviews.items.length && <p className="text-sm">No unmirrored or uncertain relationships in this permission-scoped read. This does not certify complete office coverage.</p>}
         </details>
         {!!result.unmirrored_authority_reviews.excluded_event_ids.length && <p role="note" className="text-xs">Events outside readable Ohio/Kentucky profile scope: {result.unmirrored_authority_reviews.excluded_event_ids.length}. No authorities were inferred from them.</p>}
+      </section>}
+
+      {result.electrical_source_evidence && <section aria-label="Recorded electrical source evidence review" className="space-y-2 border-t pt-3">
+        <h4 className="font-semibold">Electrical issuer and inspection source-evidence reconciliation</h4>
+        <p className="text-sm">{result.electrical_source_evidence.notice}</p>
+        <div className="overflow-x-auto"><table className="min-w-[960px] w-full text-left text-sm" aria-label="Electrical source evidence by role">
+          <thead><tr><th scope="col">State / responsibility</th><th scope="col">Histories</th><th scope="col">Recorded reference</th><th scope="col">Source not visible</th><th scope="col">Source changed</th><th scope="col">Source identity conflict</th><th scope="col">Archive incomplete</th><th scope="col">Citation incomplete</th><th scope="col">Unsupported HTML</th><th scope="col">Uncommitted</th><th scope="col">Ambiguous</th><th scope="col">Other invalid</th><th scope="col">Revoked</th></tr></thead>
+          <tbody>{['OH','KY'].flatMap(state=>[['electrical_permit','Permit issuer'],['electrical_inspection','Inspection provider']].map(([role,label])=>{const count=result.electrical_source_evidence.states[state][role];return <tr key={state+role}><th scope="row" className="py-2 pr-3 font-normal">{state==='OH'?'Ohio':'Kentucky'} — {label}</th>{['histories','recorded_source_reference','no_visible_source','source_snapshot_changed','source_identity_conflict','retained_archive_missing','page_citation_incomplete','unsupported_electrical_html','uncommitted_or_uncertain','ambiguous_history','malformed_review','revoked'].map(key=><td key={key} className="pr-3">{count[key]}</td>)}</tr>}))}</tbody>
+        </table></div>
+        <p className="text-xs">Counters describe immutable review histories visible to the current user, not current legal authority. A missing archive or citation requires staff review, not automatic assignment. Current electrical review paths require quoted PDF-page evidence; the native official-HTML delegation path is zoning-only.</p>
+        <details><summary className="min-h-11 cursor-pointer">Review source evidence discrepancies ({result.electrical_source_evidence.items.length})</summary>
+          <ul className="space-y-2 text-sm break-words">{result.electrical_source_evidence.items.map(row=><li key={row.review_id+'-'+row.role}>
+            <strong>{row.state} {row.profile_name}</strong> — {row.role==='electrical_permit'?'Electrical permit issuer':'Electrical inspection provider'}. Profile ID: {row.profile_id}; canonical office ID: {row.office_id||'not recorded'}; immutable review ID: {row.review_id}; {row.source_document_id?'PDF source record ID: '+row.source_document_id:row.html_evidence_id?'HTML evidence ID: '+row.html_evidence_id:'No source record ID'}.
+            {' '+({no_visible_source:'The referenced source record was not visible in the permission-scoped metadata read; deletion is not established.',source_identity_conflict:'The referenced source has conflicting identity fields.',source_snapshot_changed:'The saved review snapshot differs from currently readable source metadata; perform fresh evidence review.',retained_archive_missing:'PDF source lacks a complete retained archive reference, checksum, or byte count.',page_citation_incomplete:'The immutable review lacks a complete recorded PDF-page citation.',unsupported_electrical_html:'An official-HTML source is recorded for an electrical role, but the current HTML delegation verifier only supports zoning.',uncommitted_or_uncertain:'The review history or profile receipt is uncommitted or uncertain.',ambiguous_history:'Multiple same-sequence review decisions require reconciliation.',malformed_review:'The immutable review identity or responsibility evidence fields are incomplete.'}[row.status]||'Manual evidence review required.')}
+          </li>)}</ul>
+          {!result.electrical_source_evidence.items.length && <p className="text-sm">No recorded source-reference discrepancies in this read; live source validity, electrical authority and statewide completeness remain unverified.</p>}
+        </details>
       </section>}
 
       {result.electrical_offices && <section aria-label="Recorded electrical office review gaps" className="space-y-2 border-t pt-3">
