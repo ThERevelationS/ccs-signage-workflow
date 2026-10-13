@@ -7,7 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
-import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans } from '../../shared/smartsheetSalesConflictResolution.mjs';
+import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans, staleSalesRemotePutSnapshotIds } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
