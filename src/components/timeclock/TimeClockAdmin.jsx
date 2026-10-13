@@ -44,6 +44,7 @@ import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
+import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
 import TimeClockPunchExceptionReport from "@/components/timeclock/TimeClockPunchExceptionReport";
 import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
@@ -909,6 +910,8 @@ export default function TimeClockAdmin() {
           </div>
         )}
       </div>
+
+      <CorrectionCoordinatorDiagnostics sessionToken={sessionToken} />
 
       <TimeClockExceptionCenter
         timeEntries={timeEntries}
