@@ -485,6 +485,48 @@ export default function UserManagement() {
     }
   };
 
+  const handleSaveHrData = async (hrData, record) => {
+    // Confirm the exact editor record is still backed by this session's
+    // verified directory, rather than trusting a retired form's closure.
+    const verifiedUser = users.find(row =>
+      row.id === record?.id && row.email === record?.email &&
+      row.updated_date === record?.updated_date);
+    if (!verifiedUser || !isDialogOpen || isLoading || userDirectoryError ||
+        !sessionToken || activeSessionToken.current !== sessionToken ||
+        hrSaveInFlight.current || userUpdateInFlight.current ||
+        deletionInFlight.current || userMutationSaving) {
+      throw new Error("The user directory or editor has changed. Reload before saving HR data.");
+    }
+    const currentEditor = activeEditingUser.current;
+    if (currentEditor?.id !== record.id || currentEditor?.email !== record.email ||
+        currentEditor?.updated_date !== record.updated_date) {
+      throw new Error("The employee editor has changed. Reopen the correct employee before saving.");
+    }
+
+    const owner = { sessionToken, recordId: record.id };
+    hrSaveOwner.current = owner;
+    const ownsHrSave = () => hrSaveOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === record.id &&
+      activeEditingUser.current?.email === record.email;
+    hrSaveInFlight.current = true;
+    setHrMutationSaving(true);
+    try {
+      await updateAuthorizedUserHrAdmin({ record: verifiedUser, hrData, sessionToken });
+      // A completed server write does not grant a retired Admin form UI access.
+      return ownsHrSave();
+    } catch (error) {
+      if (!ownsHrSave()) return false;
+      throw error;
+    } finally {
+      if (ownsHrSave()) {
+        hrSaveOwner.current = null;
+        hrSaveInFlight.current = false;
+        setHrMutationSaving(false);
+      }
+    }
+  };
+
   const handleSave = async () => {
     if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken) return;
