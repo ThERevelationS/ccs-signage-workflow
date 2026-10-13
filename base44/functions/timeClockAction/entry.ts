@@ -2006,6 +2006,7 @@ async function releaseManagerReviewDecisionGate(
     } else {
       const applied = appliedAudits[0];
       const entry = await entryEntity.get(request.time_entry_id).catch(() => null);
+      const corrected = applied?.details?.corrected || {};
       if (!applied?.id || !['confirmed', 'recovered'].includes(String(applied.outcome || '')) ||
           String(applied.time_entry_id || '') !== String(request.time_entry_id || '') ||
           asEmail(applied.user_email) !== asEmail(request.user_email) ||
@@ -2015,7 +2016,15 @@ async function releaseManagerReviewDecisionGate(
           String(audit.details?.applied_audit_id || '') !== String(applied.id || '') ||
           !entry?.id || String(entry.last_correction_request_id || '') !== correctionRequestId ||
           String(entry.status || '') !== 'clocked_out' ||
-          String(entry.approval_status || '') !== 'needs_review') return false;
+          String(entry.approval_status || '') !== 'needs_review' ||
+          String(corrected.id || '') !== String(entry.id || '') ||
+          asEmail(corrected.user_email) !== asEmail(entry.user_email) ||
+          String(corrected.clock_in || '') !== String(entry.clock_in || '') ||
+          String(corrected.clock_out || '') !== String(entry.clock_out || '') ||
+          Number(corrected.lunch_minutes || 0) !== Number(entry.lunch_minutes || 0) ||
+          Number(corrected.total_hours || 0) !== Number(entry.total_hours || 0) ||
+          String(corrected.status || '') !== String(entry.status || '') ||
+          String(corrected.notes || '') !== String(entry.notes || '')) return false;
     }
   } else if (!(allowPrewriteRelease && status === 'pending' &&
       !request.review_request_id && !request.review_payload_hash &&
