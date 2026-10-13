@@ -16,7 +16,8 @@ export async function readAllCoveragePages(readPage, { isCurrent = () => true, o
     }
     onProgress(rows.size);
     if (!page.has_more) break;
-    if (!page.next_cursor || cursors.has(page.next_cursor)) throw Error('Coverage cursor did not advance');
+    if (typeof page.next_cursor!=='string' || !page.next_cursor.trim()) throw Error('Invalid coverage continuation token. Refresh recorded coverage.');
+    if (cursors.has(page.next_cursor)) throw Error('Coverage cursor did not advance');
     cursors.add(page.next_cursor); cursor = page.next_cursor;
   } while (true);
   return [...rows.values()];

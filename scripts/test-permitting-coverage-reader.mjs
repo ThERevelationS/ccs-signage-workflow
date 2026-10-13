@@ -38,3 +38,15 @@ for(const id of [null,undefined,0,42,true,{},[],['record'],'','   ',' record','r
 }
 const opaqueIds=['0','record-with-dashes','record_with_underscores'];
 assert.deepEqual((await readAllCoveragePages(async()=>({items:opaqueIds.map(id=>({id})),has_more:false}))).map(row=>row.id),opaqueIds);
+
+for(const next_cursor of [undefined,null,0,1,true,{},[],['cursor'],'','   ']) {
+ let tokenCalls=0;
+ await assert.rejects(readAllCoveragePages(async()=>{tokenCalls++;return {items:[],has_more:true,next_cursor};}),/Invalid coverage continuation token/);
+ assert.equal(tokenCalls,1);
+}
+let opaqueCalls=0;
+const opaqueToken='opaque+/token==';
+assert.equal((await readAllCoveragePages(async cursor=>{opaqueCalls++;if(opaqueCalls===1)return {items:[{id:'first'}],has_more:true,next_cursor:opaqueToken};assert.equal(cursor,opaqueToken);return {items:[{id:'second'}],has_more:false};})).length,2);
+let cycleCalls=0;
+await assert.rejects(readAllCoveragePages(async()=>({items:[],has_more:true,next_cursor:++cycleCalls%2?'A':'B'})),/did not advance/);
+assert.equal(cycleCalls,3);
