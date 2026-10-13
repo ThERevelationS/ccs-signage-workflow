@@ -129,6 +129,55 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
     notice:'Missing means no name/type candidate in this permission-scoped read; it does not prove absent government or authority.' };
 }
 
+/** Audit explicit saved locality -> profile IDs, not inferred geographic/name matches.
+ * Permission-scoped non-atomic reads cannot prove that an absent target was deleted.
+ */
+export function reconcileSavedLocalityProfileLinks(localities, profiles) {
+  if (!Array.isArray(localities) || !Array.isArray(profiles)) throw Error('Invalid saved locality profile-link inventory');
+  const profileById = new Map();
+  for (const profile of profiles) {
+    if (typeof profile?.id !== 'string' || !profile.id.trim() || profileById.has(profile.id)) throw Error('Invalid or repeated profile link target identity');
+    profileById.set(profile.id, profile);
+  }
+  const linkUsers = new Map(), seen = new Set();
+  for (const locality of localities) {
+    if (typeof locality?.id !== 'string' || !locality.id.trim() || seen.has(locality.id)) throw Error('Invalid or repeated saved locality link identity');
+    seen.add(locality.id);
+    const link = locality.jurisdiction_profile_id;
+    if (typeof link === 'string' && link.trim() && link === link.trim())
+      linkUsers.set(link, [...(linkUsers.get(link) || []), locality.id]);
+  }
+  const counts = () => ({saved:0,unlinked:0,missing_target:0,shared_link:0,state_review:0,name_review:0,linked_reference_only:0,invalid_link:0});
+  const states = {OH:counts(),KY:counts()}, reviews = [], excluded_record_ids = [];
+  for (const locality of localities) {
+    const state = String(locality.state || '').trim().toUpperCase();
+    if (!states[state]) {excluded_record_ids.push(locality.id);continue;}
+    const tally = states[state];tally.saved++;
+    const raw = locality.jurisdiction_profile_id;
+    const link = typeof raw === 'string' ? raw.trim() : '';
+    const flags = [];
+    if (raw !== undefined && raw !== null && raw !== '' && (typeof raw !== 'string' || link !== raw || !link)) flags.push('invalid_link');
+    else if (!link) flags.push('unlinked');
+    const profile = link && !flags.includes('invalid_link') ? profileById.get(link) : null;
+    if (link && !profile && !flags.includes('invalid_link')) flags.push('missing_target');
+    const otherIds = link && !flags.includes('invalid_link') ? (linkUsers.get(link) || []).filter(id=>id!==locality.id) : [];
+    if (otherIds.length) flags.push('shared_link');
+    if (profile) {
+      if (String(profile.state || '').trim().toUpperCase() !== state) flags.push('state_review');
+      // Different labels prompt review; exact equality is not evidence of canonical boundaries.
+      if (normalized(profile.name) !== normalized(locality.name)) flags.push('name_review');
+    }
+    if (!flags.length) flags.push('linked_reference_only');
+    for (const flag of flags) tally[flag]++;
+    if (flags.some(flag=>flag!=='linked_reference_only')) reviews.push({id:locality.id,name:String(locality.name || 'Unnamed saved locality'),state,profile_id:link,
+      profile_name:profile ? String(profile.name || '') : '',profile_state:profile ? String(profile.state || '') : '',
+      shared_locality_ids:otherIds,flags});
+  }
+  reviews.sort((a,b)=>(a.state==='OH'?0:1)-(b.state==='OH'?0:1) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  return {states,reviews,excluded_record_ids,identity_verified:false,authority_verified:false,inventory_complete:false,
+    notice:'Saved locality profile IDs are recorded references only. Missing targets may be outside read permissions or a non-atomic read; different names may be aliases. No geographic boundaries, authority or legal applicability are verified.'};
+}
+
 export function reconcileElectricalOfficeCoverage(localities) {
   if (!Array.isArray(localities)) throw Error('Invalid electrical office coverage records');
   const roles = ['electrical_permit', 'electrical_inspection'];
