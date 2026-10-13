@@ -64,7 +64,20 @@ export async function pullOrdersFromSmartsheet({ sessionToken } = {}) {
     if (!Number.isSafeInteger(results[0]?.updated) || results[0].updated < 0) {
       throw new Error("Smartsheet did not return a verifiable Order update count.");
     }
-    return { updated: results[0].updated, needsReview: data.needs_review === true || data.sync_complete !== true };
+    const nameReviewCount = results[0]?.linked_customer_name_review_count;
+    const linkedCustomerNameReviewCount = Number.isSafeInteger(nameReviewCount) && nameReviewCount >= 0
+      ? nameReviewCount : 0;
+    const linkedCustomerNameReviewRowIds = (Array.isArray(results[0]?.linked_customer_name_review_items)
+      ? results[0].linked_customer_name_review_items : [])
+      .slice(0, 10)
+      .map(item => String(item?.row_id ?? '').trim())
+      .filter(id => /^\d+$/.test(id));
+    return {
+      updated: results[0].updated,
+      needsReview: data.needs_review === true || data.sync_complete !== true || linkedCustomerNameReviewCount > 0,
+      linkedCustomerNameReviewCount,
+      linkedCustomerNameReviewRowIds,
+    };
   } catch (error) {
     throw new Error(safeMessage(error, "Could not check Smartsheet for Order changes safely."));
   }
