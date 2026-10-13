@@ -235,7 +235,7 @@ assert.match(
 );
 assert.match(
   backend,
-  /const verifiedSalesUpdates = deferredBase44Updates\.filter[\s\S]*?salesRemoteVerifiedIds\.has\(String\(update\.id\)\)[\s\S]*?bulkUpdate\(ordinaryUpdates\)[\s\S]*?WorkOrder\.updateMany\([\s\S]*?updated_date: planned\.updated_date[\s\S]*?findUnverifiedSyncMetadata\(verifiedSalesUpdates, verifiedRecords\)[\s\S]*?updated\.push\(recordId\)/,
+  /const verifiedSalesUpdates = deferredBase44Updates\.filter[\s\S]*?salesRemoteVerifiedIds\.has\(String\(update\.id\)\)[\s\S]*?commitVerifiedSalesMetadata\(\{[\s\S]*?plannedVersion: verification\?\.originalUpdatedDate[\s\S]*?WorkOrder\.updateMany\([\s\S]*?updated_date: planned\.updated_date[\s\S]*?findUnverifiedSyncMetadata\(verifiedSalesUpdates, verifiedRecords\)[\s\S]*?updated\.push\(recordId\)/,
   "Sales Base44 metadata may advance and count updated only after remote and metadata read-back verification.",
 );
 const salesPutVerificationIndex = backend.indexOf("Sales Smartsheet update could not be verified by read-back");
