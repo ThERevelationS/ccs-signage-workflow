@@ -41,6 +41,7 @@ import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegr
 import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
+import { linkedOrderCustomerPullNeedsReview } from '../../shared/smartsheetOrderLinkedCustomerReview.mjs';
 import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue, orderStaleBatchEvidencePreserved } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
 import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBackgroundPolicy.mjs';
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
@@ -383,6 +384,7 @@ async function pullDataset(
   const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
   const orderLocalPendingConflicts: string[] = [];
+  const orderLinkedCustomerNameReviews: { order_id: string; row_id: string; work_order_id: string }[] = [];
   let orderDeletedLinkTombstonesPreserved = 0;
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
@@ -502,6 +504,24 @@ async function pullDataset(
       orderLocalPendingConflicts.push(existing.id);
       await recordFieldPullHolds({base44,record:existing,dataset,bindings,remoteRow:row});
       continue;
+    }
+    if (dataset === 'orders' && existing) {
+      const customerColumnId = cleanText(bindings?.customer_name, 40);
+      const remoteName = /^\d+$/.test(customerColumnId)
+        ? buildOrderPullSnapshot(row, { customer_name: customerColumnId })[customerColumnId]
+        : undefined;
+      if (linkedOrderCustomerPullNeedsReview({
+        order: existing, remoteCustomerName: remoteName,
+        customerColumnBound: /^\d+$/.test(customerColumnId),
+      })) {
+        // Do not update the customer, job link, other row fields OR snapshot:
+        // the remote row is retained verbatim for exact-ID admin review.
+        orderLinkedCustomerNameReviews.push({
+          order_id: String(existing.id), row_id: rowId,
+          work_order_id: String(existing.work_order_id),
+        });
+        continue;
+      }
     }
     if (dataset === 'orders') {
       Object.assign(fieldValues, orderStatusFromPulledDates(
@@ -1179,8 +1199,10 @@ async function pullDataset(
     ...(dataset === 'orders' ? {
       business_field_write_failures: orderBusinessWriteFailures,
       snapshot_write_failures: snapshotWriteFailures,
-      conflicts: orderLocalPendingConflicts.length,
-      conflict_record_ids: orderLocalPendingConflicts.slice(0, 10),
+      conflicts: orderLocalPendingConflicts.length + orderLinkedCustomerNameReviews.length,
+      conflict_record_ids: [...orderLocalPendingConflicts, ...orderLinkedCustomerNameReviews.map(item => item.order_id)].slice(0, 10),
+      linked_customer_name_review_count: orderLinkedCustomerNameReviews.length,
+      linked_customer_name_review_items: orderLinkedCustomerNameReviews.slice(0, 10),
     } : {}),
     errors: errors.length,
     error_details: errors.slice(0, 10),
