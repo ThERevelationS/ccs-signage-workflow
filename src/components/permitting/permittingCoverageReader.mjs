@@ -65,6 +65,8 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       || !['OH','KY'].includes(r.state) || typeof r.name!=='string' || !r.name.trim()) throw Error('Invalid official inventory identity');
     if (!['candidate','status_relationship_review','statistical_reference'].includes(r.category)) throw Error('Invalid official inventory category');
     if (r.category==='candidate' && !['county','city','village','township'].includes(r.type)) throw Error('Invalid official inventory candidate type');
+    if (r.category==='candidate' && r.type==='township' && (typeof r.county_name!=='string' || !geographicName(r.county_name,'county')))
+      throw Error('Official township candidate has no usable county identity');
     keys.add(r.key);
   }
   const candidates = reference.rows.filter(r => r.category === 'candidate');

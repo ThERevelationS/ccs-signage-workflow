@@ -136,3 +136,13 @@ for(const [official,type,truncated] of [['Grove City','city','Grove'],['Bay Vill
 assert.deepEqual(reconcileOfficialInventory([],[p],base).profiles.assessments[0].candidate_keys,['a']);
 const countyRef={source_rows:1,rows:[{key:'county-fixture',state:'OH',name:'Hamilton',type:'county',category:'candidate'}]};
 assert.equal(reconcileOfficialInventory([],[{id:'county',state:'OH',name:'Hamilton County',type:'county'}],countyRef).profiles.assessments[0].state,'single_geographic_candidate');
+
+for(const county_name of [undefined,null,'','   ',{},42])
+ assert.throws(()=>reconcileOfficialInventory([],[],{source_rows:1,rows:[{...base.rows[0],county_name}]}),/no usable county identity/);
+r=reconcileOfficialInventory([],[],ref);
+assert.equal(ref.rows.filter(row=>row.category==='candidate'&&row.type==='township').length,1308);
+assert.equal(r.source_rows,3647);
+// Missing county on a recorded locality remains a review item, rather than corrupting the reference.
+r=reconcileOfficialInventory([],[{...p,parent_county:null}],base);
+assert.ok(r.profiles.identity_review[0].review_flags.includes('parent_county_missing'));
+assert.equal(r.profiles.identity_review[0].canonical_identity_verified,false);
