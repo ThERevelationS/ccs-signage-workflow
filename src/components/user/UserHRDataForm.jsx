@@ -654,29 +654,72 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
               <p className="text-amber-900">
                 Clothing sizes and uniquely matched emergency contacts are compared field by field. If contact identities, order, or list size change, the entire contact list is treated as one change. Choose how to resolve your draft, review the fields, and then save separately.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" variant="outline"
-                  onClick={() => resolveHrRecovery("latest")}>
-                  Use latest (discard my draft)
-                </Button>
-                <Button type="button" size="sm" variant="outline"
-                  onClick={() => resolveHrRecovery("prefer-latest")}>
-                  Keep my non-conflicting edits
+              <div className="space-y-2">
+                <p className="font-medium text-amber-950">1. Preview a resolution (no changes applied)</p>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="HR resolution preview choices">
+                  {[
+                    { value: "prefer-latest", label: "Keep non-conflicting edits" },
+                    { value: "latest", label: "Use latest record" },
+                    ...(recoveryComparison?.conflictFields.length
+                      ? [{ value: "keep-conflicts", label: "Keep my conflicting edits" }] : [])
+                  ].map(option => (
+                    <Button key={option.value} type="button" size="sm"
+                      variant={hrPreviewChoice === option.value ? "default" : "outline"}
+                      aria-pressed={hrPreviewChoice === option.value}
+                      onClick={() => selectHrPreviewChoice(option.value)}>
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-md border border-amber-200 bg-white p-3 space-y-2"
+                aria-label="HR field resolution preview">
+                <p className="font-medium text-gray-900">2. Review what will be kept or replaced</p>
+                <p className="text-gray-700">
+                  {hrResolutionPreview?.counts.mine || 0} of your field edits kept;
+                  {" "}{hrResolutionPreview?.counts.latest || 0} newer fields kept;
+                  {" "}{hrResolutionPreview?.counts.overwritten || 0} newer fields replaced;
+                  {" "}{hrResolutionPreview?.counts.agreed || 0} fields already match.
+                </p>
+                <p className="text-xs text-gray-600">Field names and outcomes only; sensitive HR values are not shown here.</p>
+                {hrResolutionPreview?.fields.length ? (
+                  <div className="max-h-56 overflow-y-auto rounded border border-gray-200">
+                    <table className="w-full text-xs text-left">
+                      <thead className="sticky top-0 bg-gray-100 text-gray-700">
+                        <tr>
+                          <th scope="col" className="p-2 font-medium">HR field</th>
+                          <th scope="col" className="p-2 font-medium">With this choice</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hrResolutionPreview.fields.map(field => (
+                          <tr key={field.path} className="border-t border-gray-100">
+                            <td className="p-2 break-words text-gray-900">{field.label}</td>
+                            <td className="p-2 break-words text-gray-700">{HR_PREVIEW_OUTCOME[field.outcome]}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-700">No field differences to resolve.</p>
+                )}
+              </div>
+              {hrPreviewChoice === "keep-conflicts" && recoveryComparison?.conflictFields.length > 0 && (
+                <label className="flex items-start gap-2 rounded border border-amber-400 p-3 text-amber-950">
+                  <input type="checkbox" className="mt-1" checked={confirmOverwrite}
+                    onChange={event => setConfirmOverwrite(event.target.checked)} />
+                  I understand the fields labeled "Replace newer with my edit" will use my older draft values and replace newer values when I later save.
+                </label>
+              )}
+              <div className="flex items-center justify-end gap-2 border-t border-amber-200 pt-3">
+                <p className="text-xs text-amber-900 flex-1">3. Apply to my local draft only. Review the form and save separately.</p>
+                <Button type="button" size="sm"
+                  disabled={hrPreviewChoice === "keep-conflicts" && !confirmOverwrite}
+                  onClick={() => resolveHrRecovery(hrPreviewChoice)}>
+                  Apply preview to my draft
                 </Button>
               </div>
-              {recoveryComparison?.conflictFields.length > 0 && (
-                <div className="space-y-2 rounded border border-amber-400 p-3">
-                  <label className="flex items-start gap-2 text-amber-950">
-                    <input type="checkbox" className="mt-1" checked={confirmOverwrite}
-                      onChange={event => setConfirmOverwrite(event.target.checked)} />
-                    I understand that choosing my edits for the listed conflicting fields (or entire list when contact identity is uncertain) will replace newer values when I later save.
-                  </label>
-                  <Button type="button" size="sm" variant="outline" disabled={!confirmOverwrite}
-                    onClick={() => resolveHrRecovery("keep-conflicts")}>
-                    Keep my edits, including conflicts
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </div>
