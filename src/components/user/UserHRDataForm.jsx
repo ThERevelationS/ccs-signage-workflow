@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
+import { reconcileHrDraft } from "./reconcileHrDraft.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,11 +37,17 @@ const MARITAL_STATUS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" }
 ];
 
-export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null, preserveDraftOnRecordRefresh = false }) {
+export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null, preserveDraftOnRecordRefresh = false, onReloadLatest = null }) {
   const [hrData, setHrData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [hrRecovery, setHrRecovery] = useState(null);
+  const [reloadSaving, setReloadSaving] = useState(false);
+  const [draftNotice, setDraftNotice] = useState("");
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  const reloadOwner = useRef(null);
+  const reloadInFlight = useRef(false);
   const saveInFlight = useRef(false);
   const saveOwner = useRef(null);
   const scopeVersion = useRef(0);
@@ -63,18 +70,26 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
     setIsSaving(false);
     setSaveSuccess("");
     setSaveError("");
+    setHrRecovery(null);
+    setReloadSaving(false);
+    setDraftNotice("");
+    setConfirmOverwrite(false);
+    reloadOwner.current = null;
+    reloadInFlight.current = false;
     setHrData(userData?.hr_data || {});
     if (successTimer.current) clearTimeout(successTimer.current);
     return () => {
       ++scopeVersion.current;
       saveOwner.current = null;
       saveInFlight.current = false;
+      reloadOwner.current = null;
+      reloadInFlight.current = false;
       if (successTimer.current) clearTimeout(successTimer.current);
     };
   }, [userData?.id, userData?.email, saveScope]);
 
   const handleSave = async () => {
-    if (!userData?.id || saveInFlight.current) return;
+    if (!userData?.id || saveInFlight.current || reloadInFlight.current || hrRecovery) return;
     const owner = {
       id: userData.id, email: userData.email, saveScope,
       version: scopeVersion.current
@@ -89,6 +104,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
     setIsSaving(true);
     setSaveError("");
     setSaveSuccess("");
+    setDraftNotice("");
     if (successTimer.current) clearTimeout(successTimer.current);
 
     try {
@@ -119,6 +135,11 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
       if (!ownsSave()) return;
       console.error("HR data save blocked:", error);
       setSaveError(error?.message || "Failed to save changes safely. Reload before retrying.");
+      if (preserveDraftOnRecordRefresh && onReloadLatest &&
+          /HR data changed in another session|saved HR record could not be verified/i.test(error?.message || "")) {
+        setHrRecovery({ stage: "needs_reload", baseline: userData?.hr_data || {} });
+        setConfirmOverwrite(false);
+      }
     } finally {
       if (ownsSave()) {
         saveOwner.current = null;
@@ -126,6 +147,69 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
         setIsSaving(false);
       }
     }
+  };
+
+  const reloadHrForRecovery = async () => {
+    if (!hrRecovery || hrRecovery.stage !== "needs_reload" || !onReloadLatest ||
+        reloadInFlight.current || saveInFlight.current) return;
+    const owner = {
+      id: userData?.id, email: userData?.email,
+      saveScope, version: scopeVersion.current
+    };
+    const ownsReload = () => reloadOwner.current === owner &&
+      scopeVersion.current === owner.version &&
+      activeScope.current?.id === owner.id &&
+      activeScope.current?.email === owner.email &&
+      activeScope.current?.saveScope === owner.saveScope;
+    reloadOwner.current = owner;
+    reloadInFlight.current = true;
+    setReloadSaving(true);
+    setSaveError("");
+    try {
+      const latest = await onReloadLatest();
+      if (!ownsReload()) return;
+      if (!latest?.updated_date || latest.id !== owner.id ||
+          latest.email !== owner.email || !latest.hr_data ||
+          typeof latest.hr_data !== "object" || Array.isArray(latest.hr_data)) {
+        throw new Error("The latest employee record could not be verified. Retry reloading.");
+      }
+      // Keep the current draft untouched; a separate deliberate choice
+      // reconciles it with the verified latest backend snapshot.
+      setHrRecovery(current => current?.stage === "needs_reload"
+        ? { ...current, stage: "review", latest: latest.hr_data } : current);
+      setConfirmOverwrite(false);
+    } catch (error) {
+      if (ownsReload()) setSaveError(error?.message || "Could not reload HR information safely.");
+    } finally {
+      if (ownsReload()) {
+        reloadOwner.current = null;
+        reloadInFlight.current = false;
+        setReloadSaving(false);
+      }
+    }
+  };
+
+  const recoveryComparison = hrRecovery?.stage === "review"
+    ? reconcileHrDraft({
+        baseline: hrRecovery.baseline, latest: hrRecovery.latest, draft: hrData
+      }) : null;
+
+  const resolveHrRecovery = (choice) => {
+    if (hrRecovery?.stage !== "review" || !recoveryComparison ||
+        reloadInFlight.current || saveInFlight.current) return;
+    if (choice === "keep-conflicts" && !confirmOverwrite) return;
+    const updated = choice === "latest" ? hrRecovery.latest :
+      reconcileHrDraft({
+        baseline: hrRecovery.baseline,
+        latest: hrRecovery.latest,
+        draft: hrData,
+        overwriteConflicts: choice === "keep-conflicts"
+      }).merged;
+    setHrData(updated);
+    setHrRecovery(null);
+    setSaveError("");
+    setConfirmOverwrite(false);
+    setDraftNotice("Draft updated using the latest HR record. Review the fields, then Save Changes. Nothing has been saved yet.");
   };
 
   const updateField = (field, value) => {
