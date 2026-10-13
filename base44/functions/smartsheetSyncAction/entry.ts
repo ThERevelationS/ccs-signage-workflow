@@ -7,7 +7,7 @@ import { secrets } from 'base44:runtime';
 import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
-import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans } from '../../shared/smartsheetSalesConflictResolution.mjs';
+import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans, staleSalesRemotePutSnapshotIds } from '../../shared/smartsheetSalesConflictResolution.mjs';
 import { salesStageCellHistoryRows } from '../../shared/smartsheetSalesStageHistory.mjs';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
@@ -1824,6 +1824,7 @@ async function pushDataset(
   const deferredSalesConflictDecisions = new Map<string, string[]>();
   const approvedSalesPlanSnapshots = new Map<string, any>();
   const approvedSalesRemotePlans = new Map<string, {rowId: string; snapshot: Record<string, any>}>();
+  const salesRemotePutPlans = new Map<string, {rowId: string; snapshot: Record<string, any>}>();
   const deferredOrderConflictDecisions = new Map<string, string[]>();
   const deferredSalesVerification = new Map<string, {
     rowId: string;
@@ -1973,7 +1974,12 @@ async function pushDataset(
         // Collect for batch write/update — no per-record GETs or verify reads.
         // This eliminates the per-record Smartsheet GET + Base44 GET + Base44
         // verify read that caused serverless function timeouts on large datasets.
-        if (fieldPlan.outgoing.length) deferredSmartsheetWrites.push({ id: existingRowId, cells: fieldPlan.outgoing });
+        if (fieldPlan.outgoing.length) {
+          deferredSmartsheetWrites.push({ id: existingRowId, cells: fieldPlan.outgoing });
+          if (dataset === 'sales') salesRemotePutPlans.set(String(record.id), {
+            rowId: existingRowId, snapshot: buildSalesPullSnapshot(currentRows[0], bindings),
+          });
+        }
         const batchSnapshot = {...fieldPlan.remote, ...Object.fromEntries(fieldPlan.outgoing.map(c => [String(c.columnId), c.value]))};
         const deferredUpdate = {
           id: record.id,
