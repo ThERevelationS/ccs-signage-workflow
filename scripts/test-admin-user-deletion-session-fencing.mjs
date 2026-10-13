@@ -19,11 +19,12 @@ function fixture() {
   const deletionInFlight = { current: false };
   const deletionOwner = { current: null };
   const userUpdateInFlight = { current: false };
+  const hrSaveInFlight = { current: false };
   const state = { saving: false, confirm: firstUser, error: "", directory: [firstUser], calls: [], reads: [], errors: [] };
   let currentlyLoading = false;
   let directoryUnavailable = false;
   const shared = {
-    activeSessionToken, deletionInFlight, deletionOwner, userUpdateInFlight,
+    activeSessionToken, deletionInFlight, deletionOwner, userUpdateInFlight, hrSaveInFlight,
     userMutationSaving: false,
     get isLoading() { return currentlyLoading; },
     get userDirectoryError() { return directoryUnavailable; },
@@ -53,11 +54,11 @@ function fixture() {
 test("Changing or leaving Admin revokes delete owner and confirmation", () => {
   assert.match(source, /const \[deletionSaving, setDeletionSaving\] = useState\(false\);\s*const deletionInFlight = useRef\(false\);\s*const deletionOwner = useRef\(null\)/);
   assert.match(effect, /deletionOwner\.current = null;\s*deletionInFlight\.current = false;\s*setDeletionSaving\(false\);\s*setDeleteConfirm\(null\)/);
-  assert.match(effect, /return \(\) => \{\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false/);
+  assert.match(effect, /return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false/);
   assert.match(source, /onOpenChange=\{\(open\) => \{ if \(!open && !deletionInFlight\.current\) setDeleteConfirm\(null\); \}\}/);
   assert.match(source, /<AlertDialogCancel disabled=\{deletionSaving\}/);
   assert.match(source, /disabled=\{deletionSaving \|\| userMutationSaving \|\| isLoading/);
-  assert.match(source, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| deletionInFlight\.current/);
+  assert.match(source, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| deletionInFlight\.current/);
 });
 
 test("Ordinary deletion succeeds once, closes its confirmation, and refreshes current directory", async () => {
