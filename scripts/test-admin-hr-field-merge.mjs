@@ -154,7 +154,7 @@ test("Conflict field names in UI are precise and do not expose field values",()=
  assert.match(ui,/conflictFields\.map\(formatHrFieldPath\)/);
  assert.match(ui,/compared field by field/);
  assert.match(ui,/entire contact list is treated as one change/);
- assert.match(ui,/disabled=\{!confirmOverwrite\}/);
+ assert.match(ui,/disabled=\{hrPreviewChoice === "keep-conflicts" && !confirmOverwrite\}/);
  assert.match(ui,/Nothing has been saved yet/);
  assert.equal(formatHrFieldPath("clothing_sizes.pants_waist"),"Clothing size: pants waist");
  assert.equal(formatHrFieldPath("emergency_contacts[1].phone_alt"),"Emergency contact 2: phone alt");
