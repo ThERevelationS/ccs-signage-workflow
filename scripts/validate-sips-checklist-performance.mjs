@@ -1030,6 +1030,64 @@ await (async () => {
   passed++;
 })();
 
+await (async () => {
+  // Failed first read and subsequent retry use isolated synthetic records.
+  const body = source.slice(source.indexOf("  const loadData = async () => {"),
+    source.indexOf("  const getDropdownName = (dropdownId) => {"));
+  const makeLoad = new Function("scope", "with(scope) { " + body + "\nreturn loadData; }");
+  let missing = true;
+  const loadErrors = [], successfulLoads = [], rows = [], saveErrors = [];
+  const scope = {
+    workOrder: { id: "synthetic-initial" },
+    saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+    saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    loadDataRequestRef: { current: 0 },
+    resetOtherPopupForReload: () => {}, setIsLoading: () => {},
+    WorkOrder: { filter: async () => missing ? [] : [{ id: "synthetic-initial", sip_checklist: [], products: [] }] },
+    AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
+    loadAllEntityRows: async () => [],
+    loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
+    setUsers: () => {}, setLoadedProductsSnapshot: () => {},
+    setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
+    setSaveError: text => saveErrors.push(text),
+    setLoadError: text => loadErrors.push(text),
+    setHasLoadedChecklist: value => successfulLoads.push(value),
+    setProducts: () => {}, setLoadedUiProductsSnapshot: () => {},
+    setLoadedChecklistSnapshot: () => {}, setLoadedUiChecklistSnapshot: () => {},
+    setChecklist: checklist => rows.push(checklist), setDropdownConditions: () => {},
+    setProductTypes: () => {}, console: { error: () => {} }
+  };
+  const load = makeLoad(scope);
+  await load();
+  assert.equal(scope.loadInFlightRef.current, false);
+  assert.equal(successfulLoads.length, 0, "Failed load is not a valid empty checklist");
+  assert.equal(rows.length, 0);
+  assert.match(loadErrors.at(-1), /no longer available/);
+  assert.deepEqual(saveErrors, [], "Load failure cannot masquerade as a save error");
+  missing = false;
+  await load();
+  assert.deepEqual(successfulLoads, [true], "Only a successful read validates a genuine empty checklist");
+  assert.deepEqual(rows, [[]]);
+  assert.equal(loadErrors.at(-1), "");
+  assert.equal(scope.loadInFlightRef.current, false);
+  console.log("PASS failed initial read cannot impersonate empty checklist; retry loads valid empty data");
+  passed++;
+})();
+
+check("failed-load UI separates errors, offers retry and blocks stale saves", () => {
+  assert.match(source, /if \(!hasLoadedChecklist && loadError\) \{\s*return \(\s*<Dialog/);
+  assert.match(source, /<DialogTitle>Could not load SIP checklist<\/DialogTitle>/);
+  assert.match(source, /The checklist has not loaded\. No items have been changed or saved/);
+  assert.match(source, /if \(!loadInFlightRef\.current\) void loadData\(\);/);
+  assert.match(source, /onClick=\{onClose\}>Close<\/Button>/);
+  assert.match(source, /Checklist reload failed/);
+  assert.match(source, /previously loaded checklist remains here, including unsaved edits/);
+  assert.match(source, /onClick=\{requestReloadLatest\} disabled=\{isLoading \|\| isSaving\}>Retry loading checklist/);
+  assert.match(source, /ref=\{completeButtonRef\}[\s\S]*?disabled=\{isSaving \|\| Boolean\(loadError\)\}/);
+  assert.match(source, /ref=\{saveRevisitButtonRef\}[\s\S]*?disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\)\}/);
+  assert.ok(source.includes('setHasLoadedChecklist(true);') && source.includes('setLoadError("");'));
+});
+
 check("Reload latest confirms unsaved edits and preserves them when cancelled", () => {
   const dirtyBody = source.slice(source.indexOf("  const hasUnsubmittedDrafts = ("),
     source.indexOf("  const requestClose = () => {"));
