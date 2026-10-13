@@ -123,6 +123,48 @@ test('six thousand saved offices have no total cap and remain read-only',()=>{
  assert.equal(JSON.stringify(rows),before);
 });
 
+test('distinct local copy IDs sharing exact canonical issuer identity become review items',()=>{
+ const rows=[locality('oh',[reviewed({id:'a',name:'First name'}),reviewed({id:'b',name:'Other name'})])];
+ const before=JSON.stringify(rows),r=run(rows);
+ assert.equal(r.states.OH.canonical_electrical_role_copy_review,2);
+ assert.equal(r.states.OH.office_identity_review,0);
+ assert.equal(r.states.OH.recorded_staff_verified_offices,2);
+ assert.deepEqual(r.reviews.map(x=>x.office_id),['a','b']);
+ for(const row of r.reviews){
+  assert.equal(row.government_office_id,'canonical-office');
+  assert.deepEqual(row.duplicate_electrical_roles,['electrical_permit']);
+  assert.deepEqual(row.duplicate_electrical_copy_counts,{electrical_permit:2});
+ }
+ assert.equal(JSON.stringify(rows),before);
+});
+test('shared canonical provider across distinct roles or localities is never grouped as a duplicate',()=>{
+ const r=run([locality('a',[reviewed({id:'issuer'}),reviewed({id:'inspector',authority_roles:['electrical_inspection']})]),
+  locality('b',[reviewed({id:'other-locality'})],{jurisdiction_profile_id:'p2'})],[...profile,{id:'p2',name:'Example City',state:'OH'}]);
+ assert.equal(r.states.OH.canonical_electrical_role_copy_review,0);
+ assert.deepEqual(r.reviews,[]);
+});
+test('duplicate role entries do not count a single copy twice; pending copies still need identity review',()=>{
+ const single=run([locality('a',[reviewed({authority_roles:['electrical_permit','electrical_permit']})])]);
+ assert.equal(single.states.OH.canonical_electrical_role_copy_review,0);
+ const r=run([locality('a',[reviewed({id:'issuer'}),reviewed({id:'pending',authority_verification_status:'needs_verification'})])]);
+ assert.equal(r.states.OH.canonical_electrical_role_copy_review,2);
+ assert.equal(r.states.OH.recorded_staff_verified_offices,1);
+ assert.equal(r.reviews.find(row=>row.office_id==='pending').recorded_staff_verified,false);
+});
+test('only exact nonempty canonical IDs establish duplicate-copy candidates',()=>{
+ const r=run([locality('a',[reviewed({id:'a',government_office_id:'exact'}),
+  reviewed({id:'b',government_office_id:' exact '}),reviewed({id:'c',government_office_id:''}),
+  reviewed({id:'d',government_office_id:''}),reviewed({id:'e',government_office_id:'different'})])]);
+ assert.equal(r.states.OH.canonical_electrical_role_copy_review,0);
+});
+test('thousands of copies for both roles retain bounded per-copy counts without mutation',()=>{
+ const rows=[locality('large',Array.from({length:4000},(_,i)=>reviewed({id:'copy-'+i,authority_roles:['electrical_permit','electrical_inspection']})))];
+ const before=JSON.stringify(rows),r=run(rows);
+ assert.equal(r.states.OH.canonical_electrical_role_copy_review,4000);
+ assert.equal(r.reviews.length,4000);
+ for(const row of r.reviews)assert.deepEqual(row.duplicate_electrical_copy_counts,{electrical_permit:4000,electrical_inspection:4000});
+ assert.equal(JSON.stringify(rows),before);
+});
 test('malformed collections or locality identity fail safely',()=>{
  assert.throws(()=>run([locality('bad',null,{offices:'invalid'})]),/malformed/);
  assert.throws(()=>run([locality('same'),locality('same')]),/repeated|duplicate/);
