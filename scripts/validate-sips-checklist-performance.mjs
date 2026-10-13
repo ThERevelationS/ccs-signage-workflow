@@ -971,7 +971,7 @@ await (async () => {
   assert.match(body, /if \(requestId === loadDataRequestRef\.current\) \{\s*loadInFlightRef\.current = false;\s*setIsLoading\(false\)/);
   const makeLoad = new Function("scope", "with(scope) { " + body + "\nreturn loadData; }");
   const requestRef = { current: 0 }, pending = [];
-  const checklists = [], loading = [], errors = [];
+  const checklists = [], loading = [], errors = [], loadErrors = [], loadedFlags = [];
   let invalidations = 0;
   const shared = {
     loadDataRequestRef: requestRef,
@@ -986,7 +986,9 @@ await (async () => {
     loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
     setUsers: () => {}, setLoadedProductsSnapshot: () => {},
     setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
-    setSaveError: value => errors.push(value), setProducts: () => {},
+    setSaveError: value => errors.push(value),
+    setLoadError: value => loadErrors.push(value),
+    setHasLoadedChecklist: value => loadedFlags.push(value), setProducts: () => {},
     setLoadedUiProductsSnapshot: () => {}, setLoadedChecklistSnapshot: () => {},
     setChecklist: items => checklists.push(items.map(item => item.id)),
     setLoadedUiChecklistSnapshot: () => {}, setDropdownConditions: () => {},
@@ -1007,14 +1009,24 @@ await (async () => {
   assert.deepEqual(loading, [true, true, false]);
   assert.equal(invalidations, 2);
   assert.deepEqual(errors, [""]);
+  assert.deepEqual(loadErrors, [""], "Successful load clears only the loading failure");
+  assert.deepEqual(loadedFlags, [true], "Successful load establishes a trustworthy checklist");
 
   const missing = loadB();
   pending[2].resolve([]); // Missing Work Order must not leave loading stuck.
   await missing;
   assert.equal(loading.at(-1), false);
   assert.equal(shared.loadInFlightRef.current, false);
-  assert.match(errors.at(-1), /Work Order no longer available/);
-  console.log("PASS overlapping Work Order reloads ignore stale results and missing records release loading");
+  assert.match(loadErrors.at(-1), /Work Order no longer available/);
+  assert.deepEqual(errors, [""], "Failed loading does not masquerade as a checklist save failure");
+  assert.deepEqual(loadedFlags, [true], "Failed reload cannot mark an old record freshly loaded");
+  const recovery = loadB();
+  pending[3].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-recovered", type: "checklist" }] }]);
+  await recovery;
+  assert.equal(loadErrors.at(-1), "", "Successful retry clears the load warning");
+  assert.deepEqual(checklists, [["row-B"], ["row-recovered"]]);
+  assert.equal(shared.loadInFlightRef.current, false);
+  console.log("PASS overlapping Work Order reloads ignore stale results and missing records recover on retry");
   passed++;
 })();
 
@@ -1382,8 +1394,8 @@ await (async () => {
   passed++;
 })();
 
-check("checklist editor and custom status controls are inert only while saving", () => {
-  assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5"\s+inert=\{isSaving \? "" : undefined\}\s+aria-busy=\{isSaving\}/);
+check("checklist editor and custom status controls are inert during saving or failed reload", () => {
+  assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5"\s+inert=\{isSaving \|\| Boolean\(loadError\) \? "" : undefined\}\s+aria-busy=\{isSaving \|\| Boolean\(loadError\)\}/);
   assert.match(source, /showAddGeneralChecklist && \(\s*<div className="p-3 bg-gray-50 rounded-lg border mb-3" inert=\{isSaving \? "" : undefined\}/);
   assert.match(source, /<OtherDialogContent\s+inert=\{isSaving \? "" : undefined\}/);
   assert.match(source, /saveInFlightRef\.current = true;\s*saveFailureFocusPendingRef\.current = false;\s*setIsSaving\(true\);/);
@@ -1391,16 +1403,16 @@ check("checklist editor and custom status controls are inert only while saving",
 });
 
 check("checklist builder and Add Item actions cannot start during loading or saving", () => {
-  assert.match(source, /if \(saveInFlightRef\.current \|\| loadInFlightRef\.current \|\| isSaving \|\| isLoading\) return;\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\);\s*\}\}\s*disabled=\{isSaving \|\| isLoading\}/);
+  assert.match(source, /if \(saveInFlightRef\.current \|\| loadInFlightRef\.current \|\| isSaving \|\| isLoading\) return;\s*cancelPendingNavigationFocus\(\);\s*setShowTemplateBuilder\(true\);\s*\}\}\s*disabled=\{isSaving \|\| isLoading \|\| Boolean\(loadError\)\}/);
   assert.match(source, /if \(!saveInFlightRef\.current && !loadInFlightRef\.current && !isSaving && !isLoading\) setShowAddGeneralChecklist\(true\);/);
-  assert.match(source, /disabled=\{isSaving \|\| isLoading\}\s+className="sm:flex-1 h-11 sm:h-10"\s*>\s*<Plus/);
+  assert.match(source, /disabled=\{isSaving \|\| isLoading \|\| Boolean\(loadError\)\}\s+className="sm:flex-1 h-11 sm:h-10"\s*>\s*<Plus/);
 });
 
 check("save feedback is announced and Save & Revisit label recovers after save", () => {
   assert.match(source, /\{isSaving && \(\s*<div role="status" aria-live="polite"/);
   assert.match(source, /Saving SIP checklist… Editing is temporarily unavailable\./);
   assert.match(source, /\{isSaving \? "Saving…" : "Save & Revisit"\}/);
-  assert.match(source, /onClick=\{handleSaveClick\}\s+disabled=\{isSaving \|\| !isRegistered\}/);
+  assert.match(source, /onClick=\{handleSaveClick\}\s+disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\)\}/);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
