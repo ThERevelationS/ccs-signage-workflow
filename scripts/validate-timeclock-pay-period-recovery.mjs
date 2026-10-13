@@ -6384,6 +6384,60 @@ test('v29 rejected entry CAS preserves correction audit binding and releases coo
   assert.equal(entry.clock_in, '2026-09-20T14:45:00.000Z');
 });
 
+test('v29 reviewed employee correction refuses a manager audit request ID already owned by another shift', async () => {
+  const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
+  const [first, second] = h.rows.TimeEntry;
+  const secondEmployee = { id: 'synthetic-reviewed-other', email: 'reviewed-other@synthetic.invalid',
+    full_name: 'Reviewed Other', role: 'employee' };
+  h.rows.AuthorizedEmail.push(secondEmployee);
+  h.rows.TimeClockEmployeeState.push({ id: 'state-' + secondEmployee.id,
+    user_email: secondEmployee.email, status: 'clocked_out',
+    break_status: 'working', work_pause_status: 'working',
+    labor_status: 'idle', correction_create_status: 'idle',
+    updated_date: '2026-09-20T00:00:00.000Z' });
+  second.user_email = secondEmployee.email;
+  second.clock_in = '2026-09-21T14:00:00.000Z';
+  second.clock_out = '2026-09-21T22:00:00.000Z';
+  const submit = (person, entry, suffix, targetClock) => h.invokeAs(person, {
+    action: 'submit_correction_request', target_email: person.email,
+    request_id: 'v29-review-global-submit-' + suffix,
+    entry_id: entry.id, expected_updated_date: entry.updated_date,
+    reason: 'Employee corrects a synthetic shift clock in',
+    requested_changes: { clock_in: targetClock, clock_out: entry.clock_out,
+      lunch_minutes: 0, notes: 'Synthetic correction identity test' },
+  });
+  const firstSubmission = await submit(employee, first, 'first', '2026-09-20T14:30:00.000Z');
+  assert.equal(firstSubmission.status, 200, JSON.stringify(firstSubmission.body));
+  const secondSubmission = await submit(secondEmployee, second, 'second', '2026-09-21T14:30:00.000Z');
+  assert.equal(secondSubmission.status, 200, JSON.stringify(secondSubmission.body));
+  const firstRequest = h.rows.TimeClockCorrectionRequest.find((row) => row.time_entry_id === first.id);
+  const secondRequest = h.rows.TimeClockCorrectionRequest.find((row) => row.time_entry_id === second.id);
+  assert.ok(firstRequest?.id && secondRequest?.id);
+  const sharedReviewId = 'v29-global-reviewed-shared-id';
+  const review = (person, request, reviewId) => h.invoke({
+    action: 'review_correction_request', target_email: person.email,
+    correction_request_id: request.id, expected_request_updated_date: request.updated_date,
+    request_id: reviewId, decision: 'approve',
+    reason: 'Manager approves verified synthetic employee correction',
+  });
+  const firstReview = await review(employee, firstRequest, sharedReviewId);
+  assert.equal(firstReview.status, 200, JSON.stringify(firstReview.body));
+  const secondBefore = clone(second);
+  const secondReview = await review(secondEmployee, secondRequest, sharedReviewId);
+  assert.equal(secondReview.status, 409, JSON.stringify(secondReview.body));
+  assert.match(String(secondReview.body.error || ''), /another|conflict|request id|audit|investigation/i);
+  assert.equal(second.clock_in, secondBefore.clock_in,
+    'Conflicting second review must not alter another employee time');
+  assert.equal(h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'admin_correction' && row.request_id === sharedReviewId).length, 1,
+    'No cross-employee duplicate confirmed correction audit');
+  const refreshedRequest = h.rows.TimeClockCorrectionRequest.find((row) => row.id === secondRequest.id);
+  if (refreshedRequest.status === 'pending') {
+    const unrelatedReview = await review(secondEmployee, refreshedRequest, 'v29-global-reviewed-unique-second');
+    assert.equal(unrelatedReview.status, 200, JSON.stringify(unrelatedReview.body));
+  }
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
