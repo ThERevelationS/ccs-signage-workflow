@@ -760,6 +760,28 @@ async function mechanicCommittedWorkOrderResponse(Access:any, WorkOrder:any, gra
   return json({...payload,work_order:sanitizeWorkOrder(latest)});
 }
 
+// Check the Fleet asset again immediately around the final mechanic grant read.
+// An estimate-row CAS alone cannot detect a reassigned Fleet work order.
+// This narrows the cross-entity race; it cannot make separate writes atomic.
+async function requireCurrentMechanicEstimateWriteTarget(Access:any, WorkOrder:any, grantId:string, action:string, openedWorkOrder:any) {
+  const id = String(openedWorkOrder?.id || '');
+  const version = String(openedWorkOrder?.updated_date || '');
+  const equipmentId = String(openedWorkOrder?.equipment_id || '');
+  const verify = async () => {
+    const latest = id ? await WorkOrder.get(id).catch(()=>null) : null;
+    if (!id || !version || !equipmentId || !latest || String(latest.id || '') !== id ||
+        String(latest.updated_date || '') !== version ||
+        String(latest.equipment_id || '') !== equipmentId ||
+        !ACTIVE.has(latest.status)) {
+      throw Object.assign(new Error('This Fleet work order changed before the mechanic estimate could be written. Refresh and review the current equipment and work-order status before retrying.'),{status:409});
+    }
+    return latest;
+  };
+  const beforeGrant = await verify();
+  await requireCurrentMechanicGrant(Access,grantId,action,String(beforeGrant.equipment_id || ''));
+  return await verify();
+}
+
 async function mechanicCommittedEstimateResponse(Access:any, WorkOrder:any, Estimate:any, grantId:string, action:string, workOrderId:string, estimate:any, payload:any) {
   // An authorized estimate write does not guarantee the response snapshot remains
   // current: CCS may update the estimate, its owner, or the linked work order.
@@ -1336,13 +1358,17 @@ Deno.serve(async (req) => {
       if (estimate && (estimate.estimate_source !== 'mechanic_portal' || String(estimate.mechanic_access_id||'') !== String(grant.id||''))) {
         return json({error:'CCS or another mechanic already manages the estimate for this work order. This portal cannot view or overwrite that financial record.'},{status:409});
       }
+      if (estimate && String(estimate.equipment_id || '') &&
+          String(estimate.equipment_id || '') !== String(current.equipment_id || '')) {
+        return json({error:'This mechanic estimate has a conflicting Fleet equipment link. CCS review is required before updating it.'},{status:409});
+      }
 
       if (action === 'estimate_save') {
         if (estimate && !['draft','changes_requested'].includes(estimate.status)) return json({error:'This estimate is locked while submitted, approved, or rejected.'},{status:409});
         const patch = repairEstimatePatch(body?.estimate || {});
         const policy = await evaluateRepairApprovalPolicy(Policy,patch.estimated_total);
         if (!estimate) {
-          await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''));
+          await requireCurrentMechanicEstimateWriteTarget(Access,WorkOrder,String(grant.id || ''),'estimate_save',current);
           const created = await createFleetRepairEstimateSafely({
             estimateEntity:Estimate,
             gateEntity:EstimateCreateGate,
@@ -1350,14 +1376,14 @@ Deno.serve(async (req) => {
             creationKey:`repair-estimate:${id}`,
             ownerSource:'mechanic_portal',
             ownerKey:String(grant.id||''),
-            beforeCreate:()=>requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || '')),
+            beforeCreate:()=>requireCurrentMechanicEstimateWriteTarget(Access,WorkOrder,String(grant.id || ''),'estimate_save',current),
             desired:{...patch,equipment_id:current.equipment_id||'',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},
           });
           estimate=created.estimate;
         } else {
           const estimateExpected=String(body?.estimate_expected_updated_date||'').trim();
           if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before saving.'},{status:409});
-          await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''));
+          await requireCurrentMechanicEstimateWriteTarget(Access,WorkOrder,String(grant.id || ''),'estimate_save',current);
           estimate=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{...patch,status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},label:'Mechanic Fleet repair estimate'});
         }
         return await mechanicCommittedEstimateResponse(Access,WorkOrder,Estimate,String(grant.id || ''),'estimate_save',id,estimate,{success:true,policy});
@@ -1369,7 +1395,7 @@ Deno.serve(async (req) => {
       if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before submitting.'},{status:409});
       const policy=await evaluateRepairApprovalPolicy(Policy,Number(estimate.estimated_total||0));
       const autoApproved=policy.approval_required===false;
-      await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_submit',String(current.equipment_id || ''));
+      await requireCurrentMechanicEstimateWriteTarget(Access,WorkOrder,String(grant.id || ''),'estimate_submit',current);
       const updated=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{approval_required:policy.approval_required,approval_tier:policy.approval_tier,status:autoApproved?'approved':'submitted',submitted_by_email:'',submitted_at:nowIso(),mechanic_name:clean(grant.name,80),decision_by_email:autoApproved?'policy:auto':'',decision_at:autoApproved?nowIso():null,decision_notes:autoApproved?'Automatically approved by Fleet repair approval policy.':estimate.decision_notes||''},label:'Mechanic Fleet repair estimate submission'});
       await Log.create({source:'fleetMechanicPortal',level:'info',message:'External mechanic submitted Fleet repair estimate.',details:{grant_id:grant.id,mechanic_name:grant.name||'',work_order_id:id,estimate_id:updated.id,estimated_total:updated.estimated_total,status:updated.status}}).catch(()=>null);
       return await mechanicCommittedEstimateResponse(Access,WorkOrder,Estimate,String(grant.id || ''),'estimate_submit',id,updated,{success:true,policy,auto_approved:autoApproved});
