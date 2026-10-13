@@ -1,0 +1,71 @@
+{
+  "method": "sharonville-publisher-candidate-preflight-v1",
+  "status": "blocked_before_live_preview",
+  "dry_run": true,
+  "live_preview_executed": false,
+  "applied": false,
+  "authority_verified": false,
+  "address_authority_resolved": false,
+  "production_writes": 0,
+  "initial_head": "f755aac66b683ee23fa3d744e4835a59f033d3d9",
+  "profile": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city"
+  },
+  "existing_path": {
+    "handler": "base44/functions/permittingOfficeCandidate/entry.ts",
+    "module": "base44/shared/permittingOfficeCandidate.mjs",
+    "method": "retained-office-candidate-v1",
+    "requires": "Exact cataloged PDF physical-page publisher quote and byte-verified saved profile archive; HTML is not accepted"
+  },
+  "candidate_selection": {
+    "office_name": "City of Sharonville Community Development Department Office",
+    "publisher_quote": "City of Sharonville Community Development Department Office",
+    "physical_page": 7,
+    "source_document_id": null,
+    "government_office_id": null,
+    "registration_key": null,
+    "expected_catalog_updated_date": null,
+    "expected_evidence_digest": null
+  },
+  "retained_pdf": {
+    "path": "docs/official-evidence/ohio-sharonville-2026-10-07/residential-guide-2026.pdf",
+    "sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+    "bytes": 11002258,
+    "page_text_sha256": "1cc9f1b15503ba2b01b46c966c8fa41f24d8ea7f77d2de705953adac60ca38d5",
+    "literal_name_confirmed": true
+  },
+  "name_reconciliation": {
+    "status": "pending",
+    "html_body_name": "Building & Zoning Division",
+    "html_parent": "Community Development",
+    "note": "Printed guide name is a literal candidate, not an approved canonical name or equivalence to the HTML division."
+  },
+  "contacts": {
+    "candidate_path_contacts": "Empty by design; separate identity review required",
+    "director_email": {
+      "value": "ameyer@cityofsharonville.com",
+      "source": "retained department HTML",
+      "general_inbox": false
+    },
+    "permit_email": {
+      "value": "permits@cityofsharonville.com",
+      "source": "retained building/electrical application",
+      "corroborated_by_department_html": false
+    }
+  },
+  "blockers": [
+    "No visible catalog ID for retained guide in prior exact-profile audit; visibility is permission-scoped.",
+    "No exact saved guide profile archive/hash/bytes linkage established.",
+    "Publisher name/hierarchy reconciliation and fresh official identity recheck pending.",
+    "Fresh catalog version, duplicate checks and evidence digest must come from actual preview; previous observations are not concurrency tokens.",
+    "Separate electrical issuer/inspector current responsibility and commercial-sign applicability remain unapproved."
+  ],
+  "validation": {
+    "candidate_tests_passed": 17,
+    "literal_page_quote_and_text_hash_passed": true
+  },
+  "next_chunk": "Audit the existing manual retained-PDF archive/catalog registration path for this guide and prepare its safe registration prerequisites. Do not manufacture catalog IDs or register an office before exact source lineage exists."
+}
