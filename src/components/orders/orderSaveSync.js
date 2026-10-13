@@ -33,6 +33,42 @@ export async function previewOrderCustomerDecision({ sessionToken, review, decis
   return result;
 }
 
+export async function commitOrderSmartsheetCustomerUnlink({ sessionToken, review } = {}) {
+  if (!String(sessionToken ?? '').trim() || !review?.orderId || !review?.orderUpdatedDate ||
+      !review?.remoteModifiedAt) throw new Error('Fresh Order customer review and session are required.');
+  const payload = {
+    action: 'commit_order_customer_decision',
+    session_token: sessionToken,
+    decision: 'adopt_smartsheet_unlink_job',
+    confirmed: true,
+    review: {
+      order_id: review.orderId, sheet_id: review.sheetId, row_id: review.rowId,
+      work_order_id: review.workOrderId, local_customer_name: review.localCustomerName,
+      smartsheet_customer_name: review.smartsheetCustomerName,
+      order_updated_date: review.orderUpdatedDate, remote_modified_at: review.remoteModifiedAt,
+    },
+  };
+  let result;
+  try {
+    const response = await queueSmartsheetSync(payload, {
+      attempts: 1, retryRateLimit: false, retryCoordinatorBusy: false,
+    });
+    result = response?.data || response;
+  } catch (error) {
+    throw new Error(error?.response?.data?.error || error?.data?.error ||
+      'The Order save acknowledgement is uncertain. Reload Orders before any other action; do not click Apply again.');
+  }
+  if (result?.success !== true || result?.verified !== true ||
+      result?.state !== 'saved_pending_sync' || result?.pending_sync !== true ||
+      result?.smartsheet_writes_attempted !== false || result?.work_order_id !== '' ||
+      result?.order_id !== review.orderId || result?.sheet_id !== review.sheetId ||
+      result?.row_id !== review.rowId || result?.customer_name !== review.smartsheetCustomerName) {
+    throw new Error(result?.error ||
+      'The Order update could not be verified. Reload Orders before deciding whether to retry.');
+  }
+  return result;
+}
+
 export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {}) {
   const token = String(sessionToken || "").trim();
   const rawIds = Array.isArray(orderIds) ? orderIds : [];
