@@ -65,7 +65,7 @@ assert.match(select, /customer_name: latest\.client_name,\s*work_order_id: lates
 assert.match(select, /manuallyUnlinkedCustomerOrderIdsRef\.current\.delete\(order\.id\)/);
 assert.match(ui, /manuallyUnlinkedCustomerOrderIdsRef\.current\.delete\(target\.id\)/);
 const update = ui.slice(ui.indexOf('const updateOrder = (orderId, field, value, skipHistory = false) => {'), ui.indexOf('const persistImmediateOrderFields'));
-assert.match(update, /field === 'customer_name' &&\s*shouldUnlinkOrderJobForTypedCustomer\(currentOrder, value\)/);
+assert.match(update, /field === 'customer_name' &&\s*\(shouldUnlinkOrderJobForTypedCustomer\(currentOrder, value\) \|\|\s*manuallyUnlinkedCustomerOrderIdsRef\.current\.has\(orderId\)\)/);
 assert.match(update, /\[field\]: value, \.\.\.\(unlinkCustomerJob \? \{ work_order_id: '' \} : \{\}\)/);
 assert.match(ui, /onClear=\{\(\) => clearCell\(contextMenu\.order\.id, contextMenu\.fieldName\)\}/);
 assert.match(ui, /const clearCell = \(orderId, fieldName\) => \{\s*updateOrder\(orderId, fieldName, ""\)/);
