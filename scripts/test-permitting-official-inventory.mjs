@@ -95,3 +95,7 @@ for(const category of [undefined,'candidate_typo','',null])
 assert.throws(()=>reconcileOfficialInventory([],[],{source_rows:1,rows:[{...base.rows[0],type:'invented'}]}),/candidate type/);
 r=reconcileOfficialInventory([],[],ref);
 assert.equal(r.candidate_counts.OH+r.candidate_counts.KY+r.status_review_count+r.statistical_reference_count,r.source_rows);
+
+r=reconcileOfficialInventory([],[],ref);assert.deepEqual(r.source_references,ref.sources);assert.equal(r.source_references.length,8);
+for(const bad of [{...ref.sources[0],url:'javascript:alert(1)'},{...ref.sources[0],url:'https://user:secret@tigerweb.geo.census.gov/source'},{...ref.sources[0],url:'https://example.com/source'},{...ref.sources[0],sha256:'missing'}])
+ assert.throws(()=>reconcileOfficialInventory([],[],{...base,sources:[bad]}),/Invalid official inventory source/);

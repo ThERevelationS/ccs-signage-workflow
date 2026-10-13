@@ -60,6 +60,14 @@ function RecordedCoverageSession({readCoverage,authorized}) {
       {result.official && <div className="space-y-2 border-t pt-3">
         <h4 className="font-semibold">Official geographic inventory — {result.official.source_vintage}</h4>
         <p className="text-sm">All {result.official.source_rows} saved source rows accounted for: Ohio {result.official.candidate_counts.OH} and Kentucky {result.official.candidate_counts.KY} research candidates, {result.official.status_review_count} status/relationship reviews, and {result.official.statistical_reference_count} statistical/hierarchy references.</p>
+        {!!result.official.source_references?.length && <details>
+          <summary className="cursor-pointer min-h-11">View retained official geographic sources ({result.official.source_references.length})</summary>
+          <p className="text-sm">These links identify the geographic reference sources. Live pages may change; hashes identify the retained files used for this inventory. They do not establish permitting authority.</p>
+          <ul className="space-y-2 text-sm break-words">{result.official.source_references.map(source=><li key={source.file}>
+            <a className="inline-flex min-h-11 items-center underline" href={source.url} target="_blank" rel="noopener noreferrer">{source.file}</a>
+            <div>Retained file SHA-256: {source.sha256}</div>
+          </li>)}</ul>
+        </details>}
         <p className="text-sm">Queue candidates missing: {result.official.queue.missing.length}. Profile candidates missing: {result.official.profiles.missing.length}. These counts describe geographic name/type candidates within your read permissions.</p>
         {!!result.official.status_review_items?.length && <details>
           <summary className="cursor-pointer min-h-11">View official status and relationship review entities ({result.official.status_review_items.length})</summary>

@@ -89,7 +89,16 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
     const represented = new Set(assessments.flatMap(r=>r.candidate_keys));
     return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.length>0).sort(reviewOrder), missing:candidates.filter(r=>!represented.has(r.key)).sort(reviewOrder) };
   }
+  const sourceReferences = (reference.sources || []).map(source => {
+    let url;
+    try { url = new URL(source.url); } catch { throw Error('Invalid official inventory source URL'); }
+    if (url.protocol!=='https:' || url.username || url.password || url.hostname!=='tigerweb.geo.census.gov'
+      || typeof source.file!=='string' || !source.file.trim() || !/^[a-f0-9]{64}$/.test(source.sha256 || ''))
+      throw Error('Invalid official inventory source reference');
+    return {file:source.file,url:source.url,sha256:source.sha256};
+  });
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
+    source_references:sourceReferences,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),
     status_review_count:reference.rows.filter(r=>r.category==='status_relationship_review').length,
     status_review_items:reference.rows.filter(r=>r.category==='status_relationship_review').map(row=>({...row})).sort((a,b)=>(a.state==='OH'?0:1)-(b.state==='OH'?0:1) || a.name.localeCompare(b.name) || a.key.localeCompare(b.key)),
