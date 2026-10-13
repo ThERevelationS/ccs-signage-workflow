@@ -419,8 +419,14 @@ export default function UserManagement() {
   };
 
   const handleResendOnboarding = async (user) => {
-    if (!user.email || !sessionToken || isLoading || userDirectoryError) return;
+    if (!user?.id || !user.email || !sessionToken || isLoading || userDirectoryError ||
+        onboardingResendInFlight.current || activeSessionToken.current !== sessionToken) return;
 
+    const owner = { sessionToken };
+    onboardingResendOwner.current = owner;
+    const ownsResend = () => onboardingResendOwner.current === owner &&
+      activeSessionToken.current === sessionToken;
+    onboardingResendInFlight.current = true;
     setSendingOnboardingEmail(user.id);
     setUserMutationError("");
     try {
@@ -429,17 +435,26 @@ export default function UserManagement() {
         session_token: sessionToken,
         target_email: user.email,
       });
+      if (!ownsResend()) return;
       const result = response?.data || response;
       if (!result?.success) throw new Error(result?.error || "Failed to issue the onboarding link safely.");
       alert(`New registration email sent to ${user.email}`);
+      // Never schedule an old-session directory refresh.
+      if (!ownsResend()) return;
       await loadUsers();
     } catch (err) {
+      if (!ownsResend()) return;
       console.error("Error sending onboarding email:", err);
       const message = err?.response?.data?.error || err?.data?.error || err?.message || "Failed to issue the onboarding link safely.";
       setUserMutationError(message);
       alert(message);
+    } finally {
+      if (ownsResend()) {
+        onboardingResendOwner.current = null;
+        onboardingResendInFlight.current = false;
+        setSendingOnboardingEmail(null);
+      }
     }
-    setSendingOnboardingEmail(null);
   };
 
   const handleSave = async () => {
@@ -973,7 +988,7 @@ export default function UserManagement() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleSendPasswordReset(user)}
-                    disabled={sendingPasswordReset === user.id}
+                    disabled={passwordResetInFlight.current || isLoading || userDirectoryError}
                     className="h-8 w-8"
                     title="Send Password Reset Email"
                   >
@@ -987,7 +1002,7 @@ export default function UserManagement() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleResendOnboarding(user)}
-                    disabled={sendingOnboardingEmail === user.id}
+                    disabled={onboardingResendInFlight.current || isLoading || userDirectoryError}
                     className="h-8 w-8"
                     title="Resend New User Setup Form"
                   >
