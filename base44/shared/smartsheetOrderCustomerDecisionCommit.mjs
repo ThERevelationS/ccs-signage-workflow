@@ -21,7 +21,7 @@ export function planOrderSmartsheetCustomerUnlink({ review, order, job, remoteRo
       smartsheet_row_id: order.smartsheet_row_id,
     },
     patch: {
-      customer_name: remoteCustomerName,
+      customer_name: String(remoteCustomerName).trim(),
       work_order_id: '',
       smartsheet_pending_local_sync: true,
     },
