@@ -760,9 +760,25 @@ async function mechanicCommittedWorkOrderResponse(Access:any, WorkOrder:any, gra
   return json({...payload,work_order:sanitizeWorkOrder(latest)});
 }
 
-async function mechanicCommittedEstimateResponse(Access:any, grantId:string, action:string, equipmentId:string, estimate:any, payload:any) {
-  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,equipmentId);
-  return json({...payload,estimate:sanitizeEstimate(estimate)});
+async function mechanicCommittedEstimateResponse(Access:any, WorkOrder:any, Estimate:any, grantId:string, action:string, workOrderId:string, estimate:any, payload:any) {
+  // An authorized estimate write does not guarantee the response snapshot remains
+  // current: CCS may update the estimate, its owner, or the linked work order.
+  const latestWorkOrder = await latestMechanicResponseWorkOrder(WorkOrder,{id:workOrderId});
+  const estimateId = String(estimate?.id || '');
+  const latestEstimate = estimateId ? await Estimate.get(estimateId).catch(()=>null) : null;
+  if (!latestEstimate || String(latestEstimate.id || '') !== estimateId ||
+      String(latestEstimate.work_order_id || '') !== String(workOrderId) ||
+      latestEstimate.estimate_source !== 'mechanic_portal' ||
+      String(latestEstimate.mechanic_access_id || '') !== grantId ||
+      (String(latestEstimate.equipment_id || '') &&
+        String(latestEstimate.equipment_id || '') !== String(latestWorkOrder.equipment_id || ''))) {
+    const error:any = new Error('Current Fleet repair-estimate ownership or work-order linkage could not be verified after the operation. It may have committed; refresh with CCS before retrying.');
+    error.code = 'FLEET_MECHANIC_RESPONSE_UNVERIFIED';
+    error.status = 409;
+    throw error;
+  }
+  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,String(latestWorkOrder.equipment_id || ''));
+  return json({...payload,estimate:sanitizeEstimate(latestEstimate)});
 }
 
 function sanitizeEquipment(row: any) {
@@ -1344,7 +1360,7 @@ Deno.serve(async (req) => {
           await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''));
           estimate=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{...patch,status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},label:'Mechanic Fleet repair estimate'});
         }
-        return await mechanicCommittedEstimateResponse(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''),estimate,{success:true,policy});
+        return await mechanicCommittedEstimateResponse(Access,WorkOrder,Estimate,String(grant.id || ''),'estimate_save',id,estimate,{success:true,policy});
       }
 
       if (!estimate) return json({error:'Save the mechanic estimate before submitting it.'},{status:404});
@@ -1356,7 +1372,7 @@ Deno.serve(async (req) => {
       await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_submit',String(current.equipment_id || ''));
       const updated=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{approval_required:policy.approval_required,approval_tier:policy.approval_tier,status:autoApproved?'approved':'submitted',submitted_by_email:'',submitted_at:nowIso(),mechanic_name:clean(grant.name,80),decision_by_email:autoApproved?'policy:auto':'',decision_at:autoApproved?nowIso():null,decision_notes:autoApproved?'Automatically approved by Fleet repair approval policy.':estimate.decision_notes||''},label:'Mechanic Fleet repair estimate submission'});
       await Log.create({source:'fleetMechanicPortal',level:'info',message:'External mechanic submitted Fleet repair estimate.',details:{grant_id:grant.id,mechanic_name:grant.name||'',work_order_id:id,estimate_id:updated.id,estimated_total:updated.estimated_total,status:updated.status}}).catch(()=>null);
-      return await mechanicCommittedEstimateResponse(Access,String(grant.id || ''),'estimate_submit',String(current.equipment_id || ''),updated,{success:true,policy,auto_approved:autoApproved});
+      return await mechanicCommittedEstimateResponse(Access,WorkOrder,Estimate,String(grant.id || ''),'estimate_submit',id,updated,{success:true,policy,auto_approved:autoApproved});
     }
 
     if (action === 'start') {
