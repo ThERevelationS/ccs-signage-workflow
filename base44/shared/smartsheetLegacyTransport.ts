@@ -45,6 +45,10 @@ export async function retrySmartsheetCall(call, {
   maxRateLimitWaitSeconds = Number.POSITIVE_INFINITY,
   onRateLimitWait = null,
   onRateLimitRetry = null,
+  // A mutation can remain queued during Retry-After while employees edit the
+  // sheet. Safety-critical callers may abort before sending the next PUT.
+  // Unlike progress hooks, errors from this guard MUST propagate.
+  beforeRateLimitRetry = null,
 } = {}) {
   let timedOutRetried = false;
   let rateLimitRetries = 0;
@@ -77,6 +81,9 @@ export async function retrySmartsheetCall(call, {
         if (typeof onRateLimitRetry === 'function') {
           try { await onRateLimitRetry({ attempt: rateLimitRetries, waitSeconds: backoffSeconds }); } catch {}
         }
+        if (typeof beforeRateLimitRetry === 'function') {
+          await beforeRateLimitRetry({ attempt: rateLimitRetries, waitSeconds: backoffSeconds });
+        }
         continue;
       }
       throw error;
@@ -96,4 +103,5 @@ export const smartsheetWriteNoTimeoutRetry = (method, path, token, jsonBody, opt
     maxRateLimitWaitSeconds: 30,
     onRateLimitWait: options?.onRateLimitWait,
     onRateLimitRetry: options?.onRateLimitRetry,
+    beforeRateLimitRetry: options?.beforeRateLimitRetry,
   });
