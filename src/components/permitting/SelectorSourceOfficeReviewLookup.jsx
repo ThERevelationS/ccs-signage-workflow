@@ -33,6 +33,7 @@ export default function SelectorSourceOfficeReviewLookup({profile,document,api=b
      {state.result.items.map((row,i)=><div key={row.review_id+'-'+i} className="border-t pt-2">
        <strong>{row.role==='electrical_permit'?'Electrical permit issuer':'Electrical inspection provider'}</strong>
        <p>Source-linked review ID: {row.review_id}. Latest committed related event ID: {row.latest_review_id||'not established'}.</p>
+       <p>Recorded service area: {row.coverage_area||'not established'}. Job-address applicability is not verified.</p>
        <p>Canonical office ID: {row.office_id||'not recorded'}. Physical PDF page: {row.physical_page||'not recorded'}.</p>
        <p><strong>{describeSourceOfficeReview(row).label}</strong>. Latest review source ID: {row.latest_source_id||'not recorded'}.</p>
        <p>Next staff action: {describeSourceOfficeReview(row).action}</p>
