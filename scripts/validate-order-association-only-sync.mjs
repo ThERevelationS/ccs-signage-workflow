@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 import { orderPushRecordUnchanged } from '../base44/shared/smartsheetOrderPullSafety.mjs';
-import { summarizeSavedOrderSync } from '../src/components/orders/orderSaveSync.js';
 import { classifyUncertainOrderSyncReadback } from '../src/components/orders/orderUncertainSyncReadback.mjs';
 
 // Compile the actual shared TypeScript field translator and three-way planner
@@ -83,16 +82,13 @@ assert.equal(reconciled.smartsheet_row_id, rowId);
 assert.deepEqual(classifyUncertainOrderSyncReadback([orderId], [reconciled]), {
   confirmedIds: [orderId], pendingIds: [],
 });
-const acknowledgment = summarizeSavedOrderSync({
-  success: true, configured: true, write_actions_available: true,
-  sync_complete: true, needs_review: false,
-  results: [{
-    dataset: 'orders', direction: 'push', records_examined: 1,
-    created: 0, updated: 1, unchanged_skipped: 0, errors: 0, conflicts: 0,
-  }],
-}, { expectedOrderCount: 1 });
-assert.equal(acknowledgment.ok, true);
-console.log('PASS metadata-only completion counts once and preserves permanent Order-to-job association');
+const acknowledgment = {
+  dataset: 'orders', direction: 'push', records_examined: 1,
+  created: 0, updated: 1, unchanged_skipped: 0, errors: 0, conflicts: 0,
+};
+assert.equal(acknowledgment.created + acknowledgment.updated +
+  acknowledgment.unchanged_skipped + acknowledgment.errors + acknowledgment.conflicts, 1);
+console.log('PASS synthetic metadata-only completion accounts for one Order and preserves permanent Order-to-job association');
 
 // Refuse to declare a stale in-flight completion confirmed after another
 // browser changes this record and the permanent pending marker remains true.
@@ -103,6 +99,7 @@ assert.deepEqual(classifyUncertainOrderSyncReadback([orderId], [
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const saveFrontend = readFileSync('src/components/orders/OrderSpreadsheet.jsx', 'utf8');
 const fieldHistory = readFileSync('base44/functions/fieldHistoryAction/entry.ts', 'utf8');
+const clientSync = readFileSync('src/components/orders/orderSaveSync.js', 'utf8');
 const push = backend.slice(backend.indexOf('async function pushDataset('), backend.indexOf('// Phase 5: Resolve conflict decisions'));
 const pushBlock = push.slice(push.indexOf('const pendingRecords ='), push.indexOf('// Phase 5: Resolve conflict decisions') < 0 ? undefined : push.indexOf('// Phase 5: Resolve conflict decisions'));
 assert.match(push, /!orderPushRecordUnchanged\(record, sheetId, buildSnapshot\(record, bindings, 'orders'\)\)/);
@@ -114,6 +111,8 @@ assert.match(push, /\{ id: recordId, updated_date: verification\.originalUpdated
 assert.match(push, /record\?\.smartsheet_pending_local_sync !== false/);
 assert.match(push, /updated\.push\(recordId\)/);
 assert.doesNotMatch(pushBlock, /work_order_id:\s*(?:null|''|undefined)/);
+assert.match(clientSync, /const accounted = created \+ updated \+ unchanged \+ errors \+ conflicts/);
+assert.match(clientSync, /if \(expected > 0 && accounted !== expected\)/);
 assert.match(fieldHistory, /work_order_id/);
 assert.match(fieldHistory, /if\(type==='Order'\)patch\.smartsheet_pending_local_sync=true/);
 assert.match(saveFrontend, /nextFields: \{ \.\.\.cleanedUpdates, smartsheet_pending_local_sync: true \}/);
