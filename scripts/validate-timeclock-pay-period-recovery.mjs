@@ -2563,11 +2563,15 @@ test('terminal correction review fails closed if final TimeEntry convergence is 
     expected_request_updated_date: request.updated_date,
     decision: 'approve', reason: 'Verified reported Clock Out',
   });
-  assert.equal(result.status, 409, JSON.stringify(result.body));
-  assert.match(result.body.error, /converg|investigation/i);
+  // A terminal review with a mismatched TimeEntry must fail closed AND leave
+  // the company coordinator claimed, not silently authorize another review.
+  assert.equal(result.status, 500, JSON.stringify(result.body));
+  assert.match(result.body.error, /could not be completed safely/i);
   assert.equal(h.rows.TimeClockCorrectionRequest[0].status, 'approved');
   assert.equal(h.rows.TimeClockPunchException[0].status, 'resolved');
   assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
+  assert.equal(h.rows.TimeClockAdminCorrectionGate[0].status, 'creating');
+  assert.equal(h.rows.TimeClockAdminCorrectionGate[0].request_id, 'convergence-review-001');
 });
 
 test('stale applied review recovery preserves exact retry audit binding', async () => {
