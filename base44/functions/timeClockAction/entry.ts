@@ -8090,7 +8090,7 @@ Deno.serve(async (req) => {
           status: 'clocking_out', last_request_id: requestId, last_request_payload_hash: null, pending_started_at: now,
         });
         if (!claimedState) {
-          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Authoritative state changed before correction claim.' } } });
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { ...(intent.details || {}), original: entryAuditSnapshot(entry), reason: 'Authoritative state changed before correction claim.' } } });
           return Response.json({ success: false, error: 'The employee clock state changed before the correction could be applied. Reload and review the shift.' }, { status: 409 });
         }
       }
@@ -8108,7 +8108,7 @@ Deno.serve(async (req) => {
             labor_pending_activity_type: '', labor_pending_work_order_id: '',
           });
         }
-        await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'TimeEntry changed before correction update.' } } });
+        await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { ...(intent.details || {}), original: entryAuditSnapshot(entry), reason: 'TimeEntry changed before correction update.' } } });
         return Response.json({ success: false, error: 'This time entry changed in another session. The correction was not applied.' }, { status: 409 });
       }
 
@@ -8122,7 +8122,7 @@ Deno.serve(async (req) => {
       if (entry.status === 'clocked_in' && !clockOut) {
         const freshActiveState = await freshState(stateEntity, state.id);
         if (freshActiveState.status !== 'clocked_in' || freshActiveState.active_entry_id !== entry.id) {
-          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Active entry corrected but authoritative state changed during correction.' } } });
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { ...(intent.details || {}), original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Active entry corrected but authoritative state changed during correction.' } } });
           return Response.json({ success: false, error: 'The active shift was corrected, but employee clock state changed during the operation. Admin review is required.' }, { status: 409 });
         }
         await stateEntity.updateMany(
