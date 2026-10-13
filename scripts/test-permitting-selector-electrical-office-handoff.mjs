@@ -37,6 +37,32 @@ test('unlinked or wrong-state locality cannot borrow office roles by name',()=>{
   assert.ok(!html.includes('Office a'));
  }
 });
+test('malformed locality, profile and link IDs cannot borrow historical electrical office references',()=>{
+ const saved=locality([office('issuer',['electrical_permit'],'staff_verified')]);
+ const cases=[];
+ for(const id of [undefined,null,'','   ',12,{},' loc '])cases.push([profile(),{...saved,id}]);
+ for(const id of [undefined,null,'','   ',12,{},' oh-profile '])cases.push([{...profile(),id},{...saved,jurisdiction_profile_id:id}]);
+ for(const link of [undefined,null,'','   ',12,{},' oh-profile '])cases.push([profile(),{...saved,jurisdiction_profile_id:link}]);
+ for(const [p,l] of cases){
+  const before=JSON.stringify([p,l]),result=summarize(p,l);
+  assert.equal(result.status,'exact_link_required');
+  assert.deepEqual(result.roles.map(r=>r.status),['not_assessed','not_assessed']);
+  assert.ok(result.roles.every(r=>r.offices.length===0));
+  const html=renderToStaticMarkup(React.createElement(Component,{profile:p,locality:l}));
+  assert.ok(html.includes('preserve malformed saved values'));
+  assert.ok(!html.includes('Office issuer'));
+  assert.ok(html.includes('Open recorded source link'));
+  assert.equal(JSON.stringify([p,l]),before);
+ }
+});
+test('exact IDs allow changed labels as references; state and unrelated IDs remain unassessed',()=>{
+ const saved=locality([office('issuer',['electrical_permit'],'staff_verified')]);
+ assert.equal(summarize({...profile(),name:'New profile label'},{...saved,name:'Historical locality label'}).status,'exact_link_read');
+ for(const [p,l] of [[{...profile(),state:' OH '},saved],[profile(),{...saved,state:'oh'}],
+  [profile(),{...saved,jurisdiction_profile_id:'other-profile'}]]){
+  assert.equal(summarize(p,l).status,'exact_link_required');
+ }
+});
 test('exact linked issuer and inspector are separate review items with preserved office IDs and official source links',()=>{
  const l=locality([office('issuer',['electrical_permit'],'staff_verified'),office('inspector',['electrical_inspection'])]);
  const result=summarize(profile(),l);
