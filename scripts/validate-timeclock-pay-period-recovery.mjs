@@ -6237,6 +6237,60 @@ test('v29 abandoned settled correction coordinator recovers from authoritative e
     ['confirmed', 'recovered'].includes(row.outcome)).length, 2);
 });
 
+test('v29 independent employees can retry distinct manager corrections after company CAS contention', async () => {
+  const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
+  const [first, second] = h.rows.TimeEntry;
+  const other = { id: 'synthetic-parallel-other', email: 'parallel-worker@synthetic.invalid',
+    full_name: 'Parallel Worker', role: 'employee' };
+  h.rows.AuthorizedEmail.push(other);
+  h.rows.TimeClockEmployeeState.push({ id: 'state-' + other.id,
+    user_email: other.email, status: 'clocked_out', break_status: 'working',
+    work_pause_status: 'working', labor_status: 'idle',
+    correction_create_status: 'idle', updated_date: '2026-09-20T00:00:00.000Z' });
+  second.user_email = other.email;
+  second.clock_in = '2026-09-21T14:00:00.000Z';
+  second.clock_out = '2026-09-21T22:00:00.000Z';
+  const correct = (entry, id, time) => h.invoke({
+    action: 'admin_correct_entry', target_email: entry.user_email, request_id: id,
+    entry_id: entry.id, expected_updated_date: entry.updated_date,
+    reason: 'Synthetic parallel independent manager correction',
+    correction: { clock_in: time, clock_out: entry.clock_out, lunch_minutes: 0,
+      notes: 'Independent worker edit',
+      job_allocations: [{ hours: 7, minutes: 30, is_inhouse: true,
+        inhouse_task: 'Synthetic shop work' }] },
+  });
+  let signalClaimed;
+  const claimed = new Promise((resolve) => { signalClaimed = resolve; });
+  let finishFirst;
+  const released = new Promise((resolve) => { finishFirst = resolve; });
+  h.setAfterRowUpdate(async (entity, _query, _update, row) => {
+    if (entity !== 'TimeClockAdminCorrectionGate' || row.status !== 'creating' ||
+        row.request_id !== 'v29-independent-a') return;
+    signalClaimed();
+    await Promise.race([
+      released,
+      new Promise((_resolve, reject) => setTimeout(() => reject(new Error(
+        'Synthetic independent correction contention did not release')), 4000)),
+    ]);
+  });
+  const initial = correct(first, 'v29-independent-a', '2026-09-20T14:30:00.000Z');
+  await claimed;
+  const blocked = await correct(second, 'v29-independent-b', '2026-09-21T14:30:00.000Z');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(second.clock_in, '2026-09-21T14:00:00.000Z');
+  assert.equal(h.rows.TimeClockAudit.some((row) => row.request_id === 'v29-independent-b'), false);
+  finishFirst();
+  const firstResult = await initial;
+  assert.equal(firstResult.status, 200, JSON.stringify(firstResult.body));
+  h.setAfterRowUpdate(null);
+  const retry = await correct(second, 'v29-independent-b', '2026-09-21T14:30:00.000Z');
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
+  assert.equal(h.rows.TimeClockAdminCorrectionGate[0].status, 'idle');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' &&
+    ['confirmed', 'recovered'].includes(row.outcome)).length, 2);
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
