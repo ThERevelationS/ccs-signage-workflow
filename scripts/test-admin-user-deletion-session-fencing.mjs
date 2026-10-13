@@ -58,7 +58,7 @@ test("Changing or leaving Admin revokes delete owner and confirmation", () => {
   assert.match(source, /onOpenChange=\{\(open\) => \{ if \(!open && !deletionInFlight\.current\) setDeleteConfirm\(null\); \}\}/);
   assert.match(source, /<AlertDialogCancel disabled=\{deletionSaving\}/);
   assert.match(source, /disabled=\{deletionSaving \|\| userMutationSaving \|\| hrMutationSaving \|\| isLoading/);
-  assert.match(source, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| deletionInFlight\.current/);
+  assert.match(source, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| hrReloadInFlight\.current \|\| deletionInFlight\.current/);
 });
 
 test("Ordinary deletion succeeds once, closes its confirmation, and refreshes current directory", async () => {
