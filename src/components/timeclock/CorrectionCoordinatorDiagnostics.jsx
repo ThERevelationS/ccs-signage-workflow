@@ -59,7 +59,7 @@ function Field({ label, value }) {
 
 export function CorrectionCoordinatorDiagnosticsView({
   result, status = "idle", error = "", onRefresh, checkedAt,
-  onViewShift, onInspectAudits,
+  onViewShift, onInspectAudits, availableEntryIds = [],
 }) {
   const state = status === "success" && result?.read_only === true ? result.coordinator_state : null;
   const ready = state === "ready";
@@ -72,7 +72,9 @@ export function CorrectionCoordinatorDiagnosticsView({
     evidenceLine("Manager review audit", result?.review_audit),
   ].filter(Boolean);
   const canInspectShift = state === "claimed" && result?.entry_found === true &&
-    Boolean(String(result?.time_entry_id || "").trim()) && typeof onViewShift === "function";
+    Boolean(String(result?.time_entry_id || "").trim()) &&
+    availableEntryIds.includes(String(result?.time_entry_id || "")) &&
+    typeof onViewShift === "function";
   const canInspectAudits = state === "claimed" &&
     Boolean(String(result?.time_entry_id || "").trim()) && typeof onInspectAudits === "function";
   const details = concerning ? [
@@ -173,7 +175,7 @@ export function CorrectionCoordinatorDiagnosticsView({
 }
 
 export default function CorrectionCoordinatorDiagnostics({
-  sessionToken, onViewShift, onInspectAudits,
+  sessionToken, onViewShift, onInspectAudits, availableEntryIds = [],
 }) {
   const [result, setResult] = useState({ token: null, status: "idle", data: null, error: "", checkedAt: null });
   const requestSequence = useRef(0);
@@ -215,5 +217,6 @@ export default function CorrectionCoordinatorDiagnostics({
   };
   return <CorrectionCoordinatorDiagnosticsView result={current.data} status={current.status}
     error={current.error} checkedAt={current.checkedAt} onRefresh={check}
-    onViewShift={onViewShift} onInspectAudits={onInspectAudits} />;
+    onViewShift={onViewShift} onInspectAudits={onInspectAudits}
+    availableEntryIds={availableEntryIds} />;
 }
