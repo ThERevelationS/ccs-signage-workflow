@@ -7644,9 +7644,16 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before applying a correction.' }, { status: 409 });
       }
 
-      const auditRows = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
+      const auditRows = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
       if (!Array.isArray(auditRows)) throw new Error('Correction audit recovery lookup did not return a record list.');
-      if (auditRows.length > 1) return Response.json({ success: false, error: 'Multiple correction audit records exist for this review request. Admin investigation is required.' }, { status: 409 });
+      if (auditRows.length > 1 || auditRows.some((row: any) =>
+        !row?.id || String(row.time_entry_id || '') !== String(entry.id) ||
+        asEmail(row.user_email) !== target.email ||
+        String(row.details?.correction_request_id || '') !== correctionRequest.id ||
+        !constantTimeEqual(String(row.details?.review_payload_hash || ''), reviewHash)
+      )) {
+        return Response.json({ success: false, error: 'Manager review correction audit has conflicting global request ownership. Admin investigation is required.' }, { status: 409 });
+      }
       let correctionAudit: any = auditRows[0] || null;
       if (correctionAudit?.id && !adminCorrectionAuditMatches(correctionAudit, reviewHash)) {
         return Response.json({ success: false, error: 'This correction audit does not match the employee, correction request, or manager-review payload. Admin investigation is required.' }, { status: 409 });
