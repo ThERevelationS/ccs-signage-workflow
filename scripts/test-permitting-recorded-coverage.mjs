@@ -35,7 +35,7 @@ try{
  assert.match(JSON.stringify(tree.toJSON()),/Electrical issuer and inspection source-evidence reconciliation/);assert.match(JSON.stringify(tree.toJSON()),/Role\/area evidence review/);assert.match(JSON.stringify(tree.toJSON()),/Synthetic Electrical Pilot/);assert.match(JSON.stringify(tree.toJSON()),/unreadable-pdf-fixture/);assert.match(JSON.stringify(tree.toJSON()),/deletion is not established/);
  assert.match(JSON.stringify(tree.toJSON()),/Recorded electrical office review gaps/);assert.match(JSON.stringify(tree.toJSON()),/Office gap fixture/);assert.match(JSON.stringify(tree.toJSON()),/Inspection provider role not assigned/);assert.match(JSON.stringify(tree.toJSON()),/State \/ role/);
  const electricalSection=tree.root.findByProps({'aria-label':'Recorded electrical office review gaps'});
- const electricalText=JSON.stringify(electricalSection.toJSON ? electricalSection.toJSON() : electricalSection.findAllByType('p').map(node=>node.children));
+ const electricalText=JSON.stringify(electricalSection.findAllByType('p').map(node=>node.children));
  assert.match(electricalText,/historical flags/);assert.match(electricalText,/revoked\/uncertain authority events/);
  assert.match(electricalText,/it does not prove that no provider exists/);
  assert.equal(snapshot.electrical_offices.states.OH.both_roles_reviewed,1);
@@ -47,6 +47,22 @@ try{
  assert.match(JSON.stringify(tree.toJSON()),/Assigned role needs review/);
  assert.match(JSON.stringify(tree.toJSON()),/No separate role assigned/);
  assert.equal(tree.root.findAllByType('button').filter(node=>node.props['aria-label']?.startsWith('Review office setup')).length,0);assert.equal(tree.root.findAllByType('button').filter(node=>node.props['aria-label']?.startsWith('Review saved office evidence')).length,0);
+ // A setup with both flags can have zero role-assignment gaps while identity evidence remains unresolved.
+ const zeroRoleGaps={...snapshot,electrical_offices:reconcileElectricalOfficeCoverage([historicalBoth])};
+ let zeroTree,zeroReads=0;
+ await act(async()=>{zeroTree=Renderer.create(React.createElement(Panel,{readCoverage:async()=>{zeroReads++;return zeroRoleGaps;}}));});
+ assert.equal(zeroReads,0);
+ await act(async()=>zeroTree.root.findAllByType('button').find(node=>node.children.includes('Read recorded coverage')).props.onClick());
+ assert.equal(zeroReads,1);
+ const zeroSection=zeroTree.root.findByProps({'aria-label':'Recorded electrical office review gaps'});
+ const zeroText=JSON.stringify(zeroSection.findAllByType('p').map(node=>node.children));
+ assert.match(zeroText,/No missing or pending separate role flags/);
+ assert.match(zeroText,/historical authority-event gaps may still remain/);
+ assert.match(zeroText,/job-address applicability and statewide completeness remain unverified/);
+ assert.doesNotMatch(zeroText,/No gaps found/);
+ assert.match(JSON.stringify(zeroTree.toJSON()),/Historical office/);
+ assert.match(JSON.stringify(zeroTree.toJSON()),/Canonical government office ID is not recorded/);
+ await act(async()=>zeroTree.unmount());
  globalThis.coverageReviewAuth={currentUser:{id:'admin-fixture',role:'admin'},isRegistered:true};
  const reviewGets=[],fresh={id:'locality',state:'OH',name:'Fresh office setup',offices:[{id:'office',authority_verification_status:'needs_verification'}]};
  globalThis.coverageReviewApi={entities:{PermitLocality:{get:async id=>{reviewGets.push(id);return fresh;}}}};
