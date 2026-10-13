@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { approvedSalesRecordStillCurrent, verifiedSalesConflictResolutionTargets } from '../base44/shared/smartsheetSalesConflictResolution.mjs';
+import { approvedSalesRecordStillCurrent, verifiedSalesConflictResolutionTargets, staleSalesRemotePutPlans } from '../base44/shared/smartsheetSalesConflictResolution.mjs';
 import { commitVerifiedSalesMetadata } from '../base44/shared/smartsheetSalesMetadataCAS.mjs';
 
 let checks = 0;
@@ -124,4 +124,63 @@ check(backend.includes('originalUpdatedDate: String(record.updated_date || \'\')
   backend.includes('rowId: verification?.rowId') &&
   !backend.includes('bulkUpdate(ordinaryUpdates)'),
   'Ordinary Sales metadata uses exact planning version and permanent row, never bulk update.');
+// A planned ordinary PUT must be excluded if the employee edits that WorkOrder
+// while this sync is still planning, without preventing unrelated rows.
+const ordinaryA={...initial,id:'sales-a',smartsheet_row_id:'90001'};
+const ordinaryB={...initial,id:'sales-b',smartsheet_row_id:'90002'};
+const ordinaryC={...initial,id:'sales-c',smartsheet_row_id:'90003'};
+const localPlans=new Map([['sales-a',ordinaryA],['sales-b',ordinaryB],['sales-c',ordinaryC]]);
+const rows=[['sales-a',{rowId:'90001',originalUpdatedDate:ordinaryA.updated_date}],
+  ['sales-b',{rowId:'90002',originalUpdatedDate:ordinaryB.updated_date}],
+  ['sales-c',{rowId:'90003',originalUpdatedDate:ordinaryC.updated_date}]];
+const cleanLatest=new Map([...localPlans.entries()].map(([id,record])=>[id,{...record}]));
+same(staleSalesRemotePutPlans(rows,localPlans,cleanLatest,initial.smartsheet_sheet_id),[],
+  'Every unchanged ordinary Sales WorkOrder remains eligible for remote prewrite.');
+const editedLatest=new Map(cleanLatest);
+editedLatest.set('sales-b',{...ordinaryB,updated_date:'newer',estimate_amount:900});
+same(staleSalesRemotePutPlans(rows,localPlans,editedLatest,initial.smartsheet_sheet_id),['sales-b'],
+  'A newer employee edit holds only its own ordinary Sales remote PUT.');
+const heldRows=new Set(staleSalesRemotePutPlans(rows,localPlans,editedLatest,initial.smartsheet_sheet_id)
+  .map(id=>rows.find(([plannedId])=>plannedId===id)?.[1]?.rowId));
+same(['90001','90002','90003'].filter(id=>!heldRows.has(id)),['90001','90003'],
+  'Unrelated Sales remote rows remain eligible for their verified PUT.');
+for (const [name,changed] of [
+  ['new task',{current_task_description:'Lost'}],
+  ['new Sales status',{sales_status:'lost'}],
+  ['deleted',{deleted:true}],
+  ['relinked row',{smartsheet_row_id:'90099'}],
+  ['new sheet',{smartsheet_sheet_id:'8702703019812741'}],
+  ['unknown revision',{updated_date:''}],
+]) {
+  const fresh=new Map(cleanLatest);
+  fresh.set('sales-a',{...ordinaryA,...changed});
+  same(staleSalesRemotePutPlans(rows,localPlans,fresh,initial.smartsheet_sheet_id),
+    ['sales-a'],'Prewrite rejects '+name+' on the same WorkOrder.');
+}
+const gone=new Map(cleanLatest);gone.delete('sales-c');
+same(staleSalesRemotePutPlans(rows,localPlans,gone,initial.smartsheet_sheet_id),['sales-c'],
+  'Missing or incomplete page results never authorize an ordinary remote PUT.');
+const wrongPlan=rows.map(([id,p])=>[id,{...p}]);
+wrongPlan[1][1].originalUpdatedDate='outdated';
+same(staleSalesRemotePutPlans(wrongPlan,localPlans,cleanLatest,initial.smartsheet_sheet_id),
+  ['sales-b'],'A mismatched planning revision fails closed even if fresh record is unchanged.');
+const wrongRow=rows.map(([id,p])=>[id,{...p}]);wrongRow[2][1].rowId='90088';
+same(staleSalesRemotePutPlans(wrongRow,localPlans,cleanLatest,initial.smartsheet_sheet_id),
+  ['sales-c'],'A mismatched permanent row plan cannot authorize a remote PUT.');
+const noPlan=new Map(localPlans);noPlan.delete('sales-a');
+same(staleSalesRemotePutPlans(rows,noPlan,cleanLatest,initial.smartsheet_sheet_id),
+  ['sales-a'],'Missing initial WorkOrder plan cannot authorize a remote PUT.');
+assert.throws(()=>staleSalesRemotePutPlans(rows,localPlans,cleanLatest,'invalid'),
+  /requires complete versioned records/);checks++;
+check(backend.includes('staleSalesRemotePutPlans(batch, plannedById, latestById, sheetId)') &&
+  backend.includes("label: 'Sales remote PUT local revision preflight'") &&
+  backend.includes('start += 100') &&
+  backend.indexOf('staleSalesRemotePutPlans(batch, plannedById, latestById, sheetId)') <
+    backend.indexOf("await smartsheetWriteNoTimeoutRetry(\n        'PUT'"),
+  'Actual production Sales PUT is preceded by a fresh, bounded WorkOrder revision preflight.');
+check(backend.includes('salesPrewriteUnverifiedRows.add(rowId)') &&
+  backend.includes('deferredSalesVerification.get(id)?.rowId') &&
+  backend.includes('!heldApprovedSalesRowIds.has(String(row.id))') &&
+  backend.includes('salesFailedRecordIds.add(id)'),
+  'Untracked or stale rows cannot reach the Sales remote PUT or metadata success gate.');
 console.log('Sales approved and ordinary task concurrent-version guards: '+checks+'/'+checks+' PASS.');
