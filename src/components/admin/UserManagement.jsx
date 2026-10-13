@@ -98,7 +98,11 @@ export default function UserManagement() {
     can_work_pause: false
   });
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
+  const passwordResetInFlight = useRef(false);
+  const passwordResetOwner = useRef(null);
   const [sendingOnboardingEmail, setSendingOnboardingEmail] = useState(null);
+  const onboardingResendInFlight = useRef(false);
+  const onboardingResendOwner = useRef(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
