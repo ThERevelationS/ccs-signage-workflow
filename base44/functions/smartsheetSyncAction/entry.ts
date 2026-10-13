@@ -2320,8 +2320,9 @@ async function pushDataset(
           exclude: 'nonexistentCells',
         });
         const result = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
-        if (String(result.body?.id ?? '') !== sheetId || !Array.isArray(result.body?.rows)) {
-          throw new Error('Smartsheet did not confirm the exact Sales sheet and requested rows');
+        if (String(result.body?.id ?? '') !== sheetId || !Array.isArray(result.body?.rows) ||
+            !columnIds.every((id: string) => result.body?.columns?.some((col: any) => String(col.id) === id))) {
+          throw new Error('Smartsheet did not confirm the exact Sales sheet, columns and requested rows');
         }
         const remoteRows = normalizeSheetRows(result.body);
         const requested = new Set(rowIds);
