@@ -982,6 +982,7 @@ await (async () => {
   let invalidations = 0;
   const shared = {
     loadDataRequestRef: requestRef,
+    loadedWorkflowSnapshotRef: { current: null },
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "old synthetic date" },
@@ -1057,7 +1058,7 @@ await (async () => {
     workOrder: { id: "synthetic-initial" },
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
-    loadDataRequestRef: { current: 0 },
+    loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
     resetOtherPopupForReload: () => {}, setIsLoading: () => {},
     WorkOrder: { filter: async () => missing ? [] : [{ id: "synthetic-initial", sip_checklist: [], products: [] }] },
     AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
@@ -1134,7 +1135,7 @@ await (async () => {
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "2099-08-25" },
-    loadDataRequestRef: { current: 0 },
+    loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
     returnToReloadRef: { current: true },
     customStatusDraftsByItemIdRef: { current: drafts.custom },
     resetOtherPopupForReload() { drafts.custom.clear(); calls.push("clear custom drafts"); },
@@ -1497,6 +1498,10 @@ await (async () => {
     isSaving: false, isLoading: false,
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    loadedWorkflowSnapshotRef: { current: {
+      completed: false, is_rider: false, current_stage: 'Production',
+      current_task_assigned_to: 'SIPs', current_task_description: 'SIPs Prep', sip_completed: false,
+    } },
     blockOnUnsubmittedDrafts: () => false,
     setIsSaving(value) { savingFlags.push(value); }, setIsLoading(value) { loadingFlags.push(value); },
     checklist: [], products: [], workOrder: record,
@@ -1539,6 +1544,8 @@ await (async () => {
   assert.equal(writes.length, 1);
   assert.deepEqual(closed, []);
   assert.equal(writes[0].workOrderId, "WO-A");
+  assert.deepEqual(writes[0].guardFields, scope.loadedWorkflowSnapshotRef.current,
+    'Every checklist save requires the previously loaded task, stage and completion state');
   assert.equal(writes[0].nextFields.sip_revisit_date, "2099-02-17");
   assert.equal(writes[0].nextFields.sip_completed, undefined);
   resolveWrite({ sip_checklist: [], products: [], sip_revisit_date: "2099-02-17", updated_date: "2" });
@@ -1572,6 +1579,14 @@ await (async () => {
   scope.loadInFlightRef.current = true;
   await save("2099-02-20");
   assert.equal(writes.length, 3);
+  scope.loadInFlightRef.current = false;
+  const changedContextSave = save("2099-02-21");
+  assert.equal(writes.length, 4);
+  rejectWrite(Error('The record no longer matches its loaded state.'));
+  await changedContextSave;
+  assert.equal(scope.saveInFlightRef.current, false);
+  assert.match(errors.at(-1), /changed stage, task, or completion state in another session/);
+  assert.deepEqual(closed, ["closed"], 'Guard conflict does not close the checklist or discard its drafts');
   assert.match(source, /const loadData = async \(\) => \{\s*if \(saveInFlightRef\.current\) return;/);
   assert.match(source, /saveInFlightRef\.current = false;\s*setIsSaving\(false\);/);
   console.log("PASS same-tick SIPS saves, Cancel and Reload serialize with retry-safe guards");
