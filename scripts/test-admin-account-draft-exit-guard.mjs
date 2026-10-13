@@ -204,7 +204,7 @@ test("Confirmation cannot cross sessions or save operations",()=>{
   f.scope.confirmDiscardHrDraft();
   assert.equal(f.state.editor,employee,mode);
   assert.equal(f.refs.accountDraftBaseline.current.id,employee.id,mode);
- });
+ }
 });
 
 test("Same employee selection cannot silently reset an Account draft",()=>{
