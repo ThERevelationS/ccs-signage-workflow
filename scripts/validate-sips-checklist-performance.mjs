@@ -1108,6 +1108,111 @@ check("failed-load UI separates errors, offers retry and blocks stale saves", ()
   assert.ok(source.includes('setHasLoadedChecklist(true);') && source.includes('setLoadError("");'));
 });
 
+await (async () => {
+  // Exercise confirmed reload through the actual handlers: a network failure
+  // must preserve inline drafts, while a successful replacement discards them.
+  const loaderSource = source.slice(source.indexOf("  const loadData = async () => {"),
+    source.indexOf("  const getDropdownName = (dropdownId) => {"));
+  const actionsSource = source.slice(source.indexOf("  const requestClose = () => {"),
+    source.indexOf("  return (\n    <>", source.indexOf("  const requestClose = () => {")));
+  const makeLoad = new Function("scope", "with(scope) { " + loaderSource + "\nreturn loadData; }");
+  const makeActions = new Function("scope", "with(scope) { " + actionsSource +
+    "\nreturn { requestReloadLatest, confirmDiscardChanges }; }");
+  const calls = [], pending = [], loads = [], warnings = [];
+  const drafts = {
+    inline: "Unsubmitted task text",
+    name: "Unsubmitted product name",
+    newItem: "Another unsubmitted item",
+    general: "Unsubmitted general item",
+    custom: new Map([["row-A", "Unsubmitted Other status"]]),
+  };
+  const states = { failure: "", checklist: [{ id: "row-A" }] };
+  const scope = {
+    workOrder: { id: "WO-synthetic", sip_checklist: [{ id: "row-A" }] },
+    isSaving: false, isLoading: false, hasUnsavedChanges: true,
+    discardWarning: "reload",
+    saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+    saveFailureFocusPendingRef: { current: true },
+    failedRevisitSelectionRef: { current: "2099-08-25" },
+    loadDataRequestRef: { current: 0 },
+    returnToReloadRef: { current: true },
+    customStatusDraftsByItemIdRef: { current: drafts.custom },
+    resetOtherPopupForReload() { drafts.custom.clear(); calls.push("clear custom drafts"); },
+    setEditingItemId: () => calls.push("close inline editor"),
+    setEditingItemText: value => { drafts.inline = value; },
+    setEditingProductName: () => {},
+    setEditingProductNameText: value => { drafts.name = value; },
+    setNewItemInput: () => {},
+    setNewItemText: value => { drafts.newItem = value; },
+    setShowAddGeneralChecklist: () => {},
+    setNewGeneralChecklistText: value => { drafts.general = value; },
+    setDiscardWarning: value => warnings.push(value),
+    cancelPendingNavigationFocus: () => {},
+    onClose: () => { throw Error("Reload must not close checklist"); },
+    setIsLoading: () => {},
+    WorkOrder: { filter: () => new Promise((resolve, reject) => pending.push({ resolve, reject })) },
+    AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
+    loadAllEntityRows: async () => [],
+    loadSingleGlobalSetting: async () => ({ setting_value: { items: [] } }),
+    setUsers: () => {}, setLoadedProductsSnapshot: () => {},
+    setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
+    setSaveError: () => {}, setLoadError: value => { states.failure = value; },
+    setHasLoadedChecklist: () => {},
+    setProducts: () => {}, setLoadedUiProductsSnapshot: () => {},
+    setLoadedChecklistSnapshot: () => {}, setLoadedUiChecklistSnapshot: () => {},
+    setChecklist: value => { states.checklist = value; }, setDropdownConditions: () => {},
+    setProductTypes: () => {}, console: { error: () => {} },
+  };
+  const realLoad = makeLoad(scope);
+  scope.loadData = () => {
+    const task = realLoad();
+    loads.push(task);
+    return task;
+  };
+  const actions = makeActions(scope);
+  actions.requestReloadLatest();
+  assert.deepEqual(warnings, ["reload"], "Unsaved edits always require confirmation");
+  assert.equal(pending.length, 0);
+  actions.confirmDiscardChanges();
+  assert.equal(pending.length, 1);
+  assert.equal(drafts.inline, "Unsubmitted task text");
+  assert.equal(drafts.custom.get("row-A"), "Unsubmitted Other status");
+  assert.equal(scope.failedRevisitSelectionRef.current, "2099-08-25");
+  assert.equal(calls.length, 0, "Confirmed reload may not clean up drafts before the server replies");
+
+  pending[0].reject(new Error("Synthetic network failure"));
+  await loads[0];
+  assert.match(states.failure, /Synthetic network failure/);
+  assert.equal(scope.loadInFlightRef.current, false);
+  assert.equal(drafts.inline, "Unsubmitted task text");
+  assert.equal(drafts.name, "Unsubmitted product name");
+  assert.equal(drafts.newItem, "Another unsubmitted item");
+  assert.equal(drafts.general, "Unsubmitted general item");
+  assert.equal(drafts.custom.get("row-A"), "Unsubmitted Other status");
+  assert.equal(scope.failedRevisitSelectionRef.current, "2099-08-25");
+  assert.deepEqual(states.checklist, [{ id: "row-A" }], "Failed reload cannot replace the previous checklist");
+
+  actions.requestReloadLatest();
+  assert.equal(warnings.at(-1), "reload", "Retry still requests explicit discard approval");
+  actions.confirmDiscardChanges();
+  assert.equal(pending.length, 2);
+  pending[1].resolve([{ id: "WO-synthetic", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
+  await loads[1];
+  assert.deepEqual(states.checklist, [{ id: "row-B", type: "checklist" }]);
+  assert.equal(states.failure, "");
+  assert.equal(drafts.inline, "");
+  assert.equal(drafts.name, "");
+  assert.equal(drafts.newItem, "");
+  assert.equal(drafts.general, "");
+  assert.equal(drafts.custom.size, 0);
+  assert.equal(scope.failedRevisitSelectionRef.current, undefined);
+  assert.ok(calls.includes("clear custom drafts"));
+  assert.match(source, /if \(isLoading\) \{[\s\S]*?<Dialog open=\{isOpen\} onOpenChange=\{\(\) => \{\}\}/,
+    "The loading overlay must not dismiss the dialog by Escape or backdrop");
+  console.log("PASS confirmed reload preserves all inline and status drafts on failure, then clears them only on verified success");
+  passed++;
+})();
+
 check("Reload latest confirms unsaved edits and preserves them when cancelled", () => {
   const dirtyBody = source.slice(source.indexOf("  const hasUnsubmittedDrafts = ("),
     source.indexOf("  const requestClose = () => {"));
