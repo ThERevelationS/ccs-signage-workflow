@@ -25,7 +25,7 @@ test('Existing-user save fences duplicate clicks and captures immutable session 
 test('Old role update cannot start password write, reload directory or dismiss current editor',()=>{
   assert.match(save,/await updateAuthorizedUserAdmin\([\s\S]*?\);\s*\/\/[^\n]*\n\s*if \(!ownsUpdate\(\)\) return/);
   assert.match(save,/if \(newPassword\) \{[\s\S]*?await setPasswordFn/);
-  assert.match(save,/if \(!ownsUpdate\(\)\) return;\s*await loadUsers\(\);\s*if \(!ownsUpdate\(\)\) return;\s*clearHrDraftTracking\(\);\s*setIsDialogOpen\(false\);\s*setEditingUser\(null\)/);
+  assert.match(save,/if \(!ownsUpdate\(\)\) return;\s*await loadUsers\(\);\s*if \(!ownsUpdate\(\)\) return;\s*clearEditorDraftTracking\(\);\s*setIsDialogOpen\(false\);\s*setEditingUser\(null\)/);
   assert.match(save,/catch \(error\) \{\s*if \(!ownsUpdate\(\)\) return;/);
   assert.match(save,/finally \{\s*if \(ownsUpdate\(\)\) \{\s*userUpdateOwner\.current = null;\s*userUpdateInFlight\.current = false/);
 });
