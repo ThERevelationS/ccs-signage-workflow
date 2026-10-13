@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory, reconcileElectricalOfficeCoverage } from './permittingCoverageReader.mjs';
+import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory, reconcileElectricalOfficeCoverage, reconcileSavedLocalityProfileLinks } from './permittingCoverageReader.mjs';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
@@ -16,9 +16,9 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
     { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','type','parent_county'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} profile records`) });
   const localities = await readAllCoveragePages(cursor => api.entities.PermitLocality.filter(
-    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','offices'], ...(cursor ? { cursor } : {}) }
+    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','jurisdiction_profile_id','offices'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} saved locality office setups`) });
-  return { electrical_offices: reconcileElectricalOfficeCoverage(localities), ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
+  return { electrical_offices: reconcileElectricalOfficeCoverage(localities), saved_profile_links: reconcileSavedLocalityProfileLinks(localities, profiles), ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
 export default function PermittingRecordedCoverage({ readCoverage = readRecordedCoverage }) {
@@ -103,6 +103,30 @@ function RecordedCoverageSession({readCoverage,authorized}) {
         </details>)}
         <p className="text-amber-800 text-sm">{result.official.notice} County relationships, consolidated entities, forms, archives, separate electrical offices and approvals remain review gaps. This is not permitting completeness.</p>
       </div>}
+
+      {result.saved_profile_links && <section aria-label="Saved locality profile link review" className="space-y-2 border-t pt-3">
+        <h4 className="font-semibold">Saved locality → jurisdiction profile link review</h4>
+        <p className="text-sm">{result.saved_profile_links.notice}</p>
+        <div className="overflow-x-auto"><table className="w-full min-w-[580px] text-left text-sm" aria-label="Saved locality profile link counts">
+          <thead><tr><th scope="col">State</th><th scope="col">Saved</th><th scope="col">Unlinked</th><th scope="col">Target unavailable</th><th scope="col">Shared link</th><th scope="col">State review</th><th scope="col">Name review</th><th scope="col">Reference only</th><th scope="col">Malformed link</th></tr></thead>
+          <tbody>{['OH','KY'].map(state=>{const counts=result.saved_profile_links.states[state];return <tr key={state}><th scope="row" className="py-2 pr-2">{state==='OH'?'Ohio':'Kentucky'}</th>{['saved','unlinked','missing_target','shared_link','state_review','name_review','linked_reference_only','invalid_link'].map(key=><td className="pr-2" key={key}>{counts[key]}</td>)}</tr>;})}</tbody>
+        </table></div>
+        <p className="text-xs">Categories may overlap: a locality can have a shared link and differing names. Recorded links never certify jurisdiction boundaries or the office responsible for a permit.</p>
+        <details><summary className="cursor-pointer min-h-11">Review saved locality profile links ({result.saved_profile_links.reviews.length})</summary>
+          <ul className="space-y-2 text-sm break-words">{result.saved_profile_links.reviews.map(row=><li key={row.id}>
+            <strong>{row.state} {row.name}</strong> — Locality ID: {row.id}; linked profile ID: {row.profile_id || 'Not recorded'}.
+            {row.profile_name && <span> Readable profile: {row.profile_name} ({row.profile_state || 'state missing'}).</span>}
+            {row.flags.includes('unlinked') && ' No explicit profile ID was recorded; no name-based link was inferred.'}
+            {row.flags.includes('invalid_link') && ' Saved profile ID is malformed; manual identity review required.'}
+            {row.flags.includes('missing_target') && ' Linked profile was not visible in this read; this does not prove deletion.'}
+            {row.flags.includes('shared_link') && <span> Other saved localities reference this profile: {row.shared_locality_ids.join(', ')}.</span>}
+            {row.flags.includes('state_review') && ' Saved locality and profile states disagree.'}
+            {row.flags.includes('name_review') && ' Recorded names differ; they may be aliases. Confirm manually.'}
+          </li>)}</ul>
+          {!result.saved_profile_links.reviews.length && <p className="text-sm">No link review flags in this permission-scoped read; geographic and authority verification remain open.</p>}
+        </details>
+        {!!result.saved_profile_links.excluded_record_ids.length && <p role="alert">Unsupported state records excluded from link totals: {result.saved_profile_links.excluded_record_ids.length}.</p>}
+      </section>}
 
       {result.electrical_offices && <section aria-label="Recorded electrical office review gaps" className="space-y-2 border-t pt-3">
         <h4 className="font-semibold">Recorded electrical office review gaps</h4>
