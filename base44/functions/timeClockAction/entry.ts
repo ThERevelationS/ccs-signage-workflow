@@ -3188,7 +3188,7 @@ Deno.serve(async (req) => {
       const auditEvidence = (rows: any[]) => ({
         count: rows.length,
         outcomes: rows.map((row: any) => String(row.outcome || 'unknown')),
-        ownership_matches: rows.length <= 1 && rows.every((row: any) =>
+        ownership_matches: rows.length === 1 && rows.every((row: any) =>
           row?.id && entry?.id && String(row.time_entry_id || '') === String(entry.id) &&
           asEmail(row.user_email) === asEmail(entry.user_email) &&
           (!heldReview || (String(row.details?.correction_request_id || '') === correctionRequestId &&
