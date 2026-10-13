@@ -2467,10 +2467,21 @@ async function pushDataset(
             item_label: 'Retrying Smartsheet write',
             detail: `Retrying the verified Order batch after rate limit (${attempt}/3)`,
           }),
-        }] : []));
+        }] : [{beforeRateLimitRetry: revalidateSalesRateLimitedPut}]));
     } catch (err: any) {
       if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
-      else salesBatchWriteError = err?.message || 'unknown error';
+      else {
+        salesBatchWriteError = err?.message || 'unknown error';
+        if (err?.salesRateLimitRecheckBlocked) {
+          // A definitive 429 means this PUT has not committed. If its retry
+          // preflight fails, don't infer success merely because another actor
+          // independently placed the expected remote values on the sheet.
+          const blockedRows = new Set(eligibleSmartsheetWrites.map((row: any) => String(row.id)));
+          for (const [recordId, verification] of deferredSalesVerification) {
+            if (blockedRows.has(String(verification.rowId))) salesFailedRecordIds.add(recordId);
+          }
+        }
+      }
     }
   }
 
