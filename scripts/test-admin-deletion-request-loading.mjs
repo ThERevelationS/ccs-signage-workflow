@@ -43,5 +43,5 @@ test("Session changes invalidate prior deletion request reads and clear sensitiv
   assert.match(page, /setDeletionRequests\(\[\]\);\s*setDeletionRequestsError\(true\)/);
   assert.match(page, /\+\+deletionImpactSequence\.current;\s*setDeletionImpactRequest\(null\);\s*setDeletionImpactReport\(null\);/);
   assert.match(page, /setDeletionRequests\(\[\]\);\s*setDeletionRequestsError\(true\);\s*setDeletionRequestConfirm\(null\)/);
-  assert.match(page, /return \(\) => \{\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
+  assert.match(page, /return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false;[\s\S]*?\+\+userLoadSequence\.current;\s*\+\+deletionRequestLoadSequence\.current;\s*\+\+deletionImpactSequence\.current;\s*\}/);
 });
