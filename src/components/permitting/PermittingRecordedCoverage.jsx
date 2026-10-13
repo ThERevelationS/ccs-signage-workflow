@@ -233,20 +233,21 @@ function RecordedCoverageSession({readCoverage,authorized}) {
         <p className="text-sm">{result.electrical_offices.notice}</p>
         <p className="text-sm">Ohio: {result.electrical_offices.states.OH.locality_count} saved localities. Kentucky: {result.electrical_offices.states.KY.locality_count} saved localities. Offices outside these saved setups are not counted.</p>
         <div className="overflow-x-auto"><table aria-label="Recorded electrical office roles" className="w-full min-w-[520px] text-left text-sm">
-          <thead><tr><th scope="col">State / role</th><th scope="col">Staff reviewed</th><th scope="col">Needs review</th><th scope="col">Not established</th></tr></thead>
+          <thead><tr><th scope="col">State / role</th><th scope="col">Staff-review flag recorded</th><th scope="col">Assigned role needs review</th><th scope="col">No separate role assigned</th></tr></thead>
           <tbody>{['OH','KY'].flatMap(state => [['electrical_permit','Permit issuer'],['electrical_inspection','Inspection provider']].map(([role,label]) => {
             const counts=result.electrical_offices.states[state].roles[role];
             return <tr key={state+role}><th scope="row" className="py-2 pr-3 font-normal">{state==='OH'?'Ohio':'Kentucky'} — {label}</th><td>{counts.staff_verified}</td><td>{counts.needs_review}</td><td>{counts.missing}</td></tr>;
           }))}</tbody>
         </table></div>
-        <p className="text-sm text-amber-800">A generic electrical label does not establish either role. Both roles still need project-specific applicability review.</p>
+        <p className="text-sm text-amber-800">These counts describe historical flags on saved locality setups. A recorded staff-review flag can coexist with missing or duplicated office IDs, unresolved profile links, missing review provenance or revoked/uncertain authority events. Check “Saved office relationship evidence review” and “Recorded authority-review event cross-check” before relying on either role. Neither count verifies current authority or the job address.</p>
+        <p className="text-sm">No separate role assigned means this saved setup has no explicit issuer or inspector assignment; it does not prove that no provider exists. A generic electrical label does not establish either role. Both roles still need exact service-area and project-specific applicability review.</p>
         <details><summary className="min-h-11 cursor-pointer">View saved locality electrical role gaps ({result.electrical_offices.gaps.length})</summary>
           <ul className="space-y-2 text-sm">{result.electrical_offices.gaps.map(row => <li key={row.id}>
-            <strong>{row.state} {row.name}</strong>: {row.roles.electrical_permit==='staff_verified'?'Permit issuer staff reviewed':row.roles.electrical_permit==='needs_review'?'Permit issuer needs review':'Permit issuer not established'}; {row.roles.electrical_inspection==='staff_verified'?'Inspection provider staff reviewed':row.roles.electrical_inspection==='needs_review'?'Inspection provider needs review':'Inspection provider not established'}.
+            <strong>{row.state} {row.name}</strong>: {row.roles.electrical_permit==='staff_verified'?'Permit issuer staff-review flag recorded':row.roles.electrical_permit==='needs_review'?'Permit issuer needs review':'Permit issuer role not assigned'}; {row.roles.electrical_inspection==='staff_verified'?'Inspection provider staff-review flag recorded':row.roles.electrical_inspection==='needs_review'?'Inspection provider needs review':'Inspection provider role not assigned'}.
             {row.legacy_broad_role_present && ' Broad electrical role recorded; separate responsibilities remain unresolved.'}
             {officeReview.canReview && <Button type="button" variant="outline" aria-label={'Review office setup for '+row.name} className="mt-2 min-h-11 h-auto whitespace-normal" disabled={Boolean(officeReview.openingId||officeReview.record)} onClick={()=>officeReview.open(row.id)}>{officeReview.openingId===row.id?'Opening saved locality…':'Review office setup'}</Button>}
           </li>)}</ul>
-          {!result.electrical_offices.gaps.length && <p className="text-sm">No gaps found in these saved role relationships. This does not establish statewide completeness.</p>}
+          {!result.electrical_offices.gaps.length && <p className="text-sm">No missing or pending separate role flags in these saved setups. Office identity, profile links, review evidence and historical authority-event gaps may still remain; check their separate review sections. Current authority, job-address applicability and statewide completeness remain unverified.</p>}
         </details>
         {!!result.electrical_offices.excluded_record_ids.length && <p role="alert">Unsupported-state records excluded: {result.electrical_offices.excluded_record_ids.length}.</p>}
       </section>}
