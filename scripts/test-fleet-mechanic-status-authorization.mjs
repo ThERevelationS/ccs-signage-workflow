@@ -89,9 +89,22 @@ test("repair-estimate writes reread Fleet version and equipment around the live 
   assert.match(helper,/const beforeGrant = await verify\(\);[\s\S]*await requireCurrentMechanicGrant\(Access,grantId,action,String\(beforeGrant\.equipment_id \|\| ''\)\);[\s\S]*return await verify\(\);/);
   const branch = between("if (action === 'estimate_save' || action === 'estimate_submit') {","\n\n    if (action === 'start') {");
   assert.match(branch,/beforeCreate:\(\)=>requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_save',current\)/);
-  assert.match(branch,/await requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_save',current\);[\s\S]*estimate=await updateFleetRecordIfCurrent/);
-  assert.match(branch,/await requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_submit',current\);[\s\S]*const updated=await updateFleetRecordIfCurrent/);
+  assert.match(branch,/await requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_save',current\);[\s\S]*estimate=await mechanicEstimateWriteWithUncertainOutcome\(\(\)=>updateFleetRecordIfCurrent/);
+  assert.match(branch,/await requireCurrentMechanicEstimateWriteTarget\(Access,WorkOrder,String\(grant\.id \|\| ''\),'estimate_submit',current\);[\s\S]*const updated=await mechanicEstimateWriteWithUncertainOutcome\(\(\)=>updateFleetRecordIfCurrent/);
   assert.match(branch,/conflicting Fleet equipment link/);
+});
+
+test("uncertain estimate writes preserve the existing CAS and require read-only recovery", () => {
+  const helper = between("async function mechanicEstimateWriteWithUncertainOutcome(", "\n\nasync function mechanicCommittedEstimateResponse",0);
+  assert.match(helper,/return await write\(\)/);
+  assert.match(helper,/error\?\.code === 'FLEET_RECORD_CONFLICT'/);
+  assert.match(helper,/Number\(error\?\.status\) === 409/);
+  assert.match(helper,/operation may have committed/i);
+  assert.match(helper,/nothing was automatically resubmitted/i);
+  const branch = between("if (action === 'estimate_save' || action === 'estimate_submit') {","\n\n    if (action === 'start') {");
+  assert.match(branch,/mechanicEstimateWriteWithUncertainOutcome\(\(\)=>createFleetRepairEstimateSafely/);
+  assert.match(branch,/mechanicEstimateWriteWithUncertainOutcome\(\(\)=>updateFleetRecordIfCurrent/);
+  assert.match(branch,/\),'Submit Estimate'\)/);
 });
 
 test("repair-estimate Save/Submit revalidate fresh work order and estimate ownership after commit", () => {
