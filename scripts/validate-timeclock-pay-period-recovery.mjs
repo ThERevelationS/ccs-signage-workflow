@@ -6625,6 +6625,93 @@ test('v29 completed manager review recovers a lost company coordinator release',
     ['confirmed', 'recovered'].includes(audit.outcome)).length, 2);
 });
 
+test('v30 manager correction coordinator diagnostics remain read-only and session-admin-only', async () => {
+  const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+  const diagnostic = () => h.invoke({
+    action: 'admin_correction_gate_diagnostics', target_email: employee.email,
+  });
+  const frozen = () => clone(h.rows);
+  const initial = frozen();
+  const denied = await h.invokeAs(employee, {
+    action: 'admin_correction_gate_diagnostics', target_email: employee.email,
+  });
+  assert.equal(denied.status, 403, JSON.stringify(denied.body));
+  assert.deepEqual(h.rows, initial, 'Unauthorized diagnostics must not change records');
+  const ready = await diagnostic();
+  assert.equal(ready.status, 200, JSON.stringify(ready.body));
+  assert.equal(ready.body.coordinator_state, 'ready');
+  assert.equal(ready.body.read_only, true);
+  assert.equal(ready.body.record_count, 1);
+  assert.deepEqual(h.rows, initial, 'Idle diagnostics must not trigger state recovery writes');
+
+  const gate = h.rows.TimeClockAdminCorrectionGate[0];
+  h.rows.TimeClockAdminCorrectionGate = [];
+  const missingBefore = frozen();
+  const missing = await diagnostic();
+  assert.equal(missing.status, 200);
+  assert.equal(missing.body.coordinator_state, 'invalid_setup');
+  assert.equal(missing.body.record_count, 0);
+  assert.deepEqual(h.rows, missingBefore);
+  h.rows.TimeClockAdminCorrectionGate = [gate, { ...clone(gate), id: 'another-synthetic-company-gate' }];
+  const duplicateBefore = frozen();
+  const duplicate = await diagnostic();
+  assert.equal(duplicate.body.coordinator_state, 'invalid_setup');
+  assert.equal(duplicate.body.record_count, 2);
+  assert.deepEqual(h.rows, duplicateBefore);
+  h.rows.TimeClockAdminCorrectionGate = [gate];
+  gate.status = 'idle';
+  gate.request_id = 'dirty-idle-request';
+  const invalidBefore = frozen();
+  const invalid = await diagnostic();
+  assert.equal(invalid.body.coordinator_state, 'invalid_state');
+  assert.deepEqual(h.rows, invalidBefore);
+  gate.request_id = '';
+
+  const entry = h.rows.TimeEntry[0];
+  const directId = 'v30-read-only-held-direct';
+  Object.assign(gate, { status: 'creating', request_id: directId,
+    time_entry_id: entry.id, payload_hash: 'synthetic-direct-hash',
+    claim_token: 'synthetic-confidential-claim-token',
+    started_at: '2026-09-22T20:00:00.000Z' });
+  h.rows.TimeClockAudit.push({
+    id: 'synthetic-diagnostic-audit', action: 'admin_correction',
+    outcome: 'pending', request_id: directId, time_entry_id: entry.id,
+    user_email: entry.user_email, actor_role: 'admin',
+    details: { payload_hash: gate.payload_hash },
+  });
+  const heldBefore = frozen();
+  const held = await diagnostic();
+  assert.equal(held.status, 200, JSON.stringify(held.body));
+  assert.equal(held.body.coordinator_state, 'claimed');
+  assert.equal(held.body.claim_kind, 'direct_manager_correction');
+  assert.equal(held.body.correction_audit.count, 1);
+  assert.equal(held.body.correction_audit.outcomes[0], 'pending');
+  assert.equal(held.body.entry_found, true);
+  assert.equal(held.body.entry_request_marker_matches, false);
+  assert.equal(JSON.stringify(held.body).includes(gate.claim_token), false,
+    'Diagnostic output must never expose secret claim tokens');
+  assert.equal(JSON.stringify(held.body).includes(gate.payload_hash), false,
+    'Diagnostic output must never expose payload hashes');
+  assert.deepEqual(h.rows, heldBefore, 'Held coordinator diagnostics cannot repair, release, or rewrite records');
+
+  const reviewId = 'v30-read-only-review-claim';
+  const request = { id: 'synthetic-diagnostic-review', time_entry_id: entry.id,
+    user_email: entry.user_email, status: 'reviewing',
+    review_request_id: reviewId, review_payload_hash: 'synthetic-review-hash' };
+  h.rows.TimeClockCorrectionRequest.push(request);
+  Object.assign(gate, { request_id: reviewId, time_entry_id: 'review:' + request.id,
+    payload_hash: request.review_payload_hash });
+  const heldReviewBefore = frozen();
+  const review = await diagnostic();
+  assert.equal(review.body.coordinator_state, 'claimed');
+  assert.equal(review.body.claim_kind, 'manager_review');
+  assert.equal(review.body.correction_request_status, 'reviewing');
+  assert.equal(review.body.review_request_binding_matches, true);
+  assert.equal(review.body.correction_audit.count, 0);
+  assert.equal(review.body.review_audit.count, 0);
+  assert.deepEqual(h.rows, heldReviewBefore, 'Review diagnostics never complete a pending review');
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
