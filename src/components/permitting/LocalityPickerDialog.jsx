@@ -328,7 +328,7 @@ function LocalityPickerSession({
                         </div>
                       )
                     )}
-                    {selectedLocality && <ElectricalAuthorityCoverage authority={selectedAuthority} />}
+                    {selectedLocality && <ElectricalAuthorityCoverage authority={selectedAuthority} selectionContext="manual" />}
                     </details>
                   </div>
                 )}
@@ -414,7 +414,7 @@ function LocalityPickerSession({
                             )}
                           </div>
                         )}
-                        <ElectricalAuthorityCoverage authority={addressAuthority} />
+                        <ElectricalAuthorityCoverage authority={addressAuthority} selectionContext="address" />
                         {addressAuthority?.coverage_status === 'configured_offices_reviewed' && (
                           <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
                         )}
