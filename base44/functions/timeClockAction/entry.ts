@@ -7494,10 +7494,17 @@ Deno.serve(async (req) => {
 
         const staleEntry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
         const staleAudits = previousRequestId
-          ? await auditEntity.filter({ action: 'admin_correction', request_id: previousRequestId, time_entry_id: correctionRequest.time_entry_id })
+          ? await auditEntity.filter({ action: 'admin_correction', request_id: previousRequestId })
           : [];
         if (!Array.isArray(staleAudits)) throw new Error('Stale correction audit recovery lookup did not return a record list.');
-        if (staleAudits.length > 1) return Response.json({ success: false, error: 'The abandoned review has multiple correction audits. Admin investigation is required.' }, { status: 409 });
+        if (staleAudits.length > 1 || staleAudits.some((row: any) =>
+          !row?.id || String(row.time_entry_id || '') !== String(correctionRequest.time_entry_id || '') ||
+          asEmail(row.user_email) !== target.email ||
+          String(row.details?.correction_request_id || '') !== correctionRequest.id ||
+          !constantTimeEqual(String(row.details?.review_payload_hash || ''), previousReviewHash)
+        )) {
+          return Response.json({ success: false, error: 'An abandoned manager review has conflicting global correction audit identity. Admin investigation is required.' }, { status: 409 });
+        }
         const staleAudit = staleAudits[0] || null;
         if (staleAudit?.id && !adminCorrectionAuditMatches(staleAudit, previousReviewHash)) {
           return Response.json({ success: false, error: 'The abandoned correction audit does not match the employee, correction request, or review payload. Admin investigation is required.' }, { status: 409 });
