@@ -66,6 +66,20 @@ Added canonical_office_identity_malformed counter and per-item identity flags. T
 
 Next contained chunk: audit exact locality-to-profile link handling between saved-link reconciliation and the electrical handoff, particularly malformed ID strings. Require exact IDs and states; preserve manual links and avoid namesake or county fallback.
 
+## Exact saved locality/profile handoff audit
+
+Starting HEAD e202e73eddb75ef7ea7fdfa4baf61b287876a324; working tree clean. Comparing saved-link reconciliation with the electrical handoff confirmed that the handoff trimmed jurisdiction_profile_id and accepted padded locality IDs. The coverage audit correctly rejected those values as malformed.
+
+The handoff now requires nonempty, unpadded string IDs for the profile, locality and explicit saved profile link, with raw exact equality and supported exact state agreement. Malformed inputs leave both electrical roles not_assessed with no borrowed office references. Saved values remain unchanged; staff receive explicit preservation/reconciliation guidance. Different display names remain permissible for exact-ID references and do not independently establish geographic identity.
+
+A new synthetic malformed-profile-ID case exposed a panel render error from displaying an object as the profile ID. The profile ID display now uses unknown for nonstring/blank values, retaining recorded source links while office comparison remains blocked. This is rendering resilience; it does not repair malformed data.
+
+31 selected synthetic checks passed across handoff, saved-profile links, saved sources and dashboard interaction/session behavior. Cases include null/blank/nonstring/padded profile, locality and link IDs; changed labels; state mismatch; historical office suppression; retained source visibility and input preservation. git diff --check passed. One production build completed with captured exit 0 and existing baseline-browser-mapping/Browserslist warnings.
+
+No API/background reads added, no production records or manual links changed, no permissions changed, no frontend publication or backend deployment. Authenticated live acceptance remains pending. Phase 10 / Milestone 1 / Task 2 remains partial.
+
+Next contained chunk: bounded read-only Ohio locality-link reconciliation evidence audit. Inspect existing official evidence packets and current exact IDs for saved locality gaps, retaining unresolved geography and separate issuer/inspection responsibility where proof is absent. Never create a link or infer authority from names, ZIPs or county membership.
+
 ## Validation of the preceding canonical-identity chunk
 
 33 focused synthetic tests passed across electrical handoff, saved sources, electrical research outcomes, recorded coverage and electrical role coverage. New cases exercise missing/blank/padded canonical IDs, repeated same-role canonical copies, valid cross-role shared offices, malformed local IDs and input preservation.
