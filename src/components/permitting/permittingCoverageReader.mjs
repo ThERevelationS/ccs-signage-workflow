@@ -70,7 +70,7 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       if (type === 'township' && !county) review_flags.push('parent_county_missing');
       if (!['county','city','village','township'].includes(type)) review_flags.push('unsupported_type');
       return { id:row.id, name:String((profile ? row.name : row.jurisdiction_name) || 'Unnamed record'), record_state:state, type, state:!hits.length?'unmatched':hits.length>1?'ambiguous':'single_geographic_candidate',
-        candidate_keys:hits.map(r=>r.key), review_flags, canonical_identity_verified:false };
+        candidate_keys:hits.map(r=>r.key), candidate_details:hits.map(r=>({key:r.key,state:r.state,type:r.type,name:r.name,county_name:r.county_name || ''})), review_flags, canonical_identity_verified:false };
     });
     const candidateRecords = new Map();
     for (const row of assessments) for (const key of row.candidate_keys)

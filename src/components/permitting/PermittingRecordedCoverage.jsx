@@ -68,6 +68,13 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           <p className="text-sm">Ambiguous or incomplete records can have name candidates and still require identity review. Candidate counts do not resolve these items.</p>
           <ul className="space-y-2 text-sm">{(result.official[group].identity_review || []).map(row => <li key={row.id}>
             <strong>{row.record_state} {row.name}</strong> — Record ID: {row.id}. {row.state==='ambiguous'?'Multiple geographic candidates':row.state==='unmatched'?'No geographic candidate':'Single candidate requires identity review'}. {row.candidate_keys.length} candidate(s).
+            {!!row.candidate_details?.length && <details className="mt-1">
+              <summary className="min-h-11 cursor-pointer">View geographic candidates for {row.name}</summary>
+              <p>Reference candidates only; review location and authority separately.</p>
+              <ul className="space-y-1 break-words">{row.candidate_details.map(candidate=><li key={candidate.key}>
+                {candidate.state} {candidate.type} {candidate.name}{candidate.county_name ? ` (${candidate.county_name} County)` : ''} — Source key: {candidate.key}
+              </li>)}</ul>
+            </details>}
             {row.review_flags.includes('parent_county_missing') && ' Parent county is missing.'}
             {row.review_flags.includes('official_county_relationship_pending') && ' Official city or village county relationship still needs confirmation; a name match does not establish county office authority.'}
             {row.review_flags.includes('unsupported_type') && ' Government type needs review.'}

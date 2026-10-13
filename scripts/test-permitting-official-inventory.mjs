@@ -57,3 +57,10 @@ for(const type of ['city','village']) {
  }
  assert.equal(r.authority_verified,false);
 }
+
+r=reconcileOfficialInventory([],[{...p,parent_county:null}],base);
+assert.deepEqual(r.profiles.identity_review[0].candidate_details,[
+ {key:'a',state:'OH',type:'township',name:'Miami',county_name:'Hamilton'},
+ {key:'b',state:'OH',type:'township',name:'Miami',county_name:'Montgomery'}]);
+assert.deepEqual(r.profiles.identity_review[0].candidate_details.map(row=>row.key),r.profiles.identity_review[0].candidate_keys);
+r=reconcileOfficialInventory([],[{...p,name:'Unmatched'}],base);assert.deepEqual(r.profiles.identity_review[0].candidate_details,[]);
