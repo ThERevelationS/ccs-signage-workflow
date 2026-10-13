@@ -11,7 +11,7 @@ const backend=readFileSync('base44/functions/smartsheetSyncAction/entry.ts','utf
 const begin=backend.indexOf("  if (dataset === 'sales' && salesRemotePutPlans.size) {");
 const end=backend.indexOf('\n  // Phase 2: Batch Smartsheet write.',begin);
 assert.ok(begin>0 && end>begin,'Production ordinary remote prewrite block must be wired immediately before PUT.');
-const snippet=backend.slice(begin,end).replace(/:\\s*(?:any|string)(?=\\s*[,)]|\\s*=>)/g,'');
+const snippet=backend.slice(begin,end).replaceAll(': any','').replaceAll(': string','');
 const columnBindings={current_task_description:'111',estimate_amount:'222',current_task_assigned_to:'333'};
 const sheetId='8702703019812740';
 const columns=Object.values(columnBindings).map(id=>({id:Number(id)}));
