@@ -96,6 +96,8 @@ function RecordedCoverageSession({readCoverage,authorized}) {
             {row.review_flags.includes('parent_county_conflict') && ' Township name candidates exist in this state, but none match the recorded county. Review the county relationship; no alternative county was selected.'}
             {row.review_flags.includes('official_county_relationship_pending') && ' Official city or village county relationship still needs confirmation; a name match does not establish county office authority.'}
             {row.review_flags.includes('unsupported_type') && ' Government type needs review.'}
+            {row.review_flags.includes('unsupported_state') && ' State is missing or outside the Ohio/Kentucky reference scope.'}
+            {row.review_flags.includes('jurisdiction_name_missing') && ' Jurisdiction name is missing.'}
             {!!row.overlapping_record_ids?.length && <span> Shares geographic candidates with record IDs: {row.overlapping_record_ids.join(', ')}. Review separately; this does not prove duplicate authority.</span>}
           </li>)}</ul>
         </details>)}

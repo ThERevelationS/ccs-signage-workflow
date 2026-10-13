@@ -78,6 +78,8 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       const nameHits = candidates.filter(r => r.state === state && r.type === type && geographicName(r.name, r.type) === name);
       const hits = nameHits.filter(r => type !== 'township' || !county || geographicName(r.county_name, 'county') === county);
       const review_flags = [];
+      if (!['OH','KY'].includes(state)) review_flags.push('unsupported_state');
+      if (!name) review_flags.push('jurisdiction_name_missing');
       if (['city','village'].includes(type)) review_flags.push('official_county_relationship_pending');
       if (type === 'township' && !county) review_flags.push('parent_county_missing');
       if (type === 'township' && county && nameHits.length && !hits.length) review_flags.push('parent_county_conflict');

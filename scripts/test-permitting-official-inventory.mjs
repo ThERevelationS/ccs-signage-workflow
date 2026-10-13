@@ -146,3 +146,13 @@ assert.equal(r.source_rows,3647);
 r=reconcileOfficialInventory([],[{...p,parent_county:null}],base);
 assert.ok(r.profiles.identity_review[0].review_flags.includes('parent_county_missing'));
 assert.equal(r.profiles.identity_review[0].canonical_identity_verified,false);
+
+for(const state of ['',null,'TN']){
+ r=reconcileOfficialInventory([],[{...p,state}],base);
+ const row=r.profiles.identity_review[0];assert.ok(row.review_flags.includes('unsupported_state'));assert.deepEqual(row.candidate_keys,[]);assert.equal(row.canonical_identity_verified,false);
+}
+for(const name of ['',null,'   ']){
+ r=reconcileOfficialInventory([{...q,jurisdiction_name:name}],[{...p,name}],base);
+ for(const group of ['queue','profiles'])assert.ok(r[group].identity_review[0].review_flags.includes('jurisdiction_name_missing'));
+}
+r=reconcileOfficialInventory([],[p],base);assert.ok(!r.profiles.assessments[0].review_flags.includes('unsupported_state'));assert.ok(!r.profiles.assessments[0].review_flags.includes('jurisdiction_name_missing'));
