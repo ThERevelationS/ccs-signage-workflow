@@ -114,6 +114,7 @@ export default function SIPs() {
   const [revisitClearFailure, setRevisitClearFailure] = useState(null);
   const [isClearingRevisit, setIsClearingRevisit] = useState(false);
   const boardLoadSequenceRef = useRef(0);
+  const boardLoadsInFlightRef = useRef(0);
   const boardSaveEpochRef = useRef(0);
   const boardSavesPendingRef = useRef(0);
   const boardRefreshDeferredRef = useRef(false);
@@ -190,11 +191,16 @@ export default function SIPs() {
 
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => loadWorkOrders(false), 60000);
+    const interval = setInterval(() => {
+      // A timer tick should not compete with an in-flight load or local save.
+      // Save/conflict recovery still invokes loadWorkOrders directly.
+      if (boardSavesPendingRef.current === 0) void refreshBoardWhenIdle();
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const loadWorkOrders = async (showLoading = true, { clearQuickEditErrorOnSuccess = false } = {}) => {
+    boardLoadsInFlightRef.current += 1;
     const loadSequence = ++boardLoadSequenceRef.current;
     const saveEpochAtStart = boardSaveEpochRef.current;
     const isCurrentBoardSnapshot = () => loadSequence === boardLoadSequenceRef.current &&
@@ -282,11 +288,20 @@ export default function SIPs() {
         setBoardError(error?.message || "SIPs could not refresh. The last loaded board is still shown.");
       }
     } finally {
+      boardLoadsInFlightRef.current -= 1;
       if (loadSequence === boardLoadSequenceRef.current) {
         setIsLoading(false);
         setIsRefreshing(false);
       }
     }
+  };
+
+  // Synchronous guard for timer and visible Refresh/Retry controls. These
+  // may not start duplicate reads before React paints the disabled state.
+  // Mandatory post-save and conflict refreshes intentionally bypass it.
+  const refreshBoardWhenIdle = (options = {}) => {
+    if (boardLoadsInFlightRef.current > 0) return;
+    return loadWorkOrders(false, options);
   };
 
   // Mirror the synchronous per-field save lock in UI state so only the editor
@@ -668,7 +683,7 @@ export default function SIPs() {
                   <Settings2 className="w-4 h-4 mr-2" />Manage Templates
                 </Button>
               )}
-              <Button type="button" variant="outline" size="sm" onClick={() => loadWorkOrders(false)} disabled={isRefreshing} className="h-11 sm:h-8">
+              <Button type="button" variant="outline" size="sm" onClick={() => refreshBoardWhenIdle()} disabled={isRefreshing} className="h-11 sm:h-8">
                 <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />Refresh
               </Button>
             </div>
@@ -787,7 +802,7 @@ export default function SIPs() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => loadWorkOrders(false)}
+              onClick={() => refreshBoardWhenIdle()}
               disabled={isRefreshing}
               className="h-11 w-full shrink-0 border-amber-300 bg-white text-amber-900 touch-manipulation sm:h-8 sm:w-auto"
             >
@@ -810,7 +825,7 @@ export default function SIPs() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => loadWorkOrders(false)}
+              onClick={() => refreshBoardWhenIdle()}
               disabled={isRefreshing}
               className="h-11 w-full shrink-0 border-amber-300 bg-white text-amber-900 touch-manipulation sm:h-8 sm:w-auto"
             >
@@ -833,7 +848,7 @@ export default function SIPs() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => loadWorkOrders(false, { clearQuickEditErrorOnSuccess: true })}
+              onClick={() => refreshBoardWhenIdle({ clearQuickEditErrorOnSuccess: true })}
               disabled={isRefreshing}
               className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 touch-manipulation sm:h-8 sm:w-auto"
             >
