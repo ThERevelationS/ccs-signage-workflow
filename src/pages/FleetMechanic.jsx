@@ -440,7 +440,7 @@ export default function FleetMechanic() {
       const saved = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
       if (saved?.data?.error) throw new Error(saved.data.error);
       if (!requestStillCurrent()) {
-        await refreshEstimateState(workOrderId, "Save Draft finished after the selected work order or portal view changed. Submit Estimate was not attempted.", true);
+        await refreshEstimateState(workOrderId, "Save Draft finished after the selected work order or portal view changed. Submit was not attempted.", true);
         return;
       }
       let finalEstimate = saved?.data?.estimate;
@@ -451,7 +451,7 @@ export default function FleetMechanic() {
         // Submit is a second independent write. Never automatically submit the
         // newer CCS version when it displaced the version just saved.
         if (saved?.data?.concurrently_updated) {
-          await refreshEstimateState(workOrderId, "Save Draft finished, but CCS updated the estimate before Submit. Submit Estimate was not attempted.", true);
+          await refreshEstimateState(workOrderId, "Save Draft finished, but CCS updated the estimate before Submit. Submit was not attempted.", true);
           return;
         }
         const submitted = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
