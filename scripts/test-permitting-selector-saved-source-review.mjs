@@ -109,7 +109,8 @@ test('only first ten records display initially; show-more is explicit and does n
  await act(async()=>button().props.onClick());
  await act(async()=>button().props.onClick());
  assert.match(visible(),/Saved entry 36/);
- assert.equal(root.root.findAllByType('button').length,0);
+ assert.equal(root.root.findAllByType('button').filter(b=>b.children.some(s=>typeof s==='string'&&s.includes('Show next saved links'))).length,0);
+ assert.equal(root.root.findAllByType('button').filter(b=>b.props['aria-label']?.startsWith('Check exact office review records')).length,37);
  await act(async()=>root.unmount());
 });
 test('no mutation, name-based inferred office, or automatic scan initiation',()=>{
