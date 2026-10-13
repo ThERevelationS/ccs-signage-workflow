@@ -928,7 +928,6 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
     "if (saveInFlightRef.current) return;",
     "const requestId = ++loadDataRequestRef.current;",
     "loadInFlightRef.current = true;",
-    "resetOtherPopupForReload();",
     "setIsLoading(true);",
   ];
   let previousStepIndex = -1;
@@ -937,8 +936,16 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
     assert.ok(stepIndex > previousStepIndex, `Checklist load safety step missing or reordered: ${step}`);
     previousStepIndex = stepIndex;
   }
-  assert.match(loaderSetup, /saveFailureFocusPendingRef\.current = false;/);
-  assert.match(loaderSetup, /failedRevisitSelectionRef\.current = undefined;/);
+  const loaderBody = source.slice(loadStart, source.indexOf("  const getDropdownName = (dropdownId) => {", loadStart));
+  const verifiedRowIndex = loaderBody.indexOf('if (!currentWO) throw new Error(');
+  const cleanupIndex = loaderBody.indexOf('resetOtherPopupForReload();');
+  assert.ok(verifiedRowIndex >= 0 && cleanupIndex > verifiedRowIndex,
+    'Reload cleanup must happen after verifying a replacement Work Order');
+  assert.ok(cleanupIndex < loaderBody.indexOf('setChecklist(reconstructedChecklist);'),
+    'Old editor focus and drafts must clear before applying the verified new checklist');
+  assert.match(loaderBody.slice(verifiedRowIndex, cleanupIndex), /saveFailureFocusPendingRef\.current = false;\s*failedRevisitSelectionRef\.current = undefined;/);
+  assert.ok(!loaderSetup.includes('resetOtherPopupForReload();'),
+    'An in-flight or failed reload must not erase local custom-status drafts');
 
   const warning = source.slice(source.indexOf("{/* Validation guidance */}"));
   const first = warning.indexOf("onCloseAutoFocus={(event) => {");
@@ -979,6 +986,10 @@ await (async () => {
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "old synthetic date" },
     resetOtherPopupForReload: () => { invalidations++; },
+    setEditingItemId: () => {}, setEditingItemText: () => {},
+    setEditingProductName: () => {}, setEditingProductNameText: () => {},
+    setNewItemInput: () => {}, setNewItemText: () => {},
+    setShowAddGeneralChecklist: () => {}, setNewGeneralChecklistText: () => {},
     setIsLoading: value => loading.push(value),
     WorkOrder: { filter: ({ id }) => new Promise(resolve => pending.push({ id, resolve })) },
     AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
@@ -998,8 +1009,9 @@ await (async () => {
   const loadB = makeLoad({ ...shared, workOrder: { id: "WO-B" } });
   const oldRequest = loadA();
   const newRequest = loadB();
-  assert.equal(shared.saveFailureFocusPendingRef.current, false, "Loading clears old failure focus");
-  assert.equal(shared.failedRevisitSelectionRef.current, undefined, "Loading resets pending failed revisit retry");
+  assert.equal(shared.saveFailureFocusPendingRef.current, true, "Pending load preserves prior failure focus");
+  assert.equal(shared.failedRevisitSelectionRef.current, "old synthetic date", "Pending load preserves failed Revisit choice");
+  assert.equal(invalidations, 0, "Pending loads must not reset unsaved drafts");
   assert.deepEqual(pending.map(call => call.id), ["WO-A", "WO-B"]);
   pending[1].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-B", type: "checklist" }] }]);
   await newRequest;
@@ -1007,7 +1019,9 @@ await (async () => {
   await oldRequest;
   assert.deepEqual(checklists, [["row-B"]]);
   assert.deepEqual(loading, [true, true, false]);
-  assert.equal(invalidations, 2);
+  assert.equal(invalidations, 1, "Only the successful current snapshot clears stale drafts");
+  assert.equal(shared.saveFailureFocusPendingRef.current, false);
+  assert.equal(shared.failedRevisitSelectionRef.current, undefined);
   assert.deepEqual(errors, [""]);
   assert.deepEqual(loadErrors, [""], "Successful load clears only the loading failure");
   assert.deepEqual(loadedFlags, [true], "Successful load establishes a trustworthy checklist");
@@ -1018,12 +1032,14 @@ await (async () => {
   assert.equal(loading.at(-1), false);
   assert.equal(shared.loadInFlightRef.current, false);
   assert.match(loadErrors.at(-1), /Work Order no longer available/);
+  assert.equal(invalidations, 1, "Missing record cannot discard the last local draft");
   assert.deepEqual(errors, [""], "Failed loading does not masquerade as a checklist save failure");
   assert.deepEqual(loadedFlags, [true], "Failed reload cannot mark an old record freshly loaded");
   const recovery = loadB();
   pending[3].resolve([{ id: "WO-B", sip_checklist: [{ id: "row-recovered", type: "checklist" }] }]);
   await recovery;
   assert.equal(loadErrors.at(-1), "", "Successful retry clears the load warning");
+  assert.equal(invalidations, 2, "Verified retry performs cleanup once");
   assert.deepEqual(checklists, [["row-B"], ["row-recovered"]]);
   assert.equal(shared.loadInFlightRef.current, false);
   console.log("PASS overlapping Work Order reloads ignore stale results and missing records recover on retry");
@@ -1052,6 +1068,10 @@ await (async () => {
     setSaveError: text => saveErrors.push(text),
     setLoadError: text => loadErrors.push(text),
     setHasLoadedChecklist: value => successfulLoads.push(value),
+    setEditingItemId: () => {}, setEditingItemText: () => {},
+    setEditingProductName: () => {}, setEditingProductNameText: () => {},
+    setNewItemInput: () => {}, setNewItemText: () => {},
+    setShowAddGeneralChecklist: () => {}, setNewGeneralChecklistText: () => {},
     setProducts: () => {}, setLoadedUiProductsSnapshot: () => {},
     setLoadedChecklistSnapshot: () => {}, setLoadedUiChecklistSnapshot: () => {},
     setChecklist: checklist => rows.push(checklist), setDropdownConditions: () => {},
@@ -1142,7 +1162,8 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
   make(true, "reload").confirmDiscardChanges();
   assert.equal(calls.filter(entry => entry === "reload").length, 1);
   assert.equal(calls.includes("close"), false);
-  assert.ok(calls.some(entry => Array.isArray(entry) && entry[0] === "editor"));
+  assert.equal(calls.some(entry => Array.isArray(entry) && entry[0] === "editor"), false,
+    'Confirm must not discard inline editor text before the replacement loads');
   assert.equal(focusFlag.current, false);
   calls.length = 0;
   make(false).requestReloadLatest();
