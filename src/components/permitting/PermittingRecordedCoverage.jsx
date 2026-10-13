@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory, reconcileElectricalOfficeCoverage, reconcileSavedLocalityProfileLinks } from './permittingCoverageReader.mjs';
+import { reconcileSavedOfficeEvidence } from './permittingOfficeEvidenceReader.mjs';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
@@ -18,7 +19,10 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
   const localities = await readAllCoveragePages(cursor => api.entities.PermitLocality.filter(
     { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','jurisdiction_profile_id','offices'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} saved locality office setups`) });
-  return { electrical_offices: reconcileElectricalOfficeCoverage(localities), saved_profile_links: reconcileSavedLocalityProfileLinks(localities, profiles), ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
+  const saved_profile_links = reconcileSavedLocalityProfileLinks(localities, profiles);
+  return { electrical_offices: reconcileElectricalOfficeCoverage(localities), saved_profile_links,
+    office_evidence: reconcileSavedOfficeEvidence(localities, saved_profile_links),
+    ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
 export default function PermittingRecordedCoverage({ readCoverage = readRecordedCoverage }) {
@@ -126,6 +130,34 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           {!result.saved_profile_links.reviews.length && <p className="text-sm">No link review flags in this permission-scoped read; geographic and authority verification remain open.</p>}
         </details>
         {!!result.saved_profile_links.excluded_record_ids.length && <p role="alert">Unsupported state records excluded from link totals: {result.saved_profile_links.excluded_record_ids.length}.</p>}
+      </section>}
+
+      {result.office_evidence && <section aria-label="Saved office relationship evidence review" className="space-y-2 border-t pt-3">
+        <h4 className="font-semibold">Saved office relationship evidence review</h4>
+        <p className="text-sm">{result.office_evidence.notice}</p>
+        <div className="overflow-x-auto"><table aria-label="Saved office evidence review counts" className="w-full min-w-[900px] text-left text-sm">
+          <thead><tr><th scope="col">State</th><th scope="col">Office copies</th><th scope="col">Marked staff verified</th><th scope="col">Office identity review</th><th scope="col">Locality profile link review</th><th scope="col">Canonical office ID missing</th><th scope="col">Verification provenance review</th><th scope="col">Role review</th><th scope="col">Issuer assignments</th><th scope="col">Inspection assignments</th></tr></thead>
+          <tbody>{['OH','KY'].map(state=>{const counts=result.office_evidence.states[state];return <tr key={state}><th scope="row" className="pr-3 py-2">{state==='OH'?'Ohio':'Kentucky'}</th>{['office_count','recorded_staff_verified_offices','office_identity_review','profile_link_review','canonical_office_identity_missing','verification_provenance_review','authority_roles_review','electrical_issuer_assignments','electrical_inspection_assignments'].map(key=><td key={key} className="pr-3">{counts[key]}</td>)}</tr>;})}</tbody>
+        </table></div>
+        <p className="text-xs">These are counts of saved office copies or assignments, not distinct government offices or completed service areas. Review categories may overlap. Issuer and inspection assignments are counted independently and do not prove applicability.</p>
+        <details><summary className="min-h-11 cursor-pointer">Review office identity and evidence gaps ({result.office_evidence.reviews.length})</summary>
+          <ul className="space-y-3 text-sm break-words">{result.office_evidence.reviews.map(row=><li key={row.locality_id+'-'+row.office_index} className="border-b pb-2">
+            <strong>{row.state} {row.locality_name} — {row.office_name}</strong>. Locality ID: {row.locality_id}; office ID: {row.office_id || 'Not recorded'}.
+            {row.recorded_staff_verified && ' Staff-verified flag recorded; supporting evidence still requires independent review.'}
+            {row.missing_or_malformed_local_office_id && ' Missing or malformed locality-scoped office ID.'}
+            {row.duplicate_local_office_id && ' This locality has duplicate office IDs.'}
+            {row.missing_office_name && ' Office name is missing.'}
+            {row.flags.includes('profile_link_review') && <span> Linked jurisdiction profile needs review ({row.link_flags.join(', ')}); do not infer service area.</span>}
+            {row.flags.includes('canonical_office_identity_missing') && ' Canonical government office ID is not recorded.'}
+            {row.missing_reviewer && ' Authority reviewer is missing.'}
+            {row.missing_or_invalid_date && ' Authority review date is missing or invalid.'}
+            {row.missing_notes && ' Authority evidence notes are missing.'}
+            {row.flags.includes('authority_roles_review') && ' Marked reviewed with missing or unsupported authority roles.'}
+            {!!row.authority_roles.length && <span> Recorded roles: {row.authority_roles.join(', ')}.</span>}
+            {officeReview.canReview && <Button type="button" variant="outline" aria-label={'Review saved office evidence for '+row.locality_id+' office '+row.office_index} className="mt-2 min-h-11 h-auto whitespace-normal" disabled={Boolean(officeReview.openingId||officeReview.record)} onClick={()=>officeReview.open(row.locality_id)}>{officeReview.openingId===row.locality_id?'Opening saved locality…':'Review saved office setup'}</Button>}
+          </li>)}</ul>
+          {!result.office_evidence.reviews.length && <p className="text-sm">No recorded office metadata gaps found in the readable records; this does not establish authority, source validity or statewide completion.</p>}
+        </details>
       </section>}
 
       {result.electrical_offices && <section aria-label="Recorded electrical office review gaps" className="space-y-2 border-t pt-3">
