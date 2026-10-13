@@ -116,6 +116,7 @@ export default function UserManagement() {
   const [hrMutationSaving, setHrMutationSaving] = useState(false);
   const hrReloadOwner = useRef(null);
   const hrReloadInFlight = useRef(false);
+  const [hrReloadLoading, setHrReloadLoading] = useState(false);
   const activeEditingUser = useRef(editingUser);
   activeEditingUser.current = editingUser;
   const [deletionRequests, setDeletionRequests] = useState([]);
@@ -155,6 +156,7 @@ export default function UserManagement() {
     setHrMutationSaving(false);
     hrReloadOwner.current = null;
     hrReloadInFlight.current = false;
+    setHrReloadLoading(false);
     // A previous session may have a deletion in flight. The server decides
     // its outcome; only the owning session may change this confirmation UI.
     deletionOwner.current = null;
@@ -503,6 +505,7 @@ export default function UserManagement() {
     const owner = { sessionToken, recordId: record.id };
     hrReloadOwner.current = owner;
     hrReloadInFlight.current = true;
+    setHrReloadLoading(true);
     const ownsReload = () => hrReloadOwner.current === owner &&
       activeSessionToken.current === sessionToken &&
       activeEditingUser.current?.id === record.id &&
@@ -526,6 +529,7 @@ export default function UserManagement() {
       if (ownsReload()) {
         hrReloadOwner.current = null;
         hrReloadInFlight.current = false;
+        setHrReloadLoading(false);
       }
     }
   };
@@ -1418,12 +1422,12 @@ export default function UserManagement() {
           </Tabs>
 
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-            <Button variant="outline" disabled={hrMutationSaving} onClick={() => { if (!hrSaveInFlight.current) setIsDialogOpen(false); }}>
+            <Button variant="outline" disabled={hrMutationSaving || hrReloadLoading} onClick={() => { if (!hrSaveInFlight.current && !hrReloadInFlight.current) setIsDialogOpen(false); }}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken}
+              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
