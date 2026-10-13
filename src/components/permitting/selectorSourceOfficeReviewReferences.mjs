@@ -112,6 +112,9 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
    throw Error('Conflicting roles share a historical relationship key. Resolve identity before reviewing');
  for(const key of keys){
    const history=related.filter(e=>e.relation_key===key);
+   const areas=history.map(e=>e.coverage_area);
+   if(areas.some(area=>!valid(area))||new Set(areas).size!==1)
+     throw Error('Conflicting or missing recorded service areas share a historical relationship key. Ask authorized staff to inspect exact review event IDs: '+history.map(e=>e.id).join(' · ')+'. Verify the service area and jurisdiction boundary; do not infer coverage from an office name, ZIP code or parent county.');
    const officeIds=history.map(e=>e.office_snapshot?.government_office_id);
    if(officeIds.some(id=>!valid(id))||new Set(officeIds).size!==1)
      throw Error('Conflicting or missing canonical office IDs share a historical relationship key. Ask authorized staff to resolve source/office identity and inspect exact review event IDs: '+history.map(e=>e.id).join(' · ')+'. Do not select an office by its name.');
@@ -134,7 +137,8 @@ export async function readSavedSourceOfficeReviewReferences(api,profile,document
    const status=discrepancy?.status|| (reference?'recorded_source_reference':latest?.action==='revoke'?'revoked':'history_review_required');
    items.push({role,review_id:first.id,latest_review_id:latest?.id||'',
      office_id:latest?.office_snapshot?.government_office_id||first.office_snapshot?.government_office_id||'',
-     status,source_replaced:Boolean(latest&&latest.source_document_id&&latest.source_document_id!==source.id),
+     status,coverage_area:first.coverage_area,
+     source_replaced:Boolean(latest&&latest.source_document_id&&latest.source_document_id!==source.id),
      physical_page:first.role_proof?.physical_page||null,
      latest_source_id:latest?.source_document_id||'',review_ids:history.map(e=>e.id)});
  }
