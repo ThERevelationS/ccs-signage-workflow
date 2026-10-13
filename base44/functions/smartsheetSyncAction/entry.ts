@@ -3001,11 +3001,15 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         : undefined;
       // Repeat local reads after remote network wait. This preview still
       // cannot authorize a future write; commit must repeat ALL checks.
-      const [freshOrder, freshJob] = await Promise.all([
+      const [freshOrder, freshJob, freshClaims] = await Promise.all([
         base44.asServiceRole.entities.Order.get(orderId),
         base44.asServiceRole.entities.WorkOrder.get(cleanText(review.work_order_id, 100)),
+        loadAllEntityRows({ entity: base44.asServiceRole.entities.Order,
+          query: { smartsheet_sheet_id: sheetId, smartsheet_row_id: rowId },
+          sort: 'id', label: 'Order customer decision final permanent row ownership' }),
       ]);
-      const duplicateClaims = claims.length !== 1 || String(claims[0]?.id) !== orderId;
+      const duplicateClaims = claims.length !== 1 || String(claims[0]?.id) !== orderId ||
+        freshClaims.length !== 1 || String(freshClaims[0]?.id) !== orderId;
       const state = checkOrderCustomerDecisionEvidence({
         review, decision, order: freshOrder, job: freshJob,
         remoteRow, remoteCustomerName: remoteName, duplicateClaims,
