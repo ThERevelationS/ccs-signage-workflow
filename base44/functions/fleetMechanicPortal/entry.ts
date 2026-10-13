@@ -766,6 +766,7 @@ async function mechanicCommittedEstimateResponse(Access:any, WorkOrder:any, Esti
   const latestWorkOrder = await latestMechanicResponseWorkOrder(WorkOrder,{id:workOrderId});
   const estimateId = String(estimate?.id || '');
   const latestEstimate = estimateId ? await Estimate.get(estimateId).catch(()=>null) : null;
+  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,String(latestWorkOrder.equipment_id || ''));
   if (!latestEstimate || String(latestEstimate.id || '') !== estimateId ||
       String(latestEstimate.work_order_id || '') !== String(workOrderId) ||
       latestEstimate.estimate_source !== 'mechanic_portal' ||
@@ -777,7 +778,6 @@ async function mechanicCommittedEstimateResponse(Access:any, WorkOrder:any, Esti
     error.status = 409;
     throw error;
   }
-  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,String(latestWorkOrder.equipment_id || ''));
   return json({...payload,estimate:sanitizeEstimate(latestEstimate)});
 }
 
