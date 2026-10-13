@@ -65,7 +65,7 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           <p className="text-sm break-words">{result.official[group].missing.map(r => r.state + ' ' + r.type + ' ' + r.name + (r.county_name ? ' (' + r.county_name + ' County)' : '')).join('; ') || 'No missing name/type candidates in this read.'}</p></details>)}
         {['queue','profiles'].map(group => <details key={'identity-review-'+group}>
           <summary className="cursor-pointer min-h-11">View {group} geographic identity review items ({result.official[group].identity_review?.length || 0})</summary>
-          <p className="text-sm">Ambiguous or incomplete records can have name candidates and still require identity review. Candidate counts do not resolve these items.</p>
+          <p className="text-sm">Ambiguous or incomplete records can have name candidates and still require identity review. Candidate counts do not resolve these items. Ohio review items appear before Kentucky.</p>
           <ul className="space-y-2 text-sm">{(result.official[group].identity_review || []).map(row => <li key={row.id}>
             <strong>{row.record_state} {row.name}</strong> — Record ID: {row.id}. {row.state==='ambiguous'?'Multiple geographic candidates':row.state==='unmatched'?'No geographic candidate':'Single candidate requires identity review'}. {row.candidate_keys.length} candidate(s).
             {!!row.candidate_details?.length && <details className="mt-1">

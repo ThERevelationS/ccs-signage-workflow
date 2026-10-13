@@ -64,3 +64,16 @@ assert.deepEqual(r.profiles.identity_review[0].candidate_details,[
  {key:'b',state:'OH',type:'township',name:'Miami',county_name:'Montgomery'}]);
 assert.deepEqual(r.profiles.identity_review[0].candidate_details.map(row=>row.key),r.profiles.identity_review[0].candidate_keys);
 r=reconcileOfficialInventory([],[{...p,name:'Unmatched'}],base);assert.deepEqual(r.profiles.identity_review[0].candidate_details,[]);
+
+const mixed=[{id:'ky',state:'KY',name:'A',type:'unsupported'},{id:'oh-z',state:'OH',name:'Z',type:'unsupported'},{id:'outside',state:'TN',name:'A',type:'unsupported'},{id:'oh-a2',state:'OH',name:'A',type:'unsupported'},{id:'oh-a1',state:'OH',name:'A',type:'unsupported'}];
+const before=JSON.stringify(mixed);
+r=reconcileOfficialInventory([],mixed,base);
+assert.deepEqual(r.profiles.identity_review.map(row=>row.id),['oh-a1','oh-a2','oh-z','ky','outside']);
+assert.deepEqual(r.profiles.assessments.map(row=>row.id),mixed.map(row=>row.id));
+assert.equal(JSON.stringify(mixed),before);
+const reversed={...base,rows:[base.rows[2],base.rows[1],base.rows[0]]};
+const original=JSON.stringify(reversed);
+r=reconcileOfficialInventory([],[],reversed);
+assert.deepEqual(r.profiles.missing.map(row=>row.key),['a','b','c']);
+assert.equal(JSON.stringify(reversed),original);
+assert.equal(r.profiles.missing.length,3);

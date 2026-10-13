@@ -79,8 +79,11 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
       row.overlapping_record_ids = [...new Set(row.candidate_keys.flatMap(key=>candidateRecords.get(key)).filter(id=>id!==row.id))];
       if (row.overlapping_record_ids.length) row.review_flags.push('shared_geographic_candidate');
     }
+    const statePriority = state => state==='OH' ? 0 : state==='KY' ? 1 : 2;
+    const reviewOrder = (a,b) => statePriority(a.record_state || a.state)-statePriority(b.record_state || b.state)
+      || String(a.name).localeCompare(String(b.name)) || String(a.id || a.key).localeCompare(String(b.id || b.key));
     const represented = new Set(assessments.flatMap(r=>r.candidate_keys));
-    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.length>0), missing:candidates.filter(r=>!represented.has(r.key)) };
+    return { assessments, identity_review:assessments.filter(row=>row.state!=='single_geographic_candidate' || row.review_flags.length>0).sort(reviewOrder), missing:candidates.filter(r=>!represented.has(r.key)).sort(reviewOrder) };
   }
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),
