@@ -609,6 +609,57 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
         </>
       )}
 
+      {hrRecovery && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-3 text-sm">
+          <p className="font-medium text-amber-950">HR information changed in another session.</p>
+          <p className="text-amber-900">Your unsaved draft is still here. Saving is paused until you review the latest record. No overwrite happens during recovery.</p>
+          {hrRecovery.stage === "needs_reload" ? (
+            <Button type="button" variant="outline" disabled={reloadSaving}
+              onClick={reloadHrForRecovery}>
+              {reloadSaving ? "Loading latest HR record..." : "Load latest record (keep my draft)"}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-amber-900">
+                Latest HR record loaded. You changed {recoveryComparison?.editedFields.length || 0} section(s).
+                {recoveryComparison?.conflictFields.length
+                  ? ` Both administrators changed: ${recoveryComparison.conflictFields.join(", ")}.`
+                  : " No overlapping section changes were found."}
+              </p>
+              <p className="text-amber-900">
+                Each listed section is compared as a whole, including emergency contacts and clothing sizes. Choose how to resolve this locally, review the fields, and then save separately.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="outline"
+                  onClick={() => resolveHrRecovery("latest")}>
+                  Use latest (discard my draft)
+                </Button>
+                <Button type="button" size="sm" variant="outline"
+                  onClick={() => resolveHrRecovery("prefer-latest")}>
+                  Keep my non-conflicting edits
+                </Button>
+              </div>
+              {recoveryComparison?.conflictFields.length > 0 && (
+                <div className="space-y-2 rounded border border-amber-400 p-3">
+                  <label className="flex items-start gap-2 text-amber-950">
+                    <input type="checkbox" className="mt-1" checked={confirmOverwrite}
+                      onChange={event => setConfirmOverwrite(event.target.checked)} />
+                    I understand that choosing my edits for the listed conflicting sections will replace the newer values in those sections when I later save.
+                  </label>
+                  <Button type="button" size="sm" variant="outline" disabled={!confirmOverwrite}
+                    onClick={() => resolveHrRecovery("keep-conflicts")}>
+                    Keep my edits, including conflicts
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {draftNotice && (
+        <p className="text-sm text-blue-800" role="status">{draftNotice}</p>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           {saveSuccess && (
@@ -626,7 +677,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
         </div>
         <Button
           onClick={handleSave}
-          disabled={isSaving || saveInFlight.current}
+          disabled={isSaving || saveInFlight.current || reloadSaving || !!hrRecovery}
           className="clay-button"
           style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
         >
