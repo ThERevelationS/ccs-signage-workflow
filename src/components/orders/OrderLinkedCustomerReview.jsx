@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { previewOrderCustomerDecision } from '@/components/orders/orderSaveSync';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,6 +14,14 @@ export default function OrderLinkedCustomerReview({
   const [previews, setPreviews] = useState({});
   const [busyId, setBusyId] = useState('');
   const previewEpochRef = useRef(0);
+  useEffect(() => {
+    // A later Sync produces new evidence; invalidate all older previews and
+    // in-flight replies even when the permanent Order IDs are unchanged.
+    previewEpochRef.current += 1;
+    setBusyId('');
+    setPreviews({});
+    setChoices({});
+  }, [items]);
   const choose = (orderId, choice) => {
     previewEpochRef.current += 1;
     setBusyId('');
@@ -132,7 +140,7 @@ export default function OrderLinkedCustomerReview({
                         onClick={() => verify(item)}>
                         {busyId === item.orderId ? 'Checking fresh sources…' : 'Verify decision safely'}
                       </Button>
-                      {previews[item.orderId] && (
+                      {current === 'matches_review' && previews[item.orderId] && (
                         <p className={previews[item.orderId].ok ? 'text-xs text-green-800' : 'text-xs text-red-700'}
                           role="status">
                           {previews[item.orderId].ok ? 'Fresh evidence verified — preview only. ' : 'Verification blocked — no changes made. '}
