@@ -206,6 +206,78 @@ await check('newer board refresh wins even if older request finishes last', asyn
   assert.equal(h.ctx.boardLoadSequenceRef.current, 2);
 });
 
+await check('rapid manual Refresh/Retry taps issue one fetch and unlock on completion', async () => {
+  const h = fixture();
+  const first = h.refreshBoardWhenIdle();
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 1);
+  assert.equal(h.ctx.isRefreshing, true);
+  const duplicate = h.refreshBoardWhenIdle();
+  assert.equal(duplicate, undefined);
+  assert.equal(h.reads.length, 1, 'Only one read started before React re-render');
+  h.reads[0].finish();
+  await first;
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 0);
+  assert.equal(h.ctx.isRefreshing, false);
+  const retry = h.refreshBoardWhenIdle();
+  assert.equal(h.reads.length, 2, 'After completion a new fetch can start');
+  h.reads[1].finish();
+  await retry;
+});
+
+await check('failed manual refresh releases synchronous lock and retains error until retry', async () => {
+  const h = fixture();
+  const first = h.refreshBoardWhenIdle();
+  h.reads[0].reject(new Error('Synthetic offline'));
+  await first;
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 0);
+  assert.match(h.ctx.boardError, /Synthetic offline/);
+  const retry = h.refreshBoardWhenIdle();
+  assert.match(h.ctx.boardError, /Synthetic offline/);
+  h.reads[1].finish();
+  await retry;
+  assert.equal(h.ctx.boardError, '');
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 0);
+});
+
+await check('60-second refresh skips pending save and in-flight board fetch', async () => {
+  const h = fixture();
+  const timer = board.match(/const interval = setInterval\(\(\) => \{([\s\S]*?)\}, 60000\);/);
+  assert.ok(timer, 'Actual board interval exists');
+  const tick = vm.runInNewContext('() => {' + timer[1] + '}', {
+    boardSavesPendingRef: h.ctx.boardSavesPendingRef,
+    refreshBoardWhenIdle: h.refreshBoardWhenIdle,
+  });
+  const release = h.holdGet();
+  const saving = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  tick();
+  tick();
+  assert.equal(h.reads.length, 0, 'Timer does not fetch while a save is pending');
+  release();
+  await saving;
+  tick();
+  assert.equal(h.reads.length, 1);
+  tick();
+  assert.equal(h.reads.length, 1, 'Timer cannot overlap itself');
+  h.reads[0].finish();
+  for (let i = 0; i < 10 && h.ctx.boardLoadsInFlightRef.current !== 0; i++) await Promise.resolve();
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 0);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow);
+});
+
+await check('mandatory recovery refresh can supersede a pending routine refresh', async () => {
+  const h = fixture();
+  const routine = h.refreshBoardWhenIdle();
+  const recovery = h.loadWorkOrders(false);
+  assert.equal(h.reads.length, 2, 'Save/conflict recovery does not use routine refresh guard');
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 2);
+  h.reads[1].finish([{ ...h.record, sip_revisit_date: tomorrow }]);
+  await recovery;
+  h.reads[0].finish();
+  await routine;
+  assert.equal(h.ctx.boardLoadsInFlightRef.current, 0);
+  assert.equal(h.queue(), 'Revisit Later', 'Older fetch cannot overwrite recovery');
+});
+
 await check('refresh finishing during pending quick edit cannot undo optimistic queue', async () => {
   const h = fixture();
   const releaseGet = h.holdGet();

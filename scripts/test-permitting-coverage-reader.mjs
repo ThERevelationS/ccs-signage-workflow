@@ -30,3 +30,11 @@ for (const changed of [false,true]) {
 }
 await assert.rejects(readAllCoveragePages(async()=>({items:[{id:'same'},{id:'same'}],has_more:false})),/repeated during pagination/);
 console.log('Repeated identities rejected within a page and across pages, including changed electrical authority snapshots.');
+
+for(const id of [null,undefined,0,42,true,{},[],['record'],'','   ',' record','record ']){
+ let progressCalls=0;
+ await assert.rejects(readAllCoveragePages(async()=>({items:[{id}],has_more:false}),{onProgress:()=>progressCalls++}),/stable identity/);
+ assert.equal(progressCalls,0);
+}
+const opaqueIds=['0','record-with-dashes','record_with_underscores'];
+assert.deepEqual((await readAllCoveragePages(async()=>({items:opaqueIds.map(id=>({id})),has_more:false}))).map(row=>row.id),opaqueIds);
