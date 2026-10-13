@@ -1328,7 +1328,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return (
       <>
         <OrderLinkedCustomerReview count={linkedNameReview.count} items={linkedNameReview.items}
-          orders={orders} workOrders={workOrders} />
+          orders={orders} workOrders={workOrders}
+          isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken} />
         <OrderMobileCards
           orders={filteredOrders}
           separateHistory={historyLayout.split}
@@ -1364,7 +1365,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}
     >
       <OrderLinkedCustomerReview count={linkedNameReview.count} items={linkedNameReview.items}
-        orders={orders} workOrders={workOrders} />
+        orders={orders} workOrders={workOrders}
+        isAdmin={currentUser?.role === 'admin'} sessionToken={sessionToken} />
       {saveError && (
         <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-2">
           <span>{saveError}</span>
