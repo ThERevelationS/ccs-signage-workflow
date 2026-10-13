@@ -80,11 +80,21 @@ test("every Start/Save response helper projects a newly loaded Fleet row and che
   assert.equal(helpers.includes("sanitizeWorkOrder(workOrder)"),false,"never project the original snapshot");
 });
 
-test("repair-estimate Save/Submit revalidate after commit before returning financial details", () => {
+test("repair-estimate Save/Submit revalidate fresh work order and estimate ownership after commit", () => {
   const estimateBlock = between("if (action === 'estimate_save' || action === 'estimate_submit') {", "\n\n    if (action === 'start') {");
-  assert.match(estimateBlock, /await mechanicCommittedEstimateResponse\(Access,String\(grant\.id \|\| ''\),'estimate_save',String\(current\.equipment_id \|\| ''\),estimate,/);
-  assert.match(estimateBlock, /updateFleetRecordIfCurrent\([\s\S]*await Log\.create\([\s\S]*await mechanicCommittedEstimateResponse\(Access,String\(grant\.id \|\| ''\),'estimate_submit',String\(current\.equipment_id \|\| ''\),updated,/);
+  assert.match(estimateBlock, /await mechanicCommittedEstimateResponse\(Access,WorkOrder,Estimate,String\(grant\.id \|\| ''\),'estimate_save',id,estimate,/);
+  assert.match(estimateBlock, /updateFleetRecordIfCurrent\([\s\S]*await Log\.create\([\s\S]*await mechanicCommittedEstimateResponse\(Access,WorkOrder,Estimate,String\(grant\.id \|\| ''\),'estimate_submit',id,updated,/);
   assert.equal(/return json\(\{success:true,estimate:sanitizeEstimate/.test(estimateBlock), false, "committed estimates must not bypass the final grant check");
+  const helper = between("async function mechanicCommittedEstimateResponse(", "\n\nfunction sanitizeEquipment", 0);
+  assert.match(helper,/latestMechanicResponseWorkOrder\(WorkOrder,\{id:workOrderId\}\)/);
+  assert.match(helper,/Estimate\.get\(estimateId\)\.catch\(\(\)=>null\)/);
+  assert.match(helper,/requireCurrentMechanicGrantForCommittedResponse\(Access,grantId,action,String\(latestWorkOrder\.equipment_id \|\| ''\)\)/);
+  assert.match(helper,/String\(latestEstimate\.work_order_id \|\| ''\) !== String\(workOrderId\)/);
+  assert.match(helper,/String\(latestEstimate\.mechanic_access_id \|\| ''\) !== grantId/);
+  assert.match(helper,/latestEstimate\.estimate_source !== 'mechanic_portal'/);
+  assert.match(helper,/String\(latestEstimate\.equipment_id \|\| ''\) !== String\(latestWorkOrder\.equipment_id \|\| ''\)/);
+  assert.match(helper,/estimate:sanitizeEstimate\(latestEstimate\)/);
+  assert.equal(helper.includes("sanitizeEstimate(estimate)"),false,"never return the earlier estimate snapshot");
 });
 
 test("post-commit authorization failures warn against blind replay", () => {
