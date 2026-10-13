@@ -41,6 +41,8 @@ assert.equal(check({ order: null }), 'order_changed');
 assert.equal(check({ job: null }), 'linked_job_unverified');
 assert.equal(check({ job: { ...job, deleted: true } }), 'linked_job_unverified');
 assert.equal(check({ job: { ...job, id: 'other-job' } }), 'linked_job_unverified');
+assert.equal(check({ job: { ...job, client_name: 'Unrelated customer' } }), 'linked_job_unverified');
+assert.equal(check({ job: { ...job, client_name: '  ORIGINAL    CUSTOMER  ' } }), 'verified_read_only');
 assert.equal(check({ remoteRow: { ...remoteRow, modified_at: '2026-10-13T10:05:00Z' } }), 'smartsheet_changed');
 assert.equal(check({ remoteRow: { ...remoteRow, id: '987654' } }), 'smartsheet_changed');
 assert.equal(check({ remoteCustomerName: 'Other updated customer' }), 'smartsheet_changed');
