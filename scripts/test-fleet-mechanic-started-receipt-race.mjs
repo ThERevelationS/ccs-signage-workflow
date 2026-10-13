@@ -1733,3 +1733,75 @@ test("mutation status checks current equipment scope after later work-order reas
   assert.equal(store.receipts.get(prior.id).status,"applied");
   assert.equal(store.updates,1);
 });
+
+test("Start Work committed response returns newer Fleet work-order state after a racing CCS edit",async()=>{
+  const {store,client}=setup();
+  store.pauseAppliedWrite=true;
+  const pending=call({action:"start",token,work_order_id:workId,
+    request_id:"start-final-fresh-123456",expected_updated_date:"version-1",note:"Start mechanical work"},client);
+  await until("Start committed receipt CAS before newer CCS edit",()=>store.pendingAppliedWrites.length===1);
+  assert.equal(store.updates,1,"Start committed exactly once");
+  store.work={...store.work,updated_date:"version-3",notes:"Later CCS supervisor maintenance note"};
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.success,true);
+  assert.equal(outcome.body.work_order.updated_date,"version-3");
+  assert.equal(outcome.body.work_order.notes,"Later CCS supervisor maintenance note");
+  assert.equal(store.updates,1);
+});
+
+test("Save Progress committed response refuses Fleet data after racing equipment reassignment",async()=>{
+  const {store,client,grant}=setup();
+  grant.scope_mode="selected_equipment";
+  grant.allowed_equipment_ids=["eq-race"];
+  store.pauseAppliedWrite=true;
+  const pending=call(payload("save-final-scope-123456"),client);
+  await until("Save committed receipt CAS before scope reassignment",()=>store.pendingAppliedWrites.length===1);
+  assert.equal(store.updates,1,"Save committed exactly once");
+  store.work={...store.work,updated_date:"version-3",equipment_id:"eq-outside"};
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,403);
+  assert.ok(!outcome.body.work_order,"No out-of-scope Fleet data may escape the committed response");
+  assert.equal(store.updates,1);
+});
+
+test("same-request Save replay returns latest CCS edit rather than its earlier work-order snapshot",async()=>{
+  const original=payload("request-original-123456");
+  const prior=makeReceipt(original);
+  const {store,client}=setup({receipt:prior});
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.pauseAppliedWrite=true;
+  const pending=call(original,client);
+  await until("same-request receipt CAS before later CCS edit",()=>store.pendingAppliedWrites.length===1);
+  store.work={...store.work,updated_date:"version-3",corrective_action:"Newer CCS corrective action"};
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.reused,true);
+  assert.equal(outcome.body.work_order.updated_date,"version-3");
+  assert.equal(outcome.body.work_order.corrective_action,"Newer CCS corrective action");
+  assert.equal(store.updates,0,"An identical replay never writes maintenance twice");
+});
+
+test("same-request Save replay refuses newly out-of-scope Fleet equipment",async()=>{
+  const original=payload("request-original-123456");
+  const prior=makeReceipt(original);
+  const {store,client,grant}=setup({receipt:prior});
+  grant.scope_mode="selected_equipment";
+  grant.allowed_equipment_ids=["eq-race"];
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.pauseAppliedWrite=true;
+  const pending=call(original,client);
+  await until("same-request applied receipt before Fleet reassignment",()=>store.pendingAppliedWrites.length===1);
+  store.work={...store.work,updated_date:"version-3",equipment_id:"eq-outside"};
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,403);
+  assert.ok(!outcome.body.work_order,"No prior in-scope data may escape after reassignment");
+  assert.equal(store.receipts.get(prior.id).status,"applied");
+  assert.equal(store.updates,0);
+});
