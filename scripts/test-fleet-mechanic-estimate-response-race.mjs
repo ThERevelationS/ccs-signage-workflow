@@ -42,7 +42,8 @@ const submitBody=()=>({
 });
 function setup(){
   const store={work:baseWork(),estimate:currentEstimate(),writes:0,readBarrier:false,pendingReads:[],estimateReads:0,
-    pausePolicyRead:false,pendingPolicyReads:[],pauseGrantRead:false,pendingGrantReads:[],gateClaims:0};
+    pausePolicyRead:false,pendingPolicyReads:[],pauseGrantRead:false,pendingGrantReads:[],
+    pauseGateClaim:false,pendingGateClaims:[],gateClaims:0};
   const grant={id:grantId,enabled:true,name:"Synthetic mechanic",token_hash:hash(token),
     allowed_actions:["bootstrap","start","save","estimate_save","estimate_submit"],
     scope_mode:"selected_equipment",allowed_equipment_ids:["eq-allowed"],
@@ -91,6 +92,10 @@ function setup(){
       if(query.id!==gate.id || query.status!==gate.status || (query.updated_date && query.updated_date!==gate.updated_date) ||
           (query.claim_token && query.claim_token!==gate.claim_token))return {updated:0};
       Object.assign(gate,clone(change.$set),{updated_date:"gate-v"+(++store.gateClaims+1)});
+      if(store.pauseGateClaim && change.$set?.status==="creating"){
+        store.pauseGateClaim=false;
+        await new Promise(resolve=>store.pendingGateClaims.push(resolve));
+      }
       return {updated:1};
     },
   };
@@ -106,7 +111,7 @@ function setup(){
     FleetRepairEstimate:Estimate,FleetRepairEstimateCreateGate:Gate,FleetRepairApprovalPolicy:Policy,
     FleetOperationReceipt:{},FleetSystemLog:{async create(){}},
   }}};
-  return {store,grant,client};
+  return {store,grant,gate,client};
 }
 async function call(body,client){
   globalThis.__fleetEstimateResponseClient=client;
@@ -159,7 +164,7 @@ test("Submit Estimate rejects equipment reassignment during approval-policy eval
   assert.equal(store.estimate.status,"draft");
 });
 
-test("first Save Draft creation rejects reassignment while the create gate waits",async()=>{
+test("first Save Draft creation rejects reassignment during approval-policy evaluation",async()=>{
   const {store,client}=setup();
   store.estimate=null;
   store.pausePolicyRead=true;
