@@ -159,6 +159,13 @@ export default function UserManagement() {
     setInviteFirstName("");
     setInviteLastName("");
     setInviteRole("user");
+    // Revoke old reset/resend UI ownership without cancelling backend effects.
+    passwordResetOwner.current = null;
+    passwordResetInFlight.current = false;
+    setSendingPasswordReset(null);
+    onboardingResendOwner.current = null;
+    onboardingResendInFlight.current = false;
+    setSendingOnboardingEmail(null);
     // Revoke UI ownership from a pending previous-session resolution.
     // The backend's authorized CAS may finish, but it cannot update this UI.
     deletionResolutionOwner.current = null;
