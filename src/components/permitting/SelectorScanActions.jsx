@@ -39,7 +39,7 @@ export default function SelectorScanActions({locality,result,profiles,onProfileU
    <p className="text-sm font-medium break-words">{profile.name}, {profile.state}</p>
    <p className="text-xs text-gray-600">{profile.documents?.length || 0} saved forms and links{profile.last_updated?` · Last checked ${new Date(profile.last_updated).toLocaleDateString()}`:''}</p>
    {duplicate&&<p className="text-xs text-amber-800">More than one saved record exists for this place. Resolve that before scanning.</p>}
-   {!duplicate&&<SelectorSavedSourceReview key={profile.id} profile={profile}/>}
+   {!duplicate&&<SelectorSavedSourceReview key={profile.id} profile={profile} locality={locality||result?.suggested_locality||null}/>}
    {feedback?.profile_id===profile.id&&<section role="status" aria-label={'Research evidence follow-up for '+profile.name} className="rounded border border-amber-300 bg-amber-50 p-2 text-xs space-y-1">
     <p className="font-semibold">{feedback.action==='research'?'Research response received':'Website scan response received'} — official authority still requires review</p>
     {feedback.observed_docs===0?<p>No document entries were reported by this attempt. Saved links and Scan activity may still contain discoveries. This does not prove that no forms, permits or inspectors exist.</p>:feedback.observed_docs!==null?<p>{feedback.observed_docs} discovered document entries were reported by this attempt. Entries are not verified official requirements.</p>:<p>The response did not include a usable discovered-document count; check Scan activity for details.</p>}
