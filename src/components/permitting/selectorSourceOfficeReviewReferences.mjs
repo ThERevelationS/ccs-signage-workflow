@@ -10,6 +10,34 @@ const eventFields=['id','method','jurisdiction_id','sequence','relation_key','ro
   'coverage_area','coverage_kind','coverage_basis','source_profile_id','role_proof',
   'source_snapshot','responsibility_confirmed','address_authority_resolved'];
 const ROLES=['electrical_permit','electrical_inspection'];
+
+/** Presentation only: never reads more records or upgrades recorded evidence. */
+export function describeSourceOfficeReview(row){
+ const uncertain={label:'Relationship cannot currently be established',
+   action:'Ask authorized staff to inspect the latest immutable events and committed review receipt before relying on this office.'};
+ if(row.status==='uncommitted_or_uncertain')return uncertain;
+ if(['ambiguous_history','source_identity_conflict','invalid_relation_key','malformed_review'].includes(row.status))
+   return {label:'Conflicting or incomplete review identity',
+     action:'Ask authorized staff to resolve duplicate source or office IDs and inspect the exact relationship events. Do not select an office by its name.'};
+ if(row.status==='revoked')return {label:'Historical relationship revoked',
+   action:'Inspect the later revocation event. Request authorized review with fresh official evidence before relying on this office for this role.'};
+ if(row.source_replaced)return {label:'Original source relationship superseded',
+   action:'Inspect the latest event and its different source ID. Its evidence was not checked by this saved-document lookup; request authorized review of that source and service area.'};
+ const messages={
+  recorded_source_reference:['Historical relationship recorded','Verify current official evidence, the quoted role and exact service area for the job address with authorized staff.'],
+  source_snapshot_changed:['Source changed since the recorded review','Refresh official evidence and request authorized review of the changed source. Preserve the original review.'],
+  no_visible_source:['Latest source evidence unavailable','Ask authorized staff to check the exact source ID and read permissions; missing evidence does not mean no requirements.'],
+  covered_area_review:['Recorded service area needs review','Verify the exact service area and jurisdiction boundary with authorized staff before using this office.'],
+  scope_receipt_review:['Source scope review needs reconciliation','Ask authorized staff to inspect the source review receipt and current covered-area evidence.'],
+  retained_archive_missing:['Retained PDF evidence incomplete','Ask authorized staff to refresh or restore retained source evidence before reviewing this role.'],
+  page_citation_incomplete:['Recorded PDF citation incomplete','Request authorized review with a retained page and an exact quotation for this role.'],
+  delegation_statement_review:['Delegation evidence needs review','Request authorized review of the official delegation quotation and exact service area.'],
+  role_statement_review:['Electrical role quotation needs review','Request authorized review of a quotation specifically identifying permit issuance or inspection performance.'],
+  unsupported_electrical_html:['Electrical evidence needs separate review','Ask authorized staff to inspect the retained official HTML evidence; this PDF lookup cannot establish that relationship.']
+ };
+ const message=messages[row.status];
+ return message?{label:message[0],action:message[1]}:uncertain;
+}
 const alive=isCurrent=>{if(!isCurrent())throw Error('Saved-source relationship lookup superseded');};
 
 /** Manual read-only navigation across the canonical catalog bridge. No names,
