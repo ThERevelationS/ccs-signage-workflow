@@ -429,7 +429,8 @@ export default function UserManagement() {
 
   const requestCloseUserEditor = () => {
     if (!isDialogOpen || hrSaveInFlight.current || hrReloadInFlight.current ||
-        userUpdateInFlight.current || activeSessionToken.current !== sessionToken) return;
+        userUpdateInFlight.current || deletionInFlight.current ||
+        activeSessionToken.current !== sessionToken) return;
     if (hasProtectedHrDraft()) {
       setPendingHrExit({
         kind: "close", sessionToken,
@@ -1486,7 +1487,7 @@ export default function UserManagement() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="hr" forceMount className="mt-0 data-[state=inactive]:hidden"> 
+              <TabsContent value="hr" forceMount className="mt-0 data-[state=inactive]:hidden">
                 <div className="p-4 mb-4 bg-amber-50 rounded-lg border border-amber-200">
                   <p className="text-sm text-amber-800">
                     <strong>Admin Access Only:</strong> This HR data is confidential and only accessible by office administrators.
