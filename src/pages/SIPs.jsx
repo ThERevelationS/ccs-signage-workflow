@@ -114,6 +114,9 @@ export default function SIPs() {
   const [revisitClearFailure, setRevisitClearFailure] = useState(null);
   const [isClearingRevisit, setIsClearingRevisit] = useState(false);
   const boardLoadSequenceRef = useRef(0);
+  // After the first successful load, keep mounted dialogs and local drafts intact
+  // while full Work Order Details updates refresh the board.
+  const boardHasLoadedRef = useRef(false);
   const boardLoadsInFlightRef = useRef(0);
   const boardSaveEpochRef = useRef(0);
   const boardSavesPendingRef = useRef(0);
@@ -205,8 +208,8 @@ export default function SIPs() {
     const saveEpochAtStart = boardSaveEpochRef.current;
     const isCurrentBoardSnapshot = () => loadSequence === boardLoadSequenceRef.current &&
       saveEpochAtStart === boardSaveEpochRef.current && boardSavesPendingRef.current === 0;
-    if (showLoading) setIsLoading(true);
-    if (!showLoading) setIsRefreshing(true);
+    if (showLoading && !boardHasLoadedRef.current) setIsLoading(true);
+    else setIsRefreshing(true);
     // Leave existing failure messages visible while Retry is pending. Only
     // a successful, current snapshot proves that the issue has recovered.
     try {
@@ -279,6 +282,7 @@ export default function SIPs() {
         (wo.current_task_description && sipTaskDescriptions.includes(wo.current_task_description)) ||
         (wo.current_task_description && wipDescs.includes(wo.current_task_description))
       );
+      boardHasLoadedRef.current = true;
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
       setLastUpdated(new Date());
