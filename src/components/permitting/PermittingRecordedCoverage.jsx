@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory, reconcileElectricalOfficeCoverage, reconcileSavedLocalityProfileLinks } from './permittingCoverageReader.mjs';
 import { reconcileSavedOfficeEvidence } from './permittingOfficeEvidenceReader.mjs';
 import { reconcileRecordedAuthorityReviewEvents } from './permittingReviewEventReconciliation.mjs';
+import { reconcileReviewedOfficesWithoutSavedCopies } from './permittingReviewedOfficeMirror.mjs';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
@@ -27,6 +28,7 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
   return { electrical_offices: reconcileElectricalOfficeCoverage(localities), saved_profile_links,
     office_evidence: reconcileSavedOfficeEvidence(localities, saved_profile_links),
     authority_events: reconcileRecordedAuthorityReviewEvents(localities, profiles, reviewEvents),
+    unmirrored_authority_reviews: reconcileReviewedOfficesWithoutSavedCopies(localities, profiles, reviewEvents),
     ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
@@ -181,6 +183,25 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           </li>)}</ul>
           {!result.authority_events.items.length && <p className="text-sm">No cross-reference gaps in the read scope. Fresh source verification, exact boundaries and statewide completeness remain pending.</p>}
         </details>
+      </section>}
+
+      {result.unmirrored_authority_reviews && <section aria-label="Historical office reviews without saved tracker relationships" className="space-y-2 border-t pt-3">
+        <h4 className="font-semibold">Reviewed office relationships not reflected in saved tracker setups</h4>
+        <p className="text-sm">{result.unmirrored_authority_reviews.notice}</p>
+        <div className="overflow-x-auto"><table className="min-w-[940px] w-full text-left text-sm" aria-label="Historical review and saved office reconciliation">
+          <thead><tr><th scope="col">State</th><th scope="col">Review histories</th><th scope="col">Saved role references</th><th scope="col">No locality copy</th><th scope="col">No office copy</th><th scope="col">Role not assigned</th><th scope="col">Office needs review</th><th scope="col">Shared locality ID</th><th scope="col">State conflict</th><th scope="col">Revoked</th><th scope="col">Uncommitted</th><th scope="col">Ambiguous/invalid</th><th scope="col">Profile unavailable</th></tr></thead>
+          <tbody>{['OH','KY'].map(state=>{const count=result.unmirrored_authority_reviews.states[state];return <tr key={state}><th scope="row" className="py-2 pr-3">{state==='OH'?'Ohio':'Kentucky'}</th>{['relation_histories','saved_copy_reference_only','no_saved_locality','no_saved_office','role_not_assigned','office_needs_review','shared_locality_reference','locality_state_conflict','revoked','uncommitted_or_uncertain'].map(key=><td key={key} className="pr-3">{count[key]}</td>)}<td className="pr-3">{count.ambiguous_history+count.invalid_review_identity}</td><td>{count.target_profile_unavailable}</td></tr>;})}</tbody>
+        </table></div>
+        <p className="text-xs">One row per historical profile/office/role/covered-area relationship. This does not establish current permitting authority or automatically create an office. A revoked relationship is counted but is not a missing-copy task.</p>
+        <details><summary className="min-h-11 cursor-pointer">Review unmirrored and uncertain authority histories ({result.unmirrored_authority_reviews.items.length})</summary>
+          <ul className="space-y-2 text-sm break-words">{result.unmirrored_authority_reviews.items.map(row=><li key={row.profile_id+'-'+row.review_id+'-'+row.role}>
+            <strong>{row.state} {row.profile_name}</strong> — {row.canonical_office_name || 'Office name unavailable'} ({row.role || 'role unavailable'}). Profile ID: {row.profile_id || 'not readable'}; canonical office ID: {row.canonical_office_id || 'not recorded'}; review event ID: {row.review_id}; covered-area text: {row.coverage_area || 'not recorded'}.
+            {' '+({no_saved_locality:'No tracker locality explicitly links to this profile.',no_saved_office:'Tracker locality exists but this canonical office ID is not copied there.',role_not_assigned:'Canonical office copy exists, but the reviewed role is not assigned on the tracker copy.',office_needs_review:'Tracker office has the role but its local staff-review flag is not confirmed.',shared_locality_reference:'Multiple tracker localities reference this profile; no single tracker office relationship inferred.',locality_state_conflict:'A linked tracker locality has a conflicting state.',uncommitted_or_uncertain:'Uncommitted event or uncertain profile receipt; historical authority cannot be inferred.',ambiguous_history:'Multiple current review events share the same sequence.',invalid_review_identity:'Historical review identity, role or evidence fields need manual review.',target_profile_unavailable:'Referenced profile was not readable in this permission-scoped snapshot.'}[row.status] || 'Review required.')}
+            {!!row.saved_locality_ids.length && <span> Linked saved locality IDs: {row.saved_locality_ids.join(', ')}.</span>}
+          </li>)}</ul>
+          {!result.unmirrored_authority_reviews.items.length && <p className="text-sm">No unmirrored or uncertain relationships in this permission-scoped read. This does not certify complete office coverage.</p>}
+        </details>
+        {!!result.unmirrored_authority_reviews.excluded_event_ids.length && <p role="note" className="text-xs">Events outside readable Ohio/Kentucky profile scope: {result.unmirrored_authority_reviews.excluded_event_ids.length}. No authorities were inferred from them.</p>}
       </section>}
 
       {result.electrical_offices && <section aria-label="Recorded electrical office review gaps" className="space-y-2 border-t pt-3">
