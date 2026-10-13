@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { readAllCoveragePages, reconcileRecordedCoverage, reconcileOfficialInventory, reconcileElectricalOfficeCoverage, reconcileSavedLocalityProfileLinks } from './permittingCoverageReader.mjs';
 import { reconcileSavedOfficeEvidence } from './permittingOfficeEvidenceReader.mjs';
+import { reconcileRecordedAuthorityReviewEvents } from './permittingReviewEventReconciliation.mjs';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
@@ -14,14 +15,18 @@ export async function readRecordedCoverage(isCurrent, onProgress, api = base44) 
     { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','jurisdiction_name','jurisdiction_type','parent_county_name'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} queue records`) });
   const profiles = await readAllCoveragePages(cursor => api.entities.JurisdictionProfile.filter(
-    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','type','parent_county'], ...(cursor ? { cursor } : {}) }
+    { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','type','parent_county','office_authority_review_state'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} profile records`) });
   const localities = await readAllCoveragePages(cursor => api.entities.PermitLocality.filter(
     { state: { $in: ['OH', 'KY'] } }, { sort: 'id', limit: 500, fields: ['id','state','name','jurisdiction_profile_id','offices'], ...(cursor ? { cursor } : {}) }
   ), { isCurrent, onProgress: count => onProgress(`Read ${count} saved locality office setups`) });
+  const reviewEvents = await readAllCoveragePages(cursor => api.entities.PermittingOfficeAuthorityReview.filter(
+    { method: 'office-authority-v1' }, { sort: 'id', limit: 500, fields: ['id','method','jurisdiction_id','sequence','relation_key','role','action','office_snapshot','profile_snapshot','source_document_id','html_evidence_id','source_review_id','evidence_kind','coverage_area','requested_by','responsibility_confirmed','address_authority_resolved'], ...(cursor ? { cursor } : {}) }
+  ), { isCurrent, onProgress: count => onProgress(`Read ${count} recorded office authority events`) });
   const saved_profile_links = reconcileSavedLocalityProfileLinks(localities, profiles);
   return { electrical_offices: reconcileElectricalOfficeCoverage(localities), saved_profile_links,
     office_evidence: reconcileSavedOfficeEvidence(localities, saved_profile_links),
+    authority_events: reconcileRecordedAuthorityReviewEvents(localities, profiles, reviewEvents),
     ...reconcileRecordedCoverage(queue, profiles), official: reconcileOfficialInventory(queue, profiles, officialInventory), checked_at: new Date().toISOString() };
 }
 const labels = { single_profile_candidate: 'Single profile candidates — identity requires confirmation', profile_missing: 'Queue rows without a profile candidate', ambiguous_profiles: 'Queue rows with multiple profile candidates', duplicate_queue_identity: 'Duplicate queue identities', identity_incomplete: 'Queue rows with incomplete identities' };
@@ -157,6 +162,24 @@ function RecordedCoverageSession({readCoverage,authorized}) {
             {officeReview.canReview && <Button type="button" variant="outline" aria-label={'Review saved office evidence for '+row.locality_id+' office '+row.office_index} className="mt-2 min-h-11 h-auto whitespace-normal" disabled={Boolean(officeReview.openingId||officeReview.record)} onClick={()=>officeReview.open(row.locality_id)}>{officeReview.openingId===row.locality_id?'Opening saved locality…':'Review saved office setup'}</Button>}
           </li>)}</ul>
           {!result.office_evidence.reviews.length && <p className="text-sm">No recorded office metadata gaps found in the readable records; this does not establish authority, source validity or statewide completion.</p>}
+        </details>
+      </section>}
+
+      {result.authority_events && <section aria-label="Recorded immutable authority review reconciliation" className="space-y-2 border-t pt-3">
+        <h4 className="font-semibold">Recorded authority-review event cross-check</h4>
+        <p className="text-sm">{result.authority_events.notice}</p>
+        <div className="overflow-x-auto"><table aria-label="Authority event cross-check counts" className="w-full min-w-[950px] text-left text-sm">
+          <thead><tr><th scope="col">State</th><th scope="col">Staff-marked role assignments</th><th scope="col">Recorded event references</th><th scope="col">No exact review</th><th scope="col">Unresolved IDs</th><th scope="col">Revoked</th><th scope="col">Uncommitted</th><th scope="col">Ambiguous</th><th scope="col">Record conflict</th><th scope="col">Uncertain receipt</th></tr></thead>
+          <tbody>{['OH','KY'].map(state=>{const s=result.authority_events.states[state];return <tr key={state}><th scope="row" className="py-2 pr-3">{state==='OH'?'Ohio':'Kentucky'}</th>{['saved_verified_role_assignments','recorded_event_reference','no_exact_review','unresolved_link_or_office','review_revoked','event_uncommitted','event_ambiguous','review_record_conflict','pending_receipt'].map(key=><td key={key} className="pr-3">{s[key]}</td>)}</tr>;})}</tbody>
+        </table></div>
+        <p className="text-xs">An event reference is not a fresh authority finding. Legacy generic electrical roles are excluded from specific issuer/inspection matches. Missing records can reflect read permissions.</p>
+        <details><summary className="min-h-11 cursor-pointer">Review event reconciliation gaps ({result.authority_events.items.length})</summary>
+          <ul className="space-y-2 text-sm break-words">{result.authority_events.items.map(row=><li key={row.locality_id+'-'+row.office_index+'-'+row.role}>
+            <strong>{row.state} {row.locality_name} — {row.office_name}</strong> ({row.role}). Locality ID: {row.locality_id}; linked profile: {row.jurisdiction_profile_id||'not recorded'}; canonical office: {row.government_office_id||'not recorded'}.
+            {' '+({no_exact_review:'No corresponding exact review record in the readable inventory.',unresolved_link_or_office:'Exact linked profile or canonical office identity is unresolved.',review_revoked:'Latest recorded relationship action is revocation.',event_uncommitted:'An uncommitted or malformed event sequence requires reconciliation.',event_ambiguous:'Multiple current review relationships or equal-sequence records require review.',review_record_conflict:'Recorded event identity, role, or supporting fields conflict.',pending_receipt:'Profile receipt is incomplete or uncertain.'}[row.status]||'Review required.')}
+            {row.review_id && <span> Review event: {row.review_id}; sequence: {row.sequence}.</span>}
+          </li>)}</ul>
+          {!result.authority_events.items.length && <p className="text-sm">No cross-reference gaps in the read scope. Fresh source verification, exact boundaries and statewide completeness remain pending.</p>}
         </details>
       </section>}
 
