@@ -3,7 +3,7 @@ import { linkedOrderCustomerPullNeedsReview } from './smartsheetOrderLinkedCusto
 // Pure read-only evidence gate. A successful preview authorizes NO writes;
 // future resolution must repeat these comparisons immediately before CAS.
 const id = v => String(v ?? '').trim();
-const exactName = v => String(v ?? '').trim().slice(0, 160);
+const exactName = v => String(v ?? '').trim();
 const revision = v => typeof v === 'string' && v.length > 4 && v.length <= 90;
 const sameCustomer = (a, b) => exactName(a).replace(/\s+/g, ' ').toLowerCase() ===
   exactName(b).replace(/\s+/g, ' ').toLowerCase();
