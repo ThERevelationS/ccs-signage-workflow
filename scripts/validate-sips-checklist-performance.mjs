@@ -982,6 +982,7 @@ await (async () => {
   let invalidations = 0;
   const shared = {
     loadDataRequestRef: requestRef,
+    loadErrorFocusPendingRef: { current: false },
     loadedWorkflowSnapshotRef: { current: null },
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: true },
@@ -1059,6 +1060,7 @@ await (async () => {
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
+    loadErrorFocusPendingRef: { current: false },
     resetOtherPopupForReload: () => {}, setIsLoading: () => {},
     WorkOrder: { filter: async () => missing ? [] : [{ id: "synthetic-initial", sip_checklist: [], products: [] }] },
     AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
@@ -1109,6 +1111,7 @@ await (async () => {
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: workflowRef,
+    loadErrorFocusPendingRef: { current: false },
     resetOtherPopupForReload: () => {}, setIsLoading: () => {},
     WorkOrder: { filter: async () => [structuredClone(server)] },
     AuthorizedEmail: {}, base44: { entities: { GlobalSettings: {} } },
@@ -1164,8 +1167,10 @@ check("failed-load UI separates errors, offers retry and blocks stale saves", ()
   assert.match(source, /if \(!loadInFlightRef\.current\) void loadData\(\);/);
   assert.match(source, /onClick=\{onClose\}>Close<\/Button>/);
   assert.match(source, /Checklist reload failed/);
-  assert.match(source, /previously loaded checklist remains here, including unsaved edits/);
+  assert.match(source, /previous checklist and unsaved edits are preserved/);
   assert.match(source, /onClick=\{requestReloadLatest\} disabled=\{isLoading \|\| isSaving\}>Retry loading checklist/);
+  assert.match(source, /onClick=\{requestClose\} disabled=\{isLoading \|\| isSaving\}>Close checklist/);
+  assert.match(source, /\{hasUnsavedChanges && <p className="mt-2 text-xs">Closing will ask you to confirm before discarding unsaved edits/);
   assert.match(source, /ref=\{completeButtonRef\}[\s\S]*?disabled=\{isSaving \|\| Boolean\(loadError\)\}/);
   assert.match(source, /ref=\{saveRevisitButtonRef\}[\s\S]*?disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\)\}/);
   assert.ok(source.includes('setHasLoadedChecklist(true);') && source.includes('setLoadError("");'));
@@ -1198,6 +1203,7 @@ await (async () => {
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "2099-08-25" },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
+    loadErrorFocusPendingRef: { current: false },
     returnToReloadRef: { current: true },
     customStatusDraftsByItemIdRef: { current: drafts.custom },
     resetOtherPopupForReload() { drafts.custom.clear(); calls.push("clear custom drafts"); },
