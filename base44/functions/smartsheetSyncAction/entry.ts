@@ -28,6 +28,7 @@ import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorCo
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview, recoverableOrderSmartsheetCreate } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { createSalesSmartsheetRowWithGuard } from '../../shared/smartsheetSalesCreateSafety.mjs';
+import { commitVerifiedSalesMetadata } from '../../shared/smartsheetSalesMetadataCAS.mjs';
 import { readSalesPullCreateAttemptRisks, readSalesPullLinkedRowRisks, classifySalesPullDuplicateLinkedRowRisks } from '../../shared/smartsheetSalesPullCreateRisk.mjs';
 import { summarizeSalesCreateAttempts, classifySalesCreateReview } from '../../shared/smartsheetSalesCreateReview.mjs';
 import { recoverVerifiedSalesCreateLink } from '../../shared/smartsheetSalesCreateRecovery.mjs';
@@ -1827,6 +1828,7 @@ async function pushDataset(
   const deferredSalesVerification = new Map<string, {
     rowId: string;
     expectedSnapshot: Record<string, any>;
+    originalUpdatedDate: string;
     requiresRemoteWrite: boolean;
   }>();
   const deferredOrderVerification = new Map<string, {
@@ -1994,6 +1996,7 @@ async function pushDataset(
           deferredSalesVerification.set(String(record.id), {
             rowId: existingRowId,
             expectedSnapshot: verifiedRemoteColumns,
+            originalUpdatedDate: String(record.updated_date || ''),
             // Recovery is read-only remotely, but requires fresh remote
             // post-plan read-back before any snapshot or review resolves.
             requiresRemoteWrite: fieldPlan.outgoing.length > 0 || recoveredTaskDecisionIds.length > 0,
@@ -2481,11 +2484,28 @@ async function pushDataset(
       );
       if (verifiedSalesUpdates.length) {
         try {
-          // Approved conflict decisions use a final revision CAS. Preserve
-          // the bulk path for ordinary Sales rows and unrelated workflows.
+          // Ordinary Sales metadata also needs the exact planning revision:
+          // a successful Smartsheet read-back must not overwrite newer local
+          // WorkOrder edits. Keep approved decisions on their existing CAS path.
           const approvedUpdates = verifiedSalesUpdates.filter((update: any) => approvedSalesPlanSnapshots.has(String(update.id)));
           const ordinaryUpdates = verifiedSalesUpdates.filter((update: any) => !approvedSalesPlanSnapshots.has(String(update.id)));
-          if (ordinaryUpdates.length) await base44.asServiceRole.entities[entityName].bulkUpdate(ordinaryUpdates);
+          for (const update of ordinaryUpdates) {
+            const id = String(update.id);
+            const verification = deferredSalesVerification.get(id);
+            const { id: _ordinaryId, ...fields } = update;
+            try {
+              await commitVerifiedSalesMetadata({
+                entity: base44.asServiceRole.entities.WorkOrder,
+                recordId: id,
+                plannedVersion: verification?.originalUpdatedDate,
+                sheetId, rowId: verification?.rowId,
+                fields, assertRunOwnership: options?.assertRunOwnership,
+              });
+            } catch (error: any) {
+              salesFailedRecordIds.add(id);
+              errors.push(id + ': Ordinary Sales metadata failed the final WorkOrder revision/row guard. Newer local edits remain pending; reload before retrying.');
+            }
+          }
           for (const update of approvedUpdates) {
             const id = String(update.id);
             const planned = approvedSalesPlanSnapshots.get(id);
