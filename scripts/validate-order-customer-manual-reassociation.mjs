@@ -64,4 +64,9 @@ assert.match(blur, /manuallyUnlinkedCustomerOrderIdsRef\.current\.delete\(order\
 assert.match(select, /customer_name: latest\.client_name,\s*work_order_id: latest\.id/);
 assert.match(select, /manuallyUnlinkedCustomerOrderIdsRef\.current\.delete\(order\.id\)/);
 assert.match(ui, /manuallyUnlinkedCustomerOrderIdsRef\.current\.delete\(target\.id\)/);
-console.log('PASS Order Form event wiring unlinks only on intentional typing, batches name/link in pending save, and relinks only on verified selection');
+const update = ui.slice(ui.indexOf('const updateOrder = (orderId, field, value, skipHistory = false) => {'), ui.indexOf('const persistImmediateOrderFields'));
+assert.match(update, /field === 'customer_name' &&\s*shouldUnlinkOrderJobForTypedCustomer\(currentOrder, value\)/);
+assert.match(update, /\[field\]: value, \.\.\.\(unlinkCustomerJob \? \{ work_order_id: '' \} : \{\}\)/);
+assert.match(ui, /onClear=\{\(\) => clearCell\(contextMenu\.order\.id, contextMenu\.fieldName\)\}/);
+assert.match(ui, /const clearCell = \(orderId, fieldName\) => \{\s*updateOrder\(orderId, fieldName, ""\)/);
+console.log('PASS Order Form typing, context-menu Clear, and verified job selection keep the customer/job association consistent');
