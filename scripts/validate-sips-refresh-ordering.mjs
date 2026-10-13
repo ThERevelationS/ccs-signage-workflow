@@ -16,7 +16,7 @@ function block(source, begin, end) {
 const source = [
   block(board, 'const parseLocalDate = ', '\n};') + '\n};',
   block(board, '  const saveBoardFields = async (options) => {', '\n  // Set document title'),
-  block(board, '  const loadWorkOrders = async (showLoading = true) => {', '\n  const updateWorkOrder'),
+  block(board, '  const loadWorkOrders = async (showLoading = true, { clearQuickEditErrorOnSuccess = false } = {}) => {', '\n  const updateWorkOrder'),
   block(board, '  const updateWorkOrder = async (orderId, field, value) => {', '\n  // Check if a work order is a WIP item'),
   block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
   block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
