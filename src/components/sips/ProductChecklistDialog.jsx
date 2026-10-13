@@ -903,7 +903,7 @@ export default function ProductChecklistDialog({
   // save's error only when saving and modal cleanup allow it, and never on load
   // errors or after the employee switches Work Orders.
   const focusSaveFailureIfReady = () => {
-    if (!saveFailureFocusPendingRef.current || !isOpen || isLoading || isSaving ||
+    if (!saveFailureFocusPendingRef.current || !isOpen || isLoading || isSaving || loadError ||
         showRevisitPopup || showTemplateBuilder || showOtherPopup) return;
     const target = saveErrorAlertRef.current;
     if (!target?.isConnected || !target.getClientRects().length) return;
