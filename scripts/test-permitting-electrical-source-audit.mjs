@@ -22,6 +22,7 @@ test('exact retained PDF metadata and citation are historical references, not ve
  assert.equal(r.items.length,0);
  assert.equal(r.current_source_verified,false);assert.equal(r.authority_verified,false);
  assert.equal(r.states.OH.electrical_inspection.histories,0);
+ assert.deepEqual(r.retained_page_candidates.map(row=>({id:row.review_id,page:row.physical_page,role:row.role})),[{id:'r',page:1,role:'electrical_permit'}]);
 });
 test('historical scope receipt and named area must match the exact reviewed jurisdiction',()=>{
  for(const patch of [{source_review_id:''},{source_review_id:'wrong'}])
@@ -101,6 +102,7 @@ test('revocations and earlier superseded verifications are not shown as missing 
  assert.equal(r.states.OH.electrical_permit.revoked,1);
  assert.equal(r.states.OH.electrical_permit.no_visible_source,0);
  assert.deepEqual(r.items,[]);
+ assert.deepEqual(r.retained_page_candidates,[]);
 });
 test('outstanding uncommitted event or uncertain reservation takes precedence',()=>{
  for(const receipt of [{status:'creating',committed_sequence:1},{status:'uncertain',committed_sequence:1},
@@ -132,6 +134,7 @@ test('Ohio findings before Kentucky for specific roles',()=>{
   review({source_document_id:'also-missing'})];
  const r=audit(p,e,[]);
  assert.deepEqual(r.items.map(i=>i.state),['OH','KY']);
+ assert.deepEqual(r.retained_page_candidates,[]);
 });
 test('metadata loader requests only unique explicit PDF IDs, in chunks of 25, with projected fields',async()=>{
  const events=Array.from({length:58},(_,i)=>review({id:'event'+i,source_document_id:'pdf-'+i}));
