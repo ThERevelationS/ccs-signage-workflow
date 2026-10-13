@@ -5,6 +5,34 @@ function safeMessage(error, fallback) {
   return error?.response?.data?.error || error?.data?.error || error?.message || fallback;
 }
 
+export async function previewOrderCustomerDecision({ sessionToken, review, decision } = {}) {
+  if (!String(sessionToken ?? '').trim()) throw new Error('Your Order Form session expired. Sign in again.');
+  if (!['keep_linked_job', 'adopt_smartsheet_unlink_job'].includes(decision) || !review?.orderId) {
+    throw new Error('Select a valid customer decision from the latest review.');
+  }
+  const response = await queueSmartsheetSync({
+    action: 'preview_order_customer_decision',
+    session_token: sessionToken,
+    decision,
+    review: {
+      order_id: review.orderId, sheet_id: review.sheetId, row_id: review.rowId,
+      work_order_id: review.workOrderId,
+      local_customer_name: review.localCustomerName,
+      smartsheet_customer_name: review.smartsheetCustomerName,
+      order_updated_date: review.orderUpdatedDate,
+      remote_modified_at: review.remoteModifiedAt,
+    },
+  }, { attempts: 1, retryRateLimit: false, retryCoordinatorBusy: false });
+  const result = response?.data || response;
+  if (!result?.success || result?.state !== 'verified_read_only' ||
+      result?.read_only !== true || result?.writes_attempted !== false ||
+      result?.decision !== decision || result?.order_id !== review.orderId ||
+      result?.sheet_id !== review.sheetId || result?.row_id !== review.rowId) {
+    throw new Error(result?.error || 'The decision evidence could not be verified. Run Sync and review the Order again.');
+  }
+  return result;
+}
+
 export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {}) {
   const token = String(sessionToken || "").trim();
   const rawIds = Array.isArray(orderIds) ? orderIds : [];
