@@ -95,6 +95,33 @@ test("switching work orders during delayed Submit must not project stale A statu
   assert.equal(h.refreshes.some(x=>x[0]==="wo-A"),true);
 });
 
+test("a newer portal refresh while Submit is in flight cannot overwrite refreshed form state",async()=>{
+  const h=harness({holdSubmit:true});
+  const pending=h.run(true);
+  for(let attempt=0;h.calls.length<2&&attempt<100;attempt++)await Promise.resolve();
+  assert.equal(h.calls.at(-1).action,"estimate_submit");
+  h.ctx.portalAppliedEpochRef.current+=1;
+  h.submitGate.resolve({data:{success:true,estimate:h.submittedEstimate,auto_approved:false}});
+  await pending;
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save","estimate_submit"]);
+  assert.equal(h.forms.length,0,"Do not project older estimate after later portal refresh");
+  assert.equal(h.refreshes.length,1,"Reread CCS instead of claiming stale approval success");
+  assert.equal(h.saves.filter(Boolean).length,0);
+});
+
+test("Save confirmed concurrent CCS edit halts Submit and provides a precise read-only recovery reason",async()=>{
+  const h=harness({holdSave:true});
+  const pending=h.run(true);
+  h.saveGate.resolve({data:{success:true,estimate:{...h.savedEstimate,status:"changes_requested"},
+    concurrently_updated:true}});
+  await pending;
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"],"CCS revision must fence Submit");
+  assert.equal(h.refreshes.length,1);
+  assert.match(h.refreshes[0][1],/Save Draft finished.*Submit Estimate was not attempted/i);
+  assert.equal(h.refreshes[0][2],true,"Read-only recovery should explain authoritative CCS status");
+  assert.equal(h.saves.filter(Boolean).length,0);
+});
+
 test("unchanged Save and Submit remains a valid two-write flow",async()=>{
   const h=harness();
   await h.run(true);
