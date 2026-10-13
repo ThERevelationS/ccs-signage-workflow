@@ -88,6 +88,7 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
   return { source_vintage:reference.source_vintage,source_rows:reference.source_rows,
     candidate_counts:Object.fromEntries(['OH','KY'].map(state=>[state,candidates.filter(r=>r.state===state).length])),
     status_review_count:reference.rows.filter(r=>r.category==='status_relationship_review').length,
+    status_review_items:reference.rows.filter(r=>r.category==='status_relationship_review').map(row=>({...row})).sort((a,b)=>(a.state==='OH'?0:1)-(b.state==='OH'?0:1) || a.name.localeCompare(b.name) || a.key.localeCompare(b.key)),
     statistical_reference_count:reference.rows.filter(r=>r.category==='statistical_reference').length,
     queue:reconcile(queue,false),profiles:reconcile(profiles,true),
     geographic_snapshot_accounted_for:true,inventory_complete_for_permitting:false,authority_verified:false,

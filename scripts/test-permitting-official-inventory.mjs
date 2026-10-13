@@ -77,3 +77,13 @@ r=reconcileOfficialInventory([],[],reversed);
 assert.deepEqual(r.profiles.missing.map(row=>row.key),['a','b','c']);
 assert.equal(JSON.stringify(reversed),original);
 assert.equal(r.profiles.missing.length,3);
+
+const referenceBefore=JSON.stringify(ref);
+r=reconcileOfficialInventory([],[],ref);
+assert.equal(r.status_review_items.length,25);
+assert.deepEqual(new Set(r.status_review_items.map(row=>row.key)),new Set(ref.rows.filter(row=>row.category==='status_relationship_review').map(row=>row.key)));
+assert.equal(r.status_review_items[0].state,'OH');
+assert.ok(r.status_review_items.every(row=>row.category==='status_relationship_review'));
+assert.ok(!r.profiles.missing.some(row=>r.status_review_items.some(item=>item.key===row.key)));
+assert.equal(JSON.stringify(ref),referenceBefore);
+assert.notEqual(r.status_review_items[0],ref.rows.find(row=>row.key===r.status_review_items[0].key));

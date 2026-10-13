@@ -61,6 +61,13 @@ function RecordedCoverageSession({readCoverage,authorized}) {
         <h4 className="font-semibold">Official geographic inventory — {result.official.source_vintage}</h4>
         <p className="text-sm">All {result.official.source_rows} saved source rows accounted for: Ohio {result.official.candidate_counts.OH} and Kentucky {result.official.candidate_counts.KY} research candidates, {result.official.status_review_count} status/relationship reviews, and {result.official.statistical_reference_count} statistical/hierarchy references.</p>
         <p className="text-sm">Queue candidates missing: {result.official.queue.missing.length}. Profile candidates missing: {result.official.profiles.missing.length}. These counts describe geographic name/type candidates within your read permissions.</p>
+        {!!result.official.status_review_items?.length && <details>
+          <summary className="cursor-pointer min-h-11">View official status and relationship review entities ({result.official.status_review_items.length})</summary>
+          <p className="text-sm">These source records need government-status or relationship review. They are kept separate from ordinary locality candidates and do not establish an active permitting authority.</p>
+          <ul className="space-y-2 text-sm break-words">{result.official.status_review_items.map(row=><li key={row.key}>
+            <strong>{row.state} {row.name}</strong> — {row.type || 'Government type requires review'}. Source key: {row.key}; source file: {row.source_file}.
+          </li>)}</ul>
+        </details>}
         {['queue','profiles'].map(group => <details key={group}><summary className="cursor-pointer min-h-11">View missing {group} geographic candidates</summary>
           <p className="text-sm break-words">{result.official[group].missing.map(r => r.state + ' ' + r.type + ' ' + r.name + (r.county_name ? ' (' + r.county_name + ' County)' : '')).join('; ') || 'No missing name/type candidates in this read.'}</p></details>)}
         {['queue','profiles'].map(group => <details key={'identity-review-'+group}>
