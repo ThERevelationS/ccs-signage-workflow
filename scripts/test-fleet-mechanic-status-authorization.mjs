@@ -39,7 +39,7 @@ test("every mutation-status work-order payload rereads the latest Fleet row and 
   const block = between("if (action === 'mutation_status') {", "\n\n    let mechanicMutation",receiptBoundary);
   assert.equal(block.includes("work_order:sanitizeWorkOrder("), false, "mutation_status must not directly emit work-order state");
   assert.match(block, /const statusWorkOrderResponse = async[\s\S]*const latest = await WorkOrder\.get\(id\)\.catch\(\(\)=>null\);/, "status responses must use a final Fleet work-order read");
-  assert.match(block, /return mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),statusMutationAction,latest,payload,init\);/, "the final live grant check must use the freshly read equipment scope");
+  assert.match(block, /return mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),statusMutationAction,latest,payload,init\);/, "the final live grant check must use the freshly read equipment scope");
   assert.ok((block.match(/await statusWorkOrderResponse\(/g) || []).length >= 10, "all status outcomes with work-order data must await the latest-row scoped response");
   assert.match(block, /if \(isMechanicAccessChangedError\(error\)\) throw error;/, "live authorization failures must escape recovery handling");
   assert.equal(/await mechanicWorkOrderResponse\(/.test(block), false, "status outcomes must not bypass the latest-row wrapper");
@@ -47,26 +47,37 @@ test("every mutation-status work-order payload rereads the latest Fleet row and 
 
 test("idempotent Start/Save retry and recovery reads revalidate before returning work-order state", () => {
   const retryBlock = between("if (MECHANIC_MUTATION_TYPES[action]) {", "\n\n    if (!ACTIVE.has(current.status))");
-  assert.match(retryBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),action,current,/);
-  assert.match(retryBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),receiptAction,updated,/);
+  assert.match(retryBlock, /await mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),action,current,/);
+  assert.match(retryBlock, /await mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),receiptAction,updated,/);
   assert.match(retryBlock, /if \(isMechanicAccessChangedError\(error\)\) throw error;/);
 
   const startBlock = between("if (action === 'start') {", "\n\n    if (action === 'save') {");
-  assert.match(startBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'start',fresh,/);
-  assert.match(startBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'start',fresh \|\| current,/);
+  assert.match(startBlock, /await mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),'start',fresh,/);
+  assert.match(startBlock, /await mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),'start',fresh \|\| current,/);
 
   const saveBlock = between("if (action === 'save') {", "\n\n    return json\(\{error:'Unsupported mechanic portal action\.'\}");
-  assert.match(saveBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'save',fresh,/);
-  assert.match(saveBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'save',fresh \|\| current,/);
+  assert.match(saveBlock, /await mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),'save',fresh,/);
+  assert.match(saveBlock, /await mechanicWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),'save',fresh \|\| current,/);
 });
 
 test("primary Start/Save success acknowledgements revalidate after durable receipt application", () => {
   const startBlock = between("if (action === 'start') {", "\n\n    if (action === 'save') {");
   const saveBlock = between("if (action === 'save') {", "\n\n    return json\(\{error:'Unsupported mechanic portal action\.'\}");
-  assert.match(startBlock, /markMechanicReceiptApplied\(Receipt,receipt,updated,false\);[\s\S]*await mechanicCommittedWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'start',updated,/);
-  assert.match(saveBlock, /markMechanicReceiptApplied\(Receipt,receipt,updated,false\);[\s\S]*resolveReusedUploadReceipt\(Receipt,receipt\);[\s\S]*await mechanicCommittedWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'save',updated,/);
+  assert.match(startBlock, /markMechanicReceiptApplied\(Receipt,receipt,updated,false\);[\s\S]*await mechanicCommittedWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),'start',updated,/);
+  assert.match(saveBlock, /markMechanicReceiptApplied\(Receipt,receipt,updated,false\);[\s\S]*resolveReusedUploadReceipt\(Receipt,receipt\);[\s\S]*await mechanicCommittedWorkOrderResponse\(Access,WorkOrder,String\(grant\.id \|\| ''\),'save',updated,/);
   assert.match(startBlock, /catch \(error\) \{\n        if \(isMechanicAccessChangedError\(error\)\) throw error;/);
   assert.match(saveBlock, /catch \(error\) \{\n        if \(isMechanicAccessChangedError\(error\)\) throw error;/);
+});
+
+test("every Start/Save response helper projects a newly loaded Fleet row and checks that row's scope", () => {
+  const helpers = between("async function latestMechanicResponseWorkOrder(", "\n\nasync function mechanicCommittedEstimateResponse", 0);
+  assert.match(helpers,/const latest = id \? await WorkOrder\.get\(id\)\.catch\(\(\)=>null\) : null;/);
+  assert.match(helpers,/!latest \|\| String\(latest\.id \|\| ''\) !== id/);
+  assert.match(helpers,/error\.code = 'FLEET_MECHANIC_RESPONSE_UNVERIFIED'/);
+  assert.match(helpers,/const latest = await latestMechanicResponseWorkOrder\(WorkOrder,workOrder\);/);
+  assert.match(helpers,/requireCurrentMechanicGrant\(Access,grantId,action,String\(latest\.equipment_id \|\| ''\)\)/);
+  assert.match(helpers,/requireCurrentMechanicGrantForCommittedResponse\(Access,grantId,action,String\(latest\.equipment_id \|\| ''\)\)/);
+  assert.equal(helpers.includes("sanitizeWorkOrder(workOrder)"),false,"never project the original snapshot");
 });
 
 test("repair-estimate Save/Submit revalidate after commit before returning financial details", () => {
