@@ -384,8 +384,14 @@ export default function UserManagement() {
   };
 
   const handleSendPasswordReset = async (user) => {
-    if (!user.email || !sessionToken || isLoading || userDirectoryError) return;
+    if (!user?.id || !user.email || !sessionToken || isLoading || userDirectoryError ||
+        passwordResetInFlight.current || activeSessionToken.current !== sessionToken) return;
 
+    const owner = { sessionToken };
+    passwordResetOwner.current = owner;
+    const ownsReset = () => passwordResetOwner.current === owner &&
+      activeSessionToken.current === sessionToken;
+    passwordResetInFlight.current = true;
     setSendingPasswordReset(user.id);
     setUserMutationError("");
     try {
@@ -393,16 +399,23 @@ export default function UserManagement() {
         session_token: sessionToken,
         target_email: user.email,
       });
+      if (!ownsReset()) return;
       const result = response?.data || response;
       if (!result?.success) throw new Error(result?.error || "Password reset could not be issued.");
       alert(`Password reset email sent to ${user.email}`);
     } catch (err) {
+      if (!ownsReset()) return;
       console.error("Error sending password reset:", err);
       const message = err?.response?.data?.error || err?.data?.error || err?.message || "Failed to issue the password reset safely.";
       setUserMutationError(message);
       alert(message);
+    } finally {
+      if (ownsReset()) {
+        passwordResetOwner.current = null;
+        passwordResetInFlight.current = false;
+        setSendingPasswordReset(null);
+      }
     }
-    setSendingPasswordReset(null);
   };
 
   const handleResendOnboarding = async (user) => {
