@@ -1,6 +1,8 @@
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {mkdir,rm} from 'node:fs/promises';
+import {resolve} from 'node:path';
 import {build} from 'esbuild';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
@@ -14,9 +16,12 @@ const document=(patch={})=>({id:'doc-1',title:'Electrical permit application',do
   discovery_page_url:'https://government.example/forms',
   file_url:'https://archives.example/files/permit.pdf',source_sha256:H,stored_sha256:H,
   source_bytes:110,stored_bytes:110,...patch});
-const bundle=await build({entryPoints:['src/components/permitting/SelectorSavedSourceReview.jsx'],
-  bundle:true,write:false,format:'esm',platform:'node',jsx:'automatic',external:['react','react/jsx-runtime']});
-const Component=(await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'))).default;
+const dir=resolve('node_modules/.cache/selector-saved-source-review');
+await mkdir(dir,{recursive:true});
+await build({entryPoints:['src/components/permitting/SelectorSavedSourceReview.jsx'],
+  bundle:true,outfile:dir+'/panel.mjs',format:'esm',platform:'node',jsx:'automatic',external:['react','react/jsx-runtime']});
+const Component=(await import(dir+'/panel.mjs')).default;
+after(async()=>rm(dir,{recursive:true,force:true}));
 const render=docs=>renderToStaticMarkup(React.createElement(Component,{profile:profile(docs)}));
 
 test('exact profile saved source links and matching fingerprints are visible without office approval',()=>{
