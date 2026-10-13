@@ -1904,6 +1904,7 @@ async function claimAdminCorrectionGate(
 async function releaseAdminCorrectionGate(
   gateEntity: any, auditEntity: any, entryEntity: any,
   gateId: string, requestId: string, entryId: string, hash: string, token: string,
+  allowPrewriteRelease = false,
 ) {
   const gate = await gateEntity.get(gateId).catch(() => null);
   if (!gate?.id || gate.status !== 'creating' || gate.scope !== 'company' ||
@@ -1914,13 +1915,36 @@ async function releaseAdminCorrectionGate(
   if (!Array.isArray(audits) || !entry?.id || audits.length > 1) return false;
   const markerMatches = String(entry.last_correction_request_id || '') === requestId;
   const audit = audits[0] || null;
-  const stable = !audit ? !markerMatches :
-    String(audit.time_entry_id || '') === entryId &&
-    ((['confirmed', 'recovered'].includes(String(audit.outcome || '')) && markerMatches) ||
-      (String(audit.outcome || '') === 'blocked' && !markerMatches));
-  // Pending/unknown audit or a saved entry with mismatched audit is uncertain.
-  // Keep the coordinator claimed until manually reconciled.
-  if (!stable) return false;
+  // Only this actively executing request may release a clean pre-write claim.
+  // Recovery of an abandoned claim must never mistake missing audit evidence
+  // for proof that an interrupted write did not commit.
+  if (!audit && (!allowPrewriteRelease || markerMatches)) return false;
+  if (audit) {
+    const auditDetails = audit.details || {};
+    if (String(audit.time_entry_id || '') !== entryId ||
+        asEmail(audit.user_email) !== asEmail(entry.user_email) ||
+        String(audit.actor_role || '') !== 'admin' ||
+        !String(audit.id || '') ||
+        !String(audit.server_timestamp || '') ||
+        !String(auditDetails.payload_hash || '') ||
+        !constantTimeEqual(String(auditDetails.payload_hash), hash)) return false;
+    if (['confirmed', 'recovered'].includes(String(audit.outcome || ''))) {
+      const corrected = auditDetails.corrected || {};
+      if (!markerMatches ||
+          String(corrected.id || '') !== entryId ||
+          asEmail(corrected.user_email) !== asEmail(entry.user_email) ||
+          String(corrected.clock_in || '') !== String(entry.clock_in || '') ||
+          String(corrected.clock_out || '') !== String(entry.clock_out || '') ||
+          Number(corrected.lunch_minutes || 0) !== Number(entry.lunch_minutes || 0) ||
+          Number(corrected.total_hours || 0) !== Number(entry.total_hours || 0) ||
+          String(corrected.status || '') !== String(entry.status || '') ||
+          String(corrected.notes || '') !== String(entry.notes || '')) return false;
+    } else if (String(audit.outcome || '') !== 'blocked' || markerMatches) {
+      return false;
+    }
+  }
+  // Pending, mismatched, missing, or unproven evidence keeps the coordinator
+  // claimed. There is no automatic timeout-based takeover.
   const released = await gateEntity.updateMany(
     { id: gateId, updated_date: gate.updated_date, scope: 'company', status: 'creating',
       request_id: requestId, time_entry_id: entryId, payload_hash: hash, claim_token: token },
@@ -7975,6 +7999,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, retry_same_request: companyCorrectionGate.retry_same_request === true,
           error: companyCorrectionGate.error }, { status: 409 });
       }
+      let coordinatorWriteStarted = Boolean(intent?.id);
       try {
       // The earlier global audit lookup is only an optimization: repeat it
       // under company CAS before any write to close the cross-employee race.
@@ -8048,6 +8073,7 @@ Deno.serve(async (req) => {
       }
 
       if (!intent) {
+        coordinatorWriteStarted = true;
         intent = await auditEntity.create({
           action: 'admin_correction', outcome: 'pending', user_email: target.email,
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
@@ -8145,6 +8171,7 @@ Deno.serve(async (req) => {
           adminCorrectionGateEntity, auditEntity, entryEntity,
           String(companyCorrectionGate.id || ''), requestId, entry.id, correctionPayloadHash,
           String(companyCorrectionGate.token || ''),
+          !coordinatorWriteStarted,
         );
         if (!globalReleased) throw new Error('Manager-correction coordinator has uncertain completion and remains claimed. Admin investigation is required before further manager corrections.');
       }
