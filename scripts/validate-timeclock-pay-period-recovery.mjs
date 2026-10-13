@@ -6521,6 +6521,99 @@ test('v29 concurrent cross-employee review IDs have exactly one authoritative wi
   assert.equal(settledCount, 1);
 });
 
+test('v29 manager review company coordinator blocks missing, duplicated, and held setup', async () => {
+  for (const mode of ['missing', 'duplicate', 'held']) {
+    const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+    const entry = h.rows.TimeEntry[0];
+    const submitted = await h.invokeAs(employee, {
+      action: 'submit_correction_request', target_email: employee.email,
+      request_id: 'v29-review-setup-submit-' + mode, entry_id: entry.id,
+      expected_updated_date: entry.updated_date,
+      reason: 'Synthetic manager review CAS setup',
+      requested_changes: { clock_in: '2026-09-20T14:30:00.000Z',
+        clock_out: entry.clock_out, lunch_minutes: 0,
+        notes: 'Review coordinator test' },
+    });
+    assert.equal(submitted.status, 200, JSON.stringify(submitted.body));
+    const correction = h.rows.TimeClockCorrectionRequest[0];
+    const gate = h.rows.TimeClockAdminCorrectionGate[0];
+    if (mode === 'missing') h.rows.TimeClockAdminCorrectionGate = [];
+    if (mode === 'duplicate') h.rows.TimeClockAdminCorrectionGate.push({
+      ...clone(gate), id: 'synthetic-extra-manager-coordinator' });
+    if (mode === 'held') Object.assign(gate, {
+      status: 'creating', request_id: 'unsettled-prior-review',
+      time_entry_id: 'review:unsettled-prior-correction',
+      payload_hash: 'unsettled-review-hash', claim_token: 'unsettled-review-token',
+      started_at: '2026-09-22T20:00:00.000Z' });
+    const entryBefore = clone(entry);
+    const review = await h.invoke({
+      action: 'review_correction_request', target_email: employee.email,
+      request_id: 'v29-review-setup-manager-' + mode,
+      correction_request_id: correction.id,
+      expected_request_updated_date: correction.updated_date,
+      decision: 'reject', reason: 'Synthetic reviewer rejects this time change',
+    });
+    assert.equal(review.status, 409, mode + JSON.stringify(review.body));
+    assert.equal(correction.status, 'pending');
+    assert.deepEqual(entry, entryBefore);
+    assert.equal(h.rows.TimeClockAudit.filter((audit) =>
+      audit.action === 'correction_review' &&
+      audit.request_id === 'v29-review-setup-manager-' + mode).length, 0);
+  }
+});
+
+test('v29 completed manager review recovers a lost company coordinator release', async () => {
+  const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+  const entry = h.rows.TimeEntry[0];
+  const submission = await h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'v29-review-recovery-submit', entry_id: entry.id,
+    expected_updated_date: entry.updated_date,
+    reason: 'Synthetic correction for manager release recovery',
+    requested_changes: { clock_in: '2026-09-20T14:30:00.000Z',
+      clock_out: entry.clock_out, lunch_minutes: 0, notes: 'Recovered reviewer evidence' },
+  });
+  assert.equal(submission.status, 200, JSON.stringify(submission.body));
+  const correction = h.rows.TimeClockCorrectionRequest[0];
+  const reviewId = 'v29-review-recovery-decision';
+  const approved = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: reviewId, correction_request_id: correction.id,
+    expected_request_updated_date: correction.updated_date,
+    decision: 'approve', reason: 'Manager confirms original synthetic time correction',
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  const gate = h.rows.TimeClockAdminCorrectionGate[0];
+  assert.equal(gate.status, 'idle');
+  const reviewEvidence = h.rows.TimeClockAudit.find((a) =>
+    a.action === 'correction_review' && a.request_id === reviewId);
+  assert.ok(reviewEvidence?.id && reviewEvidence.details?.review_payload_hash);
+  Object.assign(gate, {
+    status: 'creating', request_id: reviewId,
+    time_entry_id: 'review:' + correction.id,
+    payload_hash: reviewEvidence.details.review_payload_hash,
+    claim_token: 'synthetic-ack-lost-review', started_at: '2026-09-22T20:00:00.000Z',
+  });
+  const next = await h.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'v29-review-after-recovered-ack',
+    entry_id: entry.id, expected_updated_date: entry.updated_date,
+    reason: 'Independent manager adjustment after recovered review claim',
+    correction: { clock_in: '2026-09-20T14:45:00.000Z',
+      clock_out: entry.clock_out, lunch_minutes: 0,
+      notes: 'Independent post-review time change',
+      job_allocations: [{ hours: 7, minutes: 15, is_inhouse: true,
+        inhouse_task: 'Synthetic shop work' }] },
+  });
+  assert.equal(next.status, 200, JSON.stringify(next.body));
+  assert.equal(gate.status, 'idle');
+  assert.equal(gate.request_id, '');
+  assert.equal(entry.clock_in, '2026-09-20T14:45:00.000Z');
+  assert.equal(h.rows.TimeClockAudit.filter((audit) =>
+    audit.action === 'admin_correction' &&
+    ['confirmed', 'recovered'].includes(audit.outcome)).length, 2);
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
