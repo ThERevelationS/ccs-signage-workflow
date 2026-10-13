@@ -65,5 +65,5 @@ test('picker shows role-specific research follow-up only after acknowledged resp
  assert.match(src,/pending\.current\.has\(key\)/);
  assert.match(src,/runAction\('refreshJurisdiction'/);
  assert.match(src,/Find missing information/);
- assert.match(src,/ResearchProgressBar/).doesNotThrow;
+ assert.match(src,/Scan activity/);
 });
