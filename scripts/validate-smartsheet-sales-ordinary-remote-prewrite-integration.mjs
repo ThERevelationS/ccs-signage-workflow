@@ -58,6 +58,7 @@ async function fixture(modify=()=>{},options={}) {
       return {body:remote};
     },
     normalizeSheetRows,buildSalesPullSnapshot,staleSalesRemotePutSnapshotIds,URLSearchParams,
+    cleanText:(value,max)=>String(value??'').trim().slice(0,max),
   };
   const result=await vm.runInNewContext(
     '(async()=>{'+snippet+'\nreturn {eligible:eligibleSmartsheetWrites.map(r=>String(r.id)),failed:[...salesFailedRecordIds],errors};})()',
