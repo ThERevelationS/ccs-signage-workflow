@@ -130,6 +130,15 @@ export default function QuickClockSection({
   const credentialRef = useRef(null);
   const requestRef = useRef({});
   const notificationTimerRef = useRef(null);
+  // Passive refreshes may return out of order, after a session switch, or
+  // after a punch mutation. Never let an old response replace newer state.
+  const statusRefreshSequenceRef = useRef(0);
+  const activeActionCountRef = useRef(0);
+  const sessionScopeRef = useRef({ token: "", email: "" });
+  sessionScopeRef.current = {
+    token: authoritativeSessionToken,
+    email: String(authoritativeSessionUser?.email || "").trim().toLowerCase(),
+  };
 
   const canUseFace = Boolean(authoritativeSessionToken) && (allUsers || []).some(
     (user) => Array.isArray(user.face_descriptors) && user.face_descriptors.length > 0,
@@ -155,6 +164,8 @@ export default function QuickClockSection({
   };
 
   const invokeTimeClock = async (payload) => {
+    activeActionCountRef.current += 1;
+    statusRefreshSequenceRef.current += 1;
     try {
       const response = await base44.functions.invoke("timeClockAction", payload);
       const data = response?.data || response;
@@ -168,6 +179,9 @@ export default function QuickClockSection({
     } catch (err) {
       if (err?.retrySameRequest !== undefined) throw err;
       throw apiErrorFrom(err, "Time Clock action was not confirmed by the server.");
+    } finally {
+      activeActionCountRef.current = Math.max(0, activeActionCountRef.current - 1);
+      statusRefreshSequenceRef.current += 1;
     }
   };
 
@@ -326,7 +340,13 @@ export default function QuickClockSection({
 
   const refreshAuthoritativeSessionState = useCallback(async ({ quiet = false } = {}) => {
     const email = String(authoritativeSessionUser?.email || "").trim().toLowerCase();
-    if (!authoritativeSessionToken || !email) return null;
+    if (!authoritativeSessionToken || !email || activeActionCountRef.current > 0) return null;
+    const sequence = ++statusRefreshSequenceRef.current;
+    const isCurrentRefresh = () =>
+      sequence === statusRefreshSequenceRef.current &&
+      activeActionCountRef.current === 0 &&
+      sessionScopeRef.current.token === authoritativeSessionToken &&
+      sessionScopeRef.current.email === email;
 
     if (!quiet) setIsLoading(true);
     try {
@@ -335,6 +355,7 @@ export default function QuickClockSection({
         session_token: authoritativeSessionToken,
         target_email: email,
       });
+      if (!isCurrentRefresh()) return null;
       const status = response?.data || response;
       if (!status?.success) throw new Error(status?.error || "Authoritative Time Clock status could not be restored.");
       const restored = applyAuthoritativeStatus(status, authoritativeSessionUser, { sessionToken: authoritativeSessionToken });
@@ -370,15 +391,16 @@ export default function QuickClockSection({
       }
       return status;
     } catch (err) {
-      if (!quiet) setPersistenceError(err?.response?.data?.error || err?.message || "Authoritative Time Clock status could not be restored.");
+      if (!quiet && isCurrentRefresh()) setPersistenceError(err?.response?.data?.error || err?.message || "Authoritative Time Clock status could not be restored.");
       return null;
     } finally {
-      if (!quiet) setIsLoading(false);
+      if (!quiet && isCurrentRefresh()) setIsLoading(false);
     }
   }, [applyAuthoritativeStatus, authoritativeSessionToken, authoritativeSessionUser]);
 
   useEffect(() => {
     if (!authoritativeSessionToken || !authoritativeSessionUser?.email) {
+      statusRefreshSequenceRef.current += 1;
       setAuthoritativeTransition(null);
       return undefined;
     }
@@ -390,6 +412,7 @@ export default function QuickClockSection({
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
+      statusRefreshSequenceRef.current += 1;
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
