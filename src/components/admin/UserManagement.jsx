@@ -512,9 +512,26 @@ export default function UserManagement() {
     hrSaveInFlight.current = true;
     setHrMutationSaving(true);
     try {
-      await updateAuthorizedUserHrAdmin({ record: verifiedUser, hrData, sessionToken });
-      // A completed server write does not grant a retired Admin form UI access.
-      return ownsHrSave();
+      const saved = await updateAuthorizedUserHrAdmin({ record: verifiedUser, hrData, sessionToken });
+      if (!ownsHrSave()) return false;
+      // Only a verified server receipt may advance the HR compare-and-swap
+      // baseline. Without it, another save could overwrite newer HR data.
+      if (saved?.id !== record.id || saved?.email !== record.email ||
+          !saved?.updated_date || !saved?.hr_data ||
+          typeof saved.hr_data !== "object" || Array.isArray(saved.hr_data) ||
+          JSON.stringify(saved.hr_data) !== JSON.stringify(hrData)) {
+        throw new Error("The saved HR record could not be verified. Reload the directory before saving again.");
+      }
+      // A directory read started before the write must not reinstate its
+      // previous HR version. The form keeps its draft during this refresh.
+      ++userLoadSequence.current;
+      setUsers(current => current.map(row =>
+        row.id === record.id && row.email === record.email &&
+        row.updated_date === record.updated_date ? saved : row));
+      setEditingUser(current =>
+        current?.id === record.id && current?.email === record.email &&
+        current?.updated_date === record.updated_date ? saved : current);
+      return true;
     } catch (error) {
       if (!ownsHrSave()) return false;
       throw error;
@@ -1336,6 +1353,7 @@ export default function UserManagement() {
                   <UserHRDataForm
                     userData={editingUser}
                     saveScope={sessionToken}
+                    preserveDraftOnRecordRefresh={true}
                     onUpdate={() => { if (activeSessionToken.current === sessionToken) void loadUsers(); }}
                     onSave={(hrData) => handleSaveHrData(hrData, editingUser)}
                     section="all"
