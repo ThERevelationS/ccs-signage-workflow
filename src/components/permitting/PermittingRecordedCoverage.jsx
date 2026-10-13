@@ -6,6 +6,7 @@ import { reconcileSavedOfficeEvidence } from './permittingOfficeEvidenceReader.m
 import { reconcileRecordedAuthorityReviewEvents } from './permittingReviewEventReconciliation.mjs';
 import { reconcileReviewedOfficesWithoutSavedCopies } from './permittingReviewedOfficeMirror.mjs';
 import { readElectricalEvidenceSourceMetadata, reconcileRecordedElectricalEvidence } from './permittingElectricalSourceAudit.mjs';
+import PermittingRetainedPageReview from './PermittingRetainedPageReview';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
@@ -224,6 +225,7 @@ function RecordedCoverageSession({readCoverage,authorized}) {
           </li>)}</ul>
           {!result.electrical_source_evidence.items.length && <p className="text-sm">No recorded source-reference discrepancies in this read; live source validity, electrical authority and statewide completeness remain unverified.</p>}
         </details>
+        <PermittingRetainedPageReview key={result.checked_at} candidates={result.electrical_source_evidence.retained_page_candidates||[]} />
       </section>}
 
       {result.electrical_offices && <section aria-label="Recorded electrical office review gaps" className="space-y-2 border-t pt-3">
