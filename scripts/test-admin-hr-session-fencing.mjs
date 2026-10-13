@@ -105,7 +105,7 @@ test("Admin double submit starts one authorized HR write",async()=>{
   const f=adminFixture();
   const run=f.handler("old-session",older);
   const first=run(draft,older);
-  const duplicate=run(draft,older);
+  const duplicate=assert.rejects(()=>run(draft,older), /directory or editor has changed/);
   assert.equal(f.state.calls.length,1);
   assert.equal(f.state.saving,true);
   assert.equal(f.state.calls[0].record,older);
