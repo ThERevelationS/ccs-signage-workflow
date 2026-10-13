@@ -273,8 +273,6 @@ export default function ProductChecklistDialog({
       setLoadedProductsSnapshot(cloneLoadedValue(currentWO.products));
       setLoadedRevisitDateSnapshot(currentWO.sip_revisit_date);
       setLoadedSipCompletedSnapshot(currentWO.sip_completed);
-      setLoadError("");
-      setHasLoadedChecklist(true);
       setSaveError("");
 
       // Load products from new structure or migrate old
@@ -355,6 +353,9 @@ export default function ProductChecklistDialog({
       const loadedProductTypes = productTypesSetting?.setting_value?.items || 
         ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
       setProductTypes(loadedProductTypes);
+      // Only a fully reconstructed, current checklist may replace a failed-load state.
+      setHasLoadedChecklist(true);
+      setLoadError("");
     } catch (error) {
       if (requestId !== loadDataRequestRef.current) return;
       console.error("Error loading data:", error);
