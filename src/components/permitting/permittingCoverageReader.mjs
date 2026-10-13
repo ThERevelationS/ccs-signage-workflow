@@ -50,7 +50,13 @@ export function reconcileRecordedCoverage(queue, profiles) {
     notice: 'Recorded inventory reconciliation only. Name/type/county candidates are not canonical authority matches or statewide completeness.' };
 }
 
-const geographicName = value => normalized(value).replace(/^(city|village|township|county) of\s+/, '').replace(/\s+(county|township|city|village)$/, '');
+function geographicName(value, type) {
+  const name = normalized(value);
+  if (!['county','city','village','township'].includes(type)) return name;
+  const withoutPrefix = name.replace(new RegExp('^'+type+' of\\s+'), '');
+  // City/Village can be part of an official municipal name (Grove City, Bay Village).
+  return ['county','township'].includes(type) ? withoutPrefix.replace(new RegExp('\\s+'+type+'$'), '') : withoutPrefix;
+}
 export function reconcileOfficialInventory(queue, profiles, reference) {
   if (!reference || !Array.isArray(reference.rows) || reference.source_rows !== reference.rows.length) throw Error('Invalid official inventory');
   const keys = new Set();
@@ -65,10 +71,10 @@ export function reconcileOfficialInventory(queue, profiles, reference) {
   function reconcile(rows, profile) {
     const assessments = rows.map(row => {
       const state = normalized(row.state).toUpperCase(), type = normalized(profile ? row.type : row.jurisdiction_type);
-      const name = geographicName(profile ? row.name : row.jurisdiction_name);
-      const county = geographicName(profile ? row.parent_county?.name : row.parent_county_name);
-      const nameHits = candidates.filter(r => r.state === state && r.type === type && geographicName(r.name) === name);
-      const hits = nameHits.filter(r => type !== 'township' || !county || geographicName(r.county_name) === county);
+      const name = geographicName(profile ? row.name : row.jurisdiction_name, type);
+      const county = geographicName(profile ? row.parent_county?.name : row.parent_county_name, 'county');
+      const nameHits = candidates.filter(r => r.state === state && r.type === type && geographicName(r.name, r.type) === name);
+      const hits = nameHits.filter(r => type !== 'township' || !county || geographicName(r.county_name, 'county') === county);
       const review_flags = [];
       if (['city','village'].includes(type)) review_flags.push('official_county_relationship_pending');
       if (type === 'township' && !county) review_flags.push('parent_county_missing');

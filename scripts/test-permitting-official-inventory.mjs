@@ -127,3 +127,12 @@ for(const group of ['queue','profiles']){
 r=reconcileOfficialInventory([],[{...p,name:'Absent Township',parent_county:{name:'Wrong County'}}],base);
 assert.ok(!r.profiles.identity_review[0].review_flags.includes('parent_county_conflict'));
 r=reconcileOfficialInventory([],[p],base);assert.ok(!r.profiles.assessments[0].review_flags.includes('parent_county_conflict'));
+
+for(const [official,type,truncated] of [['Grove City','city','Grove'],['Bay Village','city','Bay'],['Beach City','village','Beach']]){
+ const municipal={source_rows:1,rows:[{key:'name-fixture',state:'OH',name:official,type,category:'candidate'}]};
+ for(const name of [official,`${type} of ${official}`])assert.equal(reconcileOfficialInventory([],[{id:'name-record',state:'OH',name,type}],municipal).profiles.assessments[0].state,'single_geographic_candidate');
+ assert.equal(reconcileOfficialInventory([],[{id:'short-record',state:'OH',name:truncated,type}],municipal).profiles.assessments[0].state,'unmatched');
+}
+assert.deepEqual(reconcileOfficialInventory([],[p],base).profiles.assessments[0].candidate_keys,['a']);
+const countyRef={source_rows:1,rows:[{key:'county-fixture',state:'OH',name:'Hamilton',type:'county',category:'candidate'}]};
+assert.equal(reconcileOfficialInventory([],[{id:'county',state:'OH',name:'Hamilton County',type:'county'}],countyRef).profiles.assessments[0].state,'single_geographic_candidate');
