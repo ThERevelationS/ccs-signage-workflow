@@ -130,6 +130,7 @@ export default function QuickClockSection({
   const credentialRef = useRef(null);
   const requestRef = useRef({});
   const notificationTimerRef = useRef(null);
+  const displayResetTimerRef = useRef(null);
   // Passive refreshes may return out of order, after a session switch, or
   // after a punch mutation. Never let an old response replace newer state.
   const statusRefreshSequenceRef = useRef(0);
@@ -150,8 +151,14 @@ export default function QuickClockSection({
     authoritativeSessionUser.email.toLowerCase() === selectedUser.email.toLowerCase()
   );
 
+  const cancelDisplayReset = () => {
+    if (displayResetTimerRef.current !== null) clearTimeout(displayResetTimerRef.current);
+    displayResetTimerRef.current = null;
+  };
+
   useEffect(() => {
     return () => {
+      cancelDisplayReset();
       if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
       stopAllMedia();
     };
@@ -164,6 +171,7 @@ export default function QuickClockSection({
   };
 
   const invokeTimeClock = async (payload) => {
+    cancelDisplayReset();
     activeActionCountRef.current += 1;
     statusRefreshSequenceRef.current += 1;
     try {
@@ -261,6 +269,7 @@ export default function QuickClockSection({
   };
 
   const applyAuthoritativeStatus = useCallback((status, fallbackUser, credential) => {
+    cancelDisplayReset();
     const verifiedUser = status?.user || fallbackUser;
     if (!verifiedUser?.email) throw new Error("The server did not return a verified employee identity.");
 
@@ -413,6 +422,7 @@ export default function QuickClockSection({
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       statusRefreshSequenceRef.current += 1;
+      cancelDisplayReset();
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
@@ -425,6 +435,7 @@ export default function QuickClockSection({
   }, [authoritativeTransition, authoritativeSessionToken, authoritativeSessionUser?.email, refreshAuthoritativeSessionState]);
 
   const resetState = async () => {
+    cancelDisplayReset();
     recognitionLockedRef.current = false;
     await stopAllMedia();
     credentialRef.current = null;
@@ -453,6 +464,20 @@ export default function QuickClockSection({
     setManualPassword("");
     setUsernameError("");
     setIsLoading(false);
+  };
+
+  const scheduleDisplayReset = (delayMs) => {
+    cancelDisplayReset();
+    const currentSequence = statusRefreshSequenceRef.current;
+    const currentScope = { ...sessionScopeRef.current };
+    displayResetTimerRef.current = setTimeout(() => {
+      displayResetTimerRef.current = null;
+      if (statusRefreshSequenceRef.current !== currentSequence ||
+          sessionScopeRef.current.token !== currentScope.token ||
+          sessionScopeRef.current.email !== currentScope.email ||
+          activeActionCountRef.current > 0) return;
+      resetState();
+    }, delayMs);
   };
 
   const performClockIn = async (user, credential) => {
@@ -484,13 +509,13 @@ export default function QuickClockSection({
       if (data.status === "already_clocked_in") {
         setActiveEntry(data.entry || null);
         setRecognitionStatus("Already clocked in. No duplicate entry was created.");
-        setTimeout(() => resetState(), 3000);
+        scheduleDisplayReset(3000);
         return data;
       }
 
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Clock-in confirmed by server.");
-      setTimeout(() => resetState(), 5000);
+      scheduleDisplayReset(5000);
       return data;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest("clock_in", email);
@@ -929,7 +954,7 @@ export default function QuickClockSection({
         setPunchResolution(null);
         setActiveEntry(result.entry || activeEntry);
         setRecognitionStatus("Continuous shift confirmed. Your original Clock In remains active and no punch time was changed.");
-        setTimeout(() => resetState(), 2500);
+        scheduleDisplayReset(2500);
         return result;
       }
 
@@ -1051,7 +1076,7 @@ export default function QuickClockSection({
       showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
       setShowClockOut(false);
       setRecognitionStatus("Clock-out confirmed by server.");
-      setTimeout(() => resetState(), 2500);
+      scheduleDisplayReset(2500);
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest("clock_out", email);
@@ -1096,7 +1121,7 @@ export default function QuickClockSection({
         onResumed={(data) => {
           applyWorkPauseResponse(data);
           setRecognitionStatus("Work resumed and confirmed by server.");
-          setTimeout(() => resetState(), 800);
+          scheduleDisplayReset(800);
         }}
       />
 
