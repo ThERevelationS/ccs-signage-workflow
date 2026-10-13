@@ -28,7 +28,19 @@ The handoff now identifies missing/malformed canonical IDs before presenting the
 
 Coverage counters remain historical tracker measures; they are not current legal authority gates. No source document, recorded review event, manual override or office record changed. All UI data still comes from supplied records; no new background read.
 
-## Validation and next work
+## Coverage-count guidance follow-up
+
+Starting HEAD fe0b7ae9baf431ffad6f3d6b766fd6710a2bd8f1; clean working tree. Exact-ID read of the same two Ohio localities returned both records, still without explicit profile links, canonical office IDs or separate authority role/review fields. No geography, source or legal responsibility was inferred.
+
+Confirmed dashboard wording discrepancy: role counters use historical configured flags, but the table said Staff reviewed, and the empty role-gap message said No gaps found. A synthetic setup can have both flags and zero role-assignment gaps while canonical identity and review provenance remain unresolved.
+
+Changed only dashboard wording and synthetic UI checks. The table now labels recorded staff-review flags, pending assignments and absent separate assignments distinctly. It explains that missing role assignment is not proof of no provider. Staff are directed to the existing saved office relationship evidence and immutable authority-event checks. Zero role gaps explicitly leave identity, profile links, review evidence, current authority and site applicability unresolved. Counters, shared authority behavior and all stored records remain unchanged.
+
+35 selected synthetic checks passed, including the existing renderer interaction/session safeguards and a new zero-role-gap fixture retaining canonical identity warnings. No extra reads occur on mount; results still require an explicit employee action. git diff --check passed; one production build completed with captured exit 0 and only the existing baseline-browser-mapping/Browserslist warnings. No frontend publishing, backend deployment or production records changed. Authenticated browser acceptance remains pending. Phase 10 / Milestone 1 / Task 2 stays partial.
+
+Next contained chunk: audit canonical duplicate office-copy detection in saved-office relationship evidence against the role-specific handoff, preserving distinct issuer/inspector roles and historical flags. Confirm a defect before changing behavior.
+
+## Validation of the preceding canonical-identity chunk
 
 33 focused synthetic tests passed across electrical handoff, saved sources, electrical research outcomes, recorded coverage and electrical role coverage. New cases exercise missing/blank/padded canonical IDs, repeated same-role canonical copies, valid cross-role shared offices, malformed local IDs and input preservation.
 
