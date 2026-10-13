@@ -114,6 +114,8 @@ export default function UserManagement() {
   const hrSaveInFlight = useRef(false);
   const hrSaveOwner = useRef(null);
   const [hrMutationSaving, setHrMutationSaving] = useState(false);
+  const hrReloadOwner = useRef(null);
+  const hrReloadInFlight = useRef(false);
   const activeEditingUser = useRef(editingUser);
   activeEditingUser.current = editingUser;
   const [deletionRequests, setDeletionRequests] = useState([]);
@@ -151,6 +153,8 @@ export default function UserManagement() {
     hrSaveOwner.current = null;
     hrSaveInFlight.current = false;
     setHrMutationSaving(false);
+    hrReloadOwner.current = null;
+    hrReloadInFlight.current = false;
     // A previous session may have a deletion in flight. The server decides
     // its outcome; only the owning session may change this confirmation UI.
     deletionOwner.current = null;
@@ -214,6 +218,8 @@ export default function UserManagement() {
     // Revoke ownership on both session transitions and component unmounts;
     // a pending email callback cannot alert after Admin is left behind.
     return () => {
+      hrReloadOwner.current = null;
+      hrReloadInFlight.current = false;
       hrSaveOwner.current = null;
       hrSaveInFlight.current = false;
       deletionOwner.current = null;
@@ -485,6 +491,45 @@ export default function UserManagement() {
     }
   };
 
+  const reloadHrRecord = async (record) => {
+    if (!record?.id || !record?.email || hrReloadInFlight.current ||
+        hrSaveInFlight.current || userUpdateInFlight.current ||
+        deletionInFlight.current || isLoading || !sessionToken ||
+        !isDialogOpen || activeSessionToken.current !== sessionToken ||
+        activeEditingUser.current?.id !== record.id ||
+        activeEditingUser.current?.email !== record.email) {
+      throw new Error("The Admin session or employee editor changed. Reopen it before reloading HR information.");
+    }
+    const owner = { sessionToken, recordId: record.id };
+    hrReloadOwner.current = owner;
+    hrReloadInFlight.current = true;
+    const ownsReload = () => hrReloadOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === record.id &&
+      activeEditingUser.current?.email === record.email;
+    try {
+      const latestUsers = await listAuthorizedUsersAdmin({ sessionToken });
+      if (!ownsReload()) return null;
+      const latest = latestUsers.find(row => row.id === record.id && row.email === record.email);
+      if (!latest?.updated_date || !latest.hr_data ||
+          typeof latest.hr_data !== "object" || Array.isArray(latest.hr_data)) {
+        throw new Error("The employee record could not be verified. Reopen the directory before trying again.");
+      }
+      // Invalidate older directory reads before applying the fresh version.
+      ++userLoadSequence.current;
+      setUsers(latestUsers);
+      setUserDirectoryError(false);
+      setEditingUser(current =>
+        current?.id === record.id && current?.email === record.email ? latest : current);
+      return latest;
+    } finally {
+      if (ownsReload()) {
+        hrReloadOwner.current = null;
+        hrReloadInFlight.current = false;
+      }
+    }
+  };
+
   const handleSaveHrData = async (hrData, record) => {
     // Confirm the exact editor record is still backed by this session's
     // verified directory, rather than trusting a retired form's closure.
@@ -493,7 +538,7 @@ export default function UserManagement() {
       row.updated_date === record?.updated_date);
     if (!verifiedUser || !isDialogOpen || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken ||
-        hrSaveInFlight.current || userUpdateInFlight.current ||
+        hrSaveInFlight.current || hrReloadInFlight.current || userUpdateInFlight.current ||
         deletionInFlight.current || userMutationSaving) {
       throw new Error("The user directory or editor has changed. Reload before saving HR data.");
     }
@@ -552,7 +597,7 @@ export default function UserManagement() {
   };
 
   const handleSave = async () => {
-    if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
+    if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
     const requestedPassword = String(formData.password_hash || "");
@@ -1361,6 +1406,7 @@ export default function UserManagement() {
                     userData={editingUser}
                     saveScope={sessionToken}
                     preserveDraftOnRecordRefresh={true}
+                    onReloadLatest={() => reloadHrRecord(editingUser)}
                     onUpdate={() => { if (activeSessionToken.current === sessionToken) void loadUsers(); }}
                     onSave={(hrData) => handleSaveHrData(hrData, editingUser)}
                     section="all"
