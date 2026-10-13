@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
-import { reconcileHrDraft, formatHrFieldPath } from "./reconcileHrDraft.js";
+import { reconcileHrDraft, formatHrFieldPath, previewHrResolution } from "./reconcileHrDraft.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,14 @@ import {
 const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 const HOODIE_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 const HAT_SIZES = ["S/M", "L/XL", "One Size", "Fitted 6 7/8", "Fitted 7", "Fitted 7 1/8", "Fitted 7 1/4", "Fitted 7 3/8", "Fitted 7 1/2", "Fitted 7 5/8", "Fitted 7 3/4"];
+const HR_PREVIEW_OUTCOME = {
+  mine: "Keep my edit",
+  latest: "Keep newer change",
+  "latest-over-mine": "Discard my edit; keep newer",
+  overwritten: "Replace newer with my edit",
+  agreed: "Both match"
+};
+
 const MARITAL_STATUS = [
   { value: "single", label: "Single" },
   { value: "married", label: "Married" },
@@ -46,6 +54,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
   const [reloadSaving, setReloadSaving] = useState(false);
   const [draftNotice, setDraftNotice] = useState("");
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  const [hrPreviewChoice, setHrPreviewChoice] = useState("prefer-latest");
   const reloadOwner = useRef(null);
   const reloadInFlight = useRef(false);
   const saveInFlight = useRef(false);
@@ -74,6 +83,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
     setReloadSaving(false);
     setDraftNotice("");
     setConfirmOverwrite(false);
+    setHrPreviewChoice("prefer-latest");
     reloadOwner.current = null;
     reloadInFlight.current = false;
     setHrData(userData?.hr_data || {});
@@ -178,6 +188,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
       setHrRecovery(current => current?.stage === "needs_reload"
         ? { ...current, stage: "review", latest: latest.hr_data } : current);
       setConfirmOverwrite(false);
+      setHrPreviewChoice("prefer-latest");
     } catch (error) {
       if (ownsReload()) setSaveError(error?.message || "Could not reload HR information safely.");
     } finally {
@@ -194,6 +205,19 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
         baseline: hrRecovery.baseline, latest: hrRecovery.latest, draft: hrData
       }) : null;
 
+  const hrResolutionPreview = hrRecovery?.stage === "review"
+    ? previewHrResolution({
+        baseline: hrRecovery.baseline,
+        latest: hrRecovery.latest,
+        draft: hrData,
+        choice: hrPreviewChoice
+      }) : null;
+
+  const selectHrPreviewChoice = choice => {
+    setHrPreviewChoice(choice);
+    setConfirmOverwrite(false);
+  };
+
   const resolveHrRecovery = (choice) => {
     if (hrRecovery?.stage !== "review" || !recoveryComparison ||
         reloadInFlight.current || saveInFlight.current) return;
@@ -209,6 +233,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
     setHrRecovery(null);
     setSaveError("");
     setConfirmOverwrite(false);
+    setHrPreviewChoice("prefer-latest");
     setDraftNotice("Draft updated using the latest HR record. Review the fields, then Save Changes. Nothing has been saved yet.");
   };
 
