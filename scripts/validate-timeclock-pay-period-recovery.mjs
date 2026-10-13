@@ -6336,6 +6336,54 @@ test('v29 abandoned company coordinator does not trust missing or mismatched set
   }
 });
 
+test('v29 rejected entry CAS preserves correction audit binding and releases coordinator', async () => {
+  const h = setup({ entryCount: 1, serverNow: '2026-09-22T21:00:00.000Z' });
+  const entry = h.rows.TimeEntry[0];
+  const requestId = 'v29-entry-race-blocked';
+  const clockInBefore = entry.clock_in;
+  let interfered = false;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (entity === 'TimeEntry' && !interfered &&
+        update.$set?.clock_source === 'admin_correction') {
+      interfered = true;
+      entry.updated_date = '2026-09-22T21:01:00.000Z';
+    }
+  });
+  const requested = await h.invoke({
+    action: 'admin_correct_entry', target_email: entry.user_email, request_id: requestId,
+    entry_id: entry.id, expected_updated_date: '2026-09-20T00:00:00.000Z',
+    reason: 'Reject stale synthetic edit with a retained audit hash',
+    correction: { clock_in: '2026-09-20T14:30:00.000Z',
+      clock_out: entry.clock_out, lunch_minutes: 0, notes: 'Stale write fixture',
+      job_allocations: [{ hours: 7, minutes: 30, is_inhouse: true,
+        inhouse_task: 'Synthetic shop work' }] },
+  });
+  assert.equal(interfered, true, 'Fixture must race after the company CAS claim');
+  assert.equal(requested.status, 409, JSON.stringify(requested.body));
+  assert.equal(entry.clock_in, clockInBefore, 'Failed correction must preserve time');
+  const audit = h.rows.TimeClockAudit.find((row) => row.request_id === requestId &&
+    row.action === 'admin_correction');
+  assert.ok(audit?.id);
+  assert.equal(audit.outcome, 'blocked');
+  assert.ok(audit.details?.payload_hash,
+    'Blocked audit must retain immutable request payload binding');
+  assert.equal(h.rows.TimeClockAdminCorrectionGate[0].status, 'idle',
+    'Confirmed failed CAS cannot strand company coordinator');
+  h.setBeforeUpdate(null);
+  const retryWithNewId = await h.invoke({
+    action: 'admin_correct_entry', target_email: entry.user_email,
+    request_id: 'v29-entry-race-fresh', entry_id: entry.id,
+    expected_updated_date: entry.updated_date,
+    reason: 'Fresh independently audited correction after failed CAS',
+    correction: { clock_in: '2026-09-20T14:45:00.000Z',
+      clock_out: entry.clock_out, lunch_minutes: 0, notes: 'Fresh corrected edit',
+      job_allocations: [{ hours: 7, minutes: 15, is_inhouse: true,
+        inhouse_task: 'Synthetic shop work' }] },
+  });
+  assert.equal(retryWithNewId.status, 200, JSON.stringify(retryWithNewId.body));
+  assert.equal(entry.clock_in, '2026-09-20T14:45:00.000Z');
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
