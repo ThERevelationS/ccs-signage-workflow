@@ -63,6 +63,11 @@ function setup({ entryCount = 1, serverNow = null, auditIdForRequest = null } = 
       id: 'synthetic-period-gate', scope: 'company', status: 'idle',
       request_id: '', payload_hash: '', claim_token: '', updated_date: '2026-09-20T00:00:00.000Z',
     }],
+    TimeClockAdminCorrectionGate: [{
+      id: 'synthetic-manager-correction-gate', scope: 'company', status: 'idle',
+      request_id: '', time_entry_id: '', payload_hash: '', claim_token: '',
+      started_at: null, updated_date: '2026-09-20T00:00:00.000Z',
+    }],
     TimeClockPayPeriod: [{
       id: 'synthetic-period', label: 'Synthetic Review Period', start_date: '2026-09-20',
       end_date: '2026-09-26', status: 'review', last_request_id: '',
@@ -6016,10 +6021,9 @@ test('v28 manager correction request IDs cannot be reused across shifts or emplo
   }
 });
 
-test('v28 diagnostic: simultaneous cross-employee correction request IDs expose uncoordinated writes', async () => {
-  // DOCUMENTED OPEN CONCURRENCY GAP. This intentionally asserts the current
-  // unsafe result for reproducible diagnosis, not acceptable production behavior.
-  // Replace with a one-winner invariant when a shared CAS/unique key is added.
+test('v29 company coordinator permits only one simultaneous cross-employee correction request owner', async () => {
+  // Both employees acquire independent mutation locks before racing for the
+  // single company-wide CAS. Exactly one may commit the shared request ID.
   const h = setup({ entryCount: 2, serverNow: '2026-09-22T21:00:00.000Z' });
   const [first, second] = h.rows.TimeEntry;
   const other = { id: 'synthetic-race-worker', email: 'race-worker@synthetic.invalid',
@@ -6067,16 +6071,17 @@ test('v28 diagnostic: simultaneous cross-employee correction request IDs expose 
   const persisted = h.rows.TimeClockAudit.filter((audit) =>
     audit.action === 'admin_correction' && audit.request_id === request_id &&
     ['confirmed', 'recovered'].includes(audit.outcome));
-  assert.equal(successful.length, 2,
-    'Current unsafe baseline: both conflicting submissions report success');
-  assert.equal(persisted.length, 2,
-    'Current unsafe baseline: duplicate cross-employee correction evidence exists');
-  assert.notEqual(persisted[0].time_entry_id, persisted[1].time_entry_id);
-  assert.equal(first.clock_in, '2026-09-20T14:30:00.000Z');
-  assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
-
-  // The write race is real, but duplicate evidence must not make either
-  // correction silently payroll-ready. Verify the reviewer/finalizer gates.
+  assert.equal(successful.length, 1,
+    'Company CAS must allow exactly one winner of an identical request ID');
+  assert.equal([a, b].filter((result) => result.status === 409).length, 1);
+  assert.equal(persisted.length, 1, 'No duplicate confirmed cross-employee audit may be created');
+  assert.equal(first.clock_in === '2026-09-20T14:30:00.000Z',
+    persisted[0].time_entry_id === first.id);
+  assert.equal(second.clock_in === '2026-09-21T14:30:00.000Z',
+    persisted[0].time_entry_id === second.id);
+  assert.equal(h.rows.TimeClockAdminCorrectionGate[0].status, 'idle',
+    'Completed winner must release company coordinator');
+  // A rejected request must not poison unrelated payroll finalization.
   const managerApprovals = await Promise.all([first, second].map((entry, index) =>
     h.invoke({
       action: 'admin_set_entry_approval', target_email: entry.user_email,
@@ -6086,17 +6091,14 @@ test('v28 diagnostic: simultaneous cross-employee correction request IDs expose 
     })));
   assert.ok(managerApprovals.every((result) => [200, 409].includes(result.status)));
   const finalSnapshot = clone(h.period());
-  const blockedFinalization = await h.action('finalize', 'v28-race-finalize-001');
-  assert.equal(blockedFinalization.status, 409, JSON.stringify(blockedFinalization.body));
-  assert.match(String(blockedFinalization.body.error || ''), /duplicate or conflicting confirmed manager-correction/i);
-  assert.equal(h.period().status, finalSnapshot.status,
-    'A rejected finalization must preserve payroll status');
-  assert.deepEqual(h.period().finalized_summary, finalSnapshot.finalized_summary,
-    'A rejected finalization cannot publish a new payroll summary');
-  assert.deepEqual(h.period().finalized_summary_history, finalSnapshot.finalized_summary_history,
-    'A rejected finalization cannot rewrite historical payroll');
-  assert.equal(h.entryLocks().length, 0,
-    'A rejected first-generation finalization must release staged payroll entry locks');
+  const payrollResult = await h.action('finalize', 'v29-race-finalize-001');
+  assert.equal(payrollResult.status, 200, JSON.stringify(payrollResult.body));
+  assert.equal(h.period().status, 'finalized');
+  assert.deepEqual(h.period().finalized_summary_history, finalSnapshot.finalized_summary_history);
+  assert.equal((await h.invoke({
+    action: 'pay_period_history_verify', pay_period_id: h.period().id,
+    request_id: 'v29-race-history-verify',
+  })).body.verified, true);
 });
 
 test('v28 first-generation payroll history rejects later cross-employee reuse of a frozen manager request', async () => {
