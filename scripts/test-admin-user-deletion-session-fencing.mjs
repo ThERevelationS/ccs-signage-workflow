@@ -57,7 +57,7 @@ test("Changing or leaving Admin revokes delete owner and confirmation", () => {
   assert.match(effect, /return \(\) => \{\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false;\s*deletionOwner\.current = null;\s*deletionInFlight\.current = false/);
   assert.match(source, /onOpenChange=\{\(open\) => \{ if \(!open && !deletionInFlight\.current\) setDeleteConfirm\(null\); \}\}/);
   assert.match(source, /<AlertDialogCancel disabled=\{deletionSaving\}/);
-  assert.match(source, /disabled=\{deletionSaving \|\| userMutationSaving \|\| isLoading/);
+  assert.match(source, /disabled=\{deletionSaving \|\| userMutationSaving \|\| hrMutationSaving \|\| isLoading/);
   assert.match(source, /if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current \|\| deletionInFlight\.current/);
 });
 
