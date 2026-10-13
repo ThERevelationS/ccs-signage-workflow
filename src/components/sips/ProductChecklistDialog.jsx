@@ -281,9 +281,10 @@ export default function ProductChecklistDialog({
       }
       // Match the SIPS board's three queue rules. A job moved to an unrelated
       // task cannot become saveable merely because someone reloads its checklist.
-      const configuredSipsTask = (taskDescriptionsSetting?.setting_value?.items || []).some(item =>
-        item.text === currentWO.current_task_description && (item.page === "SIPs" || item.wip)
-      );
+      const configuredSipsTask = Boolean(currentWO.current_task_description &&
+        (taskDescriptionsSetting?.setting_value?.items || []).some(item =>
+          item.text === currentWO.current_task_description && (item.page === "SIPs" || item.wip)
+        ));
       if (currentWO.current_task_assigned_to !== "SIPs" && !configuredSipsTask) {
         throw new Error("This Work Order's current task no longer belongs to SIPS. Close the checklist and refresh the SIPS board before continuing.");
       }
