@@ -117,7 +117,7 @@ test("Save confirmed concurrent CCS edit halts Submit and provides a precise rea
   await pending;
   assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"],"CCS revision must fence Submit");
   assert.equal(h.refreshes.length,1);
-  assert.match(h.refreshes[0][1],/Save Draft finished.*Submit Estimate was not attempted/i);
+  assert.match(h.refreshes[0][1],/Save Draft finished.*Submit was not attempted/i);
   assert.equal(h.refreshes[0][2],true,"Read-only recovery should explain authoritative CCS status");
   assert.equal(h.saves.filter(Boolean).length,0);
 });
