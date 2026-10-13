@@ -37,13 +37,15 @@ export default function SelectorSavedSourceReview({profile,locality}){
           {item.status==='not_recorded'&&'No specific office assigned this role in the saved locality. Find explicit official role and service-area evidence; do not guess.'}
           {item.status==='needs_staff_review'&&'One office is configured, but its role has not been staff reviewed. Check official responsibilities and service area.'}
           {item.status==='staff_review_reference'&&'One saved office is marked staff reviewed; fresh official authority and site applicability are still unverified.'}
-          {item.status==='office_identity_conflict'&&'The office has a missing or duplicated saved office ID. Repair identity before assigning responsibility.'}
+          {item.status==='office_identity_conflict'&&'The office has a missing, malformed or duplicated saved office ID. Repair identity before assigning responsibility.'}
+          {item.status==='canonical_identity_conflict'&&'The canonical government office ID is missing or malformed. Reconcile exact identity before relying on the historical review flag.'}
           {item.status==='multiple_saved_offices'&&'Multiple saved offices carry this role. Each office and geographic service area needs separate review; no single office was chosen.'}
         </dd>
         {!!item.offices.length&&<dd><ul className="mt-1 space-y-2">
           {item.offices.map((office,i)=><li key={office.id+'-'+i} className="border-l-2 border-amber-300 pl-2">
             <strong>{office.name}</strong> — saved office ID: {office.id||'not recorded'}; canonical government office ID: {office.canonical_id||'not recorded'}.
             <p>Local role flag: {office.recorded_review==='staff_reviewed'?'staff reviewed (historical tracker flag)':'requires review'}; {office.has_review_notes?'notes recorded':'no supporting review notes'}; {office.has_reviewer?'reviewer and date recorded':'reviewer/date missing'}.</p>
+            {!office.canonical_identity_unique&&<p>{office.canonical_identity_issue==='missing_or_malformed'?'Canonical government office identity is missing or malformed.':'This canonical government office ID appears in multiple saved copies for this role; reconcile each copy and its service area.'} Preserve historical flags and notes; names and websites cannot repair this identity.</p>}
             {office.website&&<a className="inline-flex min-h-11 items-center underline break-all" href={office.website} target="_blank" rel="noopener noreferrer">Open configured office website (reference only)</a>}
           </li>)}
         </ul></dd>}
