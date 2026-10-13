@@ -2961,6 +2961,7 @@ Deno.serve(async (req) => {
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
     const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
+    const adminCorrectionGateEntity = base44.asServiceRole.entities.TimeClockAdminCorrectionGate;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
@@ -7938,6 +7939,21 @@ Deno.serve(async (req) => {
         }, { status: 409 });
       }
       try {
+      const companyCorrectionGate = await claimAdminCorrectionGate(adminCorrectionGateEntity, requestId, entry.id, correctionPayloadHash);
+      if (!companyCorrectionGate.acquired) {
+        return Response.json({ success: false, retry_same_request: companyCorrectionGate.retry_same_request === true,
+          error: companyCorrectionGate.error }, { status: 409 });
+      }
+      try {
+      // The earlier global audit lookup is only an optimization: repeat it
+      // under company CAS before any write to close the cross-employee race.
+      const confirmedOwner = await auditEntity.filter({ action: 'admin_correction', request_id: requestId });
+      if (!Array.isArray(confirmedOwner) || confirmedOwner.length > 1 ||
+          (confirmedOwner[0] && (String(confirmedOwner[0].time_entry_id || '') !== String(entry.id) ||
+            asEmail(confirmedOwner[0].user_email) !== target.email ||
+            !constantTimeEqual(String(confirmedOwner[0].details?.payload_hash || ''), correctionPayloadHash)))) {
+        return Response.json({ success: false, error: 'This manager-correction request ID has conflicting authoritative audit ownership. Admin investigation is required.' }, { status: 409 });
+      }
       // Finalization holds this same employee mutation gate through commit. Check
       // the corrected company date only after acquiring it so a destination
       // period cannot become finalized between validation and the correction write.
@@ -8093,6 +8109,14 @@ Deno.serve(async (req) => {
       }
 
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
+      } finally {
+        const globalReleased = await releaseAdminCorrectionGate(
+          adminCorrectionGateEntity, auditEntity, entryEntity,
+          String(companyCorrectionGate.id || ''), requestId, entry.id, correctionPayloadHash,
+          String(companyCorrectionGate.token || ''),
+        );
+        if (!globalReleased) throw new Error('Manager-correction coordinator has uncertain completion and remains claimed. Admin investigation is required before further manager corrections.');
+      }
       } finally {
         const released = await releaseCorrectionCreateLock(
           stateEntity, state.id, requestId, entry.id, correctionPayloadHash,
