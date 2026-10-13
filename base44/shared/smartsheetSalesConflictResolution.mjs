@@ -52,6 +52,31 @@ export function approvedSalesRecordStillCurrent(planned, latest) {
     String(latest.current_task_description ?? '') === String(planned.current_task_description ?? ''));
 }
 
+// A planned ordinary Sales PUT is no more authoritative than an approved
+// one. Before any remote batch write, independently check the latest local
+// WorkOrder revision and permanent identity; unknown evidence fails closed.
+// This narrows the remote-write race but is not a cross-system transaction.
+export function staleSalesRemotePutPlans(plans, plannedById, latestById, sheetId) {
+  const targetSheet = String(sheetId ?? '').trim();
+  if (!/^\d+$/.test(targetSheet) || !Array.isArray(plans) ||
+      !(plannedById instanceof Map) || !(latestById instanceof Map)) {
+    throw new Error('Sales remote PUT local preflight requires complete versioned records.');
+  }
+  return plans.filter(([recordId, verification]) => {
+    const id = String(recordId ?? '').trim();
+    const planned = plannedById.get(id);
+    const current = latestById.get(id);
+    const rowId = String(verification?.rowId ?? '').trim();
+    return !id || !/^\d+$/.test(rowId) ||
+      !planned || String(planned.id ?? '') !== id ||
+      String(planned.smartsheet_sheet_id ?? '') !== targetSheet ||
+      String(planned.smartsheet_row_id ?? '') !== rowId ||
+      !verification?.originalUpdatedDate ||
+      String(planned.updated_date ?? '') !== String(verification.originalUpdatedDate) ||
+      !approvedSalesRecordStillCurrent(planned, current);
+  }).map(([recordId]) => String(recordId));
+}
+
 // Approval is intent, not completion. A Sales conflict decision may leave the
 // review queue only for a WorkOrder whose Smartsheet reconciliation AND Base44
 // snapshot metadata both passed the existing read-back verification gates.
