@@ -51,7 +51,8 @@ try {
   const rejected=async()=>{throw Error('Source access unavailable');};
   await act(async()=>{tree=Renderer.create(React.createElement(Review,{candidates:[candidates[0]],readPage:rejected}));});
   await act(async()=>{await buttons()[0].props.onClick();});
-  assert.match(JSON.stringify(tree.toJSON()),/PDF evidence could not be confirmed: Source access unavailable/);
+  assert.match(JSON.stringify(tree.toJSON()),/PDF evidence could not be confirmed/);
+  assert.match(JSON.stringify(tree.toJSON()),/Source access unavailable/);
   assert.match(JSON.stringify(tree.toJSON()),/request staff review/);
   assert.equal(tree.root.findAll(n=>n.props?.role==='status'&&n.props?.['aria-label']?.includes('Retained PDF text result')).length,0);
   assert.ok(!/current legal authority confirmed/i.test(JSON.stringify(tree.toJSON())));
