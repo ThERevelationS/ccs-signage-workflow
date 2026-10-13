@@ -94,6 +94,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
+import { isStaleVerifiedOrderCustomerBlur } from "@/components/orders/orderCustomerBlurSafety.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
@@ -180,6 +181,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
   const activeCustomerPickerRef = useRef(null);
   const customerSelectionInFlightRef = useRef(false);
+  const verifiedCustomerSelectionRef = useRef(new Map()); // Ignore old typed-name blur after verified job selection.
   const [checkingCustomerJobId, setCheckingCustomerJobId] = useState(null);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
 
@@ -911,6 +913,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setOrders((current) => current.filter(o => o.id !== target.id));
       delete pendingChangesRef.current[target.id];
       delete originalOrdersRef.current[target.id];
+      verifiedCustomerSelectionRef.current.delete(target.id);
       pendingSyncIdsRef.current.delete(target.id);
       pendingSyncVersionRef.current.delete(target.id);
       setPendingSyncCount(pendingSyncIdsRef.current.size);
@@ -1594,6 +1597,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   value={order.customer_name || ""}
                   onChange={(e) => {
                     const val = e.target.value;
+                    // An intentional new keystroke supersedes the previous
+                    // selection; only a delayed blur without new typing is stale.
+                    verifiedCustomerSelectionRef.current.delete(order.id);
                     customerNameDraftOrderRef.current = order.id;
                     orderLocalEditGenerationRef.current += 1;
                     setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
@@ -1604,7 +1610,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     // Use the actual departing input value, not an older
                     // React render captured by a delayed refresh/click.
                     const customerName = event.currentTarget.value;
-                    if (customerName !== (originalOrdersRef.current[order.id]?.customer_name || "")) {
+                    const staleSelectedName = isStaleVerifiedOrderCustomerBlur({
+                      selection: verifiedCustomerSelectionRef.current.get(order.id),
+                      blurValue: customerName,
+                    });
+                    if (!staleSelectedName && customerName !== (originalOrdersRef.current[order.id]?.customer_name || "")) {
                       pendingChangesRef.current[order.id] = {
                         ...pendingChangesRef.current[order.id],
                         customer_name: customerName
@@ -1694,6 +1704,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                               work_order_id: latest.id
                             };
                             setHasUnsavedChanges(true);
+                            verifiedCustomerSelectionRef.current.set(order.id, {
+                              customerName: latest.client_name,
+                              workOrderId: latest.id,
+                            });
                             // Picker clicks preserve input focus, so blur may
                             // never fire. The verified association is now queued
                             // for autosave; release just this draft latch.
