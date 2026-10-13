@@ -385,6 +385,20 @@ test("Ordinary unchanged Submit keeps its real policy-auto success metadata",asy
   assert.equal(store.writes,1);
 });
 
+test("Mechanic Submit flow fences its second write when CCS revises the Save Draft response",()=>{
+  const ui=readFileSync(path.join(root,"src/pages/FleetMechanic.jsx"),"utf8");
+  const start=ui.indexOf("const saveEstimate = async (submit = false) =>");
+  const end=ui.indexOf("const saveProgress = async () =>",start);
+  assert.ok(start>0&&end>start);
+  const flow=ui.slice(start,end);
+  const guard=flow.indexOf("if (saved?.data?.concurrently_updated)");
+  const secondWrite=flow.indexOf('action:"estimate_submit"');
+  assert.ok(guard>=0&&secondWrite>guard,"Second Submit write must be fenced by concurrent Save detection");
+  assert.match(flow,/Submit was not attempted/,"Explicitly tell mechanic no Submit occurred");
+  assert.match(flow,/if \(submitted\?\.data\?\.concurrently_updated\)/,"Newer CCS decision must override a stale Submit banner");
+  assert.match(flow,/if \(submitted\?\.data\?\.auto_approved\)/,"Ordinary auto-approval messaging must remain");
+});
+
 test("Submit blocks financial data if the Fleet work order changes to equipment outside the bearer grant",async()=>{
   const result=await commitWithConcurrentEdit(submitBody,store=>{
     store.work={...store.work,equipment_id:"eq-outside",updated_date:"work-v2"};
