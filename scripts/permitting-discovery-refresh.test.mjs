@@ -82,6 +82,14 @@ test('actual refresh retry clears successful gap and preserves unrelated pending
  assert.ok(r.jurisdiction.documents.some(d=>d.url.endsWith('/sign.pdf')));
 });
 
+test('Sharonville live-shaped seed rejects unsaved department rescan before fetch or write',async()=>{
+ const seed='https://www.sharonville.org/394/Sign-Application';
+ const department='https://www.sharonville.org/123/Building-Zoning-and-Planning';
+ const h=harness({profile:{name:'Sharonville',permitting_url:seed},pages:{[department]:fs.readFileSync('docs/official-evidence/ohio-sharonville-2026-10-07/building-zoning.html','utf8')}});
+ await assert.rejects(h.run(true,false,department),/not a saved official discovery page/);
+ assert.deepEqual(h.fetched,[]);assert.equal(h.written,undefined);assert.equal(h.researchCalls,0);
+});
+
 test('retained Sharonville selected-page refresh saves guide identity and preserves protected documents on replay',async()=>{
  const root='https://www.sharonville.org/123/Building-Zoning-and-Planning';
  const guide='https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026';
