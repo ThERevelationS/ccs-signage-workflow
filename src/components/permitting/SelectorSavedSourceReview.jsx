@@ -9,7 +9,7 @@ export default function SelectorSavedSourceReview({profile,locality}){
   const handoff=summarizeSelectorElectricalOfficeHandoff(profile,locality);
   return <details aria-label={'Saved source links for '+(profile?.name||'jurisdiction')} className="rounded border p-2 text-xs">
     <summary className="min-h-11 cursor-pointer py-2 font-semibold">Review saved source links ({sources.length})</summary>
-    <p>Saved on profile ID {profile?.id||'unknown'}. Research links do not verify electrical issuers, inspectors, local authority, or current adopted code. Check exact office IDs, geography and county overlays with official sources.</p>
+    <p>Saved on profile ID {typeof profile?.id==='string'&&profile.id.trim()?profile.id:'unknown'}. Research links do not verify electrical issuers, inspectors, local authority, or current adopted code. Check exact office IDs, geography and county overlays with official sources.</p>
     {!sources.length&&<p>No saved links. Inspect Scan activity and request official permit/inspection materials; do not guess an office.</p>}
     <ul className="space-y-2">{sources.slice(0,limit).map((source,index)=><li key={source.key} className="rounded border p-2">
       <p className="font-semibold break-words">{source.title}</p>
