@@ -6432,10 +6432,21 @@ test('v29 reviewed employee correction refuses a manager audit request ID alread
     row.action === 'admin_correction' && row.request_id === sharedReviewId).length, 1,
     'No cross-employee duplicate confirmed correction audit');
   const refreshedRequest = h.rows.TimeClockCorrectionRequest.find((row) => row.id === secondRequest.id);
-  if (refreshedRequest.status === 'pending') {
-    const unrelatedReview = await review(secondEmployee, refreshedRequest, 'v29-global-reviewed-unique-second');
-    assert.equal(unrelatedReview.status, 200, JSON.stringify(unrelatedReview.body));
-  }
+  assert.equal(refreshedRequest.status, 'pending',
+    'A foreign manager-review ID must not claim or finalize this employee correction');
+  const rejectedWithForeignId = await h.invoke({
+    action: 'review_correction_request', target_email: secondEmployee.email,
+    correction_request_id: refreshedRequest.id,
+    expected_request_updated_date: refreshedRequest.updated_date,
+    request_id: sharedReviewId, decision: 'reject',
+    reason: 'Synthetic rejected review reuses a foreign manager identity',
+  });
+  assert.equal(rejectedWithForeignId.status, 409, JSON.stringify(rejectedWithForeignId.body));
+  assert.equal(refreshedRequest.status, 'pending');
+  assert.equal(second.clock_in, secondBefore.clock_in);
+  const unrelatedReview = await review(secondEmployee, refreshedRequest, 'v29-global-reviewed-unique-second');
+  assert.equal(unrelatedReview.status, 200, JSON.stringify(unrelatedReview.body));
+  assert.equal(second.clock_in, '2026-09-21T14:30:00.000Z');
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
