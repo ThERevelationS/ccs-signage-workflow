@@ -36,7 +36,7 @@ const MARITAL_STATUS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" }
 ];
 
-export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null }) {
+export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false, saveScope = null, preserveDraftOnRecordRefresh = false }) {
   const [hrData, setHrData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
@@ -49,8 +49,10 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
   activeScope.current = { id: userData?.id, email: userData?.email, saveScope };
 
   useEffect(() => {
-    setHrData(userData?.hr_data || {});
-  }, [userData]);
+    // Admin refreshes the record version after each verified HR write.
+    // Keep subsequent unsaved edits instead of resetting the whole form.
+    if (!preserveDraftOnRecordRefresh) setHrData(userData?.hr_data || {});
+  }, [userData, preserveDraftOnRecordRefresh]);
 
   useEffect(() => {
     // A switched employee or Admin identity must not retain an older save,
