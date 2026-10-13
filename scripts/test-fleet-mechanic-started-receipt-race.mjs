@@ -1545,3 +1545,30 @@ test("uncertain cancellation acknowledgment reconciles a concurrent committed Fl
   assert.equal(store.receipts.get(prior.id).status,"applied");
   assert.equal(store.updates,0);
 });
+
+test("admin cancellation post-commit reconciliation blocks a racing receipt identity replacement",async()=>{
+  const prior=makeReceipt(payload("request-original-123456"));
+  const {store,client,receipts}=setup({receipt:prior});
+  client.auth={me:async()=>({email:"admin@example.test",role:"admin"})};
+  store.pauseCancelWrite=true;
+  store.pauseAppliedWrite=true;
+  const pending=call({action:"admin_revoke_link",id:grantId},client);
+  await until("admin cancellation CAS paused for late commit",()=>store.pendingCancelWrites.length===1);
+  store.work.mechanic_operation_key=prior.operation_key;
+  store.work.mechanic_operation_fingerprint=prior.payload_fingerprint;
+  store.work.updated_date="version-2";
+  store.pendingCancelWrites.shift()();
+  await until("post-cancellation reconciliation applied CAS",()=>store.pendingAppliedWrites.length===1);
+  const live=store.receipts.get(prior.id);
+  await receipts.update(prior.id,{payload_fingerprint:"reidentified-payload",
+    result_summary:{...live.result_summary,forensic_review_note:"Keep identity-conflict audit note"}});
+  store.pendingAppliedWrites.shift()();
+  const outcome=await pending;
+  assert.equal(outcome.code,200);
+  assert.equal(outcome.body.reconciled_applied,0);
+  assert.equal(outcome.body.reconciled_cancelled,0);
+  assert.equal(outcome.body.reconciled_blocked,1);
+  assert.equal(store.receipts.get(prior.id).status,"cancelled");
+  assert.equal(store.receipts.get(prior.id).result_summary.forensic_review_note,"Keep identity-conflict audit note");
+  assert.equal(store.updates,0);
+});
