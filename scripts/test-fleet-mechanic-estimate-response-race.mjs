@@ -335,6 +335,56 @@ test("Save Draft returns the latest estimate after a later legitimate CCS edit",
   assert.equal(result.store.writes,1);
 });
 
+test("Submit must not claim automatic approval after CCS requests changes during final reread",async()=>{
+  const result=await commitWithConcurrentEdit(submitBody,store=>{
+    store.estimate={...store.estimate,updated_date:"estimate-v3",status:"changes_requested",
+      approval_required:true,approval_tier:"CCS review",decision_by_email:"ccs-reviewer",decision_notes:"Please revise"};
+  });
+  assert.equal(result.status,200);
+  assert.equal(result.body.estimate?.status,"changes_requested");
+  assert.equal(result.body.auto_approved,false,"Latest CCS decision must supersede earlier mechanic auto-approval metadata");
+  assert.equal(result.body.concurrently_updated,true);
+  assert.equal(result.body.policy?.approval_required,true);
+  assert.equal(result.body.policy?.approval_tier,"CCS review");
+  assert.equal(result.store.writes,1);
+});
+
+test("Submit must not label a newer manual CCS approval as policy-auto approved",async()=>{
+  const result=await commitWithConcurrentEdit(submitBody,store=>{
+    store.estimate={...store.estimate,updated_date:"estimate-v3",status:"approved",
+      approval_required:true,approval_tier:"CCS manager",decision_by_email:"manager@synthetic.example"};
+  });
+  assert.equal(result.status,200);
+  assert.equal(result.body.estimate?.status,"approved");
+  assert.equal(result.body.auto_approved,false);
+  assert.equal(result.body.concurrently_updated,true);
+  assert.equal(result.body.policy?.approval_required,true);
+  assert.equal(result.body.policy?.approval_tier,"CCS manager");
+});
+
+test("Save Draft must expose concurrent CCS policy fields rather than earlier evaluated policy",async()=>{
+  const result=await commitWithConcurrentEdit(saveBody,store=>{
+    store.estimate={...store.estimate,updated_date:"estimate-v3",status:"submitted",
+      approval_required:true,approval_tier:"Director review"};
+  });
+  assert.equal(result.status,200);
+  assert.equal(result.body.estimate?.status,"submitted");
+  assert.equal(result.body.concurrently_updated,true);
+  assert.equal(result.body.policy?.approval_required,true);
+  assert.equal(result.body.policy?.approval_tier,"Director review");
+  assert.equal(result.body.policy?.policy_id,"","No earlier policy identity may be misattributed to a newer CCS estimate");
+});
+
+test("Ordinary unchanged Submit keeps its real policy-auto success metadata",async()=>{
+  const {store,client}=setup();
+  const outcome=await call(submitBody(),client);
+  assert.equal(outcome.status,200);
+  assert.equal(outcome.body.auto_approved,true);
+  assert.notEqual(outcome.body.concurrently_updated,true);
+  assert.equal(outcome.body.estimate?.status,"approved");
+  assert.equal(store.writes,1);
+});
+
 test("Submit blocks financial data if the Fleet work order changes to equipment outside the bearer grant",async()=>{
   const result=await commitWithConcurrentEdit(submitBody,store=>{
     store.work={...store.work,equipment_id:"eq-outside",updated_date:"work-v2"};
