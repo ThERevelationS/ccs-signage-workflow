@@ -7,6 +7,7 @@ import Renderer,{act} from 'react-test-renderer';
 
 const dir=resolve('node_modules/.cache/retained-electrical-review-ui');
 await mkdir(dir,{recursive:true});
+globalThis.window={self:null,top:null};
 try {
   await build({entryPoints:['src/components/permitting/PermittingRetainedPageReview.jsx'],
     outfile:dir+'/page-review.mjs',bundle:true,platform:'node',format:'esm',jsx:'automatic',
@@ -45,5 +46,6 @@ try {
   await act(async()=>tree.unmount());
   console.log('Retained page manual UI acceptance passed: explicit one-at-a-time click, duplicate guard, session remount, read error, and no automatic authority.');
 } finally {
+  delete globalThis.window;
   await rm(dir,{recursive:true,force:true});
 }
