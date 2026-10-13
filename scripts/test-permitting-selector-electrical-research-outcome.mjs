@@ -46,6 +46,7 @@ test('failed archival or discovery stage, unknown run status and absent counts r
  ])assert.equal(run(patch).needs_run_review,true);
  assert.equal(run({discovered_documents:-1}).observed_docs,null);
  assert.equal(run({discovered_documents:'0'}).observed_docs,null);
+ assert.equal(run({scan_run:undefined}).needs_run_review,true);
  const noCounts=run({discovered_documents:undefined,jurisdiction:{...profile(),documents:undefined}});
  assert.equal(noCounts.observed_docs,null);assert.equal(noCounts.saved_documents,null);
 });
@@ -59,7 +60,8 @@ test('picker shows role-specific research follow-up only after acknowledged resp
  assert.match(src,/summarizeSelectorElectricalResearchOutcome/);
  assert.match(src,/setFeedback\(outcome\)/);
  assert.match(src,/feedback\?\.profile_id===profile\.id/);
- assert.match(src,/No new document entries were reported by this attempt/);
+ assert.match(src,/No document entries were reported by this attempt/);
+ assert.match(src,/Saved links and Scan activity may still contain discoveries/);
  assert.match(src,/do not assign a permit issuer or inspection provider from a geographic name alone/i);
  assert.match(src,/before retrying; unresolved electrical offices remain unverified/);
  assert.match(src,/pending\.current\.has\(key\)/);
