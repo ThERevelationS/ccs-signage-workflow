@@ -1386,7 +1386,7 @@ check("checklist editor and custom status controls are inert only while saving",
   assert.match(source, /className="flex-1 overflow-y-auto space-y-3 pr-0\.5"\s+inert=\{isSaving \? "" : undefined\}\s+aria-busy=\{isSaving\}/);
   assert.match(source, /showAddGeneralChecklist && \(\s*<div className="p-3 bg-gray-50 rounded-lg border mb-3" inert=\{isSaving \? "" : undefined\}/);
   assert.match(source, /<OtherDialogContent\s+inert=\{isSaving \? "" : undefined\}/);
-  assert.match(source, /saveInFlightRef\.current = true;\s*setIsSaving\(true\);/);
+  assert.match(source, /saveInFlightRef\.current = true;\s*saveFailureFocusPendingRef\.current = false;\s*setIsSaving\(true\);/);
   assert.match(source, /saveInFlightRef\.current = false;\s*setIsSaving\(false\);/);
 });
 
