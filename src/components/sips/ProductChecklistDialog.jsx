@@ -55,6 +55,8 @@ export default function ProductChecklistDialog({
   const [users, setUsers] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [hasLoadedChecklist, setHasLoadedChecklist] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   // React state can lag rapid clicks: fence saves synchronously before the first await.
   const saveInFlightRef = useRef(false);
@@ -271,6 +273,8 @@ export default function ProductChecklistDialog({
       setLoadedProductsSnapshot(cloneLoadedValue(currentWO.products));
       setLoadedRevisitDateSnapshot(currentWO.sip_revisit_date);
       setLoadedSipCompletedSnapshot(currentWO.sip_completed);
+      setLoadError("");
+      setHasLoadedChecklist(true);
       setSaveError("");
 
       // Load products from new structure or migrate old
@@ -354,7 +358,9 @@ export default function ProductChecklistDialog({
     } catch (error) {
       if (requestId !== loadDataRequestRef.current) return;
       console.error("Error loading data:", error);
-      setSaveError(error?.message || "This SIP checklist could not be loaded. Close and reopen it, or reload the latest Work Order.");
+      // Loading failure is not an empty checklist or a failed save. Keep the
+      // previous snapshot/drafts and block mutations until a successful retry.
+      setLoadError(error?.message || "This SIP checklist could not be loaded. Retry or close it.");
     } finally {
       if (requestId === loadDataRequestRef.current) {
         loadInFlightRef.current = false;
@@ -1469,6 +1475,26 @@ export default function ProductChecklistDialog({
     );
   }
 
+  if (!hasLoadedChecklist && loadError) {
+    return (
+      <Dialog open={isOpen} onOpenChange={() => {}}>
+        <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] sm:max-w-lg [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle>Could not load SIP checklist</DialogTitle>
+          </DialogHeader>
+          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <p>{loadError}</p>
+            <p className="mt-2 text-xs">The checklist has not loaded. No items have been changed or saved. Retry to fetch the current Work Order.</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" className="min-h-11" onClick={onClose}>Close</Button>
+            <Button type="button" className="min-h-11" onClick={() => { if (!loadInFlightRef.current) void loadData(); }}>Retry loading checklist</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const toggleAllDetails = () => {
     const nextExpanded = { ...expandedItems };
     expandableChecklistIds.forEach(id => {
@@ -1750,7 +1776,7 @@ export default function ProductChecklistDialog({
                       cancelPendingNavigationFocus();
                       setShowTemplateBuilder(true);
                     }}
-                    disabled={isSaving || isLoading}
+                    disabled={isSaving || isLoading || Boolean(loadError)}
                     className="w-full h-11 sm:w-auto sm:h-8"
                   >
                     <Pencil className="w-4 h-4 mr-1" />
@@ -1896,11 +1922,20 @@ export default function ProductChecklistDialog({
             </div>
           )}
 
+          {loadError && (
+            <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">Checklist reload failed</div>
+              <p className="mt-1 text-xs">{loadError}</p>
+              <p className="mt-1 text-xs">The previously loaded checklist remains here, including unsaved edits. Editing and saving are paused until the latest Work Order loads.</p>
+              <Button type="button" variant="outline" className="mt-3 min-h-11 border-red-300 bg-white text-red-800" onClick={requestReloadLatest} disabled={isLoading || isSaving}>Retry loading checklist</Button>
+            </div>
+          )}
+
           {/* Checklist Items */}
           <div
             className="flex-1 overflow-y-auto space-y-3 pr-0.5"
-            inert={isSaving ? "" : undefined}
-            aria-busy={isSaving}
+            inert={isSaving || Boolean(loadError) ? "" : undefined}
+            aria-busy={isSaving || Boolean(loadError)}
             onKeyDown={handleChecklistResultKeyDown}
             onBlurCapture={handleChecklistResultBlurCapture}
           >
@@ -3019,7 +3054,7 @@ export default function ProductChecklistDialog({
               <Button
                 variant="outline"
                 onClick={() => { if (!saveInFlightRef.current && !loadInFlightRef.current && !isSaving && !isLoading) setShowAddGeneralChecklist(true); }}
-                disabled={isSaving || isLoading}
+                disabled={isSaving || isLoading || Boolean(loadError)}
                 className="sm:flex-1 h-11 sm:h-10"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -3030,7 +3065,7 @@ export default function ProductChecklistDialog({
               <Button
                 ref={completeButtonRef}
                 onClick={handleCheckOff}
-                disabled={isSaving}
+                disabled={isSaving || Boolean(loadError)}
                 className="sm:flex-1 h-11 sm:h-10 bg-green-600 hover:bg-green-700 text-white"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -3040,7 +3075,7 @@ export default function ProductChecklistDialog({
             <Button
               ref={saveRevisitButtonRef}
               onClick={handleSaveClick}
-              disabled={isSaving || !isRegistered}
+              disabled={isSaving || !isRegistered || Boolean(loadError)}
               className="sm:flex-1 h-11 sm:h-10 bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
