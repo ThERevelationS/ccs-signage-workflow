@@ -917,7 +917,7 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
   assert.equal(draftFocus.current, null);
   assert.equal(reopen.current, false);
   assert.deepEqual(updates, [["unfinished", null], ["draft", ""], ["popup", null], ["warning", null]]);
-  assert.match(source, /useEffect\(\(\) => \{\s*resetOtherPopupForReload\(\);\s*\}, \[workOrder\?\.id\]\);/);
+  assert.match(source, /useEffect\(\(\) => \{\s*resetOtherPopupForReload\(\);[\s\S]*?failedRevisitWorkOrderIdRef\.current = null;\s*\}, \[workOrder\?\.id\]\);/);
   // The loader may clear old focus/error state before taking its request token.
   // Verify the safety operations and their required order instead of assuming
   // those setup steps must be adjacent in the source.
