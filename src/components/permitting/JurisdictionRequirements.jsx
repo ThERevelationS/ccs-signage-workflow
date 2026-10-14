@@ -51,12 +51,15 @@ export default function JurisdictionRequirements({ jurisdictionId, onDocuments }
             <p>{citation.section_or_page || citation.section_reference || 'Source location not recorded'}{citation.physical_page != null ? ` · physical page ${citation.physical_page}` : ''}</p>
             {citation.excerpt && <blockquote className="border-l-2 pl-2">{citation.excerpt}</blockquote>}
             <p className="text-xs">Citation verification: {citation.verification_status || 'Not recorded'}{citation.source_document_id ? ` · source ${citation.source_document_id}` : ''}</p>
+            {typeof citation.source_document_id === 'string' && citation.source_document_id.trim()
+              ? onDocuments && <Button variant="outline" className="min-h-11" onClick={() => onDocuments(citation.source_document_id)}>Open saved source details</Button>
+              : <p className="text-xs text-amber-800">No saved source record linked to this citation. Inspect its official or archived link when available.</p>}
             <div className="flex flex-wrap gap-2">{link(citation.official_url) && <a className="inline-flex min-h-11 items-center text-blue-700 underline" href={link(citation.official_url)} target="_blank" rel="noopener noreferrer">Open official citation</a>}{link(citation.archived_file_url) && <a className="inline-flex min-h-11 items-center text-blue-700 underline" href={link(citation.archived_file_url)} target="_blank" rel="noopener noreferrer">Open cited archive</a>}</div>
           </div>)}
           <p className="text-xs text-gray-600">Use the existing administrator rule review to resolve missing evidence, conflicts or approvals. This view does not change review status or job work.</p>
         </div>
       </details>)}
     </>}
-    {onDocuments && <Button variant="outline" className="min-h-11" onClick={onDocuments}>Inspect jurisdiction documents</Button>}
+    {onDocuments && <Button variant="outline" className="min-h-11" onClick={() => onDocuments()}>Inspect jurisdiction documents</Button>}
   </section>;
 }

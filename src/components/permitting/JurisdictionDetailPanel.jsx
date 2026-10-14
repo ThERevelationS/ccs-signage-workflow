@@ -88,7 +88,13 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const workspaceSections = useRef({});
-  const navigateWorkspace = section => {
+  const [sourceRequest, setSourceRequest] = useState(null);
+  const navigateWorkspace = (section, sourceId) => {
+    if (section === 'documents') {
+      setSourceRequest(previous => typeof sourceId === 'string' && sourceId.trim()
+        ? { jurisdictionId: jurisdiction.id, sourceId: sourceId.trim(), token: (previous?.token || 0) + 1 }
+        : null);
+    }
     const target=workspaceSections.current[section];
     if(target){target.scrollIntoView({block:"start",behavior:"auto"});target.focus({preventScroll:true});}
   };
@@ -878,7 +884,7 @@ Answer only from the provided excerpts and cite the document title and official 
         <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel key={jurisdiction.id} jurisdictionName={jurisdiction.name} jurisdictionId={jurisdiction.id} onNavigate={navigateWorkspace} /></section>
 
         <section ref={node=>{workspaceSections.current.requirements=node;}} tabIndex={-1} aria-label="Requirements workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
-        <JurisdictionRequirements key={jurisdiction.id} jurisdictionId={jurisdiction.id} onDocuments={() => navigateWorkspace("documents")} />
+        <JurisdictionRequirements key={jurisdiction.id} jurisdictionId={jurisdiction.id} onDocuments={sourceId => navigateWorkspace("documents", sourceId)} />
         <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
         {/* Key Requirements & Rules */}
         {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
@@ -987,7 +993,7 @@ Answer only from the provided excerpts and cite the document title and official 
            <p className="text-xs font-semibold text-green-800 mb-2">
              Documents ({jurisdiction.documents?.length || 0} collected links)
            </p>
-          <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
+          <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} sourceRequest={sourceRequest} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
             if (expandedDoc === id) {
               const header = documentHeaderRefs.current.get(id);
               header?.focus({ preventScroll: true });

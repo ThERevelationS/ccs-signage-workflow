@@ -82,6 +82,7 @@ export default function ClockOutDialog({
   const previewScopeRef = useRef(previewScope);
   previewScopeRef.current = previewScope;
   const previewRequestRef = useRef({ scope: "", id: 0, pending: false });
+  const submitRequestRef = useRef({ scope: "", id: 0, pending: false });
   const draftShiftRef = useRef("");
   const [previewSnapshot, setPreviewSnapshot] = useState({ scope: "", value: null });
   const laborPreview = previewSnapshot.scope === previewScope ? previewSnapshot.value : null;
@@ -119,6 +120,11 @@ export default function ClockOutDialog({
   const totalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
   // workableMinutes already has lunch subtracted, so don't subtract again
   const remainingMinutes = workableMinutes - totalAllocatedMinutes;
+  // Preserve the exact employee-reviewed draft across asynchronous server
+  // reconciliation. Edits after submission starts must require a new review.
+  const draftFingerprint = JSON.stringify([lunchMinutes, jobAllocations, notes]);
+  const draftFingerprintRef = useRef(draftFingerprint);
+  draftFingerprintRef.current = draftFingerprint;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -169,6 +175,10 @@ export default function ClockOutDialog({
     previewRequestRef.current = {
       scope: previewScope, id: previewRequestRef.current.id + 1, pending: false,
     };
+    submitRequestRef.current = {
+      scope: previewScope, id: submitRequestRef.current.id + 1, pending: false,
+    };
+    setIsSubmitting(false);
     setLaborPreviewBusy(false);
     setLaborPreviewError("");
     setPreviewSnapshot({ scope: previewScope, value: null });
@@ -190,6 +200,9 @@ export default function ClockOutDialog({
     return () => {
       previewRequestRef.current = {
         scope: "", id: previewRequestRef.current.id + 1, pending: false,
+      };
+      submitRequestRef.current = {
+        scope: "", id: submitRequestRef.current.id + 1, pending: false,
       };
     };
   }, [isOpen, shiftKey]);
@@ -334,6 +347,8 @@ export default function ClockOutDialog({
   };
 
   const handleClockOut = async () => {
+    if (!previewScope || isSubmitting ||
+        (submitRequestRef.current.pending && submitRequestRef.current.scope === previewScope)) return;
     setError("");
 
     if (breakStatus !== "working" || activeBreak?.id) {
@@ -367,6 +382,19 @@ export default function ClockOutDialog({
       }
     }
 
+    const request = {
+      scope: previewScope, id: submitRequestRef.current.id + 1, pending: true,
+    };
+    submitRequestRef.current = request;
+    const isCurrent = () => previewScopeRef.current === request.scope &&
+      submitRequestRef.current === request;
+    const reviewedDraft = draftFingerprint;
+    // Supersede a pending auto-preview so it cannot reapply old suggestions
+    // while the final authoritative Clock Out reconciliation is running.
+    previewRequestRef.current = {
+      scope: previewScope, id: previewRequestRef.current.id + 1, pending: false,
+    };
+    setLaborPreviewBusy(false);
     setIsSubmitting(true);
     try {
       if (!onLoadLaborAllocationPreview) {
@@ -377,12 +405,16 @@ export default function ClockOutDialog({
       // backend clock, including any still-active Current Work segment. The
       // employee device clock remains display-only and is never authoritative.
       const previewResult = await onLoadLaborAllocationPreview();
+      if (!isCurrent()) return;
+      if (draftFingerprintRef.current !== reviewedDraft) {
+        throw new Error("Clock Out allocations changed during server reconciliation. Review the latest values and submit again.");
+      }
       const freshPreview = previewResult?.preview || null;
       const authoritativeElapsedMinutes = Number(freshPreview?.elapsed_minutes);
       if (!freshPreview || !Number.isFinite(authoritativeElapsedMinutes)) {
         throw new Error("Authoritative Clock Out time could not be refreshed. Nothing was submitted.");
       }
-      setLaborPreview(freshPreview);
+      setPreviewSnapshot({ scope: request.scope, value: freshPreview });
       setLaborPreviewError("");
 
       const authoritativeTrackedUnpaidMinutes = Math.max(0, Number(freshPreview.tracked_unpaid_minutes) || 0);
@@ -405,9 +437,12 @@ export default function ClockOutDialog({
         notes: notes.trim(),
       });
     } catch (err) {
-      setError(err?.message || "Clock-out was not confirmed by the server. Nothing was shown as successful.");
+      if (isCurrent()) setError(err?.message || "Clock-out was not confirmed by the server. Nothing was shown as successful.");
     } finally {
-      setIsSubmitting(false);
+      if (isCurrent()) {
+        request.pending = false;
+        setIsSubmitting(false);
+      }
     }
   };
 
