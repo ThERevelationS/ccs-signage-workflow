@@ -18,6 +18,93 @@ const bindRefresh=new Function("ctx",`with(ctx){${refreshBlock} return refreshEs
 // local test fixtures. This is not a browser acceptance test.
 const bindHandler=new Function("ctx",`with(ctx){${handlerBlock} return saveEstimate; }`);
 const defer=()=>{let resolve; const promise=new Promise(done=>{resolve=done;}); return {promise,resolve};};
+const applyBegin=source.indexOf("  const applyPortalPayload = result => {");
+const applyEnd=source.indexOf("  const applyWorkOrderSnapshot = workOrder => {",applyBegin);
+const loadBegin=source.indexOf("  const load = async (quiet = false) => {");
+const loadEnd=source.indexOf("  useEffect(() => { load(); }, []);",loadBegin);
+assert.ok(applyBegin>=0&&applyEnd>applyBegin&&loadBegin>=0&&loadEnd>loadBegin);
+const bindApply=new Function("ctx",`with(ctx){${source.slice(applyBegin,applyEnd)} return applyPortalPayload; }`);
+const bindLoad=new Function("ctx",`with(ctx){${source.slice(loadBegin,loadEnd)} return load; }`);
+
+function refreshHarness(){
+  const original={id:"estimate-A",work_order_id:"wo-A",visibility:"mechanic",updated_date:"v1",status:"approved",
+    approval_required:false,approval_tier:"",notes:"Old saved"};
+  const previous={portal:{capabilities:{estimates:true,save:true}},
+    active_work_orders:[{id:"wo-A",updated_date:"work-v1"}],recent_completed:[],repair_estimates:[original]};
+  const events={forms:[],errors:[],saves:[],recoveries:[],applications:[]};
+  const ctx={
+    token:"synthetic",selectedWorkOrderRef:{current:"wo-A"},
+    portalRequestRef:{current:0},portalAppliedEpochRef:{current:3},
+    portalPayloadRef:{current:previous},estimateCapabilityRef:{current:true},saveCapabilityRef:{current:true},
+    photoDraftEpochRef:{current:0},
+    setData:value=>events.applications.push(value),
+    setError:()=>{},setSelected:()=>{},setPhotos:()=>{},setForm:()=>{},
+    setActionError:value=>events.errors.push(value),
+    setSavedMessage:value=>events.saves.push(value),
+    setEstimateRecovery:value=>events.recoveries.push(value),
+    setEstimateForm:value=>events.forms.push(value),
+    setBusy:()=>{},setRefreshing:()=>{},setLoading:()=>{},
+    estimateSeed:row=>row?.visibility==="mechanic" ? ({status:row.status,version:row.updated_date,notes:row.notes}) : ({notes:""}),
+    pretty:value=>String(value||"draft").replaceAll("_"," "),
+    readStoredWorkRecovery:async()=>null,
+    openJob:()=>{},
+    fetchPortalPayload:async()=>ctx.nextPayload,
+  };
+  ctx.applyPortalPayload=bindApply(ctx);
+  ctx.load=bindLoad(ctx);
+  ctx.refreshEstimateState=bindRefresh(ctx);
+  return {ctx,events,original,previous,
+    nextEstimate:(overrides={})=>({...previous,
+      repair_estimates:[{...original,...overrides}]}),
+  };
+}
+
+test("manual Refresh detects newer CCS estimate and preserves unsaved draft behind recovery guard",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate({updated_date:"v2",status:"changes_requested"});
+  await h.ctx.load(true);
+  assert.equal(h.events.applications.length,1,"Scoped fresh portal data is applied");
+  assert.equal(h.events.forms.length,0,"Manual Refresh must not silently overwrite unsaved entries");
+  assert.equal(h.events.saves.at(-1),"","Earlier approval banner is no longer reliable");
+  assert.equal(h.events.recoveries.at(-1)?.workOrderId,"wo-A","Editing remains locked for review");
+  assert.match(h.events.errors.at(-1),/CCS.*changed/i);
+});
+
+test("manual Refresh detects status changes even with a contradictory unchanged version",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate({status:"changes_requested",approval_required:true});
+  await h.ctx.load(true);
+  assert.equal(h.events.recoveries.at(-1)?.workOrderId,"wo-A");
+  assert.equal(h.events.saves.at(-1),"");
+});
+
+test("manual Refresh with same server estimate preserves editable draft without false conflict",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate();
+  await h.ctx.load(true);
+  assert.ok(!h.events.recoveries.some(Boolean),"Unchanged server state does not lock estimate");
+  assert.equal(h.events.forms.length,0,"Unchanged manual refresh does not destroy unsaved notes");
+});
+
+test("Check Current Server State after manual conflict accepts newest version, clears old banner",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate({updated_date:"v5",status:"changes_requested"});
+  await h.ctx.load(true);
+  await h.ctx.refreshEstimateState("wo-A","CCS updated this estimate.",true);
+  assert.equal(h.events.forms.at(-1).version,"v5");
+  assert.equal(h.events.recoveries.at(-1),null);
+  assert.equal(h.events.saves.at(-1),"");
+  assert.match(h.events.errors.at(-1),/Current server estimate reloaded as changes requested/);
+});
+
+test("Check Current Server State cannot leave a previous automatic-approval banner",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate({updated_date:"v4",status:"changes_requested"});
+  await h.ctx.refreshEstimateState("wo-A","Earlier confirmation requires verification.",true);
+  assert.equal(h.events.saves.at(-1),"");
+  assert.match(h.events.errors.at(-1),/changes requested/);
+});
+
 
 function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
   const calls=[];
