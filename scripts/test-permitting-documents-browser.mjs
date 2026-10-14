@@ -102,14 +102,20 @@ try{
   await page.getByText('Electrical inspection provider: Example inspection provider',{exact:true}).click();
   await page.getByText('Schedule the final electrical inspection through the provider portal.',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByText('Permit required: No',{exact:true}).waitFor();
+  await nav.getByRole('button',{name:/^Documents/}).click();
+  await page.evaluate(()=>{window.fixture.delayText=true;});
+  await textPane.getByRole('button',{name:'Inspect saved physical-page text'}).click();
+  await textPane.getByText('Loading saved physical-page text…',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Switch fixture',exact:true}).click();
+  await page.evaluate(()=>{window.fixture.releaseText?.();window.fixture.delayText=false;});
+  assert.equal(await catalog.getByRole('region',{name:'Saved source text saved-form'}).count(),0,'Old jurisdiction text must be removed even when a delayed result arrives');
   await nav.getByRole('button',{name:/^Offices & Electrical/}).click();await page.getByText('Office research has not been collected yet.',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByRole('heading',{name:'Requirements not collected yet'}).waitFor();
   await nav.getByRole('button',{name:/^Documents/}).click();await page.getByText('No documents yet. Use the AI refresh to discover documents.',{exact:true}).waitFor();
   await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
   assert.equal(await catalog.locator(':scope > details').count(),0);
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
-  checks.push({width,passed:true,checks:'actual parent and catalog; type/currentness filters, draft precedence, versions, source links, extraction, zero bytes, missing archive, invalid dates, existing search/focus navigation, failure/retry, switch/empty, canonical reads, no provider calls, no overflow'});console.log('PASS document repository '+width);await page.close();
+  checks.push({width,passed:true,checks:'actual parent and catalog; type/currentness filters, draft precedence, versions, source links, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow'});console.log('PASS document repository '+width);await page.close();
  }
  await writeFile(path.join(root,'docs/permitting-documents-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
