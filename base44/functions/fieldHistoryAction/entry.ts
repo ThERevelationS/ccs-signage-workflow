@@ -59,13 +59,6 @@ async function fieldHistoryHandler(req) {
         if(!equivalent(record[f],expected[f]) && !equivalent(record[f],v))throw Object.assign(new Error('This field changed in another session: '+f+'. Reload before saving.'),{status:409});
       }
       for(const [f,v] of Object.entries(body.guard_fields||{}))if(!equivalent(record[f],v))throw Object.assign(new Error('The record no longer matches its loaded state.'),{status:409});
-      // Restrict cross-entity checking to existing SIPS checklist workflow
-      // guards; do not change other Work Order or Order save behavior.
-      if(type==='WorkOrder' && Object.prototype.hasOwnProperty.call(patch,'sip_checklist') &&
-        ['current_task_assigned_to','current_task_description','sip_completed'].every(field =>
-          Object.prototype.hasOwnProperty.call(body.guard_fields || {},field))) {
-        await verifyGuardedSipsTaskEligibility(base44,record);
-      }
       if(type==='WorkOrder') {
         validateNeutralSalesCloseout(record,patch,equivalent);
         // A stage clock may move only with an actual Sales status change.
@@ -86,6 +79,15 @@ async function fieldHistoryHandler(req) {
       if(Object.entries(patch).every(([f,v])=>equivalent(record[f],v)))return Response.json({success:true,record});
       if(body.expected_version && body.expected_version!==record.updated_date)throw Object.assign(new Error('The record changed. Reload before saving.'),{status:409});
       if(type==='Order')patch.smartsheet_pending_local_sync=true;
+      // Read SIPS/WIP settings at the last available pre-write boundary.
+      // Settings can change independently of Work Orders; this minimizes the
+      // check-to-write interval but cannot atomically fence both entities.
+      // Keep unrelated Order and Work Order saves on their existing path.
+      if(type==='WorkOrder' && Object.prototype.hasOwnProperty.call(patch,'sip_checklist') &&
+        ['current_task_assigned_to','current_task_description','sip_completed'].every(field =>
+          Object.prototype.hasOwnProperty.call(body.guard_fields || {},field))) {
+        await verifyGuardedSipsTaskEligibility(base44,record);
+      }
       const saved=await trackedConditionalSave(base44,type,record,patch,actor);
       return Response.json({success:true,record:saved});
     }
