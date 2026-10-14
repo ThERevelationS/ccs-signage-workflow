@@ -141,9 +141,9 @@ console.log('PASS real retry transport does NOT send a second PUT after unsafe 4
 
 const section=backend.slice(backend.indexOf('  const revalidateOrderRateLimitedPut = async () => {'),
   backend.indexOf('  const salesRemoteVerifiedIds = new Set<string>()'));
-assert.match(section,/beforeRateLimitRetry: revalidateOrderRateLimitedPut/);
+assert.match(section,/beforeRateLimitRetry: async \(\) => \{\s*await verifyOrderBackupBeforeFirstWrite\(\{ definitive429Retry: true \}\);\s*await revalidateOrderRateLimitedPut\(\);\s*\}/);
 assert.match(section,/orderRateLimitRecheckBlocked: true/);
-assert.match(section,/err\?\.orderRateLimitRecheckBlocked \|\| err\?\.upstreamStatus === 429/);
+assert.match(section,/err\?\.orderRateLimitRecheckBlocked \|\| err\?\.orderBackupFirstWriteBlocked \|\| err\?\.upstreamStatus === 429/);
 assert.match(section,/orderFailedRecordIds\.add\(recordId\)/);
 assert.match(section,/orderVerificationReviews\.set\(recordId/);
 assert.match(section,/staleOrderRetryPrewriteIds\(plans, plannedById, latestById, freshByRowId, sheetId\)/);
