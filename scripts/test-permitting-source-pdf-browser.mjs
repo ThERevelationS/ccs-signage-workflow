@@ -51,11 +51,11 @@ try{
  monitors:[{id:'m1',source_document_id:'listed',source_title:'Monitor linked source',staff_review_required:true},{id:'m2',source_title:'Monitor without link',staff_review_required:true}]
  };function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
  vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
- browser=await chromium.launch({channel:'chromium',headless:true,args:['--no-sandbox']});
+ browser=await chromium.launch({channel:'chromium',headless:process.env.PERMITTING_PDF_HEADED!=='1',ignoreDefaultArgs:['--disable-extensions'],args:['--no-sandbox']});
  for(const width of [320,390,1280]){
   const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
   let holdPDF=false;const heldRoutes=[];
-  await page.route('**/*',route=>{const url=route.request().url();if(/^https:\/\/example.gov\/(older|latest)\.pdf/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.fulfill({status:200,contentType:'application/pdf',body:pdf});}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
+  await page.context().route('**/*',route=>{const url=route.request().url();if(/^https:\/\/example.gov\/(older|latest)\.pdf/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.fulfill({status:200,contentType:'application/pdf',body:pdf});}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
   await page.goto(origin,{waitUntil:'networkidle'});
   const nav=page.getByRole('navigation',{name:'Jurisdiction workspace shortcuts'});await nav.waitFor();
   const catalog=page.getByRole('region',{name:'Document repository catalog'});
@@ -73,6 +73,7 @@ try{
   await preview.getByText('Retained copy · saved currentness: historical',{exact:false}).waitFor();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
+  await page.waitForTimeout(750);
   await preview.locator('iframe').screenshot({path:'/tmp/permitting-source-pdf-frame-'+width+'.png'});
   await page.screenshot({path:'/tmp/permitting-source-pdf-'+width+'.png'});
   await preview.getByRole('button',{name:'Back',exact:true}).click();assert.equal(await preview.count(),0);
@@ -119,5 +120,5 @@ try{
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
   checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
  }
- await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',production_writes:0,checks},null,2)+'\n');
+ await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',renderer:process.env.PERMITTING_PDF_HEADED==='1'?'full Chromium under Xvfb':'full Chromium headless',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
