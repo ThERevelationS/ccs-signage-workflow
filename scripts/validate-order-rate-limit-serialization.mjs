@@ -67,8 +67,19 @@ assert.match(queue, /retryRateLimit = true/);
 assert.match(queue, /retryCoordinatorBusy = true/);
 assert.match(orderClient, /retryRateLimit: false/);
 assert.match(orderClient, /retryCoordinatorBusy: true/);
-assert.match(spreadsheet, /if \(syncInFlightRef\.current \|\| saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current\) return false/);
-console.log('PASS same-browser clicks serialize, Order actions do not replay wholesale after 429, and coordinator-busy retries remain patient');
+// Check the actual Save & Sync handler, not a substring elsewhere in the UI.
+// Unverified Order reads must also hold the operation before it acquires the
+// in-flight lock, and that lock must be set before the first asynchronous save.
+const saveAndSyncStart = spreadsheet.indexOf('  const saveAndSync = async () => {');
+const saveAndSyncEnd = spreadsheet.indexOf('\n  const handleCustomerResolutionApplied', saveAndSyncStart);
+assert.ok(saveAndSyncStart >= 0 && saveAndSyncEnd > saveAndSyncStart);
+const saveAndSyncHandler = spreadsheet.slice(saveAndSyncStart, saveAndSyncEnd);
+assert.match(saveAndSyncHandler, /if \(readError \|\| syncInFlightRef\.current \|\| saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current\) return false/);
+const acquireLock = saveAndSyncHandler.indexOf('syncInFlightRef.current = true;');
+const firstSave = saveAndSyncHandler.indexOf('await saveAllChanges();');
+assert.ok(acquireLock > 0 && firstSave > acquireLock, 'Order Save & Sync must acquire its same-browser lock before the first awaited save');
+assert.match(saveAndSyncHandler, /finally \{\s*syncInFlightRef\.current = false;/);
+console.log('PASS same-browser clicks serialize before awaiting, unverified reads block sync, Order actions do not replay wholesale after 429, and coordinator-busy retries remain patient');
 
 const savedOrdersAction = backend.slice(
   backend.indexOf("if (action === 'push_saved_orders')"),
