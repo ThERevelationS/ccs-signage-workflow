@@ -71,6 +71,15 @@ function syncFixture(overrides = {}) {
 }
 
 {
+  const state = syncFixture({ setSyncMessage: () => { throw new Error('Synthetic status initialization failed'); } });
+  assert.equal(await state.run(), false);
+  assert.equal(state.refs.syncInFlightRef.current, false);
+  assert.deepEqual([...state.pendingIds], ['order-123']);
+  assert.equal(state.outboundCalls, 0);
+  console.log('PASS initial status-update exception releases sync lock before any save or remote call');
+}
+
+{
   const state = syncFixture({ saveAllChanges: async () => ({ complete: false, savedIds: ['order-123'] }) });
   assert.equal(await state.run(), false);
   assert.equal(state.refs.syncInFlightRef.current, false);
@@ -108,6 +117,16 @@ function syncFixture(overrides = {}) {
   assert.equal(state.refs.syncInFlightRef.current, false);
   assert.match(state.notices.at(-1), /No new Order changes/);
   console.log('PASS same-tick double-click blocked while awaiting initial save and lock released on clean completion');
+}
+
+{
+  const state = syncFixture({ setIsSyncing: value => { if (value) throw new Error('Synthetic spinner initialization failed'); } });
+  assert.equal(await state.run(), false);
+  assert.equal(state.refs.syncInFlightRef.current, false);
+  assert.deepEqual([...state.pendingIds], ['order-123']);
+  assert.equal(state.outboundCalls, 0);
+  assert.match(state.errors.at(-1), /Saved in Base44, but Smartsheet sync needs attention/);
+  console.log('PASS exception entering sync spinner still runs both lock cleanup paths');
 }
 
 {
