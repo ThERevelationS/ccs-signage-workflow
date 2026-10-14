@@ -19,7 +19,7 @@ function extract(name,next){
  assert.ok(start>=0&&end>start,name+" shipping handler located");
  return source.slice(start,end).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
 }
-const saveCode=extract("handleSave","retryUnverifiedAccountPassword");
+const saveCode=extract("handleSave","verifyInterruptedAccountSave");
 const retryCode=extract("retryUnverifiedAccountPassword","stopUnverifiedAccountPasswordRetry");
 const stopCode=extract("stopUnverifiedAccountPasswordRetry","handleInvite");
 const create=(code,scope)=>new Function("scope",`with(scope){return (${code})}`)(scope);
