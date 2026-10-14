@@ -135,20 +135,27 @@ export default function WorkPauseOverlay({
     const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
     const onPauseChanged = (event) => {
       const confirmed = event?.detail;
-      if (confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working") {
+      const confirmedEmail = String(confirmed?.user?.email || confirmed?.entry?.user_email || "").trim().toLowerCase();
+      const matchesEmployee = confirmedEmail &&
+        confirmedEmail === String(currentUser?.email || "").trim().toLowerCase();
+      if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working") {
+        statusSequenceRef.current += 1;
         pauseStateRef.current = null;
         setPauseState(null);
+        setPauseStateScope("");
         setShowResumePrompt(false);
         setError("");
         resumeRequestRef.current = "";
         pauseIdRef.current = "";
         dismissedAtRef.current = 0;
-      } else if (confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "paused") {
+      } else if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "paused") {
         const activePause = confirmed.active_work_pause || confirmed.work_pause || null;
         if (activePause?.id) {
+          statusSequenceRef.current += 1;
           const normalized = { ...confirmed, active_work_pause: activePause };
           pauseStateRef.current = normalized;
           setPauseState(normalized);
+          setPauseStateScope(scopeKey);
           if (pauseIdRef.current !== String(activePause.id)) {
             pauseIdRef.current = String(activePause.id);
             dismissedAtRef.current = 0;
