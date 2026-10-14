@@ -186,13 +186,13 @@ assert.equal(submitCalls.length, 3);
 await act(async () => { submitCalls[2].resolve(reconciled('Second prepared', 'second-submit')); });
 await act(async () => { editableLunch(submissionTree).props.onChange({target:{value:'0'}}); });
 let priorPendingOut;
-await act(async () { priorPendingOut = clickClockOut(submissionTree)(); });
+await act(async () => { priorPendingOut = clickClockOut(submissionTree)(); });
 assert.equal(submitCalls.length, 4);
 await act(async () => {
   submissionTree.update(React.createElement(ClockOutDialog, submissionProps(first)));
 });
 assert.equal(submitCalls.length, 5);
-await act(async () { submitCalls[4].resolve(reconciled('First restored', 'first-restored')); });
+await act(async () => { submitCalls[4].resolve(reconciled('First restored', 'first-restored')); });
 const countBeforeLate = submitted.length;
 await act(async () => {
   submitCalls[3].resolve(reconciled('Outdated second', 'second-submit'));
