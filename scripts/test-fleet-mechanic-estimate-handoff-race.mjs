@@ -47,7 +47,9 @@ function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
     setActionError:value=>errors.push(value),
     setSavedMessage:value=>saves.push(value),
     setEstimateForm:value=>forms.push(value),
-    estimateSeed:value=>({fromEstimate:value.updated_date,work_order_id:value.work_order_id}),
+    estimateSeed:value=>value?.visibility === "mechanic"
+      ? ({fromEstimate:value.updated_date,work_order_id:value.work_order_id})
+      : ({fromEstimate:"",work_order_id:""}),
     refreshEstimateState:async (...args)=>{
       refreshes.push(args);
       if(args[3]?.estimate) {
@@ -212,7 +214,9 @@ test("missing or transferred estimate on final reload cannot leave a successful 
     h.setServerEstimate(row,visibility);
     await h.run(true);
     assert.equal(h.saves.at(-1),"");
-    assert.match(h.errors.at(-1),/CCS|estimate/i);
+    assert.match(h.errors.at(-1),/CCS Fleet estimate changed after the operation response/i,
+      "Missing or transferred ownership must reach verified mismatch handling, not a mock error");
+    assert.equal(h.forms.at(-1).fromEstimate,"","Unverified financial details must not survive final reload");
     assert.equal(h.recoveries.at(-1)?.workOrderId,"wo-A","Unverified ownership cannot unlock editing");
   }
 });
