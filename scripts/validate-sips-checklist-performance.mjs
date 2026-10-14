@@ -943,7 +943,8 @@ check("Work Order switch and reload cancel stale warning focus and drafts", () =
     'Reload cleanup must happen after verifying a replacement Work Order');
   assert.ok(cleanupIndex < loaderBody.indexOf('setChecklist(reconstructedChecklist);'),
     'Old editor focus and drafts must clear before applying the verified new checklist');
-  assert.match(loaderBody.slice(verifiedRowIndex, cleanupIndex), /saveFailureFocusPendingRef\.current = false;\s*failedRevisitSelectionRef\.current = undefined;/);
+  assert.match(loaderBody.slice(verifiedRowIndex, cleanupIndex), /saveFailureFocusPendingRef\.current = false;[\s\S]*?failedRevisitWorkOrderIdRef\.current !== workOrder\.id[\s\S]*?failedRevisitSelectionRef\.current = undefined;/);
+  assert.match(source, /failedRevisitSelectionRef\.current = undefined;\s*failedRevisitWorkOrderIdRef\.current = null;\s*\}, \[workOrder\?\.id\]\);/);
   assert.ok(!loaderSetup.includes('resetOtherPopupForReload();'),
     'An in-flight or failed reload must not erase local custom-status drafts');
 
@@ -987,6 +988,7 @@ await (async () => {
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "old synthetic date" },
+    failedRevisitWorkOrderIdRef: { current: "WO-A" },
     resetOtherPopupForReload: () => { invalidations++; },
     setEditingItemId: () => {}, setEditingItemText: () => {},
     setEditingProductName: () => {}, setEditingProductNameText: () => {},
@@ -1023,7 +1025,8 @@ await (async () => {
   assert.deepEqual(loading, [true, true, false]);
   assert.equal(invalidations, 1, "Only the successful current snapshot clears stale drafts");
   assert.equal(shared.saveFailureFocusPendingRef.current, false);
-  assert.equal(shared.failedRevisitSelectionRef.current, undefined);
+  assert.equal(shared.failedRevisitSelectionRef.current, undefined, "A different Work Order cannot inherit an earlier failed Revisit");
+  assert.equal(shared.failedRevisitWorkOrderIdRef.current, null);
   assert.deepEqual(errors, [""]);
   assert.deepEqual(loadErrors, [""], "Successful load clears only the loading failure");
   assert.deepEqual(loadedFlags, [true], "Successful load establishes a trustworthy checklist");
@@ -1063,6 +1066,7 @@ await (async () => {
     workOrder: { id: "synthetic-initial" },
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    failedRevisitWorkOrderIdRef: { current: null },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
     loadErrorFocusPendingRef: { current: false },
     resetOtherPopupForReload: () => {}, setIsLoading: () => {},
@@ -1117,6 +1121,7 @@ await (async () => {
     workOrder: { id: "synthetic-status" },
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    failedRevisitWorkOrderIdRef: { current: null },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: workflowRef,
     loadErrorFocusPendingRef: { current: false },
     resetOtherPopupForReload: () => {}, setIsLoading: () => {},
@@ -1296,6 +1301,7 @@ await (async () => {
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "2099-08-25" },
+    failedRevisitWorkOrderIdRef: { current: "WO-synthetic" },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
     loadErrorFocusPendingRef: { current: false },
     returnToReloadRef: { current: true },
@@ -1368,8 +1374,18 @@ await (async () => {
   assert.equal(drafts.newItem, "");
   assert.equal(drafts.general, "");
   assert.equal(drafts.custom.size, 0);
-  assert.equal(scope.failedRevisitSelectionRef.current, undefined);
+  assert.equal(scope.failedRevisitSelectionRef.current, "2099-08-25", "A verified reload must preserve a Revisit proposal missing from the server");
+  assert.equal(scope.failedRevisitWorkOrderIdRef.current, "WO-synthetic");
   assert.ok(calls.includes("clear custom drafts"));
+  // No follow-up write is performed. If a later read confirms that date was
+  // committed, stop proposing it as an unconfirmed new choice.
+  scope.hasUnsavedChanges = false;
+  actions.requestReloadLatest();
+  assert.equal(pending.length, 3, "Clean retry reloads without a destructive confirmation");
+  pending[2].resolve([{ id: "WO-synthetic", current_task_assigned_to: "SIPs", sip_checklist: [{ id: "row-B", type: "checklist" }], sip_revisit_date: "2099-08-25" }]);
+  await loads[2];
+  assert.equal(scope.failedRevisitSelectionRef.current, undefined, "Confirmed server date consumes the pending suggestion");
+  assert.equal(scope.failedRevisitWorkOrderIdRef.current, null);
   assert.match(source, /if \(isLoading\) \{[\s\S]*?<Dialog open=\{isOpen\} onOpenChange=\{\(\) => \{\}\}/,
     "The loading overlay must not dismiss the dialog by Escape or backdrop");
   console.log("PASS confirmed reload preserves all inline and status drafts on failure, then clears them only on verified success");
@@ -1660,6 +1676,7 @@ await (async () => {
     isSaving: false, isLoading: false,
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    failedRevisitWorkOrderIdRef: { current: null },
     saveOutcomeUncertain: false,
     setSaveOutcomeUncertain: () => {},
     isDefinitiveSipsSaveRejection: () => true,
@@ -1863,6 +1880,7 @@ await (async () => {
       saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
       saveFailureFocusPendingRef: { current: false },
       failedRevisitSelectionRef: { current: undefined },
+    failedRevisitWorkOrderIdRef: { current: null },
       loadedWorkflowSnapshotRef: { current: workflow },
       isDefinitiveSipsSaveRejection, reconcileInterruptedSipsSave,
       WorkOrder: { filter: async ({ id }) => {
