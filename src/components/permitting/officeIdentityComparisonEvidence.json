@@ -1,0 +1,55 @@
+[
+  {
+    "method": "retained-office-identity-comparison-v1",
+    "candidate_id": "office-candidate-3bec03c01bca831b10be20e83ee1fe0df109206adb02acec76b6613d352e8c9c",
+    "registration_key": "d5b8a1aaaea47ec6b916ee5458f3f0d353f23a70a3514712322c74933b440475",
+    "profile_id": "6ac19f0e23bd8a65822f6d51",
+    "profile_name": "Sharonville",
+    "profile_state": "OH",
+    "profile_type": "city",
+    "source_id": "6aced7f49bda8d3e61944a9d",
+    "archive_document_id": "19bc3643-d404-4bcf-8cde-92c91897fd21",
+    "archive_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+    "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+    "printed_name": "City of Sharonville Community Development Department Office",
+    "physical_page": 7,
+    "page_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+    "observations": [
+      {
+        "kind": "Parent department",
+        "name": "Department of Community Development / Community Development Department",
+        "url": "https://www.sharonville.org/122/Community-Development",
+        "observed_at": "2026-10-14T12:22:43.754Z",
+        "sha256": "214c824df3d8235d4a160ba6cc68c90d9f22d993d5038ec0920eda7eea7826b5",
+        "bytes": 110421,
+        "repo_path": "docs/official-evidence/ohio-sharonville-2026-10-07/publisher-current-page-1-2026-10-14.html",
+        "quotes": [
+          "Department of Community Development",
+          "Community Development Department"
+        ],
+        "contacts": "Andy Meyer — Community Development Director; ameyer@cityofsharonville.com; 513-563-0033; Sharonville Municipal Building, 10900 Reading Road. Director contact, not a permit inbox.",
+        "relationship": "Links to the exact Building, Zoning and Planning child page and exact residential guide."
+      },
+      {
+        "kind": "Child division",
+        "name": "Building & Zoning Division",
+        "url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "observed_at": "2026-10-14T12:22:43.224Z",
+        "sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129",
+        "bytes": 113675,
+        "repo_path": "docs/official-evidence/ohio-sharonville-2026-10-07/publisher-current-page-0-2026-10-14.html",
+        "quotes": [
+          "Building & Zoning Division"
+        ],
+        "contacts": "Andy Meyer — Community Development Director; ameyer@cityofsharonville.com; 513-563-0033; Sharonville Municipal Building, 10900 Reading Road. Director contact, not a permit inbox.",
+        "relationship": "Division label on the linked child page; links to the exact residential guide."
+      }
+    ],
+    "guide_contact": {
+      "physical_page": 2,
+      "text": "permits@cityofsharonville.com; 513-563-0033",
+      "boundary": "Printed guide contact. The two HTML contact sections do not corroborate this permit inbox."
+    },
+    "unresolved": "The printed Department Office may denote the parent department, child division or intake function. Alias equivalence is unresolved. Guide publication does not confirm current law, commercial-sign applicability, permit roles or NIC delegation."
+  }
+]
