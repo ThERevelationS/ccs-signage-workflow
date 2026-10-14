@@ -67,7 +67,22 @@ export function updateGovernmentOfficeCatalogEntry(office, patch) {
   return updated;
 }
 
+/** Candidate registration is publisher evidence, not an identity decision.
+ * The simple toggle cannot produce the structured, version-bound review required.
+ * Keep existing verified records untouched; revocation remains available.
+ */
+export function candidateOfficeVerificationBlockReason(office) {
+  const candidate = office && (Object.hasOwn(office, "office_candidate_registration") ||
+    clean(office.id).startsWith("office-candidate-") ||
+    clean(office.government_office_id).startsWith("office-candidate-"));
+  return candidate ? "Registered candidates require a separate evidence-bound identity review. This toggle cannot verify printed names, parent departments, divisions or aliases." : "";
+}
+
 export function updateGovernmentOfficeVerification(office, patch, reviewer = "", now = () => new Date().toISOString()) {
+  if (patch?.verification_status === "staff_verified") {
+    const reason = candidateOfficeVerificationBlockReason(office);
+    if (reason) throw new Error(reason);
+  }
   const source = normalizeGovernmentOfficeCatalogEntry(office);
   const metadata = { ...source.government_office };
   const previousSourceUrl = metadata.source_url;
