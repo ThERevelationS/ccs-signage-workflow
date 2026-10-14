@@ -157,7 +157,9 @@ async function changeDate(page, mobile) {
     await calendar.getByRole("button", { name: /next month/i }).click();
   }
   assert.equal((await calendar.locator('[aria-live="polite"][role="presentation"]').innerText()).trim(), targetMonth);
-  await calendar.locator('button[name="day"]').filter({ hasText: /^3$/ }).last().click();
+  // The last visible “3” can be a trailing day in the following month.
+  // The first matching day belongs to the displayed month (not prior-month overflow).
+  await calendar.locator('button[name="day"]').filter({ hasText: /^3$/ }).first().click();
   await waitFor(1, newerDate);
 }
 
