@@ -103,6 +103,9 @@ export default function ProductChecklistDialog({
   };
   useEffect(() => {
     resetOtherPopupForReload();
+    // A failed date selection belongs only to the Work Order that submitted it.
+    failedRevisitSelectionRef.current = undefined;
+    failedRevisitWorkOrderIdRef.current = null;
   }, [workOrder?.id]);
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
@@ -122,6 +125,7 @@ export default function ProductChecklistDialog({
   const saveFailureFocusPendingRef = useRef(false);
   // Preserve a failed Revisit choice for the next confirmation, not an auto-retry.
   const failedRevisitSelectionRef = useRef(undefined);
+  const failedRevisitWorkOrderIdRef = useRef(null);
   const [validationDialog, setValidationDialog] = useState(null);
   const [showCompletedItems, setShowCompletedItems] = useState(false);
   const [discardWarning, setDiscardWarning] = useState(null); // "close" or "reload"
@@ -371,7 +375,15 @@ export default function ProductChecklistDialog({
       // Commit reload cleanup only after the new checklist has been read and
       // reconstructed successfully. On failure, all local drafts remain intact.
       saveFailureFocusPendingRef.current = false;
-      failedRevisitSelectionRef.current = undefined;
+      // A successful read resolves an uncertain write, but must not silently
+      // discard a date the server did NOT save. Keep it only for this Work
+      // Order's next explicit Save & Revisit confirmation; never auto-write.
+      if (failedRevisitWorkOrderIdRef.current !== workOrder.id ||
+          (failedRevisitSelectionRef.current !== undefined &&
+           (failedRevisitSelectionRef.current || "") === (currentWO.sip_revisit_date || ""))) {
+        failedRevisitSelectionRef.current = undefined;
+        failedRevisitWorkOrderIdRef.current = null;
+      }
       resetOtherPopupForReload();
       setEditingItemId(null);
       setEditingItemText("");
@@ -921,13 +933,17 @@ export default function ProductChecklistDialog({
       setChecklist(savedChecklist);
       setProducts(savedProducts);
       failedRevisitSelectionRef.current = undefined;
+      failedRevisitWorkOrderIdRef.current = null;
       setSaveOutcomeUncertain(false);
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error("Error saving checklist:", error);
       if (error?.saveOutcomeUncertain) setSaveOutcomeUncertain(true);
-      if (revisitDate !== undefined) failedRevisitSelectionRef.current = revisitDate;
+      if (revisitDate !== undefined) {
+        failedRevisitSelectionRef.current = revisitDate;
+        failedRevisitWorkOrderIdRef.current = workOrder.id;
+      }
       saveFailureFocusPendingRef.current = true;
       setSaveError(error?.message === "The record no longer matches its loaded state."
         ? "This Work Order changed stage, task, or completion state in another session. Nothing was saved. Reload latest to review the new workflow before trying again."
@@ -3279,7 +3295,7 @@ export default function ProductChecklistDialog({
             </AlertDialogTitle>
             <AlertDialogDescription>
               {discardWarning === "reload"
-                ? "Your unsaved checklist answers, items, product edits, and unfinished text will be lost. Reload latest will replace this view with the saved Work Order. Keep Editing preserves everything here."
+                ? "Your unsaved checklist answers, items, product edits, and unfinished text will be lost. Reload latest replaces this view with the saved Work Order. A previously unconfirmed Revisit choice stays available for your next explicit Save & Revisit review if the server has not saved it. Keep Editing preserves everything here."
                 : "Checklist answers, assignments, items, products, or unfinished text entered here have not been saved. Leaving now will discard them."}
             </AlertDialogDescription>
           </AlertDialogHeader>
