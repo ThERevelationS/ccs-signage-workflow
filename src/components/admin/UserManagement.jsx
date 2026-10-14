@@ -937,7 +937,8 @@ export default function UserManagement() {
         activeEditingUser.current?.email !== pending.email ||
         userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
         deletionInFlight.current || isLoading || userDirectoryError ||
-        (pending.comparison.status !== "applied" && !confirmAccountReconciliation)) return;
+        (pending.comparison.status !== "applied" &&
+          (!confirmAccountReconciliation || !accountResolutionPreview))) return;
     const latest = pending.latest;
     accountDraftBaseline.current = {
       sessionToken, id: latest.id, email: latest.email,
@@ -957,14 +958,20 @@ export default function UserManagement() {
       }
       setAccountSaveNotice("Latest Account values match the requested changes. No Account retry was sent. Review any subsequent edits.");
     } else {
-      // The original draft stays untouched; intentionally adopting the latest
-      // verified baseline does not itself overwrite any Account field.
-      setAccountSaveNotice("Latest Account values loaded for comparison. Your draft was preserved. Review changed fields and explicitly Save if you still want to apply them.");
+      // Apply only the administrator's explicit per-field choices in memory.
+      // Default choices preserve the latest verified record. Values edited
+      // after the interrupted request stay local unless explicitly rejected.
+      const resolved = accountResolutionPreview.draft;
+      setFormData(current => ({...resolved, password_hash: current.password_hash || ""}));
+      setAccountSaveNotice(
+        "Field choices applied to your local draft only. Latest Account values are the new baseline. Review roles and permissions, then Save separately if needed."
+      );
     }
     setEditingUser(current =>
       current?.id === pending.id && current?.email === pending.email ? latest : current);
     setAccountWriteRecovery(null);
     setConfirmAccountReconciliation(false);
+    setAccountFieldChoices({});
     setUserMutationError("");
   };
 
