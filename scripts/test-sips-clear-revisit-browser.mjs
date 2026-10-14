@@ -313,7 +313,6 @@ try {
         a.getByText("Showing 1 of 1 active item").waitFor(),
         b.getByText("Showing 1 of 1 active item").waitFor(),
       ]);
-      console.log("SIMULTANEOUS_FOCUS_DIAGNOSTIC", await Promise.all([a, b].map(page => page.evaluate(() => ({ tag: document.activeElement?.tagName, label: document.activeElement?.getAttribute('aria-label'), text: document.activeElement?.textContent?.slice(0, 70), connected: document.activeElement?.isConnected, visible: Boolean(document.activeElement?.getClientRects().length), activeId: document.activeElement?.dataset?.sipsActiveFocusId })) )));
       await Promise.all([reopenedWorkOrderFocused(a), reopenedWorkOrderFocused(b)]);
       assert.equal(fixture.row.sip_completed, false);
       assert.equal(fixture.row.sip_revisit_date, "");
