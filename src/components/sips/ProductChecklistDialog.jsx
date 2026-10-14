@@ -103,6 +103,8 @@ export default function ProductChecklistDialog({
   };
   useEffect(() => {
     resetOtherPopupForReload();
+    // Reload focus is scoped to the original job, never a later selection.
+    reloadSuccessFocusRequestRef.current = null;
     // A failed date selection belongs only to the Work Order that submitted it.
     failedRevisitSelectionRef.current = undefined;
     failedRevisitWorkOrderIdRef.current = null;
@@ -130,6 +132,8 @@ export default function ProductChecklistDialog({
   const [showCompletedItems, setShowCompletedItems] = useState(false);
   const [discardWarning, setDiscardWarning] = useState(null); // "close" or "reload"
   const reloadLatestButtonRef = useRef(null);
+  const reloadSuccessHeadingRef = useRef(null);
+  const reloadSuccessFocusRequestRef = useRef(null);
   const returnToReloadRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const deleteFocusRecoveryRef = useRef(false);
@@ -985,6 +989,30 @@ export default function ProductChecklistDialog({
     if (loadError) focusLoadFailureIfReady();
   }, [loadError, isOpen, isLoading, isSaving, showRevisitPopup, showTemplateBuilder, showOtherPopup, discardWarning, workOrder?.id]);
 
+  // A manual Reload latest replaces the entire dialog with a loading screen.
+  // On verified success, focus its current Work Order heading rather than
+  // leaving keyboard focus on a removed error button or loading overlay.
+  const focusSuccessfulReloadIfReady = () => {
+    if (!isOpen || isLoading || isSaving || !hasLoadedChecklist || loadError ||
+        reloadSuccessFocusRequestRef.current !== workOrder?.id ||
+        showRevisitPopup || showTemplateBuilder || showOtherPopup || discardWarning ||
+        unfinishedEditsWarning || validationDialog || incompleteWarning || noChecklistWarning || pendingDelete) return;
+    const heading = reloadSuccessHeadingRef.current;
+    if (!heading?.isConnected || !heading.getClientRects().length) return;
+    reloadSuccessFocusRequestRef.current = null;
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "nearest" });
+  };
+  useEffect(() => {
+    if (!isOpen) {
+      reloadSuccessFocusRequestRef.current = null;
+      return;
+    }
+    focusSuccessfulReloadIfReady();
+  }, [isOpen, isLoading, isSaving, hasLoadedChecklist, loadError, workOrder?.id,
+    showRevisitPopup, showTemplateBuilder, showOtherPopup, discardWarning,
+    unfinishedEditsWarning, validationDialog, incompleteWarning, noChecklistWarning, pendingDelete]);
+
   // Group checklist items only when checklist data changes. Search/navigation,
   // expansion, and inline editor state should not rebuild the entire product hierarchy.
   const groupedChecklist = useMemo(() => {
@@ -1597,7 +1625,7 @@ export default function ProductChecklistDialog({
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" className="min-h-11" onClick={onClose}>Close</Button>
-            <Button type="button" className="min-h-11" onClick={() => { if (!loadInFlightRef.current) void loadData(); }}>Retry loading checklist</Button>
+            <Button type="button" className="min-h-11" onClick={() => { if (!loadInFlightRef.current) { reloadSuccessFocusRequestRef.current = workOrder?.id; void loadData(); } }}>Retry loading checklist</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1838,6 +1866,7 @@ export default function ProductChecklistDialog({
       setDiscardWarning("reload");
       return;
     }
+    reloadSuccessFocusRequestRef.current = workOrder?.id;
     loadData();
   };
   const confirmDiscardChanges = () => {
@@ -1849,6 +1878,7 @@ export default function ProductChecklistDialog({
     if (action === "reload") {
       // Retain drafts through the request; only a verified replacement may
       // discard them. If loading fails, Retry is safe to attempt again.
+      reloadSuccessFocusRequestRef.current = workOrder?.id;
       loadData();
     } else if (action === "close") {
       onClose();
@@ -1864,7 +1894,7 @@ export default function ProductChecklistDialog({
         >
           <DialogHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 flex-wrap">
+              <DialogTitle ref={reloadSuccessHeadingRef} tabIndex={-1} className="text-lg sm:text-xl font-bold flex items-center gap-2 flex-wrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-sm">
                 {workOrder?.client_name}
                 {workOrder?.description && (
                   <span className="text-base font-normal text-gray-500">— {workOrder.description}</span>
