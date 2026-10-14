@@ -57,6 +57,7 @@ try{
   await catalog.getByText('Selected source: Same sign application',{exact:true}).waitFor();
   const selectedCard=catalog.locator(':scope > details').filter({has:page.getByText('Source record: beyond',{exact:true})});
   assert.equal(await selectedCard.count(),1);
+  console.log('focus diagnostic',await selectedCard.locator('summary').first().evaluate(node=>({active:document.activeElement?.outerHTML.slice(0,350),target:node.outerHTML.slice(0,200),open:node.parentElement.open})));
   assert.ok(await selectedCard.locator('summary').first().evaluate(node=>node===document.activeElement));
   assert.equal(await catalog.getByLabel('Search document catalog').inputValue(),'');
   assert.equal(await catalog.getByLabel('Document type',{exact:true}).inputValue(),'all');
