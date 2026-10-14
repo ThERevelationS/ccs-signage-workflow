@@ -58,7 +58,7 @@ function setup() {
   get userDirectoryError(){return state.error;},
   get pendingHrExit(){return state.pending;},
   get users(){return state.users;},
-  setAccountSaveRecovery:()=>{},setPasswordRetryConfirmed:()=>{},setAccountSaveNotice:()=>{},
+  setAccountSaveRecovery:()=>{},setAccountWriteRecovery:()=>{},setConfirmAccountReconciliation:()=>{},setPasswordRetryConfirmed:()=>{},setAccountSaveNotice:()=>{},
   setPendingHrExit:v=>{state.pending=v;},
   setHasUnsavedHrData:v=>{state.hrDirty=typeof v==="function"?v(state.hrDirty):v;},
   setEditingUser:v=>{
