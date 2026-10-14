@@ -22,7 +22,7 @@ const phase2 = backend.slice(
   backend.indexOf('// Phase 5: Resolve conflict decisions'),
 );
 assert.match(phase2, /if \(dataset === 'orders'\) \{\s*orderBatchWriteError = err\?\.message \|\| 'unknown error'/);
-assert.match(phase2, /err\?\.orderRateLimitRecheckBlocked \|\| err\?\.upstreamStatus === 429/);
+assert.match(phase2, /err\?\.orderRateLimitRecheckBlocked \|\| err\?\.orderBackupFirstWriteBlocked \|\| err\?\.upstreamStatus === 429/);
 assert.match(phase2, /orderFailedRecordIds\.add\(recordId\)/);
 assert.match(phase2, /if \(dataset === 'orders'\) \{/);
 assert.match(phase2, /const verifiedSalesUpdates = deferredBase44Updates\.filter/);
