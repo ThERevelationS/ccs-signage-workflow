@@ -172,7 +172,7 @@ export default function ClockOutDialog({
     setLaborPreviewBusy(false);
     setLaborPreviewError("");
     setPreviewSnapshot({ scope: previewScope, value: null });
-    if (!previewScope || !onLoadLaborAllocationPreview) return undefined;
+    if (!previewScope) return undefined;
     if (draftShiftRef.current !== shiftKey) {
       draftShiftRef.current = shiftKey;
       setLunchMinutes("");
@@ -186,7 +186,7 @@ export default function ClockOutDialog({
       previewAppliedRef.current = false;
       setAllocationsReviewed(false);
     }
-    void loadLaborPreview({ allowAutoApply: true });
+    if (onLoadLaborAllocationPreview) void loadLaborPreview({ allowAutoApply: true });
     return () => {
       previewRequestRef.current = {
         scope: "", id: previewRequestRef.current.id + 1, pending: false,
