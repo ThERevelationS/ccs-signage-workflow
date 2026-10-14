@@ -10,7 +10,7 @@ const begin=source.indexOf("  const saveEstimate = async (submit = false) => {")
 const finish=source.indexOf("  const saveProgress = async () => {",begin);
 assert.ok(begin>=0&&finish>begin,"Live FleetMechanic estimate handler must exist");
 const handlerBlock=source.slice(begin,finish);
-const refreshBegin=source.indexOf("  const refreshEstimateState = async (workOrderId, reason = \"\", showRecoveredMessage = false) => {");
+const refreshBegin=source.indexOf("  const refreshEstimateState = async (workOrderId, reason = ");
 assert.ok(refreshBegin>0&&refreshBegin<begin,"Real final estimate reload handler must exist");
 const refreshBlock=source.slice(refreshBegin,begin);
 const bindRefresh=new Function("ctx",`with(ctx){${refreshBlock} return refreshEstimateState; }`);
@@ -48,7 +48,14 @@ function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
     setSavedMessage:value=>saves.push(value),
     setEstimateForm:value=>forms.push(value),
     estimateSeed:value=>({fromEstimate:value.updated_date,work_order_id:value.work_order_id}),
-    refreshEstimateState:async (...args)=>{refreshes.push(args);return true;},
+    refreshEstimateState:async (...args)=>{
+      refreshes.push(args);
+      if(args[3]?.estimate) {
+        saves.push(args[3].message);
+        forms.push({fromEstimate:args[3].estimate.updated_date,work_order_id:args[3].estimate.work_order_id});
+      }
+      return true;
+    },
     base44:{functions:{invoke:async(_name,request)=>{
       calls.push(request);
       if(request.action==="estimate_save"){
