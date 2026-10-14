@@ -111,7 +111,7 @@ assert.equal(calls.length,5,'Reopening same shift should launch a fresh preview'
 assert.match(renderedText(tree), /In House Projects/,
   'Reopening the same shift must retain manually entered allocation drafts');
 await act(async () => { calls[4].resolve(preview('Latest Same Shift', 'second-new')); });
-await act(async () { calls[3].resolve(preview('Old Before Dialog Closed', 'old-close')); });
+await act(async () => { calls[3].resolve(preview('Old Before Dialog Closed', 'old-close')); });
 assert.match(renderedText(tree), /In House Projects/);
 assert.match(renderedText(tree), /Latest Same Shift/);
 assert.doesNotMatch(renderedText(tree), /Old Before Dialog Closed/,
