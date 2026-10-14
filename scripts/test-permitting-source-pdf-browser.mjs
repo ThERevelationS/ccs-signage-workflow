@@ -37,7 +37,7 @@ try{
  await writeFile(path.join(scratch,'report.js'),"export const generateJurisdictionPDF=()=>{throw Error('Not requested');};");aliases.push({find:'./JurisdictionPDFReport',replacement:path.join(scratch,'report.js')});
  await writeFile(path.join(scratch,'main.jsx'),`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import Panel from '/@fs/app/src/components/permitting/JurisdictionDetailPanel.jsx';
  const roles=['sign_permit','zoning','building','electrical_permit','electrical_inspection','right_of_way','historic_review'].map((role,i)=>({role,label:['Sign permit','Zoning','Building','Electrical permit issuer','Electrical inspection provider','Right of way','Historic review'][i],office_name:i<2?'Example planning office':i===4?'Example inspection provider':'',applicability:'unknown',research_fields:i===4?{inspection_scheduling:'Schedule the final electrical inspection through the provider portal.'}:{}}));
- const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:'https://example.gov/latest.pdf'}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
+ const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:'https://example.gov/latest.pdf'},{id:'profile-large',title:'Large collected PDF',doc_type:'sign_ordinance',url:'https://example.gov/profile-large.pdf',file_url:'https://example.gov/profile-large.pdf',stored_bytes:13*1024*1024}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
  const empty={id:'fixture-empty',name:'Empty Municipality',state:'OH',type:'city',documents:[]};window.fixture={calls:0,reads:[],failSource:true,
  sources:[{id:'listed',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Same sign application',source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:'https://example.gov/latest.pdf',content_status:'current',authority_classification:'application_form'},
  {id:'beyond',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Very long retained historical source '+('abcdefghij'.repeat(25)),source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:'https://example.gov/older.pdf',content_status:'historical',authority_classification:'historical'},
@@ -94,12 +94,12 @@ try{
   await preview.getByRole('button',{name:'Retry PDF preview',exact:true}).click();
   await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
   await preview.getByRole('button',{name:'Back',exact:true}).click();
-  for(const title of ['Retained web page','Oversized retained PDF','Unsafe retained URL','No retained copy']){
+  for(const title of ['Retained web page','Oversized retained PDF','Unsafe retained URL','No retained copy','Large collected PDF']){
     const row=catalog.locator(':scope > details').filter({has:page.getByText(title,{exact:true})});
     await row.locator('summary').first().click();
     assert.equal(await row.getByRole('button',{name:'Preview retained PDF',exact:true}).count(),0);
   }
-  await catalog.getByText('Recorded file size exceeds the 12 MiB inline preview limit.',{exact:false}).waitFor();
+  assert.equal(await catalog.getByText('Recorded file size exceeds the 12 MiB inline preview limit.',{exact:false}).count(),2);
   assert.equal(await catalog.locator('a[href^="javascript:"]').count(),0);
   // Existing profile PDF handoff uses the same real viewer.
   await page.getByRole('button',{name:'Expand Example sign application',exact:true}).click();

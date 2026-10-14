@@ -93,7 +93,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     ...saved.map(row => ({ ...row, key: 'source-' + row.id, collected: documents.find(doc => sameCollectedVersion(row, doc)), saved: true })),
     ...documents.filter(doc => !saved.some(row => sameCollectedVersion(row, doc))).map((doc, index) => ({
       key: 'collected-' + (doc.id || index), title: doc.title, source_type: doc.doc_type || 'other',
-      official_url: doc.url, archived_file_url: doc.file_url, retrieval_timestamp: doc.last_fetched,
+      official_url: doc.url, archived_file_url: doc.file_url, retrieval_timestamp: doc.last_fetched, file_bytes: doc.stored_bytes ?? doc.source_bytes,
       collected: doc, saved: false, content_status: 'unknown',
     })),
   ];
