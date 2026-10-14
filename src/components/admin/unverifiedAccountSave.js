@@ -28,7 +28,7 @@ export function compareUnverifiedAccountSave({ baseline, attempted, latest }) {
     !same(field, latestFields[field], oldFields[field]) &&
     !same(field, latestFields[field], attempted[field]));
   const status = diverged.length || (applied.length && unchanged.length)
-    ? "mixed" : applied.length === edited.length && edited.length > 0
+    ? "mixed" : applied.length === edited.length
       ? "applied" : "unchanged";
   return {
     status, editedCount: edited.length,
