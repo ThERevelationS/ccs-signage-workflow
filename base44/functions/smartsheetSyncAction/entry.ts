@@ -2403,6 +2403,7 @@ async function pushDataset(
   // must not overwrite a newer Smartsheet edit or a newer local Order revision.
   // Hold only affected Orders; preserve their durable pending markers. This is
   // a fresh pre-PUT check, not an atomic cross-system compare-and-swap.
+  const heldOrderPrewriteRowIds = new Set<string>();
   if (dataset === 'orders' && deferredSmartsheetWrites.length) {
     const outgoingIds = new Set(deferredSmartsheetWrites.map((row: any) => String(row.id)));
     const plans = [...deferredOrderVerification.entries()]
@@ -2450,6 +2451,7 @@ async function pushDataset(
         plans, plannedById, latestById, remoteByRowId, sheetId)) {
         orderFailedRecordIds.add(id);
         const rowId = deferredOrderVerification.get(id)?.rowId || '';
+        heldOrderPrewriteRowIds.add(String(rowId));
         errors.push(id + ': Order or Smartsheet row ' + rowId +
           ' changed since Retry Sync planning. Remote PUT held; review current values and reload before retrying.');
         await reportOrderProgress({
@@ -2460,6 +2462,9 @@ async function pushDataset(
         });
       }
     } catch {
+      // Missing verification plans are not evidence a row can be written.
+      // Hold the ENTIRE outgoing set if sheet/identity/ownership reads failed.
+      for (const rowId of outgoingIds) heldOrderPrewriteRowIds.add(String(rowId));
       for (const [id, verification] of plans) {
         orderFailedRecordIds.add(id);
         errors.push(id + ': Fresh Order/Smartsheet prewrite evidence unavailable for row ' +
@@ -2476,6 +2481,7 @@ async function pushDataset(
     ? deferredSmartsheetWrites.filter((row: any) => !heldApprovedSalesRowIds.has(String(row.id)))
     : dataset === 'orders'
       ? deferredSmartsheetWrites.filter((row: any) =>
+          !heldOrderPrewriteRowIds.has(String(row.id)) &&
           ![...deferredOrderVerification.entries()].some(([id, verification]) =>
             String(verification.rowId) === String(row.id) && orderFailedRecordIds.has(id)))
       : deferredSmartsheetWrites;
