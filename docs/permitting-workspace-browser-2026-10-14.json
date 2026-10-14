@@ -1,0 +1,22 @@
+{
+  "tested_at": "2026-10-14T15:51:46.763Z",
+  "mode": "actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked",
+  "production_writes": 0,
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "four focused shortcuts, seven office roles/electrical details, explicit negative permit flag, empty-state navigation, no provider calls, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "four focused shortcuts, seven office roles/electrical details, explicit negative permit flag, empty-state navigation, no provider calls, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "four focused shortcuts, seven office roles/electrical details, explicit negative permit flag, empty-state navigation, no provider calls, no overflow"
+    }
+  ]
+}
