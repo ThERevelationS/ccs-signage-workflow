@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-14T22:32:15.293Z",
+  "tested_at": "2026-10-14T23:13:53.235Z",
   "mode": "actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled stalled PDF fetch/time and canvas render; production CSS; unrelated heavy children stubbed; not authenticated production acceptance",
   "pdf_page_painting_asserted": true,
   "renderer": "full Chromium headless",
