@@ -15,6 +15,7 @@ export default function PermitWorkflowDesigner({
   isOpen,
   onClose,
   preselectedJurisdiction = null,
+  initialSavedDraft = null,
   workOrder = null,
   onLinesCreated = () => {},
 }) {
@@ -52,6 +53,14 @@ export default function PermitWorkflowDesigner({
   const [creating, setCreating] = useState(false);
   const [createResult, setCreateResult] = useState(null);
   const [expandedSteps, setExpandedSteps] = useState(new Set());
+
+  useEffect(() => {
+    if (!initialSavedDraft || !isOpen) return;
+    setDraft(initialSavedDraft.snapshot); setForm(initialSavedDraft.project_inputs || {});
+    setDraftTitle(initialSavedDraft.title); setReviewNotes(initialSavedDraft.review_notes || '');
+    setSaved(initialSavedDraft); setReviewed(true); setError(''); setCreateResult(null);
+    setExpandedSteps(new Set(initialSavedDraft.snapshot.steps.filter(s => s.basis !== 'approved_rule').map(s => s.step_index)));
+  }, [initialSavedDraft, isOpen]);
 
   const updateForm = useCallback((key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));

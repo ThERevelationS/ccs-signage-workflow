@@ -1,0 +1,20 @@
+{
+  "mode": "actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "library state/search filters, reopen actual designer snapshot/notes, no job action, no-match, load failure/retry, empty library, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "library state/search filters, reopen actual designer snapshot/notes, no job action, no-match, load failure/retry, empty library, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "library state/search filters, reopen actual designer snapshot/notes, no job action, no-match, load failure/retry, empty library, no overflow"
+    }
+  ]
+}

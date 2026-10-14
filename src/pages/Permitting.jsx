@@ -9,6 +9,7 @@ import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import JurisdictionsView from "@/components/permitting/JurisdictionsView";
+import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
 import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
@@ -71,6 +72,7 @@ export default function Permitting() {
   const [taskDescriptions, setTaskDescriptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showDraftLibrary, setShowDraftLibrary] = useState(false);
   const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
@@ -971,6 +973,7 @@ export default function Permitting() {
             <Button type="button" size="sm" className="gap-1 bg-purple-600 hover:bg-purple-700" aria-pressed="true">
               <MapPin className="h-4 w-4" /> Jurisdictions
             </Button>
+            <Button variant="outline" className="min-h-11" onClick={() => setShowDraftLibrary(true)}>Workflow drafts</Button>
             {jurisdictionFocus?.name && (
               <span className="text-xs text-gray-500">Viewing knowledge for <span className="font-semibold text-gray-700">{jurisdictionFocus.name}</span></span>
             )}
@@ -978,6 +981,7 @@ export default function Permitting() {
         </div>
         <div className="min-h-0 flex-1">
           <JurisdictionsView focusJurisdiction={jurisdictionFocus} />
+          {showDraftLibrary && <PermittingDraftLibrary onClose={() => setShowDraftLibrary(false)} />}
         </div>
       </div>
     );
@@ -996,6 +1000,7 @@ export default function Permitting() {
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+              <Button variant="outline" className="min-h-11" onClick={() => setShowDraftLibrary(true)}>Workflow drafts</Button>
               <div
                 className="relative w-full sm:w-56"
                 title="Search client, job, Est/Inv, assignee, project manager, task, locality, permit number, dates, fees, status, or notes"
@@ -1194,6 +1199,7 @@ export default function Permitting() {
         />
       )}
 
+      {showDraftLibrary && <PermittingDraftLibrary onClose={() => setShowDraftLibrary(false)} />}
       {showWorkflowDesigner && (
         <PermitWorkflowDesigner
           isOpen={showWorkflowDesigner}

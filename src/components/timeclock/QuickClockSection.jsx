@@ -134,6 +134,9 @@ export default function QuickClockSection({
   // Passive refreshes may return out of order, after a session switch, or
   // after a punch mutation. Never let an old response replace newer state.
   const statusRefreshSequenceRef = useRef(0);
+  // An acknowledged Current Work result cannot supersede a later break,
+  // Work Pause, Clock Out, labor action, or authoritative status restoration.
+  const workViewEpochRef = useRef(0);
   // In-flight actions are isolated by the signed Time Clock session: a slow
   // request for one employee must not block status restoration for another.
   const activeActionCountRef = useRef(new Map());
@@ -184,6 +187,9 @@ export default function QuickClockSection({
 
   const invokeTimeClock = async (payload) => {
     cancelDisplayReset();
+    if (payload?.action !== "status" && payload?.action !== "labor_allocation_preview") {
+      workViewEpochRef.current += 1;
+    }
     const actionScope = currentActionScope();
     activeActionCountRef.current.set(actionScope, actionCountForScope(actionScope) + 1);
     statusRefreshSequenceRef.current += 1;
@@ -285,6 +291,7 @@ export default function QuickClockSection({
 
   const applyAuthoritativeStatus = useCallback((status, fallbackUser, credential) => {
     cancelDisplayReset();
+    workViewEpochRef.current += 1;
     const verifiedUser = status?.user || fallbackUser;
     if (!verifiedUser?.email) throw new Error("The server did not return a verified employee identity.");
 
@@ -451,6 +458,7 @@ export default function QuickClockSection({
 
   const resetState = async () => {
     cancelDisplayReset();
+    workViewEpochRef.current += 1;
     recognitionLockedRef.current = false;
     await stopAllMedia();
     credentialRef.current = null;
@@ -749,6 +757,7 @@ export default function QuickClockSection({
       setPersistenceError("A Time Clock punch is still being finalized by the server. Wait for authoritative status to settle before starting another punch.");
       return;
     }
+    workViewEpochRef.current += 1;
     cancelDisplayReset();
     setPersistenceError("");
     setUsernameInput("");
@@ -920,17 +929,22 @@ export default function QuickClockSection({
     if (breakStatus !== "working" || activeBreak?.id) throw new Error("End the active break before changing Current Work.");
     if (workPauseStatus !== "working" || activeWorkPause?.id) throw new Error("Resume Work before changing Current Work.");
     const email = selectedUser.email;
+    const stillCurrentEntry = breakContextFor(email);
     const requestId = requestIdFor(action, email);
     setPersistenceError("");
     try {
-      const result = await invokeTimeClock({
+      // The invocation increments the epoch synchronously before sending.
+      const pending = invokeTimeClock({
         action,
         request_id: requestId,
         activity_type: activityType,
         work_order_id: workOrderId,
         ...credentialPayload(credentialRef.current, email),
       });
+      const epoch = workViewEpochRef.current;
+      const result = await pending;
       clearRequest(action, email);
+      if (!stillCurrentEntry() || epoch !== workViewEpochRef.current) return null;
       setActiveLabor(result.active_labor || null);
       setLaborSummary(result.labor_summary || { count: 0, total_minutes: 0 });
       if (result?.entry?.id) setActiveEntry(result.entry);
@@ -938,7 +952,7 @@ export default function QuickClockSection({
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest(action, email);
-      setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
+      if (stillCurrentEntry()) setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
       throw err;
     }
   };
