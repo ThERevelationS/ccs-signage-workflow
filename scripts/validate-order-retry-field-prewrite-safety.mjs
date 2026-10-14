@@ -91,6 +91,9 @@ assert.match(prewrite,/loadAllEntityRows\(\{[\s\S]*?Order Retry Sync exact local
 assert.match(prewrite,/smartsheetGet\('\/sheets\/' \+ sheetId \+ '\?' \+ params\.toString\(\), token\)/);
 assert.match(prewrite,/staleOrderRetryPrewriteIds\(/);
 assert.match(prewrite,/orderFailedRecordIds\.add\(id\)/);
+assert.match(prewrite,/for \(const rowId of outgoingIds\) heldOrderPrewriteRowIds\.add\(String\(rowId\)\)/);
+assert.match(prewrite,/heldOrderPrewriteRowIds\.add\(String\(rowId\)\)/);
+assert.match(push,/!heldOrderPrewriteRowIds\.has\(String\(row\.id\)\)/);
 assert.match(push,/plannedRemoteSnapshot: fieldPlan\.remote/);
 assert.match(push,/dataset === 'orders'[\s\S]*?deferredSmartsheetWrites\.filter\(\(row: any\) =>[\s\S]*?orderFailedRecordIds\.has\(id\)/);
 assert.match(push,/!orderRemoteVerifiedIds\.has\(recordId\) \|\| orderFailedRecordIds\.has\(recordId\)/);
