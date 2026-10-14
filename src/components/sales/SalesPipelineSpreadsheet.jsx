@@ -36,6 +36,7 @@ import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
+import { captureSalesFollowUpCompletionGuards, isSalesFollowUpCompletionSnapshotCurrent } from "@/components/sales/salesFollowUpCompletionGuards.mjs";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
 import { isSalesDateFilterField, salesDateFilterEquals, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
@@ -270,6 +271,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
   const [statusTransition, setStatusTransition] = useState(null);
   const [followUpCompletion, setFollowUpCompletion] = useState(null);
+  const [followUpCompletionError, setFollowUpCompletionError] = useState("");
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const fileInputRef = useRef(null);
   const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
@@ -282,6 +284,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [, refreshSameTaskSaveNotice] = useState(0);
   const pendingBaselinesRef = useRef({});
   const pendingSalesGuardsRef = useRef({});
+  const pendingFollowUpGuardsRef = useRef({});
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
@@ -900,7 +903,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false) => {
+  const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false, followUpGuards = null) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
     if (reconcileSameTask) {
@@ -937,11 +940,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           setQuickEditError("Reopen this Won/Lost opportunity before closing it without an outcome.");
           return;
         }
-        setStatusTransition({ workOrder: currentWo, nextStatus: null, nextTask: taskPlan.task, kind: "neutral_close", pendingChanges: proposedUpdates });
+        setStatusTransition({ workOrder: currentWo, nextStatus: null, nextTask: taskPlan.task, kind: "neutral_close", pendingChanges: proposedUpdates, followUpGuards });
         return;
       }
       if (taskPlan.action === "confirm_transition") {
-        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task, pendingChanges: proposedUpdates, reconcileSameTask });
+        setStatusTransition({ workOrder: currentWo, nextStatus: taskPlan.status, nextTask: taskPlan.task, pendingChanges: proposedUpdates, reconcileSameTask, followUpGuards });
         return;
       }
       if (taskPlan.action === "save_stage_and_task") {
@@ -1078,6 +1081,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         pendingSalesGuardsRef.current[orderId].current_task_description = currentWo.current_task_description ?? null;
       }
     }
+    if (followUpGuards) pendingFollowUpGuardsRef.current[orderId] = followUpGuards;
     pendingRecordScopesRef.current[orderId] = activeRecordScopeRef.current;
     pendingChangesRef.current[orderId] = {
       ...(pendingChangesRef.current[orderId] || {}),
@@ -1121,7 +1125,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           workOrderId: orderId,
           expectedFields,
           nextFields: changes,
-          guardFields: untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
+          guardFields: {
+            ...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
+            ...(pendingFollowUpGuardsRef.current[orderId] || {}),
+          },
           label: "Sales Pipeline quick edit",
         });
 
@@ -1158,6 +1165,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingSalesGuardsRef.current[orderId];
           delete pendingHistoryFieldsRef.current[orderId];
           delete pendingRecordScopesRef.current[orderId];
+        }
+        if (!Object.prototype.hasOwnProperty.call(remaining, "sales_last_follow_up_completed_at")) {
+          delete pendingFollowUpGuardsRef.current[orderId];
         }
         const verifiedSameTaskRepair = pendingSameTaskRepairRef.current.delete(orderId);
         if (verifiedSameTaskRepair) failedSameTaskRepairRef.current.delete(orderId);
@@ -1313,6 +1323,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     resolvedReviewExitRef.current = null;
     pendingBaselinesRef.current = {};
     pendingSalesGuardsRef.current = {};
+    pendingFollowUpGuardsRef.current = {};
     pendingHistoryFieldsRef.current = {};
     pendingRecordScopesRef.current = {};
     setQuickEditError("");
