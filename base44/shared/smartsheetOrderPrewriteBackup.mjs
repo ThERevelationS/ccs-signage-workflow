@@ -53,6 +53,13 @@ async function createVerifiedOrderSheetBackupOnce({
         throw new Error('Order pre-write backup contains duplicate permanent column IDs.');
       }
     }
+    // Normal Order pagination can tolerate edits between pages when only
+    // collecting current rows. A prewrite recovery BACKUP cannot: each page
+    // must belong to the same Smartsheet version as its first page, even if
+    // the total row count and permanent IDs have not changed.
+    if (page > 1 && body.version !== version) {
+      throw new Error(`${label} changed during backup pagination. No Smartsheet write was attempted.`);
+    }
     const pageRows = body?.rows;
     if (!Array.isArray(pageRows) || pageRows.some(row =>
       !Array.isArray(row?.cells) || row.cells.some(cell =>
