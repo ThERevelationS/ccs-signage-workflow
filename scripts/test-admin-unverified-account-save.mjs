@@ -62,6 +62,10 @@ function fixture() {
   get formData(){return state.form;},get accountSaveRecovery(){return state.password;},
   get accountWriteRecovery(){return state.write;},
   get confirmAccountReconciliation(){return state.confirmed;},
+  get accountResolutionPreview(){return state.write?.stage==="review" &&
+    state.write?.comparison?.status!=="applied"
+    ? planAccountFieldResolution({baseline:state.write.baseline,attempted:state.write.attempted,
+      latest:state.write.latest,draft:state.form,choices:state.choices}) : null;},
   get isLoading(){return state.loading;},
   get userDirectoryError(){return state.directoryError;},
   hasProtectedHrDraft:()=>state.dirtyHr,
@@ -71,6 +75,7 @@ function fixture() {
   setAccountWriteRecovery:v=>{state.write=v;},
   setAccountSaveRecovery:v=>{state.password=v;},
   setConfirmAccountReconciliation:v=>{state.confirmed=v;},
+  setAccountFieldChoices:v=>{state.choices=typeof v==="function"?v(state.choices):v;},
   setPasswordRetryConfirmed:()=>{},
   setUsers:v=>{state.users=typeof v==="function"?v(state.users):v;},
   setEditingUser:v=>{
