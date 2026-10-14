@@ -1,0 +1,80 @@
+{
+  "name": "PermittingWorkflowDraft",
+  "type": "object",
+  "description": "Permitting-only review draft. Never a job, approved requirement or operational workflow. Immutable snapshot; regenerate to create a new version.",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft"
+      ],
+      "default": "draft"
+    },
+    "jurisdiction_id": {
+      "type": "string"
+    },
+    "jurisdiction_name": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "snapshot": {
+      "type": "object"
+    },
+    "project_inputs": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "title",
+    "status",
+    "snapshot"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": false,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -22,10 +22,10 @@ export function splitRulesByHierarchy(rules = []) {
   const pending = [];
   const draftOrHistorical = [];
   for (const rule of rules) {
-    if (rule.status === APPROVED_RULE_STATUS && rule.is_operational) {
-      approved.push(rule);
-    } else if (rule.draft_context || rule.status === "historical" || rule.status === "superseded") {
+    if (rule.draft_context || rule.status === "historical" || rule.status === "superseded") {
       draftOrHistorical.push(rule);
+    } else if (rule.status === APPROVED_RULE_STATUS && rule.is_operational) {
+      approved.push(rule);
     } else {
       pending.push(rule);
     }
@@ -95,13 +95,13 @@ export async function resolveJurisdictionFromAddress(address) {
   try {
     const res = await base44.functions.invoke("findLocalityByAddress", { address });
     const data = res?.data || res;
-    if (data?.jurisdiction_id || data?.jurisdiction_name) {
+    if (data?.apply_allowed === true && data?.suggested_locality?.jurisdiction_profile_id) {
       return {
-        jurisdiction_id: data.jurisdiction_id || "",
-        jurisdiction_name: data.jurisdiction_name || data.locality_name || "",
-        state: data.state || "",
-        locality_id: data.locality_id || "",
-        locality_name: data.locality_name || data.jurisdiction_name || "",
+        jurisdiction_id: data.suggested_locality.jurisdiction_profile_id,
+        jurisdiction_name: data.suggested_locality.name || "",
+        state: data.suggested_locality.state || "",
+        locality_id: data.suggested_locality.id || "",
+        locality_name: data.suggested_locality.name || "",
         matched_address: address,
       };
     }
@@ -278,11 +278,7 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
       locality_id: jurisdiction?.locality_id || "",
       locality_name: jurisdiction?.locality_name || "",
     },
-    steps: draft.steps.map((step, index) => ({
-      ...step,
-      step_index: index,
-      citations: Array.isArray(step.citations) ? step.citations : [],
-    })),
+    steps: reviewWorkflowSteps(draft.steps, rules),
     gaps: Array.isArray(draft.gaps) ? draft.gaps : [],
     summary: draft.summary || "",
     generated_at: new Date().toISOString(),
@@ -338,4 +334,34 @@ export async function runDesignerPipeline(input, preselectedJurisdiction = null)
   // 3. Compose workflow via native AI
   const draft = await composeWorkflowDraft(input, rules, sourceDocs, jurisdiction);
   return draft;
+}
+// AI labels are proposals, not source approval. Preserve the existing evidence hierarchy.
+export function reviewWorkflowSteps(steps, rules) {
+  const approved = new Set(rules.approved.map(r => r.id));
+  const pending = new Set(rules.pending.map(r => r.id));
+  return steps.map((step, step_index) => {
+    const citations = Array.isArray(step.citations) ? step.citations : [];
+    const known = citations.length > 0 && citations.every(c => approved.has(c.rule_id) || pending.has(c.rule_id));
+    const allApproved = known && citations.every(c => approved.has(c.rule_id));
+    const basis = step.basis === 'approved_rule' && allApproved ? 'approved_rule'
+      : known && step.basis !== 'staff_confirmation_needed' ? 'pending_review' : 'staff_confirmation_needed';
+    return {...step, step_index, citations, basis, gap_reason: basis === 'staff_confirmation_needed'
+      ? step.gap_reason || 'The proposed requirement is not backed by a recognized approved or pending rule. Confirm its source and applicability.' : step.gap_reason};
+  });
+}
+
+export async function saveWorkflowDraft(draft, inputs, title, notes) {
+  if (!draft || !title.trim()) throw new Error('Name this draft before saving.');
+  // Deliberately no work_order_id, customer relationship, job or permit-line writes.
+  return base44.entities.PermittingWorkflowDraft.create({
+    title: title.trim(), status: 'draft', jurisdiction_id: draft.jurisdiction.jurisdiction_id || '',
+    jurisdiction_name: draft.jurisdiction.jurisdiction_name || '', state: draft.jurisdiction.state || '',
+    snapshot: draft, project_inputs: inputs, review_notes: notes.trim(), reviewed_at: new Date().toISOString(),
+  });
+}
+
+export async function loadWorkflowDrafts(jurisdictionId) {
+  if (!jurisdictionId) return [];
+  const result = await base44.entities.PermittingWorkflowDraft.filter({jurisdiction_id: jurisdictionId}, {sort: '-created_date', limit: 20});
+  return Array.isArray(result) ? result : result.items || [];
 }

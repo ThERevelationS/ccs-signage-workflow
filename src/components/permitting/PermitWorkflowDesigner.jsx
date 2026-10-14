@@ -1,17 +1,12 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Sparkles, X, AlertTriangle, CheckCircle, FileText, MapPin, ChevronDown, ChevronUp, Plus, ShieldCheck } from "lucide-react";
-import { runDesignerPipeline } from "./permitWorkflowDesigner";
+import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 import { createPermitLinesFromDraft, computeDeterministicRowName } from "./permitLineItemIntegration";
-
-const SIGN_TYPE_OPTIONS = [
-  "Wall Sign", "Monument", "Pole/Pylon", "Channel Letters", "Projecting",
-  "Awning/Canopy", "Window", "Banner", "EMC/Digital", "Temporary", "Real Estate", "Directional",
-];
 
 const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Service"];
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
@@ -37,6 +32,20 @@ export default function PermitWorkflowDesigner({
     zoningContext: "",
     exemptionStatus: "",
   });
+  const [savedDrafts, setSavedDrafts] = useState([]);
+  const [draftTitle, setDraftTitle] = useState('');
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewed, setReviewed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(null);
+  const [draftLoadError, setDraftLoadError] = useState('');
+  useEffect(() => {
+    let active = true;
+    if (isOpen) loadWorkflowDrafts(preselectedJurisdiction?.jurisdiction_id).then(rows => { if (active) setSavedDrafts(rows); })
+      .catch(() => { if (active) setDraftLoadError('Saved drafts could not be loaded. You can still preview a new workflow.'); });
+    return () => { active = false; };
+  }, [isOpen, preselectedJurisdiction?.jurisdiction_id]);
+
   const [generating, setGenerating] = useState(false);
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState("");
@@ -56,6 +65,8 @@ export default function PermitWorkflowDesigner({
     try {
       const result = await runDesignerPipeline(form, preselectedJurisdiction);
       setDraft(result);
+      setDraftTitle(`${result.jurisdiction.jurisdiction_name || 'Unresolved location'} — ${form.signTypes || 'Sign workflow'}`);
+      setReviewed(false); setSaved(null); setReviewNotes('');
       // Auto-expand steps that need staff confirmation
       const needsConfirm = new Set(
         result.steps.filter(s => s.basis === "staff_confirmation_needed").map(s => s.step_index),
@@ -66,6 +77,16 @@ export default function PermitWorkflowDesigner({
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!draft || !reviewed || saving || saved) return;
+    setSaving(true); setError('');
+    try {
+      const row = await saveWorkflowDraft(draft, form, draftTitle, reviewNotes);
+      setSaved(row); setSavedDrafts(prev => [row, ...prev]);
+    } catch (e) { setError(e?.message || 'Draft could not be saved. Your preview is still available.'); }
+    finally { setSaving(false); }
   };
 
   const handleCreateLines = async () => {
@@ -101,11 +122,11 @@ export default function PermitWorkflowDesigner({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-2 sm:p-4">
+      <div className="flex max-h-[95dvh] min-w-0 w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between border-b p-3 sm:p-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-600" />
             <h2 className="text-lg font-bold text-gray-900">AI Permit Workflow Designer</h2>
             {preselectedJurisdiction?.jurisdiction_name && (
@@ -121,10 +142,19 @@ export default function PermitWorkflowDesigner({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 break-words">
           {/* Input Form */}
           {!draft && (
             <div className="space-y-4">
+              <p className="rounded-lg bg-purple-50 p-3 text-sm text-purple-900">1. Describe the sign → 2. Review evidence and open questions → 3. Save a permitting draft</p>
+              {draftLoadError && <p role="status" className="text-sm text-amber-700">{draftLoadError}</p>}
+              {savedDrafts.length > 0 && <section aria-label="Saved permitting drafts" className="rounded-lg border p-3">
+                <h3 className="text-sm font-semibold">Saved drafts · not approved for use</h3>
+                {savedDrafts.map(row => <button key={row.id} className="block min-h-11 w-full break-words py-2 text-left text-sm text-purple-700" onClick={() => {
+                  setDraft(row.snapshot); setForm(row.project_inputs || form); setDraftTitle(row.title); setReviewNotes(row.review_notes || '');
+                  setSaved(row); setReviewed(true); setError(''); setCreateResult(null); setExpandedSteps(new Set());
+                }}>{row.title}</button>)}
+              </section>}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="pwd-address">Project Address</Label>
@@ -171,7 +201,7 @@ export default function PermitWorkflowDesigner({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 sm:grid-cols-3">
                 <label className="flex items-center gap-2 rounded-lg border p-3">
                   <Switch checked={form.illuminated} onCheckedChange={v => updateForm("illuminated", v)} />
                   <span className="text-sm">Illuminated</span>
@@ -251,6 +281,11 @@ export default function PermitWorkflowDesigner({
           {/* Draft Display */}
           {draft && (
             <div className="space-y-4">
+              <div className="rounded-lg border border-purple-200 p-3 text-sm">
+                <p className="font-semibold">2. Review proposed workflow</p>
+                <p>Collected sources are evidence, not approval. Pending findings and open questions remain unverified when this draft is saved.</p>
+                {draft.jurisdiction_unresolved && <p className="text-amber-800">Location unresolved. This draft cannot establish jurisdiction authority.</p>}
+              </div>
               {/* Summary */}
               <div className="rounded-lg border-l-4 border-l-purple-400 bg-purple-50 p-3">
                 <p className="text-sm font-semibold text-purple-900">{draft.summary}</p>
@@ -293,7 +328,7 @@ export default function PermitWorkflowDesigner({
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-gray-900">Workflow Steps ({draft.steps.length})</h3>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => setExpandedSteps(new Set(draft.steps.map((_, i) => i)))} className="text-xs">
+                    <Button size="sm" variant="ghost" onClick={() => setExpandedSteps(new Set(draft.steps.map((s) => s.step_index)))} className="text-xs">
                       Expand all
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setExpandedSteps(new Set())} className="text-xs">
@@ -377,6 +412,18 @@ export default function PermitWorkflowDesigner({
                 })}
               </div>
 
+              <section aria-label="Save permitting draft" className="space-y-3 rounded-lg border bg-gray-50 p-3">
+                <h3 className="text-sm font-semibold">3. Save draft for later review</h3>
+                <Label htmlFor="pwd-title">Draft name</Label>
+                <Input id="pwd-title" value={draftTitle} disabled={Boolean(saved) || saving} onChange={e => setDraftTitle(e.target.value)} className="min-h-11" />
+                <Label htmlFor="pwd-review-notes">Review notes / questions to resolve</Label>
+                <textarea id="pwd-review-notes" value={reviewNotes} disabled={Boolean(saved) || saving} onChange={e => setReviewNotes(e.target.value)} className="min-h-24 w-full rounded-md border p-3 text-sm" />
+                <label className="flex min-h-11 items-start gap-2 text-sm">
+                  <input type="checkbox" checked={reviewed} disabled={Boolean(saved) || saving} onChange={e => setReviewed(e.target.checked)} className="mt-1" />
+                  I reviewed the proposed steps and unresolved questions. Saving does not approve requirements or start job work.
+                </label>
+                {saved && <p role="status" className="text-sm font-semibold text-green-700">Saved permitting draft: {saved.title}. No job lines created by this save.</p>}
+              </section>
               {/* Create Result */}
               {createResult && (
                 <div className="rounded-lg border p-3 text-sm">
@@ -402,16 +449,17 @@ export default function PermitWorkflowDesigner({
 
         {/* Footer */}
         {draft && (
-          <div className="flex items-center justify-between gap-2 border-t p-4">
-            <Button variant="outline" onClick={() => { setDraft(null); setCreateResult(null); }} className="min-h-11">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t p-3 sm:p-4">
+            <Button variant="outline" onClick={() => { setDraft(null); setCreateResult(null); setSaved(null); setReviewed(false); }} className="min-h-11">
               ← Edit inputs
             </Button>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleSaveDraft} disabled={saving || Boolean(saved) || !reviewed || !draftTitle.trim()} className="min-h-11 bg-purple-600 hover:bg-purple-700">{saving ? "Saving draft..." : saved ? "Draft saved" : "Save permitting draft"}</Button>
               <Button variant="ghost" onClick={onClose} className="min-h-11">Close</Button>
               {workOrder?.id && draft.steps.length > 0 && (
                 <Button
                   onClick={handleCreateLines}
-                  disabled={creating || createResult?.created.length > 0}
+                  disabled={creating || !saved || draft.jurisdiction_unresolved || draft.steps.some(s => s.basis !== "approved_rule") || createResult?.created.length > 0}
                   className="min-h-11 gap-2 bg-green-600 hover:bg-green-700"
                 >
                   {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
