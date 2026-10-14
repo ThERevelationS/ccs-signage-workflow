@@ -1,3 +1,4 @@
+import {normalizeOfficeResearch} from '../base44/shared/permittingOfficeResearch.mjs';
 import {silentScanReporter} from '../base44/shared/permittingScanReporter.mjs';
 import { readPermittingResourceResponse } from '../base44/shared/permittingResourceResponse.mjs';
 import test from 'node:test';
@@ -11,7 +12,7 @@ const compiled=ts.transpileModule(entry.slice(entry.indexOf('async function refr
 function harness({profile={},ai={},pages={}}={}) {
   const initial={id:'fixture',name:'Fixture',state:'OH',type:'city',updated_date:'v1',permitting_url:'https://city.gov/permits',documents:[{id:'manual',url:'https://city.gov/old.pdf',source:'manual',file_url:'stored',extracted_text:'preserve'}],...profile};
   let written, researchCalls=0;const fetched=[];
-  const deps={silentScanReporter,readPermittingResourceResponse,scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,mergeJurisdictionResearchDocuments,
+  const deps={normalizeOfficeResearch,silentScanReporter,readPermittingResourceResponse,scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,mergeJurisdictionResearchDocuments,
     safeExternalFetch:async url=>{fetched.push(url);if(!(url in pages))throw Error('fixture unavailable');return new Response(pages[url],{headers:{'content-type':'text/html'}});},
     RESEARCH_FETCH_TIMEOUT_MS:12000,readResearchDocumentBytes:async response=>new Uint8Array(await response.arrayBuffer()),
     sanitizeJurisdictionResearch:v=>v,gateResearchRegulatoryPromotion:({updateData})=>({blocked:false,updateData}),
@@ -119,4 +120,12 @@ test('failed recovery with empty pending list reports failure and persists only 
  assert.deepEqual(r.jurisdiction.discovery_scan_state.gaps,state.gaps);
  assert.equal(r.jurisdiction.discovery_scan_state.attempted_pages_total,2);
  assert.deepEqual(r.jurisdiction.documents,h.initial.documents);assert.equal(h.researchCalls,0);
+});
+
+test('research refresh saves office findings and electrical details on the exact profile',async()=>{
+ const h=harness({ai:{documents:[],office_research:{roles:[{role:'electrical_permit',office_name:'Fixture permit office',official_source_url:'https://city.gov/electrical',research_fields:{permit_application:'https://city.gov/application',fees:'Official schedule'}}]}}});
+ const result=await h.run();assert.equal(h.researchCalls,1);
+ assert.equal(result.jurisdiction.office_research.profile_snapshot.id,'fixture');
+ assert.equal(result.jurisdiction.office_research.roles.find(r=>r.role==='electrical_permit').research_fields.fees,'Official schedule');
+ assert.equal(Object.hasOwn(result.jurisdiction,'offices'),false);
 });

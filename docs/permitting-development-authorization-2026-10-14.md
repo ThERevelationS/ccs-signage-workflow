@@ -11,3 +11,5 @@ Accuracy remains required: do not invent exact jurisdictions, requirements, curr
 Existing publication boundary remains: no frontend publication without explicit permission. Authorized affected backend resources may auto-sync/deploy as needed. The user's clarification does not itself request publishing the application.
 
 Workflow: fresh HEAD/status → one coherent meaningful functional/coverage batch → focused verification → checkpoint → stop. Preserve concurrent source changes; never reset unfamiliar/shared work. Reports should distinguish synthetic browser checks, real deployed-function checks and authenticated production-browser acceptance.
+
+Further clarification: prioritize a broadly complete, usable 90%+ functional prototype so Brett can assess major UI/UX choices before hardening. Defer nonessential auditing, proof-mechanism refinements and exhaustive hardening until the product flows are complete. This is a target, not permission to claim measured 90% completion without evidence. Keep only validation needed for working behavior and the protected live-client/shared-data boundary.
