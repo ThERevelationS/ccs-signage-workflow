@@ -51,7 +51,8 @@ try{
  vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
  browser=await chromium.launch({channel:'chromium',headless:process.env.PERMITTING_PDF_HEADED!=='1',ignoreDefaultArgs:['--disable-extensions'],args:['--no-sandbox']});
  for(const width of [320,390,1280]){
-  const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
+  const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[],pdfDownloads=[];page.on('pageerror',e=>errors.push(e.message));
+  page.on('request',request=>{if(/\/(older|latest)\.pdf$/.test(request.url()))pdfDownloads.push(request.url());});
   let holdPDF=false;const heldRoutes=[];
   await page.context().route('**/*',route=>{const url=route.request().url();if(url.startsWith(origin)&&/\/(older|latest)\.pdf(?:[?#]|$)/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.continue();}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
   await page.goto(origin,{waitUntil:'networkidle'});
@@ -70,6 +71,8 @@ try{
   assert.equal(await preview.locator('iframe').count(),0);
   const paintedPixels=await preview.locator('canvas').evaluate(canvas=>{const {width,height}=canvas;const pixels=canvas.getContext('2d').getImageData(0,0,width,height).data;let dark=0;for(let i=0;i<pixels.length;i+=4){if(pixels[i]<120&&pixels[i+1]<120&&pixels[i+2]<120&&pixels[i+3]>200)dark++;}return dark;});
   assert.ok(paintedPixels>150,'PDF page must contain visible dark text pixels: '+paintedPixels);
+  assert.ok(pdfDownloads.includes(origin+'/older.pdf'),'Canvas must fetch the exact selected historical retained version');
+  assert.ok(!pdfDownloads.includes(origin+'/latest.pdf'),'Must not substitute same-title newer retained version');
   await preview.getByText('Retained copy · saved currentness: historical',{exact:false}).waitFor();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
@@ -113,12 +116,12 @@ try{
   // Reopen selected source after the parent viewer remounts the catalog.
   await nav.getByRole('button',{name:/^Requirements/}).click();
   await page.getByText('Cited older source',{exact:true}).click();await rule.getByRole('button',{name:'Open saved source details'}).click();
-  await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
+  await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();await preview.getByText('PDF page rendered.',{exact:false}).waitFor();
   await page.getByRole('button',{name:'Switch fixture',exact:true}).click();assert.equal(await page.locator('iframe').count(),0);
   await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
   const reads=await page.evaluate(()=>window.fixture.reads);assert.ok(reads.every(r=>r.query.jurisdiction_id));
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
-  checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
+  checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, visible canvas PDF page painting with dark-text pixel proof and exact historical URL, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
  }
- await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',pdf_page_painting_asserted:true,renderer:process.env.PERMITTING_PDF_HEADED==='1'?'full Chromium under Xvfb':'full Chromium headless',production_writes:0,checks},null,2)+'\n');
+ await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled stalled PDF fetch/time and canvas render; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',pdf_page_painting_asserted:true,renderer:process.env.PERMITTING_PDF_HEADED==='1'?'full Chromium under Xvfb':'full Chromium headless',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
