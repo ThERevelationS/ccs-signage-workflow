@@ -71,6 +71,18 @@ try{
   await textPane.getByText('Physical page 7 · OCR review needed',{exact:false}).waitFor();
   await textSearch.fill('electrical');await textPane.getByText('Physical page 6: …Special electrical sign connection…',{exact:true}).waitFor();
   await textPane.screenshot({path:'/tmp/permitting-source-text-'+width+'.png'});
+  const pageJump=textPane.getByRole('spinbutton',{name:'Go to physical PDF page'});
+  const jumpButton=textPane.getByRole('button',{name:'Load from page',exact:true});
+  const readsBeforeJump=await page.evaluate(()=>window.fixture.textReads.length);
+  for(const invalid of ['0','8','1.5','']){await pageJump.fill(invalid);assert.ok(await jumpButton.isDisabled());}
+  assert.equal(await page.evaluate(()=>window.fixture.textReads.length),readsBeforeJump,'Invalid/unextracted pages must not fetch');
+  await pageJump.fill('7');await pageJump.press('Enter');
+  await textPane.getByText('Physical pages 7–7',{exact:false}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fixture.textReads.at(-1)),{source_document_id:'saved-form',start_page:7,page_count:5});
+  assert.equal(await textSearch.inputValue(),'','Page jump clears previous batch search');
+  assert.ok(await textPane.getByRole('button',{name:'Next five pages'}).isDisabled());
+  await pageJump.fill('6');await jumpButton.click();await textPane.getByText('Physical pages 6–7',{exact:false}).waitFor();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Page jump fits viewport');
   await page.evaluate(()=>{window.fixture.wrongTextHash=true;});
   await textPane.getByRole('button',{name:'Previous five pages'}).click();
   await textPane.getByRole('alert').waitFor();
