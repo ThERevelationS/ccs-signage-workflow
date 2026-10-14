@@ -1239,23 +1239,31 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const requestFollowUpCompletion = (workOrder) => {
-    if (!isRegistered || !workOrder?.id || ["won", "lost"].includes(workOrder.sales_status)) return;
-    setFollowUpCompletion(workOrder);
+    if (!isRegistered || !workOrder?.id || !isCurrentPipelineOpportunity(workOrder)) return;
+    setFollowUpCompletionError("");
+    setFollowUpCompletion({ ...workOrder });
   };
 
   const confirmFollowUpCompletion = ({ outcome = "", nextFollowUpDate = "", nextAction = "" } = {}) => {
     if (!followUpCompletion?.id || !String(outcome).trim()) return;
-    const current = workOrders.find((row) => row.id === followUpCompletion.id) || followUpCompletion;
+    const current = workOrders.find((row) => row.id === followUpCompletion.id);
+    if (!isSalesFollowUpCompletionSnapshotCurrent(followUpCompletion, current) ||
+        pendingChangesRef.current[followUpCompletion.id] || debounceTimers.current[followUpCompletion.id]) {
+      setFollowUpCompletionError("This follow-up changed or has unsaved edits. Close this dialog, save or reload the latest opportunity, and log against its current follow-up.");
+      return;
+    }
     const changes = {
       sales_last_follow_up_completed_at: new Date().toISOString(),
       sales_last_follow_up_outcome: String(outcome).trim(),
       follow_up_date: nextFollowUpDate || "",
     };
-    if (nextAction !== String(current.current_task_description || "").trim()) {
+    if (nextAction !== String(followUpCompletion.current_task_description || "").trim()) {
       changes.current_task_description = nextAction;
     }
-    updateWorkOrderFields(current.id, changes);
+    updateWorkOrderFields(current.id, changes, false, false, false,
+      captureSalesFollowUpCompletionGuards(followUpCompletion));
     setFollowUpCompletion(null);
+    setFollowUpCompletionError("");
   };
 
   const confirmSalesStatusTransition = ({ lostReason = "" } = {}) => {
@@ -1279,7 +1287,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         in_pipeline: false,
         sales_neutral_closed_at: new Date().toISOString(),
         follow_up_date: "",
-      }, false, true);
+      }, false, true, false, statusTransition.followUpGuards);
       setStatusTransition(null);
       return;
     }
@@ -1309,7 +1317,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       };
     }
 
-    updateWorkOrderFields(current.id, changes, false, false, statusTransition.reconcileSameTask === true);
+    updateWorkOrderFields(current.id, changes, false, false, statusTransition.reconcileSameTask === true, statusTransition.followUpGuards);
     setStatusTransition(null);
   };
 
@@ -2951,7 +2959,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       />
       <SalesFollowUpCompleteDialog
         workOrder={followUpCompletion}
-        onClose={() => setFollowUpCompletion(null)}
+        error={followUpCompletionError}
+        onClose={() => { setFollowUpCompletion(null); setFollowUpCompletionError(""); }}
         onConfirm={confirmFollowUpCompletion}
       />
     </>
