@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pipelineStatus";
+import { hasVerifiedEstimateSalesActivity } from "./estimateSalesActivity.mjs";
 import { localDateStamp } from "./quoteLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
@@ -192,14 +193,16 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     ...lifecycleDates,
   };
 
-  const salesActivityFields = [
-    "sales_status", "sales_rep", "estimator", "estimate_amount",
-    "date_estimate_sent", "date_order_created", "contact_name",
-    "contact_email", "contact_phone", "title", "client_name", "install_location",
-  ];
-  const salesActivityChanged = !existing || salesActivityFields.some((field) =>
-    JSON.stringify(existing?.[field] ?? null) !== JSON.stringify(fields[field] ?? null)
-  );
+  // An estimator contact/title/site refresh is not Sales activity. Confirming
+  // an already-stored quote date IS activity when the estimator has verified
+  // issuance evidence, even if the customer-facing date does not change.
+  const quoteDateVerificationRequested = Boolean(existing &&
+    lifecycleDates.date_estimate_sent &&
+    lifecycleDates.date_estimate_sent === existing.date_estimate_sent &&
+    !existing.sales_quote_sent_verified_at);
+  const salesActivityChanged = !existing || hasVerifiedEstimateSalesActivity(existing, fields, {
+    quoteDateVerificationRequested,
+  });
   if (salesActivityChanged) {
     const activityStamp = new Date().toISOString();
     fields.sales_last_activity_at = activityStamp;
