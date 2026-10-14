@@ -36,7 +36,7 @@ export default function PermittingDraftLibrary({ onClose }) {
           <Button variant="outline" disabled={loading} onClick={() => setRefresh(v => v + 1)} className="min-h-11">Refresh drafts</Button>
         </div>
         {loading ? <p role="status">Loading saved drafts…</p> : error ? <div role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</div> : <>
-          <p className="text-xs text-gray-600">{visible.length} shown from {rows.length} loaded drafts. Most recent 100; older drafts remain available from their jurisdiction.</p>
+          <p className="text-xs text-gray-600">{visible.length} shown from {rows.length} loaded drafts. Most recent 100 drafts; this list is not a complete archive.</p>
           {rows.length === 0 ? <div className="rounded-lg border p-5"><h3 className="font-semibold">No saved workflows yet</h3><p className="text-sm text-gray-600">Open a jurisdiction, choose the AI workflow designer, review the proposal and save a permitting draft.</p></div> : visible.length === 0 ? <p>No drafts match these filters.</p> : visible.map(row => {
             const valid = row.snapshot && Array.isArray(row.snapshot.steps) && row.snapshot.jurisdiction;
             const gaps = (row.snapshot?.gaps?.length || 0) + (row.snapshot?.steps || []).filter(s => s.basis !== 'approved_rule').length;
