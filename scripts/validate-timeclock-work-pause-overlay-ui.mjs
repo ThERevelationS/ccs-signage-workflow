@@ -111,5 +111,43 @@ if (calls.length > 5) await act(async () => { calls.at(-1).resolve(paused(second
 assert.match(visible(renderer), /WORK PAUSED/);
 assert.ok(beforeForeignEvent.includes('WORK PAUSED'));
 console.log('PASS foreign employee pause event cannot dismiss authoritative paused guard');
+
+const completedResumes = [];
+await act(async () => {
+  renderer.update(React.createElement(Overlay, {
+    ...propsFor(second, 'session-B'), onResumed: (data) => completedResumes.push(data),
+  }));
+});
+const resumeButton = renderer.root.findAllByType(Button).find((node) =>
+  [node.props.children].flat(Infinity).includes('Resume Work'));
+assert.ok(resumeButton, 'Paused employee must have Resume Work action');
+const beforeResume = calls.length;
+let pendingResume;
+await act(async () => { pendingResume = resumeButton.props.onClick(); });
+assert.equal(calls.length, beforeResume + 1);
+assert.equal(calls.at(-1).payload.action, 'work_pause_resume');
+assert.equal(calls.at(-1).payload.target_email, second.email);
+const pendingIndex = calls.length - 1;
+await act(async () => {
+  renderer.update(React.createElement(Overlay, {
+    ...propsFor(first, 'session-A'), onResumed: (data) => completedResumes.push(data),
+  }));
+});
+assert.equal(calls.at(-1).payload.target_email, first.email);
+await act(async () => { calls.at(-1).resolve(paused(first, 'current-A')); });
+assert.match(visible(renderer), /WORK PAUSED/);
+await act(async () => {
+  calls[pendingIndex].resolve({ data: {
+    success: true, status: 'clocked_in', work_pause_status: 'working',
+    user: second, entry: { user_email: second.email },
+  } });
+  await pendingResume;
+});
+assert.match(visible(renderer), /WORK PAUSED/,
+  'Resume response from previous session must never dismiss a different employee pause');
+assert.equal(completedResumes.length, 0,
+  'Stale Resume response must not emit confirmation to the current screen');
+console.log('PASS previous session Resume Work acknowledgement cannot update another employee');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 3/3 Work Pause overlay session/refresh/event scenarios');
+console.log('PASS 4/4 Work Pause overlay session/refresh/event scenarios');
