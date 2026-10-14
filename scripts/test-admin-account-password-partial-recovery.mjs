@@ -231,7 +231,7 @@ test("Invalid Account receipt never begins the separate password write",async()=
  assert.equal(f.state.passwordCalls.length,0);
  assert.equal(f.state.dialog,true);
  assert.equal(f.state.accountCalls.length,1);
- assert.match(f.state.error,/receipt could not be verified/);
+ assert.match(f.state.error,/outcome unverified/);
 });
 
 test("Recovery controls show uncertainty, require attestation and never auto-save Account",()=>{
