@@ -369,7 +369,7 @@ export default function FleetMechanic() {
     } finally { setBusy(""); }
   };
 
-  const refreshEstimateState = async (workOrderId, reason = "", showRecoveredMessage = false) => {
+  const refreshEstimateState = async (workOrderId, reason = "", showRecoveredMessage = false, confirmation = null) => {
     const recoveryReason = reason || "Current repair-estimate state must be verified.";
     const requestId = ++portalRequestRef.current;
     setEstimateRecovery({workOrderId, reason: recoveryReason});
@@ -386,10 +386,38 @@ export default function FleetMechanic() {
       }
       const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === workOrderId) || null;
       const isSameOpenJob = selectedWorkOrderRef.current === workOrderId;
-      if (freshEstimate && isSameOpenJob) setEstimateForm(estimateSeed(freshEstimate));
+      if (isSameOpenJob) setEstimateForm(estimateSeed(freshEstimate));
+      // A write response may be correct when received, then superseded by a
+      // legitimate CCS approval/edit before this final scoped server reload.
+      // Confirm success only if the actual reloaded row is still the same
+      // authorized estimate version and decision; never replay either write.
+      const expectedEstimate = confirmation?.estimate;
+      const matchesConfirmation = expectedEstimate?.id && freshEstimate?.visibility === "mechanic" &&
+        String(freshEstimate.id || "") === String(expectedEstimate.id || "") &&
+        String(freshEstimate.updated_date || "") === String(expectedEstimate.updated_date || "") &&
+        String(freshEstimate.status || "") === String(expectedEstimate.status || "") &&
+        (freshEstimate.approval_required === true) === (expectedEstimate.approval_required === true) &&
+        String(freshEstimate.approval_tier || "") === String(expectedEstimate.approval_tier || "");
+      const changedOwnership = !!confirmation && (!freshEstimate || freshEstimate.visibility !== "mechanic" ||
+        String(freshEstimate.id || "") !== String(expectedEstimate?.id || ""));
+      if (confirmation && isSameOpenJob && !matchesConfirmation) {
+        setSavedMessage("");
+        const currentStatus = freshEstimate?.visibility === "mechanic"
+          ? `Current server status: ${pretty(freshEstimate.status || "draft")}.`
+          : freshEstimate
+            ? "CCS or another mechanic now manages this estimate."
+            : "The estimate could not be found in the current scoped server state.";
+        const warning = `CCS Fleet estimate changed after the operation response. ${currentStatus} The current server state is authoritative. Nothing was resubmitted automatically.`;
+        setEstimateRecovery(changedOwnership ? {workOrderId,reason:warning} : null);
+        setActionError(warning);
+        return !changedOwnership;
+      }
       setEstimateRecovery(null);
       if (isSameOpenJob) {
-        if (showRecoveredMessage) {
+        if (confirmation && matchesConfirmation) {
+          setSavedMessage(confirmation.message || "");
+          setActionError("");
+        } else if (showRecoveredMessage) {
           const serverMessage = !freshEstimate
             ? "Current server check confirms no repair estimate exists yet. Your draft was kept."
             : freshEstimate.visibility === "mechanic"
@@ -407,7 +435,10 @@ export default function FleetMechanic() {
       if (requestId !== portalRequestRef.current) return false;
       const detail = e?.message ? ` (${e.message})` : "";
       setEstimateRecovery({workOrderId, reason: recoveryReason});
-      if (selectedWorkOrderRef.current === workOrderId) setActionError(`${recoveryReason} Current server ownership could not be verified${detail}. Use Check Current Server State before saving or submitting again.`);
+      if (selectedWorkOrderRef.current === workOrderId) {
+        if (confirmation) setSavedMessage("");
+        setActionError(`${recoveryReason} Current server ownership could not be verified${detail}. Use Check Current Server State before saving or submitting again.`);
+      }
       return false;
     } finally {
       if (requestId === portalRequestRef.current) {
@@ -473,9 +504,12 @@ export default function FleetMechanic() {
           resultMessage = "Estimate submission completed, but its current status changed. Review the CCS estimate before proceeding.";
         }
       }
-      setSavedMessage(resultMessage);
-      setEstimateForm(estimateSeed({...finalEstimate,visibility:"mechanic"}));
-      await refreshEstimateState(workOrderId, `${resultMessage} Current server state could not be refreshed.`, false);
+      // A final scoped reload is the authority for a success banner. Showing
+      // write-time "auto approved" before it completes can mislead if CCS
+      // changes the decision while that reload is still in flight.
+      await refreshEstimateState(workOrderId, "The repair-estimate operation finished, but the current server state could not be verified.", false, {
+        estimate:finalEstimate,message:resultMessage,
+      });
     } catch (e) {
       const reason = e?.message || "Repair estimate request could not be confirmed.";
       if (selectedWorkOrderRef.current === workOrderId) setSavedMessage("");
