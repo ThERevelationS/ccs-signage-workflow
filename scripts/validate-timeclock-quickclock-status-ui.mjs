@@ -638,6 +638,26 @@ assert.ok(restoredRecovery, 'Reload must restore pending Clock Out for same veri
 assert.equal(restoredRecovery.requestId, originalId);
 assert.equal(restoredRecovery.body.notes, reloadPayload.notes);
 assert.equal(restoredRecovery.body.job_allocations[0].work_order_id, 'reloaded-job');
+await act(async () => {
+  reloadRenderer.update(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'verified-second-only', employeeSessionUser:second,
+  }));
+});
+const secondReloadIndex = calls.length - 1;
+assert.equal(calls[secondReloadIndex].payload.action, 'status');
+await act(async () => { calls[secondReloadIndex].resolve(status(second, 'verified-second-shift')); });
+assert.equal(reloadedDialog().props.pendingClockOutRecovery, null);
+assert.equal(reloadedDialog().props.timeEntry.id, 'verified-second-shift');
+assert.ok(savedSessionData.has(`ccs_timeclock_pending_clock_out:${first.email}`),
+  'Other employee must neither see nor delete the original employee pending punch');
+await act(async () => {
+  reloadRenderer.update(React.createElement(QuickClockSection, reloadSessionProps));
+});
+const returnFirstIndex = calls.length - 1;
+assert.equal(calls[returnFirstIndex].payload.action, 'status');
+await act(async () => { calls[returnFirstIndex].resolve(status(first, 'reloaded-uncertain-shift')); });
+assert.equal(reloadedDialog().props.pendingClockOutRecovery.requestId, originalId);
+console.log('PASS pending reload recovery stays scoped to its original verified employee and shift');
 let recovered;
 await act(async () => { recovered = reloadedDialog().props.onClockOut(reloadPayload); });
 const replayIndex = calls.length - 1;
@@ -657,4 +677,31 @@ assert.ok(!savedSessionData.has(`ccs_timeclock_pending_clock_out:${first.email}`
     [...savedSessionData.keys()].join(', '));
 console.log('PASS full reload restores same-employee exact Clock Out request and clears on confirmation');
 await act(async () => { reloadRenderer.unmount(); });
-console.log('PASS 17/17 Time Clock Quick Clock async status acceptance cases');
+
+let completedRenderer;
+await act(async () => { completedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
+const completeInitIndex = calls.length - 1;
+await act(async () { calls[completeInitIndex].resolve(status(first, 'already-complete-shift')); });
+const completedDialog = completedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+assert.ok(completedDialog);
+let lostAfterCommit;
+await act(async () => { lostAfterCommit = completedDialog.props.onClockOut(reloadPayload); });
+const completeRequestIndex = calls.length - 1;
+await act(async () => {
+  calls[completeRequestIndex].reject(new Error('Network dropped after backend committed Clock Out'));
+  await assert.rejects(lostAfterCommit, /Network dropped/);
+});
+assert.ok(savedSessionData.has(`ccs_timeclock_pending_clock_out:${first.email}`));
+await act(async () => { completedRenderer.unmount(); });
+await act(async () => { completedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
+const verifyCompleteIndex = calls.length - 1;
+assert.equal(calls[verifyCompleteIndex].payload.action, 'status');
+await act(async () => {
+  calls[verifyCompleteIndex].resolve({data:{success:true,user:first,status:'clocked_out'}});
+});
+assert.equal(completedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function').length,0);
+assert.ok(!savedSessionData.has(`ccs_timeclock_pending_clock_out:${first.email}`));
+assert.ok(!savedSessionData.has(`ccs_timeclock_request:clock_out:${first.email}`));
+console.log('PASS authoritative completed status clears interrupted Clock Out recovery on reload');
+await act(async () => { completedRenderer.unmount(); });
+console.log('PASS 19/19 Time Clock Quick Clock async status acceptance cases');
