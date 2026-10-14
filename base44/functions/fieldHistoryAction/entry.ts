@@ -19,6 +19,25 @@ function validDateStamp(value) {
   const [year,month,day]=value.split('-').map(Number), parsed=new Date(Date.UTC(year,month-1,day));
   return parsed.getUTCFullYear()===year && parsed.getUTCMonth()===month-1 && parsed.getUTCDate()===day;
 }
+// A configured SIPS/WIP task can be unassigned while its Work Order fields
+// remain unchanged. Recheck current task eligibility on guarded checklist saves.
+async function verifyGuardedSipsTaskEligibility(base44, record) {
+  if (record.completed === true || record.is_rider === true) {
+    throw Object.assign(new Error('This Work Order is no longer active for SIPS. Close the checklist and refresh the SIPS board. Nothing was saved.'), {status:409});
+  }
+  if (record.current_task_assigned_to === 'SIPs') return;
+  const result = await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:'salesTaskDescriptions'}, {limit:2});
+  const rows = result?.items;
+  if (!Array.isArray(rows) || rows.length > 1 || (rows.length === 1 && !Array.isArray(rows[0]?.setting_value?.items))) {
+    throw Object.assign(new Error('SIPS task configuration could not be verified. No checklist changes were saved. Review task settings before retrying.'), {status:409});
+  }
+  const configured = (rows[0]?.setting_value?.items || []).some(item =>
+    record.current_task_description && item?.text === record.current_task_description && (item.page === 'SIPs' || item.wip)
+  );
+  if (!configured) {
+    throw Object.assign(new Error('This task is no longer configured for SIPS or WIP. Nothing was saved. Close the checklist and refresh the SIPS board.'), {status:409});
+  }
+}
 async function fieldHistoryHandler(req) {
   try {
     const base44=measureSyncEntities(createClientFromRequest(req)), body=await req.json();
@@ -39,6 +58,13 @@ async function fieldHistoryHandler(req) {
         if(!equivalent(record[f],expected[f]) && !equivalent(record[f],v))throw Object.assign(new Error('This field changed in another session: '+f+'. Reload before saving.'),{status:409});
       }
       for(const [f,v] of Object.entries(body.guard_fields||{}))if(!equivalent(record[f],v))throw Object.assign(new Error('The record no longer matches its loaded state.'),{status:409});
+      // Restrict cross-entity checking to existing SIPS checklist workflow
+      // guards; do not change other Work Order or Order save behavior.
+      if(type==='WorkOrder' && Object.prototype.hasOwnProperty.call(patch,'sip_checklist') &&
+        ['current_task_assigned_to','current_task_description','sip_completed'].every(field =>
+          Object.prototype.hasOwnProperty.call(body.guard_fields || {},field))) {
+        await verifyGuardedSipsTaskEligibility(base44,record);
+      }
       if(type==='WorkOrder') {
         validateNeutralSalesCloseout(record,patch,equivalent);
         // A stage clock may move only with an actual Sales status change.
