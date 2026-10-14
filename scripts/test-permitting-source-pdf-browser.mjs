@@ -50,7 +50,6 @@ try{
  };function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
  vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
  browser=await chromium.launch({channel:'chromium',headless:process.env.PERMITTING_PDF_HEADED!=='1',ignoreDefaultArgs:['--disable-extensions'],args:['--no-sandbox']});
- {const direct=await browser.newPage({viewport:{width:1000,height:900}}); const response=await direct.goto(origin+'/older.pdf'); await direct.waitForTimeout(1800); await direct.screenshot({path:'/tmp/permitting-vite-direct.pdf.png'}); console.log('VITE PDF DIRECT',response.status(),response.headers()['content-type']); await direct.close();}
  for(const width of [320,390,1280]){
   const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
   let holdPDF=false;const heldRoutes=[];
@@ -66,38 +65,35 @@ try{
   await card.getByRole('button',{name:'Preview retained PDF',exact:true}).waitFor();
   const preview=page.getByRole('region',{name:'Retained PDF preview'});
   await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();
-  await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
+  await preview.getByText('PDF page rendered.',{exact:false}).waitFor();
   assert.ok(await preview.getByRole('button',{name:'Back',exact:true}).evaluate(node=>node===document.activeElement));
-  assert.equal(await preview.locator('iframe').getAttribute('src'),origin+'/older.pdf#toolbar=1&navpanes=0&scrollbar=1');
+  assert.equal(await preview.locator('iframe').count(),0);
+  const paintedPixels=await preview.locator('canvas').evaluate(canvas=>{const {width,height}=canvas;const pixels=canvas.getContext('2d').getImageData(0,0,width,height).data;let dark=0;for(let i=0;i<pixels.length;i+=4){if(pixels[i]<120&&pixels[i+1]<120&&pixels[i+2]<120&&pixels[i+3]>200)dark++;}return dark;});
+  assert.ok(paintedPixels>150,'PDF page must contain visible dark text pixels: '+paintedPixels);
   await preview.getByText('Retained copy · saved currentness: historical',{exact:false}).waitFor();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
   await page.waitForTimeout(750);
-  console.log('iframe dimensions',width,await preview.locator('iframe').evaluate(e=>[e.clientWidth,e.clientHeight]));
-  await page.evaluate(()=>{const e=document.querySelector('iframe[src*=".pdf"]');const c=e.cloneNode();c.id='pdf-probe';c.style='position:fixed;z-index:999999;top:0;left:0;width:700px;height:650px';document.body.appendChild(c)});
-  await page.waitForTimeout(1500);
-  await page.locator('#pdf-probe').screenshot({path:'/tmp/permitting-pdf-probe-'+width+'.png'});
-  await page.locator('#pdf-probe').evaluate(e=>e.remove());
-  await preview.locator('iframe').screenshot({path:'/tmp/permitting-source-pdf-frame-'+width+'.png'});
+  await preview.locator('canvas').screenshot({path:'/tmp/permitting-source-pdf-frame-'+width+'.png'});
   await page.screenshot({path:'/tmp/permitting-source-pdf-'+width+'.png'});
   await preview.getByRole('button',{name:'Back',exact:true}).click();assert.equal(await preview.count(),0);
   assert.ok(await card.locator('summary').first().evaluate(node=>node===document.activeElement));
   await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();
-  await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
+  await preview.getByText('PDF page rendered.',{exact:false}).waitFor();
   await preview.getByRole('button',{name:'Preview not working?',exact:true}).click();
   await preview.getByText('PDF Preview Not Available',{exact:true}).waitFor();
   assert.ok(await preview.getByRole('button',{name:'Open PDF in New Tab',exact:true}).evaluate(node=>node===document.activeElement));
   await preview.getByRole('button',{name:'Retry PDF preview',exact:true}).click();
-  await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
+  await preview.getByText('PDF page rendered.',{exact:false}).waitFor();
   await preview.getByRole('button',{name:'Back',exact:true}).click();
   await page.clock.install();holdPDF=true;
   await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();
   await preview.getByText('Loading PDF preview…',{exact:true}).waitFor();
   await page.clock.runFor(12001);
-  await preview.getByText('PDF preview timed out',{exact:true}).waitFor();assert.equal(await preview.locator('iframe').count(),0);
+  await preview.getByText('PDF preview timed out',{exact:true}).waitFor();assert.equal(await preview.locator('canvas').count(),0);
   holdPDF=false;for(const route of heldRoutes)await route.abort().catch(()=>{});
   await preview.getByRole('button',{name:'Retry PDF preview',exact:true}).click();
-  await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
+  await preview.getByText('PDF page rendered.',{exact:false}).waitFor();
   await preview.getByRole('button',{name:'Back',exact:true}).click();
   for(const title of ['Retained web page','Oversized retained PDF','Unsafe retained URL','No retained copy','Large collected PDF']){
     const row=catalog.locator(':scope > details').filter({has:page.getByText(title,{exact:true})});
@@ -124,5 +120,5 @@ try{
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
   checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
  }
- await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',pdf_page_painting_asserted:false,renderer:process.env.PERMITTING_PDF_HEADED==='1'?'full Chromium under Xvfb':'full Chromium headless',production_writes:0,checks},null,2)+'\n');
+ await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',pdf_page_painting_asserted:true,renderer:process.env.PERMITTING_PDF_HEADED==='1'?'full Chromium under Xvfb':'full Chromium headless',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
