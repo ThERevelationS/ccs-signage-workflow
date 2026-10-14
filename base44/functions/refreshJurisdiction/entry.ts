@@ -1,3 +1,4 @@
+import {validateSavedDiscoverySelection,discoverSelectedSavedDocument} from '../../shared/permittingSavedDocumentDiscovery.mjs';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { readPermittingResourceResponse } from '../../shared/permittingResourceResponse.mjs';
@@ -5,7 +6,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
-import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { safeExternalFetch, assertSafeExternalUrl } from '../../shared/safeExternalFetch.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
@@ -25,6 +26,7 @@ Deno.serve(async (req) => {
     const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');
     const { jurisdiction_id, jurisdictionId, settings } = body;
     const discoveryOnly = body?.discovery_only === true;
+    const savedSelection=body.selected_saved_document ?? null;
     const rescanSourceUrl=body.rescan_source_url ?? null;
     if(rescanSourceUrl!==null && (!discoveryOnly || typeof rescanSourceUrl!=='string'))return Response.json({error:'Source rescan requires discovery-only mode and a saved URL'},{status:400});
     const recoverDepthUrl = body.recover_depth_url ?? null;
@@ -53,12 +55,28 @@ Deno.serve(async (req) => {
     if (id || settings || discoveryOnly) {
       if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
       if (!id) return Response.json({ error: 'Jurisdiction id is required for a targeted refresh' }, { status: 400 });
+      let selectedProfile:any=null;
+      if(savedSelection!==null){
+        if(!user || !discoveryOnly || body.defer_archive!==true || isScheduledRun || isTargetedAutomation ||
+           rescanSourceUrl!==null || recoverDepthUrl!==null || body.recover_fetch_failures || body.recover_link_limits || settings)
+          return Response.json({error:'Select one explicit discovery-only saved document action with deferred archival'},{status:400});
+        selectedProfile=await base44.asServiceRole.entities.JurisdictionProfile.get(id);
+        validateSavedDiscoverySelection(selectedProfile,savedSelection);
+        await assertSafeExternalUrl(savedSelection.url);
+      }
       if(body.action_token){
         if(!user || isScheduledRun || isTargetedAutomation)return Response.json({error:'Tracked manual scans require an authenticated admin'},{status:403});
         const target=await base44.asServiceRole.entities.JurisdictionProfile.get(id);
         reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user,targetId:id,targetName:target.name,kind:discoveryOnly?'discovery':'research',label:`${discoveryOnly?'Rescan':'Research'} ${target.name}, ${target.state}`});
       }
-      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter,rescanSourceUrl);
+      const result = savedSelection!==null ? await discoverSelectedSavedDocument({
+        entity:base44.asServiceRole.entities.JurisdictionProfile,profile:selectedProfile,selection:savedSelection,
+        onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
+        fetchPage:async(url:string)=>{
+          const response=await safeExternalFetch(url,{headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS)});
+          return {...await readPermittingResourceResponse(response),finalUrl:response.url || url};
+        }
+      }) : await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter,rescanSourceUrl);
       const scanRun=await reporter.finish(result.archival?.success===false || result.discovery_scan?.success===false?'completed_with_errors':'complete');
       return Response.json({...result,scan_run:scanRun});
     }

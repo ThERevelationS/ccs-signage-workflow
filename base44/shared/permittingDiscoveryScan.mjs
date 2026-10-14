@@ -143,7 +143,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   }
   await onProgress({kind:'discovery_summary',detail:`${attempted} pages attempted; ${documents.size} resources found; ${gaps.length} review gaps.`,resources:[...documents.values()],progress:{processed:attempted,total:attempted,indeterminate:false}});
   const pendingPages = pending.filter(p => !visited.has(key(p.url)));
-  const continuationState = { external_initial_collection_drained:false, method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
+  const continuationState = { ...(resume?.saved_document_scans ? {saved_document_scans:resume.saved_document_scans} : {}), external_initial_collection_drained:false, method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
     visited_urls: [...visited], pending_pages: pendingPages, gaps, external_referrals:referrals,
     attempted_pages_total: (Number(resume?.attempted_pages_total) || 0) + attempted };
   if (referrals.length + continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||
