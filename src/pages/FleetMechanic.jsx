@@ -94,6 +94,7 @@ export default function FleetMechanic() {
   const [workRecovery, setWorkRecovery] = useState(null);
   const portalRequestRef = useRef(0);
   const portalAppliedEpochRef = useRef(0);
+  const portalPayloadRef = useRef(null);
   const selectedWorkOrderRef = useRef(null);
   const estimateCapabilityRef = useRef(null);
   const saveCapabilityRef = useRef(null);
@@ -107,6 +108,7 @@ export default function FleetMechanic() {
 
   const applyPortalPayload = result => {
     portalAppliedEpochRef.current += 1;
+    portalPayloadRef.current = result || null;
     setData(result || null);
     setError("");
     const all = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])];
@@ -188,7 +190,27 @@ export default function FleetMechanic() {
       const result = await fetchPortalPayload();
       const pending = quiet ? null : await readStoredWorkRecovery(token);
       if (requestId !== portalRequestRef.current) return;
+      const selectedId = selectedWorkOrderRef.current;
+      const previousPayload = portalPayloadRef.current;
+      const previousEstimate = (previousPayload?.repair_estimates || []).find(row => row.work_order_id === selectedId) || null;
+      const latestEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === selectedId) || null;
+      // A top-level manual Refresh must not silently pair a stale local form
+      // with a newly fetched CCS version. A later Save would otherwise use
+      // the fresh CAS token while overwriting CCS changes with old form values.
+      const estimateSignature = row => row ? [
+        row.id,row.updated_date,row.status,row.visibility,
+        row.approval_required === true,row.approval_tier,
+      ].map(value => String(value ?? "")).join("|") : "";
+      const estimateChanged = quiet && previousPayload && selectedId &&
+        estimateSignature(previousEstimate) !== estimateSignature(latestEstimate);
       applyPortalPayload(result);
+      if (estimateChanged && selectedWorkOrderRef.current === selectedId &&
+          result?.portal?.capabilities?.estimates) {
+        const reason = "CCS changed this repair estimate since your last view. Unsaved estimate entries are preserved but locked. Check Current Server State to load the latest CCS version before editing or submitting; checking will replace these entries.";
+        setEstimateRecovery({workOrderId:selectedId,reason});
+        setSavedMessage("");
+        setActionError(reason);
+      }
       if (pending) {
         setWorkRecovery(pending);
         if (!selectedWorkOrderRef.current) {
@@ -414,6 +436,7 @@ export default function FleetMechanic() {
       }
       setEstimateRecovery(null);
       if (isSameOpenJob) {
+        if (showRecoveredMessage) setSavedMessage("");
         if (confirmation && matchesConfirmation) {
           setSavedMessage(confirmation.message || "");
           setActionError("");
