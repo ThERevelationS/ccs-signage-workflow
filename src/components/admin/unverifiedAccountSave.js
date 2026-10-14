@@ -10,6 +10,20 @@ const same = (field, a, b) => field === "sales_roles"
   ? JSON.stringify([...new Set(a || [])].sort()) === JSON.stringify([...new Set(b || [])].sort())
   : Object.is(a, b);
 
+// When the attempted values are observed in the verified record, retain only
+// new edits made after the submit began. Preserve all verified remote-only
+// changes. Password is always a local draft, never part of the Account read.
+export function rebaseAppliedAccountDraft({ latest, attempted, current }) {
+  const result = createAdminAccountDraft(latest);
+  for (const field of FIELDS) {
+    if (!same(field, current?.[field], attempted?.[field])) {
+      result[field] = current?.[field];
+    }
+  }
+  result.password_hash = current?.password_hash || "";
+  return result;
+}
+
 export function compareUnverifiedAccountSave({ baseline, attempted, latest }) {
   if (![baseline, attempted, latest].every(value =>
     value && typeof value === "object" && !Array.isArray(value))) {
