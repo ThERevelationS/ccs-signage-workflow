@@ -1,0 +1,20 @@
+{
+  "mode": "actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "seven review cards, observed change/AI distinction, retained source links, canonical queries, safe URL rejection, failure next action, evidence retry, navigation callbacks, monitor retry/empty, invalid dates, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "seven review cards, observed change/AI distinction, retained source links, canonical queries, safe URL rejection, failure next action, evidence retry, navigation callbacks, monitor retry/empty, invalid dates, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "seven review cards, observed change/AI distinction, retained source links, canonical queries, safe URL rejection, failure next action, evidence retry, navigation callbacks, monitor retry/empty, invalid dates, no overflow"
+    }
+  ]
+}
