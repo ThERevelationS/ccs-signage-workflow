@@ -19,7 +19,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X, ExternalLink } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
 import OfficeCandidateEvidencePanel from "./OfficeCandidateEvidencePanel";
-import { normalizeGovernmentOfficeCatalogEntry, safeGovernmentOfficeSourceUrl, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from "./governmentOfficeCatalog";
+import { candidateOfficeVerificationBlockReason, normalizeGovernmentOfficeCatalogEntry, safeGovernmentOfficeSourceUrl, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from "./governmentOfficeCatalog";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -100,7 +100,11 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
   const update = (patch) => onChange(updateGovernmentOfficeCatalogEntry(office, patch));
   const officeMetadata = normalizeGovernmentOfficeCatalogEntry(office).government_office;
   const sourceHref = safeGovernmentOfficeSourceUrl(officeMetadata.source_url);
-  const updateVerification = (patch) => onChange(updateGovernmentOfficeVerification(office, patch, "staff"));
+  const verificationBlockReason = candidateOfficeVerificationBlockReason(office);
+  const updateVerification = (patch) => {
+    if (patch?.verification_status === "staff_verified" && verificationBlockReason) return;
+    onChange(updateGovernmentOfficeVerification(office, patch, "staff"));
+  };
 
   const selectedTypes = getOfficeTypes(office);
 
@@ -226,11 +230,13 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
                 size="sm"
                 variant={officeMetadata.verification_status === "staff_verified" ? "outline" : "default"}
                 className="h-7 text-xs"
+                disabled={officeMetadata.verification_status !== "staff_verified" && Boolean(verificationBlockReason)}
                 onClick={() => updateVerification({ verification_status: officeMetadata.verification_status === "staff_verified" ? "needs_verification" : "staff_verified" })}
               >
                 {officeMetadata.verification_status === "staff_verified" ? "Revoke verification" : "Mark staff verified"}
               </Button>
             </div>
+            {verificationBlockReason && <p role="status" className="text-xs text-amber-800">{verificationBlockReason}</p>}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-[10px] text-gray-500">Official source URL</Label>
