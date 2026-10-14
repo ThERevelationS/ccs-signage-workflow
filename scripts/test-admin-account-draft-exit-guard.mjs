@@ -231,5 +231,5 @@ test("Account draft protection doesn't block legitimate Account saves",()=>{
  assert.equal(f.scope.hasProtectedHrDraft(),false);
  assert.equal(f.scope.hasProtectedAccountDraft(),true);
  assert.match(source,/if \(hasProtectedHrDraft\(\)\) \{[\s\S]*?const requestedPassword/);
- assert.match(source,/disabled=\{userMutationSaving \|\| hrMutationSaving \|\| hrReloadLoading \|\| hasUnsavedHrData \|\| isLoading/);
+ assert.match(source,/disabled=\{userMutationSaving \|\| hrMutationSaving \|\| hrReloadLoading \|\| hasUnsavedHrData \|\| !!accountSaveRecovery \|\| isLoading/);
 });
