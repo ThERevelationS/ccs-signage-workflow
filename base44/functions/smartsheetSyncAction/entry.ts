@@ -2128,7 +2128,17 @@ async function pushDataset(
           postRow: async (freshOrder: any) => {
             const freshCells = buildCells(freshOrder, bindings, 'orders');
             if (freshCells.length === 0) throw new Error('Order has no mapped Smartsheet cells.');
-            await verifyOrderBackupBeforeFirstWrite();
+            // This guard runs before transport. Only this specific failure is
+            // proof that no POST was sent; a blocked check after a definitive
+            // 429 remains in the transport path and must not release a claim.
+            try {
+              await verifyOrderBackupBeforeFirstWrite();
+            } catch (error: any) {
+              if (error?.orderBackupFirstWriteBlocked === true) {
+                throw Object.assign(error, { orderCreatePrePostGuardBlocked: true });
+              }
+              throw error;
+            }
             firstOrderWriteAttempted = true;
             const result = await smartsheetWriteNoTimeoutRetry('POST', `/sheets/${sheetId}/rows`, token, [{
               toTop: true,
