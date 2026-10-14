@@ -1780,4 +1780,150 @@ check("save feedback is announced and Save & Revisit label recovers after save",
   assert.match(source, /onClick=\{handleSaveClick\}\s+disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\) \|\| saveOutcomeUncertain\}/);
 });
 
+
+await (async () => {
+  // The recovery helper must remain read-only and fail closed on incomplete
+  // verification. No real Work Orders or provider APIs are involved.
+  const helper = readFileSync(new URL("../src/components/sips/checklistSaveRecovery.js", import.meta.url), "utf8")
+    .replace(/^export /gm, "");
+  const { reconcileInterruptedSipsSave, isDefinitiveSipsSaveRejection } =
+    new Function(helper + "\nreturn { reconcileInterruptedSipsSave, isDefinitiveSipsSaveRejection };")();
+  const wanted = {
+    sip_checklist: [{ id: "task", text: "Checked", sub_items: [{ value: "ok", id: "detail" }] }],
+    products: [{ description: "Cabinet", id: "one" }],
+    sip_revisit_date: "2099-05-21",
+    sip_completed: true,
+  };
+  const guard = {
+    current_stage: "Fabrication", current_task_assigned_to: "SIPs",
+    completed: false, is_rider: false, sip_completed: false,
+  };
+  let current = {
+    id: "WO-recovery", updated_date: "v2", deleted: false,
+    ...wanted, current_stage: "Fabrication", current_task_assigned_to: "SIPs",
+    completed: false, is_rider: false
+  };
+  let reads = 0;
+  const read = async query => {
+    assert.deepEqual(query, { id: "WO-recovery" });
+    reads++;
+    return [structuredClone(current)];
+  };
+  const verify = (nextFields = wanted, guardFields = guard, readWorkOrders = read) =>
+    reconcileInterruptedSipsSave({ workOrderId: "WO-recovery", nextFields, guardFields, readWorkOrders });
+  let outcome = await verify();
+  assert.equal(outcome.verified, true);
+  assert.equal(outcome.record.sip_revisit_date, "2099-05-21");
+  assert.equal(reads, 1);
+  outcome = await verify({ ...wanted, sip_revisit_date: "2099-05-22" });
+  assert.equal(outcome.verified, false, "Different Revisit date is not successful recovery");
+  outcome = await verify({ ...wanted, sip_completed: false });
+  assert.equal(outcome.verified, false, "Incomplete SIP is not successful completion recovery");
+  outcome = await verify({ ...wanted, products: [{ id: "other", description: "Cabinet" }] });
+  assert.equal(outcome.verified, false, "Changed products cannot masquerade as committed save");
+  outcome = await verify({ ...wanted, sip_checklist: [] });
+  assert.equal(outcome.verified, false, "Missing checklist cannot masquerade as committed save");
+  outcome = await verify(wanted, { ...guard, current_stage: "Installation" });
+  assert.equal(outcome.verified, false, "Changed stage prevents silent completion");
+  for (const data of [[], [current, current], [{ ...current, id: "WO-other" }], [{ ...current, deleted: true }]]) {
+    assert.equal((await verify(wanted, guard, async () => data)).verified, false);
+  }
+  assert.equal((await verify(wanted, guard, async () => { throw Error("Read interrupted"); })).verified, false);
+  assert.equal(isDefinitiveSipsSaveRejection(Error("The record no longer matches its loaded state.")), true);
+  assert.equal(isDefinitiveSipsSaveRejection(Error("This task is no longer configured for SIPS or WIP.")), true);
+  assert.equal(isDefinitiveSipsSaveRejection(Error("Network Error")), false);
+  assert.equal(isDefinitiveSipsSaveRejection(Error("The saved field could not be verified.")), false);
+  console.log("PASS read-only interrupted save verifier requires matching checklist, products, Revisit, completion and workflow");
+  passed++;
+})();
+
+await (async () => {
+  // Exercise the real SIPS save handler when the write response is interrupted.
+  // The simulated provider can commit before throwing, fail before committing,
+  // or reject deterministically; reads must never trigger another write.
+  const helper = readFileSync(new URL("../src/components/sips/checklistSaveRecovery.js", import.meta.url), "utf8")
+    .replace(/^export /gm, "");
+  const { reconcileInterruptedSipsSave, isDefinitiveSipsSaveRejection } =
+    new Function(helper + "\nreturn { reconcileInterruptedSipsSave, isDefinitiveSipsSaveRejection };")();
+  const handler = source.slice(source.indexOf("  const saveChecklist = async ("),
+    source.indexOf("  // Radix can restore focus while a Revisit dialog is closing."));
+  const makeSave = new Function("scope", "with(scope) {\n" + handler + "\nreturn saveChecklist;\n}");
+  const setup = behavior => {
+    const workflow = {
+      completed: false, is_rider: false, current_stage: "Fabrication",
+      current_task_assigned_to: "SIPs", current_task_description: "SIPS Meeting", sip_completed: false
+    };
+    let remote = {
+      id: "synthetic-recovery", sip_checklist: [], products: [],
+      sip_revisit_date: "", sip_completed: false, ...workflow
+    };
+    const stats = { writes: 0, reads: 0, closed: 0, updates: 0, errors: [], uncertainty: [] };
+    const scope = {
+      saveOutcomeUncertain: false, isSaving: false, isLoading: false,
+      saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
+      saveFailureFocusPendingRef: { current: false },
+      failedRevisitSelectionRef: { current: undefined },
+      loadedWorkflowSnapshotRef: { current: workflow },
+      isDefinitiveSipsSaveRejection, reconcileInterruptedSipsSave,
+      WorkOrder: { filter: async ({ id }) => {
+        assert.equal(id, remote.id);
+        stats.reads++;
+        return [structuredClone(remote)];
+      } },
+      blockOnUnsubmittedDrafts: () => false, setIsSaving: () => {},
+      setSaveOutcomeUncertain: value => { scope.saveOutcomeUncertain = value; stats.uncertainty.push(value); },
+      checklist: [], products: [], workOrder: { ...remote },
+      loadedChecklistSnapshot: [], loadedProductsSnapshot: [],
+      loadedRevisitDateSnapshot: "", loadedSipCompletedSnapshot: false,
+      isFutureRevisitDate: () => false,
+      setSaveError: value => stats.errors.push(value),
+      replaceWorkOrderFieldsIfUnchanged: async args => {
+        stats.writes++;
+        assert.equal(args.workOrderId, remote.id);
+        if (behavior === "lost-committed") remote = { ...remote, ...args.nextFields, updated_date: "v2" };
+        if (behavior === "explicit") throw Error("The record no longer matches its loaded state.");
+        throw Error("Network Error");
+      },
+      setLoadedChecklistSnapshot: () => {}, setLoadedProductsSnapshot: () => {},
+      setLoadedUiChecklistSnapshot: () => {}, setLoadedUiProductsSnapshot: () => {},
+      setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
+      setChecklist: () => {}, setProducts: () => {},
+      onUpdate: () => { stats.updates++; }, onClose: () => { stats.closed++; },
+      console: { error: () => {} }
+    };
+    return { save: makeSave(scope), scope, stats, readRemote: () => remote };
+  };
+  const recovered = setup("lost-committed");
+  await recovered.save("2099-06-12");
+  assert.equal(recovered.stats.writes, 1, "Successful but interrupted save is never retried");
+  assert.equal(recovered.stats.reads, 1, "Recovery verifies only by read");
+  assert.equal(recovered.stats.closed, 1);
+  assert.equal(recovered.stats.updates, 1);
+  assert.equal(recovered.readRemote().sip_revisit_date, "2099-06-12");
+  assert.equal(recovered.scope.workOrder.sip_revisit_date, "2099-06-12");
+  assert.equal(recovered.scope.failedRevisitSelectionRef.current, undefined);
+
+  const uncertain = setup("lost-uncommitted");
+  await uncertain.save("2099-06-13");
+  assert.equal(uncertain.stats.writes, 1);
+  assert.equal(uncertain.stats.reads, 1);
+  assert.equal(uncertain.stats.closed, 0);
+  assert.equal(uncertain.scope.saveOutcomeUncertain, true);
+  assert.equal(uncertain.scope.failedRevisitSelectionRef.current, "2099-06-13",
+    "Interrupted save preserves the exact requested Revisit choice");
+  assert.match(uncertain.stats.errors.at(-1), /could not be verified/);
+  await uncertain.save("2099-06-14");
+  assert.equal(uncertain.stats.writes, 1, "Unverified save cannot be resubmitted");
+  assert.equal(uncertain.stats.reads, 1, "Blocked retry cannot start another read");
+
+  const rejected = setup("explicit");
+  await rejected.save("2099-06-15");
+  assert.equal(rejected.stats.writes, 1);
+  assert.equal(rejected.stats.reads, 0, "Definitive rejection never triggers outcome recovery");
+  assert.equal(rejected.scope.saveOutcomeUncertain, false);
+  assert.equal(rejected.stats.closed, 0);
+  console.log("PASS lost checklist-save response reconciles without duplicate writes; uncertain outcomes block retry and retain Revisit");
+  passed++;
+})();
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
