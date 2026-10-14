@@ -75,7 +75,8 @@ test("actual preview renders with no API call and duplicate clicks emit one requ
 test("selection edits hide completed snapshots and ignore late responses",async()=>{
  const t=await setup();globalThis.previewUiSdk=t;let finish,pending,r;
  t.invokeHook(()=>new Promise(resolve=>finish=resolve));
- act(()=>{r=TestRenderer.create(React.createElement(Panel,{office:t.office}));pending=button(r).props.onClick();});
+ act(()=>{r=TestRenderer.create(React.createElement(Panel,{office:t.office}));});
+ act(()=>{pending=button(r).props.onClick();});
  await act(async()=>{await Promise.resolve();});
  const edited={...t.office,contact_notes:"New draft"};
  act(()=>r.update(React.createElement(Panel,{office:edited})));
@@ -91,7 +92,8 @@ test("selection edits hide completed snapshots and ignore late responses",async(
 test("unmount ignores late success and current conflicts remain explicit",async()=>{
  const t=await setup();globalThis.previewUiSdk=t;let finish,pending,r;
  t.invokeHook(()=>new Promise(resolve=>finish=resolve));
- act(()=>{r=TestRenderer.create(React.createElement(Panel,{office:t.office}));pending=button(r).props.onClick();});
+ act(()=>{r=TestRenderer.create(React.createElement(Panel,{office:t.office}));});
+ act(()=>{pending=button(r).props.onClick();});
  await act(async()=>{await Promise.resolve();});act(()=>r.unmount());
  await act(async()=>{finish({data:t.result});await pending;});
  t.invokeHook(()=>{throw Error("Selected source changed");});
