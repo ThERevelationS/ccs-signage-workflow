@@ -19,5 +19,7 @@
       "passed": true,
       "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
     }
-  ]
+  ],
+  "pdf_page_painting_asserted": false,
+  "visual_acceptance_gap": "The native PDF area was gray in both headed and headless synthetic Chromium captures; frame load and controls do not establish page painting."
 }

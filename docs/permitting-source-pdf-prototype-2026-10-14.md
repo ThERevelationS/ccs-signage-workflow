@@ -26,9 +26,11 @@ Actual parent, catalog, requirements/monitor and PDFViewer tested together with 
 - switching jurisdiction removes the frame;
 - no provider/AI calls or production writes.
 
+Actual page painting remains an explicit gap: both full headless Chromium and headed Chromium under Xvfb produced gray native PDF areas, including with the fixture served as a real local Vite file instead of intercepted external responses. The fixture bytes were validated independently with pypdf: one page, expected text 'Synthetic permitting retained source'. The reason for the gray embedded area is unknown; do not attribute it definitively to the app, PDF bytes, browser or harness. Controls/frame-load checks passed, not visible document-content acceptance.
+
 A dispatched synthetic iframe error event was not recognized by the native Chromium PDF frame and is not claimed as a passing browser check. Manual fallback and controlled stalled-frame behavior were verified instead. Browser frame loading is tested; faithful rendering/printing of production file contents is not certified.
 
-Existing document catalog and exact source-navigation browser checks remain relevant regression checks. Targeted lint and final build/diff results are verified in the completion report. Old PDF keyboard harness failures are not retested or claimed fixed.
+Existing document catalog and exact source-navigation browser checks remain relevant regression checks. Targeted ESLint passed with zero errors and six preexisting parent warnings. Final production build verified exit 0. git diff --check passed. Existing catalog and exact-source-navigation browser suites each passed 320/390/1280; nine UI/control viewport scenarios including the new PDF suite. These counts exclude actual PDF page-painting acceptance. Old PDF keyboard harness failures are not retested or claimed fixed.
 
 Harness: scripts/test-permitting-source-pdf-browser.mjs.
 Receipt: docs/permitting-source-pdf-browser-2026-10-14.json.
@@ -39,4 +41,4 @@ Frontend/component and synthetic test changes only. No backend/schema/permission
 
 Authenticated employee/admin acceptance, production PDF display and real device behavior remain pending. Google geocoding REQUEST_DENIED remains a separate blocker.
 
-Next meaningful functional batch: add saved source text previews and search for catalog-only archives, respecting segmented text scope and the existing deterministic text handler. Show partial/missing/OCR states, preserve physical-page/source-version evidence, and never turn extracted or AI text into authority. Inspect actual handlers and UI before implementation.
+Next meaningful functional batch: resolve actual retained PDF page display before source text search. Validate local fixture bytes and compare a direct browser PDF with existing profile and new catalog embeds. Confirm the native embed behavior, then make the smallest complete permitting-only fix or bounded alternative if needed. Acceptance requires visible synthetic document content at phone/desktop widths with working Back/retry/fallback and correct retained URL. Preserve PDF budgets, authority labels, existing search and protected client data. Production/browser account acceptance remains separate. Saved source text previews/search follow after this display gap.
