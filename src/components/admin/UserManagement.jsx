@@ -1464,7 +1464,10 @@ export default function UserManagement() {
                       <Input
                         type="password"
                         value={formData.password_hash}
-                        onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, password_hash: e.target.value });
+                          setPasswordRetryConfirmed(false);
+                        }}
                         placeholder={formData.password_hash ? "••••••••" : "Set password"}
                         className="mt-1"
                       />
@@ -1631,6 +1634,42 @@ export default function UserManagement() {
             </div>
           </Tabs>
 
+          {accountSaveRecovery && (
+            <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 space-y-2 text-sm" role="alert">
+              <p className="font-semibold text-amber-950">Account saved; Time Clock password outcome unverified</p>
+              <p className="text-amber-900">
+                Your Account details were saved. The password request may or may not have completed.
+                Nothing has been retried. Your password draft is still in this editor.
+                Check whether it was applied before deciding to retry.
+              </p>
+              <label className="flex items-start gap-2 text-amber-950">
+                <input type="checkbox" className="mt-1" checked={passwordRetryConfirmed}
+                  disabled={userMutationSaving}
+                  onChange={event => setPasswordRetryConfirmed(event.target.checked)} />
+                I verified the password was not changed and authorize a new password-only attempt.
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="outline"
+                  disabled={!passwordRetryConfirmed || userMutationSaving ||
+                    String(formData.password_hash || "").length < 8}
+                  onClick={retryUnverifiedAccountPassword}>
+                  {userMutationSaving ? "Checking password result..." : "Retry password only"}
+                </Button>
+                <Button type="button" size="sm" variant="outline"
+                  disabled={userMutationSaving}
+                  onClick={stopUnverifiedAccountPasswordRetry}>
+                  Stop retrying password (keep saved Account)
+                </Button>
+              </div>
+              <p className="text-xs text-amber-900">
+                No Account update runs from these controls. Stopping removes the password draft;
+                it does not undo the saved Account changes.
+              </p>
+            </div>
+          )}
+          {accountSaveNotice && (
+            <p className="text-sm text-blue-800" role="status">{accountSaveNotice}</p>
+          )}
           {(hasUnsavedHrData || hasUnsavedAccountData) && (
             <p role="status" className="text-sm text-amber-800">
               {hasUnsavedHrData
@@ -1646,7 +1685,7 @@ export default function UserManagement() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || isLoading || userDirectoryError || !sessionToken}
+              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || !!accountSaveRecovery || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
