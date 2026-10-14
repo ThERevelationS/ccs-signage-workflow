@@ -73,7 +73,18 @@ export default function ClockOutDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [breakActionBusy, setBreakActionBusy] = useState(false);
   const [workPauseBusy, setWorkPauseBusy] = useState(false);
-  const [laborPreview, setLaborPreview] = useState(null);
+  // Preview responses belong to the exact employee shift and open dialog.
+  // Do not allow an old asynchronous snapshot to replace a newer shift.
+  const shiftKey = timeEntry?.id ? JSON.stringify([
+    String(timeEntry.user_email || "").trim().toLowerCase(), String(timeEntry.id),
+  ]) : "";
+  const previewScope = isOpen ? shiftKey : "";
+  const previewScopeRef = useRef(previewScope);
+  previewScopeRef.current = previewScope;
+  const previewRequestRef = useRef({ scope: "", id: 0, pending: false });
+  const draftShiftRef = useRef("");
+  const [previewSnapshot, setPreviewSnapshot] = useState({ scope: "", value: null });
+  const laborPreview = previewSnapshot.scope === previewScope ? previewSnapshot.value : null;
   const [laborPreviewBusy, setLaborPreviewBusy] = useState(false);
   const [laborPreviewError, setLaborPreviewError] = useState("");
   const [, setAllocationsReviewed] = useState(false);
@@ -117,13 +128,21 @@ export default function ClockOutDialog({
   }, [isOpen]);
 
   const loadLaborPreview = async ({ allowAutoApply = false, invalidateReview = false } = {}) => {
-    if (!onLoadLaborAllocationPreview || !timeEntry?.id || laborPreviewBusy) return null;
+    if (!onLoadLaborAllocationPreview || !previewScope) return null;
+    if (previewRequestRef.current.pending && previewRequestRef.current.scope === previewScope) return null;
+    const request = {
+      scope: previewScope, id: previewRequestRef.current.id + 1, pending: true,
+    };
+    previewRequestRef.current = request;
+    const isCurrent = () => previewScopeRef.current === request.scope &&
+      previewRequestRef.current === request;
     setLaborPreviewBusy(true);
     setLaborPreviewError("");
     try {
       const data = await onLoadLaborAllocationPreview();
+      if (!isCurrent()) return null;
       const preview = data?.preview || null;
-      setLaborPreview(preview);
+      setPreviewSnapshot({ scope: request.scope, value: preview });
       if (invalidateReview) setAllocationsReviewed(false);
       if (allowAutoApply && preview?.suggested_allocations?.length) {
         setJobAllocations((current) => {
@@ -134,23 +153,46 @@ export default function ClockOutDialog({
       }
       return preview;
     } catch (err) {
-      setLaborPreviewError(err?.message || "Tracked Current Work suggestions could not be loaded.");
+      if (isCurrent()) setLaborPreviewError(err?.message || "Tracked Current Work suggestions could not be loaded.");
       return null;
     } finally {
-      setLaborPreviewBusy(false);
+      if (isCurrent()) {
+        request.pending = false;
+        setLaborPreviewBusy(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (!isOpen || !timeEntry?.id || !onLoadLaborAllocationPreview) return;
-    allocationEditedRef.current = false;
-    previewAppliedRef.current = false;
-    setAllocationsReviewed(false);
-    setLaborPreview(null);
+    // Invalidate prior shift or prior open-cycle requests without erasing the
+    // employee's unsaved draft when merely reopening the same active shift.
+    previewRequestRef.current = {
+      scope: previewScope, id: previewRequestRef.current.id + 1, pending: false,
+    };
+    setLaborPreviewBusy(false);
     setLaborPreviewError("");
-    loadLaborPreview({ allowAutoApply: true });
-    // The dialog is recreated for each verified active shift; only entry/open changes should trigger the automatic suggestion load.
-  }, [isOpen, timeEntry?.id]);
+    setPreviewSnapshot({ scope: previewScope, value: null });
+    if (!previewScope || !onLoadLaborAllocationPreview) return undefined;
+    if (draftShiftRef.current !== shiftKey) {
+      draftShiftRef.current = shiftKey;
+      setLunchMinutes("");
+      setJobAllocations([]);
+      setNotes("");
+      setSearchTerm("");
+      setSearchResults([]);
+      setShowSearch(false);
+      setError("");
+      allocationEditedRef.current = false;
+      previewAppliedRef.current = false;
+      setAllocationsReviewed(false);
+    }
+    void loadLaborPreview({ allowAutoApply: true });
+    return () => {
+      previewRequestRef.current = {
+        scope: "", id: previewRequestRef.current.id + 1, pending: false,
+      };
+    };
+  }, [isOpen, shiftKey]);
 
   const applyLaborPreview = () => {
     const suggestions = laborPreview?.suggested_allocations || [];
