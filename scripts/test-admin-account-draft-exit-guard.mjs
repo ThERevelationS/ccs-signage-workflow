@@ -150,6 +150,15 @@ test("Explicit confirmed discard closes editor and purges Account baseline",()=>
  assert.equal(JSON.stringify(f.state.users),before);
 });
 
+test("Confirmed discard clears a typed Time Clock password from editor state",()=>{
+ const f=setup();f.edit({password_hash:"synthetic-discard-password"});
+ f.scope.requestCloseUserEditor();
+ f.scope.confirmDiscardHrDraft();
+ assert.equal(f.state.formData.password_hash,"");
+ assert.equal(f.refs.accountDraftBaseline.current,null);
+ assert.equal(f.state.dialog,false);
+});
+
 test("Switching user with unsaved Account details is confirmation-gated",()=>{
  const f=setup();f.edit({username:"newname",sales_roles:["Installer"]});
  f.scope.openEditUser(colleague);
