@@ -452,6 +452,12 @@ export default function UserManagement() {
   const clearEditorDraftTracking = () => {
     clearHrDraftTracking();
     accountDraftBaseline.current = null;
+    // Explicit editor exit must not retain a typed Time Clock password in
+    // component state after the employee's draft has been discarded or saved.
+    setFormData(current => ({ ...current, password_hash: "" }));
+    setAccountSaveRecovery(null);
+    setPasswordRetryConfirmed(false);
+    setAccountSaveNotice("");
   };
 
   const hasProtectedEditorDraft = () => hasProtectedHrDraft() || hasProtectedAccountDraft();
