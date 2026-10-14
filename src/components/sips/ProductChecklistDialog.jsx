@@ -3125,10 +3125,10 @@ export default function ProductChecklistDialog({
           )}
           {saveError && (
             <div ref={saveErrorAlertRef} role="alert" tabIndex={-1} aria-label="SIP checklist save error" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-              <div className="font-medium">SIP product checklist save blocked</div>
+              <div className="font-medium">{saveOutcomeUncertain ? "SIP checklist save needs verification" : "SIP product checklist save blocked"}</div>
               <div className="mt-1 text-xs">{saveError}</div>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                <span className="text-xs text-red-700">Reloading replaces local edits with the latest saved Work Order. Unsaved changes require confirmation.</span>
+                <span className="text-xs text-red-700">{saveOutcomeUncertain ? "Save and Complete are paused until Reload latest confirms the server record. Local edits remain here until a successful reload." : "Reloading replaces local edits with the latest saved Work Order. Unsaved changes require confirmation."}</span>
                 <Button ref={reloadLatestButtonRef} type="button" size="sm" variant="outline" onClick={requestReloadLatest} disabled={isLoading || isSaving} className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 sm:h-8 sm:w-auto">
                   {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
                   Reload latest
