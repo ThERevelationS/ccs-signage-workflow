@@ -195,7 +195,7 @@ test("Admin session transition revokes HR writes and prevents account saves whil
   assert.match(effect,/return \(\) => \{\s*hrReloadOwner\.current = null;\s*hrReloadInFlight\.current = false;\s*hrDraftStatus\.current = null;\s*accountDraftBaseline\.current = null;\s*hrSaveOwner\.current = null;\s*hrSaveInFlight\.current = false/);
   assert.match(admin,/if \(!editingUser \|\| userUpdateInFlight\.current \|\| hrSaveInFlight\.current/);
   assert.match(admin,/saveScope=\{sessionToken\}/);
-  assert.match(admin,/disabled=\{userMutationSaving \|\| hrMutationSaving \|\| hrReloadLoading \|\| hasUnsavedHrData \|\| !!accountSaveRecovery \|\| isLoading/);
+  assert.match(admin,/disabled=\{userMutationSaving \|\| hrMutationSaving \|\| hrReloadLoading \|\| hasUnsavedHrData \|\| !!accountSaveRecovery \|\| !!accountWriteRecovery \|\| isLoading/);
 });
 
 test("Form owns requests with employee+session identity and discards old timers",()=>{
