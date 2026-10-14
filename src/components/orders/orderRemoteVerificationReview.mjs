@@ -17,8 +17,7 @@ export function orderRemoteVerificationReviewMessage(result, expectedOrderCount)
       !Number.isSafeInteger(item.errors) || item.errors < 1 ||
       !Number.isSafeInteger(count) || count < 1 ||
       count > expectedOrderCount || count > item.errors ||
-      !Array.isArray(reviews) || !reviews.length ||
-      reviews.length > 10 || reviews.length > count ||
+      !Array.isArray(reviews) || reviews.length !== Math.min(count, 10) ||
       !Array.isArray(item.unresolved_record_ids)) return '';
 
   const unresolved = new Set(item.unresolved_record_ids);
