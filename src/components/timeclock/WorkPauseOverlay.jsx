@@ -67,6 +67,7 @@ export default function WorkPauseOverlay({
       pauseStateRef.current = null;
       if (mountedRef.current) {
         setPauseState(null);
+        setPauseStateScope("");
         setShowResumePrompt(false);
       }
       return null;
@@ -83,6 +84,7 @@ export default function WorkPauseOverlay({
         const pauseId = String(data.active_work_pause.id);
         pauseStateRef.current = data;
         setPauseState(data);
+        setPauseStateScope(scopeKey);
         if (pauseIdRef.current !== pauseId) {
           pauseIdRef.current = pauseId;
           dismissedAtRef.current = 0;
@@ -91,11 +93,13 @@ export default function WorkPauseOverlay({
         }
       } else if (data.status === "clocked_in" && data.work_pause_status === "resuming" && pauseStateRef.current) {
         setPauseState(pauseStateRef.current);
+        setPauseStateScope(scopeKey);
         setShowResumePrompt(true);
         setError("Resume Work is still being finalized by the server. Your timer remains treated as paused until working state is confirmed.");
       } else {
         pauseStateRef.current = null;
         setPauseState(null);
+        setPauseStateScope("");
         setShowResumePrompt(false);
         setError("");
         resumeRequestRef.current = "";
@@ -108,6 +112,7 @@ export default function WorkPauseOverlay({
       if (!preservePausedOnError) {
         pauseStateRef.current = null;
         setPauseState(null);
+        setPauseStateScope("");
       }
       if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
@@ -116,6 +121,14 @@ export default function WorkPauseOverlay({
 
   useEffect(() => {
     mountedRef.current = true;
+    statusSequenceRef.current += 1;
+    pauseStateRef.current = null;
+    pauseIdRef.current = "";
+    resumeRequestRef.current = "";
+    setPauseState(null);
+    setPauseStateScope("");
+    setShowResumePrompt(false);
+    setError("");
     loadStatus({ preservePausedOnError: false });
     const interval = setInterval(() => loadStatus(), 15000);
     const onFocus = () => loadStatus();
@@ -153,6 +166,7 @@ export default function WorkPauseOverlay({
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mountedRef.current = false;
+      statusSequenceRef.current += 1;
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
@@ -255,7 +269,7 @@ export default function WorkPauseOverlay({
     }
   };
 
-  if (disabled || !pauseState?.active_work_pause?.started_at || !showResumePrompt) return null;
+  if (disabled || pauseStateScope !== scopeKey || !pauseState?.active_work_pause?.started_at || !showResumePrompt) return null;
 
   const pauseStarted = new Date(pauseState.active_work_pause.started_at);
   const pauseElapsedMinutes = Number.isFinite(pauseStarted.getTime())
