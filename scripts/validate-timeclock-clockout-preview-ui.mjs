@@ -66,10 +66,15 @@ const propsFor = (entry, overrides={}) => ({
   ...overrides,
 });
 const renderedText = (renderer) => JSON.stringify(renderer.toJSON());
+const childText = (child) => {
+  if (typeof child === 'string' || typeof child === 'number') return String(child);
+  if (Array.isArray(child)) return child.map(childText).join(' ');
+  if (React.isValidElement(child)) return childText(child.props.children);
+  return '';
+};
 const clickButton = (renderer, label) => {
   const btn = renderer.root.findAllByType(Btn).find((x) =>
-    x.props.children === label ||
-    JSON.stringify(x.props.children).includes(label));
+    childText(x.props.children).includes(label));
   assert.ok(btn, `Missing button: ${label}`);
   return btn.props.onClick;
 };
