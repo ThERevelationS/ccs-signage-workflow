@@ -62,6 +62,7 @@ export function categorizeSourceDocs(docs = []) {
   const codeDocs = [];
   const other = [];
   for (const doc of docs) {
+    if (["draft", "proposed", "historical", "superseded"].includes(doc.content_status) || ["draft_proposed", "comprehensive_rewrite", "historical", "superseded"].includes(doc.authority_classification)) continue;
     if (FORM_SOURCE_TYPES.has(doc.source_type)) forms.push(doc);
     else if (FEE_SOURCE_TYPES.has(doc.source_type)) feeSchedules.push(doc);
     else if (doc.source_type === "sign_ordinance" || doc.source_type === "zoning_code") codeDocs.push(doc);
@@ -114,10 +115,10 @@ export async function resolveJurisdictionFromAddress(address) {
 /**
  * Load rules for a jurisdiction from PermittingRule, split by hierarchy.
  */
-export async function loadJurisdictionRules(jurisdictionName) {
+export async function loadJurisdictionRules(jurisdictionName, jurisdictionId) {
   if (!jurisdictionName) return { approved: [], pending: [], draftOrHistorical: [] };
   const { items } = await base44.entities.PermittingRule.filter(
-    { jurisdiction_name: jurisdictionName },
+    jurisdictionId ? { jurisdiction_id: jurisdictionId } : { jurisdiction_name: jurisdictionName },
     { sort: "-is_operational", limit: 200, fields: [
       "id", "rule_category", "sign_type", "sign_type_normalized", "requirement",
       "numeric_value", "unit", "zoning_district_applicability", "trigger",
@@ -131,10 +132,10 @@ export async function loadJurisdictionRules(jurisdictionName) {
 /**
  * Load source documents for a jurisdiction from PermittingSourceDocument.
  */
-export async function loadJurisdictionSourceDocs(jurisdictionName) {
+export async function loadJurisdictionSourceDocs(jurisdictionName, jurisdictionId) {
   if (!jurisdictionName) return { forms: [], feeSchedules: [], codeDocs: [], other: [], all: [] };
   const { items } = await base44.entities.PermittingSourceDocument.filter(
-    { jurisdiction_name: jurisdictionName },
+    jurisdictionId ? { jurisdiction_id: jurisdictionId } : { jurisdiction_name: jurisdictionName },
     { sort: "-classified_at", limit: 100, fields: [
       "id", "title", "source_type", "official_url", "online_form_url",
       "authority_classification", "content_status", "effective_or_adopted_date",
@@ -327,8 +328,8 @@ export async function runDesignerPipeline(input, preselectedJurisdiction = null)
 
   // 2. Load rules and source docs in parallel
   const [rules, sourceDocs] = await Promise.all([
-    loadJurisdictionRules(jurisdiction.jurisdiction_name),
-    loadJurisdictionSourceDocs(jurisdiction.jurisdiction_name),
+    loadJurisdictionRules(jurisdiction.jurisdiction_name, jurisdiction.jurisdiction_id),
+    loadJurisdictionSourceDocs(jurisdiction.jurisdiction_name, jurisdiction.jurisdiction_id),
   ]);
 
   // 3. Compose workflow via native AI
