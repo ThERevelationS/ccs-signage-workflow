@@ -57,6 +57,7 @@ function fixture() {
  const scope={
   ...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,
   compareUnverifiedAccountSave,rebaseAppliedAccountDraft,
+  planAccountFieldResolution,
   get sessionToken(){return token;},get editingUser(){return state.editor;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.password;},
   get accountWriteRecovery(){return state.write;},
