@@ -105,7 +105,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate,
 
         {retryDate !== undefined && (
           <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            Your previous save did not complete. Your last Revisit choice is restored for review; confirm it and save again.
+            Your previous save was not confirmed. If still in the future, your last Revisit choice is restored for review. It has not been resubmitted; confirm the current date and details before saving again.
           </div>
         )}
 
