@@ -133,7 +133,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     {previewNotice && <p role="status" className="rounded bg-amber-50 p-3 text-sm">{previewNotice}</p>}
     {scopedPreview && <div ref={previewRegion} role="region" aria-label="Retained PDF preview" className="scroll-mt-3 min-w-0 overflow-hidden rounded-lg border border-blue-300">
       <p className="bg-blue-50 p-3 text-xs [overflow-wrap:anywhere]">Retained copy · saved currentness: {label(scopedPreview.status)} · classification: {label(scopedPreview.classification)}. Viewing does not approve authority or verify the cited version.</p>
-      <div className="h-[70vh] min-h-[420px] min-w-0"><PDFViewer key={scopedPreview.key + ':' + scopedPreview.url} fileUrl={scopedPreview.url} fileName={scopedPreview.title || 'Retained document'} onBack={closePreview} /></div>
+      <div className="h-[70vh] min-h-[420px] min-w-0"><PDFViewer key={scopedPreview.key + ':' + scopedPreview.url} fileUrl={scopedPreview.url} fileName={scopedPreview.title || 'Retained document'} onBack={closePreview} renderMode="canvas" /></div>
     </div>}
     {selected && <div className="space-y-2 rounded border border-blue-200 bg-blue-50 p-3 text-sm [overflow-wrap:anywhere]">
       <p className="font-semibold">Linked source record: {selectedId}</p>
