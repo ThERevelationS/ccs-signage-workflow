@@ -53,6 +53,7 @@ export default function SourceTextEvidenceBrowser({ source }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
+  const [pageInput, setPageInput] = useState('1');
   const toggleRef = useRef(null);
   const requestVersion = useRef(0);
   const fingerprint = cleanText(source.file_hash_sha256);
@@ -89,12 +90,15 @@ export default function SourceTextEvidenceBrowser({ source }) {
   const toggle = () => {
     setOpen(value => !value);
     setStart(1);
+    setPageInput('1');
     setQuery('');
     setResult(null);
     setError('');
     toggleRef.current?.focus({ preventScroll: true });
   };
   const changePage = next => {
+    if (!result || !Number.isInteger(next) || next < 1 || next > result.available_through || next === start) return;
+    setPageInput(String(next));
     setQuery('');
     setResult(null);
     setError('');
@@ -128,6 +132,16 @@ export default function SourceTextEvidenceBrowser({ source }) {
             <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-xs font-sans">{page.text || 'No text extracted from this physical page.'}</pre>
           </details>)}
         </>}
+        <form className="flex flex-wrap items-end gap-2" onSubmit={event => {
+          event.preventDefault();
+          if (/^[1-9][0-9]*$/.test(pageInput)) changePage(Number(pageInput));
+        }}>
+          <label className="min-w-0 text-xs">Go to physical PDF page
+            <Input aria-label="Go to physical PDF page" type="number" inputMode="numeric" min={1} max={result.available_through} step={1} required className="mt-1 min-h-11 w-28" value={pageInput} onChange={event => setPageInput(event.target.value)} />
+          </label>
+          <Button type="submit" variant="outline" className="min-h-11" disabled={!/^[1-9][0-9]*$/.test(pageInput) || !Number.isSafeInteger(Number(pageInput)) || Number(pageInput) > result.available_through || Number(pageInput) === start}>Load from page</Button>
+          <p className="basis-full text-xs text-gray-600">Choose page 1–{result.available_through}. Loads up to five saved physical pages starting there; unextracted pages cannot be opened.</p>
+        </form>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" className="min-h-11" disabled={start <= 1} onClick={() => changePage(Math.max(1, start - PAGE_BATCH))}>Previous five pages</Button>
           <Button variant="outline" className="min-h-11" disabled={start + PAGE_BATCH > result.available_through} onClick={() => changePage(start + PAGE_BATCH)}>Next five pages</Button>
