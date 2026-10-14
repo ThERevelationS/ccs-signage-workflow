@@ -381,5 +381,106 @@ assert.equal(laborDialog().props.laborSummary.total_minutes, 7,
   'Older labor summary must not overwrite the newer break transition');
 console.log('PASS late Current Work acknowledgement cannot revive labor during a break');
 
+let resumeAfterBreak;
+await act(async () => { resumeAfterBreak = laborDialog().props.onEndBreak(); });
+const breakFinishIndex = calls.length - 1;
+assert.equal(calls[breakFinishIndex].payload.action, 'break_end');
+await act(async () => {
+  calls[breakFinishIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'working',
+    active_labor: null, labor_summary: { count: 1, total_minutes: 7 },
+    break_summary: { count: 2, total_minutes: 15, paid_minutes: 15, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await resumeAfterBreak;
+});
+assert.equal(laborDialog().props.breakStatus, 'working');
+
+let uncertainLabor;
+await act(async () => { uncertainLabor = laborDialog().props.onStartLabor({ activityType: 'design' }); });
+const uncertainLaborIndex = calls.length - 1;
+assert.equal(calls[uncertainLaborIndex].payload.action, 'labor_start');
+const originalLaborId = calls[uncertainLaborIndex].payload.request_id;
+assert.ok(originalLaborId);
+await act(async () => {
+  calls[uncertainLaborIndex].reject(new Error('Synthetic Current Work lost acknowledgement'));
+  await assert.rejects(uncertainLabor, /Synthetic Current Work lost acknowledgement/);
+});
+assert.equal(laborDialog().props.activeLabor, null, 'Unknown labor write must never show as successful');
+let retriedLabor;
+await act(async () => { retriedLabor = laborDialog().props.onStartLabor({ activityType: 'design' }); });
+const laborRetryIndex = calls.length - 1;
+assert.equal(calls[laborRetryIndex].payload.request_id, originalLaborId);
+await act(async () => {
+  calls[laborRetryIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in',
+    active_labor: { id: 'design-work', activity_type: 'design', user_email: second.email },
+    labor_summary: { count: 1, total_minutes: 7 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await retriedLabor;
+});
+assert.equal(laborDialog().props.activeLabor.id, 'design-work');
+console.log('PASS interrupted Current Work start retains request identity and confirms one segment');
+
+let changedLabor;
+await act(async () => { changedLabor = laborDialog().props.onChangeLabor({ activityType: 'installation' }); });
+const changedLaborIndex = calls.length - 1;
+assert.equal(calls[changedLaborIndex].payload.action, 'labor_change');
+await act(async () => {
+  calls[changedLaborIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in',
+    active_labor: { id: 'installation-work', activity_type: 'installation', user_email: second.email },
+    labor_summary: { count: 2, total_minutes: 12 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await changedLabor;
+});
+assert.equal(laborDialog().props.activeLabor.id, 'installation-work');
+let stoppedLabor;
+await act(async () => { stoppedLabor = laborDialog().props.onStopLabor(); });
+const stoppedLaborIndex = calls.length - 1;
+assert.equal(calls[stoppedLaborIndex].payload.action, 'labor_stop');
+await act(async () => {
+  calls[stoppedLaborIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in',
+    active_labor: null,
+    labor_summary: { count: 2, total_minutes: 19 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await stoppedLabor;
+});
+assert.equal(laborDialog().props.activeLabor, null);
+assert.equal(laborDialog().props.laborSummary.total_minutes, 19);
+console.log('PASS Current Work change and stop keep authoritative labor summary');
+
+let oldLabor;
+await act(async () => { oldLabor = laborDialog().props.onStartLabor({ activityType: 'fabrication' }); });
+const oldLaborIndex = calls.length - 1;
+assert.equal(calls[oldLaborIndex].payload.action, 'labor_start');
+await act(async () => {
+  renderer.update(React.createElement(QuickClockSection, {
+    allUsers: [first, second], employeeSessionToken: 'session-first-current', employeeSessionUser: first,
+  }));
+});
+const currentStatusIndex = calls.length - 1;
+assert.equal(calls[currentStatusIndex].payload.action, 'status');
+assert.equal(calls[currentStatusIndex].payload.target_email, first.email);
+await act(async () => { calls[currentStatusIndex].resolve(status(first, 'first-available-work')); });
+assert.equal(laborDialog().props.activeLabor, null);
+await act(async () => {
+  calls[oldLaborIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in',
+    active_labor: { id: 'second-stale-labor', activity_type: 'fabrication', user_email: second.email },
+    labor_summary: { count: 2, total_minutes: 19 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await oldLabor;
+});
+assert.equal(laborDialog().props.timeEntry.id, 'first-available-work');
+assert.equal(laborDialog().props.activeLabor, null);
+assert.equal(laborDialog().props.laborSummary.total_minutes, 0);
+console.log('PASS prior employee Current Work acknowledgement cannot replace new session data');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 10/10 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 13/13 Time Clock Quick Clock async status acceptance cases');
