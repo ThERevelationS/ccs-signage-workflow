@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-14T20:12:52.297Z",
+  "tested_at": "2026-10-14T20:27:17.436Z",
   "mode": "actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked",
   "production_writes": 0,
   "checks": [

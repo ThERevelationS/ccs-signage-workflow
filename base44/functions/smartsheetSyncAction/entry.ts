@@ -25,6 +25,7 @@ import { canonicalBase44SalesAssignee } from '../../shared/smartsheetSalesAssign
 import { hasMeaningfulSmartsheetSalesCustomer } from '../../shared/smartsheetSalesImportEligibility.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
+import { orderBackupStillMatchesSheetBeforeFirstWrite } from '../../shared/smartsheetOrderBackupFirstWriteSafety.mjs';
 import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBackupReadiness.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId, planOrderRequestorContactAppend, orderRequestorOptionsPreserved } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
@@ -1751,6 +1752,9 @@ async function pushDataset(
   // Order Request and Sales Pipeline, read every Smartsheet page, persist a
   // private Google Drive JSON snapshot, and read the exact file back before
   // writing ANY row.
+  let verifiedOrderBackup: any = null;
+  let firstOrderWriteAttempted = false;
+  let firstOrderWriteConfirmed = false;
   if ((dataset === 'orders' || dataset === 'sales') && globalConfig?.backup_before_write) {
     try {
       const connection = await base44.asServiceRole.connectors.getConnection('googledrive');
@@ -1766,7 +1770,7 @@ async function pushDataset(
           return response;
         } finally { clearTimeout(timeout); }
       };
-      await createVerifiedOrderSheetBackup({
+      const verifiedBackup = await createVerifiedOrderSheetBackup({
         dataset,
         sheetId,
         readPage: async (page: number, pageSize: number) => {
@@ -1821,6 +1825,7 @@ async function pushDataset(
           }
         }
       });
+      if (dataset === 'orders') verifiedOrderBackup = verifiedBackup;
     } catch (err) {
       return { dataset, direction: 'push', sheet_id: sheetId, skipped: true,
         reason: `Recoverable ${dataset === 'sales' ? 'Sales' : 'Order'} backup could not be verified; no Smartsheet rows were written: ${(err as any)?.message || 'unknown error'}`,
@@ -1828,6 +1833,23 @@ async function pushDataset(
         errors: 0, error_details: [], conflict_record_ids: [] };
     }
   }
+
+  // A backup is a point-in-time recovery artifact, not permission to write
+  // later against a different sheet version. Recheck before the FIRST Order
+  // Smartsheet mutation (POST or PUT). After a confirmed first write the
+  // sheet version changes legitimately, so the standard per-row safeguards
+  // govern subsequent operations instead of comparing against the old backup.
+  const verifyOrderBackupBeforeFirstWrite = async () => {
+    if (dataset !== 'orders' || globalConfig?.backup_before_write !== true ||
+        firstOrderWriteConfirmed) return;
+    if (!verifiedOrderBackup) throw new Error('Verified Order backup is unavailable. No Smartsheet write authorized.');
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    const current = (await smartsheetGet(`/sheets/${sheetId}?page=1&pageSize=1`, token)).body;
+    if (!orderBackupStillMatchesSheetBeforeFirstWrite(verifiedOrderBackup, current, sheetId)) {
+      throw new Error('Order Smartsheet sheet changed after the verified prewrite backup. No write was authorized; reload and start Save & Sync again with a fresh backup.');
+    }
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+  };
 
   const created: string[] = [];
   const updated: string[] = [];

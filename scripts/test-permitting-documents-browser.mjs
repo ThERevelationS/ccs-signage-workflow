@@ -46,7 +46,7 @@ try{
   await catalog.getByLabel('Document type',{exact:true}).selectOption('all');
   await catalog.getByLabel('Source currentness filter').selectOption('context');assert.equal(await cards.count(),2);
   await catalog.getByText('Draft rewrite',{exact:true}).click();
-  await catalog.getByText('Draft, historical or superseded context.',{exact:false}).waitFor();
+  await cards.filter({has:page.getByText('Draft rewrite',{exact:true})}).getByText('Draft, historical or superseded context.',{exact:false}).waitFor();
   assert.equal(await catalog.locator('a[href^="javascript:"]').count(),0);
   await catalog.getByLabel('Source currentness filter').selectOption('current');assert.equal(await cards.count(),1);await catalog.getByText('Recorded fees',{exact:true}).waitFor();
   await catalog.getByLabel('Source currentness filter').selectOption('all');

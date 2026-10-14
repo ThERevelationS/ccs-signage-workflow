@@ -1,0 +1,22 @@
+{
+  "tested_at": "2026-10-14T20:27:09.652Z",
+  "mode": "actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked",
+  "production_writes": 0,
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, extraction, zero bytes, missing archive, invalid dates, existing search/focus navigation, failure/retry, switch/empty, canonical reads, no provider calls, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, extraction, zero bytes, missing archive, invalid dates, existing search/focus navigation, failure/retry, switch/empty, canonical reads, no provider calls, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, extraction, zero bytes, missing archive, invalid dates, existing search/focus navigation, failure/retry, switch/empty, canonical reads, no provider calls, no overflow"
+    }
+  ]
+}
