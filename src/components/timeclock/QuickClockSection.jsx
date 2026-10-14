@@ -134,12 +134,24 @@ export default function QuickClockSection({
   // Passive refreshes may return out of order, after a session switch, or
   // after a punch mutation. Never let an old response replace newer state.
   const statusRefreshSequenceRef = useRef(0);
-  const activeActionCountRef = useRef(0);
+  // In-flight actions are isolated by the signed Time Clock session: a slow
+  // request for one employee must not block status restoration for another.
+  const activeActionCountRef = useRef(new Map());
   const sessionScopeRef = useRef({ token: "", email: "" });
+  const selectionRef = useRef({ email: "", entryId: "" });
   sessionScopeRef.current = {
     token: authoritativeSessionToken,
     email: String(authoritativeSessionUser?.email || "").trim().toLowerCase(),
   };
+  selectionRef.current = {
+    email: String(selectedUser?.email || "").trim().toLowerCase(),
+    entryId: String(activeEntry?.id || ""),
+  };
+  const currentActionScope = () => JSON.stringify([
+    sessionScopeRef.current.token, sessionScopeRef.current.email,
+  ]);
+  const actionCountForScope = (scope = currentActionScope()) =>
+    activeActionCountRef.current.get(scope) || 0;
 
   const canUseFace = Boolean(authoritativeSessionToken) && (allUsers || []).some(
     (user) => Array.isArray(user.face_descriptors) && user.face_descriptors.length > 0,
@@ -172,7 +184,8 @@ export default function QuickClockSection({
 
   const invokeTimeClock = async (payload) => {
     cancelDisplayReset();
-    activeActionCountRef.current += 1;
+    const actionScope = currentActionScope();
+    activeActionCountRef.current.set(actionScope, actionCountForScope(actionScope) + 1);
     statusRefreshSequenceRef.current += 1;
     try {
       const response = await base44.functions.invoke("timeClockAction", payload);
@@ -188,8 +201,10 @@ export default function QuickClockSection({
       if (err?.retrySameRequest !== undefined) throw err;
       throw apiErrorFrom(err, "Time Clock action was not confirmed by the server.");
     } finally {
-      activeActionCountRef.current = Math.max(0, activeActionCountRef.current - 1);
-      statusRefreshSequenceRef.current += 1;
+      const remaining = Math.max(0, actionCountForScope(actionScope) - 1);
+      if (remaining) activeActionCountRef.current.set(actionScope, remaining);
+      else activeActionCountRef.current.delete(actionScope);
+      if (actionScope === currentActionScope()) statusRefreshSequenceRef.current += 1;
     }
   };
 
@@ -349,11 +364,11 @@ export default function QuickClockSection({
 
   const refreshAuthoritativeSessionState = useCallback(async ({ quiet = false } = {}) => {
     const email = String(authoritativeSessionUser?.email || "").trim().toLowerCase();
-    if (!authoritativeSessionToken || !email || activeActionCountRef.current > 0) return null;
+    if (!authoritativeSessionToken || !email || actionCountForScope() > 0) return null;
     const sequence = ++statusRefreshSequenceRef.current;
     const isCurrentRefresh = () =>
       sequence === statusRefreshSequenceRef.current &&
-      activeActionCountRef.current === 0 &&
+      actionCountForScope() === 0 &&
       sessionScopeRef.current.token === authoritativeSessionToken &&
       sessionScopeRef.current.email === email;
 
@@ -475,7 +490,7 @@ export default function QuickClockSection({
       if (statusRefreshSequenceRef.current !== currentSequence ||
           sessionScopeRef.current.token !== currentScope.token ||
           sessionScopeRef.current.email !== currentScope.email ||
-          activeActionCountRef.current > 0) return;
+          actionCountForScope() > 0) return;
       resetState();
     }, delayMs);
   };
