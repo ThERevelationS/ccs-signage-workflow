@@ -250,10 +250,11 @@ export default function WorkPauseOverlay({
     const requestId = resumeRequestRef.current || newRequestId();
     const resumeSequence = ++resumeSequenceRef.current;
     const expectedPauseId = String(pauseState.active_work_pause.id);
-    const isCurrentResume = () => mountedRef.current &&
-      resumeSequence === resumeSequenceRef.current &&
-      scopeRef.current === scopeKey &&
+    const isCurrentScope = () => mountedRef.current &&
+      resumeSequence === resumeSequenceRef.current && scopeRef.current === scopeKey;
+    const isCurrentResume = () => isCurrentScope() &&
       pauseIdRef.current === expectedPauseId;
+    let refreshAfterResume = false;
     resumeRequestRef.current = requestId;
     resumeInFlightRef.current = true;
     statusSequenceRef.current += 1;
@@ -282,7 +283,7 @@ export default function WorkPauseOverlay({
       if (typeof onResumed === "function") onResumed(data);
       try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
       window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed", { detail: data }));
-      void loadStatus({ preservePausedOnError: true });
+      refreshAfterResume = true;
     } catch (err) {
       if (!isCurrentResume()) return;
       const data = err?.response?.data || {};
@@ -293,9 +294,10 @@ export default function WorkPauseOverlay({
       setError(data?.error || err?.message || "Resume Work was not confirmed. Your work timer remains paused.");
       setShowResumePrompt(true);
     } finally {
-      if (isCurrentResume()) {
+      if (isCurrentScope()) {
         resumeInFlightRef.current = false;
         setResumeBusy(false);
+        if (refreshAfterResume) void loadStatus({ preservePausedOnError: true });
       }
     }
   };
