@@ -847,11 +847,21 @@ export default function QuickClockSection({
     }
   };
 
+  const breakContextFor = (email) => {
+    const scope = currentActionScope();
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const expectedEntryId = String(activeEntry?.id || "");
+    return () => scope === currentActionScope() &&
+      selectionRef.current.email === expectedEmail &&
+      selectionRef.current.entryId === expectedEntryId;
+  };
+
   const handleStartBreak = async ({ breakType, isPaid }) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
     }
     const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
     const actionKey = `break_start:${breakType}:${isPaid ? "paid" : "unpaid"}`;
     const requestId = requestIdFor(actionKey, email);
     setPersistenceError("");
@@ -864,12 +874,14 @@ export default function QuickClockSection({
         ...credentialPayload(credentialRef.current, email),
       });
       clearRequest(actionKey, email);
-      applyBreakResponse(result);
-      setRecognitionStatus(isPaid ? "Paid break started and confirmed by server." : "Unpaid lunch started and confirmed by server.");
+      if (stillCurrent()) {
+        applyBreakResponse(result);
+        setRecognitionStatus(isPaid ? "Paid break started and confirmed by server." : "Unpaid lunch started and confirmed by server.");
+      }
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest(actionKey, email);
-      setPersistenceError(err?.message || "Break start was not confirmed by the server.");
+      if (stillCurrent()) setPersistenceError(err?.message || "Break start was not confirmed by the server.");
       throw err;
     }
   };
@@ -879,6 +891,7 @@ export default function QuickClockSection({
       throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
     }
     const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("break_end", email);
     setPersistenceError("");
     try {
@@ -888,12 +901,14 @@ export default function QuickClockSection({
         ...credentialPayload(credentialRef.current, email),
       });
       clearRequest("break_end", email);
-      applyBreakResponse(result);
-      setRecognitionStatus("Break ended and confirmed by server.");
+      if (stillCurrent()) {
+        applyBreakResponse(result);
+        setRecognitionStatus("Break ended and confirmed by server.");
+      }
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest("break_end", email);
-      setPersistenceError(err?.message || "Break end was not confirmed by the server.");
+      if (stillCurrent()) setPersistenceError(err?.message || "Break end was not confirmed by the server.");
       throw err;
     }
   };
