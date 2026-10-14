@@ -198,6 +198,10 @@ async function performOrderSmartsheetCreate({
   try {
     body = await postRow(current);
   } catch (error) {
+    if (error?.orderCreatePrePostGuardBlocked === true) {
+      await releaseUnsentOrderCreateReservation({ entity, id, token, targetSheet, expectedSnapshot });
+      throw new Error('Order backup changed before Smartsheet POST. No new row was sent; the reservation was released and pending edits retained. Reload and run Save & Sync with a fresh verified backup.');
+    }
     throw new Error('Smartsheet Order create outcome is uncertain. The Order is held for review; do not retry automatically.');
   }
 
