@@ -1,0 +1,87 @@
+{
+  "candidate": {
+    "source_document_id": "6aced7f49bda8d3e61944a9d",
+    "physical_page": 7,
+    "office_name": "City of Sharonville Community Development Department Office",
+    "publisher_quote": "City of Sharonville Community Development Department Office"
+  },
+  "result": {
+    "success": true,
+    "dry_run": true,
+    "proposal": {
+      "id": "office-candidate-3bec03c01bca831b10be20e83ee1fe0df109206adb02acec76b6613d352e8c9c",
+      "government_office_id": "office-candidate-3bec03c01bca831b10be20e83ee1fe0df109206adb02acec76b6613d352e8c9c",
+      "name": "City of Sharonville Community Development Department Office",
+      "office_type": "",
+      "office_types": [],
+      "workflow_steps": [],
+      "contact_phone": "",
+      "contact_email": "",
+      "contact_website": "",
+      "contact_address": "",
+      "contact_notes": "",
+      "government_office": {
+        "name": "City of Sharonville Community Development Department Office",
+        "phone": "",
+        "email": "",
+        "website": "",
+        "address": "",
+        "notes": "",
+        "state": "OH",
+        "verification_status": "needs_verification",
+        "verified_at": "",
+        "verified_by": "",
+        "source_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+        "verification_notes": "Candidate from a retained publisher quote. Current office identity, contacts, roles and coverage require separate review."
+      },
+      "office_candidate_registration": {
+        "method": "retained-office-candidate-v1",
+        "registration_key": "d5b8a1aaaea47ec6b916ee5458f3f0d353f23a70a3514712322c74933b440475",
+        "snapshot": {
+          "source": {
+            "id": "6aced7f49bda8d3e61944a9d",
+            "jurisdiction_id": "6ac19f0e23bd8a65822f6d51",
+            "jurisdiction_name": "Sharonville",
+            "issuing_office": null,
+            "jurisdiction_scope": null,
+            "title": "Residential Permitting Guide",
+            "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+            "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+            "file_hash_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+            "file_bytes": 11002258,
+            "authority_classification": "unknown_review_required",
+            "content_status": "unknown",
+            "verification_status": "needs_verification",
+            "authority_confidence": "unverified",
+            "reviewer": null,
+            "effective_or_adopted_date": null,
+            "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review.",
+            "authority_review": null
+          },
+          "profile": {
+            "id": "6ac19f0e23bd8a65822f6d51",
+            "name": "Sharonville",
+            "state": "OH",
+            "type": "city"
+          },
+          "proof": {
+            "physical_page": 7,
+            "text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+            "excerpt": "City of Sharonville Community Development Department Office"
+          },
+          "archive_document_id": "19bc3643-d404-4bcf-8cde-92c91897fd21"
+        }
+      }
+    },
+    "existing_office": null,
+    "expected_catalog_updated_date": "2026-10-07T11:14:42.435000",
+    "expected_evidence_digest": "d5b8a1aaaea47ec6b916ee5458f3f0d353f23a70a3514712322c74933b440475",
+    "authority_verified": false,
+    "address_authority_resolved": false,
+    "llm_calls": 0
+  },
+  "settings_unchanged": true,
+  "source_unchanged": true,
+  "profile_unchanged": true,
+  "visible_catalog_count": 9
+}
