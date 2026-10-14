@@ -1,0 +1,67 @@
+{
+  "tested_at": "2026-10-14T15:33:56.656Z",
+  "mode": "isolated Chromium; actual component and production CSS; mock API only",
+  "production_writes": 0,
+  "checks": [
+    {
+      "name": "address overview and next action reader",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action unresolved",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action denied",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action office",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action reader",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action unresolved",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action denied",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action office",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action reader",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action unresolved",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action denied",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "address overview and next action office",
+      "width": 1280,
+      "passed": true
+    }
+  ]
+}
