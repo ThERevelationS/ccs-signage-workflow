@@ -1739,11 +1739,16 @@ export default function ProductChecklistDialog({
     (editingProductName !== null && editingProductNameText.trim() !== editingProductName.trim()) ||
     Array.from(customStatusDraftsByItemIdRef.current.values()).some(value => Boolean(value?.trim()))
   );
-  const hasUnsavedChanges = !isLoading && (
+  const hasUnsavedChecklistChanges = !isLoading && (
     JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot) ||
     JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot) ||
     hasUnsubmittedDrafts
   );
+  const hasPendingRevisitChoice = !isLoading &&
+    failedRevisitWorkOrderIdRef.current === workOrder?.id &&
+    failedRevisitSelectionRef.current !== undefined &&
+    (failedRevisitSelectionRef.current || "") !== (loadedRevisitDateSnapshot || "");
+  const hasUnsavedChanges = hasUnsavedChecklistChanges || hasPendingRevisitChoice;
   const getUnsubmittedDraftTarget = () => {
     if (newItemInput.show && newItemText.trim()) {
       return { kind: "new-item", itemId: newItemInput.parentId, productName: newItemInput.productName };
@@ -1828,7 +1833,7 @@ export default function ProductChecklistDialog({
   };
   const requestReloadLatest = () => {
     if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current) return;
-    if (hasUnsavedChanges) {
+    if (hasUnsavedChecklistChanges) {
       returnToReloadRef.current = true;
       setDiscardWarning("reload");
       return;
@@ -3296,7 +3301,9 @@ export default function ProductChecklistDialog({
             <AlertDialogDescription>
               {discardWarning === "reload"
                 ? "Your unsaved checklist answers, items, product edits, and unfinished text will be lost. Reload latest replaces this view with the saved Work Order. A previously unconfirmed Revisit choice stays available for your next explicit Save & Revisit review if the server has not saved it. Keep Editing preserves everything here."
-                : "Checklist answers, assignments, items, products, or unfinished text entered here have not been saved. Leaving now will discard them."}
+                : hasPendingRevisitChoice
+                  ? "Your last Revisit choice has not been confirmed on the server. Closing will discard that choice, along with any unsaved checklist answers, assignments, items, products, or unfinished text. Keep Editing preserves them here."
+                  : "Checklist answers, assignments, items, products, or unfinished text entered here have not been saved. Leaving now will discard them."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
