@@ -224,6 +224,40 @@ for(const status of ["unchanged","mixed"]){
  });
 }
 
+test("Field review keeps individual latest/mine choices without rewriting the Account",async()=>{
+ const f=fixture();await f.save();
+ // The full name landed, but an import/export grant did not.
+ f.state.readResponse=[{...target,can_import_export:false,username:"remote-only-username"}];
+ await f.verify();
+ assert.equal(f.state.write.comparison.status,"mixed");
+ f.state.choices={can_import_export:"mine",full_name:"latest"};
+ f.state.confirmed=true;f.accept();
+ assert.equal(f.state.form.full_name,target.full_name);
+ assert.equal(f.state.form.can_import_export,true);
+ assert.equal(f.state.form.username,"remote-only-username");
+ assert.equal(f.state.form.password_hash,originalDraft.password_hash);
+ assert.equal(f.refs.accountDraftBaseline.current.values.can_import_export,false);
+ assert.equal(f.state.choices && Object.keys(f.state.choices).length,0);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("One chosen conflicting personal-detail field leaves other latest Account data alone",async()=>{
+ const f=fixture();await f.save();
+ f.state.readResponse=[{...target,full_name:"Another person's edit",
+   username:"Remote username",can_import_export:false}];
+ await f.verify();
+ assert.equal(f.state.write.comparison.status,"mixed");
+ f.state.choices={full_name:"mine"};
+ f.state.confirmed=true;f.accept();
+ assert.equal(f.state.form.full_name,target.full_name);
+ assert.equal(f.state.form.username,"Remote username");
+ assert.equal(f.state.form.can_import_export,false);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.match(f.state.notice,/local draft only/);
+});
+
 test("Read failure, missing target, duplicate target, or missing version cannot authorize resubmission",async()=>{
  for(const value of [null,[],[target,target],[{...target,updated_date:""}]]){
   const f=fixture();await f.save();f.state.readResponse=value;
