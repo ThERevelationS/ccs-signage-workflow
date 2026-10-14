@@ -1834,6 +1834,9 @@ async function pushDataset(
   const errors: string[] = [];
   const salesFailedRecordIds = new Set<string>();
   const orderFailedRecordIds = new Set<string>();
+  // Exact permanent IDs for Order rows whose FINAL remote read-back could not
+  // confirm the planned values. Diagnostic only; never authorize a retry/PUT.
+  const orderVerificationReviews = new Map<string, { order_id: string; row_id: string; state: string }>();
   const orderMissingPermanentRows = new Map<string, string>();
   let requestorContactsSkippedNoEmail = 0;
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
@@ -2658,14 +2661,20 @@ async function pushDataset(
             orderRemoteVerifiedIds.add(recordId);
           } else {
             orderFailedRecordIds.add(recordId);
+            orderVerificationReviews.set(recordId, {
+              order_id: recordId, row_id: verification.rowId, state: 'row_mismatch',
+            });
             errors.push(recordId + ': Smartsheet row ' + verification.rowId +
               ' did not read back with the expected values. The Order remains queued.');
           }
         }
       } catch (err: any) {
         const detail = err?.message || 'remote verification failed';
-        for (const [recordId] of remoteChecks) {
+        for (const [recordId, verification] of remoteChecks) {
           orderFailedRecordIds.add(recordId);
+          orderVerificationReviews.set(recordId, {
+            order_id: recordId, row_id: verification.rowId, state: 'verification_unavailable',
+          });
           errors.push(recordId + ': Smartsheet row values could not be freshly verified (' +
             detail + '). The Order remains queued.');
         }
@@ -2893,6 +2902,8 @@ async function pushDataset(
       remaining_records: Math.max(0, pendingRecords.length - orderProcessedCount),
       successful_record_ids: successfulOrderRecordIds.slice(0, 100),
       unresolved_record_ids: unresolvedOrderRecordIds.slice(0, 100),
+      remote_verification_review_count: orderVerificationReviews.size,
+      remote_verification_review_items: [...orderVerificationReviews.values()].slice(0, 10),
       missing_permanent_row_links: orderMissingPermanentRows.size,
       missing_permanent_row_record_ids: [...orderMissingPermanentRows.keys()].slice(0, 100),
       missing_permanent_smartsheet_row_ids: [...orderMissingPermanentRows.values()].slice(0, 100),
