@@ -861,7 +861,7 @@ export default function UserManagement() {
         activeSessionToken.current !== sessionToken ||
         current?.id !== pending.id || current?.email !== pending.email ||
         userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
-        deletionInFlight.current || isLoading || userDirectoryError) return;
+        deletionInFlight.current || isLoading) return;
     const owner = { sessionToken };
     userUpdateOwner.current = owner;
     userUpdateInFlight.current = true;
@@ -1770,19 +1770,102 @@ export default function UserManagement() {
             </div>
           </Tabs>
 
+          {accountWriteRecovery && (
+            <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 space-y-3 text-sm" role="alert">
+              <p className="font-semibold text-amber-950">Account save outcome needs verification</p>
+              <p className="text-amber-900">
+                The Account request ended without a verified receipt. It might have succeeded.
+                Your unsaved draft is preserved; the Time Clock password was not sent.
+                No automatic Account retry will occur.
+              </p>
+              {accountWriteRecovery.stage === "review" && accountWriteRecovery.comparison ? (
+                <>
+                  <p className="font-medium text-amber-950">
+                    {accountWriteRecovery.comparison.status === "applied"
+                      ? "Verified Account fields match the requested changes."
+                      : accountWriteRecovery.comparison.status === "unchanged"
+                        ? "Requested Account changes are not visible in the verified record."
+                        : "Verified Account fields include partial, different, or concurrent changes."}
+                  </p>
+                  <p className="text-amber-900">
+                    {accountWriteRecovery.comparison.appliedCount} requested fields match;
+                    {" "}{accountWriteRecovery.comparison.unchangedCount} remain at their previous values;
+                    {" "}{accountWriteRecovery.comparison.divergentCount} have different values.
+                    A matching value does not prove which request wrote it.
+                  </p>
+                  <div className="max-h-44 overflow-auto rounded border border-amber-200 bg-white">
+                    <table className="w-full text-xs text-left">
+                      <thead className="sticky top-0 bg-gray-100">
+                        <tr><th scope="col" className="p-2">Account field</th><th scope="col" className="p-2">Verified outcome</th></tr>
+                      </thead>
+                      <tbody>
+                        {accountWriteRecovery.comparison.fields.map(field => (
+                          <tr key={field.key} className="border-t border-gray-100">
+                            <td className="p-2">{field.label}</td>
+                            <td className="p-2">
+                              {field.outcome === "applied" ? "Matches requested" :
+                                field.outcome === "unchanged" ? "Still original" : "Different from both"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {accountWriteRecovery.comparison.status !== "applied" && (
+                    <label className="flex items-start gap-2 text-amber-950">
+                      <input type="checkbox" className="mt-1"
+                        checked={confirmAccountReconciliation}
+                        onChange={event => setConfirmAccountReconciliation(event.target.checked)} />
+                      I reviewed these Account fields. Adopt the verified latest version as the save baseline
+                      and keep my draft for manual review; I understand a later Save may overwrite newer values.
+                    </label>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" variant="outline"
+                      disabled={userMutationSaving || isLoading ||
+                        (accountWriteRecovery.comparison.status !== "applied" && !confirmAccountReconciliation)}
+                      onClick={acceptVerifiedAccountSave}>
+                      {accountWriteRecovery.comparison.status === "applied"
+                        ? "Use verified Account values (no retry)"
+                        : "Adopt verified baseline; keep my draft"}
+                    </Button>
+                    <Button type="button" size="sm" variant="outline"
+                      disabled={userMutationSaving || isLoading}
+                      onClick={verifyInterruptedAccountSave}>
+                      Verify latest again
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button type="button" size="sm" variant="outline"
+                  disabled={userMutationSaving || isLoading}
+                  onClick={verifyInterruptedAccountSave}>
+                  {userMutationSaving ? "Verifying latest Account..." : "Read latest Account (no writes)"}
+                </Button>
+              )}
+              <p className="text-xs text-amber-900">Only field names and outcomes are shown here. No Account or password data is written during verification.</p>
+            </div>
+          )}
           {accountSaveRecovery && (
             <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 space-y-2 text-sm" role="alert">
-              <p className="font-semibold text-amber-950">Account saved; Time Clock password outcome unverified</p>
+              <p className="font-semibold text-amber-950">
+                {accountSaveRecovery.passwordNotSent
+                  ? "Account values verified; Time Clock password not sent"
+                  : "Account saved; Time Clock password outcome unverified"}
+              </p>
               <p className="text-amber-900">
-                Your Account details were saved. The password request may or may not have completed.
-                Nothing has been retried. Your password draft is still in this editor.
-                Check whether it was applied before deciding to retry.
+                {accountSaveRecovery.passwordNotSent
+                  ? "The Account fields match your requested changes. No Time Clock password request was sent. You may authorize a separate password-only request."
+                  : "Your Account details were saved. The password request may or may not have completed. Check whether it was applied before retrying."}
+                {" "}Your password draft is still in this editor. Nothing has been retried.
               </p>
               <label className="flex items-start gap-2 text-amber-950">
                 <input type="checkbox" className="mt-1" checked={passwordRetryConfirmed}
                   disabled={userMutationSaving}
                   onChange={event => setPasswordRetryConfirmed(event.target.checked)} />
-                I verified the password was not changed and authorize a new password-only attempt.
+                {accountSaveRecovery.passwordNotSent
+                  ? "I authorize a separate Time Clock password-only request."
+                  : "I verified the password was not changed and authorize a new password-only attempt."}
               </label>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" variant="outline"
@@ -1821,7 +1904,7 @@ export default function UserManagement() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || !!accountSaveRecovery || isLoading || userDirectoryError || !sessionToken}
+              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || !!accountSaveRecovery || !!accountWriteRecovery || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
