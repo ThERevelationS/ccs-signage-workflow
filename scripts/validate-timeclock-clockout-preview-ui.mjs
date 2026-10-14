@@ -128,5 +128,18 @@ assert.doesNotMatch(renderedText(tree), /Latest Same Shift|In House Projects|Sec
   'Switching shifts must reset previous employee draft allocations');
 console.log('PASS shift transition clears prior employee drafts and accepts only its fresh preview');
 
+await act(async () => { clickButton(tree, 'In House')(); });
+assert.match(renderedText(tree), /In House Projects/);
+const beforeMissingService = calls.length;
+await act(async () => {
+  tree.update(React.createElement(ClockOutDialog, propsFor(second, {
+    onLoadLaborAllocationPreview: null,
+  })));
+});
+assert.equal(calls.length, beforeMissingService);
+assert.doesNotMatch(renderedText(tree), /Fresh First Shift|In House Projects/,
+  'Switching employees must clear prior allocations even without a preview service');
+console.log('PASS shift change clears drafts when suggestion service is unavailable');
+
 await act(async () => { tree.unmount(); });
-console.log('PASS 4/4 Clock Out preview and allocation draft scenarios');
+console.log('PASS 5/5 Clock Out preview and allocation draft scenarios');
