@@ -76,7 +76,7 @@ export default function PDFViewer({ fileUrl, fileName, onBack, renderMode = 'nat
             fileUrl={safeFileUrl}
             onPageRendered={() => setLoadState('ready')}
             onPageLoading={() => setLoadState('loading')}
-            onFailure={() => { setLoadState('error'); setShowIframe(false); }}
+            onFailure={error => { setLoadState(error?.name === 'AbortError' ? 'timeout' : 'error'); setShowIframe(false); }}
           /> : <iframe
             key={safeFileUrl + ":" + previewAttempt}
             src={`${safeFileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
