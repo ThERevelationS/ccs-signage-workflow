@@ -197,10 +197,14 @@ export default function FleetMechanic() {
       // A top-level manual Refresh must not silently pair a stale local form
       // with a newly fetched CCS version. A later Save would otherwise use
       // the fresh CAS token while overwriting CCS changes with old form values.
-      const estimateSignature = row => row ? [
-        row.id,row.updated_date,row.status,row.visibility,
-        row.approval_required === true,row.approval_tier,
-      ].map(value => String(value ?? "")).join("|") : "";
+      const estimateSignature = row => row ? JSON.stringify({
+        id:row.id,updated_date:row.updated_date,status:row.status,visibility:row.visibility,
+        approval_required:row.approval_required === true,approval_tier:row.approval_tier,
+        decision_by_email:row.decision_by_email,decision_notes:row.decision_notes,
+        estimated_labor_hours:row.estimated_labor_hours,labor_rate:row.labor_rate,
+        misc_total:row.misc_total,estimated_completion_date:row.estimated_completion_date,
+        parts_estimate:row.parts_estimate,fluids_estimate:row.fluids_estimate,notes:row.notes,
+      }) : "";
       const estimateChanged = quiet && previousPayload && selectedId &&
         estimateSignature(previousEstimate) !== estimateSignature(latestEstimate);
       applyPortalPayload(result);
