@@ -178,6 +178,7 @@ export default function UserManagement() {
     setAccountSaveRecovery(null);
     setAccountWriteRecovery(null);
     setConfirmAccountReconciliation(false);
+    setAccountFieldChoices({});
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
     hrSaveOwner.current = null;
@@ -465,6 +466,7 @@ export default function UserManagement() {
     setAccountSaveRecovery(null);
     setAccountWriteRecovery(null);
     setConfirmAccountReconciliation(false);
+    setAccountFieldChoices({});
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
   };
@@ -522,6 +524,7 @@ export default function UserManagement() {
     setAccountSaveRecovery(null);
     setAccountWriteRecovery(null);
     setConfirmAccountReconciliation(false);
+    setAccountFieldChoices({});
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
     const initialAccountDraft = createAdminAccountDraft(user);
@@ -906,11 +909,13 @@ export default function UserManagement() {
         ...pending, stage: "review", latest, comparison
       });
       setConfirmAccountReconciliation(false);
+      setAccountFieldChoices({});
       setUserMutationError("");
     } catch {
       if (ownsVerification()) {
         setAccountWriteRecovery({ ...pending, stage: "needs_read" });
         setConfirmAccountReconciliation(false);
+        setAccountFieldChoices({});
         setUserMutationError("Unable to verify the Account save. No retry was sent. Reload the verified directory before resolving.");
       }
     } finally {
