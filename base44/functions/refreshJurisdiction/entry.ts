@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
         entity:base44.asServiceRole.entities.JurisdictionProfile,profile:selectedProfile,selection:savedSelection,
         onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
         fetchPage:async(url:string)=>{
-          const response=await safeExternalFetch(url,{headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS)});
+          const selectedHost=new URL(savedSelection.url).hostname.replace(/^www\./,'');
+          const response=await safeExternalFetch(url,{headers:{'User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS)},5,
+            (candidate:URL)=>candidate.hostname.replace(/^www\./,'')===selectedHost && !candidate.port);
           return {...await readPermittingResourceResponse(response),finalUrl:response.url || url};
         }
       }) : await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter,rescanSourceUrl);
