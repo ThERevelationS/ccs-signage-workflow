@@ -36,10 +36,15 @@ function addressResponse(data:any,init:any={}){
 Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
  try{
-  const base44=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(base44,body?.session_token);
+  const base44=createClientFromRequest(req),body=await req.json();
+  // Admin diagnostics use normal platform authentication; ordinary searches keep
+  // the existing Sign Shop session requirement and authority gates.
+  const diagnostic=body?.action==='geocode_diagnostic';
+  const actor=diagnostic?await base44.auth.me().catch(()=>null):await authenticateSignShopSession(base44,body?.session_token);
+  if(diagnostic&&actor?.role!=='admin')return addressResponse({success:false,error:'Admin access required.'},{status:403});
   const address=typeof body.address==='string'?body.address.trim():'';
   if(!address||address.length>500)return addressResponse({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
-  if(body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
+  if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});
   const progress=async(event:any)=>{const {progress,...item}=event;await reporter.emit(item,progress || {});};
   await reporter.emit({kind:'address_lookup',detail:`Looking up ${address}. Service revision: ${ADDRESS_LOOKUP_REVISION}.`},{stage:'Finding the building on the map',indeterminate:true});
   let geocode:any=null,geocodingService:any=null;
@@ -61,6 +66,7 @@ Deno.serve(async req=>{
    if(geocodingService)await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});
    if(data.status==='OK'&&data.results?.length){const g=data.results[0];geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:strictGeocode(data.results,address),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
   }catch{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}
+  if(diagnostic)return addressResponse({success:true,diagnostic_only:true,geocode,geocoding_service:geocodingService,authority_established:false,apply_allowed:false,llm_calls:0,record_writes:0});
   await reporter.emit({kind:'geocode_result',detail:geocode?`Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact?'Street and building coordinates matched.':'Approximate or corrected address; review required.'}`:'No map location found.'},{stage:'Checking government boundaries',indeterminate:true});
   const resolution=await resolveSpatialLocation({geocode,fetchJSON:fixedJSON,onProgress:progress});
   const hasServiceIssue=Boolean(geocodingService?.issue&&resolution.status!=='location_verified');
