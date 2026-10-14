@@ -302,5 +302,41 @@ assert.equal(firstDialog().props.breakSummary.unpaid_minutes, 0,
   'Previous employee End Break confirmation must not contaminate next employee totals');
 console.log('PASS prior employee End Break acknowledgement cannot replace new employee totals');
 
+let paidStart;
+await act(async () => {
+  paidStart = firstDialog().props.onStartBreak({ breakType: 'break', isPaid: true });
+});
+const paidStartIndex = calls.length - 1;
+assert.equal(calls[paidStartIndex].payload.action, 'break_start');
+assert.equal(calls[paidStartIndex].payload.is_paid, true);
+await act(async () => {
+  calls[paidStartIndex].resolve({ data: {
+    success: true, status: 'clocked_in', user: second, break_status: 'on_break',
+    break: { id: 'paid-break-second', is_paid: true, break_type: 'break', user_email: second.email },
+    break_summary: { count: 1, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await paidStart;
+});
+assert.equal(firstDialog().props.breakStatus, 'on_break');
+assert.equal(firstDialog().props.activeBreak.is_paid, true);
+let paidEnd;
+await act(async () => { paidEnd = firstDialog().props.onEndBreak(); });
+const paidEndIndex = calls.length - 1;
+assert.equal(calls[paidEndIndex].payload.action, 'break_end');
+await act(async () => {
+  calls[paidEndIndex].resolve({ data: {
+    success: true, status: 'clocked_in', user: second, break_status: 'working',
+    break_summary: { count: 1, total_minutes: 8, paid_minutes: 8, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await paidEnd;
+});
+assert.equal(firstDialog().props.breakStatus, 'working');
+assert.equal(firstDialog().props.activeBreak, null);
+assert.equal(firstDialog().props.breakSummary.paid_minutes, 8);
+assert.equal(firstDialog().props.breakSummary.unpaid_minutes, 0);
+console.log('PASS paid break normal start/end preserves server paid versus unpaid totals');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 8/8 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 9/9 Time Clock Quick Clock async status acceptance cases');
