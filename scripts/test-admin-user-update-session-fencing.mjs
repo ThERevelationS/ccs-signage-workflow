@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const page = readFileSync('src/components/admin/UserManagement.jsx','utf8');
 const effect = page.slice(page.indexOf('  useEffect(() => {\n    // A previous Admin session'),page.indexOf('  const loadUsers = async'));
-const save = page.slice(page.indexOf('  const handleSave = async () => {'),page.indexOf('  const retryUnverifiedAccountPassword = async () => {'));
+const save = page.slice(page.indexOf('  const handleSave = async () => {'),page.indexOf('  const verifyInterruptedAccountSave = async () => {'));
 const list = page.slice(page.indexOf('  const loadUsers = async () => {'),page.indexOf('  const loadDeletionRequests = async () => {'));
 
 test('Session transition revokes user-update owner and clears sensitive editor state',()=>{
