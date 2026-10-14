@@ -373,7 +373,7 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   const makeClick = new Function("isRegistered", "isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
     "blockOnUnsubmittedDrafts", "cancelPendingNavigationFocus", "setPendingRevisitDate",
     "loadedRevisitDateSnapshot", "setShowRevisitPopup", "setPendingRevisitRetry",
-    "failedRevisitSelectionRef", saveClick + "\nreturn handleSaveClick;");
+    "failedRevisitSelectionRef", "const saveOutcomeUncertain = false;\n" + saveClick + "\nreturn handleSaveClick;");
   const cancel = () => calls.push("cancel focus");
   const setDate = date => calls.push(["revisit date", date]);
   const setOpen = open => calls.push(["confirmation open", open]);
@@ -402,7 +402,7 @@ check("Save and Revisit opens focus-safe confirmation without bypassing date sel
   ]);
   assert.match(source, /<RevisitDatePopup\s+isOpen=\{showRevisitPopup\}/);
   assert.match(source, /onSave=\{handleRevisitSave\}/);
-  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*if \(isSaving \|\| saveInFlightRef\.current \|\| isLoading \|\| loadInFlightRef\.current\) return;\s*if \(blockOnUnsubmittedDrafts\("save"\)\) \{\s*setShowRevisitPopup\(false\);\s*return;\s*\}\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
+  assert.match(source, /const handleRevisitSave = async \(dateString\) => \{\s*if \(saveOutcomeUncertain \|\| isSaving \|\| saveInFlightRef\.current \|\| isLoading \|\| loadInFlightRef\.current\) return;\s*if \(blockOnUnsubmittedDrafts\("save"\)\) \{\s*setShowRevisitPopup\(false\);\s*return;\s*\}\s*setShowRevisitPopup\(false\);\s*await saveChecklist\(dateString\);/);
 
   const searchRecovery = source.slice(source.indexOf("// When checklist edits remove a navigated match"),
     source.indexOf("// A collapsed product, hierarchy, or Completed section"));
@@ -1265,8 +1265,8 @@ check("failed-load UI separates errors, offers retry and blocks stale saves", ()
   assert.match(source, /onClick=\{requestReloadLatest\} disabled=\{isLoading \|\| isSaving\}>Retry loading checklist/);
   assert.match(source, /onClick=\{requestClose\} disabled=\{isLoading \|\| isSaving\}>Close checklist/);
   assert.match(source, /\{hasUnsavedChanges && <p className="mt-2 text-xs">Closing will ask you to confirm before discarding unsaved edits/);
-  assert.match(source, /ref=\{completeButtonRef\}[\s\S]*?disabled=\{isSaving \|\| Boolean\(loadError\)\}/);
-  assert.match(source, /ref=\{saveRevisitButtonRef\}[\s\S]*?disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\)\}/);
+  assert.match(source, /ref=\{completeButtonRef\}[\s\S]*?disabled=\{isSaving \|\| Boolean\(loadError\) \|\| saveOutcomeUncertain\}/);
+  assert.match(source, /ref=\{saveRevisitButtonRef\}[\s\S]*?disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\) \|\| saveOutcomeUncertain\}/);
   assert.ok(source.includes('setHasLoadedChecklist(true);') && source.includes('setLoadError("");'));
 });
 
@@ -1497,7 +1497,7 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const makeClick = new Function("isRegistered", "isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
     "blockOnUnsubmittedDrafts", "cancelPendingNavigationFocus", "setPendingRevisitDate",
     "loadedRevisitDateSnapshot", "setShowRevisitPopup", "setPendingRevisitRetry", "failedRevisitSelectionRef",
-    saveClickSource + "\nreturn handleSaveClick;");
+    "const saveOutcomeUncertain = false;\n" + saveClickSource + "\nreturn handleSaveClick;");
   const retrySelections = [];
   makeClick(true, false, { current: false }, false, { current: false }, block, () => {}, () => {}, "2099-03-21",
     () => { revisitOpens++; }, value => retrySelections.push(value), { current: "2099-03-25" })();
@@ -1508,7 +1508,7 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const makeComplete = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef", "blockOnUnsubmittedDrafts",
     "checkIfComplete", "completingWithoutChecklistRef", "setNoChecklistWarning",
     "setIncompleteWarning", "saveChecklist",
-    completeSource + "\nreturn handleCheckOff;");
+    "const saveOutcomeUncertain = false;\n" + completeSource + "\nreturn handleCheckOff;");
   makeComplete(false, { current: false }, false, { current: false }, block, () => { validated++; return { complete: true, hasChecklist: true }; },
     { current: false }, () => {}, () => {}, () => { persisted++; })();
   assert.equal(validated, 0);
@@ -1519,7 +1519,7 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
     source.indexOf("  // Called when Save button is clicked"));
   const makeOverride = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef", "blockOnUnsubmittedDrafts",
     "completingWithoutChecklistRef", "setNoChecklistWarning", "saveChecklist",
-    overrideSource + "\nreturn proceedWithCheckOff;");
+    "const saveOutcomeUncertain = false;\n" + overrideSource + "\nreturn proceedWithCheckOff;");
   const overrideRef = { current: false };
   makeOverride(false, { current: false }, false, { current: false }, block, overrideRef, () => { throw Error("Override warning must remain open"); },
     () => { persisted++; })();
@@ -1529,7 +1529,7 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const directSaveStart = source.slice(source.indexOf("  const saveChecklist = async"),
     source.indexOf("    try {", source.indexOf("  const saveChecklist = async")));
   const makeSaveGuard = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
-    "blockOnUnsubmittedDrafts", "setIsSaving", directSaveStart + "\n  };\nreturn saveChecklist;");
+    "blockOnUnsubmittedDrafts", "setIsSaving", "const saveOutcomeUncertain = false;\n" + directSaveStart + "\n  };\nreturn saveChecklist;");
   makeSaveGuard(false, { current: false }, false, { current: false }, block, () => { persisted++; })(null, { markComplete: true });
   assert.equal(persisted, 0);
   assert.equal(notices.at(-1), "complete");
@@ -1544,7 +1544,7 @@ check("unfinished inline text blocks Save & Revisit and Complete before any writ
   const revisitSave = source.slice(source.indexOf("  const handleRevisitSave = async (dateString) => {"),
     source.indexOf("  const saveChecklist = async"));
   const makeRevisitSave = new Function("isSaving", "saveInFlightRef", "isLoading", "loadInFlightRef",
-    "blockOnUnsubmittedDrafts", "setShowRevisitPopup", "saveChecklist", revisitSave + "\nreturn handleRevisitSave;");
+    "blockOnUnsubmittedDrafts", "setShowRevisitPopup", "saveChecklist", "const saveOutcomeUncertain = false;\n" + revisitSave + "\nreturn handleRevisitSave;");
   const savedDates = [], popupStates = [];
   makeRevisitSave(false, { current: false }, false, { current: false }, block, value => popupStates.push(value),
     value => savedDates.push(value))("2099-04-12");
@@ -1660,6 +1660,10 @@ await (async () => {
     isSaving: false, isLoading: false,
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: false }, failedRevisitSelectionRef: { current: undefined },
+    saveOutcomeUncertain: false,
+    setSaveOutcomeUncertain: () => {},
+    isDefinitiveSipsSaveRejection: () => true,
+    reconcileInterruptedSipsSave: () => { throw Error("Explicit conflict must not attempt save reconciliation"); },
     loadedWorkflowSnapshotRef: { current: {
       completed: false, is_rider: false, current_stage: 'Production',
       current_task_assigned_to: 'SIPs', current_task_description: 'SIPs Prep', sip_completed: false,
@@ -1773,7 +1777,7 @@ check("save feedback is announced and Save & Revisit label recovers after save",
   assert.match(source, /\{isSaving && \(\s*<div role="status" aria-live="polite"/);
   assert.match(source, /Saving SIP checklist… Editing is temporarily unavailable\./);
   assert.match(source, /\{isSaving \? "Saving…" : "Save & Revisit"\}/);
-  assert.match(source, /onClick=\{handleSaveClick\}\s+disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\)\}/);
+  assert.match(source, /onClick=\{handleSaveClick\}\s+disabled=\{isSaving \|\| !isRegistered \|\| Boolean\(loadError\) \|\| saveOutcomeUncertain\}/);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
