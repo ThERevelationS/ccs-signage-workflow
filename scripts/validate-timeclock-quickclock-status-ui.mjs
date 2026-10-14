@@ -16,6 +16,7 @@ const timers = new Map();
 let nextTimerId = 0;
 const events = new Map();
 const docEvents = new Map();
+const savedSessionData = new Map();
 const fakeWindow = {
   addEventListener(name, listener) { events.set(name, listener); },
   removeEventListener(name, listener) { if (events.get(name) === listener) events.delete(name); },
@@ -68,7 +69,11 @@ vm.runInNewContext(compiled, {
   },
   clearTimeout: (id) => { timers.delete(id); },
   setInterval: () => 1, clearInterval: () => {},
-  sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  sessionStorage: {
+    getItem: (key) => savedSessionData.get(key) || null,
+    setItem: (key, value) => { savedSessionData.set(key, String(value)); },
+    removeItem: (key) => { savedSessionData.delete(key); },
+  },
 }, { filename: 'synthetic-quick-clock-component.js' });
 const QuickClockSection = module.exports.default;
 const first = { email: 'first@synthetic.invalid', full_name: 'First Test Employee' };
@@ -589,4 +594,65 @@ assert.match(visible(renderer), /second-not-clocked-out/,
 console.log('PASS late prior-employee Clock Out success cannot close new employee dialog');
 
 await act(async () => { renderer.unmount(); });
-console.log('PASS 16/16 Time Clock Quick Clock async status acceptance cases');
+
+let reloadRenderer;
+const reloadSessionProps = {
+  allUsers:[first,second], employeeSessionToken:'reloaded-signed-first',
+  employeeSessionUser:first,
+};
+await act(async () => {
+  reloadRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps));
+});
+const freshStatusIndex = calls.length - 1;
+assert.equal(calls[freshStatusIndex].payload.action, 'status');
+await act(async () => { calls[freshStatusIndex].resolve(status(first, 'reloaded-uncertain-shift')); });
+const reloadedDialog = () => reloadRenderer.root.findAll((node) =>
+  typeof node.props?.onClockOut === 'function')[0];
+assert.ok(reloadedDialog());
+const reloadPayload = {
+  lunchMinutes:0,
+  jobAllocations:[{work_order_id:'reloaded-job', minutes:45}],
+  notes:'Exact original post-reload body',
+};
+let awaiting;
+await act(async () => { awaiting = reloadedDialog().props.onClockOut(reloadPayload); });
+const pendingIndex = calls.length - 1;
+const originalId = calls[pendingIndex].payload.request_id;
+assert.equal(calls[pendingIndex].payload.action, 'clock_out');
+assert.ok(originalId);
+assert.ok([...savedSessionData.keys()].some((key) => key.includes('clock_out')),
+  'Pending Clock Out recovery must be persisted before making its backend call');
+await act(async () => {
+  calls[pendingIndex].reject(new Error('Page unload before Clock Out acknowledgement'));
+  await assert.rejects(awaiting, /Page unload/);
+  reloadRenderer.unmount();
+});
+await act(async () => {
+  reloadRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps));
+});
+const restoredStatusIndex = calls.length - 1;
+assert.equal(calls[restoredStatusIndex].payload.action, 'status');
+await act(async () => { calls[restoredStatusIndex].resolve(status(first, 'reloaded-uncertain-shift')); });
+const restoredRecovery = reloadedDialog().props.pendingClockOutRecovery;
+assert.ok(restoredRecovery, 'Reload must restore pending Clock Out for same verified shift');
+assert.equal(restoredRecovery.requestId, originalId);
+assert.equal(restoredRecovery.body.notes, reloadPayload.notes);
+assert.equal(restoredRecovery.body.job_allocations[0].work_order_id, 'reloaded-job');
+let recovered;
+await act(async () => { recovered = reloadedDialog().props.onClockOut(reloadPayload); });
+const replayIndex = calls.length - 1;
+assert.equal(calls[replayIndex].payload.request_id, originalId);
+assert.deepEqual(calls[replayIndex].payload.job_allocations, calls[pendingIndex].payload.job_allocations);
+await act(async () => {
+  calls[replayIndex].resolve({data: {
+    success:true, status:'already_clocked_out', reused:true,
+    user:first, entry:{id:'reloaded-uncertain-shift',clock_out:'2026-10-14T21:00:00.000Z'},
+  }});
+  await recovered;
+});
+assert.doesNotMatch(visible(reloadRenderer), /reloaded-uncertain-shift/);
+assert.ok(![...savedSessionData.keys()].some((key) => key.includes('clock_out')),
+  'Confirmed recovered punch must remove persisted recovery payload and id');
+console.log('PASS full reload restores same-employee exact Clock Out request and clears on confirmation');
+await act(async () => { reloadRenderer.unmount(); });
+console.log('PASS 17/17 Time Clock Quick Clock async status acceptance cases');
