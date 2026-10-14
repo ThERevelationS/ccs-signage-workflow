@@ -60,6 +60,55 @@ function removeStoredRequestId(action, email) {
   try { sessionStorage.removeItem(requestStorageKey(action, email)); } catch {}
 }
 
+// Temporary tab-only recovery, never a payroll source of truth. Contains no
+// credential, badge, session token, or server timestamp. The backend still
+// validates the original request ID, exact payload, identity, and shift state.
+function clockOutSnapshotKey(email) {
+  return `ccs_timeclock_pending_clock_out:${String(email || "").trim().toLowerCase()}`;
+}
+
+function clockOutSnapshotFor(email) {
+  try {
+    const raw = sessionStorage.getItem(clockOutSnapshotKey(email)) || "";
+    if (!raw || raw.length > 131072) return null;
+    const snapshot = JSON.parse(raw);
+    const body = snapshot?.body;
+    if (snapshot?.version !== 1 ||
+        snapshot.email !== String(email || "").trim().toLowerCase() ||
+        !snapshot.entryId || !snapshot.requestId ||
+        !body || typeof body.notes !== "string" ||
+        !Number.isFinite(Number(body.lunch_minutes)) ||
+        !Array.isArray(body.job_allocations) ||
+        body.job_allocations.length < 1 ||
+        body.job_allocations.some((row) => !row || typeof row !== "object" || Array.isArray(row))) return null;
+    return snapshot;
+  } catch {
+    return null;
+  }
+}
+
+function saveClockOutSnapshot(email, entryId, requestId, body) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const snapshot = {
+    version: 1, email: normalizedEmail, entryId: String(entryId),
+    requestId: String(requestId), body,
+  };
+  try {
+    const serialized = JSON.stringify(snapshot);
+    if (serialized.length > 131072) return false;
+    sessionStorage.setItem(clockOutSnapshotKey(normalizedEmail), serialized);
+    return sessionStorage.getItem(clockOutSnapshotKey(normalizedEmail)) === serialized;
+  } catch {
+    return false;
+  }
+}
+
+function clearClockOutSnapshot(email, requestId = "") {
+  const snapshot = clockOutSnapshotFor(email);
+  if (requestId && snapshot?.requestId !== requestId) return;
+  try { sessionStorage.removeItem(clockOutSnapshotKey(email)); } catch {}
+}
+
 function shouldRetainRequest(err) {
   return err?.retrySameRequest === true || err?.ambiguousOutcome === true;
 }
@@ -300,6 +349,14 @@ export default function QuickClockSection({
 
     credentialRef.current = credential;
     setSelectedUser(verifiedUser);
+    const verifiedEmail = String(verifiedUser.email).trim().toLowerCase();
+    const pendingClockOut = clockOutSnapshotFor(verifiedEmail);
+    if (status?.status === "clocked_out" ||
+        (status?.status === "clocked_in" && status?.entry?.id &&
+         pendingClockOut && pendingClockOut.entryId !== String(status.entry.id))) {
+      clearClockOutSnapshot(verifiedEmail);
+      removeStoredRequestId("clock_out", verifiedEmail);
+    }
     setBreakStatus(status?.break_status || "working");
     setActiveBreak(status?.active_break || null);
     setBreakSummary(status?.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
@@ -1120,18 +1177,30 @@ export default function QuickClockSection({
       notes: data.notes,
     };
     const previous = clockOutAttemptRef.current;
-    if (previous?.requestId === requestId &&
-        previous.email === String(email).toLowerCase() &&
-        previous.entryId === entryId) {
-      if (JSON.stringify(submittedBody) !== previous.payloadJson) {
-        throw new Error("An earlier Clock Out is unconfirmed. Retry with the original lunch, allocations and notes; do not replace the pending request details.");
-      }
-    } else {
-      clockOutAttemptRef.current = {
-        email: String(email).toLowerCase(),
-        entryId, requestId, payloadJson: JSON.stringify(submittedBody),
-      };
+    const savedSnapshot = clockOutSnapshotFor(email);
+    const storedId = storedRequestId("clock_out", email);
+    const payloadJson = JSON.stringify(submittedBody);
+    if ((previous?.requestId === requestId &&
+         previous.email === String(email).toLowerCase() &&
+         previous.entryId === entryId &&
+         previous.payloadJson !== payloadJson) ||
+        (savedSnapshot && (
+          savedSnapshot.requestId !== requestId ||
+          savedSnapshot.entryId !== entryId ||
+          JSON.stringify(savedSnapshot.body) !== payloadJson
+        ))) {
+      throw new Error("An earlier Clock Out is unconfirmed. Retry with the original lunch, allocations and notes; do not replace the pending request details.");
     }
+    if (storedId && !savedSnapshot && !previous) {
+      throw new Error("The previous Clock Out request cannot be reconstructed safely on this device. Reload authoritative status and contact a manager before changing this shift.");
+    }
+    if (!savedSnapshot && !saveClockOutSnapshot(email, entryId, requestId, submittedBody)) {
+      throw new Error("This browser cannot preserve the original Clock Out for interruption recovery. Nothing was submitted. Enable session storage or use a trusted browser.");
+    }
+    clockOutAttemptRef.current = {
+      email: String(email).toLowerCase(),
+      entryId, requestId, payloadJson,
+    };
     setPersistenceError("");
     if (stillCurrent()) setIsLoading(true);
     try {
@@ -1142,6 +1211,7 @@ export default function QuickClockSection({
         ...credentialPayload(credentialRef.current, email),
       });
       clearRequest("clock_out", email);
+      clearClockOutSnapshot(email, requestId);
       if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
       if (stillCurrent()) {
         showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
@@ -1153,6 +1223,7 @@ export default function QuickClockSection({
     } catch (err) {
       if (!shouldRetainRequest(err)) {
         clearRequest("clock_out", email);
+        clearClockOutSnapshot(email, requestId);
         if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
       }
       if (stillCurrent()) {
@@ -1396,6 +1467,16 @@ export default function QuickClockSection({
           onStopLabor={() => handleLaborAction("labor_stop")}
           onLoadLaborAllocationPreview={handleLoadLaborAllocationPreview}
           onClockOut={handleClockOut}
+          pendingClockOutRecovery={
+            (!authoritativeSessionToken || authoritativeSessionGuardsSelected)
+              ? (() => {
+                  const pending = clockOutSnapshotFor(selectedUser.email);
+                  return pending?.entryId === String(activeEntry.id) &&
+                    pending?.requestId === storedRequestId("clock_out", selectedUser.email)
+                    ? pending : null;
+                })()
+              : null
+          }
         />
       )}
     </>
