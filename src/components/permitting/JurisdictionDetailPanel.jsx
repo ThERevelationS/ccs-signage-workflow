@@ -1376,6 +1376,7 @@ Answer only from the provided excerpts and cite the document title and official 
                           ref={pdfOpenButtonRef}
                           onClick={(e) => {
                             e.stopPropagation();
+                            setSourceRequest(null);
                             setViewingPDF({ id: doc.id, jurisdictionId: jurisdiction.id });
                           }}
                           className="mt-3 min-h-11 h-auto w-full gap-2 whitespace-normal break-words bg-green-600 px-3 py-3 text-center font-semibold text-white hover:bg-green-700"

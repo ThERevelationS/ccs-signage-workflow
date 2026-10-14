@@ -1,0 +1,22 @@
+{
+  "tested_at": "2026-10-14T21:17:13.912Z",
+  "mode": "actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance",
+  "production_writes": 0,
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
+    }
+  ]
+}
