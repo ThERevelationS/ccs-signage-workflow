@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import PDFViewer from './PDFViewer';
-import SourceTextEvidenceBrowser from './SourceTextEvidenceBrowser';
+import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from './SourceTextEvidenceBrowser';
 
 const types = { sign_ordinance: 'Sign ordinance', permit_application: 'Application', zoning_code: 'Zoning code', fee_schedule: 'Fees', checklist: 'Checklist', legislative_record: 'Legislative record', gis_resource: 'Map / GIS', portal_instruction: 'Portal instructions', other: 'Other' };
 const label = value => String(value || 'Unknown').replaceAll('_', ' ');
@@ -27,6 +27,14 @@ function contextOnly(row) {
 function statusGroup(row) {
   return contextOnly(row) ? 'context' : row.content_status === 'current' ? 'current' : 'review';
 }
+const availabilityFilters = { all: 'All document availability', text: 'Saved physical-page text', retained: 'Retained copy available', missing: 'No retained copy URL', ocr: 'Recorded OCR review needed' };
+function matchesAvailability(row, filter) {
+  if (filter === 'text') return row.saved && hasSavedPhysicalPageText(row);
+  if (filter === 'retained') return Boolean(link(row.archived_file_url));
+  if (filter === 'missing') return !link(row.archived_file_url);
+  if (filter === 'ocr') return row.saved && (row.text_extraction_state?.needs_ocr_page_count > 0 || row.text_extraction_state?.status === 'needs_ocr');
+  return true;
+}
 const groups = { all: 'All evidence', review: 'Currentness unknown', current: 'Recorded current', context: 'Draft / historical context' };
 
 export default function DocumentRepositoryBrowser({ jurisdictionId, documents = [], onOpenCollected, onNavigate, sourceRequest }) {
@@ -39,13 +47,14 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   }, [jurisdictionId, sourceRequest?.token, sourceRequest?.jurisdictionId]);
   const [selectedState, setSelectedState] = useState(null), [sourceRetry, setSourceRetry] = useState(0);
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [group, setGroup] = useState('all');
+  const [availability, setAvailability] = useState('all');
   const sourceNodes = useRef(new Map()), focusedSourceRequest = useRef(null);
   const selection = sourceRequest?.jurisdictionId === jurisdictionId ? sourceRequest : null;
   const selectedId = selection?.sourceId, selectedToken = selection?.token;
   useEffect(() => {
     let active = true;
     if (!selectedId) { focusedSourceRequest.current = null; setSelectedState(null); return () => { active = false; }; }
-    setQuery(''); setType('all'); setGroup('all');
+    setQuery(''); setType('all'); setGroup('all'); setAvailability('all');
     const identity = { jurisdictionId, sourceId: selectedId, token: selectedToken };
     setSelectedState({ ...identity, row: null, loading: true, error: '' });
     base44.entities.PermittingSourceDocument.filter({ id: selectedId, jurisdiction_id: jurisdictionId }, { limit: 1, fields }).then(result => {
@@ -74,7 +83,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   useEffect(() => {
     let active = true;
     setState({ jurisdictionId, rows: [], loading: true, error: '' });
-    setQuery(''); setType('all'); setGroup('all');
+    setQuery(''); setType('all'); setGroup('all'); setAvailability('all');
     if (!jurisdictionId) {
       setState({ jurisdictionId, rows: [], loading: false, error: 'Select a canonical jurisdiction to load saved source records.' });
       return () => { active = false; };
@@ -98,7 +107,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
       collected: doc, saved: false, content_status: 'unknown',
     })),
   ];
-  const visible = rows.filter(row => (type === 'all' || row.source_type === type) && (group === 'all' || statusGroup(row) === group) &&
+  const visible = rows.filter(row => matchesAvailability(row, availability) && (type === 'all' || row.source_type === type) && (group === 'all' || statusGroup(row) === group) &&
     [row.title, row.source_type, types[row.source_type], row.category, row.issuing_office, row.jurisdiction_scope, row.notes_gaps].some(value => String(value || '').toLowerCase().includes(query.trim().toLowerCase())));
   const scopedPreview = viewingPDF?.jurisdictionId === jurisdictionId && viewingPDF.requestToken === selectedToken ? viewingPDF : null;
   const livePreviewRow = scopedPreview && rows.find(row => row.key === scopedPreview.key && link(row.archived_file_url) === scopedPreview.url && !previewTooLarge(row));
@@ -126,7 +135,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   };
   const closePreview = () => {
     if (viewingPDF) previewReturn.current = { jurisdictionId, key: viewingPDF.key };
-    setQuery(''); setType('all'); setGroup('all'); setViewingPDF(null);
+    setQuery(''); setType('all'); setGroup('all'); setAvailability('all'); setViewingPDF(null);
   };
   return <section aria-label="Document repository catalog" className="mb-4 space-y-3 rounded-lg border border-green-200 bg-white p-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Browse documents & source details</h3><Button ref={refreshButton} variant="outline" className="min-h-11" disabled={currentState.loading} onClick={() => setRefresh(v => v + 1)}>Refresh source catalog</Button></div>
@@ -148,6 +157,8 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
       <select aria-label="Document type" className="min-h-11 min-w-0 w-full rounded-md border px-2 text-sm sm:flex-1" value={type} onChange={e => setType(e.target.value)}><option value="all">All document types ({rows.length})</option>{[...new Set(rows.map(row => row.source_type).filter(Boolean))].sort().map(value => <option key={value} value={value}>{types[value] || label(value)} ({rows.filter(row => row.source_type === value).length})</option>)}</select>
       <select aria-label="Source currentness filter" className="min-h-11 min-w-0 w-full rounded-md border px-2 text-sm sm:flex-1" value={group} onChange={e => setGroup(e.target.value)}>{Object.entries(groups).map(([value,title]) => <option key={value} value={value}>{title} ({rows.filter(row => value === 'all' || statusGroup(row) === value).length})</option>)}</select>
     </div>
+    <select aria-label="Document availability" className="min-h-11 min-w-0 w-full rounded-md border px-2 text-sm" value={availability} onChange={e => setAvailability(e.target.value)}>{Object.entries(availabilityFilters).map(([value, title]) => <option key={value} value={value}>{title} ({rows.filter(row => matchesAvailability(row, value)).length})</option>)}</select>
+    <p className="text-xs text-gray-600">Availability counts cover loaded entries only. Saved text may be partial or inaccessible; a retained URL does not confirm the file can be fetched. OCR flags describe saved processing evidence.</p>
     {currentState.loading && <p role="status" className="text-sm">Loading saved source catalog…</p>}
     {currentState.error && <p role="alert" className="text-sm text-red-700">{currentState.error}</p>}
     <p role="status" className="text-xs text-gray-600">{visible.length} shown from {rows.length} loaded entries. Saved sources are limited to the latest 200 canonical records; collected links are included{selected?.row ? ", plus the selected source record if outside that list" : ""}. Separate retained versions stay separate.</p>
