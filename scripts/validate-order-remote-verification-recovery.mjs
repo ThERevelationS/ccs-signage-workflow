@@ -29,7 +29,8 @@ assert.doesNotMatch(msg,/already synchronized/);
 console.log('PASS accurate permanent-ID diagnostics and review-first recovery text for mixed remote changes or failed readback');
 
 const alter=(changes={}, rowChanges={})=>({
-  ...base,...changes,results:[{...base.results[0],...rowChanges}],
+  ...base,...changes,
+  results:Object.hasOwn(changes,'results')?changes.results:[{...base.results[0],...rowChanges}],
 });
 for (const invalid of [
   alter({success:false}),alter({configured:false}),alter({write_actions_available:false}),
