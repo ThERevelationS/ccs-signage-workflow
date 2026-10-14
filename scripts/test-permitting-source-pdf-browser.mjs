@@ -50,12 +50,12 @@ try{
  };function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
  vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
  browser=await chromium.launch({channel:'chromium',headless:process.env.PERMITTING_PDF_HEADED!=='1',ignoreDefaultArgs:['--disable-extensions'],args:['--no-sandbox']});
+ {const direct=await browser.newPage({viewport:{width:1000,height:900}}); const response=await direct.goto(origin+'/older.pdf'); await direct.waitForTimeout(1800); await direct.screenshot({path:'/tmp/permitting-vite-direct.pdf.png'}); console.log('VITE PDF DIRECT',response.status(),response.headers()['content-type']); await direct.close();}
  for(const width of [320,390,1280]){
   const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
   let holdPDF=false;const heldRoutes=[];
   await page.context().route('**/*',route=>{const url=route.request().url();if(url.startsWith(origin)&&/\/(older|latest)\.pdf(?:[?#]|$)/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.continue();}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
   await page.goto(origin,{waitUntil:'networkidle'});
-  await page.context().unroute('**/*'); // diagnostic only
   const nav=page.getByRole('navigation',{name:'Jurisdiction workspace shortcuts'});await nav.waitFor();
   const catalog=page.getByRole('region',{name:'Document repository catalog'});
   await nav.getByRole('button',{name:/^Requirements/}).click();
