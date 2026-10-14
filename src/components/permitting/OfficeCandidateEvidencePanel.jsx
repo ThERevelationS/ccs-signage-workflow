@@ -1,5 +1,6 @@
 import { officeCandidateEvidence } from "./officeCandidateEvidence.mjs";
 import OfficeIdentityComparisonPanel from "./OfficeIdentityComparisonPanel";
+import OfficeIdentityLivePreview from "./OfficeIdentityLivePreview";
 
 export default function OfficeCandidateEvidencePanel({ office }) {
   const evidence = officeCandidateEvidence(office);
@@ -39,7 +40,8 @@ export default function OfficeCandidateEvidencePanel({ office }) {
       {evidence.archiveHref && <a className="text-blue-700 underline" href={evidence.archiveHref} target="_blank" rel="noopener noreferrer">Retained archive (new tab)</a>}
     </div>
     <OfficeIdentityComparisonPanel office={office} />
-    <p>Historical classification and currentness above may differ from the source catalog today. This panel makes no fresh source check.</p>
+    <OfficeIdentityLivePreview office={office} />
+    <p>Historical classification and currentness above may differ from the source catalog today. This retained registration makes no fresh source check.</p>
     <p>Contacts, permit inboxes, roles, covered areas, currentness, commercial-sign applicability and delegation remain separate evidence decisions. Do not copy a director contact into a permit inbox.</p>
   </section>;
 }
