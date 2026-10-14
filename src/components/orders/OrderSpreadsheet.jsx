@@ -558,6 +558,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     // two rapid clicks can both pass the guard when there are no unsaved Base44
     // fields, then both push the same durable pending Orders after the await yields.
     syncInFlightRef.current = true;
+    // Cover save preparation too: the Smartsheet try/finally below begins
+    // only after the Base44 save and pending-ID snapshot. An unexpected
+    // exception in either must not strand the same-browser sync lock.
+    try {
     setSaveError('');
     setSyncMessage('');
 
@@ -578,8 +582,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       return true;
     }
 
-    setIsSyncing(true);
     try {
+      setIsSyncing(true);
       // A previous response can be lost after Base44 has already confirmed
       // some rows. Re-read the EXACT requested permanent IDs before Retry
       // Sync; do not re-submit stale, already completed Orders alongside the
@@ -683,6 +687,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     } finally {
       syncInFlightRef.current = false;
       setIsSyncing(false);
+    }
+    } catch (error) {
+      // No Smartsheet request was started by this preflight path. Do not
+      // clear the pending-save or pending-sync queues on an unexpected error.
+      console.error('Could not prepare Order Save & Sync safely:', error);
+      setSaveError(`Order Save & Sync preparation stopped unexpectedly: ${error?.message || 'unknown error'}. Reload Orders and review pending changes before retrying.`);
+      return false;
+    } finally {
+      syncInFlightRef.current = false;
     }
   };
 
