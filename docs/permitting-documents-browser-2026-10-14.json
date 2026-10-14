@@ -1,22 +1,22 @@
 {
-  "tested_at": "2026-10-14T23:50:36.185Z",
+  "tested_at": "2026-10-14T23:56:08.070Z",
   "mode": "actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked",
   "production_writes": 0,
   "checks": [
     {
       "width": 320,
       "passed": true,
-      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow"
+      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow"
     },
     {
       "width": 390,
       "passed": true,
-      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow"
+      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow"
     },
     {
       "width": 1280,
       "passed": true,
-      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow"
+      "checks": "actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow"
     }
   ]
 }
