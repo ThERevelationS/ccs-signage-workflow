@@ -78,6 +78,43 @@ test("manual Refresh detects status changes even with a contradictory unchanged 
   assert.equal(h.events.saves.at(-1),"");
 });
 
+test("manual Refresh detects changed financial inputs even when provider version is unchanged",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate({estimated_labor_hours:9,notes:"CCS revised estimated hours"});
+  await h.ctx.load(true);
+  assert.equal(h.events.recoveries.at(-1)?.workOrderId,"wo-A",
+    "Fresh CAS version must not authorize saving a stale local form over altered CCS financial inputs");
+  assert.equal(h.events.forms.length,0);
+  assert.equal(h.events.saves.at(-1),"");
+});
+
+test("out-of-order manual Refresh results cannot roll back a newer CCS decision",async()=>{
+  const h=refreshHarness();
+  const slow=defer(),fast=defer();
+  let calls=0;
+  h.ctx.fetchPortalPayload=()=>++calls===1?slow.promise:fast.promise;
+  const first=h.ctx.load(true);
+  const second=h.ctx.load(true);
+  fast.resolve(h.nextEstimate({updated_date:"v3",status:"changes_requested"}));
+  await second;
+  slow.resolve(h.nextEstimate({updated_date:"v2",status:"submitted"}));
+  await first;
+  assert.equal(h.events.applications.length,1,"Older request cannot apply after newer scoped data");
+  assert.equal(h.ctx.portalPayloadRef.current.repair_estimates[0].updated_date,"v3");
+  assert.equal(h.events.recoveries.at(-1)?.workOrderId,"wo-A");
+  assert.equal(h.events.saves.at(-1),"");
+});
+
+test("a second unchanged manual Refresh must not remove an outstanding review lock",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload=h.nextEstimate({updated_date:"v2",status:"changes_requested"});
+  await h.ctx.load(true);
+  const recoveryCount=h.events.recoveries.length;
+  await h.ctx.load(true);
+  assert.equal(h.events.recoveries.length,recoveryCount,
+    "Only explicit Check Current Server State can release a detected conflict");
+});
+
 test("manual Refresh with same server estimate preserves editable draft without false conflict",async()=>{
   const h=refreshHarness();
   h.ctx.nextPayload=h.nextEstimate();
