@@ -55,6 +55,7 @@ try{
   let holdPDF=false;const heldRoutes=[];
   await page.context().route('**/*',route=>{const url=route.request().url();if(url.startsWith(origin)&&/\/(older|latest)\.pdf(?:[?#]|$)/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.continue();}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
   await page.goto(origin,{waitUntil:'networkidle'});
+  await page.context().unroute('**/*'); // diagnostic only
   const nav=page.getByRole('navigation',{name:'Jurisdiction workspace shortcuts'});await nav.waitFor();
   const catalog=page.getByRole('region',{name:'Document repository catalog'});
   await nav.getByRole('button',{name:/^Requirements/}).click();
