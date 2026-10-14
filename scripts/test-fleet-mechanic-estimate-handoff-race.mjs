@@ -31,14 +31,17 @@ function refreshHarness(){
     approval_required:false,approval_tier:"",notes:"Old saved"};
   const previous={portal:{capabilities:{estimates:true,save:true}},
     active_work_orders:[{id:"wo-A",updated_date:"work-v1"}],recent_completed:[],repair_estimates:[original]};
-  const events={forms:[],errors:[],saves:[],recoveries:[],applications:[]};
+  const events={forms:[],errors:[],saves:[],recoveries:[],applications:[],
+    selections:[],scopeNotices:[],photos:[]};
   const ctx={
     token:"synthetic",selectedWorkOrderRef:{current:"wo-A"},
     portalRequestRef:{current:0},portalAppliedEpochRef:{current:3},
     portalPayloadRef:{current:previous},estimateCapabilityRef:{current:true},saveCapabilityRef:{current:true},
     photoDraftEpochRef:{current:0},
     setData:value=>events.applications.push(value),
-    setError:()=>{},setSelected:()=>{},setPhotos:()=>{},setForm:()=>{},
+    setError:()=>{},setSelected:value=>events.selections.push(value),
+    setPhotos:value=>events.photos.push(typeof value==="function"?value([]):value),setForm:()=>{},
+    setScopeNotice:value=>events.scopeNotices.push(value),
     setActionError:value=>events.errors.push(value),
     setSavedMessage:value=>events.saves.push(value),
     setEstimateRecovery:value=>events.recoveries.push(value),
@@ -58,6 +61,49 @@ function refreshHarness(){
       repair_estimates:[{...original,...overrides}]}),
   };
 }
+
+test("manual Refresh removes inaccessible work order and displays generic access-change notice",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload={...h.previous,active_work_orders:[],recent_completed:[],repair_estimates:[]};
+  await h.ctx.load(true);
+  assert.equal(h.ctx.selectedWorkOrderRef.current,null,"Revoked work order must close");
+  assert.equal(h.events.selections.at(-1),null,"Restricted modal cannot remain mounted");
+  assert.deepEqual(h.events.forms.at(-1),{notes:""},"Old financial form is cleared");
+  assert.deepEqual(h.events.photos.at(-1),[],"Restricted photos cleared");
+  assert.equal(h.events.saves.at(-1),"","Old approval cannot remain visible");
+  assert.equal(h.events.recoveries.at(-1),null,"No inaccessible estimate recovery marker");
+  assert.match(h.events.scopeNotices.at(-1),/no longer available to this mechanic link/i);
+  assert.doesNotMatch(h.events.scopeNotices.at(-1),/estimate-A|wo-A|approved/i,
+    "Access warning must not reveal restricted record identity or approval");
+});
+
+test("Check Current Server State on revoked work order must not recreate inaccessible recovery",async()=>{
+  const h=refreshHarness();
+  h.ctx.nextPayload={...h.previous,active_work_orders:[],recent_completed:[],repair_estimates:[]};
+  const verified=await h.ctx.refreshEstimateState("wo-A","Interrupted estimate requested reread.",true);
+  assert.equal(verified,false);
+  assert.equal(h.ctx.selectedWorkOrderRef.current,null);
+  assert.equal(h.events.recoveries.at(-1),null,"No stale inaccessible recovery state after closing");
+  assert.match(h.events.scopeNotices.at(-1),/no longer available to this mechanic link/i);
+  assert.equal(h.events.saves.at(-1),"");
+});
+
+test("reordered refresh cannot restore revoked work order from a stale response",async()=>{
+  const h=refreshHarness();
+  const slow=defer(),fast=defer();
+  let calls=0;
+  h.ctx.fetchPortalPayload=()=>++calls===1?slow.promise:fast.promise;
+  const prior=h.ctx.load(true);
+  const latest=h.ctx.load(true);
+  fast.resolve({...h.previous,active_work_orders:[],recent_completed:[],repair_estimates:[]});
+  await latest;
+  slow.resolve(h.previous);
+  await prior;
+  assert.equal(h.events.applications.length,1);
+  assert.equal(h.ctx.selectedWorkOrderRef.current,null);
+  assert.equal(h.events.selections.at(-1),null);
+  assert.match(h.events.scopeNotices.at(-1),/no longer available/i);
+});
 
 test("manual Refresh detects newer CCS estimate and preserves unsaved draft behind recovery guard",async()=>{
   const h=refreshHarness();
