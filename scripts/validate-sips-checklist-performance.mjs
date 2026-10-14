@@ -1916,13 +1916,24 @@ await (async () => {
   assert.equal(uncertain.stats.writes, 1, "Unverified save cannot be resubmitted");
   assert.equal(uncertain.stats.reads, 1, "Blocked retry cannot start another read");
 
+  const completed = setup("lost-committed");
+  await completed.save(undefined, { markComplete: true });
+  assert.equal(completed.stats.writes, 1, "Interrupted completion cannot create a second write");
+  assert.equal(completed.stats.reads, 1, "Completion is confirmed read-only");
+  assert.equal(completed.readRemote().sip_completed, true);
+  assert.equal(completed.stats.closed, 1, "Verified completion may close normally");
+
   const rejected = setup("explicit");
   await rejected.save("2099-06-15");
   assert.equal(rejected.stats.writes, 1);
   assert.equal(rejected.stats.reads, 0, "Definitive rejection never triggers outcome recovery");
   assert.equal(rejected.scope.saveOutcomeUncertain, false);
   assert.equal(rejected.stats.closed, 0);
-  console.log("PASS lost checklist-save response reconciles without duplicate writes; uncertain outcomes block retry and retain Revisit");
+  assert.match(source, /saveOutcomeUncertain \? "SIP checklist save needs verification"/);
+  assert.match(source, /Save and Complete are paused until Reload latest confirms the server record/);
+  assert.match(source, /setSaveOutcomeUncertain\(false\);\s*loadErrorFocusPendingRef\.current = false;/,
+    "Only successful checklist reload clears an uncertain save");
+  console.log("PASS lost checklist-save and completion responses reconcile without duplicate writes; uncertain outcomes block retry and retain Revisit");
   passed++;
 })();
 
