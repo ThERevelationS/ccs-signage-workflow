@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
 import { acceptedInternalEstimateCost } from "./customerPricing";
+import { hasVerifiedEstimateSalesActivity } from "./estimateSalesActivity.mjs";
 import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
 import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
 import { localDateStamp } from "./quoteLifecycle";
@@ -131,14 +132,9 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       });
       // Converting an already-Won job again must not manufacture Sales
       // activity. Only a changed approved estimate/Sales field is evidence.
-      const conversionSalesFields = new Set([
-        "sales_status", "sales_rep", "estimator", "estimate_amount", "estimate_id",
-        "date_order_created", "contact_name", "contact_email", "contact_phone",
-        "title", "client_name", "install_location", "customer_id", "products",
-      ]);
-      const hasConversionSalesActivity = !existing || Object.entries(convertedFields)
-        .some(([field, value]) => conversionSalesFields.has(field) &&
-          JSON.stringify(existing[field] ?? null) !== JSON.stringify(value ?? null));
+      const hasConversionSalesActivity = !existing || hasVerifiedEstimateSalesActivity(existing, convertedFields, {
+        includeProducts: true, // Approved quote products are part of the Sales conversion.
+      });
       const conversionActivityStamp = new Date().toISOString();
       const workOrderFields = {
         ...convertedFields,
