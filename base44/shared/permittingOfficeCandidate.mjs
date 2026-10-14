@@ -56,6 +56,53 @@ function matchCandidate(row,proposal){
   throw evidenceError('Existing office identity conflicts with this candidate. Existing data was preserved.');
  return found || null;
 }
+
+/** Read-only identity review. Historical registration and present source purpose stay distinct. */
+export async function previewOfficeCandidateIdentity(deps,{officeId,registrationKey,expectedCatalogVersion}) {
+ if(typeof officeId!=='string' || !officeId.startsWith('office-candidate-') ||
+  !/^[a-f0-9]{64}$/.test(registrationKey || '') || typeof expectedCatalogVersion!=='string' || !expectedCatalogVersion)
+  throw evidenceError('Exact saved candidate, registration key and catalog version are required.',400);
+ async function read(){
+  const row=await catalog(deps.settingsEntity);
+  if(row.updated_date!==expectedCatalogVersion)throw evidenceError('Office catalog changed; select the current candidate before review.');
+  const office=row.setting_value.items.find(o=>o.id===officeId),reg=office?.office_candidate_registration,saved=reg?.snapshot;
+  if(!office || office.government_office_id!==officeId || reg?.method!==OFFICE_CANDIDATE_METHOD ||
+   reg.registration_key!==registrationKey || !saved?.proof || office.name!==saved.proof.excerpt ||
+   office.government_office?.name!==office.name)
+   throw evidenceError('Saved candidate identity or literal printed name differs; no identity inference is made.');
+  if(await evidenceDigest({method:OFFICE_CANDIDATE_METHOD,office_name:office.name,snapshot:saved})!==registrationKey)
+   throw evidenceError('Historical registration evidence no longer matches its immutable key.');
+  const proposal=await evidence(deps,{office_name:office.name,publisher_quote:saved.proof.excerpt,
+   source_document_id:saved.source?.id,physical_page:saved.proof.physical_page});
+  const fresh=proposal.office_candidate_registration.snapshot;
+  const sourceKeys=['id','jurisdiction_id','jurisdiction_name','official_url','archived_file_url','file_hash_sha256','file_bytes'];
+  if(!evidenceEqual(saved.profile,fresh.profile) || !evidenceEqual(saved.proof,fresh.proof) ||
+   saved.archive_document_id!==fresh.archive_document_id ||
+   sourceKeys.some(k=>!evidenceEqual(saved.source[k],fresh.source[k])))
+   throw evidenceError('Profile, archive or exact page lineage changed since registration; identity review is withheld.');
+  const source=await deps.sourceEntity.get(fresh.source.id),profile=await deps.profileEntity.get(fresh.profile.id);
+  if(!source?.updated_date || !profile?.updated_date ||
+   !evidenceEqual(Object.fromEntries(Object.keys(fresh.source).map(k=>[k,source[k] ?? null])),fresh.source) ||
+   !evidenceEqual(profileIdentity(profile),fresh.profile))
+   throw evidenceError('Current source/profile is unversioned or changed during evidence retrieval.');
+  const docs=(profile.documents || []).filter(d=>d.id===fresh.archive_document_id);
+  if(docs.length!==1)throw evidenceError('The exact saved archive document is missing or ambiguous.');
+  return {catalog:{id:row.id,updated_date:row.updated_date},office,
+   historical_registration:saved,current_evidence:fresh,
+   source_updated_date:source.updated_date,profile_updated_date:profile.updated_date,
+   saved_archive_document:docs[0]};
+ }
+ const first=await read(),second=await read();
+ if(!evidenceEqual(first,second))throw evidenceError('Candidate/source/profile/page evidence changed during identity review; read again.');
+ return {success:true,dry_run:true,status:'identity_review_only',review_snapshot:first,
+  review_snapshot_sha256:await evidenceDigest(first),
+  unresolved_identity:['Printed publisher name requires reconciliation with current official parent department and child division.',
+   'Name similarity or retained registration does not establish alias equivalence.'],
+  authority_verified:false,identity_verified:false,source_currentness_verified:false,
+  contacts_verified:false,commercial_sign_scope_verified:false,delegation_verified:false,
+  address_authority_resolved:false,production_writes:0,llm_calls:0};
+}
+
 const result=(office,status)=>({success:true,status,office,authority_verified:false,address_authority_resolved:false,llm_calls:0});
 export async function getOfficeCandidate(deps,{officeId,registrationKey}){
  if(typeof officeId!=='string' || !officeId || !/^[a-f0-9]{64}$/.test(registrationKey || ''))throw evidenceError('Saved candidate identity is required.',400);
