@@ -1,3 +1,4 @@
+import AddressSearchSummary from './AddressSearchSummary';
 import {runPickerDraftAction,requireReviewedRepositoryProfile} from './pickerDraftAction.mjs';
 import SavedAddressResearch from './SavedAddressResearch';
 import AutomaticAddressScanResults from './AutomaticAddressScanResults';
@@ -280,8 +281,10 @@ function LocalityPickerSession({
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
         <div className="flex flex-1 flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden min-h-0 lg:h-[680px]">
           <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto space-y-3 pr-1">
+            <AddressSearchSummary address={address} searching={searching} result={result}/>
+            <ResearchProgressBar inline />
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
-                {localities.length > 0 && (
+                {!address.trim() && localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
                     <Label htmlFor="jurisdiction-choice" className="text-xs">Choose a jurisdiction</Label>
                     <select id="jurisdiction-choice"
@@ -333,24 +336,7 @@ function LocalityPickerSession({
                   </div>
                 )}
 
-            <SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/>
-            <ResearchProgressBar inline />
-            <SavedAddressResearch />
             {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this jurisdiction.</p>}
-            {!result && !searching && !selectedLocalityId && (
-              <div className="h-full flex items-center justify-center text-gray-400 text-sm p-8 text-center border border-dashed rounded">
-                Enter the job address. Press <strong>Find my jurisdiction</strong>. We will check the map and look for the right office.
-              </div>
-            )}
-
-            {searching && (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500 p-8">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-2" />
-                
-                <p className="text-sm">Finding the address and checking saved information…</p>
-              </div>
-            )}
-
             {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
               <h4 className="font-semibold text-sm">Create a tracker from the repository</h4>
               <p className="text-xs">Manual selection creates a draft workflow reference. It does not verify the job location or office authority.</p>
@@ -366,7 +352,7 @@ function LocalityPickerSession({
             {result && (
               <>
                 {/* Locality match */}
-                <div className={`border rounded-lg p-3 ${result.suggested_locality ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
+                <div className={`border rounded-lg p-3 ${result.apply_allowed ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     {result.suggested_locality ? (
                       <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -427,7 +413,7 @@ function LocalityPickerSession({
                   ) : (
                     <div>
                       <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? 'The map location service needs attention.' : result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
-                      <p className="text-xs text-amber-800 mt-2">We started website research automatically. An administrator needs to review the results. You do not need to choose a place or guess.</p>
+                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'Website research started automatically. An administrator needs to review the results.' : 'No automatic research result was returned. Check scan activity before retrying.'} You do not need to choose a place or guess.</p>
                       {result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
@@ -554,6 +540,8 @@ function LocalityPickerSession({
                 )}
               </>
             )}
+            <SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/>
+            <SavedAddressResearch />
           </div>
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
