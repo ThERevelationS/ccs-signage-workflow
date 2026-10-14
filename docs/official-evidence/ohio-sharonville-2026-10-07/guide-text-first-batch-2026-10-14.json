@@ -1,0 +1,165 @@
+{
+  "live": {
+    "result": {
+      "success": true,
+      "source_document_id": "6aced7f49bda8d3e61944a9d",
+      "status": "partial",
+      "pages_processed": 5,
+      "pages_extracted": 5,
+      "total_pages": 28,
+      "next_page": 6,
+      "llm_calls": 0
+    },
+    "source": {
+      "id": "6aced7f49bda8d3e61944a9d",
+      "updated_date": "2026-10-14T01:30:52.161000",
+      "text_extraction_state": {
+        "status": "partial",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+        "claim_token": "8e52e38b-0246-422b-85ff-8c842911f9f0",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-14T01:30:50.190Z",
+        "attempts": 1,
+        "next_page": 6,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 28,
+        "pages_extracted": 5,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-14T01:30:50.741Z",
+        "completed_at": "",
+        "complete_document_text": false
+      },
+      "pages": [
+        {
+          "page": 1,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text_sha256": "6c2c7ec79fbc606d8ef70f781a5fb0d03360047f7ce4e568bfd168b78a7814b3",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-14T01:30:50.741Z",
+          "truncated": false,
+          "needs_ocr_review": false,
+          "text_chars": 50
+        },
+        {
+          "page": 2,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text_sha256": "3f986dfa6679fb70e287faad42d489cc3ebfe1eb28ad0d7daf1021d87cd619a6",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-14T01:30:50.741Z",
+          "truncated": false,
+          "needs_ocr_review": false,
+          "text_chars": 360
+        },
+        {
+          "page": 3,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text_sha256": "5c814bfde65df5a39ad46685365afbe31b7aabc4889a4adf78470e86fa3da555",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-14T01:30:50.741Z",
+          "truncated": false,
+          "needs_ocr_review": false,
+          "text_chars": 1315
+        },
+        {
+          "page": 4,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text_sha256": "9a38c4c74c91bc70159cfc4450cf046c6f04784906fbdd8304303185e6bdbdde",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-14T01:30:50.741Z",
+          "truncated": false,
+          "needs_ocr_review": false,
+          "text_chars": 1069
+        },
+        {
+          "page": 5,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text_sha256": "bf8b269433eb75e5f6108018fcbefdeb729c23dbaa94b8ad20108ee219e28dbd",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-14T01:30:50.741Z",
+          "truncated": false,
+          "needs_ocr_review": false,
+          "text_chars": 1901
+        }
+      ],
+      "verification_status": "needs_verification",
+      "authority_classification": "unknown_review_required"
+    },
+    "profile_unchanged": true
+  },
+  "page_readback": {
+    "success": true,
+    "source_document_id": "6aced7f49bda8d3e61944a9d",
+    "verified_page_hashes": [
+      {
+        "page": 1,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "6c2c7ec79fbc606d8ef70f781a5fb0d03360047f7ce4e568bfd168b78a7814b3",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false,
+        "text_chars": 50
+      },
+      {
+        "page": 2,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "3f986dfa6679fb70e287faad42d489cc3ebfe1eb28ad0d7daf1021d87cd619a6",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false,
+        "text_chars": 360
+      },
+      {
+        "page": 3,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "5c814bfde65df5a39ad46685365afbe31b7aabc4889a4adf78470e86fa3da555",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false,
+        "text_chars": 1315
+      },
+      {
+        "page": 4,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "9a38c4c74c91bc70159cfc4450cf046c6f04784906fbdd8304303185e6bdbdde",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false,
+        "text_chars": 1069
+      },
+      {
+        "page": 5,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "bf8b269433eb75e5f6108018fcbefdeb729c23dbaa94b8ad20108ee219e28dbd",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false,
+        "text_chars": 1901
+      }
+    ],
+    "verification_status": "needs_verification",
+    "authority_classification": "unknown_review_required",
+    "llm_calls": 0
+  }
+}
