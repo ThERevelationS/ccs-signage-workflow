@@ -90,6 +90,7 @@ export default function FleetMechanic() {
   const [busy, setBusy] = useState("");
   const [actionError, setActionError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const [scopeNotice, setScopeNotice] = useState("");
   const [estimateRecovery, setEstimateRecovery] = useState(null);
   const [workRecovery, setWorkRecovery] = useState(null);
   const portalRequestRef = useRef(0);
@@ -130,8 +131,12 @@ export default function FleetMechanic() {
       });
       setForm({ actual_hours:"", corrective_action:"", mechanic_note:"" });
       setEstimateForm(estimateSeed(null));
+      setEstimateRecovery(null);
       setActionError("");
       setSavedMessage("");
+      // Do not retain identifiers, approval details, or unsent drafts from
+      // a Fleet work order that this bearer link can no longer access.
+      setScopeNotice("A previously selected work order is no longer available to this mechanic link. Its local drafts were cleared. Contact CCS if access is needed.");
       return;
     }
     if (freshSelected) {
@@ -241,6 +246,7 @@ export default function FleetMechanic() {
   const rows = tab === "active" ? (data?.active_work_orders || []) : (data?.recent_completed || []);
 
   const openJob = workOrder => {
+    setScopeNotice("");
     photoDraftEpochRef.current += 1;
     selectedWorkOrderRef.current = workOrder.id;
     setSelected(workOrder);
@@ -407,7 +413,9 @@ export default function FleetMechanic() {
       applyPortalPayload(result);
       const visibleWorkOrder = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])].some(row => row.id === workOrderId);
       if (!visibleWorkOrder) {
-        setEstimateRecovery({workOrderId, reason: recoveryReason});
+        // applyPortalPayload already closed and cleared an inaccessible job.
+        // Never recreate a recovery marker tied to its now-restricted ID.
+        setEstimateRecovery(null);
         return false;
       }
       const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === workOrderId) || null;
@@ -589,6 +597,7 @@ export default function FleetMechanic() {
         <button onClick={()=>load(true)} disabled={refreshing||!!busy} className="min-h-11 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm disabled:opacity-50">{refreshing?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh</button>
       </div>
 
+      {scopeNotice && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{scopeNotice}</div>}
       {workRecovery && ![...(data?.active_work_orders || []),...(data?.recent_completed || [])].some(row=>row.id===workRecovery.workOrderId) && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">An interrupted mechanic update requires CCS review. The affected job is no longer available to this link. No request was replayed, and no restricted job details are shown.</div>}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <Summary label="Active Jobs" value={data?.active_work_orders?.length || 0} icon={Wrench}/>
