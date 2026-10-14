@@ -1170,6 +1170,7 @@ export default function QuickClockSection({
     const email = selectedUser.email;
     const entryId = String(activeEntry.id);
     const stillCurrent = breakContextFor(email);
+    const storedBeforeAttempt = storedRequestId("clock_out", email);
     const requestId = requestIdFor("clock_out", email);
     const submittedBody = {
       lunch_minutes: data.lunchMinutes,
@@ -1178,7 +1179,6 @@ export default function QuickClockSection({
     };
     const previous = clockOutAttemptRef.current;
     const savedSnapshot = clockOutSnapshotFor(email);
-    const storedId = storedRequestId("clock_out", email);
     const payloadJson = JSON.stringify(submittedBody);
     if ((previous?.requestId === requestId &&
          previous.email === String(email).toLowerCase() &&
@@ -1191,7 +1191,7 @@ export default function QuickClockSection({
         ))) {
       throw new Error("An earlier Clock Out is unconfirmed. Retry with the original lunch, allocations and notes; do not replace the pending request details.");
     }
-    if (storedId && !savedSnapshot && !previous) {
+    if (storedBeforeAttempt && !savedSnapshot && !previous) {
       throw new Error("The previous Clock Out request cannot be reconstructed safely on this device. Reload authoritative status and contact a manager before changing this shift.");
     }
     if (!savedSnapshot && !saveClockOutSnapshot(email, entryId, requestId, submittedBody)) {
