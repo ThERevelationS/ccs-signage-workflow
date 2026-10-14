@@ -939,7 +939,7 @@ export default function ClockOutDialog({
             </Button>
             <Button onClick={handleClockOut} disabled={isSubmitting || breakActionBusy || onBreak} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
               {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
-              {isSubmitting ? "Confirming..." : onBreak ? "End Break First" : pendingClockOutRecovery ? "Retry Original Clock Out" : "Clock Out"}
+              {isSubmitting ? "Confirming..." : onBreak ? "End Break First" : pendingClockOutRecovery?.entryId === String(timeEntry?.id) ? "Retry Original Clock Out" : "Clock Out"}
             </Button>
           </div>
         </div>
