@@ -681,7 +681,7 @@ await act(async () => { reloadRenderer.unmount(); });
 let completedRenderer;
 await act(async () => { completedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
 const completeInitIndex = calls.length - 1;
-await act(async () { calls[completeInitIndex].resolve(status(first, 'already-complete-shift')); });
+await act(async () => { calls[completeInitIndex].resolve(status(first, 'already-complete-shift')); });
 const completedDialog = completedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
 assert.ok(completedDialog);
 let lostAfterCommit;
