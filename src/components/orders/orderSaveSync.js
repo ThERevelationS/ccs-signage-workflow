@@ -1,5 +1,6 @@
 import { queueSmartsheetSync } from "@/components/admin/syncRequestQueue";
 import { normalizeOrderLinkedCustomerReviews } from "@/components/orders/orderLinkedCustomerReviewPresentation.mjs";
+import { orderRemoteVerificationReviewMessage } from "@/components/orders/orderRemoteVerificationReview.mjs";
 
 function safeMessage(error, fallback) {
   return error?.response?.data?.error || error?.data?.error || error?.message || fallback;
@@ -164,6 +165,11 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
     };
   }
   const results = Array.isArray(result?.results) ? result.results : [];
+  // A failed final Smartsheet read-back must still explain WHICH permanent
+  // Order rows need review. This is only failure feedback; no success flag or
+  // pending-marker clearance is inferred from the diagnostic.
+  const remoteVerificationMessage = orderRemoteVerificationReviewMessage(result, expected);
+  if (remoteVerificationMessage) return { ok: false, message: remoteVerificationMessage };
   if (expected === 0) {
     return results.length === 0 && result?.success === true && result?.sync_complete === true && result?.needs_review === false
       ? { ok: true, message: "Saved changes are already synchronized." }
