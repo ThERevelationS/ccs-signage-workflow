@@ -2576,6 +2576,76 @@ async function pushDataset(
   // Phase 2: Batch Smartsheet write. Neither Sales nor Order rows are
   // considered complete from the write acknowledgement alone; affected
   // permanent rows are freshly read back before Base44 sync metadata advances.
+  // Smartsheet definitively rejected the preceding PUT with HTTP 429.
+  // Before replaying the *same* payload after Retry-After, independently
+  // verify its exact Base44 revisions, permanent rows, and unmoved remote
+  // values again. The transport propagates this guard's failure, unlike
+  // progress callbacks. No retry is authorized by matching row labels.
+  const revalidateOrderRateLimitedPut = async () => {
+    try {
+      if (dataset !== 'orders' || typeof options?.assertRunOwnership !== 'function') {
+        throw new Error('Order sync ownership verification unavailable');
+      }
+      await options.assertRunOwnership();
+      const rowIds = eligibleSmartsheetWrites.map((row: any) => String(row.id ?? ''));
+      const requested = new Set(rowIds);
+      if (!rowIds.length || requested.size !== rowIds.length ||
+          rowIds.some((id: string) => !/^\d+$/.test(id))) {
+        throw new Error('Order retry rows are missing or duplicated');
+      }
+      const plans = [...deferredOrderVerification.entries()].filter(([, verification]) =>
+        requested.has(String(verification.rowId)));
+      if (plans.length !== requested.size ||
+          new Set(plans.map(([, verification]) => String(verification.rowId))).size !== requested.size) {
+        throw new Error('Order retry permanent-row plans cannot be uniquely verified');
+      }
+      const orderIds = plans.map(([id]) => id);
+      const freshLocal = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { id: { $in: orderIds } }, sort: 'id',
+        label: 'Order rate limit retry fresh Base44 revisions',
+      });
+      if (freshLocal.length !== plans.length ||
+          new Set(freshLocal.map((record: any) => String(record.id))).size !== plans.length ||
+          freshLocal.some((record: any) => !orderIds.includes(String(record.id)))) {
+        throw new Error('Order retry Base44 records were missing, duplicated, or unrelated');
+      }
+      const latestById = new Map(freshLocal.map((record: any) => [String(record.id), record]));
+      const plannedById = new Map(pendingRecords.map((record: any) => [String(record.id), record]));
+      const columnIds = [...new Set(Object.values(bindings)
+        .map((value: any) => String(value).trim()).filter((id: string) => /^\d+$/.test(id)))];
+      if (!columnIds.length) throw new Error('Order retry mapped columns unavailable');
+      const params = new URLSearchParams({
+        rowIds: rowIds.join(','), columnIds: columnIds.join(','),
+        exclude: 'nonexistentCells',
+      });
+      await options.assertRunOwnership();
+      const remote = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+      if (String(remote.body?.id ?? '') !== sheetId ||
+          !Array.isArray(remote.body?.rows) ||
+          !columnIds.every((id: string) =>
+            remote.body?.columns?.some((column: any) => String(column.id) === id))) {
+        throw new Error('Order retry Smartsheet sheet/column evidence incomplete');
+      }
+      const currentRows = normalizeSheetRows(remote.body);
+      if (currentRows.length !== requested.size ||
+          new Set(currentRows.map((row: any) => String(row.id))).size !== requested.size ||
+          currentRows.some((row: any) => !requested.has(String(row.id)))) {
+        throw new Error('Order retry Smartsheet rows missing, duplicate, or unexpected');
+      }
+      const freshByRowId = new Map(currentRows.map((row: any) =>
+        [String(row.id), buildOrderPullSnapshot(row, bindings)]));
+      if (staleOrderRetryPrewriteIds(plans, plannedById, latestById, freshByRowId, sheetId).length) {
+        throw new Error('Order or Smartsheet values changed during the rate-limit wait');
+      }
+      await options.assertRunOwnership();
+    } catch {
+      throw Object.assign(new Error(
+        'Order Smartsheet rate-limit retry held: fresh Base44/Smartsheet identities or values could not be verified. Reload Orders and review current Smartsheet rows before retrying.'
+      ), { orderRateLimitRecheckBlocked: true });
+    }
+  };
+
   let salesBatchWriteError = '';
   let orderBatchWriteError = '';
   if (eligibleSmartsheetWrites.length) {
