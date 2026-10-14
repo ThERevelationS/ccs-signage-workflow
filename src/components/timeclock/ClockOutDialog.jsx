@@ -283,6 +283,9 @@ export default function ClockOutDialog({
   const handleLaborMutation = async (handler, payload) => {
     if (!handler) return null;
     const result = await handler(payload);
+    // A stale acknowledgement is intentionally ignored by Quick Clock.
+    // Do not fetch labor suggestions for an obsolete employee/shift dialog.
+    if (!result) return null;
     setAllocationsReviewed(false);
     await loadLaborPreview({ invalidateReview: true });
     return result;
