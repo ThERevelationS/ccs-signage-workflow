@@ -51,7 +51,7 @@ import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
-import { compareUnverifiedAccountSave } from "./unverifiedAccountSave.js";
+import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft } from "./unverifiedAccountSave.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
@@ -852,6 +852,97 @@ export default function UserManagement() {
         setUserMutationSaving(false);
       }
     }
+  };
+
+  const verifyInterruptedAccountSave = async () => {
+    const pending = accountWriteRecovery;
+    const current = activeEditingUser.current;
+    if (!pending || !sessionToken || pending.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        current?.id !== pending.id || current?.email !== pending.email ||
+        userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
+        deletionInFlight.current || isLoading || userDirectoryError) return;
+    const owner = { sessionToken };
+    userUpdateOwner.current = owner;
+    userUpdateInFlight.current = true;
+    setUserMutationSaving(true);
+    const ownsVerification = () => userUpdateOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === pending.id &&
+      activeEditingUser.current?.email === pending.email;
+    try {
+      // Authorized, read-only directory query. An incomplete or competing
+      // read is not evidence that the previous Account write did not occur.
+      const rows = await loadUsers();
+      if (!ownsVerification()) return;
+      const matching = rows?.filter(row => row.id === pending.id &&
+        row.email === pending.email && row.updated_date);
+      if (!matching || matching.length !== 1) {
+        throw new Error("The latest Account record could not be verified.");
+      }
+      const latest = matching[0];
+      const comparison = compareUnverifiedAccountSave({
+        baseline: pending.baseline, attempted: pending.attempted, latest
+      });
+      setAccountWriteRecovery({
+        ...pending, stage: "review", latest, comparison
+      });
+      setConfirmAccountReconciliation(false);
+      setUserMutationError("");
+    } catch {
+      if (ownsVerification()) {
+        setAccountWriteRecovery({ ...pending, stage: "needs_read" });
+        setConfirmAccountReconciliation(false);
+        setUserMutationError("Unable to verify the Account save. No retry was sent. Reload the verified directory before resolving.");
+      }
+    } finally {
+      if (ownsVerification()) {
+        userUpdateOwner.current = null;
+        userUpdateInFlight.current = false;
+        setUserMutationSaving(false);
+      }
+    }
+  };
+
+  const acceptVerifiedAccountSave = () => {
+    const pending = accountWriteRecovery;
+    if (!pending || pending.stage !== "review" || !pending.latest ||
+        !pending.comparison || !sessionToken ||
+        pending.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        activeEditingUser.current?.id !== pending.id ||
+        activeEditingUser.current?.email !== pending.email ||
+        userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
+        deletionInFlight.current || isLoading || userDirectoryError ||
+        (pending.comparison.status !== "applied" && !confirmAccountReconciliation)) return;
+    const latest = pending.latest;
+    accountDraftBaseline.current = {
+      sessionToken, id: latest.id, email: latest.email,
+      values: createAdminAccountDraft(latest)
+    };
+    if (pending.comparison.status === "applied") {
+      setFormData(current => rebaseAppliedAccountDraft({
+        latest, attempted: pending.attempted, current
+      }));
+      if (String(activeAccountDraft.current?.password_hash || "").length > 0) {
+        // This password was never sent: the Account request did not return
+        // a verified response, so the original flow never got to this step.
+        setAccountSaveRecovery({
+          sessionToken, id: latest.id, email: latest.email,
+          updated_date: latest.updated_date, passwordNotSent: true
+        });
+      }
+      setAccountSaveNotice("Latest Account values match the requested changes. No Account retry was sent. Review any subsequent edits.");
+    } else {
+      // The original draft stays untouched; intentionally adopting the latest
+      // verified baseline does not itself overwrite any Account field.
+      setAccountSaveNotice("Latest Account values loaded for comparison. Your draft was preserved. Review changed fields and explicitly Save if you still want to apply them.");
+    }
+    setEditingUser(current =>
+      current?.id === pending.id && current?.email === pending.email ? latest : current);
+    setAccountWriteRecovery(null);
+    setConfirmAccountReconciliation(false);
+    setUserMutationError("");
   };
 
   const retryUnverifiedAccountPassword = async () => {
