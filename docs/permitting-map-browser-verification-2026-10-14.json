@@ -1,0 +1,57 @@
+{
+  "tested_at": "2026-10-14T15:20:09.384Z",
+  "mode": "isolated Chromium, actual React map and loader, production CSS, simulated Google SDK; live API configuration and imagery not verified",
+  "production_writes": 0,
+  "checks": [
+    {
+      "name": "visible map, authenticated loader and early address marker",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "visible map, authenticated loader and early address marker",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "visible map, authenticated loader and early address marker",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "unconfirmed address fallback opens without key and closes before exact map",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "unconfirmed address fallback opens without key and closes before exact map",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "unconfirmed address fallback opens without key and closes before exact map",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "late address updates pin and recenter restores address",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "layers, outline visibility and distance measurement work independently",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "failed map loading is visible and retry recovers",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "stalled configuration times out, late response stays ignored and retry recovers",
+      "width": 390,
+      "passed": true
+    }
+  ]
+}

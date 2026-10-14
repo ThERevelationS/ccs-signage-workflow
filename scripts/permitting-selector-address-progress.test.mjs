@@ -119,3 +119,12 @@ test('rejected geocoder classifies known causes without echoing provider interna
  const examples=[['API keys with referer restrictions cannot be used with this API.','BROWSER_KEY_RESTRICTION'],['You must enable Billing on the Google Cloud Project.','BILLING_REQUIRED'],['The provided API key is invalid.','KEY_INVALID'],['Geocoding API has not been used in project before or it is disabled.','API_DISABLED'],['This API project is not authorized to use this API.','API_ACCESS_DENIED'],['This IP, site or mobile application is not authorized to use this API key.','APPLICATION_RESTRICTION'],['Unknown rejection.','REQUEST_DENIED']];
  for(const [error_message,code] of examples){const data=await (await handler('findLocalityByAddress',client(ledger()),{Deno:{env:{get:()=> 'SECRET-KEY'}},fetch:async()=>new Response(JSON.stringify({status:'REQUEST_DENIED',error_message:error_message+' SECRET-KEY project-internals',results:[]}))})({address:'123 Main St',action_token:token})).json();assert.equal(data.geocoding_service.diagnostic_code,code);assert.equal(data.scan_run.status,'completed_with_errors');assert.equal(data.apply_allowed,false);assert.equal(data.suggested_locality,null);assert(!JSON.stringify(data).includes('SECRET-KEY'));assert(!JSON.stringify(data).includes('project-internals'));assert.match(data.match_reason,/do not need to re-enter/);}
 });
+
+test('admin geocode diagnostic never enters research, catalog or scan writes',async()=>{
+ const c={auth:{me:async()=>({id:'a',email:'admin@example.com',role:'admin'})}};
+ const data=await (await handler('findLocalityByAddress',c,{loadAllEntityRows:async()=>{throw Error('must not read catalog');},authenticateSignShopSession:async()=>{throw Error('must not inspect app session');}})({action:'geocode_diagnostic',address:'10900 Reading Road, Sharonville, OH',action_token:token})).json();
+ assert.equal(data.diagnostic_only,true);assert.equal(data.record_writes,0);assert.equal(data.llm_calls,0);assert.equal(data.apply_allowed,false);assert.equal(data.geocoding_service.status,'NOT_CONFIGURED');
+});
+test('geocode diagnostic rejects unauthenticated and non-admin platform users',async()=>{
+ for(const user of [null,{id:'r',role:'user'}])assert.equal((await handler('findLocalityByAddress',{auth:{me:async()=>user}})({action:'geocode_diagnostic',address:'123 Main St'})).status,403);
+});
