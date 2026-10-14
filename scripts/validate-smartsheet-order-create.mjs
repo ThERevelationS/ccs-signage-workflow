@@ -42,9 +42,16 @@ function fixture(initial = {}) {
     },
     async updateMany(query, update) {
       assert.equal(query.id, 'order-123');
-      calls.push('LINK_CAS');
+      calls.push(update?.$unset ? 'RELEASE_CAS' : 'LINK_CAS');
       if (query.updated_date && query.updated_date !== stored.updated_date) return { updated: 0 };
-      applyPatch(update?.$set || {});
+      if (query.smartsheet_pending_local_sync !== undefined && query.smartsheet_pending_local_sync !== stored.smartsheet_pending_local_sync) return { updated: 0 };
+      if (query.smartsheet_sheet_id !== undefined && query.smartsheet_sheet_id !== stored.smartsheet_sheet_id) return { updated: 0 };
+      for (const [key, value] of Object.entries(query)) {
+        if (key.startsWith('smartsheet_create_attempt.') && stored.smartsheet_create_attempt?.[key.split('.')[1]] !== value) return { updated: 0 };
+      }
+      const next = structuredClone(stored);
+      for (const field of Object.keys(update?.$unset || {})) delete next[field];
+      applyPatch({ ...next, ...structuredClone(update?.$set || {}) });
       return { updated: 1 };
     },
   };
