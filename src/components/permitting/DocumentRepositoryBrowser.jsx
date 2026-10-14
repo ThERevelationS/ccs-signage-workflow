@@ -3,11 +3,15 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import PDFViewer from './PDFViewer';
 
 const types = { sign_ordinance: 'Sign ordinance', permit_application: 'Application', zoning_code: 'Zoning code', fee_schedule: 'Fees', checklist: 'Checklist', legislative_record: 'Legislative record', gis_resource: 'Map / GIS', portal_instruction: 'Portal instructions', other: 'Other' };
 const label = value => String(value || 'Unknown').replaceAll('_', ' ');
 const dateLabel = value => { const date = new Date(value); return value && Number.isFinite(date.getTime()) ? date.toLocaleDateString() : 'Not recorded'; };
 const link = value => { try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : ''; } catch { return ''; } };
+const pdfLink = row => Boolean(link(row.archived_file_url)) && /\.pdf(?:[?#]|$)/i.test(row.archived_file_url || row.official_url || '') ||
+  Boolean(link(row.archived_file_url)) && /\.pdf(?:[?#]|$)/i.test(row.official_url || '');
+const previewTooLarge = row => Number(row.file_bytes) > 12 * 1024 * 1024;
 const fields = ['id','jurisdiction_id','jurisdiction_profile_doc_id','title','source_type','category','official_url','online_form_url','archived_file_url','archived_file_path','file_hash_sha256','file_bytes','retrieval_timestamp','document_revision_date','effective_or_adopted_date','content_status','authority_classification','verification_status','reviewer','issuing_office','jurisdiction_scope','notes_gaps','last_checked','last_changed','superseded_by','text_extraction_state'];
 
 function sameCollectedVersion(source, doc) {
@@ -27,6 +31,11 @@ const groups = { all: 'All evidence', review: 'Currentness unknown', current: 'R
 export default function DocumentRepositoryBrowser({ jurisdictionId, documents = [], onOpenCollected, onNavigate, sourceRequest }) {
   const [state, setState] = useState({ jurisdictionId: null, rows: [], loading: true, error: '' });
   const [refresh, setRefresh] = useState(0);
+  const [viewingPDF, setViewingPDF] = useState(null), [previewNotice, setPreviewNotice] = useState('');
+  const previewRegion = useRef(null), previewReturn = useRef(null), refreshButton = useRef(null);
+  useEffect(() => {
+    setViewingPDF(null); setPreviewNotice(''); previewReturn.current = null;
+  }, [jurisdictionId, sourceRequest?.token, sourceRequest?.jurisdictionId]);
   const [selectedState, setSelectedState] = useState(null), [sourceRetry, setSourceRetry] = useState(0);
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [group, setGroup] = useState('all');
   const sourceNodes = useRef(new Map()), focusedSourceRequest = useRef(null);
@@ -90,9 +99,42 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   ];
   const visible = rows.filter(row => (type === 'all' || row.source_type === type) && (group === 'all' || statusGroup(row) === group) &&
     [row.title, row.source_type, types[row.source_type], row.category, row.issuing_office, row.jurisdiction_scope, row.notes_gaps].some(value => String(value || '').toLowerCase().includes(query.trim().toLowerCase())));
+  const scopedPreview = viewingPDF?.jurisdictionId === jurisdictionId && viewingPDF.requestToken === selectedToken ? viewingPDF : null;
+  const livePreviewRow = scopedPreview && rows.find(row => row.key === scopedPreview.key && link(row.archived_file_url) === scopedPreview.url && !previewTooLarge(row));
+  useEffect(() => {
+    if (!scopedPreview || currentState.loading || currentState.error || livePreviewRow) return;
+    setPreviewNotice('The retained copy is no longer available at the selected URL, or its recorded size now exceeds the preview limit. Review the source details before reopening.');
+    previewReturn.current = { jurisdictionId, key: scopedPreview.key };
+    setViewingPDF(null);
+  }, [scopedPreview, currentState.loading, currentState.error, livePreviewRow, jurisdictionId]);
+  useEffect(() => {
+    if (scopedPreview) previewRegion.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }, [scopedPreview]);
+  useEffect(() => {
+    const destination = previewReturn.current;
+    if (!destination || viewingPDF || destination.jurisdictionId !== jurisdictionId || currentState.loading) return;
+    const node = sourceNodes.current.get(destination.key);
+    if (node) node.open = true;
+    (node?.querySelector('summary') || refreshButton.current)?.focus({ preventScroll: true });
+    node?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    previewReturn.current = null;
+  }, [viewingPDF, jurisdictionId, currentState.loading, query, type, group]);
+  const openPreview = row => {
+    setPreviewNotice('');
+    setViewingPDF({ jurisdictionId, requestToken: selectedToken, key: row.key, url: link(row.archived_file_url), title: row.title, status: row.content_status, classification: row.authority_classification });
+  };
+  const closePreview = () => {
+    if (viewingPDF) previewReturn.current = { jurisdictionId, key: viewingPDF.key };
+    setQuery(''); setType('all'); setGroup('all'); setViewingPDF(null);
+  };
   return <section aria-label="Document repository catalog" className="mb-4 space-y-3 rounded-lg border border-green-200 bg-white p-3">
-    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Browse documents & source details</h3><Button variant="outline" className="min-h-11" disabled={currentState.loading} onClick={() => setRefresh(v => v + 1)}>Refresh source catalog</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Browse documents & source details</h3><Button ref={refreshButton} variant="outline" className="min-h-11" disabled={currentState.loading} onClick={() => setRefresh(v => v + 1)}>Refresh source catalog</Button></div>
     <p className="text-xs text-gray-600">Saved classifications and currentness describe retained records. Collection, extraction and AI research do not approve a requirement or confirm applicability to a project.</p>
+    {previewNotice && <p role="status" className="rounded bg-amber-50 p-3 text-sm">{previewNotice}</p>}
+    {scopedPreview && <div ref={previewRegion} role="region" aria-label="Retained PDF preview" className="scroll-mt-3 min-w-0 overflow-hidden rounded-lg border border-blue-300">
+      <p className="bg-blue-50 p-3 text-xs [overflow-wrap:anywhere]">Retained copy · saved currentness: {label(scopedPreview.status)} · classification: {label(scopedPreview.classification)}. Viewing does not approve authority or verify the cited version.</p>
+      <div className="h-[70vh] min-h-[420px] min-w-0"><PDFViewer key={scopedPreview.key + ':' + scopedPreview.url} fileUrl={scopedPreview.url} fileName={scopedPreview.title || 'Retained document'} onBack={closePreview} /></div>
+    </div>}
     {selected && <div className="space-y-2 rounded border border-blue-200 bg-blue-50 p-3 text-sm [overflow-wrap:anywhere]">
       <p className="font-semibold">Linked source record: {selectedId}</p>
       <p className="text-xs">Confirm this record's retained version against the citation or monitoring evidence. Opening it does not approve authority or clear source alerts.</p>
@@ -127,8 +169,10 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
           {link(row.official_url) && <a className="inline-flex min-h-11 items-center rounded border bg-white px-3 text-blue-700" href={link(row.official_url)} target="_blank" rel="noopener noreferrer">Open official source link</a>}
           {link(row.online_form_url) && row.online_form_url !== row.official_url && <a className="inline-flex min-h-11 items-center rounded border bg-white px-3 text-blue-700" href={link(row.online_form_url)} target="_blank" rel="noopener noreferrer">Open application / portal</a>}
           {link(row.archived_file_url) && <a className="inline-flex min-h-11 items-center rounded border bg-white px-3 text-blue-700" href={link(row.archived_file_url)} target="_blank" rel="noopener noreferrer">Open retained copy</a>}
+          {pdfLink(row) && !previewTooLarge(row) && <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={() => openPreview(row)}>Preview retained PDF</Button>}
           {row.collected?.id && onOpenCollected && <Button variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={() => onOpenCollected(row.collected.id)}>Open collected search / PDF tools</Button>}
         </div>
+        {pdfLink(row) && previewTooLarge(row) && <p className="text-xs">Recorded file size exceeds the 12 MiB inline preview limit. Use Open retained copy to inspect it externally.</p>}
         {!link(row.official_url) && <p>Official source link missing or unavailable.</p>}
         {!link(row.archived_file_url) && <p>{row.archived_file_path ? 'Retained repository path recorded; no downloadable copy URL available.' : 'No downloadable retained copy. This may be an online source or an archive gap.'}</p>}
         {row.saved && !row.collected && <p className="text-xs">Collected search / PDF tools are not linked to this saved version. Open its retained copy or official link above.</p>}
