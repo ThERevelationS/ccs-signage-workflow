@@ -1,0 +1,20 @@
+{
+  "mode": "actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "preview evidence labels, unsupported label demotion, review gate, save failure/retry, immutable draft save, reopen notes, no job writes, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "preview evidence labels, unsupported label demotion, review gate, save failure/retry, immutable draft save, reopen notes, no job writes, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "preview evidence labels, unsupported label demotion, review gate, save failure/retry, immutable draft save, reopen notes, no job writes, no overflow"
+    }
+  ]
+}
