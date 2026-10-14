@@ -79,8 +79,8 @@ await check("Completed or rider Work Orders reject guarded checklist saves", asy
 });
 
 await check("Only SIPS snapshot-guarded checklist saves trigger cross-entity checks", async () => {
-  const gateStart = src.indexOf("      // Restrict cross-entity checking to existing SIPS checklist workflow");
-  const gateEnd = src.indexOf("      if(type==='WorkOrder') {", gateStart);
+  const gateStart = src.indexOf("      // Read SIPS/WIP settings at the last available pre-write boundary.");
+  const gateEnd = src.indexOf("      const saved=await trackedConditionalSave(", gateStart);
   assert.ok(gateStart > 0 && gateEnd > gateStart);
   const gate = new Function(
     "type", "patch", "body", "base44", "record", "verifyGuardedSipsTaskEligibility",
@@ -99,8 +99,10 @@ await check("Only SIPS snapshot-guarded checklist saves trigger cross-entity che
   await gate("WorkOrder", { sip_checklist: [], sip_completed: true },
     { guard_fields: fields }, server, record, count);
   assert.equal(calls, 2, "Save & Revisit and completion trigger task verification");
-  assert.ok(src.indexOf("await verifyGuardedSipsTaskEligibility(base44,record);") <
-    src.indexOf("const saved=await trackedConditionalSave("));
+  const eligibilityAt = src.indexOf("await verifyGuardedSipsTaskEligibility(base44,record);");
+  const writeAt = src.indexOf("const saved=await trackedConditionalSave(");
+  assert.ok(eligibilityAt > src.indexOf("validateSalesActivityTimestampPatch(record,patch,equivalent)") &&
+    eligibilityAt < writeAt, "SIPS task eligibility must be checked after validators, immediately before persistence");
   assert.match(frontend, /guardFields: loadedWorkflowSnapshotRef\.current/);
 });
 
