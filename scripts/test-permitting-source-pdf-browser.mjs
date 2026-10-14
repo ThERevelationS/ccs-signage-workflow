@@ -13,6 +13,7 @@ const scratch=await mkdtemp(path.join(tmpdir(),'permitting-source-pdf-'));let vi
 try{
  await symlink(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
  await writeFile(path.join(scratch,'older.pdf'),pdf);await writeFile(path.join(scratch,'latest.pdf'),pdf);
+ await writeFile(path.join(scratch,'oversized.pdf'),Buffer.concat([pdf,Buffer.alloc(12*1024*1024+1)]));
  const css=(await readdir(path.join(root,'dist/assets'))).find(n=>n.endsWith('.css'));await copyFile(path.join(root,'dist/assets',css),path.join(scratch,'styles.css'));
  await writeFile(path.join(scratch,'index.html'),'<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div><script type="module" src="/main.jsx"></script></body></html>');
  await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{
@@ -21,7 +22,7 @@ try{
  PermittingSourceDocument:{filter:async(query,options)=>{
  window.fixture.reads.push({entity:'sources',query,options});
  if(query.jurisdiction_id!=='fixture-populated')return {items:[]};
- if(!query.id)return {items:window.fixture.sources.filter(row=>['listed','html','large','unsafe','missingcopy'].includes(row.id))};
+ if(!query.id)return {items:window.fixture.sources.filter(row=>['listed','html','large','unsafe','missingcopy','unknownbig'].includes(row.id))};
  if(query.id==='failed'&&window.fixture.failSource){window.fixture.failSource=false;throw Error('Synthetic source failure');}
  if(query.id==='delayed')return await new Promise(resolve=>{window.fixture.pendingResolve=()=>resolve({items:[{id:'delayed',jurisdiction_id:'fixture-populated',title:'Late old jurisdiction source'}]});});
  return {items:window.fixture.sources.filter(row=>row.id===query.id)};
@@ -43,6 +44,7 @@ try{
  {id:'failed',jurisdiction_id:'fixture-populated',title:'Recovered source',source_type:'checklist'},
  {id:'html',jurisdiction_id:'fixture-populated',title:'Retained web page',source_type:'portal_instruction',archived_file_url:'https://example.gov/retained.html'},
  {id:'large',jurisdiction_id:'fixture-populated',title:'Oversized retained PDF',source_type:'sign_ordinance',archived_file_url:'https://example.gov/large.pdf',file_bytes:13*1024*1024},
+ {id:'unknownbig',jurisdiction_id:'fixture-populated',title:'Oversized PDF with unknown recorded size',source_type:'sign_ordinance',archived_file_url:location.origin+'/oversized.pdf'},
  {id:'unsafe',jurisdiction_id:'fixture-populated',title:'Unsafe retained URL',source_type:'other',archived_file_url:'javascript:example.pdf'},
  {id:'missingcopy',jurisdiction_id:'fixture-populated',title:'No retained copy',source_type:'checklist',official_url:'https://example.gov/missing.pdf'}],
  rules:[['found','Cited older source','beyond'],['missing','Cited missing source','missing'],['foreign','Cited foreign source','foreign'],['failed','Cited retry source','failed'],['delayed','Cited slow source','delayed'],['unlinked','Citation without source','']].map(([id,requirement,source])=>({id,requirement,status:'needs_review',citations:[{source_document_id:source,section_or_page:'Section 1',excerpt:'Synthetic cited excerpt',official_url:'https://example.gov/code'}]})),
@@ -105,6 +107,12 @@ try{
   }
   assert.equal(await catalog.getByText('Recorded file size exceeds the 12 MiB inline preview limit.',{exact:false}).count(),2);
   assert.equal(await catalog.locator('a[href^="javascript:"]').count(),0);
+  const unknownBig=catalog.locator(':scope > details').filter({has:page.getByText('Oversized PDF with unknown recorded size',{exact:true})});
+  await unknownBig.locator('summary').first().click();
+  await unknownBig.getByRole('button',{name:'Preview retained PDF',exact:true}).click();
+  await preview.getByText('PDF Preview Not Available',{exact:true}).waitFor();
+  assert.equal(await preview.locator('canvas').count(),0,'Oversized unknown-size PDF cannot be parsed');
+  await preview.getByRole('button',{name:'Back',exact:true}).click();
   // Existing profile PDF handoff uses the same real viewer.
   await page.getByRole('button',{name:'Expand Example sign application',exact:true}).click();
   await page.getByRole('button',{name:'Open Example sign application',exact:true}).click();
@@ -121,7 +129,7 @@ try{
   await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
   const reads=await page.evaluate(()=>window.fixture.reads);assert.ok(reads.every(r=>r.query.jurisdiction_id));
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
-  checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, visible canvas PDF page painting with dark-text pixel proof and exact historical URL, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
+  checks.push({width,passed:true,painted_dark_pixels:paintedPixels,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, visible canvas PDF page painting with dark-text pixel proof and exact historical URL, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
  }
  await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled stalled PDF fetch/time and canvas render; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',pdf_page_painting_asserted:true,renderer:process.env.PERMITTING_PDF_HEADED==='1'?'full Chromium under Xvfb':'full Chromium headless',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
