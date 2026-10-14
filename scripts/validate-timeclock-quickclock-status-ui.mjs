@@ -454,6 +454,48 @@ assert.equal(laborDialog().props.activeLabor, null);
 assert.equal(laborDialog().props.laborSummary.total_minutes, 19);
 console.log('PASS Current Work change and stop keep authoritative labor summary');
 
+let invalidatedLabor;
+await act(async () => { invalidatedLabor = laborDialog().props.onStartLabor({ activityType: 'cnc' }); });
+const invalidatedLaborIndex = calls.length - 1;
+assert.equal(calls[invalidatedLaborIndex].payload.action, 'labor_start');
+let supersedingBreak;
+await act(async () => {
+  supersedingBreak = laborDialog().props.onStartBreak({ breakType: 'break', isPaid: true });
+});
+const supersedingBreakIndex = calls.length - 1;
+await act(async () => {
+  calls[supersedingBreakIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'on_break',
+    break: { id: 'newer-break', is_paid: true, user_email: second.email },
+    active_labor: null, labor_summary: { count: 3, total_minutes: 22 },
+    break_summary: { count: 3, total_minutes: 16, paid_minutes: 16, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await supersedingBreak;
+});
+await act(async () => {
+  calls[invalidatedLaborIndex].reject(new Error('Obsolete Current Work failure'));
+  await assert.rejects(invalidatedLabor, /Obsolete Current Work failure/);
+});
+assert.equal(laborDialog().props.activeLabor, null);
+assert.equal(laborDialog().props.breakStatus, 'on_break');
+assert.doesNotMatch(visible(renderer), /Obsolete Current Work failure/,
+  'Older labor failure must not show an obsolete warning after the server confirms Break Start');
+console.log('PASS superseded Current Work failure cannot overwrite newer Break Start feedback');
+let endSupersedingBreak;
+await act(async () => { endSupersedingBreak = laborDialog().props.onEndBreak(); });
+const endSupersedingIndex = calls.length - 1;
+await act(async () => {
+  calls[endSupersedingIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'working',
+    active_labor: null, labor_summary: { count: 3, total_minutes: 22 },
+    break_summary: { count: 3, total_minutes: 20, paid_minutes: 20, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await endSupersedingBreak;
+});
+assert.equal(laborDialog().props.breakStatus, 'working');
+
 let oldLabor;
 await act(async () => { oldLabor = laborDialog().props.onStartLabor({ activityType: 'fabrication' }); });
 const oldLaborIndex = calls.length - 1;
@@ -483,4 +525,4 @@ assert.equal(laborDialog().props.laborSummary.total_minutes, 0);
 console.log('PASS prior employee Current Work acknowledgement cannot replace new session data');
 
 await act(async () => { renderer.unmount(); });
-console.log('PASS 13/13 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 14/14 Time Clock Quick Clock async status acceptance cases');
