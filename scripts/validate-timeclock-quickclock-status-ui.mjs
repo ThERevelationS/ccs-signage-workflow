@@ -524,5 +524,69 @@ assert.equal(laborDialog().props.activeLabor, null);
 assert.equal(laborDialog().props.laborSummary.total_minutes, 0);
 console.log('PASS prior employee Current Work acknowledgement cannot replace new session data');
 
+const oldClockOutDialog = renderer.root.findAll((node) =>
+  typeof node.props?.onClockOut === 'function')[0];
+assert.ok(oldClockOutDialog);
+const originalPayload = {
+  lunchMinutes: 0,
+  jobAllocations: [{ work_order_id: 'synthetic-original-job', minutes: 45 }],
+  notes: 'Original confirmation contents',
+};
+let interruptedOut;
+await act(async () => { interruptedOut = oldClockOutDialog.props.onClockOut(originalPayload); });
+const uncertainOutIndex = calls.length - 1;
+assert.equal(calls[uncertainOutIndex].payload.action, 'clock_out');
+const originalOutRequestId = calls[uncertainOutIndex].payload.request_id;
+await act(async () => {
+  calls[uncertainOutIndex].reject(new Error('Synthetic Clock Out lost acknowledgement'));
+  await assert.rejects(interruptedOut, /Synthetic Clock Out lost acknowledgement/);
+});
+assert.match(visible(renderer), /first-available-work/);
+assert.ok(originalOutRequestId);
+let retryOut;
+await act(async () => { retryOut = oldClockOutDialog.props.onClockOut(originalPayload); });
+const retryOutIndex = calls.length - 1;
+assert.equal(calls[retryOutIndex].payload.request_id, originalOutRequestId);
+assert.deepEqual(calls[retryOutIndex].payload.job_allocations, calls[uncertainOutIndex].payload.job_allocations);
+assert.equal(calls[retryOutIndex].payload.notes, calls[uncertainOutIndex].payload.notes);
+await act(async () => {
+  calls[retryOutIndex].resolve({ data: {
+    success: true, status: 'already_clocked_out', reused: true, user: first,
+    entry: { id: 'first-available-work', clock_out:'2026-10-14T20:00:00.000Z' },
+  } });
+  await retryOut;
+});
+assert.doesNotMatch(visible(renderer), /first-available-work/);
+console.log('PASS lost Clock Out acknowledgement replays original id and payload exactly');
+
+await act(async () => { events.get('focus')(); });
+const statusAfterRetryIndex = calls.length - 1;
+assert.equal(calls[statusAfterRetryIndex].payload.action, 'status');
+await act(async () => { calls[statusAfterRetryIndex].resolve(status(first, 'first-new-shift')); });
+const pendingDialog = renderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+assert.ok(pendingDialog);
+let olderClockOut;
+await act(async () => { olderClockOut = pendingDialog.props.onClockOut(originalPayload); });
+const olderOutIndex = calls.length - 1;
+assert.equal(calls[olderOutIndex].payload.action, 'clock_out');
+await act(async () => {
+  renderer.update(React.createElement(QuickClockSection, {
+    allUsers: [first, second], employeeSessionToken: 'session-second-clockout', employeeSessionUser: second,
+  }));
+});
+const secondStatus = calls.length - 1;
+assert.equal(calls[secondStatus].payload.action, 'status');
+await act(async () => { calls[secondStatus].resolve(status(second, 'second-not-clocked-out')); });
+await act(async () => {
+  calls[olderOutIndex].resolve({ data: {
+    success:true, status:'clocked_out', user:first,
+    entry:{id:'first-new-shift',clock_out:'2026-10-14T20:30:00.000Z'},
+  } });
+  await olderClockOut;
+});
+assert.match(visible(renderer), /second-not-clocked-out/,
+  'Late prior employee Clock Out must never dismiss the new employee active shift');
+console.log('PASS late prior-employee Clock Out success cannot close new employee dialog');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 14/14 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 16/16 Time Clock Quick Clock async status acceptance cases');
