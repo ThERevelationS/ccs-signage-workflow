@@ -73,6 +73,26 @@ const args = () => {
   console.log('PASS Sales uses the same complete paginated, persisted, byte-read-back-verified backup primitive with a distinct recoverable artifact identity');
 }
 
+// A temporary edit during the first pagination pass must force a completely
+// new backup read; never append later pages to the failed first attempt.
+{
+  const setup = args();
+  const originalReadPage = setup.options.readPage;
+  let passes = 0;
+  setup.options.readPage = async (number, size) => {
+    if (number === 1) passes++;
+    const body = await originalReadPage(number, size);
+    return passes === 1 && number === 2 ? { ...body, version: 20 } : body;
+  };
+  const artifact = await createVerifiedOrderSheetBackup(setup.options);
+  assert.equal(artifact.row_count, 3);
+  assert.equal(passes, 2);
+  assert.deepEqual(setup.calls.map(([kind]) => kind),
+    ['read', 'read', 'read', 'read', 'version', 'upload', 'readback', 'version', 'log']);
+  assert.deepEqual(JSON.parse(setup.getContent()).rows, rawRows);
+  console.log('PASS a transient sheet-version change discards the first backup and restarts complete pagination before one verified artifact/log');
+}
+
 async function fails(label, alter, matching, expectedLastStep) {
   const setup = args();
   alter(setup.options);
