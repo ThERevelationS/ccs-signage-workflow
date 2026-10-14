@@ -23,6 +23,10 @@ export function planAccountFieldResolution({baseline,attempted,latest,draft,choi
      FIELDS_KEYS.some(key=>!own(attempted,key)||!own(draft,key))) {
     throw new Error("Account field review requires complete, scoped drafts.");
   }
+  if(Object.entries(choices).some(([key,value])=>
+    !FIELDS_KEYS.includes(key)||!["latest","mine"].includes(value))) {
+    throw new Error("Unknown Account field resolution choice.");
+  }
   const original=createAdminAccountDraft(baseline);
   const remote=createAdminAccountDraft(latest);
   const result={...remote,sales_roles:copy(remote.sales_roles),password_hash:draft.password_hash||""};
