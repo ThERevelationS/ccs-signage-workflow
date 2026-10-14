@@ -142,4 +142,67 @@ assert.doesNotMatch(renderedText(tree), /Fresh First Shift|In House Projects/,
 console.log('PASS shift change clears drafts when suggestion service is unavailable');
 
 await act(async () => { tree.unmount(); });
-console.log('PASS 5/5 Clock Out preview and allocation draft scenarios');
+
+const submitCalls = [];
+const submitted = [];
+const submitPreview = () => new Promise((resolve, reject) => submitCalls.push({resolve, reject}));
+const submissionProps = (entry, extra={}) => propsFor(entry, {
+  onLoadLaborAllocationPreview: submitPreview,
+  onClockOut: async (data) => { submitted.push(data); },
+  ...extra,
+});
+const editableLunch = (renderer) => renderer.root.findAllByType(Input).find((node) =>
+  node.props.placeholder === 'Enter 0 if none');
+const clickClockOut = (renderer) => clickButton(renderer, 'Clock Out');
+let submissionTree;
+await act(async () => {
+  submissionTree = TestRenderer.create(React.createElement(ClockOutDialog, submissionProps(first)));
+});
+assert.equal(submitCalls.length, 1);
+const reconciled = (label, id, elapsedMinutes = 70) => {
+  const result = preview(label, id);
+  result.preview.elapsed_minutes = elapsedMinutes;
+  return result;
+};
+await act(async () => { submitCalls[0].resolve(reconciled('Ready for submission', 'first-submit')); });
+assert.ok(editableLunch(submissionTree));
+await act(async () => { editableLunch(submissionTree).props.onChange({target:{value:'0'}}); });
+let completedClockOut;
+await act(async () => { completedClockOut = clickClockOut(submissionTree)(); });
+assert.equal(submitCalls.length, 2, 'Clock Out requires a fresh server reconciliation');
+await act(async () => {
+  submitCalls[1].resolve(reconciled('Ready for submission', 'first-submit'));
+  await completedClockOut;
+});
+assert.equal(submitted.length, 1,
+  'Valid confirmed reconciliation must allow Clock Out with preserved allocations');
+assert.equal(submitted[0].jobAllocations[0].work_order_id, 'first-submit');
+console.log('PASS final server reconciliation accepts unchanged manually reviewed allocations');
+
+await act(async () => {
+  submissionTree.update(React.createElement(ClockOutDialog, submissionProps(second)));
+});
+assert.equal(submitCalls.length, 3);
+await act(async () => { submitCalls[2].resolve(reconciled('Second prepared', 'second-submit')); });
+await act(async () => { editableLunch(submissionTree).props.onChange({target:{value:'0'}}); });
+let priorPendingOut;
+await act(async () { priorPendingOut = clickClockOut(submissionTree)(); });
+assert.equal(submitCalls.length, 4);
+await act(async () => {
+  submissionTree.update(React.createElement(ClockOutDialog, submissionProps(first)));
+});
+assert.equal(submitCalls.length, 5);
+await act(async () { submitCalls[4].resolve(reconciled('First restored', 'first-restored')); });
+const countBeforeLate = submitted.length;
+await act(async () => {
+  submitCalls[3].resolve(reconciled('Outdated second', 'second-submit'));
+  await priorPendingOut;
+});
+assert.equal(submitted.length, countBeforeLate,
+  'Final reconciliation from prior employee must never submit a stale Clock Out');
+assert.match(renderedText(submissionTree), /First restored/);
+assert.doesNotMatch(renderedText(submissionTree), /Outdated second/);
+console.log('PASS previous employee final reconciliation cannot submit or replace new shift');
+
+await act(async () => { submissionTree.unmount(); });
+console.log('PASS 7/7 Clock Out preview and allocation draft scenarios');
