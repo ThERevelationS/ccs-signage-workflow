@@ -29,7 +29,7 @@ Harness: `scripts/test-permitting-documents-browser.mjs`. Actual parent/detail p
 
 Screenshot captures at `/tmp/permitting-source-text-{320,390,1280}.png` are temporary test artifacts, not repository assets. Test receipt: `docs/permitting-documents-browser-2026-10-14.json`.
 
-Independent regression suites for **exact source navigation** and **retained PDF canvas rendering** also passed all three viewport widths. Authenticated production employee/admin endpoint calls and real persisted segment records were **not** exercised. PDF text parser/archive authenticity and legislative currentness remain separate from this UI. Google address lookup REQUEST_DENIED remains unresolved. Production research settings not read or changed.
+Independent regression suites for **exact source navigation** and **retained PDF canvas rendering** also passed all three viewport widths: nine synthetic browser scenarios total. Targeted ESLint had zero errors and six previously present parent-panel warnings; the final production build exited zero and `git diff --check` passed. Authenticated production employee/admin endpoint calls and real persisted segment records were **not** exercised. PDF text parser/archive authenticity and legislative currentness remain separate from this UI. Google address lookup REQUEST_DENIED remains unresolved. Production research settings not read or changed.
 
 ## Change and safety scope
 
