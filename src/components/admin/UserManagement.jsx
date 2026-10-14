@@ -110,6 +110,9 @@ export default function UserManagement() {
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
+  const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
+  const [passwordRetryConfirmed, setPasswordRetryConfirmed] = useState(false);
+  const [accountSaveNotice, setAccountSaveNotice] = useState("");
   const userUpdateInFlight = useRef(false);
   const userUpdateOwner = useRef(null);
   const hrSaveInFlight = useRef(false);
@@ -165,6 +168,9 @@ export default function UserManagement() {
     userUpdateOwner.current = null;
     userUpdateInFlight.current = false;
     setUserMutationSaving(false);
+    setAccountSaveRecovery(null);
+    setPasswordRetryConfirmed(false);
+    setAccountSaveNotice("");
     hrSaveOwner.current = null;
     hrSaveInFlight.current = false;
     setHrMutationSaving(false);
@@ -480,6 +486,9 @@ export default function UserManagement() {
       return;
     }
     clearEditorDraftTracking();
+    setAccountSaveRecovery(null);
+    setPasswordRetryConfirmed(false);
+    setAccountSaveNotice("");
     const initialAccountDraft = createAdminAccountDraft(user);
     accountDraftBaseline.current = {
       sessionToken, id: user.id, email: user.email, values: initialAccountDraft
@@ -701,6 +710,10 @@ export default function UserManagement() {
     // Account saves close the whole editor. Do not implicitly discard HR edits.
     if (hasProtectedHrDraft()) {
       setUserMutationError("Save your HR data separately or choose Cancel and confirm discarding it before saving account changes.");
+      return;
+    }
+    if (accountSaveRecovery) {
+      setUserMutationError("Account details were already saved. Resolve the unverified Time Clock password result without resaving the Account.");
       return;
     }
     if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
