@@ -43,6 +43,13 @@ function validEvidence(data, source, start) {
   );
 }
 
+export function hasSavedPhysicalPageText(source) {
+  return Boolean(source.id && HASH.test(cleanText(source.file_hash_sha256)) &&
+    /^https?:\/\//i.test(source.archived_file_url || '') &&
+    Number.isInteger(source.text_extraction_state?.pages_extracted) &&
+    source.text_extraction_state.pages_extracted > 0);
+}
+
 // A read-only, exact-record view. Search is deliberately limited to the returned physical pages;
 // it must never claim to search unread/uncommitted segments or other versions of the PDF.
 export default function SourceTextEvidenceBrowser({ source }) {
@@ -57,10 +64,7 @@ export default function SourceTextEvidenceBrowser({ source }) {
   const toggleRef = useRef(null);
   const requestVersion = useRef(0);
   const fingerprint = cleanText(source.file_hash_sha256);
-  const available = Boolean(source.id && HASH.test(fingerprint) &&
-    /^https?:\/\//i.test(source.archived_file_url || '') &&
-    Number.isInteger(source.text_extraction_state?.pages_extracted) &&
-    source.text_extraction_state.pages_extracted > 0);
+  const available = hasSavedPhysicalPageText(source);
 
   useEffect(() => {
     if (!open || !available) return;
