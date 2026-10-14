@@ -195,4 +195,22 @@ await act(async () => { refreshedAfterResume.resolve(working(second)); });
 assert.doesNotMatch(visible(retryRenderer), /WORK PAUSED/);
 console.log('PASS lost Resume Work acknowledgement retries same request and normal success clears guard');
 await act(async () => { retryRenderer.unmount(); });
-console.log('PASS 5/5 Work Pause overlay session/refresh/event scenarios');
+
+let identityRenderer;
+const identityStart = calls.length;
+await act(async () => {
+  identityRenderer = TestRenderer.create(React.createElement(Overlay, propsFor(first, 'session-ident-A')));
+});
+assert.equal(calls.length, identityStart + 1);
+await act(async () => {
+  identityRenderer.update(React.createElement(Overlay, propsFor(second, 'session-ident-B')));
+});
+assert.equal(calls.length, identityStart + 2);
+await act(async () => { calls[identityStart + 1].resolve(working(second)); });
+assert.doesNotMatch(visible(identityRenderer), /WORK PAUSED/);
+await act(async () { calls[identityStart].resolve(paused(first, 'stale-other-employee')); });
+assert.doesNotMatch(visible(identityRenderer), /WORK PAUSED/,
+  'Stale previous-employee response must not show a pause guard when the current employee is working');
+console.log('PASS old employee paused status cannot reopen guard for newly signed-in working employee');
+await act(async () => { identityRenderer.unmount(); });
+console.log('PASS 6/6 Work Pause overlay session/refresh/event scenarios');
