@@ -33,6 +33,7 @@ import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
 import JurisdictionActivityTab from "./JurisdictionActivityTab";
 import JurisdictionAuthorityStatus from "./JurisdictionAuthorityStatus";
+import JurisdictionRequirements from "./JurisdictionRequirements";
 import SourceMonitorPanel from "./SourceMonitorPanel";
 import PermitWorkflowDesigner from "./PermitWorkflowDesigner";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
@@ -876,12 +877,13 @@ Answer only from the provided excerpts and cite the document title and official 
         <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel key={jurisdiction.id} jurisdictionName={jurisdiction.name} jurisdictionId={jurisdiction.id} onNavigate={navigateWorkspace} /></section>
 
         <section ref={node=>{workspaceSections.current.requirements=node;}} tabIndex={-1} aria-label="Requirements workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
+        <JurisdictionRequirements key={jurisdiction.id} jurisdictionId={jurisdiction.id} onDocuments={() => navigateWorkspace("documents")} />
         <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
         {/* Key Requirements & Rules */}
         {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
           <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400 space-y-3">
             <div>
-              <p className="text-xs font-semibold text-red-800 mb-2">Permit Requirements</p>
+              <p className="text-xs font-semibold text-red-800 mb-2">Collected profile notes · unverified summary</p>
               <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                 {req.requires_permit !== undefined && (
                   <div className="flex min-w-0 items-start gap-1.5">
@@ -896,13 +898,13 @@ Answer only from the provided excerpts and cite the document title and official 
                 {req.illumination_allowed !== undefined && (
                   <div className="flex min-w-0 items-start gap-1.5">
                     {req.illumination_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                    <span className="min-w-0 break-words">Illumination Allowed</span>
+                    <span className="min-w-0 break-words">Illumination allowed: {req.illumination_allowed ? "Yes" : "No"}</span>
                   </div>
                 )}
                 {req.electronic_signs_allowed !== undefined && (
                   <div className="flex min-w-0 items-start gap-1.5">
                     {req.electronic_signs_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                    <span className="min-w-0 break-words">Electronic Signs</span>
+                    <span className="min-w-0 break-words">Electronic signs allowed: {req.electronic_signs_allowed ? "Yes" : "No"}</span>
                   </div>
                 )}
                 {req.setback_requirements && <div className="min-w-0 break-words sm:col-span-2"><span className="font-medium text-gray-500">Setbacks:</span> {req.setback_requirements}</div>}
