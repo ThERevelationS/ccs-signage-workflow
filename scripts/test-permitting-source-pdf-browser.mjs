@@ -51,7 +51,7 @@ try{
  monitors:[{id:'m1',source_document_id:'listed',source_title:'Monitor linked source',staff_review_required:true},{id:'m2',source_title:'Monitor without link',staff_review_required:true}]
  };function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
  vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
- browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ browser=await chromium.launch({channel:'chromium',headless:true,args:['--no-sandbox']});
  for(const width of [320,390,1280]){
   const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
   let holdPDF=false;const heldRoutes=[];
