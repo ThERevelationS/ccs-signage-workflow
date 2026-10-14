@@ -16,6 +16,48 @@ export default function RenderedPDFPages({ fileUrl, onPageRendered, onFailure, o
   const failureCallback = useRef(onFailure);
   failureCallback.current = onFailure;
 
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const load = async () => {
+      try {
+        const response = await fetch(fileUrl, { signal: controller.signal });
+        if (!response.ok) throw new Error('PDF request failed');
+        const declaredSize = Number(response.headers.get('content-length'));
+        if (declaredSize > MAX_PDF_BYTES) throw new Error('PDF exceeds size limit');
+        const reader = response.body?.getReader();
+        const chunks = [];
+        let total = 0;
+        if (reader) {
+          try {
+            while (true) {
+              const result = await reader.read();
+              if (result.done) break;
+              total += result.value.byteLength;
+              if (total > MAX_PDF_BYTES) throw new Error('PDF exceeds size limit');
+              chunks.push(result.value);
+            }
+          } finally { reader.releaseLock(); }
+        } else {
+          const buffer = new Uint8Array(await response.arrayBuffer());
+          total = buffer.byteLength;
+          if (total > MAX_PDF_BYTES) throw new Error('PDF exceeds size limit');
+          chunks.push(buffer);
+        }
+        const bytes = new Uint8Array(total);
+        let offset = 0;
+        for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+        if (!new TextDecoder().decode(bytes.subarray(0, 1024)).includes('%PDF-')) throw new Error('Not a PDF file');
+        if (active) setDocumentBytes({ data: bytes });
+      } catch (error) {
+        if (active) failureCallback.current(error);
+      } finally { clearTimeout(timeout); }
+    };
+    load();
+    return () => { active = false; controller.abort(); clearTimeout(timeout); };
+  }, [fileUrl]);
+
   useLayoutEffect(() => {
     const node = container.current;
     if (!node) return;
