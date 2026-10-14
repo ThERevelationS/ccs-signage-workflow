@@ -140,6 +140,76 @@ test("Save confirmed concurrent CCS edit halts Submit and provides a precise rea
   assert.equal(h.saves.filter(Boolean).length,0);
 });
 
+test("newer CCS changes-requested decision on final reload clears earlier auto-approval banner",async()=>{
+  const h=harness({autoApproved:true});
+  h.submittedEstimate.status="approved";
+  h.useRealRefresh();
+  h.setServerEstimate({...h.submittedEstimate,updated_date:"estimate-v4",status:"changes_requested",
+    approval_required:true,approval_tier:"Supervisor",decision_notes:"Revise line items"});
+  await h.run(true);
+  assert.deepEqual(h.calls.map(x=>x.action),["estimate_save","estimate_submit"]);
+  assert.equal(h.forms.at(-1).fromEstimate,"estimate-v4");
+  assert.equal(h.saves.at(-1),"","Do not leave a stale auto-approved confirmation");
+  assert.match(h.errors.at(-1),/changes requested/i);
+  assert.match(h.errors.at(-1),/CCS/i);
+});
+
+test("newer CCS approval on final reload clears stale waiting-for-approval banner",async()=>{
+  const h=harness();
+  h.useRealRefresh();
+  h.setServerEstimate({...h.submittedEstimate,updated_date:"estimate-v4",status:"approved",
+    approval_required:true,approval_tier:"Manager",decision_notes:"Approved by CCS"});
+  await h.run(true);
+  assert.equal(h.saves.at(-1),"","Old submission-to-CCS message must not remain");
+  assert.equal(h.forms.at(-1).fromEstimate,"estimate-v4");
+  assert.match(h.errors.at(-1),/approved/i);
+});
+
+test("a newer CCS revision to Save Draft clears the draft-saved confirmation",async()=>{
+  const h=harness();
+  h.useRealRefresh();
+  h.setServerEstimate({...h.savedEstimate,updated_date:"estimate-v7",notes:"Changed by CCS"});
+  await h.run(false);
+  assert.equal(h.saves.at(-1),"");
+  assert.match(h.errors.at(-1),/CCS/i);
+  assert.equal(h.forms.at(-1).fromEstimate,"estimate-v7");
+});
+
+test("unchanged server revision preserves legitimate automatic approval confirmation",async()=>{
+  const h=harness({autoApproved:true});
+  h.submittedEstimate.status="approved";
+  h.useRealRefresh();
+  h.setServerEstimate(h.submittedEstimate);
+  await h.run(true);
+  assert.match(h.saves.at(-1),/automatically approved/i);
+  assert.equal(h.errors.at(-1),"");
+  assert.equal(h.recoveries.at(-1),null);
+});
+
+test("unavailable final reload hides unverified automatic approval banner and retains recovery lock",async()=>{
+  const h=harness({autoApproved:true});
+  h.submittedEstimate.status="approved";
+  h.useRealRefresh();
+  h.ctx.fetchPortalPayload=async()=>{throw new Error("Synthetic CCS reload unavailable")};
+  await h.run(true);
+  assert.equal(h.saves.at(-1),"");
+  assert.match(h.errors.at(-1),/server ownership could not be verified/i);
+  assert.equal(h.recoveries.at(-1)?.workOrderId,"wo-A");
+});
+
+test("missing or transferred estimate on final reload cannot leave a successful approval banner",async()=>{
+  for(const [row,visibility] of [[null,"mechanic"],[{id:"estimate-other",work_order_id:"wo-A",updated_date:"estimate-v4",status:"submitted"},"ccs_managed"]]){
+    const h=harness({autoApproved:true});
+    h.submittedEstimate.status="approved";
+    h.useRealRefresh();
+    h.setServerEstimate(row,visibility);
+    await h.run(true);
+    assert.equal(h.saves.at(-1),"");
+    assert.match(h.errors.at(-1),/CCS|estimate/i);
+    assert.equal(h.recoveries.at(-1)?.workOrderId,"wo-A","Unverified ownership cannot unlock editing");
+  }
+});
+
 test("unchanged Save and Submit remains a valid two-write flow",async()=>{
   const h=harness();
   await h.run(true);
