@@ -40,6 +40,7 @@ try{
   await catalog.getByLabel('Document type',{exact:true}).selectOption('fee_schedule');assert.equal(await cards.count(),1);
   await cards.locator('summary').first().click();
   await catalog.getByText('Text extraction: complete (saved processing status)',{exact:false}).waitFor();
+  assert.equal(await cards.getByRole('button',{name:'Inspect saved physical-page text'}).count(),0,'Missing version fingerprint/cursor cannot activate page text');
   await catalog.getByText('Saved archive size: 0 bytes',{exact:true}).count().then(n=>assert.equal(n,1));
   assert.equal(await catalog.getByRole('link',{name:'Open application / portal'}).getAttribute('href'),'https://example.gov/apply');
   await catalog.getByText('Retained repository path recorded; no downloadable copy URL available.',{exact:true}).waitFor();
