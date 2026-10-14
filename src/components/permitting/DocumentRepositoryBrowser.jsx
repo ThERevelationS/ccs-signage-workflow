@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import PDFViewer from './PDFViewer';
+import SourceTextEvidenceBrowser from './SourceTextEvidenceBrowser';
 
 const types = { sign_ordinance: 'Sign ordinance', permit_application: 'Application', zoning_code: 'Zoning code', fee_schedule: 'Fees', checklist: 'Checklist', legislative_record: 'Legislative record', gis_resource: 'Map / GIS', portal_instruction: 'Portal instructions', other: 'Other' };
 const label = value => String(value || 'Unknown').replaceAll('_', ' ');
@@ -175,6 +176,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
         {pdfLink(row) && previewTooLarge(row) && <p className="text-xs">Recorded file size exceeds the 12 MiB inline preview limit. Use Open retained copy to inspect it externally.</p>}
         {!link(row.official_url) && <p>Official source link missing or unavailable.</p>}
         {!link(row.archived_file_url) && <p>{row.archived_file_path ? 'Retained repository path recorded; no downloadable copy URL available.' : 'No downloadable retained copy. This may be an online source or an archive gap.'}</p>}
+        {row.saved && <SourceTextEvidenceBrowser key={[jurisdictionId, row.id, row.file_hash_sha256, row.archived_file_url, row.text_extraction_state?.pages_extracted].join(':')} source={row} />}
         {row.saved && !row.collected && <p className="text-xs">Collected search / PDF tools are not linked to this saved version. Open its retained copy or official link above.</p>}
         {row.saved && <details><summary className="min-h-11 cursor-pointer py-2">Retained version details</summary><p>Source record: {row.id}</p><p>Saved archive fingerprint: {row.file_hash_sha256 || 'Not recorded'}</p><p>Saved archive size: {row.file_bytes != null ? row.file_bytes + ' bytes' : 'Not recorded'}</p><p className="text-xs">Saved metadata identifies a retained version; this view does not verify its bytes or current adoption.</p></details>}
         {onNavigate && <div className="flex flex-wrap gap-2"><Button variant="outline" className="min-h-11 h-auto w-full whitespace-normal sm:w-auto" onClick={() => onNavigate('requirements')}>Review saved requirements</Button><Button variant="outline" className="min-h-11 h-auto w-full whitespace-normal sm:w-auto" onClick={() => onNavigate('monitoring')}>Inspect source monitoring</Button></div>}
