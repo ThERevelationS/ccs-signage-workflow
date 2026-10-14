@@ -84,10 +84,14 @@ test("selection edits hide completed snapshots and ignore late responses",async(
  assert.ok(!output(r).includes(t.result.review_snapshot_sha256));assert.ok(!output(r).includes("preview received"));
  t.invokeHook(()=>({data:t.result}));
  act(()=>r.update(React.createElement(Panel,{office:t.office})));
+ assert.equal(button(r).props.disabled,false);
+ assert.ok(!output(r).includes(t.result.review_snapshot_sha256));
  await act(async()=>await button(r).props.onClick());
  assert.ok(output(r).includes(t.result.review_snapshot_sha256));
  act(()=>r.update(React.createElement(Panel,{office:edited})));
- assert.ok(!output(r).includes(t.result.review_snapshot_sha256));act(()=>r.unmount());
+ assert.ok(!output(r).includes(t.result.review_snapshot_sha256));
+ act(()=>r.update(React.createElement(Panel,{office:t.office})));
+ assert.ok(!output(r).includes(t.result.review_snapshot_sha256));assert.equal(button(r).props.disabled,false);act(()=>r.unmount());
 });
 test("unmount ignores late success and current conflicts remain explicit",async()=>{
  const t=await setup();globalThis.previewUiSdk=t;let finish,pending,r;

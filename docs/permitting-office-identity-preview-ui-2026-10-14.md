@@ -16,3 +16,7 @@ Validation: 36/36 focused tests passed across request/UI interaction, identity p
 Fresh permission-scoped catalog readback: 69e14b004e01bf082f0f8c75; version 2026-10-14T12:07:33.616000; 10 visible items; exact Sharonville candidate remains needs_verification. No production record changes, contacts/roles/currentness/identity approval or frontend publication. No backend resources changed in this chunk. Prior identity_preview backend changes may have auto-synced; deployed invocation verification is recorded separately below if available. Authenticated visual browser acceptance remains pending.
 
 Next ONE chunk: safely verify the real deployed identity_preview against exact Sharonville registration and check the preview UI with synthetic browser responses at desktop/phone sizes, preserving all live data. If authentication is unavailable, retain that precise blocker; do not repeat login/preview loops or promote the candidate.
+
+Final refinement: view state is also bound to the request generation, so returning to an earlier selection cannot resurrect an old completed preview or leave an obsolete loading state disabled. Final affected UI tests and lint rerun after this change.
+
+Live endpoint blocker: bounded CLI whoami exited 124 after reporting login required and entering a device authorization wait. The process ended; no generated device code should be reused. No authenticated live identity_preview call or deployed-source pull performed. Connector catalog readback worked independently. No new login request issued to the user.

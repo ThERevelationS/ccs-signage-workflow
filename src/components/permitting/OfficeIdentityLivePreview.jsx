@@ -17,21 +17,21 @@ export default function OfficeIdentityLivePreview({ office }) {
     mounted.current = true;
     return () => { mounted.current = false; generation.current += 1; inFlight.current = null; };
   }, []);
-  const visible = view?.selection === selection ? view : null;
+  const visible = view?.selection === selection && view?.ticket === generation.current ? view : null;
   async function preview() {
     if (!evidence || evidence.gaps.length || inFlight.current?.selection === selection) return;
     const ticket = ++generation.current;
     inFlight.current = { selection, ticket };
-    setView({ selection, busy: true });
+    setView({ selection, ticket, busy: true });
     try {
       const result = await loadOfficeIdentityPreview({ office: JSON.parse(JSON.stringify(office)),
         settingsEntity: base44.entities.GlobalSettings, invoke: (name, body) => base44.functions.invoke(name, body),
         isCurrent: () => mounted.current && current.current === selection && generation.current === ticket });
       if (mounted.current && current.current === selection && generation.current === ticket)
-        setView({ selection, result, receivedAt: new Date().toISOString() });
+        setView({ selection, ticket, result, receivedAt: new Date().toISOString() });
     } catch (error) {
       if (mounted.current && current.current === selection && generation.current === ticket)
-        setView({ selection, error: error?.response?.data?.error || error.message || "Identity preview unavailable." });
+        setView({ selection, ticket, error: error?.response?.data?.error || error.message || "Identity preview unavailable." });
     } finally {
       if (inFlight.current?.ticket === ticket) inFlight.current = null;
     }
