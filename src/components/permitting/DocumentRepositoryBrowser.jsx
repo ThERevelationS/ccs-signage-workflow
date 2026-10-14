@@ -28,12 +28,13 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   const [state, setState] = useState({ jurisdictionId: null, rows: [], loading: true, error: '' });
   const [refresh, setRefresh] = useState(0);
   const [selectedState, setSelectedState] = useState(null), [sourceRetry, setSourceRetry] = useState(0);
-  const sourceNodes = useRef(new Map());
+  const [query, setQuery] = useState(''), [type, setType] = useState('all'), [group, setGroup] = useState('all');
+  const sourceNodes = useRef(new Map()), focusedSourceRequest = useRef(null);
   const selection = sourceRequest?.jurisdictionId === jurisdictionId ? sourceRequest : null;
   const selectedId = selection?.sourceId, selectedToken = selection?.token;
   useEffect(() => {
     let active = true;
-    if (!selectedId) { setSelectedState(null); return () => { active = false; }; }
+    if (!selectedId) { focusedSourceRequest.current = null; setSelectedState(null); return () => { active = false; }; }
     setQuery(''); setType('all'); setGroup('all');
     const identity = { jurisdictionId, sourceId: selectedId, token: selectedToken };
     setSelectedState({ ...identity, row: null, loading: true, error: '' });
@@ -49,14 +50,17 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     ? selectedState : selectedId ? { row: null, loading: true, error: '' } : null;
   useEffect(() => {
     if (!selected?.row) return;
+    const requestKey = [jurisdictionId, selectedId, selectedToken, sourceRetry].join(':');
+    if (focusedSourceRequest.current === requestKey) return;
     const node = sourceNodes.current.get('source-' + selected.row.id);
     if (!node) return;
+    // Filter reset and the source response may commit separately. Wait for the card.
+    focusedSourceRequest.current = requestKey;
     node.open = true;
     const summary = node.querySelector('summary');
     summary?.focus({ preventScroll: true });
     node.scrollIntoView({ block: 'start', behavior: 'auto' });
-  }, [selected?.row, selectedToken]);
-  const [query, setQuery] = useState(''), [type, setType] = useState('all'), [group, setGroup] = useState('all');
+  }, [selected?.row, selectedToken, selectedId, jurisdictionId, sourceRetry, query, type, group]);
   useEffect(() => {
     let active = true;
     setState({ jurisdictionId, rows: [], loading: true, error: '' });

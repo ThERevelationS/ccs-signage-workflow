@@ -1,0 +1,22 @@
+{
+  "tested_at": "2026-10-14T20:42:51.891Z",
+  "mode": "actual parent, requirements, source monitor and document catalog with production CSS; synthetic API; unrelated heavy children stubbed; external requests blocked; not authenticated production acceptance",
+  "production_writes": 0,
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "actual parent/requirements/monitor/catalog; source ID navigation beyond list, identical titles and different archives, filter reset/open/focus/repeat, missing/foreign records, failure/retry, missing citation/monitor IDs, generic browse, late reads ignored on jurisdiction switch, canonical queries, no writes/provider calls/overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "actual parent/requirements/monitor/catalog; source ID navigation beyond list, identical titles and different archives, filter reset/open/focus/repeat, missing/foreign records, failure/retry, missing citation/monitor IDs, generic browse, late reads ignored on jurisdiction switch, canonical queries, no writes/provider calls/overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "actual parent/requirements/monitor/catalog; source ID navigation beyond list, identical titles and different archives, filter reset/open/focus/repeat, missing/foreign records, failure/retry, missing citation/monitor IDs, generic browse, late reads ignored on jurisdiction switch, canonical queries, no writes/provider calls/overflow"
+    }
+  ]
+}
