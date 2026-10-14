@@ -482,12 +482,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (Object.keys(changes).length === 0) return { complete: true, savedIds: [] };
 
     saveInFlightRef.current = true;
-    setIsSaving(true);
-    setSaveError("");
     let savedRows = 0;
     const savedIds = [];
     let complete = false;
     try {
+      // UI updates belong inside the lock's finally protection too.
+      setIsSaving(true);
+      setSaveError("");
       for (const [orderId, updates] of Object.entries(changes)) {
         const cleanedUpdates = Object.fromEntries(
           Object.entries(updates).filter(([, value]) => value !== undefined)
@@ -689,10 +690,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setIsSyncing(false);
     }
     } catch (error) {
-      // No Smartsheet request was started by this preflight path. Do not
-      // clear the pending-save or pending-sync queues on an unexpected error.
-      console.error('Could not prepare Order Save & Sync safely:', error);
-      setSaveError(`Order Save & Sync preparation stopped unexpectedly: ${error?.message || 'unknown error'}. Reload Orders and review pending changes before retrying.`);
+      // Unexpected preparation or cleanup failures are not proof of a
+      // completed remote sync. Keep both local queues for safe review.
+      console.error('Order Save & Sync was interrupted unexpectedly:', error);
+      setSaveError(`Order Save & Sync stopped unexpectedly: ${error?.message || 'unknown error'}. Reload Orders and review pending changes before retrying.`);
       return false;
     } finally {
       syncInFlightRef.current = false;
