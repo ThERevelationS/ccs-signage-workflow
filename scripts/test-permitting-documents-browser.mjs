@@ -1,0 +1,88 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,symlink,copyFile,readdir,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {createServer} from 'vite';
+import react from '@vitejs/plugin-react';
+const {chromium}=await import('/tmp/permitting-browser-check/node_modules/playwright/index.mjs');
+const root=process.cwd(),scratch=await mkdtemp(path.join(tmpdir(),'permitting-documents-'));let vite,browser;const checks=[];
+try{
+ await symlink(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
+ const css=(await readdir(path.join(root,'dist/assets'))).find(n=>n.endsWith('.css'));await copyFile(path.join(root,'dist/assets',css),path.join(scratch,'styles.css'));
+ await writeFile(path.join(scratch,'index.html'),'<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div><script type="module" src="/main.jsx"></script></body></html>');
+ await writeFile(path.join(scratch,'api.js'),"export const base44={entities:{PermittingSourceDocument:{filter:async(query,options)=>{window.fixture.reads.push({query,options});if(window.fixture.fail){window.fixture.fail=false;throw Error('Synthetic read failure');}return {items: query.jurisdiction_id === 'fixture-populated' ? [{id:'saved-form',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Saved sign application',source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:'https://example.gov/archive.pdf',authority_classification:'application_form',content_status:'unknown',verification_status:'needs_verification',retrieval_timestamp:'invalid',notes_gaps:'Electrical submission needs confirmation'},{id:'draft',jurisdiction_id:'fixture-populated',title:'Draft rewrite',source_type:'sign_ordinance',authority_classification:'draft_proposed',content_status:'current',verification_status:'verified',official_url:'javascript:alert(1)'},{id:'fees',jurisdiction_id:'fixture-populated',title:'Recorded fees',source_type:'fee_schedule',content_status:'current',authority_classification:'fee_schedule',effective_or_adopted_date:'2025-01-01',online_form_url:'https://example.gov/apply',archived_file_path:'public/example.pdf',text_extraction_state:{status:'complete'},file_bytes:0},{id:'older',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Older sign application',source_type:'permit_application',content_status:'historical',archived_file_url:'https://example.gov/old.pdf'}] : []};}},PermittingRule:{filter:async()=>({items:[]})}},functions:{invoke:async()=>{window.fixture.calls++;throw Error('No provider calls allowed');}},integrations:{Core:{InvokeLLM:async()=>{window.fixture.calls++;throw Error('No AI allowed');}}}};");
+ await writeFile(path.join(scratch,'auth.js'),"export const useAuth=()=>({currentUser:{id:'fixture',email:'fixture@example.test',role:'user'},sessionToken:'fixture'});");
+ await writeFile(path.join(scratch,'progress.js'),"export const useResearchProgress=()=>({runAction:()=>{window.fixture.calls++;throw Error('No research calls allowed');}});");
+ const stubNames=['OfficialSourceRescans','ExternalPermittingReferrals','LocalityApprovedEvidence','PDFViewer','CAGISSearchBar','DocumentAnalysisPanel','ExtractedContentDisplay','JurisdictionActivityTab','JurisdictionAuthorityStatus','SourceMonitorPanel','PermitWorkflowDesigner'];
+ const aliases=[];
+ for(const name of stubNames){const file=path.join(scratch,name+'.jsx');await writeFile(file,'export default function Fixture(){return <p>'+name+' · isolated fixture</p>}');aliases.push({find:'./'+name,replacement:file});}
+ await writeFile(path.join(scratch,'report.js'),"export const generateJurisdictionPDF=()=>{throw Error('Not requested');};");aliases.push({find:'./JurisdictionPDFReport',replacement:path.join(scratch,'report.js')});
+ await writeFile(path.join(scratch,'main.jsx'),`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import Panel from '/@fs/app/src/components/permitting/JurisdictionDetailPanel.jsx';
+ const roles=['sign_permit','zoning','building','electrical_permit','electrical_inspection','right_of_way','historic_review'].map((role,i)=>({role,label:['Sign permit','Zoning','Building','Electrical permit issuer','Electrical inspection provider','Right of way','Historic review'][i],office_name:i<2?'Example planning office':i===4?'Example inspection provider':'',applicability:'unknown',research_fields:i===4?{inspection_scheduling:'Schedule the final electrical inspection through the provider portal.'}:{}}));
+ const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:'https://example.gov/archive.pdf',last_fetched:'invalid',extracted_text:'Sign setback sign setback.'},{id:'portal',title:'Collected portal',doc_type:'portal_instruction',url:'https://example.gov/portal'}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
+ const empty={id:'fixture-empty',name:'Empty Municipality',state:'OH',type:'city',documents:[]};window.fixture={calls:0,reads:[],fail:false};function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
+ vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
+ browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ for(const width of [320,390,1280]){
+  const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**/*',route=>{const url=route.request().url();if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
+  await page.goto(origin,{waitUntil:'networkidle'});
+  const nav=page.getByRole('navigation',{name:'Jurisdiction workspace shortcuts'});await nav.waitFor();
+  for(const [label,region] of [['Documents','Documents workspace'],['Offices & Electrical','Office and electrical research workspace'],['Requirements','Requirements workspace'],['Source Monitoring','Source monitoring workspace']]){
+   const button=nav.getByRole('button',{name:new RegExp('^'+label)});assert.ok((await button.boundingBox()).height>=44);
+   await button.click();const target=page.getByLabel(region,{exact:true});await target.waitFor();assert.ok(await target.evaluate(node=>node===document.activeElement));
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  }
+  await nav.getByRole('button',{name:/^Documents/}).click();
+  const catalog=page.getByRole('region',{name:'Document repository catalog'});
+  await catalog.getByText('5 shown from 5 loaded entries.',{exact:false}).waitFor();
+  const cards=catalog.locator(':scope > details');assert.equal(await cards.count(),5);
+  await catalog.getByLabel('Document type',{exact:true}).selectOption('fee_schedule');assert.equal(await cards.count(),1);
+  await cards.locator('summary').first().click();
+  await catalog.getByText('Text extraction: complete (saved processing status)',{exact:false}).waitFor();
+  await catalog.getByText('Saved archive size: 0 bytes',{exact:true}).count().then(n=>assert.equal(n,1));
+  assert.equal(await catalog.getByRole('link',{name:'Open application / portal'}).getAttribute('href'),'https://example.gov/apply');
+  await catalog.getByText('Retained repository path recorded; no downloadable copy URL available.',{exact:true}).waitFor();
+  await catalog.getByLabel('Document type',{exact:true}).selectOption('all');
+  await catalog.getByLabel('Source currentness filter').selectOption('context');assert.equal(await cards.count(),2);
+  await catalog.getByText('Draft rewrite',{exact:true}).click();
+  await catalog.getByText('Draft, historical or superseded context.',{exact:false}).waitFor();
+  assert.equal(await catalog.locator('a[href^="javascript:"]').count(),0);
+  await catalog.getByLabel('Source currentness filter').selectOption('current');assert.equal(await cards.count(),1);await catalog.getByText('Recorded fees',{exact:true}).waitFor();
+  await catalog.getByLabel('Source currentness filter').selectOption('all');
+  await catalog.getByLabel('Search document catalog').fill('Electrical submission');assert.equal(await cards.count(),1);
+  await catalog.getByText('Saved sign application',{exact:true}).click();
+  await catalog.getByText('Collected / retrieved: Not recorded',{exact:false}).waitFor();
+  assert.equal(await catalog.getByRole('link',{name:'Open retained copy'}).getAttribute('href'),'https://example.gov/archive.pdf');
+  await catalog.getByRole('button',{name:'Open collected search / PDF tools'}).click();
+  const heading=page.getByRole('button',{name:'Collapse Example sign application',exact:true});
+  assert.ok(await heading.evaluate(node=>node===document.activeElement));
+  await page.getByRole('textbox',{name:'Search within Example sign application',exact:true}).fill('setback');
+  await page.getByText('Match 1 of 2 in Example sign application',{exact:false}).first().waitFor();
+  await catalog.getByRole('button',{name:'Open collected search / PDF tools'}).click();assert.ok(await heading.evaluate(node=>node===document.activeElement));
+  await catalog.getByRole('button',{name:'Review saved requirements'}).click();assert.ok(await page.getByLabel('Requirements workspace',{exact:true}).evaluate(node=>node===document.activeElement));
+  await catalog.getByRole('button',{name:'Inspect source monitoring'}).click();assert.ok(await page.getByLabel('Source monitoring workspace',{exact:true}).evaluate(node=>node===document.activeElement));
+  await catalog.getByLabel('Search document catalog').fill('no-result');await catalog.getByText('No documents match these filters.',{exact:true}).waitFor();
+  await page.evaluate(()=>{window.fixture.fail=true;});await catalog.getByRole('button',{name:'Refresh source catalog'}).click();await catalog.getByRole('alert').waitFor();
+  await catalog.getByText('Collected portal',{exact:true}).waitFor();
+  await catalog.getByRole('button',{name:'Refresh source catalog'}).click();await catalog.getByText('Saved sign application',{exact:true}).waitFor();
+  await catalog.getByText('Saved sign application',{exact:true}).click();
+  await nav.getByRole('button',{name:/^Documents/}).click();
+  await page.screenshot({path:'/tmp/permitting-documents-'+width+'.png'});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  const reads=await page.evaluate(()=>window.fixture.reads);assert.ok(reads.every(r=>r.query.jurisdiction_id==='fixture-populated'&&r.options.limit===200));assert.ok(reads.every(r=>!('jurisdiction_name' in r.query)));
+  await nav.getByRole('button',{name:/^Offices & Electrical/}).click();assert.equal(await page.getByRole('region',{name:'Collected office research'}).locator('details').count(),7);
+  await page.getByText('Electrical inspection provider: Example inspection provider',{exact:true}).click();
+  await page.getByText('Schedule the final electrical inspection through the provider portal.',{exact:true}).waitFor();
+  await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByText('Permit required: No',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Switch fixture',exact:true}).click();
+  await nav.getByRole('button',{name:/^Offices & Electrical/}).click();await page.getByText('Office research has not been collected yet.',{exact:true}).waitFor();
+  await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByRole('heading',{name:'Requirements not collected yet'}).waitFor();
+  await nav.getByRole('button',{name:/^Documents/}).click();await page.getByText('No documents yet. Use the AI refresh to discover documents.',{exact:true}).waitFor();
+  await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
+  assert.equal(await catalog.locator(':scope > details').count(),0);
+  assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
+  checks.push({width,passed:true,checks:'actual parent and catalog; type/currentness filters, draft precedence, versions, source links, extraction, zero bytes, missing archive, invalid dates, existing search/focus navigation, failure/retry, switch/empty, canonical reads, no provider calls, no overflow'});console.log('PASS document repository '+width);await page.close();
+ }
+ await writeFile(path.join(root,'docs/permitting-documents-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked',production_writes:0,checks},null,2)+'\n');
+}finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}

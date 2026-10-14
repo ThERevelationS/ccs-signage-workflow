@@ -22,7 +22,7 @@ function contextOnly(row) {
 function statusGroup(row) {
   return contextOnly(row) ? 'context' : row.content_status === 'current' ? 'current' : 'review';
 }
-const groups = { all: 'All evidence', review: 'Currentness unknown / needs review', current: 'Recorded current', context: 'Draft / historical context' };
+const groups = { all: 'All evidence', review: 'Currentness unknown', current: 'Recorded current', context: 'Draft / historical context' };
 
 export default function DocumentRepositoryBrowser({ jurisdictionId, documents = [], onOpenCollected, onNavigate }) {
   const [state, setState] = useState({ jurisdictionId: null, rows: [], loading: true, error: '' });
@@ -70,7 +70,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     {!currentState.loading && !currentState.error && rows.length === 0 && <p className="text-sm">No saved sources or collected links found. Missing documents do not mean no permit is required.</p>}
     {rows.length > 0 && visible.length === 0 && <p className="text-sm">No documents match these filters.</p>}
     {visible.map(row => <details key={row.key} className="min-w-0 rounded-lg border bg-gray-50 p-3 [overflow-wrap:anywhere]">
-      <summary className="min-h-11 cursor-pointer text-sm"><span className="block font-semibold">{row.title || 'Untitled document'}</span><span className="mt-1 flex flex-wrap gap-1"><Badge variant="outline">{types[row.source_type] || label(row.source_type)}</Badge><Badge variant="outline">{contextOnly(row) ? 'Context only · confirm before use' : row.content_status === 'current' ? 'Recorded current · confirm before use' : 'Currentness unknown'}</Badge>{!row.saved && <Badge variant="outline">Collected link · no matched classification</Badge>}</span></summary>
+      <summary className="min-h-11 cursor-pointer text-sm"><span className="block font-semibold">{row.title || 'Untitled document'}</span><span className="mt-1 flex flex-wrap gap-1"><Badge variant="outline">{types[row.source_type] || label(row.source_type)}</Badge><Badge variant="outline">{contextOnly(row) ? 'Context only · confirm before use' : row.content_status === 'current' ? 'Recorded current · confirm before use' : 'Currentness unknown'}</Badge>{!row.saved && <Badge variant="outline">Collected link</Badge>}</span></summary>
       <div className="space-y-3 border-t pt-3 text-sm">
         {row.saved ? <>
           <p>Saved classification: {label(row.authority_classification)}<br/>Saved currentness: {label(row.content_status)}<br/>Saved review status: {label(row.verification_status)}</p>

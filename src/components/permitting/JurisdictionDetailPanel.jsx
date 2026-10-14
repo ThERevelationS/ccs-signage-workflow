@@ -988,8 +988,14 @@ Answer only from the provided excerpts and cite the document title and official 
              Documents ({jurisdiction.documents?.length || 0})
            </p>
           <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
-            pendingDocNavigationRef.current = id;
-            setExpandedDoc(id);
+            if (expandedDoc === id) {
+              const header = documentHeaderRefs.current.get(id);
+              header?.focus({ preventScroll: true });
+              header?.scrollIntoView({ block: "start", behavior: "auto" });
+            } else {
+              pendingDocNavigationRef.current = id;
+              setExpandedDoc(id);
+            }
           }} />
           <h3 className="mb-2 text-sm font-semibold text-green-900">Collected document search & PDF tools</h3>
           <div className="mb-3">
