@@ -931,6 +931,7 @@ export default function QuickClockSection({
     const email = selectedUser.email;
     const stillCurrentEntry = breakContextFor(email);
     const requestId = requestIdFor(action, email);
+    let actionEpoch = workViewEpochRef.current;
     setPersistenceError("");
     try {
       // The invocation increments the epoch synchronously before sending.
@@ -941,10 +942,10 @@ export default function QuickClockSection({
         work_order_id: workOrderId,
         ...credentialPayload(credentialRef.current, email),
       });
-      const epoch = workViewEpochRef.current;
+      actionEpoch = workViewEpochRef.current;
       const result = await pending;
       clearRequest(action, email);
-      if (!stillCurrentEntry() || epoch !== workViewEpochRef.current) return null;
+      if (!stillCurrentEntry() || actionEpoch !== workViewEpochRef.current) return null;
       setActiveLabor(result.active_labor || null);
       setLaborSummary(result.labor_summary || { count: 0, total_minutes: 0 });
       if (result?.entry?.id) setActiveEntry(result.entry);
@@ -952,7 +953,9 @@ export default function QuickClockSection({
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) clearRequest(action, email);
-      if (stillCurrentEntry()) setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
+      if (stillCurrentEntry() && actionEpoch === workViewEpochRef.current) {
+        setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
+      }
       throw err;
     }
   };
