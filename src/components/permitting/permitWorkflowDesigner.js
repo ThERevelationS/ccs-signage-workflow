@@ -105,7 +105,7 @@ export async function resolveJurisdictionFromAddress(address) {
         matched_address: address,
       };
     }
-  } catch (_e) {
+  } catch {
     // findLocalityByAddress may not resolve; staff selects manually.
   }
   return null;
