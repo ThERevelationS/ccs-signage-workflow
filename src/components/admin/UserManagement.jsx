@@ -101,6 +101,8 @@ export default function UserManagement() {
     employment_type: "hourly",
     can_work_pause: false
   });
+  const activeAccountDraft = useRef(formData);
+  activeAccountDraft.current = formData;
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
   const passwordResetInFlight = useRef(false);
   const passwordResetOwner = useRef(null);
@@ -719,6 +721,7 @@ export default function UserManagement() {
     if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
         !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
+    setAccountSaveNotice("");
     const requestedPassword = String(formData.password_hash || "");
     if (requestedPassword && requestedPassword.length < 8) {
       setUserMutationError("Password must be at least 8 characters, or leave it blank to keep the existing password.");
@@ -790,6 +793,20 @@ export default function UserManagement() {
         }
       }
       if (!ownsUpdate()) return;
+      // Account controls can receive edits while a network request is pending.
+      // Never close and silently discard changes made after this save began.
+      const currentDraft = activeAccountDraft.current;
+      const remainingDraft = {
+        ...currentDraft,
+        password_hash: currentDraft.password_hash === newPassword ? "" : currentDraft.password_hash
+      };
+      if (hasUnsavedAdminAccountDraft(accountDraftBaseline.current.values, remainingDraft)) {
+        setFormData(current => ({
+          ...current, password_hash: current.password_hash === newPassword ? "" : current.password_hash
+        }));
+        setAccountSaveNotice("The Account and requested password changes were confirmed. New edits made during saving remain in your draft.");
+        return;
+      }
       await loadUsers();
       if (!ownsUpdate()) return;
       clearEditorDraftTracking();
