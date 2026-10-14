@@ -187,5 +187,56 @@ assert.doesNotMatch(visible(renderer), /freshly-restored-new-active-shift/,
   'Normal post-punch cleanup should clear completed shift details');
 console.log('PASS ordinary confirmed Clock Out still resets the kiosk when no newer state exists');
 
+await act(async () => { events.get('focus')(); });
+const secondRecoveryStatusIndex = calls.length - 1;
+assert.equal(calls[secondRecoveryStatusIndex].payload.action, 'status');
+await act(async () => {
+  calls[secondRecoveryStatusIndex].resolve(status(second, 'break-in-flight-second'));
+});
+const secondBreakDialog = renderer.root.findAll((node) =>
+  typeof node.props?.onStartBreak === 'function')[0];
+assert.ok(secondBreakDialog);
+let interruptedBreak;
+await act(async () => {
+  interruptedBreak = secondBreakDialog.props.onStartBreak({ breakType: 'lunch', isPaid: false });
+});
+const oldBreakCallIndex = calls.length - 1;
+assert.equal(calls[oldBreakCallIndex].payload.action, 'break_start');
+assert.equal(calls[oldBreakCallIndex].payload.target_email, second.email);
+assert.equal(calls[oldBreakCallIndex].payload.is_paid, false);
+assert.ok(calls[oldBreakCallIndex].payload.request_id);
+
+await act(async () => {
+  renderer.update(React.createElement(QuickClockSection, {
+    allUsers: [first, second], employeeSessionToken: 'session-first-return', employeeSessionUser: first,
+  }));
+});
+assert.equal(calls.at(-1).payload.action, 'status',
+  'New employee session must independently refresh even if prior employee break remains in flight');
+assert.equal(calls.at(-1).payload.target_email, first.email);
+const firstStatusIndex = calls.length - 1;
+await act(async () => { calls[firstStatusIndex].resolve(status(first, 'first-current-shift')); });
+const firstBreakDialog = renderer.root.findAll((node) =>
+  typeof node.props?.onStartBreak === 'function')[0];
+assert.ok(firstBreakDialog);
+assert.equal(firstBreakDialog.props.breakStatus, 'working');
+await act(async () => {
+  calls[oldBreakCallIndex].resolve({ data: {
+    success: true, status: 'clocked_in', user: second, break_status: 'on_break',
+    break: { id: 'old-second-lunch', user_email: second.email, break_type: 'lunch', is_paid: false },
+    break_summary: { count: 1, unpaid_minutes: 10, total_minutes: 10, paid_minutes: 0 },
+    entry: { id: 'break-in-flight-second', user_email: second.email },
+  } });
+  await interruptedBreak;
+});
+const currentDialog = renderer.root.findAll((node) =>
+  typeof node.props?.onStartBreak === 'function')[0];
+assert.ok(currentDialog);
+assert.equal(currentDialog.props.timeEntry.id, 'first-current-shift');
+assert.equal(currentDialog.props.breakStatus, 'working',
+  'Old employee break acknowledgement must not put new employee on break');
+assert.equal(currentDialog.props.activeBreak, null);
+console.log('PASS previous employee break completion never contaminates new employee state');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 5/5 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 6/6 Time Clock Quick Clock async status acceptance cases');
