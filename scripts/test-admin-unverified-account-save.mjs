@@ -5,6 +5,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "../src/components/admin/adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft } from "../src/components/admin/unverifiedAccountSave.js";
+import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
 
 const source = readFileSync("src/components/admin/UserManagement.jsx", "utf8");
 const token = "synthetic-admin";
