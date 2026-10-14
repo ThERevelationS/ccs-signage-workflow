@@ -96,6 +96,9 @@ export default function SourceTextEvidenceBrowser({ source }) {
   };
   const changePage = next => {
     setQuery('');
+    setResult(null);
+    setError('');
+    setLoading(true);
     setStart(next);
     toggleRef.current?.focus({ preventScroll: true });
   };
