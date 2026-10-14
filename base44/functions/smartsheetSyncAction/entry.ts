@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { planFieldPush, recordFieldPullHolds, applyMergedLocalFields } from '../../shared/smartsheetFieldMerge.ts';
+import { staleOrderRetryPrewriteIds } from '../../shared/smartsheetOrderRetryPrewriteSafety.mjs';
 import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
 import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
@@ -1886,6 +1887,7 @@ async function pushDataset(
   }>();
   const deferredOrderVerification = new Map<string, {
     rowId: string;
+    plannedRemoteSnapshot: Record<string, any>;
     expectedSnapshot: Record<string, any>;
     originalUpdatedDate: string;
     requiresRemoteWrite: boolean;
@@ -2063,6 +2065,7 @@ async function pushDataset(
         if (dataset === 'orders') {
           deferredOrderVerification.set(String(record.id), {
             rowId: existingRowId,
+            plannedRemoteSnapshot: fieldPlan.remote,
             expectedSnapshot: batchSnapshot,
             originalUpdatedDate: String(record.updated_date || ''),
             requiresRemoteWrite: fieldPlan.outgoing.length > 0,
