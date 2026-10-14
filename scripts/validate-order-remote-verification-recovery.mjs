@@ -43,6 +43,7 @@ for (const invalid of [
   alter({}, {remote_verification_review_count:3}),
   alter({}, {remote_verification_review_count:0}),
   alter({}, {remote_verification_review_items:[]}),
+  alter({}, {remote_verification_review_items:[{order_id:id1,row_id:row1,state:'row_mismatch'}]}),
   alter({}, {remote_verification_review_items:[{order_id:id1,row_id:row1,state:'invalid'}]}),
   alter({}, {remote_verification_review_items:[{order_id:'not a valid id',row_id:row1,state:'row_mismatch'}]}),
   alter({}, {remote_verification_review_items:[{order_id:id1,row_id:'rowX',state:'row_mismatch'}]}),
