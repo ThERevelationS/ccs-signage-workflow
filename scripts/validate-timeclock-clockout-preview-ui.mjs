@@ -113,16 +113,18 @@ assert.match(renderedText(tree), /In House Projects/,
 await act(async () => { calls[4].resolve(preview('Latest Same Shift', 'second-new')); });
 await act(async () => { calls[3].resolve(preview('Old Before Dialog Closed', 'old-close')); });
 assert.match(renderedText(tree), /In House Projects/);
-assert.match(renderedText(tree), /Latest Same Shift/);
+await act(async () => { clickButton(tree, 'Apply Tracked Suggestions')(); });
+assert.match(renderedText(tree), /Latest Same Shift/,
+  'Explicit Apply Suggestions must use the latest open-cycle preview');
 assert.doesNotMatch(renderedText(tree), /Old Before Dialog Closed/,
   'Pending preview from a closed dialog must not overwrite later same-shift refresh');
-console.log('PASS close and reopen preserves same-shift draft but fences previous open-cycle response');
+console.log('PASS close and reopen preserves draft, and deliberate Apply uses newest preview');
 
 await act(async () => { tree.update(React.createElement(ClockOutDialog, propsFor(first))); });
 assert.equal(calls.length,6);
 await act(async () => { calls[5].resolve(preview('Fresh First Shift', 'first-fresh')); });
 assert.match(renderedText(tree), /Fresh First Shift/);
-assert.doesNotMatch(renderedText(tree), /In House Projects|Second Shift Work/,
+assert.doesNotMatch(renderedText(tree), /Latest Same Shift|In House Projects|Second Shift Work/,
   'Switching shifts must reset previous employee draft allocations');
 console.log('PASS shift transition clears prior employee drafts and accepts only its fresh preview');
 
