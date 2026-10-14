@@ -51,6 +51,7 @@ import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
+import { compareUnverifiedAccountSave } from "./unverifiedAccountSave.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
@@ -113,6 +114,8 @@ export default function UserManagement() {
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
+  const [accountWriteRecovery, setAccountWriteRecovery] = useState(null);
+  const [confirmAccountReconciliation, setConfirmAccountReconciliation] = useState(false);
   const [passwordRetryConfirmed, setPasswordRetryConfirmed] = useState(false);
   const [accountSaveNotice, setAccountSaveNotice] = useState("");
   const userUpdateInFlight = useRef(false);
@@ -171,6 +174,8 @@ export default function UserManagement() {
     userUpdateInFlight.current = false;
     setUserMutationSaving(false);
     setAccountSaveRecovery(null);
+    setAccountWriteRecovery(null);
+    setConfirmAccountReconciliation(false);
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
     hrSaveOwner.current = null;
@@ -456,6 +461,8 @@ export default function UserManagement() {
     // component state after the employee's draft has been discarded or saved.
     setFormData(current => ({ ...current, password_hash: "" }));
     setAccountSaveRecovery(null);
+    setAccountWriteRecovery(null);
+    setConfirmAccountReconciliation(false);
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
   };
@@ -495,6 +502,8 @@ export default function UserManagement() {
     }
     clearEditorDraftTracking();
     setAccountSaveRecovery(null);
+    setAccountWriteRecovery(null);
+    setConfirmAccountReconciliation(false);
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
     const initialAccountDraft = createAdminAccountDraft(user);
@@ -720,8 +729,8 @@ export default function UserManagement() {
       setUserMutationError("Save your HR data separately or choose Cancel and confirm discarding it before saving account changes.");
       return;
     }
-    if (accountSaveRecovery) {
-      setUserMutationError("Account details were already saved. Resolve the unverified Time Clock password result without resaving the Account.");
+    if (accountSaveRecovery || accountWriteRecovery) {
+      setUserMutationError("Resolve the unverified Account or Time Clock password result before another Account write.");
       return;
     }
     if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
@@ -741,12 +750,15 @@ export default function UserManagement() {
       activeSessionToken.current === sessionToken;
     userUpdateInFlight.current = true;
     const record = editingUser;
+    let verifiedAccountReceipt = false;
+    let accountAttempt = null;
     setUserMutationSaving(true);
     try {
       const dataToSave = { ...formData };
       const newPassword = dataToSave.password_hash;
       // Never send password_hash directly — use secure backend
       delete dataToSave.password_hash;
+      accountAttempt = { ...dataToSave, sales_roles: [...(dataToSave.sales_roles || [])] };
       const savedUser = await updateAuthorizedUserAdmin({
         record,
         nextFields: dataToSave,
@@ -759,6 +771,7 @@ export default function UserManagement() {
         throw new Error("The saved account receipt could not be verified. Reload the employee before another Account write.");
       }
 
+      verifiedAccountReceipt = true;
       // The Account has already been committed. Advance its editor baseline
       // immediately, even if the separate Time Clock password step fails.
       // Keep local formData (including the unsaved password) unchanged.
@@ -818,11 +831,20 @@ export default function UserManagement() {
       clearEditorDraftTracking();
       setIsDialogOpen(false);
       setEditingUser(null);
-    } catch (error) {
+    } catch {
       if (!ownsUpdate()) return;
-      console.error("User update blocked:", error);
-      setUserMutationError(error?.message || "This user changed in another session. Reload before saving.");
-      await loadUsers();
+      if (!verifiedAccountReceipt && accountAttempt) {
+        // A failed request, timeout, or missing receipt cannot prove whether
+        // the Account write landed. Do not start a password write or retry.
+        setAccountWriteRecovery({
+          stage: "needs_read", sessionToken, id: record.id, email: record.email,
+          baseline: createAdminAccountDraft(record), attempted: accountAttempt
+        });
+        setConfirmAccountReconciliation(false);
+        setUserMutationError("Account save outcome unverified. Use the read-only verification below before attempting another Account save. Time Clock password was not sent.");
+        return;
+      }
+      setUserMutationError("Account save could not be completed or verified. Review the latest directory record before retrying.");
     } finally {
       if (ownsUpdate()) {
         userUpdateOwner.current = null;
