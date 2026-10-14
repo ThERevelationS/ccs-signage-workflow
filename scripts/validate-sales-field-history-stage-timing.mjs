@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {runInNewContext} from "node:vm";
 import {validateSalesStageTimestampPatch} from "../base44/shared/salesStageTimestampGuard.mjs";
+import {validateSalesActivityTimestampPatch} from "../base44/shared/salesActivityTimestampGuard.mjs";
 
 let count=0;
 const check=(value,message)=>{assert.ok(value,message);count++;};
@@ -81,6 +82,7 @@ const ctx={
   equivalent,
   validateNeutralSalesCloseout:()=>{},
   validateSalesStageTimestampPatch,
+  validateSalesActivityTimestampPatch,
   tracedSyncRequest:async(req,name,callback)=>callback(req),
   trackedConditionalSave:async(_sdk,type,record,patch)=>{
     assert.equal(type,"WorkOrder");
