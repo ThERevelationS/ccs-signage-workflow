@@ -28,9 +28,18 @@ async function syntheticFieldHistoryAction(request) {
   }
   const before = await fixture("get", { id: request.entity_id });
   if (!before) return { data: { success: false, error: "Synthetic Work Order not found" } };
-  const fields = { ...request.expected_fields, ...request.guard_fields };
-  const changed = Object.entries(fields).find(([field, expected]) => !equal(before[field], expected));
+  const changed = Object.entries(request.next_fields || {}).find(([field, next]) =>
+    !Object.hasOwn(request.expected_fields || {}, field) ||
+    (!equal(before[field], request.expected_fields[field]) && !equal(before[field], next))
+  );
   if (changed) return { data: { success: false, error: `This field changed in another session (${changed[0]}). Reload before saving.` } };
+  const changedGuard = Object.entries(request.guard_fields || {}).find(([field, expected]) => !equal(before[field], expected));
+  if (changedGuard) return { data: { success: false, error: "The record no longer matches its loaded state." } };
+  // Mirror production's idempotent already-saved response: concurrent identical
+  // submissions do not create a second write or strand the winning UI's focus.
+  if (Object.entries(request.next_fields || {}).every(([field, next]) => equal(before[field], next))) {
+    return { data: { success: true, record: before } };
+  }
   try {
     const result = await fixture("updateMany", {
       query: { id: request.entity_id, updated_date: before.updated_date },
