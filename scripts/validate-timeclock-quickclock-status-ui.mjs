@@ -651,8 +651,10 @@ await act(async () => {
   await recovered;
 });
 assert.doesNotMatch(visible(reloadRenderer), /reloaded-uncertain-shift/);
-assert.ok(![...savedSessionData.keys()].some((key) => key.includes('clock_out')),
-  'Confirmed recovered punch must remove persisted recovery payload and id');
+assert.ok(!savedSessionData.has(`ccs_timeclock_pending_clock_out:${first.email}`) &&
+  !savedSessionData.has(`ccs_timeclock_request:clock_out:${first.email}`),
+  'Confirmed recovered punch must remove its own persisted payload and id; remaining keys: ' +
+    [...savedSessionData.keys()].join(', '));
 console.log('PASS full reload restores same-employee exact Clock Out request and clears on confirmation');
 await act(async () => { reloadRenderer.unmount(); });
 console.log('PASS 17/17 Time Clock Quick Clock async status acceptance cases');
