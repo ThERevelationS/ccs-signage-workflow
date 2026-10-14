@@ -81,9 +81,9 @@ export default function RenderedPDFPages({ fileUrl, onPageRendered, onFailure, o
       <Button variant="outline" size="sm" className="min-h-11" disabled={pageNumber === pageCount} onClick={() => changePage(pageNumber + 1)}>Next page</Button>
     </div>}
     <div className="min-h-0 min-w-0 flex-1 overflow-auto p-2" aria-label="Rendered PDF document page">
-      <Document file={fileUrl} onLoadSuccess={data => { setPageCount(data.numPages); setPageNumber(1); }} onLoadError={onFailure} onSourceError={onFailure} loading={<p className="p-3 text-sm text-white">Rendering PDF document…</p>} error={<p className="p-3 text-sm text-white">Could not render this PDF. Try the original file link.</p>}>
+      {!documentBytes ? <p className="p-3 text-sm text-white">Loading retained PDF within the 12 MiB limit…</p> : <Document file={documentBytes} onLoadSuccess={data => { setPageCount(data.numPages); setPageNumber(1); }} onLoadError={onFailure} onSourceError={onFailure} loading={<p className="p-3 text-sm text-white">Rendering PDF document…</p>} error={<p className="p-3 text-sm text-white">Could not render this PDF. Try the original file link.</p>}>
         {width > 0 && <Page pageNumber={pageNumber} width={Math.max(160, Math.min(900, width - 16))} renderTextLayer={false} renderAnnotationLayer={false} onRenderSuccess={onPageRendered} onRenderError={onFailure} loading={<p className="p-3 text-sm text-white">Rendering page…</p>} />}
-      </Document>
+      </Document>}
     </div>
   </div>;
 }
