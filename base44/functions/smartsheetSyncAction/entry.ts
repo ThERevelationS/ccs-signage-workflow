@@ -2688,13 +2688,29 @@ async function pushDataset(
           }),
           onRateLimitRetry: async ({ attempt }: any) => reportOrderProgress({
             phase: 'retrying', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.56,
-            item_label: 'Retrying Smartsheet write',
-            detail: `Retrying the verified Order batch after rate limit (${attempt}/3)`,
+            item_label: 'Rechecking Order data before retry',
+            detail: `Revalidating permanent Base44 and Smartsheet rows after rate limit (${attempt}/3)`,
           }),
+          beforeRateLimitRetry: revalidateOrderRateLimitedPut,
         }] : [{beforeRateLimitRetry: revalidateSalesRateLimitedPut}]));
     } catch (err: any) {
-      if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
-      else {
+      if (dataset === 'orders') {
+        orderBatchWriteError = err?.message || 'unknown error';
+        if (err?.orderRateLimitRecheckBlocked || err?.upstreamStatus === 429) {
+          // Definitive 429 responses did not authorize a PUT. A failed fresh
+          // retry guard must not clear pending markers merely because an
+          // independent read-back happens to contain the intended values.
+          const heldRows = new Set(eligibleSmartsheetWrites.map((row: any) => String(row.id)));
+          for (const [recordId, verification] of deferredOrderVerification) {
+            if (!heldRows.has(String(verification.rowId))) continue;
+            orderFailedRecordIds.add(recordId);
+            orderVerificationReviews.set(recordId, {
+              order_id: recordId, row_id: verification.rowId, state: 'verification_unavailable',
+            });
+            errors.push(recordId + ': Order PUT held after Smartsheet rate limiting. Fresh Base44 and Smartsheet values must be reviewed before retrying.');
+          }
+        }
+      } else {
         salesBatchWriteError = err?.message || 'unknown error';
         if (err?.salesRateLimitRecheckBlocked || err?.salesOwnershipRecheckBlocked) {
           // A cancelled prewrite or definitive 429 has not authorized a PUT.
