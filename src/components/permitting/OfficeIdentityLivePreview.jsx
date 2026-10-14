@@ -41,7 +41,7 @@ export default function OfficeIdentityLivePreview({ office }) {
   return <section aria-label="Fresh saved identity evidence preview" className="border-t border-amber-200 pt-2 space-y-2">
     <h6 className="font-semibold">Preview freshly saved evidence</h6>
     <p>Reads the saved office catalog, source, profile and retained page. No website scan, AI research, approval or save.</p>
-    <button type="button" className="rounded border px-3 py-2 text-xs disabled:opacity-50"
+    <button type="button" className="min-h-11 rounded border px-3 py-2 text-xs disabled:opacity-50"
       disabled={Boolean(visible?.busy || evidence.gaps.length)} onClick={preview}>
       {visible?.busy ? "Checking saved evidence…" : "Preview saved identity evidence"}
     </button>
