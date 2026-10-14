@@ -18,7 +18,7 @@ const FOLLOW_UP_OUTCOMES = [
   "Other",
 ];
 
-export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConfirm }) {
+export default function SalesFollowUpCompleteDialog({ workOrder, error = "", onClose, onConfirm }) {
   const [outcome, setOutcome] = useState("");
   const [details, setDetails] = useState("");
   const [nextFollowUpDate, setNextFollowUpDate] = useState("");
@@ -120,6 +120,7 @@ export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConf
           )}
         </div>
 
+        {error && <p role="alert" className="text-sm font-medium text-red-700">{error}</p>}
         <DialogFooter className="gap-2 sm:gap-0">
           <Button type="button" variant="outline" className="h-11 sm:h-9" onClick={() => onClose?.()}>Cancel</Button>
           <Button
