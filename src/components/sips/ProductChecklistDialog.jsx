@@ -15,6 +15,7 @@ import TemplateBuilder from "./TemplateBuilder";
 import RevisitDatePopup from "./RevisitDatePopup";
 import ChecklistCompletedSection from "./ChecklistCompletedSection";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { isDefinitiveSipsSaveRejection, reconcileInterruptedSipsSave } from "./checklistSaveRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
@@ -116,6 +117,7 @@ export default function ProductChecklistDialog({
   // job, completes it, or changes SIP completion while this dialog is open.
   const loadedWorkflowSnapshotRef = useRef(null);
   const [saveError, setSaveError] = useState("");
+  const [saveOutcomeUncertain, setSaveOutcomeUncertain] = useState(false);
   const saveErrorAlertRef = useRef(null);
   const saveFailureFocusPendingRef = useRef(false);
   // Preserve a failed Revisit choice for the next confirmation, not an auto-retry.
@@ -398,6 +400,7 @@ export default function ProductChecklistDialog({
       };
       // Only a fully reconstructed, current checklist may replace a failed-load state.
       setHasLoadedChecklist(true);
+      setSaveOutcomeUncertain(false);
       loadErrorFocusPendingRef.current = false;
       setLoadError("");
     } catch (error) {
@@ -734,7 +737,7 @@ export default function ProductChecklistDialog({
   };
 
   const handleCheckOff = async () => {
-    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("complete")) return;
+    if (saveOutcomeUncertain || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("complete")) return;
     const status = checkIfComplete();
     
     if (!status.hasChecklist) {
@@ -754,7 +757,7 @@ export default function ProductChecklistDialog({
   };
 
   const proceedWithCheckOff = async () => {
-    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("complete")) return;
+    if (saveOutcomeUncertain || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("complete")) return;
     completingWithoutChecklistRef.current = true;
     setNoChecklistWarning(false);
     // Preserve any local product edits and complete the SIP in the same
@@ -765,7 +768,7 @@ export default function ProductChecklistDialog({
 
   // Called when Save button is clicked - first show revisit date popup
   const handleSaveClick = () => {
-    if (!isRegistered || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("save")) return;
+    if (saveOutcomeUncertain || !isRegistered || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current || blockOnUnsubmittedDrafts("save")) return;
     // The Revisit confirmation owns keyboard focus until it closes.
     // Do not allow a queued checklist navigation callback behind it.
     cancelPendingNavigationFocus();
@@ -776,7 +779,7 @@ export default function ProductChecklistDialog({
 
   // Called after user picks (or skips) a revisit date
   const handleRevisitSave = async (dateString) => {
-    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current) return;
+    if (saveOutcomeUncertain || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current) return;
     if (blockOnUnsubmittedDrafts("save")) {
       setShowRevisitPopup(false);
       return;
@@ -786,7 +789,7 @@ export default function ProductChecklistDialog({
   };
 
   const saveChecklist = async (revisitDate, { markComplete = false } = {}) => {
-    if (isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current ||
+    if (saveOutcomeUncertain || isSaving || saveInFlightRef.current || isLoading || loadInFlightRef.current ||
         blockOnUnsubmittedDrafts(markComplete ? "complete" : "save")) return;
     saveInFlightRef.current = true;
     saveFailureFocusPendingRef.current = false;
@@ -871,15 +874,35 @@ export default function ProductChecklistDialog({
       }
 
       setSaveError("");
-      const saved = await replaceWorkOrderFieldsIfUnchanged({
-        workOrderId: workOrder.id,
-        expectedFields,
-        nextFields,
-        // Backend guard_fields compares current server state, not just fields
-        // we are writing. Reject a stale SIPS task/stage/completion context.
-        guardFields: loadedWorkflowSnapshotRef.current,
-        label: markComplete ? "SIP checklist save and completion" : "SIP product checklist",
-      });
+      let saved;
+      try {
+        saved = await replaceWorkOrderFieldsIfUnchanged({
+          workOrderId: workOrder.id,
+          expectedFields,
+          nextFields,
+          // Backend guard_fields compares current server state, not just fields
+          // we are writing. Reject a stale SIPS task/stage/completion context.
+          guardFields: loadedWorkflowSnapshotRef.current,
+          label: markComplete ? "SIP checklist save and completion" : "SIP product checklist",
+        });
+      } catch (writeError) {
+        if (isDefinitiveSipsSaveRejection(writeError)) throw writeError;
+        // Lost responses can occur after a successful server commit. Read
+        // once and reconcile all written fields plus unchanged workflow guards;
+        // never resubmit the write to discover what happened.
+        const outcome = await reconcileInterruptedSipsSave({
+          workOrderId: workOrder.id,
+          nextFields,
+          guardFields: loadedWorkflowSnapshotRef.current,
+          readWorkOrders: query => WorkOrder.filter(query),
+        });
+        if (!outcome.verified) {
+          const uncertainty = new Error("The checklist save result could not be verified. The checklist or Revisit date may already be saved. Do not save again until you reload the latest Work Order. Your local edits are still here.");
+          uncertainty.saveOutcomeUncertain = true;
+          throw uncertainty;
+        }
+        saved = outcome.record;
+      }
       const savedChecklist = saved.sip_checklist || [];
       const savedProducts = saved.products || [];
       Object.assign(workOrder, {
@@ -898,10 +921,12 @@ export default function ProductChecklistDialog({
       setChecklist(savedChecklist);
       setProducts(savedProducts);
       failedRevisitSelectionRef.current = undefined;
+      setSaveOutcomeUncertain(false);
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error("Error saving checklist:", error);
+      if (error?.saveOutcomeUncertain) setSaveOutcomeUncertain(true);
       if (revisitDate !== undefined) failedRevisitSelectionRef.current = revisitDate;
       saveFailureFocusPendingRef.current = true;
       setSaveError(error?.message === "The record no longer matches its loaded state."
@@ -3130,7 +3155,7 @@ export default function ProductChecklistDialog({
               <Button
                 ref={completeButtonRef}
                 onClick={handleCheckOff}
-                disabled={isSaving || Boolean(loadError)}
+                disabled={isSaving || Boolean(loadError) || saveOutcomeUncertain}
                 className="sm:flex-1 h-11 sm:h-10 bg-green-600 hover:bg-green-700 text-white"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -3140,7 +3165,7 @@ export default function ProductChecklistDialog({
             <Button
               ref={saveRevisitButtonRef}
               onClick={handleSaveClick}
-              disabled={isSaving || !isRegistered || Boolean(loadError)}
+              disabled={isSaving || !isRegistered || Boolean(loadError) || saveOutcomeUncertain}
               className="sm:flex-1 h-11 sm:h-10 bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
