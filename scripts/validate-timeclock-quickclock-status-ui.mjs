@@ -338,5 +338,48 @@ assert.equal(firstDialog().props.breakSummary.paid_minutes, 8);
 assert.equal(firstDialog().props.breakSummary.unpaid_minutes, 0);
 console.log('PASS paid break normal start/end preserves server paid versus unpaid totals');
 
+const laborDialog = () => renderer.root.findAll((node) =>
+  typeof node.props?.onStartLabor === 'function')[0];
+assert.ok(laborDialog());
+let laborBeforeBreak;
+await act(async () => {
+  laborBeforeBreak = laborDialog().props.onStartLabor({ activityType: 'fabrication' });
+});
+const laborBeforeBreakCall = calls.length - 1;
+assert.equal(calls[laborBeforeBreakCall].payload.action, 'labor_start');
+assert.equal(calls[laborBeforeBreakCall].payload.target_email, second.email);
+let breakAfterLabor;
+await act(async () => {
+  breakAfterLabor = laborDialog().props.onStartBreak({ breakType: 'break', isPaid: true });
+});
+const breakAfterLaborCall = calls.length - 1;
+assert.equal(calls[breakAfterLaborCall].payload.action, 'break_start');
+await act(async () => {
+  calls[breakAfterLaborCall].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'on_break',
+    break: { id: 'break-after-labor', user_email: second.email, is_paid: true },
+    active_labor: null, labor_summary: { count: 1, total_minutes: 7 },
+    break_summary: { count: 2, total_minutes: 8, paid_minutes: 8, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await breakAfterLabor;
+});
+assert.equal(laborDialog().props.breakStatus, 'on_break');
+assert.equal(laborDialog().props.activeLabor, null);
+await act(async () => {
+  calls[laborBeforeBreakCall].resolve({ data: {
+    success: true, user: second, status: 'clocked_in',
+    active_labor: { id: 'older-labor-before-break', activity_type: 'fabrication', user_email: second.email },
+    labor_summary: { count: 0, total_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await laborBeforeBreak;
+});
+assert.equal(laborDialog().props.activeLabor, null,
+  'An older labor acknowledgement must not revive Current Work after a confirmed Break Start');
+assert.equal(laborDialog().props.laborSummary.total_minutes, 7,
+  'Older labor summary must not overwrite the newer break transition');
+console.log('PASS late Current Work acknowledgement cannot revive labor during a break');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 9/9 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 10/10 Time Clock Quick Clock async status acceptance cases');
