@@ -195,6 +195,45 @@ test("unchanged server revision preserves legitimate automatic approval confirma
   assert.equal(h.recoveries.at(-1),null);
 });
 
+test("automatic approval is never displayed while the final reload is pending",async()=>{
+  const h=harness({autoApproved:true});
+  h.submittedEstimate.status="approved";
+  h.useRealRefresh();
+  const reload=defer();
+  let reloadStarted=false;
+  h.ctx.fetchPortalPayload=async()=>{reloadStarted=true;return await reload.promise;};
+  const pending=h.run(true);
+  for(let i=0;i<40&&!reloadStarted;i++)await Promise.resolve();
+  assert.equal(reloadStarted,true,"Final read must start before the approval may be confirmed");
+  assert.equal(h.saves.some(message=>/approved/i.test(message||"")),false,
+    "An in-flight response must not show automatic approval before CCS verification");
+  h.setServerEstimate({...h.submittedEstimate,updated_date:"estimate-v4",status:"changes_requested"});
+  reload.resolve(h.ctx.serverPayload);
+  await pending;
+  assert.equal(h.saves.some(message=>/approved/i.test(message||"")),false);
+  assert.match(h.errors.at(-1),/changes requested/i);
+});
+
+test("same-version decision conflict also suppresses the success banner",async()=>{
+  const h=harness({autoApproved:true});
+  h.submittedEstimate.status="approved";
+  h.useRealRefresh();
+  h.setServerEstimate({...h.submittedEstimate,status:"changes_requested",approval_required:true});
+  await h.run(true);
+  assert.equal(h.saves.at(-1),"");
+  assert.match(h.errors.at(-1),/changes requested/i);
+});
+
+test("explicit read-only recovery retains its existing latest-status explanation",async()=>{
+  const h=harness();
+  h.useRealRefresh();
+  h.setServerEstimate({...h.savedEstimate,status:"changes_requested"});
+  const loaded=await h.ctx.refreshEstimateState("wo-A","Interrupted estimate needs verification.",true);
+  assert.equal(loaded,true);
+  assert.match(h.errors.at(-1),/Current server estimate reloaded as changes requested/i);
+  assert.equal(h.recoveries.at(-1),null);
+});
+
 test("unavailable final reload hides unverified automatic approval banner and retains recovery lock",async()=>{
   const h=harness({autoApproved:true});
   h.submittedEstimate.status="approved";
