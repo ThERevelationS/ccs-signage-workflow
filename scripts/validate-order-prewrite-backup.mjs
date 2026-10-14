@@ -108,7 +108,7 @@ await fails('readback bytes mismatch', o => { o.readBack = async () => 'differen
 await fails('readback unavailable', o => { o.readBack = async () => { throw new Error('read failed'); }; },
   /read failed/);
 await fails('sheet changed after upload', o => { let i=0; o.verifySource = async () =>
-  ({id:Number(SHEET), version: ++i===1?19:20, totalRowCount:3}); },
+  ({id:Number(SHEET), version: ++i%2===1?19:20, totalRowCount:3}); },
   /changed while backup was being verified/);
 await fails('BackupLog write failed', o => { o.log = async () => { throw new Error('log failed'); }; },
   /log failed/);
