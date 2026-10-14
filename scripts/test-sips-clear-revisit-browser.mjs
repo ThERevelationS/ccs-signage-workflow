@@ -103,7 +103,7 @@ async function waitFor(writeCount, targetDate) {
     if (fixture.writes.length === writeCount && fixture.row.sip_revisit_date === targetDate) return;
     await new Promise((resolve) => setTimeout(resolve, 30));
   }
-  throw new Error("Timed out waiting for synthetic conditional Work Order save");
+  throw new Error(`Timed out waiting for synthetic conditional Work Order save; writes=${JSON.stringify(fixture.writes)} date=${fixture.row.sip_revisit_date} expected=${targetDate}`);
 }
 
 const alias = [
