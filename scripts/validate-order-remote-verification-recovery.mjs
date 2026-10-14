@@ -101,7 +101,7 @@ const backend=readFileSync('base44/functions/smartsheetSyncAction/entry.ts','utf
 const client=readFileSync('src/components/orders/orderSaveSync.js','utf8');
 const grid=readFileSync('src/components/orders/OrderSpreadsheet.jsx','utf8');
 const push=backend.slice(backend.indexOf('async function pushDataset('),
-  backend.indexOf('// Phase 5: Resolve conflict decisions'));
+  backend.indexOf('async function smartsheetSyncHandler('));
 const verify=push.slice(push.indexOf('const orderRemoteVerifiedIds = new Set<string>()'),
   push.indexOf('// Phase 3: Persist Base44 reconciliation'));
 assert.match(verify,/orderVerificationReviews\.set\(recordId, \{\s*order_id: recordId, row_id: verification\.rowId, state: 'row_mismatch'/);
