@@ -1,0 +1,34 @@
+{
+  "method": "retained-sharonville-guide-purpose-v1",
+  "query": {
+    "id": "6aced7f49bda8d3e61944a9d",
+    "updated_date": "2026-10-14T11:57:53.408000",
+    "authority_classification": "unknown_review_required",
+    "file_hash_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9"
+  },
+  "fields": {
+    "authority_classification": "administrative_guidance",
+    "matched_signals": [
+      "retained residential permitting guide; administrative instructions, not adopted code"
+    ],
+    "classified_at": "2026-10-14T12:16:29.502Z",
+    "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review. Classification describes residential administrative guidance only; reproduced zoning/code summaries do not establish adoption or current law. Commercial-sign applicability, currentness, publisher identity and electrical delegation require separate review."
+  },
+  "purpose_pages": [
+    {
+      "page": 1,
+      "text_sha256": "6c2c7ec79fbc606d8ef70f781a5fb0d03360047f7ce4e568bfd168b78a7814b3"
+    },
+    {
+      "page": 3,
+      "text_sha256": "5c814bfde65df5a39ad46685365afbe31b7aabc4889a4adf78470e86fa3da555"
+    },
+    {
+      "page": 7,
+      "text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141"
+    }
+  ],
+  "currentness_verified": false,
+  "authority_verified": false,
+  "commercial_sign_applicability_verified": false
+}
