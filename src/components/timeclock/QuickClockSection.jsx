@@ -129,6 +129,9 @@ export default function QuickClockSection({
   matchFaceRef.current = matchFace;
   const credentialRef = useRef(null);
   const requestRef = useRef({});
+  // Keep an uncertain Clock Out bound to its exact original body/request ID.
+  // A different reconciliation payload may not reuse that idempotency key.
+  const clockOutAttemptRef = useRef(null);
   const notificationTimerRef = useRef(null);
   const displayResetTimerRef = useRef(null);
   // Passive refreshes may return out of order, after a session switch, or
@@ -1108,34 +1111,60 @@ export default function QuickClockSection({
     }
 
     const email = selectedUser.email;
+    const entryId = String(activeEntry.id);
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("clock_out", email);
+    const submittedBody = {
+      lunch_minutes: data.lunchMinutes,
+      job_allocations: data.jobAllocations,
+      notes: data.notes,
+    };
+    const previous = clockOutAttemptRef.current;
+    if (previous?.requestId === requestId &&
+        previous.email === String(email).toLowerCase() &&
+        previous.entryId === entryId) {
+      if (JSON.stringify(submittedBody) !== previous.payloadJson) {
+        throw new Error("An earlier Clock Out is unconfirmed. Retry with the original lunch, allocations and notes; do not replace the pending request details.");
+      }
+    } else {
+      clockOutAttemptRef.current = {
+        email: String(email).toLowerCase(),
+        entryId, requestId, payloadJson: JSON.stringify(submittedBody),
+      };
+    }
     setPersistenceError("");
-    setIsLoading(true);
+    if (stillCurrent()) setIsLoading(true);
     try {
       const result = await invokeTimeClock({
         action: "clock_out",
         request_id: requestId,
-        lunch_minutes: data.lunchMinutes,
-        job_allocations: data.jobAllocations,
-        notes: data.notes,
+        ...submittedBody,
         ...credentialPayload(credentialRef.current, email),
       });
       clearRequest("clock_out", email);
-      showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
-      setShowClockOut(false);
-      setRecognitionStatus("Clock-out confirmed by server.");
-      scheduleDisplayReset(2500);
+      if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
+      if (stillCurrent()) {
+        showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
+        setShowClockOut(false);
+        setRecognitionStatus("Clock-out confirmed by server.");
+        scheduleDisplayReset(2500);
+      }
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("clock_out", email);
-      const message = err?.message || "Clock-out was not confirmed by the server.";
-      setPersistenceError(message);
-      setRecognitionStatus(err?.retrySameRequest
-        ? "Clock-out may have been saved. Submit again to recover the same request safely."
-        : "Clock-out blocked. Correct the issue and submit again.");
+      if (!shouldRetainRequest(err)) {
+        clearRequest("clock_out", email);
+        if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
+      }
+      if (stillCurrent()) {
+        const message = err?.message || "Clock-out was not confirmed by the server.";
+        setPersistenceError(message);
+        setRecognitionStatus(shouldRetainRequest(err)
+          ? "Clock-out may already be saved. Retry the identical request to recover safely."
+          : "Clock-out blocked. Correct the issue and submit again.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
