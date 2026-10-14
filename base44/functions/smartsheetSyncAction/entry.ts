@@ -2399,6 +2399,74 @@ async function pushDataset(
       }
     }
   }
+  // Order Retry Sync: an outgoing cell planned from the earlier sheet cache
+  // must not overwrite a newer Smartsheet edit or a newer local Order revision.
+  // Hold only affected Orders; preserve their durable pending markers. This is
+  // a fresh pre-PUT check, not an atomic cross-system compare-and-swap.
+  if (dataset === 'orders' && deferredSmartsheetWrites.length) {
+    const outgoingIds = new Set(deferredSmartsheetWrites.map((row: any) => String(row.id)));
+    const plans = [...deferredOrderVerification.entries()]
+      .filter(([, verification]) => outgoingIds.has(String(verification.rowId)));
+    const plannedById = new Map(pendingRecords.map((record: any) => [String(record.id), record]));
+    try {
+      if (typeof options?.assertRunOwnership !== 'function' ||
+          plans.length !== outgoingIds.size ||
+          outgoingIds.size !== deferredSmartsheetWrites.length) {
+        throw new Error('Order permanent-row prewrite ownership cannot be verified');
+      }
+      await options.assertRunOwnership();
+      const currentOrders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { id: { $in: plans.map(([id]) => id) } }, sort: 'id',
+        label: 'Order Retry Sync exact local prewrite revision',
+      });
+      const latestById = new Map(currentOrders.map((record: any) =>
+        [String(record.id), record]));
+      const columnIds = [...new Set(Object.values(bindings)
+        .map((value: any) => String(value).trim()).filter((id: string) => /^\d+$/.test(id)))];
+      if (!columnIds.length) throw new Error('Order mapped columns unavailable');
+      const params = new URLSearchParams({
+        rowIds: [...outgoingIds].join(','), columnIds: columnIds.join(','),
+        exclude: 'nonexistentCells',
+      });
+      await options.assertRunOwnership();
+      const remote = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+      if (String(remote.body?.id ?? '') !== sheetId ||
+          !Array.isArray(remote.body?.rows) ||
+          !columnIds.every((id: string) =>
+            remote.body?.columns?.some((col: any) => String(col.id) === id))) {
+        throw new Error('Fresh Order sheet/column evidence was incomplete');
+      }
+      const rows = normalizeSheetRows(remote.body);
+      const requested = new Set(outgoingIds);
+      if (rows.length !== requested.size ||
+          new Set(rows.map((row: any) => String(row.id))).size !== requested.size ||
+          rows.some((row: any) => !requested.has(String(row.id)))) {
+        throw new Error('Fresh Order row identities were incomplete or duplicate');
+      }
+      const remoteByRowId = new Map(rows.map((row: any) =>
+        [String(row.id), buildOrderPullSnapshot(row, bindings)]));
+      for (const id of staleOrderRetryPrewriteIds(
+        plans, plannedById, latestById, remoteByRowId, sheetId)) {
+        orderFailedRecordIds.add(id);
+        const rowId = deferredOrderVerification.get(id)?.rowId || '';
+        errors.push(id + ': Order or Smartsheet row ' + rowId +
+          ' changed since Retry Sync planning. Remote PUT held; review current values and reload before retrying.');
+        await reportOrderProgress({
+          phase: 'needs_review', current: orderProcessedCount, total: pendingRecords.length,
+          fraction: 0.5, item_label: 'Order ' + id,
+          detail: 'Fresh Order or Smartsheet change held the stale PUT; review the current row',
+          record_id: id, smartsheet_row_id: rowId,
+        });
+      }
+    } catch {
+      for (const [id, verification] of plans) {
+        orderFailedRecordIds.add(id);
+        errors.push(id + ': Fresh Order/Smartsheet prewrite evidence unavailable for row ' +
+          verification.rowId + '. No remote PUT sent; verify and retry.');
+      }
+    }
+  }
   const heldApprovedSalesRowIds = new Set([...salesPrewriteUnverifiedRows,
     ...[...salesFailedRecordIds].map((id) =>
       deferredSalesVerification.get(id)?.rowId ||
@@ -2406,7 +2474,11 @@ async function pushDataset(
       .filter((id) => id != null).map(String)]);
   const eligibleSmartsheetWrites = dataset === 'sales'
     ? deferredSmartsheetWrites.filter((row: any) => !heldApprovedSalesRowIds.has(String(row.id)))
-    : deferredSmartsheetWrites;
+    : dataset === 'orders'
+      ? deferredSmartsheetWrites.filter((row: any) =>
+          ![...deferredOrderVerification.entries()].some(([id, verification]) =>
+            String(verification.rowId) === String(row.id) && orderFailedRecordIds.has(id)))
+      : deferredSmartsheetWrites;
 
   // Smartsheet has no documented conditional PUT/If-Match. A definitive 429
   // can safely retry only if its previously approved local and remote state
