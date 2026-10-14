@@ -314,4 +314,67 @@ assert.deepEqual(sentPayloads[1], sentPayloads[0],
 console.log('PASS interrupted Clock Out retries identical payload without new preview');
 
 await act(async () => { lostTree.unmount(); });
-console.log('PASS 11/11 Clock Out preview and allocation draft scenarios');
+
+const reloadCalls = [];
+const reloadSubmissions = [];
+const pendingRecovery = {
+  version: 1, email:first.user_email, entryId:first.id, requestId:'synthetic-reload-request',
+  body: {
+    lunch_minutes: 0,
+    notes:'Original restored notes',
+    job_allocations:[{
+      work_order_id:'persisted-job', work_order_title:'Persisted original work',
+      client_name:'Synthetic', minutes:70, hours:70/60, is_inhouse:false,
+    }],
+  },
+};
+const reloadFetch = () => new Promise((resolve, reject) => reloadCalls.push({resolve, reject}));
+let recoveryTree;
+await act(async () => {
+  recoveryTree = TestRenderer.create(React.createElement(ClockOutDialog, propsFor(first, {
+    pendingClockOutRecovery:pendingRecovery,
+    onLoadLaborAllocationPreview:reloadFetch,
+    onClockOut:async (data) => { reloadSubmissions.push(JSON.parse(JSON.stringify(data))); },
+  })));
+});
+assert.equal(reloadCalls.length, 1);
+assert.match(renderedText(recoveryTree), /Retry Original Clock Out/);
+assert.match(renderedText(recoveryTree), /Persisted original work/);
+await act(async () => { reloadCalls[0].resolve(reconciled('Newly tracked server work','new-server-job',90)); });
+assert.doesNotMatch(renderedText(recoveryTree), /Newly tracked server work/,
+  'New server preview must not auto-replace a recovery draft');
+await act(async () => { editableLunch(recoveryTree).props.onChange({target:{value:'5'}}); });
+let blockedRecovery;
+await act(async () => {
+  blockedRecovery = clickButton(recoveryTree,'Retry Original Clock Out')();
+  await blockedRecovery;
+});
+assert.equal(reloadSubmissions.length, 0);
+assert.match(renderedText(recoveryTree), /earlier Clock Out is unconfirmed/);
+await act(async () => { editableLunch(recoveryTree).props.onChange({target:{value:'0'}}); });
+let completedRecovery;
+await act(async () => {
+  completedRecovery = clickButton(recoveryTree,'Retry Original Clock Out')();
+  await completedRecovery;
+});
+assert.equal(reloadCalls.length, 1,
+  'Confirmed server snapshot already exists; exact retry needs no further preview');
+assert.equal(reloadSubmissions.length, 1);
+assert.equal(reloadSubmissions[0].notes, pendingRecovery.body.notes);
+assert.equal(reloadSubmissions[0].jobAllocations[0].work_order_id, 'persisted-job');
+console.log('PASS reload dialog restores exact original allocations; changed draft fails closed');
+
+await act(async () => { recoveryTree.update(React.createElement(ClockOutDialog, propsFor(second, {
+  pendingClockOutRecovery:pendingRecovery,
+  onLoadLaborAllocationPreview:reloadFetch,
+  onClockOut:async (data) => { reloadSubmissions.push(data); },
+}))); });
+assert.equal(reloadCalls.length, 2);
+assert.doesNotMatch(renderedText(recoveryTree), /Persisted original work|Original restored notes/,
+  'Other employee shift may not display prior shift recovery details');
+assert.doesNotMatch(renderedText(recoveryTree), /Retry Original Clock Out/,
+  'Other employee cannot invoke the original pending punch');
+console.log('PASS recovery details and button are not visible in another employee shift');
+await act(async () => { reloadCalls[1].resolve(reconciled('Other employee work','other-work')); });
+await act(async () => { recoveryTree.unmount(); });
+console.log('PASS 13/13 Clock Out preview and allocation draft scenarios');
