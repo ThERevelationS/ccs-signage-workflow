@@ -1,6 +1,8 @@
 export const PDF_TEXT_METHOD = 'pdfjs-4.8.69-text-v1';
 export const PDF_TEXT_PAGE_BATCH = 5;
-export const PDF_TEXT_MAX_BYTES = 10 * 1024 * 1024;
+// Accommodate the byte-verified 11,002,258-byte Sharonville guide while
+// retaining a hard buffer limit and the existing five-page/time budgets.
+export const PDF_TEXT_MAX_BYTES = 12 * 1024 * 1024;
 export const PDF_TEXT_MAX_PAGE_CHARS = 50_000;
 export const PDF_TEXT_MAX_TOTAL_CHARS = 500_000;
 export const PDF_TEXT_TIMEOUT_MS = 12_000;
