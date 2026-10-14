@@ -111,5 +111,43 @@
       "has_text_gaps": false,
       "llm_calls": 0
     }
-  }
+  },
+  "exact_differences": [
+    {
+      "operation": "delete",
+      "retained_start": 20,
+      "retained_end": 21,
+      "live_start": 20,
+      "live_end": 20,
+      "retained_fragment": " ",
+      "live_fragment": ""
+    },
+    {
+      "operation": "delete",
+      "retained_start": 23,
+      "retained_end": 24,
+      "live_start": 22,
+      "live_end": 22,
+      "retained_fragment": " ",
+      "live_fragment": ""
+    },
+    {
+      "operation": "delete",
+      "retained_start": 44,
+      "retained_end": 45,
+      "live_start": 42,
+      "live_end": 42,
+      "retained_fragment": " ",
+      "live_fragment": ""
+    },
+    {
+      "operation": "delete",
+      "retained_start": 562,
+      "retained_end": 563,
+      "live_start": 559,
+      "live_end": 559,
+      "retained_fragment": " ",
+      "live_fragment": ""
+    }
+  ]
 }
