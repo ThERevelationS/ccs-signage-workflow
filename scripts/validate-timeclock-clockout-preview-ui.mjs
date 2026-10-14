@@ -205,4 +205,60 @@ assert.doesNotMatch(renderedText(submissionTree), /Outdated second/);
 console.log('PASS previous employee final reconciliation cannot submit or replace new shift');
 
 await act(async () => { submissionTree.unmount(); });
-console.log('PASS 7/7 Clock Out preview and allocation draft scenarios');
+
+const guardedCalls = [];
+const guardedSubmitted = [];
+const guardedPreview = () => new Promise((resolve, reject) => guardedCalls.push({resolve, reject}));
+const guardedProps = (entry, extra={}) => propsFor(entry, {
+  onLoadLaborAllocationPreview: guardedPreview,
+  onClockOut: async (data) => { guardedSubmitted.push(data); },
+  ...extra,
+});
+let guardedTree;
+await act(async () => {
+  guardedTree = TestRenderer.create(React.createElement(ClockOutDialog, guardedProps(first)));
+});
+await act(async () => { guardedCalls[0].resolve(reconciled('Manually reviewed', 'guarded-job')); });
+await act(async () => { editableLunch(guardedTree).props.onChange({target:{value:'0'}}); });
+let pendingDouble;
+await act(async () => {
+  pendingDouble = clickClockOut(guardedTree)();
+  clickClockOut(guardedTree)();
+});
+assert.equal(guardedCalls.length, 2, 'Same-tick double Clock Out must only send one final preview request');
+await act(async () => { clickButton(guardedTree, 'In House')(); });
+assert.match(renderedText(guardedTree), /In House Projects/);
+await act(async () => {
+  guardedCalls[1].resolve(reconciled('Manually reviewed', 'guarded-job'));
+  await pendingDouble;
+});
+assert.equal(guardedSubmitted.length, 0,
+  'Employee allocations edited after reconciliation begins must not be submitted from stale draft');
+assert.match(renderedText(guardedTree), /allocations changed during server reconciliation/);
+assert.match(renderedText(guardedTree), /In House Projects/,
+  'Interrupted reconciliation must retain all manually edited allocations');
+console.log('PASS same-tick duplicate and midflight draft edit fail closed with draft preserved');
+
+await act(async () => {
+  guardedTree.update(React.createElement(ClockOutDialog, guardedProps(second)));
+});
+assert.equal(guardedCalls.length, 3);
+await act(async () => { guardedCalls[2].resolve(reconciled('Changed server totals', 'changed-job')); });
+await act(async () => { editableLunch(guardedTree).props.onChange({target:{value:'0'}}); });
+let changedTotals;
+await act(async () => { changedTotals = clickClockOut(guardedTree)(); });
+assert.equal(guardedCalls.length, 4);
+await act(async () => {
+  guardedCalls[3].resolve(reconciled('Changed server totals', 'changed-job', 90));
+  await changedTotals;
+});
+assert.equal(guardedSubmitted.length, 0,
+  'Shift duration change beyond reconciliation tolerance must never clock out');
+assert.match(renderedText(guardedTree), /remains|over-allocated/,
+  'Employee must be prompted to reconcile the new authoritative minutes');
+assert.match(renderedText(guardedTree), /Changed server totals/,
+  'Updated authoritative server preview must be shown without erasing the draft');
+console.log('PASS changed authoritative totals block submission and retain allocations');
+
+await act(async () => { guardedTree.unmount(); });
+console.log('PASS 9/9 Clock Out preview and allocation draft scenarios');
