@@ -51,6 +51,7 @@ createRoot(document.getElementById("root")).render(<Fixture/>);
  const section=page=>page.getByRole("region",{name:"Fresh saved identity evidence preview"});
  async function check(name,width,run){
   const page=await browser.newPage({viewport:{width,height:900}}),errors=[],outside=[];
+  page.setDefaultTimeout(5000);
   page.on("pageerror",e=>errors.push(e.message));
   await page.route("**/*",route=>{const url=route.request().url();if(url.startsWith("http")&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
   try{await page.goto(origin,{waitUntil:"networkidle"});await preview(page).waitFor();await run(page);

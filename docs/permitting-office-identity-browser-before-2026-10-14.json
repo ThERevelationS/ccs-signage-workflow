@@ -1,0 +1,72 @@
+{
+  "tested_at": "2026-10-14T14:38:55.326Z",
+  "browser": "156.0.8078.4",
+  "mode": "isolated Chromium; actual components and app CSS; synthetic SDK; all external HTTP blocked",
+  "production_writes": 0,
+  "live_endpoint_verified": false,
+  "checks": [
+    {
+      "name": "layout and tap target",
+      "width": 320,
+      "passed": false,
+      "error": "Preview tap target is 34px; requires at least 44px"
+    },
+    {
+      "name": "keyboard preview and readable snapshot",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "name": "layout and tap target",
+      "width": 390,
+      "passed": false,
+      "error": "Preview tap target is 34px; requires at least 44px"
+    },
+    {
+      "name": "keyboard preview and readable snapshot",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "layout and tap target",
+      "width": 1280,
+      "passed": false,
+      "error": "Preview tap target is 34px; requires at least 44px"
+    },
+    {
+      "name": "keyboard preview and readable snapshot",
+      "width": 1280,
+      "passed": true
+    },
+    {
+      "name": "unsaved draft refused without invocation",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "late result and return to old selection stay hidden",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "explicit conflict failure",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "explicit digest failure",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "explicit approved failure",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "name": "panel closure suppresses late response",
+      "width": 390,
+      "passed": true
+    }
+  ]
+}
