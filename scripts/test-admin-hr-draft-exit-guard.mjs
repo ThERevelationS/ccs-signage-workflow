@@ -224,12 +224,12 @@ test("Force-mounted HR tab survives Account tab switching and is reset for a new
  assert.match(page,/Keep editing/);
  assert.match(page,/Discard unsaved changes/);
  assert.match(page,/onClick=\{confirmDiscardHrDraft\}/);
- assert.match(page,/hasUnsavedHrData \|\| isLoading/);
+ assert.match(page,/hasUnsavedHrData \|\| !!accountSaveRecovery \|\| isLoading/);
 });
 
 test("Account save cannot close an editor with unsaved HR changes",async()=>{
  const start=page.indexOf("  const handleSave = async () => {");
- const end=page.indexOf("  const handleInvite = async () => {",start);
+ const end=page.indexOf("  const retryUnverifiedAccountPassword = async () => {",start);
  assert.ok(start>=0&&end>start);
  const handler=compile(page.slice(start,end).trim().replace(/^const \w+ = /,"").replace(/;$/,""),{
   hasProtectedHrDraft:()=>true,setUserMutationError:message=>{assert.match(message,/HR data/);},
