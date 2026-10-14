@@ -72,7 +72,7 @@ const salesSheet = readFileSync("src/components/sales/SalesPipelineSpreadsheet.j
 const persistence = readFileSync("src/components/workflow/workOrderPersistence.js", "utf8");
 const wrapper = readFileSync("src/components/shared/trackedFieldPersistence.js", "utf8");
 const historyBackend = readFileSync("base44/functions/fieldHistoryAction/entry.ts", "utf8");
-check(salesSheet.includes("&& !confirmedTaskTransition") && salesSheet.includes("}, false, true);"),
+check(salesSheet.includes("&& !confirmedTaskTransition") && salesSheet.includes("}, false, true, false, statusTransition.followUpGuards);"),
   "Confirmed neutral transition bypasses repeated task mapping confirmation.");
 check(salesSheet.includes("pendingChanges: proposedUpdates") &&
   (salesSheet.match(/\.\.\.\(statusTransition\.pendingChanges \|\| \{\}\)/g) || []).length === 2,
@@ -85,7 +85,8 @@ const opportunity = readFileSync("src/components/sales/SalesOpportunityDialog.js
 check(opportunity.includes('"sales_neutral_closed_at"') && opportunity.includes("Neutral closure confirmed"),
   "Opportunity Detail displays explicit neutral closure in history.");
 check(salesSheet.includes("pendingSalesGuardsRef.current[orderId] = captureSalesTransitionGuards") &&
-  salesSheet.includes("guardFields: untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes)"),
+  salesSheet.includes("...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes)") &&
+  salesSheet.includes("...(pendingFollowUpGuardsRef.current[orderId] || {})"),
   "Quick edits preserve untouched Sales classification guards.");
 check(salesSheet.includes("delete pendingSalesGuardsRef.current[orderId];") &&
   salesSheet.includes("pendingSalesGuardsRef.current = {};"),
