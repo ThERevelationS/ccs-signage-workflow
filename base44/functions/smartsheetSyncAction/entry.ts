@@ -1839,16 +1839,24 @@ async function pushDataset(
   // Smartsheet mutation (POST or PUT). After a confirmed first write the
   // sheet version changes legitimately, so the standard per-row safeguards
   // govern subsequent operations instead of comparing against the old backup.
-  const verifyOrderBackupBeforeFirstWrite = async () => {
+  const verifyOrderBackupBeforeFirstWrite = async ({ definitive429Retry = false } = {}) => {
     if (dataset !== 'orders' || globalConfig?.backup_before_write !== true ||
         firstOrderWriteConfirmed) return;
-    if (!verifiedOrderBackup) throw new Error('Verified Order backup is unavailable. No Smartsheet write authorized.');
-    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-    const current = (await smartsheetGet(`/sheets/${sheetId}?page=1&pageSize=1`, token)).body;
-    if (!orderBackupStillMatchesSheetBeforeFirstWrite(verifiedOrderBackup, current, sheetId)) {
-      throw new Error('Order Smartsheet sheet changed after the verified prewrite backup. No write was authorized; reload and start Save & Sync again with a fresh backup.');
+    try {
+      if (!verifiedOrderBackup || (firstOrderWriteAttempted && !definitive429Retry)) {
+        throw new Error('Backup unavailable or prior Order write acknowledgement uncertain');
+      }
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      const current = (await smartsheetGet(`/sheets/${sheetId}?page=1&pageSize=1`, token)).body;
+      if (!orderBackupStillMatchesSheetBeforeFirstWrite(verifiedOrderBackup, current, sheetId)) {
+        throw new Error('Smartsheet sheet revision changed after backup');
+      }
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    } catch {
+      throw Object.assign(new Error(
+        'Order backup no longer authorizes the first Smartsheet write. No further Order write was authorized; reload and run Save & Sync with a fresh verified backup.'
+      ), { orderBackupFirstWriteBlocked: true });
     }
-    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
   };
 
   const created: string[] = [];
@@ -2108,6 +2116,9 @@ async function pushDataset(
         if (dataset !== 'orders' && !fieldPlan.unresolved.length) deferredConflictRecordIds.push(record.id);
         continue;
       } else if (dataset === 'orders') {
+        // Check before reserving a new create, then again directly before
+        // POST: the reservation's Base44 round trips may take time.
+        await verifyOrderBackupBeforeFirstWrite();
         // Reserve the permanent Order before POST; never automatically retry an
         // uncertain create or silently create a second row for an existing link.
         const createResult = await createOrderSmartsheetRowWithGuard({
@@ -2117,6 +2128,8 @@ async function pushDataset(
           postRow: async (freshOrder: any) => {
             const freshCells = buildCells(freshOrder, bindings, 'orders');
             if (freshCells.length === 0) throw new Error('Order has no mapped Smartsheet cells.');
+            await verifyOrderBackupBeforeFirstWrite();
+            firstOrderWriteAttempted = true;
             const result = await smartsheetWriteNoTimeoutRetry('POST', `/sheets/${sheetId}/rows`, token, [{
               toTop: true,
               cells: freshCells.map((c) => ({ columnId: c.columnId, value: c.value,
@@ -2133,10 +2146,12 @@ async function pushDataset(
                 phase: 'retrying', current: orderProcessedCount, total: pendingRecords.length,
                 fraction: 0.48,
                 item_label: orderProgressItemLabel(freshOrder),
-                detail: `Retrying new-row create after Smartsheet rate limit (${attempt}/3)`,
+                detail: `Rechecking backup before new-row retry (${attempt}/3)`,
                 record_id: freshOrder.id,
               }),
+              beforeRateLimitRetry: async () => verifyOrderBackupBeforeFirstWrite({ definitive429Retry: true }),
             });
+            firstOrderWriteConfirmed = true;
             return result.body;
           },
           makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
@@ -2700,6 +2715,8 @@ async function pushDataset(
       // resend an uncertain mutation: rely on the existing fresh Smartsheet
       // read-back and verified Base44 CAS before any review is resolved.
       // Orders already use the same no-timeout-retry transport.
+      await verifyOrderBackupBeforeFirstWrite();
+      if (dataset === 'orders') firstOrderWriteAttempted = true;
       await smartsheetWriteNoTimeoutRetry(
         'PUT', '/sheets/' + sheetId + '/rows', token, eligibleSmartsheetWrites,
         ...(dataset === 'orders' ? [{
@@ -2713,12 +2730,16 @@ async function pushDataset(
             item_label: 'Rechecking Order data before retry',
             detail: `Revalidating permanent Base44 and Smartsheet rows after rate limit (${attempt}/3)`,
           }),
-          beforeRateLimitRetry: revalidateOrderRateLimitedPut,
+          beforeRateLimitRetry: async () => {
+            await verifyOrderBackupBeforeFirstWrite({ definitive429Retry: true });
+            await revalidateOrderRateLimitedPut();
+          },
         }] : [{beforeRateLimitRetry: revalidateSalesRateLimitedPut}]));
+      if (dataset === 'orders') firstOrderWriteConfirmed = true;
     } catch (err: any) {
       if (dataset === 'orders') {
         orderBatchWriteError = err?.message || 'unknown error';
-        if (err?.orderRateLimitRecheckBlocked || err?.upstreamStatus === 429) {
+        if (err?.orderRateLimitRecheckBlocked || err?.orderBackupFirstWriteBlocked || err?.upstreamStatus === 429) {
           // Definitive 429 responses did not authorize a PUT. A failed fresh
           // retry guard must not clear pending markers merely because an
           // independent read-back happens to contain the intended values.
