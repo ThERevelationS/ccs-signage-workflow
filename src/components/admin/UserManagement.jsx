@@ -52,6 +52,7 @@ import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft } from "./unverifiedAccountSave.js";
+import { planAccountFieldResolution } from "./accountFieldResolution.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
@@ -116,6 +117,7 @@ export default function UserManagement() {
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
   const [accountWriteRecovery, setAccountWriteRecovery] = useState(null);
   const [confirmAccountReconciliation, setConfirmAccountReconciliation] = useState(false);
+  const [accountFieldChoices, setAccountFieldChoices] = useState({});
   const [passwordRetryConfirmed, setPasswordRetryConfirmed] = useState(false);
   const [accountSaveNotice, setAccountSaveNotice] = useState("");
   const userUpdateInFlight = useRef(false);
@@ -468,6 +470,22 @@ export default function UserManagement() {
   };
 
   const hasProtectedEditorDraft = () => hasProtectedHrDraft() || hasProtectedAccountDraft();
+  const accountResolutionPreview = accountWriteRecovery?.stage === "review" &&
+    accountWriteRecovery.comparison?.status !== "applied"
+    ? planAccountFieldResolution({
+        baseline: accountWriteRecovery.baseline,
+        attempted: accountWriteRecovery.attempted,
+        latest: accountWriteRecovery.latest,
+        draft: formData,
+        choices: accountFieldChoices
+      })
+    : null;
+  const chooseAccountField = (field, value) => {
+    if (!accountResolutionPreview?.fields.some(item => item.key === field) ||
+        !["latest", "mine"].includes(value) || userUpdateInFlight.current) return;
+    setAccountFieldChoices(current => ({...current,[field]:value}));
+    setConfirmAccountReconciliation(false);
+  };
   const hasUnsavedAccountData = isDialogOpen && hasProtectedAccountDraft();
 
   const requestCloseUserEditor = () => {
