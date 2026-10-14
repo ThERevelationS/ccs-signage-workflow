@@ -45,7 +45,7 @@ export function planAccountFieldResolution({baseline,attempted,latest,draft,choi
     const selected=explicit || (editedLater?"mine":"latest");
     result[key]=copy(selected==="mine"?draft[key]:remote[key]);
     fields.push({key,label,selected,tried,remoteChanged,editedLater,
-      sensitive:["role","can_import_export","can_order_export","can_view_resources"].includes(key),
+      sensitive:["role","sales_roles","can_import_export","can_order_export","can_view_resources"].includes(key),
       matchesLatest:equal(key,draft[key],remote[key])});
   }
   const adjustments=[];
