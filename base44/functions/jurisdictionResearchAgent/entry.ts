@@ -2,6 +2,7 @@ import {attachScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
+import {officeResearchPrompt,officeResearchResponseSchema,normalizeOfficeResearch} from '../../shared/permittingOfficeResearch.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -89,6 +90,7 @@ ${includeParentCounty && jurisdictionType !== 'county' ? `F. PARENT COUNTY INFOR
    - Identify which rules come from county vs. local jurisdiction
    - Document parent county ordinances that apply` : ''}
 
+${officeResearchPrompt()}
 === RESPONSE FORMAT ===
 Return ONLY valid JSON with this structure. Leave fields null if not found:
 
@@ -170,6 +172,7 @@ Before returning:
           cagis_database_url: { type: ["string", "null"] },
           ai_summary: { type: ["string", "null"] },
           contact_info: { type: "object" },
+          office_research: officeResearchResponseSchema,
           permit_requirements: { type: "object" },
           documents: {
             type: "array",
@@ -200,6 +203,7 @@ Before returning:
     });
 
     const data = sanitizeJurisdictionResearch(typeof result === 'string' ? JSON.parse(result) : result);
+    data.office_research = normalizeOfficeResearch(data.office_research,{jurisdiction:{name:jurisdictionName,state:jurisdictionState,type:jurisdictionType}});
     
     return Response.json({ 
       success: true, 

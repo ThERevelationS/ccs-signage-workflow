@@ -9,6 +9,7 @@ import {findRepositoryJurisdictionMatches,hasDuplicateRepositoryIdentity} from '
 import {createJurisdictionIfAbsent} from './jurisdictionPersistence';
 import {summarizeSelectorElectricalResearchOutcome} from './selectorElectricalResearchOutcome.mjs';
 import SelectorSavedSourceReview from './SelectorSavedSourceReview';
+import OfficeResearchFindings from './OfficeResearchFindings';
 export default function SelectorScanActions({locality,result,profiles,onProfileUpdated,loading,unavailable}){
  const {currentUser}=useAuth(),{runAction}=useResearchProgress(),[busy,setBusy]=useState(new Set()),[error,setError]=useState('');
  const [feedback,setFeedback]=useState(null);
@@ -38,6 +39,7 @@ export default function SelectorScanActions({locality,result,profiles,onProfileU
   {!loading&&matches.map(profile=>{const duplicate=hasDuplicateRepositoryIdentity(profiles,profile),pending=busy.has(profile.id);return <div key={profile.id} className="space-y-2 border-t pt-2 min-w-0">
    <p className="text-sm font-medium break-words">{profile.name}, {profile.state}</p>
    <p className="text-xs text-gray-600">{profile.documents?.length || 0} saved forms and links{profile.last_updated?` · Last checked ${new Date(profile.last_updated).toLocaleDateString()}`:''}</p>
+   <OfficeResearchFindings research={profile.office_research}/>
    {duplicate&&<p className="text-xs text-amber-800">More than one saved record exists for this place. Resolve that before scanning.</p>}
    {!duplicate&&<SelectorSavedSourceReview key={profile.id} profile={profile} locality={locality||result?.suggested_locality||null}/>}
    {feedback?.profile_id===profile.id&&<section role="status" aria-label={'Research evidence follow-up for '+profile.name} className="rounded border border-amber-300 bg-amber-50 p-2 text-xs space-y-1">

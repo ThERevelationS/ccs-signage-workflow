@@ -8,6 +8,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch, assertSafeExternalUrl } from '../../shared/safeExternalFetch.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
+import {normalizeOfficeResearch} from '../../shared/permittingOfficeResearch.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
@@ -199,6 +200,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
 
     if (batchSettings.updateRequirements && (!batchSettings.skipManualData || !jurisdiction._manual_requirements)) {
+      if (researchData.office_research) updateData.office_research = normalizeOfficeResearch(researchData.office_research,{jurisdiction});
       // Always replace with new research data — don't fall back to old
       if (researchData.permit_requirements && Object.keys(researchData.permit_requirements).length > 0) {
         updateData.permit_requirements = researchData.permit_requirements;

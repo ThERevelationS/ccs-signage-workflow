@@ -26,6 +26,11 @@
       "additionalProperties": true,
       "description": "Durable manual HTML evidence reservation/receipt. Unknown creates reconcile the same source hash without repeating creation. Does not modify documents, reviewed authority or automated queue accounting."
     },
+    "office_research": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Unverified role-by-role office and electrical research findings. No canonical office assignment, authority approval or client/job change is implied."
+    },
     "office_authority_review_state": {
       "type": "object",
       "additionalProperties": true,

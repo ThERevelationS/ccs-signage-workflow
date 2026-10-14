@@ -37,7 +37,7 @@ export function jurisdictionProtectionGuards(record = {}, nextFields = {}, { res
   if (fields.has('documents')) guards._manual_documents = record?._manual_documents;
   const requirementFields = [
     'permit_requirements', 'ai_summary', 'contact_info', 'sqft_width_height_rules',
-    'height_allowances', 'setback_rules', 'lighting_allowances'
+    'height_allowances', 'setback_rules', 'lighting_allowances', 'office_research'
   ];
   if (requirementFields.some((field) => fields.has(field))) {
     guards._manual_requirements = record?._manual_requirements;
