@@ -217,7 +217,7 @@ for(const status of ["unchanged","mixed"]){
   assert.equal(f.state.editor.updated_date,before.updated_date);
   f.state.confirmed=true;f.accept();
   assert.equal(f.state.write,null);
-  assert.equal(f.state.form.full_name,target.full_name);
+  assert.equal(f.state.form.full_name,status==="unchanged"?before.full_name:target.full_name);
   assert.equal(f.state.form.password_hash,originalDraft.password_hash);
   assert.equal(f.state.accountCalls.length,1);
   assert.equal(f.state.passwordCalls.length,0);
@@ -268,7 +268,7 @@ test("Review cannot adopt another employee identity or run while a write is in f
 test("Synthetic Account recovery UI discloses field names but no values or automatic writes",()=>{
  assert.match(source,/Account save outcome needs verification/);
  assert.match(source,/Read latest Account \(no writes\)/);
- assert.match(source,/Adopt verified baseline; keep my draft/);
+ assert.match(source,/Apply reviewed field choices \(local only\)/);
  assert.match(source,/No automatic Account retry will occur/);
  assert.match(source,/disabled=\{userMutationSaving \|\| hrMutationSaving \|\| hrReloadLoading \|\| hasUnsavedHrData \|\| !!accountSaveRecovery \|\| !!accountWriteRecovery/);
  assert.doesNotMatch(code.verify,/updateAuthorizedUserAdmin|setPasswordFn/);
