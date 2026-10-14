@@ -1,0 +1,126 @@
+{
+  "live": {
+    "result": {
+      "success": true,
+      "source_document_id": "6aced7f49bda8d3e61944a9d",
+      "status": "partial",
+      "pages_processed": 5,
+      "pages_extracted": 10,
+      "total_pages": 28,
+      "next_page": 11,
+      "segment_id": "6acf6e3e1ae409cc63a3da41",
+      "reconciled": false,
+      "llm_calls": 0
+    },
+    "source": {
+      "id": "6aced7f49bda8d3e61944a9d",
+      "updated_date": "2026-10-14T11:57:53.408000",
+      "text_extraction_state": {
+        "status": "partial",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+        "claim_token": "9a91ddcc-46d9-43d5-9bad-7e8ee82330ab",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-14T11:57:48.661Z",
+        "attempts": 2,
+        "next_page": 11,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 28,
+        "pages_extracted": 10,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-14T11:57:50.682Z",
+        "completed_at": "",
+        "complete_document_text": false,
+        "storage_mode": "pdf-page-segments-v1",
+        "inline_page_count": 5,
+        "preview_only": true,
+        "segment_count": 1,
+        "pending_segment": null,
+        "last_segment": {
+          "id": "6acf6e3e1ae409cc63a3da41",
+          "registration_key": "pdf-page-segments-v1:6aced7f49bda8d3e61944a9d:4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9:pdfjs-4.8.69-text-v1:6",
+          "payload_sha256": "17c40e22abe89f89ec3c9935980eff7be4772aee99ccfab3c2887acd518bbef9",
+          "page_start": 6,
+          "page_end": 10,
+          "total_pages": 28
+        },
+        "extracted_text_scope": "inline_preview"
+      },
+      "verification_status": "needs_verification",
+      "authority_classification": "unknown_review_required"
+    },
+    "inline_pages_unchanged": true,
+    "inline_text_unchanged": true,
+    "profile_unchanged": true
+  },
+  "page_readback": {
+    "success": true,
+    "pages": [
+      {
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text": "COMMUNITYDEVELOPMENT\n4\nPERMIT INFORMATION 3.\nProjects Requiring a Building\nand/ or Zoning Permit:\nb.\n\u2022 Above ground and In-Ground Swimming Pools\n\u2022 Attached or Detached Garages\n\u2022 Building Additions\n\u2022 Building Remodeling\n\u2022 Carports\n\u2022 Decks/Porches\n\u2022 Demolitions\n\u2022 Driveways (A street opening permit from Public Works may be required)\n\u2022 Electric\n\u2022 Fences\n\u2022 Downspouts\n\u2022 Heating, Ventilation and Air Conditioning (HVAC)\n\u2022 New residential construction\n\u2022 Roof Replacement and Repair\n\u2022 Portable Storage Units / Construction Dumpsters\n\u2022 Retaining Walls (If over 4 feet in height)\n\u2022 Sheds or other Accessory Structures\n\u2022 Window or Door Replacements (If structural altercations are made)\nIf you\u2019re not sure if a permit is required for the work you\nintend to do, just give us a call at (513)-563-0033\nTypical Projects:",
+        "needs_ocr_review": false,
+        "truncated": false,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "text_sha256": "91b6dcca367f57026e6b25a10d4e05aad4bc4c924f0dfd354bc341de5bd27c0b",
+        "method": "pdfjs-4.8.69-text-v1",
+        "page": 6,
+        "extracted_at": "2026-10-14T11:57:48.947Z"
+      },
+      {
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text": "COMMUNITYDEVELOPMENT\n5\nELECTRIC PERMITS 4.\nIn early 2020, the City of Sharonville partnered with National\nInspection Corporation (NIC) to perform electric plan review,\napprovals and inspections in an effort to improve the convenience to\nresidents and businesses.\nAll electric permits and plans can be emailed or dropped off at the\nCity of Sharonville Community Development Department Office to\nstart the electric permit approval process.\nOnce the permit is approved, you will be contacted for payment of\nthe electric permit fee, and the permit will be issued.\nAll electrical inspections are handled directly by NIC.\nIf you have any general\nadministrative questions\nabout electric permitting,\nplease contact us at\n513-563-0033\nFor specific electric\npermitting questions\nplease call NIC at\n888-433-4642",
+        "needs_ocr_review": false,
+        "truncated": false,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+        "method": "pdfjs-4.8.69-text-v1",
+        "page": 7,
+        "extracted_at": "2026-10-14T11:57:48.947Z"
+      },
+      {
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text": "6\nINSPECTIONS 5.\nList of Typical Residential Building Inspections\n\u2022 Soil / Footing Inspection\n\u2022 Site / Erosion Controls\n\u2022 Foundation / Steel Reinforcement\n\u2022 Under Slab / Vapor Barrier\n\u2022 Framing / Shear Wall\n\u2022 Above Ceiling HVAC / Duct Seal\n\u2022 HVAC\n\u2022 Insulation\n\u2022 Gas and Pressure piping test\n\u2022 Temporary structures (tents, special events)\n\u2022 Temporary Certificate of Occupancy\n\u2022 Site inspection, elevation certificate if in\nFlood zone\n\u2022 Special Inspection final report (if required)\n\u2022 Final inspection, Certificate of Complaince/\nor Certification of Occupancy\nPlumbing Permits are\nissed and inspected by\nthe\nHamilton County\nHealth Department\nElectric permits are\nissued by the City of\nSharonville. The plan\nreview and inspection\nare performed by the\nNational Inspection\nCorporation (NIC)\n888-433-4642",
+        "needs_ocr_review": false,
+        "truncated": false,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "text_sha256": "76cc9f242a1dea694cdc5f991bbd9dbf77d5db0b5de69da70567fd93c3752cc4",
+        "method": "pdfjs-4.8.69-text-v1",
+        "page": 8,
+        "extracted_at": "2026-10-14T11:57:48.947Z"
+      },
+      {
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text": "7\nCURRENT ZONING MAP 6.\n1. Go onto the City of Sharonville website sharonville.org\n2. Hold Cursor over City Office\n3. Click on Community Development under \u201cDepartments\u201d\n4. Click on Zoning Map on the left side of the screen\n5. To find the legend , in the top left, click on the two arrows ( >> )\n6. To see individual layers and legends , click on the preffered layer arrow ( > ) to\nthe right of the name of the layer\nPlease call the Community\nDevelopment Department\nwith any questions\n(513) 563-0033\nHow to Access The Sharonville Zoning Map",
+        "needs_ocr_review": false,
+        "truncated": false,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "text_sha256": "dcdecb379e15a2d6210acc0e717327e66a189db050953edddae5f9b7bb0cce6f",
+        "method": "pdfjs-4.8.69-text-v1",
+        "page": 9,
+        "extracted_at": "2026-10-14T11:57:48.947Z"
+      },
+      {
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text": "COMMUNITYDEVELOPMENT\n8\nRESIDENTIAL DISTRICT REQUIREMENTS 7.\nBuilding Setback Table\nZONING\nDISTRICTS\nMINIMUM LOT\nAREA\nMINIMUM LOT\nWIDTH\nFRONT\nYARD\nSETBACK\nSIDEYARD\nSETBACK\nREAR\nYARD\nSETBACK\nMINIMUM\nHEIGHT\nMAXIMUM\nLOT\nCOVERAGE\nR1-A 12,000\u2019 100\u2019 40\u2019 15\u2019 35\u2019 35 feet 35%\nR1-B 9,600\u2019 80\u2019 30\u2019 10\u2019 35\u2019 35 feet 35%\nR2-C\n9.600\u2019 per each\nsingle family\ndwelling\n80\u2019 for lots with\na single family\ndwelling\n30\u2019\n10\u2019 for\nsingle\nfamily\ndwellings\n35\u2019 35 feet 35% 8,500\u2019 per each\ndwelling unit in a\ntwo family house\n100\u2019 for lots with\na two family\ndwelling\n12\u2019 for\nall other\ndwellings\n150\u2019 for lots with\na rowhouse\ndwelling\n5,445\u2019 per each\ndwelling unit in a\nrowhouse dwelling\nRM-D\n9,600\u2019 per each\nsingke family\ndwelling\n80\u2019 for lots with\na single family\ndwelling\n30\u2019\n10\u2019 for\nsingle\nfamily\ndwellings\n35\u2019 40 feet 35% 8,500\u2019 per each\ndwelling unit in a\ntwo family house\n100\u2019 for lots with\na single family\ndwelling\n12\u2019 for\nall other\ndwellings\nthat are 2\nstories in\nheight or\nshorter\n4,000 per each\ndwelling unit in a\nrowhouse or multi\n- family dwelling\n200\u2019 for lots\nwith rowhouse\ndwelling\n15\u2019 for\nall other\ndwellings\na.",
+        "needs_ocr_review": false,
+        "truncated": false,
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "text_sha256": "c62b481aa5f39d316621e3ba79c23dce2574660e875306b18f4718a3bf02bb27",
+        "method": "pdfjs-4.8.69-text-v1",
+        "page": 10,
+        "extracted_at": "2026-10-14T11:57:48.947Z"
+      }
+    ],
+    "page7_matches_retained": false,
+    "publisher_literal_present": true,
+    "verification_status": "needs_verification",
+    "authority_classification": "unknown_review_required"
+  }
+}
