@@ -101,13 +101,30 @@ assert.doesNotMatch(renderedText(tree), /Late Auto Preview/,
   'Refresh may update suggestions but must not silently replace employee allocations');
 console.log('PASS refreshed suggestions do not overwrite employee-edited allocations');
 
-await act(async () => { tree.update(React.createElement(ClockOutDialog, propsFor(first))); });
+await act(async () => { clickButton(tree, 'Refresh')(); });
 assert.equal(calls.length,4);
-await act(async () => { calls[3].resolve(preview('Fresh First Shift', 'first-fresh')); });
+await act(async () => {
+  tree.update(React.createElement(ClockOutDialog, propsFor(second, {isOpen:false})));
+});
+await act(async () => { tree.update(React.createElement(ClockOutDialog, propsFor(second))); });
+assert.equal(calls.length,5,'Reopening same shift should launch a fresh preview');
+assert.match(renderedText(tree), /In House Projects/,
+  'Reopening the same shift must retain manually entered allocation drafts');
+await act(async () => { calls[4].resolve(preview('Latest Same Shift', 'second-new')); });
+await act(async () { calls[3].resolve(preview('Old Before Dialog Closed', 'old-close')); });
+assert.match(renderedText(tree), /In House Projects/);
+assert.match(renderedText(tree), /Latest Same Shift/);
+assert.doesNotMatch(renderedText(tree), /Old Before Dialog Closed/,
+  'Pending preview from a closed dialog must not overwrite later same-shift refresh');
+console.log('PASS close and reopen preserves same-shift draft but fences previous open-cycle response');
+
+await act(async () => { tree.update(React.createElement(ClockOutDialog, propsFor(first))); });
+assert.equal(calls.length,6);
+await act(async () => { calls[5].resolve(preview('Fresh First Shift', 'first-fresh')); });
 assert.match(renderedText(tree), /Fresh First Shift/);
 assert.doesNotMatch(renderedText(tree), /In House Projects|Second Shift Work/,
   'Switching shifts must reset previous employee draft allocations');
 console.log('PASS shift transition clears prior employee drafts and accepts only its fresh preview');
 
 await act(async () => { tree.unmount(); });
-console.log('PASS 3/3 Clock Out preview and allocation draft scenarios');
+console.log('PASS 4/4 Clock Out preview and allocation draft scenarios');
