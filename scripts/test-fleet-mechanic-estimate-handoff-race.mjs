@@ -10,14 +10,18 @@ const begin=source.indexOf("  const saveEstimate = async (submit = false) => {")
 const finish=source.indexOf("  const saveProgress = async () => {",begin);
 assert.ok(begin>=0&&finish>begin,"Live FleetMechanic estimate handler must exist");
 const handlerBlock=source.slice(begin,finish);
+const refreshBegin=source.indexOf("  const refreshEstimateState = async (workOrderId, reason = \"\", showRecoveredMessage = false) => {");
+assert.ok(refreshBegin>0&&refreshBegin<begin,"Real final estimate reload handler must exist");
+const refreshBlock=source.slice(refreshBegin,begin);
+const bindRefresh=new Function("ctx",`with(ctx){${refreshBlock} return refreshEstimateState; }`);
 // Evaluate the exact live handler, with state and Base44 invocations replaced by
 // local test fixtures. This is not a browser acceptance test.
 const bindHandler=new Function("ctx",`with(ctx){${handlerBlock} return saveEstimate; }`);
 const defer=()=>{let resolve; const promise=new Promise(done=>{resolve=done;}); return {promise,resolve};};
 
-function harness({holdSave=false,holdSubmit=false}={}) {
+function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
   const calls=[];
-  const saves=[],errors=[],forms=[],busy=[],refreshes=[];
+  const saves=[],errors=[],forms=[],busy=[],refreshes=[],recoveries=[];
   const saveGate=defer(),submitGate=defer();
   const initialEstimate={id:"estimate-A",work_order_id:"wo-A",visibility:"mechanic",status:"draft",
     updated_date:"estimate-v1",estimated_labor_hours:2,labor_rate:100,notes:"Initial"};
@@ -27,6 +31,12 @@ function harness({holdSave=false,holdSubmit=false}={}) {
     selected:{id:"wo-A",updated_date:"work-v1"},
     selectedWorkOrderRef:{current:"wo-A"},
     portalAppliedEpochRef:{current:3},
+    portalRequestRef:{current:0},
+    setEstimateRecovery:value=>recoveries.push(value),
+    setRefreshing:()=>{},
+    applyPortalPayload:result=>{ctx.lastAppliedPayload=result;},
+    fetchPortalPayload:async()=>ctx.serverPayload,
+    pretty:value=>String(value||"draft").replaceAll("_"," "),
     data:{portal:{capabilities:{estimates:true}}},
     estimateRecovery:null,
     estimateByWorkOrder:{"wo-A":initialEstimate},
@@ -47,13 +57,21 @@ function harness({holdSave=false,holdSubmit=false}={}) {
       }
       if(request.action==="estimate_submit"){
         if(holdSubmit)return await submitGate.promise;
-        return {data:{success:true,estimate:submittedEstimate,auto_approved:false}};
+        return {data:{success:true,estimate:submittedEstimate,auto_approved:autoApproved}};
       }
       throw new Error("Unexpected synthetic portal operation");
     }}},
   };
   const run=bindHandler(ctx);
-  return {ctx,run,calls,saves,errors,forms,busy,refreshes,saveGate,submitGate,savedEstimate,submittedEstimate};
+  const useRealRefresh=()=>{ctx.refreshEstimateState=bindRefresh(ctx);};
+  const setServerEstimate=(estimate,visibility="mechanic")=>{
+    ctx.serverPayload={
+      active_work_orders:[{id:"wo-A"}],recent_completed:[],
+      repair_estimates:estimate?[{...estimate,visibility}]:[],
+    };
+  };
+  return {ctx,run,calls,saves,errors,forms,busy,refreshes,recoveries,saveGate,submitGate,
+    savedEstimate,submittedEstimate,useRealRefresh,setServerEstimate};
 }
 
 test("switching from A to B during delayed Save Draft must not submit A or project A into B",async()=>{
