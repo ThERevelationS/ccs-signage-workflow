@@ -261,4 +261,46 @@ assert.match(renderedText(guardedTree), /Changed server totals/,
 console.log('PASS changed authoritative totals block submission and retain allocations');
 
 await act(async () => { guardedTree.unmount(); });
-console.log('PASS 9/9 Clock Out preview and allocation draft scenarios');
+
+const lostCalls = [];
+const sentPayloads = [];
+let confirmCount = 0;
+const lostPreview = () => new Promise((resolve, reject) => lostCalls.push({ resolve, reject }));
+const lostAck = async (data) => {
+  sentPayloads.push(JSON.parse(JSON.stringify(data)));
+  if (++confirmCount === 1) {
+    const err = new Error('Clock Out acknowledgement interrupted');
+    err.ambiguousOutcome = true;
+    throw err;
+  }
+  return { success: true };
+};
+let lostTree;
+await act(async () => {
+  lostTree = TestRenderer.create(React.createElement(ClockOutDialog, propsFor(first, {
+    onLoadLaborAllocationPreview: lostPreview, onClockOut: lostAck,
+  })));
+});
+await act(async () => { lostCalls[0].resolve(reconciled('Retry-safe work', 'retry-job')); });
+await act(async () => { editableLunch(lostTree).props.onChange({target:{value:'0'}}); });
+let lostFirst;
+await act(async () => { lostFirst = clickClockOut(lostTree)(); });
+assert.equal(lostCalls.length, 2);
+await act(async () => {
+  lostCalls[1].resolve(reconciled('Retry-safe work', 'retry-job'));
+  await lostFirst;
+});
+assert.equal(sentPayloads.length, 1);
+assert.match(renderedText(lostTree), /Clock Out acknowledgement interrupted/);
+let lostRetry;
+await act(async () => { lostRetry = clickClockOut(lostTree)(); });
+assert.equal(lostCalls.length, 2,
+  'Uncertain Clock Out retry must not regenerate authoritative reconciliation');
+await act(async () => { await lostRetry; });
+assert.equal(sentPayloads.length, 2);
+assert.deepEqual(sentPayloads[1], sentPayloads[0],
+  'Uncertain retry must reuse exactly the same submitted lunch, allocations, and notes');
+console.log('PASS interrupted Clock Out retries identical payload without new preview');
+
+await act(async () => { lostTree.unmount(); });
+console.log('PASS 10/10 Clock Out preview and allocation draft scenarios');
