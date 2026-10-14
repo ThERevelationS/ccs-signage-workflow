@@ -106,4 +106,63 @@ await check("Only SIPS snapshot-guarded checklist saves trigger cross-entity che
   assert.match(frontend, /guardFields: loadedWorkflowSnapshotRef\.current/);
 });
 
+await check("Revocation during synchronous validation is rejected before guarded write", async () => {
+  const begin = src.indexOf("const optionalFields =");
+  const finish = src.indexOf("export default async function", begin);
+  assert.ok(begin >= 0 && finish > begin);
+  const backend = src.slice(begin, finish);
+  const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null) ||
+    ((a == null || a === "") && (b == null || b === ""));
+  let config = [{ setting_value: { items: [{ text: "SIPS meeting", wip: true }] } }];
+  let writes = 0;
+  let revoke = true;
+  const wo = {
+    id: "syntheticWO981", updated_date: "v1", deleted: false, completed: false,
+    is_rider: false, current_task_assigned_to: "Production",
+    current_task_description: "SIPS meeting", current_stage: "Production",
+    sip_completed: false, sip_revisit_date: "", sip_checklist: [], products: []
+  };
+  const sdk = { asServiceRole: { entities: {
+    WorkOrder: { get: async () => structuredClone(wo) },
+    GlobalSettings: { filter: async () => ({ items: config }) }
+  } } };
+  const deps = {
+    createClientFromRequest: () => sdk, measureSyncEntities: x => x,
+    authenticateSignShopSession: async () => ({ role: "user" }),
+    beginSyncTraceStorage: async () => {}, equivalent: same,
+    validateNeutralSalesCloseout: () => {}, validateSalesStageTimestampPatch: () => {},
+    validateSalesActivityTimestampPatch: () => {
+      if (revoke) config = [{ setting_value: {
+        items: [{ text: "SIPS meeting", page: "Other", wip: false }]
+      } }];
+    },
+    trackedConditionalSave: async (_sdk, _type, row, patch) => {
+      writes++;
+      return { ...row, ...patch, updated_date: "v2" };
+    },
+    Response
+  };
+  const handler = new Function("deps",
+    "with(deps) {\n" + backend + "\nreturn fieldHistoryHandler;\n}")(deps);
+  const patch = { sip_checklist: [{ id: "synthetic-row", text: "Step" }], products: [] };
+  const request = () => ({ json: async () => ({
+    action: "save", session_token: "synthetic-only", entity_type: "WorkOrder",
+    entity_id: wo.id, next_fields: patch,
+    expected_fields: { sip_checklist: [], products: [] },
+    guard_fields: {
+      current_task_assigned_to: "Production", current_task_description: "SIPS meeting",
+      current_stage: "Production", sip_completed: false, completed: false, is_rider: false
+    }
+  }) });
+  let result = await handler(request());
+  assert.equal(result.status, 409);
+  assert.match((await result.json()).error, /no longer configured for SIPS or WIP/);
+  assert.equal(writes, 0, "Final guard prevents the save after revocation");
+  revoke = false;
+  config = [{ setting_value: { items: [{ text: "SIPS meeting", wip: true }] } }];
+  result = await handler(request());
+  assert.equal(result.status, 200);
+  assert.equal(writes, 1, "Eligible checklist still saves normally");
+});
+
 console.log(passed + "/" + passed + " protected SIPS task configuration checks passed");
