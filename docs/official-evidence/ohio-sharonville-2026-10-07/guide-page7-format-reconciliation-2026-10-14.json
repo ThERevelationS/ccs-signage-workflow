@@ -1,0 +1,115 @@
+{
+  "status": "resolved_formatting_difference",
+  "physical_page": 7,
+  "archive_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+  "archive_bytes": 11002258,
+  "retained_method": "pdfjs-dist embedded text; no OCR",
+  "live_method": "pdfjs-4.8.69-text-v1",
+  "retained_text_sha256": "1cc9f1b15503ba2b01b46c966c8fa41f24d8ea7f77d2de705953adac60ca38d5",
+  "live_text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+  "retained_chars": 804,
+  "live_chars": 800,
+  "retained_saved_hash_valid": true,
+  "live_saved_hash_valid": true,
+  "whitespace_normalized_equal": true,
+  "non_whitespace_sequence_equal": true,
+  "reconstructed": [
+    {
+      "useSystemFonts": true,
+      "legacy_sha256": "1cc9f1b15503ba2b01b46c966c8fa41f24d8ea7f77d2de705953adac60ca38d5",
+      "current_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+      "legacy_matches_retained": true,
+      "current_matches_live": true
+    },
+    {
+      "useSystemFonts": false,
+      "legacy_sha256": "1cc9f1b15503ba2b01b46c966c8fa41f24d8ea7f77d2de705953adac60ca38d5",
+      "current_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+      "legacy_matches_retained": true,
+      "current_matches_live": true
+    }
+  ],
+  "literal_office_present_in_both": true,
+  "cause": "Legacy formatter retains one space before line endings; production pdfItemsText removes trailing horizontal whitespace before line endings. Font-option variants reproduce both exact hashes from the same original PDF.",
+  "historical_evidence_modified": false,
+  "production_writes": false,
+  "authority_established": false,
+  "fresh_readback": {
+    "source": {
+      "id": "6aced7f49bda8d3e61944a9d",
+      "updated_date": "2026-10-14T11:57:53.408000",
+      "file_hash_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "file_bytes": 11002258,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+      "text_extraction_state": {
+        "status": "partial",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+        "claim_token": "9a91ddcc-46d9-43d5-9bad-7e8ee82330ab",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-14T11:57:48.661Z",
+        "attempts": 2,
+        "next_page": 11,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 28,
+        "pages_extracted": 10,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-14T11:57:50.682Z",
+        "completed_at": "",
+        "complete_document_text": false,
+        "storage_mode": "pdf-page-segments-v1",
+        "inline_page_count": 5,
+        "preview_only": true,
+        "segment_count": 1,
+        "pending_segment": null,
+        "last_segment": {
+          "id": "6acf6e3e1ae409cc63a3da41",
+          "registration_key": "pdf-page-segments-v1:6aced7f49bda8d3e61944a9d:4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9:pdfjs-4.8.69-text-v1:6",
+          "payload_sha256": "17c40e22abe89f89ec3c9935980eff7be4772aee99ccfab3c2887acd518bbef9",
+          "page_start": 6,
+          "page_end": 10,
+          "total_pages": 28
+        },
+        "extracted_text_scope": "inline_preview"
+      }
+    },
+    "page_readback": {
+      "success": true,
+      "source_document_id": "6aced7f49bda8d3e61944a9d",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+      "authority_classification": "unknown_review_required",
+      "content_status": "unknown",
+      "verification_status": "needs_verification",
+      "pages": [
+        {
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text": "COMMUNITYDEVELOPMENT\n5\nELECTRIC PERMITS 4.\nIn early 2020, the City of Sharonville partnered with National\nInspection Corporation (NIC) to perform electric plan review,\napprovals and inspections in an effort to improve the convenience to\nresidents and businesses.\nAll electric permits and plans can be emailed or dropped off at the\nCity of Sharonville Community Development Department Office to\nstart the electric permit approval process.\nOnce the permit is approved, you will be contacted for payment of\nthe electric permit fee, and the permit will be issued.\nAll electrical inspections are handled directly by NIC.\nIf you have any general\nadministrative questions\nabout electric permitting,\nplease contact us at\n513-563-0033\nFor specific electric\npermitting questions\nplease call NIC at\n888-433-4642",
+          "needs_ocr_review": false,
+          "truncated": false,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+          "method": "pdfjs-4.8.69-text-v1",
+          "page": 7,
+          "extracted_at": "2026-10-14T11:57:48.947Z"
+        }
+      ],
+      "next_page": 8,
+      "available_through": 10,
+      "total_pages": 28,
+      "complete_document_text": false,
+      "preview_only": true,
+      "needs_ocr_page_count": 0,
+      "truncated_page_count": 0,
+      "has_text_gaps": false,
+      "llm_calls": 0
+    }
+  }
+}
