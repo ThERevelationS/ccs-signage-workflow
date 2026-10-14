@@ -114,6 +114,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   // Do not carry document expansion, search results, or pending focus into another jurisdiction.
   useEffect(() => {
     activeArchiveJurisdictionRef.current = jurisdiction.id;
+    setSourceRequest(null);
     setArchiveProgress(null);
     setViewingPDF(null);
     setVerificationTarget(null);
