@@ -120,18 +120,29 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
       const products = mergeWorkOrderProducts(existing?.products || [], estimateProducts);
       const generatedDescription = [estimate.notes, sections].filter(Boolean).join("\n\n");
+      const convertedFields = buildConvertedWorkOrderFields({
+        estimate,
+        pricing,
+        existing,
+        products,
+        generatedDescription,
+        conversionDate: localDateStamp(),
+        verifiedCustomerId,
+      });
+      // Converting an already-Won job again must not manufacture Sales
+      // activity. Only a changed approved estimate/Sales field is evidence.
+      const conversionSalesFields = new Set([
+        "sales_status", "sales_rep", "estimator", "estimate_amount", "estimate_id",
+        "date_order_created", "contact_name", "contact_email", "contact_phone",
+        "title", "client_name", "install_location", "customer_id", "products",
+      ]);
+      const hasConversionSalesActivity = !existing || Object.entries(convertedFields)
+        .some(([field, value]) => conversionSalesFields.has(field) &&
+          JSON.stringify(existing[field] ?? null) !== JSON.stringify(value ?? null));
       const conversionActivityStamp = new Date().toISOString();
       const workOrderFields = {
-        ...buildConvertedWorkOrderFields({
-          estimate,
-          pricing,
-          existing,
-          products,
-          generatedDescription,
-          conversionDate: localDateStamp(),
-          verifiedCustomerId,
-        }),
-        sales_last_activity_at: conversionActivityStamp,
+        ...convertedFields,
+        ...(hasConversionSalesActivity ? { sales_last_activity_at: conversionActivityStamp } : {}),
         ...(existing?.sales_status !== "won" ? { sales_stage_changed_at: conversionActivityStamp } : {}),
       };
 
