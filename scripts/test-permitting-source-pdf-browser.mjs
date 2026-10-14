@@ -83,7 +83,7 @@ try{
   assert.ok(await preview.getByRole('button',{name:'Open PDF in New Tab',exact:true}).evaluate(node=>node===document.activeElement));
   await preview.getByRole('button',{name:'Retry PDF preview',exact:true}).click();
   await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
-  await preview.locator('iframe').evaluate(node=>node.dispatchEvent(new Event('error')));
+  await preview.locator('iframe').dispatchEvent('error');
   await preview.getByText('PDF Preview Not Available',{exact:true}).waitFor();
   await preview.getByRole('button',{name:'Back',exact:true}).click();
   await page.clock.install();holdPDF=true;
