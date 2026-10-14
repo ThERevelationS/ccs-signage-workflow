@@ -489,6 +489,13 @@ export default function UserManagement() {
     setConfirmAccountReconciliation(false);
   };
   const hasUnsavedAccountData = isDialogOpen && hasProtectedAccountDraft();
+  useEffect(() => {
+    // An explicit acknowledgment covers only the fields as they stood at
+    // confirmation time. Later Account edits require fresh review.
+    if (accountWriteRecovery?.stage === "review") {
+      setConfirmAccountReconciliation(false);
+    }
+  }, [formData]);
 
   const requestCloseUserEditor = () => {
     if (!isDialogOpen || hrSaveInFlight.current || hrReloadInFlight.current ||
@@ -1823,31 +1830,74 @@ export default function UserManagement() {
                     {" "}{accountWriteRecovery.comparison.divergentCount} have different values.
                     A matching value does not prove which request wrote it.
                   </p>
-                  <div className="max-h-44 overflow-auto rounded border border-amber-200 bg-white">
+                  {accountResolutionPreview && (
+                    <p className="text-amber-950">
+                      Field choices: {accountResolutionPreview.counts.useLatest} use latest,
+                      {" "}{accountResolutionPreview.counts.useMine} keep my draft.
+                      {accountResolutionPreview.counts.privilegedMine > 0 &&
+                        ` ${accountResolutionPreview.counts.privilegedMine} explicit role/permission choices will require a separate authorized Save.`}
+                      All choices below affect only this local draft.
+                    </p>
+                  )}
+                  <div className="max-h-56 overflow-auto rounded border border-amber-200 bg-white">
                     <table className="w-full text-xs text-left">
                       <thead className="sticky top-0 bg-gray-100">
-                        <tr><th scope="col" className="p-2">Account field</th><th scope="col" className="p-2">Verified outcome</th></tr>
+                        <tr>
+                          <th scope="col" className="p-2">Account field</th>
+                          <th scope="col" className="p-2">Verified outcome</th>
+                          {accountResolutionPreview && <th scope="col" className="p-2">Keep in my draft</th>}
+                        </tr>
                       </thead>
                       <tbody>
-                        {accountWriteRecovery.comparison.fields.map(field => (
+                        {(accountResolutionPreview?.fields || accountWriteRecovery.comparison.fields).map(field => (
                           <tr key={field.key} className="border-t border-gray-100">
-                            <td className="p-2">{field.label}</td>
+                            <td className="p-2 font-medium">
+                              {field.label}
+                              {field.sensitive && <span className="block text-amber-700">Admin authority / permission</span>}
+                            </td>
                             <td className="p-2">
                               {field.outcome === "applied" ? "Matches requested" :
-                                field.outcome === "unchanged" ? "Still original" : "Different from both"}
+                                field.outcome === "unchanged" ? "Still original" :
+                                  field.outcome === "different" ? "Different from both" :
+                                    field.editedLater ? "Updated after request" :
+                                      field.remoteChanged ? "Latest record changed" : "Original request"}
                             </td>
+                            {accountResolutionPreview && (
+                              <td className="p-2">
+                                <div className="flex flex-wrap gap-1" role="group" aria-label={`Resolve ${field.label}`}>
+                                  <Button type="button" size="sm" variant={field.selected === "latest" ? "default" : "outline"}
+                                    aria-pressed={field.selected === "latest"}
+                                    disabled={userMutationSaving || isLoading}
+                                    onClick={() => chooseAccountField(field.key, "latest")}>
+                                    Use latest
+                                  </Button>
+                                  <Button type="button" size="sm" variant={field.selected === "mine" ? "default" : "outline"}
+                                    aria-pressed={field.selected === "mine"}
+                                    disabled={userMutationSaving || isLoading}
+                                    onClick={() => chooseAccountField(field.key, "mine")}>
+                                    Keep my draft
+                                  </Button>
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                  {accountResolutionPreview?.adjustments.length > 0 && (
+                    <div role="status" className="text-amber-950">
+                      {accountResolutionPreview.adjustments.map(message => <p key={message}>{message}</p>)}
+                    </div>
+                  )}
                   {accountWriteRecovery.comparison.status !== "applied" && (
                     <label className="flex items-start gap-2 text-amber-950">
                       <input type="checkbox" className="mt-1"
                         checked={confirmAccountReconciliation}
                         onChange={event => setConfirmAccountReconciliation(event.target.checked)} />
-                      I reviewed these Account fields. Adopt the verified latest version as the save baseline
-                      and keep my draft for manual review; I understand a later Save may overwrite newer values.
+                      I reviewed each Account field and any role/permission adjustments. Apply these
+                      choices to my local draft against the verified latest baseline. A later Save is
+                      separate, permission-checked, and may replace fields I explicitly chose to keep.
                     </label>
                   )}
                   <div className="flex flex-wrap gap-2">
@@ -1857,7 +1907,7 @@ export default function UserManagement() {
                       onClick={acceptVerifiedAccountSave}>
                       {accountWriteRecovery.comparison.status === "applied"
                         ? "Use verified Account values (no retry)"
-                        : "Adopt verified baseline; keep my draft"}
+                        : "Apply reviewed field choices (local only)"}
                     </Button>
                     <Button type="button" size="sm" variant="outline"
                       disabled={userMutationSaving || isLoading}
