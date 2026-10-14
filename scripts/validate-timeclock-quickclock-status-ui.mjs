@@ -238,5 +238,69 @@ assert.equal(currentDialog.props.breakStatus, 'working',
 assert.equal(currentDialog.props.activeBreak, null);
 console.log('PASS previous employee break completion never contaminates new employee state');
 
+const firstDialog = () => renderer.root.findAll((node) =>
+  typeof node.props?.onStartBreak === 'function')[0];
+assert.equal(firstDialog().props.breakStatus, 'working');
+let failedLunch;
+await act(async () => {
+  failedLunch = firstDialog().props.onStartBreak({ breakType: 'lunch', isPaid: false });
+});
+const firstLunchIndex = calls.length - 1;
+assert.equal(calls[firstLunchIndex].payload.action, 'break_start');
+const originalLunchRequest = calls[firstLunchIndex].payload.request_id;
+await act(async () => {
+  calls[firstLunchIndex].reject(new Error('Synthetic lost break start acknowledgement'));
+  await assert.rejects(failedLunch, /Synthetic lost break start acknowledgement/);
+});
+assert.equal(firstDialog().props.breakStatus, 'working',
+  'Failed break acknowledgement must not appear as successful');
+let retriedLunch;
+await act(async () => {
+  retriedLunch = firstDialog().props.onStartBreak({ breakType: 'lunch', isPaid: false });
+});
+const secondLunchIndex = calls.length - 1;
+assert.equal(calls[secondLunchIndex].payload.request_id, originalLunchRequest,
+  'Uncertain break start must retry with its original request identity');
+await act(async () => {
+  calls[secondLunchIndex].resolve({ data: {
+    success: true, user: first, status: 'clocked_in', break_status: 'on_break',
+    break: { id: 'first-current-lunch', user_email: first.email, is_paid: false, break_type: 'lunch' },
+    break_summary: { count: 1, total_minutes: 2, unpaid_minutes: 2, paid_minutes: 0 },
+    entry: { id: 'first-current-shift', user_email: first.email },
+  } });
+  await retriedLunch;
+});
+assert.equal(firstDialog().props.breakStatus, 'on_break');
+assert.equal(firstDialog().props.activeBreak.id, 'first-current-lunch');
+console.log('PASS interrupted unpaid break retries exact request and preserves active break');
+
+let pendingBreakEnd;
+await act(async () => { pendingBreakEnd = firstDialog().props.onEndBreak(); });
+const oldBreakEndIndex = calls.length - 1;
+assert.equal(calls[oldBreakEndIndex].payload.action, 'break_end');
+await act(async () => {
+  renderer.update(React.createElement(QuickClockSection, {
+    allUsers: [first, second], employeeSessionToken: 'session-second-new', employeeSessionUser: second,
+  }));
+});
+const secondStatusIndex = calls.length - 1;
+assert.equal(calls[secondStatusIndex].payload.action, 'status');
+assert.equal(calls[secondStatusIndex].payload.target_email, second.email);
+await act(async () => { calls[secondStatusIndex].resolve(status(second, 'second-break-free')); });
+assert.equal(firstDialog().props.breakStatus, 'working');
+await act(async () => {
+  calls[oldBreakEndIndex].resolve({ data: {
+    success: true, user: first, status: 'clocked_in', break_status: 'working',
+    break_summary: { count: 1, unpaid_minutes: 12, total_minutes: 12, paid_minutes: 0 },
+    entry: { id: 'first-current-shift', user_email: first.email },
+  } });
+  await pendingBreakEnd;
+});
+assert.equal(firstDialog().props.timeEntry.id, 'second-break-free');
+assert.equal(firstDialog().props.breakStatus, 'working');
+assert.equal(firstDialog().props.breakSummary.unpaid_minutes, 0,
+  'Previous employee End Break confirmation must not contaminate next employee totals');
+console.log('PASS prior employee End Break acknowledgement cannot replace new employee totals');
+
 await act(async () => { renderer.unmount(); });
-console.log('PASS 6/6 Time Clock Quick Clock async status acceptance cases');
+console.log('PASS 8/8 Time Clock Quick Clock async status acceptance cases');
