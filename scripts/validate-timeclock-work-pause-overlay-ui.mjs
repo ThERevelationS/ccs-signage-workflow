@@ -150,4 +150,49 @@ assert.equal(completedResumes.length, 0,
 console.log('PASS previous session Resume Work acknowledgement cannot update another employee');
 
 await act(async () => { renderer.unmount(); });
-console.log('PASS 4/4 Work Pause overlay session/refresh/event scenarios');
+
+let retryRenderer;
+const retryResumes = [];
+const retryStart = calls.length;
+await act(async () => {
+  retryRenderer = TestRenderer.create(React.createElement(Overlay, {
+    ...propsFor(second, 'session-retry'),
+    onResumed: (data) => retryResumes.push(data),
+  }));
+});
+assert.equal(calls.length, retryStart + 1);
+await act(async () => { calls.at(-1).resolve(paused(second, 'retry')); });
+assert.match(visible(retryRenderer), /WORK PAUSED/);
+const resumeControl = () => retryRenderer.root.findAllByType(Button).find((node) =>
+  [node.props.children].flat(Infinity).includes('Resume Work'));
+let failedResume;
+await act(async () => { failedResume = resumeControl().props.onClick(); });
+const originalResumeId = calls.at(-1).payload.request_id;
+assert.ok(originalResumeId);
+assert.equal(calls.at(-1).payload.action, 'work_pause_resume');
+await act(async () => {
+  calls.at(-1).reject(new Error('Synthetic interrupted acknowledgement'));
+  await failedResume;
+});
+assert.match(visible(retryRenderer), /WORK PAUSED/);
+assert.match(visible(retryRenderer), /Synthetic interrupted acknowledgement/);
+let exactRetry;
+await act(async () => { exactRetry = resumeControl().props.onClick(); });
+assert.equal(calls.at(-1).payload.request_id, originalResumeId,
+  'Uncertain Work Pause resume retries must keep their exact original request ID');
+await act(async () => {
+  calls.at(-1).resolve({ data: {
+    success: true, status: 'clocked_in', work_pause_status: 'working',
+    user: second, entry: { user_email: second.email },
+  } });
+  await exactRetry;
+});
+assert.equal(retryResumes.length, 1);
+assert.doesNotMatch(visible(retryRenderer), /WORK PAUSED/);
+const refreshedAfterResume = calls.at(-1);
+assert.equal(refreshedAfterResume.payload.action, 'status');
+await act(async () => { refreshedAfterResume.resolve(working(second)); });
+assert.doesNotMatch(visible(retryRenderer), /WORK PAUSED/);
+console.log('PASS lost Resume Work acknowledgement retries same request and normal success clears guard');
+await act(async () => { retryRenderer.unmount(); });
+console.log('PASS 5/5 Work Pause overlay session/refresh/event scenarios');
