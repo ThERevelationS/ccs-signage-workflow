@@ -74,8 +74,10 @@ try{
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
   await page.waitForTimeout(750);
   console.log('iframe dimensions',width,await preview.locator('iframe').evaluate(e=>[e.clientWidth,e.clientHeight]));
-  await preview.locator('iframe').evaluate(e=>{e.src=e.src.split('#')[0]});
+  await page.evaluate(()=>{const e=document.querySelector('iframe[src*=".pdf"]');const c=e.cloneNode();c.id='pdf-probe';c.style='position:fixed;z-index:999999;top:0;left:0;width:700px;height:650px';document.body.appendChild(c)});
   await page.waitForTimeout(1500);
+  await page.locator('#pdf-probe').screenshot({path:'/tmp/permitting-pdf-probe-'+width+'.png'});
+  await page.locator('#pdf-probe').evaluate(e=>e.remove());
   await preview.locator('iframe').screenshot({path:'/tmp/permitting-source-pdf-frame-'+width+'.png'});
   await page.screenshot({path:'/tmp/permitting-source-pdf-'+width+'.png'});
   await preview.getByRole('button',{name:'Back',exact:true}).click();assert.equal(await preview.count(),0);
