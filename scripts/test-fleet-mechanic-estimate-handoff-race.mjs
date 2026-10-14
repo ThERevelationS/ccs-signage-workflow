@@ -88,6 +88,20 @@ test("Check Current Server State on revoked work order must not recreate inacces
   assert.equal(h.events.saves.at(-1),"");
 });
 
+test("late recovery for inaccessible A cannot clear B's active recovery lock",async()=>{
+  const h=refreshHarness();
+  h.ctx.selectedWorkOrderRef.current="wo-B";
+  h.ctx.nextPayload={...h.previous,active_work_orders:[{id:"wo-B"}],
+    recent_completed:[],repair_estimates:[]};
+  const result=await h.ctx.refreshEstimateState("wo-A","Old estimate response finished.",true);
+  assert.equal(result,false);
+  assert.equal(h.ctx.selectedWorkOrderRef.current,"wo-B","Current authorized work order remains selected");
+  assert.equal(h.events.recoveries.length,0,
+    "Old A completion cannot replace or clear B's separate pending recovery marker");
+  assert.equal(h.events.scopeNotices.length,0,"Do not raise revocation notice for B");
+  assert.equal(h.events.saves.length,0,"Do not modify B's confirmation UI");
+});
+
 test("reordered refresh cannot restore revoked work order from a stale response",async()=>{
   const h=refreshHarness();
   const slow=defer(),fast=defer();
