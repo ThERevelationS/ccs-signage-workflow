@@ -60,6 +60,7 @@ export default function ClockOutDialog({
   onChangeLabor,
   onStopLabor,
   onLoadLaborAllocationPreview,
+  pendingClockOutRecovery = null,
 }) {
   const [lunchMinutes, setLunchMinutes] = useState("");
   const [jobAllocations, setJobAllocations] = useState([]);
@@ -189,18 +190,20 @@ export default function ClockOutDialog({
     if (!previewScope) return undefined;
     if (draftShiftRef.current !== shiftKey) {
       draftShiftRef.current = shiftKey;
-      setLunchMinutes("");
-      setJobAllocations([]);
-      setNotes("");
+      const pendingBody = pendingClockOutRecovery?.entryId === String(timeEntry.id)
+        ? pendingClockOutRecovery.body : null;
+      setLunchMinutes(pendingBody ? String(pendingBody.lunch_minutes) : "");
+      setJobAllocations(pendingBody ? pendingBody.job_allocations.map((row) => ({ ...row })) : []);
+      setNotes(pendingBody ? pendingBody.notes : "");
       setSearchTerm("");
       setSearchResults([]);
       setShowSearch(false);
       setError("");
-      allocationEditedRef.current = false;
-      previewAppliedRef.current = false;
+      allocationEditedRef.current = Boolean(pendingClockOutRecovery);
+      previewAppliedRef.current = Boolean(pendingClockOutRecovery);
       setAllocationsReviewed(false);
     }
-    if (onLoadLaborAllocationPreview) void loadLaborPreview({ allowAutoApply: true });
+    if (onLoadLaborAllocationPreview) void loadLaborPreview({ allowAutoApply: !pendingClockOutRecovery });
     return () => {
       previewRequestRef.current = {
         scope: "", id: previewRequestRef.current.id + 1, pending: false,
@@ -403,11 +406,24 @@ export default function ClockOutDialog({
     try {
       const uncertain = uncertainClockOutRef.current?.scope === request.scope
         ? uncertainClockOutRef.current : null;
-      if (uncertain) {
-        if (uncertain.draft !== reviewedDraft) {
+      const restoredBody = pendingClockOutRecovery?.entryId === String(timeEntry.id)
+        ? pendingClockOutRecovery.body : null;
+      if (uncertain || restoredBody) {
+        const retryPayload = uncertain?.payload || {
+          lunchMinutes: restoredBody.lunch_minutes,
+          jobAllocations: restoredBody.job_allocations,
+          notes: restoredBody.notes,
+        };
+        const currentBody = {
+          lunchMinutes: restoredBody ? Number(lunchMinutes) : retryPayload.lunchMinutes,
+          jobAllocations: jobAllocations.map(({ suggested_from_current_work: _suggested, ...row }) => row),
+          notes: notes.trim(),
+        };
+        if ((uncertain && uncertain.draft !== reviewedDraft) ||
+            JSON.stringify(currentBody) !== JSON.stringify(retryPayload)) {
           throw new Error("An earlier Clock Out is unconfirmed. Restore the original allocations, lunch, and notes before retrying the same request. Do not submit revised payroll time until its outcome is verified.");
         }
-        await onClockOut(uncertain.payload);
+        await onClockOut(retryPayload);
         if (isCurrent()) uncertainClockOutRef.current = null;
         return;
       }
@@ -903,6 +919,12 @@ export default function ClockOutDialog({
             />
           </div>
 
+          {pendingClockOutRecovery?.entryId === String(timeEntry?.id) && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              An earlier Clock Out has not been confirmed. Your original allocations are restored for an exact retry. Confirm your identity and retry the original request; do not revise payroll time until its outcome is verified.
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -917,7 +939,7 @@ export default function ClockOutDialog({
             </Button>
             <Button onClick={handleClockOut} disabled={isSubmitting || breakActionBusy || onBreak} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
               {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
-              {isSubmitting ? "Confirming..." : onBreak ? "End Break First" : "Clock Out"}
+              {isSubmitting ? "Confirming..." : onBreak ? "End Break First" : pendingClockOutRecovery ? "Retry Original Clock Out" : "Clock Out"}
             </Button>
           </div>
         </div>
