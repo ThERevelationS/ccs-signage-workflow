@@ -212,19 +212,20 @@ export async function replaceWorkOrderFieldsIfUnchanged() {
     { width: 320, height: 568 }, async page => {
       const alert = await showSaveFailure(page);
       await page.getByRole("button", { name: "Add Item" }).click();
-      await page.getByPlaceholder("New item...").fill("Keep my synthetic draft");
+      const draft = page.getByRole("textbox", { name: "New general checklist item" });
+      await draft.fill("Keep my synthetic draft");
       await alert.getByRole("button", { name: "Reload latest" }).click();
       const warning = page.getByRole("alertdialog", { name: "Discard edits and reload latest?" });
       await warning.waitFor();
       await warning.getByRole("button", { name: "Keep Editing" }).click();
       await warning.waitFor({ state: "hidden" });
-      await page.getByDisplayValue("Keep my synthetic draft").waitFor();
+      assert.equal(await draft.inputValue(), "Keep my synthetic draft", "Cancelled reload preserves the local draft");
       await alert.getByRole("button", { name: "Reload latest" }).click();
       await warning.waitFor();
       await warning.getByRole("button", { name: "Discard & Reload" }).click();
       await warning.waitFor({ state: "hidden" });
       await focusHeading(page);
-      assert.equal(await page.getByDisplayValue("Keep my synthetic draft").count(), 0);
+      assert.equal(await draft.count(), 0, "Verified reload clears the discarded local draft");
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     });
   console.log("PASS " + passed + " isolated Chromium checklist focus scenarios (no writes)");
