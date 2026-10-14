@@ -72,6 +72,7 @@ try{
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
   await page.waitForTimeout(750);
+  console.log('iframe dimensions',width,await preview.locator('iframe').evaluate(e=>[e.clientWidth,e.clientHeight]));
   await preview.locator('iframe').screenshot({path:'/tmp/permitting-source-pdf-frame-'+width+'.png'});
   await page.screenshot({path:'/tmp/permitting-source-pdf-'+width+'.png'});
   await preview.getByRole('button',{name:'Back',exact:true}).click();assert.equal(await preview.count(),0);
