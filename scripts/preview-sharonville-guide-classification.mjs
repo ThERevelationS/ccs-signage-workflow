@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 export function previewSharonvilleGuideClassification(source,profile,pages){
  const fail=()=>{throw Error('Exact unreviewed Sharonville guide archive, retained purpose evidence and idle review state are required.');};
  const sha='4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9';
@@ -8,6 +9,7 @@ export function previewSharonvilleGuideClassification(source,profile,pages){
  source.content_status!=='unknown'||source.authority_confidence!=='unverified'||source.authority_review||
  source.authority_review_state||source.rule_import_state||source.rule_extraction_state||source.text_extraction_pinned||
  source.text_extraction_state?.status!=='partial'||source.text_extraction_state.pending_segment||
+ source.official_url!=='https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026'||
  source.file_hash_sha256!==sha||source.file_bytes!==11002258)fail();
  const docs=(profile.documents||[]).filter(d=>d.id===source.jurisdiction_profile_doc_id);
  const doc=docs[0];
@@ -16,7 +18,8 @@ export function previewSharonvilleGuideClassification(source,profile,pages){
  doc.source_sha256!==sha||doc.stored_sha256!==sha||doc.source_bytes!==11002258||doc.stored_bytes!==11002258||
  doc.archive_state?.status!=='complete'||doc.catalog_state?.source_document_id!==source.id)fail();
  const p1=pages.find(p=>p.page===1),p3=pages.find(p=>p.page===3),p7=pages.find(p=>p.page===7);
- if(!p1||!p3||!p7||pages.some(p=>p.source_document_id!==source.id||p.source_sha256!==sha||p.truncated||p.needs_ocr_review)||
+ if(!p1||!p3||!p7||pages.some(p=>p.source_document_id!==source.id||p.source_sha256!==sha||p.truncated||p.needs_ocr_review||
+ createHash('sha256').update(p.text).digest('hex')!==p.text_sha256)||
  !p1.text.includes('RESIDENTIAL')||!p1.text.includes('PERMITTING')||!p1.text.includes('GUIDE')||
  !p3.text.includes('Guide to Residential Permitting in Sharonville')||
  !p7.text.includes('City of Sharonville Community Development Department Office')||
