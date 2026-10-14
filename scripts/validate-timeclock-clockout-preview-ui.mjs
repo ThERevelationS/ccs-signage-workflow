@@ -292,6 +292,17 @@ await act(async () => {
 });
 assert.equal(sentPayloads.length, 1);
 assert.match(renderedText(lostTree), /Clock Out acknowledgement interrupted/);
+await act(async () => { editableLunch(lostTree).props.onChange({target:{value:'5'}}); });
+let unsafeRetry;
+await act(async () => { unsafeRetry = clickClockOut(lostTree)(); await unsafeRetry; });
+assert.equal(sentPayloads.length, 1);
+assert.equal(lostCalls.length, 2);
+assert.match(renderedText(lostTree), /earlier Clock Out is unconfirmed/,
+  'Edited draft must not replace an uncertain Clock Out payload');
+assert.match(renderedText(lostTree), /Retry-safe work/,
+  'Employee draft should remain intact after an unsafe retry is refused');
+console.log('PASS uncertain Clock Out blocks edited allocations until original draft restored');
+await act(async () => { editableLunch(lostTree).props.onChange({target:{value:'0'}}); });
 let lostRetry;
 await act(async () => { lostRetry = clickClockOut(lostTree)(); });
 assert.equal(lostCalls.length, 2,
@@ -303,4 +314,4 @@ assert.deepEqual(sentPayloads[1], sentPayloads[0],
 console.log('PASS interrupted Clock Out retries identical payload without new preview');
 
 await act(async () => { lostTree.unmount(); });
-console.log('PASS 10/10 Clock Out preview and allocation draft scenarios');
+console.log('PASS 11/11 Clock Out preview and allocation draft scenarios');
