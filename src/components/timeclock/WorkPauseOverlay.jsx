@@ -46,6 +46,8 @@ export default function WorkPauseOverlay({
   const scopeRef = useRef(scopeKey);
   scopeRef.current = scopeKey;
   const statusSequenceRef = useRef(0);
+  const resumeSequenceRef = useRef(0);
+  const resumeInFlightRef = useRef(false);
   const [pauseStateScope, setPauseStateScope] = useState("");
   const [pauseState, setPauseState] = useState(null);
   const [now, setNow] = useState(() => new Date());
@@ -60,6 +62,7 @@ export default function WorkPauseOverlay({
   const lastActivityAtRef = useRef(Date.now());
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
+    if (resumeInFlightRef.current) return null;
     const sequence = ++statusSequenceRef.current;
     const isCurrent = () => mountedRef.current &&
       sequence === statusSequenceRef.current && scopeRef.current === scopeKey;
@@ -122,6 +125,9 @@ export default function WorkPauseOverlay({
   useEffect(() => {
     mountedRef.current = true;
     statusSequenceRef.current += 1;
+    resumeSequenceRef.current += 1;
+    resumeInFlightRef.current = false;
+    setResumeBusy(false);
     pauseStateRef.current = null;
     pauseIdRef.current = "";
     resumeRequestRef.current = "";
@@ -174,6 +180,8 @@ export default function WorkPauseOverlay({
     return () => {
       mountedRef.current = false;
       statusSequenceRef.current += 1;
+      resumeSequenceRef.current += 1;
+      resumeInFlightRef.current = false;
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
@@ -240,7 +248,15 @@ export default function WorkPauseOverlay({
   const resumeWork = async () => {
     if (!pauseState?.active_work_pause?.id || !currentUser?.email || !hasCredential || resumeBusy) return;
     const requestId = resumeRequestRef.current || newRequestId();
+    const resumeSequence = ++resumeSequenceRef.current;
+    const expectedPauseId = String(pauseState.active_work_pause.id);
+    const isCurrentResume = () => mountedRef.current &&
+      resumeSequence === resumeSequenceRef.current &&
+      scopeRef.current === scopeKey &&
+      pauseIdRef.current === expectedPauseId;
     resumeRequestRef.current = requestId;
+    resumeInFlightRef.current = true;
+    statusSequenceRef.current += 1;
     setResumeBusy(true);
     setError("");
     try {
@@ -249,6 +265,7 @@ export default function WorkPauseOverlay({
         request_id: requestId,
         ...credentialPayload,
       });
+      if (!isCurrentResume()) return;
       const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || "Resume Work was not confirmed by the server.");
@@ -259,6 +276,7 @@ export default function WorkPauseOverlay({
       setShowResumePrompt(false);
       pauseStateRef.current = null;
       setPauseState(null);
+      setPauseStateScope("");
       pauseIdRef.current = "";
       dismissedAtRef.current = 0;
       if (typeof onResumed === "function") onResumed(data);
@@ -266,13 +284,19 @@ export default function WorkPauseOverlay({
       window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed", { detail: data }));
       void loadStatus({ preservePausedOnError: true });
     } catch (err) {
+      if (!isCurrentResume()) return;
       const data = err?.response?.data || {};
-      const retrySame = err?.retrySameRequest === true || data?.retry_same_request === true;
+      const responseStatus = Number(err?.response?.status || 0);
+      const retrySame = err?.retrySameRequest === true || data?.retry_same_request === true ||
+        !err?.response || responseStatus >= 500;
       if (!retrySame) resumeRequestRef.current = "";
       setError(data?.error || err?.message || "Resume Work was not confirmed. Your work timer remains paused.");
       setShowResumePrompt(true);
     } finally {
-      setResumeBusy(false);
+      if (isCurrentResume()) {
+        resumeInFlightRef.current = false;
+        setResumeBusy(false);
+      }
     }
   };
 
