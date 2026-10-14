@@ -18,6 +18,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X, ExternalLink } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
+import OfficeCandidateEvidencePanel from "./OfficeCandidateEvidencePanel";
 import { normalizeGovernmentOfficeCatalogEntry, safeGovernmentOfficeSourceUrl, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from "./governmentOfficeCatalog";
 
 const stepTypeLabels = {
@@ -190,6 +191,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
 
       {expanded && (
         <div className="p-3 space-y-3">
+          <OfficeCandidateEvidencePanel office={office} />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-[10px] text-gray-500">Phone</Label>
