@@ -114,7 +114,7 @@ async function readPermittingResourceResponse(response, { htmlMaxBytes = 2 * 102
 }
 
 // base44/shared/jurisdictionPermittingLinkDiscovery.mjs
-var RELEVANT_LINK_RE = /\b(signs?|zoning|permits?|applications?|apply|forms?|fees?|checklists?|submittals?|building|electrical|electric|inspections?|inspectors?|development|ordinances?|codes?|regulations?|resolutions?|variances?|conditional use)\b/i;
+var RELEVANT_LINK_RE = /\b(signs?|zoning|permits?|permitting|applications?|apply|forms?|fees?|checklists?|submittals?|building|electrical|electric|inspections?|inspectors?|development|ordinances?|codes?|regulations?|resolutions?|variances?|conditional use)\b/i;
 var DOWNLOADABLE_RE = /\.(pdf|doc|docx|xls|xlsx|csv|txt)(?:$|[?#])/i;
 function decodeHtmlText(value = "") {
   return String(value).replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/\s+/g, " ").trim();
@@ -425,6 +425,7 @@ async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, m
   await onProgress({ kind: "discovery_summary", detail: `${attempted} pages attempted; ${documents.size} resources found; ${gaps.length} review gaps.`, resources: [...documents.values()], progress: { processed: attempted, total: attempted, indeterminate: false } });
   const pendingPages = pending.filter((p) => !visited.has(key(p.url)));
   const continuationState = {
+    ...resume?.saved_document_scans ? { saved_document_scans: resume.saved_document_scans } : {},
     external_initial_collection_drained: false,
     method: DISCOVERY_CURSOR_METHOD,
     seed_url: seedUrl,
@@ -940,7 +941,7 @@ async function registerJurisdictionArchive({ entity, catalogEntity, jurisdiction
 }
 
 // base44/shared/jurisdictionSourcePdfText.mjs
-var PDF_TEXT_MAX_BYTES = 10 * 1024 * 1024;
+var PDF_TEXT_MAX_BYTES = 12 * 1024 * 1024;
 
 // base44/shared/permittingRuleEvidence.mjs
 var evidenceError = (message, status = 409) => Object.assign(Error(message), { status });
@@ -1915,10 +1916,13 @@ function addressResponse(data, init = {}) {
 Deno.serve(async (req) => {
   let reporter = silentScanReporter;
   try {
-    const base44 = createClientFromRequest(req), body = await req.json(), actor = await authenticateSignShopSession(base44, body?.session_token);
+    const base44 = createClientFromRequest(req), body = await req.json();
+    const diagnostic = body?.action === "geocode_diagnostic";
+    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await authenticateSignShopSession(base44, body?.session_token);
+    if (diagnostic && actor?.role !== "admin") return addressResponse({ success: false, error: "Admin access required." }, { status: 403 });
     const address = typeof body.address === "string" ? body.address.trim() : "";
     if (!address || address.length > 500) return addressResponse({ success: false, error: "Enter a full street address of 500 characters or fewer." }, { status: 400 });
-    if (body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: "address-lookup", targetName: address, kind: "address", label: `Find jurisdiction for ${address}` });
+    if (!diagnostic && body.action_token) reporter = await createScanReporter({ entity: base44.asServiceRole.entities.PermittingScanRun, token: body.action_token, user: actor, targetId: "address-lookup", targetName: address, kind: "address", label: `Find jurisdiction for ${address}` });
     const progress = async (event) => {
       const { progress: progress2, ...item } = event;
       await reporter.emit(item, progress2 || {});
@@ -1956,6 +1960,7 @@ Deno.serve(async (req) => {
       if (!geocodingService) serviceFailure("UNAVAILABLE", "The map location service could not be reached. Try again later; no jurisdiction has been selected.");
       await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}` });
     }
+    if (diagnostic) return addressResponse({ success: true, diagnostic_only: true, geocode, geocoding_service: geocodingService, authority_established: false, apply_allowed: false, llm_calls: 0, record_writes: 0 });
     await reporter.emit({ kind: "geocode_result", detail: geocode ? `Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact ? "Street and building coordinates matched." : "Approximate or corrected address; review required."}` : "No map location found." }, { stage: "Checking government boundaries", indeterminate: true });
     const resolution = await resolveSpatialLocation({ geocode, fetchJSON: fixedJSON, onProgress: progress });
     const hasServiceIssue = Boolean(geocodingService?.issue && resolution.status !== "location_verified");
