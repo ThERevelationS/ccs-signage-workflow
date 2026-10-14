@@ -985,7 +985,7 @@ Answer only from the provided excerpts and cite the document title and official 
         {/* Documents */}
          <div ref={node=>{workspaceSections.current.documents=node;}} tabIndex={-1} aria-label="Documents workspace" className="scroll-mt-3 bg-green-50 rounded-lg p-3 border border-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
            <p className="text-xs font-semibold text-green-800 mb-2">
-             Documents ({jurisdiction.documents?.length || 0})
+             Documents ({jurisdiction.documents?.length || 0} collected links)
            </p>
           <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
             if (expandedDoc === id) {
