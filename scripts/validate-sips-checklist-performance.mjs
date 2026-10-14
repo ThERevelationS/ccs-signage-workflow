@@ -1297,7 +1297,7 @@ await (async () => {
   const scope = {
     workOrder: { id: "WO-synthetic", sip_checklist: [{ id: "row-A" }] },
     isSaving: false, isLoading: false, hasUnsavedChanges: true,
-    discardWarning: "reload",
+    hasUnsavedChecklistChanges: true, discardWarning: "reload",
     saveInFlightRef: { current: false }, loadInFlightRef: { current: false },
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "2099-08-25" },
@@ -1380,6 +1380,7 @@ await (async () => {
   // No follow-up write is performed. If a later read confirms that date was
   // committed, stop proposing it as an unconfirmed new choice.
   scope.hasUnsavedChanges = false;
+  scope.hasUnsavedChecklistChanges = false;
   actions.requestReloadLatest();
   assert.equal(pending.length, 3, "Clean retry reloads without a destructive confirmation");
   pending[2].resolve([{ id: "WO-synthetic", current_task_assigned_to: "SIPs", sip_checklist: [{ id: "row-B", type: "checklist" }], sip_revisit_date: "2099-08-25" }]);
@@ -1399,12 +1400,13 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
     "showAddGeneralChecklist", "newGeneralChecklistText", "editingItemId",
     "editingItemText", "checklistItemById", "editingProductName", "editingProductNameText",
     "customStatusDraftsByItemIdRef", "isLoading", "checklist", "loadedUiChecklistSnapshot",
-    "products", "loadedUiProductsSnapshot",
+    "products", "loadedUiProductsSnapshot", "failedRevisitWorkOrderIdRef",
+    "failedRevisitSelectionRef", "workOrder", "loadedRevisitDateSnapshot",
     dirtyBody + "\nreturn hasUnsavedChanges;");
   const clean = [{ id: "item-1", text: "Existing" }];
   const dirtyArgs = [ { show: false }, "", false, "", null, "",
     new Map([["item-1", clean[0]]]), null, "", { current: new Map() },
-    false, clean, clean, [], [] ];
+    false, clean, clean, [], [], { current: null }, { current: undefined }, { id: "WO-dirty" }, "" ];
   assert.equal(calculateDirty(...dirtyArgs), false);
   dirtyArgs[11] = [{ id: "item-1", text: "Changed" }];
   assert.equal(calculateDirty(...dirtyArgs), true);
@@ -1420,18 +1422,27 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
   dirtyArgs[4] = null;
   dirtyArgs[9] = { current: new Map([["item-1", "Custom draft"]]) };
   assert.equal(calculateDirty(...dirtyArgs), true);
+  dirtyArgs[9] = { current: new Map() };
+  dirtyArgs[15] = { current: "WO-dirty" };
+  dirtyArgs[16] = { current: "2099-07-22" };
+  assert.equal(calculateDirty(...dirtyArgs), true, "An unconfirmed Revisit date protects against silent close");
+  dirtyArgs[18] = "2099-07-22";
+  assert.equal(calculateDirty(...dirtyArgs), false, "A server-confirmed date is no longer a pending edit");
+  dirtyArgs[18] = "";
+  dirtyArgs[17] = { id: "WO-other" };
+  assert.equal(calculateDirty(...dirtyArgs), false, "A different Work Order never inherits an unconfirmed date");
 
   const actionBody = source.slice(source.indexOf("  const requestClose = () => {"),
     source.indexOf("  return (\n    <>", source.indexOf("  const requestClose = () => {")));
   const createActions = new Function("isSaving", "isLoading", "saveInFlightRef", "loadInFlightRef",
-    "hasUnsavedChanges", "setDiscardWarning", "cancelPendingNavigationFocus", "onClose", "returnToReloadRef",
+    "hasUnsavedChanges", "hasUnsavedChecklistChanges", "setDiscardWarning", "cancelPendingNavigationFocus", "onClose", "returnToReloadRef",
     "loadData", "discardWarning", "setEditingItemId", "setEditingItemText",
     "setEditingProductName", "setEditingProductNameText", "setNewItemInput",
     "setNewItemText", "setShowAddGeneralChecklist", "setNewGeneralChecklistText",
     actionBody + "\nreturn { requestClose, requestReloadLatest, confirmDiscardChanges };");
   const calls = [], focusFlag = { current: false };
-  const make = (dirty, action = null, saving = false, loading = false) =>
-    createActions(saving, loading, { current: false }, { current: false }, dirty, value => calls.push(["warning", value]),
+  const make = (dirty, action = null, saving = false, loading = false, checklistDirty = dirty) =>
+    createActions(saving, loading, { current: false }, { current: false }, dirty, checklistDirty, value => calls.push(["warning", value]),
       () => calls.push("cancel nav"), () => calls.push("close"), focusFlag,
       () => calls.push("reload"), action,
       value => calls.push(["editor", value]),
@@ -1452,6 +1463,12 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
   calls.length = 0;
   make(false).requestReloadLatest();
   assert.deepEqual(calls, ["reload"]);
+  calls.length = 0;
+  make(true, null, false, false, false).requestReloadLatest();
+  assert.deepEqual(calls, ["reload"], "Only a pending Revisit choice permits safe read-only reload without discarding checklist edits");
+  calls.length = 0;
+  make(true, null, false, false, false).requestClose();
+  assert.deepEqual(calls, [["warning", "close"]], "Closing still confirms discarding an unconfirmed Revisit choice");
   calls.length = 0;
   make(true, null, true).requestReloadLatest();
   make(true, null, false, true).requestReloadLatest();
@@ -1701,7 +1718,7 @@ await (async () => {
     setLoadedUiChecklistSnapshot: () => {}, setLoadedUiProductsSnapshot: () => {},
     setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
     setChecklist: () => {}, setProducts: () => {},
-    hasUnsavedChanges: true, discardWarning: "reload",
+    hasUnsavedChanges: true, hasUnsavedChecklistChanges: true, discardWarning: "reload",
     returnToReloadRef: { current: false },
     setDiscardWarning: () => { throw Error("Discard warning changed while save in flight"); },
     cancelPendingNavigationFocus: () => { throw Error("Focus cleanup interrupted save"); },
