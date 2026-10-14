@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-14T22:27:03.776Z",
+  "tested_at": "2026-10-14T22:28:39.281Z",
   "mode": "actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled stalled PDF fetch/time and canvas render; production CSS; unrelated heavy children stubbed; not authenticated production acceptance",
   "pdf_page_painting_asserted": true,
   "renderer": "full Chromium headless",
@@ -8,16 +8,19 @@
     {
       "width": 320,
       "passed": true,
+      "painted_dark_pixels": 393,
       "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, visible canvas PDF page painting with dark-text pixel proof and exact historical URL, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
     },
     {
       "width": 390,
       "passed": true,
+      "painted_dark_pixels": 710,
       "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, visible canvas PDF page painting with dark-text pixel proof and exact historical URL, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
     },
     {
       "width": 1280,
       "passed": true,
+      "painted_dark_pixels": 7014,
       "checks": "actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, visible canvas PDF page painting with dark-text pixel proof and exact historical URL, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow"
     }
   ]
