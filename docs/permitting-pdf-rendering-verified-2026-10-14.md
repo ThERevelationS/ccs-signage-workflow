@@ -24,7 +24,7 @@ The selected historical `/older.pdf` was requested, and same-title `/latest.pdf`
 
 Verified: historical classification/currentness context; no lateral overflow; Back and return focus; manual fallback and retry; controlled stalled-fetch timeout and retry; unknown-size over-12-MiB guard; missing, unsafe, non-PDF and known-large inline-action guards; native profile viewer link/Back focus; jurisdiction switch cleanup; no simulated writes or provider/AI calls. Browser errors/outside fetches were empty in these scenarios. The rendering result is **synthetic canvas painting**, not authenticated production acceptance.
 
-Receipts: `docs/permitting-source-pdf-browser-2026-10-14.json` plus this report. Other catalog and exact-source-navigation browser suites run at 320/390/1280. Targeted lint zero errors (six preexisting JurisdictionDetailPanel warnings). Production build and final Git check are to be confirmed with the checkpoint.
+Receipts: `docs/permitting-source-pdf-browser-2026-10-14.json` plus this report. Other catalog and exact-source-navigation browser suites run at 320/390/1280. Targeted lint zero errors (six preexisting JurisdictionDetailPanel warnings). Final production build exit 0 and `git diff --check` passed. The focused PDF suite passed all three viewports again after abort-versus-timeout labeling was made deterministic.
 
 ## Remaining limits and next chunk
 
