@@ -745,8 +745,29 @@ export default function UserManagement() {
       });
       // Never continue follow-up changes from a superseded Admin session.
       if (!ownsUpdate()) return;
+      if (!savedUser?.updated_date || savedUser.id !== record.id ||
+          savedUser.email !== record.email) {
+        throw new Error("The saved account receipt could not be verified. Reload the employee before another Account write.");
+      }
 
-      // If a new password was entered, save it securely via backend function
+      // The Account has already been committed. Advance its editor baseline
+      // immediately, even if the separate Time Clock password step fails.
+      // Keep local formData (including the unsaved password) unchanged.
+      accountDraftBaseline.current = {
+        sessionToken, id: savedUser.id, email: savedUser.email,
+        values: createAdminAccountDraft(savedUser)
+      };
+      ++userLoadSequence.current;
+      setUsers(current => current.map(row =>
+        row.id === record.id && row.email === record.email &&
+        row.updated_date === record.updated_date ? savedUser : row));
+      setEditingUser(current =>
+        current?.id === record.id && current?.email === record.email &&
+        current?.updated_date === record.updated_date ? savedUser : current);
+
+      // Password changes are a separate backend operation, with no atomic
+      // guarantee together with the Account write. A failure or lost
+      // acknowledgement must not close the editor or retry either write.
       if (newPassword) {
         try {
           const res = await setPasswordFn({
@@ -756,12 +777,16 @@ export default function UserManagement() {
             session_token: sessionToken,
           });
           if (!ownsUpdate()) return;
-          if (!res?.data?.success) {
-            alert(`Password not saved: ${res?.data?.error || 'Unknown error'}`);
-          }
-        } catch (e) {
+          if (!res?.data?.success) throw new Error("Password result unverified");
+        } catch {
           if (!ownsUpdate()) return;
-          alert(`Password save failed: ${e?.response?.data?.error || e?.message}`);
+          setAccountSaveRecovery({
+            sessionToken, id: savedUser.id, email: savedUser.email,
+            updated_date: savedUser.updated_date
+          });
+          setPasswordRetryConfirmed(false);
+          setUserMutationError("Account changes were saved, but the Time Clock password result is unverified. Check whether it already changed before attempting a password-only retry.");
+          return;
         }
       }
       if (!ownsUpdate()) return;
