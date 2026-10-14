@@ -58,6 +58,38 @@ export function recoverableOrderSmartsheetCreate(record, sheetId) {
   return { rowId, snapshot, marker };
 }
 
+// Release only a verified reservation whose POST was never dispatched. A
+// failed version check or unavailable readback leaves the claim for review.
+async function releaseUnsentOrderCreateReservation({ entity, id, token, targetSheet, expectedSnapshot }) {
+  const needsReview = 'No Smartsheet POST was sent, but Base44 could not verify reservation release. Pending Order edits remain; an administrator must audit this create attempt before retrying.';
+  try {
+    const held = await entity.get(id);
+    if (!held || held.deleted || held.smartsheet_pending_local_sync !== true ||
+        String(held.smartsheet_sheet_id ?? '').trim() !== targetSheet ||
+        String(held.smartsheet_row_id ?? '').trim() ||
+        held.smartsheet_create_attempt?.attempt_id !== token ||
+        held.smartsheet_create_attempt?.status !== 'reserved' ||
+        !snapshotsEqual(held.smartsheet_create_attempt?.expected_snapshot, expectedSnapshot)) {
+      throw new Error('Reservation no longer matches');
+    }
+    const released = await entity.updateMany(
+      { id, updated_date: held.updated_date, smartsheet_pending_local_sync: true,
+        smartsheet_sheet_id: targetSheet,
+        'smartsheet_create_attempt.attempt_id': token,
+        'smartsheet_create_attempt.status': 'reserved' },
+      { $unset: { smartsheet_sheet_id: 1, smartsheet_create_attempt: 1 } },
+    );
+    if (released?.updated !== 1) throw new Error('Reservation release did not commit');
+    const verified = await entity.get(id);
+    if (!verified || verified.deleted || verified.smartsheet_pending_local_sync !== true ||
+        String(verified.smartsheet_sheet_id ?? '').trim() ||
+        String(verified.smartsheet_row_id ?? '').trim() ||
+        verified.smartsheet_create_attempt) throw new Error('Reservation release readback failed');
+  } catch {
+    throw new Error(needsReview);
+  }
+}
+
 // Prevent simultaneous Order POSTs in one backend runtime. The durable
 // reservation below protects later invocations, including across runtimes.
 const activeOrderCreates = new Set();
