@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
+import RenderedPDFPages from './RenderedPDFPages';
 
-export default function PDFViewer({ fileUrl, fileName, onBack }) {
+export default function PDFViewer({ fileUrl, fileName, onBack, renderMode = 'native' }) {
   const [showIframe, setShowIframe] = useState(true);
   const [loadState, setLoadState] = useState('loading');
   const [previewAttempt, setPreviewAttempt] = useState(0);
@@ -64,13 +65,19 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
       </div>
 
       {showIframe && safeFileUrl && <div className="shrink-0 px-3 py-2 text-xs text-gray-200">
-        <p role="status">{loadState === 'loading' ? 'Loading PDF preview…' : 'The browser reported the frame loaded. Confirm the document displays correctly.'}</p>
+        <p role="status">{loadState === 'loading' ? 'Loading PDF preview…' : renderMode === 'canvas' ? 'PDF page rendered. Confirm the retained source and its contents.' : 'The browser reported the frame loaded. Confirm the document displays correctly.'}</p>
         <button type="button" className="min-h-11 py-2 text-blue-200 underline" onClick={() => { setLoadState('manual'); setShowIframe(false); }}>Preview not working?</button>
       </div>}
       {/* PDF Viewer */}
       <div className="min-h-0 flex-1 overflow-hidden">
         {showIframe && safeFileUrl ? (
-          <iframe
+          renderMode === 'canvas' ? <RenderedPDFPages
+            key={safeFileUrl + ':' + previewAttempt}
+            fileUrl={safeFileUrl}
+            onPageRendered={() => setLoadState('ready')}
+            onPageLoading={() => setLoadState('loading')}
+            onFailure={() => { setLoadState('error'); setShowIframe(false); }}
+          /> : <iframe
             key={safeFileUrl + ":" + previewAttempt}
             src={`${safeFileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
             className="w-full h-full border-0"
