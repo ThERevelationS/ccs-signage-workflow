@@ -1259,6 +1259,72 @@ check("failed-load focus waits for dialogs and prioritizes the current loading e
     "Initial-load and later-reload errors must be focusable");
 });
 
+check("verified reload focuses the current checklist heading only after modal cleanup", () => {
+  const marker = "  const focusSuccessfulReloadIfReady = () => {";
+  const start = source.indexOf(marker);
+  assert.ok(start > 0, "Verified reload focus helper exists");
+  const helper = source.slice(start, source.indexOf("  useEffect(() => {", start));
+  const makeFocus = new Function("ctx", "with(ctx) { " + helper + "\nreturn focusSuccessfulReloadIfReady; }");
+  let focused = 0, scrolled = 0;
+  const heading = {
+    isConnected: true, getClientRects: () => [1],
+    focus(options) { assert.deepEqual(options, { preventScroll: true }); focused++; },
+    scrollIntoView(options) { assert.deepEqual(options, { block: "nearest" }); scrolled++; }
+  };
+  const ctx = {
+    isOpen: true, isLoading: false, isSaving: false, hasLoadedChecklist: true,
+    loadError: "", workOrder: { id: "WO-current" },
+    reloadSuccessFocusRequestRef: { current: null },
+    reloadSuccessHeadingRef: { current: heading },
+    showRevisitPopup: false, showTemplateBuilder: false, showOtherPopup: false,
+    discardWarning: null, unfinishedEditsWarning: null, validationDialog: null,
+    incompleteWarning: null, noChecklistWarning: null, pendingDelete: null,
+  };
+  const focus = makeFocus(ctx);
+  focus();
+  assert.equal(focused, 0, "Initial checklist load does not steal focus");
+  ctx.reloadSuccessFocusRequestRef.current = "WO-current";
+  ctx.isLoading = true;
+  focus();
+  ctx.isLoading = false;
+  ctx.loadError = "Network failure";
+  focus();
+  ctx.loadError = "";
+  ctx.hasLoadedChecklist = false;
+  focus();
+  ctx.hasLoadedChecklist = true;
+  ctx.discardWarning = "reload";
+  focus();
+  ctx.discardWarning = null;
+  ctx.showRevisitPopup = true;
+  focus();
+  ctx.showRevisitPopup = false;
+  ctx.validationDialog = { type: "incomplete" };
+  focus();
+  ctx.validationDialog = null;
+  ctx.reloadSuccessHeadingRef.current = { ...heading, isConnected: false };
+  focus();
+  ctx.reloadSuccessHeadingRef.current = heading;
+  ctx.workOrder = { id: "WO-other" };
+  focus();
+  assert.equal(focused, 0, "Failures, overlays, missing headings and other jobs cannot steal focus");
+  ctx.workOrder = { id: "WO-current" };
+  focus();
+  assert.equal(focused, 1, "Verified current-job reload focuses the live heading");
+  assert.equal(scrolled, 1);
+  assert.equal(ctx.reloadSuccessFocusRequestRef.current, null, "Restoration is consumed once");
+  focus();
+  assert.equal(focused, 1, "Subsequent renders cannot steal focus twice");
+  ctx.reloadSuccessFocusRequestRef.current = "WO-current";
+  ctx.isOpen = false;
+  focus();
+  assert.equal(focused, 1, "Closed dialogs cannot restore focus");
+  assert.match(source, /<DialogTitle ref=\{reloadSuccessHeadingRef\} tabIndex=\{-1\}/);
+  assert.match(source, /if \(!isOpen\) \{\s*reloadSuccessFocusRequestRef\.current = null;/);
+  assert.match(source, /resetOtherPopupForReload\(\);\s*\/\/ Reload focus is scoped[\s\S]*?reloadSuccessFocusRequestRef\.current = null;/);
+  assert.match(source, /reloadSuccessFocusRequestRef\.current = workOrder\?\.id;\s*loadData\(\);/);
+});
+
 check("failed-load UI separates errors, offers retry and blocks stale saves", () => {
   assert.match(source, /if \(!hasLoadedChecklist && loadError\) \{\s*return \(\s*<Dialog/);
   assert.match(source, /<DialogTitle>Could not load SIP checklist<\/DialogTitle>/);
@@ -1345,6 +1411,7 @@ await (async () => {
   assert.equal(pending.length, 0);
   actions.confirmDiscardChanges();
   assert.equal(pending.length, 1);
+  assert.equal(scope.reloadSuccessFocusRequestRef.current, "WO-synthetic", "Only explicit confirmed reload requests heading focus");
   assert.equal(drafts.inline, "Unsubmitted task text");
   assert.equal(drafts.custom.get("row-A"), "Unsubmitted Other status");
   assert.equal(scope.failedRevisitSelectionRef.current, "2099-08-25");
@@ -1353,6 +1420,7 @@ await (async () => {
   pending[0].reject(new Error("Synthetic network failure"));
   await loads[0];
   assert.match(states.failure, /Synthetic network failure/);
+  assert.equal(scope.reloadSuccessFocusRequestRef.current, "WO-synthetic", "Failed reload retains focus intent for a later successful retry");
   assert.equal(scope.loadInFlightRef.current, false);
   assert.equal(drafts.inline, "Unsubmitted task text");
   assert.equal(drafts.name, "Unsubmitted product name");
