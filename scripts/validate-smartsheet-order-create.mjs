@@ -51,7 +51,8 @@ function fixture(initial = {}) {
       }
       const next = structuredClone(stored);
       for (const field of Object.keys(update?.$unset || {})) delete next[field];
-      applyPatch({ ...next, ...structuredClone(update?.$set || {}) });
+      revision++;
+      stored = { ...next, ...structuredClone(update?.$set || {}), updated_date: stamp() };
       return { updated: 1 };
     },
   };
