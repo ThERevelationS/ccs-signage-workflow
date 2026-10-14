@@ -51,6 +51,7 @@ export default function RenderedPDFPages({ fileUrl, onPageRendered, onFailure, o
         if (!new TextDecoder().decode(bytes.subarray(0, 1024)).includes('%PDF-')) throw new Error('Not a PDF file');
         if (active) setDocumentBytes({ data: bytes });
       } catch (error) {
+        controller.abort(); // Stop any remaining transfer when a size/format limit fails.
         if (active) failureCallback.current(error);
       } finally { clearTimeout(timeout); }
     };
