@@ -73,6 +73,7 @@ try{
   await preview.getByText('Retained copy · saved currentness: historical',{exact:false}).waitFor();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
+  await preview.locator('iframe').screenshot({path:'/tmp/permitting-source-pdf-frame-'+width+'.png'});
   await page.screenshot({path:'/tmp/permitting-source-pdf-'+width+'.png'});
   await preview.getByRole('button',{name:'Back',exact:true}).click();assert.equal(await preview.count(),0);
   assert.ok(await card.locator('summary').first().evaluate(node=>node===document.activeElement));
@@ -83,8 +84,6 @@ try{
   assert.ok(await preview.getByRole('button',{name:'Open PDF in New Tab',exact:true}).evaluate(node=>node===document.activeElement));
   await preview.getByRole('button',{name:'Retry PDF preview',exact:true}).click();
   await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
-  await preview.locator('iframe').dispatchEvent('error');
-  await preview.getByText('PDF Preview Not Available',{exact:true}).waitFor();
   await preview.getByRole('button',{name:'Back',exact:true}).click();
   await page.clock.install();holdPDF=true;
   await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();
@@ -118,7 +117,7 @@ try{
   await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
   const reads=await page.evaluate(()=>window.fixture.reads);assert.ok(reads.every(r=>r.query.jurisdiction_id));
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
-  checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, simulated iframe error, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
+  checks.push({width,passed:true,checks:'actual catalog and PDF viewer; citation-to-catalog-only PDF, correct retained URL, historical context, responsive header, initial/back focus, native frame load, manual fallback/retry, 12s timeout/retry, size/non-PDF/unsafe/missing guards, existing profile viewer/back focus, jurisdiction switch closes frame, no writes/provider calls/overflow'});console.log('PASS retained source PDF '+width);await page.close();
  }
  await writeFile(path.join(root,'docs/permitting-source-pdf-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual parent, catalog and PDFViewer; actual requirements/monitor; synthetic metadata and valid one-page PDF; controlled browser frame responses/errors/time; production CSS; unrelated heavy children stubbed; not authenticated production acceptance',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}

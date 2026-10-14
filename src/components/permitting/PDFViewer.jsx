@@ -49,7 +49,7 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
             <ChevronLeft className="w-4 h-4 mr-1" />
             Back
           </Button>
-          <h2 className="min-w-0 break-words text-sm text-white font-medium [overflow-wrap:anywhere]">{fileName}</h2>
+          <h2 title={fileName} className="line-clamp-2 min-w-0 break-words text-sm text-white font-medium [overflow-wrap:anywhere]">{fileName}</h2>
         </div>
         {safeFileUrl && (
           <Button
