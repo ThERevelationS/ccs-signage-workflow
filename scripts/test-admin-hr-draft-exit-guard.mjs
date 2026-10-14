@@ -61,7 +61,7 @@ function fixture(){
     refs.activeEditingUser.current=state.editor;
   },
   setIsDialogOpen:v=>{state.dialog=v;},
-  setFormData:v=>{state.account=v;}
+  setFormData:v=>{state.account=typeof v==="function"?v(state.account):v;}
  };
  const names={protected:"hasProtectedHrDraft",account:"hasProtectedAccountDraft",
   clear:"clearHrDraftTracking",clearEditor:"clearEditorDraftTracking",
