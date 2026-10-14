@@ -873,7 +873,7 @@ Answer only from the provided excerpts and cite the document title and official 
         <JurisdictionAuthorityStatus jurisdiction={jurisdiction} />
 
         {/* Source monitor health */}
-        <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel jurisdictionName={jurisdiction.name} /></section>
+        <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel key={jurisdiction.id} jurisdictionName={jurisdiction.name} jurisdictionId={jurisdiction.id} onNavigate={navigateWorkspace} /></section>
 
         <section ref={node=>{workspaceSections.current.requirements=node;}} tabIndex={-1} aria-label="Requirements workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
         <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
