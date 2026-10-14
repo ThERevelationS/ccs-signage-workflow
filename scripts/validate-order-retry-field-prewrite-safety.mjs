@@ -61,7 +61,6 @@ assert.deepEqual(staleOrderRetryPrewriteIds(plans,byLocal,
 assert.deepEqual(staleOrderRetryPrewriteIds(plans,byLocal,
  new Map([[saved.id,{...saved,work_order_id:'new job',smartsheet_pending_local_sync:false}]]),expectedRemote,sheet),[saved.id]);
 assert.deepEqual(staleOrderRetryPrewriteIds(plans,byLocal,byLocal,new Map(),sheet),[saved.id]);
-assert.deepEqual(staleOrderRetryPrewriteIds(plans,byLocal,byLocal,expectedRemote,'not-sheet'),[saved.id].filter(()=>false)); // invalid sheet throws below
 console.log('PASS stale Smartsheet changes, stale local revisions and missing permanent rows block planned PUT');
 
 assert.equal(orderSnapshotsMatchForPrewrite(plan.remote,{...plan.remote}),true);
