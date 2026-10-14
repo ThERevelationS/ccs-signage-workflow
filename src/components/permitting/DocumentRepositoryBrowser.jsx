@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +47,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   }, [jurisdictionId, selectedId, selectedToken, sourceRetry]);
   const selected = selectedId && selectedState?.jurisdictionId === jurisdictionId && selectedState.sourceId === selectedId && selectedState.token === selectedToken
     ? selectedState : selectedId ? { row: null, loading: true, error: '' } : null;
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!selected?.row) return;
     const node = sourceNodes.current.get('source-' + selected.row.id);
     if (!node) return;
