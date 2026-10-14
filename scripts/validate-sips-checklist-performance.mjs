@@ -1263,7 +1263,7 @@ check("failed-load UI separates errors, offers retry and blocks stale saves", ()
   assert.match(source, /if \(!hasLoadedChecklist && loadError\) \{\s*return \(\s*<Dialog/);
   assert.match(source, /<DialogTitle>Could not load SIP checklist<\/DialogTitle>/);
   assert.match(source, /The checklist has not loaded\. No items have been changed or saved/);
-  assert.match(source, /if \(!loadInFlightRef\.current\) void loadData\(\);/);
+  assert.match(source, /if \(!loadInFlightRef\.current\) \{ reloadSuccessFocusRequestRef\.current = workOrder\?\.id; void loadData\(\); \}/);
   assert.match(source, /onClick=\{onClose\}>Close<\/Button>/);
   assert.match(source, /Checklist reload failed/);
   assert.match(source, /previous checklist and unsaved edits are preserved/);
@@ -1302,6 +1302,7 @@ await (async () => {
     saveFailureFocusPendingRef: { current: true },
     failedRevisitSelectionRef: { current: "2099-08-25" },
     failedRevisitWorkOrderIdRef: { current: "WO-synthetic" },
+    reloadSuccessFocusRequestRef: { current: null },
     loadDataRequestRef: { current: 0 }, loadedWorkflowSnapshotRef: { current: null },
     loadErrorFocusPendingRef: { current: false },
     returnToReloadRef: { current: true },
@@ -1439,6 +1440,7 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
     "loadData", "discardWarning", "setEditingItemId", "setEditingItemText",
     "setEditingProductName", "setEditingProductNameText", "setNewItemInput",
     "setNewItemText", "setShowAddGeneralChecklist", "setNewGeneralChecklistText",
+    "reloadSuccessFocusRequestRef", "workOrder",
     actionBody + "\nreturn { requestClose, requestReloadLatest, confirmDiscardChanges };");
   const calls = [], focusFlag = { current: false };
   const make = (dirty, action = null, saving = false, loading = false, checklistDirty = dirty) =>
@@ -1447,7 +1449,7 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
       () => calls.push("reload"), action,
       value => calls.push(["editor", value]),
       value => calls.push(["text", value]), () => {}, () => {}, () => {},
-      () => {}, () => {}, () => {});
+      () => {}, () => {}, () => {}, { current: null }, { id: "WO-test" });
   make(true).requestReloadLatest();
   assert.deepEqual(calls, [["warning", "reload"]]);
   assert.equal(focusFlag.current, true);
@@ -1719,6 +1721,7 @@ await (async () => {
     setLoadedRevisitDateSnapshot: () => {}, setLoadedSipCompletedSnapshot: () => {},
     setChecklist: () => {}, setProducts: () => {},
     hasUnsavedChanges: true, hasUnsavedChecklistChanges: true, discardWarning: "reload",
+    reloadSuccessFocusRequestRef: { current: null },
     returnToReloadRef: { current: false },
     setDiscardWarning: () => { throw Error("Discard warning changed while save in flight"); },
     cancelPendingNavigationFocus: () => { throw Error("Focus cleanup interrupted save"); },
