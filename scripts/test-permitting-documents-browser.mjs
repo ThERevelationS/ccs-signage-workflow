@@ -37,6 +37,14 @@ try{
   const catalog=page.getByRole('region',{name:'Document repository catalog'});
   await catalog.getByText('5 shown from 5 loaded entries.',{exact:false}).waitFor();
   const cards=catalog.locator(':scope > details');assert.equal(await cards.count(),5);
+  const availability=catalog.getByRole('combobox',{name:'Document availability',exact:true});
+  for(const [filter,count] of [['text',1],['retained',2],['missing',3],['ocr',0],['all',5]]){
+   await availability.selectOption(filter);assert.equal(await cards.count(),count,'Availability '+filter);
+  }
+  assert.equal(await page.evaluate(()=>window.fixture.textReads.length),0,'Availability filter never reads page text');
+  await availability.selectOption('text');
+  await catalog.getByLabel('Document type',{exact:true}).selectOption('fee_schedule');assert.equal(await cards.count(),0,'Availability combines with type');
+  await availability.selectOption('all');
   await catalog.getByLabel('Document type',{exact:true}).selectOption('fee_schedule');assert.equal(await cards.count(),1);
   await cards.locator('summary').first().click();
   await catalog.getByText('Text extraction: complete (saved processing status)',{exact:false}).waitFor();
@@ -129,7 +137,7 @@ try{
   await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
   assert.equal(await catalog.locator(':scope > details').count(),0);
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
-  checks.push({width,passed:true,checks:'actual parent and catalog; type/currentness filters, draft precedence, versions, source links, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow'});console.log('PASS document repository '+width);await page.close();
+  checks.push({width,passed:true,checks:'actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow'});console.log('PASS document repository '+width);await page.close();
  }
  await writeFile(path.join(root,'docs/permitting-documents-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
