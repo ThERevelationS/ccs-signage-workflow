@@ -69,6 +69,7 @@ try{
   assert.deepEqual(await page.evaluate(()=>window.fixture.textReads.at(-1)),{source_document_id:'saved-form',start_page:6,page_count:5});
   await textPane.getByText('Physical page 7 · OCR review needed',{exact:false}).waitFor();
   await textSearch.fill('electrical');await textPane.getByText('Physical page 6: …Special electrical sign connection…',{exact:true}).waitFor();
+  await textPane.screenshot({path:'/tmp/permitting-source-text-'+width+'.png'});
   await page.evaluate(()=>{window.fixture.wrongTextHash=true;});
   await textPane.getByRole('button',{name:'Previous five pages'}).click();
   await textPane.getByRole('alert').waitFor();
