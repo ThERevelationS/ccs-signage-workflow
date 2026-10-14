@@ -8,7 +8,7 @@ import { officeCandidateEvidence } from "../src/components/permitting/officeCand
 
 const receipt = JSON.parse(fs.readFileSync("docs/official-evidence/ohio-sharonville-2026-10-07/publisher-identity-review-readback-2026-10-14.json", "utf8"));
 const fixture = () => structuredClone(receipt.candidate);
-const bundle = await build({entryPoints:["src/components/permitting/OfficeCandidateEvidencePanel.jsx"],bundle:true,write:false,format:"esm",platform:"node",jsx:"automatic",external:["react","react/jsx-runtime"]});
+const bundle = await build({entryPoints:["src/components/permitting/OfficeCandidateEvidencePanel.jsx"],bundle:true,write:false,format:"esm",platform:"node",jsx:"automatic",external:["react","react/jsx-runtime"],plugins:[{name:"no-api-on-render",setup(p){p.onResolve({filter:/^@\/api\/base44Client$/},()=>({path:"sdk",namespace:"mock"}));p.onLoad({filter:/.*/,namespace:"mock"},()=>({contents:"export const base44={entities:{GlobalSettings:{filter(){throw Error(\"Unexpected render read\");}}},functions:{invoke(){throw Error(\"Unexpected render invoke\");}}};",loader:"js"}));}}]});
 const temporary = "scripts/.office-candidate-panel-test-bundle.mjs";
 fs.writeFileSync(temporary,bundle.outputFiles[0].text);
 let Panel;
@@ -25,7 +25,8 @@ test("exact registered lineage remains historical and read-only",()=>{
  assert.ok(html.includes(e.printedName)); assert.ok(html.includes(e.archiveDocumentId));
  assert.ok(html.includes("Not established by this registration"));
  assert.ok(html.includes("makes no fresh source check"));
- assert.ok(!/<button|<input|<textarea|<select/.test(html));
+ assert.ok(!/<input|<textarea|<select/.test(html));
+ assert.ok(html.includes("Preview saved identity evidence"));
  assert.equal(JSON.stringify(office),before);
 });
 test("legacy offices have no fabricated registration",()=>{

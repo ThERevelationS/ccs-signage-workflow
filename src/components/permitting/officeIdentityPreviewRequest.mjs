@@ -10,15 +10,16 @@ async function digest(snapshot) {
   return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 /** Exactly one catalog read and one read-only function request; no retry or save. */
-export async function loadOfficeIdentityPreview({ office, settingsEntity, invoke, timeoutMs = 20000 }) {
+export async function loadOfficeIdentityPreview({ office, settingsEntity, invoke, timeoutMs = 20000, isCurrent = () => true }) {
   const evidence = officeCandidateEvidence(office);
   if (!evidence || evidence.gaps.length) throw Error("Complete, unchanged candidate registration evidence is required for a preview.");
   const selectedKey = officePreviewSelectionKey(office);
-  let timer;
+  let timer, expired = false;
   const request = (async () => {
     const rows = await settingsEntity.filter({ setting_key: "permitOfficeCatalog" }, "id", 2, 0);
     if (!Array.isArray(rows) || rows.length !== 1 || !rows[0]?.id || !rows[0]?.updated_date ||
       !Array.isArray(rows[0].setting_value?.items)) throw Error("The saved office catalog is missing, ambiguous or unversioned.");
+    if (expired || !isCurrent()) throw Error("The selected office changed or the preview expired.");
     const row = rows[0], matches = row.setting_value.items.filter(item => item?.id === evidence.officeId);
     if (matches.length !== 1 || officePreviewSelectionKey(matches[0]) !== selectedKey)
       throw Error("This office differs from the saved catalog. Finish saving or reload your draft before previewing.");
@@ -35,6 +36,12 @@ export async function loadOfficeIdentityPreview({ office, settingsEntity, invoke
       snapshot?.catalog?.id !== row.id || snapshot.catalog.updated_date !== row.updated_date ||
       officePreviewSelectionKey(snapshot.office) !== selectedKey ||
       !snapshot.source_updated_date || !snapshot.profile_updated_date ||
+      JSON.stringify(canonical(snapshot.historical_registration)) !== JSON.stringify(canonical(office.office_candidate_registration.snapshot)) ||
+      snapshot.current_evidence?.source?.id !== evidence.sourceId ||
+      snapshot.current_evidence?.source?.file_hash_sha256 !== evidence.archiveHash ||
+      snapshot.current_evidence?.profile?.id !== evidence.profileId ||
+      snapshot.current_evidence?.proof?.physical_page !== evidence.physicalPage ||
+      snapshot.current_evidence?.proof?.text_sha256 !== evidence.pageHash ||
       !Array.isArray(result.unresolved_identity) || result.unresolved_identity.some(v => typeof v !== "string") ||
       !/^[a-f0-9]{64}$/.test(result.review_snapshot_sha256 || "") ||
       await digest(snapshot) !== result.review_snapshot_sha256)
@@ -43,7 +50,7 @@ export async function loadOfficeIdentityPreview({ office, settingsEntity, invoke
   })();
   try {
     return await Promise.race([request, new Promise((_, reject) => {
-      timer = setTimeout(() => reject(Error("The read-only preview timed out. No approval or save was attempted. You can request it again.")), timeoutMs);
+      timer = setTimeout(() => { expired = true; reject(Error("The read-only preview timed out. No approval or save was attempted. You can request it again.")); }, timeoutMs);
     })]);
   } finally { clearTimeout(timer); }
 }
