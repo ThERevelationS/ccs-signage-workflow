@@ -76,7 +76,7 @@ export async function previewOfficeCandidateIdentity(deps,{officeId,registration
    source_document_id:saved.source?.id,physical_page:saved.proof.physical_page});
   const fresh=proposal.office_candidate_registration.snapshot;
   const sourceKeys=['id','jurisdiction_id','jurisdiction_name','official_url','archived_file_url','file_hash_sha256','file_bytes'];
-  if(!evidenceEqual(saved.profile,fresh.profile) || !evidenceEqual(saved.proof,fresh.proof) ||
+  if(proposal.id!==officeId || !evidenceEqual(saved.profile,fresh.profile) || !evidenceEqual(saved.proof,fresh.proof) ||
    saved.archive_document_id!==fresh.archive_document_id ||
    sourceKeys.some(k=>!evidenceEqual(saved.source[k],fresh.source[k])))
    throw evidenceError('Profile, archive or exact page lineage changed since registration; identity review is withheld.');
