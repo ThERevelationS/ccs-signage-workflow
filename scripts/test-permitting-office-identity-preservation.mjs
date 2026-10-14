@@ -41,14 +41,14 @@ test('contact changes revoke verification while retaining evidence and history',
  assert.deepEqual(next.office_identity_reviews,original.office_identity_reviews);
  assert.deepEqual(next.office_candidate_registration,original.office_candidate_registration);
 });
-test('verification and revocation preserve retained review provenance',()=>{
+test('candidate revocation preserves provenance and shortcut re-verification is rejected',()=>{
  const original=office();
- for(const status of ['needs_verification','staff_verified']){
-  const next=updateGovernmentOfficeVerification(original,{verification_status:status},'New reviewer',()=> '2026-10-04T21:00:00Z');
-  assert.equal(next.government_office.state,'KY');
-  assert.deepEqual(next.government_office.retained_identity_evidence,original.government_office.retained_identity_evidence);
-  assert.deepEqual(next.office_identity_reviews,original.office_identity_reviews);
- }
+ const next=updateGovernmentOfficeVerification(original,{verification_status:'needs_verification'});
+ assert.equal(next.government_office.state,'KY');
+ assert.deepEqual(next.government_office.retained_identity_evidence,original.government_office.retained_identity_evidence);
+ assert.deepEqual(next.office_identity_reviews,original.office_identity_reviews);
+ assert.throws(()=>updateGovernmentOfficeVerification(original,{verification_status:'staff_verified'},'New reviewer'),/separate evidence-bound identity review/);
+ assert.deepEqual(original,office());
 });
 test('retained evidence never fabricates a verification flag',()=>{
  const original=office();original.government_office.verification_status='unknown';
