@@ -809,6 +809,73 @@ export default function UserManagement() {
     }
   };
 
+  const retryUnverifiedAccountPassword = async () => {
+    const recovery = accountSaveRecovery;
+    const record = activeEditingUser.current;
+    if (!recovery || !passwordRetryConfirmed || !sessionToken ||
+        recovery.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        record?.id !== recovery.id || record?.email !== recovery.email ||
+        record?.updated_date !== recovery.updated_date ||
+        userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
+        deletionInFlight.current || isLoading || userDirectoryError) return;
+    const password = String(formData.password_hash || "");
+    if (password.length < 8) {
+      setUserMutationError("Enter a Time Clock password with at least 8 characters before retrying.");
+      return;
+    }
+    const owner = { sessionToken };
+    userUpdateOwner.current = owner;
+    userUpdateInFlight.current = true;
+    setUserMutationSaving(true);
+    setPasswordRetryConfirmed(false);
+    const ownsRetry = () => userUpdateOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === recovery.id &&
+      activeEditingUser.current?.email === recovery.email &&
+      activeEditingUser.current?.updated_date === recovery.updated_date;
+    try {
+      const result = await setPasswordFn({
+        user_email: recovery.email,
+        username: record.username,
+        new_password: password,
+        session_token: sessionToken,
+      });
+      if (!ownsRetry()) return;
+      if (!result?.data?.success) throw new Error("Password result unverified");
+      setFormData(current => ({
+        ...current, password_hash: current.password_hash === password ? "" : current.password_hash
+      }));
+      setAccountSaveRecovery(null);
+      setUserMutationError("");
+      setAccountSaveNotice("Time Clock password update confirmed. Account details were already saved. Review any remaining edits before leaving.");
+    } catch {
+      if (!ownsRetry()) return;
+      setUserMutationError("Time Clock password outcome is still unverified. Check whether it changed before another manually confirmed attempt.");
+    } finally {
+      if (ownsRetry()) {
+        userUpdateOwner.current = null;
+        userUpdateInFlight.current = false;
+        setUserMutationSaving(false);
+      }
+    }
+  };
+
+  const stopUnverifiedAccountPasswordRetry = () => {
+    const recovery = accountSaveRecovery;
+    if (!recovery || userUpdateInFlight.current ||
+        recovery.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        activeEditingUser.current?.id !== recovery.id ||
+        activeEditingUser.current?.email !== recovery.email ||
+        activeEditingUser.current?.updated_date !== recovery.updated_date) return;
+    setFormData(current => ({ ...current, password_hash: "" }));
+    setAccountSaveRecovery(null);
+    setPasswordRetryConfirmed(false);
+    setUserMutationError("");
+    setAccountSaveNotice("Account details remain saved. The Time Clock password result was not verified; no retry was sent.");
+  };
+
   const handleInvite = async () => {
     if (inviteInFlight.current || isLoading || userDirectoryError || !sessionToken ||
         activeSessionToken.current !== sessionToken) return;
