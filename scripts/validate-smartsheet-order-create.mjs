@@ -278,6 +278,66 @@ console.log('PASS existing links, incomplete links, prior attempts and deleted O
   console.log('PASS competing or unverified reservation stops before POST');
 }
 
+// A changed backup detected before transport is definitively unsent. The
+// specific reservation is released only after CAS and readback succeed.
+{
+  const state = fixture({ smartsheet_pending_local_sync: true });
+  let posts = 0;
+  await assert.rejects(createOrderSmartsheetRowWithGuard(state.args(async () => {
+    throw Object.assign(new Error('Sheet revision changed'), {
+      orderBackupFirstWriteBlocked: true, orderCreatePrePostGuardBlocked: true,
+    });
+  })), /No new row was sent; the reservation was released and pending edits retained/);
+  assert.equal(posts, 0);
+  assert.equal(state.calls.includes('RELEASE_CAS'), true);
+  assert.equal(state.getStored().smartsheet_create_attempt, undefined);
+  assert.equal(state.getStored().smartsheet_sheet_id, undefined);
+  assert.equal(state.getStored().smartsheet_pending_local_sync, true);
+  assert.equal(orderSmartsheetCreateNeedsReview(state.getStored()), false);
+  const result = await createOrderSmartsheetRowWithGuard(state.args(async () => {
+    posts++;
+    return success(12345678);
+  }));
+  assert.equal(posts, 1);
+  assert.equal(result.rowId, '12345678');
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'linked');
+  console.log('PASS pre-POST backup change releases only verified reservation, preserves pending edits and permits one later fresh create');
+}
+
+{
+  const state = fixture({ smartsheet_pending_local_sync: true });
+  const normalCAS = state.entity.updateMany;
+  state.entity.updateMany = async (query, update) => {
+    if (update?.$unset) state.setStored({ customer_name: 'Concurrent edit' });
+    return normalCAS(query, update);
+  };
+  let posts = 0;
+  await assert.rejects(createOrderSmartsheetRowWithGuard(state.args(async () => {
+    throw Object.assign(new Error('Backup expired'), { orderCreatePrePostGuardBlocked: true });
+  })), /administrator must audit/);
+  assert.equal(posts, 0);
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'reserved');
+  assert.equal(state.getStored().smartsheet_pending_local_sync, true);
+  await assert.rejects(createOrderSmartsheetRowWithGuard(state.args(async () => {
+    posts++;
+    return success();
+  })), /unresolved Smartsheet create attempt/);
+  assert.equal(posts, 0);
+  console.log('PASS concurrent edits prevent reservation release and prevent any blind second POST');
+}
+
+{
+  const state = fixture({ smartsheet_pending_local_sync: true });
+  await assert.rejects(createOrderSmartsheetRowWithGuard(state.args(async () => {
+    throw Object.assign(new Error('Retry guard held after definitive 429'), {
+      orderBackupFirstWriteBlocked: true,
+    });
+  })), /outcome is uncertain/);
+  assert.equal(state.getStored().smartsheet_create_attempt.status, 'reserved');
+  assert.equal(state.calls.includes('RELEASE_CAS'), false);
+  console.log('PASS a post-transport backup guard failure never releases the create reservation');
+}
+
 const source = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const schema = readFileSync('base44/entities/Order.jsonc', 'utf8');
 assert.match(schema, /"smartsheet_create_attempt": \{/);
