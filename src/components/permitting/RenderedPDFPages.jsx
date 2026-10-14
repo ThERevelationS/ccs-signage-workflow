@@ -1,16 +1,20 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { Button } from '@/components/ui/button';
 
 // Reuse the installed pdf.js worker locally; no third-party PDF proxy or new package.
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+const MAX_PDF_BYTES = 12 * 1024 * 1024;
 
 export default function RenderedPDFPages({ fileUrl, onPageRendered, onFailure, onPageLoading }) {
   const container = useRef(null);
   const [width, setWidth] = useState(0);
   const [pageCount, setPageCount] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
+  const [documentBytes, setDocumentBytes] = useState(null);
+  const failureCallback = useRef(onFailure);
+  failureCallback.current = onFailure;
 
   useLayoutEffect(() => {
     const node = container.current;
