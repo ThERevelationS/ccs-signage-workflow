@@ -1391,6 +1391,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         delete pendingChangesRef.current[id];
         delete pendingBaselinesRef.current[id];
         delete pendingSalesGuardsRef.current[id];
+        delete pendingFollowUpGuardsRef.current[id];
         delete pendingHistoryFieldsRef.current[id];
         delete pendingRecordScopesRef.current[id];
         await softDeleteWorkOrderFromLoadedSnapshot({
@@ -1429,6 +1430,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     delete pendingChangesRef.current[orderId];
     delete pendingBaselinesRef.current[orderId];
     delete pendingSalesGuardsRef.current[orderId];
+    delete pendingFollowUpGuardsRef.current[orderId];
     delete pendingHistoryFieldsRef.current[orderId];
     delete pendingRecordScopesRef.current[orderId];
     
