@@ -35,6 +35,18 @@ export default function WorkPauseOverlay({
         target_email: currentUser?.email,
       };
   const hasCredential = Boolean(credentialPayload.badge_code || credentialPayload.session_token);
+  // Bind every status result to its employee and signed credential, not just
+  // whether the component is still mounted when a request returns.
+  const scopeKey = JSON.stringify([
+    String(currentUser?.email || "").trim().toLowerCase(),
+    credentialPayload.badge_code || "",
+    credentialPayload.session_token || "",
+    Boolean(disabled),
+  ]);
+  const scopeRef = useRef(scopeKey);
+  scopeRef.current = scopeKey;
+  const statusSequenceRef = useRef(0);
+  const [pauseStateScope, setPauseStateScope] = useState("");
   const [pauseState, setPauseState] = useState(null);
   const [now, setNow] = useState(() => new Date());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -48,6 +60,9 @@ export default function WorkPauseOverlay({
   const lastActivityAtRef = useRef(Date.now());
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
+    const sequence = ++statusSequenceRef.current;
+    const isCurrent = () => mountedRef.current &&
+      sequence === statusSequenceRef.current && scopeRef.current === scopeKey;
     if (disabled || !currentUser?.email || !hasCredential) {
       pauseStateRef.current = null;
       if (mountedRef.current) {
@@ -63,7 +78,7 @@ export default function WorkPauseOverlay({
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
-      if (!mountedRef.current) return data;
+      if (!isCurrent()) return null;
       if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
         const pauseId = String(data.active_work_pause.id);
         pauseStateRef.current = data;
@@ -89,7 +104,7 @@ export default function WorkPauseOverlay({
       }
       return data;
     } catch (err) {
-      if (!mountedRef.current) return null;
+      if (!isCurrent()) return null;
       if (!preservePausedOnError) {
         pauseStateRef.current = null;
         setPauseState(null);
@@ -97,7 +112,7 @@ export default function WorkPauseOverlay({
       if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled]);
+  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey]);
 
   useEffect(() => {
     mountedRef.current = true;
