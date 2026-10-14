@@ -15,6 +15,7 @@ const pdf=fixturePDF();
 const root=process.cwd(),scratch=await mkdtemp(path.join(tmpdir(),'permitting-source-pdf-'));let vite,browser;const checks=[];
 try{
  await symlink(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
+ await writeFile(path.join(scratch,'older.pdf'),pdf);await writeFile(path.join(scratch,'latest.pdf'),pdf);
  const css=(await readdir(path.join(root,'dist/assets'))).find(n=>n.endsWith('.css'));await copyFile(path.join(root,'dist/assets',css),path.join(scratch,'styles.css'));
  await writeFile(path.join(scratch,'index.html'),'<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div><script type="module" src="/main.jsx"></script></body></html>');
  await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{
@@ -37,10 +38,10 @@ try{
  await writeFile(path.join(scratch,'report.js'),"export const generateJurisdictionPDF=()=>{throw Error('Not requested');};");aliases.push({find:'./JurisdictionPDFReport',replacement:path.join(scratch,'report.js')});
  await writeFile(path.join(scratch,'main.jsx'),`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import Panel from '/@fs/app/src/components/permitting/JurisdictionDetailPanel.jsx';
  const roles=['sign_permit','zoning','building','electrical_permit','electrical_inspection','right_of_way','historic_review'].map((role,i)=>({role,label:['Sign permit','Zoning','Building','Electrical permit issuer','Electrical inspection provider','Right of way','Historic review'][i],office_name:i<2?'Example planning office':i===4?'Example inspection provider':'',applicability:'unknown',research_fields:i===4?{inspection_scheduling:'Schedule the final electrical inspection through the provider portal.'}:{}}));
- const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:'https://example.gov/latest.pdf'},{id:'profile-large',title:'Large collected PDF',doc_type:'sign_ordinance',url:'https://example.gov/profile-large.pdf',file_url:'https://example.gov/profile-large.pdf',stored_bytes:13*1024*1024}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
+ const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:location.origin+'/latest.pdf'},{id:'profile-large',title:'Large collected PDF',doc_type:'sign_ordinance',url:'https://example.gov/profile-large.pdf',file_url:'https://example.gov/profile-large.pdf',stored_bytes:13*1024*1024}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
  const empty={id:'fixture-empty',name:'Empty Municipality',state:'OH',type:'city',documents:[]};window.fixture={calls:0,reads:[],failSource:true,
- sources:[{id:'listed',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Same sign application',source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:'https://example.gov/latest.pdf',content_status:'current',authority_classification:'application_form'},
- {id:'beyond',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Very long retained historical source '+('abcdefghij'.repeat(25)),source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:'https://example.gov/older.pdf',content_status:'historical',authority_classification:'historical'},
+ sources:[{id:'listed',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Same sign application',source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:location.origin+'/latest.pdf',content_status:'current',authority_classification:'application_form'},
+ {id:'beyond',jurisdiction_id:'fixture-populated',jurisdiction_profile_doc_id:'form',title:'Very long retained historical source '+('abcdefghij'.repeat(25)),source_type:'permit_application',official_url:'https://example.gov/sign.pdf',archived_file_url:location.origin+'/older.pdf',content_status:'historical',authority_classification:'historical'},
  {id:'foreign',jurisdiction_id:'other-jurisdiction',title:'Wrong jurisdiction source',source_type:'permit_application'},
  {id:'failed',jurisdiction_id:'fixture-populated',title:'Recovered source',source_type:'checklist'},
  {id:'html',jurisdiction_id:'fixture-populated',title:'Retained web page',source_type:'portal_instruction',archived_file_url:'https://example.gov/retained.html'},
@@ -55,7 +56,7 @@ try{
  for(const width of [320,390,1280]){
   const page=await browser.newPage({viewport:{width,height:1100}}),errors=[],outside=[];page.on('pageerror',e=>errors.push(e.message));
   let holdPDF=false;const heldRoutes=[];
-  await page.context().route('**/*',route=>{const url=route.request().url();if(/^https:\/\/example.gov\/(older|latest)\.pdf/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.fulfill({status:200,contentType:'application/pdf',body:pdf});}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
+  await page.context().route('**/*',route=>{const url=route.request().url();if(url.startsWith(origin)&&/\/(older|latest)\.pdf(?:[?#]|$)/.test(url)){if(holdPDF){heldRoutes.push(route);return;}return route.continue();}if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
   await page.goto(origin,{waitUntil:'networkidle'});
   const nav=page.getByRole('navigation',{name:'Jurisdiction workspace shortcuts'});await nav.waitFor();
   const catalog=page.getByRole('region',{name:'Document repository catalog'});
@@ -69,7 +70,7 @@ try{
   await card.getByRole('button',{name:'Preview retained PDF',exact:true}).click();
   await preview.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
   assert.ok(await preview.getByRole('button',{name:'Back',exact:true}).evaluate(node=>node===document.activeElement));
-  assert.match(await preview.locator('iframe').getAttribute('src'),/^https:\/\/example.gov\/older\.pdf#toolbar=1/);
+  assert.equal(await preview.locator('iframe').getAttribute('src'),origin+'/older.pdf#toolbar=1&navpanes=0&scrollbar=1');
   await preview.getByText('Retained copy · saved currentness: historical',{exact:false}).waitFor();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.ok(await preview.evaluate(node=>node.scrollWidth<=node.clientWidth));
@@ -106,7 +107,7 @@ try{
   await page.getByRole('button',{name:'Expand Example sign application',exact:true}).click();
   await page.getByRole('button',{name:'Open Example sign application',exact:true}).click();
   await page.getByText('The browser reported the frame loaded.',{exact:false}).waitFor();
-  assert.match(await page.locator('iframe').getAttribute('src'),/^https:\/\/example.gov\/latest\.pdf#toolbar=1/);
+  assert.equal(await page.locator('iframe').getAttribute('src'),origin+'/latest.pdf#toolbar=1&navpanes=0&scrollbar=1');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.getByRole('button',{name:'Back',exact:true}).click();
   assert.ok(await page.getByRole('button',{name:'Open Example sign application',exact:true}).evaluate(node=>node===document.activeElement));
