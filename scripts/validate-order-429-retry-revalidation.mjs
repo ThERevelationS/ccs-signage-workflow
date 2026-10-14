@@ -42,7 +42,7 @@ const remote = {
 const makeEnv=(changes={})=>{
   const counts={ownership:0,local:0,remote:0};
   const opts={
-    dataset:'orders',sheetId,token:'synthetic-not-a-token', bindings,
+    dataset:'orders',sheetId:sheet,token:'synthetic-not-a-token', bindings,
     eligibleSmartsheetWrites:[{id:rowId,cells:[{columnId:colId,value:'New'}]}],
     deferredOrderVerification:new Map([[order.id,{
       rowId,originalUpdatedDate:order.updated_date,plannedRemoteSnapshot:snapshot,
