@@ -1,0 +1,15 @@
+# Picker overview prototype — October 14, 2026
+
+Phase 10, milestone 1, task 2 remains partial. Task 4 authenticated full live acceptance remains pending. No statewide/completion percentage claim.
+
+AddressSearchSummary now leads the picker: property location, government boundary, and permitting information have separate plain-language states. Ready, office-review-needed, unresolved property, and geocoding outage have different next-action messages. Automatic research counts only usable HTTP(S) source links and reports review items without implying jurisdiction approval. Missing research no longer claims a scan returned findings.
+
+LocalityPickerDialog places this overview and inline activity above detailed findings. Manual configured-locality selection is hidden while an address is entered; scans and saved research follow the result/details. Existing manual browsing remains available when the address is blank. Existing apply gate, stale-response protection, map/fallback, draft creation, and data behavior remain unchanged. No added backend/AI calls.
+
+Validation: 12/12 Chromium checks across 320,390,1280 using actual picker, summary, progress/research components and production CSS; synthetic API and labeled map placeholder, all external requests blocked. Four scenarios: approved ready result, unresolved no-match with automatic research, Google denial with automatic research, and verified geography with incomplete office review. Checked initial/searching/result headings, exactly one address call, inline progress, apply disabled for all unresolved states, successful synthetic approved apply, outcome before findings, address-edit reset and horizontal overflow. First run found a missing denied-mode research response in the new test fixture; corrected fixture and reran all twelve successfully. Focused lint and git diff --check passed. One production build passed before the final summary-only wording/link-count adjustment; final lint and all browser checks passed after that adjustment. Existing Browserslist/baseline-browser warnings remain.
+
+Receipt: docs/permitting-picker-overview-browser-2026-10-14.json. Test harness: scripts/test-permitting-picker-overview-browser.mjs. Desktop synthetic layout shown in conversation; map placeholder is not real imagery or production acceptance.
+
+No client/shared or production permitting records read or changed. No shared permissions/settings/dispatcher changes. No frontend publication or backend deployment in this batch. Google server geocoding remains REQUEST_DENIED from the preceding live diagnostic; Google Cloud configuration access unavailable. Updated authenticated production picker, live paid research, and full exact-address flow remain unverified.
+
+Next meaningful product batch: inspect and improve the main jurisdiction workspace so employees can find the collected documents, office/electrical findings and requirements from one clear entry point. Keep prototype completion ahead of nonessential audits and preserve the external geocoding blocker explicitly.
