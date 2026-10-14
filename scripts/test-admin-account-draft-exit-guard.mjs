@@ -67,7 +67,7 @@ function setup() {
    state.changedUser=true;
   },
   setIsDialogOpen:v=>{state.dialog=v;},
-  setFormData:v=>{state.formData=v;}
+  setFormData:v=>{state.formData=typeof v==="function"?v(state.formData):v;}
  };
  for(const [key,fragment] of Object.entries(handlers)) {
   const name={
