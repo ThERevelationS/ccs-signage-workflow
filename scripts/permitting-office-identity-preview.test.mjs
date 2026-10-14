@@ -80,3 +80,9 @@ test("compiled handler returns exact read-only preview and exposes no identity a
  assert.equal(r.status,200);assert.equal(r.data.identity_verified,false);assert.equal(r.data.production_writes,0);assert.equal(t.writes(),0);
  assert.equal((await call({action:"identity_apply"})).status,400);
 });
+
+test("changing both candidate identifiers cannot reuse a valid publisher registration",async()=>{
+ const t=await setup(),office=t.row.setting_value.items[0];
+ office.id=office.government_office_id=t.input.officeId="office-candidate-substituted";
+ await assert.rejects(t.preview,/lineage changed/);assert.equal(t.writes(),0);
+});
