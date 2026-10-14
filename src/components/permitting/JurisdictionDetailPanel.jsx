@@ -1,3 +1,5 @@
+import JurisdictionWorkspaceNavigation from './JurisdictionWorkspaceNavigation';
+import OfficeResearchFindings from './OfficeResearchFindings';
 import OfficialSourceRescans from "./OfficialSourceRescans";
 import ExternalPermittingReferrals from "./ExternalPermittingReferrals";
 import LocalityApprovedEvidence from "./LocalityApprovedEvidence";
@@ -83,6 +85,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [clearedDocSearchId, setClearedDocSearchId] = useState(null);
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const workspaceSections = useRef({});
+  const navigateWorkspace = section => {
+    const target=workspaceSections.current[section];
+    if(target){target.scrollIntoView({block:"start",behavior:"auto"});target.focus({preventScroll:true});}
+  };
   const [verificationTarget, setVerificationTarget] = useState(null);
   const [verificationNote, setVerificationNote] = useState("");
   const [verificationSaving, setVerificationSaving] = useState(false);
@@ -839,8 +846,12 @@ Answer only from the provided excerpts and cite the document title and official 
         </div>
       )}
 
-      {activeTab === "overview" && <><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
+      {activeTab === "overview" && <><JurisdictionWorkspaceNavigation jurisdiction={jurisdiction} onNavigate={navigateWorkspace}/><div id="jurisdiction-overview-panel" role="tabpanel" className="flex-1 overflow-y-auto p-4 space-y-4">
         <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
+
+        <section ref={node=>{workspaceSections.current.offices=node;}} tabIndex={-1} aria-label="Office and electrical research workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
+          {jurisdiction.office_research?.method==='office-research-requirements-v1' && Array.isArray(jurisdiction.office_research.roles) && jurisdiction.office_research.roles.length ? <OfficeResearchFindings research={jurisdiction.office_research}/> : <div className="rounded-lg border bg-blue-50 p-3"><h3 className="text-sm font-semibold">Offices and electrical work</h3><p className="mt-1 text-sm">Office research has not been collected yet.</p><p className="mt-2 text-xs">Research covers sign permits, zoning, building, electrical permits, electrical inspections, right-of-way and historic review. An administrator can use Refresh above to collect draft findings.</p></div>}
+        </section>
 
         {/* CAGIS Location Search */}
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
@@ -862,8 +873,10 @@ Answer only from the provided excerpts and cite the document title and official 
         <JurisdictionAuthorityStatus jurisdiction={jurisdiction} />
 
         {/* Source monitor health */}
-        <SourceMonitorPanel jurisdictionName={jurisdiction.name} />
+        <section ref={node=>{workspaceSections.current.monitoring=node;}} tabIndex={-1} aria-label="Source monitoring workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600"><SourceMonitorPanel jurisdictionName={jurisdiction.name} /></section>
 
+        <section ref={node=>{workspaceSections.current.requirements=node;}} tabIndex={-1} aria-label="Requirements workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
+        <p className="mb-2 text-xs text-gray-600">Collected requirements are references. Use approved evidence and the current official documents to confirm what applies to the proposed sign.</p>
         {/* Key Requirements & Rules */}
         {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
           <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400 space-y-3">
@@ -873,7 +886,7 @@ Answer only from the provided excerpts and cite the document title and official 
                 {req.requires_permit !== undefined && (
                   <div className="flex min-w-0 items-start gap-1.5">
                     {req.requires_permit ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                    <span className="min-w-0 break-words">Permit Required</span>
+                    <span className="min-w-0 break-words">Permit required: {req.requires_permit ? "Yes" : "No"}</span>
                   </div>
                 )}
                 {req.max_sign_area_sqft && <div className="min-w-0 break-words"><span className="font-medium text-gray-500">Max Area:</span> {req.max_sign_area_sqft} sq ft</div>}
@@ -926,6 +939,9 @@ Answer only from the provided excerpts and cite the document title and official 
           </div>
         )}
 
+        {!(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && <div className="rounded-lg border bg-gray-50 p-3"><h3 className="text-sm font-semibold">Requirements not collected yet</h3><p className="mt-1 text-xs">Check the official forms and rules under Documents. Missing requirements do not mean a permit is unnecessary.</p></div>}
+        </section>
+
         {/* Parent County Info */}
         {jurisdiction.parent_county?.name && (
           <div className="rounded-lg border-l-4 border-l-orange-400 bg-orange-50 p-3">
@@ -964,7 +980,7 @@ Answer only from the provided excerpts and cite the document title and official 
         <ExternalPermittingReferrals key={jurisdiction.id} jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} onUpdate={onUpdate} disabled={isResearching || Boolean(downloadingDocId)} />
 
         {/* Documents */}
-         <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+         <div ref={node=>{workspaceSections.current.documents=node;}} tabIndex={-1} aria-label="Documents workspace" className="scroll-mt-3 bg-green-50 rounded-lg p-3 border border-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
            <p className="text-xs font-semibold text-green-800 mb-2">
              Documents ({jurisdiction.documents?.length || 0})
            </p>
