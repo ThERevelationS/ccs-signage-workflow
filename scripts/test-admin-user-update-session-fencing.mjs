@@ -25,15 +25,16 @@ test('Existing-user save fences duplicate clicks and captures immutable session 
 test('Old role update cannot start password write, reload directory or dismiss current editor',()=>{
   assert.match(save,/await updateAuthorizedUserAdmin\([\s\S]*?\);\s*\/\/[^\n]*\n\s*if \(!ownsUpdate\(\)\) return/);
   assert.match(save,/if \(newPassword\) \{[\s\S]*?await setPasswordFn/);
-  assert.match(save,/if \(!ownsUpdate\(\)\) return;\s*await loadUsers\(\);\s*if \(!ownsUpdate\(\)\) return;\s*clearEditorDraftTracking\(\);\s*setIsDialogOpen\(false\);\s*setEditingUser\(null\)/);
+  assert.match(save,/const currentDraft = activeAccountDraft\.current;[\s\S]*?await loadUsers\(\);\s*if \(!ownsUpdate\(\)\) return;\s*clearEditorDraftTracking\(\);\s*setIsDialogOpen\(false\);\s*setEditingUser\(null\)/);
   assert.match(save,/catch \(error\) \{\s*if \(!ownsUpdate\(\)\) return;/);
   assert.match(save,/finally \{\s*if \(ownsUpdate\(\)\) \{\s*userUpdateOwner\.current = null;\s*userUpdateInFlight\.current = false/);
 });
 
 test('Late password completion suppresses stale success/failure messages',()=>{
   assert.match(save,/const res = await setPasswordFn\([\s\S]*?\);\s*if \(!ownsUpdate\(\)\) return;\s*if \(!res\?\.data\?\.success\)/);
-  assert.match(save,/catch \(e\) \{\s*if \(!ownsUpdate\(\)\) return;\s*alert/);
+  assert.match(save,/catch \{\s*if \(!ownsUpdate\(\)\) return;\s*setAccountSaveRecovery\(\{/);
   assert.match(save,/delete dataToSave\.password_hash/);
+  assert.doesNotMatch(save,/alert\(`Password/);
 });
 
 test('Late directory results and errors from old session are ignored',()=>{
