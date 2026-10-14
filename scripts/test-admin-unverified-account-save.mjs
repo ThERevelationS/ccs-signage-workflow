@@ -52,7 +52,7 @@ function fixture() {
   editor:before,form:originalDraft,users:[before],write:null,password:null,
   passwordCalls:[],accountCalls:[],readCalls:0,readResponse:[target],
   reads:[],accounts:[],notice:"",error:"",loading:false,dirtyHr:false,
-  directoryError:false,mutationSaving:false,confirmed:false,dialog:true
+  directoryError:false,mutationSaving:false,confirmed:false,choices:{},dialog:true
  };
  const scope={
   ...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,
