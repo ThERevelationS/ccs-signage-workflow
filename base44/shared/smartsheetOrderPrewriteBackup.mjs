@@ -58,7 +58,7 @@ async function createVerifiedOrderSheetBackupOnce({
     // must belong to the same Smartsheet version as its first page, even if
     // the total row count and permanent IDs have not changed.
     if (page > 1 && body.version !== version) {
-      throw new Error(`${label} changed during backup pagination. No Smartsheet write was attempted.`);
+      throw new Error(`${label} changed during pagination while building the prewrite backup. No Smartsheet write was attempted.`);
     }
     const pageRows = body?.rows;
     if (!Array.isArray(pageRows) || pageRows.some(row =>
