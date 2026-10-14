@@ -35,6 +35,7 @@ import JurisdictionActivityTab from "./JurisdictionActivityTab";
 import JurisdictionAuthorityStatus from "./JurisdictionAuthorityStatus";
 import JurisdictionRequirements from "./JurisdictionRequirements";
 import SourceMonitorPanel from "./SourceMonitorPanel";
+import DocumentRepositoryBrowser from './DocumentRepositoryBrowser';
 import PermitWorkflowDesigner from "./PermitWorkflowDesigner";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
@@ -986,6 +987,11 @@ Answer only from the provided excerpts and cite the document title and official 
            <p className="text-xs font-semibold text-green-800 mb-2">
              Documents ({jurisdiction.documents?.length || 0})
            </p>
+          <DocumentRepositoryBrowser key={jurisdiction.id} jurisdictionId={jurisdiction.id} documents={jurisdiction.documents || []} onNavigate={navigateWorkspace} onOpenCollected={id => {
+            pendingDocNavigationRef.current = id;
+            setExpandedDoc(id);
+          }} />
+          <h3 className="mb-2 text-sm font-semibold text-green-900">Collected document search & PDF tools</h3>
           <div className="mb-3">
             <div className="relative">
               {docSearching && <Loader2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-500" />}
@@ -993,7 +999,7 @@ Answer only from the provided excerpts and cite the document title and official 
               <Input
                 ref={jurisdictionSearchInputRef}
                 type="text"
-                placeholder="Search City/Locality/Info..."
+                placeholder="Search collected document text and locality info..."
                 aria-label="Search jurisdiction documents and information"
                 aria-describedby={`jurisdiction-search-instructions-${jurisdiction.id}`}
                 value={docSearchTerm}
@@ -1153,7 +1159,7 @@ Answer only from the provided excerpts and cite the document title and official 
                      <span className="block break-words text-xs font-medium text-gray-800">{doc.title}</span>
                      <span className="mt-0.5 flex flex-wrap items-center gap-2">
                        <span className={`text-[10px] capitalize px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-purple-200 text-purple-700' : 'bg-amber-200 text-amber-700'}`}>{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
-                       {doc.last_fetched && <span className="text-[10px] text-gray-500">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
+                       {doc.last_fetched && <span className="text-[10px] text-gray-500">{Number.isFinite(new Date(doc.last_fetched).getTime()) ? format(new Date(doc.last_fetched), "MM/dd/yy") : "Date not recorded"}</span>}
                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-blue-200 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{doc.source === 'ai_discovered' ? 'AI' : 'Manual'}</span>
                      </span>
                    </span>
@@ -1379,7 +1385,7 @@ Answer only from the provided excerpts and cite the document title and official 
                     ) : (
                       <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                         <p className="font-medium">No file available</p>
-                        <p className="text-xs mt-1">This document could not be downloaded. Check the source link below.</p>
+                        <p className="text-xs mt-1">No retained file URL is recorded. This may be an online source or an archive gap. Check the source link below.</p>
                       </div>
                     )}
                     
@@ -1400,7 +1406,7 @@ Answer only from the provided excerpts and cite the document title and official 
                     
                     {doc.ai_summary && (
                       <div className="min-w-0">
-                        <p className="mb-1 text-[10px] font-semibold text-purple-600">AI Summary</p>
+                        <p className="mb-1 text-[10px] font-semibold text-purple-600">AI Summary · unverified</p>
                         <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{doc.ai_summary}</p>
                       </div>
                     )}
