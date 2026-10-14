@@ -83,6 +83,9 @@ export default function ClockOutDialog({
   previewScopeRef.current = previewScope;
   const previewRequestRef = useRef({ scope: "", id: 0, pending: false });
   const submitRequestRef = useRef({ scope: "", id: 0, pending: false });
+  // An interrupted Clock Out may already have committed. Retry its original
+  // body instead of recomputing server duration or silently changing totals.
+  const uncertainClockOutRef = useRef(null);
   const draftShiftRef = useRef("");
   const [previewSnapshot, setPreviewSnapshot] = useState({ scope: "", value: null });
   const laborPreview = previewSnapshot.scope === previewScope ? previewSnapshot.value : null;
@@ -178,6 +181,7 @@ export default function ClockOutDialog({
     submitRequestRef.current = {
       scope: previewScope, id: submitRequestRef.current.id + 1, pending: false,
     };
+    if (uncertainClockOutRef.current?.scope !== previewScope) uncertainClockOutRef.current = null;
     setIsSubmitting(false);
     setLaborPreviewBusy(false);
     setLaborPreviewError("");
@@ -397,6 +401,16 @@ export default function ClockOutDialog({
     setLaborPreviewBusy(false);
     setIsSubmitting(true);
     try {
+      const uncertain = uncertainClockOutRef.current?.scope === request.scope
+        ? uncertainClockOutRef.current : null;
+      if (uncertain) {
+        if (uncertain.draft !== reviewedDraft) {
+          throw new Error("An earlier Clock Out is unconfirmed. Restore the original allocations, lunch, and notes before retrying the same request. Do not submit revised payroll time until its outcome is verified.");
+        }
+        await onClockOut(uncertain.payload);
+        if (isCurrent()) uncertainClockOutRef.current = null;
+        return;
+      }
       if (!onLoadLaborAllocationPreview) {
         throw new Error("Authoritative Clock Out reconciliation is unavailable. Close this dialog and identify again.");
       }
@@ -431,11 +445,21 @@ export default function ClockOutDialog({
         throw new Error(`All time must be allocated using the refreshed server duration. ${formatDuration(Math.abs(finalRemainingMinutes))}${finalRemainingMinutes < 0 ? " is over-allocated" : " remains"}. Review or refresh tracked suggestions before Clock Out.`);
       }
 
-      await onClockOut({
+      const submittedPayload = {
         lunchMinutes: authoritativeLunchMinutes,
         jobAllocations: jobAllocations.map(({ suggested_from_current_work: _suggested, ...allocation }) => allocation),
         notes: notes.trim(),
-      });
+      };
+      try {
+        await onClockOut(submittedPayload);
+      } catch (err) {
+        if (isCurrent() && (err?.retrySameRequest === true || err?.ambiguousOutcome === true)) {
+          uncertainClockOutRef.current = {
+            scope: request.scope, draft: reviewedDraft, payload: submittedPayload,
+          };
+        }
+        throw err;
+      }
     } catch (err) {
       if (isCurrent()) setError(err?.message || "Clock-out was not confirmed by the server. Nothing was shown as successful.");
     } finally {
