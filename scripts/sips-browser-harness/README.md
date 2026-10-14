@@ -11,11 +11,16 @@ npm install --prefix /tmp/sips-browser-check --no-save --no-package-lock --ignor
 # Only if required on a fresh sandbox:
 # /tmp/sips-browser-check/node_modules/.bin/playwright install-deps chromium
 node scripts/test-sips-clear-revisit-browser.mjs
+node scripts/test-sips-checklist-reload-focus-browser.mjs
 ```
 
 The runner mounts the **actual SIPS page and production CSS** inside a temporary local Vite server. It replaces Base44 auth, Work Order data, global settings and unrelated dialogs with isolated synthetic fixtures. Two independent Chromium browser contexts share a conditional-write fixture. Requests outside the temporary local origin are blocked and fail the suite. Nothing is published, no credentials are loaded, and no production records are created or changed. The browser driver is installed outside `/app` to avoid changing production dependencies.
 
 Covered: desktop/mobile Clear Revisit and Escape; concurrent stale-clear versus newer scheduling; safe review and retry; legacy completed-WIP reopening; simultaneous reopen; conflict-safe reopen after another date edit; focus restoration when a reopened item is visible or hidden by filters; preserving intentional focus changes during a save; 320px calendar and dialog fit; long failures on a 320×480 screen; blocked dismissal and repeat submission during an in-flight Clear.
+
+## Actual checklist-dialog reload-focus acceptance
+
+The additional `test-sips-checklist-reload-focus-browser.mjs` runner mounts the **real `ProductChecklistDialog.jsx`** with the production CSS and isolated synthetic Work Order, authorization-list and settings fixtures. All external requests are blocked. Save attempts are deliberately rejected by a local replacement for the persistence function; no Work Order (real or synthetic) is written. The suite checks desktop and 320px successful-reload heading focus, an interrupted reload's error focus followed by a successful retry, and mobile unsaved-draft discard confirmation (cancel preserves the draft; confirm reload clears it and restores focus). It does not test authenticated permissions, production network behavior or actual saved writes.
 
 ## Outstanding: authenticated two-browser QA
 
