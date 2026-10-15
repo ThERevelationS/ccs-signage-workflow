@@ -64,6 +64,7 @@ export default function PermitWorkflowDesigner({
   workOrder = null,
   onLinesCreated = () => {},
   onDraftSaved = () => {},
+  onOpenSourceDocument,
 }) {
   const [form, setForm] = useState({
     address: preselectedJurisdiction?.jurisdiction_name ? `${preselectedJurisdiction.jurisdiction_name}, ${preselectedJurisdiction.state || ""}` : "",
@@ -565,7 +566,10 @@ export default function PermitWorkflowDesigner({
                                 <div key={i} className="min-w-0 break-words text-[11px] text-gray-600">
                                   {c.section_or_page && <span className="font-medium">{c.section_or_page}: </span>}
                                   {c.excerpt && <span className="text-gray-500">"{c.excerpt.slice(0, 120)}{c.excerpt.length > 120 ? "…" : ""}"</span>}
-                                  {c.source_document_id && <span className="text-gray-400"> [{c.source_document_id.slice(0, 8)}]</span>}
+                                  {typeof c.source_document_id === "string" && c.source_document_id.trim() && <>
+                                    <span className="text-gray-400"> [{c.source_document_id.slice(0, 8)}]</span>
+                                    {typeof onOpenSourceDocument === "function" && <Button type="button" variant="outline" className="mt-1 min-h-11 h-auto whitespace-normal text-xs" onClick={() => onOpenSourceDocument(c.source_document_id.trim())}>Open saved source details</Button>}
+                                  </>}
                                 </div>
                               ))}
                             </div>
