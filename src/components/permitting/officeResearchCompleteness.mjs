@@ -1,5 +1,5 @@
 import { officeResearchChecklist, officeResearchFieldLabels } from '../../../base44/shared/permittingOfficeResearch.mjs';
-import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog';
+import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog.js';
 
 const unresolvedText = /^(?:unknown|not known|not found(?: yet)?|not recorded|not established|unresolved|pending)$/i;
 const hasRecordedText = value => typeof value === 'string' && Boolean(value.trim()) && !unresolvedText.test(value.trim());
