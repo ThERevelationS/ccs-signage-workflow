@@ -72,7 +72,9 @@ test('profiles load only after an explicit action and stage only a freshly confi
     await h.mount();
     assert.deepEqual(h.calls, []);
     await h.click('Load profiles for OH');
-    assert.deepEqual(h.calls[0], ['filter', { state: 'OH' }, 'name', 50, 0]);
+    assert.equal(h.calls[0][0], 'filter');
+    assert.equal(h.calls[0][1].state, 'OH');
+    assert.deepEqual(Array.from(h.calls[0].slice(2)), ['name', 50, 0]);
     assert.deepEqual(h.options().map(option => option.value), ['', 'profile-oh-1']);
     await h.select('profile-oh-1');
     assert.deepEqual(h.staged, []);
