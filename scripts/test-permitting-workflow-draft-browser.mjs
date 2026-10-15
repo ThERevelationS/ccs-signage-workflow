@@ -13,7 +13,7 @@ try {
  await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{
  PermittingRule:{filter:async()=>({items:[{id:'approved',status:'staff_approved',is_operational:true,requirement:'Synthetic approved requirement'},{id:'pending',status:'needs_review',requirement:'Synthetic pending requirement'},{id:'historical',status:'historical',is_operational:true,draft_context:true}]})},
  PermittingSourceDocument:{filter:async()=>({items:[]})},
- PermittingWorkflowDraft:{filter:async()=>({items:window.fixture.rows}),create:async row=>{window.fixture.attempts++;if(window.fixture.fail){window.fixture.fail=false;throw Error('Synthetic save failure');}const saved={...row,id:'synthetic-draft'};window.fixture.rows.push(saved);return saved;}},
+ PermittingWorkflowDraft:{filter:async()=>({items:window.fixture.rows}),create:async row=>{window.fixture.attempts++;if(window.fixture.fail){window.fixture.fail=false;throw Error('Synthetic save failure');}const saved={...row,id:'synthetic-draft-'+(window.fixture.rows.length+1)};window.fixture.rows.push(saved);return saved;}},
  PermitLineItem:{create:async()=>{window.fixture.jobWrites++;throw Error('Job writes forbidden');}}},
  functions:{invoke:async()=>{throw Error('Provider calls forbidden');}},integrations:{Core:{InvokeLLM:async()=>{window.fixture.aiCalls++;return {summary:'Synthetic workflow — fixture only',steps:[
  {permit_type:'Synthetic approved step',office:'Example office',office_type:'Zoning',action:'Synthetic action',basis:'approved_rule',citations:[{rule_id:'approved'}]},
@@ -27,6 +27,10 @@ try {
  await page.route('**/*',route=>route.request().url().startsWith(origin)?route.continue():route.abort());await page.goto(origin,{waitUntil:'networkidle'});
  await page.getByLabel('Sign Type(s)',{exact:true}).fill('Wall sign');await page.getByRole('button',{name:'Generate Permit Workflow',exact:true}).click();
  await page.getByText('Synthetic workflow — fixture only',{exact:true}).waitFor();await page.getByText('Approved Rule',{exact:true}).waitFor();await page.getByText('Pending Review',{exact:true}).waitFor();await page.getByText('Staff Confirmation Needed',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Edit proposed steps',exact:true}).click();
+ await page.getByLabel('Action for step 1',{exact:true}).fill('Staff-adjusted synthetic action');
+ await page.getByLabel('Required documents for step 1 · one per line',{exact:true}).fill('Site plan\nLighting plan');
+ await page.getByText('Staff edited',{exact:true}).waitFor();
  await page.getByRole('button',{name:'Expand all',exact:true}).click();await page.getByText('The proposed requirement is not backed by a recognized approved or pending rule. Confirm its source and applicability.',{exact:true}).waitFor();
  const save=page.getByRole('button',{name:'Save permitting draft',exact:true});assert.ok(await save.isDisabled());
  await page.getByLabel('Review notes / questions to resolve').fill('Confirm electrical requirements with office');await page.getByRole('checkbox').check();assert.ok(await save.isEnabled());
@@ -34,8 +38,21 @@ try {
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.ok((await page.getByRole('button',{name:'Draft saved',exact:true}).boundingBox()).height>=44);
  await page.getByRole('button',{name:'Close',exact:true}).first().click();await page.getByRole('button',{name:'Open designer',exact:true}).click();await page.getByRole('region',{name:'Saved permitting drafts'}).getByRole('button').click();
  assert.equal(await page.getByLabel('Review notes / questions to resolve').inputValue(),'Confirm electrical requirements with office');assert.ok(await page.getByRole('button',{name:'Draft saved',exact:true}).isDisabled());
- const result=await page.evaluate(()=>window.fixture);assert.equal(result.rows.length,1);assert.equal(result.attempts,2);assert.equal(result.aiCalls,1);assert.equal(result.jobWrites,0);assert.equal(result.rows[0].status,'draft');assert.equal(result.rows[0].work_order_id,undefined);assert.deepEqual(result.rows[0].snapshot.steps.map(s=>s.basis),['approved_rule','pending_review','staff_confirmation_needed']);assert.deepEqual(errors,[]);
- checks.push({width,passed:true,checks:'preview evidence labels, unsupported label demotion, review gate, save failure/retry, immutable draft save, reopen notes, no job writes, no overflow'});console.log('PASS workflow draft '+width);await page.close();
+ await page.getByRole('button',{name:'Create editable revision',exact:true}).click();
+ await page.getByLabel('Action for step 1',{exact:true}).fill('Revision two synthetic action');
+ const revisedSave=page.getByRole('button',{name:'Save revised permitting draft',exact:true});assert.ok(await revisedSave.isDisabled());
+ await page.getByRole('checkbox').check();assert.ok(await revisedSave.isEnabled());await revisedSave.click();
+ await page.getByRole('status').filter({hasText:'Saved permitting draft:'}).waitFor();
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ const result=await page.evaluate(()=>window.fixture);assert.equal(result.rows.length,2);assert.equal(result.attempts,3);assert.equal(result.aiCalls,1);assert.equal(result.jobWrites,0);
+ assert.equal(result.rows[0].status,'draft');assert.equal(result.rows[0].work_order_id,undefined);assert.equal(result.rows[1].work_order_id,undefined);
+ assert.deepEqual(result.rows[0].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','pending_review','staff_confirmation_needed']);
+ assert.equal(result.rows[0].snapshot.steps[0].action,'Staff-adjusted synthetic action');assert.deepEqual(result.rows[0].snapshot.steps[0].required_documents,['Site plan','Lighting plan']);
+ assert.deepEqual(result.rows[0].snapshot.steps[0].citations,[{rule_id:'approved'}]);assert.equal(result.rows[0].snapshot.steps[0].staff_override.original_values.action,'Synthetic action');
+ assert.deepEqual(result.rows[1].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','pending_review','staff_confirmation_needed']);
+ assert.equal(result.rows[1].snapshot.steps[0].action,'Revision two synthetic action');assert.deepEqual(result.rows[1].snapshot.steps[0].citations,[{rule_id:'approved'}]);
+ assert.equal(result.rows[0].snapshot.steps[0].action,'Staff-adjusted synthetic action');assert.equal(result.rows[1].snapshot.draft_revision.parent_draft_id,result.rows[0].id);assert.equal(result.rows[1].snapshot.draft_revision.root_draft_id,result.rows[0].id);assert.equal(result.rows[1].snapshot.draft_revision.revision_number,2);assert.deepEqual(errors,[]);
+ checks.push({width,passed:true,checks:'preview evidence labels, staff step edits demote basis and preserve citations, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow'});console.log('PASS workflow draft '+width);await page.close();
  }
- await writeFile(path.join(root,'docs/permitting-workflow-draft-browser-2026-10-14.json'),JSON.stringify({mode:'actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance',checks},null,2)+'\n');
+ await writeFile(path.join(root,'docs/permitting-workflow-draft-browser-2026-10-15.json'),JSON.stringify({mode:'actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance',checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
