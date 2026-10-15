@@ -74,7 +74,9 @@ export default function PermitWorkflowDesigner({
     setCreateResult(null);
     try {
       const result = await runDesignerPipeline(form, preselectedJurisdiction);
-      setDraft(result);
+      setDraft(electricalPlanningHandoff
+        ? { ...result, electrical_planning_handoff: electricalPlanningHandoff }
+        : result);
       setDraftTitle(`${result.jurisdiction.jurisdiction_name || 'Unresolved location'} — ${form.signTypes || 'Sign workflow'}`);
       setReviewed(false); setSaved(null); setReviewNotes('');
       // Auto-expand steps that need staff confirmation
