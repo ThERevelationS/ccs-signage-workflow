@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import SourceTextEvidenceBrowser from './SourceTextEvidenceBrowser';
 
 const metadata = [
   ['id', 'Exact source ID'], ['jurisdiction_id', 'Canonical jurisdiction ID'],
@@ -38,9 +39,11 @@ export default function SourceVersionComparison({ jurisdictionId, rows = [], onO
     {!ready ? <p role="status" className="text-sm">Select two distinct saved sources to compare metadata.</p> : <>
       <p role="status" className="rounded bg-blue-50 p-2 text-sm">{fingerprint}</p>
       <p className="text-xs">Recorded metadata only. Hash, date and title differences do not establish legal changes, adopted authority, currentness or supersession. Matching hashes do not verify retained bytes or access. Supersession references below are saved relationships, not conclusions from this comparison.</p>
+      <p className="text-xs text-gray-600">Each panel can inspect saved physical-page text for that exact record. Open both viewers to review the extracted text side by side; each read is limited to five pages and may be partial or need OCR review.</p>
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {pair.map((row, index) => <article key={row.id} aria-label={'Compared source ' + (index + 1)} className="min-w-0 rounded border bg-gray-50 p-3">
           <h5 className="font-semibold">Source {index + 1}: {row.title || 'Untitled document'}</h5>
+          <SourceTextEvidenceBrowser key={['comparison', row.id, row.file_hash_sha256, row.archived_file_url, row.text_extraction_state?.pages_extracted].join(':')} source={row} />
           {onOpenSource && <Button variant="outline" className="my-2 min-h-11 h-auto w-full whitespace-normal" onClick={event => onOpenSource(row.id, event.currentTarget)}>Open source {index + 1} catalog details</Button>}
           <dl className="space-y-2 text-sm">{metadata.map(([field, title]) => <div key={field}><dt className="font-medium">{title}</dt><dd className="whitespace-pre-wrap">{recorded(row[field])}</dd></div>)}</dl>
         </article>)}
