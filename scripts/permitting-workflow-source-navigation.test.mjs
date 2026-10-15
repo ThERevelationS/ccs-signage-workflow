@@ -10,6 +10,7 @@ const React = require("react");
 const { create, act } = require("react-test-renderer");
 
 test("workflow citations open only their exact saved source IDs", async () => {
+  globalThis.window = { self: {}, top: {} };
   const mockId = "\0permitting-workflow-source-test";
   const mockBase44 = {
     name: "permitting-workflow-source-test",
@@ -27,6 +28,7 @@ test("workflow citations open only their exact saved source IDs", async () => {
     configFile: false,
     root: process.cwd(),
     plugins: [react(), mockBase44],
+    optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: [{ find: "@", replacement: path.resolve("src") }] },
     server: { middlewareMode: true },
     logLevel: "error",
