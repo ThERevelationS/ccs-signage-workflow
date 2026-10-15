@@ -7,6 +7,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
   plugins: [
+    // Resolve the exact browser-safe shared helpers before Base44 blocks /base44/** imports.
     frontendSharedModules(),
     base44({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
