@@ -75,17 +75,36 @@ try{
    assert.equal(await page.evaluate(()=>window.fixture.reads.length),readsBeforeCompare);
    assert.equal(await page.evaluate(()=>window.fixture.textReads.length),0);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+
+   const back=target.getByRole('button',{name:'Return to source comparison',exact:true});
+   assert.ok((await back.boundingBox()).height>=44);
+   await back.click();
+   await page.waitForFunction(name=>document.activeElement?.textContent===name,'Open source '+slot+' catalog details');
+   assert.equal(await first.inputValue(),'saved-form');assert.equal(await second.inputValue(),'fees');
+   assert.equal(await catalog.getByRole('button',{name:'Return to source comparison',exact:true}).count(),0);
+   assert.equal(await page.evaluate(()=>window.fixture.reads.length),readsBeforeCompare);
+   assert.equal(await page.evaluate(()=>window.fixture.textReads.length),0);
    await target.locator(':scope > summary').click();
   }
+
+  await compare.getByRole('button',{name:'Open source 1 catalog details',exact:true}).click();
+  const returnCard=cards.filter({has:page.getByText('Saved sign application',{exact:true})});
+  await returnCard.getByRole('button',{name:'Return to source comparison',exact:true}).waitFor();
+  await compare.getByRole('button',{name:'Clear comparison'}).click();
+  await returnCard.getByRole('button',{name:'Return to source comparison',exact:true}).click();
+  assert.ok(await compare.evaluate(node=>node===document.activeElement),'Removed origin falls back to comparison region');
+  await returnCard.locator(':scope > summary').click();
   await compare.getByRole('button',{name:'Clear comparison'}).click();
   await page.waitForFunction(()=>document.querySelector('[aria-label="Comparison source 1"]').value==='');
   assert.equal(await second.inputValue(),'');
   await first.selectOption('saved-form');await second.selectOption('older');
+  await compare.getByRole('button',{name:'Open source 1 catalog details',exact:true}).click();
   await page.getByRole('button',{name:'Switch fixture'}).click();
   await compare.getByText('Select two distinct saved sources to compare metadata.',{exact:true}).waitFor();
   assert.equal(await compare.getByRole('article').count(),0);
   await page.getByRole('button',{name:'Switch fixture'}).click();
   await catalog.getByText('5 shown from 5 loaded entries.',{exact:false}).waitFor();
+  assert.equal(await catalog.getByRole('button',{name:'Return to source comparison',exact:true}).count(),0,'Jurisdiction change clears return state');
 
   const availability=catalog.getByRole('combobox',{name:'Document availability',exact:true});
   for(const [filter,count] of [['text',1],['retained',2],['missing',3],['ocr',0],['all',5]]){

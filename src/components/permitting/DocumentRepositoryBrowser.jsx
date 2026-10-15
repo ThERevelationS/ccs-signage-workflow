@@ -54,7 +54,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   const comparisonRegion = useRef(null);
   useEffect(() => { setComparisonOrigin(null); }, [jurisdictionId, refresh, sourceRequest?.token, sourceRequest?.jurisdictionId]);
   const returnToComparison = () => {
-    if (comparisonOrigin?.jurisdictionId !== jurisdictionId || comparisonOrigin.refresh !== refresh) return;
+    if (!comparisonOrigin || comparisonOrigin.jurisdictionId !== jurisdictionId || comparisonOrigin.refresh !== refresh) return;
     const destination = comparisonOrigin.button?.isConnected ? comparisonOrigin.button : comparisonRegion.current;
     destination?.focus({ preventScroll: true });
     destination?.scrollIntoView({ block: 'center', behavior: 'auto' });
@@ -199,7 +199,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     {visible.map(row => <details key={row.key} ref={node => { if (node) sourceNodes.current.set(row.key, node); else sourceNodes.current.delete(row.key); }} className={`min-w-0 scroll-mt-3 rounded-lg border p-3 [overflow-wrap:anywhere] ${selected?.row?.id === row.id && row.saved ? 'border-blue-400 bg-blue-50' : 'bg-gray-50'}`}>
       <summary tabIndex={0} className="min-h-11 cursor-pointer text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"><span className="block font-semibold">{row.title || 'Untitled document'}</span><span className="mt-1 flex flex-wrap gap-1"><Badge variant="outline">{types[row.source_type] || label(row.source_type)}</Badge><Badge variant="outline">{contextOnly(row) ? 'Context only · confirm before use' : row.content_status === 'current' ? 'Recorded current · confirm before use' : 'Currentness unknown'}</Badge>{!row.saved && <Badge variant="outline">Collected link</Badge>}</span></summary>
       <div className="space-y-3 border-t pt-3 text-sm">
-        {row.saved && comparisonOrigin?.jurisdictionId === jurisdictionId && comparisonOrigin.refresh === refresh && comparisonOrigin.sourceId === row.id && <Button variant="outline" className="min-h-11 h-auto w-full whitespace-normal sm:w-auto" onClick={returnToComparison}>Return to source comparison</Button>}
+        {row.saved && comparisonOrigin && comparisonOrigin.jurisdictionId === jurisdictionId && comparisonOrigin.refresh === refresh && comparisonOrigin.sourceId === row.id && <Button variant="outline" className="min-h-11 h-auto w-full whitespace-normal sm:w-auto" onClick={returnToComparison}>Return to source comparison</Button>}
         {row.saved ? <>
           <p>Saved classification: {label(row.authority_classification)}<br/>Saved currentness: {label(row.content_status)}<br/>Saved review status: {label(row.verification_status)}</p>
           {contextOnly(row) && <p className="rounded bg-amber-50 p-2 text-amber-900">Draft, historical or superseded context. Do not use this record as current permitting authority.</p>}
