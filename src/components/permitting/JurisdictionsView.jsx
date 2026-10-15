@@ -413,6 +413,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             duplicateCount={duplicateCountFor(selectedJurisdiction)}
             onSetVerification={handleVerificationChange}
             onClose={() => setSelectedJurisdiction(null)}
+            onSaveOfficeResearch={handleOfficeResearchSave}
             onUpdate={(updated) => {
               setJurisdictions(prev => prev.map(j => j.id === updated.id ? updated : j));
               setSelectedJurisdiction(updated);
