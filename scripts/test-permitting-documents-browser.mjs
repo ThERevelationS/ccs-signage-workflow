@@ -212,7 +212,7 @@ try{
   await permitRole.getByText('Office identity missing',{exact:false}).waitFor();
   await permitRole.getByText('Illuminated signs',{exact:false}).waitFor();
   const inspectRole=overview.getByRole('article',{name:'Role overview: Electrical inspection office',exact:true});
-  await inspectRole.getByText('Inspection scheduling',{exact:false}).waitFor();
+  await inspectRole.getByText('Booking lead time',{exact:false}).waitFor();
   const inspect=inspectRole.getByRole('button',{name:'Inspect Electrical inspection office finding 1',exact:true});
   assert.ok((await inspect.boundingBox()).height>=44);await inspect.click();
   await page.waitForFunction(()=>document.activeElement?.tagName==='SUMMARY'&&document.activeElement.textContent.includes('Example inspection provider'));
