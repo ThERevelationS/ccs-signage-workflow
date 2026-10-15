@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { normalizeAddressState } from '../../shared/permittingAddressState.js';
 
@@ -31,9 +31,7 @@ export default function LocalityProfileLinkEditor({
   const state = stateCode(localityState);
   const canLoad = ['OH', 'KY'].includes(state);
 
-  useState(() => {
-    return () => { request.current += 1; };
-  });
+  useEffect(() => () => { request.current += 1; }, []);
 
   const loadNext = async () => {
     if (!canLoad || loadingRef.current || typeof Profile?.filter !== 'function') return;
