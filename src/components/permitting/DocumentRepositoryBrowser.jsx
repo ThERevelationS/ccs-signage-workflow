@@ -50,6 +50,16 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [group, setGroup] = useState('all');
   const [availability, setAvailability] = useState('all');
   const [comparisonTarget, setComparisonTarget] = useState(null);
+  const [comparisonOrigin, setComparisonOrigin] = useState(null);
+  const comparisonRegion = useRef(null);
+  useEffect(() => { setComparisonOrigin(null); }, [jurisdictionId, refresh, sourceRequest?.token, sourceRequest?.jurisdictionId]);
+  const returnToComparison = () => {
+    if (comparisonOrigin?.jurisdictionId !== jurisdictionId || comparisonOrigin.refresh !== refresh) return;
+    const destination = comparisonOrigin.button?.isConnected ? comparisonOrigin.button : comparisonRegion.current;
+    destination?.focus({ preventScroll: true });
+    destination?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    setComparisonOrigin(null);
+  };
   const sourceNodes = useRef(new Map()), focusedSourceRequest = useRef(null);
   const selection = sourceRequest?.jurisdictionId === jurisdictionId ? sourceRequest : null;
   const selectedId = selection?.sourceId, selectedToken = selection?.token;
@@ -99,9 +109,10 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
   }, [jurisdictionId, refresh]);
   const currentState = state.jurisdictionId === jurisdictionId ? state : { rows: [], loading: true, error: '' };
   const loaded = currentState.rows.filter(row => row.jurisdiction_id === jurisdictionId);
-  const openComparedSource = sourceId => {
+  const openComparedSource = (sourceId, button) => {
     if (currentState.loading || currentState.error || !loaded.some(row => row.id === sourceId)) return;
     setQuery(''); setType('all'); setGroup('all'); setAvailability('all');
+    setComparisonOrigin({ jurisdictionId, refresh, sourceId, button });
     setComparisonTarget({ jurisdictionId, refresh, sourceId });
   };
   useEffect(() => {
@@ -172,7 +183,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
       {!selected.loading && (!selected.row || selected.error) && <Button variant="outline" className="min-h-11" onClick={() => setSourceRetry(value => value + 1)}>Retry linked source</Button>}
       {onNavigate && <Button variant="outline" className="min-h-11" onClick={() => onNavigate('documents')}>Clear source selection</Button>}
     </div>}
-    <SourceVersionComparison key={String(jurisdictionId) + ':' + refresh} jurisdictionId={jurisdictionId} rows={currentState.loading || currentState.error ? [] : loaded} onOpenSource={openComparedSource} />
+    <SourceVersionComparison key={String(jurisdictionId) + ':' + refresh} jurisdictionId={jurisdictionId} rows={currentState.loading || currentState.error ? [] : loaded} onOpenSource={openComparedSource} regionRef={comparisonRegion} />
     <Input aria-label="Search document catalog" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search title, type, office, scope or gaps" className="min-h-11" />
     <div className="flex flex-col gap-2 sm:flex-row">
       <select aria-label="Document type" className="min-h-11 min-w-0 w-full rounded-md border px-2 text-sm sm:flex-1" value={type} onChange={e => setType(e.target.value)}><option value="all">All document types ({rows.length})</option>{[...new Set(rows.map(row => row.source_type).filter(Boolean))].sort().map(value => <option key={value} value={value}>{types[value] || label(value)} ({rows.filter(row => row.source_type === value).length})</option>)}</select>
@@ -188,6 +199,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     {visible.map(row => <details key={row.key} ref={node => { if (node) sourceNodes.current.set(row.key, node); else sourceNodes.current.delete(row.key); }} className={`min-w-0 scroll-mt-3 rounded-lg border p-3 [overflow-wrap:anywhere] ${selected?.row?.id === row.id && row.saved ? 'border-blue-400 bg-blue-50' : 'bg-gray-50'}`}>
       <summary tabIndex={0} className="min-h-11 cursor-pointer text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"><span className="block font-semibold">{row.title || 'Untitled document'}</span><span className="mt-1 flex flex-wrap gap-1"><Badge variant="outline">{types[row.source_type] || label(row.source_type)}</Badge><Badge variant="outline">{contextOnly(row) ? 'Context only · confirm before use' : row.content_status === 'current' ? 'Recorded current · confirm before use' : 'Currentness unknown'}</Badge>{!row.saved && <Badge variant="outline">Collected link</Badge>}</span></summary>
       <div className="space-y-3 border-t pt-3 text-sm">
+        {row.saved && comparisonOrigin?.jurisdictionId === jurisdictionId && comparisonOrigin.refresh === refresh && comparisonOrigin.sourceId === row.id && <Button variant="outline" className="min-h-11 h-auto w-full whitespace-normal sm:w-auto" onClick={returnToComparison}>Return to source comparison</Button>}
         {row.saved ? <>
           <p>Saved classification: {label(row.authority_classification)}<br/>Saved currentness: {label(row.content_status)}<br/>Saved review status: {label(row.verification_status)}</p>
           {contextOnly(row) && <p className="rounded bg-amber-50 p-2 text-amber-900">Draft, historical or superseded context. Do not use this record as current permitting authority.</p>}
