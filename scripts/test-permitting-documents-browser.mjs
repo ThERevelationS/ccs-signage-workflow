@@ -270,7 +270,7 @@ try{
   assert.equal(await page.evaluate(()=>window.fixture.calls),callsBeforeHandoff+1,'Only explicit Generate invokes workflow composition');
   assert.equal(await page.evaluate(()=>window.fixture.draftCreates.length),1,'Only synthetic permitting draft is created; no WorkOrder lines are touched');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Workflow handoff fits viewport');
-  await page.getByRole('button',{name:'Close',exact:true}).click();
+  await page.getByRole('button',{name:'Close',exact:true}).last().click();
   await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByText('Permit required: No',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Documents/}).click();
   await page.evaluate(()=>{window.fixture.delayText=true;});
