@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, X, Search, LogOut, AlertTriangle } from "lucide-react";
 import LocalityOfficeEditor from "./LocalityOfficeEditor";
+import LocalityProfileLinkEditor from "./LocalityProfileLinkEditor";
 import OfficeCatalogEditor from "./OfficeCatalogEditor";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./permitGlobalSettingsPersistence";
@@ -139,6 +140,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       name: loc.name || "",
       state: loc.state || "",
       zip: loc.zip || "",
+      ...(Object.prototype.hasOwnProperty.call(loc, "jurisdiction_profile_id") ? { jurisdiction_profile_id: loc.jurisdiction_profile_id } : {}),
       offices: migrateLocality(loc)
     };
     setForm(next);
@@ -641,6 +643,14 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                         <Input value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} className="h-8 text-sm" placeholder="e.g. 45040" />
                       </div>
                     </div>
+
+                    <LocalityProfileLinkEditor
+                      key={String(editingLocality) + ':' + String(form.state)}
+                      localityId={editingLocality === "new" ? null : editingLocality}
+                      localityState={form.state}
+                      currentProfileId={form.jurisdiction_profile_id}
+                      onLink={id => setForm(previous => ({ ...previous, jurisdiction_profile_id: id }))}
+                    />
 
                     <div className="border-t pt-3">
                       <div className="flex items-center justify-between mb-2">
