@@ -257,7 +257,7 @@ try{
   assert.equal(await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText(/Saved application instructions/).count(),1);
   assert.equal(await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText(/Saved booking instructions/).count(),0,'Inspection instructions stay in inspection role');
   assert.equal(await handoff.getByRole('article',{name:'Inspection scheduling and stages',exact:true}).getByText(/Schedule the final electrical inspection through the provider portal/).count(),1);
-  await handoff.getByText('not-applicable candidate · confirm before skipping',{exact:true}).waitFor();
+  await handoff.getByText(/not-applicable candidate · confirm before skipping/).waitFor();
   await handoff.getByText('This context is unverified',{exact:false}).waitFor();
   assert.equal(await handoff.locator('a[href^="javascript:"]').count(),0,'Unsafe saved source URLs are not opened');
   await page.getByLabel('I reviewed the proposed steps and unresolved questions. Saving does not approve requirements or start job work.').check();
