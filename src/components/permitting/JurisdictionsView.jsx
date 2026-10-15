@@ -168,6 +168,39 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     return finalRecord;
   };
 
+  const handleOfficeResearchSave = async (jurisdiction, officeResearch) => {
+    if (!jurisdiction?.id || !officeResearch || !Array.isArray(officeResearch.roles))
+      throw new Error("The selected jurisdiction research draft is unavailable. Reload before saving.");
+    const actor = currentUser?.full_name || currentUser?.email || "CCS Staff";
+    const updated = await saveJurisdictionFromLoadedSnapshot({
+      entity: JurisdictionProfile,
+      jurisdiction,
+      formData: { office_research: officeResearch },
+      label: `Office research ${jurisdiction.name || jurisdiction.id}`,
+    });
+    let finalRecord = updated;
+    try {
+      finalRecord = await appendJurisdictionActivitySafely({
+        entity: JurisdictionProfile,
+        jurisdictionId: updated.id,
+        entry: {
+          id: `office_research_${Date.now()}`,
+          action: "manual_edit",
+          description: "Staff edited a saved office research draft; office authority remains unverified.",
+          user: actor,
+          timestamp: new Date().toISOString(),
+          changes: { office_research_saved: true, verification_status: "needs_verification" },
+        },
+        label: `Office research history ${jurisdiction.name || jurisdiction.id}`,
+      });
+    } catch (activityError) {
+      console.error("Office research saved but activity history append failed:", activityError);
+    }
+    setJurisdictions(prev => prev.map(row => row.id === finalRecord.id ? finalRecord : row));
+    if (selectedJurisdiction?.id === finalRecord.id) setSelectedJurisdiction(finalRecord);
+    return finalRecord;
+  };
+
   const handleDelete = async (id) => {
     const loaded = jurisdictions.find(j => j.id === id);
     if (!loaded?.id) {
