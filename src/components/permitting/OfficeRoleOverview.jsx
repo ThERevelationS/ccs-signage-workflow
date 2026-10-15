@@ -23,7 +23,7 @@ export default function OfficeRoleOverview({ rows = [], onInspect, onNavigate })
     <p className="text-xs">Electrical permit issuance and inspection are separate responsibilities. Office names, links and populated fields do not establish authority, commercial-sign applicability or coverage of a project address. County membership does not prove responsibility.</p>
     <label className="block text-sm">Show roles
       <select aria-label="Office role gap filter" value={filter} onChange={event => setFilter(event.target.value)} className="mt-1 min-h-11 w-full min-w-0 rounded border px-2">
-        <option value="all">All seven roles</option><option value="gaps">Missing or ambiguous metadata ({gaps})</option>
+        <option value="all">All seven roles</option><option value="gaps">Missing or incomplete metadata ({gaps})</option>
       </select>
     </label>
     {filter === 'gaps' && gaps === 0 && <p role="status" className="text-sm">No missing checklist metadata detected. Staff review and location applicability are still required.</p>}
