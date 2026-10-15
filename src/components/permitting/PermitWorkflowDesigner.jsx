@@ -13,7 +13,7 @@ const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Serv
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
 
 function handoffText(value) {
-  if (typeof value === "string") return value.trim() || "Not recorded · confirm with the responsible office";
+  if (typeof value === "string") return value.length ? value : "Not recorded · confirm with the responsible office";
   if (value === null || value === undefined) return "Not recorded · confirm with the responsible office";
   return String(value);
 }
@@ -29,7 +29,7 @@ function ElectricalPlanningHandoffView({ handoff }) {
   return <section aria-label="Electrical planning handoff" className="min-w-0 space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 [overflow-wrap:anywhere]">
     <h3 className="font-semibold text-amber-950">Electrical office planning handoff · saved research draft</h3>
     <p className="text-sm text-amber-900">This context is unverified and does not approve requirements, determine applicability, select a provider, or create job tasks. Permit issuance and inspection responsibility remain separate.</p>
-    <p className="text-xs text-amber-900">Research date: {handoffText(handoff.researched_at)} · Jurisdiction: {handoffText(handoff.jurisdiction?.jurisdiction_name)}{handoff.jurisdiction?.state ? `, ${handoff.jurisdiction.state}` : ""}</p>
+    <p className="text-xs text-amber-900">Research method: {handoffText(handoff.research_method)} · Research date: {handoffText(handoff.researched_at)} · Jurisdiction: {handoffText(handoff.jurisdiction?.jurisdiction_name)}{handoff.jurisdiction?.state ? `, ${handoff.jurisdiction.state}` : ""}</p>
     <div className="grid min-w-0 gap-3 sm:grid-cols-2">
       {(handoff.roles || []).map(role => <article key={role.role} aria-label={role.label} className="min-w-0 space-y-2 rounded border border-amber-200 bg-white p-3 text-xs">
         <h4 className="font-semibold">{role.label}</h4>
