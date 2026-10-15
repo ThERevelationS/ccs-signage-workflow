@@ -1,0 +1,15 @@
+# Office and electrical role evidence overview
+
+Phase 10 — Ohio/Kentucky coverage, milestone 1. Geographic identity/office reconciliation remains partial; authenticated read-only live acceptance remains pending. UI metadata counts do not change phase or coverage completion counts.
+
+Added OfficeRoleOverview.jsx, using the existing seven-role office research checklist. Every role remains visible even with no saved finding. Loaded finding counts and missing/ambiguous metadata counts are explicitly not verified coverage or required permits. Gap filtering covers absent/multiple findings, missing office identity, usable source link, responsibility quote, service area, unresolved applicability and unfilled expected common/role-specific research fields. Populated metadata does not establish authority. Electrical issuance and inspections remain separate. Multiple findings remain separate with individual inspect buttons; no automatic choice or merging.
+
+OfficeResearchFindings now embeds the overview, expands/focuses the exact selected finding, preserves full saved evidence and offers document/requirements workspace shortcuts. Empty research gets the same seven-role overview with unknown responsibilities. Existing parent fallback replaced with this unified component keyed to jurisdiction. Unknown-role saved detail rows remain visible in the full findings list. No scans, research, AI, record reads or writes are triggered by overview/filter/navigation actions.
+
+Files: src/components/permitting/OfficeRoleOverview.jsx; OfficeResearchFindings.jsx; JurisdictionDetailPanel.jsx; scripts/test-permitting-documents-browser.mjs.
+
+Validation: targeted ESLint passed with six preexisting JurisdictionDetailPanel warnings and no errors; one production build passed; enhanced document/office browser suite and exact-source navigation suite passed at 320/390/1280; git diff --check passed. Synthetic fixture includes a missing building role, two zoning candidates, a fully populated draft sign role, separate electrical gaps and an empty jurisdiction. Checks cover metadata counts, gap filter, distinct candidates, exact focus, electrical checklist labels, direct workspace focus, no extra reads/provider calls, no overflow and existing document/source behavior. Receipts: docs/permitting-documents-browser-2026-10-14.json and docs/permitting-source-navigation-browser-2026-10-14.json.
+
+Nothing published or deployed. No backend/schema changes or production record mutations. Authenticated employee/admin browser acceptance remains unverified. No statewide expansion in this batch.
+
+Next meaningful chunk: turn the electrical research details into a compact issuance-versus-inspection task view for forms, fees, contractor requirements, submittals, booking/prerequisites and inspection stages, using only recorded findings and explicit missing states; preserve separate providers and applicability warnings. If authenticated staff access becomes available, prioritize real saved-text read-only acceptance.
