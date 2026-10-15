@@ -4,6 +4,9 @@ import { build } from 'esbuild';
 // Browser-safe, pure shared helpers only. Backend directories stay denied by Vite.
 const names = new Set([
   'permittingAddressLocality.js', 'permittingAddressState.js',
+  'permittingOfficeResearch.mjs', 'permittingOfficeResearchRequirements.json',
+  'permittingSourceAuthorityPolicy.mjs', 'jurisdictionSourceTextSegments.mjs',
+  'jurisdictionSourcePdfText.mjs',
   'salesTaskStatusAudit.mjs', 'salesTaskStageCatalog.mjs',
   'smartsheetSalesSafety.mjs', 'smartsheetSalesAssigneeTranslation.mjs',
   'smartsheetSalesImportEligibility.mjs', 'historicalSalesOutcomeReconciliation.mjs',
