@@ -4,7 +4,7 @@ import ElectricalResearchTasks from './ElectricalResearchTasks';
 import {officeResearchFieldLabels} from '../../../base44/shared/permittingOfficeResearch.mjs';
 import {safeGovernmentOfficeSourceUrl} from './governmentOfficeCatalog';
 
-export default function OfficeResearchFindings({research,onNavigate}){
+export default function OfficeResearchFindings({research,onNavigate,onPreviewWorkflow}){
  const nodes=useRef(new Map());
  const rows=research?.method==='office-research-requirements-v1' && Array.isArray(research.roles)?research.roles.filter(row=>row && typeof row==='object'):[];
  const date=new Date(research?.researched_at);
