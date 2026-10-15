@@ -13,6 +13,41 @@
 
 import { base44 } from "@/api/base44Client";
 
+const ELECTRICAL_RESEARCH_ROLES = [
+  { role: "electrical_permit", label: "Permit issuance" },
+  { role: "electrical_inspection", label: "Inspection scheduling and stages" },
+];
+
+// Carry saved findings as immutable, non-operational context; never promote them to rules.
+export function createElectricalPlanningHandoff(research, jurisdiction = {}) {
+  const sourceRows = research?.method === "office-research-requirements-v1" && Array.isArray(research.roles)
+    ? research.roles : [];
+  return {
+    classification: "saved_research_draft_non_operational",
+    research_method: research?.method || "",
+    researched_at: research?.researched_at || "",
+    jurisdiction: {
+      jurisdiction_id: jurisdiction?.id || jurisdiction?.jurisdiction_id || "",
+      jurisdiction_name: jurisdiction?.name || jurisdiction?.jurisdiction_name || "",
+      state: jurisdiction?.state || "",
+    },
+    roles: ELECTRICAL_RESEARCH_ROLES.map(({ role, label }) => ({
+      role, label,
+      findings: sourceRows.filter(row => row?.role === role).map(row => ({
+        office_name: row.office_name || "",
+        applicability: row.applicability || "unknown",
+        service_area: row.service_area || "",
+        responsibility_quote: row.responsibility_quote || "",
+        delegation_quote: row.delegation_quote || "",
+        official_source_url: row.official_source_url || "",
+        contact_info: row.contact_info && typeof row.contact_info === "object" ? { ...row.contact_info } : {},
+        notes: row.notes || "",
+        research_fields: row.research_fields && typeof row.research_fields === "object" ? { ...row.research_fields } : {},
+      })),
+    })),
+  };
+}
+
 // ── Rules hierarchy ──
 
 const APPROVED_RULE_STATUS = "staff_approved";
