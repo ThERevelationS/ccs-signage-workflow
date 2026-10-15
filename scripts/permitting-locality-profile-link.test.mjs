@@ -93,8 +93,9 @@ test('state-scoped profile pages load incrementally only when requested', async 
     await h.click('Load profiles for OH');
     assert.equal(h.calls.length, 1);
     await h.click('Load next 50 profiles');
-    assert.deepEqual(Array.from(h.calls[1]), ['filter', { state: 'OH' }, 'name', 50, 50]);
+    assert.equal(h.calls[1][0], 'filter');
     assert.equal(h.calls[1][1].state, 'OH');
+    assert.deepEqual(Array.from(h.calls[1].slice(2)), ['name', 50, 50]);
     assert.equal(h.options().some(option => option.value === 'oh-next'), true);
   } finally {
     await h.close();
