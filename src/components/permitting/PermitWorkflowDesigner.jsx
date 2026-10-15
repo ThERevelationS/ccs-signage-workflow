@@ -16,6 +16,7 @@ export default function PermitWorkflowDesigner({
   onClose,
   preselectedJurisdiction = null,
   initialSavedDraft = null,
+  electricalPlanningHandoff = null,
   workOrder = null,
   onLinesCreated = () => {},
 }) {
