@@ -37,6 +37,22 @@ try{
   const catalog=page.getByRole('region',{name:'Document repository catalog'});
   await catalog.getByText('5 shown from 5 loaded entries.',{exact:false}).waitFor();
   const cards=catalog.locator(':scope > details');assert.equal(await cards.count(),5);
+  const compare=catalog.getByRole('region',{name:'Compare saved source versions'});
+  const first=compare.getByLabel('Comparison source 1',{exact:true}),second=compare.getByLabel('Comparison source 2',{exact:true});
+  assert.equal(await first.locator('option').count(),5,'Only four canonical records, no collected links');
+  const readsBeforeCompare=await page.evaluate(()=>window.fixture.reads.length);
+  await first.selectOption('saved-form');
+  assert.ok(await second.locator('option[value="saved-form"]').isDisabled());
+  await second.selectOption('older');
+  await compare.getByText('Hash comparison unavailable:',{exact:false}).waitFor();
+  assert.equal(await compare.getByRole('article').count(),2);
+  await compare.getByText('https://example.gov/archive.pdf',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.fixture.reads.length),readsBeforeCompare,'Comparison performs no additional reads');
+  assert.equal(await page.evaluate(()=>window.fixture.textReads.length),0,'Comparison never reads page text');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await compare.getByRole('button',{name:'Clear comparison'}).click();
+  assert.equal(await first.inputValue(),'');assert.equal(await second.inputValue(),'');
+
   const availability=catalog.getByRole('combobox',{name:'Document availability',exact:true});
   for(const [filter,count] of [['text',1],['retained',2],['missing',3],['ocr',0],['all',5]]){
    await availability.selectOption(filter);assert.equal(await cards.count(),count,'Availability '+filter);
