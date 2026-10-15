@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import PDFViewer from './PDFViewer';
+import SourceVersionComparison from './SourceVersionComparison';
 import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from './SourceTextEvidenceBrowser';
 
 const types = { sign_ordinance: 'Sign ordinance', permit_application: 'Application', zoning_code: 'Zoning code', fee_schedule: 'Fees', checklist: 'Checklist', legislative_record: 'Legislative record', gis_resource: 'Map / GIS', portal_instruction: 'Portal instructions', other: 'Other' };
@@ -13,7 +14,7 @@ const link = value => { try { const url = new URL(value); return ['https:', 'htt
 const pdfLink = row => Boolean(link(row.archived_file_url)) && /\.pdf(?:[?#]|$)/i.test(row.archived_file_url || row.official_url || '') ||
   Boolean(link(row.archived_file_url)) && /\.pdf(?:[?#]|$)/i.test(row.official_url || '');
 const previewTooLarge = row => Number(row.file_bytes) > 12 * 1024 * 1024;
-const fields = ['id','jurisdiction_id','jurisdiction_profile_doc_id','title','source_type','category','official_url','online_form_url','archived_file_url','archived_file_path','file_hash_sha256','file_bytes','retrieval_timestamp','document_revision_date','effective_or_adopted_date','content_status','authority_classification','verification_status','reviewer','issuing_office','jurisdiction_scope','notes_gaps','last_checked','last_changed','superseded_by','text_extraction_state'];
+const fields = ['id','jurisdiction_id','jurisdiction_profile_doc_id','title','source_type','category','official_url','online_form_url','archived_file_url','archived_file_path','file_hash_sha256','file_bytes','retrieval_timestamp','document_revision_date','effective_or_adopted_date','content_status','authority_classification','verification_status','reviewer','issuing_office','jurisdiction_scope','notes_gaps','last_checked','last_changed','supersedes','superseded_by','text_extraction_state'];
 
 function sameCollectedVersion(source, doc) {
   if (!doc || !source.jurisdiction_profile_doc_id || source.jurisdiction_profile_doc_id !== doc.id) return false;
@@ -152,6 +153,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
       {!selected.loading && (!selected.row || selected.error) && <Button variant="outline" className="min-h-11" onClick={() => setSourceRetry(value => value + 1)}>Retry linked source</Button>}
       {onNavigate && <Button variant="outline" className="min-h-11" onClick={() => onNavigate('documents')}>Clear source selection</Button>}
     </div>}
+    <SourceVersionComparison key={String(jurisdictionId) + ':' + refresh} jurisdictionId={jurisdictionId} rows={currentState.loading || currentState.error ? [] : loaded} />
     <Input aria-label="Search document catalog" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search title, type, office, scope or gaps" className="min-h-11" />
     <div className="flex flex-col gap-2 sm:flex-row">
       <select aria-label="Document type" className="min-h-11 min-w-0 w-full rounded-md border px-2 text-sm sm:flex-1" value={type} onChange={e => setType(e.target.value)}><option value="all">All document types ({rows.length})</option>{[...new Set(rows.map(row => row.source_type).filter(Boolean))].sort().map(value => <option key={value} value={value}>{types[value] || label(value)} ({rows.filter(row => row.source_type === value).length})</option>)}</select>
