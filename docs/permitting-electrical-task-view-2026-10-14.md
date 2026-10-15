@@ -1,0 +1,11 @@
+# Electrical permit and inspection planning view
+
+Phase 10 — Ohio/Kentucky coverage, milestone 1. Geographic reconciliation remains partial; authenticated live acceptance remains pending.
+
+ElectricalResearchTasks.jsx presents saved electrical permit issuance and inspection research in separate columns (stacked on phones). Issuance uses the existing role checklist for illuminated signs, circuits/connections, applications, portals, fees, contractors and submittals. Inspections uses provider, booking, stages, lead time, prerequisites, access/concealment, reinspection and utility release fields. No cross-role substitution or fallback from similarly named fields. Office, service area, applicability, delegation and safe source links remain attached to each separate saved candidate. Missing values are explicit. Each candidate opens/focuses its full original finding through OfficeResearchFindings. Multiple candidates remain separate; no auto assignment. Empty research retains two unknown responsibilities.
+
+Read-only planning questions, not approved requirements or a saved job checklist. No new reads, research/AI, PDF fetches, source writes or job changes. No frontend publication, backend/schema changes or production data mutations.
+
+Validation: targeted ESLint passed; one production build passed; enhanced actual-parent document/office synthetic browser suite passed at 320/390/1280; git diff --check passed. Fixture tests separate saved application/fee data from booking/stages/prerequisites, unknown fields, not-applicable candidate warning, unsafe link rejection, both exact detail focus actions, empty state and viewport overflow. The older gap assertion was updated from scheduling to booking lead time because the fixture now provides scheduling data. Receipt: docs/permitting-documents-browser-2026-10-14.json. Authenticated live acceptance not performed.
+
+Next batch: inspect workflow designer and add an explicit handoff from office/electrical planning into workflow preview, preserving source and role provenance, unresolved applicability and missing evidence. No real job creation or automatic requirement approval; use draft/preview-only behavior. First inspect fresh live source to determine the smallest complete implementation. If authenticated staff access genuinely becomes available, prioritize read-only saved-text acceptance instead.
