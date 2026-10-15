@@ -43,6 +43,7 @@ export default function PermittingDraftLibrary({ onClose }) {
             return <article key={row.id} className="min-w-0 rounded-lg border p-3 break-words">
               <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0 flex-1"><h3 className="font-semibold">{row.title || 'Untitled draft'}</h3><p className="text-sm text-gray-600">{row.jurisdiction_name || 'Jurisdiction unresolved'}{row.state ? `, ${row.state}` : ''}</p></div><span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">Draft · unapproved</span></div>
               <p className="mt-2 text-sm">{row.snapshot?.steps?.length || 0} proposed steps · {gaps} review items</p>
+              {row.snapshot?.draft_revision && <p className="mt-1 text-xs text-amber-800">Revision {row.snapshot.draft_revision.revision_number} · based on {row.snapshot.draft_revision.parent_title || row.snapshot.draft_revision.parent_draft_id}</p>}
               {row.review_notes && <p className="mt-1 text-sm text-gray-600">Review notes: {row.review_notes}</p>}
               {!valid && <p className="text-sm text-amber-800">This draft is incomplete and cannot be opened.</p>}
               <Button className="mt-2 min-h-11" variant="outline" disabled={!valid} onClick={() => setSelected(row)}>Review draft</Button>
@@ -51,6 +52,6 @@ export default function PermittingDraftLibrary({ onClose }) {
         </>}
       </div>
     </section>
-    {selected && <PermitWorkflowDesigner key={selected.id} isOpen initialSavedDraft={selected} preselectedJurisdiction={selected.snapshot.jurisdiction} onClose={() => setSelected(null)} />}
+    {selected && <PermitWorkflowDesigner key={selected.id} isOpen initialSavedDraft={selected} preselectedJurisdiction={selected.snapshot.jurisdiction} onClose={() => setSelected(null)} onDraftSaved={() => setRefresh(v => v + 1)} />}
   </div>;
 }
