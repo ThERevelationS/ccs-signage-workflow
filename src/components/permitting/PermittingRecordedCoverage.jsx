@@ -10,6 +10,7 @@ import PermittingRetainedPageReview from './PermittingRetainedPageReview';
 
 import officialInventory from './officialGeographicInventory.json';
 import PermitSettingsDialog from './PermitSettingsDialog';
+import ElectricalOfficeGapList from './ElectricalOfficeGapList';
 import useLocalityOfficeGapReview from './useLocalityOfficeGapReview';
 import { useAuth } from '@/components/auth/EmailGate';
 
@@ -244,11 +245,13 @@ function RecordedCoverageSession({readCoverage,authorized}) {
         <p className="text-sm text-amber-800">These counts describe historical flags on saved locality setups. A recorded staff-review flag can coexist with missing or duplicated office IDs, unresolved profile links, missing review provenance or revoked/uncertain authority events. Check “Saved office relationship evidence review” and “Recorded authority-review event cross-check” before relying on either role. Neither count verifies current authority or the job address.</p>
         <p className="text-sm">No separate role assigned means this saved setup has no explicit issuer or inspector assignment; it does not prove that no provider exists. A generic electrical label does not establish either role. Both roles still need exact service-area and project-specific applicability review.</p>
         <details><summary className="min-h-11 cursor-pointer">View saved locality electrical role gaps ({result.electrical_offices.gaps.length})</summary>
-          <ul className="space-y-2 text-sm">{result.electrical_offices.gaps.map(row => <li key={row.id}>
-            <strong>{row.state} {row.name}</strong>: {row.roles.electrical_permit==='staff_verified'?'Permit issuer staff-review flag recorded':row.roles.electrical_permit==='needs_review'?'Permit issuer needs review':'Permit issuer role not assigned'}; {row.roles.electrical_inspection==='staff_verified'?'Inspection provider staff-review flag recorded':row.roles.electrical_inspection==='needs_review'?'Inspection provider needs review':'Inspection provider role not assigned'}.
-            {row.legacy_broad_role_present && ' Broad electrical role recorded; separate responsibilities remain unresolved.'}
-            {officeReview.canReview && <Button type="button" variant="outline" aria-label={'Review office setup for '+row.name} className="mt-2 min-h-11 h-auto whitespace-normal" disabled={Boolean(officeReview.openingId||officeReview.record)} onClick={()=>officeReview.open(row.id)}>{officeReview.openingId===row.id?'Opening saved locality…':'Review office setup'}</Button>}
-          </li>)}</ul>
+          <ElectricalOfficeGapList
+            gaps={result.electrical_offices.gaps}
+            canReview={officeReview.canReview}
+            openingId={officeReview.openingId}
+            recordOpen={Boolean(officeReview.record)}
+            onReview={officeReview.open}
+          />
           {!result.electrical_offices.gaps.length && <p className="text-sm">No missing or pending separate role flags in these saved setups. Office identity, profile links, review evidence and historical authority-event gaps may still remain; check their separate review sections. Current authority, job-address applicability and statewide completeness remain unverified.</p>}
         </details>
         {!!result.electrical_offices.excluded_record_ids.length && <p role="alert">Unsupported-state records excluded: {result.electrical_offices.excluded_record_ids.length}.</p>}
