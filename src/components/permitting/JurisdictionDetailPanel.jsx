@@ -861,7 +861,7 @@ Answer only from the provided excerpts and cite the document title and official 
         <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
 
         <section ref={node=>{workspaceSections.current.offices=node;}} tabIndex={-1} aria-label="Office and electrical research workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
-          <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} onNavigate={navigateWorkspace}/>
+          <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} onNavigate={navigateWorkspace} onPreviewWorkflow={() => { setElectricalPlanningHandoff(createElectricalPlanningHandoff(jurisdiction.office_research, jurisdiction)); setShowWorkflowDesigner(true); }}/>
         </section>
 
         {/* CAGIS Location Search */}
