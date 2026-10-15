@@ -1,4 +1,4 @@
-import { officeResearchChecklist, officeResearchFieldLabels } from '../../../base44/shared/permittingOfficeResearch.mjs';
+import { officeResearchChecklist } from '../../../base44/shared/permittingOfficeResearch.mjs';
 import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog.js';
 
 const unresolvedText = /^(?:unknown|not known|not found(?: yet)?|not recorded|not established|unresolved|pending)$/i;
@@ -59,6 +59,3 @@ export function assessOfficeResearchRoles(rows) {
   };
 }
 
-export function officeResearchFieldLabel(key) {
-  return officeResearchFieldLabels[key] || key;
-}
