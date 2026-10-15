@@ -1461,7 +1461,8 @@ Answer only from the provided excerpts and cite the document title and official 
       {showWorkflowDesigner && (
         <PermitWorkflowDesigner
           isOpen={showWorkflowDesigner}
-          onClose={() => setShowWorkflowDesigner(false)}
+          onClose={() => { setShowWorkflowDesigner(false); setElectricalPlanningHandoff(null); }}
+          electricalPlanningHandoff={electricalPlanningHandoff}
           preselectedJurisdiction={{
             jurisdiction_name: jurisdiction.name,
             state: jurisdiction.state,
