@@ -1447,7 +1447,7 @@ Answer only from the provided excerpts and cite the document title and official 
         <Button
           type="button"
           variant="outline"
-          onClick={() => setShowWorkflowDesigner(true)}
+          onClick={() => { setElectricalPlanningHandoff(null); setShowWorkflowDesigner(true); }}
           className="min-h-11 w-full gap-2 border-violet-300 bg-white text-violet-700 hover:bg-violet-100"
         >
           <Sparkles className="h-4 w-4" />
