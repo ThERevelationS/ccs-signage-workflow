@@ -58,4 +58,3 @@ export function assessOfficeResearchRoles(rows) {
     authority_verified: false,
   };
 }
-
