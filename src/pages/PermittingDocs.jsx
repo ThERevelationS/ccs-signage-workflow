@@ -49,7 +49,7 @@ const sourceFields = [
 ];
 
 function SavedPhysicalTextAcceptance() {
-  const [localities, setLocalities] = useState({ rows: [], loading: true, error: "" });
+  const [jurisdictions, setJurisdictions] = useState({ rows: [], loading: true, error: "" });
   const [jurisdictionId, setJurisdictionId] = useState("");
   const [catalog, setCatalog] = useState({ rows: [], loading: false, error: "" });
   const [selectedId, setSelectedId] = useState("");
@@ -58,13 +58,13 @@ function SavedPhysicalTextAcceptance() {
   useEffect(() => {
     let active = true;
     loadAllEntityRows({
-      entity: base44.entities.PermitLocality,
+      entity: base44.entities.JurisdictionProfile,
       sort: null,
-      label: "Permitting text reader locality catalog",
+      label: "Permitting text reader jurisdiction catalog",
     }).then(rows => {
-      if (active) setLocalities({ rows, loading: false, error: "" });
+      if (active) setJurisdictions({ rows, loading: false, error: "" });
     }).catch(() => {
-      if (active) setLocalities({ rows: [], loading: false, error: "Canonical permitting localities could not be loaded." });
+      if (active) setJurisdictions({ rows: [], loading: false, error: "Canonical permitting jurisdictions could not be loaded." });
     });
     return () => { active = false; };
   }, []);
@@ -87,14 +87,14 @@ function SavedPhysicalTextAcceptance() {
       setCatalog({ rows, loading: false, error: "" });
       setSelectedId(current => rows.some(row => row.id === current && hasSavedPhysicalPageText(row)) ? current : "");
     }).catch(() => {
-      if (active) setCatalog({ rows: [], loading: false, error: "Saved source records for this locality could not be loaded." });
+      if (active) setCatalog({ rows: [], loading: false, error: "Saved source records for this jurisdiction could not be loaded." });
     });
     return () => { active = false; };
   }, [jurisdictionId, refresh]);
 
   const candidates = catalog.rows.filter(hasSavedPhysicalPageText);
   const selected = candidates.find(row => row.id === selectedId);
-  const selectedLocality = localities.rows.find(row => row.id === jurisdictionId);
+  const selectedJurisdiction = jurisdictions.rows.find(row => row.id === jurisdictionId);
 
   return (
     <Card className="border-blue-200">
@@ -102,35 +102,35 @@ function SavedPhysicalTextAcceptance() {
         <div>
           <CardTitle className="text-base">Inspect saved physical-page text</CardTitle>
           <p className="mt-1 text-sm text-gray-600">
-            Read-only view using only permitting locality and PermittingSourceDocument records. It does not load work orders or customer records.
+            Read-only view using only permitting JurisdictionProfile and PermittingSourceDocument records. It does not load work orders or customer records.
           </p>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {localities.loading && <p role="status">Loading canonical permitting localities…</p>}
-        {localities.error && <p role="alert" className="text-sm text-red-700">{localities.error}</p>}
-        {!localities.loading && !localities.error && (
+        {jurisdictions.loading && <p role="status">Loading canonical permitting jurisdictions…</p>}
+        {jurisdictions.error && <p role="alert" className="text-sm text-red-700">{jurisdictions.error}</p>}
+        {!jurisdictions.loading && !jurisdictions.error && (
           <>
-            <label className="block text-sm font-medium" htmlFor="saved-locality-select">Choose the exact canonical locality</label>
+            <label className="block text-sm font-medium" htmlFor="saved-locality-select">Choose the exact canonical jurisdiction</label>
             <select
               id="saved-locality-select"
               className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
               value={jurisdictionId}
               onChange={event => { setJurisdictionId(event.target.value); setSelectedId(""); }}
             >
-              <option value="">Select locality</option>
-              {localities.rows.map(row => (
+              <option value="">Select canonical jurisdiction</option>
+              {jurisdictions.rows.map(row => (
                 <option key={row.id} value={row.id}>
-                  {[row.name || row.locality_name || "Unnamed locality", row.state || row.state_abbr].filter(Boolean).join(", ")} · {row.id}
+                  {[row.name || "Unnamed jurisdiction", row.state].filter(Boolean).join(", ")} · {row.id}
                 </option>
               ))}
             </select>
           </>
         )}
-        {selectedLocality && (
+        {selectedJurisdiction && (
           <>
             <p className="text-xs text-gray-600">
-              Selected locality ID: {selectedLocality.id}. Source lookup is restricted to this exact jurisdiction ID.
+              Selected jurisdiction ID: {selectedJurisdiction.id}. Source lookup is restricted to this exact canonical jurisdiction ID.
             </p>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-gray-600">
@@ -175,7 +175,7 @@ function SavedPhysicalTextAcceptance() {
               </div>
             )}
             {!catalog.loading && !catalog.error && candidates.length === 0 && (
-              <p className="text-sm text-gray-600">No source in this locality’s loaded catalog has complete saved-page identity metadata.</p>
+              <p className="text-sm text-gray-600">No source in this jurisdiction’s loaded catalog has complete saved-page identity metadata.</p>
             )}
           </>
         )}
