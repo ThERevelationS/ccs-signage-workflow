@@ -298,6 +298,7 @@ export default function PermitWorkflowDesigner({
                 <p>Collected sources are evidence, not approval. Pending findings and open questions remain unverified when this draft is saved.</p>
                 {draft.jurisdiction_unresolved && <p className="text-amber-800">Location unresolved. This draft cannot establish jurisdiction authority.</p>}
               </div>
+              {draft.electrical_planning_handoff && <ElectricalPlanningHandoffView handoff={draft.electrical_planning_handoff} /> }
               {/* Summary */}
               <div className="rounded-lg border-l-4 border-l-purple-400 bg-purple-50 p-3">
                 <p className="text-sm font-semibold text-purple-900">{draft.summary}</p>
