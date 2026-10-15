@@ -10,6 +10,28 @@ test('frontend bundles preserve electrical helper behavior without blocked runti
  assert.deepEqual(module.summarizeElectricalRoleCoverage([]), original.summarizeElectricalRoleCoverage([]));
  assert.doesNotMatch(code, /from ['"]\.\//);
 });
+test('office research and segmented source evidence resolve through the safe frontend bridge', async () => {
+ const plugin = frontendSharedModules(); plugin.addWatchFile = () => {};
+ const importer = process.cwd() + '/src/components/permitting/example.jsx';
+ const officeId = plugin.resolveId('../../../base44/shared/permittingOfficeResearch.mjs', importer);
+ assert.ok(officeId);
+ const officeCode = await plugin.load(officeId);
+ assert.doesNotMatch(officeCode, /from ['"]\.\//);
+ const office = await import('data:text/javascript;base64,' + Buffer.from(officeCode).toString('base64'));
+ assert.ok(office.officeResearchChecklist.roles.some(role => role.key === 'electrical_permit'));
+ assert.ok(office.officeResearchChecklist.roles.some(role => role.key === 'electrical_inspection'));
+ const normalized = office.normalizeOfficeResearch({roles:[{role:'electrical_permit',office_name:'Fixture office',official_source_url:'https://fixture.gov'}]}, {jurisdiction:{id:'fixture',name:'Fixture City',state:'OH'}});
+ assert.equal(normalized.roles.find(role => role.role === 'electrical_permit').official_source_url, 'https://fixture.gov/');
+ assert.equal(normalized.roles.find(role => role.role === 'electrical_permit').verification_status, 'needs_verification');
+
+ const sourceId = plugin.resolveId('../../../base44/shared/jurisdictionSourceTextSegments.mjs', importer);
+ assert.ok(sourceId);
+ const sourceCode = await plugin.load(sourceId);
+ assert.doesNotMatch(sourceCode, /from ['"]\.\//);
+ const source = await import('data:text/javascript;base64,' + Buffer.from(sourceCode).toString('base64'));
+ assert.equal(source.segmentedProgressOwned({extracted_pages:[{}],text_extraction_state:{storage_mode:'pdf-page-segments-v1',inline_page_count:1,pages_extracted:1,next_page:2,segment_count:0}}), true);
+ assert.equal(source.segmentedProgressOwned({extracted_pages:[{}],text_extraction_state:{storage_mode:'pdf-page-segments-v1',inline_page_count:1,pages_extracted:2,next_page:4,segment_count:1,last_segment:{page_start:2,page_end:2}}}), false);
+});
 test('backend files and non-approved helpers cannot resolve through frontend bridge', async () => {
  const plugin = frontendSharedModules();
  const importer = process.cwd() + '/src/components/permitting/example.jsx';
