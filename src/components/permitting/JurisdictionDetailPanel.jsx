@@ -105,6 +105,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [verificationError, setVerificationError] = useState("");
   const { runAction } = useResearchProgress();
   const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
+  const [electricalPlanningHandoff, setElectricalPlanningHandoff] = useState(null);
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
   const pdfSources = (jurisdiction.documents || []).filter(doc => /\.pdf(?:[?#]|$)/i.test(doc.url || ""));
   const pendingPDFs = pdfSources.filter(doc => !doc.file_url && /^[a-f0-9]{64}$/i.test(doc.source_sha256 || "") && Number.isSafeInteger(Number(doc.source_bytes)) && Number(doc.source_bytes) > 0);
