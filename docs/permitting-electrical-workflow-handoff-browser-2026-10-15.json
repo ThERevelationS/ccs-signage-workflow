@@ -1,0 +1,22 @@
+{
+  "tested_at": "2026-10-15T01:24:59.307Z",
+  "mode": "actual detail panel, office research findings, and workflow designer with production CSS; synthetic data and Base44 API stubs; unrelated heavy child surfaces stubbed; external requests blocked",
+  "production_writes": 0,
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "seven-role office overview, missing roles, duplicate candidates kept separate, gap filter, electrical checklist gaps, focus and workspace navigation, empty jurisdiction; actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, explicit workflow handoff with preserved separated electrical findings and draft snapshot, one synthetic AI composition and permitting draft, no WorkOrder writes, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "seven-role office overview, missing roles, duplicate candidates kept separate, gap filter, electrical checklist gaps, focus and workspace navigation, empty jurisdiction; actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, explicit workflow handoff with preserved separated electrical findings and draft snapshot, one synthetic AI composition and permitting draft, no WorkOrder writes, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "seven-role office overview, missing roles, duplicate candidates kept separate, gap filter, electrical checklist gaps, focus and workspace navigation, empty jurisdiction; actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, explicit workflow handoff with preserved separated electrical findings and draft snapshot, one synthetic AI composition and permitting draft, no WorkOrder writes, no overflow"
+    }
+  ]
+}
