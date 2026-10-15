@@ -24,6 +24,10 @@ const DOC_TYPE_COLORS = {
 
 export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSelect, isRefreshing, duplicateCount = 1 }) {
   const docCount = jurisdiction.documents?.length || 0;
+  const lastUpdatedDate = jurisdiction.last_updated ? new Date(jurisdiction.last_updated) : null;
+  const lastUpdatedLabel = lastUpdatedDate && !Number.isNaN(lastUpdatedDate.getTime())
+    ? format(lastUpdatedDate, "MM/dd/yy")
+    : null;
   const hasRequirements = jurisdiction.permit_requirements?.requires_permit !== undefined;
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
 
@@ -106,10 +110,10 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               Requirements extracted
             </span>
           )}
-          {jurisdiction.last_updated && (
+          {lastUpdatedLabel && (
             <span className="flex items-center gap-1 text-xs text-gray-400">
               <Clock className="w-3 h-3" />
-              {format(new Date(jurisdiction.last_updated), "MM/dd/yy")}
+              {lastUpdatedLabel}
             </span>
           )}
         </div>
