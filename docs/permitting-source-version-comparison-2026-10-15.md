@@ -6,6 +6,8 @@ Added SourceVersionComparison to DocumentRepositoryBrowser. Two explicit distinc
 
 Validation: targeted ESLint passed; one production build completed; enhanced document catalog synthetic browser suite passed at 320/390/1280 including comparison identity, hashes, no extra reads, jurisdiction reset, overflow, existing catalog filters and saved-page tools. git diff --check passed. Initial synthetic assertions were corrected to wait for React rendering and account for the explicitly tested empty jurisdiction read. Receipt: docs/permitting-documents-browser-2026-10-14.json.
 
+Validation for the comparison text panes: targeted ESLint and Vite production build passed. The hosted preview still displays “Preview is starting up” after the build; authenticated employee/admin and deployed endpoint acceptance remain blocked.
+
 No frontend publication, backend/schema changes or production record mutations. Authenticated employee/admin browser acceptance and deployed source-page endpoint acceptance remain unverified.
 
 Next: authenticated employee/admin browser and deployed source-page endpoint acceptance when the hosted preview is available. Until then, keep the preview blocker recorded and continue only bounded permitting-only improvements. Statewide expansion remains separate.
