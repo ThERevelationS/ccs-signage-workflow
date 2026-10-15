@@ -14,7 +14,7 @@ export default function OfficeResearchFindings({research,onNavigate,onPreviewWor
   <p className="text-xs">Research draft · {research?.researched_at && Number.isFinite(date.getTime()) ? date.toLocaleDateString() : 'Date unavailable'}. Review findings before relying on requirements or office roles.</p>
   {!rows.length && <p className="text-sm">Office research has not been collected yet.</p>}
   <OfficeRoleOverview rows={rows} onInspect={inspect} onNavigate={onNavigate}/>
-  <ElectricalResearchTasks rows={rows} onInspect={inspect}/>
+  <ElectricalResearchTasks rows={rows} onInspect={inspect} onPreviewWorkflow={onPreviewWorkflow}/>
   {rows.map((row,index)=>{const source=safeGovernmentOfficeSourceUrl(row.official_source_url);return <details key={index} ref={node=>{if(node)nodes.current.set(index,node);else nodes.current.delete(index);}} className="min-w-0 scroll-mt-3 rounded border bg-white p-2 text-xs [overflow-wrap:anywhere]">
    <summary tabIndex={0} className="cursor-pointer min-h-11 flex items-center font-medium">{row.label}: {row.office_name || 'Not found yet'}</summary>
    <div className="mt-2 space-y-2">
