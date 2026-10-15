@@ -859,7 +859,7 @@ Answer only from the provided excerpts and cite the document title and official 
         <LocalityApprovedEvidence jurisdiction={jurisdiction} isAdmin={currentUser?.role === "admin"} />
 
         <section ref={node=>{workspaceSections.current.offices=node;}} tabIndex={-1} aria-label="Office and electrical research workspace" className="scroll-mt-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600">
-          {jurisdiction.office_research?.method==='office-research-requirements-v1' && Array.isArray(jurisdiction.office_research.roles) && jurisdiction.office_research.roles.length ? <OfficeResearchFindings research={jurisdiction.office_research}/> : <div className="rounded-lg border bg-blue-50 p-3"><h3 className="text-sm font-semibold">Offices and electrical work</h3><p className="mt-1 text-sm">Office research has not been collected yet.</p><p className="mt-2 text-xs">Research covers sign permits, zoning, building, electrical permits, electrical inspections, right-of-way and historic review. An administrator can use Refresh above to collect draft findings.</p></div>}
+          <OfficeResearchFindings key={jurisdiction.id} research={jurisdiction.office_research} onNavigate={navigateWorkspace}/>
         </section>
 
         {/* CAGIS Location Search */}
