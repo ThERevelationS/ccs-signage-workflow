@@ -1463,6 +1463,11 @@ Answer only from the provided excerpts and cite the document title and official 
           isOpen={showWorkflowDesigner}
           onClose={() => { setShowWorkflowDesigner(false); setElectricalPlanningHandoff(null); }}
           electricalPlanningHandoff={electricalPlanningHandoff}
+          onOpenSourceDocument={sourceId => {
+            setShowWorkflowDesigner(false);
+            setElectricalPlanningHandoff(null);
+            navigateWorkspace("documents", sourceId);
+          }}
           preselectedJurisdiction={{
             jurisdiction_name: jurisdiction.name,
             state: jurisdiction.state,
