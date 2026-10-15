@@ -13,7 +13,7 @@ const metadata = [
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value) ? value.toLowerCase() : '';
 const recorded = value => typeof value === 'string' && value.trim() ? value : 'Not recorded';
 
-export default function SourceVersionComparison({ jurisdictionId, rows = [] }) {
+export default function SourceVersionComparison({ jurisdictionId, rows = [], onOpenSource }) {
   const [ids, setIds] = useState(['', '']);
   // Explicit IDs only: never pair records by title, URL, dates or fingerprints.
   const eligible = rows.filter(row => row.id && row.jurisdiction_id === jurisdictionId);
@@ -41,6 +41,7 @@ export default function SourceVersionComparison({ jurisdictionId, rows = [] }) {
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {pair.map((row, index) => <article key={row.id} aria-label={'Compared source ' + (index + 1)} className="min-w-0 rounded border bg-gray-50 p-3">
           <h5 className="font-semibold">Source {index + 1}: {row.title || 'Untitled document'}</h5>
+          {onOpenSource && <Button variant="outline" className="my-2 min-h-11 h-auto w-full whitespace-normal" onClick={() => onOpenSource(row.id)}>Open source {index + 1} catalog details</Button>}
           <dl className="space-y-2 text-sm">{metadata.map(([field, title]) => <div key={field}><dt className="font-medium">{title}</dt><dd className="whitespace-pre-wrap">{recorded(row[field])}</dd></div>)}</dl>
         </article>)}
       </div>
