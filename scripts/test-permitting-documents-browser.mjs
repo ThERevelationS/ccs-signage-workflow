@@ -54,6 +54,29 @@ try{
   assert.equal(await page.evaluate(()=>window.fixture.reads.length),readsBeforeCompare,'Comparison performs no additional reads');
   assert.equal(await page.evaluate(()=>window.fixture.textReads.length),0,'Comparison never reads page text');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+
+  for(const [slot,id,title] of [[1,'saved-form','Saved sign application'],[2,'fees','Recorded fees']]){
+   await catalog.getByLabel('Search document catalog').fill('no matching record');
+   await catalog.getByLabel('Document type',{exact:true}).selectOption('portal_instruction');
+   await catalog.getByLabel('Source currentness filter').selectOption('context');
+   await catalog.getByLabel('Document availability',{exact:true}).selectOption('ocr');
+   const open=compare.getByRole('button',{name:'Open source '+slot+' catalog details',exact:true});
+   assert.ok((await open.boundingBox()).height>=44);
+   await open.click();
+   const target=cards.filter({has:page.getByText(title,{exact:true})});
+   await target.locator(':scope > summary').waitFor();
+   await page.waitForFunction(text=>document.activeElement?.tagName==='SUMMARY'&&document.activeElement.textContent.includes(text),title);
+   assert.ok(await target.evaluate(node=>node.open));
+   assert.equal(await catalog.getByLabel('Search document catalog').inputValue(),'');
+   assert.equal(await catalog.getByLabel('Document type',{exact:true}).inputValue(),'all');
+   assert.equal(await catalog.getByLabel('Source currentness filter').inputValue(),'all');
+   assert.equal(await catalog.getByLabel('Document availability',{exact:true}).inputValue(),'all');
+   assert.equal(await first.inputValue(),'saved-form');assert.equal(await second.inputValue(),'fees');
+   assert.equal(await page.evaluate(()=>window.fixture.reads.length),readsBeforeCompare);
+   assert.equal(await page.evaluate(()=>window.fixture.textReads.length),0);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+   await target.locator(':scope > summary').click();
+  }
   await compare.getByRole('button',{name:'Clear comparison'}).click();
   await page.waitForFunction(()=>document.querySelector('[aria-label="Comparison source 1"]').value==='');
   assert.equal(await second.inputValue(),'');
