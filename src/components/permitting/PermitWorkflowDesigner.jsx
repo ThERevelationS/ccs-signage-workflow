@@ -7,9 +7,53 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Sparkles, X, AlertTriangle, CheckCircle, FileText, MapPin, ChevronDown, ChevronUp, Plus, ShieldCheck } from "lucide-react";
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 import { createPermitLinesFromDraft, computeDeterministicRowName } from "./permitLineItemIntegration";
+import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 
 const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Service"];
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
+
+function handoffText(value) {
+  if (typeof value === "string") return value.trim() || "Not recorded · confirm with the responsible office";
+  if (value === null || value === undefined) return "Not recorded · confirm with the responsible office";
+  return String(value);
+}
+
+function ElectricalPlanningHandoffView({ handoff }) {
+  const applicability = value => value === "potentially_applicable"
+    ? "potentially applicable · confirm the proposed work"
+    : value === "not_applicable_candidate"
+      ? "not-applicable candidate · confirm before skipping"
+      : value === "unknown" || !value
+        ? "unknown · unresolved"
+        : handoffText(value);
+  return <section aria-label="Electrical planning handoff" className="min-w-0 space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 [overflow-wrap:anywhere]">
+    <h3 className="font-semibold text-amber-950">Electrical office planning handoff · saved research draft</h3>
+    <p className="text-sm text-amber-900">This context is unverified and does not approve requirements, determine applicability, select a provider, or create job tasks. Permit issuance and inspection responsibility remain separate.</p>
+    <p className="text-xs text-amber-900">Research date: {handoffText(handoff.researched_at)} · Jurisdiction: {handoffText(handoff.jurisdiction?.jurisdiction_name)}{handoff.jurisdiction?.state ? `, ${handoff.jurisdiction.state}` : ""}</p>
+    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+      {(handoff.roles || []).map(role => <article key={role.role} aria-label={role.label} className="min-w-0 space-y-2 rounded border border-amber-200 bg-white p-3 text-xs">
+        <h4 className="font-semibold">{role.label}</h4>
+        {!role.findings?.length
+          ? <p>No saved finding for this responsibility. Office and applicability remain unresolved.</p>
+          : role.findings.map((finding, index) => {
+            const source = safeGovernmentOfficeSourceUrl(finding.official_source_url);
+            return <div key={index} className="space-y-2 border-t pt-2">
+              <p className="font-medium">Finding {index + 1}: {handoffText(finding.office_name)}</p>
+              <p><strong>Recorded applicability:</strong> {applicability(finding.applicability)}</p>
+              <p><strong>Recorded service area:</strong> {handoffText(finding.service_area)}</p>
+              <p><strong>Responsibility evidence:</strong> {handoffText(finding.responsibility_quote)}</p>
+              <p><strong>Delegation/provider evidence:</strong> {handoffText(finding.delegation_quote)}</p>
+              {Object.entries(finding.contact_info || {}).map(([key, value]) => <p key={key}><strong>{key.replaceAll("_", " ")}:</strong> {handoffText(value)}</p>)}
+              {Object.entries(finding.research_fields || {}).map(([key, value]) => <p key={key} className="whitespace-pre-wrap"><strong>{key.replaceAll("_", " ")}:</strong> {handoffText(value)}</p>)}
+              <p><strong>Research notes:</strong> {handoffText(finding.notes)}</p>
+              {source ? <a href={source} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center break-all text-blue-700 underline">Open recorded office research source</a>
+                : <p>Usable recorded source URL unavailable.</p>}
+            </div>;
+          })}
+      </article>)}
+    </div>
+  </section>;
+}
 
 export default function PermitWorkflowDesigner({
   isOpen,
