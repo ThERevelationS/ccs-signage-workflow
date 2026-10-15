@@ -17,6 +17,7 @@ let nextTimerId = 0;
 const events = new Map();
 const docEvents = new Map();
 const savedSessionData = new Map();
+let blockClockOutRecoveryStorage = false;
 const fakeWindow = {
   addEventListener(name, listener) { events.set(name, listener); },
   removeEventListener(name, listener) { if (events.get(name) === listener) events.delete(name); },
@@ -71,7 +72,12 @@ vm.runInNewContext(compiled, {
   setInterval: () => 1, clearInterval: () => {},
   sessionStorage: {
     getItem: (key) => savedSessionData.get(key) || null,
-    setItem: (key, value) => { savedSessionData.set(key, String(value)); },
+    setItem: (key, value) => {
+      if (blockClockOutRecoveryStorage && key.startsWith('ccs_timeclock_pending_clock_out:')) {
+        throw new Error('Synthetic browser denies pending Clock Out storage');
+      }
+      savedSessionData.set(key, String(value));
+    },
     removeItem: (key) => { savedSessionData.delete(key); },
   },
 }, { filename: 'synthetic-quick-clock-component.js' });
@@ -704,4 +710,23 @@ assert.ok(!savedSessionData.has(`ccs_timeclock_pending_clock_out:${first.email}`
 assert.ok(!savedSessionData.has(`ccs_timeclock_request:clock_out:${first.email}`));
 console.log('PASS authoritative completed status clears interrupted Clock Out recovery on reload');
 await act(async () => { completedRenderer.unmount(); });
-console.log('PASS 19/19 Time Clock Quick Clock async status acceptance cases');
+
+let blockedRenderer;
+await act(async () => { blockedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
+const storageStatusIndex = calls.length - 1;
+await act(async () => { calls[storageStatusIndex].resolve(status(first, 'browser-storage-blocked-shift')); });
+const blockedDialog = blockedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+assert.ok(blockedDialog);
+const beforeStorageBlock = calls.length;
+blockClockOutRecoveryStorage = true;
+let blockError;
+await act(async () => {
+  blockError = blockedDialog.props.onClockOut(reloadPayload);
+  await assert.rejects(blockError, /cannot preserve the original Clock Out/);
+});
+blockClockOutRecoveryStorage = false;
+assert.equal(calls.length, beforeStorageBlock,
+  'Storage-disabled browser must not send Clock Out with unrecoverable retry details');
+console.log('PASS unavailable recovery storage fails closed before any official Clock Out request');
+await act(async () => { blockedRenderer.unmount(); });
+console.log('PASS 20/20 Time Clock Quick Clock async status acceptance cases');
