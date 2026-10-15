@@ -37,7 +37,7 @@ try {
  await page.getByText('Staff edited',{exact:true}).first().waitFor();assert.equal(await page.getByText('Staff edited',{exact:true}).count(),2);
  await page.getByRole('button',{name:'Expand all',exact:true}).click();await page.getByText('The proposed requirement is not backed by a recognized approved or pending rule. Confirm its source and applicability.',{exact:true}).waitFor();
  const save=page.getByRole('button',{name:'Save permitting draft',exact:true});assert.ok(await save.isDisabled());
- await page.getByLabel('Review notes / questions to resolve').fill('Confirm electrical requirements with office');await page.getByRole('checkbox').check();assert.ok(await save.isEnabled());
+ await page.getByLabel('Review notes / questions to resolve').fill('Confirm electrical requirements with office');await page.getByRole('checkbox',{name:/I reviewed the proposed steps/}).check();assert.ok(await save.isEnabled());
  await save.click();await page.getByText('Synthetic save failure',{exact:true}).waitFor();assert.ok(await save.isEnabled());await save.click();await page.getByRole('status').filter({hasText:'Saved permitting draft:'}).waitFor();
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.ok((await page.getByRole('button',{name:'Draft saved',exact:true}).boundingBox()).height>=44);
  await page.getByRole('button',{name:'Close',exact:true}).first().click();await page.getByRole('button',{name:'Open designer',exact:true}).click();await page.getByRole('region',{name:'Saved permitting drafts'}).getByRole('button').click();
@@ -45,7 +45,7 @@ try {
  await page.getByRole('button',{name:'Create editable revision',exact:true}).click();
  await page.getByLabel('Action for step 1',{exact:true}).fill('Revision two synthetic action');
  const revisedSave=page.getByRole('button',{name:'Save revised permitting draft',exact:true});assert.ok(await revisedSave.isDisabled());
- await page.getByRole('checkbox').check();assert.ok(await revisedSave.isEnabled());await revisedSave.click();
+ await page.getByRole('checkbox',{name:/I reviewed the proposed steps/}).check();assert.ok(await revisedSave.isEnabled());await revisedSave.click();
  await page.getByRole('status').filter({hasText:'Saved permitting draft:'}).waitFor();
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  const result=await page.evaluate(()=>window.fixture);assert.equal(result.rows.length,2);assert.equal(result.attempts,3);assert.equal(result.aiCalls,1);assert.equal(result.jobWrites,0);
