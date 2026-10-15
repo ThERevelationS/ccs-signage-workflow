@@ -19,6 +19,8 @@ try{
  await writeFile(path.join(scratch,'report.js'),"export const generateJurisdictionPDF=()=>{throw Error('Not requested');};");aliases.push({find:'./JurisdictionPDFReport',replacement:path.join(scratch,'report.js')});
  await writeFile(path.join(scratch,'main.jsx'),`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import Panel from '/@fs/app/src/components/permitting/JurisdictionDetailPanel.jsx';
  const roles=['sign_permit','zoning','building','electrical_permit','electrical_inspection','right_of_way','historic_review'].map((role,i)=>({role,label:['Sign permit','Zoning','Building','Electrical permit issuer','Electrical inspection provider','Right of way','Historic review'][i],office_name:i<2?'Example planning office':i===4?'Example inspection provider':'',applicability:'unknown',research_fields:i===4?{inspection_scheduling:'Schedule the final electrical inspection through the provider portal.'}:{}}));
+ Object.assign(roles[0],{official_source_url:'https://example.gov/sign-office',responsibility_quote:'Example quoted role',service_area:'Example Municipality',applicability:'potentially_applicable',research_fields:Object.fromEntries(['canonical_office_identity','official_role_evidence','explicit_service_area','commercial_sign_scope','delegation_or_contract_provider','phone_email_address','official_source_url','source_date_and_version','document_archives_or_online_form_links'].map(key=>[key,'Saved draft finding']))});
+ roles.splice(2,1);roles.push({...roles[1],office_name:'Second zoning candidate'});
  const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:'https://example.gov/archive.pdf',last_fetched:'invalid',extracted_text:'Sign setback sign setback.'},{id:'portal',title:'Collected portal',doc_type:'portal_instruction',url:'https://example.gov/portal'}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
  const empty={id:'fixture-empty',name:'Empty Municipality',state:'OH',type:'city',documents:[]};window.fixture={calls:0,reads:[],textReads:[],fail:false,failText:false,wrongTextHash:false,delayText:false};function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
  vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[...aliases,{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@/components/auth/EmailGate',replacement:path.join(scratch,'auth.js')},{find:'./ResearchProgressContext',replacement:path.join(scratch,'progress.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
@@ -189,7 +191,38 @@ try{
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   const reads=await page.evaluate(()=>window.fixture.reads);assert.ok(reads.every(r=>['fixture-populated','fixture-empty'].includes(r.query.jurisdiction_id)&&r.options.limit===200));assert.ok(reads.every(r=>!('jurisdiction_name' in r.query)));
   await nav.getByRole('button',{name:/^Offices & Electrical/}).click();assert.equal(await page.getByRole('region',{name:'Collected office research'}).locator('details').count(),7);
-  await page.getByText('Electrical inspection provider: Example inspection provider',{exact:true}).click();
+
+  const officeRegion=page.getByRole('region',{name:'Collected office research'});
+  const overview=officeRegion.getByRole('region',{name:'Office role evidence overview'});
+  assert.equal(await overview.getByRole('article').count(),7);
+  await overview.getByText('Seven research roles · 6 with saved findings · 6 with missing or ambiguous metadata.',{exact:false}).waitFor();
+  await overview.getByRole('article',{name:'Role overview: Building permit and inspection authority',exact:true}).getByText('No saved finding for this role.',{exact:false}).waitFor();
+  const zoning=overview.getByRole('article',{name:'Role overview: Zoning authority',exact:true});
+  await zoning.getByText('Multiple saved findings for this role.',{exact:false}).waitFor();
+  assert.equal(await zoning.getByRole('button').count(),2);
+  await zoning.getByRole('button',{name:'Inspect Zoning authority finding 2',exact:true}).click();
+  await page.waitForFunction(()=>document.activeElement?.tagName==='SUMMARY'&&document.activeElement.textContent.includes('Second zoning candidate'));
+  await overview.getByLabel('Office role gap filter').selectOption('gaps');
+  assert.equal(await overview.getByRole('article').count(),6);
+  assert.equal(await overview.getByRole('article',{name:'Role overview: Sign permit issuer',exact:true}).count(),0);
+  await overview.getByLabel('Office role gap filter').selectOption('all');
+  const permitRole=overview.getByRole('article',{name:'Role overview: Electrical permit issuer',exact:true});
+  await permitRole.getByText('Office identity missing',{exact:false}).waitFor();
+  await permitRole.getByText('Illuminated signs',{exact:false}).waitFor();
+  const inspectRole=overview.getByRole('article',{name:'Role overview: Electrical inspection office',exact:true});
+  await inspectRole.getByText('Inspection scheduling',{exact:false}).waitFor();
+  const inspect=inspectRole.getByRole('button',{name:'Inspect Electrical inspection office finding 1',exact:true});
+  assert.ok((await inspect.boundingBox()).height>=44);await inspect.click();
+  await page.waitForFunction(()=>document.activeElement?.tagName==='SUMMARY'&&document.activeElement.textContent.includes('Example inspection provider'));
+  await overview.getByRole('button',{name:'Review office source documents',exact:true}).click();
+  assert.ok(await page.getByLabel('Documents workspace',{exact:true}).evaluate(node=>node===document.activeElement));
+  await nav.getByRole('button',{name:/^Offices & Electrical/}).click();
+  await overview.getByRole('button',{name:'Review saved requirements',exact:true}).click();
+  assert.ok(await page.getByLabel('Requirements workspace',{exact:true}).evaluate(node=>node===document.activeElement));
+  await nav.getByRole('button',{name:/^Offices & Electrical/}).click();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  assert.equal(await page.evaluate(()=>window.fixture.reads.length),reads.length,'Office overview never loads more records');
+
   await page.getByText('Schedule the final electrical inspection through the provider portal.',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByText('Permit required: No',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Documents/}).click();
@@ -200,12 +233,15 @@ try{
   await page.evaluate(()=>{window.fixture.releaseText?.();window.fixture.delayText=false;});
   assert.equal(await catalog.getByRole('region',{name:'Saved source text saved-form'}).count(),0,'Old jurisdiction text must be removed even when a delayed result arrives');
   await nav.getByRole('button',{name:/^Offices & Electrical/}).click();await page.getByText('Office research has not been collected yet.',{exact:true}).waitFor();
+  const emptyOverview=page.getByRole('region',{name:'Office role evidence overview'});
+  assert.equal(await emptyOverview.getByRole('article').count(),7);
+  await emptyOverview.getByText('Seven research roles · 0 with saved findings · 7 with missing or ambiguous metadata.',{exact:false}).waitFor();
   await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByRole('heading',{name:'Requirements not collected yet'}).waitFor();
   await nav.getByRole('button',{name:/^Documents/}).click();await page.getByText('No documents yet. Use the AI refresh to discover documents.',{exact:true}).waitFor();
   await catalog.getByText('No saved sources or collected links found.',{exact:false}).waitFor();
   assert.equal(await catalog.locator(':scope > details').count(),0);
   assert.equal(await page.evaluate(()=>window.fixture.calls),0);assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
-  checks.push({width,passed:true,checks:'actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow'});console.log('PASS document repository '+width);await page.close();
+  checks.push({width,passed:true,checks:'seven-role office overview, missing roles, duplicate candidates kept separate, gap filter, electrical checklist gaps, focus and workspace navigation, empty jurisdiction; actual parent and catalog; type/currentness filters, draft precedence, versions, source links, availability filters/counts and combined type filter without text fetches, direct page jumps and invalid/unextracted page rejection, physical-page text batches 1–5 and 6–7, loaded-page-only search, correct source/hash and physical-page metadata, OCR and truncation gaps, wrong hash rejection/retry, read failure/retry, delayed-jurisdiction switch cleanup, zero bytes, missing archive, invalid dates, existing collected search/focus, no writes/AI, no overflow'});console.log('PASS document repository '+width);await page.close();
  }
  await writeFile(path.join(root,'docs/permitting-documents-browser-2026-10-14.json'),JSON.stringify({tested_at:new Date().toISOString(),mode:'actual detail panel/navigation/office findings and production CSS; synthetic data; unrelated heavy child surfaces stubbed; external requests blocked',production_writes:0,checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
