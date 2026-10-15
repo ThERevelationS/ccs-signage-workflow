@@ -50,7 +50,7 @@ const DOC_TYPE_LABELS = {
   other: "Other"
 };
 
-export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onSetVerification, onClose, onUpdate }) {
+export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
   const { currentUser } = useAuth();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
