@@ -4,17 +4,17 @@
     {
       "width": 320,
       "passed": true,
-      "checks": "preview evidence labels, staff step edits demote basis and preserve citations, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow"
+      "checks": "preview evidence labels, staff content and schedule edits demote basis and preserve citations, inspection and earlier-step dependency planning, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow"
     },
     {
       "width": 390,
       "passed": true,
-      "checks": "preview evidence labels, staff step edits demote basis and preserve citations, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow"
+      "checks": "preview evidence labels, staff content and schedule edits demote basis and preserve citations, inspection and earlier-step dependency planning, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow"
     },
     {
       "width": 1280,
       "passed": true,
-      "checks": "preview evidence labels, staff step edits demote basis and preserve citations, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow"
+      "checks": "preview evidence labels, staff content and schedule edits demote basis and preserve citations, inspection and earlier-step dependency planning, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow"
     }
   ]
 }
