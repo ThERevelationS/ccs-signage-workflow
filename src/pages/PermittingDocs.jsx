@@ -5,7 +5,9 @@
  * Accessible from Admin Settings → Permitting Docs, or directly at /PermittingDocs.
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from "@/components/permitting/SourceTextEvidenceBrowser";
 import {
   BookOpen, ChevronDown, ChevronUp, ShieldCheck, FileSearch, RefreshCw,
   AlertTriangle, MapPin, Search, Sparkles, ClipboardCheck, BarChart3,
@@ -39,10 +41,105 @@ function DocSection({ icon: Icon, title, children, defaultOpen = false }) {
   );
 }
 
+const sourceFields = [
+  "id", "jurisdiction_id", "title", "source_type", "official_url", "archived_file_url",
+  "file_hash_sha256", "retrieval_timestamp", "content_status", "authority_classification",
+  "verification_status", "text_extraction_state",
+];
+
+function SavedPhysicalTextAcceptance() {
+  const [catalog, setCatalog] = useState({ rows: [], loading: true, error: "" });
+  const [selectedId, setSelectedId] = useState("");
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setCatalog({ rows: [], loading: true, error: "" });
+    base44.entities.PermittingSourceDocument.filter({}, {
+      sort: "-retrieval_timestamp",
+      limit: 200,
+      fields: sourceFields,
+    }).then(result => {
+      if (!active) return;
+      const rows = Array.isArray(result) ? result : result.items || [];
+      setCatalog({ rows, loading: false, error: "" });
+      setSelectedId(current => rows.some(row => row.id === current && hasSavedPhysicalPageText(row)) ? current : "");
+    }).catch(() => {
+      if (active) setCatalog({ rows: [], loading: false, error: "Saved permitting source records could not be loaded." });
+    });
+    return () => { active = false; };
+  }, [refresh]);
+
+  const candidates = catalog.rows.filter(hasSavedPhysicalPageText);
+  const selected = candidates.find(row => row.id === selectedId);
+
+  return (
+    <Card className="border-blue-200">
+      <CardHeader>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">Inspect saved physical-page text</CardTitle>
+            <p className="mt-1 text-sm text-gray-600">
+              Read-only view of saved PermittingSourceDocument records. It does not load work orders or customer records.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="min-h-11 rounded-md border bg-white px-3 text-sm hover:bg-gray-50"
+            disabled={catalog.loading}
+            onClick={() => setRefresh(value => value + 1)}
+          >
+            Refresh source records
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {catalog.loading && <p role="status">Loading saved permitting source records…</p>}
+        {catalog.error && <p role="alert" className="text-sm text-red-700">{catalog.error}</p>}
+        {!catalog.loading && !catalog.error && (
+          <>
+            <p className="text-xs text-gray-600">
+              Showing the latest {catalog.rows.length} source records by retrieval time; {candidates.length} have a saved-page cursor, retained URL and archive fingerprint.
+            </p>
+            <label className="block text-sm font-medium" htmlFor="saved-source-select">Choose an exact saved source record</label>
+            <select
+              id="saved-source-select"
+              className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
+              value={selectedId}
+              onChange={event => setSelectedId(event.target.value)}
+            >
+              <option value="">Select source by title, jurisdiction and record ID</option>
+              {candidates.map(row => (
+                <option key={row.id} value={row.id}>
+                  {row.title || "Untitled"} · jurisdiction {row.jurisdiction_id || "unlinked"} · {row.id}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+        {selected && (
+          <div className="space-y-2 rounded-md border bg-slate-50 p-3 text-xs [overflow-wrap:anywhere]">
+            <p><strong>Exact source record:</strong> {selected.id}</p>
+            <p><strong>Canonical jurisdiction ID:</strong> {selected.jurisdiction_id || "Not recorded"}</p>
+            <p><strong>Saved archive SHA-256:</strong> {selected.file_hash_sha256}</p>
+            <p><strong>Archived URL:</strong> {selected.archived_file_url}</p>
+            <p><strong>Saved extraction state:</strong> {selected.text_extraction_state?.status || "Not recorded"}; {selected.text_extraction_state?.pages_extracted} page(s) extracted.</p>
+            <SourceTextEvidenceBrowser source={selected} />
+          </div>
+        )}
+        {!catalog.loading && !catalog.error && candidates.length === 0 && (
+          <p className="text-sm text-gray-600">No source in the loaded catalog has complete saved-page identity metadata.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PermittingDocs() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50/30 p-4 sm:p-6">
       <div className="mx-auto max-w-3xl space-y-4">
+        <SavedPhysicalTextAcceptance />
         {/* Header */}
         <div className="mb-2">
           <div className="flex items-center gap-2">
