@@ -254,8 +254,8 @@ try{
   const handoff=page.getByRole('region',{name:'Electrical planning handoff',exact:true});
   await handoff.waitFor();
   await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText(/Finding 1: Not recorded/).waitFor();
-  assert.equal(await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText('Saved application instructions',{exact:true}).count(),1);
-  assert.equal(await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText('Saved booking instructions',{exact:true}).count(),0,'Inspection instructions stay in inspection role');
+  assert.equal(await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText(/Saved application instructions/).count(),1);
+  assert.equal(await handoff.getByRole('article',{name:'Permit issuance',exact:true}).getByText(/Saved booking instructions/).count(),0,'Inspection instructions stay in inspection role');
   assert.equal(await handoff.getByRole('article',{name:'Inspection scheduling and stages',exact:true}).getByText('Schedule the final electrical inspection through the provider portal.',{exact:true}).count(),1);
   await handoff.getByText('not-applicable candidate · confirm before skipping',{exact:true}).waitFor();
   await handoff.getByText('This context is unverified',{exact:false}).waitFor();
