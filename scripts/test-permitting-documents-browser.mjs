@@ -94,7 +94,6 @@ try{
   await returnCard.getByRole('button',{name:'Return to source comparison',exact:true}).click();
   assert.ok(await compare.evaluate(node=>node===document.activeElement),'Removed origin falls back to comparison region');
   await returnCard.locator(':scope > summary').click();
-  await compare.getByRole('button',{name:'Clear comparison'}).click();
   await page.waitForFunction(()=>document.querySelector('[aria-label="Comparison source 1"]').value==='');
   assert.equal(await second.inputValue(),'');
   await first.selectOption('saved-form');await second.selectOption('older');

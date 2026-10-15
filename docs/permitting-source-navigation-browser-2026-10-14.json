@@ -1,5 +1,5 @@
 {
-  "tested_at": "2026-10-15T00:28:11.908Z",
+  "tested_at": "2026-10-15T00:42:24.011Z",
   "mode": "actual parent, requirements, source monitor and document catalog with production CSS; synthetic API; unrelated heavy children stubbed; external requests blocked; not authenticated production acceptance",
   "production_writes": 0,
   "checks": [
