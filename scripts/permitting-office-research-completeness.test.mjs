@@ -32,9 +32,9 @@ test('unknown applicability, empty fields and unresolved placeholders remain gap
   row.research_fields.inspection_provider='Unknown';
   const result=assessOfficeResearchRole([row],'electrical_inspection');
   assert.equal(result.status,'incomplete');
-  assert.ok(result.missing_evidence.includes('Applicability unresolved'));
-  assert.ok(result.missing_evidence.includes('Service area missing'));
-  assert.ok(result.missing_fields.includes('inspection_provider'));
+  assert.ok(result.findings[0].missing_evidence.includes('Applicability unresolved'));
+  assert.ok(result.findings[0].missing_evidence.includes('Service area missing'));
+  assert.ok(result.findings[0].missing_fields.includes('inspection_provider'));
 });
 
 test('multiple same-role findings remain ambiguous instead of being merged',()=>{
@@ -50,8 +50,8 @@ test('unsafe sources and missing role evidence cannot appear metadata-complete',
   row.responsibility_quote='';
   const result=assessOfficeResearchRole([row],'electrical_permit');
   assert.equal(result.status,'incomplete');
-  assert.ok(result.missing_evidence.includes('Usable HTTPS source link missing'));
-  assert.ok(result.missing_evidence.includes('Official responsibility quote missing'));
+  assert.ok(result.findings[0].missing_evidence.includes('Usable HTTPS source link missing'));
+  assert.ok(result.findings[0].missing_evidence.includes('Official responsibility quote missing'));
 });
 
 test('filled research fields only means metadata present, never authority verified',()=>{
