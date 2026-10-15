@@ -62,7 +62,7 @@ test('invalid references are rejected before any API call',async()=>{
  const h=await hookHarness();try{for(const id of ['',null,'../another-record'])await assert.rejects(h.read(id,{get:async()=>{throw Error('should not call API');}}),/reference is invalid/);}finally{await h.close();}
 });
 function dialogHarness({save,remove}={}){
- const uiCache=new Map(),writes=[],offices=[],module={exports:{}};
+ const uiCache=new Map(),writes=[],offices=[],saveCalls=[],module={exports:{}};
  const ui=new Proxy({}, {get(_,name){
   if(uiCache.has(name))return uiCache.get(name);
   const Component=props=>{
@@ -79,15 +79,16 @@ function dialogHarness({save,remove}={}){
   if(name==='lucide-react')return new Proxy({}, {get:()=>()=>null});
   if(name==='@/components/auth/EmailGate')return {useAuth:()=>admin};
   if(name==='./LocalityOfficeEditor')return {__esModule:true,default:props=>{offices.push(props);return null;}};
+  if(name==='./LocalityProfileLinkEditor')return {__esModule:true,default:()=>null};
   if(name==='./OfficeCatalogEditor')return {__esModule:true,default:()=>null};
-  if(name.includes('builderEntityPersistence'))return {deleteEntityIfUnchanged:remove || refuseWrite,expectedEntityFields:()=>({}),replaceEntityFieldsIfUnchanged:save || refuseWrite};
+  if(name.includes('builderEntityPersistence'))return {deleteEntityIfUnchanged:remove || refuseWrite,expectedEntityFields:()=>({}),replaceEntityFieldsIfUnchanged:async args=>{saveCalls.push(args);return save?save(args):refuseWrite();}};
   if(name==='./permitGlobalSettingsPersistence')return {loadSingleGlobalSetting:async()=>null,saveGlobalSettingValueIfUnchanged:refuseWrite};
   if(name==='./permitLocalityPersistence')return {createPermitLocalityIfAbsent:refuseWrite};
   if(name==='./localityOfficeCatalogBridge')return {copyCatalogOfficeToLocality:refuseWrite,resolveCatalogOfficeProvenance:()=>null};
   if(name.includes('loadAllEntityRows'))return {loadAllEntityRows:async()=>[]};
   throw Error(name);
  }});
- return {Component:module.exports.default,writes,offices};
+ return {Component:module.exports.default,writes,offices,saveCalls};
 }
 test('the existing editor selects by exact ID once and preserves later unsaved edits',async()=>{
  const h=dialogHarness(),a={...row,name:'Same name'},b={...row,id:'locality-b',name:'Same name',zip:'45200',offices:[{id:'office-b',authority_verification_status:'needs_verification'}]};
@@ -108,6 +109,18 @@ test('missing or duplicated initial locality IDs cannot select a different recor
    assert.match(JSON.stringify(tree.toJSON()),/unavailable or ambiguous/);assert.equal(h.offices.length,0);assert.equal(h.writes.length,0);
   }finally{await act(async()=>tree?.unmount());}
  }
+});
+
+test('existing exact repository profile link is preserved in locality save payload',async()=>{
+ const linked={...row,jurisdiction_profile_id:'repository-profile-oh'};
+ const h=dialogHarness({save:async args=>({...linked,...args.nextFields})});let tree;
+ try{
+  await act(async()=>{tree=Renderer.create(React.createElement(h.Component,{isOpen:true,onClose:()=>{},localities:[linked],initialSelectedLocalityId:linked.id}));});
+  const save=tree.root.findAllByType('button').find(node=>node.children.some(child=>typeof child==='string'&&child.trim()==='Save Locality'));
+  await act(async()=>save.props.onClick());
+  assert.equal(h.saveCalls.length,1);
+  assert.equal(h.saveCalls[0].nextFields.jurisdiction_profile_id,linked.jurisdiction_profile_id);
+ }finally{await act(async()=>tree?.unmount());}
 });
 
 test('confirmed locality save notifies once and notification failure does not undo success',async()=>{
