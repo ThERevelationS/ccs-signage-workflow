@@ -3,7 +3,7 @@ import { officeResearchChecklist, officeResearchFieldLabels } from '../../../bas
 import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog';
 
 const recorded = value => typeof value === 'string' && value.trim() ? value : 'Not recorded · confirm with the responsible office';
-export default function ElectricalResearchTasks({ rows = [], onInspect }) {
+export default function ElectricalResearchTasks({ rows = [], onInspect, onPreviewWorkflow }) {
   return <section aria-label="Electrical permit and inspection task view" className="min-w-0 space-y-3 rounded border bg-white p-3 [overflow-wrap:anywhere]">
     <h5 className="text-sm font-semibold">Electrical work: permit and inspection planning</h5>
     <p className="text-xs">Saved research drafts for planning questions, not an approved job checklist. Confirm project applicability, office responsibility and current instructions before applying, booking or working. No task completion or job changes are saved here.</p>
