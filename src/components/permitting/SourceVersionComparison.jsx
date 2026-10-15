@@ -13,7 +13,7 @@ const metadata = [
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value) ? value.toLowerCase() : '';
 const recorded = value => typeof value === 'string' && value.trim() ? value : 'Not recorded';
 
-export default function SourceVersionComparison({ jurisdictionId, rows = [], onOpenSource }) {
+export default function SourceVersionComparison({ jurisdictionId, rows = [], onOpenSource, regionRef }) {
   const [ids, setIds] = useState(['', '']);
   // Explicit IDs only: never pair records by title, URL, dates or fingerprints.
   const eligible = rows.filter(row => row.id && row.jurisdiction_id === jurisdictionId);
@@ -23,7 +23,7 @@ export default function SourceVersionComparison({ jurisdictionId, rows = [], onO
   const fingerprint = !hashes[0] || !hashes[1]
     ? 'Hash comparison unavailable: one or both recorded SHA-256 values are missing or invalid.'
     : hashes[0] === hashes[1] ? 'Identical recorded SHA-256 hashes.' : 'Different recorded SHA-256 hashes.';
-  return <section aria-label="Compare saved source versions" className="min-w-0 space-y-3 rounded-lg border border-blue-200 p-3 [overflow-wrap:anywhere]">
+  return <section ref={regionRef} tabIndex={-1} aria-label="Compare saved source versions" className="min-w-0 space-y-3 rounded-lg border border-blue-200 p-3 [overflow-wrap:anywhere]">
     <h4 className="text-sm font-semibold">Compare saved source versions</h4>
     <p className="text-xs text-gray-600">Choose two distinct exact records from this jurisdiction’s latest 200 loaded canonical sources. Collected links and separately loaded citation records outside that catalog are excluded. No automatic version matching.</p>
     <div className="grid min-w-0 gap-3 sm:grid-cols-2">
@@ -41,7 +41,7 @@ export default function SourceVersionComparison({ jurisdictionId, rows = [], onO
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {pair.map((row, index) => <article key={row.id} aria-label={'Compared source ' + (index + 1)} className="min-w-0 rounded border bg-gray-50 p-3">
           <h5 className="font-semibold">Source {index + 1}: {row.title || 'Untitled document'}</h5>
-          {onOpenSource && <Button variant="outline" className="my-2 min-h-11 h-auto w-full whitespace-normal" onClick={() => onOpenSource(row.id)}>Open source {index + 1} catalog details</Button>}
+          {onOpenSource && <Button variant="outline" className="my-2 min-h-11 h-auto w-full whitespace-normal" onClick={event => onOpenSource(row.id, event.currentTarget)}>Open source {index + 1} catalog details</Button>}
           <dl className="space-y-2 text-sm">{metadata.map(([field, title]) => <div key={field}><dt className="font-medium">{title}</dt><dd className="whitespace-pre-wrap">{recorded(row[field])}</dd></div>)}</dl>
         </article>)}
       </div>
