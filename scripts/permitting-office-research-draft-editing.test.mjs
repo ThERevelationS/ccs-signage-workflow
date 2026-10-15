@@ -13,22 +13,24 @@ const research = normalizeOfficeResearch({
       research_fields: { required_inspection_stages: "Rough and final." } },
   ],
 }, { jurisdiction: { id: "fixture", name: "Fixture City", state: "OH", type: "city" }, now: () => "2026-10-15T12:00:00.000Z" });
+const permitIndex = research.roles.findIndex(row => row.role === "electrical_permit");
+const inspectionIndex = research.roles.findIndex(row => row.role === "electrical_inspection");
 
 test("staff can update one saved electrical role without merging or verifying the other", () => {
   const before = structuredClone(research);
-  const draft = structuredClone(research.roles[1]);
+  const draft = structuredClone(research.roles[inspectionIndex]);
   draft.office_name = "Revised Inspector";
   draft.applicability = "potentially_applicable";
   draft.research_fields.required_inspection_stages = "Rough, final, and service inspection.";
-  const next = updateOfficeResearchDraft(research, 1, draft, {
+  const next = updateOfficeResearchDraft(research, inspectionIndex, draft, {
     actor: "Reviewer",
     now: () => "2026-10-15T13:00:00.000Z",
   });
 
-  assert.equal(next.roles[0].office_name, "Permit Office");
-  assert.equal(next.roles[1].office_name, "Revised Inspector");
-  assert.equal(next.roles[1].research_fields.required_inspection_stages, "Rough, final, and service inspection.");
-  assert.equal(next.roles[1].verification_status, "needs_verification");
+  assert.equal(next.roles[permitIndex].office_name, "Permit Office");
+  assert.equal(next.roles[inspectionIndex].office_name, "Revised Inspector");
+  assert.equal(next.roles[inspectionIndex].research_fields.required_inspection_stages, "Rough, final, and service inspection.");
+  assert.equal(next.roles[inspectionIndex].verification_status, "needs_verification");
   assert.equal(next.verification_status, "needs_verification");
   assert.equal(next.staff_edited_by, "Reviewer");
   assert.equal(next.staff_edited_at, "2026-10-15T13:00:00.000Z");
