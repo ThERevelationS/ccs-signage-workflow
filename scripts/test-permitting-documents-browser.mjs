@@ -20,6 +20,8 @@ try{
  await writeFile(path.join(scratch,'main.jsx'),`import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import Panel from '/@fs/app/src/components/permitting/JurisdictionDetailPanel.jsx';
  const roles=['sign_permit','zoning','building','electrical_permit','electrical_inspection','right_of_way','historic_review'].map((role,i)=>({role,label:['Sign permit','Zoning','Building','Electrical permit issuer','Electrical inspection provider','Right of way','Historic review'][i],office_name:i<2?'Example planning office':i===4?'Example inspection provider':'',applicability:'unknown',research_fields:i===4?{inspection_scheduling:'Schedule the final electrical inspection through the provider portal.'}:{}}));
  Object.assign(roles[0],{official_source_url:'https://example.gov/sign-office',responsibility_quote:'Example quoted role',service_area:'Example Municipality',applicability:'potentially_applicable',research_fields:Object.fromEntries(['canonical_office_identity','official_role_evidence','explicit_service_area','commercial_sign_scope','delegation_or_contract_provider','phone_email_address','official_source_url','source_date_and_version','document_archives_or_online_form_links'].map(key=>[key,'Saved draft finding']))});
+ Object.assign(roles[3],{applicability:'not_applicable_candidate',official_source_url:'javascript:alert(1)',research_fields:{permit_application:'Saved application instructions',fees:'Saved fee requires confirmation'}});
+ Object.assign(roles[4].research_fields,{scheduling_contact_or_portal:'Saved booking instructions',required_inspection_stages:'Saved final stage',permit_number_or_prerequisites:'Saved permit number prerequisite'});
  roles.splice(2,1);roles.push({...roles[1],office_name:'Second zoning candidate'});
  const populated={id:'fixture-populated',name:'Example Municipality',state:'OH',type:'city',verification_status:'needs_verification',website_url:'https://example.gov',documents:[{id:'form',title:'Example sign application',doc_type:'permit_application',url:'https://example.gov/sign.pdf',file_url:'https://example.gov/archive.pdf',last_fetched:'invalid',extracted_text:'Sign setback sign setback.'},{id:'portal',title:'Collected portal',doc_type:'portal_instruction',url:'https://example.gov/portal'}],permit_requirements:{requires_permit:false,fee_range:'Unverified example fee'},office_research:{method:'office-research-requirements-v1',researched_at:'2026-10-14T12:00:00Z',roles}};
  const empty={id:'fixture-empty',name:'Empty Municipality',state:'OH',type:'city',documents:[]};window.fixture={calls:0,reads:[],textReads:[],fail:false,failText:false,wrongTextHash:false,delayText:false};function App(){const [row,setRow]=useState(populated);return <div className="h-screen flex flex-col"><button className="min-h-11 shrink-0" onClick={()=>setRow(row.id===populated.id?empty:populated)}>Switch fixture</button><div className="min-h-0 flex-1"><Panel jurisdiction={row} onClose={()=>{}} onUpdate={()=>{throw Error('No writes allowed');}}/></div></div>}createRoot(document.getElementById('root')).render(<App/>);`);
@@ -222,7 +224,28 @@ try{
   await nav.getByRole('button',{name:/^Offices & Electrical/}).click();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.equal(await page.evaluate(()=>window.fixture.reads.length),reads.length,'Office overview never loads more records');
+  const electrical=officeRegion.getByRole('region',{name:'Electrical permit and inspection task view'});
+  const issuance=electrical.getByRole('article',{name:'Electrical planning: electrical_permit',exact:true});
+  const inspections=electrical.getByRole('article',{name:'Electrical planning: electrical_inspection',exact:true});
+  await issuance.getByText('Saved application instructions',{exact:true}).waitFor();
+  await issuance.getByText('Saved fee requires confirmation',{exact:true}).waitFor();
+  await issuance.getByText('Research suggests it may not apply',{exact:false}).waitFor();
+  assert.equal(await issuance.getByText('Saved booking instructions',{exact:true}).count(),0);
+  await inspections.getByText('Saved booking instructions',{exact:true}).waitFor();
+  await inspections.getByText('Saved final stage',{exact:true}).waitFor();
+  await inspections.getByText('Saved permit number prerequisite',{exact:true}).waitFor();
+  assert.ok(await inspections.getByText('Not recorded · confirm with the responsible office',{exact:true}).count()>0);
+  assert.equal(await electrical.locator('a[href^="javascript:"]').count(),0);
+  const fullInspection=inspections.getByRole('button',{name:'Inspect full inspection finding 1',exact:true});
+  assert.ok((await fullInspection.boundingBox()).height>=44);await fullInspection.click();
+  await page.waitForFunction(()=>document.activeElement?.tagName==='SUMMARY'&&document.activeElement.textContent.includes('Example inspection provider'));
+  await issuance.getByRole('button',{name:'Inspect full permit finding 1',exact:true}).click();
+  await page.waitForFunction(()=>document.activeElement?.tagName==='SUMMARY'&&document.activeElement.textContent.includes('Electrical permit issuer'));
+  assert.equal(await page.evaluate(()=>window.fixture.reads.length),reads.length);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 
+
+  await fullInspection.click();
   await page.getByText('Schedule the final electrical inspection through the provider portal.',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Requirements/}).click();await page.getByText('Permit required: No',{exact:true}).waitFor();
   await nav.getByRole('button',{name:/^Documents/}).click();
@@ -233,6 +256,7 @@ try{
   await page.evaluate(()=>{window.fixture.releaseText?.();window.fixture.delayText=false;});
   assert.equal(await catalog.getByRole('region',{name:'Saved source text saved-form'}).count(),0,'Old jurisdiction text must be removed even when a delayed result arrives');
   await nav.getByRole('button',{name:/^Offices & Electrical/}).click();await page.getByText('Office research has not been collected yet.',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('region',{name:'Electrical permit and inspection task view'}).getByText('No saved finding for this responsibility. Do not substitute the other electrical office.',{exact:true}).count(),2);
   const emptyOverview=page.getByRole('region',{name:'Office role evidence overview'});
   assert.equal(await emptyOverview.getByRole('article').count(),7);
   await emptyOverview.getByText('Seven research roles · 0 with saved findings · 7 with missing or ambiguous metadata.',{exact:false}).waitFor();
