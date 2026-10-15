@@ -496,6 +496,34 @@ export default function PermitWorkflowDesigner({
                               <div className="min-w-0"><Label htmlFor={`pwd-step-forms-${idx}`}>Required forms for step {idx + 1} · one per line</Label><textarea id={`pwd-step-forms-${idx}`} value={Array.isArray(step.required_forms) ? step.required_forms.join('\n') : typeof step.required_forms === 'string' ? step.required_forms : ''} onChange={event => updateStepField(idx, 'required_forms', event.target.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean))} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
                               <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-fee-${idx}`}>Fee expectation for step {idx + 1}</Label><Input id={`pwd-step-fee-${idx}`} className="min-h-11" value={step.fee_expectation || ''} onChange={event => updateStepField(idx, 'fee_expectation', event.target.value)} /></div>
                             </div>
+                            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-target-days-${idx}`}>Target day for step {idx + 1}</Label><Input id={`pwd-step-target-days-${idx}`} type="number" inputMode="numeric" step="1" min="0" className="min-h-11" value={step.target_days_from_start ?? ''} onChange={event => { const raw = event.target.value; const value = raw === '' ? null : Number(raw); if (value === null || (Number.isSafeInteger(value) && value >= 0)) updateStepField(idx, 'target_days_from_start', value); }} /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-followup-${idx}`}>Follow-up interval in days for step {idx + 1}</Label><Input id={`pwd-step-followup-${idx}`} type="number" inputMode="numeric" step="1" min="1" className="min-h-11" value={step.followup_interval_days ?? ''} onChange={event => { const raw = event.target.value; const value = raw === '' ? null : Number(raw); if (value === null || (Number.isSafeInteger(value) && value >= 1)) updateStepField(idx, 'followup_interval_days', value); }} /></div>
+                              <label className="flex min-h-11 items-center gap-2 rounded border bg-white p-3 sm:col-span-2">
+                                <input type="checkbox" checked={step.inspection_needed === true} onChange={event => updateStepField(idx, 'inspection_needed', event.target.checked)} />
+                                Inspection planned for step {idx + 1} · confirm provider and stages
+                              </label>
+                            </div>
+                            <fieldset className="min-w-0 space-y-2 rounded border bg-white p-3">
+                              <legend className="px-1 font-medium">Prerequisite steps for step {idx + 1}</legend>
+                              {idx === 0 ? <p className="text-gray-600">This is the first step, so it has no earlier steps to select.</p> : <>
+                                <p className="text-gray-600">Select earlier steps that must happen first.</p>
+                                <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+                                  {draft.steps.slice(0, idx).map((prerequisite, prerequisiteIndex) => {
+                                    const current = (Array.isArray(step.dependencies) ? step.dependencies : []).filter(dependency => Number.isInteger(dependency) && dependency >= 0 && dependency < idx);
+                                    return <label key={prerequisiteIndex} className="flex min-h-11 min-w-0 items-center gap-2 rounded border p-2">
+                                      <input type="checkbox" aria-label={`Step ${idx + 1} depends on step ${prerequisiteIndex + 1}`} checked={current.includes(prerequisiteIndex)} onChange={event => {
+                                        const next = event.target.checked
+                                          ? [...new Set([...current, prerequisiteIndex])].sort((a, b) => a - b)
+                                          : current.filter(dependency => dependency !== prerequisiteIndex);
+                                        updateStepField(idx, 'dependencies', next);
+                                      }} />
+                                      <span className="min-w-0 break-words">Step {prerequisiteIndex + 1}: {prerequisite.permit_type || 'Untitled step'}</span>
+                                    </label>;
+                                  })}
+                                </div>
+                              </>}
+                            </fieldset>
                           </fieldset>}
                           {step.staff_override && <p className="rounded bg-amber-100 p-2 text-amber-950">Staff edited · source basis was {step.staff_override.original_basis}; the edited step remains unapproved. Edited fields: {Array.isArray(step.staff_override.edited_fields) ? step.staff_override.edited_fields.join(', ') : 'unavailable'}.</p>}
                           <p className="text-gray-700">{step.action}</p>
@@ -523,7 +551,8 @@ export default function PermitWorkflowDesigner({
                           {step.variance_needed && <p className="text-amber-700"><AlertTriangle className="mr-1 inline h-3 w-3" />Variance/conditional-use may be required</p>}
                           {step.target_days_from_start != null && <p className="text-gray-600"><span className="font-medium">Target:</span> Day {step.target_days_from_start}</p>}
                           {step.followup_interval_days != null && <p className="text-gray-600"><span className="font-medium">Follow-up:</span> Every {step.followup_interval_days} days</p>}
-                          {step.inspection_needed && <p className="text-gray-600"><ShieldCheck className="mr-1 inline h-3 w-3" />Inspection required</p>}
+                          {step.inspection_needed === true && <p className="text-gray-600"><ShieldCheck className="mr-1 inline h-3 w-3" />Inspection planned · confirm provider and required stages</p>}
+                          {step.inspection_needed === false && <p className="text-amber-700"><ShieldCheck className="mr-1 inline h-3 w-3" />No inspection currently identified · confirm before relying on this draft</p>}
                           {step.dependencies?.length > 0 && (
                             <p className="text-gray-600"><span className="font-medium">Depends on:</span> Step(s) {step.dependencies.map(d => Number(d) + 1).join(", ")}</p>
                           )}
