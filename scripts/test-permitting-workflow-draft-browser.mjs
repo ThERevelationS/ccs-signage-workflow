@@ -34,7 +34,7 @@ try {
  await page.getByLabel('Follow-up interval in days for step 2',{exact:true}).fill('7');
  await page.getByLabel('Inspection planned for step 2 · confirm provider and stages',{exact:true}).check();
  await page.getByLabel('Step 2 depends on step 1',{exact:true}).check();
- await page.getByText('Staff edited',{exact:true}).waitFor();
+ await page.getByText('Staff edited',{exact:true}).first().waitFor();assert.equal(await page.getByText('Staff edited',{exact:true}).count(),2);
  await page.getByRole('button',{name:'Expand all',exact:true}).click();await page.getByText('The proposed requirement is not backed by a recognized approved or pending rule. Confirm its source and applicability.',{exact:true}).waitFor();
  const save=page.getByRole('button',{name:'Save permitting draft',exact:true});assert.ok(await save.isDisabled());
  await page.getByLabel('Review notes / questions to resolve').fill('Confirm electrical requirements with office');await page.getByRole('checkbox').check();assert.ok(await save.isEnabled());
