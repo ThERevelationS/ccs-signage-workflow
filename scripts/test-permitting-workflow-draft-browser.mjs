@@ -30,6 +30,10 @@ try {
  await page.getByRole('button',{name:'Edit proposed steps',exact:true}).click();
  await page.getByLabel('Action for step 1',{exact:true}).fill('Staff-adjusted synthetic action');
  await page.getByLabel('Required documents for step 1 · one per line',{exact:true}).fill('Site plan\nLighting plan');
+ await page.getByLabel('Target day for step 2',{exact:true}).fill('30');
+ await page.getByLabel('Follow-up interval in days for step 2',{exact:true}).fill('7');
+ await page.getByLabel('Inspection planned for step 2 · confirm provider and stages',{exact:true}).check();
+ await page.getByLabel('Step 2 depends on step 1',{exact:true}).check();
  await page.getByText('Staff edited',{exact:true}).waitFor();
  await page.getByRole('button',{name:'Expand all',exact:true}).click();await page.getByText('The proposed requirement is not backed by a recognized approved or pending rule. Confirm its source and applicability.',{exact:true}).waitFor();
  const save=page.getByRole('button',{name:'Save permitting draft',exact:true});assert.ok(await save.isDisabled());
@@ -46,13 +50,15 @@ try {
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  const result=await page.evaluate(()=>window.fixture);assert.equal(result.rows.length,2);assert.equal(result.attempts,3);assert.equal(result.aiCalls,1);assert.equal(result.jobWrites,0);
  assert.equal(result.rows[0].status,'draft');assert.equal(result.rows[0].work_order_id,undefined);assert.equal(result.rows[1].work_order_id,undefined);
- assert.deepEqual(result.rows[0].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','pending_review','staff_confirmation_needed']);
+ assert.deepEqual(result.rows[0].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','staff_confirmation_needed','staff_confirmation_needed']);
  assert.equal(result.rows[0].snapshot.steps[0].action,'Staff-adjusted synthetic action');assert.deepEqual(result.rows[0].snapshot.steps[0].required_documents,['Site plan','Lighting plan']);
  assert.deepEqual(result.rows[0].snapshot.steps[0].citations,[{rule_id:'approved'}]);assert.equal(result.rows[0].snapshot.steps[0].staff_override.original_values.action,'Synthetic action');
- assert.deepEqual(result.rows[1].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','pending_review','staff_confirmation_needed']);
+ const timedStep=result.rows[0].snapshot.steps[1];assert.equal(timedStep.target_days_from_start,30);assert.equal(timedStep.followup_interval_days,7);assert.equal(timedStep.inspection_needed,true);assert.deepEqual(timedStep.dependencies,[0]);assert.deepEqual(timedStep.citations,[{rule_id:'pending'}]);assert.equal(timedStep.staff_override.original_basis,'pending_review');
+ assert.deepEqual(result.rows[1].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','staff_confirmation_needed','staff_confirmation_needed']);
  assert.equal(result.rows[1].snapshot.steps[0].action,'Revision two synthetic action');assert.deepEqual(result.rows[1].snapshot.steps[0].citations,[{rule_id:'approved'}]);
+ assert.equal(result.rows[1].snapshot.steps[1].target_days_from_start,30);assert.equal(result.rows[1].snapshot.steps[1].followup_interval_days,7);assert.equal(result.rows[1].snapshot.steps[1].inspection_needed,true);assert.deepEqual(result.rows[1].snapshot.steps[1].dependencies,[0]);
  assert.equal(result.rows[0].snapshot.steps[0].action,'Staff-adjusted synthetic action');assert.equal(result.rows[1].snapshot.draft_revision.parent_draft_id,result.rows[0].id);assert.equal(result.rows[1].snapshot.draft_revision.root_draft_id,result.rows[0].id);assert.equal(result.rows[1].snapshot.draft_revision.revision_number,2);assert.deepEqual(errors,[]);
- checks.push({width,passed:true,checks:'preview evidence labels, staff step edits demote basis and preserve citations, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow'});console.log('PASS workflow draft '+width);await page.close();
+ checks.push({width,passed:true,checks:'preview evidence labels, staff content and schedule edits demote basis and preserve citations, inspection and earlier-step dependency planning, review gate, save failure/retry, immutable append-only revision and parent linkage, no job writes, no overflow'});console.log('PASS workflow draft '+width);await page.close();
  }
  await writeFile(path.join(root,'docs/permitting-workflow-draft-browser-2026-10-15.json'),JSON.stringify({mode:'actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance',checks},null,2)+'\n');
 }finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
