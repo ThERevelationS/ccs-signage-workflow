@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from "@/components/permitting/SourceTextEvidenceBrowser";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   BookOpen, ChevronDown, ChevronUp, ShieldCheck, FileSearch, RefreshCw,
   AlertTriangle, MapPin, Search, Sparkles, ClipboardCheck, BarChart3,
@@ -48,14 +49,35 @@ const sourceFields = [
 ];
 
 function SavedPhysicalTextAcceptance() {
-  const [catalog, setCatalog] = useState({ rows: [], loading: true, error: "" });
+  const [localities, setLocalities] = useState({ rows: [], loading: true, error: "" });
+  const [jurisdictionId, setJurisdictionId] = useState("");
+  const [catalog, setCatalog] = useState({ rows: [], loading: false, error: "" });
   const [selectedId, setSelectedId] = useState("");
   const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
     let active = true;
+    loadAllEntityRows({
+      entity: base44.entities.PermitLocality,
+      sort: null,
+      label: "Permitting text reader locality catalog",
+    }).then(rows => {
+      if (active) setLocalities({ rows, loading: false, error: "" });
+    }).catch(() => {
+      if (active) setLocalities({ rows: [], loading: false, error: "Canonical permitting localities could not be loaded." });
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setSelectedId("");
+    if (!jurisdictionId) {
+      setCatalog({ rows: [], loading: false, error: "" });
+      return () => { active = false; };
+    }
     setCatalog({ rows: [], loading: true, error: "" });
-    base44.entities.PermittingSourceDocument.filter({}, {
+    base44.entities.PermittingSourceDocument.filter({ jurisdiction_id: jurisdictionId }, {
       sort: "-retrieval_timestamp",
       limit: 200,
       fields: sourceFields,
@@ -65,70 +87,97 @@ function SavedPhysicalTextAcceptance() {
       setCatalog({ rows, loading: false, error: "" });
       setSelectedId(current => rows.some(row => row.id === current && hasSavedPhysicalPageText(row)) ? current : "");
     }).catch(() => {
-      if (active) setCatalog({ rows: [], loading: false, error: "Saved permitting source records could not be loaded." });
+      if (active) setCatalog({ rows: [], loading: false, error: "Saved source records for this locality could not be loaded." });
     });
     return () => { active = false; };
-  }, [refresh]);
+  }, [jurisdictionId, refresh]);
 
   const candidates = catalog.rows.filter(hasSavedPhysicalPageText);
   const selected = candidates.find(row => row.id === selectedId);
+  const selectedLocality = localities.rows.find(row => row.id === jurisdictionId);
 
   return (
     <Card className="border-blue-200">
       <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">Inspect saved physical-page text</CardTitle>
-            <p className="mt-1 text-sm text-gray-600">
-              Read-only view of saved PermittingSourceDocument records. It does not load work orders or customer records.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="min-h-11 rounded-md border bg-white px-3 text-sm hover:bg-gray-50"
-            disabled={catalog.loading}
-            onClick={() => setRefresh(value => value + 1)}
-          >
-            Refresh source records
-          </button>
+        <div>
+          <CardTitle className="text-base">Inspect saved physical-page text</CardTitle>
+          <p className="mt-1 text-sm text-gray-600">
+            Read-only view using only permitting locality and PermittingSourceDocument records. It does not load work orders or customer records.
+          </p>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {catalog.loading && <p role="status">Loading saved permitting source records…</p>}
-        {catalog.error && <p role="alert" className="text-sm text-red-700">{catalog.error}</p>}
-        {!catalog.loading && !catalog.error && (
+        {localities.loading && <p role="status">Loading canonical permitting localities…</p>}
+        {localities.error && <p role="alert" className="text-sm text-red-700">{localities.error}</p>}
+        {!localities.loading && !localities.error && (
           <>
-            <p className="text-xs text-gray-600">
-              Showing the latest {catalog.rows.length} source records by retrieval time; {candidates.length} have a saved-page cursor, retained URL and archive fingerprint.
-            </p>
-            <label className="block text-sm font-medium" htmlFor="saved-source-select">Choose an exact saved source record</label>
+            <label className="block text-sm font-medium" htmlFor="saved-locality-select">Choose the exact canonical locality</label>
             <select
-              id="saved-source-select"
+              id="saved-locality-select"
               className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
-              value={selectedId}
-              onChange={event => setSelectedId(event.target.value)}
+              value={jurisdictionId}
+              onChange={event => { setJurisdictionId(event.target.value); setSelectedId(""); }}
             >
-              <option value="">Select source by title, jurisdiction and record ID</option>
-              {candidates.map(row => (
+              <option value="">Select locality</option>
+              {localities.rows.map(row => (
                 <option key={row.id} value={row.id}>
-                  {row.title || "Untitled"} · jurisdiction {row.jurisdiction_id || "unlinked"} · {row.id}
+                  {[row.name || row.locality_name || "Unnamed locality", row.state || row.state_abbr].filter(Boolean).join(", ")} · {row.id}
                 </option>
               ))}
             </select>
           </>
         )}
-        {selected && (
-          <div className="space-y-2 rounded-md border bg-slate-50 p-3 text-xs [overflow-wrap:anywhere]">
-            <p><strong>Exact source record:</strong> {selected.id}</p>
-            <p><strong>Canonical jurisdiction ID:</strong> {selected.jurisdiction_id || "Not recorded"}</p>
-            <p><strong>Saved archive SHA-256:</strong> {selected.file_hash_sha256}</p>
-            <p><strong>Archived URL:</strong> {selected.archived_file_url}</p>
-            <p><strong>Saved extraction state:</strong> {selected.text_extraction_state?.status || "Not recorded"}; {selected.text_extraction_state?.pages_extracted} page(s) extracted.</p>
-            <SourceTextEvidenceBrowser source={selected} />
-          </div>
-        )}
-        {!catalog.loading && !catalog.error && candidates.length === 0 && (
-          <p className="text-sm text-gray-600">No source in the loaded catalog has complete saved-page identity metadata.</p>
+        {selectedLocality && (
+          <>
+            <p className="text-xs text-gray-600">
+              Selected locality ID: {selectedLocality.id}. Source lookup is restricted to this exact jurisdiction ID.
+            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-gray-600">
+                {catalog.loading ? "Loading source records…" : catalog.error || ("Showing " + catalog.rows.length + " source records; " + candidates.length + " have saved-page identity metadata.")}
+              </p>
+              <button
+                type="button"
+                className="min-h-11 rounded-md border bg-white px-3 text-sm hover:bg-gray-50"
+                disabled={catalog.loading}
+                onClick={() => setRefresh(value => value + 1)}
+              >
+                Refresh source records
+              </button>
+            </div>
+            {catalog.error && <p role="alert" className="text-sm text-red-700">{catalog.error}</p>}
+            {!catalog.loading && !catalog.error && (
+              <>
+                <label className="block text-sm font-medium" htmlFor="saved-source-select">Choose an exact saved source record</label>
+                <select
+                  id="saved-source-select"
+                  className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
+                  value={selectedId}
+                  onChange={event => setSelectedId(event.target.value)}
+                >
+                  <option value="">Select source by title and record ID</option>
+                  {candidates.map(row => (
+                    <option key={row.id} value={row.id}>
+                      {row.title || "Untitled"} · {row.id}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+            {selected && (
+              <div className="space-y-2 rounded-md border bg-slate-50 p-3 text-xs [overflow-wrap:anywhere]">
+                <p><strong>Exact source record:</strong> {selected.id}</p>
+                <p><strong>Canonical jurisdiction ID:</strong> {selected.jurisdiction_id}</p>
+                <p><strong>Saved archive SHA-256:</strong> {selected.file_hash_sha256}</p>
+                <p><strong>Archived URL:</strong> {selected.archived_file_url}</p>
+                <p><strong>Saved extraction state:</strong> {selected.text_extraction_state?.status || "Not recorded"}; {selected.text_extraction_state?.pages_extracted} page(s) extracted.</p>
+                <SourceTextEvidenceBrowser source={selected} />
+              </div>
+            )}
+            {!catalog.loading && !catalog.error && candidates.length === 0 && (
+              <p className="text-sm text-gray-600">No source in this locality’s loaded catalog has complete saved-page identity metadata.</p>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
