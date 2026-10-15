@@ -153,7 +153,7 @@ export default function PermitWorkflowDesigner({
     setReviewed(false);
     setError('');
     setCreateResult(null);
-    setExpandedSteps(new Set((draft?.steps || []).map((step, index) => Number.isInteger(step.step_index) ? step.step_index : index)));
+    setExpandedSteps(new Set((draft?.steps || []).map((_, index) => index)));
   };
 
   const updateStepField = (stepIndex, field, value) => {
