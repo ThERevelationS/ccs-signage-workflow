@@ -29,5 +29,9 @@ export default function ElectricalResearchTasks({ rows = [], onInspect, onPrevie
         </article>;
       })}
     </div>
+    <Button variant="outline" className="min-h-11 w-full whitespace-normal" onClick={() => onPreviewWorkflow?.()}>
+      Preview workflow with electrical planning
+    </Button>
+    <p className="text-xs">This explicit handoff keeps saved electrical findings beside the workflow as unverified research context. It does not approve requirements, choose an office, or create job tasks.</p>
   </section>;
 }
