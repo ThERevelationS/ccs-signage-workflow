@@ -21,6 +21,8 @@ function syncFixture(overrides = {}) {
   const versions = new Map([['order-123', 1]]);
   const refs = {
     syncInFlightRef: { current: false },
+    customerNameDraftOrderRef: { current: null },
+    customerSelectionInFlightRef: { current: false },
     saveInFlightRef: { current: false },
     dateNeededSaveInFlightRef: { current: false },
     pendingSyncIdsRef: { current: pendingIds },
