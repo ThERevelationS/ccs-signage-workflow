@@ -26,6 +26,10 @@ The additional `test-sips-checklist-reload-focus-browser.mjs` runner mounts the 
 
 The board's completed-WIP reopen now recognizes a concurrent identical save **only after its existing read-only board refresh verifies both `sip_completed === false` and the expected Revisit date**. The losing session does not resubmit a stale conditional write, and focus returns to the visible Active row (or board heading if the filters hide it). A mismatch or unreadable refresh remains a conflict rather than being reported as successful. The isolated Clear Revisit/WIP Chromium suite passes all 12 scenarios, including simultaneous desktop/mobile reopening, and the separate real-checklist reload-focus suite passes all four scenarios. These synthetic checks do not replace authenticated nonproduction acceptance.
 
+## Superseded WIP recovery verification (October 16, 2026)
+
+The read-only WIP reopen reconciliation now tolerates one board-refresh supersession with **at most one bounded additional verification read**. A superseded response is never trusted to clear a conflict or request focus; only a successful current board snapshot matching **both** the intended `sip_completed` and `sip_revisit_date` can do so. If the fresh Revisit date differs or the verification read fails, the conflict stays visible and no additional write occurs. Deterministic synthetic regressions in `validate-sips-refresh-ordering.mjs` exercise the superseded matching case, divergent Revisit, and failed read. The isolated browser suites cover the standard concurrent reopen and checklist focus paths; authenticated nonproduction acceptance remains separate.
+
 ## Outstanding: authenticated two-browser QA
 
 **The synthetic suite does not demonstrate backend authorization or authenticated cross-session behavior.** Before claiming full acceptance, use an explicitly authorized *nonproduction* CCS environment with two real, independent test accounts and test Work Orders. Do not test mutations on production Work Orders, use production credentials in scripts, bypass the normal sign-in system, copy confidential production records into fixtures, or publish as part of QA.
