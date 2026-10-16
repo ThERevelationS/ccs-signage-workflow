@@ -76,3 +76,21 @@ assert.match(customer, /disabled=\{!isRegistered \|\| isPulling\}/);
 assert.match(customer, /disabled=\{checkingCustomerJobId !== null \|\| isPulling\}/);
 assert.match(customer, /onClick=\{async \(\) => \{\s*if \(manualPullInFlightRef\.current \|\| isPulling \|\| customerSelectionInFlightRef\.current\) return;/);
 console.log('PASS customer input and job options are disabled during pull with a second in-handler early guard');
+
+const jobHandlerStart = customer.indexOf('onClick={async () => {');
+const jobHandlerEnd = customer.indexOf('\n                        }}\n                      >', jobHandlerStart);
+assert.ok(jobHandlerStart > 0 && jobHandlerEnd > jobHandlerStart);
+const jobClickBody = customer.slice(jobHandlerStart + 'onClick={async () => {'.length, jobHandlerEnd).trim();
+for (const options of [{ pullRef: true, pulling: false }, { pullRef: false, pulling: true }]) {
+  const { refs, env } = createState(options);
+  let attemptedJobVerification = 0;
+  const jobEnv = {
+    ...env,
+    verifyActiveOrderCustomerJob: async () => { attemptedJobVerification++; throw Error('Unexpected job verification'); },
+  };
+  const jobClick = new Function('env', 'const { ' + Object.keys(jobEnv).join(', ') + ' } = env;\nreturn async () => {\n' + jobClickBody + '\n};')(jobEnv);
+  await jobClick();
+  assert.equal(refs.customerSelectionInFlightRef.current, false);
+  assert.equal(attemptedJobVerification, 0);
+}
+console.log('PASS actual active-job click handler refuses pull-time selections before beginning verification or changing the customer draft');
