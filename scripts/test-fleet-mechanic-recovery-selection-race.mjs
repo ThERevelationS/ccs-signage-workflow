@@ -13,7 +13,7 @@ const defer=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{reso
 function harness(action){
   const response=defer();
   const initial={workOrderId:"wo-A",action,requestId:`request-${action}-1234567890123456`,reason:"Synthetic interrupted mutation."};
-  const events={snapshots:[],errors:[],messages:[],recoveries:[],busy:[],refreshing:[],clears:[],draftClears:[]};
+  const events={snapshots:[],errors:[],messages:[],scopeNotices:[],recoveries:[],busy:[],refreshing:[],clears:[],draftClears:[]};
   let currentRecovery=null;
   const ctx={
     token:"synthetic",
@@ -27,6 +27,7 @@ function harness(action){
     setRefreshing:value=>events.refreshing.push(value),
     setActionError:value=>events.errors.push(value),
     setSavedMessage:value=>events.messages.push(value),
+    setScopeNotice:value=>events.scopeNotices.push(value),
     applyWorkOrderSnapshot:value=>events.snapshots.push(value),
     clearSavedProgressDraft:value=>events.draftClears.push(value),
     clearStoredWorkRecovery:async (_token,value)=>events.clears.push(value),
@@ -52,8 +53,8 @@ for(const action of ["start","save"]){
     assert.equal(await pending,true);
     assert.deepEqual(h.events.snapshots,[],"The old job snapshot must not enter the selected job's state");
     assert.equal(h.ctx.portalRequestRef.current,newPortalRequest,"Work recovery must not supersede the selected job's portal refresh");
-    assert.deepEqual(h.events.errors,[]);
-    assert.deepEqual(h.events.messages,[]);
+    assert.deepEqual(h.events.errors,["An earlier mechanic request was confirmed. The currently open job was not changed."]);
+    assert.deepEqual(h.events.messages,[""]);
     assert.deepEqual(h.events.busy,[]);
     assert.deepEqual(h.events.refreshing,[]);
     assert.equal(h.events.clears.length,1,"Verified receipt marker should be cleared for the original request");
@@ -73,12 +74,27 @@ for(const action of ["start","save"]){
     h.response.resolve({data:{error:"This mechanic link is not allowed to verify that action."}});
     assert.equal(await pending,false);
     assert.equal(h.ctx.portalRequestRef.current,newPortalRequest,"Denied recovery cannot cancel another job's portal work");
-    assert.deepEqual(h.events.errors,[],"Old-job access details must not appear in the selected job");
-    assert.deepEqual(h.events.messages,[]);
+    assert.deepEqual(h.events.errors,["An earlier work-order request could not be verified. It may no longer be available to this mechanic link. Nothing was replayed; contact CCS if access is needed."],"Only a generic recovery notice may appear with the selected job");
+    assert.doesNotMatch(h.events.errors.join(" "),/wo-A|request-start|request-save|Access denied/i,"The selected job must not reveal restricted identifiers or raw server details");
+    assert.deepEqual(h.events.messages,[""]);
     assert.deepEqual(h.events.busy,[]);
     assert.deepEqual(h.events.refreshing,[]);
     assert.equal(h.recovery.workOrderId,"wo-A","Unverified recovery remains locked to the original job");
     assert.equal(h.recovery.requestId,h.initial.requestId);
     assert.deepEqual(h.events.clears,[],"Denied status must retain the durable request marker");
+  });
+
+  test(`${action}: denied recovery after scope loss remains actionable without exposing the job identifier`,async()=>{
+    const h=harness(action);
+    const pending=bindRecovery(h.ctx)(h.initial);
+    h.ctx.selectedWorkOrderRef.current=null;
+    h.response.resolve({data:{error:"Access denied for wo-A"}});
+    assert.equal(await pending,false);
+    assert.equal(h.recovery.workOrderId,"wo-A");
+    assert.equal(h.events.clears.length,0);
+    assert.equal(h.events.scopeNotices.at(-1),"An earlier work-order request could not be verified. It may no longer be available to this mechanic link. Nothing was replayed; contact CCS if access is needed.");
+    assert.doesNotMatch(h.events.scopeNotices.at(-1),/wo-A|Access denied/i);
+    assert.equal(h.events.busy.at(-1),"");
+    assert.equal(h.events.refreshing.at(-1),false);
   });
 }
