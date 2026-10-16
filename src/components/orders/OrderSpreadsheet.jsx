@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { orderSaveRecoveryAction } from "@/components/orders/orderSaveRecoveryAction.mjs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -1355,6 +1356,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     );
   }
 
+  const saveRecovery = orderSaveRecoveryAction({
+    saveError,
+    readError,
+    hasProtectedDrafts: hasUnsavedChanges || hasActiveOrderEdits(),
+    busy: isLoading || isSaving || isSyncing,
+  });
+
   // Mobile card view
   if (isMobile) {
     return (
@@ -1404,15 +1412,20 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         canResolve={!readError && !hasActiveOrderEdits() && !pendingSyncIdsRef.current.size && !isSaving && !isSyncing}
         onResolutionApplied={handleCustomerResolutionApplied} />
       {saveError && (
-        <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-2">
-          <span>{saveError}</span>
-          <Button
-            type="button" variant="outline" size="sm"
-            onClick={() => saveError.startsWith('Saved in Base44, but Smartsheet sync needs attention:') ? saveAndSync() : loadData(true)}
-            className="h-7 shrink-0 border-red-300 bg-white text-red-800"
-          >
-            {saveError.startsWith('Saved in Base44, but Smartsheet sync needs attention:') ? 'Retry Sync' : 'Reload Orders'}
-          </Button>
+        <div role="alert" className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex flex-wrap items-center justify-between gap-2">
+          <span className="min-w-0 flex-1 break-words">{saveError}</span>
+          {saveRecovery?.kind === 'protected_edits' ? (
+            <span className="w-full font-medium">{saveRecovery.guidance}</span>
+          ) : saveRecovery ? (
+            <Button
+              type="button" variant="outline" size="sm"
+              disabled={saveRecovery.disabled}
+              onClick={() => saveRecovery.kind === 'retry_sync' ? saveAndSync() : loadData(true)}
+              className="h-7 shrink-0 border-red-300 bg-white text-red-800"
+            >
+              {saveRecovery.label}
+            </Button>
+          ) : null}
         </div>
       )}
       {syncMessage && !saveError && (
