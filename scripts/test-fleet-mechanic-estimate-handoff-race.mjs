@@ -88,6 +88,49 @@ test("Check Current Server State on revoked work order must not recreate inacces
   assert.equal(h.events.saves.at(-1),"");
 });
 
+test("in-flight recovery for A cannot apply stale scope after mechanic opens B",async()=>{
+  const h=refreshHarness();
+  const pendingResponse=defer();
+  h.ctx.fetchPortalPayload=()=>pendingResponse.promise;
+  const pending=h.ctx.refreshEstimateState("wo-A","Recover A.",true);
+  const markersBefore=h.events.recoveries.length;
+  h.ctx.selectedWorkOrderRef.current="wo-B";
+  h.ctx.photoDraftEpochRef.current+=1;
+  pendingResponse.resolve({...h.previous,active_work_orders:[{id:"wo-B"}]});
+  assert.equal(await pending,false);
+  assert.equal(h.events.applications.length,0,"Do not apply an old scoped response to B");
+  assert.equal(h.events.recoveries.length,markersBefore,"Do not clear or change B's recovery lock");
+  assert.equal(h.events.scopeNotices.length,0);
+});
+
+test("failed in-flight recovery for A cannot replace B's pending recovery marker",async()=>{
+  const h=refreshHarness();
+  const pendingResponse=defer();
+  h.ctx.fetchPortalPayload=()=>pendingResponse.promise;
+  const pending=h.ctx.refreshEstimateState("wo-A","Recover A.",true);
+  h.ctx.selectedWorkOrderRef.current="wo-B";
+  h.ctx.photoDraftEpochRef.current+=1;
+  const markersBefore=h.events.recoveries.length;
+  pendingResponse.reject(new Error("Synthetic network failure"));
+  assert.equal(await pending,false);
+  assert.equal(h.events.recoveries.length,markersBefore,"A's late failure must not overwrite B's pending recovery");
+  assert.equal(h.events.errors.length,0,"Do not show A's error in B");
+});
+
+test("close and reopen same work order fences stale earlier recovery response",async()=>{
+  const h=refreshHarness();
+  const pendingResponse=defer();
+  h.ctx.fetchPortalPayload=()=>pendingResponse.promise;
+  const pending=h.ctx.refreshEstimateState("wo-A","Recover A.",true);
+  h.ctx.selectedWorkOrderRef.current=null;
+  h.ctx.photoDraftEpochRef.current+=1;
+  h.ctx.selectedWorkOrderRef.current="wo-A";
+  h.ctx.photoDraftEpochRef.current+=1;
+  pendingResponse.resolve(h.nextEstimate({updated_date:"v2",status:"changes_requested"}));
+  assert.equal(await pending,false);
+  assert.equal(h.events.applications.length,0,"Old A response must not overwrite newly reopened A");
+});
+
 test("late recovery for inaccessible A cannot clear B's active recovery lock",async()=>{
   const h=refreshHarness();
   h.ctx.selectedWorkOrderRef.current="wo-B";
