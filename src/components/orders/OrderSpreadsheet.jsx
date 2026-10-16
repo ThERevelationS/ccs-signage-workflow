@@ -1684,6 +1684,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Input
                   value={order.customer_name || ""}
                   onChange={(e) => {
+                    // Customer typing bypasses updateOrder until blur, so it
+                    // needs its own pull fence. Check the ref before the UI
+                    // state update to close the same-tick pull/edit race.
+                    if (manualPullInFlightRef.current || isPulling) {
+                      setSaveError('Wait for the Smartsheet pull to finish before editing the customer.');
+                      return;
+                    }
                     const val = e.target.value;
                     // An intentional new keystroke supersedes the previous
                     // selection; only a delayed blur without new typing is stale.
@@ -1727,6 +1734,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     setCustomerDraftActive(Boolean(customerNameDraftOrderRef.current || customerSelectionInFlightRef.current));
                   }}
                   onFocus={(e) => {
+                    if (manualPullInFlightRef.current || isPulling) return;
                     customerNameDraftOrderRef.current = order.id;
                     setCustomerDraftActive(true);
                     orderLocalEditGenerationRef.current += 1;
@@ -1734,6 +1742,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     setShowCustomerDropdown(order.id);
                   }}
                   onClick={(event) => {
+                    if (manualPullInFlightRef.current || isPulling) return;
                     setCustomerSearch(event.currentTarget.value);
                     setShowCustomerDropdown(order.id);
                   }}
@@ -1746,7 +1755,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   className="h-7 text-xs border-0 bg-transparent px-1 w-full"
                   placeholder="Customer..."
                   title={order.work_order_id ? "Typing a different customer name unlinks the current job. Choose an active job to link it again." : "Choose an active job to associate this Order."}
-                  disabled={!isRegistered}
+                  disabled={!isRegistered || isPulling}
                 />
                 {order.work_order_id && (
                   <button
@@ -1775,10 +1784,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         key={wo.id}
                         type="button"
                         className="block w-full px-3 py-2 text-left hover:bg-gray-100 focus-visible:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 text-xs border-b last:border-0"
-                        disabled={checkingCustomerJobId !== null}
+                        disabled={checkingCustomerJobId !== null || isPulling}
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={async () => {
-                          if (customerSelectionInFlightRef.current) return;
+                          if (manualPullInFlightRef.current || isPulling || customerSelectionInFlightRef.current) return;
                           customerSelectionInFlightRef.current = true;
                           setCustomerDraftActive(true);
                           const selectionEditGeneration = ++orderLocalEditGenerationRef.current;
