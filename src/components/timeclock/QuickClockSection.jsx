@@ -105,7 +105,8 @@ function saveClockOutSnapshot(email, entryId, requestId, body) {
 
 function clearClockOutSnapshot(email, requestId = "") {
   const snapshot = clockOutSnapshotFor(email);
-  if (requestId && snapshot?.requestId !== requestId) return;
+  if (requestId && snapshot && snapshot.requestId !== requestId) return;
+  if (requestId && !snapshot && storedRequestId("clock_out", email) !== requestId) return;
   try { sessionStorage.removeItem(clockOutSnapshotKey(email)); } catch {}
 }
 
@@ -1220,8 +1221,8 @@ export default function QuickClockSection({
         ...submittedBody,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest("clock_out", email, requestId);
       clearClockOutSnapshot(email, requestId);
+      clearRequest("clock_out", email, requestId);
       if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
       if (stillCurrent()) {
         showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
