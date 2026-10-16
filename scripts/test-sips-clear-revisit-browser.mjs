@@ -512,7 +512,7 @@ try {
         "bounded recovery verification paused in flight");
       // Supersede even the one permitted recovery retry via the normal SIPS
       // Work Order Details callback, not a production-only test entry point.
-      await page.locator('[data-sips-active-focus-id="synthetic-sips-order"]').click();
+      await page.locator('[data-sips-active-focus-id="synthetic-sips-order"]:visible').first().click();
       await page.getByRole("button", { name: "Synthetic Details Refresh" }).click();
       await awaitFixture(page, origin, s => s.listReads === 5 && s.heldListReads === 1,
         "a second, newer Details refresh supersedes bounded recovery");
