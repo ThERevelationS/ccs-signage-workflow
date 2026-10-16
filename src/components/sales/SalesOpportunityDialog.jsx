@@ -141,7 +141,7 @@ export default function SalesOpportunityDialog({
         if (revision !== historyRevisionRef.current) return;
         const data = response?.data || response;
         if (!data?.success || !Array.isArray(data.entries) || !data.pagination) {
-          throw new Error(data?.error || "Verified Sales history could not be loaded.");
+          throw Object.assign(new Error(data?.error || "Verified Sales history could not be loaded."), {code:data?.code});
         }
         setHistory(appendSalesOpportunityHistoryPages([], data.entries));
         setHistoryPagination(data.pagination);
@@ -149,7 +149,12 @@ export default function SalesOpportunityDialog({
       .catch((error) => {
         if (revision !== historyRevisionRef.current) return;
         setHistory([]);
-        setHistoryError(error?.message || "Sales history could not be loaded.");
+        const stale = error?.code === "SALES_HISTORY_STALE" ||
+          error?.response?.data?.code === "SALES_HISTORY_STALE";
+        setHistoryNeedsRefresh(stale);
+        setHistoryError(stale
+          ? "Sales history changed during loading. Refresh Sales history to retrieve a consistent view."
+          : error?.response?.data?.error || error?.message || "Sales history could not be loaded.");
       })
       .finally(() => {
         if (revision === historyRevisionRef.current) setHistoryLoading(false);
