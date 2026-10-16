@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
@@ -19,6 +19,7 @@ import { planExistingSalesTaskStatusReconciliation } from "@/components/sales/sa
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
+import { appendSalesOpportunityHistoryPages } from "../../../base44/shared/salesOpportunityHistory.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
@@ -103,6 +104,11 @@ export default function SalesOpportunityDialog({
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [historyPagination, setHistoryPagination] = useState(null);
+  const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  const [historyPageError, setHistoryPageError] = useState("");
+  const historyRevisionRef = useRef(0);
+  const historyPageInFlightRef = useRef(false);
   const [removeFromPipelineOpen, setRemoveFromPipelineOpen] = useState(false);
   const [removeFromPipelineBusy, setRemoveFromPipelineBusy] = useState(false);
   const [removeFromPipelineAction, setRemoveFromPipelineAction] = useState("");
@@ -110,9 +116,14 @@ export default function SalesOpportunityDialog({
   const opportunityDisplayName = salesOpportunityDisplayName(workOrder);
 
   useEffect(() => {
-    let active = true;
+    const revision = ++historyRevisionRef.current;
+    setHistory([]);
+    setHistoryPagination(null);
+    setHistoryPageError("");
+    setHistoryLoadingMore(false);
+    historyPageInFlightRef.current = false;
     if (!workOrder?.id) {
-      setHistory([]);
+      setHistoryLoading(false);
       return undefined;
     }
     setHistoryLoading(true);
@@ -124,21 +135,58 @@ export default function SalesOpportunityDialog({
       entity_id: workOrder.id,
     })
       .then((response) => {
-        if (!active) return;
+        if (revision !== historyRevisionRef.current) return;
         const data = response?.data || response;
-        if (!data?.success || !Array.isArray(data.entries)) {
+        if (!data?.success || !Array.isArray(data.entries) || !data.pagination) {
           throw new Error(data?.error || "Verified Sales history could not be loaded.");
         }
-        setHistory(data.entries);
+        setHistory(appendSalesOpportunityHistoryPages([], data.entries));
+        setHistoryPagination(data.pagination);
       })
       .catch((error) => {
-        if (!active) return;
+        if (revision !== historyRevisionRef.current) return;
         setHistory([]);
         setHistoryError(error?.message || "Sales history could not be loaded.");
       })
-      .finally(() => active && setHistoryLoading(false));
-    return () => { active = false; };
+      .finally(() => {
+        if (revision === historyRevisionRef.current) setHistoryLoading(false);
+      });
+    return () => { historyRevisionRef.current += 1; };
   }, [workOrder?.id, workOrder?.updated_date]);
+
+  const loadMoreSalesHistory = async () => {
+    if (!workOrder?.id || !historyPagination?.has_more || historyLoading ||
+        historyPageInFlightRef.current) return;
+    const revision = historyRevisionRef.current;
+    historyPageInFlightRef.current = true;
+    setHistoryLoadingMore(true);
+    setHistoryPageError("");
+    try {
+      const response = await base44.functions.invoke("fieldHistoryAction", {
+        action: "sales_history",
+        session_token: localStorage.getItem("sss_session_token") || "",
+        entity_type: "WorkOrder",
+        entity_id: workOrder.id,
+        history_page: historyPagination,
+      });
+      if (revision !== historyRevisionRef.current) return;
+      const data = response?.data || response;
+      if (!data?.success || !Array.isArray(data.entries) || !data.pagination) {
+        throw new Error(data?.error || "Older Sales history could not be loaded.");
+      }
+      setHistory((current) => appendSalesOpportunityHistoryPages(current, data.entries));
+      setHistoryPagination(data.pagination);
+    } catch (error) {
+      if (revision === historyRevisionRef.current) {
+        setHistoryPageError(error?.message || "Older Sales history could not be loaded.");
+      }
+    } finally {
+      if (revision === historyRevisionRef.current) {
+        historyPageInFlightRef.current = false;
+        setHistoryLoadingMore(false);
+      }
+    }
+  };
 
   const value = Number(workOrder?.estimate_amount ?? 0) || 0;
   const unverifiedStage = isUnverifiedSmartsheetSalesStage(workOrder);
