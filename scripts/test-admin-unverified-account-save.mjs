@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "../src/components/admin/adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "../src/components/admin/unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
+import { rejectedAdminAccountField } from "../src/components/admin/accountSaveConflict.js";
 
 const source = readFileSync("src/components/admin/UserManagement.jsx", "utf8");
 const token = "synthetic-admin";
@@ -57,6 +58,7 @@ function fixture() {
  const scope={
   ...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,
   compareUnverifiedAccountSave,rebaseAppliedAccountDraft,isSameVerifiedAccountSnapshot,
+  rejectedAdminAccountField,
   planAccountFieldResolution,
   get sessionToken(){return token;},get editingUser(){return state.editor;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.password;},
