@@ -72,7 +72,7 @@ check(source.includes("mergeSalesOpportunityHistory(audit.items,legacy.items)"),
 check(dialog.includes('base44.functions.invoke("fieldHistoryAction"') &&
   dialog.includes('action: "sales_history"') && !dialog.includes("entity: CellHistory"),
   "Opportunity Detail uses authenticated combined Sales history rather than direct CellHistory-only reads.");
-check(dialog.includes("[workOrder?.id, workOrder?.updated_date]"),
+check(dialog.includes("[workOrder?.id, workOrder?.updated_date, historyReloadNonce]"),
   "Opening and verified save/reload revisions trigger history refresh.");
 check(dialog.includes("entry.actor_name || entry.actor_email") &&
   dialog.includes("Legacy record time"),
