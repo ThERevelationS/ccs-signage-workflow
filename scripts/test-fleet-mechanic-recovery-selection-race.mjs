@@ -11,7 +11,8 @@ const bindRecovery=new Function("ctx",`with(ctx){${source.slice(begin,finish)} r
 const defer=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return {promise,resolve,reject};};
 
 test("an out-of-scope recovery remains visible, checkable, and blocks new work without revealing identity",()=>{
-  assert.match(source,/workRecovery && !\[\.\.\.\(data\?\.active_work_orders[\s\S]*?Check Current Server State/);
+  assert.match(source,/workRecovery && selected\?\.id !== workRecovery\.workOrderId[\s\S]*?Check Current Server State/);
+  assert.match(source,/An interrupted mechanic update remains unresolved\. Its job is not available to this link\. No request was replayed, and no restricted job details are shown\./);
   assert.match(source,/workRecovery=\{workRecovery\}/,"The selected job must receive a pending recovery even when it belongs to another work order");
   assert.match(source,/const workRecoveryForThisJob = workRecovery\?\.workOrderId === workOrder\.id/);
   assert.match(source,/disabled=\{workMutationBusy\|\|workRecoveryForThisJob\} aria-label="Close work order"/,"Only the affected job must remain unclosable during its own recovery");
