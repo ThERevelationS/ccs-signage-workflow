@@ -10,6 +10,15 @@ assert.ok(begin>=0&&finish>begin,"Live Start/Save recovery handler must exist");
 const bindRecovery=new Function("ctx",`with(ctx){${source.slice(begin,finish)} return recoverWorkMutation; }`);
 const defer=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return {promise,resolve,reject};};
 
+test("an out-of-scope recovery remains visible, checkable, and blocks new work without revealing identity",()=>{
+  assert.match(source,/workRecovery && !\[\.\.\.\(data\?\.active_work_orders[\s\S]*?Check Current Server State/);
+  assert.match(source,/workRecovery=\{workRecovery\}/,"The selected job must receive a pending recovery even when it belongs to another work order");
+  assert.match(source,/const workRecoveryForThisJob = workRecovery\?\.workOrderId === workOrder\.id/);
+  assert.match(source,/disabled=\{workMutationBusy\|\|workRecoveryForThisJob\} aria-label="Close work order"/,"Only the affected job must remain unclosable during its own recovery");
+  assert.match(source,/if \(workRecovery\) \{ setActionError\("Check the current server state before trying another work-order update\."/,"Start Work is globally blocked while the single durable recovery marker is unresolved");
+  assert.match(source,/if \(workRecovery\) \{ setActionError\("Check the current server state before saving progress again\."/,"Save Progress is globally blocked while the single durable recovery marker is unresolved");
+});
+
 function harness(action){
   const response=defer();
   const initial={workOrderId:"wo-A",action,requestId:`request-${action}-1234567890123456`,reason:"Synthetic interrupted mutation."};
