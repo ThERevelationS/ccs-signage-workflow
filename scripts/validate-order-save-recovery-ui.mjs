@@ -51,5 +51,5 @@ assert.match(page, /max-w-full break-words/);
 assert.match(page, /saveStatus\.saveError && saveStatus\.hasUnsavedChanges/);
 assert.match(page, /Unsaved edits are protected/);
 assert.match(page, /hasLocalOrderChanges \? "Save & Sync" : "Sync"/);
-assert.match(page, /disabled=\{saveStatus\.isSaving \|\| saveStatus\.isSyncing \|\| saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
+assert.match(page, /disabled=\{saveStatus\.customerDraftActive \|\| saveStatus\.isSaving \|\| saveStatus\.isSyncing \|\| saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
 console.log('PASS mobile toolbar displays every Order save/sync error without losing long-text wrapping or disabling normal Save & Sync protections');
