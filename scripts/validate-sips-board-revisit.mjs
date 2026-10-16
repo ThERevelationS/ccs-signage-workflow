@@ -91,6 +91,7 @@ function harness(initialDate = tomorrow) {
     base44: { functions },
     localStorage: { getItem: () => '' },
     today,
+    boardLoadSequenceRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
     boardRefreshDeferredRef: { current: false },
@@ -129,6 +130,7 @@ function harness(initialDate = tomorrow) {
     ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
   };
   ctx.loadWorkOrders = async () => {
+    ctx.boardLoadSequenceRef.current++;
     ctx.reloads++;
     ctx.workOrders = [structuredClone(record)];
     return ctx.workOrders;
@@ -462,6 +464,7 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
       base44: { functions },
       localStorage: { getItem: () => '' },
       today,
+      boardLoadSequenceRef: { current: 0 },
       boardSaveEpochRef: { current: 0 },
       boardSavesPendingRef: { current: 0 },
       boardRefreshDeferredRef: { current: false },
@@ -495,8 +498,10 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
       ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
     };
     ctx.loadWorkOrders = async () => {
+      ctx.boardLoadSequenceRef.current++;
       ctx.reloads++;
       ctx.workOrders = [structuredClone(live)];
+      return ctx.workOrders;
     };
     vm.createContext(ctx);
     vm.runInContext(source, ctx);
