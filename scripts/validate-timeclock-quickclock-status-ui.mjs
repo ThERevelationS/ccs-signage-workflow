@@ -842,6 +842,10 @@ await act(async () => { overlapRenderer.unmount(); });
 
 // Confirmed response must clean up malformed stale recovery data, but only
 // when the separately stored request ID still belongs to that acknowledgement.
+const malformedStorageKey = `ccs_timeclock_pending_clock_out:${first.email}`;
+const malformedRequestKey = `ccs_timeclock_request:clock_out:${first.email}`;
+savedSessionData.delete(malformedStorageKey);
+savedSessionData.delete(malformedRequestKey);
 let malformedSnapshotRenderer;
 await act(async () => {
   malformedSnapshotRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
@@ -860,8 +864,6 @@ await act(async () => {
   });
 });
 const malformedRequest = calls.length - 1;
-const malformedStorageKey = `ccs_timeclock_pending_clock_out:${first.email}`;
-const malformedRequestKey = `ccs_timeclock_request:clock_out:${first.email}`;
 assert.ok(savedSessionData.has(malformedStorageKey));
 savedSessionData.set(malformedStorageKey,'{malformed snapshot');
 await act(async () => {
