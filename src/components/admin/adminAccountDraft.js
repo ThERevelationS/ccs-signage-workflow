@@ -25,6 +25,29 @@ export function createAdminAccountDraft(record) {
   };
 }
 
+// Only fields edited from this verified Account version belong in a write.
+// Role/order-export/resources dependencies are still enforced by the backend.
+// Passwords are never part of Account writes or account field reconciliation.
+export function getChangedAdminAccountFields(record, draft) {
+  if (!record?.id || !record?.email || !record?.updated_date ||
+      !draft || typeof draft !== "object" || Array.isArray(draft) ||
+      ACCOUNT_FIELDS.some(field => !own(draft, field))) {
+    throw new Error("Account edits require a verified employee and complete draft.");
+  }
+  const baseline = createAdminAccountDraft(record);
+  const patch = {};
+  for (const field of ACCOUNT_FIELDS) {
+    const before = field === "sales_roles" ? stableRoles(baseline[field]) : baseline[field];
+    const after = field === "sales_roles" ? stableRoles(draft[field]) : draft[field];
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      patch[field] = field === "sales_roles" && Array.isArray(draft[field])
+        ? [...new Set(draft[field])]
+        : draft[field];
+    }
+  }
+  return patch;
+}
+
 export function hasUnsavedAdminAccountDraft(baseline, draft) {
   if (!baseline || !draft || typeof baseline !== "object" ||
       typeof draft !== "object" || Array.isArray(baseline) || Array.isArray(draft)) return true;
