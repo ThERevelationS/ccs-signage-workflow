@@ -1233,8 +1233,8 @@ export default function QuickClockSection({
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) {
-        clearRequest("clock_out", email, requestId);
         clearClockOutSnapshot(email, requestId);
+        clearRequest("clock_out", email, requestId);
         if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
       }
       if (stillCurrent()) {
