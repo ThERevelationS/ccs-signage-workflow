@@ -332,15 +332,17 @@ for(const [name,change] of [
  ["version",row=>({...row,updated_date:"version-3"})],
  ["privilege promotion",row=>({...row,role:"admin"})],
  ["role demotion",row=>({...row,role:"user",can_view_resources:false})],
- ["Order Form export grant",row=>({...row,can_order_export:true})],
+ ["Order Form export revocation",row=>({...row,can_order_export:false})],
  ["Resources permission",row=>({...row,can_view_resources:true})],
- ["Import/export permission",row=>({...row,can_import_export:false})],
+ ["Import/export permission",row=>({...row,can_import_export:true})],
  ["Sales Pipeline roles",row=>({...row,sales_roles:["Installer"]})],
  ["unchanged version but different username",row=>({...row,username:"different"})]
 ]){
  test(`Concurrent ${name} between preview and approval requires new review without applying choices`,async()=>{
   const f=fixture();await f.save();
-  f.state.readResponse=[{...target,can_import_export:false}];
+  f.state.readResponse=[{...target,can_import_export:false,
+    ...(["role demotion","Order Form export revocation"].includes(name)
+      ? {role:"admin",can_view_resources:true,can_order_export:true} : {})}];
   await f.verify();
   f.state.choices={can_import_export:"mine"};
   f.state.confirmed=true;
