@@ -36,6 +36,7 @@ import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
+import { readBackUncertainSalesFollowUpSave } from "@/components/sales/salesFollowUpSaveRecovery.mjs";
 import { captureSalesFollowUpCompletionGuards, isSalesFollowUpCompletionSnapshotCurrent } from "@/components/sales/salesFollowUpCompletionGuards.mjs";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
@@ -285,6 +286,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingBaselinesRef = useRef({});
   const pendingSalesGuardsRef = useRef({});
   const pendingFollowUpGuardsRef = useRef({});
+  const blockedFollowUpSavesRef = useRef(new Set());
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
@@ -906,6 +908,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false, followUpGuards = null) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
+    if (blockedFollowUpSavesRef.current.has(orderId)) {
+      setQuickEditError("A prior follow-up completion has not been verified. Reload the latest opportunity before making more changes; do not log it again.");
+      return;
+    }
     if (reconcileSameTask) {
       // Only the explicit repair action may reuse an unchanged task. Require
       // a modern mapped mismatch and a clean pending-save queue.
@@ -1121,16 +1127,33 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           out[changedField] = baselineSource[changedField];
           return out;
         }, {});
-        const saved = await replaceWorkOrderFieldsIfUnchanged({
-          workOrderId: orderId,
-          expectedFields,
-          nextFields: changes,
-          guardFields: {
-            ...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
-            ...(pendingFollowUpGuardsRef.current[orderId] || {}),
-          },
-          label: "Sales Pipeline quick edit",
-        });
+        let saved;
+        let recoveredFollowUpSave = false;
+        try {
+          saved = await replaceWorkOrderFieldsIfUnchanged({
+            workOrderId: orderId,
+            expectedFields,
+            nextFields: changes,
+            guardFields: {
+              ...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes),
+              ...(pendingFollowUpGuardsRef.current[orderId] || {}),
+            },
+            label: "Sales Pipeline quick edit",
+          });
+        } catch (saveError) {
+          if (!pendingFollowUpGuardsRef.current[orderId]) throw saveError;
+          // The write may have committed before the response disappeared.
+          // Read the authoritative record once; NEVER issue a second save.
+          const readBack = await readBackUncertainSalesFollowUpSave({
+            workOrderId: orderId, changes, getLatest: (id) => WorkOrder.get(id),
+          });
+          if (!readBack.verified) {
+            blockedFollowUpSavesRef.current.add(orderId);
+            throw new Error("Follow-up save was not verified after an interrupted or rejected acknowledgment. Do not complete it again; use Reload latest to inspect the authoritative record. " + (saveError?.message || ""));
+          }
+          saved = readBack.record;
+          recoveredFollowUpSave = true;
+        }
 
         // History is written only after the conflict-safe business save succeeds.
         await Promise.all(Object.keys(changes)
@@ -1172,7 +1195,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         const verifiedSameTaskRepair = pendingSameTaskRepairRef.current.delete(orderId);
         if (verifiedSameTaskRepair) failedSameTaskRepairRef.current.delete(orderId);
         if (verifiedSameTaskRepair) refreshSameTaskSaveNotice((version) => version + 1);
-        const verifiedRepairFields = verifiedSameTaskRepair
+        const verifiedRepairFields = verifiedSameTaskRepair || recoveredFollowUpSave
           ? Object.fromEntries(Object.keys(changes).map((field) => [field, saved[field]])) : {};
         if (verifiedSameTaskRepair && selectedWorkOrder?.id === orderId) {
           // Only now is a corrected review eligible to leave the queue.
@@ -1184,12 +1207,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         setWorkOrders((current) => current.map((row) => row.id === orderId ? {
           ...row,
           ...verifiedRepairFields,
+          ...(recoveredFollowUpSave ? remaining : {}),
           updated_date: saved.updated_date,
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : row));
         setSelectedWorkOrder((selected) => selected?.id === orderId ? {
           ...selected,
           ...verifiedRepairFields,
+          ...(recoveredFollowUpSave ? remaining : {}),
           updated_date: saved.updated_date,
           sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
         } : selected);
@@ -1332,6 +1357,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     pendingBaselinesRef.current = {};
     pendingSalesGuardsRef.current = {};
     pendingFollowUpGuardsRef.current = {};
+    blockedFollowUpSavesRef.current.clear();
     pendingHistoryFieldsRef.current = {};
     pendingRecordScopesRef.current = {};
     setQuickEditError("");
