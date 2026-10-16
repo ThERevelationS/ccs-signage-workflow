@@ -426,7 +426,16 @@ export default function SIPs() {
     } catch (error) {
       console.error("Error reopening completed SIP WIP item:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
-      const refreshedOrders = await loadWorkOrders(false);
+      const beforeRecoveryRead = boardLoadSequenceRef.current;
+      let refreshedOrders = await loadWorkOrders(false);
+      // A background/explicit refresh can supersede this recovery read. Its
+      // result is intentionally discarded by loadWorkOrders; perform at most
+      // one new read-only verification after that race, never another write.
+      // Failed reads or concurrent saves cannot silently resolve conflicts.
+      if (!refreshedOrders && boardLoadSequenceRef.current > beforeRecoveryRead + 1 &&
+          boardSavesPendingRef.current === 0) {
+        refreshedOrders = await loadWorkOrders(false);
+      }
       // Two employees may reopen the same completed WIP simultaneously.
       // If our conditional write lost but the verified server record already
       // has precisely the intended completion AND Revisit date, restore focus
