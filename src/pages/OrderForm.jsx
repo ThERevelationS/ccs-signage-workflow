@@ -32,7 +32,7 @@ export default function OrderForm() {
   const [filterLoaded, setFilterLoaded] = useState(false);
   const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, isSaving: false, isSyncing: false, isLoading: true, pendingSyncCount: 0, saveError: "", readError: "" });
+  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, customerDraftActive: false, isSaving: false, isSyncing: false, isLoading: true, pendingSyncCount: 0, saveError: "", readError: "" });
   const spreadsheetRef = useRef(null);
   const hasLocalOrderChanges = saveStatus.hasUnsavedChanges || saveStatus.pendingSyncCount > 0;
   const saveSyncIndicator = orderSaveSyncStatus(saveStatus);
@@ -136,8 +136,8 @@ export default function OrderForm() {
                   : spreadsheetRef.current?.pullFromSmartsheet?.()}
                 size="sm"
                 className="h-8 px-3"
-                disabled={saveStatus.isSaving || saveStatus.isSyncing || saveStatus.isLoading || Boolean(saveStatus.readError)}
-                title={saveStatus.readError ? "Reload Orders successfully before saving or syncing." : hasLocalOrderChanges ? "Save local Order changes and push them to Smartsheet" : "Check Smartsheet and pull changed Orders into this app"}
+                disabled={saveStatus.customerDraftActive || saveStatus.isSaving || saveStatus.isSyncing || saveStatus.isLoading || Boolean(saveStatus.readError)}
+                title={saveStatus.customerDraftActive ? "Finish editing the customer name or selecting an active job before saving or syncing." : saveStatus.readError ? "Reload Orders successfully before saving or syncing." : hasLocalOrderChanges ? "Save local Order changes and push them to Smartsheet" : "Check Smartsheet and pull changed Orders into this app"}
               >
                 {saveStatus.isSaving || saveStatus.isSyncing
                   ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -146,7 +146,8 @@ export default function OrderForm() {
                 {saveStatus.isPulling ? "Checking Smartsheet..."
                   : saveStatus.isSyncing ? "Syncing..."
                     : saveStatus.isSaving ? "Saving..."
-                      : hasLocalOrderChanges ? "Save & Sync" : "Sync"}
+                      : saveStatus.customerDraftActive ? "Finish Customer Edit"
+                        : hasLocalOrderChanges ? "Save & Sync" : "Sync"}
               </Button>
             )}
             {isRegistered && (
