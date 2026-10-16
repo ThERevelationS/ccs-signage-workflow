@@ -566,7 +566,7 @@ export default function FleetMechanic() {
 
   const saveProgress = async () => {
     if (!selected) return;
-    if (workRecovery?.workOrderId === selected.id) { setActionError("Check the current server state before saving progress again."); return; }
+    if (workRecovery) { setActionError("Check the current server state before saving progress again."); return; }
     const recovery = {workOrderId:selected.id,action:"save",requestId:newMechanicRequestId(),reason:"Progress-save request could not be confirmed."};
     const appliedPortalEpoch = portalAppliedEpochRef.current;
     setBusy("save"); setActionError(""); setSavedMessage("");
