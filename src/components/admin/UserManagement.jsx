@@ -51,7 +51,7 @@ import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
-import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft } from "./unverifiedAccountSave.js";
+import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "./accountFieldResolution.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -934,7 +934,7 @@ export default function UserManagement() {
     }
   };
 
-  const acceptVerifiedAccountSave = () => {
+  const acceptVerifiedAccountSave = async () => {
     const pending = accountWriteRecovery;
     if (!pending || pending.stage !== "review" || !pending.latest ||
         !pending.comparison || !sessionToken ||
@@ -946,40 +946,74 @@ export default function UserManagement() {
         deletionInFlight.current || isLoading || userDirectoryError ||
         (pending.comparison.status !== "applied" &&
           (!confirmAccountReconciliation || !accountResolutionPreview))) return;
-    const latest = pending.latest;
-    accountDraftBaseline.current = {
-      sessionToken, id: latest.id, email: latest.email,
-      values: createAdminAccountDraft(latest)
-    };
-    if (pending.comparison.status === "applied") {
-      setFormData(current => rebaseAppliedAccountDraft({
-        latest, attempted: pending.attempted, current
-      }));
-      if (String(activeAccountDraft.current?.password_hash || "").length > 0) {
-        // This password was never sent: the Account request did not return
-        // a verified response, so the original flow never got to this step.
-        setAccountSaveRecovery({
-          sessionToken, id: latest.id, email: latest.email,
-          updated_date: latest.updated_date, passwordNotSent: true
-        });
+    // Review choices remain local. Before adopting the reviewed baseline,
+    // obtain a new authorized read and prove that its entire editable Account
+    // surface and version still match the record displayed for approval.
+    const owner = { sessionToken };
+    const draftAtApproval = activeAccountDraft.current;
+    userUpdateOwner.current = owner;
+    userUpdateInFlight.current = true;
+    setUserMutationSaving(true);
+    const ownsApproval = () => userUpdateOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === pending.id &&
+      activeEditingUser.current?.email === pending.email;
+    try {
+      const rows = await listAuthorizedUsersAdmin({ sessionToken });
+      if (!ownsApproval()) return;
+      const matching = rows?.filter(row => row.id === pending.id && row.email === pending.email);
+      if (!matching || matching.length !== 1 ||
+          !isSameVerifiedAccountSnapshot(pending.latest, matching[0]) ||
+          activeAccountDraft.current !== draftAtApproval) {
+        throw new Error("Reconciliation must be reviewed against the latest Account.");
       }
-      setAccountSaveNotice("Latest Account values match the requested changes. No Account retry was sent. Review any subsequent edits.");
-    } else {
-      // Apply only the administrator's explicit per-field choices in memory.
-      // Default choices preserve the latest verified record. Values edited
-      // after the interrupted request stay local unless explicitly rejected.
-      const resolved = accountResolutionPreview.draft;
-      setFormData(current => ({...resolved, password_hash: current.password_hash || ""}));
-      setAccountSaveNotice(
-        "Field choices applied to your local draft only. Latest Account values are the new baseline. Review roles and permissions, then Save separately if needed."
-      );
+      const latest = matching[0];
+      accountDraftBaseline.current = {
+        sessionToken, id: latest.id, email: latest.email,
+        values: createAdminAccountDraft(latest)
+      };
+      if (pending.comparison.status === "applied") {
+        setFormData(current => rebaseAppliedAccountDraft({
+          latest, attempted: pending.attempted, current
+        }));
+        if (String(draftAtApproval?.password_hash || "").length > 0) {
+          // No password write was started by the interrupted Account request.
+          setAccountSaveRecovery({
+            sessionToken, id: latest.id, email: latest.email,
+            updated_date: latest.updated_date, passwordNotSent: true
+          });
+        }
+        setAccountSaveNotice("Verified Account values still match the requested changes. No Account retry was sent.");
+      } else {
+        // Choices are calculated from the original verified snapshot and the
+        // draft as it stood at approval. Concurrent changes invalidate review.
+        const resolved = accountResolutionPreview.draft;
+        setFormData(current => ({...resolved, password_hash: current.password_hash || ""}));
+        setAccountSaveNotice(
+          "Field choices applied to the local draft only after verifying no intervening Account changes. Review roles and permissions before a separate Save."
+        );
+      }
+      setEditingUser(current =>
+        current?.id === pending.id && current?.email === pending.email ? latest : current);
+      setAccountWriteRecovery(null);
+      setConfirmAccountReconciliation(false);
+      setAccountFieldChoices({});
+      setUserMutationError("");
+    } catch {
+      if (!ownsApproval()) return;
+      // The previous preview cannot be trusted after a failed, changed, or
+      // ambiguous read. Keep all unsaved fields and password draft unchanged.
+      setAccountWriteRecovery({ ...pending, stage: "needs_read", latest: null, comparison: null });
+      setConfirmAccountReconciliation(false);
+      setAccountFieldChoices({});
+      setUserMutationError("Account verification changed or could not be confirmed. No choices were applied and no write was sent. Read latest Account again.");
+    } finally {
+      if (ownsApproval()) {
+        userUpdateOwner.current = null;
+        userUpdateInFlight.current = false;
+        setUserMutationSaving(false);
+      }
     }
-    setEditingUser(current =>
-      current?.id === pending.id && current?.email === pending.email ? latest : current);
-    setAccountWriteRecovery(null);
-    setConfirmAccountReconciliation(false);
-    setAccountFieldChoices({});
-    setUserMutationError("");
   };
 
   const retryUnverifiedAccountPassword = async () => {
@@ -1894,6 +1928,7 @@ export default function UserManagement() {
                     <label className="flex items-start gap-2 text-amber-950">
                       <input type="checkbox" className="mt-1"
                         checked={confirmAccountReconciliation}
+                        disabled={userMutationSaving || isLoading}
                         onChange={event => setConfirmAccountReconciliation(event.target.checked)} />
                       I reviewed each Account field and any role/permission adjustments. Apply these
                       choices to my local draft against the verified latest baseline. A later Save is
