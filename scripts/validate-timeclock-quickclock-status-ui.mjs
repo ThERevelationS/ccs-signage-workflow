@@ -839,4 +839,42 @@ assert.equal(savedSessionData.has(`ccs_timeclock_request:clock_out:${second.emai
 assert.equal(savedSessionData.has(`ccs_timeclock_pending_clock_out:${second.email}`),false);
 console.log('PASS previous session late Clock Out cannot delete newer shift request or recovery data');
 await act(async () => { overlapRenderer.unmount(); });
-console.log('PASS 22/22 Time Clock Quick Clock async status acceptance cases');
+
+// Confirmed response must clean up malformed stale recovery data, but only
+// when the separately stored request ID still belongs to that acknowledgement.
+let malformedSnapshotRenderer;
+await act(async () => {
+  malformedSnapshotRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'malformed-snapshot-session', employeeSessionUser:first,
+  }));
+});
+const malformedInitialStatus = calls.length - 1;
+await act(async () => { calls[malformedInitialStatus].resolve(status(first,'malformed-snapshot-shift')); });
+const malformedDialog = malformedSnapshotRenderer.root.findAll((node) =>
+  typeof node.props?.onClockOut === 'function')[0];
+let malformedCleanupOut;
+await act(async () => {
+  malformedCleanupOut = malformedDialog.props.onClockOut({
+    lunchMinutes:0, jobAllocations:[{work_order_id:'privacy-job',minutes:42}],
+    notes:'Synthetic malformed recovery cleanup',
+  });
+});
+const malformedRequest = calls.length - 1;
+const malformedStorageKey = `ccs_timeclock_pending_clock_out:${first.email}`;
+const malformedRequestKey = `ccs_timeclock_request:clock_out:${first.email}`;
+assert.ok(savedSessionData.has(malformedStorageKey));
+savedSessionData.set(malformedStorageKey,'{malformed snapshot');
+await act(async () => {
+  calls[malformedRequest].resolve({data:{
+    success:true,status:'clocked_out',user:first,
+    entry:{id:'malformed-snapshot-shift',clock_out:'2026-10-15T22:00:00.000Z'},
+  }});
+  await malformedCleanupOut;
+});
+assert.equal(savedSessionData.has(malformedStorageKey),false,
+  'Confirmed Clock Out must remove its malformed stale payload');
+assert.equal(savedSessionData.has(malformedRequestKey),false,
+  'Confirmed Clock Out must also remove its matching request id');
+await act(async () => { malformedSnapshotRenderer.unmount(); });
+console.log('PASS confirmed Clock Out removes malformed stale recovery payload');
+console.log('PASS 23/23 Time Clock Quick Clock async status acceptance cases');
