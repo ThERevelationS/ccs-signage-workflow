@@ -62,7 +62,8 @@ check(backendSource.includes("validateSalesStageTimestampPatch(record,patch,equi
 check(backendSource.includes("!optionalFields.has(f)") &&
   !backendSource.slice(backendSource.indexOf("const optionalFields"),backendSource.indexOf("function cincinnatiDateStamp")).includes("smartsheet_row_id"),
   "FieldHistory regular-user writes do not allow Smartsheet permanent row identity.");
-check(salesSheet.includes("guardFields: untouchedSalesTransitionGuards(") &&
+check(salesSheet.includes("...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes)") &&
+  salesSheet.includes("...(pendingFollowUpGuardsRef.current[orderId] || {})") &&
   salesSheet.includes("expectedFields,") && salesSheet.includes("nextFields: changes,"),
   "Sales table forwards field baselines and transition guards to conflict-safe backend.");
 check(opportunity.includes("const update = (changes) => onUpdateFields?.(workOrder.id, changes)"),
