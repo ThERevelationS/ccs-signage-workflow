@@ -104,12 +104,17 @@ export async function updateAuthorizedUserAdmin({ record, nextFields, sessionTok
   if (!record?.id || !record?.email) throw new Error("Authorized user is not loaded. Reload before saving.");
   const desired = nextFields && typeof nextFields === "object" ? nextFields : {};
   const expectedFields = Object.fromEntries(Object.keys(desired).map((field) => [field, record?.[field]]));
+  const permissionDependsOnRole = ["can_order_export", "can_view_resources"]
+    .some(field => Object.prototype.hasOwnProperty.call(desired, field));
   const result = await invokeAdminUsers({
     action: "update",
     id: record.id,
     email: record.email,
     next_fields: desired,
     expected_fields: expectedFields,
+    // Not a write field: protect role-dependent permission edits against a
+    // role change between the editor snapshot and the backend conditional write.
+    ...(permissionDependsOnRole ? { expected_role: record.role } : {}),
     session_token: requireSessionToken(sessionToken),
   });
   if (!result?.success || !result?.record?.id) throw new Error("Authorized user update could not be verified.");
