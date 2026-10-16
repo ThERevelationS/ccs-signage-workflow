@@ -8,6 +8,7 @@ import {
  hasUnsavedAdminAccountDraft
 } from "../src/components/admin/adminAccountDraft.js";
 import { rejectedAdminAccountField } from "../src/components/admin/accountSaveConflict.js";
+import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from "../base44/shared/authorizedEmailCredentialPersistence.mjs";
 import { compareUnverifiedAccountSave } from "../src/components/admin/unverifiedAccountSave.js";
 
 const source=readFileSync("src/components/admin/UserManagement.jsx","utf8");
@@ -245,6 +246,82 @@ test("Account-save controls keep server-side role restrictions and field-scoped 
  assert.match(source,/const changedFields = getChangedAdminAccountFields\(record, dataToSave\)/);
  assert.match(source,/nextFields: changedFields/);
  assert.match(source,/accountWriteSent = Object\.keys\(changedFields\)\.length > 0/);
+});
+
+test("Role-bound permissions keep the role as a conditional guard, not a write field",()=>{
+ assert.match(persistence,/permissionDependsOnRole = \["can_order_export", "can_view_resources"\]/);
+ assert.match(persistence,/expected_role: record.role/);
+ assert.match(backend,/const roleBoundPermission = Object\.prototype\.hasOwnProperty\.call\(desired, 'can_order_export'\)/);
+ assert.match(backend,/expectedRole && expectedRole !== current.role/);
+ assert.match(backend,/role: expectedRole \|\| current.role/);
+ assert.match(backend,/Administrator Resources access cannot be disabled/);
+});
+
+test("Synthetic conditional permission update refuses role changed before read",async()=>{
+ let writes=0;
+ const current={...original,role:"user",can_order_export:false};
+ const entity={
+  get:async()=>({...current}),
+  updateMany:async()=>{writes++;return {updated:1};}
+ };
+ await assert.rejects(
+  replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+   entity,user:{id:current.id,can_order_export:false},
+   nextFields:{can_order_export:true},guardFields:{email:current.email,role:"admin"},
+   label:"Synthetic role-dependent permission"
+  }),
+  /changed in another session \(role\)/
+ );
+ assert.equal(writes,0);
+ assert.equal(current.can_order_export,false);
+});
+
+test("Synthetic role switch between read and write cannot grant Order Form export",async()=>{
+ let current={...original,role:"admin",can_view_resources:true,updated_date:"v1"};
+ let attempts=0;
+ const entity={
+  get:async()=>({...current}),
+  updateMany:async()=>{
+   attempts++;
+   // Concurrent demotion wins the CAS race. The permission update writes 0.
+   current={...current,role:"user",updated_date:"v2"};
+   return {updated:0};
+  }
+ };
+ await assert.rejects(
+  replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+   entity,user:{id:current.id,can_order_export:false},
+   nextFields:{can_order_export:true},guardFields:{email:current.email,role:"admin"},
+   label:"Synthetic Order Form export"
+  }),
+  /changed in another session \(role\)/
+ );
+ assert.equal(attempts,1);
+ assert.equal(current.can_order_export,false);
+ assert.equal(current.role,"user");
+});
+
+test("Synthetic authorized admin export grant writes only the permission with verified role",async()=>{
+ let current={...original,role:"admin",can_view_resources:true,updated_date:"v1"};
+ let patch=null;
+ const entity={
+  get:async()=>({...current}),
+  updateMany:async(query,update)=>{
+   assert.deepEqual(query,{id:current.id,updated_date:"v1"});
+   patch=update.$set;
+   current={...current,...patch,updated_date:"v2"};
+   return {updated:1};
+  }
+ };
+ const saved=await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+  entity,user:{id:current.id,can_order_export:false},
+  nextFields:{can_order_export:true},
+  guardFields:{email:current.email,role:"admin"},
+  label:"Synthetic authorized export"
+ });
+ assert.deepEqual(patch,{can_order_export:true});
+ assert.equal(saved.can_order_export,true);
+ assert.equal(saved.role,"admin");
 });
 
 test("Concurrent late local edit during password-only request remains in editor",async()=>{
