@@ -139,7 +139,7 @@ check(detail.includes("Use Current Task to Correct Status") &&
 check(sheet.includes("reconcileSameTask || String(nextChanges.current_task_description") &&
   sheet.includes("proposedUpdates.sales_status = taskPlan.status"),
   "Same-task correction activates only the existing mapped stage transition.");
-check(sheet.includes("reconcileSameTask })") &&
+check(sheet.includes("reconcileSameTask, followUpGuards })") &&
   sheet.includes("statusTransition.reconcileSameTask === true"),
   "Terminal stage correction preserves confirmation context.");
 check(confirmation.includes("transition.reconcileSameTask") &&
@@ -147,7 +147,8 @@ check(confirmation.includes("transition.reconcileSameTask") &&
   confirmation.includes("const canConfirm = !isLost || Boolean(finalReason)"),
   "Confirmation explains unchanged task and still requires a Lost reason.");
 check(sheet.includes("pendingSalesGuardsRef.current[orderId].current_task_description = currentWo.current_task_description") &&
-  sheet.includes("guardFields: untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes)"),
+  sheet.includes("...untouchedSalesTransitionGuards(pendingSalesGuardsRef.current[orderId], changes)") &&
+  sheet.includes("...(pendingFollowUpGuardsRef.current[orderId] || {})"),
   "Unchanged task is included in frontend CAS guards for explicit reconciliation.");
 check(server.includes("Object.entries(body.guard_fields||{})") &&
   server.includes("trackedConditionalSave(base44,type,record,patch,actor)"),
