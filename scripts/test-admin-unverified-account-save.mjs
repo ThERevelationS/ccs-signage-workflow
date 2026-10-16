@@ -56,7 +56,7 @@ function fixture() {
   directoryError:false,mutationSaving:false,confirmed:false,choices:{},dialog:true
  };
  const scope={
-  ...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,
+  ...refs,createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,
   compareUnverifiedAccountSave,rebaseAppliedAccountDraft,isSameVerifiedAccountSnapshot,
   rejectedAdminAccountField,
   planAccountFieldResolution,
