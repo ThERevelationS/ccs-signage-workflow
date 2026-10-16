@@ -259,6 +259,7 @@ function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
     selectedWorkOrderRef:{current:"wo-A"},
     portalAppliedEpochRef:{current:3},
     portalRequestRef:{current:0},
+    photoDraftEpochRef:{current:0},
     setEstimateRecovery:value=>recoveries.push(value),
     setRefreshing:()=>{},
     applyPortalPayload:result=>{ctx.lastAppliedPayload=result;},
