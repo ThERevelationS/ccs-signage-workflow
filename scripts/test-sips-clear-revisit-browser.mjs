@@ -101,14 +101,14 @@ function syntheticBackend() {
               fixture.forcedExternalReopens++;
               result = { updated: 0 };
             } else {
-            const matches = query.id === fixture.row.id &&
-              query.updated_date === fixture.row.updated_date && fixture.row.deleted !== true;
-            if (matches) {
-              Object.assign(fixture.row, clone(patch.$set));
-              fixture.row.updated_date = String(Number(fixture.row.updated_date) + 1).padStart(9, "0");
-              fixture.writes.push(clone(patch.$set));
-            }
-            result = { updated: matches ? 1 : 0 };
+              const matches = query.id === fixture.row.id &&
+                query.updated_date === fixture.row.updated_date && fixture.row.deleted !== true;
+              if (matches) {
+                Object.assign(fixture.row, clone(patch.$set));
+                fixture.row.updated_date = String(Number(fixture.row.updated_date) + 1).padStart(9, "0");
+                fixture.writes.push(clone(patch.$set));
+              }
+              result = { updated: matches ? 1 : 0 };
             }
           } else if (request.op === "armSupersededReopen") {
             assert.equal(fixture.heldListReads.length, 0, "No held reads from a prior case");
@@ -151,6 +151,22 @@ function syntheticBackend() {
   };
 }
 
+async function fixtureAction(page, origin, op, data = {}) {
+  const response = await page.request.post(origin + "/__sips_fixture", { data: { op, ...data } });
+  assert.equal(response.ok(), true, "Synthetic fixture action succeeded: " + op);
+  return response.json();
+}
+
+async function awaitFixture(page, origin, condition, explanation) {
+  const until = Date.now() + 9000;
+  while (Date.now() < until) {
+    const state = await fixtureAction(page, origin, "fixtureStatus");
+    if (condition(state)) return state;
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  throw new Error("Timed out waiting for synthetic fixture: " + explanation);
+}
+
 async function waitFor(writeCount, targetDate) {
   const deadline = Date.now() + 9000;
   while (Date.now() < deadline) {
@@ -163,7 +179,7 @@ async function waitFor(writeCount, targetDate) {
 const alias = [
   { find: "@/api/base44Client", replacement: path.join(source, "mockBase44.js") },
   { find: "@/components/auth/EmailGate", replacement: path.join(source, "mockUI.jsx") },
-  { find: "@/components/workflow/WorkOrderDetailsDialog", replacement: path.join(source, "mockUI.jsx") },
+  { find: "@/components/workflow/WorkOrderDetailsDialog", replacement: path.join(scratch, "mockDetails.jsx") },
   { find: "@/components/sips/ProductChecklistDialog", replacement: path.join(source, "mockUI.jsx") },
   { find: "@/components/sips/TemplateBuilder", replacement: path.join(source, "mockUI.jsx") },
   { find: /^@\//, replacement: path.join(appRoot, "src") + "/" },
@@ -271,6 +287,14 @@ try {
     '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div>' +
     '<script type="module" src="/main.jsx"></script></body></html>');
+  // Test-only facade for the real page's Work Order Details onUpdate callback.
+  // There is no app SDK, auth, production write, or special production hook.
+  await writeFile(path.join(scratch, "mockDetails.jsx"), [
+    'export default function SyntheticDetails({onUpdate, onClose}) {',
+    'return <div data-testid="synthetic-details-refresh">',
+    '<button type="button" onClick={() => { onUpdate(); onClose(); }}>Synthetic Details Refresh</button>',
+    '</div>; }',
+  ].join("\n"));
   await writeFile(path.join(scratch, "main.jsx"), [
     'import React from "react";',
     'import {createRoot} from "react-dom/client";',
