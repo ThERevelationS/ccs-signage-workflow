@@ -350,7 +350,7 @@ export default function FleetMechanic() {
         setActionError(`${recoveryReason} The server has not confirmed whether this request finished. Nothing was replayed. Use Check Current Server State before trying again.`);
       } else notifyRecoveryOnCurrentView("An earlier mechanic request is still unverified. Nothing was replayed. Use Check Current Server State to try again.");
       return false;
-    } catch (e) {
+    } catch {
       if (requestSequence !== workRecoveryRequestRef.current) return false;
       if (ownsSelectedJob()) {
         const safeReason = "The mechanic update could not be confirmed.";
