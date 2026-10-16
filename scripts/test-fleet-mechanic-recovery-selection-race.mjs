@@ -108,4 +108,18 @@ for(const action of ["start","save"]){
     assert.equal(h.events.busy.at(-1),"");
     assert.equal(h.events.refreshing.at(-1),false);
   });
+
+  test(`${action}: denied recovery while the old job is still open refreshes scope without leaking server detail`,async()=>{
+    const h=harness(action);
+    const pending=bindRecovery(h.ctx)(h.initial);
+    h.response.resolve({data:{error:"Access denied for restricted work-order wo-A; internal grant details"}});
+    assert.equal(await pending,false);
+    assert.deepEqual(h.events.portalLoads,[true],"A denied status check must trigger a read-only scoped portal reload");
+    assert.equal(h.ctx.selectedWorkOrderRef.current,null,"The fresh scoped payload must remove a job the link can no longer access");
+    assert.doesNotMatch(h.events.errors.join(" "),/wo-A|internal grant details|Access denied/i);
+    assert.match(h.events.scopeNotices.at(-1),/no longer available to this mechanic link/);
+    assert.equal(h.events.requests.length,1,"Recovery must never replay the Start or Save mutation");
+    assert.equal(h.events.clears.length,0,"The unresolved receipt marker stays available for a later authorized check");
+    assert.equal(h.recovery.requestId,h.initial.requestId);
+  });
 }
