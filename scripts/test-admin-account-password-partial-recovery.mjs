@@ -38,7 +38,7 @@ function fixture({password=secret,accountResult=newer}={}){
   directory:[old],editor:old,dialog:true,loadCount:0,errors:[],
   form:refs.activeAccountDraft.current};
  const accountReplies=[],passwordReplies=[];
- const scope={...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,rejectedAdminAccountField,
+ const scope={...refs,createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,rejectedAdminAccountField,
   get editingUser(){return state.editor;},get sessionToken(){return token;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.recovery;},get accountWriteRecovery(){return state.writeRecovery;},
   get passwordRetryConfirmed(){return state.confirmed;},
