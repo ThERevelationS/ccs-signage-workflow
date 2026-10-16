@@ -50,7 +50,7 @@ function fixture() {
  };
  const state={
   editor:before,form:originalDraft,users:[before],write:null,password:null,
-  passwordCalls:[],accountCalls:[],readCalls:0,approvalReads:0,approvalResponse:null,readResponse:[target],
+  passwordCalls:[],accountCalls:[],readCalls:0,approvalReads:0,approvalResponse:undefined,readResponse:[target],
   reads:[],approvalReplies:[],accounts:[],notice:"",error:"",loading:false,dirtyHr:false,
   directoryError:false,mutationSaving:false,confirmed:false,choices:{},dialog:true
  };
@@ -96,7 +96,7 @@ function fixture() {
   listAuthorizedUsersAdmin:()=>{
     state.approvalReads++;
     const next=state.approvalReplies.shift();
-    return next?next.promise:Promise.resolve(state.approvalResponse??state.readResponse);
+    return next?next.promise:Promise.resolve(state.approvalResponse===undefined?state.readResponse:state.approvalResponse);
   },
   loadUsers:()=>{
     state.readCalls++;
