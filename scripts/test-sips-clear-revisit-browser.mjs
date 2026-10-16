@@ -286,6 +286,24 @@ async function caseRun(name, origin, sizes, run, setup = () => {}) {
   }
 }
 
+async function stageSupersededReopen(page, origin, retryReadBehavior) {
+  await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+  await page.getByRole("button", { name: "Open Work Order" }).click();
+  await page.getByRole("button", { name: "Synthetic Details Refresh" }).waitFor();
+  await fixtureAction(page, origin, "armSupersededReopen", { retryReadBehavior });
+  await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+  await awaitFixture(page, origin, s => s.heldListReads === 1 && s.forcedExternalReopens === 1,
+    "held read after failed concurrent WIP reopening");
+  const conflict = page.getByRole("alert").filter({ hasText: "This record changed during saving" });
+  await conflict.waitFor();
+  await page.getByRole("button", { name: "Synthetic Details Refresh" }).click();
+  await awaitFixture(page, origin, s => s.listReads === 3, "superseding Details refresh");
+  await page.getByText("Showing 1 of 1 active item").waitFor();
+  await fixtureAction(page, origin, "releaseHeldList");
+  await awaitFixture(page, origin, s => s.listReads === 4, "single bounded recovery retry");
+  return conflict;
+}
+
 const desktop = { width: 1366, height: 900 };
 const mobile = { width: 360, height: 640 };
 try {
@@ -464,6 +482,57 @@ try {
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       }, state => { state.row.sip_completed = true; });
   }
+
+  await caseRun("Mobile superseded WIP recovery: failed verification retains errors and does not retry forever",
+    origin, [mobile], async ([page]) => {
+      const conflict = await stageSupersededReopen(page, origin, "fail");
+      const readFailure = page.getByRole("alert").filter({ hasText: "Synthetic recovery verification read unavailable" });
+      await readFailure.waitFor();
+      await conflict.waitFor();
+      // After a failed last verification, neither an implicit third read nor
+      // focus restoration may silently imply the original write succeeded.
+      await page.waitForTimeout(250);
+      const status = await fixtureAction(page, origin, "fixtureStatus");
+      assert.equal(status.listReads, 4, "Initial, held, superseding and one failed retry only");
+      assert.equal(status.failedListReads, 1);
+      assert.equal(status.releasedListReads, 1);
+      assert.equal(status.heldListReads, 0);
+      assert.equal(status.forcedExternalReopens, 1);
+      assert.equal(status.writeCount, 0);
+      assert.equal(status.sip_completed, false);
+      assert.equal(status.sip_revisit_date, "");
+      assert.equal(await page.evaluate(() => document.activeElement?.dataset?.sipsActiveFocusId !== "synthetic-sips-order"), true,
+        "Failed recovery must not steal focus from the user");
+    }, state => { state.row.sip_completed = true; });
+
+  await caseRun("Mobile repeated supersession: second stale read never creates an unbounded retry or steals focus",
+    origin, [mobile], async ([page]) => {
+      const conflict = await stageSupersededReopen(page, origin, "hold");
+      await awaitFixture(page, origin, s => s.heldListReads === 1 && s.listReads === 4,
+        "bounded recovery verification paused in flight");
+      // Supersede even the one permitted recovery retry via the normal SIPS
+      // Work Order Details callback, not a production-only test entry point.
+      await page.locator('[data-sips-active-focus-id="synthetic-sips-order"]').click();
+      await page.getByRole("button", { name: "Synthetic Details Refresh" }).click();
+      await awaitFixture(page, origin, s => s.listReads === 5 && s.heldListReads === 1,
+        "a second, newer Details refresh supersedes bounded recovery");
+      const search = page.getByPlaceholder(/Search customer/);
+      await search.focus();
+      await fixtureAction(page, origin, "releaseHeldList");
+      await page.waitForTimeout(250);
+      await conflict.waitFor();
+      const status = await fixtureAction(page, origin, "fixtureStatus");
+      assert.equal(status.listReads, 5, "A second supersession never creates a third recovery read");
+      assert.equal(status.releasedListReads, 2);
+      assert.equal(status.heldListReads, 0);
+      assert.equal(status.failedListReads, 0);
+      assert.equal(status.forcedExternalReopens, 1);
+      assert.equal(status.writeCount, 0);
+      assert.equal(status.sip_completed, false);
+      assert.equal(status.sip_revisit_date, "");
+      assert.equal(await search.evaluate(node => document.activeElement === node), true,
+        "A stale, superseded verification cannot overwrite deliberate keyboard focus");
+    }, state => { state.row.sip_completed = true; });
 
   await caseRun("Mobile: stale undated WIP reopen cannot erase a different session's future Revisit",
     origin, [mobile], async ([page]) => {
