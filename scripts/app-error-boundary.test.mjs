@@ -31,10 +31,11 @@ test('a render failure shows a reload action and does not expose error details',
   console.error = () => {};
   try {
     await act(async () => {
+      const Thrower = () => {
+        throw new Error('synthetic render failure');
+      };
       tree = Renderer.create(
-        React.createElement(AppErrorBoundary, null, () => {
-          throw new Error('synthetic render failure');
-        }),
+        React.createElement(AppErrorBoundary, null, React.createElement(Thrower)),
       );
     });
     assert.equal(tree.root.findByProps({ role: 'alert' }).type, 'main');
