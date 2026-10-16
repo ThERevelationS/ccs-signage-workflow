@@ -45,6 +45,8 @@ function reset() {
     releasedListReads: 0,
     holdNextList: false,
     forceNextReopenConflict: false,
+    retryReadBehavior: null,
+    failedListReads: 0,
   };
 }
 reset();
@@ -67,10 +69,16 @@ function syntheticBackend() {
               (!Object.hasOwn(q, "completed") || row.completed === q.completed) &&
               (!q.deleted || row.deleted !== true);
             fixture.listReads++;
+            // The fourth read is the single bounded retry after a held read
+            // is superseded. Fault injection applies only in explicit cases.
+            if (fixture.listReads === 4 && fixture.retryReadBehavior === "fail") {
+              fixture.failedListReads++;
+              throw new Error("Synthetic recovery verification read unavailable");
+            }
             // Snapshot at request time, then optionally hold the response. A
             // later real SIPS load may supersede it before we release it.
             const snapshot = matching ? [clone(row)].slice(request.skip || 0, (request.skip || 0) + (request.limit || 500)) : [];
-            if (fixture.holdNextList) {
+            if (fixture.holdNextList || (fixture.listReads === 4 && fixture.retryReadBehavior === "hold")) {
               fixture.holdNextList = false;
               await new Promise(resolve => fixture.heldListReads.push({ snapshot, release: resolve }));
             }
@@ -112,6 +120,8 @@ function syntheticBackend() {
             }
           } else if (request.op === "armSupersededReopen") {
             assert.equal(fixture.heldListReads.length, 0, "No held reads from a prior case");
+            assert.ok([null, undefined, "fail", "hold"].includes(request.retryReadBehavior), "Unsupported isolated retry fault");
+            fixture.retryReadBehavior = request.retryReadBehavior || null;
             fixture.forceNextReopenConflict = true;
             fixture.holdNextList = true;
             result = { armed: true };
@@ -131,6 +141,7 @@ function syntheticBackend() {
               listReads: fixture.listReads,
               heldListReads: fixture.heldListReads.length,
               releasedListReads: fixture.releasedListReads,
+              failedListReads: fixture.failedListReads,
               forcedExternalReopens: fixture.forcedExternalReopens,
               writeCount: fixture.writes.length,
               sip_completed: fixture.row.sip_completed,
