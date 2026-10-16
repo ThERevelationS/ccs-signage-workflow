@@ -2,15 +2,18 @@ import { isPermittingPreviewHost } from '@/components/admin/permittingPreviewQa'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
+import AppErrorBoundary from '@/components/auth/AppErrorBoundary'
 import '@/index.css'
 
 const previewQaHost = isPermittingPreviewHost(window.location.hostname, import.meta.env.DEV);
 const root = ReactDOM.createRoot(document.getElementById('root'));
 if (previewQaHost && new URLSearchParams(window.location.search).get('permittingReviewQa') === '1') {
   // Fixture-only local callbacks; no application sessions or records are exposed.
-  import('./components/admin/PermittingReviewBrowserFixture.jsx').then(({ default: Fixture }) => root.render(<Fixture />));
+  import('./components/admin/PermittingReviewBrowserFixture.jsx').then(({ default: Fixture }) => {
+    root.render(<AppErrorBoundary><Fixture /></AppErrorBoundary>);
+  });
 } else {
-  root.render(<App />);
+  root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
 }
 
 if (import.meta.hot) {
