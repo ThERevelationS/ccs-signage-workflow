@@ -306,12 +306,10 @@ export default function FleetMechanic() {
     const requestSequence = ++workRecoveryRequestRef.current;
     const recoveryReason = reason || recovery.reason || "The mechanic update could not be confirmed.";
     const ownsSelectedJob = () => selectedWorkOrderRef.current === recovery.workOrderId;
-    if (ownsSelectedJob()) {
-      photoDraftEpochRef.current += 1;
-      setBusy("work-recovery");
-      setRefreshing(true);
-    }
+    if (ownsSelectedJob()) photoDraftEpochRef.current += 1;
     setWorkRecovery({...recovery,reason:recoveryReason});
+    setBusy("work-recovery");
+    setRefreshing(true);
     try {
       const {data:result} = await base44.functions.invoke("fleetMechanicPortal", {
         action:"mutation_status",token,work_order_id:recovery.workOrderId,mutation_action:recovery.action,request_id:recovery.requestId,
@@ -328,7 +326,7 @@ export default function FleetMechanic() {
           if (recovery.action === "save") clearSavedProgressDraft(fresh);
           setActionError("");
           setSavedMessage(recovery.action === "start" ? "Work started. CCS Fleet confirmed the interrupted request." : "Progress saved. CCS Fleet confirmed the interrupted request without replaying it.");
-        }
+        } else notifyRecoveryOnCurrentView("An earlier mechanic request was confirmed. The currently open job was not changed.");
         return true;
       }
       if (result?.status === "failed" || result?.status === "not_found") {
@@ -339,14 +337,14 @@ export default function FleetMechanic() {
           setActionError(recovery.action === "start"
             ? `${recoveryReason} The server confirms this request was not applied. Current Fleet state was refreshed; review it before trying Start Work again.`
             : `${recoveryReason} The server confirms this request was not applied. Current Fleet state was refreshed and your unsaved progress was kept for review before another save.`);
-        }
+        } else notifyRecoveryOnCurrentView("An earlier mechanic request is confirmed not applied. The currently open job was not changed; review it before starting or saving.");
         return false;
       }
-      if (isSameOpenJob) setWorkRecovery({...recovery,reason:recoveryReason});
       if (isSameOpenJob) {
+        setWorkRecovery({...recovery,reason:recoveryReason});
         setSavedMessage("");
         setActionError(`${recoveryReason} The server has not confirmed whether this request finished. Nothing was replayed. Use Check Current Server State before trying again.`);
-      }
+      } else notifyRecoveryOnCurrentView("An earlier mechanic request is still unverified. Nothing was replayed. Use Check Current Server State to try again.");
       return false;
     } catch (e) {
       if (requestSequence !== workRecoveryRequestRef.current) return false;
@@ -355,14 +353,21 @@ export default function FleetMechanic() {
         const detail = e?.message ? ` (${e.message})` : "";
         setSavedMessage("");
         setActionError(`${recoveryReason} Current server state could not be verified${detail}. Nothing was replayed. Use Check Current Server State before trying again.`);
-      }
+      } else notifyRecoveryOnCurrentView("An earlier work-order request could not be verified. It may no longer be available to this mechanic link. Nothing was replayed; contact CCS if access is needed.");
       return false;
     } finally {
-      if (requestSequence === workRecoveryRequestRef.current && ownsSelectedJob()) {
+      if (requestSequence === workRecoveryRequestRef.current) {
         setBusy("");
         setRefreshing(false);
       }
     }
+  };
+
+  const notifyRecoveryOnCurrentView = message => {
+    if (selectedWorkOrderRef.current) {
+      setSavedMessage("");
+      setActionError(message);
+    } else setScopeNotice(message);
   };
 
   const handleSupersededWorkAcknowledgement = recovery => {
@@ -610,7 +615,7 @@ export default function FleetMechanic() {
       </div>
 
       {scopeNotice && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{scopeNotice}</div>}
-      {workRecovery && ![...(data?.active_work_orders || []),...(data?.recent_completed || [])].some(row=>row.id===workRecovery.workOrderId) && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">An interrupted mechanic update requires CCS review. The affected job is no longer available to this link. No request was replayed, and no restricted job details are shown.</div>}
+      {workRecovery && ![...(data?.active_work_orders || []),...(data?.recent_completed || [])].some(row=>row.id===workRecovery.workOrderId) && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"><div>An interrupted mechanic update remains unresolved. Its job is not available to this link. No request was replayed, and no restricted job details are shown.</div><button type="button" onClick={()=>recoverWorkMutation(workRecovery,workRecovery.reason||"Previous mechanic work-order update was not confirmed.")} disabled={busy==="work-recovery"} className="mt-3 min-h-11 rounded-xl border border-amber-500 bg-white px-4 font-semibold text-amber-900 disabled:opacity-50">{busy==="work-recovery"?"Checking current state…":"Check Current Server State"}</button></div>}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <Summary label="Active Jobs" value={data?.active_work_orders?.length || 0} icon={Wrench}/>
         <Summary label="Recent Completed" value={data?.recent_completed?.length || 0} icon={CheckCircle2}/>
@@ -631,7 +636,7 @@ export default function FleetMechanic() {
       </div>
     </main>
 
-    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} workRecovery={workRecovery?.workOrderId===selected.id?workRecovery:null} onCheckWorkState={()=>recoverWorkMutation(workRecovery,workRecovery?.reason||"Previous mechanic work-order update was not confirmed.")} canStart={data?.portal?.capabilities?.start !== false} canSave={data?.portal?.capabilities?.save !== false} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} recoveryRequired={estimateRecovery?.workOrderId===selected.id} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)} onCheckEstimateState={()=>refreshEstimateState(selected.id,estimateRecovery?.reason||"Previous repair-estimate request was not confirmed.",true)}/>} 
+    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} workRecovery={workRecovery} onCheckWorkState={()=>recoverWorkMutation(workRecovery,workRecovery?.reason||"Previous mechanic work-order update was not confirmed.")} canStart={data?.portal?.capabilities?.start !== false} canSave={data?.portal?.capabilities?.save !== false} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} recoveryRequired={estimateRecovery?.workOrderId===selected.id} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)} onCheckEstimateState={()=>refreshEstimateState(selected.id,estimateRecovery?.reason||"Previous repair-estimate request was not confirmed.",true)}/>} 
   </Standalone>;
 }
 
