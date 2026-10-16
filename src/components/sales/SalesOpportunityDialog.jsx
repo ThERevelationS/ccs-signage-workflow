@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, Mail, Phone, UserRound, Wrench } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems } from "@/components/sales/salesAttention";
@@ -22,28 +21,6 @@ import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdent
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
-
-const CellHistory = base44.entities.CellHistory;
-
-const SALES_HISTORY_FIELDS = new Set([
-  "sales_status",
-  "sales_stage_changed_at",
-  "sales_rep",
-  "lead_source",
-  "estimate_amount",
-  "date_estimate_sent",
-  "follow_up_date",
-  "sales_last_follow_up_completed_at",
-  "sales_last_follow_up_outcome",
-  "expected_close_date",
-  "close_date",
-  "lost_reason",
-  "current_task_description",
-  "current_task_deadline",
-  "current_task_assigned_to",
-  "in_pipeline",
-  "sales_neutral_closed_at",
-]);
 
 const FIELD_LABELS = {
   sales_status: "Sales status",
@@ -140,15 +117,19 @@ export default function SalesOpportunityDialog({
     }
     setHistoryLoading(true);
     setHistoryError("");
-    loadAllEntityRows({
-      entity: CellHistory,
-      query: { entity_type: "WorkOrder", entity_id: workOrder.id },
-      sort: "-created_date",
-      label: "Sales opportunity change history",
+    base44.functions.invoke("fieldHistoryAction", {
+      action: "sales_history",
+      session_token: localStorage.getItem("sss_session_token") || "",
+      entity_type: "WorkOrder",
+      entity_id: workOrder.id,
     })
-      .then((rows) => {
+      .then((response) => {
         if (!active) return;
-        setHistory((rows || []).filter((row) => SALES_HISTORY_FIELDS.has(row.field_name)).slice(0, 75));
+        const data = response?.data || response;
+        if (!data?.success || !Array.isArray(data.entries)) {
+          throw new Error(data?.error || "Verified Sales history could not be loaded.");
+        }
+        setHistory(data.entries);
       })
       .catch((error) => {
         if (!active) return;
@@ -605,7 +586,7 @@ export default function SalesOpportunityDialog({
 
           <section className="rounded-xl border bg-white p-4">
             <div className="flex items-center gap-2 font-semibold text-gray-800"><FileClock className="h-4 w-4 text-slate-600" />Sales Activity</div>
-            <p className="mt-1 text-xs text-gray-500">Verified saved field changes. Older imported/legacy activity may be incomplete.</p>
+            <p className="mt-1 text-xs text-gray-500">Committed Sales field history and older CellHistory. Legacy records may have incomplete coverage.</p>
             <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
               {historyLoading ? <div className="flex items-center justify-center py-8 text-sm text-gray-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading history…</div> : historyError ? <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{historyError}</div> : history.length === 0 ? <div className="py-6 text-center text-sm text-gray-400">No captured sales changes yet.</div> : history.map((entry) => (
                 <div key={entry.id} className="flex gap-3 rounded-lg border border-gray-100 px-3 py-2">
@@ -617,7 +598,7 @@ export default function SalesOpportunityDialog({
                     ) : (
                       <div className="mt-0.5 text-xs text-gray-500"><span className="line-through">{displayValue(entry.field_name, entry.old_value)}</span> → <span className="font-medium text-gray-700">{displayValue(entry.field_name, entry.new_value)}</span></div>
                     )}
-                    <div className="mt-1 text-[11px] text-gray-400">{entry.changed_by_name || entry.changed_by_email || "Unknown"}{entry.created_date ? ` · ${format(new Date(entry.created_date), "MMM d, yyyy h:mm a")}` : ""}</div>
+                    <div className="mt-1 text-[11px] text-gray-400">{entry.actor_name || entry.actor_email || entry.changed_by_name || entry.changed_by_email || "Unknown"}{entry.modified_at || entry.created_date ? ` · ${format(new Date(entry.modified_at || entry.created_date), "MMM d, yyyy h:mm a")}` : ""}{entry.source === "Legacy CellHistory" ? " · Legacy record time" : ""}</div>
                   </div>
                 </div>
               ))}
