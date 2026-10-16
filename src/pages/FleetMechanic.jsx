@@ -94,6 +94,7 @@ export default function FleetMechanic() {
   const [estimateRecovery, setEstimateRecovery] = useState(null);
   const [workRecovery, setWorkRecovery] = useState(null);
   const portalRequestRef = useRef(0);
+  const workRecoveryRequestRef = useRef(0);
   const portalAppliedEpochRef = useRef(0);
   const portalPayloadRef = useRef(null);
   const selectedWorkOrderRef = useRef(null);
