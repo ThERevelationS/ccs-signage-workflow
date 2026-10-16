@@ -107,6 +107,8 @@ export default function SalesOpportunityDialog({
   const [historyPagination, setHistoryPagination] = useState(null);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
   const [historyPageError, setHistoryPageError] = useState("");
+  const [historyNeedsRefresh, setHistoryNeedsRefresh] = useState(false);
+  const [historyReloadNonce, setHistoryReloadNonce] = useState(0);
   const historyRevisionRef = useRef(0);
   const historyPageInFlightRef = useRef(false);
   const [removeFromPipelineOpen, setRemoveFromPipelineOpen] = useState(false);
@@ -120,6 +122,7 @@ export default function SalesOpportunityDialog({
     setHistory([]);
     setHistoryPagination(null);
     setHistoryPageError("");
+    setHistoryNeedsRefresh(false);
     setHistoryLoadingMore(false);
     historyPageInFlightRef.current = false;
     if (!workOrder?.id) {
@@ -152,7 +155,7 @@ export default function SalesOpportunityDialog({
         if (revision === historyRevisionRef.current) setHistoryLoading(false);
       });
     return () => { historyRevisionRef.current += 1; };
-  }, [workOrder?.id, workOrder?.updated_date]);
+  }, [workOrder?.id, workOrder?.updated_date, historyReloadNonce]);
 
   const loadMoreSalesHistory = async () => {
     if (!workOrder?.id || !historyPagination?.has_more || historyLoading ||
@@ -172,13 +175,21 @@ export default function SalesOpportunityDialog({
       if (revision !== historyRevisionRef.current) return;
       const data = response?.data || response;
       if (!data?.success || !Array.isArray(data.entries) || !data.pagination) {
-        throw new Error(data?.error || "Older Sales history could not be loaded.");
+        throw Object.assign(new Error(data?.error || "Older Sales history could not be loaded."), {code:data?.code});
+      }
+      if (data.pagination.work_order_version !== historyPagination.work_order_version) {
+        throw Object.assign(new Error("Sales history changed. Refresh Sales history before loading older entries."), {code:"SALES_HISTORY_STALE"});
       }
       setHistory((current) => appendSalesOpportunityHistoryPages(current, data.entries));
       setHistoryPagination(data.pagination);
     } catch (error) {
       if (revision === historyRevisionRef.current) {
-        setHistoryPageError(error?.message || "Older Sales history could not be loaded.");
+        const stale = error?.code === "SALES_HISTORY_STALE" ||
+          error?.response?.data?.code === "SALES_HISTORY_STALE";
+        setHistoryNeedsRefresh(stale);
+        setHistoryPageError(stale
+          ? "Sales history changed during paging. Refresh Sales history to start again with the latest entries."
+          : error?.response?.data?.error || error?.message || "Older Sales history could not be loaded.");
       }
     } finally {
       if (revision === historyRevisionRef.current) {
@@ -652,7 +663,13 @@ export default function SalesOpportunityDialog({
               ))}
             </div>
             {historyPageError && <p role="alert" className="mt-2 text-xs text-red-700">{historyPageError}</p>}
-            {historyPagination?.has_more && !historyLoading && (
+            {historyNeedsRefresh && !historyLoading && (
+              <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
+                onClick={() => setHistoryReloadNonce((value) => value + 1)}>
+                Refresh Sales history
+              </Button>
+            )}
+            {historyPagination?.has_more && !historyLoading && !historyNeedsRefresh && (
               <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
                 disabled={historyLoadingMore} onClick={loadMoreSalesHistory}>
                 {historyLoadingMore ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
