@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
 import {createAdminAccountDraft,hasUnsavedAdminAccountDraft} from "../src/components/admin/adminAccountDraft.js";
+import {rejectedAdminAccountField} from "../src/components/admin/accountSaveConflict.js";
 
 const source=readFileSync("src/components/admin/UserManagement.jsx","utf8");
 const old={id:"synthetic-user",email:"employee@example.invalid",updated_date:"before",
@@ -37,7 +38,7 @@ function fixture({password=secret,accountResult=newer}={}){
   directory:[old],editor:old,dialog:true,loadCount:0,errors:[],
   form:refs.activeAccountDraft.current};
  const accountReplies=[],passwordReplies=[];
- const scope={...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,
+ const scope={...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,rejectedAdminAccountField,
   get editingUser(){return state.editor;},get sessionToken(){return token;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.recovery;},get accountWriteRecovery(){return state.writeRecovery;},
   get passwordRetryConfirmed(){return state.confirmed;},
