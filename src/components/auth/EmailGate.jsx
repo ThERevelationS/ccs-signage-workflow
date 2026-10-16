@@ -192,8 +192,16 @@ function LoginDialog({ open, onLogin, onBrowseOnly }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onBrowseOnly(); }}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // A backdrop tap or browser Back must not silently switch staff into guest mode.
+      // The separate browse button below is the only intentional dismissal path.
+      if (isOpen) return;
+    }}>
+      <DialogContent
+        className="sm:max-w-md"
+        onInteractOutside={(event) => event.preventDefault()}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <LogIn className="w-5 h-5 text-purple-600" /> Sign In
