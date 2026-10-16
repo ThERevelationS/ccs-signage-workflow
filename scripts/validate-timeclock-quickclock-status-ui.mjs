@@ -810,7 +810,7 @@ const overlapNewStatusIndex = calls.length - 1;
 assert.equal(calls[overlapNewStatusIndex].payload.action,'status');
 await act(async () => { calls[overlapNewStatusIndex].resolve(status(second,'second-overlap-entry')); });
 let newOverlapOut;
-await act(async () { newOverlapOut = overlapDialog().props.onClockOut(shiftChangePayload); });
+await act(async () => { newOverlapOut = overlapDialog().props.onClockOut(shiftChangePayload); });
 const newOverlapIndex = calls.length - 1;
 const newOverlapId = calls[newOverlapIndex].payload.request_id;
 assert.notEqual(newOverlapId,oldOverlapId);
