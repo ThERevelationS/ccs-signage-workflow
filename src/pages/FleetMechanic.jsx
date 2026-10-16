@@ -303,12 +303,15 @@ export default function FleetMechanic() {
 
   const recoverWorkMutation = async (recovery, reason = "") => {
     if (!recovery?.workOrderId || !recovery?.requestId || !recovery?.action) return false;
-    const requestSequence = ++portalRequestRef.current;
+    const requestSequence = ++workRecoveryRequestRef.current;
     const recoveryReason = reason || recovery.reason || "The mechanic update could not be confirmed.";
-    photoDraftEpochRef.current += 1;
+    const ownsSelectedJob = () => selectedWorkOrderRef.current === recovery.workOrderId;
+    if (ownsSelectedJob()) {
+      photoDraftEpochRef.current += 1;
+      setBusy("work-recovery");
+      setRefreshing(true);
+    }
     setWorkRecovery({...recovery,reason:recoveryReason});
-    setBusy("work-recovery");
-    setRefreshing(true);
     try {
       const {data:result} = await base44.functions.invoke("fleetMechanicPortal", {
         action:"mutation_status",token,work_order_id:recovery.workOrderId,mutation_action:recovery.action,request_id:recovery.requestId,
