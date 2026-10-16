@@ -286,6 +286,9 @@ export default function SIPs() {
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
       setLastUpdated(new Date());
+      // Callers reconciling a rejected write may use only this verified,
+      // current snapshot, never a stale or failed board refresh.
+      return sipOrders;
     } catch (error) {
       if (isCurrentBoardSnapshot()) {
         console.error("Error loading work orders:", error);
@@ -423,7 +426,18 @@ export default function SIPs() {
     } catch (error) {
       console.error("Error reopening completed SIP WIP item:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
-      await loadWorkOrders(false);
+      const refreshedOrders = await loadWorkOrders(false);
+      // Two employees may reopen the same completed WIP simultaneously.
+      // If our conditional write lost but the verified server record already
+      // has precisely the intended completion AND Revisit date, restore focus
+      // to the moved item without resubmitting or claiming a stale edit saved.
+      const alreadyReopened = refreshedOrders?.some(current => current.id === wo.id &&
+        current.sip_completed === false &&
+        (current.sip_revisit_date || "") === (reopenedRevisitDate || ""));
+      if (alreadyReopened) {
+        setQuickEditError("");
+        setReopenedFocusWorkOrderId(wo.id);
+      }
     } finally {
       reopeningWipInFlightRef.current.delete(wo.id);
       setReopeningWipIds(prev => {
