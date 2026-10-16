@@ -65,8 +65,8 @@ for(const action of ["start","save"]){
     assert.equal(h.ctx.portalRequestRef.current,newPortalRequest,"Work recovery must not supersede the selected job's portal refresh");
     assert.deepEqual(h.events.errors,["An earlier mechanic request was confirmed. The currently open job was not changed."]);
     assert.deepEqual(h.events.messages,[""]);
-    assert.deepEqual(h.events.busy,[]);
-    assert.deepEqual(h.events.refreshing,[]);
+    assert.deepEqual(h.events.busy,[""]);
+    assert.deepEqual(h.events.refreshing,[false]);
     assert.equal(h.events.clears.length,1,"Verified receipt marker should be cleared for the original request");
     assert.equal(h.recovery,null,"Resolved original marker can be cleared without changing the selected job");
   });
@@ -87,8 +87,8 @@ for(const action of ["start","save"]){
     assert.deepEqual(h.events.errors,["An earlier work-order request could not be verified. It may no longer be available to this mechanic link. Nothing was replayed; contact CCS if access is needed."],"Only a generic recovery notice may appear with the selected job");
     assert.doesNotMatch(h.events.errors.join(" "),/wo-A|request-start|request-save|Access denied/i,"The selected job must not reveal restricted identifiers or raw server details");
     assert.deepEqual(h.events.messages,[""]);
-    assert.deepEqual(h.events.busy,[]);
-    assert.deepEqual(h.events.refreshing,[]);
+    assert.deepEqual(h.events.busy,[""]);
+    assert.deepEqual(h.events.refreshing,[false]);
     assert.equal(h.recovery.workOrderId,"wo-A","Unverified recovery remains locked to the original job");
     assert.equal(h.recovery.requestId,h.initial.requestId);
     assert.deepEqual(h.events.clears,[],"Denied status must retain the durable request marker");
