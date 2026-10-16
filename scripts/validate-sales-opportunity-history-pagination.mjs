@@ -5,6 +5,7 @@ import {
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
   appendSalesOpportunityHistoryPages,
 } from '../base44/shared/salesOpportunityHistory.mjs';
+import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from '../base44/shared/salesHistorySnapshotGuard.mjs';
 
 let checks=0;
 function ok(condition,description){assert.ok(condition,description);checks++}
@@ -53,7 +54,8 @@ const ctx={
   measureSyncEntities:value=>value,
   authenticateSignShopSession:async()=>({role:'user',email:'sales@example.invalid'}),
   beginSyncTraceStorage:async()=>{},
-  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,Response,
+  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
+  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,Response,
 };
 runInNewContext(source.replace(/^import .*;\s*$/gm,'')
   .replace('export default async function(req) {','async function simulatedDefault(req) {')
