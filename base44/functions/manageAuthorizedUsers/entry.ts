@@ -539,6 +539,18 @@ Deno.serve(async (req) => {
 
     if (action === 'update') {
       const desired = cleanManagedFields(body?.next_fields);
+      const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
+        Object.prototype.hasOwnProperty.call(desired, 'can_view_resources');
+      // Existing clients may not supply expected_role. They still receive a
+      // conditional role guard from the loaded record at persistence time.
+      const expectedRole = String(body?.expected_role || '').trim();
+      if (roleBoundPermission && expectedRole && expectedRole !== current.role) {
+        return Response.json({ error: 'Authorized user changed in another session (role). Reload before saving.' }, { status: 409 });
+      }
+      // Changing only a permission must not disable Resources for admins.
+      if ((desired.role || current.role) === 'admin' && desired.can_view_resources === false) {
+        return Response.json({ error: 'Administrator Resources access cannot be disabled.' }, { status: 403 });
+      }
       // The Order Form export grant is separate from broad import/export.
       // Role demotion revokes it, and no non-admin may retain or request it.
       if (desired.can_order_export === true && (desired.role || current.role) !== 'admin') {
@@ -572,7 +584,10 @@ Deno.serve(async (req) => {
         entity: AuthorizedEmail,
         user: { id, ...expected },
         nextFields: desired,
-        guardFields: { email: current.email },
+        guardFields: {
+          email: current.email,
+          ...(roleBoundPermission ? { role: expectedRole || current.role } : {})
+        },
         label: `Authorized user ${email}`,
       });
       return Response.json({ success: true, record: adminUserView(saved) });
