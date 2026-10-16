@@ -188,7 +188,7 @@ export default function FleetMechanic() {
     }));
   };
 
-  const load = async (quiet = false) => {
+  const load = async (quiet = false, onQuietError = null) => {
     if (!token) { setError("This mechanic link is missing its access key. Ask CCS for a new link."); setLoading(false); return; }
     const requestId = ++portalRequestRef.current;
     if (quiet) setRefreshing(true); else setLoading(true);
@@ -230,7 +230,10 @@ export default function FleetMechanic() {
         }
       }
     } catch (e) {
-      if (requestId === portalRequestRef.current) setError(e?.message || "The Fleet mechanic portal could not be loaded.");
+      if (requestId === portalRequestRef.current) {
+        if (quiet && typeof onQuietError === "function") onQuietError();
+        else setError(e?.message || "The Fleet mechanic portal could not be loaded.");
+      }
     } finally {
       if (requestId === portalRequestRef.current) {
         setLoading(false);
@@ -350,10 +353,11 @@ export default function FleetMechanic() {
     } catch (e) {
       if (requestSequence !== workRecoveryRequestRef.current) return false;
       if (ownsSelectedJob()) {
-        setWorkRecovery({...recovery,reason:recoveryReason});
-        const detail = e?.message ? ` (${e.message})` : "";
+        const safeReason = "The mechanic update could not be confirmed.";
+        setWorkRecovery({...recovery,reason:safeReason});
         setSavedMessage("");
-        setActionError(`${recoveryReason} Current server state could not be verified${detail}. Nothing was replayed. Use Check Current Server State before trying again.`);
+        setActionError(`${safeReason} Current server state could not be verified. Nothing was replayed. Use Check Current Server State before trying again.`);
+        await load(true,()=>notifyRecoveryOnCurrentView("The interrupted mechanic request remains unverified. Current access could not be refreshed. Nothing was replayed; contact CCS if access is needed."));
       } else notifyRecoveryOnCurrentView("An earlier work-order request could not be verified. It may no longer be available to this mechanic link. Nothing was replayed; contact CCS if access is needed.");
       return false;
     } finally {
