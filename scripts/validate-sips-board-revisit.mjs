@@ -379,6 +379,22 @@ await check('CAS-losing WIP reopen recognizes matching saved state, restores foc
   assert.equal(h.ctx.quickEditError, '', 'Already-applied state clears the stale conflict message');
 });
 
+await check('CAS-losing reopen with a different Revisit date retains conflict and never redirects focus', async () => {
+  const h = completedHarness(tomorrow);
+  h.beforeCommit(record => {
+    record.sip_completed = false;
+    record.sip_revisit_date = later;
+    record.updated_date = String(Number(record.updated_date) + 1);
+  });
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, later);
+  assert.equal(h.writes, 0);
+  assert.equal(h.ctx.reloads, 1);
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, null, 'Mismatched Revisit outcome cannot hijack keyboard focus');
+  assert.match(h.ctx.quickEditError, /changed during saving/, 'A divergent Revisit outcome stays visible as a conflict');
+});
+
 await check('reopen fails safely on unrelated concurrent edit without losing it', async () => {
   const h = completedHarness(todayDate);
   h.beforeCommit((record) => {
