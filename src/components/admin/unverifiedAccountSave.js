@@ -24,6 +24,19 @@ export function rebaseAppliedAccountDraft({ latest, attempted, current }) {
   return result;
 }
 
+// A verification preview is not a permanent authorization. Check the whole
+// editable Account surface and its record version again before accepting it.
+// Fail closed on missing identities/versions, including legacy rows.
+export function isSameVerifiedAccountSnapshot(reviewed, fresh) {
+  if (!reviewed?.id || !reviewed?.email || !reviewed?.updated_date ||
+      !fresh?.id || !fresh?.email || !fresh?.updated_date ||
+      reviewed.id !== fresh.id || reviewed.email !== fresh.email ||
+      reviewed.updated_date !== fresh.updated_date) return false;
+  const prior = createAdminAccountDraft(reviewed);
+  const current = createAdminAccountDraft(fresh);
+  return FIELDS.every(field => same(field, prior[field], current[field]));
+}
+
 export function compareUnverifiedAccountSave({ baseline, attempted, latest }) {
   if (![baseline, attempted, latest].every(value =>
     value && typeof value === "object" && !Array.isArray(value))) {
