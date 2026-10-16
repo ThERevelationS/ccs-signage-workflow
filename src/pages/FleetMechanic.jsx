@@ -245,6 +245,7 @@ export default function FleetMechanic() {
   const taskById = useMemo(() => Object.fromEntries((data?.tasks || []).map(row => [row.id, row])), [data]);
   const estimateByWorkOrder = useMemo(() => Object.fromEntries((data?.repair_estimates || []).map(row => [row.work_order_id, row])), [data]);
   const rows = tab === "active" ? (data?.active_work_orders || []) : (data?.recent_completed || []);
+  const recoveryJobAvailable = !!workRecovery && [...(data?.active_work_orders || []),...(data?.recent_completed || [])].some(row => row.id === workRecovery.workOrderId);
 
   const openJob = workOrder => {
     setScopeNotice("");
@@ -615,7 +616,7 @@ export default function FleetMechanic() {
       </div>
 
       {scopeNotice && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{scopeNotice}</div>}
-      {workRecovery && ![...(data?.active_work_orders || []),...(data?.recent_completed || [])].some(row=>row.id===workRecovery.workOrderId) && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"><div>An interrupted mechanic update remains unresolved. Its job is not available to this link. No request was replayed, and no restricted job details are shown.</div><button type="button" onClick={()=>recoverWorkMutation(workRecovery,workRecovery.reason||"Previous mechanic work-order update was not confirmed.")} disabled={busy==="work-recovery"} className="mt-3 min-h-11 rounded-xl border border-amber-500 bg-white px-4 font-semibold text-amber-900 disabled:opacity-50">{busy==="work-recovery"?"Checking current state…":"Check Current Server State"}</button></div>}
+      {workRecovery && selected?.id !== workRecovery.workOrderId && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"><div>{recoveryJobAvailable ? "An interrupted mechanic update still needs confirmation. Open that job to check its current state before making another update." : "An interrupted mechanic update remains unresolved. Its job is not available to this link. No request was replayed, and no restricted job details are shown."}</div><button type="button" onClick={()=>recoverWorkMutation(workRecovery,workRecovery.reason||"Previous mechanic work-order update was not confirmed.")} disabled={busy==="work-recovery"} className="mt-3 min-h-11 rounded-xl border border-amber-500 bg-white px-4 font-semibold text-amber-900 disabled:opacity-50">{busy==="work-recovery"?"Checking current state…":"Check Current Server State"}</button></div>}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <Summary label="Active Jobs" value={data?.active_work_orders?.length || 0} icon={Wrench}/>
         <Summary label="Recent Completed" value={data?.recent_completed?.length || 0} icon={CheckCircle2}/>
