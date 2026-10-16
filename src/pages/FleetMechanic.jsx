@@ -317,13 +317,13 @@ export default function FleetMechanic() {
         action:"mutation_status",token,work_order_id:recovery.workOrderId,mutation_action:recovery.action,request_id:recovery.requestId,
       });
       if (result?.error) throw new Error(result.error);
-      if (requestSequence !== portalRequestRef.current) return false;
+      if (requestSequence !== workRecoveryRequestRef.current) return false;
       const fresh = result?.work_order || null;
-      if (fresh) applyWorkOrderSnapshot(fresh);
-      const isSameOpenJob = selectedWorkOrderRef.current === recovery.workOrderId;
+      const isSameOpenJob = ownsSelectedJob();
+      if (fresh && isSameOpenJob) applyWorkOrderSnapshot(fresh);
       if (result?.status === "applied") {
         await clearStoredWorkRecovery(token,recovery);
-        setWorkRecovery(null);
+        setWorkRecovery(current => current?.workOrderId === recovery.workOrderId && current?.action === recovery.action && current?.requestId === recovery.requestId ? null : current);
         if (isSameOpenJob) {
           if (recovery.action === "save") clearSavedProgressDraft(fresh);
           setActionError("");
@@ -333,7 +333,7 @@ export default function FleetMechanic() {
       }
       if (result?.status === "failed" || result?.status === "not_found") {
         await clearStoredWorkRecovery(token,recovery);
-        setWorkRecovery(null);
+        setWorkRecovery(current => current?.workOrderId === recovery.workOrderId && current?.action === recovery.action && current?.requestId === recovery.requestId ? null : current);
         if (isSameOpenJob) {
           setSavedMessage("");
           setActionError(recovery.action === "start"
@@ -342,23 +342,23 @@ export default function FleetMechanic() {
         }
         return false;
       }
-      setWorkRecovery({...recovery,reason:recoveryReason});
+      if (isSameOpenJob) setWorkRecovery({...recovery,reason:recoveryReason});
       if (isSameOpenJob) {
         setSavedMessage("");
         setActionError(`${recoveryReason} The server has not confirmed whether this request finished. Nothing was replayed. Use Check Current Server State before trying again.`);
       }
       return false;
     } catch (e) {
-      if (requestSequence !== portalRequestRef.current) return false;
-      setWorkRecovery({...recovery,reason:recoveryReason});
-      if (selectedWorkOrderRef.current === recovery.workOrderId) {
+      if (requestSequence !== workRecoveryRequestRef.current) return false;
+      if (ownsSelectedJob()) {
+        setWorkRecovery({...recovery,reason:recoveryReason});
         const detail = e?.message ? ` (${e.message})` : "";
         setSavedMessage("");
         setActionError(`${recoveryReason} Current server state could not be verified${detail}. Nothing was replayed. Use Check Current Server State before trying again.`);
       }
       return false;
     } finally {
-      if (requestSequence === portalRequestRef.current) {
+      if (requestSequence === workRecoveryRequestRef.current && ownsSelectedJob()) {
         setBusy("");
         setRefreshing(false);
       }
@@ -375,7 +375,7 @@ export default function FleetMechanic() {
 
   const startJob = async () => {
     if (!selected) return;
-    if (workRecovery?.workOrderId === selected.id) { setActionError("Check the current server state before trying another work-order update."); return; }
+    if (workRecovery) { setActionError("Check the current server state before trying another work-order update."); return; }
     const recovery = {workOrderId:selected.id,action:"start",requestId:newMechanicRequestId(),reason:"Work-start request could not be confirmed."};
     const appliedPortalEpoch = portalAppliedEpochRef.current;
     setBusy("start"); setActionError(""); setSavedMessage("");
