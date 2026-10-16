@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { rejectedAdminAccountField } from "../src/components/admin/accountSaveConflict.js";
-import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "../src/components/admin/adminAccountDraft.js";
+import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "../src/components/admin/adminAccountDraft.js";
 import { compareUnverifiedAccountSave } from "../src/components/admin/unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
 
