@@ -51,20 +51,41 @@ async function fieldHistoryHandler(req) {
     const entity=base44.asServiceRole.entities[type], record=await entity.get(body.entity_id);
     if(!record)return Response.json({error:'Record not found.'},{status:404});
     if(type==='WorkOrder' && body.action==='sales_history') {
-      // Aggregate only whitelisted Sales fields for regular users. Pending or
-      // aborted FieldAudit events must never be shown as completed follow-ups.
-      // Constrain the query before retrieval; no N+1 per-field calls.
+      // Bounded, independent source cursors. A 35-row page from each source
+      // yields at most 70 merged entries, so none are lost to the 75-entry
+      // merge cap. Never fetch the full legacy archive in a single request.
+      const page=body.history_page ?? null;
+      if(page!==null && (typeof page!=='object' || Array.isArray(page)))
+        throw Object.assign(new Error('Invalid Sales history page.'),{status:400});
+      const validCursor=value=>typeof value==='string' && value.length>0 && value.length<=4096;
+      const auditDone=page?.audit_exhausted===true, legacyDone=page?.legacy_exhausted===true;
+      if(page && ((!auditDone && !validCursor(page.audit_cursor)) ||
+                  (!legacyDone && !validCursor(page.legacy_cursor))))
+        throw Object.assign(new Error('Sales history page expired. Reload the history from the beginning.'),{status:400});
       const scope={entity_type:'WorkOrder',entity_id:record.id,
         field_name:{$in:SALES_OPPORTUNITY_HISTORY_FIELDS}};
+      const empty={items:[],has_more:false};
       const [audit,legacy]=await Promise.all([
-        base44.asServiceRole.entities.FieldAudit.filter({...scope,status:'committed'},
-          {sort:'-modified_at',limit:100}),
-        base44.asServiceRole.entities.CellHistory.filter(scope,
-          {sort:'-created_date',limit:100}),
+        auditDone ? empty : base44.asServiceRole.entities.FieldAudit.filter({...scope,status:'committed'},
+          {sort:'-modified_at',limit:35,...(page?{cursor:page.audit_cursor}:{})}),
+        legacyDone ? empty : base44.asServiceRole.entities.CellHistory.filter(scope,
+          {sort:'-created_date',limit:35,...(page?{cursor:page.legacy_cursor}:{})}),
       ]);
       if(!Array.isArray(audit?.items) || !Array.isArray(legacy?.items))
         throw Object.assign(new Error('Sales history could not be verified. Reload and retry.'),{status:503});
-      return Response.json({success:true,entries:mergeSalesOpportunityHistory(audit.items,legacy.items)});
+      const nextAudit= !auditDone && audit.has_more===true;
+      const nextLegacy= !legacyDone && legacy.has_more===true;
+      if((nextAudit && !validCursor(audit.next_cursor)) ||
+         (nextLegacy && !validCursor(legacy.next_cursor)))
+        throw Object.assign(new Error('Sales history pagination could not be verified. Reload the history.'),{status:503});
+      return Response.json({success:true,entries:mergeSalesOpportunityHistory(audit.items,legacy.items),
+        pagination:{
+          audit_cursor:nextAudit?audit.next_cursor:'',
+          legacy_cursor:nextLegacy?legacy.next_cursor:'',
+          audit_exhausted:!nextAudit,
+          legacy_exhausted:!nextLegacy,
+          has_more:nextAudit||nextLegacy,
+        }});
     }
     if(body.action==='save') {
       const patch={...(body.next_fields||{})}, expected=body.expected_fields;
