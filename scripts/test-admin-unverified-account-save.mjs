@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "../src/components/admin/adminAccountDraft.js";
-import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft } from "../src/components/admin/unverifiedAccountSave.js";
+import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "../src/components/admin/unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
 
 const source = readFileSync("src/components/admin/UserManagement.jsx", "utf8");
@@ -50,13 +50,13 @@ function fixture() {
  };
  const state={
   editor:before,form:originalDraft,users:[before],write:null,password:null,
-  passwordCalls:[],accountCalls:[],readCalls:0,readResponse:[target],
-  reads:[],accounts:[],notice:"",error:"",loading:false,dirtyHr:false,
+  passwordCalls:[],accountCalls:[],readCalls:0,approvalReads:0,approvalResponse:null,readResponse:[target],
+  reads:[],approvalReplies:[],accounts:[],notice:"",error:"",loading:false,dirtyHr:false,
   directoryError:false,mutationSaving:false,confirmed:false,choices:{},dialog:true
  };
  const scope={
   ...refs,createAdminAccountDraft,hasUnsavedAdminAccountDraft,
-  compareUnverifiedAccountSave,rebaseAppliedAccountDraft,
+  compareUnverifiedAccountSave,rebaseAppliedAccountDraft,isSameVerifiedAccountSnapshot,
   planAccountFieldResolution,
   get sessionToken(){return token;},get editingUser(){return state.editor;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.password;},
@@ -93,6 +93,11 @@ function fixture() {
     return state.accounts.length?state.accounts.shift().promise:Promise.reject(new Error("lost acknowledgement"));
   },
   setPasswordFn:options=>{state.passwordCalls.push(options);return Promise.resolve({data:{success:true}});},
+  listAuthorizedUsersAdmin:()=>{
+    state.approvalReads++;
+    const next=state.approvalReplies.shift();
+    return next?next.promise:Promise.resolve(state.approvalResponse??state.readResponse);
+  },
   loadUsers:()=>{
     state.readCalls++;
     return state.reads.length?state.reads.shift().promise:Promise.resolve(state.readResponse);
@@ -189,7 +194,7 @@ test("Read-only verification observes applied Account and never resends the upda
  assert.equal(f.state.write.comparison.status,"applied");
  assert.equal(f.state.accountCalls.length,1);
  assert.equal(f.state.passwordCalls.length,0);
- f.accept();
+ await f.accept();
  assert.equal(f.state.write,null);
  assert.equal(f.refs.accountDraftBaseline.current.values.full_name,target.full_name);
  assert.equal(f.state.editor.updated_date,target.updated_date);
@@ -200,7 +205,7 @@ test("Read-only verification observes applied Account and never resends the upda
 
 test("Read matches requested edits but preserves post-click local changes",async()=>{
  const f=fixture();await f.save();f.draft({username:"my-newer-edit"});
- await f.verify();f.accept();
+ await f.verify();await f.accept();
  assert.equal(f.state.form.username,"my-newer-edit");
  assert.equal(f.state.form.full_name,target.full_name);
  assert.equal(f.state.accountCalls.length,1);
@@ -212,10 +217,10 @@ for(const status of ["unchanged","mixed"]){
   f.state.readResponse=status==="unchanged"?[before]:[{...target,can_import_export:false}];
   await f.verify();
   assert.equal(f.state.write.comparison.status,status);
-  f.accept();
+  await f.accept();
   assert.equal(f.state.write.stage,"review");
   assert.equal(f.state.editor.updated_date,before.updated_date);
-  f.state.confirmed=true;f.accept();
+  f.state.confirmed=true;await f.accept();
   assert.equal(f.state.write,null);
   assert.equal(f.state.form.full_name,status==="unchanged"?before.full_name:target.full_name);
   assert.equal(f.state.form.password_hash,originalDraft.password_hash);
@@ -231,7 +236,7 @@ test("Field review keeps individual latest/mine choices without rewriting the Ac
  await f.verify();
  assert.equal(f.state.write.comparison.status,"mixed");
  f.state.choices={can_import_export:"mine",full_name:"latest"};
- f.state.confirmed=true;f.accept();
+ f.state.confirmed=true;await f.accept();
  assert.equal(f.state.form.full_name,target.full_name);
  assert.equal(f.state.form.can_import_export,true);
  assert.equal(f.state.form.username,"remote-only-username");
@@ -249,7 +254,7 @@ test("One chosen conflicting personal-detail field leaves other latest Account d
  await f.verify();
  assert.equal(f.state.write.comparison.status,"mixed");
  f.state.choices={full_name:"mine"};
- f.state.confirmed=true;f.accept();
+ f.state.confirmed=true;await f.accept();
  assert.equal(f.state.form.full_name,target.full_name);
  assert.equal(f.state.form.username,"Remote username");
  assert.equal(f.state.form.can_import_export,false);
@@ -291,11 +296,11 @@ test("Duplicate verification clicks share one owned read and stale completions d
 test("Review cannot adopt another employee identity or run while a write is in flight",async()=>{
  const f=fixture();await f.save();await f.verify();
  f.refs.activeEditingUser.current={...before,id:"another"};
- f.accept();
+ await f.accept();
  assert.equal(f.state.write.stage,"review");
  f.refs.activeEditingUser.current=before;
  f.refs.userUpdateInFlight.current=true;
- f.accept();
+ await f.accept();
  assert.equal(f.state.write.stage,"review");
 });
 
