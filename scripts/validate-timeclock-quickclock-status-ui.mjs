@@ -784,4 +784,59 @@ await act(async () => {
 });
 console.log('PASS new authoritative shift never inherits previous uncertain Clock Out request ID');
 await act(async () => { shiftChangeRenderer.unmount(); });
-console.log('PASS 21/21 Time Clock Quick Clock async status acceptance cases');
+
+// An old in-flight Clock Out from a replaced session must not delete the new
+// request's recovery snapshot when its delayed acknowledgement finally arrives.
+let overlapRenderer;
+await act(async () => {
+  overlapRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'old-device-session', employeeSessionUser:second,
+  }));
+});
+const overlapInitialIndex = calls.length - 1;
+await act(async () => { calls[overlapInitialIndex].resolve(status(second,'first-overlap-entry')); });
+const overlapDialog = () => overlapRenderer.root.findAll((node) =>
+  typeof node.props?.onClockOut === 'function')[0];
+let oldOverlapOut;
+await act(async () => { oldOverlapOut = overlapDialog().props.onClockOut(shiftChangePayload); });
+const oldOverlapIndex = calls.length - 1;
+const oldOverlapId = calls[oldOverlapIndex].payload.request_id;
+await act(async () => {
+  overlapRenderer.update(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'new-device-session', employeeSessionUser:second,
+  }));
+});
+const overlapNewStatusIndex = calls.length - 1;
+assert.equal(calls[overlapNewStatusIndex].payload.action,'status');
+await act(async () => { calls[overlapNewStatusIndex].resolve(status(second,'second-overlap-entry')); });
+let newOverlapOut;
+await act(async () { newOverlapOut = overlapDialog().props.onClockOut(shiftChangePayload); });
+const newOverlapIndex = calls.length - 1;
+const newOverlapId = calls[newOverlapIndex].payload.request_id;
+assert.notEqual(newOverlapId,oldOverlapId);
+await act(async () => {
+  calls[oldOverlapIndex].resolve({data:{
+    success:true,status:'clocked_out',user:second,
+    entry:{id:'first-overlap-entry',clock_out:'2026-10-15T21:00:00.000Z'},
+  }});
+  await oldOverlapOut;
+});
+assert.equal(savedSessionData.get(`ccs_timeclock_request:clock_out:${second.email}`),newOverlapId,
+  'Old acknowledgement cannot delete the newer shift request id');
+const newOverlapSnapshot = JSON.parse(savedSessionData.get(`ccs_timeclock_pending_clock_out:${second.email}`));
+assert.equal(newOverlapSnapshot.requestId,newOverlapId,
+  'Old acknowledgement cannot delete the newer shift recovery body');
+assert.match(visible(overlapRenderer),/second-overlap-entry/,
+  'Prior shift success must not dismiss a newer shift');
+await act(async () => {
+  calls[newOverlapIndex].resolve({data:{
+    success:true,status:'clocked_out',user:second,
+    entry:{id:'second-overlap-entry',clock_out:'2026-10-15T22:00:00.000Z'},
+  }});
+  await newOverlapOut;
+});
+assert.equal(savedSessionData.has(`ccs_timeclock_request:clock_out:${second.email}`),false);
+assert.equal(savedSessionData.has(`ccs_timeclock_pending_clock_out:${second.email}`),false);
+console.log('PASS previous session late Clock Out cannot delete newer shift request or recovery data');
+await act(async () => { overlapRenderer.unmount(); });
+console.log('PASS 22/22 Time Clock Quick Clock async status acceptance cases');
