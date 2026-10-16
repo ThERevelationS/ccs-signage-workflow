@@ -402,6 +402,9 @@ export default function FleetMechanic() {
   };
 
   const refreshEstimateState = async (workOrderId, reason = "", showRecoveredMessage = false, confirmation = null) => {
+    // Delayed responses for a previously selected job must never replace the
+    // recovery state or visible estimate of the currently opened work order.
+    if (selectedWorkOrderRef.current !== workOrderId) return false;
     const recoveryReason = reason || "Current repair-estimate state must be verified.";
     const requestId = ++portalRequestRef.current;
     setEstimateRecovery({workOrderId, reason: recoveryReason});
@@ -409,7 +412,8 @@ export default function FleetMechanic() {
     setRefreshing(true);
     try {
       const result = await fetchPortalPayload();
-      if (requestId !== portalRequestRef.current) return false;
+      if (requestId !== portalRequestRef.current ||
+          selectedWorkOrderRef.current !== workOrderId) return false;
       applyPortalPayload(result);
       const visibleWorkOrder = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])].some(row => row.id === workOrderId);
       if (!visibleWorkOrder) {
