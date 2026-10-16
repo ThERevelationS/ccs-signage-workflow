@@ -116,7 +116,7 @@ const replay=await ctx.syntheticHistoryHandler(request(page));
 same((await replay.json()).pagination.has_more,false,
   'Exhausted history page remains exhausted without issuing repeated source queries.');
 const badPage=await ctx.syntheticHistoryHandler(request({
-  audit_exhausted:false,legacy_exhausted:true,audit_cursor:'',
+  work_order_version:'v1',audit_exhausted:false,legacy_exhausted:true,audit_cursor:'',
 }));
 same(badPage.status,400,'Invalid missing cursor is rejected rather than replaying page one.');
 unavailableCursors=true;
