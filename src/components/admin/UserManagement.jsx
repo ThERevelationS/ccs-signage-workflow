@@ -2020,7 +2020,7 @@ export default function UserManagement() {
                   ? "Account values verified; Time Clock password not sent"
                   : accountSaveRecovery.accountUnchanged
                     ? "Account unchanged; Time Clock password outcome unverified"
-                    : "Account saved; Time Clock password outcome unverified"
+                    : "Account saved; Time Clock password outcome unverified"}
               </p>
               <p className="text-amber-900">
                 {accountSaveRecovery.passwordNotSent
