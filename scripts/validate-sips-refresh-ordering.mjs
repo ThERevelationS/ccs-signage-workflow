@@ -758,6 +758,85 @@ await check('rapid same-session completed WIP reopening has one pending write', 
   assert.equal(h.ctx.reopeningWipInFlightRef.current.size, 0);
 });
 
+await check('superseded WIP conflict read verifies the new Active state once without another write', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  let saveAttempts = 0;
+  h.ctx.base44.functions.invoke = async () => {
+    saveAttempts++;
+    // Another user won the identical reopen, while this request receives a
+    // definite conflict. The recovering session must only read and verify.
+    h.externalUpdate({ sip_completed: false, sip_revisit_date: '' });
+    return { data: { success: false, error: 'Synthetic competing reopen' } };
+  };
+  const reopen = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  for (let i = 0; i < 30 && h.reads.length < 1; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1, 'Conflicted save begins read-only recovery');
+  const newerRefresh = h.loadWorkOrders(false);
+  assert.equal(h.reads.length, 2);
+  h.reads[1].finish();
+  await newerRefresh;
+  // The superseded response may contain a misleading old completed snapshot;
+  // only a subsequent current read may resolve the original conflict.
+  h.reads[0].finish([{ ...h.record, sip_completed: true, sip_revisit_date: tomorrow }]);
+  for (let i = 0; i < 30 && h.reads.length < 3; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 3, 'Exactly one bounded read-only retry follows supersession');
+  assert.match(h.ctx.quickEditError, /Synthetic competing reopen/, 'Conflict stays visible while verification is pending');
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, null, 'Superseded read never changes focus');
+  h.reads[2].finish();
+  await reopen;
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, h.record.id);
+  assert.equal(h.ctx.quickEditError, '');
+  assert.equal(saveAttempts, 1, 'Only the original conditional write was attempted');
+  assert.equal(h.writes, 0, 'Recovery never writes');
+});
+
+await check('superseded WIP recovery cannot clear errors or focus when latest Revisit diverges', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  let saveAttempts = 0;
+  h.ctx.base44.functions.invoke = async () => {
+    saveAttempts++;
+    h.externalUpdate({ sip_completed: false, sip_revisit_date: later });
+    return { data: { success: false, error: 'Synthetic divergent revisit' } };
+  };
+  const reopen = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  for (let i = 0; i < 30 && h.reads.length < 1; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1);
+  const newerRefresh = h.loadWorkOrders(false);
+  h.reads[1].finish();
+  await newerRefresh;
+  // Even a discarded read pretending the intended change applied must not
+  // override a later verified date that belongs to a different session.
+  h.reads[0].finish([{ ...h.record, sip_revisit_date: '', sip_completed: false }]);
+  for (let i = 0; i < 30 && h.reads.length < 3; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 3);
+  assert.match(h.ctx.quickEditError, /Synthetic divergent revisit/);
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, null);
+  h.reads[2].finish();
+  await reopen;
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, later);
+  assert.match(h.ctx.quickEditError, /Synthetic divergent revisit/, 'Different Revisit date requires review');
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, null, 'Divergent date cannot redirect focus');
+  assert.equal(saveAttempts, 1);
+  assert.equal(h.writes, 0);
+});
+
+await check('unsuperseded failed WIP recovery read never loops, clears conflict or redirects focus', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  h.ctx.base44.functions.invoke = async () => ({ data: { success: false, error: 'Synthetic save conflict' } });
+  const reopen = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  for (let i = 0; i < 30 && h.reads.length < 1; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1);
+  h.reads[0].reject(new Error('Recovery read unavailable'));
+  await reopen;
+  assert.equal(h.reads.length, 1, 'No bounded retry is warranted for a simple failed read');
+  assert.match(h.ctx.quickEditError, /Synthetic save conflict/);
+  assert.match(h.ctx.boardError, /Recovery read unavailable/);
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, null);
+  assert.equal(h.writes, 0);
+});
+
 await check('conflicted WIP reopening stays busy through reload and then allows retry', async () => {
   const h = fixture(tomorrow, { completed: true });
   h.externalUpdate({ sip_revisit_date: later });
