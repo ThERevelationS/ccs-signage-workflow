@@ -43,7 +43,7 @@ function fixture({response=fresh,errorMessage="Authorized user changed in anothe
   error:"",confirm:true,choices:{role:"mine"},calls:0,passwordCalls:0,reads:0,readRows:response===null?null:[response],
   writeDeferred:null,readDeferred:null,loading:false,readError:false,users:[original],dialog:true,saving:false};
  refs.activeAccountDraft.current=state.draft;
- const scope={...refs,rejectedAdminAccountField,createAdminAccountDraft,
+ const scope={...refs,rejectedAdminAccountField,createAdminAccountDraft,getChangedAdminAccountFields,
   compareUnverifiedAccountSave,hasUnsavedAdminAccountDraft,
   get sessionToken(){return "session-1";},get editingUser(){return state.editor;},
   get formData(){return state.draft;},get accountWriteRecovery(){return state.write;},
