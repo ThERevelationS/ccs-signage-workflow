@@ -50,7 +50,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
-import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
+import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "./accountFieldResolution.js";
 import { rejectedAdminAccountField } from "./accountSaveConflict.js";
@@ -781,18 +781,25 @@ export default function UserManagement() {
     const record = editingUser;
     let verifiedAccountReceipt = false;
     let accountAttempt = null;
+    let accountWriteSent = false;
     setUserMutationSaving(true);
     try {
       const dataToSave = { ...formData };
       const newPassword = dataToSave.password_hash;
-      // Never send password_hash directly — use secure backend
+      // Never send password_hash directly — use the separate secure backend.
       delete dataToSave.password_hash;
+      const changedFields = getChangedAdminAccountFields(record, dataToSave);
+      // Recovery needs the full original draft to compare individual fields;
+      // the backend receives ONLY the genuinely changed fields.
       accountAttempt = { ...dataToSave, sales_roles: [...(dataToSave.sales_roles || [])] };
-      const savedUser = await updateAuthorizedUserAdmin({
-        record,
-        nextFields: dataToSave,
-        sessionToken,
-      });
+      accountWriteSent = Object.keys(changedFields).length > 0;
+      const savedUser = accountWriteSent
+        ? await updateAuthorizedUserAdmin({
+            record,
+            nextFields: changedFields,
+            sessionToken,
+          })
+        : record;
       // Never continue follow-up changes from a superseded Admin session.
       if (!ownsUpdate()) return;
       if (!savedUser?.updated_date || savedUser.id !== record.id ||
@@ -808,13 +815,15 @@ export default function UserManagement() {
         sessionToken, id: savedUser.id, email: savedUser.email,
         values: createAdminAccountDraft(savedUser)
       };
-      ++userLoadSequence.current;
-      setUsers(current => current.map(row =>
-        row.id === record.id && row.email === record.email &&
-        row.updated_date === record.updated_date ? savedUser : row));
-      setEditingUser(current =>
-        current?.id === record.id && current?.email === record.email &&
-        current?.updated_date === record.updated_date ? savedUser : current);
+      if (accountWriteSent) {
+        ++userLoadSequence.current;
+        setUsers(current => current.map(row =>
+          row.id === record.id && row.email === record.email &&
+          row.updated_date === record.updated_date ? savedUser : row));
+        setEditingUser(current =>
+          current?.id === record.id && current?.email === record.email &&
+          current?.updated_date === record.updated_date ? savedUser : current);
+      }
 
       // Password changes are a separate backend operation, with no atomic
       // guarantee together with the Account write. A failure or lost
@@ -833,10 +842,13 @@ export default function UserManagement() {
           if (!ownsUpdate()) return;
           setAccountSaveRecovery({
             sessionToken, id: savedUser.id, email: savedUser.email,
-            updated_date: savedUser.updated_date
+            updated_date: savedUser.updated_date,
+            ...(!accountWriteSent ? { accountUnchanged: true } : {})
           });
           setPasswordRetryConfirmed(false);
-          setUserMutationError("Account changes were saved, but the Time Clock password result is unverified. Check whether it already changed before attempting a password-only retry.");
+          setUserMutationError(accountWriteSent
+            ? "Account changes were saved, but the Time Clock password result is unverified. Check whether it already changed before attempting a password-only retry."
+            : "No Account fields required updating, but the Time Clock password result is unverified. Check whether it already changed before attempting a password-only retry.");
           return;
         }
       }
@@ -852,7 +864,7 @@ export default function UserManagement() {
         setFormData(current => ({
           ...current, password_hash: current.password_hash === newPassword ? "" : current.password_hash
         }));
-        setAccountSaveNotice("The Account and requested password changes were confirmed. New edits made during saving remain in your draft.");
+        setAccountSaveNotice("The requested changes were confirmed. New edits made during saving remain in your draft.");
         return;
       }
       await loadUsers();
@@ -2006,12 +2018,16 @@ export default function UserManagement() {
               <p className="font-semibold text-amber-950">
                 {accountSaveRecovery.passwordNotSent
                   ? "Account values verified; Time Clock password not sent"
-                  : "Account saved; Time Clock password outcome unverified"}
+                  : accountSaveRecovery.accountUnchanged
+                    ? "Account unchanged; Time Clock password outcome unverified"
+                    : "Account saved; Time Clock password outcome unverified"
               </p>
               <p className="text-amber-900">
                 {accountSaveRecovery.passwordNotSent
                   ? "The Account fields match your requested changes. No Time Clock password request was sent. You may authorize a separate password-only request."
-                  : "Your Account details were saved. The password request may or may not have completed. Check whether it was applied before retrying."}
+                  : accountSaveRecovery.accountUnchanged
+                    ? "No Account fields were written. The separate password request may or may not have completed. Check whether it was applied before retrying."
+                    : "Your Account details were saved. The password request may or may not have completed. Check whether it was applied before retrying."}
                 {" "}Your password draft is still in this editor. Nothing has been retried.
               </p>
               <label className="flex items-start gap-2 text-amber-950">
