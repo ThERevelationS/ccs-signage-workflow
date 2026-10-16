@@ -23,7 +23,7 @@ test("an out-of-scope recovery remains visible, checkable, and blocks new work w
 function harness(action){
   const response=defer();
   const initial={workOrderId:"wo-A",action,requestId:`request-${action}-1234567890123456`,reason:"Synthetic interrupted mutation."};
-  const events={snapshots:[],errors:[],messages:[],scopeNotices:[],recoveries:[],busy:[],refreshing:[],clears:[],draftClears:[]};
+  const events={snapshots:[],errors:[],messages:[],scopeNotices:[],recoveries:[],busy:[],refreshing:[],clears:[],draftClears:[],portalLoads:[]};
   let currentRecovery=null;
   const ctx={
     token:"synthetic",
@@ -41,6 +41,7 @@ function harness(action){
     applyWorkOrderSnapshot:value=>events.snapshots.push(value),
     clearSavedProgressDraft:value=>events.draftClears.push(value),
     clearStoredWorkRecovery:async (_token,value)=>events.clears.push(value),
+    load:async quiet=>{events.portalLoads.push(quiet);ctx.selectedWorkOrderRef.current=null;events.scopeNotices.push("A previously selected work order is no longer available to this mechanic link. Its local drafts were cleared. Contact CCS if access is needed.");},
   };
   return {ctx,events,response,initial,get recovery(){return currentRecovery;}};
 }
