@@ -285,6 +285,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const orderLoadGenerationRef = useRef(0);
   const orderLocalEditGenerationRef = useRef(0); // Fence reads begun before a local edit/save.
   const customerNameDraftOrderRef = useRef(null); // Typing does not enter pendingChanges until blur.
+  const [customerDraftActive, setCustomerDraftActive] = useState(false);
   const dateNeededSaveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
@@ -363,11 +364,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   useEffect(() => {
     if (onSaveStatusChange) {
       onSaveStatusChange({
-        hasUnsavedChanges, isSaving, lastSaved, isLoading,
+        hasUnsavedChanges, customerDraftActive, isSaving, lastSaved, isLoading,
         isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, readError,
       });
     }
-  }, [hasUnsavedChanges, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, readError, onSaveStatusChange]);
+  }, [hasUnsavedChanges, customerDraftActive, isSaving, lastSaved, isLoading, isSyncing, isPulling, lastSyncDirection, pendingSyncCount, lastSynced, syncMessage, saveError, readError, onSaveStatusChange]);
 
   const hasActiveOrderEdits = () => Boolean(
     customerNameDraftOrderRef.current || customerSelectionInFlightRef.current ||
@@ -556,6 +557,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const saveAndSync = async () => {
     if (readError || syncInFlightRef.current || saveInFlightRef.current || dateNeededSaveInFlightRef.current) return false;
+    if (customerNameDraftOrderRef.current || customerSelectionInFlightRef.current) {
+      setSaveError('Finish editing the customer name or selecting an active job before Save & Sync. Your draft has not been submitted.');
+      return false;
+    }
     // Reserve the full Save & Sync operation before the first await. Without this,
     // two rapid clicks can both pass the guard when there are no unsaved Base44
     // fields, then both push the same durable pending Orders after the await yields.
@@ -723,6 +728,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (readError || !isRegistered || syncInFlightRef.current || saveInFlightRef.current ||
         dateNeededSaveInFlightRef.current || addInFlightRef.current ||
         deleteInFlightRef.current || importInFlightRef.current) return false;
+    // A focused customer name is not pendingChanges until blur. Do not let a
+    // stale toolbar mode pull Smartsheet over that protected local draft.
+    if (customerNameDraftOrderRef.current || customerSelectionInFlightRef.current) {
+      setSaveError('Finish editing the customer name or selecting an active job before checking Smartsheet. No remote pull was started.');
+      return false;
+    }
     // Never mix a manual remote pull with local unsaved edits or the durable
     // outbound queue. Those changes must use Save & Sync first.
     if (Object.keys(pendingChangesRef.current).length || pendingSyncIdsRef.current.size) {
@@ -1681,6 +1692,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       manuallyUnlinkedCustomerOrderIdsRef.current.add(order.id);
                     }
                     customerNameDraftOrderRef.current = order.id;
+                    setCustomerDraftActive(true);
                     orderLocalEditGenerationRef.current += 1;
                     setOrders(prev => prev.map(o => o.id === order.id ? orderAfterTypedCustomerName(o, val) : o));
                     setCustomerSearch(val);
@@ -1712,9 +1724,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       manuallyUnlinkedCustomerOrderIdsRef.current.delete(order.id);
                     }
                     if (customerNameDraftOrderRef.current === order.id) customerNameDraftOrderRef.current = null;
+                    setCustomerDraftActive(Boolean(customerNameDraftOrderRef.current || customerSelectionInFlightRef.current));
                   }}
                   onFocus={(e) => {
                     customerNameDraftOrderRef.current = order.id;
+                    setCustomerDraftActive(true);
                     orderLocalEditGenerationRef.current += 1;
                     setCustomerSearch(e.target.value);
                     setShowCustomerDropdown(order.id);
@@ -1766,6 +1780,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         onClick={async () => {
                           if (customerSelectionInFlightRef.current) return;
                           customerSelectionInFlightRef.current = true;
+                          setCustomerDraftActive(true);
                           const selectionEditGeneration = ++orderLocalEditGenerationRef.current;
                           setCheckingCustomerJobId(wo.id);
                           try {
@@ -1812,6 +1827,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                             setSaveError(error?.message || "Could not verify this job is active. Try again.");
                           } finally {
                             customerSelectionInFlightRef.current = false;
+                            setCustomerDraftActive(Boolean(customerNameDraftOrderRef.current));
                             setCheckingCustomerJobId(null);
                           }
                         }}
