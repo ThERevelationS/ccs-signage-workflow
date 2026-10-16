@@ -61,6 +61,24 @@ function syncFixture(overrides = {}) {
 }
 
 {
+  let saves = 0;
+  const state = syncFixture({ saveAllChanges: async () => { saves++; throw Error('Save must not start while customer is editing'); } });
+  state.refs.customerNameDraftOrderRef.current = 'order-123';
+  assert.equal(await state.run(), false);
+  assert.equal(state.refs.syncInFlightRef.current, false);
+  assert.equal(state.outboundCalls, 0);
+  assert.equal(saves, 0);
+  assert.deepEqual([...state.pendingIds], ['order-123']);
+  assert.match(state.errors.at(-1), /Finish editing the customer name/);
+  state.refs.customerNameDraftOrderRef.current = null;
+  state.refs.customerSelectionInFlightRef.current = true;
+  assert.equal(await state.run(), false);
+  assert.equal(saves, 0);
+  assert.equal(state.outboundCalls, 0);
+  console.log('PASS actual Save & Sync refuses focused customer edits or in-flight job selection without saving or posting remotely');
+}
+
+{
   const state = syncFixture({ saveAllChanges: async () => { throw new Error('Unexpected local save failure'); } });
   assert.equal(await state.run(), false);
   assert.equal(state.refs.syncInFlightRef.current, false);
