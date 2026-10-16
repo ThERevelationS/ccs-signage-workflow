@@ -304,6 +304,167 @@ test("Review cannot adopt another employee identity or run while a write is in f
  assert.equal(f.state.write.stage,"review");
 });
 
+test("Snapshot comparison rejects version changes and sensitive permission changes even with same version",()=>{
+ assert.equal(isSameVerifiedAccountSnapshot(target,{...target}),true);
+ assert.equal(isSameVerifiedAccountSnapshot(target,{...target,sales_roles:["Designer"]}),true);
+ for(const record of [
+  {...target,updated_date:"version-3"},
+  {...target,role:"admin"},
+  {...target,can_order_export:true},
+  {...target,can_view_resources:true},
+  {...target,can_import_export:false},
+  {...target,can_work_pause:true},
+  {...target,employment_type:"salary"},
+  {...target,username:"other-login"},
+  {...target,id:"another"},
+  {...target,email:"other@example.invalid"},
+  {...target,updated_date:""},
+  null
+ ]){
+  assert.equal(isSameVerifiedAccountSnapshot(target,record),false);
+ }
+ const matchingRoles={...target,sales_roles:["Estimator","Designer"]};
+ assert.equal(isSameVerifiedAccountSnapshot(
+  {...target,sales_roles:["Designer","Estimator"]},matchingRoles),true);
+});
+
+for(const [name,change] of [
+ ["version",row=>({...row,updated_date:"version-3"})],
+ ["privilege promotion",row=>({...row,role:"admin"})],
+ ["role demotion",row=>({...row,role:"user",can_view_resources:false})],
+ ["Order Form export grant",row=>({...row,can_order_export:true})],
+ ["Resources permission",row=>({...row,can_view_resources:true})],
+ ["Import/export permission",row=>({...row,can_import_export:false})],
+ ["Sales Pipeline roles",row=>({...row,sales_roles:["Installer"]})],
+ ["unchanged version but different username",row=>({...row,username:"different"})]
+]){
+ test(`Concurrent ${name} between preview and approval requires new review without applying choices`,async()=>{
+  const f=fixture();await f.save();
+  f.state.readResponse=[{...target,can_import_export:false}];
+  await f.verify();
+  f.state.choices={can_import_export:"mine"};
+  f.state.confirmed=true;
+  const priorDraft={...f.state.form};
+  const priorBaseline=f.refs.accountDraftBaseline.current;
+  f.state.approvalResponse=[change(f.state.readResponse[0])];
+  await f.accept();
+  assert.equal(f.state.approvalReads,1);
+  assert.equal(f.state.write.stage,"needs_read");
+  assert.equal(f.state.write.latest,null);
+  assert.equal(f.state.write.comparison,null);
+  assert.equal(f.state.confirmed,false);
+  assert.deepEqual(f.state.choices,{});
+  assert.deepEqual(f.state.form,priorDraft);
+  assert.equal(f.refs.accountDraftBaseline.current,priorBaseline);
+  assert.equal(f.state.editor.updated_date,before.updated_date);
+  assert.equal(f.state.passwordCalls.length,0);
+  assert.equal(f.state.accountCalls.length,1);
+  assert.match(f.state.error,/No choices were applied/);
+ });
+}
+
+test("Approval refuses missing, duplicate, misidentified and unversioned fresh records",async()=>{
+ for(const value of [null,[],[target,target],
+  [{...target,id:"someone-else"}],[{...target,email:"other@example.invalid"}],
+  [{...target,updated_date:""}]]){
+  const f=fixture();await f.save();await f.verify();
+  f.state.approvalResponse=value;
+  await f.accept();
+  assert.equal(f.state.write.stage,"needs_read");
+  assert.equal(f.state.accountCalls.length,1);
+  assert.equal(f.state.passwordCalls.length,0);
+  assert.equal(f.state.form.password_hash,originalDraft.password_hash);
+ }
+});
+
+test("Approval failure preserves password, role, permissions and chosen draft, requiring another review",async()=>{
+ const f=fixture();await f.save();
+ const privileged={...target,role:"admin",can_view_resources:true};
+ f.state.readResponse=[privileged];
+ await f.verify();
+ f.state.confirmed=true;
+ f.state.choices={can_import_export:"mine"};
+ f.draft({role:"admin",can_order_export:true,can_view_resources:true});
+ const preserved={...f.state.form};
+ const request=deferred();f.state.approvalReplies.push(request);
+ const pending=f.accept();
+ request.reject(new Error("Read timed out"));
+ await pending;
+ assert.deepEqual(f.state.form,preserved);
+ assert.equal(f.state.write.stage,"needs_read");
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.confirmed,false);
+});
+
+test("Duplicate approval clicks cause exactly one authorized read and no writes",async()=>{
+ const f=fixture();await f.save();await f.verify();
+ const read=deferred();f.state.approvalReplies.push(read);
+ const first=f.accept(),second=f.accept();
+ assert.equal(f.state.approvalReads,1);
+ assert.equal(f.refs.userUpdateInFlight.current,true);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ read.resolve([target]);
+ await first;await second;
+ assert.equal(f.state.approvalReads,1);
+ assert.equal(f.state.write,null);
+ assert.equal(f.refs.userUpdateInFlight.current,false);
+});
+
+test("Replaced session during approval cannot adopt an old Account or dismiss review",async()=>{
+ const f=fixture();await f.save();await f.verify();
+ const read=deferred();f.state.approvalReplies.push(read);
+ const pending=f.accept();
+ f.refs.activeSessionToken.current="new-session";
+ read.resolve([target]);await pending;
+ assert.equal(f.state.write.stage,"review");
+ assert.equal(f.state.editor.updated_date,before.updated_date);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("Changes typed after approval begins cannot be silently overwritten",async()=>{
+ const f=fixture();await f.save();await f.verify();
+ const read=deferred();f.state.approvalReplies.push(read);
+ const pending=f.accept();
+ f.draft({full_name:"Typed during approval",role:"admin",can_order_export:true});
+ read.resolve([target]);await pending;
+ assert.equal(f.state.write.stage,"needs_read");
+ assert.equal(f.state.form.full_name,"Typed during approval");
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.form.can_order_export,true);
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Approval succeeds when a fresh Account read semantically matches with new array order",async()=>{
+ const f=fixture();await f.save();await f.verify();
+ f.state.approvalResponse=[{...target,sales_roles:["Designer"]}];
+ await f.accept();
+ assert.equal(f.state.write,null);
+ assert.equal(f.state.editor.updated_date,target.updated_date);
+ assert.equal(f.state.approvalReads,1);
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Failed approval can reverify and make newly reviewed choices later",async()=>{
+ const f=fixture();await f.save();await f.verify();
+ f.state.approvalResponse=[{...target,role:"admin",can_view_resources:true,updated_date:"version-3"}];
+ await f.accept();
+ assert.equal(f.state.write.stage,"needs_read");
+ f.state.readResponse=f.state.approvalResponse;
+ await f.verify();
+ assert.equal(f.state.write.stage,"review");
+ // The refreshed review is now the only valid base.
+ f.state.confirmed=true;
+ await f.accept();
+ assert.equal(f.state.write,null);
+ assert.equal(f.state.editor.updated_date,"version-3");
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.accountCalls.length,1);
+});
+
 test("Synthetic Account recovery UI discloses field names but no values or automatic writes",()=>{
  assert.match(source,/Account save outcome needs verification/);
  assert.match(source,/Read latest Account \(no writes\)/);
