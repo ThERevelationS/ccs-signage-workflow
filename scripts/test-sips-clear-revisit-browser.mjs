@@ -397,6 +397,63 @@ try {
       assert.equal(fixture.writes.length, 1, "The conditional second reopen must not make a duplicate write");
     }, (state) => { state.row.sip_completed = true; });
 
+  for (const [label, divergent] of [
+    ["matching external reopen restores Active focus", false],
+    ["different external Revisit retains conflict and leaves focus alone", true],
+  ]) {
+    await caseRun("Mobile superseded recovery read: " + label,
+      origin, [mobile], async ([page]) => {
+        await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+        await page.getByRole("button", { name: "Open Work Order" }).click();
+        await page.getByRole("button", { name: "Synthetic Details Refresh" }).waitFor();
+        await fixtureAction(page, origin, "armSupersededReopen");
+        await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+        await awaitFixture(page, origin, s => s.heldListReads === 1 && s.forcedExternalReopens === 1,
+          "losing CAS reached held recovery Work Order read");
+        const conflict = page.getByRole("alert").filter({ hasText: "This record changed during saving" });
+        await conflict.waitFor();
+        if (divergent) {
+          // Change the server's Revisit date AFTER the held recovery read
+          // captured an apparently matching snapshot.
+          await fixtureAction(page, origin, "setExternalRevisit", { date: newerDate });
+        }
+        // Work Order Details invokes the real SIPS onUpdate callback, which
+        // bypasses the idle-only Refresh button and supersedes the held read.
+        await page.getByRole("button", { name: "Synthetic Details Refresh" }).click();
+        await awaitFixture(page, origin, s => s.listReads === 3, "newer details board refresh");
+        if (divergent) {
+          await page.locator("#sips-revisit-later")
+            .getByRole("button", { name: "Change Revisit Date" }).waitFor();
+        } else {
+          await page.getByText("Showing 1 of 1 active item").waitFor();
+        }
+        // The stale held response now arrives after the newer refresh. It
+        // must be ignored, forcing exactly one additional verification read.
+        await conflict.waitFor();
+        await fixtureAction(page, origin, "releaseHeldList");
+        await awaitFixture(page, origin, s => s.listReads === 4,
+          "single bounded recovery verification after supersession");
+        if (!divergent) {
+          await reopenedWorkOrderFocused(page);
+          await conflict.waitFor({ state: "hidden" });
+        } else {
+          await conflict.waitFor();
+          await page.waitForFunction(() => document.activeElement?.dataset?.sipsActiveFocusId !== "synthetic-sips-order");
+          assert.equal(await page.locator("#sips-revisit-later")
+            .getByRole("button", { name: "Change Revisit Date" }).count(), 1,
+          "A newer future Revisit must stay visible instead of moving to Active");
+        }
+        const outcome = await fixtureAction(page, origin, "fixtureStatus");
+        assert.equal(outcome.listReads, 4, "Initial, held, superseding, and one recovery read only");
+        assert.equal(outcome.releasedListReads, 1);
+        assert.equal(outcome.forcedExternalReopens, 1);
+        assert.equal(outcome.writeCount, 0, "The losing session must not retry a stale write");
+        assert.equal(outcome.sip_completed, false);
+        assert.equal(outcome.sip_revisit_date, divergent ? newerDate : "");
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      }, state => { state.row.sip_completed = true; });
+  }
+
   await caseRun("Mobile: stale undated WIP reopen cannot erase a different session's future Revisit",
     origin, [mobile], async ([page]) => {
       await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
