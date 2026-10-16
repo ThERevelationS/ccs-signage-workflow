@@ -11,6 +11,23 @@ export const SALES_OPPORTUNITY_HISTORY_FIELDS = Object.freeze([
 
 const ALLOWED = new Set(SALES_OPPORTUNITY_HISTORY_FIELDS);
 
+// Once pages have been authorized and sanitized by the backend, merge them
+// without dropping older entries at an arbitrary display cap. Load-more is
+// always explicit; no entire archive is fetched automatically.
+export function appendSalesOpportunityHistoryPages(previous = [], incoming = []) {
+  const byId = new Map();
+  for (const entry of [...previous, ...incoming]) {
+    if (!entry?.id || !ALLOWED.has(entry.field_name) ||
+        !/^(audit|legacy):/.test(String(entry.id))) continue;
+    byId.set(String(entry.id), entry);
+  }
+  return [...byId.values()].sort((a, b) => {
+    const time = entry => Date.parse(entry.modified_at || entry.created_date || '') || 0;
+    return time(b) - time(a) || String(a.id).localeCompare(String(b.id));
+  });
+}
+
+
 export function mergeSalesOpportunityHistory(audit = [], legacy = [], limit = 75) {
   const entries = [];
   const seen = new Set();
