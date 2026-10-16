@@ -53,6 +53,7 @@ import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "./accountFieldResolution.js";
+import { rejectedAdminAccountField } from "./accountSaveConflict.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
@@ -859,17 +860,50 @@ export default function UserManagement() {
       clearEditorDraftTracking();
       setIsDialogOpen(false);
       setEditingUser(null);
-    } catch {
+    } catch (error) {
       if (!ownsUpdate()) return;
       if (!verifiedAccountReceipt && accountAttempt) {
-        // A failed request, timeout, or missing receipt cannot prove whether
-        // the Account write landed. Do not start a password write or retry.
-        setAccountWriteRecovery({
+        const rejectedField = rejectedAdminAccountField(error);
+        // Only the backend's exact field-precondition rejection confirms that
+        // this Account write was blocked. Ambiguous/network errors still
+        // require explicit read-only recovery; neither is ever auto-retried.
+        const pending = {
           stage: "needs_read", sessionToken, id: record.id, email: record.email,
-          baseline: createAdminAccountDraft(record), attempted: accountAttempt
-        });
+          baseline: createAdminAccountDraft(record), attempted: accountAttempt,
+          ...(rejectedField ? { rejectedField } : {})
+        };
+        setAccountWriteRecovery(pending);
         setConfirmAccountReconciliation(false);
-        setUserMutationError("Account save outcome unverified. Use the read-only verification below before attempting another Account save. Time Clock password was not sent.");
+        setAccountFieldChoices({});
+        if (rejectedField) {
+          try {
+            // Safe immediate field-level review for a confirmed backend
+            // precondition rejection. Never start another Account/password
+            // write, even when the read fails or an admin session changes.
+            const rows = await listAuthorizedUsersAdmin({ sessionToken });
+            if (!ownsUpdate()) return;
+            const matching = rows?.filter(row => row.id === record.id &&
+              row.email === record.email && row.updated_date);
+            if (!matching || matching.length !== 1) {
+              throw new Error("Conflicted Account could not be verified.");
+            }
+            const latest = matching[0];
+            const comparison = compareUnverifiedAccountSave({
+              baseline: pending.baseline, attempted: pending.attempted, latest
+            });
+            setAccountWriteRecovery({ ...pending, stage: "review", latest, comparison });
+            setUserMutationError("");
+          } catch {
+            if (!ownsUpdate()) return;
+            setUserMutationError(
+              "Account changed in another session. The latest Account could not be verified; your draft is preserved. Read latest Account before resolving fields."
+            );
+          }
+        } else {
+          setUserMutationError(
+            "Account save outcome unverified. Use the read-only verification below before attempting another Account save. Time Clock password was not sent."
+          );
+        }
         return;
       }
       setUserMutationError("Account save could not be completed or verified. Review the latest directory record before retrying.");
