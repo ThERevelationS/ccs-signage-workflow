@@ -651,6 +651,14 @@ export default function SalesOpportunityDialog({
                 </div>
               ))}
             </div>
+            {historyPageError && <p role="alert" className="mt-2 text-xs text-red-700">{historyPageError}</p>}
+            {historyPagination?.has_more && !historyLoading && (
+              <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
+                disabled={historyLoadingMore} onClick={loadMoreSalesHistory}>
+                {historyLoadingMore ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
+                {historyLoadingMore ? "Loading older Sales history…" : "Load older Sales history"}
+              </Button>
+            )}
           </section>
         </div>
       </DialogContent>
