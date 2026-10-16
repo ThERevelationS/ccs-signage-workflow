@@ -20,7 +20,7 @@ const bindHandler=new Function("ctx",`with(ctx){${handlerBlock} return saveEstim
 const defer=()=>{let resolve,reject; const promise=new Promise((done,fail)=>{resolve=done;reject=fail;}); return {promise,resolve,reject};};
 const applyBegin=source.indexOf("  const applyPortalPayload = result => {");
 const applyEnd=source.indexOf("  const applyWorkOrderSnapshot = workOrder => {",applyBegin);
-const loadBegin=source.indexOf("  const load = async (quiet = false) => {");
+const loadBegin=source.indexOf("  const load = async (");
 const loadEnd=source.indexOf("  useEffect(() => { load(); }, []);",loadBegin);
 assert.ok(applyBegin>=0&&applyEnd>applyBegin&&loadBegin>=0&&loadEnd>loadBegin);
 const bindApply=new Function("ctx",`with(ctx){${source.slice(applyBegin,applyEnd)} return applyPortalPayload; }`);
