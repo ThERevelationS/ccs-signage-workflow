@@ -276,12 +276,19 @@ export default function QuickClockSection({
     return id;
   };
 
-  const clearRequest = (action, email) => {
+  const clearRequest = (action, email, expectedRequestId = "") => {
     const key = `${action}:${String(email || "").trim().toLowerCase()}`;
-    const next = { ...requestRef.current };
-    delete next[key];
-    requestRef.current = next;
-    removeStoredRequestId(action, email);
+    const inMemoryRequestId = requestRef.current?.[key] || "";
+    const storedId = storedRequestId(action, email);
+    // Old asynchronous acknowledgements must not erase a newer action's key.
+    if (!expectedRequestId || inMemoryRequestId === expectedRequestId) {
+      const next = { ...requestRef.current };
+      delete next[key];
+      requestRef.current = next;
+    }
+    if (!expectedRequestId || storedId === expectedRequestId) {
+      removeStoredRequestId(action, email);
+    }
   };
 
   const stopFaceCamera = () => {
@@ -355,7 +362,10 @@ export default function QuickClockSection({
         (status?.status === "clocked_in" && status?.entry?.id &&
          pendingClockOut && pendingClockOut.entryId !== String(status.entry.id))) {
       clearClockOutSnapshot(verifiedEmail);
-      removeStoredRequestId("clock_out", verifiedEmail);
+      clearRequest("clock_out", verifiedEmail);
+      if (clockOutAttemptRef.current?.email === verifiedEmail) {
+        clockOutAttemptRef.current = null;
+      }
     }
     setBreakStatus(status?.break_status || "working");
     setActiveBreak(status?.active_break || null);
@@ -1210,7 +1220,7 @@ export default function QuickClockSection({
         ...submittedBody,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest("clock_out", email);
+      clearRequest("clock_out", email, requestId);
       clearClockOutSnapshot(email, requestId);
       if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
       if (stillCurrent()) {
@@ -1222,7 +1232,7 @@ export default function QuickClockSection({
       return result;
     } catch (err) {
       if (!shouldRetainRequest(err)) {
-        clearRequest("clock_out", email);
+        clearRequest("clock_out", email, requestId);
         clearClockOutSnapshot(email, requestId);
         if (clockOutAttemptRef.current?.requestId === requestId) clockOutAttemptRef.current = null;
       }
