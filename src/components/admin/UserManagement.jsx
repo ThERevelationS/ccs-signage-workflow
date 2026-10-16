@@ -1877,10 +1877,16 @@ export default function UserManagement() {
 
           {accountWriteRecovery && (
             <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 space-y-3 text-sm" role="alert">
-              <p className="font-semibold text-amber-950">Account save outcome needs verification</p>
+              <p className="font-semibold text-amber-950">
+                {accountWriteRecovery.rejectedField
+                  ? "Account save rejected — review concurrent field changes"
+                  : "Account save outcome needs verification"}
+              </p>
               <p className="text-amber-900">
-                The Account request ended without a verified receipt. It might have succeeded.
-                Your unsaved draft is preserved; the Time Clock password was not sent.
+                {accountWriteRecovery.rejectedField
+                  ? `The server rejected this Account update because ${accountWriteRecovery.rejectedField.replaceAll("_", " ")} changed in another session. Review the current fields before manually deciding what to keep.`
+                  : "The Account request ended without a verified receipt. It might have succeeded."}
+                {" "}Your unsaved draft is preserved; the Time Clock password was not sent.
                 No automatic Account retry will occur.
               </p>
               {accountWriteRecovery.stage === "review" && accountWriteRecovery.comparison ? (
