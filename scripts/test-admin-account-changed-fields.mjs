@@ -138,7 +138,7 @@ test("Password-only change never writes Account and closes on confirmed password
 });
 
 test("Password-only uncertain result retains draft with accurate recovery label",async()=>{
- const f=fixture({changes:{password_hash:"synthetic-pass-1234"}},
+ const f=fixture({changes:{password_hash:"synthetic-pass-1234"},
   passwordResult:{data:{success:false}}});
  await f.save();
  assert.equal(f.state.accountCalls.length,0);
