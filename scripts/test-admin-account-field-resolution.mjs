@@ -152,7 +152,7 @@ test("Field-choice UI is scoped, accessible and explicitly local-only",()=>{
 });
 
 test("Resolve handler retains a separate Account save and backend validation",()=>{
- const start=source.indexOf("  const acceptVerifiedAccountSave = () => {");
+ const start=source.indexOf("  const acceptVerifiedAccountSave = async () => {");
  const end=source.indexOf("  const retryUnverifiedAccountPassword = async",start);
  assert.ok(start>=0&&end>start);
  const accept=source.slice(start,end);
@@ -160,4 +160,6 @@ test("Resolve handler retains a separate Account save and backend validation",()
  assert.match(accept,/accountDraftBaseline\.current =/);
  assert.match(accept,/setFormData\(current => \(\{\.\.\.resolved, password_hash: current.password_hash/);
  assert.match(accept,/!confirmAccountReconciliation \|\| !accountResolutionPreview/);
+ assert.match(accept,/await listAuthorizedUsersAdmin\(\{ sessionToken \}\)/);
+ assert.match(accept,/isSameVerifiedAccountSnapshot\(pending.latest, matching\[0\]\)/);
 });
