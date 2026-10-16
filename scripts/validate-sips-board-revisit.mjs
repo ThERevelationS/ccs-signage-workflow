@@ -131,6 +131,7 @@ function harness(initialDate = tomorrow) {
   ctx.loadWorkOrders = async () => {
     ctx.reloads++;
     ctx.workOrders = [structuredClone(record)];
+    return ctx.workOrders;
   };
   vm.createContext(ctx);
   vm.runInContext(source, ctx);
@@ -356,6 +357,26 @@ await check('reopen rejects future Revisit added mid-save at CAS boundary', asyn
   assert.equal(h.writes, 0);
   assert.equal(h.ctx.reloads, 1);
   assert.match(h.ctx.quickEditError, /changed during saving/);
+});
+
+await check('CAS-losing WIP reopen recognizes matching saved state, restores focus without duplicate write', async () => {
+  const h = completedHarness(tomorrow);
+  // Another session completes the *same* guarded reopen between read and CAS.
+  // The losing response is a conflict, but a verified refresh proves the
+  // requested completion and Revisit outcome is already current on the server.
+  h.beforeCommit(record => {
+    record.sip_completed = false;
+    record.sip_revisit_date = '';
+    record.updated_date = String(Number(record.updated_date) + 1);
+  });
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 0, 'Losing session never resubmits the reopen');
+  assert.equal(h.attemptedWrites, 1, 'Only the first conditional attempt occurs');
+  assert.equal(h.ctx.reloads, 1, 'Failed CAS performs a verified board refresh');
+  assert.equal(h.ctx.reopenedFocusWorkOrderId, h.record.id, 'Already-reopened item receives pending focus restoration');
+  assert.equal(h.ctx.quickEditError, '', 'Already-applied state clears the stale conflict message');
 });
 
 await check('reopen fails safely on unrelated concurrent edit without losing it', async () => {
