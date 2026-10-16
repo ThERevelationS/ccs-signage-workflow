@@ -729,4 +729,59 @@ assert.equal(calls.length, beforeStorageBlock,
   'Storage-disabled browser must not send Clock Out with unrecoverable retry details');
 console.log('PASS unavailable recovery storage fails closed before any official Clock Out request');
 await act(async () => { blockedRenderer.unmount(); });
-console.log('PASS 20/20 Time Clock Quick Clock async status acceptance cases');
+
+// A new shift returned by authoritative status must invalidate BOTH persisted
+// and in-memory Clock Out request ids from the earlier, uncertain shift.
+savedSessionData.delete(`ccs_timeclock_request:clock_out:${second.email}`);
+savedSessionData.delete(`ccs_timeclock_pending_clock_out:${second.email}`);
+let shiftChangeRenderer;
+await act(async () => {
+  shiftChangeRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'second-shift-recovery', employeeSessionUser:second,
+  }));
+});
+const changeInitialStatusIndex = calls.length - 1;
+await act(async () => {
+  calls[changeInitialStatusIndex].resolve(status(second, 'second-old-uncertain-entry'));
+});
+const shiftChangeDialog = () => shiftChangeRenderer.root.findAll((node) =>
+  typeof node.props?.onClockOut === 'function')[0];
+const shiftChangePayload = {
+  lunchMinutes:0, jobAllocations:[{work_order_id:'new-job',minutes:45}],
+  notes:'Synthetic old/new shift identity separation',
+};
+let oldShiftOut;
+await act(async () => { oldShiftOut = shiftChangeDialog().props.onClockOut(shiftChangePayload); });
+const oldShiftOutIndex = calls.length - 1;
+const oldShiftRequestId = calls[oldShiftOutIndex].payload.request_id;
+await act(async () => {
+  calls[oldShiftOutIndex].reject(new Error('Old shift confirmation lost'));
+  await assert.rejects(oldShiftOut,/Old shift confirmation lost/);
+});
+assert.ok(savedSessionData.has(`ccs_timeclock_pending_clock_out:${second.email}`));
+await act(async () => { events.get('focus')(); });
+const newShiftStatusIndex = calls.length - 1;
+assert.equal(calls[newShiftStatusIndex].payload.action,'status');
+await act(async () => {
+  calls[newShiftStatusIndex].resolve(status(second, 'second-new-server-verified-entry'));
+});
+assert.equal(shiftChangeDialog().props.timeEntry.id,'second-new-server-verified-entry');
+assert.equal(shiftChangeDialog().props.pendingClockOutRecovery,null);
+assert.equal(savedSessionData.has(`ccs_timeclock_pending_clock_out:${second.email}`),false);
+assert.equal(savedSessionData.has(`ccs_timeclock_request:clock_out:${second.email}`),false);
+let newShiftOut;
+await act(async () => { newShiftOut = shiftChangeDialog().props.onClockOut(shiftChangePayload); });
+const newShiftOutIndex = calls.length - 1;
+assert.equal(calls[newShiftOutIndex].payload.action,'clock_out');
+assert.notEqual(calls[newShiftOutIndex].payload.request_id,oldShiftRequestId,
+  'New authoritative shift must use a new Clock Out request identity after stale recovery is cleared');
+await act(async () => {
+  calls[newShiftOutIndex].resolve({data:{
+    success:true,status:'clocked_out',user:second,
+    entry:{id:'second-new-server-verified-entry',clock_out:'2026-10-15T22:00:00.000Z'},
+  }});
+  await newShiftOut;
+});
+console.log('PASS new authoritative shift never inherits previous uncertain Clock Out request ID');
+await act(async () => { shiftChangeRenderer.unmount(); });
+console.log('PASS 21/21 Time Clock Quick Clock async status acceptance cases');
