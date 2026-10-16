@@ -9,6 +9,7 @@ import { filterSalesColumnBindings } from '../../shared/smartsheetSalesSafety.mj
 import { validateNeutralSalesCloseout } from '../../shared/salesNeutralCloseoutGuard.mjs';
 import { validateSalesStageTimestampPatch } from '../../shared/salesStageTimestampGuard.mjs';
 import { validateSalesActivityTimestampPatch } from '../../shared/salesActivityTimestampGuard.mjs';
+import { SALES_OPPORTUNITY_HISTORY_FIELDS, mergeSalesOpportunityHistory } from '../../shared/salesOpportunityHistory.mjs';
 
 const optionalFields = new Set(('title client_name customer_name customer_id work_order_id description quantity request_type requestor_email requestor_name date_needed date_needed_option date_ordered date_ordered_option vendor date_received receipt_option status row_number current_stage priority assigned_to notes work_notes follow_up due_date start_date is_rider parent_work_order_id rider_stage completed asap in_pipeline sales_status lead_source current_task_deadline current_task_assigned_to designer surveyor site_survey_date site_survey_time site_survey_am_pm project_manager estimator est_inv_at estimate_amount current_task_description date_initial_contact date_estimate_sent date_order_created project_install_date permit_submitted_date permit_receipt_confirmed_date permit_number permit_approved_date actual_cost profit_margin contact_name contact_email contact_phone representative additional_contact follow_up_date sales_last_follow_up_completed_at sales_last_follow_up_outcome close_date expected_close_date sales_last_activity_at sales_stage_changed_at sales_neutral_closed_at lost_reason project_type install_location address_line_2 billing_address billing_address_line_2 sales_rep permitting township_city county permit_code permit_class property_owner pud parcel_number electrical_ibi electrical_nkyei electrical_nec electrical_city electrical_county customer_is_building_owner customer_is_tenant customer_is_marketing_co business_co_coo_reminder business_co_coo_date install_yes install_no budget_less_than removal_yes removal_no service_repair origination patch paint color products product_1 product_2 product_3 product_4 product_5 product_6 cb_complete cf_complete cc_complete sms_complete production_type sip_checklist mmm_sip_checklist mmm_checklist sip_completed sip_revisit_date image_url files google_drive_folder_url google_drive_file_ids corbridge_invoice_number corbridge_link estimate_id milestones project_health health_override health_notes dependencies').split(' '));
 function cincinnatiDateStamp(now=new Date()) {
@@ -49,6 +50,22 @@ async function fieldHistoryHandler(req) {
     await beginSyncTraceStorage(base44);
     const entity=base44.asServiceRole.entities[type], record=await entity.get(body.entity_id);
     if(!record)return Response.json({error:'Record not found.'},{status:404});
+    if(type==='WorkOrder' && body.action==='sales_history') {
+      // Aggregate only whitelisted Sales fields for regular users. Pending or
+      // aborted FieldAudit events must never be shown as completed follow-ups.
+      // Constrain the query before retrieval; no N+1 per-field calls.
+      const scope={entity_type:'WorkOrder',entity_id:record.id,
+        field_name:{$in:SALES_OPPORTUNITY_HISTORY_FIELDS}};
+      const [audit,legacy]=await Promise.all([
+        base44.asServiceRole.entities.FieldAudit.filter({...scope,status:'committed'},
+          {sort:'-modified_at',limit:100}),
+        base44.asServiceRole.entities.CellHistory.filter(scope,
+          {sort:'-created_date',limit:100}),
+      ]);
+      if(!Array.isArray(audit?.items) || !Array.isArray(legacy?.items))
+        throw Object.assign(new Error('Sales history could not be verified. Reload and retry.'),{status:503});
+      return Response.json({success:true,entries:mergeSalesOpportunityHistory(audit.items,legacy.items)});
+    }
     if(body.action==='save') {
       const patch={...(body.next_fields||{})}, expected=body.expected_fields;
       if(!patch || !expected || !Object.keys(patch).length || Array.isArray(patch))throw Object.assign(new Error('A field update and its baseline are required.'),{status:400});
