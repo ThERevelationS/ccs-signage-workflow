@@ -24,6 +24,9 @@ export function orderSaveSyncStatus(status = {}) {
   if (status?.readError) {
     return { kind: 'error', text: 'Reload Orders', title: 'Order records could not be verified. Reload the Order Form before saving, syncing, or exporting.' };
   }
+  if (status?.customerDraftActive) {
+    return { kind: 'unsaved', text: 'Finish customer edit', title: 'Finish or leave the customer field before Save & Sync or a Smartsheet pull.' };
+  }
   if (status?.hasUnsavedChanges) {
     return { kind: 'unsaved', text: 'Unsaved changes', title: 'Order edits are waiting to be saved.' };
   }
