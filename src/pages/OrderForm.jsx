@@ -188,16 +188,19 @@ export default function OrderForm() {
           </div>
         </div>
 
-        {(String(saveStatus.saveError || '').startsWith('Smartsheet pull') ||
+        {(saveStatus.saveError ||
           (saveStatus.lastSyncDirection === 'pull' && saveStatus.syncMessage)) && (
           <div
-            role="status"
+            role={saveStatus.saveError ? 'alert' : 'status'}
             aria-live="polite"
-            className={`mb-3 rounded-md border px-3 py-2 text-sm md:hidden ${saveStatus.saveError
+            className={`mb-3 min-w-0 max-w-full break-words rounded-md border px-3 py-2 text-sm md:hidden ${saveStatus.saveError
               ? 'border-red-200 bg-red-50 text-red-800'
               : 'border-blue-200 bg-blue-50 text-blue-800'}`}
           >
             {saveStatus.saveError || saveStatus.syncMessage}
+            {saveStatus.saveError && saveStatus.hasUnsavedChanges && (
+              <div className="mt-1 font-medium">Unsaved edits are protected. Review them, then use Save & Sync. Do not reload the page to resolve this error.</div>
+            )}
           </div>
         )}
 
