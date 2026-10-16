@@ -4,6 +4,7 @@ import {runInNewContext} from "node:vm";
 import {
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
 } from "../base44/shared/salesOpportunityHistory.mjs";
+import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from "../base44/shared/salesHistorySnapshotGuard.mjs";
 
 let checks=0;
 const check=(condition,label)=>{assert.ok(condition,label);checks++};
@@ -101,7 +102,8 @@ const ctx={
   measureSyncEntities:x=>x,
   authenticateSignShopSession:async()=>authed?{role:"user",email:"sales@example.invalid"}:null,
   beginSyncTraceStorage:async()=>{},
-  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,Response,
+  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
+  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,Response,
 };
 runInNewContext(serverCode,ctx,{timeout:3000});
 const request=(action="sales_history",entityType="WorkOrder",id=record.id)=>({
