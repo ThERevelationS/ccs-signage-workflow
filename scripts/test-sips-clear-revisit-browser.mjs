@@ -38,6 +38,13 @@ function reset() {
       created_date: "2026-09-01T12:00:00Z", updated_date: "000000001",
     },
     writes: [],
+    // Synthetic, explicitly controlled read/write races; never production data.
+    listReads: 0,
+    forcedExternalReopens: 0,
+    heldListReads: [],
+    releasedListReads: 0,
+    holdNextList: false,
+    forceNextReopenConflict: false,
   };
 }
 reset();
@@ -59,7 +66,15 @@ function syntheticBackend() {
             const matching = (!q.is_rider || !row.is_rider) &&
               (!Object.hasOwn(q, "completed") || row.completed === q.completed) &&
               (!q.deleted || row.deleted !== true);
-            result = matching ? [clone(row)].slice(request.skip || 0, (request.skip || 0) + (request.limit || 500)) : [];
+            fixture.listReads++;
+            // Snapshot at request time, then optionally hold the response. A
+            // later real SIPS load may supersede it before we release it.
+            const snapshot = matching ? [clone(row)].slice(request.skip || 0, (request.skip || 0) + (request.limit || 500)) : [];
+            if (fixture.holdNextList) {
+              fixture.holdNextList = false;
+              await new Promise(resolve => fixture.heldListReads.push({ snapshot, release: resolve }));
+            }
+            result = snapshot;
           } else if (request.op === "get") {
             result = request.id === fixture.row.id ? clone(fixture.row) : null;
           } else if (request.op === "updateMany") {
@@ -74,6 +89,18 @@ function syntheticBackend() {
               await new Promise((resolve) => setTimeout(resolve, fixture.updateDelayMs));
             }
             assert.deepEqual(Object.keys(patch), ["$set"], "Synthetic fixture accepts only conditional field replacements");
+            if (fixture.forceNextReopenConflict) {
+              fixture.forceNextReopenConflict = false;
+              assert.deepEqual(Object.keys(patch.$set).sort(), ["sip_completed", "sip_revisit_date"],
+                "Synthetic forced conflict is scoped to completed-WIP reopening");
+              assert.equal(patch.$set.sip_completed, false);
+              // Simulate another session winning the identical guarded save
+              // between this session's read and its conditional write.
+              Object.assign(fixture.row, clone(patch.$set));
+              fixture.row.updated_date = String(Number(fixture.row.updated_date) + 1).padStart(9, "0");
+              fixture.forcedExternalReopens++;
+              result = { updated: 0 };
+            } else {
             const matches = query.id === fixture.row.id &&
               query.updated_date === fixture.row.updated_date && fixture.row.deleted !== true;
             if (matches) {
@@ -82,6 +109,33 @@ function syntheticBackend() {
               fixture.writes.push(clone(patch.$set));
             }
             result = { updated: matches ? 1 : 0 };
+            }
+          } else if (request.op === "armSupersededReopen") {
+            assert.equal(fixture.heldListReads.length, 0, "No held reads from a prior case");
+            fixture.forceNextReopenConflict = true;
+            fixture.holdNextList = true;
+            result = { armed: true };
+          } else if (request.op === "setExternalRevisit") {
+            assert.equal(fixture.forcedExternalReopens, 1, "Only mutate after another synthetic session reopens");
+            fixture.row.sip_revisit_date = request.date;
+            fixture.row.updated_date = String(Number(fixture.row.updated_date) + 1).padStart(9, "0");
+            result = { updated: true };
+          } else if (request.op === "releaseHeldList") {
+            const held = fixture.heldListReads.shift();
+            assert.ok(held, "Expected a paused Work Order read");
+            held.release();
+            fixture.releasedListReads++;
+            result = { released: true };
+          } else if (request.op === "fixtureStatus") {
+            result = {
+              listReads: fixture.listReads,
+              heldListReads: fixture.heldListReads.length,
+              releasedListReads: fixture.releasedListReads,
+              forcedExternalReopens: fixture.forcedExternalReopens,
+              writeCount: fixture.writes.length,
+              sip_completed: fixture.row.sip_completed,
+              sip_revisit_date: fixture.row.sip_revisit_date,
+            };
           } else {
             throw new Error("Unexpected synthetic operation: " + request.op);
           }
