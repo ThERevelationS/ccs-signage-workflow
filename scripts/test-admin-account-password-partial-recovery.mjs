@@ -49,7 +49,7 @@ function fixture({password=secret,accountResult=newer}={}){
   setUserMutationSaving:v=>{state.mutationSaving=v;},
   setPasswordRetryConfirmed:v=>{state.confirmed=v;},
   setAccountSaveRecovery:v=>{state.recovery=v;},
-  setAccountWriteRecovery:v=>{state.writeRecovery=v;},setConfirmAccountReconciliation:()=>{},
+  setAccountWriteRecovery:v=>{state.writeRecovery=v;},setConfirmAccountReconciliation:()=>{},setAccountFieldChoices:()=>{},
   setFormData:v=>{state.form=typeof v==="function"?v(state.form):v;refs.activeAccountDraft.current=state.form;},
   setUsers:v=>{state.directory=typeof v==="function"?v(state.directory):v;},
   setEditingUser:v=>{state.editor=typeof v==="function"?v(state.editor):v;refs.activeEditingUser.current=state.editor;},
