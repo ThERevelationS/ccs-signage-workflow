@@ -80,7 +80,7 @@ const startAt=sheet.indexOf(begin),stopAt=sheet.indexOf(end,startAt);
 check(startAt>0 && stopAt>startAt,"Real quick-edit timer callback can be exercised without modifying production.");
 const timerBlock=sheet.slice(startAt,stopAt+end.length);
 
-const simulate=async ({mode,latest=committed,changeWhileSaving=false})=>{
+const simulate=async ({mode,latest=committed})=>{
   let writes=0,readCount=0,sync=0,warning="",timerFn=null;
   const pendingChangesRef={current:{[base.id]:{...changes}}};
   const pendingBaselinesRef={current:{[base.id]:Object.fromEntries(Object.keys(changes).map(k=>[k,base[k]??null]))}};
