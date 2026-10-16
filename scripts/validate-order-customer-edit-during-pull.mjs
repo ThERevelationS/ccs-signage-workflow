@@ -14,7 +14,7 @@ function jsxCallback(text, opening, ending, env, asyncCallback = false) {
   assert.ok(first >= 0, 'Missing event handler: ' + opening);
   const last = text.indexOf(ending, first + opening.length);
   assert.ok(last > first, 'Missing end of handler: ' + opening);
-  const expression = text.slice(first + opening.length, last).trim();
+  const expression = text.slice(first + opening.length, last).trim().replace(/\}\}\s*$/, '');
   const initializer = 'const { ' + Object.keys(env).join(', ') + ' } = env;';
   return new Function('env', initializer + '\nreturn ' + (asyncCallback ? 'async ' : '') +
     '(event) => {\n' + expression + '\n};')(env);
