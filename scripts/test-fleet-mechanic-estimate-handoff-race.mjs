@@ -17,7 +17,7 @@ const bindRefresh=new Function("ctx",`with(ctx){${refreshBlock} return refreshEs
 // Evaluate the exact live handler, with state and Base44 invocations replaced by
 // local test fixtures. This is not a browser acceptance test.
 const bindHandler=new Function("ctx",`with(ctx){${handlerBlock} return saveEstimate; }`);
-const defer=()=>{let resolve; const promise=new Promise(done=>{resolve=done;}); return {promise,resolve};};
+const defer=()=>{let resolve,reject; const promise=new Promise((done,fail)=>{resolve=done;reject=fail;}); return {promise,resolve,reject};};
 const applyBegin=source.indexOf("  const applyPortalPayload = result => {");
 const applyEnd=source.indexOf("  const applyWorkOrderSnapshot = workOrder => {",applyBegin);
 const loadBegin=source.indexOf("  const load = async (quiet = false) => {");
