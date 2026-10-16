@@ -34,7 +34,14 @@ export function isSameVerifiedAccountSnapshot(reviewed, fresh) {
       reviewed.updated_date !== fresh.updated_date) return false;
   const prior = createAdminAccountDraft(reviewed);
   const current = createAdminAccountDraft(fresh);
-  return FIELDS.every(field => same(field, prior[field], current[field]));
+  return FIELDS.every(field =>
+    same(field, prior[field], current[field]) &&
+    // Normalized editor defaults can mask raw invalid permission states.
+    // Preserve strict equality for authority-bearing fields instead of
+    // treating an unexpected grant as unchanged.
+    (!["can_order_export", "can_view_resources"].includes(field) ||
+      Object.is(reviewed[field], fresh[field]))
+  );
 }
 
 export function compareUnverifiedAccountSave({ baseline, attempted, latest }) {
