@@ -269,6 +269,9 @@ const submission = {
     return { data: {} };
   } } },
   async loadData() { completedRows.push("refreshed"); },
+  attemptPostMutationRefresh: async refreshData => {
+    try { await refreshData(); return true; } catch { return false; }
+  },
 };
 const submitCompleted = extract(
   "  const submitDialog = async (workOrderData, equipmentStatus) => {",
