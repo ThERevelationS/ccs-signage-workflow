@@ -225,7 +225,7 @@ test("Force-mounted HR tab survives Account tab switching and is reset for a new
  assert.match(page,/Keep editing/);
  assert.match(page,/Discard unsaved changes/);
  assert.match(page,/onClick=\{confirmDiscardHrDraft\}/);
- assert.match(page,/hasUnsavedHrData \|\| !!accountSaveRecovery \|\| !!accountWriteRecovery \|\| isLoading/);
+ assert.match(page,/hasUnsavedHrData \|\| !!accountSaveRecovery \|\| !!accountWriteRecovery \|\| !!postSaveRefreshPending \|\| isLoading/);
 });
 
 test("Account save cannot close an editor with unsaved HR changes",async()=>{
