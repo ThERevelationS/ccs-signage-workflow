@@ -151,6 +151,7 @@ export default function TimeClockAdmin() {
   const [correctionRequests, setCorrectionRequests] = useState([]);
   const [punchExceptions, setPunchExceptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataLoadError, setDataLoadError] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -188,6 +189,7 @@ export default function TimeClockAdmin() {
 
   const loadData = async () => {
     setIsLoading(true);
+    setDataLoadError("");
     try {
       const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows] = await Promise.all([
         loadAllEntityRows({
@@ -242,6 +244,7 @@ export default function TimeClockAdmin() {
       setPendingApprovalRecovery(recovery);
     } catch (err) {
       console.error("Error loading data:", err);
+      setDataLoadError("Time Clock data could not be loaded. Shift review is unavailable until the data reloads successfully.");
     }
     setIsLoading(false);
   };
@@ -705,6 +708,23 @@ export default function TimeClockAdmin() {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (dataLoadError) {
+    return (
+      <div role="alert" className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+          <div className="flex-1">
+            <h2 className="font-semibold">Time Clock data unavailable</h2>
+            <p className="mt-1">{dataLoadError}</p>
+          </div>
+          <Button type="button" variant="outline" className="shrink-0 border-red-300 bg-white text-red-900" onClick={loadData}>
+            Reload data
+          </Button>
+        </div>
       </div>
     );
   }
