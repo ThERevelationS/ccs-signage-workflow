@@ -129,20 +129,14 @@ assert.equal(renderer.root.findByType('button').props.disabled, false,
 console.log('PASS previous employee pending action cannot disable current employee control');
 
 await act(async () => {
-  calls[4].resolve({ data: {
-    success: true, user: { email: 'first@synthetic.invalid' },
-    status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
-    work_pause: { id: 'synthetic-old-pause' },
-  } });
+  calls[4].reject(new Error('Synthetic previous employee action failure'));
   await pendingOldAction;
 });
-assert.equal(calls.length, 7, 'A late action acknowledgement should refresh only the current signed session');
-assert.equal(calls[6].payload.action, 'status');
-assert.equal(calls[6].payload.target_email, 'second@synthetic.invalid');
-await act(async () => { calls[6].resolve({ data: {
-  success: true, user: { email: 'second@synthetic.invalid' },
-  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
-} }); });
-assert.equal(renderer.root.findByType('button').props.disabled, false);
-console.log('PASS late previous employee acknowledgement leaves current controls usable');
+assert.equal(calls.length, 6,
+  'A stale action failure must not launch another status request for the previous employee');
+const currentButton = renderer.root.findByType('button');
+assert.equal(currentButton.props.disabled, false);
+assert.doesNotMatch(currentButton.props.title, /Synthetic previous employee action failure/,
+  'A previous employee error must not replace the current employee control message');
+console.log('PASS late previous employee failure leaves current control usable and error-free');
 console.log('PASS 3/3 Global Work Pause session/event scenarios');
