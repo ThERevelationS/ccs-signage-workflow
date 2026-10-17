@@ -5,6 +5,7 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft} from "../src/components/admin/adminAccountDraft.js";
 import {rejectedAdminAccountField} from "../src/components/admin/accountSaveConflict.js";
+import {isSameVerifiedAccountSnapshot} from "../src/components/admin/unverifiedAccountSave.js";
 
 const source=readFileSync("src/components/admin/UserManagement.jsx","utf8");
 const old={id:"synthetic-user",email:"employee@example.invalid",updated_date:"before",
@@ -38,7 +39,7 @@ function fixture({password=secret,accountResult=newer}={}){
   directory:[old],editor:old,dialog:true,loadCount:0,errors:[],
   form:refs.activeAccountDraft.current};
  const accountReplies=[],passwordReplies=[];
- const scope={...refs,createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,rejectedAdminAccountField,
+ const scope={...refs,createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,rejectedAdminAccountField,isSameVerifiedAccountSnapshot,
   get editingUser(){return state.editor;},get sessionToken(){return token;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.recovery;},get accountWriteRecovery(){return state.writeRecovery;},get postSaveRefreshPending(){return null;},
   get passwordRetryConfirmed(){return state.confirmed;},
