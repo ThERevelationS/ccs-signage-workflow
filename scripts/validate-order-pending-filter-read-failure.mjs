@@ -62,7 +62,7 @@ assert.match(ui, /isSyncing, isPulling, lastSyncDirection, pendingSyncCount, las
 assert.match(ui, /saveError, readError, onSaveStatusChange/);
 console.log('PASS UI keeps presentation filters separate from authoritative pending-marker retrieval');
 
-assert.match(page, /disabled=\{saveStatus\.isSaving \|\| saveStatus\.isSyncing \|\| saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
+assert.match(page, /disabled=\{saveStatus\.customerDraftActive \|\| saveStatus\.isSaving \|\| saveStatus\.isSyncing \|\| saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
 assert.match(page, /disabled=\{saveStatus\.isSyncing \|\| saveStatus\.isSaving \|\| saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
 assert.match(page, /disabled=\{saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
 assert.match(ui, /const pullFromSmartsheet = async \(\) => \{\s*if \(readError \|\| !isRegistered/);
