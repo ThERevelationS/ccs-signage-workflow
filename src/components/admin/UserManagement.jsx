@@ -1332,6 +1332,47 @@ export default function UserManagement() {
     );
   };
 
+  const retryPostSaveDirectoryRefresh = async () => {
+    const pending = postSaveRefreshPending;
+    if (!pending || !sessionToken || pending.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        activeEditingUser.current?.id !== pending.id ||
+        activeEditingUser.current?.email !== pending.email ||
+        userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
+        deletionInFlight.current || isLoading) return;
+    const owner = { sessionToken };
+    userUpdateOwner.current = owner;
+    userUpdateInFlight.current = true;
+    setUserMutationSaving(true);
+    const ownsRead = () => userUpdateOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === pending.id &&
+      activeEditingUser.current?.email === pending.email;
+    try {
+      const rows = await loadUsers();
+      if (!ownsRead()) return;
+      const verified = rows?.filter(row =>
+        row.id === pending.id && row.email === pending.email && row.updated_date);
+      if (!verified || verified.length !== 1) {
+        setUserMutationError("The saved Account is still not verified in the directory. Your draft remains here. No Account or password request was resent.");
+        return;
+      }
+      setPostSaveRefreshPending(null);
+      setUserMutationError("");
+      setAccountSaveNotice("Employee directory verified. Your local draft was preserved. Review it before saving again or closing.");
+    } catch {
+      if (ownsRead()) {
+        setUserMutationError("Directory refresh failed again. No Account or password request was resent; your draft remains available.");
+      }
+    } finally {
+      if (ownsRead()) {
+        userUpdateOwner.current = null;
+        userUpdateInFlight.current = false;
+        setUserMutationSaving(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {userMutationError && (
@@ -2095,6 +2136,17 @@ export default function UserManagement() {
                 No Account update runs from these controls. Stopping removes the password draft;
                 it does not undo the saved Account changes.
               </p>
+            </div>
+          )}
+          {postSaveRefreshPending && (
+            <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2 text-sm text-amber-950">
+              <p className="font-medium">Changes confirmed; directory refresh needs verification</p>
+              <p>The employee editor stays open. Use a read-only refresh; do not resubmit a confirmed Account or password update.</p>
+              <Button type="button" size="sm" variant="outline"
+                disabled={userMutationSaving || isLoading || !sessionToken}
+                onClick={retryPostSaveDirectoryRefresh}>
+                {userMutationSaving ? "Checking directory..." : "Retry directory read (no writes)"}
+              </Button>
             </div>
           )}
           {accountSaveNotice && (
