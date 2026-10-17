@@ -185,7 +185,7 @@ const completionContext = {
     getElementById: id => id === "fleet-work-order-toggle-wo1"
       ? { focus() { listFocused++; } } : null,
     querySelectorAll: selector => {
-      assert.equal(selector, "button");
+      assert.equal(selector, "button[data-fleet-board-open]");
       return boardButtons;
     },
   },
