@@ -274,7 +274,11 @@ export default function FleetMechanic() {
       if (estimateChanged && selectedWorkOrderRef.current === selectedId &&
           result?.portal?.capabilities?.estimates) {
         const reason = "CCS changed this repair estimate since your last view. Unsaved estimate entries are preserved but locked. Check Current Server State to load the latest CCS version before editing or submitting; checking will replace these entries.";
-        setEstimateRecovery({workOrderId:selectedId,reason});
+        const detectedRecovery = {workOrderId:selectedId,reason};
+        estimateRecoveryByWorkOrderRef.current.set(selectedId,detectedRecovery);
+        await storeEstimateRecovery(token,detectedRecovery).catch(() => {});
+        if (requestId !== portalRequestRef.current || selectedWorkOrderRef.current !== selectedId) return;
+        setEstimateRecovery(detectedRecovery);
         setSavedMessage("");
         setActionError(reason);
       }
