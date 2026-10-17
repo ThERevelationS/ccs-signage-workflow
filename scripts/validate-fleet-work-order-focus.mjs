@@ -64,6 +64,9 @@ const focusedRows = [];
 const timers = new Map();
 let timerNumber = 0;
 const focusContext = {
+  findWorkOrderFocusTarget: (rows, id, _viewMode, root) => rows.some(row => row.id === id)
+    ? root.getElementById(`fleet-work-order-toggle-${id}`)
+    : null,
   pendingReopenFocusRef,
   confirmReopen: null,
   loading: false,
