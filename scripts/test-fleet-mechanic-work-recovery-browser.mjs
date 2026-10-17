@@ -193,41 +193,37 @@ try {
     assert.equal(state.work.notes,"");
   });
 
-  await run("Desktop: post-commit Start 403 locks the job and never replays Start Work",1440,async page => {
+  await run("Desktop: post-commit Start 403 hides the job when scoped access cannot be verified",1440,async page => {
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.postCommitStart403 = true; });
     await page.getByRole("button",{name:"Mark Work Started"}).click();
-    const recovery = page.getByRole("alert");
-    await recovery.getByText(/Current server state must be checked/i).waitFor();
-    await page.getByText(/may have been committed/i).waitFor();
-    assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).isDisabled(),true);
-    assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
-    assert.deepEqual(await actionNames(page),["bootstrap","start","mutation_status"]);
+    await page.getByRole("heading",{name:"Mechanic link unavailable"}).waitFor();
+    await page.getByText(/Current Fleet access could not be verified/i).waitFor();
+    assert.equal(await page.getByRole("heading",{name:"Synthetic work recovery",exact:true}).count(),0,"unverified job details must be hidden");
+    assert.equal(await page.getByText("WO-SYNTH-WORK",{exact:true}).count(),0,"unverified job must not remain in the list");
+    assert.deepEqual(await actionNames(page),["bootstrap","start","mutation_status","bootstrap"]);
     assert.equal(await page.evaluate(() => window.__fleetMechanicWorkFixture.work.status),"in_progress","server-side Start must remain committed");
-    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
-    await page.getByText(/Current server state could not be verified/i).waitFor();
-    assert.deepEqual(await actionNames(page),["bootstrap","start","mutation_status","mutation_status"],"explicit reconciliation may retry status only, never Start Work");
-    assert.equal((await actionNames(page)).filter(name=>name==="start").length,1);
+    const marker=await page.evaluate(() => Object.entries(sessionStorage).find(([key])=>key.startsWith("ccs_fleet_mechanic_pending_v1:"))?.[1]||null);
+    assert.ok(marker,"unresolved Start receipt marker must remain durable");
+    assert.equal(JSON.parse(marker).action,"start");
+    assert.equal((await actionNames(page)).filter(name=>name==="start").length,1,"Start Work must never be replayed");
   });
 
-  await run("Mobile: post-commit Save 403 keeps the draft locked and never replays Save Progress",390,async page => {
+  await run("Mobile: post-commit Save 403 hides the job when scoped access cannot be verified",390,async page => {
     await page.getByLabel("Add mechanic note").fill("Committed once but response blocked");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.postCommitSave403 = true; });
     await page.getByRole("button",{name:"Save Progress"}).click();
-    const recovery = page.getByRole("alert");
-    await recovery.getByText(/Current server state must be checked/i).waitFor();
-    await page.getByText(/may have been committed/i).waitFor();
-    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"Committed once but response blocked");
-    assert.equal(await page.getByLabel("Add mechanic note").isDisabled(),true);
-    assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
-    assert.deepEqual(await actionNames(page),["bootstrap","save","mutation_status"]);
-    const before = await page.evaluate(() => window.__fleetMechanicWorkFixture.work.notes);
-    assert.equal((before.match(/Committed once but response blocked/g)||[]).length,1,"server-side Save must remain committed exactly once");
-    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
-    await page.getByText(/Current server state could not be verified/i).waitFor();
-    assert.deepEqual(await actionNames(page),["bootstrap","save","mutation_status","mutation_status"],"explicit reconciliation may retry status only, never Save Progress");
-    assert.equal((await actionNames(page)).filter(name=>name==="save").length,1);
-    const after = await page.evaluate(() => window.__fleetMechanicWorkFixture.work.notes);
-    assert.equal((after.match(/Committed once but response blocked/g)||[]).length,1);
+    await page.getByRole("heading",{name:"Mechanic link unavailable"}).waitFor();
+    await page.getByText(/Current Fleet access could not be verified/i).waitFor();
+    assert.equal(await page.getByRole("heading",{name:"Synthetic work recovery",exact:true}).count(),0,"unverified job details must be hidden");
+    assert.equal(await page.getByLabel("Add mechanic note").count(),0,"local draft for unverified scope must be hidden");
+    assert.equal(await page.getByText("WO-SYNTH-WORK",{exact:true}).count(),0,"unverified job must not remain in the list");
+    assert.deepEqual(await actionNames(page),["bootstrap","save","mutation_status","bootstrap"]);
+    const notes = await page.evaluate(() => window.__fleetMechanicWorkFixture.work.notes);
+    assert.equal((notes.match(/Committed once but response blocked/g)||[]).length,1,"server-side Save must remain committed exactly once");
+    const marker=await page.evaluate(() => Object.entries(sessionStorage).find(([key])=>key.startsWith("ccs_fleet_mechanic_pending_v1:"))?.[1]||null);
+    assert.ok(marker,"unresolved Save receipt marker must remain durable");
+    assert.equal(JSON.parse(marker).action,"save");
+    assert.equal((await actionNames(page)).filter(name=>name==="save").length,1,"Save Progress must never be replayed");
   });
 
   await run("Desktop: successful narrowed-scope refresh closes the open out-of-scope job",1440,async page => {
