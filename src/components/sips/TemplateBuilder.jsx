@@ -43,6 +43,15 @@ function getConditionDropdownPosition(anchor, viewport) {
   return { left, top, width, maxHeight };
 }
 
+// Count only new checklist groups/options that Apply will actually add.
+// Saved Work Order products are present for adding options, not for reapplying.
+function countPendingChecklistAdditions(products, productTypeTemplates, subTemplates, subTemplateItems) {
+  const availableOptions = new Set(subTemplates.filter(st => subTemplateItems[st.id]?.items?.length > 0).map(st => st.id));
+  return products.reduce((count, product) => count +
+    (!product.isExisting && productTypeTemplates[product.productType]?.items?.length > 0 ? 1 : 0) +
+    product.subTemplates.filter(id => availableOptions.has(id)).length, 0);
+}
+
 export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [], isAdmin = false, workOrderProducts = [] }) {
   const [activeTab, setActiveTab] = useState("selectors");
   const [subTemplates, setSubTemplates] = useState([]);
@@ -1340,6 +1349,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     </div>
   );};
 
+  const savedProductCount = selectedProducts.filter(product => product.isExisting).length;
+  const pendingChecklistAdditions = countPendingChecklistAdditions(
+    selectedProducts, productTypeTemplates, subTemplates, subTemplateItems
+  );
+
   // Item editor with drag-drop
   const renderItemEditor = (items, setItems, isProductType = false) => (
     <DragDropContext onDragEnd={(result) => handleDragEnd(result, items, setItems, isProductType)}>
@@ -1482,11 +1496,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </div>
 
                 <div className="flex flex-col h-auto lg:h-full">
-                  <h3 className="font-bold text-sm">Apply Setup ({selectedProducts.length})</h3>
+                  <h3 className="font-bold text-sm">Checklist Setup</h3>
                   {selectedProducts.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-1 mb-2">
-                      Saved Work Order products stay listed so checklist options can be added safely. They are never reapplied or deleted here; only new template selections can be removed.
-                    </p>
+                    <div className="text-xs text-gray-600 mt-1 mb-2 space-y-1">
+                      <p>{savedProductCount} saved on Work Order · {pendingChecklistAdditions} new to add</p>
+                      <p>Saved checklist rows and answers stay unchanged. Deselecting a pending template only changes what will be added.</p>
+                    </div>
                   )}
                   {selectedProducts.length === 0 ? (
                     <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Choose a product type to add</div>
@@ -1502,18 +1517,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       {(provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 max-h-[50vh] overflow-y-auto">
                       {selectedProducts.map((product, idx) => (
-                        <Draggable key={product.id} draggableId={product.id} index={idx}>
+                        <Draggable key={product.id} draggableId={product.id} index={idx} isDragDisabled={product.isExisting}>
                           {(provided) => (
                         <div ref={provided.innerRef} {...provided.draggableProps} className="border rounded p-2 bg-white">
                           <div className="flex items-center gap-2 mb-1">
-                            <div
-                              {...provided.dragHandleProps}
-                              className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-7 lg:w-7"
-                              aria-label={`Reorder ${product.customName}`}
-                              title={`Reorder ${product.customName}`}
-                            >
-                              <GripVertical className="w-4 h-4 text-gray-400" aria-hidden="true" />
-                            </div>
+                            {product.isExisting ? (
+                              <div className="h-11 w-11 shrink-0 rounded bg-green-50 flex items-center justify-center lg:h-7 lg:w-7" title="Saved Work Order checklist order cannot be changed here" aria-label="Saved checklist — order unchanged">
+                                <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
+                              </div>
+                            ) : (
+                              <div
+                                {...provided.dragHandleProps}
+                                className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-7 lg:w-7"
+                                aria-label={`Reorder pending checklist ${product.customName}`}
+                                title={`Reorder pending checklist ${product.customName}`}
+                              >
+                                <GripVertical className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                              </div>
+                            )}
                             <Input
                               value={product.customName}
                               onChange={(e) => updateProductName(product.id, e.target.value)}
@@ -1536,8 +1557,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 type="button"
                                 onClick={() => setSelectedProducts(current => current.filter(p => p.id !== product.id))}
                                 className="h-11 w-11 shrink-0 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 touch-manipulation lg:h-7 lg:w-7"
-                                title="Remove this new template from the apply setup"
-                                aria-label={`Remove new template ${product.customName} from apply setup`}
+                                title="Deselect this pending checklist; saved Work Order data is unchanged"
+                                aria-label={`Deselect pending checklist ${product.customName}; saved Work Order data is unchanged`}
                               >
                                 <X className="w-4 h-4 mx-auto" aria-hidden="true" />
                               </button>
@@ -1568,8 +1589,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                       aria-disabled={isAlreadyApplied}
                                       aria-label={isAlreadyApplied
                                         ? `${st.name}, already applied to saved Work Order checklist`
-                                        : `${isSelected ? 'Remove' : 'Add'} checklist option ${st.name} for ${product.customName}`}
-                                      title={isAlreadyApplied ? "Applied — this saved checklist option remains on the Work Order" : undefined}
+                                        : isSelected
+                                          ? `Deselect pending checklist option ${st.name} for ${product.customName}; saved answers stay unchanged`
+                                          : `Select checklist option ${st.name} to add to ${product.customName}`}
+                                      title={isAlreadyApplied
+                                        ? "Already saved on this Work Order — cannot be removed here"
+                                        : isSelected
+                                          ? "Deselect pending addition — saved checklist answers are unchanged"
+                                          : "Select this option to add checklist rows"}
                                       className={`min-h-11 max-w-full px-2 py-1.5 rounded border inline-flex items-center gap-1.5 text-left text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 ${
                                         isAlreadyApplied
                                           ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
@@ -1591,7 +1618,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         {(isAlreadyApplied || isSelected) && <Check className="w-3 h-3 text-white" />}
                                       </span>
                                       <span className="min-w-0 break-words">{st.name}</span>
-                                      {isAlreadyApplied && <span className="shrink-0 font-medium">Applied</span>}
+                                      {isAlreadyApplied && <span className="shrink-0 font-medium">Saved</span>}
+                                      {!isAlreadyApplied && isSelected && <span className="shrink-0 font-medium">To add</span>}
                                     </button>
                                   );
                                 })}
@@ -1612,8 +1640,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                           <Button
                             type="button"
                             onClick={handleApplyTemplate}
-                            className="min-h-11 w-full mt-2 bg-purple-600 hover:bg-purple-700 touch-manipulation focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
-                            aria-label="Apply selected checklist setup to project"
+                            disabled={pendingChecklistAdditions === 0}
+                            className="min-h-11 w-full mt-2 bg-purple-600 hover:bg-purple-700 touch-manipulation focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:opacity-50"
+                            aria-label={pendingChecklistAdditions > 0
+                              ? `Apply ${pendingChecklistAdditions} new checklist selection${pendingChecklistAdditions === 1 ? '' : 's'} to project`
+                              : 'Nothing new selected to add to project'}
                           >
                             <CheckSquare className="w-4 h-4 mr-2" aria-hidden="true" />Apply to Project
                           </Button>
