@@ -1276,7 +1276,7 @@ export default function QuickClockSection({
       <WorkPauseOverlay
         userOverride={selectedUser}
         credentialOverride={credentialRef.current}
-        disabled={authoritativeSessionGuardsSelected || workPauseStatus !== "paused" || !activeWorkPause?.id || !selectedUser?.email || !credentialRef.current}
+        disabled={workPauseStatus !== "paused" || !activeWorkPause?.id || !selectedUser?.email || !credentialRef.current}
         onResumed={(data) => {
           applyWorkPauseResponse(data);
           setRecognitionStatus("Work resumed and confirmed by server.");
