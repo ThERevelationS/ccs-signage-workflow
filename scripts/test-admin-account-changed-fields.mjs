@@ -46,7 +46,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
  };
  const state={
   form:initial,editor:record,users:[record],dialog:true,error:"",notice:"",
-  accountCalls:[],passwordCalls:[],readCalls:0,recovery:null,writeRecovery:null,
+  accountCalls:[],passwordCalls:[],readCalls:0,recovery:null,writeRecovery:null,hrDirty:false,
   mutationSaving:false,backendRecord:{...record,...remoteChanges},passwordResult,
   refreshPending:null,refreshRows:undefined,accountDeferred:null,passwordDeferred:null,readDeferred:null
  };
@@ -59,7 +59,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   get accountWriteRecovery(){return state.writeRecovery;},
   get postSaveRefreshPending(){return state.refreshPending;},
   isLoading:false,userDirectoryError:false,
-  hasProtectedHrDraft:()=>false,
+  hasProtectedHrDraft:()=>state.hrDirty,
   setUserMutationError:value=>{state.error=value;},
   setAccountSaveNotice:value=>{state.notice=value;},
   setPostSaveRefreshPending:value=>{state.refreshPending=value;},
@@ -148,13 +148,14 @@ test("Late password edits made during directory refresh are never silently disca
 test("Late HR draft while directory refresh is pending cannot be silently closed",async()=>{
  const f=fixture({changes:{full_name:"Saved Name"}});
  const deferred=wait();f.state.readDeferred=deferred;
- const oldStatus=f.state.hrDirty;
  const task=f.save();await Promise.resolve();await Promise.resolve();
  f.state.hrDirty=true;
- // The real HR guard is checked after the awaited directory refresh as well.
- f.state.hrDirty=oldStatus;
  deferred.resolve([f.state.backendRecord]);await task;
  assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.editor?.id,original.id);
+ assert.equal(f.state.refreshPending,null);
+ assert.match(f.state.notice,/Edits made while refreshing/);
 });
 
 for(const [kind,rows] of [
@@ -214,6 +215,9 @@ test("Failed read-only retry preserves recovery and never resubmits Account writ
  assert.equal(f.state.accountCalls.length,1);
  assert.equal(f.state.passwordCalls.length,0);
  assert.match(f.state.error,/still not verified/);
+ await f.save();
+ assert.equal(f.state.accountCalls.length,1);
+ assert.match(f.state.error,/confirmed save must not be submitted again/);
 });
 
 test("Read-only retry cannot adopt a stale employee or session",async()=>{
@@ -274,6 +278,7 @@ test("Shipping input callbacks synchronously update Account draft reference",()=
  }
  assert.match(source,/Retry directory read \(no writes\)/);
  assert.match(source,/onClick=\{retryPostSaveDirectoryRefresh\}/);
+ assert.match(source,/!!postSaveRefreshPending \|\| isLoading/);
 });
 
 test("Exactly one edited detail is in the Account patch and password is excluded",async()=>{
