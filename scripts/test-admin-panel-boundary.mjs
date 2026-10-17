@@ -12,14 +12,28 @@ test("All 15 Admin pages and 11 nested panels retain their TabsContent semantics
   assert.equal(closed.length, 26);
   assert.equal(new Set(pages).size, 26);
   assert.doesNotMatch(page, /<TabsContent/);
-  assert.match(boundary, /<TabsContent value=\{value\} className=\{cn\("w-full min-w-0 max-w-full overflow-x-auto", className\)\} \{\.\.\.props\}>/);
-  assert.match(boundary, /<AdminPanelErrorBoundary label=\{label\}>\{children\}<\/AdminPanelErrorBoundary>/);
+  assert.match(boundary, /<TabsContent ref=\{panelRef\} value=\{value\} className=\{cn\("w-full min-w-0 max-w-full overflow-x-auto", className\)\} \{\.\.\.props\}>/);
+  assert.match(boundary, /<AdminPanelErrorBoundary label=\{label\} onRetryRecovered=\{focusSelectedTabAfterRetry\}>\{children\}<\/AdminPanelErrorBoundary>/);
 });
 
 test("Active Admin tab content bounds wide panel data to internal horizontal scrolling", () => {
   assert.match(boundary, /overflow-x-auto/);
   assert.match(boundary, /className, \.\.\.props/);
   assert.match(boundary, /cn\("w-full min-w-0 max-w-full overflow-x-auto", className\)/);
+});
+
+test("Retry focus is owned by the exact selected tab and never an unrelated input", () => {
+  assert.match(boundary, /componentDidUpdate\(previousProps, previousState\)/);
+  assert.match(boundary, /this\.retryButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(boundary, /this\.props\.onRetryRecovered\?\.\(\)/);
+  assert.match(boundary, /panel\.getAttribute\("data-state"\) !== "active"/);
+  assert.match(boundary, /panel\.getAttribute\("aria-labelledby"\)/);
+  assert.match(boundary, /trigger\.getAttribute\("data-state"\) !== "active"/);
+  assert.match(boundary, /focused !== panel\.ownerDocument\.body && focused !== panel/);
+  assert.match(boundary, /trigger\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(boundary, /panel\.closest\("\[data-admin-scroll-area\]"\)/);
+  assert.match(page, /data-admin-scroll-area/);
+  assert.doesNotMatch(boundary, /window\.scrollTo\(|\.click\(\)|location\.assign\(/);
 });
 
 test("Panel boundary offers an accessible manual-only retry without exposing raw errors", () => {
