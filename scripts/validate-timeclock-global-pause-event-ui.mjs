@@ -139,4 +139,49 @@ assert.equal(currentButton.props.disabled, false);
 assert.doesNotMatch(currentButton.props.title, /Synthetic previous employee action failure/,
   'A previous employee error must not replace the current employee control message');
 console.log('PASS late previous employee failure leaves current control usable and error-free');
-console.log('PASS 3/3 Global Work Pause session/event scenarios');
+
+authSession = {
+  currentUser: { email: 'first@synthetic.invalid' },
+  sessionToken: 'signed-session-A2',
+};
+await act(async () => { renderer.update(React.createElement(Control)); });
+assert.equal(calls.length, 7);
+await act(async () => { calls[6].resolve({ data: {
+  success: true, user: { email: 'first@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
+} }); });
+let pendingOldSuccess;
+await act(async () => {
+  pendingOldSuccess = renderer.root.findByType('button').props.onClick();
+});
+assert.equal(calls.length, 8);
+assert.equal(calls[7].payload.action, 'work_pause_start');
+
+authSession = {
+  currentUser: { email: 'second@synthetic.invalid' },
+  sessionToken: 'signed-session-B',
+};
+await act(async () => { renderer.update(React.createElement(Control)); });
+assert.equal(calls.length, 9);
+assert.equal(calls[8].payload.target_email, 'second@synthetic.invalid');
+await act(async () => {
+  calls[7].resolve({ data: {
+    success: true, user: { email: 'first@synthetic.invalid' },
+    status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+    work_pause: { id: 'synthetic-late-success-pause' },
+  } });
+  await pendingOldSuccess;
+});
+assert.equal(calls.length, 10,
+  'A previous employee success should notify current sessions without launching a stale status request');
+assert.equal(calls[9].payload.action, 'status');
+assert.equal(calls[9].payload.target_email, 'second@synthetic.invalid');
+await act(async () => { calls[9].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
+} }); });
+assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
+assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Resume Work/);
+assert.equal(renderer.root.findByType('button').props.disabled, false);
+console.log('PASS late previous employee success refreshes current identity without canceling it');
+console.log('PASS 5/5 Global Work Pause session/event scenarios');
