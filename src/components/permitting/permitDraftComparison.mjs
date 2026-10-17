@@ -1,5 +1,6 @@
 // Compare retained permitting snapshots only. No regeneration or record mutation.
 const labelOverrides = {
+  staff_review: 'Staff planning review',
   signTypes: 'Sign types', emcDigital: 'EMC / digital', electricalWork: 'Electrical work',
   temporaryVsPermanent: 'Temporary / permanent', newVsReplacement: 'New / replacement',
   jurisdiction_unresolved: 'Jurisdiction unresolved', electrical_planning_handoff: 'Electrical office planning handoff',
@@ -32,8 +33,8 @@ export function compareSavedDrafts(earlier, current) {
     const left = beforeSteps[index] || {}, right = afterSteps[index] || {};
     for (const key of new Set([...Object.keys(left), ...Object.keys(right), 'citations'])) {
       if (key === 'step_index') continue;
-      const group = key === 'citations' ? 'Citations' : ['office', 'office_type', 'issuing_office', 'jurisdiction_name'].includes(key) ? 'Offices and jurisdiction' : 'Proposed actions and planning';
-      add(group, 'Step ' + (index + 1) + ' · ' + draftFieldLabel(key), left[key], right[key], key === 'citations');
+      const group = key === 'staff_review' ? 'Staff planning review' : key === 'citations' ? 'Citations' : ['office', 'office_type', 'issuing_office', 'jurisdiction_name'].includes(key) ? 'Offices and jurisdiction' : 'Proposed actions and planning';
+      add(group, 'Step ' + (index + 1) + ' · ' + draftFieldLabel(key), left[key], right[key], ['citations', 'staff_review'].includes(key));
     }
   }
   add('Gaps', 'Saved unresolved questions', a.gaps, b.gaps, true);

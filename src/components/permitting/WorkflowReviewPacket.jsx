@@ -3,11 +3,13 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogOverlay, DialogPortal, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { safeExternalHttpUrl } from '@/utils/safeExternalUrl';
+import { planningReviewDecisionLabel } from './workflowPlanningReview.mjs';
 import { draftFieldLabel } from './permitDraftComparison.mjs';
 import './workflowReviewPacket.css';
 
 const empty = value => value === undefined || value === null || value === '';
 const labels = {
+  staff_review: 'Staff planning review (not authority approval)', follow_up: 'Open follow-up areas',
   basis: 'Saved evidence basis', staff_override: 'Staff edits requiring confirmation',
   source_evidence: 'Captured source metadata', required_documents: 'Required documents / forms',
   target_days_from_start: 'Proposed target day from start', followup_interval_days: 'Proposed follow-up interval (days)',
@@ -15,6 +17,7 @@ const labels = {
 };
 function RecordedValue({ value, field = '' }) {
   if (empty(value)) return <span>Not recorded</span>;
+  if (field === 'decision') return <span>{planningReviewDecisionLabel(value)}</span>;
   if (typeof value === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
   if (Array.isArray(value)) return value.length ? <ol>{value.map((item, index) => <li key={index}><RecordedValue value={item} /></li>)}</ol> : <span>None recorded</span>;
   if (typeof value === 'object') return <dl>{Object.entries(value).map(([key, item]) => <div className="packet-field" key={key}><dt>{labels[key] || draftFieldLabel(key)}</dt><dd><RecordedValue value={item} field={key} /></dd></div>)}</dl>;

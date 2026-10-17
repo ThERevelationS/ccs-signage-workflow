@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,8 @@ import WorkflowCitationList from "./WorkflowCitationList";
 import PermittingDraftHistory from "./PermittingDraftHistory";
 import WorkflowSourceEvidenceDialog from "./WorkflowSourceEvidenceDialog";
 import WorkflowReviewPacket from "./WorkflowReviewPacket";
+import WorkflowPlanningReview from "./WorkflowPlanningReview";
+import { editPlanningReview, invalidatePlanningReview, planningReviewIssues, planningReviewSummary } from "./workflowPlanningReview.mjs";
 
 const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Service"];
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
@@ -109,8 +111,22 @@ export default function PermitWorkflowDesigner({
   const [createResult, setCreateResult] = useState(null);
   const [expandedSteps, setExpandedSteps] = useState(new Set());
 
+  const reviewIssues = planningReviewIssues(draft?.steps || []);
+  const reviewSummary = planningReviewSummary(draft?.steps || []);
+  const hasUnsavedReview = Boolean(!saved && revisionSource && JSON.stringify((draft?.steps || []).map(step => step.staff_review || null)) !== JSON.stringify((revisionSource.snapshot?.steps || []).map(step => step.staff_review || null)));
+  const unsavedReviewRef = useRef(false);
+  unsavedReviewRef.current = hasUnsavedReview;
   useEffect(() => {
-    if (!initialSavedDraft || !isOpen) return;
+    if (!isOpen || !hasUnsavedReview) return;
+    const beforeUnload = event => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [isOpen, hasUnsavedReview]);
+  const canLeaveReview = () => !hasUnsavedReview || (!saving && window.confirm('Leave without saving your staff review checklist? Unsaved review changes may be lost.'));
+  const closeDesigner = () => { if (canLeaveReview()) onClose(); };
+
+  useEffect(() => {
+    if (!initialSavedDraft || !isOpen || unsavedReviewRef.current) return;
     setDraft(initialSavedDraft.snapshot); setForm(initialSavedDraft.project_inputs || {});
     setDraftTitle(initialSavedDraft.title); setReviewNotes(initialSavedDraft.review_notes || '');
     setSaved(initialSavedDraft); setRevisionSource(initialSavedDraft); setEditingSteps(false);
@@ -175,6 +191,7 @@ export default function PermitWorkflowDesigner({
         const editedFields = Array.from(new Set([...(Array.isArray(prior.edited_fields) ? prior.edited_fields : []), field]));
         return {
           ...step,
+          ...(step.staff_review ? { staff_review: invalidatePlanningReview(step.staff_review, field) } : {}),
           [field]: value,
           basis: 'staff_confirmation_needed',
           gap_reason: 'Staff changed this proposed detail. Confirm it against current evidence before relying on it.',
@@ -192,8 +209,15 @@ export default function PermitWorkflowDesigner({
     setCreateResult(null);
   };
 
+  const updateStaffReview = (stepIndex, field, value) => {
+    if (!editingSteps || saved || saving) return;
+    setDraft(previous => ({ ...previous, steps: previous.steps.map((step, index) => index === stepIndex ? { ...step, staff_review: editPlanningReview(step.staff_review, field, value) } : step) }));
+    setReviewed(false); setError('');
+  };
+
   const handleSaveDraft = async () => {
     if (!draft || !reviewed || saving || saved) return;
+    if (reviewIssues.length) { setError("Resolve the staff planning review questions before saving this revision."); return; }
     setSaving(true); setError('');
     try {
       const snapshot = revisionSource ? {
@@ -262,7 +286,7 @@ export default function PermitWorkflowDesigner({
               </Badge>
             )}
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close">
+          <button onClick={closeDesigner} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -414,6 +438,13 @@ export default function PermitWorkflowDesigner({
                 {!editingSteps ? <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={beginStepEditing} disabled={saving || creating}>{saved ? 'Create editable revision' : 'Edit proposed steps'}</Button> : <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">Step editing is on. Changed steps keep their citations and become Staff Confirmation Needed. Save creates a separate permitting draft; it does not approve requirements or create job lines.</p>}
                 {draft.jurisdiction_unresolved && <p className="text-amber-800">Location unresolved. This draft cannot establish jurisdiction authority.</p>}
               </div>
+              {(saved || revisionSource) && <section aria-label="Staff planning review progress" className="space-y-2 rounded border border-purple-200 bg-purple-50 p-3 text-sm">
+                <h3 className="font-semibold">Staff planning review</h3>
+                <p>Reviewed for planning: {reviewSummary.reviewed_for_planning} / {draft.steps.length} · Needs follow-up: {reviewSummary.needs_follow_up} · Proposed not applicable: {reviewSummary.not_applicable_proposal} · Not reviewed: {reviewSummary.not_reviewed}</p>
+                <p>This is review progress only. It does not establish evidence completeness, authority approval or readiness for job work. {saved ? 'Create an editable revision to record decisions and follow-up.' : 'Save creates a separate immutable revision.'}</p>
+                {hasUnsavedReview && <p role="status" className="font-semibold">Unsaved staff review checklist changes</p>}
+                {editingSteps && reviewIssues.length > 0 && <ul className="text-amber-900">{reviewIssues.map(issue => <li key={issue.index + issue.message}>Step {issue.index + 1}: {issue.message}</li>)}</ul>}
+              </section>}
               {saved?.id && <Button type="button" variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={event => setReviewPacket({ draftRow: structuredClone(saved), trigger: event.currentTarget })}>Open saved review packet</Button>}
               {saved && <PermittingDraftHistory key={saved.id} current={saved} onOpenCitation={(citation, draftRow, trigger) => setSourceEvidence({citation, draftRow, trigger})} />}
               {draft.electrical_planning_handoff && <ElectricalPlanningHandoffView handoff={draft.electrical_planning_handoff} /> }
@@ -566,6 +597,7 @@ export default function PermitWorkflowDesigner({
                             <p className="text-gray-600"><span className="font-medium">Depends on:</span> Step(s) {step.dependencies.map(d => Number(d) + 1).join(", ")}</p>
                           )}
                           {step.gap_reason && <p className="text-red-700"><AlertTriangle className="mr-1 inline h-3 w-3" />{step.gap_reason}</p>}
+                          {(saved || revisionSource) && <WorkflowPlanningReview step={step} index={idx} editable={editingSteps && !saved && !saving} onChange={(field, value) => updateStaffReview(idx, field, value)} />}
                           {/* Citations */}
                           <WorkflowCitationList citations={step.citations} onOpenSourceDocument={(sourceId, citation, trigger) => {
                             if (!saved && onOpenSourceDocument) onOpenSourceDocument(sourceId);
@@ -617,12 +649,12 @@ export default function PermitWorkflowDesigner({
         {/* Footer */}
         {draft && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-t p-3 sm:p-4">
-            <Button variant="outline" onClick={() => { setDraft(null); setCreateResult(null); setSaved(null); setRevisionSource(null); setEditingSteps(false); setReviewed(false); }} className="min-h-11">
+            <Button variant="outline" onClick={() => { if (!canLeaveReview()) return; setDraft(null); setCreateResult(null); setSaved(null); setRevisionSource(null); setEditingSteps(false); setReviewed(false); }} className="min-h-11">
               ← Edit inputs
             </Button>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleSaveDraft} disabled={saving || Boolean(saved) || !reviewed || !draftTitle.trim()} className="min-h-11 bg-purple-600 hover:bg-purple-700">{saving ? "Saving draft..." : saved ? "Draft saved" : revisionSource ? "Save revised permitting draft" : "Save permitting draft"}</Button>
-              <Button variant="ghost" onClick={onClose} className="min-h-11">Close</Button>
+              <Button onClick={handleSaveDraft} disabled={saving || Boolean(saved) || !reviewed || !draftTitle.trim() || reviewIssues.length > 0} className="min-h-11 bg-purple-600 hover:bg-purple-700">{saving ? "Saving draft..." : saved ? "Draft saved" : revisionSource ? "Save revised permitting draft" : "Save permitting draft"}</Button>
+              <Button variant="ghost" onClick={closeDesigner} className="min-h-11">Close</Button>
               {workOrder?.id && draft.steps.length > 0 && (
                 <Button
                   onClick={handleCreateLines}
