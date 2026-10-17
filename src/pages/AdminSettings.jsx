@@ -377,6 +377,19 @@ export default function AdminSettings() {
   const availableAdminGroups = getAccessibleAdminGroups(isAdmin);
   const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
+  const categoryScrollerRef = useRef(null);
+  useEffect(() => {
+    // Keep keyboard-selected and deep-linked categories in view without
+    // moving the Admin page itself sideways.
+    const scroller = categoryScrollerRef.current;
+    const selected = [...(scroller?.querySelectorAll("[data-admin-category]") || [])]
+      .find(button => button.getAttribute("data-admin-category") === activeAdminGroupId);
+    if (!selected) return;
+    const bounds = scroller.getBoundingClientRect();
+    const target = selected.getBoundingClientRect();
+    if (target.left < bounds.left) scroller.scrollLeft -= bounds.left - target.left + 4;
+    else if (target.right > bounds.right) scroller.scrollLeft += target.right - bounds.right + 4;
+  }, [activeAdminGroupId]);
   const handleAdminTabChange = (nextTab, nextSubtab = null) => {
     if (getAccessibleAdminTab(nextTab, isAdmin) !== nextTab) return;
     const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab) === nextSubtab
@@ -1029,12 +1042,12 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="h-full min-w-0 overflow-y-auto p-3 sm:p-6">
+    <div className="h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
-        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="min-w-0 space-y-6">
+        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} onNavigate={handleAdminTabChange} />
-            <div role="group" aria-label="Admin navigation categories" className="flex min-w-0 flex-wrap items-center gap-1.5 border-b border-red-200/70 pb-2">
+            <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70 pb-2 [scrollbar-width:thin]">
               {availableAdminGroups.map((group) => (
                 <button
                   key={group.id}
@@ -1051,20 +1064,20 @@ export default function AdminSettings() {
                     event.preventDefault();
                     event.currentTarget.parentElement?.querySelectorAll("[data-admin-category]")[targetIndex]?.focus();
                   }}
-                  className={`inline-flex min-h-9 max-w-full items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${activeAdminGroup.id === group.id ? "border-red-200 bg-white text-gray-900 shadow-sm" : "border-transparent bg-white/30 text-gray-700 hover:border-red-200 hover:bg-white/70"}`}
+                  className={`inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${activeAdminGroup.id === group.id ? "border-red-200 bg-white text-gray-900 shadow-sm" : "border-transparent bg-white/30 text-gray-700 hover:border-red-200 hover:bg-white/70"}`}
                 >
                   {group.label}
                 </button>
               ))}
             </div>
-            <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className="mt-2 flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 bg-transparent p-1">
+            <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className="mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 bg-transparent p-1 sm:grid-cols-3 lg:grid-cols-4">
               {activeAdminGroup.tabs.map((tab) => {
                 const TabIcon = ADMIN_TAB_ICONS[tab.value];
                 return (
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className="max-w-full min-h-10 gap-2 whitespace-normal px-3 py-2 text-center text-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 data-[state=active]:bg-white/80"
+                    className="min-h-11 min-w-0 max-w-full gap-2 whitespace-normal break-words px-2 py-2 text-center text-xs sm:px-3 sm:text-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 data-[state=active]:bg-white/80"
                   >
                     {TabIcon && <TabIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                     <span>{tab.label}</span>
