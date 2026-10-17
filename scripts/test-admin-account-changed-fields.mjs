@@ -133,6 +133,139 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
 
 
 
+
+test("Confirmed Account receipt with unrelated remote role and permissions does not create phantom local edits",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"},remoteChanges:{
+  role:"admin",can_view_resources:true,can_import_export:true,
+  sales_roles:["Installer"],username:"remote-account"
+ }});
+ await f.save();
+ assert.deepEqual(f.state.accountCalls[0].nextFields,{full_name:"Saved Name"});
+ assert.equal(f.state.dialog,false);
+ assert.equal(f.state.editor,null);
+ assert.equal(f.state.readCalls,1);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.equal(f.state.backendRecord.role,"admin");
+ assert.equal(f.state.backendRecord.can_import_export,true);
+});
+
+test("Remote-only changes in a confirmed receipt are rebased while later local edits stay unsaved",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const delayed=wait();f.state.accountDeferred=delayed;
+ const task=f.save();
+ f.edit({username:"local-after-click",can_work_pause:true});
+ const saved={...original,full_name:"Saved Name",updated_date:"v2",
+  role:"admin",can_view_resources:true,can_import_export:true,
+  sales_roles:["Installer"]};
+ f.state.refreshRows=[saved];delayed.resolve(saved);await task;
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.form.username,"local-after-click");
+ assert.equal(f.state.form.can_work_pause,true);
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.form.can_view_resources,true);
+ assert.equal(f.state.form.can_import_export,true);
+ assert.deepEqual(f.state.form.sales_roles,["Installer"]);
+ assert.equal(f.refs.accountDraftBaseline.current.values.role,"admin");
+ assert.equal(f.refs.accountDraftBaseline.current.values.username,original.username);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.equal(f.state.readCalls,0);
+ assert.match(f.state.notice,/New edits made during saving/);
+});
+
+test("Confirmed receipt is adopted before an uncertain password result, without losing password draft",async()=>{
+ const f=fixture({
+  changes:{full_name:"Saved Name",password_hash:"synthetic-new-password"},
+  remoteChanges:{role:"admin",can_view_resources:true,can_import_export:true},
+  passwordResult:{data:{success:false}}
+ });
+ await f.save();
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.form.can_import_export,true);
+ assert.equal(f.state.form.password_hash,"synthetic-new-password");
+ assert.equal(f.refs.accountDraftBaseline.current.values.role,"admin");
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,1);
+ assert.equal(f.state.recovery?.id,original.id);
+ assert.equal(f.state.readCalls,0);
+});
+
+test("Confirmed receipt rebases remote-only changes before checking a password-only save",async()=>{
+ const f=fixture({changes:{password_hash:"synthetic-new-password"},
+  remoteChanges:{sales_roles:["Installer"],role:"admin",can_view_resources:true}});
+ await f.save();
+ assert.equal(f.state.accountCalls.length,0);
+ assert.equal(f.state.passwordCalls.length,1);
+ // A password-only request does not perform an authorized Account write; the
+ // editor uses its loaded record until the final directory read.
+ assert.equal(f.state.dialog,false);
+});
+
+test("Receipt rebasing keeps a new password typed after Save rather than resending it",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name",password_hash:"first-password-1234"}});
+ const delayed=wait();f.state.accountDeferred=delayed;
+ const task=f.save();
+ f.edit({password_hash:"later-password-5678"});
+ const saved={...original,full_name:"Saved Name",updated_date:"v2",
+  role:"admin",can_view_resources:true};
+ delayed.resolve(saved);await task;
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.form.password_hash,"later-password-5678");
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,1);
+ assert.equal(f.state.passwordCalls[0].new_password,"first-password-1234");
+});
+
+test("Post-save newer-version field review treats receipt-only changes as confirmed baseline",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const saved={...original,full_name:"Saved Name",updated_date:"v2",
+  role:"admin",can_view_resources:true,can_import_export:true};
+ const latest={...saved,updated_date:"v3",can_import_export:false,
+  sales_roles:["Installer"]};
+ const delayed=wait();f.state.accountDeferred=delayed;
+ const task=f.save();
+ f.state.refreshRows=[latest];delayed.resolve(saved);await task;
+ assert.equal(f.state.refreshPending?.stage,"review");
+ assert.equal(f.state.refreshPending.saved.role,"admin");
+ assert.equal(f.state.refreshPending.attempted.role,"admin");
+ assert.equal(f.state.refreshPending.attempted.can_import_export,true);
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.form.can_import_export,true);
+ const preview=planAccountFieldResolution({
+  baseline:f.state.refreshPending.saved,
+  attempted:f.state.refreshPending.attempted,
+  latest:f.state.refreshPending.latest,draft:f.state.form
+ });
+ assert.equal(preview.fields.find(field=>field.key==="can_import_export").selected,"latest");
+ assert.equal(preview.draft.can_import_export,false);
+ assert.equal(preview.fields.find(field=>field.key==="role"),undefined);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("Sales-role semantic ordering in successful receipt creates no extra Account draft",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"},
+  remoteChanges:{sales_roles:["Estimator","Designer","Designer"]}});
+ await f.save();
+ assert.equal(f.state.dialog,false);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.readCalls,1);
+});
+
+test("Remote permission change after a confirmed no-op Account save is reviewed, not sent as a local write",async()=>{
+ const f=fixture({changes:{}});
+ const newRecord={...original,updated_date:"v2",can_import_export:true};
+ f.state.refreshRows=[newRecord];await f.save();
+ assert.equal(f.state.refreshPending?.stage,"review");
+ assert.equal(f.state.refreshPending.saved.updated_date,original.updated_date);
+ assert.equal(f.state.refreshPending.attempted.can_import_export,false);
+ assert.equal(f.state.accountCalls.length,0);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
 test("Post-save refresh newer roles opens field review without another write",async()=>{
  const f=fixture({changes:{full_name:"Saved Name"}});
  const newer={...original,full_name:"Saved Name",updated_date:"v3",role:"admin",
