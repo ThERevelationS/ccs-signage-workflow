@@ -260,6 +260,35 @@ createRoot(document.getElementById("root")).render(params.has("global-pause")
       },
     });
 
+  await caseRun("Foreign Work Pause events cannot replace signed employee status",
+    origin, async ([page]) => {
+      await page.getByRole("button", { name: "Pause Work", exact: true }).waitFor();
+      const foreignPause = fixture.h.rows.TimeClockWorkPause.find((row) =>
+        row.user_email === second.email && row.status === "active");
+      assert.ok(foreignPause?.id);
+      fixture.holdWorkerStatus = true;
+      await page.evaluate((user) => {
+        window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed", { detail: {
+          success: true, status: "clocked_in", work_pause_status: "paused",
+          work_pause: { id: "foreign-pause-only" }, user,
+        } }));
+      }, second);
+      await waitForFixture(() => Boolean(fixture.releaseWorkerStatus), "signed employee status refresh after foreign event");
+      assert.equal(await page.getByRole("button", { name: "Resume Work", exact: true }).count(), 0);
+      await page.evaluate(async () => { await fetch("/__release_worker_status"); });
+      await waitForFixture(() => Boolean(fixture.delayedWorkerStatusResult), "signed employee status response");
+      assert.equal(fixture.delayedWorkerStatusResult.work_pause_status, "working");
+      await page.getByRole("button", { name: "Pause Work", exact: true }).waitFor();
+      assert.equal(await page.getByRole("button", { name: "Resume Work", exact: true }).count(), 0);
+    }, {
+      globalPause: true,
+      beforeLoad: async () => {
+        const result = await fixture.h.invokeAs(second, { action: "work_pause_start", target_email: second.email,
+          request_id: "synthetic-second-pause-before-foreign-event" });
+        assert.equal(result.body.success, true, JSON.stringify(result.body));
+      },
+    });
+
   await caseRun("Clock Out persists one shift, clears recovery storage, and remains closed after refresh",
     origin, async ([page]) => {
       await fillClockOut(page); await submit(page); await expectConfirmed(page);
