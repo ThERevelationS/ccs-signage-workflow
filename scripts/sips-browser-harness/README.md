@@ -13,6 +13,7 @@ npm install --prefix /tmp/sips-browser-check --no-save --no-package-lock --ignor
 node scripts/test-sips-clear-revisit-browser.mjs
 node scripts/test-sips-checklist-reload-focus-browser.mjs
 node scripts/test-sips-template-selection-browser.mjs
+node scripts/test-sips-template-unsaved-navigation-browser.mjs
 ```
 
 The runner mounts the **actual SIPS page and production CSS** inside a temporary local Vite server. It replaces Base44 auth, Work Order data, global settings and unrelated dialogs with isolated synthetic fixtures. Two independent Chromium browser contexts share a conditional-write fixture. Requests outside the temporary local origin are blocked and fail the suite. Nothing is published, no credentials are loaded, and no production records are created or changed. The browser driver is installed outside `/app` to avoid changing production dependencies.
@@ -26,6 +27,10 @@ The additional `test-sips-checklist-reload-focus-browser.mjs` runner mounts the 
 ## Actual Template Builder selection acceptance (October 16, 2026)
 
 `test-sips-template-selection-browser.mjs` mounts the **real Template Builder and production CSS** in isolated Chromium contexts at desktop (1366px) and narrow-phone (320px) widths. It provides synthetic saved checklist rows (including answers and approvers), product templates, and reusable checklist options through read-only replacement readers. No production SDK or credentials are imported; external requests are blocked, and any persistence write is treated as a test failure. Eight browser scenarios exercise locked saved products and applied options, clear Saved/To add counts, pending-option selection/deselection, removing only a new pending checklist, disabled no-op Apply, and the actual Apply callback producing only newly selected option rows while preserving saved answers. Both viewports are checked for document overflow. This is synthetic UI acceptance, **not authenticated integration or permission testing**.
+
+## Template Builder unsaved-navigation Chromium acceptance (October 17, 2026)
+
+`test-sips-template-unsaved-navigation-browser.mjs` mounts the **real admin Template Builder component and production CSS** in isolated Chromium at desktop (1366px) and narrow-phone (320px) sizes. A read-only synthetic fixture supplies two product checklists and two reusable checklist options, plus a separate already-saved Work Order answer; persistence writes are forbidden, and all external HTTP requests are blocked. Eight browser scenarios verify cancel/confirm behavior when switching an edited checklist option, switching an edited product checklist, navigating tabs with unfinished item text, and closing with an unfinished checklist-option name. Cancel keeps drafts; explicit discard restores the last saved editor snapshot or closes only when confirmed. Both viewports have no document-wide horizontal overflow. These synthetic UI checks do not verify backend authorization, authenticated sessions or live persistence.
 
 ## Verified concurrent reopening focus recovery (October 15, 2026)
 
