@@ -885,8 +885,14 @@ try {
     await page.getByRole('group', { name: 'Admin navigation categories' }).getByRole('button', { name: 'People' }).click();
     await failure.waitFor();
     await page.evaluate(() => { window.__adminPanelFailures = []; });
+    const selectedUrl = new URL(page.url()).search;
     await failure.getByRole('button', { name: 'Retry panel' }).click();
     await page.getByTestId('synthetic-UserManagement').waitFor();
+    assert.equal(await page.getByRole('tab', { name: 'Users' })
+      .evaluate(tab => document.activeElement === tab), true,
+      'A successful main-panel retry must restore focus to its own active tab');
+    assert.equal(new URL(page.url()).search, selectedUrl,
+      'Main-panel recovery must leave the selected navigation unchanged');
   }, { allowSyntheticPanelError: true });
 
   await check('Failed automation read shows retry, not an empty rule list or editable controls', 375,
