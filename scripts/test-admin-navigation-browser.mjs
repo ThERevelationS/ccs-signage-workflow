@@ -59,8 +59,8 @@ function monitor(page, origin, errors) {
   });
 }
 
-async function check(name, width, urlSuffix, fn, { allowSyntheticPanelError = false } = {}) {
-  const context = await browser.newContext({ viewport: { width, height: 860 } });
+async function check(name, width, urlSuffix, fn, { allowSyntheticPanelError = false, height = 860 } = {}) {
+  const context = await browser.newContext({ viewport: { width, height } });
   const errors = [];
   try {
     const page = await context.newPage();
@@ -426,6 +426,67 @@ try {
       assert.ok(bounds.panelScrollWidth>bounds.panelWidth,'Panel has independent horizontal scroll');
       assert.ok(bounds.documentWidth<=bounds.viewport+1,JSON.stringify(bounds));
     });
+
+  await check('Short mobile viewport restores the active Backend subtab without stealing focus', 320,
+    '/?tab=backend&subtab=monitoring', async page=>{
+      const active=page.getByRole('tablist',{name:'Backend administration'})
+        .getByRole('tab',{name:'Jurisdiction Monitoring'});
+      await active.waitFor();
+      const bounds=await page.evaluate(()=>{
+        const tab=document.querySelector('[aria-label="Backend administration"] [data-state="active"]');
+        const scroller=document.querySelector('[aria-label="Admin navigation categories"]')
+          ?.closest('.clay-card')?.parentElement?.parentElement?.parentElement;
+        const r=tab.getBoundingClientRect(),area=scroller?.getBoundingClientRect();
+        return {top:r.top,bottom:r.bottom,areaBottom:area?.bottom,
+          scrollTop:scroller?.scrollTop,active:document.activeElement?.getAttribute('role')};
+      });
+      assert.ok(bounds.bottom<=bounds.areaBottom+2,JSON.stringify(bounds));
+      assert.notEqual(bounds.active,'tab','Deep link must not steal keyboard focus');
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    }, {height:420});
+
+  await check('Nested keyboard arrows retain focus and selected tab during mobile switches', 320,
+    '/?tab=timeclock&subtab=entries', async page=>{
+      const list=page.getByRole('tablist',{name:'Time Clock administration'});
+      const entries=list.getByRole('tab',{name:'Time Entries'});
+      await entries.focus();
+      await entries.press('ArrowRight');
+      await page.getByTestId('synthetic-TimeClockReportsDashboard').waitFor();
+      assert.equal(new URL(page.url()).searchParams.get('subtab'),'reports');
+      assert.equal(await list.getByRole('tab',{name:'Reports'})
+        .evaluate(tab=>document.activeElement===tab),true);
+      await page.keyboard.press('End');
+      await page.getByTestId('synthetic-OvertimeRulesManager').waitFor();
+      assert.equal(await list.getByRole('tab',{name:'Overtime Rules'})
+        .evaluate(tab=>document.activeElement===tab),true);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    }, {height:420});
+
+  await check('History restores nested selection and keeps focus on the active nested tab', 375,
+    '/?tab=backend&subtab=backup', async page=>{
+      const list=page.getByRole('tablist',{name:'Backend administration'});
+      const backup=list.getByRole('tab',{name:'Data Backup'});
+      await backup.focus();
+      await list.getByRole('tab',{name:'Jurisdiction Monitoring'}).click();
+      await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+      await page.goBack();
+      await page.getByTestId('synthetic-BackupManager').waitFor();
+      assert.equal(await backup.evaluate(tab=>document.activeElement===tab),true,
+        'Focused nested tab bar follows the selected history entry');
+      assert.equal(await backup.getAttribute('data-state'),'active');
+      assert.equal(new URL(page.url()).searchParams.get('subtab'),'backup');
+    }, {height:420});
+
+  await check('Search-selected nested settings preserve search focus at mobile width', 320,
+    '/?tab=users', async page=>{
+      const input=page.getByRole('combobox',{name:'Find an Admin page or setting'});
+      await input.fill('Jurisdiction Monitoring');
+      await input.press('Enter');
+      await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+      assert.equal(await input.evaluate(node=>document.activeElement===node),true);
+      assert.equal(await page.getByRole('tablist',{name:'Backend administration'})
+        .getByRole('tab',{name:'Jurisdiction Monitoring'}).getAttribute('data-state'),'active');
+    }, {height:420});
 
   await check('Non-admin excludes restricted sections from search and category bar', 375,
     '/?role=basic&tab=smartsheet', async page=>{
