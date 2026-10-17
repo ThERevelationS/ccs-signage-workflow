@@ -1,3 +1,7 @@
+import { SALES_OPPORTUNITY_HISTORY_FIELDS } from './salesOpportunityHistory.mjs';
+
+const salesAuditFields = new Set(SALES_OPPORTUNITY_HISTORY_FIELDS);
+
 export const equivalent = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null) || (a == null || a === '') && (b == null || b === '');
 export async function valueHash(value) {
   const bytes = new TextEncoder().encode(JSON.stringify(value ?? null));
@@ -6,11 +10,21 @@ export async function valueHash(value) {
 export function preview(value) { return typeof value === 'string' ? value : JSON.stringify(value ?? null); }
 export async function prepareFieldAudit(base44, type, record, patch, actor, source = 'app', timestamps = {}) {
   const at = new Date().toISOString();
+  // Correlate only locally initiated Sales WorkOrder saves. This does not
+  // establish whether the following compare-and-set write actually succeeded.
+  // Keep Smartsheet, Order and unrelated WorkOrder audit contracts unchanged.
+  const localSalesAttempt = type === 'WorkOrder' && source === 'app' &&
+    Object.keys(patch).some(field => salesAuditFields.has(field));
+  const saveAttempt = localSalesAttempt
+    ? {save_attempt_id:crypto.randomUUID(),
+       ...(typeof record.updated_date === 'string' && record.updated_date
+         ? {save_attempt_baseline_version:record.updated_date} : {})}
+    : null;
   const events = [];
   for (const [field, value] of Object.entries(patch)) {
     if (field.startsWith('smartsheet_') || equivalent(record[field], value)) continue;
     const old = preview(record[field]), next = preview(value);
-    events.push({event_key: crypto.randomUUID(), entity_type: type, entity_id: record.id, field_name: field,
+    events.push({event_key: crypto.randomUUID(), ...(saveAttempt || {}), entity_type: type, entity_id: record.id, field_name: field,
       old_value: old.slice(0, 4000), new_value: next.slice(0, 4000), preview_truncated: old.length > 4000 || next.length > 4000,
       value_hash: await valueHash(value), ...(timestamps[field] || source === 'app' || source === 'admin' ? {modified_at:timestamps[field] || at} : {}), source,
       actor_name: actor?.full_name || actor?.name || source, actor_email: actor?.email || '', status: 'pending'});
