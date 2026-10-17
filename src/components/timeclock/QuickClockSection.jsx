@@ -419,7 +419,7 @@ export default function QuickClockSection({
     if (status?.status === "clocked_in" && status?.entry?.id) {
       setAuthoritativeTransition(null);
       setActiveEntry(status.entry);
-      setShowClockOut(true);
+      setShowClockOut(status?.work_pause_status !== "paused");
       setIsRecognizing(false);
       return "clocked_in";
     }
