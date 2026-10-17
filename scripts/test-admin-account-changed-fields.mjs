@@ -132,6 +132,155 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
 }
 
 
+
+test("Post-save refresh newer roles opens field review without another write",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const newer={...original,full_name:"Saved Name",updated_date:"v3",role:"admin",
+   can_view_resources:true,can_import_export:true,sales_roles:["Installer"]};
+ f.state.refreshRows=[newer];await f.save();
+ assert.equal(f.state.refreshPending?.stage,"review");
+ assert.equal(f.state.refreshPending.latest.updated_date,"v3");
+ assert.equal(f.state.refreshPending.saved.updated_date,"version-two");
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.editor.updated_date,"version-two");
+ assert.equal(f.state.form.role,"user");
+ const preview=planAccountFieldResolution({
+   baseline:f.state.refreshPending.saved,attempted:f.state.refreshPending.attempted,
+   latest:f.state.refreshPending.latest,draft:f.state.form,choices:f.state.choices
+ });
+ assert.equal(preview.draft.role,"admin");
+ assert.equal(preview.draft.can_import_export,true);
+ assert.equal(preview.draft.can_view_resources,true);
+ assert.ok(preview.fields.some(row=>row.key==="role"&&row.sensitive));
+ assert.ok(preview.fields.some(row=>row.key==="sales_roles"&&row.sensitive));
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ await f.save();
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Field choices can retain a later local edit while adopting unrelated remote changes",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const fresh={...original,full_name:"Saved Name",updated_date:"v3",role:"admin",
+   can_view_resources:true,can_import_export:true};
+ f.state.refreshRows=[fresh];
+ const delayed=wait();f.state.readDeferred=delayed;
+ const task=f.save();await Promise.resolve();await Promise.resolve();
+ f.edit({username:"later-user"});
+ delayed.resolve([fresh]);await task;
+ assert.equal(f.state.refreshPending?.stage,"review");
+ assert.equal(f.state.form.username,"later-user");
+ const preview=planAccountFieldResolution({baseline:f.state.refreshPending.saved,
+   attempted:f.state.refreshPending.attempted,latest:fresh,draft:f.state.form});
+ assert.equal(preview.fields.find(row=>row.key==="username").selected,"mine");
+ assert.equal(preview.fields.find(row=>row.key==="role").selected,"latest");
+ f.state.confirmed=true;f.state.approvalRows=[fresh];await f.approve();
+ assert.equal(f.state.refreshPending,null);
+ assert.equal(f.state.form.username,"later-user");
+ assert.equal(f.state.form.role,"admin");
+ assert.equal(f.state.form.can_import_export,true);
+ assert.equal(f.state.editor.updated_date,"v3");
+ assert.equal(f.refs.accountDraftBaseline.current.values.role,"admin");
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("Explicit Keep my draft on a role conflict stays local and never escalates remotely",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const fresh={...original,full_name:"Saved Name",updated_date:"v3",role:"admin",
+   can_view_resources:true};
+ f.state.refreshRows=[fresh];await f.save();
+ f.state.choices={role:"mine"};
+ f.state.confirmed=true;f.state.approvalRows=[fresh];
+ await f.approve();
+ assert.equal(f.state.form.role,"user");
+ assert.equal(f.state.form.can_order_export,false);
+ assert.equal(f.state.editor.role,"admin");
+ assert.equal(f.refs.accountDraftBaseline.current.values.role,"admin");
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("Post-save approval checks fresh identity/version/permissions and keeps original draft on mismatch",async()=>{
+ for(const changed of [
+   row=>({...row,updated_date:"v4"}),
+   row=>({...row,can_import_export:false}),
+   row=>({...row,role:"user",can_view_resources:false}),
+   row=>({...row,id:"another"}),
+   row=>({...row,email:"another@example.invalid"})
+ ]){
+  const f=fixture({changes:{full_name:"Saved Name"}});
+  const fresh={...original,full_name:"Saved Name",updated_date:"v3",
+    role:"admin",can_view_resources:true,can_import_export:true};
+  f.state.refreshRows=[fresh];await f.save();
+  const draftBefore={...f.state.form},baselineBefore=f.refs.accountDraftBaseline.current;
+  f.state.confirmed=true;f.state.approvalRows=[changed(fresh)];
+  await f.approve();
+  assert.equal(f.state.refreshPending.stage,"needs_read");
+  assert.equal(f.state.refreshPending.latest,null);
+  assert.equal(f.state.confirmed,false);
+  assert.deepEqual(f.state.form,draftBefore);
+  assert.equal(f.refs.accountDraftBaseline.current,baselineBefore);
+  assert.equal(f.state.accountCalls.length,1);
+  assert.equal(f.state.passwordCalls.length,0);
+ }
+});
+
+test("Post-save read-only retry finds newer version and requires new review",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ f.state.refreshRows=null;await f.save();
+ assert.equal(f.state.refreshPending?.stage,"needs_read");
+ const fresh={...original,full_name:"Saved Name",updated_date:"v3",
+   role:"admin",can_view_resources:true};
+ f.state.refreshRows=[fresh];await f.retry();
+ assert.equal(f.state.refreshPending?.stage,"review");
+ assert.equal(f.state.refreshPending?.latest?.updated_date,"v3");
+ assert.equal(f.state.editor.updated_date,"version-two");
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("Post-save approval preserves a newer password and refuses mid-read local edits",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name",password_hash:"sent-password-1234"}});
+ const fresh={...original,full_name:"Saved Name",updated_date:"v3",
+   role:"admin",can_view_resources:true};
+ f.state.refreshRows=[fresh];await f.save();
+ assert.equal(f.state.refreshPending.stage,"review");
+ assert.equal(f.state.form.password_hash,"");
+ f.edit({password_hash:"unsent-password-5678"});
+ f.state.confirmed=true;
+ const deferred=wait();f.state.approvalDeferred=deferred;
+ const approval=f.approve();
+ f.edit({can_import_export:true});
+ deferred.resolve([fresh]);await approval;
+ assert.equal(f.state.refreshPending.stage,"needs_read");
+ assert.equal(f.state.form.password_hash,"unsent-password-5678");
+ assert.equal(f.state.form.can_import_export,true);
+ assert.equal(f.state.passwordCalls.length,1);
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Post-save review cannot approve without acknowledgment or with wrong session",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const fresh={...original,full_name:"Saved Name",updated_date:"v3",role:"admin",can_view_resources:true};
+ f.state.refreshRows=[fresh];await f.save();
+ await f.approve();
+ assert.equal(f.state.refreshPending.stage,"review");
+ f.state.confirmed=true;f.refs.activeSessionToken.current="other-session";
+ await f.approve();
+ assert.equal(f.state.refreshPending.stage,"review");
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Post-save review UI stays scoped, explicit and write-free",()=>{
+ assert.match(source,/postSaveResolutionPreview\.fields\.map\(field =>/);
+ assert.match(source,/onClick=\{\(\) => choosePostSaveField\(field\.key, "mine"\)\}/);
+ assert.match(source,/Apply post-save field choices \(local only\)/);
+ assert.match(source,/onClick=\{acceptPostSaveAccountReview\}/);
+ assert.doesNotMatch(approveSource,/updateAuthorizedUserAdmin|setPasswordFn/);
+ assert.doesNotMatch(retrySource,/updateAuthorizedUserAdmin|setPasswordFn/);
+});
+
 test("Late Account edits during final directory read stay in the editor",async()=>{
  const f=fixture({changes:{full_name:"Saved Name"}});
  const deferred=wait();f.state.readDeferred=deferred;
