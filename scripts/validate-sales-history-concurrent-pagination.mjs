@@ -3,6 +3,7 @@ import {readFileSync} from "node:fs";
 import {runInNewContext} from "node:vm";
 import {SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory} from "../base44/shared/salesOpportunityHistory.mjs";
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,SALES_HISTORY_STALE_CODE} from "../base44/shared/salesHistorySnapshotGuard.mjs";
+import {salesHistoryHasUnfinalizedMatchingAudit} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
 
 let checks=0;
 const ok=(v,l)=>{assert.ok(v,l);checks++};
@@ -14,6 +15,7 @@ const event={id:"newest",field_name:"sales_last_follow_up_outcome",
  actor_name:"Sales",new_value:"Called customer",old_value:""};
 const makeEntity=(kind)=>({
  async filter(query,options){
+   if(kind==="audit" && query.status==="pending")return {items:[],has_more:false};
    filterCalls.push({kind,query,options});
    if(injectEditDuringRead && kind==="legacy") version="v2";
    const row={...event,id:kind==="audit"?"audit-1":"legacy-1"};
@@ -35,7 +37,8 @@ const ctx={
  authenticateSignShopSession:async()=>({role:"user",email:"user@example.invalid"}),
  beginSyncTraceStorage:async()=>{},
  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
- validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,Response,
+ validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
+ salesHistoryHasUnfinalizedMatchingAudit,Response,
 };
 runInNewContext(code.replace(/^import .*;\s*$/gm,"")
  .replace("export default async function(req) {","async function testDefault(req) {")
