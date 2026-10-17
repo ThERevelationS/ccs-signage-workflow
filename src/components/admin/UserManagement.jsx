@@ -1396,7 +1396,18 @@ export default function UserManagement() {
       const verified = rows?.filter(row =>
         row.id === pending.id && row.email === pending.email && row.updated_date);
       if (!verified || verified.length !== 1) {
+        setPostSaveRefreshPending({ ...pending, stage: "needs_read", latest: null });
+        setConfirmAccountReconciliation(false);
+        setAccountFieldChoices({});
         setUserMutationError("The saved Account is still not verified in the directory. Your draft remains here. No Account or password request was resent.");
+        return;
+      }
+      if (!isSameVerifiedAccountSnapshot(pending.saved, verified[0])) {
+        setPostSaveRefreshPending({ ...pending, stage: "review", latest: verified[0] });
+        setConfirmAccountReconciliation(false);
+        setAccountFieldChoices({});
+        setUserMutationError("");
+        setAccountSaveNotice("A newer Account version was found. Review each field before adopting the latest baseline; no changes were resent.");
         return;
       }
       setPostSaveRefreshPending(null);
@@ -1404,10 +1415,74 @@ export default function UserManagement() {
       setAccountSaveNotice("Employee directory verified. Your local draft was preserved. Review it before saving again or closing.");
     } catch {
       if (ownsRead()) {
+        setPostSaveRefreshPending({ ...pending, stage: "needs_read", latest: null });
+        setConfirmAccountReconciliation(false);
+        setAccountFieldChoices({});
         setUserMutationError("Directory refresh failed again. No Account or password request was resent; your draft remains available.");
       }
     } finally {
       if (ownsRead()) {
+        userUpdateOwner.current = null;
+        userUpdateInFlight.current = false;
+        setUserMutationSaving(false);
+      }
+    }
+  };
+
+  const acceptPostSaveAccountReview = async () => {
+    const pending = postSaveRefreshPending;
+    if (!pending || pending.stage !== "review" || !pending.latest ||
+        !postSaveResolutionPreview || !confirmAccountReconciliation ||
+        !sessionToken || pending.sessionToken !== sessionToken ||
+        activeSessionToken.current !== sessionToken ||
+        activeEditingUser.current?.id !== pending.id ||
+        activeEditingUser.current?.email !== pending.email ||
+        userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current ||
+        deletionInFlight.current || isLoading || userDirectoryError) return;
+    const owner = { sessionToken };
+    const draftAtApproval = activeAccountDraft.current;
+    userUpdateOwner.current = owner;
+    userUpdateInFlight.current = true;
+    setUserMutationSaving(true);
+    const ownsApproval = () => userUpdateOwner.current === owner &&
+      activeSessionToken.current === sessionToken &&
+      activeEditingUser.current?.id === pending.id &&
+      activeEditingUser.current?.email === pending.email;
+    try {
+      // Reverify the exact reviewed version and every editable field. An
+      // administrator may have changed permissions since the preview loaded.
+      const rows = await listAuthorizedUsersAdmin({ sessionToken });
+      if (!ownsApproval()) return;
+      const matching = rows?.filter(row => row.id === pending.id && row.email === pending.email);
+      if (!matching || matching.length !== 1 ||
+          !isSameVerifiedAccountSnapshot(pending.latest, matching[0]) ||
+          activeAccountDraft.current !== draftAtApproval) {
+        throw new Error("The post-save Account preview changed.");
+      }
+      const latest = matching[0];
+      const resolved = postSaveResolutionPreview.draft;
+      accountDraftBaseline.current = {
+        sessionToken, id: latest.id, email: latest.email,
+        values: createAdminAccountDraft(latest)
+      };
+      // Local-only adoption. Never resubmit the confirmed Account or password
+      // request from a post-save reconciliation.
+      setFormData(current => ({ ...resolved, password_hash: current.password_hash || "" }));
+      setEditingUser(current =>
+        current?.id === pending.id && current?.email === pending.email ? latest : current);
+      setPostSaveRefreshPending(null);
+      setConfirmAccountReconciliation(false);
+      setAccountFieldChoices({});
+      setUserMutationError("");
+      setAccountSaveNotice("Post-save field choices applied to the local draft only. Review remaining role and permission edits before any separate Save.");
+    } catch {
+      if (!ownsApproval()) return;
+      setPostSaveRefreshPending({ ...pending, stage: "needs_read", latest: null });
+      setConfirmAccountReconciliation(false);
+      setAccountFieldChoices({});
+      setUserMutationError("Latest Account changed or could not be verified. No field choices were applied; read the directory again.");
+    } finally {
+      if (ownsApproval()) {
         userUpdateOwner.current = null;
         userUpdateInFlight.current = false;
         setUserMutationSaving(false);
