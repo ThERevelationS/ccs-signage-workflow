@@ -18,7 +18,11 @@ const start=source.indexOf("  const handleSave = async () => {");
 const end=source.indexOf("  const verifyInterruptedAccountSave = async () => {",start);
 assert.ok(start>=0 && end>start);
 const handler=source.slice(start,end).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
-const compile=scope=>new Function("scope",`with(scope){return (${handler})}`)(scope);
+const retryStart=source.indexOf("  const retryPostSaveDirectoryRefresh = async () => {");
+const retryEnd=source.indexOf("\n\n  return (\n    <div",retryStart);
+assert.ok(retryStart>=0&&retryEnd>retryStart,"shipping read-only retry handler exists");
+const retrySource=source.slice(retryStart,retryEnd).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
+const compile=(code,scope)=>new Function("scope",`with(scope){return (${code})}`)(scope);
 const token="synthetic-admin-session";
 const original={
  id:"synthetic-user",email:"synthetic@example.invalid",updated_date:"version-one",
@@ -44,7 +48,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   form:initial,editor:record,users:[record],dialog:true,error:"",notice:"",
   accountCalls:[],passwordCalls:[],readCalls:0,recovery:null,writeRecovery:null,
   mutationSaving:false,backendRecord:{...record,...remoteChanges},passwordResult,
-  accountDeferred:null,passwordDeferred:null,readDeferred:null
+  refreshPending:null,refreshRows:undefined,accountDeferred:null,passwordDeferred:null,readDeferred:null
  };
  const scope={...refs,
   createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,
@@ -53,6 +57,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   get sessionToken(){return token;},
   get accountSaveRecovery(){return state.recovery;},
   get accountWriteRecovery(){return state.writeRecovery;},
+  get postSaveRefreshPending(){return state.refreshPending;},
   isLoading:false,userDirectoryError:false,
   hasProtectedHrDraft:()=>false,
   setUserMutationError:value=>{state.error=value;},
@@ -76,7 +81,8 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   clearEditorDraftTracking:()=>{refs.accountDraftBaseline.current=null;},
   loadUsers:()=>{
    state.readCalls++;
-   return state.readDeferred?state.readDeferred.promise:Promise.resolve(state.users);
+   return state.readDeferred?state.readDeferred.promise:Promise.resolve(
+     state.refreshRows===undefined?state.users:state.refreshRows);
   },
   updateAuthorizedUserAdmin:options=>{
    state.accountCalls.push(options);
@@ -104,7 +110,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
    return Promise.resolve(state.passwordResult);
   }
  };
- return {state,refs,save:compile(scope),edit:change=>{
+ return {state,refs,save:compile(handler,scope),retry:compile(retrySource,scope),edit:change=>{
   state.form={...state.form,...change};
   refs.activeAccountDraft.current=state.form;
  }};
