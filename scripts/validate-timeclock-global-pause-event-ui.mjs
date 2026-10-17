@@ -14,6 +14,10 @@ const require = createRequire(import.meta.url);
 const calls = [];
 const listeners = new Map();
 const storage = new Map();
+let authSession = {
+  currentUser: { email: 'first@synthetic.invalid' },
+  sessionToken: 'signed-session-A',
+};
 const windowStub = {
   addEventListener(name, callback) { listeners.set(name, callback); },
   removeEventListener(name, callback) { if (listeners.get(name) === callback) listeners.delete(name); },
@@ -28,9 +32,7 @@ vm.runInNewContext(compiled, {
       assert.equal(name, 'timeClockAction');
       calls.push({ payload, resolve, reject });
     }) } } },
-    '@/components/auth/EmailGate': { useAuth: () => ({
-      currentUser: { email: 'first@synthetic.invalid' }, sessionToken: 'signed-session-A',
-    }) },
+    '@/components/auth/EmailGate': { useAuth: () => authSession },
     'lucide-react': { Loader2: icon, Pause: icon, Play: icon },
   })[id] || require(id),
   console, Promise, Date, Math, Object, Number, String, Map, Set,
@@ -76,4 +78,21 @@ await act(async () => { calls[1].resolve({ data: {
 } }); });
 assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
 assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Resume Work/);
-console.log('PASS 1/1 Global Work Pause event isolation scenario');
+console.log('PASS foreign Work Pause event cannot replace signed employee status');
+
+authSession = {
+  currentUser: { email: 'second@synthetic.invalid' },
+  sessionToken: 'signed-session-B',
+};
+await act(async () => { renderer.update(React.createElement(Control)); });
+assert.equal(calls.length, 3, 'Switching signed employees must refresh status for the new identity');
+assert.equal(calls[2].payload.action, 'status');
+assert.equal(calls[2].payload.target_email, 'second@synthetic.invalid');
+assert.equal(renderer.toJSON(), null,
+  'The prior employee Work Pause control must not remain visible while the new employee status is unresolved');
+await act(async () => { calls[2].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' }, status: 'clocked_out',
+} }); });
+assert.equal(renderer.toJSON(), null);
+console.log('PASS prior employee Work Pause control is hidden during account switch');
+console.log('PASS 2/2 Global Work Pause session/event scenarios');
