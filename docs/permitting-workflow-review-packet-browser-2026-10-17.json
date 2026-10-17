@@ -1,0 +1,25 @@
+{
+  "mode": "actual components and Chromium Print/PDF; synthetic immutable saved drafts; production CSS; external requests blocked; not authenticated employee acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "actual library/designer/packet; saved-only entry; full saved action/citations/forms/office metadata; unsafe links omitted; 44px controls; no overflow; print invocation and unavailable fallback; Escape/return focus; draft notes preserved; unsaved revision excluded; legacy missing evidence explicit; no mutations, source reads, AI or job writes"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "actual library/designer/packet; saved-only entry; full saved action/citations/forms/office metadata; unsafe links omitted; 44px controls; no overflow; print invocation and unavailable fallback; Escape/return focus; draft notes preserved; unsaved revision excluded; legacy missing evidence explicit; no mutations, source reads, AI or job writes"
+    },
+    {
+      "width": 1280,
+      "printedPages": 13,
+      "pdf": "actual Chromium PDF text verified; complete long quotes/notes and saved metadata; no unrelated client/navigation content"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "actual library/designer/packet; saved-only entry; full saved action/citations/forms/office metadata; unsafe links omitted; 44px controls; no overflow; print invocation and unavailable fallback; Escape/return focus; draft notes preserved; unsaved revision excluded; legacy missing evidence explicit; no mutations, source reads, AI or job writes"
+    }
+  ]
+}
