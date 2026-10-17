@@ -27,6 +27,10 @@ async function reset() {
   const h = setupSyntheticTimeClock({ entryCount: 0, serverNow: "2026-10-16T15:00:00.000Z" });
   h.rows.TimeClockPayPeriod = [];
   h.rows.AuthorizedEmail.push(structuredClone(second));
+  for (const user of users) {
+    const authorized = h.rows.AuthorizedEmail.find((row) => row.email === user.email);
+    if (authorized) authorized.can_work_pause = true;
+  }
   h.rows.TimeClockEmployeeState.push({
     ...structuredClone(h.rows.TimeClockEmployeeState.find((row) => row.user_email === worker.email)),
     id: "state-synthetic-second", user_email: second.email,
@@ -50,7 +54,8 @@ function fixturePlugin() {
         let input = "";
         for await (const chunk of req) input += chunk;
         const { payload } = JSON.parse(input);
-        assert.ok(["status", "labor_allocation_preview", "clock_out"].includes(payload?.action),
+        assert.ok(["status", "labor_allocation_preview", "clock_out", "break_start", "break_end",
+          "work_pause_start", "work_pause_resume", "labor_start", "labor_change", "labor_stop"].includes(payload?.action),
           "Unexpected action: " + payload?.action);
         const user = tokens.get(payload.session_token);
         assert.ok(user, "Only disposable fixture session identities are permitted");
@@ -280,7 +285,76 @@ createRoot(document.getElementById("root")).render(
       assert.equal(clockOuts().length, 0);
       assert.equal(completed().length, 0);
     }, {denyStorage:true});
-  console.log("PASS " + passed + "/" + passed + " isolated Quick Clock Chromium scenarios");
+
+  await caseRun("Paid break and unpaid lunch start/end reconcile exact server minutes and block conflicting actions",
+    origin, async ([page]) => {
+      const dialog = await dialogFor(page);
+      await dialog.getByRole("button", {name:"Start Work",exact:true}).click();
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 1);
+      await dialog.getByRole("button", {name:"Start Paid Break",exact:true}).click();
+      await page.getByText("On Break", {exact:true}).waitFor();
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed" && row.end_reason === "break").length, 1);
+      assert.equal(await dialog.getByRole("button", {name:"Start Work",exact:true}).isDisabled(), true);
+      fixture.h.setServerNow("2026-10-16T16:10:00.000Z");
+      await page.getByRole("button", {name:"End Break",exact:true}).click();
+      await page.getByRole("button", {name:"Start Paid Break",exact:true}).waitFor();
+      const paid = fixture.h.rows.TimeClockBreak.find((row) => row.is_paid === true);
+      assert.equal(paid.status, "completed");
+      assert.equal(paid.duration_minutes, 10);
+      await page.getByRole("button", {name:"Start Unpaid Lunch",exact:true}).click();
+      await page.getByText("On Break", {exact:true}).waitFor();
+      fixture.h.setServerNow("2026-10-16T16:30:00.000Z");
+      await page.getByRole("button", {name:"End Break",exact:true}).click();
+      const lunch = fixture.h.rows.TimeClockBreak.find((row) => row.break_type === "lunch");
+      assert.equal(lunch.is_paid, false);
+      assert.equal(lunch.status, "completed");
+      assert.equal(lunch.duration_minutes, 20);
+      const status = await fixture.h.invokeAs(worker, {action:"status"});
+      assert.equal(status.body.break_status, "working");
+      assert.equal(status.body.break_summary.paid_minutes, 10);
+      assert.equal(status.body.break_summary.unpaid_minutes, 20);
+    });
+
+  await caseRun("Work Pause closes active Current Work and Resume restores working status",
+    origin, async ([page]) => {
+      const dialog = await dialogFor(page);
+      await dialog.getByRole("button", {name:"Start Work",exact:true}).click();
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 1);
+      await dialog.getByRole("button", {name:"Pause Work",exact:true}).click();
+      await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor();
+      const activePause = fixture.h.rows.TimeClockWorkPause.find((row) => row.status === "active");
+      assert.ok(activePause?.id);
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed" && row.end_reason === "work_pause").length, 1);
+      await page.getByRole("button", {name:"Resume Work",exact:true}).click();
+      await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor({state:"detached"});
+      const status = await fixture.h.invokeAs(worker, {action:"status"});
+      assert.equal(status.body.work_pause_status, "working");
+      assert.equal(fixture.h.rows.TimeClockWorkPause.find((row) => row.id === activePause.id).status, "completed");
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
+      await page.getByRole("button", {name:"Clock Out",exact:true}).waitFor();
+    });
+
+  await caseRun("Current Work can start, change activity, and stop without leaving an active segment",
+    origin, async ([page]) => {
+      const dialog = await dialogFor(page);
+      await dialog.getByRole("button", {name:"Start Work",exact:true}).click();
+      let active = fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active");
+      assert.equal(active.length, 1);
+      assert.equal(active[0].activity_type, "shop");
+      await dialog.getByRole("button", {name:"Change Work",exact:true}).click();
+      await page.getByRole("option", {name:"Fabrication",exact:true}).click();
+      await dialog.getByRole("button", {name:"Change Work",exact:true}).click();
+      active = fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active");
+      assert.equal(active.length, 1);
+      assert.equal(active[0].activity_type, "fabrication");
+      await dialog.getByRole("button", {name:"Stop Work",exact:true}).click();
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
+      assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed").length, 2);
+    });
+
+  console.log("PASS " + passed + "/9 isolated Quick Clock Chromium scenarios");
 } finally {
   if (browser) await browser.close();
   if (vite) await vite.close();
