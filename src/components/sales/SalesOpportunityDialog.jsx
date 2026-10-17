@@ -89,6 +89,7 @@ export default function SalesOpportunityDialog({
   leadSources = [],
   taskDescriptions = [],
   isRegistered,
+  isAdmin = false,
   onClose,
   onUpdateFields,
   onReconcileExistingTaskStatus,
@@ -113,6 +114,11 @@ export default function SalesOpportunityDialog({
   const [historyReloadNonce, setHistoryReloadNonce] = useState(0);
   const historyRevisionRef = useRef(0);
   const historyPageInFlightRef = useRef(false);
+  const historyReviewInFlightRef = useRef(false);
+  const [historyReview, setHistoryReview] = useState(null);
+  const [historyReviewOpen, setHistoryReviewOpen] = useState(false);
+  const [historyReviewBusy, setHistoryReviewBusy] = useState(false);
+  const [historyReviewError, setHistoryReviewError] = useState("");
   const [removeFromPipelineOpen, setRemoveFromPipelineOpen] = useState(false);
   const [removeFromPipelineBusy, setRemoveFromPipelineBusy] = useState(false);
   const [removeFromPipelineAction, setRemoveFromPipelineAction] = useState("");
@@ -129,6 +135,11 @@ export default function SalesOpportunityDialog({
     setHistoryAuditNeedsReview(false);
     setHistoryLoadingMore(false);
     historyPageInFlightRef.current = false;
+    historyReviewInFlightRef.current = false;
+    setHistoryReview(null);
+    setHistoryReviewOpen(false);
+    setHistoryReviewBusy(false);
+    setHistoryReviewError("");
     if (!workOrder?.id) {
       setHistoryLoading(false);
       return undefined;
@@ -215,6 +226,48 @@ export default function SalesOpportunityDialog({
         setHistoryLoadingMore(false);
       }
     }
+  };
+
+  const inspectPendingSalesAudits = async () => {
+    if (!isAdmin || !historyAuditNeedsReview || !workOrder?.id ||
+        historyReviewInFlightRef.current) return;
+    const revision = historyRevisionRef.current;
+    historyReviewInFlightRef.current = true;
+    setHistoryReviewOpen(true);
+    setHistoryReviewBusy(true);
+    setHistoryReviewError("");
+    try {
+      const response = await base44.functions.invoke("fieldHistoryAction", {
+        action: "sales_audit_review",
+        session_token: localStorage.getItem("sss_session_token") || "",
+        entity_type: "WorkOrder",
+        entity_id: workOrder.id,
+      });
+      if (revision !== historyRevisionRef.current) return;
+      const data = response?.data || response;
+      if (!data?.success || data.read_only !== true || !Array.isArray(data.entries)) {
+        throw new Error(data?.error || "Pending Sales audit review could not be loaded.");
+      }
+      if (data.work_order_version !== historyPagination?.work_order_version) {
+        throw new Error("The WorkOrder changed during review. Refresh Sales history first.");
+      }
+      setHistoryReview(data);
+    } catch (error) {
+      if (revision === historyRevisionRef.current) {
+        setHistoryReview(null);
+        setHistoryReviewError(error?.response?.data?.error || error?.message ||
+          "Pending Sales audit review could not be loaded.");
+      }
+    } finally {
+      if (revision === historyRevisionRef.current) {
+        historyReviewBusyRefReset();
+      }
+    }
+  };
+
+  const historyReviewBusyRefReset = () => {
+    historyReviewInFlightRef.current = false;
+    setHistoryReviewBusy(false);
   };
 
   const value = Number(workOrder?.estimate_amount ?? 0) || 0;
