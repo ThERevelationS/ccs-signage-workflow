@@ -57,6 +57,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   hasProtectedHrDraft:()=>false,
   setUserMutationError:value=>{state.error=value;},
   setAccountSaveNotice:value=>{state.notice=value;},
+  setPostSaveRefreshPending:value=>{state.refreshPending=value;},
   setUserMutationSaving:value=>{state.mutationSaving=value;},
   setAccountSaveRecovery:value=>{state.recovery=value;},
   setAccountWriteRecovery:value=>{state.writeRecovery=value;},
