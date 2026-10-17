@@ -268,6 +268,28 @@ test("Later unsent password edits survive a failed directory read",async()=>{
  assert.equal(f.state.accountCalls.length,0);
 });
 
+test("Two Account input changes before a React render retain both edits",()=>{
+ const start=source.indexOf("  const changeAccountDraft = changes => {");
+ const end=source.indexOf("\n  const [sendingPasswordReset",start);
+ assert.ok(start>=0&&end>start);
+ const code=source.slice(start,end).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
+ const originalDraft=createAdminAccountDraft(original);
+ const ref={current:originalDraft};
+ const queued=[];
+ const change=new Function("scope",`with(scope){return (${code})}`)({
+  activeAccountDraft:ref,setFormData:value=>queued.push(value)
+ });
+ change({username:"new-username"});
+ change({role:"admin",can_view_resources:true});
+ change({sales_roles:["Designer","Estimator","Installer"]});
+ assert.equal(queued.length,3);
+ assert.equal(ref.current.username,"new-username");
+ assert.equal(ref.current.role,"admin");
+ assert.equal(ref.current.can_view_resources,true);
+ assert.deepEqual(ref.current.sales_roles,["Designer","Estimator","Installer"]);
+ assert.notEqual(ref.current,originalDraft);
+});
+
 test("Shipping input callbacks synchronously update Account draft reference",()=>{
  assert.match(source,/const changeAccountDraft = changes =>/);
  assert.match(source,/activeAccountDraft\.current = next;\s*setFormData\(next\)/);
