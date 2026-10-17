@@ -314,7 +314,7 @@ try {
     assert.equal(await recovery.count(),1,"Disallowed status must fail closed");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
-    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===4);
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===5);
     assert.equal(await recovery.count(),1,"Capability restoration must not settle Start recovery");
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
@@ -358,7 +358,7 @@ try {
     assert.equal(await recovery.count(),1,"Disallowed Save verification must remain locked");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
-    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===4);
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===5);
     await page.getByRole("button",{name:"Save Progress"}).waitFor();
     assert.equal(await recovery.count(),1,"Capability restoration must not settle Save recovery");
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
@@ -490,7 +490,7 @@ try {
     assert.equal(await recovery.count(),1,"Removed permission must deny status check");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
-    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===4);
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===5);
     assert.equal(await recovery.count(),1,"Permission restoration cannot itself settle recovery");
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
     await page.getByText(/Work started\. CCS Fleet confirmed the interrupted request/i).waitFor();
