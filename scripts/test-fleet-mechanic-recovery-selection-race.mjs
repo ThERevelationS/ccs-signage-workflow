@@ -68,6 +68,24 @@ for(const action of ["start","save"]){
     assert.equal(h.recovery,null);
   });
 
+  test(`${action}: late not-applied status after scope-loss and same-job reopen refreshes without stale projection`,async()=>{
+    const h=harness(action);
+    const pending=bindRecovery(h.ctx)(h.initial);
+    h.ctx.photoDraftEpochRef.current+=1;
+    h.ctx.selectedWorkOrderRef.current=null;
+    h.ctx.photoDraftEpochRef.current+=1;
+    h.ctx.selectedWorkOrderRef.current="wo-A";
+    h.ctx.load=async quiet=>h.events.portalLoads.push(quiet);
+    h.response.resolve({data:{status:"failed",work_order:{id:"wo-A",status:"open",actual_hours:1}}});
+    assert.equal(await pending,false);
+    assert.deepEqual(h.events.snapshots,[],"A status response from the previous editor must not replace a reopened editor");
+    assert.deepEqual(h.events.portalLoads,[true],"Fetch a new scoped snapshot before allowing the reopened editor to continue");
+    assert.equal(h.events.requests.length,1,"A failed mutation is never replayed by recovery");
+    assert.deepEqual(h.events.errors,["An earlier mechanic request was confirmed not applied. The current job was refreshed; its new editor was not overwritten."]);
+    assert.equal(h.events.clears.length,1,"Confirmed non-application can clear the original receipt marker");
+    assert.equal(h.recovery,null);
+  });
+
   test(`${action}: late applied status after switching jobs cannot update the selected job or cancel its refresh`,async()=>{
     const h=harness(action);
     const pending=bindRecovery(h.ctx)(h.initial);
