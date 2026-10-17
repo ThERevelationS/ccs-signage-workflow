@@ -67,6 +67,22 @@ test('Nested active tabs are scrolled into the Admin viewport without stealing s
   assert.match(page, /nestedTabListsRef\.current\.backend = node/);
 });
 
+test('Resize observers keep responsive Admin tabs visible without overriding user focus', () => {
+  assert.match(page, /new ResizeObserver\(onLayoutChange\)/);
+  assert.match(page, /window\.addEventListener\("orientationchange", onLayoutChange\)/);
+  assert.match(page, /window\.addEventListener\("resize", onLayoutChange\)/);
+  assert.match(page, /observer\?\.observe\(scroller\)/);
+  assert.match(page, /categoryScrollerRef\.current\?\.parentElement/);
+  assert.match(page, /list\.closest\('\[role="tabpanel"\]'\)/);
+  assert.match(page, /let keepVisible = activeIsVisible\(\)/);
+  assert.match(page, /if \(frame !== null \|\| !keepVisible\) return/);
+  assert.match(page, /!list\.contains\(currentFocus\)\) return/);
+  assert.match(page, /scroller\.addEventListener\("touchmove", onExplore/);
+  assert.match(page, /scrollArea\.addEventListener\("wheel", onUserScroll/);
+  assert.match(page, /observer\?\.disconnect\(\)/);
+  assert.match(page, /cancelAnimationFrame\(userScrollFrame\)/);
+});
+
 test('Category scroll and responsive grid tabs remain bounded on phones and desktop', () => {
   assert.equal(listTags.length, 3);
   for (const list of listTags) {
