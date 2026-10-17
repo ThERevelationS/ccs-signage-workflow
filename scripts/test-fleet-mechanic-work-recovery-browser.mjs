@@ -1028,7 +1028,7 @@ try {
     const requestId=await preparePending(page,"save");
     await changeGrant(page,{scopeRemoved:true});
     await page.reload({waitUntil:"networkidle"});
-    await page.getByText(/An interrupted mechanic update requires CCS review/i).waitFor();
+    await page.getByText(/An interrupted mechanic update remains unresolved/i).waitFor();
     assert.equal(await page.getByText("WO-SYNTH-WORK",{exact:true}).count(),0);
     assert.equal(await page.getByText(/Scoped-out durable note/i).count(),0);
     assert.equal(await page.getByRole("button",{name:"Check Current Server State"}).count(),0);
