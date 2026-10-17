@@ -45,6 +45,13 @@ async function reset() {
 }
 const clockOuts = () => fixture.invokes.filter((item) => item.action === "clock_out");
 const completed = () => fixture.h.rows.TimeEntry.filter((row) => row.clock_out);
+async function waitForFixture(check, label) {
+  const deadline = Date.now() + 5000;
+  while (!check()) {
+    if (Date.now() >= deadline) throw new Error("Timed out waiting for synthetic " + label);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
 
 function fixturePlugin() {
   return { name: "isolated-quickclock-backend", configureServer(server) {
@@ -351,11 +358,16 @@ createRoot(document.getElementById("root")).render(
       await dialog.getByRole("combobox").first().click();
       await page.getByRole("option", {name:"Fabrication",exact:true}).click();
       await dialog.getByRole("button", {name:"Change Work",exact:true}).click();
+      await waitForFixture(() => fixture.h.rows.TimeClockLaborSegment.some(
+        (row) => row.status === "active" && row.activity_type === "fabrication",
+      ), "Current Work activity change");
       active = fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active");
       assert.equal(active.length, 1);
       assert.equal(active[0].activity_type, "fabrication");
       await dialog.getByRole("button", {name:"Stop Work",exact:true}).click();
       await dialog.getByRole("button", {name:"Start Work",exact:true}).waitFor();
+      await waitForFixture(() => fixture.h.rows.TimeClockLaborSegment.every((row) => row.status !== "active"),
+        "Current Work stop");
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed").length, 2);
     });
