@@ -172,3 +172,11 @@ The expanded real-handler synthetic suite covers scope revocation during manual 
 ## Mechanic mutation-status denial refreshes current scope (2026-10-16)
 
 A denied Start/Save mutation-status check while the original job remained selected left the stale modal open and included raw server denial detail in its error. Deterministic tests reproduced this for both actions. The denial path now retains the unresolved durable recovery marker, avoids displaying server details, and performs a read-only scoped portal reload. If the job is no longer in the bearer scope, the normal portal projection clears its stale details, drafts and modal and shows the generic access-change notice. A refresh failure also stays generic. No Start/Save mutation is replayed and the recovery marker is not cleared by an unverified response.
+
+## Mechanic Start/Save denied recovery and stale bootstrap fencing (2026-10-17)
+
+Synthetic Chromium races exposed two additional recovery boundaries. If a denied mutation-status check was followed by a denied portal bootstrap, the old Fleet details remained visible. The failure path now replaces the portal with a generic unavailable message while leaving the original pending marker untouched. When the scoped bootstrap succeeds but the interrupted job is absent, the alert retains the unresolved marker and hides its Check Current Server State control until that job returns to the bearer scope.
+
+A confirmed mutation-status response now invalidates older in-flight portal bootstraps only when it contains a fresh snapshot for the currently open work order. This prevents an older manual Refresh from replacing a just-reconciled Start/Save snapshot, while a late recovery for a different job cannot cancel the selected job's refresh.
+
+The isolated Chromium acceptance suite passes all 34 cases, including these scope-loss, revocation, job-switch and stale-bootstrap races. The complete Fleet mechanic synthetic scripts, targeted ESLint and production build pass. The repository typecheck remains at 8,046 unrelated diagnostics with zero Fleet/Bouncie diagnostics. Git diff checks pass. No production Fleet records were modified; nothing was published or deployed.
