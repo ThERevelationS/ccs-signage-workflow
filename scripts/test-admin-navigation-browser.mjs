@@ -319,13 +319,26 @@ try {
         const root=document.documentElement;
         const viewport=innerWidth;
         const card=shell.getBoundingClientRect();
+        const categories=shell.querySelector('[aria-label="Admin navigation categories"]');
+        const categoryBounds=categories.getBoundingClientRect();
+        const selectedCategory=categories.querySelector('[aria-pressed="true"]')?.getBoundingClientRect();
         const descendants=[...shell.querySelectorAll('button,[role="tab"],input,[role="tablist"]')];
         return {
           viewport,
           documentWidth:root.scrollWidth,
           cardLeft:card.left,
           cardRight:card.right,
+          categoryLeft:categoryBounds.left,
+          categoryRight:categoryBounds.right,
+          selectedVisible:!!selectedCategory &&
+            selectedCategory.left>=categoryBounds.left-2 &&
+            selectedCategory.right<=categoryBounds.right+2,
+          categoryScrollWidth:categories.scrollWidth,
+          categoryClientWidth:categories.clientWidth,
           bad:descendants.filter(node=>{
+            // Offscreen categories are intentionally contained by the
+            // horizontal scroller; page tabs and search must stay in the card.
+            if(categories.contains(node))return false;
             const box=node.getBoundingClientRect();
             return box.width>0 && (box.left < card.left-2 || box.right > card.right+2);
           }).map(node=>({text:node.textContent?.trim().slice(0,40),rect:node.getBoundingClientRect().toJSON()})),
@@ -333,6 +346,9 @@ try {
       });
       assert.ok(bounds.cardLeft>=-1 && bounds.cardRight<=width+1,JSON.stringify(bounds));
       assert.deepEqual(bounds.bad,[],JSON.stringify(bounds));
+      assert.ok(bounds.categoryLeft>=bounds.cardLeft-2 && bounds.categoryRight<=bounds.cardRight+2,
+        'Category scroller is bounded: '+JSON.stringify(bounds));
+      assert.equal(bounds.selectedVisible,true,'Active category is visible: '+JSON.stringify(bounds));
       assert.ok(bounds.documentWidth<=width+1,'Document horizontal overflow: '+JSON.stringify(bounds));
       await page.getByRole('combobox',{name:'Find an Admin page or setting'}).fill('permitting');
       const results=page.getByRole('option',{name:/Permitting/});
