@@ -16,7 +16,8 @@ const bindSave=new Function("ctx",`with(ctx){${source.slice(saveBegin,saveEnd)} 
 const defer=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return {promise,resolve,reject};};
 
 function harness(action){
-  const gate=defer(),calls=[],markers=new Map();
+  const gate=defer(),calls=[];
+  let storedMarker=null;
   const errors=[],messages=[],busy=[],snapshots=[],draftClears=[],scopeNotices=[];
   const recovery={workOrderId:"wo-A",action,requestId:"request-A-abcdefghijklmnop",reason:`${action} request could not be confirmed.`};
   const ctx={
@@ -31,8 +32,10 @@ function harness(action){
     photos:[],
     base44:{functions:{invoke:async(_name,payload)=>{calls.push(payload);return gate.promise;}}},
     newMechanicRequestId:()=>recovery.requestId,
-    storeWorkRecovery:async(_token,value)=>{markers.set(value.workOrderId,value);},
-    clearStoredWorkRecovery:async(_token,value)=>{markers.delete(value.workOrderId);},
+    storeWorkRecovery:async(_token,value)=>{storedMarker=value;},
+    clearStoredWorkRecovery:async(_token,value)=>{
+      if(storedMarker?.workOrderId===value.workOrderId&&storedMarker?.requestId===value.requestId)storedMarker=null;
+    },
     setWorkRecovery:value=>{ctx.workRecovery=typeof value==="function"?value(ctx.workRecovery):value;},
     setBusy:value=>busy.push(value),
     setActionError:value=>errors.push(value),
@@ -49,7 +52,7 @@ function harness(action){
     recoverWorkMutation:async value=>{ctx.recoveryStarted=value;},
   };
   const run=action==="start"?bindStart(ctx):bindSave(ctx);
-  return {ctx,run,gate,calls,markers,errors,messages,busy,snapshots,draftClears,scopeNotices,recovery};
+  return {ctx,run,gate,calls,get storedMarker(){return storedMarker;},errors,messages,busy,snapshots,draftClears,scopeNotices,recovery};
 }
 
 for(const action of ["start","save"]){
@@ -60,7 +63,7 @@ for(const action of ["start","save"]){
     assert.equal(h.calls.length,1);
     assert.equal(h.calls[0].action,action);
     assert.equal(h.calls[0].work_order_id,"wo-A");
-    assert.equal(h.markers.has("wo-A"),true,"Durable A marker must be written before dispatch");
+    assert.equal(h.storedMarker?.workOrderId,"wo-A","Durable A marker must be written before dispatch");
     h.ctx.portalAppliedEpochRef.current+=1; // A disappeared in a newer authorized portal payload.
     h.ctx.selectedWorkOrderRef.current="wo-B";
     h.ctx.selected={id:"wo-B",updated_date:"rev-B"};
@@ -68,7 +71,11 @@ for(const action of ["start","save"]){
     await pending;
     assert.equal(h.ctx.workRecovery?.workOrderId,"wo-A","A's uncertain marker remains visible after the job switch");
     assert.equal(h.ctx.workRecovery?.requestId,h.recovery.requestId);
-    assert.equal(h.markers.has("wo-A"),true,"Late acknowledgment must not silently discard A's durable marker");
+    assert.equal(h.storedMarker?.workOrderId,"wo-A","Late acknowledgment must not silently discard A's durable marker");
+    const nextRequest=h.run();
+    await nextRequest;
+    assert.equal(h.calls.length,1,"B Start/Save must stay blocked until A's receipt is checked");
+    assert.equal(h.storedMarker?.workOrderId,"wo-A","A's single durable marker must not be overwritten by B");
     assert.deepEqual(h.snapshots,[],"A's response cannot project into B");
     assert.deepEqual(h.draftClears,[],"A's response cannot clear B's draft");
     assert.equal(h.errors.at(-1),"An earlier mechanic request is still being verified. Check its current server state before starting or saving another job.");
