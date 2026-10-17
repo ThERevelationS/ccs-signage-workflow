@@ -787,7 +787,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const addNewRow = async () => {
-    if (!isRegistered || readError || addInFlightRef.current || isPulling) return;
+    // A manual pull owns its ref before React renders the disabled Add button.
+    if (!isRegistered || readError || addInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
     addInFlightRef.current = true;
     setSaveError("");
     try {
@@ -968,7 +969,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const confirmDelete = async () => {
     const target = deleteConfirm;
-    if (!target || deleteInFlightRef.current || isPulling) return;
+    // A stale confirmation dialog must never delete during a just-started pull.
+    if (!target || deleteInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
     const baseline = originalOrdersRef.current[target.id] || target;
     deleteInFlightRef.current = true;
     setSaveError("");
@@ -1154,7 +1156,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    if (importInFlightRef.current || isPulling) return;
+    // A file selection can finish in the same tick that manual Sync begins.
+    // Reject it before FileReader, import progress or any backend invocation.
+    if (importInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
     importInFlightRef.current = true;
 
     const importId = startMultiImport(file.name);
@@ -1202,7 +1206,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     pullFromSmartsheet,
     exportToExcel,
     refreshOrders: () => loadData(false),
-    importFromExcel: () => fileInputRef.current?.click(),
+    importFromExcel: () => {
+      if (manualPullInFlightRef.current || isPulling || importInFlightRef.current) return;
+      fileInputRef.current?.click();
+    },
     canImportExport: () => {
       // Check if user has import/export permission
       const user = users.find(u => u.email?.toLowerCase() === currentUser?.email?.toLowerCase());
@@ -2268,6 +2275,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     variant="ghost"
                     size="icon"
                     onClick={() => deleteOrder(order)}
+                    disabled={isPulling}
                     className="h-6 w-6"
                   >
                     <Trash2 className="w-3 h-3 text-red-500" />
@@ -2462,7 +2470,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
+            <AlertDialogAction onClick={confirmDelete} disabled={isPulling || deleteInFlightRef.current} className="bg-red-600 text-white">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
