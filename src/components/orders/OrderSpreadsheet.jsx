@@ -1165,6 +1165,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const processingTimeout = setTimeout(() => {
       updateImport(importId, { message: 'Processing rows on server...' });
     }, 1500);
+    let importRequestStarted = false;
 
     try {
       const fileData = await new Promise((resolve, reject) => {
@@ -1173,10 +1174,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         reader.onerror = reject;
         reader.readAsBinaryString(file);
       });
+      importRequestStarted = true;
       const res = await base44.functions.invoke("importOrders", { fileData, workOrderFilter: workOrderFilter || '', session_token: sessionToken });
-      const result = res.data;
-      const conflictCount = Number(result.conflicts || 0);
-      const errorCount = Number(result.errors || 0);
+      const result = res?.data;
+      // Do not announce an import success based on a missing/malformed or
+      // incomplete acknowledgment; the server may already have written rows.
+      const counts = ['created', 'updated', 'skipped', 'conflicts', 'errors', 'total'];
+      if (!counts.every(key => Number.isSafeInteger(result?.[key]) && result[key] >= 0) ||
+          result.created + result.updated + result.skipped + result.conflicts + result.errors !== result.total) {
+        throw new Error('The Order import result was not complete or verifiable.');
+      }
+      const conflictCount = result.conflicts;
+      const errorCount = result.errors;
       const hasIssues = conflictCount > 0 || errorCount > 0;
       const summary = [
         `${result.created} created`,
@@ -1185,15 +1194,28 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         ...(conflictCount ? [`${conflictCount} concurrency conflict${conflictCount === 1 ? '' : 's'}`] : []),
         ...(errorCount ? [`${errorCount} failed`] : []),
       ].join(', ');
+      // The import runs on the server and may finish while the browser still
+      // has protected edits or an invalidated reload. Keep the result uncertain
+      // until an authoritative complete Order snapshot is visible locally.
+      const verifiedReload = await loadData(false);
+      if (!verifiedReload) {
+        const warning = `${summary}. Import processing returned, but Orders could not be reloaded safely. Review protected edits and reload Orders before importing again; some rows may already be saved.`;
+        setSaveError(warning);
+        finishImport(importId, warning, true);
+        return;
+      }
       finishImport(
         importId,
-        hasIssues ? `${summary}. Conflicted rows were not overwritten; reload Orders before retrying them.` : summary,
+        hasIssues ? `${summary}. Conflicted rows were not overwritten; review Orders before retrying them.` : summary,
         hasIssues,
       );
-      await loadData(false);
     } catch (err) {
-      console.error("Import failed:", err);
-      finishImport(importId, 'Import failed. Please try again.', true);
+      console.error('Order import could not be verified:', err);
+      const warning = importRequestStarted
+        ? 'Order import acknowledgment or reload could not be verified. Some rows may already have been saved. Reload and review Orders before importing again.'
+        : 'The Excel file could not be read. No Order import request was sent.';
+      setSaveError(warning);
+      finishImport(importId, warning, true);
     } finally {
       clearTimeout(processingTimeout);
       importInFlightRef.current = false;
