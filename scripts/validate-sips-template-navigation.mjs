@@ -69,6 +69,7 @@ test('pending selection wording distinguishes deselection from saved deletion',(
  assert.match(src,/Deselect pending checklist \$\{product\.customName\}; saved Work Order data is unchanged/);
  assert.match(src,/Deselect pending checklist option \$\{st\.name\} for \$\{product\.customName\}; saved answers stay unchanged/);
  assert.match(src,/Already saved on this Work Order — cannot be removed here/);
+ assert.match(src,/Removing from Builder…/);
  assert.match(src,/>To add<\/span>/);
 });
 test('apply is disabled with saved-only selection and announces actual additions',()=>{
