@@ -1,6 +1,65 @@
 # Permitting continuation handoff — October 17, 2026
 
-## Latest completed unit — saved workflow print-ready review packet
+## Latest completed unit — saved workflow staff planning review checklist
+
+This is the current continuation state and supersedes older next-chunk sections below. Prior packet/citation-evidence implementation history remains preserved.
+
+Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation; Task 2 partial; 2 of 4 tasks complete. No fixed coverage counts advanced. Ohio first. Official OpenAI guidance was rechecked: GPT-6.1 Sol High remains recommended for this functional chunk. The picker was unavailable; no model switch was claimed.
+
+Previous verified checkpoint: 6ad3f8b684a68ad708ef3097, “Permitting saved workflow print-ready review packet verified — handoff included”, Git b539dfe475ddcb0f506c353912c91c9e2b5555f5.
+This chunk started at that fresh clean HEAD. All changes since it were confined to the permitting checklist, designer, comparison, packet labels, focused tests/receipts and this handoff. All earlier concurrent CCS work remains preserved.
+
+### Implemented
+- Open a saved draft, choose Create editable revision, expand a step and use Staff planning review.
+- Each step supports Not reviewed, Needs follow-up, Reviewed for planning and Proposed not applicable, with a reason, notes and evidence/office-provider/documents-forms follow-up areas.
+- Review progress explicitly does not establish evidence completeness, authority approval or readiness for job work. Proposed not applicable does not remove steps.
+- Selecting a follow-up area sets Needs follow-up. Follow-up/not-applicable decisions require a reason. Open follow-up areas prevent another decision from being saved until resolved/cleared. Invalid/unknown decisions remain visible and must be reviewed before saving.
+- Editing a proposed action/office/document/timing detail after an earlier planning review invalidates that review to Needs follow-up, retains its reason/notes, records the changed field and opens the appropriate follow-up area. Existing staff-override basis demotion remains intact.
+- Checklist-only edits retain the action's original evidence basis, citations, source metadata, gaps and other planning fields. They do not grant operational eligibility or authority approval.
+- Uses the existing append-only draft save path; the original record is never updated. Review annotations live under snapshot.steps[position].staff_review; no schema changes.
+- Cancelled Close/Edit inputs prompts preserve unsaved checklist work. Dirty reviews install a beforeunload guard and are protected from initialSavedDraft re-initialization while dirty. Failed saves retain edits for retry; review controls become read-only during save.
+- Saved reviews reopen read-only after reload. Missing legacy annotations remain explicitly Not reviewed without backfilling the old snapshot.
+- Revision comparison has a dedicated Staff planning review group; unchanged annotations remain visible. Print packets retain review decisions, all follow-up fields and complete notes, with human-readable planning decisions.
+
+### Source
+New:
+- src/components/permitting/WorkflowPlanningReview.jsx
+- src/components/permitting/workflowPlanningReview.mjs
+- scripts/permitting-workflow-planning-review.test.mjs
+- scripts/test-permitting-workflow-planning-review-browser.mjs
+- docs/permitting-workflow-planning-review-browser-2026-10-17.json
+
+Updated:
+- src/components/permitting/PermitWorkflowDesigner.jsx
+- src/components/permitting/permitDraftComparison.mjs
+- src/components/permitting/WorkflowReviewPacket.jsx
+- this handoff
+
+### Verification
+Passed:
+- Three focused Node tests: reason/open-area consistency and detached updates; changed-plan review invalidation without losing retained context; unchanged/changed review comparison visibility without altering source basis/citations.
+- Existing immutable comparison/ancestor validation.
+- Targeted ESLint, git diff --check and npm run build.
+- Actual library/designer/checklist/revision/history/packet Chromium scenarios at 320, 390 and 1280 px.
+- Required reasons and follow-up consistency; cancelled navigation and unload guard; failed-save retry; append-only save with original snapshots/citations/source metadata/basis/gaps unchanged; actual browser reload/reopen using synthetic session-persisted draft API fixtures; saved read-only review; changed-proposal invalidation and re-review; no horizontal overflow; 44px decision control.
+- Actual nine-page Chromium PDF at desktop width: full long note beginning/end markers, both review decisions, saved source metadata and original action retained; unrelated client text omitted.
+- Existing actual generation/save/reopen/revision browser scenarios passed at all three widths.
+- Mobile checklist screenshot visually inspected.
+
+Tests used synthetic API fixtures and production CSS with external requests blocked; no production records were touched. Authenticated employee persistence/sign-in and native print-dialog acceptance remain pending. The sandbox lacked temporary browser tooling, so Playwright/Chromium/system browser libraries were restored outside the repository. No app dependency changes. Only existing browser-database warnings.
+
+### Records / deployment / settings
+Nothing published or frontend-deployed. No backend/entity/schema/RLS/integration changes, production/client/job/shared-file writes, source refreshes, authority approvals, research AI calls or dispatcher/settings changes. Policy defaults and archive limits below remain unchanged; live settings were not remeasured.
+
+### Next — one functional chunk
+Surface staff follow-ups in the saved-draft library: per-draft/step review summaries, loaded-only filters for review decision and evidence/office/documents follow-up, and direct opening of the selected step. Preserve explicit 100-row cursor paging, append/deduplication, older-page retry, immutable snapshots, branches/ancestor distinctions and mobile usability. Do not label loaded-only counts as global totals or infer a single current revision. Legacy snapshots without reviews stay explicit. Use synthetic browser fixtures, no source refreshes, AI calls or job writes, checkpoint and do not publish.
+
+Checkpoint name for this completed unit: “Permitting saved workflow staff planning review checklist verified”. Exact checkpoint ID/final Git are returned after the handoff commit and checkpoint; use the final tool receipt/report or version history.
+
+Verified pre-handoff HEAD: a425a22499ad00c40dad0673874590012b835fec; working tree was clean. Inspect fresh HEAD/status before continuing.
+
+
+## Previous completed unit — saved workflow print-ready review packet
 
 This section supersedes the earlier “next chunk” below; the prior citation-evidence implementation history remains preserved.
 
@@ -44,7 +103,7 @@ Browser print invocation was stubbed to verify wiring/fallback. The PDF itself w
 Nothing published or frontend-deployed. No backend/entity/schema/RLS/integration changes. No production records, jobs, clients, shared files, relationships, authority approvals, source refreshes, research AI calls or dispatcher/settings changes. Live settings were not remeasured. No application dependency changes. Temporary visual-QA files remain outside the repository.
 
 ### Next — one functional chunk
-Add a staff review checklist to saved workflows: per-step review decisions and unresolved evidence/office/document follow-up, reasons and notes retained in a new immutable revision. Keep original snapshots/citations/source metadata intact; distinguish staff review from authority approval and operational readiness. Support mobile/desktop review and reopen, preserve unsaved work, use synthetic fixtures, and checkpoint without publication, source refreshes, AI calls or job writes. Do not advance statewide coverage counts merely for implementing this feature.
+This checklist is now implemented and verified in the latest completed unit at the top. Follow its new next-chunk direction.
 
 The completed unit is saved under the checkpoint name “Permitting saved workflow print-ready review packet verified”. Its exact checkpoint ID and final Git are returned after checkpoint creation; use the final tool receipt/report or version history. The prior checkpoint above is historical. The final observed pre-document/checkpoint HEAD is recorded immediately below; inspect fresh HEAD/status before the next change.
 
