@@ -163,8 +163,9 @@ try {
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
 
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 2,"Scoped recovery refresh should follow denied mutation status");
     await page.getByRole("button",{name:"Refresh"}).click();
-    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 2);
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 3);
     assert.equal(await recovery.count(),1,"Global Refresh must not clear uncertain mutation lock");
     assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"Keep this draft until verified");
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
@@ -174,7 +175,7 @@ try {
     assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isEnabled(),true);
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isEnabled(),true);
-    assert.deepEqual(await actionNames(page),["bootstrap","save","mutation_status","bootstrap","mutation_status"]);
+    assert.deepEqual(await actionNames(page),["bootstrap","save","mutation_status","bootstrap","bootstrap","mutation_status"]);
     const state = await page.evaluate(() => window.__fleetMechanicWorkFixture);
     assert.equal((state.work.notes.match(/Keep this draft until verified/g)||[]).length,1);
   });
