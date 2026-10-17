@@ -836,12 +836,23 @@ export default function UserManagement() {
       }
 
       verifiedAccountReceipt = true;
-      // The Account has already been committed. Advance its editor baseline
-      // immediately, even if the separate Time Clock password step fails.
-      // Keep local formData (including the unsaved password) unchanged.
+      // The confirmed receipt may include remote-only field changes which
+      // were never in our changed-field patch. Adopt those values instead of
+      // treating the stale submitted form as fresh local edits. Keep only
+      // fields actually edited after Save began, and retain the local password
+      // draft independently of the Account receipt.
+      const savedAccountDraft = createAdminAccountDraft(savedUser);
+      const rebasedReceiptDraft = rebaseAppliedAccountDraft({
+        latest: savedUser, attempted: accountAttempt,
+        current: activeAccountDraft.current
+      });
+      activeAccountDraft.current = rebasedReceiptDraft;
+      setFormData(rebasedReceiptDraft);
+      // Advance the baseline even when the separate password result later
+      // needs manual recovery; this prevents re-sending confirmed changes.
       accountDraftBaseline.current = {
         sessionToken, id: savedUser.id, email: savedUser.email,
-        values: createAdminAccountDraft(savedUser)
+        values: savedAccountDraft
       };
       if (accountWriteSent) {
         ++userLoadSequence.current;
@@ -910,7 +921,7 @@ export default function UserManagement() {
       if (!verifiedRows || verifiedRows.length !== 1) {
         setPostSaveRefreshPending({
           sessionToken, id: savedUser.id, email: savedUser.email,
-          saved: savedUser, attempted: accountAttempt, stage: "needs_read"
+          saved: savedUser, attempted: savedAccountDraft, stage: "needs_read"
         });
         // A confirmed password must not be resent after a failed directory
         // refresh. Clear only that confirmed password draft, never newer edits.
@@ -926,7 +937,7 @@ export default function UserManagement() {
       if (!isSameVerifiedAccountSnapshot(savedUser, verifiedRows[0])) {
         setPostSaveRefreshPending({
           sessionToken, id: savedUser.id, email: savedUser.email,
-          saved: savedUser, attempted: accountAttempt,
+          saved: savedUser, attempted: savedAccountDraft,
           stage: "review", latest: verifiedRows[0]
         });
         setConfirmAccountReconciliation(false);
