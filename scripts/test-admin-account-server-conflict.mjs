@@ -48,6 +48,7 @@ function fixture({response=fresh,errorMessage="Authorized user changed in anothe
   get sessionToken(){return "session-1";},get editingUser(){return state.editor;},
   get formData(){return state.draft;},get accountWriteRecovery(){return state.write;},
   get accountSaveRecovery(){return null;},
+  get postSaveRefreshPending(){return null;},
   get isLoading(){return state.loading;},get userDirectoryError(){return state.readError;},
   hasProtectedHrDraft:()=>false,
   setUserMutationError:v=>{state.error=v;},
