@@ -22,7 +22,7 @@ function RecordedValue({ value, field = '' }) {
     const safe = safeExternalHttpUrl(value);
     return safe ? <a href={safe} target="_blank" rel="noopener noreferrer">{safe}</a> : <span>Unusable recorded link</span>;
   }
-  return <span>{String(value)}</span>;
+  return <span className="packet-value">{String(value)}</span>;
 }
 function PacketSection({ title, children }) {
   return <section className="packet-section" aria-label={title}><h3>{title}</h3>{children}</section>;
@@ -48,6 +48,7 @@ export default function WorkflowReviewPacket({ draftRow, trigger, onClose }) {
       <DialogPrimitive.Content data-permitting-review-packet="" className="workflow-review-packet"
         onOpenAutoFocus={event => { event.preventDefault(); heading.current?.focus(); }}
         onCloseAutoFocus={event => { event.preventDefault(); if (trigger?.isConnected) trigger.focus({ preventScroll: true }); }}>
+        <style>{'@media print { @page { margin: 16mm; } }'}</style>
         <header className="packet-toolbar">
           <div><DialogTitle ref={heading} tabIndex={-1}>Saved workflow review packet</DialogTitle>
             <DialogDescription>Read-only saved snapshot. Print or choose Save as PDF in your browser where supported.</DialogDescription></div>
@@ -64,6 +65,7 @@ export default function WorkflowReviewPacket({ draftRow, trigger, onClose }) {
               draft_id: draftRow.id, saved_status: draftRow.status,
               revision: revision?.revision_number ?? 'Revision number not recorded (original or legacy snapshot)',
               saved_at: draftRow.created_date, reviewed_at: draftRow.reviewed_at,
+              recorded_revision_details: revision,
               revision_created_at: revision?.created_at, parent_draft_id: revision?.parent_draft_id,
               parent_title: revision?.parent_title, root_draft_id: revision?.root_draft_id, root_title: revision?.root_title,
             }} /></PacketSection>

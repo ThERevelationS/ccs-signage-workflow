@@ -22,6 +22,7 @@
 .workflow-review-packet .packet-document p { margin-bottom: 10px; }
 .workflow-review-packet .packet-field { margin: 6px 0; }
 .workflow-review-packet dt { font-weight: 600; }
+.workflow-review-packet .packet-value { white-space: pre-wrap; }
 .workflow-review-packet dd { margin-left: 12px; white-space: pre-wrap; }
 .workflow-review-packet ol { list-style: decimal; padding-left: 22px; }
 .workflow-review-packet li { margin: 6px 0; }
@@ -33,7 +34,6 @@
   .workflow-review-packet .packet-document h2 { font-size: 20px; }
 }
 @media print {
-  @page { margin: 16mm; }
   /* This portal is a direct body child. Only this opened packet may print. */
   body:has(> [data-permitting-review-packet]) > :not([data-permitting-review-packet]) { display: none !important; }
   html:has([data-permitting-review-packet]), body:has(> [data-permitting-review-packet]) {
