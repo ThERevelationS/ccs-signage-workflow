@@ -358,6 +358,7 @@ try {
     assert.equal(await recovery.count(),1,"Disallowed Save verification must remain locked");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===4);
     await page.getByRole("button",{name:"Save Progress"}).waitFor();
     assert.equal(await recovery.count(),1,"Capability restoration must not settle Save recovery");
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).isDisabled(),true);
@@ -396,9 +397,10 @@ try {
     await page.getByRole("button",{name:"Save Progress"}).click();
     const recovery=page.getByRole("alert");
     await recovery.getByText(/Current server state must be checked/i).waitFor();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===2);
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=false; });
     await page.getByRole("button",{name:"Refresh"}).click();
-    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===2);
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===3);
     assert.equal(await recovery.count(),1);
     assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
     await page.evaluate(() => window.__releaseFleetPhotoDecode());
@@ -406,6 +408,7 @@ try {
     assert.equal(await page.locator('img[src^="blob:"]').count(),0,"An in-flight image conversion must not resurrect purged photos");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row=>row.action==="bootstrap").length===4);
     await page.getByRole("button",{name:"Save Progress"}).waitFor();
     assert.equal(await recovery.count(),1);
     assert.equal(await page.locator('img[src^="blob:"]').count(),0);
