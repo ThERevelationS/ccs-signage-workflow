@@ -69,7 +69,7 @@ same(result.entries.length,0,"Pending outcome is never promoted into visible his
 same(reads.map(x=>x.kind),["audit","legacy","audit"],"History is bounded to three source calls.");
 same(reads[2].options.limit,35,"Pending check remains bounded.");
 check(!Object.keys(result).some(key=>/pending_values|uncommitted_rows/.test(key)),"API exposes no pending audit values.");
-pending=[recent];reads=[];
+pending=[make(1000)];reads=[];
 result=await load();
 same(result.audit_verification_status,"pending","Backend distinguishes a recent in-flight write.");
 pending=[{...aged,new_value:"unmatched"}];reads=[];
