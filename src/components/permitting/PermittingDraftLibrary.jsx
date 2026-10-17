@@ -11,16 +11,34 @@ export default function PermittingDraftLibrary({ onClose }) {
   const [query, setQuery] = useState('');
   const [state, setState] = useState('all');
   const [selected, setSelected] = useState(null);
-  const [refresh, setRefresh] = useState(0);
+  const [request, setRequest] = useState({ cursor: null, revision: 0 });
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [olderError, setOlderError] = useState('');
+  const refreshDrafts = () => setRequest(previous => ({ cursor: null, revision: previous.revision + 1 }));
   useEffect(() => {
     let active = true;
-    setLoading(true); setError('');
-    base44.entities.PermittingWorkflowDraft.filter({}, { sort: '-created_date', limit: 100 }).then(result => {
-      if (active) setRows(Array.isArray(result) ? result : result.items || []);
-    }).catch(() => { if (active) setError('Drafts could not be loaded. Retry to check the saved library.'); })
-      .finally(() => { if (active) setLoading(false); });
+    const append = Boolean(request.cursor);
+    setLoading(!append); setLoadingMore(append); setError(''); setOlderError('');
+    if (!append) { setRows([]); setHasMore(false); setNextCursor(null); }
+    const options = append ? { cursor: request.cursor, limit: 100 } : { sort: '-created_date', limit: 100 };
+    base44.entities.PermittingWorkflowDraft.filter({}, options).then(page => {
+      if (!active) return;
+      if (!Array.isArray(page?.items) || typeof page.has_more !== 'boolean' ||
+        page.items.some(row => !row?.id) || (page.has_more &&
+          (typeof page.next_cursor !== 'string' || !page.next_cursor || page.next_cursor === request.cursor))) {
+        throw new Error('Invalid draft continuation');
+      }
+      setRows(previous => append ? [...new Map([...previous, ...page.items].map(row => [row.id, row])).values()] : page.items);
+      setHasMore(page.has_more); setNextCursor(page.has_more ? page.next_cursor : null);
+    }).catch(() => {
+      if (!active) return;
+      if (append) setOlderError('Older drafts could not be loaded. Your loaded drafts are still available. Retry or refresh the library.');
+      else setError('Drafts could not be loaded. Retry to check the saved library.');
+    }).finally(() => { if (active) { setLoading(false); setLoadingMore(false); } });
     return () => { active = false; };
-  }, [refresh]);
+  }, [request]);
   const visible = rows.filter(row => (state === 'all' || row.state === state) &&
     [row.title, row.jurisdiction_name, row.state, row.project_inputs?.signTypes, row.review_notes].some(value => String(value || '').toLowerCase().includes(query.trim().toLowerCase())));
   return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-2 sm:p-4">
@@ -33,10 +51,10 @@ export default function PermittingDraftLibrary({ onClose }) {
         <div className="flex flex-wrap gap-2">
           <Input aria-label="Search workflow drafts" placeholder="Search draft, jurisdiction, sign or notes" value={query} onChange={e => setQuery(e.target.value)} className="min-h-11 min-w-0 flex-1" />
           <select aria-label="Filter draft state" value={state} onChange={e => setState(e.target.value)} className="min-h-11 rounded-md border px-3"><option value="all">All states</option><option>OH</option><option>KY</option></select>
-          <Button variant="outline" disabled={loading} onClick={() => setRefresh(v => v + 1)} className="min-h-11">Refresh drafts</Button>
+          <Button variant="outline" disabled={loading || loadingMore} onClick={refreshDrafts} className="min-h-11">Refresh drafts</Button>
         </div>
         {loading ? <p role="status">Loading saved drafts…</p> : error ? <div role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</div> : <>
-          <p className="text-xs text-gray-600">{visible.length} shown from {rows.length} loaded drafts. Most recent 100 drafts; this list is not a complete archive.</p>
+          <p className="text-xs text-gray-600">{visible.length} shown from {rows.length} loaded drafts. Search and state filters cover loaded drafts only.</p>
           {rows.length === 0 ? <div className="rounded-lg border p-5"><h3 className="font-semibold">No saved workflows yet</h3><p className="text-sm text-gray-600">Open a jurisdiction, choose the AI workflow designer, review the proposal and save a permitting draft.</p></div> : visible.length === 0 ? <p>No drafts match these filters.</p> : visible.map(row => {
             const valid = row.snapshot && Array.isArray(row.snapshot.steps) && row.snapshot.jurisdiction;
             const gaps = (row.snapshot?.gaps?.length || 0) + (row.snapshot?.steps || []).filter(s => s.basis !== 'approved_rule').length;
@@ -49,9 +67,15 @@ export default function PermittingDraftLibrary({ onClose }) {
               <Button className="mt-2 min-h-11" variant="outline" disabled={!valid} onClick={() => setSelected(row)}>Review draft</Button>
             </article>;
           })}
+          {olderError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{olderError}</p>}
+          {hasMore ? <div className="space-y-2 border-t pt-3">
+            <p className="text-sm text-gray-600">Older drafts are available. Load them to expand your search.</p>
+            <Button variant="outline" className="min-h-11" disabled={loadingMore} onClick={() => setRequest(previous => ({ cursor: nextCursor, revision: previous.revision + 1 }))}>{loadingMore ? 'Loading older drafts…' : olderError ? 'Retry older drafts' : 'Load older drafts'}</Button>
+            {loadingMore && <p role="status" className="text-sm">Loading older drafts. Loaded drafts remain available.</p>}
+          </div> : rows.length > 0 && <p className="text-xs text-gray-600">Reached the end of this browse. Refresh to include newly saved drafts.</p>}
         </>}
       </div>
     </section>
-    {selected && <PermitWorkflowDesigner key={selected.id} isOpen initialSavedDraft={selected} preselectedJurisdiction={selected.snapshot.jurisdiction} onClose={() => setSelected(null)} onDraftSaved={() => setRefresh(v => v + 1)} />}
+    {selected && <PermitWorkflowDesigner key={selected.id} isOpen initialSavedDraft={selected} preselectedJurisdiction={selected.snapshot.jurisdiction} onClose={() => setSelected(null)} onDraftSaved={refreshDrafts} />}
   </div>;
 }
