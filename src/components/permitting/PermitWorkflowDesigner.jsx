@@ -11,6 +11,7 @@ import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import WorkflowCitationList from "./WorkflowCitationList";
 import PermittingDraftHistory from "./PermittingDraftHistory";
 import WorkflowSourceEvidenceDialog from "./WorkflowSourceEvidenceDialog";
+import WorkflowReviewPacket from "./WorkflowReviewPacket";
 
 const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Service"];
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
@@ -92,6 +93,7 @@ export default function PermitWorkflowDesigner({
   const [editingSteps, setEditingSteps] = useState(false);
   const [revisionSource, setRevisionSource] = useState(null);
   const [sourceEvidence, setSourceEvidence] = useState(null);
+  const [reviewPacket, setReviewPacket] = useState(null);
   const [draftLoadError, setDraftLoadError] = useState('');
   useEffect(() => {
     let active = true;
@@ -412,6 +414,7 @@ export default function PermitWorkflowDesigner({
                 {!editingSteps ? <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={beginStepEditing} disabled={saving || creating}>{saved ? 'Create editable revision' : 'Edit proposed steps'}</Button> : <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">Step editing is on. Changed steps keep their citations and become Staff Confirmation Needed. Save creates a separate permitting draft; it does not approve requirements or create job lines.</p>}
                 {draft.jurisdiction_unresolved && <p className="text-amber-800">Location unresolved. This draft cannot establish jurisdiction authority.</p>}
               </div>
+              {saved?.id && <Button type="button" variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={event => setReviewPacket({ draftRow: structuredClone(saved), trigger: event.currentTarget })}>Open saved review packet</Button>}
               {saved && <PermittingDraftHistory key={saved.id} current={saved} onOpenCitation={(citation, draftRow, trigger) => setSourceEvidence({citation, draftRow, trigger})} />}
               {draft.electrical_planning_handoff && <ElectricalPlanningHandoffView handoff={draft.electrical_planning_handoff} /> }
               {/* Summary */}
@@ -635,6 +638,7 @@ export default function PermitWorkflowDesigner({
         )}
       </div>
       {sourceEvidence && <WorkflowSourceEvidenceDialog {...sourceEvidence} onClose={() => setSourceEvidence(null)} />}
+      {reviewPacket && <WorkflowReviewPacket {...reviewPacket} onClose={() => setReviewPacket(null)} />}
     </div>
   );
 }
