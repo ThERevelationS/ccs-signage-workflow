@@ -58,6 +58,7 @@ try {
    await page.screenshot({path:'/tmp/permitting-packet-desktop.png'});
    await page.emulateMedia({media:'print'});
    assert.equal(await page.locator('#root').evaluate(node=>getComputedStyle(node).display),'none');
+   assert.equal(await page.locator('[data-permitting-review-packet] .packet-document').evaluate(node=>getComputedStyle(node).visibility),'visible');
    assert.equal(await page.locator('[data-permitting-review-packet] .packet-toolbar').evaluate(node=>getComputedStyle(node).display),'none');
    assert.equal(await page.locator('[data-permitting-review-packet] .packet-scroll').evaluate(node=>getComputedStyle(node).overflow),'visible');
    assert.equal(await page.locator('[data-permitting-review-packet]').evaluate(node=>getComputedStyle(node).position),'static');
