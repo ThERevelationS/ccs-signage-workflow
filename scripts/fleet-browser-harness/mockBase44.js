@@ -23,6 +23,15 @@ const state = {
   actions: [],
   failNextWorkOrderList: false,
   asyncLatencyMs: 0,
+  deferNextWorkOrderList: false,
+  workOrderListStarted: 0,
+  workOrderListCompleted: 0,
+  pendingWorkOrderListResolvers: [],
+  releaseNextWorkOrderList() {
+    const resolve = state.pendingWorkOrderListResolvers.shift();
+    if (!resolve) throw new Error("No deferred synthetic work-order list is pending");
+    resolve();
+  },
 };
 window.__fleetBrowserFixture = state;
 
@@ -30,12 +39,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const list = (source) => async (_sort, limit, skip) => clone(source.slice(skip, skip + limit));
 const ordersEntity = {
   async list(_sort, limit, skip) {
+    state.workOrderListStarted += 1;
     if (state.failNextWorkOrderList) {
       state.failNextWorkOrderList = false;
       throw new Error("Synthetic Fleet refresh failed");
     }
+    const snapshot = clone(state.orders.slice(skip, skip + limit));
+    if (state.deferNextWorkOrderList) {
+      state.deferNextWorkOrderList = false;
+      await new Promise((resolve) => state.pendingWorkOrderListResolvers.push(resolve));
+    }
     if (state.asyncLatencyMs) await sleep(state.asyncLatencyMs);
-    return clone(state.orders.slice(skip, skip + limit));
+    state.workOrderListCompleted += 1;
+    return snapshot;
   },
 };
 
