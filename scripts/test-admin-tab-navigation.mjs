@@ -53,6 +53,19 @@ test('Category navigation stays synchronized to the selected URL tab', () => {
   assert.match(page, /getAdminGroupForTab\(selectedAdminTab, isAdmin\)/);
 });
 
+test('Nested active tabs are scrolled into the Admin viewport without stealing search focus', () => {
+  assert.match(page, /const adminScrollRef = useRef\(null\)/);
+  assert.match(page, /const nestedTabListsRef = useRef\(\{\}\)/);
+  assert.match(page, /nestedTabListsRef\.current\[selectedAdminTab\]/);
+  assert.match(page, /querySelector\('\[role="tab"\]\[data-state="active"\]'\)/);
+  assert.match(page, /list\.contains\(focused\) && focused !== active/);
+  assert.match(page, /active\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(page, /scrollArea\.scrollTop \+= tabBounds\.bottom - areaBounds\.bottom \+ margin/);
+  assert.match(page, /ref=\{adminScrollRef\}/);
+  assert.match(page, /nestedTabListsRef\.current\.timeclock = node/);
+  assert.match(page, /nestedTabListsRef\.current\.backend = node/);
+});
+
 test('Category scroll and responsive grid tabs remain bounded on phones and desktop', () => {
   assert.equal(listTags.length, 3);
   for (const list of listTags) {
