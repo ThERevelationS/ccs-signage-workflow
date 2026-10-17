@@ -290,6 +290,7 @@ createRoot(document.getElementById("root")).render(
     origin, async ([page]) => {
       const dialog = await dialogFor(page);
       await dialog.getByRole("button", {name:"Start Work",exact:true}).click();
+      await dialog.getByRole("button", {name:"Change Work",exact:true}).waitFor();
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 1);
       await dialog.getByRole("button", {name:"Start Paid Break",exact:true}).click();
       await page.getByText("On Break", {exact:true}).waitFor();
@@ -320,6 +321,7 @@ createRoot(document.getElementById("root")).render(
     origin, async ([page]) => {
       const dialog = await dialogFor(page);
       await dialog.getByRole("button", {name:"Start Work",exact:true}).click();
+      await dialog.getByRole("button", {name:"Change Work",exact:true}).waitFor();
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 1);
       await dialog.getByRole("button", {name:"Pause Work",exact:true}).click();
       await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor();
@@ -340,6 +342,7 @@ createRoot(document.getElementById("root")).render(
     origin, async ([page]) => {
       const dialog = await dialogFor(page);
       await dialog.getByRole("button", {name:"Start Work",exact:true}).click();
+      await dialog.getByRole("button", {name:"Change Work",exact:true}).waitFor();
       let active = fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active");
       assert.equal(active.length, 1);
       assert.equal(active[0].activity_type, "shop");
