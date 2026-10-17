@@ -63,8 +63,13 @@ export async function replaceImportedOrderFieldsIfUnchanged({
     assertImportIdentityStable(current, order, desired, label);
 
     const alreadyDesired = targetFieldsConverged(current, desired);
+    // Reimporting unchanged values must not queue a redundant Smartsheet push.
     if (alreadyDesired) return { record: current, status: "already_desired" };
 
+    // A genuinely changed Order must carry its durable outbound marker in the
+    // SAME version-checked write as the imported fields. Never commit the
+    // business fields first and try to mark them pending in a second request.
+    const writeFields = { ...desired, smartsheet_pending_local_sync: true };
     for (const field of fieldNames) {
       if (!sameValue(current[field], order[field]) && !sameValue(current[field], desired[field])) {
         throw new OrderImportConflictError(`${label} changed in another session (${field}). The import did not overwrite that change.`);
@@ -80,7 +85,7 @@ export async function replaceImportedOrderFieldsIfUnchanged({
     try {
       result = await entity.updateMany(
         { id, updated_date: currentVersion },
-        { $set: desired },
+        { $set: writeFields },
       );
     } catch (error) {
       let afterError;
@@ -91,7 +96,7 @@ export async function replaceImportedOrderFieldsIfUnchanged({
       }
       if (afterError?.id) {
         assertImportIdentityStable(afterError, order, desired, label);
-        if (targetFieldsConverged(afterError, desired)) {
+        if (targetFieldsConverged(afterError, writeFields)) {
           return { record: afterError, status: "converged_after_response_loss" };
         }
       }
@@ -108,7 +113,7 @@ export async function replaceImportedOrderFieldsIfUnchanged({
       const saved = await entity.get(id);
       if (!saved?.id) throw new Error(`${label} succeeded but the Order could not be re-read.`);
       assertImportIdentityStable(saved, order, desired, label);
-      if (!targetFieldsConverged(saved, desired)) {
+      if (!targetFieldsConverged(saved, writeFields)) {
         throw new OrderImportConflictError(`${label} changed again immediately after the import write. Reload before retrying.`);
       }
       return { record: saved, status: "updated" };
