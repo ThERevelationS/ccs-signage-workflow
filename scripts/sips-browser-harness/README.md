@@ -12,6 +12,7 @@ npm install --prefix /tmp/sips-browser-check --no-save --no-package-lock --ignor
 # /tmp/sips-browser-check/node_modules/.bin/playwright install-deps chromium
 node scripts/test-sips-clear-revisit-browser.mjs
 node scripts/test-sips-checklist-reload-focus-browser.mjs
+node scripts/test-sips-template-selection-browser.mjs
 ```
 
 The runner mounts the **actual SIPS page and production CSS** inside a temporary local Vite server. It replaces Base44 auth, Work Order data, global settings and unrelated dialogs with isolated synthetic fixtures. Two independent Chromium browser contexts share a conditional-write fixture. Requests outside the temporary local origin are blocked and fail the suite. Nothing is published, no credentials are loaded, and no production records are created or changed. The browser driver is installed outside `/app` to avoid changing production dependencies.
@@ -21,6 +22,10 @@ Covered: desktop/mobile Clear Revisit and Escape; concurrent stale-clear versus 
 ## Actual checklist-dialog reload-focus acceptance
 
 The additional `test-sips-checklist-reload-focus-browser.mjs` runner mounts the **real `ProductChecklistDialog.jsx`** with the production CSS and isolated synthetic Work Order, authorization-list and settings fixtures. All external requests are blocked. Save attempts are deliberately rejected by a local replacement for the persistence function; no Work Order (real or synthetic) is written. The suite checks desktop and 320px successful-reload heading focus, an interrupted reload's error focus followed by a successful retry, and mobile unsaved-draft discard confirmation (cancel preserves the draft; confirm reload clears it and restores focus). It does not test authenticated permissions, production network behavior or actual saved writes.
+
+## Actual Template Builder selection acceptance (October 16, 2026)
+
+`test-sips-template-selection-browser.mjs` mounts the **real Template Builder and production CSS** in isolated Chromium contexts at desktop (1366px) and narrow-phone (320px) widths. It provides synthetic saved checklist rows (including answers and approvers), product templates, and reusable checklist options through read-only replacement readers. No production SDK or credentials are imported; external requests are blocked, and any persistence write is treated as a test failure. Eight browser scenarios exercise locked saved products and applied options, clear Saved/To add counts, pending-option selection/deselection, removing only a new pending checklist, disabled no-op Apply, and the actual Apply callback producing only newly selected option rows while preserving saved answers. Both viewports are checked for document overflow. This is synthetic UI acceptance, **not authenticated integration or permission testing**.
 
 ## Verified concurrent reopening focus recovery (October 15, 2026)
 
