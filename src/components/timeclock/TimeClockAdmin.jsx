@@ -41,7 +41,6 @@ import {
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
@@ -57,14 +56,6 @@ import {
   shiftDurationSummary,
   formatCompanyDateTime,
 } from "@/components/timeclock/timeClockCompanyTime";
-
-const TimeEntry = base44.entities.TimeEntry;
-const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
-const TimeClockBreak = base44.entities.TimeClockBreak;
-const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
-const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
-const TimeClockPunchException = base44.entities.TimeClockPunchException;
-const TimeClockLaborSegment = base44.entities.TimeClockLaborSegment;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -191,47 +182,39 @@ export default function TimeClockAdmin() {
     setIsLoading(true);
     setDataLoadError("");
     try {
+      if (!sessionToken) throw new Error("A signed-in administrator session is required.");
+      const loadAdminCollection = async (collection) => {
+        const rows = [];
+        let skip = 0;
+        while (skip < 50000) {
+          const response = await base44.functions.invoke("timeClockAction", {
+            action: "admin_load_data",
+            session_token: sessionToken,
+            collection,
+            skip,
+          });
+          const data = functionData(response);
+          if (!data?.success || !Array.isArray(data.rows) || !Number.isInteger(data.next_skip) ||
+              typeof data.has_more !== "boolean") {
+            throw adminActionError(data, "Time Clock admin data could not be verified.");
+          }
+          rows.push(...data.rows);
+          if (!data.has_more) return rows;
+          if (data.next_skip !== skip + data.rows.length || data.rows.length === 0) {
+            throw new Error("Time Clock admin data paging could not be verified.");
+          }
+          skip = data.next_skip;
+        }
+        throw new Error("Time Clock admin data exceeds the 50,000-record safety limit.");
+      };
       const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows] = await Promise.all([
-        loadAllEntityRows({
-          entity: TimeEntry,
-          query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
-          sort: "-clock_in",
-          label: "Time Clock admin entries",
-        }),
-        loadAllEntityRows({
-          entity: TimeClockEmployeeState,
-          sort: null,
-          label: "Time Clock employee states",
-        }),
-        loadAllEntityRows({
-          entity: TimeClockBreak,
-          query: { status: "active" },
-          sort: "-started_at",
-          label: "Time Clock active breaks",
-        }),
-        loadAllEntityRows({
-          entity: TimeClockWorkPause,
-          query: { status: "active" },
-          sort: "-started_at",
-          label: "Time Clock active Work Pauses",
-        }),
-        loadAllEntityRows({
-          entity: TimeClockLaborSegment,
-          query: { status: "active" },
-          sort: "-started_at",
-          label: "Time Clock active labor segments",
-        }),
-        loadAllEntityRows({
-          entity: TimeClockCorrectionRequest,
-          query: { status: { $in: ["pending", "reviewing"] } },
-          sort: "-requested_at",
-          label: "Time Clock active correction requests",
-        }),
-        loadAllEntityRows({
-          entity: TimeClockPunchException,
-          sort: "-detected_at",
-          label: "Time Clock punch exception reports",
-        }),
+        loadAdminCollection("entries"),
+        loadAdminCollection("states"),
+        loadAdminCollection("breaks"),
+        loadAdminCollection("work_pauses"),
+        loadAdminCollection("labor_segments"),
+        loadAdminCollection("correction_requests"),
+        loadAdminCollection("punch_exceptions"),
       ]);
       setTimeEntries(entries);
       setEmployeeStates(states);
