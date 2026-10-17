@@ -5,7 +5,7 @@ import {
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
 } from "../base44/shared/salesOpportunityHistory.mjs";
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from "../base44/shared/salesHistorySnapshotGuard.mjs";
-import {salesHistoryHasUnfinalizedMatchingAudit} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
+import {classifySalesHistoryPendingAudits} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
 
 let checks=0;
 const check=(condition,label)=>{assert.ok(condition,label);checks++};
@@ -106,7 +106,7 @@ const ctx={
   beginSyncTraceStorage:async()=>{},
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
   validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
-  salesHistoryHasUnfinalizedMatchingAudit,Response,
+  classifySalesHistoryPendingAudits,Response,
 };
 runInNewContext(serverCode,ctx,{timeout:3000});
 const request=(action="sales_history",entityType="WorkOrder",id=record.id)=>({
