@@ -19,7 +19,7 @@ function fixture({ result = response(), reload = true, invokeError = null, readE
   let reloadCalls = 0;
   const progress = [];
   const errors = [];
-  const locks = { importInFlightRef: { current: false }, manualPullInFlightRef: { current: false } };
+  const locks = { importInFlightRef: { current: false }, manualPullInFlightRef: { current: false }, orderLoadGenerationRef: { current: 0 } };
   class SyntheticReader {
     readAsBinaryString() {
       if (readError) this.onerror(new Error('Synthetic file read failure'));
@@ -41,7 +41,13 @@ function fixture({ result = response(), reload = true, invokeError = null, readE
       if (invokeError) throw invokeError;
       return { data: result };
     } } },
-    loadData: async () => { reloadCalls++; return await reload; },
+    loadData: async (showLoading, options) => {
+      assert.equal(showLoading, false);
+      assert.deepEqual(options, { importReload: true }, 'Only the import-owned verified reload may run during an import');
+      assert.equal(locks.importInFlightRef.current, true);
+      reloadCalls++;
+      return await reload;
+    },
     workOrderFilter: null,
     sessionToken: 'synthetic-only',
     setSaveError: value => errors.push(value),
@@ -67,6 +73,7 @@ function fixture({ result = response(), reload = true, invokeError = null, readE
   await new Promise(resolve => queueMicrotask(resolve));
   assert.equal(test.backendCalls, 1);
   assert.equal(test.reloadCalls, 1);
+  assert.equal(test.locks.orderLoadGenerationRef.current, 1, 'Import invalidates preexisting background refreshes');
   assert.equal(test.progress.length, 0, 'A server acknowledgment alone cannot mark import complete');
   assert.equal(test.locks.importInFlightRef.current, true, 'Import lock stays held throughout verification');
   settle(true);
