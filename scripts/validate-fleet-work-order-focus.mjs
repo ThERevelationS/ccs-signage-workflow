@@ -168,6 +168,12 @@ const boardButtons = [
 }));
 let listFocused = 0;
 const completionContext = {
+  findWorkOrderFocusTarget: (rows, id, mode, root) => {
+    if (!rows.some(row => row.id === id)) return null;
+    if (mode === "list") return root.getElementById(`fleet-work-order-toggle-${id}`);
+    return Array.from(root.querySelectorAll("button[data-fleet-board-open]"))
+      .find(button => button.dataset.fleetBoardOpen === id && button.getClientRects().length > 0) || null;
+  },
   pendingCompletionFocusRef,
   dialog: { mode: "complete" },
   loading: false,
