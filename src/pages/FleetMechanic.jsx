@@ -374,6 +374,9 @@ export default function FleetMechanic() {
     const recoveryReason = reason || recovery.reason || "The mechanic update could not be confirmed.";
     const ownsSelectedJob = () => selectedWorkOrderRef.current === recovery.workOrderId;
     if (ownsSelectedJob()) photoDraftEpochRef.current += 1;
+    const recoveryEditorEpoch = ownsSelectedJob() ? photoDraftEpochRef.current : null;
+    const ownsRecoveryEditor = () => ownsSelectedJob() &&
+      photoDraftEpochRef.current === recoveryEditorEpoch;
     setWorkRecovery({...recovery,reason:recoveryReason});
     setBusy("work-recovery");
     setRefreshing(true);
@@ -384,7 +387,8 @@ export default function FleetMechanic() {
       if (result?.error) throw new Error(result.error);
       if (requestSequence !== workRecoveryRequestRef.current) return false;
       const fresh = result?.work_order || null;
-      const isSameOpenJob = ownsSelectedJob();
+      const isSameOpenJob = ownsRecoveryEditor();
+      const reopenedSameJob = ownsSelectedJob() && !isSameOpenJob;
       if (fresh && isSameOpenJob) {
         // A confirmed recovery snapshot supersedes any older portal bootstrap
         // for this open job, without cancelling a newer job's refresh.
@@ -398,6 +402,12 @@ export default function FleetMechanic() {
           if (recovery.action === "save") clearSavedProgressDraft(fresh);
           setActionError("");
           setSavedMessage(recovery.action === "start" ? "Work started. CCS Fleet confirmed the interrupted request." : "Progress saved. CCS Fleet confirmed the interrupted request without replaying it.");
+        } else if (reopenedSameJob) {
+          await load(true,()=>setError("Current Fleet access could not be verified. Reload this mechanic link or contact CCS."));
+          if (ownsSelectedJob()) {
+            setSavedMessage("");
+            setActionError("An earlier mechanic request was confirmed. The current job was refreshed; its new editor was not overwritten.");
+          }
         } else notifyRecoveryOnCurrentView("An earlier mechanic request was confirmed. The currently open job was not changed.");
         return true;
       }
@@ -409,6 +419,12 @@ export default function FleetMechanic() {
           setActionError(recovery.action === "start"
             ? `${recoveryReason} The server confirms this request was not applied. Current Fleet state was refreshed; review it before trying Start Work again.`
             : `${recoveryReason} The server confirms this request was not applied. Current Fleet state was refreshed and your unsaved progress was kept for review before another save.`);
+        } else if (reopenedSameJob) {
+          await load(true,()=>setError("Current Fleet access could not be verified. Reload this mechanic link or contact CCS."));
+          if (ownsSelectedJob()) {
+            setSavedMessage("");
+            setActionError("An earlier mechanic request was confirmed not applied. The current job was refreshed; its new editor was not overwritten.");
+          }
         } else notifyRecoveryOnCurrentView("An earlier mechanic request is confirmed not applied. The currently open job was not changed; review it before starting or saving.");
         return false;
       }
