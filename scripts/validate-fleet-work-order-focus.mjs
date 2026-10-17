@@ -17,8 +17,10 @@ function extract(startText, endText, prefix, context) {
 const loadingCalls = [];
 const rowsRead = [];
 const hasLoadedRef = { current: false };
+const loadSequenceRef = { current: 0 };
 const refreshContext = {
   hasLoadedRef,
+  loadSequenceRef,
   setLoading: value => loadingCalls.push(value),
   listAllFleetRows: async (_entity, _sort, options) => [{ label: options.label }],
   base44: {
