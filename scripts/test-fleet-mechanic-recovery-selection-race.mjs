@@ -61,6 +61,7 @@ for(const action of ["start","save"]){
     assert.deepEqual(h.events.snapshots,[],"An old recovery snapshot must not replace the reopened editor state");
     assert.equal(h.ctx.portalRequestRef.current,currentPortalRequest,"Late recovery must not fence the reopened job's own refresh");
     assert.deepEqual(h.events.portalLoads,[true],"Reopened authorized job must receive a fresh scoped snapshot");
+    assert.equal(h.events.requests.length,1,"Recovery must check the durable status without replaying Start or Save");
     assert.deepEqual(h.events.messages,[""]);
     assert.deepEqual(h.events.errors,["An earlier mechanic request was confirmed. The current job was refreshed; its new editor was not overwritten."]);
     assert.equal(h.events.clears.length,1,"Confirmed durable receipt may clear its original marker");
