@@ -460,11 +460,15 @@ export default function FleetMechanic() {
   };
 
   const handleSupersededWorkAcknowledgement = recovery => {
-    if (selectedWorkOrderRef.current !== recovery.workOrderId) return;
+    const isSameOpenJob = selectedWorkOrderRef.current === recovery.workOrderId;
     const reason = "A newer Fleet portal refresh completed while this update was in progress.";
     setWorkRecovery({...recovery,reason});
     setSavedMessage("");
-    setActionError(`${reason} Check Current Server State before making another update. Nothing was replayed.`);
+    if (isSameOpenJob) {
+      setActionError(`${reason} Check Current Server State before making another update. Nothing was replayed.`);
+    } else {
+      notifyRecoveryOnCurrentView("An earlier mechanic request is still being verified. Check its current server state before starting or saving another job.");
+    }
   };
 
   const startJob = async () => {
