@@ -5,6 +5,7 @@ import {SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory} from "../
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from "../base44/shared/salesHistorySnapshotGuard.mjs";
 import {classifySalesHistoryPendingAudits} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
 import {projectPendingSalesAuditForAdmin} from "../base44/shared/salesAuditAdminReview.mjs";
+import {verifyPendingSalesAuditReviewSnapshot} from "../base44/shared/salesAuditReviewSnapshot.mjs";
 
 let tests=0;
 function check(value,label){assert.ok(value,label);tests++;}
@@ -38,6 +39,8 @@ equal(snapshot.entries.length,2,"Only pending audit entries for the selected Wor
 equal(snapshot.entries[0].field_name,"sales_last_follow_up_outcome","Matching follow-up outcome identified.");
 equal(snapshot.entries[0].timing,"aged","Older pending audit classifies as aged.");
 equal(snapshot.entries[0].matching_current_value,true,"Current value agreement is identified without claiming successful save.");
+equal(snapshot.entries[0].save_outcome,"unknown","Matching current value never asserts a completed save.");
+equal(snapshot.entries[0].operation_receipt,"unavailable","Field audit is not a correlated save-operation receipt.");
 equal(snapshot.entries[1].matching_current_value,false,"Mismatching proposed value remains explicitly uncertain.");
 equal(snapshot.entries[1].timing,"recent","Recently created audit marked recent.");
 equal(snapshot.has_more,true,"Projection conveys incomplete read coverage.");
@@ -77,7 +80,8 @@ const ctx={createClientFromRequest:()=>sdk,measureSyncEntities:x=>x,
  beginSyncTraceStorage:async()=>{},
  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
- classifySalesHistoryPendingAudits,projectPendingSalesAuditForAdmin,Response,
+ classifySalesHistoryPendingAudits,projectPendingSalesAuditForAdmin,
+ verifyPendingSalesAuditReviewSnapshot,Response,
 };
 runInNewContext(source.replace(/^import .*;\s*$/gm,"")
  .replace("export default async function(req) {","async function testDefault(req) {")
@@ -98,13 +102,13 @@ equal(result.entries.length,2,"Server projection excludes private/unrelated evid
 equal(result.has_more,true,"Admin is told evidence beyond the first page exists.");
 equal(result.work_order_version,"v1","Admin read returns verified WorkOrder version.");
 equal(getCalls,2,"Admin read double-checks WorkOrder version around query.");
-equal(pendingCalls,1,"Admin review performs only a single pending audit query.");
+equal(pendingCalls,2,"Admin review rechecks pending audit evidence with two scoped reads.");
 equal(historyCalls,0,"Admin review does not scan legacy archives.");
 equal(writeCalls,0,"Admin review never writes any WorkOrders or audit rows.");
 check(!JSON.stringify(result).includes("PRIVATE-"),"Server returns no secret audit values.");
 response=await ctx.reviewHandler(request("Order"));
 equal(response.status,400,"Audit review cannot be used against Order records.");
-equal(pendingCalls,1,"Invalid entity cannot trigger audit query.");
+equal(pendingCalls,2,"Invalid entity cannot trigger audit query.");
 mutateVersionMidRead=true;
 response=await ctx.reviewHandler(request());
 equal(response.status,409,"Concurrent WorkOrder edit invalidates stale admin evidence.");
