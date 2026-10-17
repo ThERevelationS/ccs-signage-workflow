@@ -5,6 +5,14 @@
     "event_key": {
       "type": "string"
     },
+    "save_attempt_id": {
+      "type": "string",
+      "description": "Opaque correlation ID for field audit events prepared in one local WorkOrder save attempt; not proof of successful write."
+    },
+    "save_attempt_baseline_version": {
+      "type": "string",
+      "description": "WorkOrder updated_date read before local save CAS; not a commit receipt."
+    },
     "entity_type": {
       "type": "string",
       "enum": [
