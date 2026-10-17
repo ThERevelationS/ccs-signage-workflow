@@ -1730,7 +1730,7 @@ export default function UserManagement() {
                     <Label>Full Name</Label>
                     <Input
                       value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      onChange={(e) => changeAccountDraft({ full_name: e.target.value })}
                       placeholder="Enter full name"
                       className="mt-1"
                     />
@@ -1741,7 +1741,7 @@ export default function UserManagement() {
                       <Label>Username (for Time Clock)</Label>
                       <Input
                         value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                        onChange={(e) => changeAccountDraft({ username: e.target.value.toLowerCase().replace(/\s/g, '') })}
                         placeholder="e.g., jsmith"
                         className="mt-1"
                       />
@@ -1753,7 +1753,7 @@ export default function UserManagement() {
                         type="password"
                         value={formData.password_hash}
                         onChange={(e) => {
-                          setFormData({ ...formData, password_hash: e.target.value });
+                          changeAccountDraft({ password_hash: e.target.value });
                           setPasswordRetryConfirmed(false);
                         }}
                         placeholder={formData.password_hash ? "••••••••" : "Set password"}
@@ -1767,12 +1767,11 @@ export default function UserManagement() {
                     <Label>Role</Label>
                     <Select
                       value={formData.role}
-                      onValueChange={(val) => setFormData({ 
-                        ...formData, 
+                      onValueChange={(val) => changeAccountDraft({
                         role: val,
-                        can_order_export: val === 'admin' ? formData.can_order_export : false,
+                        can_order_export: val === 'admin' ? activeAccountDraft.current.can_order_export : false,
                         // Auto-enable resources for admins
-                        can_view_resources: val === 'admin' ? true : formData.can_view_resources
+                        can_view_resources: val === 'admin' ? true : activeAccountDraft.current.can_view_resources
                       })}
                     >
                       <SelectTrigger className="mt-1">
@@ -1803,11 +1802,11 @@ export default function UserManagement() {
                           <Checkbox
                             checked={formData.sales_roles?.includes(role) || false}
                             onCheckedChange={(checked) => {
-                              const currentRoles = formData.sales_roles || [];
+                              const currentRoles = activeAccountDraft.current.sales_roles || [];
                               const newRoles = checked
                                 ? [...currentRoles, role]
                                 : currentRoles.filter(r => r !== role);
-                              setFormData({ ...formData, sales_roles: newRoles });
+                              changeAccountDraft({ sales_roles: newRoles });
                             }}
                           />
                           <label className="text-sm">{role}</label>
@@ -1827,7 +1826,7 @@ export default function UserManagement() {
                         <Label className="text-sm">Employment Type</Label>
                         <Select
                           value={formData.employment_type || "hourly"}
-                          onValueChange={(val) => setFormData({ ...formData, employment_type: val })}
+                          onValueChange={(val) => changeAccountDraft({ employment_type: val })}
                         >
                           <SelectTrigger className="mt-1 bg-white">
                             <SelectValue />
@@ -1843,7 +1842,7 @@ export default function UserManagement() {
                         <div className="flex items-start gap-2">
                           <Checkbox
                             checked={formData.can_work_pause === true}
-                            onCheckedChange={(checked) => setFormData({ ...formData, can_work_pause: checked === true })}
+                            onCheckedChange={(checked) => changeAccountDraft({ can_work_pause: checked === true })}
                           />
                           <div>
                             <label className="text-sm font-medium">Allow Work Pause</label>
@@ -1861,7 +1860,7 @@ export default function UserManagement() {
                         <Checkbox
                           checked={formData.can_import_export || false}
                           onCheckedChange={(checked) => {
-                            setFormData({ ...formData, can_import_export: checked });
+                            changeAccountDraft({ can_import_export: checked });
                           }}
                         />
                         <label className="text-sm">Can Import/Export Data</label>
@@ -1871,7 +1870,7 @@ export default function UserManagement() {
                           <Checkbox
                             id="admin-order-form-export"
                             checked={formData.can_order_export === true}
-                            onCheckedChange={(checked) => setFormData({ ...formData, can_order_export: checked === true })}
+                            onCheckedChange={(checked) => changeAccountDraft({ can_order_export: checked === true })}
                           />
                           <div>
                             <label htmlFor="admin-order-form-export" className="text-sm font-medium">Order Form: Show Export button</label>
@@ -1884,7 +1883,7 @@ export default function UserManagement() {
                           checked={formData.role === 'admin' || formData.can_view_resources || false}
                           disabled={formData.role === 'admin'}
                           onCheckedChange={(checked) => {
-                            setFormData({ ...formData, can_view_resources: checked });
+                            changeAccountDraft({ can_view_resources: checked });
                           }}
                         />
                         <label className="text-sm">Can View Resources Page</label>
