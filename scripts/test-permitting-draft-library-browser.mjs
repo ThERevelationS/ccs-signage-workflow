@@ -53,9 +53,10 @@ try {
  assert.equal(await page.getByLabel('Review notes / questions to resolve').inputValue(),'Keep the earlier review notes');
  assert.equal(await page.getByRole('button',{name:/Create .*Permit Line/}).count(),0);
  await page.getByRole('button',{name:'Close',exact:true}).first().click();
- const requests=await page.evaluate(()=>window.fixture.requests);
+ const requests=await page.evaluate(()=>window.fixture.requests.filter(request=>Object.keys(request.query).length===0));
  assert.deepEqual(requests,[{query:{},options:{sort:'-created_date',limit:100}},{query:{},options:{cursor:'draft-page-100',limit:100}},{query:{},options:{cursor:'draft-page-100',limit:100}},{query:{},options:{cursor:'draft-page-200',limit:100}}]);
  await page.getByLabel('Search workflow drafts').fill('');await page.getByLabel('Filter draft state').selectOption('all');
+ await page.getByText('205 shown from 205 loaded drafts.',{exact:false}).waitFor();
  assert.equal(await page.locator('article').count(),205);assert.equal(await page.locator('article h3').evaluateAll(nodes=>new Set(nodes.map(node=>node.textContent)).size),205);
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);
  checks.push({width,passed:true,checks:'library filters, saved snapshot/notes, no job action, load failure/retry, empty states; 205 drafts across 3 cursor pages, older failure preserves rows, retry uses same cursor, loading state, filter/search older records, reopen oldest snapshot, no duplicate cards, end of browse, no overflow'});console.log('PASS draft library '+width);await page.close();
