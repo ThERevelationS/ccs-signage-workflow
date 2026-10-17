@@ -41,10 +41,22 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const mountedRef = useRef(true);
+  const scopeKey = JSON.stringify([email, String(sessionToken || "")]);
+  const scopeRef = useRef(scopeKey);
+  scopeRef.current = scopeKey;
+  const statusSequenceRef = useRef(0);
 
   const loadStatus = useCallback(async () => {
+    const requestScope = scopeKey;
+    const requestSequence = ++statusSequenceRef.current;
+    const isCurrent = () => mountedRef.current &&
+      requestSequence === statusSequenceRef.current &&
+      scopeRef.current === requestScope;
     if (!email || !sessionToken) {
-      if (mountedRef.current) setStatus(null);
+      if (isCurrent()) {
+        setStatus(null);
+        setError("");
+      }
       return null;
     }
     try {
@@ -55,20 +67,20 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
+      if (!isCurrent()) return null;
       if (data?.status === "clocked_in" && !data?.transition && ["working", "paused"].includes(data?.work_pause_status)) {
         clearRequestId("work_pause_start", email);
         clearRequestId("work_pause_resume", email);
       }
-      if (mountedRef.current) {
-        setStatus(data);
-        setError("");
-      }
+      setStatus(data);
+      setError("");
       return data;
     } catch (err) {
-      if (mountedRef.current) setError(err?.response?.data?.error || err?.message || "Work Pause status could not be verified.");
+      if (!isCurrent()) return null;
+      setError(err?.response?.data?.error || err?.message || "Work Pause status could not be verified.");
       return null;
     }
-  }, [email, sessionToken]);
+  }, [email, sessionToken, scopeKey]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -94,6 +106,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mountedRef.current = false;
+      statusSequenceRef.current += 1;
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);

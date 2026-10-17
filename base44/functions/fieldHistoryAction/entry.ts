@@ -54,11 +54,12 @@ async function fieldHistoryHandler(req) {
     // pending-audit diagnostics. Enforce before any service-role record reads.
     if(body.action==='sales_audit_review' && actor.role!=='admin')
       return Response.json({error:'Administrator access required.'},{status:403});
+    if(body.action==='sales_audit_review' && type!=='WorkOrder')
+      return Response.json({error:'Sales audit review requires a WorkOrder.'},{status:400});
     await beginSyncTraceStorage(base44);
     const entity=base44.asServiceRole.entities[type], record=await entity.get(body.entity_id);
     if(!record)return Response.json({error:'Record not found.'},{status:404});
     if(body.action==='sales_audit_review') {
-      if(type!=='WorkOrder')return Response.json({error:'Sales audit review requires a WorkOrder.'},{status:400});
       const version=validateSalesHistoryPageVersion(record);
       const pending=await base44.asServiceRole.entities.FieldAudit.filter({
         entity_type:'WorkOrder',entity_id:record.id,status:'pending',
