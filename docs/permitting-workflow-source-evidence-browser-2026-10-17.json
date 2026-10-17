@@ -1,0 +1,20 @@
+{
+  "mode": "actual UI; synthetic saved draft/source/text API fixtures; production CSS; external requests blocked; not authenticated employee acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "actual library/designer/history, both snapshot citations and source contexts, fingerprint match/mismatch/unknown, full quotes, explicit page text reads, same-record retries, missing/foreign/unlinked source, unsafe URLs omitted, late read ignored, preserved draft/comparison/focus, no snapshot mutations or job actions or external requests or overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "actual library/designer/history, both snapshot citations and source contexts, fingerprint match/mismatch/unknown, full quotes, explicit page text reads, same-record retries, missing/foreign/unlinked source, unsafe URLs omitted, late read ignored, preserved draft/comparison/focus, no snapshot mutations or job actions or external requests or overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "actual library/designer/history, both snapshot citations and source contexts, fingerprint match/mismatch/unknown, full quotes, explicit page text reads, same-record retries, missing/foreign/unlinked source, unsafe URLs omitted, late read ignored, preserved draft/comparison/focus, no snapshot mutations or job actions or external requests or overflow"
+    }
+  ]
+}

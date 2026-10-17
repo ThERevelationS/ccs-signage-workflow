@@ -75,7 +75,7 @@ try {
  dialog=page.getByRole('dialog',{name:'Saved citation evidence',exact:true});await dialog.getByRole('alert').waitFor();assert.equal(await dialog.getByRole('region',{name:'Loaded exact source details'}).count(),0);
  await dialog.getByRole('button',{name:'Return to draft',exact:true}).click();
  await comparison.getByRole('button',{name:'Open opened citation 3 source',exact:true}).click();
- dialog=page.getByRole('dialog',{name:'Saved citation evidence',exact:true});await dialog.getByRole('heading',{name:'Exact cited version is unverified',exact:true}).waitFor();
+ dialog=page.getByRole('dialog',{name:'Saved citation evidence',exact:true});await dialog.getByRole('heading',{name:'Source metadata differs or cannot match',exact:true}).waitFor();
  assert.equal(await dialog.getByRole('link').count(),0);
  await page.keyboard.press('Escape');await dialog.waitFor({state:'detached'});
  await comparison.getByRole('button',{name:'Open opened citation 4 source',exact:true}).click();
