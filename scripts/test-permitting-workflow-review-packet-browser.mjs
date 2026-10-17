@@ -69,11 +69,11 @@ try {
    assert.ok(!pdf.text.includes('UNRELATED_CLIENT_SECRET_TOKEN'));assert.ok(!pdf.text.includes('Print / Save as PDF'));assert.ok(!pdf.text.includes('AI Permit Workflow Designer'));
    checks.push({width,printedPages:pdf.pages,pdf:'actual Chromium PDF text verified; complete long quotes/notes and saved metadata; no unrelated client/navigation content'});
  }
- await page.keyboard.press('Escape');await packet.waitFor({state:'detached'});assert.ok(await packetButton.evaluate(node=>node===document.activeElement));
+ await page.keyboard.press('Escape');await packet.waitFor({state:'detached'});await page.waitForFunction(()=>document.activeElement?.textContent==='Open saved review packet');assert.ok(await packetButton.evaluate(node=>node===document.activeElement));
  assert.equal(await page.getByLabel('Review notes / questions to resolve').inputValue(),await page.evaluate(()=>window.fixture.rows[0].review_notes));
  // Reopen/return retains the saved review, then edited revisions have no print action until saved.
  await packetButton.click();await packet.waitFor();await page.evaluate(()=>{window.print=null;});await packet.getByRole('button',{name:'Print / Save as PDF',exact:true}).click();await packet.getByRole('alert').filter({hasText:'Printing is unavailable'}).waitFor();
- await packet.getByRole('button',{name:'Return to saved draft',exact:true}).click();assert.ok(await packetButton.evaluate(node=>node===document.activeElement));
+ await packet.getByRole('button',{name:'Return to saved draft',exact:true}).click();await page.waitForFunction(()=>document.activeElement?.textContent==='Open saved review packet');assert.ok(await packetButton.evaluate(node=>node===document.activeElement));
  await page.getByRole('button',{name:'Create editable revision',exact:true}).click();await page.getByLabel('Action for step 1',{exact:true}).fill('UNSAVED_ACTION_TOKEN');
  assert.equal(await page.getByRole('button',{name:'Open saved review packet',exact:true}).count(),0);
  await page.getByRole('button',{name:'Close',exact:true}).first().click();
