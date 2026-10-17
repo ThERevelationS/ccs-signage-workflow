@@ -1,0 +1,25 @@
+{
+  "mode": "actual UI and Chromium PDF; synthetic immutable draft API persisted in test-session storage for reload checks; production CSS; external requests blocked; not authenticated employee acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "actual saved library/designer/revision/checklist/history/packet; missing legacy review explicit; reason and follow-up consistency gates; cancel leave preserves edits and unload guard; save failure/retry; immutable append preserving source/citations/basis/gaps; reload/reopen; print evidence and long review notes; changed proposal invalidates earlier review; no job/provider/AI/source calls or overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "actual saved library/designer/revision/checklist/history/packet; missing legacy review explicit; reason and follow-up consistency gates; cancel leave preserves edits and unload guard; save failure/retry; immutable append preserving source/citations/basis/gaps; reload/reopen; print evidence and long review notes; changed proposal invalidates earlier review; no job/provider/AI/source calls or overflow"
+    },
+    {
+      "width": 1280,
+      "pdfPages": 9,
+      "pdf": "actual saved review annotations, long notes, evidence and uncertainty retained; unrelated UI excluded"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "actual saved library/designer/revision/checklist/history/packet; missing legacy review explicit; reason and follow-up consistency gates; cancel leave preserves edits and unload guard; save failure/retry; immutable append preserving source/citations/basis/gaps; reload/reopen; print evidence and long review notes; changed proposal invalidates earlier review; no job/provider/AI/source calls or overflow"
+    }
+  ]
+}
