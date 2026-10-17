@@ -74,13 +74,14 @@ for(const action of ["start","save"]){
     assert.equal(h.ctx.workRecovery?.workOrderId,"wo-A","A's uncertain marker remains visible after the job switch");
     assert.equal(h.ctx.workRecovery?.requestId,h.recovery.requestId);
     assert.equal(h.storedMarker?.workOrderId,"wo-A","Late acknowledgment must not silently discard A's durable marker");
+    assert.equal(h.errors.at(-1),"An earlier mechanic request is still being verified. Check its current server state before starting or saving another job.");
+    assert.deepEqual(h.snapshots,[],"A's response cannot project into B");
+    assert.deepEqual(h.draftClears,[],"A's response cannot clear B's draft");
     const nextRequest=h.run();
     await nextRequest;
     assert.equal(h.calls.length,1,"B Start/Save must stay blocked until A's receipt is checked");
     assert.equal(h.storedMarker?.workOrderId,"wo-A","A's single durable marker must not be overwritten by B");
-    assert.deepEqual(h.snapshots,[],"A's response cannot project into B");
-    assert.deepEqual(h.draftClears,[],"A's response cannot clear B's draft");
-    assert.equal(h.errors.at(-1),"An earlier mechanic request is still being verified. Check its current server state before starting or saving another job.");
+    assert.match(h.errors.at(-1),/Check the current server state before (trying another work-order update|saving progress again)/);
     assert.equal(h.busy.at(-1),"");
   });
 }
