@@ -71,7 +71,6 @@ assert.equal(calls[1].payload.target_email, 'first@synthetic.invalid');
 assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/,
   'An event payload for another employee must not show Resume Work while signed-session status is unresolved');
 assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Resume Work/);
-console.log('PASS foreign Work Pause change event cannot replace signed employee status');
 await act(async () => { calls[1].resolve({ data: {
   success: true, user: { email: 'first@synthetic.invalid' },
   status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
