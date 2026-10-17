@@ -37,6 +37,38 @@ async function clearStoredWorkRecovery(token,recovery) {
     if (pending?.workOrderId === recovery.workOrderId && pending?.action === recovery.action && pending?.requestId === recovery.requestId) sessionStorage.removeItem(key);
   } catch { /* Keeping the marker is safer than discarding unverified recovery state. */ }
 }
+const ESTIMATE_RECOVERY_STORAGE_PREFIX = "ccs_fleet_mechanic_estimate_pending_v1";
+async function estimateRecoveryStorageKey(token) {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return ESTIMATE_RECOVERY_STORAGE_PREFIX + ":" + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2,"0")).join("");
+}
+async function readStoredEstimateRecoveries(token) {
+  const raw = sessionStorage.getItem(await estimateRecoveryStorageKey(token));
+  if (!raw) return [];
+  const pending = JSON.parse(raw);
+  if (!Array.isArray(pending) || pending.length > 100 || pending.some(row =>
+      !row || typeof row.workOrderId !== "string" || !row.workOrderId ||
+      typeof row.reason !== "string" || !row.reason || row.reason.length > 500)) {
+    throw new Error("A previous repair-estimate recovery marker cannot be verified. Check current server state with CCS before retrying.");
+  }
+  return pending;
+}
+async function storeEstimateRecovery(token,recovery) {
+  const key = await estimateRecoveryStorageKey(token);
+  const pending = await readStoredEstimateRecoveries(token);
+  const next = pending.filter(row => row.workOrderId !== recovery.workOrderId);
+  next.push({workOrderId:recovery.workOrderId,reason:String(recovery.reason || "Current repair-estimate ownership must be checked before retrying.").slice(0,500)});
+  sessionStorage.setItem(key,JSON.stringify(next.slice(-100)));
+}
+async function clearStoredEstimateRecovery(token,workOrderId) {
+  try {
+    const key = await estimateRecoveryStorageKey(token);
+    const pending = await readStoredEstimateRecoveries(token);
+    const next = pending.filter(row => row.workOrderId !== workOrderId);
+    if (next.length) sessionStorage.setItem(key,JSON.stringify(next));
+    else sessionStorage.removeItem(key);
+  } catch { /* Keeping the marker is safer than discarding unverified recovery state. */ }
+}
 
 function initialToken() {
   if (typeof window === "undefined") return "";
@@ -97,6 +129,7 @@ export default function FleetMechanic() {
   const workRecoveryRequestRef = useRef(0);
   const portalAppliedEpochRef = useRef(0);
   const portalPayloadRef = useRef(null);
+  const estimateRecoveryByWorkOrderRef = useRef(new Map());
   const selectedWorkOrderRef = useRef(null);
   const estimateCapabilityRef = useRef(null);
   const saveCapabilityRef = useRef(null);
@@ -195,7 +228,9 @@ export default function FleetMechanic() {
     try {
       const result = await fetchPortalPayload();
       const pending = quiet ? null : await readStoredWorkRecovery(token);
+      const estimateRecoveries = await readStoredEstimateRecoveries(token);
       if (requestId !== portalRequestRef.current) return;
+      estimateRecoveryByWorkOrderRef.current = new Map(estimateRecoveries.map(row => [row.workOrderId,row]));
       const selectedId = selectedWorkOrderRef.current;
       const previousPayload = portalPayloadRef.current;
       const previousEstimate = (previousPayload?.repair_estimates || []).find(row => row.work_order_id === selectedId) || null;
@@ -214,6 +249,14 @@ export default function FleetMechanic() {
       const estimateChanged = quiet && previousPayload && selectedId &&
         estimateSignature(previousEstimate) !== estimateSignature(latestEstimate);
       applyPortalPayload(result);
+      const refreshedSelectedId = selectedWorkOrderRef.current;
+      const refreshedSelectedIsVisible = refreshedSelectedId &&
+        [...(result?.active_work_orders || []), ...(result?.recent_completed || [])].some(row => row.id === refreshedSelectedId);
+      if (refreshedSelectedIsVisible && result?.portal?.capabilities?.estimates) {
+        const pendingEstimateRecovery = estimateRecoveryByWorkOrderRef.current.get(refreshedSelectedId) || null;
+        setEstimateRecovery(pendingEstimateRecovery);
+        if (pendingEstimateRecovery) setActionError(pendingEstimateRecovery.reason);
+      }
       if (estimateChanged && selectedWorkOrderRef.current === selectedId &&
           result?.portal?.capabilities?.estimates) {
         const reason = "CCS changed this repair estimate since your last view. Unsaved estimate entries are preserved but locked. Check Current Server State to load the latest CCS version before editing or submitting; checking will replace these entries.";
@@ -257,6 +300,9 @@ export default function FleetMechanic() {
     setSelected(workOrder);
     setForm({ actual_hours: workOrder.actual_hours ?? "", corrective_action: workOrder.corrective_action || "", mechanic_note: "" });
     setEstimateForm(estimateSeed(estimateByWorkOrder[workOrder.id]));
+    const pendingEstimateRecovery = estimateRecoveryByWorkOrderRef.current.get(workOrder.id) || null;
+    setEstimateRecovery(pendingEstimateRecovery);
+    if (pendingEstimateRecovery) setActionError(pendingEstimateRecovery.reason);
     photos.forEach(row => URL.revokeObjectURL(row.preview));
     setPhotos([]);
     setActionError("");
@@ -427,7 +473,10 @@ export default function FleetMechanic() {
     const openedDraftEpoch = photoDraftEpochRef.current;
     const recoveryReason = reason || "Current repair-estimate state must be verified.";
     const requestId = ++portalRequestRef.current;
-    setEstimateRecovery({workOrderId, reason: recoveryReason});
+    const pendingRecovery = {workOrderId,reason:recoveryReason};
+    estimateRecoveryByWorkOrderRef.current.set(workOrderId,pendingRecovery);
+    setEstimateRecovery(pendingRecovery);
+    await storeEstimateRecovery(token,pendingRecovery).catch(() => {});
     setBusy("estimate-refresh");
     setRefreshing(true);
     try {
@@ -471,6 +520,8 @@ export default function FleetMechanic() {
         setActionError(warning);
         return !changedOwnership;
       }
+      await clearStoredEstimateRecovery(token,workOrderId);
+      estimateRecoveryByWorkOrderRef.current.delete(workOrderId);
       setEstimateRecovery(null);
       if (isSameOpenJob) {
         if (showRecoveredMessage) setSavedMessage("");
@@ -523,6 +574,14 @@ export default function FleetMechanic() {
     const openedPortalEpoch = portalAppliedEpochRef.current;
     const requestStillCurrent = () => selectedWorkOrderRef.current === workOrderId &&
       portalAppliedEpochRef.current === openedPortalEpoch;
+    const pendingRecovery = {workOrderId,reason:"This repair-estimate request may have committed. Check current server ownership before saving or submitting again."};
+    try {
+      await storeEstimateRecovery(token,pendingRecovery);
+      estimateRecoveryByWorkOrderRef.current.set(workOrderId,pendingRecovery);
+    } catch {
+      setActionError("This browser cannot retain the repair-estimate recovery marker. The request was not sent. Enable session storage or contact CCS.");
+      return;
+    }
     setBusy(submit ? "estimate-submit" : "estimate-save"); setActionError(""); setSavedMessage("");
     try {
       const payloadEstimate = {
