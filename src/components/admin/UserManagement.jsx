@@ -106,6 +106,13 @@ export default function UserManagement() {
   });
   const activeAccountDraft = useRef(formData);
   activeAccountDraft.current = formData;
+  // Keep an immediate draft reference for Account editor events. State renders
+  // may be batched while a successful Save is awaiting its final directory read.
+  const changeAccountDraft = changes => {
+    const next = { ...activeAccountDraft.current, ...changes };
+    activeAccountDraft.current = next;
+    setFormData(next);
+  };
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
   const passwordResetInFlight = useRef(false);
   const passwordResetOwner = useRef(null);
@@ -867,8 +874,36 @@ export default function UserManagement() {
         setAccountSaveNotice("The requested changes were confirmed. New edits made during saving remain in your draft.");
         return;
       }
-      await loadUsers();
+      // Directory verification is read-only; a failed or superseded refresh
+      // cannot authorize closing the editor after a confirmed Account save.
+      const refreshedRows = await loadUsers();
       if (!ownsUpdate()) return;
+      const verifiedRows = refreshedRows?.filter(row =>
+        row.id === savedUser.id && row.email === savedUser.email && row.updated_date);
+      if (!verifiedRows || verifiedRows.length !== 1) {
+        // A confirmed password must not be resent after a failed directory
+        // refresh. Clear only that confirmed password draft, never newer edits.
+        setFormData(current => ({
+          ...current, password_hash: current.password_hash === newPassword ? "" : current.password_hash
+        }));
+        setUserMutationError("Your changes were confirmed, but the employee directory refresh could not be verified. The editor and any newer drafts are preserved. Retry the directory read without resending any changes.");
+        return;
+      }
+      // A user might have edited an Account field while the directory request
+      // was pending. Re-evaluate *after* the await, not just before it.
+      const afterRefresh = activeAccountDraft.current;
+      const remainingAfterRefresh = {
+        ...afterRefresh,
+        password_hash: afterRefresh.password_hash === newPassword ? "" : afterRefresh.password_hash
+      };
+      if (hasUnsavedAdminAccountDraft(accountDraftBaseline.current.values, remainingAfterRefresh) ||
+          hasProtectedHrDraft()) {
+        setFormData(current => ({
+          ...current, password_hash: current.password_hash === newPassword ? "" : current.password_hash
+        }));
+        setAccountSaveNotice("Your changes were confirmed and the directory was refreshed. Edits made while refreshing remain in this editor.");
+        return;
+      }
       clearEditorDraftTracking();
       setIsDialogOpen(false);
       setEditingUser(null);
