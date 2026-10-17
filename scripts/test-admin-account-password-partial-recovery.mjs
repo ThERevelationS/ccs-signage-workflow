@@ -242,7 +242,7 @@ test("Recovery controls show uncertainty, require attestation and never auto-sav
  assert.match(source,/disabled=\{!passwordRetryConfirmed \|\| userMutationSaving/);
  assert.match(source,/onClick=\{retryUnverifiedAccountPassword\}/);
  assert.match(source,/onClick=\{stopUnverifiedAccountPasswordRetry\}/);
- assert.match(source,/!!accountSaveRecovery \|\| !!accountWriteRecovery \|\| isLoading/);
+ assert.match(source,/!!accountSaveRecovery \|\| !!accountWriteRecovery \|\| !!postSaveRefreshPending \|\| isLoading/);
  assert.match(source,/setPasswordRetryConfirmed\(false\)/);
  assert.doesNotMatch(retryCode,/updateAuthorizedUserAdmin|setEditingUser\(null\)|setIsDialogOpen\(false\)/);
  assert.doesNotMatch(stopCode,/updateAuthorizedUserAdmin|setPasswordFn\(/);
