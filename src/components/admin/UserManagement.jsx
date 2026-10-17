@@ -2330,7 +2330,7 @@ export default function UserManagement() {
                 {userMutationSaving ? "Checking directory..." : "Retry directory read (no writes)"}
               </Button>
             </div>
-          )
+          )}
           {accountSaveNotice && (
             <p className="text-sm text-blue-800" role="status">{accountSaveNotice}</p>
           )}
