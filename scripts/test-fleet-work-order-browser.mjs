@@ -118,18 +118,27 @@ try {
     await page.evaluate(() => {
       window.__fleetBrowserFixture.orders.find((row) => row.id === "wo-open").title = "Newer synthetic server title";
     });
-    await page.getByRole("combobox", { name: "Filter by work order status" }).selectOption("all");
-    await page.getByRole("button", { name: "Edit", exact: true }).click();
-    const secondDialog = page.getByRole("dialog", { name: "Edit WO-SYNTH-OPEN" });
-    await secondDialog.getByRole("button", { name: "Refresh", exact: true }).first().click();
+    await page.getByRole("button", { name: "Close Fleet work order dialog" }).waitFor({ state: "hidden" });
+    await page.evaluate(() => { window.__fleetBrowserFixture.failNextWorkOrderList = true; });
+    await page.getByRole("button", { name: "New Fleet Work Order" }).click();
+    const createDialog = page.getByRole("dialog", { name: "New Fleet Work Order" });
+    await createDialog.getByRole("combobox", { name: "Equipment" }).selectOption("eq-synthetic");
+    await createDialog.getByRole("textbox", { name: "Title" }).fill("Newer synthetic creation");
+    await createDialog.getByRole("button", { name: "Create Work Order" }).click();
+    await createDialog.waitFor({ state: "hidden" });
+    const retry = page.getByRole("button", { name: "Retry refresh" });
+    await retry.waitFor();
+    await retry.click();
+    await retry.waitFor({ state: "hidden" });
     await page.waitForFunction((expected) => window.__fleetBrowserFixture.workOrderListCompleted === expected + 1, initialStarted);
-    await secondDialog.getByRole("button", { name: "Close Fleet work order dialog" }).click();
     const openRow = page.locator("#fleet-work-order-toggle-wo-open");
     await expectText(openRow, /Newer synthetic server title/);
+    await expectText(page.locator("#fleet-work-order-toggle-wo-created-1"), /Newer synthetic creation/);
 
     await page.evaluate(() => window.__fleetBrowserFixture.releaseNextWorkOrderList());
     await page.waitForFunction((expected) => window.__fleetBrowserFixture.workOrderListCompleted === expected + 2, initialStarted);
     await expectText(openRow, /Newer synthetic server title/);
+    await expectText(page.locator("#fleet-work-order-toggle-wo-created-1"), /Newer synthetic creation/);
 
     async function expectText(locator, pattern) {
       assert.match(await locator.innerText(), pattern);
