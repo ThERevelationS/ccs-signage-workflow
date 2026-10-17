@@ -935,6 +935,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (dateNeededSaveInFlightRef.current || saveInFlightRef.current) {
       throw new Error('An Order save is already running. Retry Date Needed when it finishes.');
     }
+    if (manualPullInFlightRef.current || isPulling) {
+      throw new Error('Wait for the Smartsheet pull to finish before editing Orders.');
+    }
     const before = originalOrdersRef.current[orderId];
     dateNeededSaveInFlightRef.current = true;
     setIsSaving(true);
@@ -1971,7 +1974,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 onContextMenu={(e) => handleContextMenu(e, order, "date_needed", "Date Needed", order.date_needed)}
               >
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
-                  <PopoverTrigger asChild disabled={!isRegistered}>
+                  <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}
                     </button>
@@ -2039,7 +2042,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 onContextMenu={(e) => handleContextMenu(e, order, "date_ordered", "Date Ordered", order.date_ordered)}
               >
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
-                  <PopoverTrigger asChild disabled={!isRegistered}>
+                  <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_ordered_option || safeFormatDate(order.date_ordered, "MM/dd/yy")}
                     </button>
@@ -2138,7 +2141,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 onContextMenu={(e) => handleContextMenu(e, order, "date_received", "Date Received", order.date_received)}
               >
                 <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
-                  <PopoverTrigger asChild disabled={!isRegistered}>
+                  <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.receipt_option || safeFormatDate(order.date_received, "MM/dd/yy")}
                     </button>
@@ -2164,7 +2167,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       <div className="flex flex-wrap gap-1.5">
                         {receiptOptions.map((option) => (
                           <Button key={option} type="button" size="sm"
-                            variant={order.receipt_option === option ? 'default' : 'outline'} disabled={isSaving}
+                            variant={order.receipt_option === option ? 'default' : 'outline'} disabled={isSaving || isPulling}
                             onClick={async () => {
                               try {
                                 setSaveError('');
