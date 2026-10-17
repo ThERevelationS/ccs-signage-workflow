@@ -493,6 +493,22 @@ export default function UserManagement() {
         choices: accountFieldChoices
       })
     : null;
+  const postSaveResolutionPreview = postSaveRefreshPending?.stage === "review" &&
+    postSaveRefreshPending.latest && postSaveRefreshPending.saved
+    ? planAccountFieldResolution({
+        baseline: postSaveRefreshPending.saved,
+        attempted: postSaveRefreshPending.attempted,
+        latest: postSaveRefreshPending.latest,
+        draft: formData,
+        choices: accountFieldChoices
+      })
+    : null;
+  const choosePostSaveField = (field, value) => {
+    if (!postSaveResolutionPreview?.fields.some(item => item.key === field) ||
+        !["latest", "mine"].includes(value) || userUpdateInFlight.current) return;
+    setAccountFieldChoices(current => ({...current,[field]:value}));
+    setConfirmAccountReconciliation(false);
+  };
   const chooseAccountField = (field, value) => {
     if (!accountResolutionPreview?.fields.some(item => item.key === field) ||
         !["latest", "mine"].includes(value) || userUpdateInFlight.current) return;
@@ -503,7 +519,7 @@ export default function UserManagement() {
   useEffect(() => {
     // An explicit acknowledgment covers only the fields as they stood at
     // confirmation time. Later Account edits require fresh review.
-    if (accountWriteRecovery?.stage === "review") {
+    if (accountWriteRecovery?.stage === "review" || postSaveRefreshPending?.stage === "review") {
       setConfirmAccountReconciliation(false);
     }
   }, [formData]);
@@ -892,13 +908,33 @@ export default function UserManagement() {
       const verifiedRows = refreshedRows?.filter(row =>
         row.id === savedUser.id && row.email === savedUser.email && row.updated_date);
       if (!verifiedRows || verifiedRows.length !== 1) {
-        setPostSaveRefreshPending({ sessionToken, id: savedUser.id, email: savedUser.email });
+        setPostSaveRefreshPending({
+          sessionToken, id: savedUser.id, email: savedUser.email,
+          saved: savedUser, attempted: accountAttempt, stage: "needs_read"
+        });
         // A confirmed password must not be resent after a failed directory
         // refresh. Clear only that confirmed password draft, never newer edits.
         setFormData(current => ({
           ...current, password_hash: current.password_hash === newPassword ? "" : current.password_hash
         }));
         setUserMutationError("Your changes were confirmed, but the employee directory refresh could not be verified. The editor and any newer drafts are preserved. Retry the directory read without resending any changes.");
+        return;
+      }
+      // A newer version must be explicitly reviewed, not silently accepted
+      // as the version that was just confirmed. Include semantic field checks
+      // for backends that do not always advance updated_date.
+      if (!isSameVerifiedAccountSnapshot(savedUser, verifiedRows[0])) {
+        setPostSaveRefreshPending({
+          sessionToken, id: savedUser.id, email: savedUser.email,
+          saved: savedUser, attempted: accountAttempt,
+          stage: "review", latest: verifiedRows[0]
+        });
+        setConfirmAccountReconciliation(false);
+        setAccountFieldChoices({});
+        setFormData(current => ({
+          ...current, password_hash: current.password_hash === newPassword ? "" : current.password_hash
+        }));
+        setAccountSaveNotice("Your Account changes were confirmed, but the directory now shows a newer version. Review field-level differences before using its values.");
         return;
       }
       // A user might have edited an Account field while the directory request
