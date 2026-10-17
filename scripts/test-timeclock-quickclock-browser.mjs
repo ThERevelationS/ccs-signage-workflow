@@ -41,7 +41,7 @@ async function reset() {
     assert.equal(result.body.success, true, JSON.stringify(result.body));
   }
   h.setServerNow("2026-10-16T16:00:00.000Z");
-  fixture = { h, invokes: [], drop: "", holdWorkerStatus: false, releaseWorkerStatus: null };
+  fixture = { h, invokes: [], drop: "", holdWorkerStatus: false, releaseWorkerStatus: null, delayedWorkerStatusResult: null };
 }
 const clockOuts = () => fixture.invokes.filter((item) => item.action === "clock_out");
 const completed = () => fixture.h.rows.TimeEntry.filter((row) => row.clock_out);
@@ -72,12 +72,12 @@ function fixturePlugin() {
         const user = tokens.get(payload.session_token);
         assert.ok(user, "Only disposable fixture session identities are permitted");
         fixture.invokes.push(structuredClone(payload));
-        if (payload.action === "status" && payload.session_token === "synthetic-worker" && fixture.holdWorkerStatus) {
-          await new Promise((resolve) => { fixture.releaseWorkerStatus = resolve; });
-        }
+        const isDelayedWorkerStatus = payload.action === "status" && payload.session_token === "synthetic-worker" && fixture.holdWorkerStatus;
+        if (isDelayedWorkerStatus) await new Promise((resolve) => { fixture.releaseWorkerStatus = resolve; });
         const drop = payload.action === "clock_out" ? fixture.drop : "";
         if (drop) fixture.drop = "";
         const result = drop === "before" ? null : await fixture.h.invokeAs(user, payload);
+        if (isDelayedWorkerStatus) fixture.delayedWorkerStatusResult = structuredClone(result.body);
         res.statusCode = drop ? 503 : result.status;
         res.setHeader("content-type", "application/json");
         res.end(JSON.stringify(drop ? { simulate_lost_ack: true } : result.body));
@@ -244,7 +244,10 @@ createRoot(document.getElementById("root")).render(params.has("global-pause")
       await page.getByRole("button", { name: "Pause Work", exact: true }).waitFor();
       await waitForFixture(() => Boolean(fixture.releaseWorkerStatus), "delayed prior employee status");
       await page.evaluate(async () => { await fetch("/__release_worker_status"); });
-      await page.getByRole("button", { name: "Resume Work", exact: true }).waitFor({ state: "detached" });
+      await waitForFixture(() => Boolean(fixture.delayedWorkerStatusResult), "prior employee status response");
+      assert.equal(fixture.delayedWorkerStatusResult.work_pause_status, "paused");
+      await page.waitForTimeout(100);
+      assert.equal(await page.getByRole("button", { name: "Resume Work", exact: true }).count(), 0);
       await page.getByRole("button", { name: "Pause Work", exact: true }).waitFor();
       assert.equal(fixture.invokes.filter((item) => item.action === "work_pause_resume").length, 0);
     }, {
