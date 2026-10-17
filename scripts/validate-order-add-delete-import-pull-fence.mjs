@@ -76,3 +76,30 @@ assert.match(ui, /onClick=\{\(\) => deleteOrder\(order\)\}\s*disabled=\{isPullin
 assert.match(ui, /<AlertDialogAction onClick=\{confirmDelete\} disabled=\{isPulling \|\| deleteInFlightRef\.current\}/);
 assert.match(ui, /const pullFromSmartsheet = async \(\) => \{[\s\S]*?addInFlightRef\.current \|\|[\s\S]*?deleteInFlightRef\.current \|\| importInFlightRef\.current/);
 console.log('PASS visible Delete actions disable during pulls and existing pull-start action serialization remains intact');
+
+// Reverse race: an already-started Add, Delete, or import must prevent the
+// pull-only Sync path from reaching Smartsheet. Use actual handler guards.
+for (const busyRef of ['addInFlightRef', 'deleteInFlightRef', 'importInFlightRef']) {
+  let remoteCalls = 0;
+  const locks = {
+    syncInFlightRef: { current: false }, saveInFlightRef: { current: false },
+    dateNeededSaveInFlightRef: { current: false },
+    addInFlightRef: { current: false }, deleteInFlightRef: { current: false },
+    importInFlightRef: { current: false },
+    customerNameDraftOrderRef: { current: null },
+    customerSelectionInFlightRef: { current: false },
+  };
+  locks[busyRef].current = true;
+  const env = {
+    ...locks, readError: '', isRegistered: true,
+    pullOrdersFromSmartsheet: async () => { remoteCalls++; throw Error('Smartsheet must not be called'); },
+    setSaveError: () => { throw Error('No new error should overwrite the active mutation status'); },
+  };
+  const manualPull = isolate('  const pullFromSmartsheet = async () => {',
+    '\n  // Existing internal/manual callers', 'pullFromSmartsheet', env);
+  assert.equal(await manualPull(), false, busyRef + ' must block manual Sync');
+  assert.equal(remoteCalls, 0, 'No remote request during ' + busyRef);
+  assert.equal(locks.syncInFlightRef.current, false);
+  assert.equal(locks[busyRef].current, true, 'The in-progress Order action must keep ownership');
+}
+console.log('PASS in-flight Add, Delete and import each block manual Smartsheet Sync without changing action ownership');
