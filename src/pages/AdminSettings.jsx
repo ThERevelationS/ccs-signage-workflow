@@ -381,23 +381,49 @@ export default function AdminSettings() {
   const adminScrollRef = useRef(null);
   const nestedTabListsRef = useRef({});
   useEffect(() => {
-    // Keep keyboard-selected and deep-linked categories in view without
-    // moving the Admin page itself sideways.
+    // Keep selected categories visible on deep links and after responsive
+    // changes. Do not snap back while someone is swiping through categories.
     const scroller = categoryScrollerRef.current;
     const selected = [...(scroller?.querySelectorAll("[data-admin-category]") || [])]
       .find(button => button.getAttribute("data-admin-category") === activeAdminGroupId);
     if (!selected) return;
-    const bounds = scroller.getBoundingClientRect();
-    const target = selected.getBoundingClientRect();
-    if (target.left < bounds.left) scroller.scrollLeft -= bounds.left - target.left + 4;
-    else if (target.right > bounds.right) scroller.scrollLeft += target.right - bounds.right + 4;
+    let exploringCategories = false;
+    let frame = null;
+    const revealSelected = () => {
+      const bounds = scroller.getBoundingClientRect();
+      const target = selected.getBoundingClientRect();
+      if (target.left < bounds.left) scroller.scrollLeft -= bounds.left - target.left + 4;
+      else if (target.right > bounds.right) scroller.scrollLeft += target.right - bounds.right + 4;
+    };
+    const onLayoutChange = () => {
+      if (exploringCategories || frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        if (scroller.isConnected && selected.isConnected) revealSelected();
+      });
+    };
+    revealSelected();
+    const onExplore = () => { exploringCategories = true; };
+    scroller.addEventListener("wheel", onExplore, { passive: true });
+    scroller.addEventListener("touchmove", onExplore, { passive: true });
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(onLayoutChange) : null;
+    observer?.observe(scroller);
+    window.addEventListener("resize", onLayoutChange);
+    window.addEventListener("orientationchange", onLayoutChange);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", onLayoutChange);
+      window.removeEventListener("orientationchange", onLayoutChange);
+      scroller.removeEventListener("wheel", onExplore);
+      scroller.removeEventListener("touchmove", onExplore);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, [activeAdminGroupId]);
   useEffect(() => {
-    // Radix provides roving keyboard focus. When a nested destination is
-    // restored from history or a saved preference, keep its active trigger in
-    // the Admin scroll area; never scroll the entire document into position.
-    // Move focus only if it was already inside this nested tab bar. In
-    // particular, search, category buttons, and panel forms retain focus.
+    // Radix owns roving tab focus. History may switch the selected trigger
+    // while keyboard focus is inside its list; never steal focus from search,
+    // a form, or another section.
     if (!isUnlocked || !isAdmin) return;
     const list = nestedTabListsRef.current[selectedAdminTab];
     const scrollArea = adminScrollRef.current;
@@ -407,14 +433,64 @@ export default function AdminSettings() {
     if (list.contains(focused) && focused !== active) {
       active.focus({ preventScroll: true });
     }
-    const tabBounds = active.getBoundingClientRect();
-    const areaBounds = scrollArea.getBoundingClientRect();
     const margin = 8;
-    if (tabBounds.top < areaBounds.top + margin) {
-      scrollArea.scrollTop -= areaBounds.top + margin - tabBounds.top;
-    } else if (tabBounds.bottom > areaBounds.bottom - margin) {
-      scrollArea.scrollTop += tabBounds.bottom - areaBounds.bottom + margin;
+    const revealActive = () => {
+      const tabBounds = active.getBoundingClientRect();
+      const areaBounds = scrollArea.getBoundingClientRect();
+      if (tabBounds.top < areaBounds.top + margin) {
+        scrollArea.scrollTop -= areaBounds.top + margin - tabBounds.top;
+      } else if (tabBounds.bottom > areaBounds.bottom - margin) {
+        scrollArea.scrollTop += tabBounds.bottom - areaBounds.bottom + margin;
+      }
+    };
+    const activeIsVisible = () => {
+      const tab = active.getBoundingClientRect();
+      const area = scrollArea.getBoundingClientRect();
+      return tab.top >= area.top - 2 && tab.bottom <= area.bottom + 2;
+    };
+    revealActive();
+    // ResizeObserver catches orientation changes as well as dynamic header /
+    // panel height changes. Only keep the tab visible if it was visible before
+    // the change. Intentionally scrolling into a long panel is not a request
+    // to jump back to its navigation on the next layout update.
+    let keepVisible = activeIsVisible();
+    let frame = null;
+    const onUserScroll = () => {
+      requestAnimationFrame(() => {
+        if (scrollArea.isConnected && active.isConnected) keepVisible = activeIsVisible();
+      });
+    };
+    const onLayoutChange = () => {
+      if (frame !== null || !keepVisible) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        if (!scrollArea.isConnected || !active.isConnected || !keepVisible) return;
+        // Resizes must never call focus(), including when a search box or
+        // content input is active.
+        revealActive();
+        keepVisible = activeIsVisible();
+      });
+    };
+    scrollArea.addEventListener("wheel", onUserScroll, { passive: true });
+    scrollArea.addEventListener("touchend", onUserScroll, { passive: true });
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(onLayoutChange) : null;
+    for (const element of [
+      scrollArea, list, active, list.closest('[role="tabpanel"]'),
+      categoryScrollerRef.current?.parentElement
+    ]) {
+      if (element) observer?.observe(element);
     }
+    window.addEventListener("resize", onLayoutChange);
+    window.addEventListener("orientationchange", onLayoutChange);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", onLayoutChange);
+      window.removeEventListener("orientationchange", onLayoutChange);
+      scrollArea.removeEventListener("wheel", onUserScroll);
+      scrollArea.removeEventListener("touchend", onUserScroll);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, [isUnlocked, isAdmin, selectedAdminTab, selectedAdminSubtab]);
   const handleAdminTabChange = (nextTab, nextSubtab = null) => {
     if (getAccessibleAdminTab(nextTab, isAdmin) !== nextTab) return;
