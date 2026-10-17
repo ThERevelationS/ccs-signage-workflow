@@ -72,6 +72,7 @@ function fixture() {
   get userDirectoryError(){return state.directoryError;},
   hasProtectedHrDraft:()=>state.dirtyHr,
   setAccountSaveNotice:v=>{state.notice=v;},
+  setPostSaveRefreshPending:()=>{},
   setUserMutationError:v=>{state.error=v;},
   setUserMutationSaving:v=>{state.mutationSaving=v;},
   setAccountWriteRecovery:v=>{state.write=v;},
