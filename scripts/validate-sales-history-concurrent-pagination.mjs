@@ -3,7 +3,7 @@ import {readFileSync} from "node:fs";
 import {runInNewContext} from "node:vm";
 import {SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory} from "../base44/shared/salesOpportunityHistory.mjs";
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,SALES_HISTORY_STALE_CODE} from "../base44/shared/salesHistorySnapshotGuard.mjs";
-import {salesHistoryHasUnfinalizedMatchingAudit} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
+import {classifySalesHistoryPendingAudits} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
 
 let checks=0;
 const ok=(v,l)=>{assert.ok(v,l);checks++};
@@ -38,7 +38,7 @@ const ctx={
  beginSyncTraceStorage:async()=>{},
  SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
- salesHistoryHasUnfinalizedMatchingAudit,Response,
+ classifySalesHistoryPendingAudits,Response,
 };
 runInNewContext(code.replace(/^import .*;\s*$/gm,"")
  .replace("export default async function(req) {","async function testDefault(req) {")
