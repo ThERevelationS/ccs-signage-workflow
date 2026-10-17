@@ -64,7 +64,7 @@ try {
    const buffer=await page.pdf({format:'Letter',printBackground:true,displayHeaderFooter:false,path:'/tmp/permitting-packet-fixture.pdf'});
    await page.emulateMedia({media:'screen'});
    const pdf=await page.evaluate(data=>window.readPacketPdf(data),Array.from(buffer));
-   assert.ok(pdf.pages>=3,'Long saved content must span pages');
+   await writeFile('/tmp/permitting-packet-pdf-text.json',JSON.stringify(pdf));assert.ok(pdf.pages>=3,'Long saved content must span pages');
    for(const token of ['CITATION_BEGIN_TOKEN','CITATION_END_TOKEN','NOTE_BEGIN_TOKEN','NOTE_END_TOKEN','SAVED_ACTION_TOKEN','CAPTURED_OLD_SOURCE','ISSUER_ONLY_OFFICE','INSPECTOR_ONLY_OFFICE','GAP_TOKEN','rule-42','2026-10-17T10:01:00Z','UNLINKED_SAVED_CITATION'])assert.ok(pdf.text.includes(token),'Missing PDF content '+token);
    assert.ok(!pdf.text.includes('UNRELATED_CLIENT_SECRET_TOKEN'));assert.ok(!pdf.text.includes('Print / Save as PDF'));assert.ok(!pdf.text.includes('AI Permit Workflow Designer'));
    checks.push({width,printedPages:pdf.pages,pdf:'actual Chromium PDF text verified; complete long quotes/notes and saved metadata; no unrelated client/navigation content'});
