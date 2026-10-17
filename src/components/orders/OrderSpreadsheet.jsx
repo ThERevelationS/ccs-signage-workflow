@@ -376,10 +376,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     Object.keys(pendingChangesRef.current).length > 0
   );
 
-  const loadData = async (showLoading = true, { manualPullReload = false } = {}) => {
-    // Even explicit/loading refreshes must never replace a focused customer
-    // name draft (recorded only on blur) or edits still awaiting Base44 save.
-    if ((manualPullInFlightRef.current && !manualPullReload) || hasActiveOrderEdits()) return false;
+  const loadData = async (showLoading = true, { manualPullReload = false, importReload = false } = {}) => {
+    // Only an import's own final read may refresh during an active import.
+    // Timers/focus refreshes and older reads must not replace imported records
+    // or rebuild their durable pending-SMARTSHEET marker queue from stale data.
+    if ((manualPullInFlightRef.current && !manualPullReload) ||
+        (importInFlightRef.current && !importReload) || hasActiveOrderEdits()) return false;
     const requestGeneration = ++orderLoadGenerationRef.current;
     const startedEditGeneration = orderLocalEditGenerationRef.current;
     if (showLoading && orders.length === 0) setIsLoading(true);
@@ -410,6 +412,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         latestGeneration: orderLoadGenerationRef.current,
         manualPullInFlight: manualPullInFlightRef.current,
         manualPullReload,
+        importInFlight: importInFlightRef.current,
+        importReload,
         startedEditGeneration,
         latestEditGeneration: orderLocalEditGenerationRef.current,
         localEditInProgress: hasActiveOrderEdits(),
@@ -442,6 +446,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         latestGeneration: orderLoadGenerationRef.current,
         manualPullInFlight: manualPullInFlightRef.current,
         manualPullReload,
+        importInFlight: importInFlightRef.current,
+        importReload,
         startedEditGeneration,
         latestEditGeneration: orderLocalEditGenerationRef.current,
         localEditInProgress: hasActiveOrderEdits(),
@@ -1160,6 +1166,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     // Reject it before FileReader, import progress or any backend invocation.
     if (importInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
     importInFlightRef.current = true;
+    // Invalidate any refresh already reading an older pre-import snapshot.
+    // This also fences its error branch if its request fails after import.
+    orderLoadGenerationRef.current += 1;
 
     const importId = startMultiImport(file.name);
     const processingTimeout = setTimeout(() => {
@@ -1197,7 +1206,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       // The import runs on the server and may finish while the browser still
       // has protected edits or an invalidated reload. Keep the result uncertain
       // until an authoritative complete Order snapshot is visible locally.
-      const verifiedReload = await loadData(false);
+      const verifiedReload = await loadData(false, { importReload: true });
       if (!verifiedReload) {
         const warning = `${summary}. Import processing returned, but Orders could not be reloaded safely. Review protected edits and reload Orders before importing again; some rows may already be saved.`;
         setSaveError(warning);
