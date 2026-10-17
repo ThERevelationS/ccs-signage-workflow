@@ -15,6 +15,9 @@ export function projectPendingSalesAuditForAdmin(rows, record, {now=Date.now(),h
     const timing=!Number.isFinite(ms)?'unknown':ms>now?'future':
       now-ms>=SALES_AUDIT_REVIEW_AFTER_MS?'aged':'recent';
     const matching=salesHistoryHasUnfinalizedMatchingAudit([row],record);
+    const attemptId=typeof row.save_attempt_id==='string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(row.save_attempt_id)
+      ? row.save_attempt_id : null;
     return {
       audit_id:String(row.id||''),
       event_key:String(row.event_key||''),
@@ -24,6 +27,10 @@ export function projectPendingSalesAuditForAdmin(rows, record, {now=Date.now(),h
       matching_current_value:matching,
       save_outcome:'unknown',
       operation_receipt:'unavailable',
+      save_attempt_id:attemptId,
+      save_attempt_baseline_recorded:attemptId !== null &&
+        typeof row.save_attempt_baseline_version === 'string' &&
+        row.save_attempt_baseline_version.length > 0,
       source:['app','admin','smartsheet'].includes(row.source)?row.source:'unknown',
       actor_name:String(row.actor_name||'').slice(0,120),
       preview_truncated:row.preview_truncated===true,
