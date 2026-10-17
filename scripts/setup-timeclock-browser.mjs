@@ -25,3 +25,4 @@ run(process.execPath, [
 ]);
 console.log("Time Clock browser runtime ready: " + runtimeDir);
 console.log("Run: node scripts/test-timeclock-pay-period-browser.mjs");
+console.log("Run: node scripts/test-timeclock-quickclock-browser.mjs");
