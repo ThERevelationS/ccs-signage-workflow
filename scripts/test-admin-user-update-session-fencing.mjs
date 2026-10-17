@@ -25,7 +25,7 @@ test('Existing-user save fences duplicate clicks and captures immutable session 
 test('Old role update cannot start password write, reload directory or dismiss current editor',()=>{
   assert.match(save,/accountWriteSent\s*\? await updateAuthorizedUserAdmin\([\s\S]*?\)\s*:\s*record;\s*\/\/[^\n]*\n\s*if \(!ownsUpdate\(\)\) return/);
   assert.match(save,/if \(newPassword\) \{[\s\S]*?await setPasswordFn/);
-  assert.match(save,/const currentDraft = activeAccountDraft\.current;[\s\S]*?await loadUsers\(\);\s*if \(!ownsUpdate\(\)\) return;\s*clearEditorDraftTracking\(\);\s*setIsDialogOpen\(false\);\s*setEditingUser\(null\)/);
+  assert.match(save,/const currentDraft = activeAccountDraft\.current;[\s\S]*?refreshedRows = await loadUsers\(\);[\s\S]*?if \(!verifiedRows \|\| verifiedRows\.length !== 1\)[\s\S]*?const afterRefresh = activeAccountDraft\.current;[\s\S]*?clearEditorDraftTracking\(\);\s*setIsDialogOpen\(false\);\s*setEditingUser\(null\)/);
   assert.match(save,/catch \(error\) \{\s*if \(!ownsUpdate\(\)\) return;/);
   assert.match(save,/finally \{\s*if \(ownsUpdate\(\)\) \{\s*userUpdateOwner\.current = null;\s*userUpdateInFlight\.current = false/);
 });
