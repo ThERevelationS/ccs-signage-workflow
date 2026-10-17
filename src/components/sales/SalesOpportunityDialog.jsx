@@ -109,6 +109,7 @@ export default function SalesOpportunityDialog({
   const [historyPageError, setHistoryPageError] = useState("");
   const [historyNeedsRefresh, setHistoryNeedsRefresh] = useState(false);
   const [historyAuditPending, setHistoryAuditPending] = useState(false);
+  const [historyAuditNeedsReview, setHistoryAuditNeedsReview] = useState(false);
   const [historyReloadNonce, setHistoryReloadNonce] = useState(0);
   const historyRevisionRef = useRef(0);
   const historyPageInFlightRef = useRef(false);
@@ -125,6 +126,7 @@ export default function SalesOpportunityDialog({
     setHistoryPageError("");
     setHistoryNeedsRefresh(false);
     setHistoryAuditPending(false);
+    setHistoryAuditNeedsReview(false);
     setHistoryLoadingMore(false);
     historyPageInFlightRef.current = false;
     if (!workOrder?.id) {
@@ -147,6 +149,7 @@ export default function SalesOpportunityDialog({
         }
         setHistory(appendSalesOpportunityHistoryPages([], data.entries));
         setHistoryAuditPending(data.audit_verification_pending === true);
+        setHistoryAuditNeedsReview(data.audit_verification_status === "needs_review");
         setHistoryPagination(data.pagination);
       })
       .catch((error) => {
@@ -190,6 +193,7 @@ export default function SalesOpportunityDialog({
       }
       if (data.audit_verification_pending === true) {
         setHistoryAuditPending(true);
+        setHistoryAuditNeedsReview(data.audit_verification_status === "needs_review");
         setHistoryNeedsRefresh(true);
         setHistoryPageError("A Sales audit is not yet verified. Refresh Sales history before loading more records.");
         return;
@@ -678,12 +682,14 @@ export default function SalesOpportunityDialog({
             </div>
             {historyPageError && <p role="alert" className="mt-2 text-xs text-red-700">{historyPageError}</p>}
             {historyAuditPending && !historyPageError && (
-              <p role="status" className="mt-2 text-xs text-amber-800">A Sales audit is not yet confirmed. Recent history may be incomplete; pending changes are not shown as saved activity. Retry history verification.</p>
+              <p role="status" className="mt-2 text-xs text-amber-800">{historyAuditNeedsReview
+                ? "Sales history needs administrator review. A matching pending audit is at least 15 minutes old, has uncertain timing, or more pending records exist than can be safely inspected. Do not log the follow-up again; ask an administrator to investigate the WorkOrder. Rechecking does not change audit records."
+                : "A Sales audit is not yet confirmed. Recent history may be incomplete; pending changes are not shown as saved activity. Retry history verification."}</p>
             )}
             {(historyNeedsRefresh || historyAuditPending || historyError) && !historyLoading && (
               <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
                 onClick={() => setHistoryReloadNonce((value) => value + 1)}>
-                {historyAuditPending ? "Retry history verification" : historyError && !historyNeedsRefresh ? "Retry Sales history" : "Refresh Sales history"}
+                {historyAuditPending ? historyAuditNeedsReview ? "Recheck pending Sales history" : "Retry history verification" : historyError && !historyNeedsRefresh ? "Retry Sales history" : "Refresh Sales history"}
               </Button>
             )}
             {historyPagination?.has_more && !historyLoading && !historyNeedsRefresh && !historyAuditPending && (
