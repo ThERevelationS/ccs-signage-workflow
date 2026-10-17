@@ -2891,6 +2891,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       {selectedWorkOrder && !showFullWorkOrderDetails && (
         <SalesOpportunityDialog
           workOrder={selectedWorkOrder}
+          isAdmin={isAdmin}
           users={users}
           leadSources={leadSources}
           taskDescriptions={taskDescriptions}
