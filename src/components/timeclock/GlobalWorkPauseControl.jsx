@@ -47,8 +47,12 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   const scopeInstanceKey = `${scopeGenerationRef.current}:${scopeKey}`;
   const [statusRecord, setStatusRecord] = useState({ scope: scopeInstanceKey, data: null });
   const status = statusRecord.scope === scopeInstanceKey ? statusRecord.data : null;
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [busyRecord, setBusyRecord] = useState({ scope: scopeInstanceKey, value: false });
+  const busy = busyRecord.scope === scopeInstanceKey && busyRecord.value;
+  const setBusy = (value) => setBusyRecord({ scope: scopeInstanceKey, value });
+  const [errorRecord, setErrorRecord] = useState({ scope: scopeInstanceKey, value: "" });
+  const error = errorRecord.scope === scopeInstanceKey ? errorRecord.value : "";
+  const setError = (value) => setErrorRecord({ scope: scopeInstanceKey, value });
   const mountedRef = useRef(true);
   const scopeRef = useRef(scopeInstanceKey);
   scopeRef.current = scopeInstanceKey;
