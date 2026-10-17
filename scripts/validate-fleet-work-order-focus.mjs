@@ -39,6 +39,7 @@ const refreshContext = {
   setParts() {},
   setFluids() {},
   setCurrentUser() {},
+  setRefreshError() {},
   Promise,
 };
 const refresh = extract(
