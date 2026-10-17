@@ -63,6 +63,7 @@ function fixture() {
   get sessionToken(){return token;},get editingUser(){return state.editor;},
   get formData(){return state.form;},get accountSaveRecovery(){return state.password;},
   get accountWriteRecovery(){return state.write;},
+  get postSaveRefreshPending(){return null;},
   get confirmAccountReconciliation(){return state.confirmed;},
   get accountResolutionPreview(){return state.write?.stage==="review" &&
     state.write?.comparison?.status!=="applied"
