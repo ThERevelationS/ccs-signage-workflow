@@ -336,7 +336,8 @@ createRoot(document.getElementById("root")).render(
       assert.equal(status.body.work_pause_status, "working");
       assert.equal(fixture.h.rows.TimeClockWorkPause.find((row) => row.id === activePause.id).status, "completed");
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
-      await page.getByRole("button", {name:"Clock Out",exact:true}).waitFor();
+      await page.getByRole("button", {name:"Out",exact:true}).waitFor();
+      assert.equal(await page.getByRole("dialog", {name:"Clock Out",exact:true}).count(), 0);
     });
 
   await caseRun("Current Work can start, change activity, and stop without leaving an active segment",
