@@ -105,6 +105,38 @@ try {
     await page.locator("#fleet-work-order-toggle-wo-created-1").waitFor();
   });
 
+  await caseRun("Desktop: older work-order list refresh cannot overwrite a newer snapshot", { width: 1440, height: 900 }, async (page) => {
+    await page.locator("#fleet-work-order-toggle-wo-open").click();
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    const firstDialog = page.getByRole("dialog", { name: "Edit WO-SYNTH-OPEN" });
+    const initialStarted = await page.evaluate(() => window.__fleetBrowserFixture.workOrderListStarted);
+    await page.evaluate(() => { window.__fleetBrowserFixture.deferNextWorkOrderList = true; });
+    await firstDialog.getByRole("button", { name: "Refresh", exact: true }).first().click();
+    await page.waitForFunction(() => window.__fleetBrowserFixture.pendingWorkOrderListResolvers.length === 1);
+    await firstDialog.getByRole("button", { name: "Close Fleet work order dialog" }).click();
+
+    await page.evaluate(() => {
+      window.__fleetBrowserFixture.orders.find((row) => row.id === "wo-open").title = "Newer synthetic server title";
+    });
+    await page.getByRole("combobox", { name: "Filter by work order status" }).selectOption("all");
+    await page.locator("#fleet-work-order-toggle-wo-done").click();
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    const secondDialog = page.getByRole("dialog", { name: "Edit WO-SYNTH-DONE" });
+    await secondDialog.getByRole("button", { name: "Refresh", exact: true }).first().click();
+    await page.waitForFunction((expected) => window.__fleetBrowserFixture.workOrderListCompleted === expected + 1, initialStarted);
+    await secondDialog.getByRole("button", { name: "Close Fleet work order dialog" }).click();
+    const openRow = page.locator("#fleet-work-order-toggle-wo-open");
+    await expectText(openRow, /Newer synthetic server title/);
+
+    await page.evaluate(() => window.__fleetBrowserFixture.releaseNextWorkOrderList());
+    await page.waitForFunction((expected) => window.__fleetBrowserFixture.workOrderListCompleted === expected + 2, initialStarted);
+    await expectText(openRow, /Newer synthetic server title/);
+
+    async function expectText(locator, pattern) {
+      assert.match(await locator.innerText(), pattern);
+    }
+  });
+
   await caseRun("Desktop: edit to Cancelled under Active filter keeps a safe focus", { width: 1440, height: 900 }, async (page) => {
     await page.locator("#fleet-work-order-toggle-wo-open").click();
     await page.getByRole("button", { name: "Edit", exact: true }).click();
