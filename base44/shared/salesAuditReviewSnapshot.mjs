@@ -24,6 +24,8 @@ function signature(page, workOrderId) {
       created_date:row.created_date ?? null,
       new_value:row.new_value ?? null, old_value:row.old_value ?? null,
       preview_truncated:row.preview_truncated ?? null,
+      save_attempt_id:row.save_attempt_id ?? null,
+      save_attempt_baseline_version:row.save_attempt_baseline_version ?? null,
       source:row.source ?? null, actor_name:row.actor_name ?? null,
     };
   });
