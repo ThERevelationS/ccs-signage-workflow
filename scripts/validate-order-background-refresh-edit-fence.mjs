@@ -54,7 +54,7 @@ const reload = source.slice(source.indexOf('const hasActiveOrderEdits = () =>'),
   source.indexOf('useEffect(() => {\n    const refreshAuthoritativeOrders'));
 assert.match(reload, /customerNameDraftOrderRef\.current/);
 assert.match(reload, /customerSelectionInFlightRef\.current/);
-assert.match(reload, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
+assert.match(reload, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\|\s*\(importInFlightRef\.current && !importReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
 assert.match(reload, /const startedEditGeneration = orderLocalEditGenerationRef\.current/);
 assert.equal((reload.match(/latestEditGeneration: orderLocalEditGenerationRef\.current/g) || []).length, 2);
 assert.equal((reload.match(/localEditInProgress: hasActiveOrderEdits\(\)/g) || []).length, 2);
