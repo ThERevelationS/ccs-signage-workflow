@@ -750,7 +750,7 @@ export default function SalesOpportunityDialog({
                     {historyReviewBusy ? "Checking audit evidence…" : "Inspect pending Sales audits"}
                   </Button>
                 </div>
-                <p className="text-xs text-amber-900">Read-only evidence for this WorkOrder. A matching value does not prove the write completed. Do not change audit status based only on this view.</p>
+                <p className="text-xs text-amber-900">Read-only evidence for this WorkOrder. A matching value does not prove the write completed. These field-level audit events lack a shared save-operation receipt, so the write outcome remains unknown. Do not change audit status based only on this view.</p>
                 {historyReviewError && <p role="alert" className="text-xs text-red-700">{historyReviewError}</p>}
                 {historyReviewOpen && historyReview && (
                   <div className="space-y-2">
@@ -763,6 +763,7 @@ export default function SalesOpportunityDialog({
                         <div className="mt-1">{entry.matching_current_value
                           ? "Pending value matches current WorkOrder (not proof of save)"
                           : "Pending value does not match current WorkOrder or cannot be compared"}</div>
+                        <div className="mt-1 font-medium text-amber-900">Save outcome: unknown · no shared operation receipt</div>
                         <div className="mt-1 text-gray-500">
                           {entry.timing === "aged" ? "15+ minutes old" : entry.timing === "recent"
                             ? "Recent pending" : "Timing requires review"}
