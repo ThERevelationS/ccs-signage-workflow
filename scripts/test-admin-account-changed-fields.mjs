@@ -57,7 +57,7 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
  };
  const scope={...refs,
   createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,
-  rejectedAdminAccountField,compareUnverifiedAccountSave,isSameVerifiedAccountSnapshot,
+  rejectedAdminAccountField,compareUnverifiedAccountSave,rebaseAppliedAccountDraft,isSameVerifiedAccountSnapshot,
   get editingUser(){return state.editor;},get formData(){return state.form;},
   get sessionToken(){return token;},
   get accountSaveRecovery(){return state.recovery;},
