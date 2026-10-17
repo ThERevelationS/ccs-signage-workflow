@@ -67,6 +67,6 @@ assert.match(page, /disabled=\{saveStatus\.isSyncing \|\| saveStatus\.isSaving \
 assert.match(page, /disabled=\{saveStatus\.isLoading \|\| Boolean\(saveStatus\.readError\)\}/);
 assert.match(ui, /const pullFromSmartsheet = async \(\) => \{\s*if \(readError \|\| !isRegistered/);
 assert.match(ui, /const saveAndSync = async \(\) => \{\s*if \(readError \|\| syncInFlightRef/);
-assert.match(ui, /const addNewRow = async \(\) => \{\s*if \(!isRegistered \|\| readError/);
+assert.match(ui, /const addNewRow = async \(\) => \{\s*(?:\/\/[^\n]*\n\s*)*if \(!isRegistered \|\| readError/);
 assert.match(ui, /const exportToExcel = async \(\) => \{\s*if \(readError\) return/);
 console.log('PASS read-failure toolbar and internal action guards block Sync, Save & Sync, Add and partial-data Export');
