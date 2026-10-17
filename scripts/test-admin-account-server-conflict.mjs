@@ -5,7 +5,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { rejectedAdminAccountField } from "../src/components/admin/accountSaveConflict.js";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "../src/components/admin/adminAccountDraft.js";
-import { compareUnverifiedAccountSave } from "../src/components/admin/unverifiedAccountSave.js";
+import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft } from "../src/components/admin/unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
 
 const source = readFileSync("src/components/admin/UserManagement.jsx", "utf8");
@@ -44,7 +44,7 @@ function fixture({response=fresh,errorMessage="Authorized user changed in anothe
   writeDeferred:null,readDeferred:null,loading:false,readError:false,users:[original],dialog:true,saving:false};
  refs.activeAccountDraft.current=state.draft;
  const scope={...refs,rejectedAdminAccountField,createAdminAccountDraft,getChangedAdminAccountFields,
-  compareUnverifiedAccountSave,hasUnsavedAdminAccountDraft,
+  compareUnverifiedAccountSave,rebaseAppliedAccountDraft,hasUnsavedAdminAccountDraft,
   get sessionToken(){return "session-1";},get editingUser(){return state.editor;},
   get formData(){return state.draft;},get accountWriteRecovery(){return state.write;},
   get accountSaveRecovery(){return null;},
