@@ -108,6 +108,7 @@ export default function SalesOpportunityDialog({
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
   const [historyPageError, setHistoryPageError] = useState("");
   const [historyNeedsRefresh, setHistoryNeedsRefresh] = useState(false);
+  const [historyAuditPending, setHistoryAuditPending] = useState(false);
   const [historyReloadNonce, setHistoryReloadNonce] = useState(0);
   const historyRevisionRef = useRef(0);
   const historyPageInFlightRef = useRef(false);
@@ -123,6 +124,7 @@ export default function SalesOpportunityDialog({
     setHistoryPagination(null);
     setHistoryPageError("");
     setHistoryNeedsRefresh(false);
+    setHistoryAuditPending(false);
     setHistoryLoadingMore(false);
     historyPageInFlightRef.current = false;
     if (!workOrder?.id) {
@@ -144,6 +146,7 @@ export default function SalesOpportunityDialog({
           throw Object.assign(new Error(data?.error || "Verified Sales history could not be loaded."), {code:data?.code});
         }
         setHistory(appendSalesOpportunityHistoryPages([], data.entries));
+        setHistoryAuditPending(data.audit_verification_pending === true);
         setHistoryPagination(data.pagination);
       })
       .catch((error) => {
@@ -164,7 +167,7 @@ export default function SalesOpportunityDialog({
 
   const loadMoreSalesHistory = async () => {
     if (!workOrder?.id || !historyPagination?.has_more || historyLoading ||
-        historyPageInFlightRef.current) return;
+        historyNeedsRefresh || historyAuditPending || historyPageInFlightRef.current) return;
     const revision = historyRevisionRef.current;
     historyPageInFlightRef.current = true;
     setHistoryLoadingMore(true);
@@ -184,6 +187,12 @@ export default function SalesOpportunityDialog({
       }
       if (data.pagination.work_order_version !== historyPagination.work_order_version) {
         throw Object.assign(new Error("Sales history changed. Refresh Sales history before loading older entries."), {code:"SALES_HISTORY_STALE"});
+      }
+      if (data.audit_verification_pending === true) {
+        setHistoryAuditPending(true);
+        setHistoryNeedsRefresh(true);
+        setHistoryPageError("A Sales audit is not yet verified. Refresh Sales history before loading more records.");
+        return;
       }
       setHistory((current) => appendSalesOpportunityHistoryPages(current, data.entries));
       setHistoryPagination(data.pagination);
@@ -668,13 +677,16 @@ export default function SalesOpportunityDialog({
               ))}
             </div>
             {historyPageError && <p role="alert" className="mt-2 text-xs text-red-700">{historyPageError}</p>}
-            {historyNeedsRefresh && !historyLoading && (
+            {historyAuditPending && !historyPageError && (
+              <p role="status" className="mt-2 text-xs text-amber-800">A Sales audit is not yet confirmed. Recent history may be incomplete; pending changes are not shown as saved activity. Retry history verification.</p>
+            )}
+            {(historyNeedsRefresh || historyAuditPending || historyError) && !historyLoading && (
               <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
                 onClick={() => setHistoryReloadNonce((value) => value + 1)}>
-                Refresh Sales history
+                {historyAuditPending ? "Retry history verification" : historyError && !historyNeedsRefresh ? "Retry Sales history" : "Refresh Sales history"}
               </Button>
             )}
-            {historyPagination?.has_more && !historyLoading && !historyNeedsRefresh && (
+            {historyPagination?.has_more && !historyLoading && !historyNeedsRefresh && !historyAuditPending && (
               <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
                 disabled={historyLoadingMore} onClick={loadMoreSalesHistory}>
                 {historyLoadingMore ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
