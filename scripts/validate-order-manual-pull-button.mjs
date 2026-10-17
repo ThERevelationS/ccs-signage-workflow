@@ -19,7 +19,7 @@ assert.match(grid, /const reloaded = await loadData\(false, \{ manualPullReload:
 assert.match(grid, /syncInFlightRef\.current = true/);
 assert.match(grid, /pullFromSmartsheet,\s*exportToExcel/);
 assert.match(grid, /const hasActiveOrderEdits = \(\) => Boolean\(/);
-assert.match(grid, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
+assert.match(grid, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\|\s*\(importInFlightRef\.current && !importReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
 assert.match(grid, /localEditInProgress: hasActiveOrderEdits\(\)/);
 console.log("PASS Order button swaps modes based on unsaved or durable pending changes; pull guards in-flight data");
 
@@ -35,7 +35,7 @@ assert.match(grid, /const orderLoadGenerationRef = useRef\(0\)/);
 assert.match(grid, /const manualPullInFlightRef = useRef\(false\)/);
 assert.match(grid, /const requestGeneration = \+\+orderLoadGenerationRef\.current/);
 assert.match(grid, /orderLoadGenerationRef\.current \+= 1/);
-assert.match(grid, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
+assert.match(grid, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\|\s*\(importInFlightRef\.current && !importReload\) \|\| hasActiveOrderEdits\(\)\) return false/);
 assert.match(grid, /loadData\(false, \{ manualPullReload: true \}\)/);
 assert.match(grid, /if \(!canCommitOrderReload\(\{/);
 assert.match(grid, /manualPullInFlightRef\.current = false/);
