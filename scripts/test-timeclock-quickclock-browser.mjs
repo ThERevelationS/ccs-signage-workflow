@@ -337,6 +337,8 @@ createRoot(document.getElementById("root")).render(
       assert.ok(activePause?.id);
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed" && row.end_reason === "work_pause").length, 1);
+      await page.reload({waitUntil:"networkidle"});
+      await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor();
       await page.getByRole("button", {name:"Resume Work",exact:true}).click();
       await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor({state:"detached"});
       const status = await fixture.h.invokeAs(worker, {action:"status"});
