@@ -11,7 +11,7 @@ import { setupSyntheticTimeClock } from "./validate-timeclock-pay-period-recover
 
 const root = process.cwd();
 const driver = process.env.TIMECLOCK_PLAYWRIGHT_PATH ||
-  "/tmp/fleet-browser-check/node_modules/playwright/index.mjs";
+  path.join(tmpdir(), "timeclock-browser-check/node_modules/playwright/index.mjs");
 const { chromium } = await import(driver);
 const scratch = await mkdtemp(path.join(tmpdir(), "timeclock-browser-"));
 const mockDir = path.join(root, "scripts/timeclock-browser-harness");
