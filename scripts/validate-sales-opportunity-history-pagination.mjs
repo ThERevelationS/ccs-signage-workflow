@@ -6,7 +6,7 @@ import {
   appendSalesOpportunityHistoryPages,
 } from '../base44/shared/salesOpportunityHistory.mjs';
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from '../base44/shared/salesHistorySnapshotGuard.mjs';
-import {salesHistoryHasUnfinalizedMatchingAudit} from '../base44/shared/salesHistoryFinalizationSignal.mjs';
+import {classifySalesHistoryPendingAudits} from '../base44/shared/salesHistoryFinalizationSignal.mjs';
 
 let checks=0;
 function ok(condition,description){assert.ok(condition,description);checks++}
@@ -58,7 +58,7 @@ const ctx={
   beginSyncTraceStorage:async()=>{},
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
   validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
-  salesHistoryHasUnfinalizedMatchingAudit,Response,
+  classifySalesHistoryPendingAudits,Response,
 };
 runInNewContext(source.replace(/^import .*;\s*$/gm,'')
   .replace('export default async function(req) {','async function simulatedDefault(req) {')
