@@ -5,6 +5,7 @@ import {
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
 } from "../base44/shared/salesOpportunityHistory.mjs";
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from "../base44/shared/salesHistorySnapshotGuard.mjs";
+import {salesHistoryHasUnfinalizedMatchingAudit} from "../base44/shared/salesHistoryFinalizationSignal.mjs";
 
 let checks=0;
 const check=(condition,label)=>{assert.ok(condition,label);checks++};
@@ -85,6 +86,7 @@ let authed=true;
 let activeAudit=structuredClone(audit);
 const collection=(kind,sourceRows)=>({
   async filter(query,options){
+    if(kind==='audit' && query.status==='pending')return {items:[],has_more:false};
     readCounts[kind]++;
     (kind==="audit"?auditFilters:legacyFilters).push({query,options});
     return {items:sourceRows()
@@ -103,7 +105,8 @@ const ctx={
   authenticateSignShopSession:async()=>authed?{role:"user",email:"sales@example.invalid"}:null,
   beginSyncTraceStorage:async()=>{},
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
-  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,Response,
+  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
+  salesHistoryHasUnfinalizedMatchingAudit,Response,
 };
 runInNewContext(serverCode,ctx,{timeout:3000});
 const request=(action="sales_history",entityType="WorkOrder",id=record.id)=>({
