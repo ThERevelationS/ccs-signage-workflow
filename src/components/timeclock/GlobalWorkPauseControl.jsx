@@ -80,6 +80,11 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
       if (!isCurrent()) return null;
+      const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+      if (!responseEmail || responseEmail !== email) {
+        setStatusRecord({ scope: requestScope, data: null });
+        throw new Error("Work Pause status did not match the signed-in employee.");
+      }
       if (data?.status === "clocked_in" && !data?.transition && ["working", "paused"].includes(data?.work_pause_status)) {
         clearRequestId("work_pause_start", email);
         clearRequestId("work_pause_resume", email);
