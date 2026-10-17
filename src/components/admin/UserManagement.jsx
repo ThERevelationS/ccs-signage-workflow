@@ -128,6 +128,7 @@ export default function UserManagement() {
   const [accountFieldChoices, setAccountFieldChoices] = useState({});
   const [passwordRetryConfirmed, setPasswordRetryConfirmed] = useState(false);
   const [accountSaveNotice, setAccountSaveNotice] = useState("");
+  const [postSaveRefreshPending, setPostSaveRefreshPending] = useState(null);
   const userUpdateInFlight = useRef(false);
   const userUpdateOwner = useRef(null);
   const hrSaveInFlight = useRef(false);
@@ -189,6 +190,7 @@ export default function UserManagement() {
     setAccountFieldChoices({});
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
+    setPostSaveRefreshPending(null);
     hrSaveOwner.current = null;
     hrSaveInFlight.current = false;
     setHrMutationSaving(false);
@@ -477,6 +479,7 @@ export default function UserManagement() {
     setAccountFieldChoices({});
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
+    setPostSaveRefreshPending(null);
   };
 
   const hasProtectedEditorDraft = () => hasProtectedHrDraft() || hasProtectedAccountDraft();
@@ -542,6 +545,7 @@ export default function UserManagement() {
     setAccountFieldChoices({});
     setPasswordRetryConfirmed(false);
     setAccountSaveNotice("");
+    setPostSaveRefreshPending(null);
     const initialAccountDraft = createAdminAccountDraft(user);
     accountDraftBaseline.current = {
       sessionToken, id: user.id, email: user.email, values: initialAccountDraft
@@ -773,6 +777,7 @@ export default function UserManagement() {
         !sessionToken || activeSessionToken.current !== sessionToken) return;
     setUserMutationError("");
     setAccountSaveNotice("");
+    setPostSaveRefreshPending(null);
     const requestedPassword = String(formData.password_hash || "");
     if (requestedPassword && requestedPassword.length < 8) {
       setUserMutationError("Password must be at least 8 characters, or leave it blank to keep the existing password.");
@@ -881,6 +886,7 @@ export default function UserManagement() {
       const verifiedRows = refreshedRows?.filter(row =>
         row.id === savedUser.id && row.email === savedUser.email && row.updated_date);
       if (!verifiedRows || verifiedRows.length !== 1) {
+        setPostSaveRefreshPending({ sessionToken, id: savedUser.id, email: savedUser.email });
         // A confirmed password must not be resent after a failed directory
         // refresh. Clear only that confirmed password draft, never newer edits.
         setFormData(current => ({
