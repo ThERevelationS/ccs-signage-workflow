@@ -1098,11 +1098,11 @@ export default function AdminSettings() {
             <>
               <AdminPanelContent value="timeclock">
                 <Tabs value={selectedAdminTab === "timeclock" ? selectedAdminSubtab : "entries"} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
-                  <TabsList aria-label="Time Clock administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
-                    <TabsTrigger value="entries" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
-                    <TabsTrigger value="reports" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
-                    <TabsTrigger value="pto" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
-                    <TabsTrigger value="overtime" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Overtime Rules</TabsTrigger>
+                  <TabsList aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4">
+                    <TabsTrigger value="entries" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
+                    <TabsTrigger value="reports" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
+                    <TabsTrigger value="pto" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
+                    <TabsTrigger value="overtime" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <AdminPanelContent value="entries">
                     <TimeClockAdmin />
@@ -1121,14 +1121,14 @@ export default function AdminSettings() {
 
               <AdminPanelContent value="backend">
                 <Tabs value={selectedAdminTab === "backend" ? selectedAdminSubtab : "backup"} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
-                  <TabsList aria-label="Backend administration" className="flex h-auto min-h-9 w-full max-w-full flex-wrap items-stretch justify-start gap-1 p-1">
-                    <TabsTrigger value="backup" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Data Backup</TabsTrigger>
-                    <TabsTrigger value="client_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Client Trash</TabsTrigger>
-                    <TabsTrigger value="order_trash" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Order Trash</TabsTrigger>
-                    <TabsTrigger value="default_sort" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Default Sort</TabsTrigger>
-                    <TabsTrigger value="wip_import" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">WIP Import</TabsTrigger>
-                    <TabsTrigger value="permitting" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Permitting Repository</TabsTrigger>
-                    <TabsTrigger value="monitoring" className="min-h-10 max-w-full whitespace-normal px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Jurisdiction Monitoring</TabsTrigger>
+                  <TabsList aria-label="Backend administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-3 lg:grid-cols-4">
+                    <TabsTrigger value="backup" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Data Backup</TabsTrigger>
+                    <TabsTrigger value="client_trash" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Client Trash</TabsTrigger>
+                    <TabsTrigger value="order_trash" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Order Trash</TabsTrigger>
+                    <TabsTrigger value="default_sort" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Default Sort</TabsTrigger>
+                    <TabsTrigger value="wip_import" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">WIP Import</TabsTrigger>
+                    <TabsTrigger value="permitting" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Permitting Repository</TabsTrigger>
+                    <TabsTrigger value="monitoring" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Jurisdiction Monitoring</TabsTrigger>
                   </TabsList>
                     <AdminPanelContent value="backup">
                     <BackupManager />
