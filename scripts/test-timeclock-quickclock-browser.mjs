@@ -307,6 +307,7 @@ createRoot(document.getElementById("root")).render(
       await page.getByText("On Break", {exact:true}).waitFor();
       fixture.h.setServerNow("2026-10-16T16:30:00.000Z");
       await page.getByRole("button", {name:"End Break",exact:true}).click();
+      await page.getByRole("button", {name:"Start Unpaid Lunch",exact:true}).waitFor();
       const lunch = fixture.h.rows.TimeClockBreak.find((row) => row.break_type === "lunch");
       assert.equal(lunch.is_paid, false);
       assert.equal(lunch.status, "completed");
@@ -353,6 +354,7 @@ createRoot(document.getElementById("root")).render(
       assert.equal(active.length, 1);
       assert.equal(active[0].activity_type, "fabrication");
       await dialog.getByRole("button", {name:"Stop Work",exact:true}).click();
+      await dialog.getByRole("button", {name:"Start Work",exact:true}).waitFor();
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed").length, 2);
     });
