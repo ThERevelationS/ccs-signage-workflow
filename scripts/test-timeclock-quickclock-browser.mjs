@@ -41,7 +41,7 @@ async function reset() {
     assert.equal(result.body.success, true, JSON.stringify(result.body));
   }
   h.setServerNow("2026-10-16T16:00:00.000Z");
-  fixture = { h, invokes: [], drop: "" };
+  fixture = { h, invokes: [], drop: "", holdWorkerStatus: false, releaseWorkerStatus: null };
 }
 const clockOuts = () => fixture.invokes.filter((item) => item.action === "clock_out");
 const completed = () => fixture.h.rows.TimeEntry.filter((row) => row.clock_out);
@@ -55,6 +55,11 @@ async function waitForFixture(check, label) {
 
 function fixturePlugin() {
   return { name: "isolated-quickclock-backend", configureServer(server) {
+    server.middlewares.use("/__release_worker_status", (req, res) => {
+      fixture.holdWorkerStatus = false;
+      fixture.releaseWorkerStatus?.();
+      res.end("released");
+    });
     server.middlewares.use("/__timeclock_fixture", async (req, res) => {
       try {
         assert.equal(req.method, "POST");
@@ -67,6 +72,9 @@ function fixturePlugin() {
         const user = tokens.get(payload.session_token);
         assert.ok(user, "Only disposable fixture session identities are permitted");
         fixture.invokes.push(structuredClone(payload));
+        if (payload.action === "status" && payload.session_token === "synthetic-worker" && fixture.holdWorkerStatus) {
+          await new Promise((resolve) => { fixture.releaseWorkerStatus = resolve; });
+        }
         const drop = payload.action === "clock_out" ? fixture.drop : "";
         if (drop) fixture.drop = "";
         const result = drop === "before" ? null : await fixture.h.invokeAs(user, payload);
@@ -111,8 +119,9 @@ async function expectConfirmed(page, user = worker) {
   assert.equal(await storage(page, snapshotKey(user)), null);
   assert.equal(await storage(page, requestKey(user)), null);
 }
-async function caseRun(name, origin, run, { denyStorage = false, twoContexts = false } = {}) {
+async function caseRun(name, origin, run, { denyStorage = false, twoContexts = false, globalPause = false, beforeLoad = null } = {}) {
   await reset();
+  if (beforeLoad) await beforeLoad();
   const contexts = [];
   const failures = [];
   try {
@@ -137,8 +146,10 @@ async function caseRun(name, origin, run, { denyStorage = false, twoContexts = f
       const page = await context.newPage();
       page.setDefaultTimeout(15000);
       page.on("pageerror", (error) => failures.push(error.message));
-      await page.goto(origin + (i ? "?employee=second" : ""), { waitUntil: "networkidle" });
-      await dialogFor(page);
+      const route = globalPause ? "?global-pause=true" : (i ? "?employee=second" : "");
+      await page.goto(origin + route, { waitUntil: "networkidle" });
+      if (globalPause) await page.getByRole("button", { name: "Switch synthetic employee", exact: true }).waitFor();
+      else await dialogFor(page);
     }
     await run(contexts.map((context) => context.pages()[0]));
     assert.deepEqual(failures, [], "No runtime errors or outside-origin requests");
@@ -181,7 +192,7 @@ export const base44 = {
     return {data};
   } }
 };
-export const useAuth = () => ({sessionToken:"",currentUser:null});
+export const useAuth = () => ({sessionToken:window.__sessionToken||"",currentUser:window.__currentUser||null});
 export const loadAllEntityRows = async () => [];
 export const createFaceMatcher = () => () => null;
 export const detectDetailedFace = async () => null;
@@ -192,11 +203,25 @@ export class Html5Qrcode {}
 import React from "react";
 import {createRoot} from "react-dom/client";
 import QuickClockSection from "/@fs${path.join(root, "src/components/timeclock/QuickClockSection.jsx")}";
+import GlobalWorkPauseControl from "/@fs${path.join(root, "src/components/timeclock/GlobalWorkPauseControl.jsx")}";
 const users = ${JSON.stringify(users)};
-const isSecond = new URLSearchParams(location.search).get("employee") === "second";
-createRoot(document.getElementById("root")).render(
-  <QuickClockSection allUsers={users} employeeSessionUser={users[isSecond ? 1 : 0]}
-    employeeSessionToken={isSecond ? "synthetic-second" : "synthetic-worker"} />);
+const params = new URLSearchParams(location.search);
+const isSecond = params.get("employee") === "second";
+window.__sessionToken = isSecond ? "synthetic-second" : "synthetic-worker";
+window.__currentUser = users[isSecond ? 1 : 0];
+function SessionHarness() {
+  const [secondEmployee, setSecondEmployee] = React.useState(false);
+  return <><button type="button" onClick={() => {
+    const next = !secondEmployee;
+    window.__sessionToken = next ? "synthetic-second" : "synthetic-worker";
+    window.__currentUser = users[next ? 1 : 0];
+    setSecondEmployee(next);
+  }}>Switch synthetic employee</button><GlobalWorkPauseControl /></>;
+}
+createRoot(document.getElementById("root")).render(params.has("global-pause")
+  ? <SessionHarness />
+  : <QuickClockSection allUsers={users} employeeSessionUser={users[isSecond ? 1 : 0]}
+      employeeSessionToken={isSecond ? "synthetic-second" : "synthetic-worker"} />);
 `);
   const mock = path.join(scratch, "mock.js");
   const stubImports = ["@/api/base44Client", "@/components/auth/EmailGate",
@@ -212,6 +237,25 @@ createRoot(document.getElementById("root")).render(
   await vite.listen();
   const origin = "http://127.0.0.1:" + vite.httpServer.address().port;
   browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
+
+  await caseRun("Delayed Sign Shop Work Pause status cannot cross employee sessions",
+    origin, async ([page]) => {
+      await page.getByRole("button", { name: "Switch synthetic employee", exact: true }).click();
+      await page.getByRole("button", { name: "Pause Work", exact: true }).waitFor();
+      await waitForFixture(() => Boolean(fixture.releaseWorkerStatus), "delayed prior employee status");
+      await page.evaluate(async () => { await fetch("/__release_worker_status"); });
+      await page.getByRole("button", { name: "Resume Work", exact: true }).waitFor({ state: "detached" });
+      await page.getByRole("button", { name: "Pause Work", exact: true }).waitFor();
+      assert.equal(fixture.invokes.filter((item) => item.action === "work_pause_resume").length, 0);
+    }, {
+      globalPause: true,
+      beforeLoad: async () => {
+        const result = await fixture.h.invokeAs(worker, { action: "work_pause_start", target_email: worker.email,
+          request_id: "synthetic-worker-pause-before-switch" });
+        assert.equal(result.body.success, true, JSON.stringify(result.body));
+        fixture.holdWorkerStatus = true;
+      },
+    });
 
   await caseRun("Clock Out persists one shift, clears recovery storage, and remains closed after refresh",
     origin, async ([page]) => {
@@ -375,7 +419,8 @@ createRoot(document.getElementById("root")).render(
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed").length, 2);
     });
 
-  console.log("PASS " + passed + "/9 isolated Quick Clock Chromium scenarios");
+  console.log("PASS " + (passed - 1) + "/9 isolated Quick Clock Chromium scenarios");
+  console.log("PASS " + passed + "/10 isolated Time Clock Chromium scenarios");
 } finally {
   if (browser) await browser.close();
   if (vite) await vite.close();
