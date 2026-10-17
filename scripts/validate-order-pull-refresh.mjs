@@ -11,7 +11,7 @@ assert.ok(sheet.includes('refreshOrders: () => loadData(false)'), 'OrderSpreadsh
 // protects focused customer drafts, asynchronous job selection, and pulls.
 assert.match(sheet, /const hasActiveOrderEdits = \(\) => Boolean\([\s\S]*?customerNameDraftOrderRef\.current \|\| customerSelectionInFlightRef\.current \|\|[\s\S]*?saveInFlightRef\.current \|\| dateNeededSaveInFlightRef\.current \|\|[\s\S]*?Object\.keys\(pendingChangesRef\.current\)\.length > 0/,
   'quiet reload must protect drafts, pending changes, and in-flight saves');
-assert.match(sheet, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\| hasActiveOrderEdits\(\)\) return false;/,
-  'quiet and explicit refreshes must reject active Order edits before reading');
+assert.match(sheet, /if \(\(manualPullInFlightRef\.current && !manualPullReload\) \|\|\s*\(importInFlightRef\.current && !importReload\) \|\| hasActiveOrderEdits\(\)\) return false;/,
+  'quiet and explicit refreshes must reject active Order edits and overlapping imports before reading');
 
 console.log('PASS Order pull-to-refresh reloads data without replacing pending edits');
