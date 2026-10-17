@@ -364,6 +364,67 @@ try {
     });
   }
 
+  await check('Phone category strip scrolls to deep-linked System without widening Admin', 320,
+    '/?tab=backend&subtab=monitoring', async page=>{
+      await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+      const bounds=await page.getByRole('group',{name:'Admin navigation categories'}).evaluate(scroller=>{
+        const active=scroller.querySelector('[aria-pressed="true"]');
+        const nav=scroller.getBoundingClientRect(), tab=active.getBoundingClientRect();
+        return {scrollWidth:scroller.scrollWidth,clientWidth:scroller.clientWidth,
+          scrollLeft:scroller.scrollLeft,active:active.textContent.trim(),
+          selectedVisible:tab.left>=nav.left-2 && tab.right<=nav.right+2};
+      });
+      assert.equal(bounds.active,'System');
+      assert.ok(bounds.scrollWidth>bounds.clientWidth,'Phone categories scroll rather than wrap');
+      assert.ok(bounds.scrollLeft>0,'Deep-linked System category is brought into view');
+      assert.equal(bounds.selectedVisible,true);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+      await page.getByRole('tab',{name:'Jurisdiction Monitoring'}).click();
+      assert.equal(new URL(page.url()).searchParams.get('subtab'),'monitoring');
+    });
+
+  await check('Phone grids retain every Backend and Time Clock subtab without clipping', 320,
+    '/?tab=backend&subtab=backup', async page=>{
+      const backend=page.getByRole('tablist',{name:'Backend administration'});
+      assert.equal(await backend.getByRole('tab').count(),7);
+      const boxes=await backend.evaluate(list=>{
+        const outer=list.getBoundingClientRect();
+        return [...list.querySelectorAll('[role="tab"]')].map(tab=>{
+          const box=tab.getBoundingClientRect();
+          return {name:tab.textContent.trim(),left:box.left,right:box.right,
+            visible:box.left>=outer.left-2 && box.right<=outer.right+2};
+        });
+      });
+      assert.ok(boxes.every(box=>box.visible),JSON.stringify(boxes));
+      await backend.getByRole('tab',{name:'Jurisdiction Monitoring'}).click();
+      await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+      await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'People'}).click();
+      await page.getByRole('tab',{name:'Time Clock'}).click();
+      const clock=page.getByRole('tablist',{name:'Time Clock administration'});
+      assert.equal(await clock.getByRole('tab').count(),4);
+      await clock.getByRole('tab',{name:'Overtime Rules'}).click();
+      await page.getByTestId('synthetic-OvertimeRulesManager').waitFor();
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    });
+
+  await check('Wide Admin panel scrolls internally and does not widen 320px page', 320,
+    '/?tab=smartsheet', async page=>{
+      const table=page.getByTestId('synthetic-SmartsheetSyncSettings');
+      const bounds=await table.evaluate(node=>{
+        const panel=node.closest('[role="tabpanel"]');
+        const wide=document.createElement('div');
+        wide.style.width='1450px'; wide.textContent='Synthetic wide data';
+        node.appendChild(wide);
+        return {panelExists:!!panel,overflowX:getComputedStyle(panel).overflowX,
+          panelWidth:panel.clientWidth,panelScrollWidth:panel.scrollWidth,
+          documentWidth:document.documentElement.scrollWidth,viewport:innerWidth};
+      });
+      assert.equal(bounds.panelExists,true);
+      assert.equal(bounds.overflowX,'auto');
+      assert.ok(bounds.panelScrollWidth>bounds.panelWidth,'Panel has independent horizontal scroll');
+      assert.ok(bounds.documentWidth<=bounds.viewport+1,JSON.stringify(bounds));
+    });
+
   await check('Non-admin excludes restricted sections from search and category bar', 375,
     '/?role=basic&tab=smartsheet', async page=>{
       assert.equal(await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).count(),0);
