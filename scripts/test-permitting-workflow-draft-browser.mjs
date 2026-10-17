@@ -12,7 +12,7 @@ try {
  await writeFile(path.join(scratch,'index.html'),'<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div><script type="module" src="/main.jsx"></script></body></html>');
  await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{
  PermittingRule:{filter:async()=>({items:[{id:'approved',status:'staff_approved',is_operational:true,requirement:'Synthetic approved requirement'},{id:'pending',status:'needs_review',requirement:'Synthetic pending requirement'},{id:'historical',status:'historical',is_operational:true,draft_context:true}]})},
- PermittingSourceDocument:{filter:async()=>({items:[]})},
+ PermittingSourceDocument:{filter:async()=>({items:[{id:'fixture-source',jurisdiction_id:'fixture-only',title:'Synthetic retained source',file_hash_sha256:'a'.repeat(64),archived_file_url:'https://example.gov/retained.pdf',content_status:'current'}]})},
  PermittingWorkflowDraft:{filter:async()=>({items:window.fixture.rows}),create:async row=>{window.fixture.attempts++;if(window.fixture.fail){window.fixture.fail=false;throw Error('Synthetic save failure');}const saved={...row,id:'synthetic-draft-'+(window.fixture.rows.length+1)};window.fixture.rows.push(saved);return saved;}},
  PermitLineItem:{create:async()=>{window.fixture.jobWrites++;throw Error('Job writes forbidden');}}},
  functions:{invoke:async()=>{throw Error('Provider calls forbidden');}},integrations:{Core:{InvokeLLM:async()=>{window.fixture.aiCalls++;return {summary:'Synthetic workflow — fixture only',steps:[
@@ -51,7 +51,7 @@ try {
  await page.getByRole('status').filter({hasText:'Saved permitting draft:'}).waitFor();
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  const result=await page.evaluate(()=>window.fixture);assert.equal(result.rows.length,2);assert.equal(result.attempts,3);assert.equal(result.aiCalls,1);assert.equal(result.jobWrites,0);
- assert.equal(result.rows[0].status,'draft');assert.equal(result.rows[0].work_order_id,undefined);assert.equal(result.rows[1].work_order_id,undefined);
+ assert.equal(result.rows[0].snapshot.source_evidence['fixture-source'].file_hash_sha256,'a'.repeat(64));assert.deepEqual(result.rows[1].snapshot.source_evidence,result.rows[0].snapshot.source_evidence);assert.equal(result.rows[0].status,'draft');assert.equal(result.rows[0].work_order_id,undefined);assert.equal(result.rows[1].work_order_id,undefined);
  assert.deepEqual(result.rows[0].snapshot.steps.map(s=>s.basis),['staff_confirmation_needed','staff_confirmation_needed','staff_confirmation_needed']);
  assert.equal(result.rows[0].snapshot.steps[0].action,'Staff-adjusted synthetic action');assert.deepEqual(result.rows[0].snapshot.steps[0].required_documents,['Site plan','Lighting plan']);
  assert.deepEqual(result.rows[0].snapshot.steps[0].citations,[{rule_id:'approved',source_document_id:'fixture-source',section_or_page:'Section 1'}]);assert.equal(result.rows[0].snapshot.steps[0].staff_override.original_values.action,'Synthetic action');

@@ -26,3 +26,12 @@ test('fingerprints, changed archives and legacy snapshots are distinguished with
  assert.equal(matchWorkflowSource({source_document_id:'source'},{...source,jurisdiction_id:'ky'},source,'oh').state,'unknown');
 });
 
+
+test('citation and captured metadata conflicts stay visible even if one fingerprint matches',()=>{
+ const conflicting={...source,file_hash_sha256:hashB,content_status:'current',verification_status:'verified'};
+ const result=matchWorkflowSource(citation,conflicting,{...source,content_status:'historical',verification_status:'needs_verification'},'oh');
+ assert.equal(result.state,'different');
+ assert.deepEqual(result.metadataChanges.map(item=>item.field),['content_status','verification_status']);
+ assert.ok(result.changes.some(message=>message.includes('source metadata captured with this draft')));
+ assert.equal(matchWorkflowSource(citation,{...source,content_status:'current'},{...source,content_status:'historical'},'oh').state,'matching');
+});
