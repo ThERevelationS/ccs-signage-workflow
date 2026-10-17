@@ -61,7 +61,9 @@ const source=readFileSync("base44/functions/fieldHistoryAction/entry.ts","utf8")
 const dialog=readFileSync("src/components/sales/SalesOpportunityDialog.jsx","utf8");
 const spreadsheet=readFileSync("src/components/sales/SalesPipelineSpreadsheet.jsx","utf8");
 let role="user",getCalls=0,historyCalls=0,pendingCalls=0,writeCalls=0,mutateVersionMidRead=false,
- pendingResult={items:pending.filter(e=>e.status==="pending"),has_more:true};
+ pendingResult={items:pending.filter(e=>e.status==="pending" && e.entity_id===id &&
+   SALES_OPPORTUNITY_HISTORY_FIELDS.includes(e.field_name)),has_more:true},
+ pendingResponses=[];
 const sdk={asServiceRole:{entities:{
  WorkOrder:{async get(key){getCalls++;return key===id?{...row}:null;}},
  FieldAudit:{async filter(query,options){
@@ -71,7 +73,7 @@ const sdk={asServiceRole:{entities:{
    check(query.entity_id===id&&query.entity_type==="WorkOrder","Admin evidence query is scoped to one WorkOrder.");
    equal(query.field_name.$in,SALES_OPPORTUNITY_HISTORY_FIELDS,"Server filters to allowed Sales fields.");
    equal(options.limit,35,"Admin evidence request remains bounded.");
-   return pendingResult;
+   return pendingResponses.length ? pendingResponses.shift() : pendingResult;
  }},
  CellHistory:{async filter(){historyCalls++;return {items:[]};}},
 }}};
@@ -114,6 +116,27 @@ response=await ctx.reviewHandler(request());
 equal(response.status,409,"Concurrent WorkOrder edit invalidates stale admin evidence.");
 equal((await response.json()).code,"SALES_HISTORY_STALE","Version conflict is explicitly labeled.");
 equal(writeCalls,0,"Concurrency check never mutates audit data.");
+mutateVersionMidRead=false;
+row.updated_date="v1";
+const stablePage={items:pendingResult.items.map(e=>({...e})),has_more:false};
+const noPendingPage={items:[],has_more:false};
+pendingResponses=[stablePage,noPendingPage];
+response=await ctx.reviewHandler(request());
+equal(response.status,409,"Pending to committed finalization during admin review fails closed.");
+equal((await response.json()).code,"SALES_HISTORY_STALE","Audit-only finalization returns the same safe reload signal.");
+pendingResponses=[noPendingPage,stablePage];
+response=await ctx.reviewHandler(request());
+equal(response.status,409,"New pending audit appearing during investigation fails closed.");
+pendingResponses=[stablePage,{items:stablePage.items.map((e,i)=>i===0?{...e,new_value:"CHANGED"}:e),has_more:false}];
+response=await ctx.reviewHandler(request());
+equal(response.status,409,"Changing pending evidence without WorkOrder revision fails closed.");
+pendingResponses=[stablePage,{items:stablePage.items.slice().reverse(),has_more:false}];
+response=await ctx.reviewHandler(request());
+equal(response.status,200,"Stable evidence with harmless backend ordering differences is accepted.");
+pendingResponses=[stablePage,{...stablePage,has_more:true}];
+response=await ctx.reviewHandler(request());
+equal(response.status,409,"Changed pagination coverage triggers fresh inspection.");
+equal(writeCalls,0,"All races are rejected without any audit writes.");
 check(spreadsheet.includes("isAdmin={isAdmin}"),"Sales user role is passed from existing auth context to Opportunity Detail.");
 check(dialog.includes('action: "sales_audit_review"') &&
  dialog.includes("isAdmin && historyAuditNeedsReview"),"Admin review is an explicit privileged UI interaction.");
