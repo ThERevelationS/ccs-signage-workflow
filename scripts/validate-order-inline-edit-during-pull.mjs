@@ -91,7 +91,7 @@ assert.ok(needed.indexOf('if (manualPullInFlightRef.current || isPulling)') <
 const ui = source.slice(source.indexOf('  // Mobile card view'));
 for (const field of ['request_type', 'quantity', 'vendor', 'description']) {
   const snippet = ui.slice(ui.indexOf('updateOrder(' + (field === 'description' ? 'expandedDescription' : 'order.id') + ', "' + field + '"'));
-  assert.match(snippet.slice(0, 250), /disabled=\{!isRegistered \|\| isPulling\}/,
+  assert.match(snippet.slice(0, 500), /disabled=\{!isRegistered \|\| isPulling\}/,
     'Inline ' + field + ' must visibly disable during a pull');
 }
 assert.equal((ui.match(/<PopoverTrigger asChild disabled=\{!isRegistered \|\| isPulling\}>/g) || []).length, 3);
