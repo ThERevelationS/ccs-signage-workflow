@@ -9,7 +9,8 @@ import {
 } from '../src/components/admin/adminTabNavigation.js';
 
 const page = readFileSync(new URL('../src/pages/AdminSettings.jsx', import.meta.url), 'utf8');
-const listTags = page.match(/<TabsList\b[^>]*>/g) || [];
+// Callback refs include `=>`, so collect each opening tag through className.
+const listTags = page.match(/<TabsList\b[\s\S]*?className="[^"]*"/g) || [];
 const triggerTags = page.match(/<TabsTrigger\b[^>]*>/g) || [];
 const mainNav = page.slice(page.indexOf('<Tabs value={selectedAdminTab}'), page.indexOf('<AdminPanelContent value="users">'));
 const allTabs = ADMIN_TAB_GROUPS.flatMap((group) => group.tabs);
