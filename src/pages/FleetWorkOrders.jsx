@@ -49,8 +49,10 @@ export default function FleetWorkOrders() {
   const statusFilterRef = useRef(null);
   const retryRefreshButtonRef = useRef(null);
   const hasLoadedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const loadSequence = ++loadSequenceRef.current;
     // Retain keyed work-order controls during subsequent refreshes so a
     // keyboard user's focus is not removed by the loading placeholder.
     if (!hasLoadedRef.current) setLoading(true);
@@ -63,19 +65,23 @@ export default function FleetWorkOrders() {
         listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
         base44.auth.me().catch(() => null),
       ]);
-      setOrders(w || []);
-      setEquipment(e || []);
-      setTasks(t || []);
-      setParts(p || []);
-      setFluids(f || []);
-      setCurrentUser(u || null);
-      hasLoadedRef.current = true;
-      setRefreshError("");
+      if (loadSequence === loadSequenceRef.current) {
+        setOrders(w || []);
+        setEquipment(e || []);
+        setTasks(t || []);
+        setParts(p || []);
+        setFluids(f || []);
+        setCurrentUser(u || null);
+        hasLoadedRef.current = true;
+        setRefreshError("");
+      }
     } catch (error) {
-      setRefreshError("Unable to refresh Fleet work orders. The list may be out of date; retry the refresh instead of repeating a saved action.");
+      if (loadSequence === loadSequenceRef.current) {
+        setRefreshError("Unable to refresh Fleet work orders. The list may be out of date; retry the refresh instead of repeating a saved action.");
+      }
       throw error;
     } finally {
-      setLoading(false);
+      if (loadSequence === loadSequenceRef.current) setLoading(false);
     }
   }, []);
 
