@@ -6,6 +6,7 @@ import {
   appendSalesOpportunityHistoryPages,
 } from '../base44/shared/salesOpportunityHistory.mjs';
 import {validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead} from '../base44/shared/salesHistorySnapshotGuard.mjs';
+import {salesHistoryHasUnfinalizedMatchingAudit} from '../base44/shared/salesHistoryFinalizationSignal.mjs';
 
 let checks=0;
 function ok(condition,description){assert.ok(condition,description);checks++}
@@ -39,6 +40,7 @@ const sdk={asServiceRole:{entities:{
 const readCalls=[];
 let unavailableCursors=false;
 function fetchPage(kind,query,options){
+  if(kind==='audit' && query.status==='pending')return Promise.resolve({items:[],has_more:false});
   readCalls.push({kind,query,options});
   const dataset=(kind==='audit'?audits:legacy).filter(row=>
     query.field_name.$in.includes(row.field_name) &&
@@ -55,7 +57,8 @@ const ctx={
   authenticateSignShopSession:async()=>({role:'user',email:'sales@example.invalid'}),
   beginSyncTraceStorage:async()=>{},
   SALES_OPPORTUNITY_HISTORY_FIELDS,mergeSalesOpportunityHistory,
-  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,Response,
+  validateSalesHistoryPageVersion,verifySalesHistoryPageVersionAfterRead,
+  salesHistoryHasUnfinalizedMatchingAudit,Response,
 };
 runInNewContext(source.replace(/^import .*;\s*$/gm,'')
   .replace('export default async function(req) {','async function simulatedDefault(req) {')
