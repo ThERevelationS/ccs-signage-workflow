@@ -53,7 +53,7 @@ function fixture(){
   get formData(){return state.account;},
   createAdminAccountDraft:record=>({ full_name:record.full_name || "" }), 
   hasUnsavedAdminAccountDraft:()=>false,
-  setAccountSaveRecovery:()=>{},setAccountWriteRecovery:()=>{},setConfirmAccountReconciliation:()=>{},setAccountFieldChoices:()=>{},setPasswordRetryConfirmed:()=>{},setAccountSaveNotice:()=>{},
+  setAccountSaveRecovery:()=>{},setAccountWriteRecovery:()=>{},setConfirmAccountReconciliation:()=>{},setAccountFieldChoices:()=>{},setPostSaveRefreshPending:()=>{},setPasswordRetryConfirmed:()=>{},setAccountSaveNotice:()=>{},
   setPendingHrExit:v=>{state.pending=v;},
   setHasUnsavedHrData:v=>{state.hasUnsaved=typeof v==="function"?v(state.hasUnsaved):v;},
   setEditingUser:v=>{
