@@ -157,13 +157,13 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         : data;
       if (mountedRef.current) setStatusRecord({ scope: scopeInstanceKey, data: confirmedStatus });
       signalPauseChanged(confirmedStatus);
-      void loadStatus();
+      if (mountedRef.current && scopeRef.current === scopeInstanceKey) void loadStatus();
     } catch (err) {
       const responseStatus = Number(err?.response?.status || 0);
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
       if (!retrySame) clearRequestId(action, email);
       setError(err?.response?.data?.error || err?.message || `${paused ? "Resume Work" : "Work Pause"} was not confirmed.`);
-      await loadStatus();
+      if (mountedRef.current && scopeRef.current === scopeInstanceKey) await loadStatus();
     } finally {
       setBusy(false);
     }
