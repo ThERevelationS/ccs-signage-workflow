@@ -272,6 +272,68 @@ test("Post-save review cannot approve without acknowledgment or with wrong sessi
  assert.equal(f.state.accountCalls.length,1);
 });
 
+
+test("Version-only change still requires an explicit post-save review",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const latest={...original,full_name:"Saved Name",updated_date:"v3"};
+ f.state.refreshRows=[latest];await f.save();
+ assert.equal(f.state.refreshPending.stage,"review");
+ const preview=planAccountFieldResolution({
+  baseline:f.state.refreshPending.saved,attempted:f.state.refreshPending.attempted,
+  latest,draft:f.state.form
+ });
+ assert.equal(preview.fields.length,0);
+ assert.equal(f.state.accountCalls.length,1);
+ f.state.confirmed=true;f.state.approvalRows=[latest];await f.approve();
+ assert.equal(f.state.editor.updated_date,"v3");
+ assert.equal(f.state.refreshPending,null);
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Same-version change to role or permission cannot bypass post-save review",async()=>{
+ for(const changed of [
+  {can_import_export:true},
+  {sales_roles:["Installer"]},
+  {role:"admin",can_view_resources:true}
+ ]){
+  const f=fixture({changes:{full_name:"Saved Name"}});
+  const newer={...original,full_name:"Saved Name",updated_date:"version-two",...changed};
+  f.state.refreshRows=[newer];await f.save();
+  assert.equal(f.state.refreshPending.stage,"review");
+  assert.equal(f.state.editor.updated_date,"version-two");
+  assert.equal(f.state.accountCalls.length,1);
+ }
+});
+
+test("Successful post-save field approval preserves a new unsent password",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const latest={...original,full_name:"Saved Name",updated_date:"v3",
+  role:"admin",can_view_resources:true};
+ f.state.refreshRows=[latest];await f.save();
+ f.edit({password_hash:"a-new-unsent-password"});
+ f.state.confirmed=true;f.state.approvalRows=[latest];await f.approve();
+ assert.equal(f.state.form.password_hash,"a-new-unsent-password");
+ assert.equal(f.state.editor.role,"admin");
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Duplicate and stale-session post-save approvals cannot adopt the preview",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const latest={...original,full_name:"Saved Name",updated_date:"v3",
+  role:"admin",can_view_resources:true};
+ f.state.refreshRows=[latest];await f.save();
+ f.state.confirmed=true;
+ const read=wait();f.state.approvalDeferred=read;
+ const first=f.approve(),second=f.approve();
+ assert.equal(f.refs.userUpdateInFlight.current,true);
+ f.refs.activeSessionToken.current="revoked-session";
+ read.resolve([latest]);await first;await second;
+ assert.equal(f.state.refreshPending.stage,"review");
+ assert.equal(f.state.editor.updated_date,"version-two");
+ assert.equal(f.state.accountCalls.length,1);
+});
+
 test("Post-save review UI stays scoped, explicit and write-free",()=>{
  assert.match(source,/postSaveResolutionPreview\.fields\.map\(field =>/);
  assert.match(source,/onClick=\{\(\) => choosePostSaveField\(field\.key, "mine"\)\}/);
