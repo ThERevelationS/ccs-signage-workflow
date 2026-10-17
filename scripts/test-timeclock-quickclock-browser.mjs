@@ -348,7 +348,7 @@ createRoot(document.getElementById("root")).render(
       let active = fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active");
       assert.equal(active.length, 1);
       assert.equal(active[0].activity_type, "shop");
-      await dialog.getByRole("button", {name:"Change Work",exact:true}).click();
+      await dialog.getByRole("combobox").first().click();
       await page.getByRole("option", {name:"Fabrication",exact:true}).click();
       await dialog.getByRole("button", {name:"Change Work",exact:true}).click();
       active = fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active");
