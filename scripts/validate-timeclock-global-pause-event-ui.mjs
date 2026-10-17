@@ -184,4 +184,21 @@ assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
 assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Resume Work/);
 assert.equal(renderer.root.findByType('button').props.disabled, false);
 console.log('PASS late previous employee success refreshes current identity without canceling it');
-console.log('PASS 5/5 Global Work Pause session/event scenarios');
+
+await act(async () => {
+  windowStub.dispatchEvent(new CustomEvent('ccs-timeclock-work-pause-changed', { detail: {
+    success: true, user: { email: 'first@synthetic.invalid' },
+    status: 'clocked_in', work_pause_status: 'paused', active_work_pause: { id: 'foreign-event-pause' },
+  } }));
+});
+assert.equal(calls.length, 11);
+assert.equal(calls[10].payload.target_email, 'second@synthetic.invalid');
+await act(async () => { calls[10].resolve({ data: {
+  success: true, user: { email: 'first@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+  active_work_pause: { id: 'foreign-response-pause' }, break_status: 'working',
+} }); });
+assert.equal(renderer.toJSON(), null,
+  'A successful status response for a different employee must fail closed instead of exposing their Work Pause state');
+console.log('PASS mismatched status identity fails closed');
+console.log('PASS 6/6 Global Work Pause session/event scenarios');
