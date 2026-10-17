@@ -12,8 +12,14 @@ test("All 15 Admin pages and 11 nested panels retain their TabsContent semantics
   assert.equal(closed.length, 26);
   assert.equal(new Set(pages).size, 26);
   assert.doesNotMatch(page, /<TabsContent/);
-  assert.match(boundary, /<TabsContent value=\{value\} \{\.\.\.props\}>/);
+  assert.match(boundary, /<TabsContent value=\{value\} className=\{cn\("w-full min-w-0 max-w-full overflow-x-auto", className\)\} \{\.\.\.props\}>/);
   assert.match(boundary, /<AdminPanelErrorBoundary label=\{label\}>\{children\}<\/AdminPanelErrorBoundary>/);
+});
+
+test("Active Admin tab content bounds wide panel data to internal horizontal scrolling", () => {
+  assert.match(boundary, /overflow-x-auto/);
+  assert.match(boundary, /className, \.\.\.props/);
+  assert.match(boundary, /cn\("w-full min-w-0 max-w-full overflow-x-auto", className\)/);
 });
 
 test("Panel boundary offers an accessible manual-only retry without exposing raw errors", () => {
