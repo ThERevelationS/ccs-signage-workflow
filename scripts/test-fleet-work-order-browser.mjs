@@ -119,9 +119,9 @@ try {
       window.__fleetBrowserFixture.orders.find((row) => row.id === "wo-open").title = "Newer synthetic server title";
     });
     await page.getByRole("combobox", { name: "Filter by work order status" }).selectOption("all");
-    await page.locator("#fleet-work-order-toggle-wo-done").click();
+    await page.locator("#fleet-work-order-toggle-wo-open").click();
     await page.getByRole("button", { name: "Edit", exact: true }).click();
-    const secondDialog = page.getByRole("dialog", { name: "Edit WO-SYNTH-DONE" });
+    const secondDialog = page.getByRole("dialog", { name: "Edit WO-SYNTH-OPEN" });
     await secondDialog.getByRole("button", { name: "Refresh", exact: true }).first().click();
     await page.waitForFunction((expected) => window.__fleetBrowserFixture.workOrderListCompleted === expected + 1, initialStarted);
     await secondDialog.getByRole("button", { name: "Close Fleet work order dialog" }).click();
