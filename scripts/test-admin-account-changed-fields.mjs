@@ -9,7 +9,8 @@ import {
 } from "../src/components/admin/adminAccountDraft.js";
 import { rejectedAdminAccountField } from "../src/components/admin/accountSaveConflict.js";
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from "../base44/shared/authorizedEmailCredentialPersistence.mjs";
-import { compareUnverifiedAccountSave } from "../src/components/admin/unverifiedAccountSave.js";
+import { compareUnverifiedAccountSave, isSameVerifiedAccountSnapshot } from "../src/components/admin/unverifiedAccountSave.js";
+import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
 
 const source=readFileSync("src/components/admin/UserManagement.jsx","utf8");
 const persistence=readFileSync("src/components/admin/authorizedUserAdminPersistence.js","utf8");
@@ -19,9 +20,13 @@ const end=source.indexOf("  const verifyInterruptedAccountSave = async () => {",
 assert.ok(start>=0 && end>start);
 const handler=source.slice(start,end).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
 const retryStart=source.indexOf("  const retryPostSaveDirectoryRefresh = async () => {");
-const retryEnd=source.indexOf("\n\n  return (\n    <div",retryStart);
+const retryEnd=source.indexOf("  const acceptPostSaveAccountReview = async () => {",retryStart);
 assert.ok(retryStart>=0&&retryEnd>retryStart,"shipping read-only retry handler exists");
 const retrySource=source.slice(retryStart,retryEnd).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
+const approveStart=retryEnd;
+const approveEnd=source.indexOf("\n\n  return (\n    <div",approveStart);
+assert.ok(approveEnd>approveStart);
+const approveSource=source.slice(approveStart,approveEnd).trim().replace(/^const \w+ = /,"").replace(/;$/,"");
 const compile=(code,scope)=>new Function("scope",`with(scope){return (${code})}`)(scope);
 const token="synthetic-admin-session";
 const original={
@@ -48,16 +53,23 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   form:initial,editor:record,users:[record],dialog:true,error:"",notice:"",
   accountCalls:[],passwordCalls:[],readCalls:0,recovery:null,writeRecovery:null,hrDirty:false,
   mutationSaving:false,backendRecord:{...record,...remoteChanges},passwordResult,
-  refreshPending:null,refreshRows:undefined,accountDeferred:null,passwordDeferred:null,readDeferred:null
+  refreshPending:null,confirmed:false,choices:{},approvalRows:undefined,approvalDeferred:null,refreshRows:undefined,accountDeferred:null,passwordDeferred:null,readDeferred:null
  };
  const scope={...refs,
   createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft,
-  rejectedAdminAccountField,compareUnverifiedAccountSave,
+  rejectedAdminAccountField,compareUnverifiedAccountSave,isSameVerifiedAccountSnapshot,
   get editingUser(){return state.editor;},get formData(){return state.form;},
   get sessionToken(){return token;},
   get accountSaveRecovery(){return state.recovery;},
   get accountWriteRecovery(){return state.writeRecovery;},
   get postSaveRefreshPending(){return state.refreshPending;},
+  get postSaveResolutionPreview(){
+   const pending=state.refreshPending;
+   return pending?.stage==="review" && pending.latest && pending.saved
+    ? planAccountFieldResolution({baseline:pending.saved,attempted:pending.attempted,
+        latest:pending.latest,draft:state.form,choices:state.choices}) : null;
+  },
+  get confirmAccountReconciliation(){return state.confirmed;},
   isLoading:false,userDirectoryError:false,
   hasProtectedHrDraft:()=>state.hrDirty,
   setUserMutationError:value=>{state.error=value;},
@@ -66,8 +78,9 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
   setUserMutationSaving:value=>{state.mutationSaving=value;},
   setAccountSaveRecovery:value=>{state.recovery=value;},
   setAccountWriteRecovery:value=>{state.writeRecovery=value;},
-  setConfirmAccountReconciliation:()=>{},
-  setAccountFieldChoices:()=>{},setPasswordRetryConfirmed:()=>{},
+  setConfirmAccountReconciliation:value=>{state.confirmed=value;},
+  setAccountFieldChoices:value=>{state.choices=typeof value==="function"?value(state.choices):value;},
+  setPasswordRetryConfirmed:()=>{},
   setUsers:value=>{state.users=typeof value==="function"?value(state.users):value;},
   setEditingUser:value=>{
    state.editor=typeof value==="function"?value(state.editor):value;
@@ -103,14 +116,16 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
    state.backendRecord=saved;
    return Promise.resolve(saved);
   },
-  listAuthorizedUsersAdmin:()=>Promise.resolve([state.backendRecord]),
+  listAuthorizedUsersAdmin:()=>state.approvalDeferred
+    ? state.approvalDeferred.promise
+    : Promise.resolve(state.approvalRows===undefined?[state.backendRecord]:state.approvalRows),
   setPasswordFn:options=>{
    state.passwordCalls.push(options);
    if(state.passwordDeferred)return state.passwordDeferred.promise;
    return Promise.resolve(state.passwordResult);
   }
  };
- return {state,refs,save:compile(handler,scope),retry:compile(retrySource,scope),edit:change=>{
+ return {state,refs,save:compile(handler,scope),retry:compile(retrySource,scope),approve:compile(approveSource,scope),edit:change=>{
   state.form={...state.form,...change};
   refs.activeAccountDraft.current=state.form;
  }};
