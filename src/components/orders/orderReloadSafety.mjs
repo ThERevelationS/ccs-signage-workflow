@@ -5,6 +5,8 @@ export function canCommitOrderReload({
   latestGeneration,
   manualPullInFlight = false,
   manualPullReload = false,
+  importInFlight = false,
+  importReload = false,
   startedEditGeneration = 0,
   latestEditGeneration = 0,
   localEditInProgress = false,
@@ -16,5 +18,6 @@ export function canCommitOrderReload({
     Number.isSafeInteger(latestEditGeneration) &&
     startedEditGeneration === latestEditGeneration &&
     !localEditInProgress &&
-    (!manualPullInFlight || manualPullReload);
+    (!manualPullInFlight || manualPullReload) &&
+    (!importInFlight || importReload);
 }
