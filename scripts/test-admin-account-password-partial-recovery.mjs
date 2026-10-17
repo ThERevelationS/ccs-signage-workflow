@@ -110,7 +110,7 @@ test("The normal Account Save cannot resubmit an already-committed partial save"
  await f.save();await f.save();
  assert.equal(f.state.accountCalls.length,1);
  assert.equal(f.state.passwordCalls.length,1);
- assert.match(f.state.error,/Resolve the unverified/);
+ assert.match(f.state.error,/Resolve the Account verification/);
 });
 
 test("Manual retry cannot execute without reviewed confirmation",async()=>{
