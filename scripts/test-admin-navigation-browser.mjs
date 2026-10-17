@@ -488,6 +488,40 @@ try {
         .getByRole('tab',{name:'Jurisdiction Monitoring'}).getAttribute('data-state'),'active');
     }, {height:420});
 
+  await check('History reveal scrolls only the constrained Admin viewport to nested active tab', 320,
+    '/?tab=backend&subtab=backup', async page=>{
+      const list=page.getByRole('tablist',{name:'Backend administration'});
+      await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        const scroller=card.parentElement.parentElement.parentElement;
+        scroller.style.height='250px';
+        scroller.style.overflowY='auto';
+      });
+      await list.getByRole('tab',{name:'Jurisdiction Monitoring'}).click();
+      await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+      await page.goBack();
+      await page.getByTestId('synthetic-BackupManager').waitFor();
+      await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        card.parentElement.parentElement.parentElement.scrollTop=0;
+      });
+      await page.goForward();
+      await page.getByTestId('synthetic-JurisdictionMonitoringSettings').waitFor();
+      const position=await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        const scroller=card.parentElement.parentElement.parentElement;
+        const selected=document.querySelector('[aria-label="Backend administration"] [data-state="active"]');
+        const area=scroller.getBoundingClientRect(),tab=selected.getBoundingClientRect();
+        return {scrollTop:scroller.scrollTop,selectedTop:tab.top,selectedBottom:tab.bottom,
+          areaTop:area.top,areaBottom:area.bottom,
+          documentWidth:document.documentElement.scrollWidth,viewport:innerWidth};
+      });
+      assert.ok(position.scrollTop>0,JSON.stringify(position));
+      assert.ok(position.selectedTop>=position.areaTop-2,JSON.stringify(position));
+      assert.ok(position.selectedBottom<=position.areaBottom+2,JSON.stringify(position));
+      assert.ok(position.documentWidth<=position.viewport+1,JSON.stringify(position));
+    }, {height:420});
+
   await check('Non-admin excludes restricted sections from search and category bar', 375,
     '/?role=basic&tab=smartsheet', async page=>{
       assert.equal(await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).count(),0);
