@@ -46,6 +46,7 @@ function fixture({password=secret,accountResult=newer}={}){
   hasProtectedHrDraft:()=>false,
   setUserMutationError:v=>{state.error=v;},
   setAccountSaveNotice:v=>{state.notice=v;},
+  setPostSaveRefreshPending:()=>{},
   setUserMutationSaving:v=>{state.mutationSaving=v;},
   setPasswordRetryConfirmed:v=>{state.confirmed=v;},
   setAccountSaveRecovery:v=>{state.recovery=v;},
