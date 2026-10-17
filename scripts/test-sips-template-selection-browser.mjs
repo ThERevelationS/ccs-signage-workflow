@@ -51,8 +51,11 @@ async function scenario(name, origin, viewport, run) {
     await page.getByText("1 saved on Work Order · 0 new to add").waitFor();
     await run(page);
     assert.deepEqual(failures, [], "No runtime errors or external HTTP requests");
-    assert.equal(await page.evaluate(() => window.__sipsSaved.length), 2,
-      "Synthetic saved checklist rows must remain intact");
+    const saved = await page.evaluate(() => window.__sipsSaved);
+    assert.deepEqual(saved.map(row => [row.id, row.status, row.approved_by]), [
+      ["saved-base", "Completed", "Supervisor"],
+      ["saved-option", "Completed", "Supervisor"],
+    ], "Saved checklist answers and approvals must stay unchanged");
     assert.equal(await page.evaluate(() => window.__sipsWriteAttempts), 0,
       "No actual or synthetic persistence write attempts");
     await checkViewport(page);
@@ -194,8 +197,12 @@ try {
     });
   }
 
-  await scenario("Desktop: applying one new option emits additions only, never rewrites answered checklist",
-    origin, { width: 1366, height: 900 }, async page => {
+  for (const [label, viewport] of [
+    ["Desktop", { width: 1366, height: 900 }],
+    ["320px phone", { width: 320, height: 568 }],
+  ]) {
+    await scenario(label + ": Apply emits only additions without rewriting saved answers",
+      origin, viewport, async page => {
       await page.getByRole("button", { name: "Select checklist option Permit Review to add to Existing Cabinet" }).click();
       await page.getByRole("button", { name: "Apply 1 new checklist selection to project" }).click();
       const result = await page.evaluate(() => ({
@@ -211,6 +218,7 @@ try {
       assert.deepEqual(result.saved.map(row => row.status), ["Completed", "Completed"]);
       assert.deepEqual(result.saved.map(row => row.approved_by), ["Supervisor", "Supervisor"]);
     });
+  }
 
   console.log("PASS " + passed + " isolated Chromium Template Builder selection scenarios (read-only)");
 } finally {
