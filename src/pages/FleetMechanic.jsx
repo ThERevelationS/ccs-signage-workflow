@@ -67,7 +67,10 @@ async function clearStoredEstimateRecovery(token,workOrderId) {
     const next = pending.filter(row => row.workOrderId !== workOrderId);
     if (next.length) sessionStorage.setItem(key,JSON.stringify(next));
     else sessionStorage.removeItem(key);
-  } catch { /* Keeping the marker is safer than discarding unverified recovery state. */ }
+    return true;
+  } catch { /* Keeping the marker is safer than discarding unverified recovery state. */
+    return false;
+  }
 }
 
 function initialToken() {
@@ -301,11 +304,10 @@ export default function FleetMechanic() {
     setForm({ actual_hours: workOrder.actual_hours ?? "", corrective_action: workOrder.corrective_action || "", mechanic_note: "" });
     setEstimateForm(estimateSeed(estimateByWorkOrder[workOrder.id]));
     const pendingEstimateRecovery = estimateRecoveryByWorkOrderRef.current.get(workOrder.id) || null;
-    setEstimateRecovery(pendingEstimateRecovery);
-    if (pendingEstimateRecovery) setActionError(pendingEstimateRecovery.reason);
     photos.forEach(row => URL.revokeObjectURL(row.preview));
     setPhotos([]);
-    setActionError("");
+    setActionError(pendingEstimateRecovery?.reason || "");
+    setEstimateRecovery(pendingEstimateRecovery);
     setSavedMessage("");
   };
 
@@ -520,7 +522,12 @@ export default function FleetMechanic() {
         setActionError(warning);
         return !changedOwnership;
       }
-      await clearStoredEstimateRecovery(token,workOrderId);
+      const recoveryCleared = await clearStoredEstimateRecovery(token,workOrderId);
+      if (!recoveryCleared) {
+        setEstimateRecovery(pendingRecovery);
+        setActionError("Current server state was loaded, but this browser could not clear the recovery marker. Check Current Server State again before retrying.");
+        return false;
+      }
       estimateRecoveryByWorkOrderRef.current.delete(workOrderId);
       setEstimateRecovery(null);
       if (isSameOpenJob) {
