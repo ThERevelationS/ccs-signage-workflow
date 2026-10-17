@@ -260,14 +260,10 @@ export default function SalesOpportunityDialog({
       }
     } finally {
       if (revision === historyRevisionRef.current) {
-        historyReviewBusyRefReset();
+        historyReviewInFlightRef.current = false;
+        setHistoryReviewBusy(false);
       }
     }
-  };
-
-  const historyReviewBusyRefReset = () => {
-    historyReviewInFlightRef.current = false;
-    setHistoryReviewBusy(false);
   };
 
   const value = Number(workOrder?.estimate_amount ?? 0) || 0;
@@ -744,6 +740,45 @@ export default function SalesOpportunityDialog({
                 onClick={() => setHistoryReloadNonce((value) => value + 1)}>
                 {historyAuditPending ? historyAuditNeedsReview ? "Recheck pending Sales history" : "Retry history verification" : historyError && !historyNeedsRefresh ? "Retry Sales history" : "Refresh Sales history"}
               </Button>
+            )}
+            {isAdmin && historyAuditNeedsReview && !historyLoading && (
+              <div className="mt-3 space-y-2 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-amber-900">Administrator investigation</p>
+                  <Button type="button" size="sm" variant="outline" className="min-h-11 sm:min-h-9"
+                    disabled={historyReviewBusy} onClick={inspectPendingSalesAudits}>
+                    {historyReviewBusy ? "Checking audit evidence…" : "Inspect pending Sales audits"}
+                  </Button>
+                </div>
+                <p className="text-xs text-amber-900">Read-only evidence for this WorkOrder. A matching value does not prove the write completed. Do not change audit status based only on this view.</p>
+                {historyReviewError && <p role="alert" className="text-xs text-red-700">{historyReviewError}</p>}
+                {historyReviewOpen && historyReview && (
+                  <div className="space-y-2">
+                    {historyReview.entries.length === 0 && (
+                      <p className="text-xs text-gray-700">No pending Sales audit records in this read. Recheck Sales history to confirm the warning has cleared.</p>
+                    )}
+                    {historyReview.entries.map((entry) => (
+                      <div key={entry.audit_id || entry.event_key} className="rounded-md border bg-white p-2.5 text-xs text-gray-700">
+                        <div className="font-semibold">{FIELD_LABELS[entry.field_name] || entry.field_name}</div>
+                        <div className="mt-1">{entry.matching_current_value
+                          ? "Pending value matches current WorkOrder (not proof of save)"
+                          : "Pending value does not match current WorkOrder or cannot be compared"}</div>
+                        <div className="mt-1 text-gray-500">
+                          {entry.timing === "aged" ? "15+ minutes old" : entry.timing === "recent"
+                            ? "Recent pending" : "Timing requires review"}
+                          {" · "}{entry.source || "Unknown source"}
+                          {entry.actor_name ? ` · ${entry.actor_name}` : ""}
+                        </div>
+                        <div className="mt-1 break-all text-[11px] text-gray-500">
+                          Audit ID: {entry.audit_id || "Unavailable"}
+                          {entry.created_at ? ` · ${format(new Date(entry.created_at), "MMM d, yyyy h:mm a")}` : ""}
+                        </div>
+                      </div>
+                    ))}
+                    {historyReview.has_more && <p className="text-xs font-medium text-amber-900">More pending audit records exist beyond this bounded inspection. Manual review is incomplete.</p>}
+                  </div>
+                )}
+              </div>
             )}
             {historyPagination?.has_more && !historyLoading && !historyNeedsRefresh && !historyAuditPending && (
               <Button type="button" variant="outline" size="sm" className="mt-3 h-11 w-full sm:h-9"
