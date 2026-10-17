@@ -769,8 +769,8 @@ export default function UserManagement() {
       setUserMutationError("Save your HR data separately or choose Cancel and confirm discarding it before saving account changes.");
       return;
     }
-    if (accountSaveRecovery || accountWriteRecovery) {
-      setUserMutationError("Resolve the unverified Account or Time Clock password result before another Account write.");
+    if (accountSaveRecovery || accountWriteRecovery || postSaveRefreshPending) {
+      setUserMutationError("Resolve the Account verification or Time Clock password recovery before another Account write. A confirmed save must not be submitted again.");
       return;
     }
     if (!editingUser || userUpdateInFlight.current || hrSaveInFlight.current || hrReloadInFlight.current || deletionInFlight.current || isLoading || userDirectoryError ||
@@ -2173,7 +2173,7 @@ export default function UserManagement() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || !!accountSaveRecovery || !!accountWriteRecovery || isLoading || userDirectoryError || !sessionToken}
+              disabled={userMutationSaving || hrMutationSaving || hrReloadLoading || hasUnsavedHrData || !!accountSaveRecovery || !!accountWriteRecovery || !!postSaveRefreshPending || isLoading || userDirectoryError || !sessionToken}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
