@@ -452,7 +452,7 @@ createRoot(document.getElementById("root")).render(params.has("global-pause")
     });
 
   console.log("PASS " + (passed - 1) + "/9 isolated Quick Clock Chromium scenarios");
-  console.log("PASS " + passed + "/10 isolated Time Clock Chromium scenarios");
+  console.log("PASS " + passed + "/11 isolated Time Clock Chromium scenarios");
 } finally {
   if (browser) await browser.close();
   if (vite) await vite.close();
