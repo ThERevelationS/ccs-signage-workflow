@@ -51,7 +51,7 @@ function refreshHarness(){
     pretty:value=>String(value||"draft").replaceAll("_"," "),
     readStoredWorkRecovery:async()=>null,
     estimateRecoveryByWorkOrderRef:{current:new Map()},
-    readStoredEstimateRecoveries:async()=>[],
+    readStoredEstimateRecoveries:async()=>[...ctx.estimateRecoveryByWorkOrderRef.current.values()],
     storeEstimateRecovery:async(_token,recovery)=>{
       ctx.estimateRecoveryByWorkOrderRef.current.set(recovery.workOrderId,recovery);
       return true;
