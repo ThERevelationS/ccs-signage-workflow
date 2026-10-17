@@ -848,14 +848,29 @@ try {
     await failure.waitFor();
     assert.equal(await failure.getByRole('button', { name: 'Retry panel' }).count(), 1,
       'A repeat failure still gives a recoverable fallback');
+    assert.equal(await failure.getByRole('button', { name: 'Retry panel' })
+      .evaluate(button => document.activeElement === button), true,
+      'A failed retry must leave keyboard focus on the live retry control');
     await page.getByRole('tab', { name: 'Client Trash' }).click();
     await page.getByTestId('synthetic-ProjectTrash').waitFor();
     await page.getByRole('tab', { name: 'Data Backup' }).click();
     await failure.waitFor();
     await page.evaluate(() => { window.__adminPanelFailures = []; });
+    const urlBeforeRetry = new URL(page.url()).search;
+    const draftSearch = page.getByRole('combobox', { name: 'Find an Admin page or setting' });
+    await draftSearch.fill('unsubmitted search draft');
     await failure.getByRole('button', { name: 'Retry panel' }).click();
     await page.getByTestId('synthetic-BackupManager').waitFor();
     assert.equal(await failure.count(), 0);
+    assert.equal(await page.getByRole('tab', { name: 'Data Backup' }).evaluate(
+      tab => document.activeElement === tab), true,
+      'Successful recovery moves focus from the vanished retry button to the selected nested tab');
+    assert.equal(await draftSearch.inputValue(), 'unsubmitted search draft',
+      'Retry must preserve independent React input state');
+    assert.equal(new URL(page.url()).search, urlBeforeRetry,
+      'Retry must not rewrite the selected Admin URL or nested subtab');
+    assert.equal(await page.getByRole('tab', { name: 'Client Trash' }).getAttribute('data-state'), 'inactive');
+    assert.equal(await page.evaluate(() => (window.__adminEditUpdateCalls || []).length), 0);
   }, { allowSyntheticPanelError: true });
 
   await check('Failed Users panel does not block access to other main Admin categories', 320, '/?tab=calendar', async page => {
