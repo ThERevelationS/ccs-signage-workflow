@@ -188,6 +188,9 @@ Deno.serve(async (req) => {
           status,
           row_number: maxRowNumber + importedCount + 1,
           work_order_id: workOrderFilter || '',
+          // The Order Form's Save & Sync queue is reconstructed only from this
+          // durable marker, including Orders created by Excel import.
+          smartsheet_pending_local_sync: true,
         };
         if (dateNeeded) newOrder.date_needed = dateNeeded;
         if (dateOrdered) newOrder.date_ordered = dateOrdered;
