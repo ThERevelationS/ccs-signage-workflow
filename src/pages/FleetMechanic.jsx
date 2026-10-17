@@ -320,6 +320,9 @@ export default function FleetMechanic() {
       });
       if (result?.error) throw new Error(result.error);
       if (requestSequence !== workRecoveryRequestRef.current) return false;
+      // A confirmed recovery snapshot supersedes any older portal bootstrap
+      // that is still in flight, so it cannot overwrite the reconciled job.
+      portalRequestRef.current += 1;
       const fresh = result?.work_order || null;
       const isSameOpenJob = ownsSelectedJob();
       if (fresh && isSameOpenJob) applyWorkOrderSnapshot(fresh);
