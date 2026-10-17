@@ -53,19 +53,26 @@ test('Category navigation stays synchronized to the selected URL tab', () => {
   assert.match(page, /getAdminGroupForTab\(selectedAdminTab, isAdmin\)/);
 });
 
-test('Category and nested tab bars remain bounded on small screens', () => {
+test('Category scroll and responsive grid tabs remain bounded on phones and desktop', () => {
   assert.equal(listTags.length, 3);
   for (const list of listTags) {
-    for (const className of ['h-auto', 'w-full', 'max-w-full', 'flex-wrap', 'justify-start']) {
+    for (const className of ['grid', 'h-auto', 'w-full', 'min-w-0', 'max-w-full', 'grid-cols-2', 'items-stretch']) {
       assert.ok(list.includes(className), `${className} missing in ${list}`);
     }
     assert.match(list, /aria-label=/);
   }
-  assert.match(mainNav, /flex min-w-0 flex-wrap items-center/);
+  assert.match(listTags[0], /sm:grid-cols-3 lg:grid-cols-4/);
+  assert.match(listTags[1], /sm:grid-cols-4/);
+  assert.match(listTags[2], /sm:grid-cols-3 lg:grid-cols-4/);
+  assert.match(mainNav, /ref=\{categoryScrollerRef\} role="group"/);
+  assert.match(mainNav, /flex-nowrap items-center.*overflow-x-auto overscroll-x-contain/);
+  assert.match(mainNav, /min-h-10 shrink-0.*whitespace-nowrap/);
   assert.match(mainNav, /clay-card w-full min-w-0 max-w-full/);
+  assert.match(page, /getBoundingClientRect\(\)/);
+  assert.match(page, /scroller\.scrollLeft \+= target\.right - bounds\.right/);
   assert.equal(triggerTags.length, 12); // One mapped main trigger plus eleven nested triggers.
   for (const trigger of triggerTags) {
-    for (const className of ['max-w-full', 'min-h-10', 'whitespace-normal']) {
+    for (const className of ['max-w-full', 'min-w-0', 'min-h-11', 'whitespace-normal', 'break-words']) {
       assert.ok(trigger.includes(className), `${className} missing in ${trigger}`);
     }
   }
