@@ -158,7 +158,9 @@ try {
   ]) {
     await scenario(label + ": saved checklist and already-applied option stay locked", origin, viewport, async page => {
       await assertSaved(page);
-      await page.getByRole("button", { name: "Safety Review, already applied to saved Work Order checklist" }).click();
+      assert.equal(await page.getByRole("button", {
+        name: "Safety Review, already applied to saved Work Order checklist",
+      }).isDisabled(), true, "Already-applied options are disabled to user interaction");
       assert.equal(await page.getByText("1 saved on Work Order · 0 new to add").isVisible(), true);
       assert.equal(await page.getByRole("button", { name: "Nothing new selected to add to project" }).isDisabled(), true);
       assert.equal(await page.evaluate(() => window.__sipsApplied.length), 0);
