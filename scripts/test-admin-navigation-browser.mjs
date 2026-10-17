@@ -165,7 +165,9 @@ try {
     'if(window.__adminEditHoldStage==="update"&&sessionToken==="synthetic")',
     'await new Promise(resolve=>{window.__adminEditPendingUpdate=resolve;});',
     'if(window.__adminEditRejectStage==="update"&&sessionToken==="synthetic")throw Error("synthetic-private-old-edit-failure");',
-    'return {...record,...nextFields};',
+    'const saved={...record,...nextFields,updated_date:sessionToken==="synthetic-new"?"newer-account-confirmed":"synthetic-account-confirmed"};',
+    'if(sessionToken==="synthetic-new")window.__adminEditSavedRecordNew=saved;else window.__adminEditSavedRecord=saved;',
+    'return saved;',
     '}', 
     'export async function createAuthorizedUserAdmin({data,sessionToken}={}){',
     '(window.__adminInviteCreateCalls??=[]).push({email:data.email,session:sessionToken});',
@@ -220,12 +222,12 @@ try {
     'export async function listAuthorizedUsersAdmin({sessionToken}={}){',
     ' window.__adminUserDirectoryAttempts=(window.__adminUserDirectoryAttempts||0)+1;',
     ' (window.__adminUserReadSessions??=[]).push(sessionToken);',
-    ' if(sessionToken==="synthetic-new")return [{id:"synthetic-person-new",email:"new@example.invalid",full_name:"New Admin Directory User",role:"admin",updated_date:"new-version"}];',
+    ' if(sessionToken==="synthetic-new")return [window.__adminEditSavedRecordNew||{id:"synthetic-person-new",email:"new@example.invalid",full_name:"New Admin Directory User",role:"admin",updated_date:"new-version"}];',
     ' const params=new URLSearchParams(location.search);',
     ' if(window.__adminUserDirectoryFailure===true||(window.__adminUserDirectoryFailure!==false&&params.get("user_directory_fail")==="1"))',
     ' throw Error("synthetic-private-user-directory-error");',
     ' return params.get("user_rows")==="1"?',
-    ' [{id:"synthetic-person-1",email:"staff@example.invalid",full_name:"Synthetic Directory User",role:"user",updated_date:"synthetic"}]:[];',
+    ' [window.__adminEditSavedRecord||{id:"synthetic-person-1",email:"staff@example.invalid",full_name:"Synthetic Directory User",role:"user",updated_date:"synthetic"}]:[];',
     '}',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockSetPassword.js'), [
@@ -1150,12 +1152,13 @@ try {
       assert.equal(await page.evaluate(() => window.__adminInviteFunctionCalls.length), 2);
     });
 
-  await check('Old role update cannot begin password follow-up or overwrite new Admin editor', 375,
+  await check('Old Account update cannot begin password follow-up or overwrite new Admin editor', 375,
     '/?tab=users&real_users=1&user_rows=1', async page => {
       await page.evaluate(() => { window.__adminEditHoldStage = 'update'; });
       await page.getByRole('button', { name: 'Edit Synthetic Directory User' }).click();
       const oldDialog = page.getByRole('dialog', { name: /Edit User: Synthetic Directory User/ });
       await oldDialog.getByPlaceholder('Set password').fill('synthetic-only-123');
+      await oldDialog.getByPlaceholder('Enter full name').fill('Old pending Account edit');
       await oldDialog.getByRole('button', { name: 'Save Changes' }).evaluate(button => {
         button.click(); button.click();
       });
@@ -1219,6 +1222,7 @@ try {
       await page.getByRole('button', { name: 'Edit Synthetic Directory User' }).click();
       const dialog = page.getByRole('dialog', { name: /Edit User: Synthetic Directory User/ });
       await dialog.getByPlaceholder('Set password').fill('synthetic-only-123');
+      await dialog.getByPlaceholder('Enter full name').fill('Updated synthetic Account name');
       await dialog.getByRole('button', { name: 'Save Changes' }).click();
       await dialog.waitFor({ state: 'detached' });
       assert.deepEqual(await page.evaluate(() => (window.__adminEditUpdateCalls||[]).map(call => call.session)), ['synthetic']);
