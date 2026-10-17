@@ -11,7 +11,7 @@ export default function WorkflowCitationList({ citations = [], onOpenSourceDocum
         {citation.excerpt && <span className="text-gray-500">"{citation.excerpt.slice(0, 120)}{citation.excerpt.length > 120 ? "…" : ""}"</span>}
         {sourceId && <>
           <span className="text-gray-400"> [{sourceId.slice(0, 8)}]</span>
-          {typeof onOpenSourceDocument === "function" && <Button type="button" variant="outline" className="mt-1 min-h-11 h-auto whitespace-normal text-xs" onClick={() => onOpenSourceDocument(sourceId)}>Open saved source details</Button>}
+          {typeof onOpenSourceDocument === "function" && <Button type="button" variant="outline" className="mt-1 min-h-11 h-auto whitespace-normal text-xs" onClick={event => onOpenSourceDocument(sourceId, citation, event?.currentTarget)}>Open saved source details</Button>}
         </>}
       </div>;
     })}

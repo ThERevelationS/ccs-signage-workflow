@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { compareSavedDrafts, draftFieldLabel, validateDraftAncestor } from './permitDraftComparison.mjs';
+import { citationSourceId } from './workflowSourceEvidence.mjs';
 
 function SavedValue({ value }) {
   if (value === undefined || value === null || value === '') return <span className="text-gray-500">Not recorded</span>;
@@ -14,7 +15,14 @@ function revisionLabel(row) {
   return row.snapshot?.draft_revision?.revision_number ? 'Revision ' + row.snapshot.draft_revision.revision_number : 'Original saved draft';
 }
 
-export default function PermittingDraftHistory({ current }) {
+function CitationSourceActions({ citations, draftRow, side, onOpenCitation }) {
+  if (!Array.isArray(citations) || !onOpenCitation) return null;
+  return <div className="mt-2 space-y-2">{citations.map((citation, index) => citation && typeof citation === 'object' && <div key={index}>
+    <Button type="button" variant="outline" className="min-h-11 h-auto w-full whitespace-normal text-xs" onClick={event => onOpenCitation(citation, draftRow, event.currentTarget)}>Open {side} citation {index + 1} source</Button>
+    {!citationSourceId(citation) && <p>No saved source record linked; the retained citation can still be reviewed.</p>}
+  </div>)}</div>;
+}
+export default function PermittingDraftHistory({ current, onOpenCitation }) {
   const [open, setOpen] = useState(false);
   const [ancestors, setAncestors] = useState([]);
   const [selectedId, setSelectedId] = useState('');
@@ -69,8 +77,8 @@ export default function PermittingDraftHistory({ current }) {
           {visible.filter(row => row.group === group).map(row => <article key={row.label} className="min-w-0 rounded border p-2 text-xs">
             <h6 className="font-semibold">{row.label} · {row.changed ? 'Changed' : 'Unchanged'}</h6>
             <div className="mt-2 grid min-w-0 gap-3 sm:grid-cols-2">
-              <div className="min-w-0 rounded bg-gray-50 p-2"><p className="mb-1 font-semibold">Earlier snapshot</p><SavedValue value={row.before} /></div>
-              <div className="min-w-0 rounded bg-purple-50 p-2"><p className="mb-1 font-semibold">Opened snapshot</p><SavedValue value={row.after} /></div>
+              <div className="min-w-0 rounded bg-gray-50 p-2"><p className="mb-1 font-semibold">Earlier snapshot</p><SavedValue value={row.before} />{group === 'Citations' && <CitationSourceActions citations={row.before} draftRow={selected} side="earlier" onOpenCitation={onOpenCitation} />}</div>
+              <div className="min-w-0 rounded bg-purple-50 p-2"><p className="mb-1 font-semibold">Opened snapshot</p><SavedValue value={row.after} />{group === 'Citations' && <CitationSourceActions citations={row.after} draftRow={current} side="opened" onOpenCitation={onOpenCitation} />}</div>
             </div>
           </article>)}
         </section>)}

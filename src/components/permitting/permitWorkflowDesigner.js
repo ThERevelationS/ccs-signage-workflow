@@ -12,6 +12,7 @@
  */
 
 import { base44 } from "@/api/base44Client";
+import { captureWorkflowSources, WORKFLOW_SOURCE_FIELDS } from "./workflowSourceEvidence.mjs";
 
 const ELECTRICAL_RESEARCH_ROLES = [
   { role: "electrical_permit", label: "Permit issuance" },
@@ -171,11 +172,7 @@ export async function loadJurisdictionSourceDocs(jurisdictionName, jurisdictionI
   if (!jurisdictionName) return { forms: [], feeSchedules: [], codeDocs: [], other: [], all: [] };
   const { items } = await base44.entities.PermittingSourceDocument.filter(
     jurisdictionId ? { jurisdiction_id: jurisdictionId } : { jurisdiction_name: jurisdictionName },
-    { sort: "-classified_at", limit: 100, fields: [
-      "id", "title", "source_type", "official_url", "online_form_url",
-      "authority_classification", "content_status", "effective_or_adopted_date",
-      "issuing_office", "jurisdiction_scope",
-    ] },
+    { sort: "-classified_at", limit: 100, fields: WORKFLOW_SOURCE_FIELDS },
   );
   return { ...categorizeSourceDocs(items), all: items };
 }
@@ -315,6 +312,7 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
       locality_name: jurisdiction?.locality_name || "",
     },
     steps: reviewWorkflowSteps(draft.steps, rules),
+    source_evidence: captureWorkflowSources(draft.steps, sourceDocs.all, jurisdiction?.jurisdiction_id),
     gaps: Array.isArray(draft.gaps) ? draft.gaps : [],
     summary: draft.summary || "",
     generated_at: new Date().toISOString(),
