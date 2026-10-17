@@ -50,6 +50,16 @@ function refreshHarness(){
     estimateSeed:row=>row?.visibility==="mechanic" ? ({status:row.status,version:row.updated_date,notes:row.notes}) : ({notes:""}),
     pretty:value=>String(value||"draft").replaceAll("_"," "),
     readStoredWorkRecovery:async()=>null,
+    estimateRecoveryByWorkOrderRef:{current:new Map()},
+    readStoredEstimateRecoveries:async()=>[],
+    storeEstimateRecovery:async(_token,recovery)=>{
+      ctx.estimateRecoveryByWorkOrderRef.current.set(recovery.workOrderId,recovery);
+      return true;
+    },
+    clearStoredEstimateRecovery:async(_token,workOrderId)=>{
+      ctx.estimateRecoveryByWorkOrderRef.current.delete(workOrderId);
+      return true;
+    },
     openJob:()=>{},
     fetchPortalPayload:async()=>ctx.nextPayload,
   };
@@ -261,6 +271,15 @@ function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
     portalRequestRef:{current:0},
     photoDraftEpochRef:{current:0},
     setEstimateRecovery:value=>recoveries.push(value),
+    estimateRecoveryByWorkOrderRef:{current:new Map()},
+    storeEstimateRecovery:async(_token,recovery)=>{
+      ctx.estimateRecoveryByWorkOrderRef.current.set(recovery.workOrderId,recovery);
+      return true;
+    },
+    clearStoredEstimateRecovery:async(_token,workOrderId)=>{
+      ctx.estimateRecoveryByWorkOrderRef.current.delete(workOrderId);
+      return true;
+    },
     setRefreshing:()=>{},
     applyPortalPayload:result=>{ctx.lastAppliedPayload=result;},
     fetchPortalPayload:async()=>ctx.serverPayload,
