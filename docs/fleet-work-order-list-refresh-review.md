@@ -12,9 +12,9 @@ Each list load receives an increasing sequence number. Only the latest-started l
 
 Fleet data continues to load from `FleetMaintenanceWorkOrder`, `FleetEquipment`, `FleetMaintenanceTask`, `FleetPart`, and `FleetFluid`.
 
-## Synthetic verification
+## Verification
 
-- The stale-response regression passes with the older response released after the newer refresh.
-- Fleet Work Orders Chromium acceptance passes at desktop and mobile viewports.
-- Work-order refresh error handling, save focus, and focus safety checks pass.
-- Mechanic authorization, mutation recovery, and receipt race scripts pass.
+- The stale-response regression passes with the older response released after the newer refresh; Fleet Work Orders Chromium acceptance passes 10/10 at desktop and mobile viewports.
+- Work-order refresh error handling, save focus, and focus safety checks pass. The Fleet mechanic work-recovery browser suite passes 34/34, and mechanic authorization, mutation recovery, and receipt race scripts pass.
+- Targeted ESLint, production build, and `git diff --check` pass. Typecheck exits with 8,049 unrelated TypeScript diagnostics and zero Fleet/Bouncie diagnostics.
+- Separate repair-estimate browser acceptance is still failing in the scope-narrowing then reopen scenario: 11 earlier cases pass, but the reopened job does not show its expected ownership-verification lock. This phase changed no mechanic files.
