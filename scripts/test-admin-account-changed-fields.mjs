@@ -9,7 +9,7 @@ import {
 } from "../src/components/admin/adminAccountDraft.js";
 import { rejectedAdminAccountField } from "../src/components/admin/accountSaveConflict.js";
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from "../base44/shared/authorizedEmailCredentialPersistence.mjs";
-import { compareUnverifiedAccountSave, isSameVerifiedAccountSnapshot } from "../src/components/admin/unverifiedAccountSave.js";
+import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "../src/components/admin/unverifiedAccountSave.js";
 import { planAccountFieldResolution } from "../src/components/admin/accountFieldResolution.js";
 
 const source=readFileSync("src/components/admin/UserManagement.jsx","utf8");
