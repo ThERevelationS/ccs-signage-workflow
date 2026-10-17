@@ -2256,16 +2256,81 @@ export default function UserManagement() {
             </div>
           )}
           {postSaveRefreshPending && (
-            <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2 text-sm text-amber-950">
-              <p className="font-medium">Changes confirmed; directory refresh needs verification</p>
-              <p>The employee editor stays open. Use a read-only refresh; do not resubmit a confirmed Account or password update.</p>
+            <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-3 text-sm text-amber-950">
+              <p className="font-medium">
+                {postSaveResolutionPreview
+                  ? "Changes confirmed; newer Account fields require review"
+                  : "Changes confirmed; directory refresh needs verification"}
+              </p>
+              <p>The employee editor and local drafts remain open. Neither Account fields nor Time Clock passwords will be resent by these review controls.</p>
+              {postSaveResolutionPreview && (
+                <>
+                  <p>
+                    {postSaveResolutionPreview.fields.length} Account fields need comparison;
+                    {" "}{postSaveResolutionPreview.counts.useLatest} use latest and
+                    {" "}{postSaveResolutionPreview.counts.useMine} keep my draft.
+                    {" "}Role and permission choices affect the local draft only; a separate Save requires backend authorization.
+                  </p>
+                  <div className="max-h-56 overflow-auto rounded border border-amber-200 bg-white">
+                    <table className="w-full text-xs text-left">
+                      <thead className="sticky top-0 bg-gray-100"><tr>
+                        <th scope="col" className="p-2">Account field</th>
+                        <th scope="col" className="p-2">Latest directory</th>
+                        <th scope="col" className="p-2">Local choice</th>
+                      </tr></thead>
+                      <tbody>
+                        {postSaveResolutionPreview.fields.map(field => (
+                          <tr key={field.key} className="border-t border-gray-100">
+                            <td className="p-2 font-medium">
+                              {field.label}
+                              {field.sensitive && <span className="block text-amber-700">Admin authority / permission</span>}
+                            </td>
+                            <td className="p-2">
+                              {field.remoteChanged ? "Changed since confirmed save" : "Same as saved"}
+                              {field.editedLater && <span className="block">Local draft changed after submit</span>}
+                            </td>
+                            <td className="p-2">
+                              <div className="flex flex-wrap gap-1" role="group" aria-label={`Resolve post-save ${field.label}`}>
+                                <Button type="button" size="sm" variant={field.selected === "latest" ? "default" : "outline"}
+                                  aria-pressed={field.selected === "latest"}
+                                  disabled={userMutationSaving || isLoading}
+                                  onClick={() => choosePostSaveField(field.key, "latest")}>Use latest</Button>
+                                <Button type="button" size="sm" variant={field.selected === "mine" ? "default" : "outline"}
+                                  aria-pressed={field.selected === "mine"}
+                                  disabled={userMutationSaving || isLoading}
+                                  onClick={() => choosePostSaveField(field.key, "mine")}>Keep my draft</Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {postSaveResolutionPreview.adjustments.map(message => (
+                    <p key={message}>{message}</p>
+                  ))}
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1"
+                      checked={confirmAccountReconciliation}
+                      disabled={userMutationSaving || isLoading}
+                      onChange={event => setConfirmAccountReconciliation(event.target.checked)} />
+                    I reviewed the newer Account version and these field choices. Apply them to my local draft only.
+                    No save or password request will be submitted.
+                  </label>
+                  <Button type="button" size="sm" variant="outline"
+                    disabled={!confirmAccountReconciliation || userMutationSaving || isLoading}
+                    onClick={acceptPostSaveAccountReview}>
+                    Apply post-save field choices (local only)
+                  </Button>
+                </>
+              )}
               <Button type="button" size="sm" variant="outline"
                 disabled={userMutationSaving || isLoading || !sessionToken}
                 onClick={retryPostSaveDirectoryRefresh}>
                 {userMutationSaving ? "Checking directory..." : "Retry directory read (no writes)"}
               </Button>
             </div>
-          )}
+          )
           {accountSaveNotice && (
             <p className="text-sm text-blue-800" role="status">{accountSaveNotice}</p>
           )}
