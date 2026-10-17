@@ -378,6 +378,8 @@ export default function AdminSettings() {
   const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
   const categoryScrollerRef = useRef(null);
+  const adminScrollRef = useRef(null);
+  const nestedTabListsRef = useRef({});
   useEffect(() => {
     // Keep keyboard-selected and deep-linked categories in view without
     // moving the Admin page itself sideways.
@@ -390,6 +392,30 @@ export default function AdminSettings() {
     if (target.left < bounds.left) scroller.scrollLeft -= bounds.left - target.left + 4;
     else if (target.right > bounds.right) scroller.scrollLeft += target.right - bounds.right + 4;
   }, [activeAdminGroupId]);
+  useEffect(() => {
+    // Radix provides roving keyboard focus. When a nested destination is
+    // restored from history or a saved preference, keep its active trigger in
+    // the Admin scroll area; never scroll the entire document into position.
+    // Move focus only if it was already inside this nested tab bar. In
+    // particular, search, category buttons, and panel forms retain focus.
+    if (!isUnlocked || !isAdmin) return;
+    const list = nestedTabListsRef.current[selectedAdminTab];
+    const scrollArea = adminScrollRef.current;
+    const active = list?.querySelector('[role="tab"][data-state="active"]');
+    if (!active || !scrollArea) return;
+    const focused = list.ownerDocument.activeElement;
+    if (list.contains(focused) && focused !== active) {
+      active.focus({ preventScroll: true });
+    }
+    const tabBounds = active.getBoundingClientRect();
+    const areaBounds = scrollArea.getBoundingClientRect();
+    const margin = 8;
+    if (tabBounds.top < areaBounds.top + margin) {
+      scrollArea.scrollTop -= areaBounds.top + margin - tabBounds.top;
+    } else if (tabBounds.bottom > areaBounds.bottom - margin) {
+      scrollArea.scrollTop += tabBounds.bottom - areaBounds.bottom + margin;
+    }
+  }, [isUnlocked, isAdmin, selectedAdminTab, selectedAdminSubtab]);
   const handleAdminTabChange = (nextTab, nextSubtab = null) => {
     if (getAccessibleAdminTab(nextTab, isAdmin) !== nextTab) return;
     const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab) === nextSubtab
@@ -1042,7 +1068,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
+    <div ref={adminScrollRef} className="h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
@@ -1098,7 +1124,7 @@ export default function AdminSettings() {
             <>
               <AdminPanelContent value="timeclock">
                 <Tabs value={selectedAdminTab === "timeclock" ? selectedAdminSubtab : "entries"} onValueChange={(nextSubtab) => handleAdminTabChange("timeclock", nextSubtab)} className="min-w-0 space-y-4">
-                  <TabsList aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4">
+                  <TabsList ref={(node) => { nestedTabListsRef.current.timeclock = node; }} aria-label="Time Clock administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-4">
                     <TabsTrigger value="entries" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Time Entries</TabsTrigger>
                     <TabsTrigger value="reports" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Reports</TabsTrigger>
                     <TabsTrigger value="pto" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">PTO Policies</TabsTrigger>
@@ -1121,7 +1147,7 @@ export default function AdminSettings() {
 
               <AdminPanelContent value="backend">
                 <Tabs value={selectedAdminTab === "backend" ? selectedAdminSubtab : "backup"} onValueChange={(nextSubtab) => handleAdminTabChange("backend", nextSubtab)} className="min-w-0 space-y-4">
-                  <TabsList aria-label="Backend administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-3 lg:grid-cols-4">
+                  <TabsList ref={(node) => { nestedTabListsRef.current.backend = node; }} aria-label="Backend administration" className="grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 p-1 sm:grid-cols-3 lg:grid-cols-4">
                     <TabsTrigger value="backup" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Data Backup</TabsTrigger>
                     <TabsTrigger value="client_trash" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Client Trash</TabsTrigger>
                     <TabsTrigger value="order_trash" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Order Trash</TabsTrigger>
