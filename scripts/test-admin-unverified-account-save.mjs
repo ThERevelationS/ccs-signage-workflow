@@ -186,7 +186,7 @@ for(const outcome of ["rejected","invalid-receipt"]){
   await f.save();
   assert.equal(f.state.accountCalls.length,1);
   assert.equal(f.state.readCalls,0);
-  assert.match(f.state.error,/Resolve the unverified/);
+  assert.match(f.state.error,/Resolve the Account verification/);
  });
 }
 
