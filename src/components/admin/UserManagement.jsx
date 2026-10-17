@@ -881,7 +881,13 @@ export default function UserManagement() {
       }
       // Directory verification is read-only; a failed or superseded refresh
       // cannot authorize closing the editor after a confirmed Account save.
-      const refreshedRows = await loadUsers();
+      let refreshedRows = null;
+      try {
+        refreshedRows = await loadUsers();
+      } catch {
+        // Treat unexpected reader errors just like a failed, incomplete read.
+        // The Account/password acknowledgement remains confirmed.
+      }
       if (!ownsUpdate()) return;
       const verifiedRows = refreshedRows?.filter(row =>
         row.id === savedUser.id && row.email === savedUser.email && row.updated_date);
