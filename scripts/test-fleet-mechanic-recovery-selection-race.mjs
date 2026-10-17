@@ -47,6 +47,26 @@ function harness(action){
 }
 
 for(const action of ["start","save"]){
+  test(`${action}: late applied status after scope-loss and same-job reopen cannot project into the new editor`,async()=>{
+    const h=harness(action);
+    const pending=bindRecovery(h.ctx)(h.initial);
+    h.ctx.photoDraftEpochRef.current+=1;
+    h.ctx.selectedWorkOrderRef.current=null; // authorized refresh removed the job from scope
+    h.ctx.photoDraftEpochRef.current+=1;
+    h.ctx.selectedWorkOrderRef.current="wo-A"; // a later authorized refresh restored it and the mechanic reopened it
+    const currentPortalRequest=h.ctx.portalRequestRef.current;
+    h.ctx.load=async quiet=>events.portalLoads.push(quiet);
+    h.response.resolve({data:{status:"applied",work_order:{id:"wo-A",status:"in_progress",actual_hours:9}}});
+    assert.equal(await pending,true);
+    assert.deepEqual(h.events.snapshots,[],"An old recovery snapshot must not replace the reopened editor state");
+    assert.equal(h.ctx.portalRequestRef.current,currentPortalRequest,"Late recovery must not fence the reopened job's own refresh");
+    assert.deepEqual(h.events.portalLoads,[true],"Reopened authorized job must receive a fresh scoped snapshot");
+    assert.deepEqual(h.events.messages,[""]);
+    assert.deepEqual(h.events.errors,["An earlier mechanic request was confirmed. The current job was refreshed; its new editor was not overwritten."]);
+    assert.equal(h.events.clears.length,1,"Confirmed durable receipt may clear its original marker");
+    assert.equal(h.recovery,null);
+  });
+
   test(`${action}: late applied status after switching jobs cannot update the selected job or cancel its refresh`,async()=>{
     const h=harness(action);
     const pending=bindRecovery(h.ctx)(h.initial);
