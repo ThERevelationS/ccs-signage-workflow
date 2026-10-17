@@ -76,4 +76,56 @@ test('apply is disabled with saved-only selection and announces actual additions
  assert.match(src,/Nothing new selected to add to project/);
  assert.match(src,/\{savedProductCount\} saved on Work Order · \{pendingChecklistAdditions\} new to add/);
 });
+
+const applyStart=src.indexOf('  const handleApplyTemplate = () => {');
+const applyEnd=src.indexOf('\n  };',applyStart);
+assert.ok(applyStart>=0&&applyEnd>applyStart,'Real Apply handler exists');
+function runApply(selection, savedChecklist){
+ let applied=null;
+ let notice=null;
+ let updatedSelection=null;
+ const ctx={
+  selectedProducts:selection,
+  productTypeTemplates:templates,
+  subTemplates:[{id:'opt1',name:'Safety Option'}],
+  subTemplateItems:optionItems,
+  existingChecklist:savedChecklist,
+  onApplyTemplate:rows=>{applied=rows;},
+  setSelectedProducts:rows=>{updatedSelection=rows;},
+  setNoticeDialog:dialog=>{notice=dialog;},
+  Date,Math,
+ };
+ vm.createContext(ctx);
+ vm.runInContext(src.slice(applyStart,applyEnd+6)+'\nthis.apply=handleApplyTemplate;',ctx);
+ ctx.apply();
+ return {applied,notice,updatedSelection};
+}
+test('actual Apply handler does not reapply saved base checklist without additions',()=>{
+ const savedAnswers=[{id:'persisted',product_name:'Saved Cabinet',status:'Completed',approved_by:'Supervisor'}];
+ const result=runApply([{...saved,customName:'Saved Cabinet'}],savedAnswers);
+ assert.equal(result.applied,null);
+ assert.match(result.notice?.message||'',/Existing product checklists are preserved/);
+ assert.equal(savedAnswers[0].status,'Completed');
+ assert.equal(result.updatedSelection,null);
+});
+test('actual Apply handler only adds selected option to saved product',()=>{
+ const savedAnswers=[{id:'persisted',product_name:'Saved Cabinet',status:'Continued',approved_by:'Supervisor'}];
+ const result=runApply([{...saved,customName:'Saved Cabinet',subTemplates:['opt1']}],savedAnswers);
+ assert.equal(result.applied.length,1);
+ assert.equal(result.applied[0].type,'sub_template');
+ assert.equal(result.applied[0].parentProduct,'Saved Cabinet');
+ assert.equal(result.applied[0].items[0].text,'option row');
+ assert.notEqual(result.applied[0].items[0].id,'persisted');
+ assert.equal(savedAnswers[0].status,'Continued');
+ assert.equal(result.notice,null);
+ assert.equal(result.updatedSelection.length,0);
+});
+test('actual Apply handler creates a new base checklist for new product only',()=>{
+ const result=runApply([{...newProduct,customName:'New Cabinet'}],[]);
+ assert.equal(result.applied.length,1);
+ assert.equal(result.applied[0].type,'product_header');
+ assert.equal(result.applied[0].productName,'New Cabinet');
+ assert.equal(result.applied[0].items[0].text,'base checklist');
+ assert.equal(result.notice,null);
+});
 console.log(passed+'/'+passed+' SIPS navigation checks passed');
