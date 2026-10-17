@@ -763,7 +763,11 @@ export default function SalesOpportunityDialog({
                         <div className="mt-1">{entry.matching_current_value
                           ? "Pending value matches current WorkOrder (not proof of save)"
                           : "Pending value does not match current WorkOrder or cannot be compared"}</div>
-                        <div className="mt-1 font-medium text-amber-900">Save outcome: unknown · no shared operation receipt</div>
+                        <div className="mt-1 font-medium text-amber-900">Save outcome: unknown · no successful-write receipt</div>
+                        {entry.save_attempt_id && (
+                          <div className="mt-1 break-all text-[11px] text-gray-600">Local save attempt: {entry.save_attempt_id}{entry.save_attempt_baseline_recorded ? " · pre-save version recorded" : " · pre-save version missing"} (correlation only)</div>
+                        )}
+                        {!entry.save_attempt_id && <div className="mt-1 text-[11px] text-gray-500">No save-attempt correlation available for this audit.</div>}
                         <div className="mt-1 text-gray-500">
                           {entry.timing === "aged" ? "15+ minutes old" : entry.timing === "recent"
                             ? "Recent pending" : "Timing requires review"}
