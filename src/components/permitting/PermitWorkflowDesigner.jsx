@@ -9,6 +9,7 @@ import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./pe
 import { createPermitLinesFromDraft, computeDeterministicRowName } from "./permitLineItemIntegration";
 import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import WorkflowCitationList from "./WorkflowCitationList";
+import PermittingDraftHistory from "./PermittingDraftHistory";
 
 const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Service"];
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
@@ -409,6 +410,7 @@ export default function PermitWorkflowDesigner({
                 {!editingSteps ? <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={beginStepEditing} disabled={saving || creating}>{saved ? 'Create editable revision' : 'Edit proposed steps'}</Button> : <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">Step editing is on. Changed steps keep their citations and become Staff Confirmation Needed. Save creates a separate permitting draft; it does not approve requirements or create job lines.</p>}
                 {draft.jurisdiction_unresolved && <p className="text-amber-800">Location unresolved. This draft cannot establish jurisdiction authority.</p>}
               </div>
+              {saved && <PermittingDraftHistory key={saved.id} current={saved} />}
               {draft.electrical_planning_handoff && <ElectricalPlanningHandoffView handoff={draft.electrical_planning_handoff} /> }
               {/* Summary */}
               <div className="rounded-lg border-l-4 border-l-purple-400 bg-purple-50 p-3">

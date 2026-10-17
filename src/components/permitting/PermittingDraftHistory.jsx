@@ -1,0 +1,81 @@
+import { useEffect, useRef, useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { compareSavedDrafts, draftFieldLabel, validateDraftAncestor } from './permitDraftComparison.mjs';
+
+function SavedValue({ value }) {
+  if (value === undefined || value === null || value === '') return <span className="text-gray-500">Not recorded</span>;
+  if (typeof value === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
+  if (Array.isArray(value)) return value.length ? <ol className="list-inside list-decimal space-y-2">{value.map((item, index) => <li key={index}><SavedValue value={item} /></li>)}</ol> : <span className="text-gray-500">None recorded</span>;
+  if (typeof value === 'object') return <dl className="space-y-1">{Object.entries(value).map(([key, item]) => <div key={key}><dt className="font-medium">{draftFieldLabel(key)}</dt><dd className="pl-2"><SavedValue value={item} /></dd></div>)}</dl>;
+  return <span className="whitespace-pre-wrap">{String(value)}</span>;
+}
+function revisionLabel(row) {
+  return row.snapshot?.draft_revision?.revision_number ? 'Revision ' + row.snapshot.draft_revision.revision_number : 'Original saved draft';
+}
+
+export default function PermittingDraftHistory({ current }) {
+  const [open, setOpen] = useState(false);
+  const [ancestors, setAncestors] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showUnchanged, setShowUnchanged] = useState(false);
+  const pending = useRef(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
+  const oldest = ancestors[ancestors.length - 1] || current;
+  const parentId = oldest.snapshot?.draft_revision?.parent_draft_id;
+  const selected = ancestors.find(row => row.id === selectedId);
+  const comparison = selected ? compareSavedDrafts(selected, current) : [];
+  const changed = comparison.filter(row => row.changed).length;
+  const visible = comparison.filter(row => row.changed || row.always || showUnchanged);
+  const groups = [...new Set(visible.map(row => row.group))];
+  const loadPrevious = async () => {
+    if (pending.current || !parentId) return;
+    pending.current = true; setLoading(true); setError('');
+    try {
+      if ([current, ...ancestors].some(row => row.id === parentId)) throw new Error('Revision link cycle');
+      const row = validateDraftAncestor(await base44.entities.PermittingWorkflowDraft.get(parentId), parentId, current, [current, ...ancestors]);
+      if (!active.current) return;
+      setAncestors(previous => [...previous, row]); setSelectedId(row.id);
+    } catch {
+      if (active.current) setError('Earlier revision could not be loaded or its links could not be verified. It may be unavailable or outside your access. Loaded comparisons are still available; retry to check again.');
+    } finally {
+      pending.current = false;
+      if (active.current) setLoading(false);
+    }
+  };
+  return <section aria-label="Saved draft revision history" className="min-w-0 space-y-3 rounded-lg border border-purple-200 p-3 [overflow-wrap:anywhere]">
+    <Button type="button" variant="outline" aria-expanded={open} className="min-h-11 h-auto whitespace-normal" onClick={() => setOpen(value => !value)}>{open ? 'Hide revision history' : 'Show revision history & comparison'}</Button>
+    {open && <>
+      <h3 className="font-semibold">Saved revision history</h3>
+      <p className="text-sm text-gray-600">Read-only saved snapshots. Earlier revisions load one at a time through recorded parent links. This view covers the opened draft and its ancestors; newer revisions and other branches are not listed. No AI call or job changes.</p>
+      <p className="text-sm"><strong>Opened draft:</strong> {revisionLabel(current)} · {current.title} · Saved {current.created_date || current.reviewed_at || 'date not recorded'}</p>
+      <div className="flex flex-wrap gap-2">
+        {ancestors.map(row => <Button key={row.id} type="button" variant={selectedId === row.id ? 'default' : 'outline'} aria-pressed={selectedId === row.id} className="min-h-11 h-auto max-w-full whitespace-normal text-left" onClick={() => setSelectedId(row.id)}>Compare with {revisionLabel(row)} · {row.title || 'Untitled draft'}</Button>)}
+      </div>
+      {parentId ? <Button type="button" variant="outline" className="min-h-11" disabled={loading} onClick={loadPrevious}>{loading ? 'Loading earlier revision…' : error ? 'Retry earlier revision' : 'Load previous revision'}</Button>
+        : <p className="text-sm text-gray-600">{ancestors.length ? 'Reached the earliest linked snapshot.' : 'No earlier revision is linked to this saved draft.'}</p>}
+      {loading && <p role="status" className="text-sm">Loading the recorded earlier snapshot…</p>}
+      {error && <p role="alert" className="rounded bg-red-50 p-2 text-sm text-red-800">{error}</p>}
+      {selected && <section aria-label="Saved revision comparison" className="min-w-0 space-y-3">
+        <h4 className="font-semibold">{changed} changed fields · {revisionLabel(selected)} → {revisionLabel(current)}</h4>
+        <p className="text-xs text-gray-600">Earlier: {selected.title} · Saved {selected.created_date || selected.reviewed_at || 'date not recorded'}. Steps are compared by saved position. Evidence is displayed exactly as saved and has not been refreshed or approved.</p>
+        <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={showUnchanged} onChange={event => setShowUnchanged(event.target.checked)} />Show all unchanged fields</label>
+        <p className="text-xs text-gray-600">Citations, gaps and review notes remain visible even when unchanged.</p>
+        {groups.map(group => <section key={group} aria-label={group + ' comparison'} className="min-w-0 space-y-2">
+          <h5 className="font-semibold text-purple-900">{group}</h5>
+          {visible.filter(row => row.group === group).map(row => <article key={row.label} className="min-w-0 rounded border p-2 text-xs">
+            <h6 className="font-semibold">{row.label} · {row.changed ? 'Changed' : 'Unchanged'}</h6>
+            <div className="mt-2 grid min-w-0 gap-3 sm:grid-cols-2">
+              <div className="min-w-0 rounded bg-gray-50 p-2"><p className="mb-1 font-semibold">Earlier snapshot</p><SavedValue value={row.before} /></div>
+              <div className="min-w-0 rounded bg-purple-50 p-2"><p className="mb-1 font-semibold">Opened snapshot</p><SavedValue value={row.after} /></div>
+            </div>
+          </article>)}
+        </section>)}
+      </section>}
+    </>}
+  </section>;
+}
+
