@@ -116,6 +116,166 @@ function fixture({record=original,changes={},passwordResult={data:{success:true}
  }};
 }
 
+
+test("Late Account edits during final directory read stay in the editor",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const deferred=wait();f.state.readDeferred=deferred;
+ const saving=f.save();await Promise.resolve();await Promise.resolve();
+ assert.equal(f.state.readCalls,1);
+ f.edit({username:"edited-during-refresh",can_import_export:true});
+ deferred.resolve([f.state.backendRecord]);await saving;
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.editor.updated_date,"version-two");
+ assert.equal(f.state.form.username,"edited-during-refresh");
+ assert.equal(f.state.form.can_import_export,true);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.match(f.state.notice,/Edits made while refreshing/);
+});
+
+test("Late password edits made during directory refresh are never silently discarded",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name",password_hash:"first-password-1234"}});
+ const deferred=wait();f.state.readDeferred=deferred;
+ const saving=f.save();await Promise.resolve();await Promise.resolve();await Promise.resolve();
+ assert.equal(f.state.readCalls,1);
+ f.edit({password_hash:"newer-password-5678"});
+ deferred.resolve([f.state.backendRecord]);await saving;
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.form.password_hash,"newer-password-5678");
+ assert.equal(f.state.passwordCalls.length,1);
+ assert.equal(f.state.passwordCalls[0].new_password,"first-password-1234");
+});
+
+test("Late HR draft while directory refresh is pending cannot be silently closed",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ const deferred=wait();f.state.readDeferred=deferred;
+ const oldStatus=f.state.hrDirty;
+ const task=f.save();await Promise.resolve();await Promise.resolve();
+ f.state.hrDirty=true;
+ // The real HR guard is checked after the awaited directory refresh as well.
+ f.state.hrDirty=oldStatus;
+ deferred.resolve([f.state.backendRecord]);await task;
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+for(const [kind,rows] of [
+ ["missing response",null],
+ ["empty response",[]],
+ ["duplicate matches",[{...original,updated_date:"v2"},{...original,updated_date:"v2"}]],
+ ["unversioned match",[{...original,updated_date:""}]],
+ ["different employee",[{...original,id:"another"}]]
+]){
+ test(`Confirmed Account saves keep the editor on ${kind} refresh`,async()=>{
+  const f=fixture({changes:{full_name:"Saved Name"}});
+  f.state.refreshRows=rows;
+  await f.save();
+  assert.equal(f.state.dialog,true);
+  assert.notEqual(f.state.editor,null);
+  assert.equal(f.state.refreshPending?.id,original.id);
+  assert.equal(f.state.refreshPending?.email,original.email);
+  assert.equal(f.state.accountCalls.length,1);
+  assert.equal(f.state.passwordCalls.length,0);
+  assert.equal(f.refs.accountDraftBaseline.current?.values.full_name,"Saved Name");
+  assert.match(f.state.error,/directory refresh could not be verified/);
+ });
+}
+
+test("Unexpected directory read exception also preserves verified Account baseline",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ f.state.readDeferred={promise:Promise.reject(new Error("synthetic read failed"))};
+ await f.save();
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.refreshPending?.id,original.id);
+ assert.equal(f.refs.accountDraftBaseline.current?.values.full_name,"Saved Name");
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Read-only retry clears refresh recovery without repeating writes",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ f.state.refreshRows=null;await f.save();
+ assert.equal(f.state.refreshPending?.id,original.id);
+ const saved={...f.state.backendRecord};
+ f.state.refreshRows=[saved];await f.retry();
+ assert.equal(f.state.refreshPending,null);
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.editor?.id,original.id);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.equal(f.state.error,"");
+ assert.match(f.state.notice,/directory verified/i);
+});
+
+test("Failed read-only retry preserves recovery and never resubmits Account writes",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ f.state.refreshRows=null;await f.save();
+ const previous=f.state.form;
+ await f.retry();
+ assert.equal(f.state.refreshPending?.id,original.id);
+ assert.equal(f.state.form,previous);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+ assert.match(f.state.error,/still not verified/);
+});
+
+test("Read-only retry cannot adopt a stale employee or session",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ f.state.refreshRows=null;await f.save();
+ const pending=wait();f.state.readDeferred=pending;
+ const task=f.retry();
+ f.refs.activeSessionToken.current="new-session";
+ pending.resolve([f.state.backendRecord]);await task;
+ assert.equal(f.state.refreshPending?.id,original.id);
+ assert.equal(f.state.accountCalls.length,1);
+ assert.equal(f.state.passwordCalls.length,0);
+});
+
+test("Read-only refresh retries are fenced against duplicate clicks",async()=>{
+ const f=fixture({changes:{full_name:"Saved Name"}});
+ f.state.refreshRows=null;await f.save();
+ const d=wait();f.state.readDeferred=d;
+ const a=f.retry(),b=f.retry();
+ assert.equal(f.state.readCalls,2);
+ d.resolve([f.state.backendRecord]);await a;await b;
+ assert.equal(f.state.refreshPending,null);
+ assert.equal(f.state.readCalls,2);
+ assert.equal(f.state.accountCalls.length,1);
+});
+
+test("Directory refresh failure after a confirmed password clears only the sent password",async()=>{
+ const f=fixture({changes:{password_hash:"confirmed-password-1234"}});
+ f.state.refreshRows=null;await f.save();
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.refreshPending?.id,original.id);
+ assert.equal(f.state.form.password_hash,"");
+ assert.equal(f.state.passwordCalls.length,1);
+ assert.equal(f.state.accountCalls.length,0);
+ await f.retry();
+ assert.equal(f.state.passwordCalls.length,1);
+});
+
+test("Later unsent password edits survive a failed directory read",async()=>{
+ const f=fixture({changes:{password_hash:"sent-password-1234"}});
+ const d=wait();f.state.readDeferred=d;
+ const active=f.save();await Promise.resolve();await Promise.resolve();
+ f.edit({password_hash:"different-password-5678"});
+ d.resolve(null);await active;
+ assert.equal(f.state.dialog,true);
+ assert.equal(f.state.form.password_hash,"different-password-5678");
+ assert.equal(f.state.passwordCalls.length,1);
+ assert.equal(f.state.accountCalls.length,0);
+});
+
+test("Shipping input callbacks synchronously update Account draft reference",()=>{
+ assert.match(source,/const changeAccountDraft = changes =>/);
+ assert.match(source,/activeAccountDraft\.current = next;\s*setFormData\(next\)/);
+ for(const key of ["full_name","username","password_hash","sales_roles",
+  "role","employment_type","can_work_pause","can_import_export",
+  "can_order_export","can_view_resources"]){
+  assert.match(source,new RegExp(`changeAccountDraft\\(\\{[\\s\\S]*?${key}:`));
+ }
+ assert.match(source,/Retry directory read \(no writes\)/);
+ assert.match(source,/onClick=\{retryPostSaveDirectoryRefresh\}/);
+});
+
 test("Exactly one edited detail is in the Account patch and password is excluded",async()=>{
  const f=fixture({changes:{full_name:"Different Name",password_hash:"synthetic-pass-1234"}});
  await f.save();
