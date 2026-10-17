@@ -681,7 +681,7 @@ export default function SalesOpportunityDialog({
               ))}
             </div>
             {historyPageError && <p role="alert" className="mt-2 text-xs text-red-700">{historyPageError}</p>}
-            {historyAuditPending && !historyPageError && (
+            {historyAuditPending && (
               <p role="status" className="mt-2 text-xs text-amber-800">{historyAuditNeedsReview
                 ? "Sales history needs administrator review. A matching pending audit is at least 15 minutes old, has uncertain timing, or more pending records exist than can be safely inspected. Do not log the follow-up again; ask an administrator to investigate the WorkOrder. Rechecking does not change audit records."
                 : "A Sales audit is not yet confirmed. Recent history may be incomplete; pending changes are not shown as saved activity. Retry history verification."}</p>
