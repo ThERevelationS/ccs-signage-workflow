@@ -865,7 +865,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const updateOrder = (orderId, field, value, skipHistory = false) => {
-    if (isPulling) {
+    // A pull reserves this ref synchronously, before React can render isPulling.
+    // All inline editors (including requestor, quantity and description) must
+    // respect that same-tick reservation before changing Order state.
+    if (manualPullInFlightRef.current || isPulling) {
       setSaveError('Wait for the Smartsheet pull to finish before editing Orders.');
       return;
     }
@@ -900,7 +903,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const persistImmediateOrderFields = async (orderId, nextFields, label, { supersedePendingFields = [] } = {}) => {
-    if (isPulling) throw new Error('Wait for the Smartsheet pull to finish before editing Orders.');
+    // Date/receipt writes bypass updateOrder, so fence their Base44 writes too.
+    if (manualPullInFlightRef.current || isPulling) throw new Error('Wait for the Smartsheet pull to finish before editing Orders.');
     const pendingAtStart = { ...(pendingChangesRef.current[orderId] || {}) };
     const baseline = originalOrdersRef.current[orderId];
     if (!baseline?.id) throw new Error(`${label} is missing its loaded Order baseline. Reload before saving.`);
@@ -1857,7 +1861,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Select
                   value={order.request_type || "Other"}
                   onValueChange={(val) => updateOrder(order.id, "request_type", val)}
-                  disabled={!isRegistered}
+                  disabled={!isRegistered || isPulling}
                 >
                   <SelectTrigger className="h-7 text-xs border-0 bg-transparent w-full">
                     <SelectValue />
@@ -1907,7 +1911,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   onChange={(e) => updateOrder(order.id, "quantity", e.target.value)}
                   className="h-7 text-xs border-0 bg-transparent px-1 w-full"
                   placeholder="-"
-                  disabled={!isRegistered}
+                  disabled={!isRegistered || isPulling}
                 />
               </td>
 
@@ -1919,7 +1923,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <div 
                   className="flex items-center gap-1 cursor-pointer h-7 hover:bg-gray-100 rounded px-1 overflow-hidden"
                   onClick={(e) => {
-                    if (!isRegistered) return;
+                    if (!isRegistered || manualPullInFlightRef.current || isPulling) return;
                     const rect = e.currentTarget.getBoundingClientRect();
                     setDropdownPosition({ top: rect.bottom + 2, left: rect.left });
                     setShowRequestorDropdown(order.id);
@@ -1942,6 +1946,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         key={u.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs flex items-center gap-2"
                         onMouseDown={() => {
+                          if (manualPullInFlightRef.current || isPulling) return;
                           updateOrder(order.id, "requestor_name", u.full_name);
                           updateOrder(order.id, "requestor_email", u.email);
                           setShowRequestorDropdown(null);
@@ -2114,7 +2119,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Select
                   value={order.vendor || ""}
                   onValueChange={(val) => updateOrder(order.id, "vendor", val)}
-                  disabled={!isRegistered}
+                  disabled={!isRegistered || isPulling}
                 >
                   <SelectTrigger className="h-7 text-xs border-0 bg-transparent w-full">
                     <SelectValue placeholder="-" />
@@ -2374,7 +2379,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   onChange={(e) => updateOrder(expandedDescription, "description", e.target.value)}
                   className="w-full min-h-[150px] p-3 text-sm border rounded-lg resize-y"
                   placeholder="Enter description..."
-                  disabled={!isRegistered}
+                  disabled={!isRegistered || isPulling}
                 />
                 <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
                   <div className="font-medium mb-1">Preview with links:</div>
