@@ -53,20 +53,31 @@ async function readStoredEstimateRecoveries(token) {
   }
   return pending;
 }
+let estimateRecoveryStorageQueue = Promise.resolve();
+function queueEstimateRecoveryStorageMutation(operation) {
+  const queued = estimateRecoveryStorageQueue.then(operation,operation);
+  estimateRecoveryStorageQueue = queued.catch(() => {});
+  return queued;
+}
 async function storeEstimateRecovery(token,recovery) {
-  const key = await estimateRecoveryStorageKey(token);
-  const pending = await readStoredEstimateRecoveries(token);
-  const next = pending.filter(row => row.workOrderId !== recovery.workOrderId);
-  next.push({workOrderId:recovery.workOrderId,reason:String(recovery.reason || "Current repair-estimate ownership must be checked before retrying.").slice(0,500)});
-  sessionStorage.setItem(key,JSON.stringify(next.slice(-100)));
+  return queueEstimateRecoveryStorageMutation(async () => {
+    const key = await estimateRecoveryStorageKey(token);
+    const pending = await readStoredEstimateRecoveries(token);
+    const next = pending.filter(row => row.workOrderId !== recovery.workOrderId);
+    next.push({workOrderId:recovery.workOrderId,reason:String(recovery.reason || "Current repair-estimate ownership must be checked before retrying.").slice(0,500)});
+    if (next.length > 100) throw new Error("Too many unresolved repair-estimate recovery markers. Check current server state with CCS before starting another estimate request.");
+    sessionStorage.setItem(key,JSON.stringify(next));
+  });
 }
 async function clearStoredEstimateRecovery(token,workOrderId) {
   try {
-    const key = await estimateRecoveryStorageKey(token);
-    const pending = await readStoredEstimateRecoveries(token);
-    const next = pending.filter(row => row.workOrderId !== workOrderId);
-    if (next.length) sessionStorage.setItem(key,JSON.stringify(next));
-    else sessionStorage.removeItem(key);
+    await queueEstimateRecoveryStorageMutation(async () => {
+      const key = await estimateRecoveryStorageKey(token);
+      const pending = await readStoredEstimateRecoveries(token);
+      const next = pending.filter(row => row.workOrderId !== workOrderId);
+      if (next.length) sessionStorage.setItem(key,JSON.stringify(next));
+      else sessionStorage.removeItem(key);
+    });
     return true;
   } catch { /* Keeping the marker is safer than discarding unverified recovery state. */
     return false;
