@@ -1,0 +1,148 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,symlink,copyFile,readdir,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {createServer} from 'vite';
+import react from '@vitejs/plugin-react';
+const {chromium}=await import('/tmp/permitting-browser-check/node_modules/playwright/index.mjs');
+const root=process.cwd(),scratch=await mkdtemp(path.join(tmpdir(),'permitting-draft-'));let vite,browser;const checks=[];
+try {
+ await symlink(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
+ const css=(await readdir(path.join(root,'dist/assets'))).find(n=>n.endsWith('.css'));await copyFile(path.join(root,'dist/assets',css),path.join(scratch,'styles.css'));
+ await writeFile(path.join(scratch,'index.html'),'<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body><div id="root"></div><script type="module" src="/main.jsx"></script></body></html>');
+ await writeFile(path.join(scratch,'api.js'),`export const base44={entities:{PermittingWorkflowDraft:{get:async(id)=>{window.fixture.gets.push(id);if(window.fixture.failGet)throw Error('Synthetic missing parent');if(window.fixture.slowGet)await new Promise(resolve=>setTimeout(resolve,250));const row=window.fixture.ancestors[id];if(!row)throw Error('Missing snapshot');return structuredClone(row);},filter:async(query,options)=>{window.fixture.reads++;window.fixture.requests.push({query,options});if(window.fixture.fail)throw Error('Synthetic failure');const start=options.cursor?Number(options.cursor.replace('draft-page-','')):0;if(window.fixture.failOlder&&start)throw Error('Synthetic older-page failure');if(window.fixture.slowOlder&&start)await new Promise(resolve=>setTimeout(resolve,350));const items=window.fixture.rows.slice(start,start+options.limit),end=start+items.length,has_more=end<window.fixture.rows.length;return {items,has_more,next_cursor:has_more?'draft-page-'+end:null};}}}};`);
+ await writeFile(path.join(scratch,'main.jsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import Library from '/@fs/app/src/components/permitting/PermittingDraftLibrary.jsx';const snapshot={jurisdiction:{jurisdiction_id:'fixture',jurisdiction_name:'Example Municipality',state:'OH'},summary:'Synthetic saved proposal',steps:[{step_index:0,permit_type:'Confirm sign application',office:'Example office',office_type:'Zoning',action:'Confirm the source',basis:'staff_confirmation_needed',citations:[]}],gaps:[{description:'Missing fee evidence'}],rule_counts:{approved:0,pending:0}};window.fixture={reads:0,requests:[],fail:false,failOlder:false,slowOlder:false,rows:[{id:'oh',title:'Wall sign review',jurisdiction_name:'Example Municipality',state:'OH',snapshot,project_inputs:{signTypes:'Wall sign'},review_notes:'Confirm electrical office'},{id:'ky',title:'Kentucky monument',state:'KY',jurisdiction_name:'Example County',snapshot:{...snapshot,jurisdiction:{jurisdiction_id:'ky',jurisdiction_name:'Example County',state:'KY'}}},{id:'broken',title:'Incomplete fixture',snapshot:null}]};createRoot(document.getElementById('root')).render(<Library onClose={()=>{}}/>);`);
+ vite=await createServer({configFile:false,root:scratch,plugins:[react()],resolve:{alias:[{find:'@/api/base44Client',replacement:path.join(scratch,'api.js')},{find:'@',replacement:path.join(root,'src')}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,scratch]}},logLevel:'error'});await vite.listen();const origin='http://127.0.0.1:'+vite.httpServer.address().port;
+ browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ for(const width of [320,390,1280]){
+ const page=await browser.newPage({viewport:{width,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/*',route=>route.request().url().startsWith(origin)?route.continue():route.abort());await page.goto(origin,{waitUntil:'networkidle'});
+ await page.getByRole('heading',{name:'Wall sign review',exact:true}).waitFor();
+ await page.getByLabel('Filter draft state').selectOption('KY');assert.equal(await page.locator('article').count(),1);await page.getByRole('heading',{name:'Kentucky monument'}).waitFor();
+ await page.getByLabel('Filter draft state').selectOption('all');await page.getByLabel('Search workflow drafts').fill('electrical');assert.equal(await page.locator('article').count(),1);
+ await page.getByRole('button',{name:'Review draft',exact:true}).click();await page.getByText('Synthetic saved proposal',{exact:true}).waitFor();assert.equal(await page.getByLabel('Review notes / questions to resolve').inputValue(),'Confirm electrical office');assert.ok(await page.getByRole('button',{name:'Draft saved',exact:true}).isDisabled());assert.equal(await page.getByRole('button',{name:/Create .*Permit Line/}).count(),0);
+ await page.getByRole('button',{name:'Close',exact:true}).first().click();await page.getByLabel('Search workflow drafts').fill('no-match');await page.getByText('No drafts match these filters.',{exact:true}).waitFor();
+ await page.getByLabel('Search workflow drafts').fill('');await page.evaluate(()=>window.fixture.fail=true);await page.getByRole('button',{name:'Refresh drafts'}).click();await page.getByRole('alert').waitFor();assert.equal(await page.locator('article').count(),0);
+ await page.evaluate(()=>{window.fixture.fail=false;window.fixture.rows=[];});await page.getByRole('button',{name:'Refresh drafts'}).click();await page.getByRole('heading',{name:'No saved workflows yet'}).waitFor();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);
+
+ // Exercise actual saved-draft designer/history against three immutable fixture snapshots.
+ await page.evaluate(()=>{
+   const citation={source_document_id:'retained-official-file',section_or_page:'Page 7',excerpt:'Full retained citation '+ 'official evidence '.repeat(24)};
+   const common={jurisdiction:{jurisdiction_id:'history-fixture',jurisdiction_name:'History municipality',state:'OH'},summary:'Saved history proposal',steps:[{step_index:0,permit_type:'Sign review',office:'Original office',office_type:'Zoning',action:'Original action',target_days_from_start:0,inspection_needed:false,basis:'pending_review',citations:[citation]}],gaps:[{description:'Original fee question'}],rule_counts:{approved:0,pending:1}};
+   const original={id:'history-1',title:'Original proposal',created_date:'2026-10-15T12:00:00Z',snapshot:common,project_inputs:{dimensions:'48 x 24',illuminated:false},review_notes:'Original review note'};
+   const second={...structuredClone(original),id:'history-2',title:'Second proposal',snapshot:{...structuredClone(common),draft_revision:{root_draft_id:'history-1',parent_draft_id:'history-1',revision_number:2}}};
+   second.snapshot.steps[0].office='Updated permit office';
+   const current={...structuredClone(second),id:'history-3',title:'Third proposal',created_date:'2026-10-17T12:00:00Z',snapshot:{...structuredClone(second.snapshot),draft_revision:{root_draft_id:'history-1',parent_draft_id:'history-2',revision_number:3}},project_inputs:{dimensions:'72 x 24',illuminated:true},review_notes:'Confirm revised inspection provider'};
+   current.snapshot.steps[0].action='Revised submission action';
+   current.snapshot.steps[0].target_days_from_start=5;
+   current.snapshot.steps[0].inspection_needed=true;
+   current.snapshot.steps[0].basis='staff_confirmation_needed';
+   current.snapshot.gaps=[{description:'Confirm changed electrical responsibility'}];
+   current.snapshot.electrical_planning_handoff={research_method:'retained fixture research',roles:[{role:'electrical_inspection',label:'Electrical inspection',findings:[{office_name:'Recorded inspection provider',notes:'Provider scope remains unverified'}]}]};
+   window.fixture.rows=[current];window.fixture.ancestors={'history-1':original,'history-2':second};window.fixture.gets=[];window.fixture.failGet=false;
+   window.fixture.unchanged=JSON.stringify({rows:window.fixture.rows,ancestors:window.fixture.ancestors});
+ });
+ await page.getByRole('button',{name:'Refresh drafts'}).click();
+ await page.getByRole('heading',{name:'Third proposal',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Review draft',exact:true}).click();
+ await page.getByRole('button',{name:'Show revision history & comparison',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>window.fixture.gets),[]);
+ await page.evaluate(()=>window.fixture.failGet=true);
+ await page.getByRole('button',{name:'Load previous revision',exact:true}).click();
+ await page.getByRole('alert').filter({hasText:'Earlier revision could not be loaded'}).waitFor();
+ assert.equal(await page.getByLabel('Review notes / questions to resolve').inputValue(),'Confirm revised inspection provider');
+ await page.evaluate(()=>{window.fixture.failGet=false;window.fixture.slowGet=true;});
+ await page.getByRole('button',{name:'Retry earlier revision',exact:true}).click();
+ await page.getByRole('status').filter({hasText:'Loading the recorded earlier snapshot'}).waitFor();
+ const comparison=page.getByRole('region',{name:'Saved revision comparison',exact:true});
+ await comparison.waitFor();
+ await comparison.getByText('Revised submission action',{exact:true}).waitFor();
+ await comparison.getByText('Original action',{exact:true}).waitFor();
+ await comparison.getByText('Step 1 · Inspection needed · Changed',{exact:true}).waitFor();
+ await comparison.getByText('Step 1 · Citations · Unchanged',{exact:true}).waitFor();
+ const fullCitation=await page.evaluate(()=>window.fixture.ancestors['history-1'].snapshot.steps[0].citations[0].excerpt);
+ assert.equal(await comparison.getByText(fullCitation,{exact:true}).count(),2);
+ await comparison.getByText('Confirm changed electrical responsibility',{exact:true}).waitFor();
+ await comparison.getByText('Original fee question',{exact:true}).waitFor();
+ await comparison.getByText('Confirm revised inspection provider',{exact:true}).waitFor();
+ await comparison.getByText('Original review note',{exact:true}).waitFor();
+ await comparison.getByText('Recorded inspection provider',{exact:true}).waitFor();
+ assert.equal(await comparison.getByText('Step 1 · Office · Unchanged',{exact:true}).count(),0);
+ await comparison.getByLabel('Show all unchanged fields').check();
+ await comparison.getByText('Step 1 · Office · Unchanged',{exact:true}).waitFor();
+ // A later failed read must retain the already usable comparison.
+ await page.evaluate(()=>window.fixture.failGet=true);
+ await page.getByRole('button',{name:'Load previous revision',exact:true}).click();
+ await page.getByRole('alert').filter({hasText:'Loaded comparisons are still available'}).waitFor();
+ await comparison.getByText('Revised submission action',{exact:true}).waitFor();
+ await page.evaluate(()=>window.fixture.failGet=false);
+ await page.getByRole('button',{name:'Retry earlier revision',exact:true}).click();
+ await page.getByText('Reached the earliest linked snapshot.',{exact:true}).waitFor();
+ await comparison.getByText('Step 1 · Office · Changed',{exact:true}).waitFor();
+ await comparison.getByText('Original office',{exact:true}).waitFor();
+ await comparison.getByText('Updated permit office',{exact:true}).waitFor();
+ await comparison.getByText('72 x 24',{exact:true}).waitFor();
+ await comparison.getByText('48 x 24',{exact:true}).waitFor();
+ assert.deepEqual(await page.evaluate(()=>window.fixture.gets),['history-2','history-2','history-1','history-1']);
+ assert.equal(await page.evaluate(()=>JSON.stringify({rows:window.fixture.rows,ancestors:window.fixture.ancestors})===window.fixture.unchanged),true);
+ await page.getByRole('button',{name:'Compare with Revision 2 · Second proposal',exact:true}).click();
+ await comparison.getByText('Step 1 · Office · Unchanged',{exact:true}).waitFor();
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ assert.ok(await comparison.evaluate(node=>node.scrollWidth<=node.clientWidth));
+ await page.getByRole('button',{name:'Hide revision history',exact:true}).click();
+ assert.equal(await page.getByRole('region',{name:'Saved revision comparison',exact:true}).count(),0);
+ await page.getByRole('button',{name:'Show revision history & comparison',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>window.fixture.gets),['history-2','history-2','history-1','history-1']);
+ await page.getByRole('button',{name:'Close',exact:true}).first().click();
+ // An original draft offers an explicit no-earlier state without an API read.
+ await page.evaluate(()=>{window.fixture.rows=[window.fixture.ancestors['history-1']];});
+ await page.getByRole('button',{name:'Refresh drafts'}).click();
+ await page.getByRole('heading',{name:'Original proposal',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Review draft',exact:true}).click();
+ await page.getByRole('button',{name:'Show revision history & comparison',exact:true}).click();
+ await page.getByText('No earlier revision is linked to this saved draft.',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Load previous revision',exact:true}).count(),0);
+ assert.equal(await page.getByRole('button',{name:/Create .*Permit Line/}).count(),0);
+ await page.getByRole('button',{name:'Close',exact:true}).first().click();
+ assert.deepEqual(errors,[]);
+
+ // Replace only synthetic fixtures: no app records or external APIs are written.
+ await page.evaluate(()=>{
+   const snapshot={jurisdiction:{jurisdiction_id:'older-fixture',jurisdiction_name:'Older Example',state:'OH'},summary:'Older saved proposal',steps:[],gaps:[],rule_counts:{approved:0,pending:0}};
+   window.fixture.rows=Array.from({length:205},(_,index)=>({id:'draft-'+index,title:index===204?'Oldest electrical review':'Saved draft '+index,state:index===204?'OH':'KY',snapshot,review_notes:index===204?'Keep the earlier review notes':''}));
+   window.fixture.requests=[];
+ });await page.getByRole('button',{name:'Refresh drafts'}).click();
+ await page.getByText('100 shown from 100 loaded drafts.',{exact:false}).waitFor();
+ assert.equal(await page.locator('article').count(),100);
+ await page.getByLabel('Search workflow drafts').fill('Oldest electrical');
+ await page.getByText('No drafts match these filters.',{exact:true}).waitFor();
+ await page.evaluate(()=>window.fixture.failOlder=true);await page.getByRole('button',{name:'Load older drafts',exact:true}).click();
+ await page.getByRole('alert').filter({hasText:'Your loaded drafts are still available'}).waitFor();
+ await page.getByLabel('Search workflow drafts').fill('');assert.equal(await page.locator('article').count(),100);
+ await page.evaluate(()=>{window.fixture.failOlder=false;window.fixture.slowOlder=true;});
+ await page.getByRole('button',{name:'Retry older drafts',exact:true}).click();
+ await page.getByRole('status').filter({hasText:'Loaded drafts remain available'}).waitFor();assert.equal(await page.locator('article').count(),100);
+ assert.ok(await page.getByRole('button',{name:'Refresh drafts',exact:true}).isDisabled());
+ await page.getByText('200 shown from 200 loaded drafts.',{exact:false}).waitFor();
+ await page.getByLabel('Search workflow drafts').fill('Oldest electrical');await page.getByLabel('Filter draft state').selectOption('OH');
+ await page.getByRole('button',{name:'Load older drafts',exact:true}).click();
+ await page.getByRole('heading',{name:'Oldest electrical review',exact:true}).waitFor();
+ await page.getByText('1 shown from 205 loaded drafts.',{exact:false}).waitFor();
+ await page.getByText('Reached the end of this browse.',{exact:false}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Load older drafts',exact:true}).count(),0);
+ await page.getByRole('button',{name:'Review draft',exact:true}).click();
+ await page.getByText('Older saved proposal',{exact:true}).waitFor();
+ assert.equal(await page.getByLabel('Review notes / questions to resolve').inputValue(),'Keep the earlier review notes');
+ assert.equal(await page.getByRole('button',{name:/Create .*Permit Line/}).count(),0);
+ await page.getByRole('button',{name:'Close',exact:true}).first().click();
+ const requests=await page.evaluate(()=>window.fixture.requests.filter(request=>Object.keys(request.query).length===0));
+ assert.deepEqual(requests,[{query:{},options:{sort:'-created_date',limit:100}},{query:{},options:{cursor:'draft-page-100',limit:100}},{query:{},options:{cursor:'draft-page-100',limit:100}},{query:{},options:{cursor:'draft-page-200',limit:100}}]);
+ await page.getByLabel('Search workflow drafts').fill('');await page.getByLabel('Filter draft state').selectOption('all');
+ await page.getByText('205 shown from 205 loaded drafts.',{exact:false}).waitFor();
+ assert.equal(await page.locator('article').count(),205);assert.equal(await page.locator('article h3').evaluateAll(nodes=>new Set(nodes.map(node=>node.textContent)).size),205);
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);
+ checks.push({width,passed:true,checks:'three immutable revisions, explicit ancestor reads, retry/loading/error retention, original no-history, planning/office/action changes, full retained citations, gaps and notes, unchanged toggle, ancestor selection, snapshots unchanged; library filters, saved snapshot/notes, no job action, load failure/retry, empty states; 205 drafts across 3 cursor pages, older failure preserves rows, retry uses same cursor, loading state, filter/search older records, reopen oldest snapshot, no duplicate cards, end of browse, no overflow'});console.log('PASS draft library and revision history '+width);await page.close();
+ }
+ await writeFile(path.join(root,'docs/permitting-draft-revision-browser-2026-10-17.json'),JSON.stringify({mode:'actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance',checks},null,2)+'\n');
+}finally{await browser?.close();await vite?.close();await rm(scratch,{recursive:true,force:true});}
+

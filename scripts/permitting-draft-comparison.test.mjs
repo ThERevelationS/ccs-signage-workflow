@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {compareSavedDrafts, sameDraftValue, validateDraftAncestor} from '../src/components/permitting/permitDraftComparison.mjs';
+assert.ok(sameDraftValue({a:1,b:[false,0]}, {b:[false,0],a:1}));
+assert.ok(!sameDraftValue(false,undefined));
+assert.ok(!sameDraftValue(0,undefined));
+assert.ok(!sameDraftValue([1,2],[2,1]));
+const original={id:'a',title:'A',snapshot:{jurisdiction:{state:'OH'},steps:[{office:'Zoning',action:'Submit',citations:[{excerpt:'Retained evidence'}]}],gaps:[]},review_notes:'Keep me'};
+const revised={id:'b',title:'B',snapshot:{jurisdiction:{state:'OH'},steps:[{office:'Building',action:'Confirm',citations:[{excerpt:'Retained evidence'}],inspection_needed:false},{action:'New step',citations:[]}],gaps:[{description:'Missing fee'}],draft_revision:{root_draft_id:'a',parent_draft_id:'a',revision_number:2}},review_notes:'Revised note'};
+const frozen=JSON.stringify({original,revised});
+const result=compareSavedDrafts(original,revised);
+assert.ok(result.find(row=>row.label==='Step 1 · Office').changed);
+assert.ok(result.find(row=>row.label==='Step 1 · Action').changed);
+assert.ok(!result.find(row=>row.label==='Step 1 · Citations').changed);
+assert.ok(result.find(row=>row.label==='Step 1 · Citations').always);
+assert.equal(result.find(row=>row.label==='Step 1 · Inspection needed').after,false);
+assert.ok(result.find(row=>row.label==='Step 2 · Action').changed);
+assert.ok(result.find(row=>row.group==='Gaps').changed);
+assert.ok(result.find(row=>row.group==='Review notes').changed);
+assert.ok(!result.some(row=>row.label==='Draft revision'));
+assert.equal(compareSavedDrafts(revised,original).find(row=>row.label==='Step 2 · Action').after,undefined);
+assert.equal(validateDraftAncestor(original,'a',revised,[revised]),original);
+for (const bad of [null,{...original,id:'wrong'},{...original,snapshot:{}},{...original,snapshot:{...original.snapshot,draft_revision:{root_draft_id:'unrelated'}}}]) assert.throws(()=>validateDraftAncestor(bad,'a',revised,[revised]));
+assert.throws(()=>validateDraftAncestor(original,'a',revised,[revised,original]));
+assert.equal(JSON.stringify({original,revised}),frozen);
+console.log('PASS immutable draft comparison and ancestor validation');
+
