@@ -2467,7 +2467,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               aria-busy={isConfirming}
               className="h-11 w-full bg-red-600 hover:bg-red-700 touch-manipulation sm:w-auto"
             >
-              {isConfirming ? "Deleting…" : (confirmDialog?.confirmLabel || "Delete")}
+              {isConfirming
+                ? (confirmDialog?.confirmLabel === "Remove from Builder" ? "Removing from Builder…" : "Deleting…")
+                : (confirmDialog?.confirmLabel || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
