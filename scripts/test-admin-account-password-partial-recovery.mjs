@@ -5,7 +5,7 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {createAdminAccountDraft,getChangedAdminAccountFields,hasUnsavedAdminAccountDraft} from "../src/components/admin/adminAccountDraft.js";
 import {rejectedAdminAccountField} from "../src/components/admin/accountSaveConflict.js";
-import {isSameVerifiedAccountSnapshot} from "../src/components/admin/unverifiedAccountSave.js";
+import {rebaseAppliedAccountDraft,isSameVerifiedAccountSnapshot} from "../src/components/admin/unverifiedAccountSave.js";
 
 const source=readFileSync("src/components/admin/UserManagement.jsx","utf8");
 const old={id:"synthetic-user",email:"employee@example.invalid",updated_date:"before",
