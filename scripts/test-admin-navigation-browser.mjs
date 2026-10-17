@@ -522,6 +522,119 @@ try {
       assert.ok(position.documentWidth<=position.viewport+1,JSON.stringify(position));
     }, {height:420});
 
+  await check('Orientation resize keeps the active category and nested Backend tab visible', 768,
+    '/?tab=backend&subtab=monitoring', async page=>{
+      const categories=page.getByRole('group',{name:'Admin navigation categories'});
+      const active=page.getByRole('tablist',{name:'Backend administration'})
+        .getByRole('tab',{name:'Jurisdiction Monitoring'});
+      for(const viewport of [{width:320,height:420},{width:812,height:375},{width:375,height:667}]){
+        await page.setViewportSize(viewport);
+        await page.waitForFunction(()=>{
+          const categories=document.querySelector('[aria-label="Admin navigation categories"]');
+          const selected=categories?.querySelector('[aria-pressed="true"]');
+          const active=document.querySelector('[aria-label="Backend administration"] [data-state="active"]');
+          const area=categories?.closest('.clay-card')?.parentElement?.parentElement?.parentElement;
+          if(!selected||!active||!area)return false;
+          const box=categories.getBoundingClientRect(),c=selected.getBoundingClientRect();
+          const r=active.getBoundingClientRect(),s=area.getBoundingClientRect();
+          return c.left>=box.left-2 && c.right<=box.right+2 &&
+            r.top>=s.top-2 && r.bottom<=s.bottom+2;
+        });
+        assert.equal(await active.getAttribute('data-state'),'active');
+        assert.equal(await categories.getByRole('button',{name:'System'}).getAttribute('aria-pressed'),'true');
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+      }
+    });
+
+  await check('Dynamic Admin navigation height reveals an active nested tab without moving focus', 320,
+    '/?tab=backend&subtab=monitoring', async page=>{
+      const selected=page.getByRole('tablist',{name:'Backend administration'})
+        .getByRole('tab',{name:'Jurisdiction Monitoring'});
+      await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        const scrollArea=card.parentElement.parentElement.parentElement;
+        scrollArea.style.height='340px';
+        scrollArea.style.overflowY='auto';
+        const extra=document.createElement('div');
+        extra.id='synthetic-dynamic-admin-header';
+        extra.style.height='180px';
+        card.prepend(extra);
+      });
+      await page.waitForFunction(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        const scrollArea=card.parentElement.parentElement.parentElement;
+        const r=document.querySelector('[aria-label="Backend administration"] [data-state="active"]').getBoundingClientRect();
+        const b=scrollArea.getBoundingClientRect();
+        return r.top>=b.top-2 && r.bottom<=b.bottom+2 && scrollArea.scrollTop>0;
+      });
+      assert.equal(await selected.getAttribute('data-state'),'active');
+      assert.equal(await selected.evaluate(node=>document.activeElement===node),false);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    }, {height:420});
+
+  await check('Scrolling into a long Admin panel prevents layout observer snap-back', 320,
+    '/?tab=backend&subtab=monitoring', async page=>{
+      await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        const scrollArea=card.parentElement.parentElement.parentElement;
+        scrollArea.style.height='250px';
+        scrollArea.style.overflowY='auto';
+        const filler=document.createElement('div');
+        filler.style.height='1200px';
+        filler.id='synthetic-dynamic-admin-content';
+        scrollArea.appendChild(filler);
+      });
+      await page.mouse.move(160,190);
+      await page.mouse.wheel(0,850);
+      await page.waitForFunction(()=>{
+        const scroller=document.querySelector('[aria-label="Admin navigation categories"]')
+          .closest('.clay-card').parentElement.parentElement.parentElement;
+        return scroller.scrollTop>300;
+      });
+      const before=await page.evaluate(()=>{
+        const scroller=document.querySelector('[aria-label="Admin navigation categories"]')
+          .closest('.clay-card').parentElement.parentElement.parentElement;
+        return scroller.scrollTop;
+      });
+      await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        card.style.paddingBottom='70px';
+        window.dispatchEvent(new Event('resize'));
+      });
+      await page.waitForTimeout(130);
+      const after=await page.evaluate(()=>{
+        const scroller=document.querySelector('[aria-label="Admin navigation categories"]')
+          .closest('.clay-card').parentElement.parentElement.parentElement;
+        return scroller.scrollTop;
+      });
+      assert.ok(after>=before-20,'Do not jump to navigation while reading panel: '+JSON.stringify({before,after}));
+    }, {height:420});
+
+  await check('Focused Admin search is not displaced by dynamic navigation layout', 320,
+    '/?tab=backend&subtab=monitoring', async page=>{
+      const input=page.getByRole('combobox',{name:'Find an Admin page or setting'});
+      await input.focus();
+      await page.evaluate(()=>{
+        const card=document.querySelector('[aria-label="Admin navigation categories"]').closest('.clay-card');
+        const scrollArea=card.parentElement.parentElement.parentElement;
+        scrollArea.style.height='340px';
+        scrollArea.style.overflowY='auto';
+        scrollArea.style.overflowAnchor='none';
+        scrollArea.scrollTop=0;
+        const extra=document.createElement('div');
+        extra.style.height='180px';
+        card.prepend(extra);
+      });
+      await page.waitForTimeout(130);
+      assert.equal(await input.evaluate(node=>document.activeElement===node),true);
+      const position=await page.evaluate(()=>{
+        const scrollArea=document.querySelector('[aria-label="Admin navigation categories"]')
+          .closest('.clay-card').parentElement.parentElement.parentElement;
+        return scrollArea.scrollTop;
+      });
+      assert.ok(position<30,'Do not scroll a focused search away: '+position);
+    }, {height:420});
+
   await check('Non-admin excludes restricted sections from search and category bar', 375,
     '/?role=basic&tab=smartsheet', async page=>{
       assert.equal(await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Integrations'}).count(),0);
