@@ -1,0 +1,20 @@
+{
+  "mode": "actual designer and pipeline; synthetic API/AI/evidence; production CSS; external requests blocked; not production acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "library filters, saved snapshot/notes, no job action, load failure/retry, empty states; 205 drafts across 3 cursor pages, older failure preserves rows, retry uses same cursor, loading state, filter/search older records, reopen oldest snapshot, no duplicate cards, end of browse, no overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "library filters, saved snapshot/notes, no job action, load failure/retry, empty states; 205 drafts across 3 cursor pages, older failure preserves rows, retry uses same cursor, loading state, filter/search older records, reopen oldest snapshot, no duplicate cards, end of browse, no overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "library filters, saved snapshot/notes, no job action, load failure/retry, empty states; 205 drafts across 3 cursor pages, older failure preserves rows, retry uses same cursor, loading state, filter/search older records, reopen oldest snapshot, no duplicate cards, end of browse, no overflow"
+    }
+  ]
+}
