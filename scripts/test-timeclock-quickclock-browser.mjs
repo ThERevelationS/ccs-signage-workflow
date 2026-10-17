@@ -338,6 +338,7 @@ createRoot(document.getElementById("root")).render(
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "active").length, 0);
       assert.equal(fixture.h.rows.TimeClockLaborSegment.filter((row) => row.status === "completed" && row.end_reason === "work_pause").length, 1);
       await page.reload({waitUntil:"networkidle"});
+      assert.equal(await page.getByRole("dialog", {name:"Clock Out",exact:true}).count(), 0);
       await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor();
       await page.getByRole("button", {name:"Resume Work",exact:true}).click();
       await page.getByRole("heading", {name:"WORK PAUSED",exact:true}).waitFor({state:"detached"});
