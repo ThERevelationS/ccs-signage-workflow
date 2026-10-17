@@ -37,24 +37,32 @@ function signalPauseChanged(data = null) {
 export default function GlobalWorkPauseControl({ className = "", fullWidth = false, paired = false, compact = false } = {}) {
   const { currentUser, sessionToken } = useAuth();
   const email = String(currentUser?.email || "").trim().toLowerCase();
-  const [status, setStatus] = useState(null);
+  const scopeKey = JSON.stringify([email, String(sessionToken || "")]);
+  const previousScopeKeyRef = useRef(scopeKey);
+  const scopeGenerationRef = useRef(0);
+  if (previousScopeKeyRef.current !== scopeKey) {
+    previousScopeKeyRef.current = scopeKey;
+    scopeGenerationRef.current += 1;
+  }
+  const scopeInstanceKey = `${scopeGenerationRef.current}:${scopeKey}`;
+  const [statusRecord, setStatusRecord] = useState({ scope: scopeInstanceKey, data: null });
+  const status = statusRecord.scope === scopeInstanceKey ? statusRecord.data : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const mountedRef = useRef(true);
-  const scopeKey = JSON.stringify([email, String(sessionToken || "")]);
-  const scopeRef = useRef(scopeKey);
-  scopeRef.current = scopeKey;
+  const scopeRef = useRef(scopeInstanceKey);
+  scopeRef.current = scopeInstanceKey;
   const statusSequenceRef = useRef(0);
 
   const loadStatus = useCallback(async () => {
-    const requestScope = scopeKey;
+    const requestScope = scopeInstanceKey;
     const requestSequence = ++statusSequenceRef.current;
     const isCurrent = () => mountedRef.current &&
       requestSequence === statusSequenceRef.current &&
       scopeRef.current === requestScope;
     if (!email || !sessionToken) {
       if (isCurrent()) {
-        setStatus(null);
+        setStatusRecord({ scope: requestScope, data: null });
         setError("");
       }
       return null;
@@ -72,7 +80,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         clearRequestId("work_pause_start", email);
         clearRequestId("work_pause_resume", email);
       }
-      setStatus(data);
+      setStatusRecord({ scope: requestScope, data });
       setError("");
       return data;
     } catch (err) {
@@ -80,7 +88,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       setError(err?.response?.data?.error || err?.message || "Work Pause status could not be verified.");
       return null;
     }
-  }, [email, sessionToken, scopeKey]);
+  }, [email, sessionToken, scopeInstanceKey]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -143,7 +151,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       const confirmedStatus = data?.work_pause_status === "paused" && data?.work_pause?.id
         ? { ...data, active_work_pause: data.work_pause }
         : data;
-      if (mountedRef.current) setStatus(confirmedStatus);
+      if (mountedRef.current) setStatusRecord({ scope: scopeInstanceKey, data: confirmedStatus });
       signalPauseChanged(confirmedStatus);
       void loadStatus();
     } catch (err) {
