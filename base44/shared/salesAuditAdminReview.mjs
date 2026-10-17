@@ -22,6 +22,8 @@ export function projectPendingSalesAuditForAdmin(rows, record, {now=Date.now(),h
       created_at:Number.isFinite(ms)?new Date(ms).toISOString():null,
       timing,
       matching_current_value:matching,
+      save_outcome:'unknown',
+      operation_receipt:'unavailable',
       source:['app','admin','smartsheet'].includes(row.source)?row.source:'unknown',
       actor_name:String(row.actor_name||'').slice(0,120),
       preview_truncated:row.preview_truncated===true,
