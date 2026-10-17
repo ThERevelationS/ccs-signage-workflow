@@ -64,7 +64,7 @@ async function storeEstimateRecovery(token,recovery) {
     const key = await estimateRecoveryStorageKey(token);
     const pending = await readStoredEstimateRecoveries(token);
     const next = pending.filter(row => row.workOrderId !== recovery.workOrderId);
-    next.push({workOrderId:recovery.workOrderId,reason:String(recovery.reason || "Current repair-estimate ownership must be checked before retrying.").slice(0,500)});
+    next.push({workOrderId:recovery.workOrderId,reason:"A previous repair-estimate request may have committed. Check current server ownership before saving or submitting again."});
     if (next.length > 100) throw new Error("Too many unresolved repair-estimate recovery markers. Check current server state with CCS before starting another estimate request.");
     sessionStorage.setItem(key,JSON.stringify(next));
   });
