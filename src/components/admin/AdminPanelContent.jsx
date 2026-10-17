@@ -1,6 +1,7 @@
 import { Component, Fragment } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { TabsContent } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { ADMIN_NESTED_TABS, ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
 
 const panelLabels = new Map([
@@ -52,10 +53,10 @@ export class AdminPanelErrorBoundary extends Component {
 
 // Preserve Radix TabsContent's controlled selection and unmount behavior,
 // while containing render / lifecycle failures in the individual tab.
-export default function AdminPanelContent({ value, children, ...props }) {
+export default function AdminPanelContent({ value, children, className, ...props }) {
   const label = panelLabels.get(value) || value.replace(/_/g, " ");
   return (
-    <TabsContent value={value} {...props}>
+    <TabsContent value={value} className={cn("w-full min-w-0 max-w-full overflow-x-auto", className)} {...props}>
       <AdminPanelErrorBoundary label={label}>{children}</AdminPanelErrorBoundary>
     </TabsContent>
   );
