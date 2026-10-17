@@ -12,6 +12,7 @@ const saveBegin=source.indexOf("  const saveProgress = async () => {",handoffEnd
 const saveEnd=source.indexOf("  if (loading) return",saveBegin);
 assert.ok(handoffBegin>=0&&startBegin>handoffBegin&&handoffEnd>startBegin&&saveBegin>handoffEnd&&saveEnd>saveBegin);
 const bindStart=new Function("ctx",`with(ctx){${source.slice(handoffBegin,handoffEnd)} return startJob; }`);
+const bindHandoff=new Function("ctx",`with(ctx){${source.slice(handoffBegin,startBegin)} return handleSupersededWorkAcknowledgement; }`);
 const bindSave=new Function("ctx",`with(ctx){${source.slice(saveBegin,saveEnd)} return saveProgress; }`);
 const defer=()=>{let resolve,reject;const promise=new Promise((done,fail)=>{resolve=done;reject=fail;});return {promise,resolve,reject};};
 
@@ -51,6 +52,7 @@ function harness(action){
     },
     recoverWorkMutation:async value=>{ctx.recoveryStarted=value;},
   };
+  ctx.handleSupersededWorkAcknowledgement=bindHandoff(ctx);
   const run=action==="start"?bindStart(ctx):bindSave(ctx);
   return {ctx,run,gate,calls,get storedMarker(){return storedMarker;},errors,messages,busy,snapshots,draftClears,scopeNotices,recovery};
 }
