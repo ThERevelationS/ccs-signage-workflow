@@ -147,7 +147,7 @@ async function caseRun(name, origin, run, { denyStorage = false, twoContexts = f
       page.setDefaultTimeout(15000);
       page.on("pageerror", (error) => failures.push(error.message));
       const route = globalPause ? "?global-pause=true" : (i ? "?employee=second" : "");
-      await page.goto(origin + route, { waitUntil: "networkidle" });
+      await page.goto(origin + route, { waitUntil: globalPause ? "domcontentloaded" : "networkidle" });
       if (globalPause) await page.getByRole("button", { name: "Switch synthetic employee", exact: true }).waitFor();
       else await dialogFor(page);
     }
