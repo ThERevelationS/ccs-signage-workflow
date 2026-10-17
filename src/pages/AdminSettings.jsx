@@ -455,8 +455,11 @@ export default function AdminSettings() {
     // to jump back to its navigation on the next layout update.
     let keepVisible = activeIsVisible();
     let frame = null;
+    let userScrollFrame = null;
     const onUserScroll = () => {
-      requestAnimationFrame(() => {
+      if (userScrollFrame !== null) cancelAnimationFrame(userScrollFrame);
+      userScrollFrame = requestAnimationFrame(() => {
+        userScrollFrame = null;
         if (scrollArea.isConnected && active.isConnected) keepVisible = activeIsVisible();
       });
     };
@@ -465,8 +468,12 @@ export default function AdminSettings() {
       frame = requestAnimationFrame(() => {
         frame = null;
         if (!scrollArea.isConnected || !active.isConnected || !keepVisible) return;
-        // Resizes must never call focus(), including when a search box or
-        // content input is active.
+        // A focused search field or form is in use. Never move its scroll
+        // position to chase a tab during unrelated layout updates.
+        const currentFocus = list.ownerDocument.activeElement;
+        if (currentFocus && currentFocus !== list.ownerDocument.body &&
+            !list.contains(currentFocus)) return;
+        // Resizes must never call focus(), including during keyboard input.
         revealActive();
         keepVisible = activeIsVisible();
       });
@@ -489,6 +496,7 @@ export default function AdminSettings() {
       window.removeEventListener("orientationchange", onLayoutChange);
       scrollArea.removeEventListener("wheel", onUserScroll);
       scrollArea.removeEventListener("touchend", onUserScroll);
+      if (userScrollFrame !== null) cancelAnimationFrame(userScrollFrame);
       if (frame !== null) cancelAnimationFrame(frame);
     };
   }, [isUnlocked, isAdmin, selectedAdminTab, selectedAdminSubtab]);
