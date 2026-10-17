@@ -34,4 +34,46 @@ test('tab switch waits while checklist save is in progress',()=>{const x=setup(t
 test('close waits while checklist save is in progress',()=>{const x=setup(true);x.startSave();x.requestClose();assert.equal(x.state.closed,false);assert.equal(x.state.pendingNavigation,null)});
 test('saved Work Order checklist safety is explicit when deleting a reusable option',()=>{assert.match(src,/Delete reusable checklist option\?/);assert.match(src,/Work Orders that already use this option keep their saved checklist rows and answers/);assert.match(src,/Delete Reusable Option/)});
 test('product checklist removal wording matches retained template behavior',()=>{assert.match(src,/Remove product checklist from builder\?/);assert.match(src,/stored template configuration is retained internally/);assert.match(src,/confirmLabel: "Remove from Builder"/);assert.match(src,/aria-label={`Remove product checklist \$\{type\} from Template Builder`}/)});
+
+const counterStart=src.indexOf('function countPendingChecklistAdditions(');
+const counterEnd=src.indexOf('\n}',counterStart);
+assert.ok(counterStart>=0&&counterEnd>counterStart,'Pending checklist count helper exists');
+const countPending=vm.runInNewContext('('+src.slice(counterStart,counterEnd+2)+')');
+const templates={Cabinet:{items:[{text:'base checklist'}]},Empty:{items:[]}};
+const options=[{id:'opt1'},{id:'opt2'},{id:'retired'}];
+const optionItems={opt1:{items:[{text:'option row'}]},opt2:{items:[]}};
+const saved={id:'saved',productType:'Cabinet',isExisting:true,subTemplates:[]};
+const newProduct={id:'new',productType:'Cabinet',isExisting:false,subTemplates:[]};
+test('saved products do not count as pending additions',()=>{
+ assert.equal(countPending([saved],templates,options,optionItems),0);
+ assert.equal(countPending([{...saved,subTemplates:['opt2','retired']}],templates,options,optionItems),0);
+});
+test('new product checklist counts as one pending addition',()=>{
+ assert.equal(countPending([saved,newProduct],templates,options,optionItems),1);
+ assert.equal(countPending([{...newProduct,productType:'Empty'}],templates,options,optionItems),0);
+});
+test('valid selected option for saved product counts without reapplying saved base checklist',()=>{
+ assert.equal(countPending([{...saved,subTemplates:['opt1']}],templates,options,optionItems),1);
+ assert.equal(countPending([{...saved,subTemplates:['opt1','opt2','retired']}],templates,options,optionItems),1);
+});
+test('new product plus selected option counts two additions',()=>{
+ assert.equal(countPending([{...newProduct,subTemplates:['opt1']}],templates,options,optionItems),2);
+});
+test('saved checklists cannot be dragged or deselected through pending selection controls',()=>{
+ assert.match(src,/isDragDisabled=\{product\.isExisting\}/);
+ assert.match(src,/\{!product\.isExisting && \(/);
+ assert.match(src,/Saved checklist rows and answers stay unchanged/);
+ assert.match(src,/Saved checklist — order unchanged/);
+});
+test('pending selection wording distinguishes deselection from saved deletion',()=>{
+ assert.match(src,/Deselect pending checklist \$\{product\.customName\}; saved Work Order data is unchanged/);
+ assert.match(src,/Deselect pending checklist option \$\{st\.name\} for \$\{product\.customName\}; saved answers stay unchanged/);
+ assert.match(src,/Already saved on this Work Order — cannot be removed here/);
+ assert.match(src,/>To add<\/span>/);
+});
+test('apply is disabled with saved-only selection and announces actual additions',()=>{
+ assert.match(src,/disabled=\{pendingChecklistAdditions === 0\}/);
+ assert.match(src,/Nothing new selected to add to project/);
+ assert.match(src,/\{savedProductCount\} saved on Work Order · \{pendingChecklistAdditions\} new to add/);
+});
 console.log(passed+'/'+passed+' SIPS navigation checks passed');
