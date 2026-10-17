@@ -58,9 +58,9 @@ try {
    await page.screenshot({path:'/tmp/permitting-packet-desktop.png'});
    await page.emulateMedia({media:'print'});
    assert.equal(await page.locator('#root').evaluate(node=>getComputedStyle(node).display),'none');
-   assert.equal(await packet.locator('.packet-toolbar').evaluate(node=>getComputedStyle(node).display),'none');
-   assert.equal(await packet.locator('.packet-scroll').evaluate(node=>getComputedStyle(node).overflow),'visible');
-   assert.equal(await packet.evaluate(node=>getComputedStyle(node).position),'static');
+   assert.equal(await page.locator('[data-permitting-review-packet] .packet-toolbar').evaluate(node=>getComputedStyle(node).display),'none');
+   assert.equal(await page.locator('[data-permitting-review-packet] .packet-scroll').evaluate(node=>getComputedStyle(node).overflow),'visible');
+   assert.equal(await page.locator('[data-permitting-review-packet]').evaluate(node=>getComputedStyle(node).position),'static');
    const buffer=await page.pdf({format:'Letter',printBackground:true,displayHeaderFooter:false,path:'/tmp/permitting-packet-fixture.pdf'});
    await page.emulateMedia({media:'screen'});
    const pdf=await page.evaluate(data=>window.readPacketPdf(data),Array.from(buffer));
