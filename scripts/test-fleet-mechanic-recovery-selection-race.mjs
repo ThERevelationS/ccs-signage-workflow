@@ -55,7 +55,7 @@ for(const action of ["start","save"]){
     h.ctx.photoDraftEpochRef.current+=1;
     h.ctx.selectedWorkOrderRef.current="wo-A"; // a later authorized refresh restored it and the mechanic reopened it
     const currentPortalRequest=h.ctx.portalRequestRef.current;
-    h.ctx.load=async quiet=>events.portalLoads.push(quiet);
+    h.ctx.load=async quiet=>h.events.portalLoads.push(quiet);
     h.response.resolve({data:{status:"applied",work_order:{id:"wo-A",status:"in_progress",actual_hours:9}}});
     assert.equal(await pending,true);
     assert.deepEqual(h.events.snapshots,[],"An old recovery snapshot must not replace the reopened editor state");
