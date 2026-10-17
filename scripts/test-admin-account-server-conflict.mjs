@@ -53,6 +53,7 @@ function fixture({response=fresh,errorMessage="Authorized user changed in anothe
   setUserMutationError:v=>{state.error=v;},
   setUserMutationSaving:v=>{state.saving=v;},
   setAccountSaveNotice:v=>{state.notice=v;},
+  setPostSaveRefreshPending:()=>{},
   setAccountWriteRecovery:v=>{state.write=v;},
   setConfirmAccountReconciliation:v=>{state.confirm=v;},
   setAccountFieldChoices:v=>{state.choices=v;},
