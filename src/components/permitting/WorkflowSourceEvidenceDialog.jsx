@@ -52,7 +52,7 @@ export default function WorkflowSourceEvidenceDialog({ citation, draftRow, trigg
   }, [sourceId, jurisdictionId, citation, captured, retry]);
   const source = result?.source, match = result?.match;
   const pdfUrl = source && safeExternalHttpUrl(source.archived_file_url);
-  const canPreview = pdfUrl && /\.pdf(?:[?#]|$)/i.test(source.archived_file_url || source.official_url || '') && Number(source.file_bytes || 0) <= 12 * 1024 * 1024;
+  const canPreview = pdfUrl && (/\.pdf(?:[?#]|$)/i.test(source.archived_file_url || '') || /\.pdf(?:[?#]|$)/i.test(source.official_url || '')) && Number(source.file_bytes || 0) <= 12 * 1024 * 1024;
   const closePreview = () => { setPreview(false); requestAnimationFrame(() => previewButton.current?.focus({ preventScroll: true })); };
   const contextOnly = source && (['draft','proposed','historical','superseded'].includes(source.content_status) || ['draft_proposed','comprehensive_rewrite','historical','superseded'].includes(source.authority_classification) || source.superseded_by);
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
