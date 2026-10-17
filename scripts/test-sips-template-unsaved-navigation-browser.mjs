@@ -56,6 +56,41 @@ async function confirmSwitch(dialog) {
  await dialog.getByRole("button",{name:"Discard and switch"}).click();
  await dialog.waitFor({state:"hidden"});
 }
+async function pendingSave(page, count) {
+ await page.waitForFunction(expected=>window.__saveCalls?.length===expected &&
+   window.__pendingSaves?.length===1,count);
+}
+async function settleSave(page, outcome="resolve") {
+ await page.evaluate(result=>{
+   const next=window.__pendingSaves.shift();
+   if (!next) throw Error("Missing held synthetic save");
+   if (result==="reject") next.reject("Synthetic concurrent update blocked");
+   else next.resolve();
+ },outcome);
+}
+async function assertBlockedNavigation(page, otherEditor, otherTab, busyLabel) {
+ const busy=page.getByRole("button",{name:busyLabel});
+ await busy.waitFor();
+ assert.equal(await busy.isDisabled(),true,"Save button must be disabled while pending");
+ // Programmatic click models a same-tick duplicate activation: disabled
+ // buttons and the synchronous save ref both prevent repeat requests.
+ await busy.evaluate(element=>element.click());
+ assert.equal(await page.evaluate(()=>window.__saveCalls.length),1,"No duplicate save while pending");
+ const notice=page.getByRole("alertdialog",{name:"Checklist save in progress"});
+ for (const action of [
+   ()=>page.getByRole("button",{name:otherEditor}).click(),
+   ()=>page.getByRole("tab",{name:otherTab}).click(),
+   ()=>page.getByRole("button",{name:"Close",exact:true}).click(),
+ ]) {
+   await action();
+   await notice.waitFor();
+   assert.match(await notice.innerText(),/Finish saving your checklist before switching editors/);
+   await notice.getByRole("button",{name:"OK"}).click();
+   await notice.waitFor({state:"hidden"});
+ }
+ assert.equal(await page.evaluate(()=>window.__closeCount),0,"Cannot close during a save");
+ assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
+}
 
 try {
  await symlink(path.join(root,"node_modules"),path.join(scratch,"node_modules"),"dir");
@@ -219,8 +254,73 @@ try {
     await page.getByRole("heading",{name:"Checklist Builder"}).waitFor({state:"hidden"});
     assert.equal(await page.evaluate(()=>window.__closeCount),1);
    });
+  await run(label+": pending option save blocks editor, tab, close and duplicate submits",
+   origin,viewport,async page=>{
+    await optionEditor(page,"Safety Review");
+    await page.getByRole("textbox",{name:"New checklist option item"}).fill("Saved after hold");
+    await page.getByRole("button",{name:"Add checklist item",exact:true}).click();
+    await page.getByRole("button",{name:"Save checklist option"}).click();
+    await pendingSave(page,1);
+    await assertBlockedNavigation(page,"Edit checklist option Permit Review","Select & Apply","Saving checklist option");
+    await page.getByRole("button",{name:"Edit checklist item Saved after hold"}).waitFor();
+    await settleSave(page);
+    await page.getByRole("button",{name:"Checklist option saved"}).waitFor();
+    assert.equal(await page.evaluate(()=>window.__settledSaves.length),1);
+    assert.equal(await page.evaluate(()=>window.__settledSaves[0].items.some(item=>item.text==="Saved after hold")),true);
+    await page.getByRole("button",{name:"Edit checklist option Permit Review"}).click();
+    await page.getByRole("button",{name:"Edit checklist item Check permit"}).waitFor();
+    assert.equal(await navDialog(page).count(),0,"Clean post-save editor switch needs no discard");
+   });
+  await run(label+": edits during option save stay dirty after older save settles",
+   origin,viewport,async page=>{
+    await optionEditor(page,"Safety Review");
+    await page.getByRole("textbox",{name:"New checklist option item"}).fill("First snapshot");
+    await page.getByRole("button",{name:"Add checklist item",exact:true}).click();
+    await page.getByRole("button",{name:"Save checklist option"}).click();
+    await pendingSave(page,1);
+    await page.getByRole("textbox",{name:"New checklist option item"}).fill("Newer unsaved edit");
+    await page.getByRole("button",{name:"Add checklist item",exact:true}).click();
+    await settleSave(page);
+    await page.getByRole("button",{name:"Save checklist option"}).waitFor();
+    const snapshots=await page.evaluate(()=>({sent:window.__saveCalls[0].items,
+      saved:window.__settledSaves[0].items}));
+    assert.deepEqual(snapshots.sent,snapshots.saved);
+    assert.equal(snapshots.sent.some(item=>item.text==="Newer unsaved edit"),false,
+      "Older save must not incorrectly include the newer draft");
+    await page.getByRole("button",{name:"Edit checklist item Newer unsaved edit"}).waitFor();
+    await page.getByRole("tab",{name:"Select & Apply"}).click();
+    const dialog=navDialog(page);
+    await dialog.waitFor();
+    await canceled(dialog);
+    await page.getByRole("button",{name:"Edit checklist item Newer unsaved edit"}).waitFor();
+    await page.getByRole("button",{name:"Save checklist option"}).click();
+    await pendingSave(page,2);
+    await settleSave(page);
+    await page.getByRole("button",{name:"Checklist option saved"}).waitFor();
+    assert.equal(await page.evaluate(()=>window.__settledSaves[1].items.some(item=>item.text==="Newer unsaved edit")),true);
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),2,"Only requested retries saved");
+   });
+  await run(label+": failed product save releases lock and safely allows retry",
+   origin,viewport,async page=>{
+    await productEditor(page,"Cabinet Sign");
+    await page.getByRole("textbox",{name:"New product checklist item"}).fill("Pending cabinet proof");
+    await page.getByRole("button",{name:"Add product checklist item"}).click();
+    await page.getByRole("button",{name:"Save product checklist"}).click();
+    await pendingSave(page,1);
+    await assertBlockedNavigation(page,"Edit product checklist Monument","Select & Apply","Saving product checklist");
+    await settleSave(page,"reject");
+    await page.getByText("Synthetic concurrent update blocked").waitFor();
+    await page.getByRole("button",{name:"Save product checklist"}).waitFor();
+    await page.getByRole("button",{name:"Edit checklist item Pending cabinet proof"}).waitFor();
+    await page.getByRole("button",{name:"Save product checklist"}).click();
+    await pendingSave(page,2);
+    await settleSave(page);
+    await page.getByRole("button",{name:"Product checklist saved"}).waitFor();
+    assert.equal(await page.evaluate(()=>window.__settledSaves.length),1);
+    assert.equal(await page.evaluate(()=>window.__settledSaves[0].items.some(item=>item.text==="Pending cabinet proof")),true);
+   });
  }
- console.log("PASS "+passed+" isolated Chromium SIPS Template Builder unsaved-navigation scenarios (read-only)");
+ console.log("PASS "+passed+" isolated Chromium SIPS Template Builder unsaved-navigation scenarios (synthetic save only)");
 } finally {
  await browser?.close();
  await vite?.close();
