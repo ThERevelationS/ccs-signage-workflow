@@ -357,7 +357,7 @@ export default function FleetMechanic() {
         setWorkRecovery({...recovery,reason:safeReason});
         setSavedMessage("");
         setActionError(`${safeReason} Current server state could not be verified. Nothing was replayed. Use Check Current Server State before trying again.`);
-        await load(true,()=>notifyRecoveryOnCurrentView("The interrupted mechanic request remains unverified. Current access could not be refreshed. Nothing was replayed; contact CCS if access is needed."));
+        await load(true,()=>setError("Current Fleet access could not be verified. Reload this mechanic link or contact CCS. The interrupted request was not replayed."));
       } else notifyRecoveryOnCurrentView("An earlier work-order request could not be verified. It may no longer be available to this mechanic link. Nothing was replayed; contact CCS if access is needed.");
       return false;
     } finally {
