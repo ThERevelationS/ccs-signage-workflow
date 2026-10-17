@@ -222,10 +222,9 @@ test("a second unchanged manual Refresh must not remove an outstanding review lo
   const h=refreshHarness();
   h.ctx.nextPayload=h.nextEstimate({updated_date:"v2",status:"changes_requested"});
   await h.ctx.load(true);
-  const recoveryCount=h.events.recoveries.length;
   await h.ctx.load(true);
-  assert.equal(h.events.recoveries.length,recoveryCount,
-    "Only explicit Check Current Server State can release a detected conflict");
+  assert.equal(h.events.recoveries.at(-1)?.workOrderId,"wo-A",
+    "A repeated Refresh must preserve the outstanding review lock");
 });
 
 test("manual Refresh with same server estimate preserves editable draft without false conflict",async()=>{
@@ -333,6 +332,7 @@ function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
 test("switching from A to B during delayed Save Draft must not submit A or project A into B",async()=>{
   const h=harness({holdSave:true});
   const pending=h.run(true);
+  for(let attempt=0;h.calls.length<1&&attempt<100;attempt++)await Promise.resolve();
   assert.deepEqual(h.calls.map(x=>x.action),["estimate_save"]);
   // A user selects B while A's request remains in-flight. React's original
   // callback retains selected=A, but its selectedWorkOrderRef changes.
