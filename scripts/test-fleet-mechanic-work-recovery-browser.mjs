@@ -310,7 +310,7 @@ try {
     assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),0);
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
-    await page.getByText(/not allowed to verify that action/i).waitFor();
+    await page.getByText(/Current server state could not be verified/i).waitFor();
     assert.equal(await recovery.count(),1,"Disallowed status must fail closed");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
@@ -354,7 +354,7 @@ try {
     assert.equal(await page.getByLabel("Add mechanic note").isDisabled(),true);
     assert.equal(await page.getByRole("button",{name:"Save Progress"}).count(),0);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
-    await page.getByText(/not allowed to verify that action/i).waitFor();
+    await page.getByText(/Current server state could not be verified/i).waitFor();
     assert.equal(await recovery.count(),1,"Disallowed Save verification must remain locked");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.savePermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
@@ -486,7 +486,7 @@ try {
     assert.equal(await recovery.count(),1,"Older refresh cannot release uncertain mutation");
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
-    await page.getByText(/not allowed to verify that action/i).waitFor();
+    await page.getByText(/Current server state could not be verified/i).waitFor();
     assert.equal(await recovery.count(),1,"Removed permission must deny status check");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
@@ -712,7 +712,7 @@ try {
     await page.getByRole("button",{name:"Mark Work Started"}).waitFor({state:"detached"});
     await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseStartAck());
     const recovery=page.getByRole("alert");
-    await page.getByText(/not allowed to verify that action/i).waitFor();
+    await page.getByText(/Current server state could not be verified/i).waitFor();
     assert.equal(await recovery.count(),1,"Revoked Start permission must keep uncertain recovery locked");
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
@@ -764,7 +764,7 @@ try {
     assert.equal(await page.locator('img[src^="blob:"]').count(),0,"Save permission removal must purge unsaved photo preview");
     await page.evaluate(() => window.__fleetMechanicWorkFixture.releaseSaveAck());
     const recovery=page.getByRole("alert");
-    await page.getByText(/not allowed to verify that action/i).waitFor();
+    await page.getByText(/Current server state could not be verified/i).waitFor();
     assert.equal(await recovery.count(),1);
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
@@ -815,7 +815,7 @@ try {
     assert.equal(await page.getByRole("button",{name:"Close work order"}).isDisabled(),true);
     assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),0);
     await recovery.getByRole("button",{name:"Check Current Server State"}).click();
-    await page.getByText(/not allowed to verify that action/i).waitFor();
+    await page.getByText(/Current server state could not be verified/i).waitFor();
     assert.equal(await recovery.count(),1,"Revoked Start permission must deny status verification");
     await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
     await page.getByRole("button",{name:"Refresh"}).click();
