@@ -83,8 +83,13 @@ async function fieldHistoryHandler(req) {
         throw Object.assign(new Error('Sales history pagination could not be verified. Reload the history.'),{status:503});
       // Check for a business write whose Sales audit has not been marked
       // committed. Never expose the pending entry as a historical event.
-      const pending=await base44.asServiceRole.entities.FieldAudit.filter(
-        {...scope,status:'pending'}, {sort:'-created_date',limit:35});
+      let pending;
+      try {
+        pending=await base44.asServiceRole.entities.FieldAudit.filter(
+          {...scope,status:'pending'}, {sort:'-created_date',limit:35});
+      }catch {
+        throw Object.assign(new Error('Sales audit verification is temporarily unavailable. Retry Sales history.'),{status:503});
+      }
       if(!Array.isArray(pending?.items))
         throw Object.assign(new Error('Sales audit verification is temporarily unavailable. Retry Sales history.'),{status:503});
       const auditVerificationPending=salesHistoryHasUnfinalizedMatchingAudit(pending.items,record) || pending.has_more===true;
