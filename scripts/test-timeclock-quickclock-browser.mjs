@@ -76,7 +76,6 @@ async function storage(page, key) {
 async function dialogFor(page) {
   const dialog = page.getByRole("dialog", { name: "Clock Out", exact: true });
   await dialog.waitFor();
-  await dialog.getByText("Authoritative tracked allocation preview", { exact: false }).count();
   return dialog;
 }
 async function fillClockOut(page, note = notes) {
