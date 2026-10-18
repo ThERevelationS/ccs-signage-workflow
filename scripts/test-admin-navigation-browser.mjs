@@ -1063,6 +1063,156 @@ try {
       assert.equal(await page.getByRole('status',{name:'Unsaved Automation draft'}).count(),0);
     });
 
+  await check('Delayed confirmed Automation create receipt dispatches only one write', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationHoldWrite=true;
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      const save=editor.getByRole('button',{name:'Create Automation'});
+      await save.evaluate(button=>{button.click();button.click();});
+      await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      assert.equal(await editor.getByRole('button',{name:'Saving...'}).isDisabled(),true);
+      await page.evaluate(()=>window.__adminAutomationPendingWrite());
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+    });
+
+  await check('Recovered delayed create receipt retains draft until matching read-only review', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationCreateReceiptStatus='recovered';
+        window.__adminAutomationHoldWrite=true;
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      const attempted=await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue();
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
+      await page.evaluate(()=>window.__adminAutomationPendingWrite());
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.getByText(/server located a rule after processing/).waitFor();
+      assert.equal(await editor.getByRole('button',{name:'Create Automation'}).isDisabled(),true);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),attempted);
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Existing-name create collision is never treated as a confirmed new rule', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationCreateReceiptStatus='existing';
+        window.__adminAutomationCreateWinnerDifferent=true;
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      const draft=await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue();
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.getByText(/rule already used this name/).waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/values differ from the attempted save/).waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),draft);
+      assert.equal(await editor.getByRole('button',{name:'Create Automation'}).isDisabled(),true);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Concurrent canonical create winner is flagged for read-only review', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationCreateReceiptStatus='concurrent_duplicate_discarded';
+        window.__adminAutomationCreateWinnerDifferent=true;
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.getByText(/Concurrent creation left a different rule/).waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/values differ from the attempted save/).waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      assert.equal(await editor.getByRole('button',{name:'Create Automation'}).isDisabled(),true);
+    });
+
+  await check('Missing create receipt version blocks save despite a found rule', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationCreateReceiptStatus='unversioned_created';
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      assert.equal(await editor.getByRole('button',{name:'Create Automation'}).isDisabled(),true);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Lost create receipt with empty verification remains blocked and preserves draft', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationVerifyAbsent=true;
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      const original=await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue();
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/No matching rule was found/).waitFor();
+      assert.equal(await editor.getByRole('button',{name:'Create Automation'}).isDisabled(),true);
+      await editor.getByRole('button',{name:'Close editor'}).click();
+      const parked=page.getByRole('status',{name:'Unsaved Automation draft'});
+      await parked.waitFor();
+      await parked.getByRole('button',{name:'Resume Automation draft'}).click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),original);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Late create receipt cannot close or overwrite a replacement Admin session', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationHoldWrite=true;
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
+      await page.evaluate(()=>{
+        window.__adminSyntheticSessionToken='synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await editor.waitFor({state:'detached'});
+      await page.evaluate(()=>window.__adminAutomationPendingWrite());
+      await page.waitForTimeout(75);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      await page.getByRole('button',{name:'New Automation'}).click();
+      const next=page.getByRole('dialog',{name:/Create Automation/});
+      await next.waitFor();
+      assert.equal(await next.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'');
+      await next.getByRole('button',{name:'Discard draft'}).click();
+    });
+
   await check('Uncertain Automation update has read-only matching review and no duplicate save', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{
