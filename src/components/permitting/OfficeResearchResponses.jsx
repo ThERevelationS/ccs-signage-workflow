@@ -21,7 +21,12 @@ export default function OfficeResearchResponses({ research, role, canEdit = fals
       if (!request.current) request.current = createOfficeResearchResponse(basis.current, role, draft, { id: 'office-response-' + crypto.randomUUID(), actor });
       const next = appendOfficeResearchResponse(research, request.current);
       setFrozen(true);
-      if (next !== research) await onSave(next);
+      if (next !== research) {
+        const saved = await onSave(next);
+        const confirmed = saved?.office_research?.staff_responses?.filter(row => row?.id === request.current.id);
+        if (!Array.isArray(confirmed) || confirmed.length !== 1 || JSON.stringify(confirmed[0]) !== JSON.stringify(request.current))
+          throw Error('The response save was not confirmed. Keep this response open and verify the saved research before retrying.');
+      }
       setDraft(null); request.current = null; setFrozen(false);
       setStatus('Office response saved as unverified evidence. The saved office findings and authority status were preserved.');
     } catch (e) {
@@ -52,7 +57,7 @@ export default function OfficeResearchResponses({ research, role, canEdit = fals
     })}
     {status && <p role="status">{status}</p>}
     {canEdit && typeof onSave === 'function' && research?.profile_snapshot?.id && !draft && <Button type="button" variant="outline" className="min-h-11 h-auto w-full whitespace-normal" onClick={start}>Record {label} response</Button>}
-    {draft && <div className="space-y-3 rounded border bg-blue-50 p-3" aria-label={'Record response: ' + role}>
+    {draft && canEdit && typeof onSave === 'function' && <div className="space-y-3 rounded border bg-blue-50 p-3" aria-label={'Record response: ' + role}>
       <p>Enter the reply exactly and retain its source. Leave unknown scope unestablished. Saving adds a separate historical response.</p>
       <fieldset disabled={saving || frozen} className="space-y-3">
         {[
