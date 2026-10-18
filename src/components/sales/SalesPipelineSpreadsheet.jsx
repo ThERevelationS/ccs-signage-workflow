@@ -1128,8 +1128,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
       // A second timer may have been queued while the first request was in
       // flight. Recheck the fence at dispatch, not only at user-edit time.
-      if (blockedFollowUpSavesRef.current.has(orderId)) {
-        setQuickEditError("A previous Sales save is still unverified. Use Reload latest; do not repeat the save.");
+      if (reloadingSalesQuickEditsRef.current || blockedFollowUpSavesRef.current.has(orderId)) {
+        setQuickEditError("A previous Sales save is still unverified or Reload latest is in progress. Do not repeat the save.");
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
         return;
       }
