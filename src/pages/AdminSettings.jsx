@@ -1563,10 +1563,10 @@ export default function AdminSettings() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
-                        <Button variant="ghost" size="icon" disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label={`Duplicate ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label={`Edit ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(rule)} className="h-8 w-8">
