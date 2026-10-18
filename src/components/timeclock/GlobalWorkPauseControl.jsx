@@ -216,7 +216,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       data-work-pause-trigger
       type="button"
       onClick={runToggle}
-      disabled={busy || unavailable}
+      disabled={busy || transition || unavailable}
       aria-pressed={paused}
       title={title}
       className={`${pairedClassName} ${className}`}
