@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { verifySalesSaveAcknowledgment } from '../base44/shared/salesSaveAcknowledgmentGuard.mjs';
 
 // Exercise the actual SIPS completion field builder and shared conditional-write
 // helper with a simulated Work Order. Never connect to production or mutate data.
@@ -62,6 +63,7 @@ function simulatedStore(record) {
   const ctx = {
     base44: { functions },
     localStorage: { getItem: () => '' },
+    verifySalesSaveAcknowledgment,
     Number, JSON, Math, String, Error, Object, Array,
   };
   vm.createContext(ctx);
