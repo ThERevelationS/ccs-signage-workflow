@@ -53,7 +53,13 @@ function storedRequestId(action, email) {
 }
 
 function persistRequestId(action, email, requestId) {
-  try { sessionStorage.setItem(requestStorageKey(action, email), requestId); } catch {}
+  try {
+    const key = requestStorageKey(action, email);
+    sessionStorage.setItem(key, requestId);
+    return sessionStorage.getItem(key) === requestId;
+  } catch {
+    return false;
+  }
 }
 
 function removeStoredRequestId(action, email) {
@@ -272,8 +278,15 @@ export default function QuickClockSection({
     if (requestRef.current?.[key]) return requestRef.current[key];
     const recovered = storedRequestId(action, email);
     const id = recovered || newRequestId();
+    const retained = recovered || persistRequestId(action, email, id);
+    // Clock Out also stores and verifies its full immutable recovery snapshot
+    // before submission. Every other mutation needs a durable exact retry ID.
+    if (!retained && action !== "clock_out") {
+      const message = "This browser cannot preserve the exact Time Clock request ID. Nothing was submitted. Enable session storage or use a trusted browser.";
+      setPersistenceError(message);
+      throw new Error(message);
+    }
     requestRef.current = { ...requestRef.current, [key]: id };
-    if (!recovered) persistRequestId(action, email, id);
     return id;
   };
 
