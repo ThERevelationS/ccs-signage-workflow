@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { reviewUncertainAutomationSave } from "../src/components/admin/automationSaveReconciliation.js";
+import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave } from "../src/components/admin/automationSaveReconciliation.js";
 
 const source = readFileSync("src/pages/AdminSettings.jsx", "utf8");
 const attempted = {
@@ -18,6 +18,27 @@ test("A single exact, versioned rule is a matching snapshot, not proof of author
     kind:"update",originalId:"r1",attempted,rows:[{id:"r1",updated_date:"v3",...attempted,
       triggers:[{logic:"or",trigger_condition:{},trigger_type:"work_order_created"}]}]
   }), "matching");
+});
+
+test("Only a fully matching versioned created receipt confirms this create", () => {
+  assert.equal(classifyAutomationCreateReceipt({status:"created",record},attempted),"created");
+  assert.equal(classifyAutomationCreateReceipt({status:"created",record:{...record,priority:3}},attempted),"unverified");
+  assert.equal(classifyAutomationCreateReceipt({status:"created",record:{...record,updated_date:null}},attempted),"unverified");
+  assert.equal(classifyAutomationCreateReceipt({status:"created",record:{...record,id:null}},attempted),"unverified");
+  assert.equal(classifyAutomationCreateReceipt({status:"created"},attempted),"unverified");
+  assert.equal(classifyAutomationCreateReceipt({},attempted),"unverified");
+  assert.equal(classifyAutomationCreateReceipt(null,attempted),"unverified");
+});
+
+test("Existing-name, recovered, and concurrent-winner create receipts require read-only review", () => {
+  for(const status of ["existing","recovered","concurrent_duplicate_discarded"]) {
+    assert.equal(classifyAutomationCreateReceipt({status,record},attempted),status);
+  }
+  assert.equal(classifyAutomationCreateReceipt({status:"unknown",record},attempted),"unverified");
+  assert.match(source,/createReceiptStatus = classifyAutomationCreateReceipt\(result, saveData\)/);
+  assert.match(source,/if \(createReceiptStatus !== "created"\)/);
+  assert.match(source,/receiptStatus: editingRule \? null : createReceiptStatus/);
+  assert.match(source,/Concurrent creation left a different rule as the canonical record/);
 });
 
 test("Read errors, absent rows and missing version never verify an uncertain mutation", () => {
