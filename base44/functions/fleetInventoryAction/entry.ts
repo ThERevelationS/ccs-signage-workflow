@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
+import { requireFleetInventoryExpectedVersion } from '../../shared/fleetInventoryVersion.ts';
 
 async function requireAdmin(base44: any) {
   const user = await base44.auth.me().catch(() => null);
@@ -479,7 +480,7 @@ Deno.serve(async (req) => {
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
       const wasLow = inventoryIsLow(itemType, existing);
       const beforeQuantity = itemType === 'part' ? num(existing.quantity_on_hand, NaN) : num(existing.quantity, NaN);
-      const expectedUpdatedAt = String(body?.expected_updated_date || existing.updated_date || '').trim();
+      const expectedUpdatedAt = requireFleetInventoryExpectedVersion(body?.expected_updated_date);
       if (!expectedUpdatedAt) return Response.json({ error: 'Fleet inventory record version is missing. Reload this item before saving.' }, { status: 409 });
       const result = await Entity.updateMany(
         { id, updated_date: expectedUpdatedAt },
