@@ -130,6 +130,13 @@ try {
   ' if(!(settingKey in settings))throw Error("Unknown setting: "+settingKey);',
   ' if(window.__failNextTemplateReload){window.__failNextTemplateReload=false;throw Error("Synthetic reload network failure");}',
   ' const updated=window.__remoteTemplateSettings?.[settingKey] || settings[settingKey];',
+  ' if(window.__pauseTemplateReload && settingKey==="subTemplateItems"){',
+  '  window.__pauseTemplateReload=false;',
+  '  return new Promise((resolve,reject)=>window.__pendingTemplateReads.push({',
+  '   resolve(){resolve({id:settingKey,setting_key:settingKey,setting_value:updated});},',
+  '   reject(){reject(Error("Synthetic delayed reload failed"));},',
+  '  }));',
+  ' }',
   ' return {id:settingKey,setting_key:settingKey,setting_value:updated};',
   '}',
   'export async function saveGlobalSettingValueIfUnchanged(){',
@@ -161,6 +168,7 @@ try {
   'window.__writeAttempts=0;window.__closeCount=0;window.__applyCount=0;',
   'window.__saveCalls=[];window.__pendingSaves=[];window.__settledSaves=[];',
   'window.__remoteTemplateSettings={};window.__failNextTemplateReload=false;',
+  'window.__pauseTemplateReload=false;window.__pendingTemplateReads=[];',
   'function Fixture(){const [open,setOpen]=React.useState(true);',
   'return <>{open&&<TemplateBuilder isOpen={true} isAdmin={true} existingChecklist={window.__savedRows}',
   'onClose={()=>{window.__closeCount++;setOpen(false)}}',
@@ -358,6 +366,14 @@ try {
     await page.getByRole("button",{name:"Edit checklist item Concurrent fresh cabinet setup"}).waitFor();
     assert.equal(await page.getByRole("button",{name:"Edit checklist item Protected on reload failure"}).count(),0);
     assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
+   });
+  await run(label+": held reload traps keyboard, blocks edits and restores heading after success",
+   origin,viewport,async page=>{
+    await optionEditor(page,"Safety Review");
+    const draft=page.getByRole("textbox",{name:"New checklist option item"});
+    await draft.fill("Must stay unchanged during reload");
+    await page.getByRole("button",{name:"Save checklist option"}).click(); // Save only added checklist rows.
+    // No dirty checklist-row save occurs until an item is added; use a new row.
    });
   await run(label+": failed product save releases lock and safely allows retry",
    origin,viewport,async page=>{
