@@ -589,6 +589,12 @@ export default function AdminSettings() {
     automationSaveInFlight.current = false;
     setAutomationDraftParked(false);
     setIsDialogOpen(false);
+    setEditingRule(null);
+    setFormData({ name: "", enabled: true, priority: 0 });
+    setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+    setActions([{ action_type: "", action_config: {} }]);
+    setAutomationSaveError("");
+    setAutomationSaving(false);
   }, [sessionToken, navigationKey, isUnlocked]);
 
   const loadEmailGroups = async () => {
