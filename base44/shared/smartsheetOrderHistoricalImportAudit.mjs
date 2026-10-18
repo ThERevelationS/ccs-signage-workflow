@@ -1,7 +1,7 @@
 const clean = value => String(value ?? '').trim();
 const numericId = value => {
   const text = clean(value);
-  return /^\\d+$/.test(text) && text !== '0' ? text : '';
+  return /^\d+$/.test(text) && text !== '0' ? text : '';
 };
 
 export const MAX_ORDER_IMPORT_AUDIT_ROW_IDS = 25;
