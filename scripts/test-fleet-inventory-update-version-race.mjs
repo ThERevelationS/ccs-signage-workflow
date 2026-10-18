@@ -10,15 +10,12 @@ const transpile = (file) => ts.transpileModule(
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } },
 ).outputText;
 const importTs = async (file) => import("data:text/javascript;base64," + Buffer.from(transpile(file)).toString("base64"));
-const { requireFleetInventoryExpectedVersion } = await importTs("base44/shared/fleetInventoryVersion.ts");
 const { updateFleetRecordIfCurrent } = await importTs("base44/shared/fleetRecordPersistence.ts");
 const endpoint = readFileSync(path.join(root, "base44/functions/fleetInventoryAction/entry.ts"), "utf8");
 
 test("inventory update requires the version from the opened Fleet record", () => {
-  assert.match(endpoint, /requireFleetInventoryExpectedVersion\(body\?\.expected_updated_date\)/);
+  assert.match(endpoint, /const expectedUpdatedAt = String\(body\?\.expected_updated_date \|\| ''\)\.trim\(\);/);
   assert.doesNotMatch(endpoint, /body\?\.expected_updated_date\s*\|\|\s*existing\.updated_date/);
-  assert.equal(requireFleetInventoryExpectedVersion(undefined), "");
-  assert.equal(requireFleetInventoryExpectedVersion("  version-opened  "), "version-opened");
 });
 
 function fixture() {
@@ -41,7 +38,7 @@ test("delayed Fleet inventory edit conflicts after another save wins", async () 
   row.updated_date = "newer-server-version";
   await assert.rejects(
     () => updateFleetRecordIfCurrent({
-      entity, id: row.id, expectedUpdatedAt: requireFleetInventoryExpectedVersion("version-opened"),
+      entity, id: row.id, expectedUpdatedAt: "version-opened",
       patch: { notes: "stale edit" }, label: "Fleet Part",
     }),
     error => error?.code === "FLEET_RECORD_CONFLICT",
@@ -54,7 +51,7 @@ test("delayed Fleet inventory edit conflicts after another save wins", async () 
 test("matching Fleet inventory version saves normally", async () => {
   const { row, entity } = fixture();
   const saved = await updateFleetRecordIfCurrent({
-    entity, id: row.id, expectedUpdatedAt: requireFleetInventoryExpectedVersion("version-opened"),
+    entity, id: row.id, expectedUpdatedAt: "version-opened",
     patch: { notes: "current edit" }, label: "Fleet Part",
   });
   assert.equal(saved.notes, "current edit");
@@ -65,7 +62,7 @@ test("missing client version fails before any Fleet write", async () => {
   const { row, writes, entity } = fixture();
   await assert.rejects(
     () => updateFleetRecordIfCurrent({
-      entity, id: row.id, expectedUpdatedAt: requireFleetInventoryExpectedVersion(""),
+      entity, id: row.id, expectedUpdatedAt: "",
       patch: { quantity_on_hand: 0 }, label: "Fleet Part",
     }),
     /could not initialize its concurrency-safe update/,
