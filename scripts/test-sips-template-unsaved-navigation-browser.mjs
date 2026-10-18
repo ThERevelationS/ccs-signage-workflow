@@ -367,13 +367,77 @@ try {
     assert.equal(await page.getByRole("button",{name:"Edit checklist item Protected on reload failure"}).count(),0);
     assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
    });
-  await run(label+": held reload traps keyboard, blocks edits and restores heading after success",
+  await run(label+": held reload traps keyboard, protects drafts and restores heading on success",
    origin,viewport,async page=>{
     await optionEditor(page,"Safety Review");
     const draft=page.getByRole("textbox",{name:"New checklist option item"});
-    await draft.fill("Must stay unchanged during reload");
-    await page.getByRole("button",{name:"Save checklist option"}).click(); // Save only added checklist rows.
-    // No dirty checklist-row save occurs until an item is added; use a new row.
+    await draft.fill("Local draft must not be changed during reload");
+    await page.getByRole("button",{name:"Add checklist item",exact:true}).click();
+    await page.getByRole("button",{name:"Save checklist option"}).click();
+    await pendingSave(page,1);
+    await settleSave(page,"reject");
+    await page.getByText("Synthetic concurrent update blocked").waitFor();
+    await page.evaluate(()=>{
+      window.__pauseTemplateReload=true;
+      window.__remoteTemplateSettings.subTemplateItems={
+        safety:{items:[{id:"remote-safety",text:"Fresh safety review after reload"}]},
+        permit:{items:[{id:"permit-1",text:"Check permit"}]}
+      };
+    });
+    await page.getByRole("button",{name:"Reload latest"}).click();
+    await page.getByRole("alertdialog",{name:"Discard edits and reload latest templates?"})
+      .getByRole("button",{name:"Discard edits & reload latest"}).click();
+    const busy=page.getByRole("alertdialog",{name:"Reloading latest checklist templates…"});
+    await busy.waitFor();
+    await page.waitForFunction(()=>window.__pendingTemplateReads.length===1);
+    assert.equal(await page.locator('[inert]').count()>0,true,"Editable Builder becomes inert");
+    for (const key of ["Tab","Shift+Tab","Escape","Tab"]) {
+      await page.keyboard.press(key);
+      assert.equal(await page.evaluate(()=>
+        document.activeElement?.closest('[role="alertdialog"]')?.textContent?.includes("Reloading latest checklist templates")),true,
+        "Focus must stay in the reload modal for "+key);
+      assert.equal(await busy.isVisible(),true,"Escape/Tab cannot dismiss a pending reload");
+    }
+    await page.keyboard.type("DO-NOT-EDIT");
+    assert.equal(await draft.inputValue(),"","Underlying draft input is disabled during reload");
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),1,"Reload does not resubmit");
+    assert.equal(await page.evaluate(()=>window.__closeCount),0,"No close during reload");
+    await page.evaluate(()=>window.__pendingTemplateReads.shift().resolve());
+    await busy.waitFor({state:"hidden"});
+    await page.getByRole("button",{name:"Edit checklist item Fresh safety review after reload"}).waitFor();
+    await page.waitForFunction(()=>document.activeElement?.textContent==="Checklist Builder");
+    assert.equal(await page.locator('[inert]').count(),0,"Builder is editable after reload");
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),1,"No additional save emitted");
+   });
+  await run(label+": failed held reload retains draft and restores focus to retry",
+   origin,viewport,async page=>{
+    await productEditor(page,"Cabinet Sign");
+    await page.getByRole("textbox",{name:"New product checklist item"}).fill("Preserve draft after delayed failure");
+    await page.getByRole("button",{name:"Add product checklist item"}).click();
+    await page.getByRole("button",{name:"Save product checklist"}).click();
+    await pendingSave(page,1);
+    await settleSave(page,"reject");
+    await page.getByText("Synthetic concurrent update blocked").waitFor();
+    await page.evaluate(()=>{window.__pauseTemplateReload=true;});
+    await page.getByRole("button",{name:"Reload latest"}).click();
+    await page.getByRole("alertdialog",{name:"Discard edits and reload latest templates?"})
+      .getByRole("button",{name:"Discard edits & reload latest"}).click();
+    const busy=page.getByRole("alertdialog",{name:"Reloading latest checklist templates…"});
+    await busy.waitFor();
+    await page.waitForFunction(()=>window.__pendingTemplateReads.length===1);
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Tab");
+    assert.equal(await busy.isVisible(),true,"Pending modal remains visible");
+    assert.equal(await page.evaluate(()=>
+      document.activeElement?.closest('[role="alertdialog"]')?.textContent?.includes("Reloading latest checklist templates")),true);
+    await page.evaluate(()=>window.__pendingTemplateReads.shift().reject());
+    await busy.waitFor({state:"hidden"});
+    await page.getByText("Synthetic delayed reload failed").waitFor();
+    await page.getByRole("button",{name:"Edit checklist item Preserve draft after delayed failure"}).waitFor();
+    await page.getByRole("button",{name:"Save product checklist"}).waitFor();
+    await page.waitForFunction(()=>document.activeElement?.textContent==="Reload latest");
+    assert.equal(await page.locator('[inert]').count(),0);
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
    });
   await run(label+": failed product save releases lock and safely allows retry",
    origin,viewport,async page=>{
