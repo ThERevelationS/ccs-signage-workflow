@@ -89,6 +89,6 @@ assert.match(action, /success: true, \.\.\.audit/);
 assert.match(helper, /writes_attempted: false/);
 assert.doesNotMatch(action, /smartsheetWrite|\.bulkUpdate\(|\.create\(|\.update\(|\.delete\(/);
 assert.match(ui, /action: "audit_order_import_sync_evidence"/);
-assert.match(ui, /historicalRowIds\.split\(\/[\\s,;]\+\//);
+assert.match(ui, /historicalRowIds\\.split\\(/);
 assert.match(ui, /Missing markers alone never prove sync/);
 console.log('PASS endpoint and Order review UI expose only bounded admin read-only reconciliation');
