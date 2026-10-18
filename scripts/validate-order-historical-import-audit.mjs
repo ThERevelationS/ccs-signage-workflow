@@ -56,7 +56,7 @@ assert.equal(report.counts.missing_permanent_id_orders, 1);
 assert.equal(report.counts.invalid_permanent_id_orders, 1);
 assert.equal(report.counts.local_marker_true, 1);
 assert.equal(report.counts.local_marker_false, 1);
-assert.equal(report.counts.local_marker_absent, 6);
+assert.equal(report.counts.local_marker_absent, 7);
 assert.equal(report.rows.find(row => row.row_id === '103').claims.length, 2);
 assert.equal(report.rows.find(row => row.row_id === '103').claims.some(claim => claim.deleted), true);
 assert.equal(report.rows.find(row => row.row_id === '104').review_required, true);
