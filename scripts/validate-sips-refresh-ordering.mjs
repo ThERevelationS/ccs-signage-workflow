@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { verifySalesSaveAcknowledgment } from '../base44/shared/salesSaveAcknowledgmentGuard.mjs';
 
 // Exercise the actual SIPS board load, quick edit, save wrapper and shared
 // conditional persistence with deferred synthetic reads. No app API calls.
@@ -95,6 +96,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
   const ctx = {
     base44: { functions, entities: { WorkOrder: entity, GlobalSettings: globalSettings } },
     localStorage: { getItem: () => '' },
+    verifySalesSaveAcknowledgment,
     WorkOrder: entity,
     AuthorizedEmail: authorizedEmail,
     boardLoadSequenceRef: { current: 0 },
