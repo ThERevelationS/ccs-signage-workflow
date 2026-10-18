@@ -74,9 +74,8 @@ export function buildOrderHistoricalImportEvidence({
   const invalidPermanentIdOrders = [];
   const claimsByRowId = new Map();
   for (const order of orders) {
-    if (!order || order.deleted === true) {
-      // Deleted rows still participate in identity ownership and marker counts.
-    }
+    if (!order) continue;
+    // Deleted rows still participate in identity ownership and marker counts.
     localMarkerCounts[markerState(order)]++;
     const orderSheet = clean(order?.smartsheet_sheet_id);
     const rowText = clean(order?.smartsheet_row_id);
