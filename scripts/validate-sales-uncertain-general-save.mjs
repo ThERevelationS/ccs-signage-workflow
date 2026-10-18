@@ -48,6 +48,7 @@ async function simulate({mode,observed=latest,blockedInitially=false}={}){
  let writes=0,reads=0,syncs=0,warning="",timer=null;
  let display={...base,...patch},selection={...base,...patch};
  const blockedFollowUpSavesRef={current:new Set(blockedInitially?[id]:[])};
+ const reloadingSalesQuickEditsRef={current:false};
  const pendingChangesRef={current:{[id]:{...patch}}};
  const pendingBaselinesRef={current:{[id]:{lead_source:base.lead_source}}};
  const pendingHistoryFieldsRef={current:{[id]:new Set(["lead_source"])}};
@@ -59,7 +60,7 @@ async function simulate({mode,observed=latest,blockedInitially=false}={}){
   orderId:id,currentWo:{...base},Object,JSON,Set,Map,Promise,Error,
   pendingChangesRef,pendingBaselinesRef,pendingHistoryFieldsRef,pendingSalesGuardsRef,
   pendingFollowUpGuardsRef,pendingRecordScopesRef,pendingSameTaskRepairRef,
-  failedSameTaskRepairRef,blockedFollowUpSavesRef,debounceTimers,
+  failedSameTaskRepairRef,blockedFollowUpSavesRef,reloadingSalesQuickEditsRef,debounceTimers,
   setTimeout:fn=>{timer=fn;return 1;},clearTimeout:()=>{},
   setQuickEditError:value=>{warning=value;},
   replaceWorkOrderFieldsIfUnchanged:async()=>{writes++;
