@@ -702,7 +702,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
   };
 
-  const loadWorkOrders = async (showLoading = true, scope = recordScope) => {
+  const loadWorkOrders = async (showLoading = true, scope = recordScope, requiredIds = []) => {
     const requestId = ++loadRequestRef.current;
     const scopeAtStart = scope;
     if (showLoading) setIsLoading(true);
@@ -764,7 +764,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       setArchiveHasMore(hasMore);
       setWorkOrders((current) => mergeLoadedRows(rows, scopeAtStart, current));
       setUsers(usersData);
-      return true;
+      // During explicit uncertain-save recovery a scoped page is only
+      // sufficient if it actually includes each affected WorkOrder. A row
+      // moved to another workspace must not be declared reviewed here.
+      return requiredIds.every((id) => rows.some((row) => row?.id === id))
+        ? true : "missing_required";
     } catch (error) {
       if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
       return false;
@@ -1410,7 +1414,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     pendingHistoryFieldsRef.current = {};
     pendingRecordScopesRef.current = {};
     try {
-      const reloaded = await loadWorkOrders(false, reloadScope);
+      const reloaded = await loadWorkOrders(false, reloadScope, [...prior.blocked]);
       const sameView = activeRecordScopeRef.current === reloadScope &&
         liveViewSessionKeyRef.current === reloadViewKey;
       if (reloaded !== true || !sameView) {
@@ -1424,13 +1428,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         pendingSameTaskRepairRef.current = prior.repairs;
         failedSameTaskRepairRef.current = prior.repairFailures;
         resolvedReviewExitRef.current = prior.reviewExit;
-        if (sameView && liveEditPinsRef.current !== prior.pins) {
+        if (sameView && reloaded !== "missing_required" &&
+            liveEditPinsRef.current !== prior.pins) {
           liveEditPinsRef.current = prior.pins;
           setLiveEditPinVersion((version) => version + 1);
         }
-        setQuickEditError(sameView
-          ? "Reload latest could not be verified. Pending Sales edits and the save safety block are preserved; retry Reload latest when the connection is available."
-          : "The Sales workspace or filter changed during Reload latest. Unverified saves remain blocked; review the new view and use Reload latest again.");
+        setQuickEditError(!sameView
+          ? "The Sales workspace or filter changed during Reload latest. Unverified saves remain blocked; review the new view and use Reload latest again."
+          : reloaded === "missing_required"
+            ? "The WorkOrder with an uncertain save is no longer in the loaded Sales workspace. Its safety block remains; find it in Outcomes or All Records and review the current values before retrying."
+            : "Reload latest could not be verified. Pending Sales edits and the save safety block are preserved; retry Reload latest when the connection is available.");
       } else {
         setQuickEditError("");
       }
