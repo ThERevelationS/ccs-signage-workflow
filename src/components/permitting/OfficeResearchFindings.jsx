@@ -75,7 +75,7 @@ export default function OfficeResearchFindings({
     {!rows.length && <p className="text-sm">Office research has not been collected yet.</p>}
     {savedMessage && <p role="status" className="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-900">{savedMessage}</p>}
     <OfficeRoleOverview rows={rows} onInspect={inspect} onNavigate={onNavigate} />
-    <ElectricalResearchTasks rows={rows} research={research} onInspect={inspect} onPreviewWorkflow={onPreviewWorkflow} />
+    <ElectricalResearchTasks rows={rows} research={research} canEdit={canEdit} actor={actor} onSave={onSave} onInspect={inspect} onPreviewWorkflow={onPreviewWorkflow} />
     <OfficeResearchIdentityComparison research={research} onInspect={inspect} />
     {rows.map((row, index) => {
       const source = safeGovernmentOfficeSourceUrl(row.official_source_url);

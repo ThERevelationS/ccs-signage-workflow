@@ -1,3 +1,4 @@
+import { retainOfficeResearchResponseHistory } from '../../shared/officeResearchResponseHistory.mjs';
 import {validateSavedDiscoverySelection,discoverSelectedSavedDocument} from '../../shared/permittingSavedDocumentDiscovery.mjs';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
@@ -200,7 +201,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
 
     if (batchSettings.updateRequirements && (!batchSettings.skipManualData || !jurisdiction._manual_requirements)) {
-      if (researchData.office_research) updateData.office_research = normalizeOfficeResearch(researchData.office_research,{jurisdiction});
+      if (researchData.office_research) updateData.office_research = retainOfficeResearchResponseHistory(
+        normalizeOfficeResearch(researchData.office_research,{jurisdiction}), jurisdiction.office_research);
       // Always replace with new research data — don't fall back to old
       if (researchData.permit_requirements && Object.keys(researchData.permit_requirements).length > 0) {
         updateData.permit_requirements = researchData.permit_requirements;
