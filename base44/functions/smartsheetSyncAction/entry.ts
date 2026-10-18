@@ -62,6 +62,7 @@ import { buildOrderPullReadOnlyRowReport } from '../../shared/smartsheetOrderPul
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import { classifyOrderPermanentRowIdentity } from '../../shared/smartsheetOrderPermanentRowSafety.mjs';
 import { classifyOrderDeletedLinkTombstones } from '../../shared/smartsheetOrderDeletionSafety.mjs';
+import { buildOrderHistoricalImportEvidence, validateOrderImportAuditRowIds } from '../../shared/smartsheetOrderHistoricalImportAudit.mjs';
 import {
   buildCells,
   buildOrderPullSnapshot,
@@ -3192,7 +3193,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -4419,6 +4420,88 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         sample_is_complete_archive: false, summary,
         potential_five_digit_backfill_in_sample: cases.filter((entry: any) => !!entry.potential_number_to_fill).length,
         cases,
+      });
+    }
+
+    if (action === 'audit_order_import_sync_evidence') {
+      // Bounded admin-only reconciliation. This performs exact-row Smartsheet
+      // GETs and Base44 reads only; it never queues, repairs, links, or writes.
+      if (adminActor?.role !== 'admin' || !hasSessionToken) {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      if (!configured) {
+        return Response.json({ success: false, error: 'Smartsheet is not configured for a read-only Order audit.' }, { status: 503 });
+      }
+      let rowIds: string[];
+      try {
+        rowIds = validateOrderImportAuditRowIds(body?.row_ids);
+      } catch (error: any) {
+        return Response.json({ success: false, error: error?.message || 'Invalid Order audit row IDs.' }, { status: 400 });
+      }
+
+      const { config, duplicateCount } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const bindings = profile?.column_bindings || {};
+      const columnIds = numericIdList(Object.values(bindings), 100);
+      if (duplicateCount !== 1 || !/^\\d+$/.test(sheetId) || !columnIds.length) {
+        return Response.json({ success: false, error: 'The configured Order sheet or mapped columns could not be verified.' }, { status: 409 });
+      }
+
+      const allOrders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        sort: 'id',
+        label: 'Order historical import marker read-only audit',
+      });
+      const remoteRows: any[] = [];
+      for (const rowId of rowIds) {
+        // The row ID comes from a bounded, validated request and is always
+        // paired with the current configured sheet ID, never a visual index.
+        const response = await smartsheetGet(`/sheets/${sheetId}/rows/${rowId}`, token);
+        const remoteRow = normalizeSheetRows({ rows: [response.body] })[0] || null;
+        if (!remoteRow || String(remoteRow.id) !== rowId) {
+          return Response.json({ success: false,
+            error: `Smartsheet did not verify the requested permanent row ID ${rowId}. No classification was returned.` }, { status: 502 });
+        }
+        remoteRows.push({ ...remoteRow, remote_snapshot: buildOrderPullSnapshot(remoteRow, bindings) });
+      }
+
+      const readSignature = (rows: any[]) => rows.map(order => ({
+        id: String(order?.id || ''),
+        updated_date: String(order?.updated_date || ''),
+        deleted: order?.deleted === true,
+        sheet_id: String(order?.smartsheet_sheet_id || ''),
+        row_id: String(order?.smartsheet_row_id || ''),
+        pending: Object.prototype.hasOwnProperty.call(order || {}, 'smartsheet_pending_local_sync')
+          ? order.smartsheet_pending_local_sync : '__absent__',
+        last_synced_at: String(order?.smartsheet_last_synced_at || ''),
+        stored_snapshot: order?.smartsheet_sync_snapshot ?? null,
+        local_snapshot: buildSnapshot(order, bindings, 'orders'),
+      }));
+      const freshOrders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        sort: 'id',
+        label: 'Order historical import marker final read-only verification',
+      });
+      if (!sameStableValue(readSignature(allOrders), readSignature(freshOrders))) {
+        return Response.json({ success: false,
+          error: 'Order records changed while the remote rows were being read. Discard this result and retry the bounded audit.' }, { status: 409 });
+      }
+      const localSnapshots = Object.fromEntries(freshOrders.map(order => [
+        String(order?.id || ''), buildSnapshot(order, bindings, 'orders'),
+      ]));
+      const audit = buildOrderHistoricalImportEvidence({
+        orders: freshOrders,
+        rowIds,
+        remoteRows,
+        configuredSheetId: sheetId,
+        bindings,
+        localSnapshots,
+      });
+      return Response.json({
+        success: true, ...audit,
+        identity_strategy: 'configured_sheet_and_explicit_permanent_row_ids',
+        local_readback_verified: true,
       });
     }
 
