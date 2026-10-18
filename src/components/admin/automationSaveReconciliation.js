@@ -22,6 +22,21 @@ const comparable = (rule) => ({
 const sameFields = (left, right) =>
   JSON.stringify(normalize(comparable(left))) === JSON.stringify(normalize(comparable(right)));
 
+// A create response is a verified receipt only when the server explicitly
+// identifies a newly created, versioned rule with all attempted fields.
+// "recovered" and existing-name statuses are not proof that this request
+// created the rule: keep the local draft fenced for read-only review.
+export function classifyAutomationCreateReceipt(receipt, attempted) {
+  const status = String(receipt?.status || "").trim();
+  if (["existing", "recovered", "concurrent_duplicate_discarded"].includes(status)) {
+    return status;
+  }
+  if (status !== "created" || !receipt?.record?.id ||
+      !String(receipt.record.updated_date || "").trim() ||
+      !sameFields(receipt.record, attempted)) return "unverified";
+  return "created";
+}
+
 export function reviewUncertainAutomationSave({ kind, attempted, originalId, rows } = {}) {
   if (!Array.isArray(rows) || !attempted || !["create", "update"].includes(kind)) {
     return "unverified";
