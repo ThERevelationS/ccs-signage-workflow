@@ -13,6 +13,7 @@ const compiled = transformSync(source, { loader: 'jsx', jsx: 'automatic', format
 const require = createRequire(import.meta.url);
 const calls = [];
 const listeners = new Map();
+const dispatchedEvents = [];
 const storage = new Map();
 let authSession = {
   currentUser: { email: 'first@synthetic.invalid' },
@@ -21,7 +22,7 @@ let authSession = {
 const windowStub = {
   addEventListener(name, callback) { listeners.set(name, callback); },
   removeEventListener(name, callback) { if (listeners.get(name) === callback) listeners.delete(name); },
-  dispatchEvent(event) { listeners.get(event.type)?.(event); },
+  dispatchEvent(event) { dispatchedEvents.push(event); listeners.get(event.type)?.(event); },
 };
 const icon = () => React.createElement('svg');
 const module = { exports: {} };
@@ -255,6 +256,8 @@ await act(async () => {
 assert.equal(calls.length, 16, 'A mismatched action acknowledgement should trigger an authoritative signed-session refresh');
 assert.equal(calls[15].payload.action, 'status');
 assert.equal(calls[15].payload.target_email, 'second@synthetic.invalid');
+assert.equal(dispatchedEvents.at(-1).detail, null,
+  'A mismatched acknowledgement must broadcast only an invalidation signal, never the returned employee data');
 assert.equal(storage.get('ccs_timeclock_request:work_pause_resume:second@synthetic.invalid'), expectedResumeRequestId,
   'A mismatched successful acknowledgement must retain its exact request ID until authoritative status verifies the action');
 const guardedButton = renderer.root.findByType('button');
@@ -272,5 +275,41 @@ assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
 assert.equal(verifiedButton.props.disabled, false);
 assert.equal(storage.has('ccs_timeclock_request:work_pause_resume:second@synthetic.invalid'), false,
   'A signed-employee status response should clear the recovered Work Pause request ID');
+let pendingMismatchedStart;
+await act(async () => {
+  pendingMismatchedStart = renderer.root.findByType('button').props.onClick();
+});
+assert.equal(calls.length, 17);
+assert.equal(calls[16].payload.action, 'work_pause_start');
+const expectedStartRequestId = calls[16].payload.request_id;
+await act(async () => {
+  calls[16].resolve({ data: {
+    success: true, user: { email: 'first@synthetic.invalid' },
+    status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+    work_pause: { id: 'foreign-ack-pause' },
+  } });
+  await pendingMismatchedStart;
+});
+assert.equal(calls.length, 18);
+assert.equal(calls[17].payload.action, 'status');
+assert.equal(calls[17].payload.target_email, 'second@synthetic.invalid');
+assert.equal(storage.get('ccs_timeclock_request:work_pause_start:second@synthetic.invalid'), expectedStartRequestId,
+  'A mismatched start acknowledgement must retain the exact request ID while status is uncertain');
+assert.equal(dispatchedEvents.at(-1).detail, null);
+const guardedStartButton = renderer.root.findByType('button');
+assert.equal(guardedStartButton.props.disabled, true);
+assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
+assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Resume Work/,
+  'A mismatched start acknowledgement must not expose the foreign employee pause state');
+await act(async () => {
+  calls[17].reject(new Error('Synthetic authoritative status refresh failure'));
+  await Promise.resolve();
+});
+const failedRefreshButton = renderer.root.findByType('button');
+assert.equal(failedRefreshButton.props.disabled, true,
+  'A failed authoritative refresh must leave the Work Pause control guarded');
+assert.match(failedRefreshButton.props.title, /Synthetic authoritative status refresh failure/);
+assert.equal(storage.get('ccs_timeclock_request:work_pause_start:second@synthetic.invalid'), expectedStartRequestId,
+  'A failed authoritative refresh must leave the original request ID available for safe recovery');
 console.log('PASS mismatched Work Pause action acknowledgement stays isolated and retries safely');
 console.log('PASS 8/8 Global Work Pause session/event scenarios');
