@@ -1,5 +1,60 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — saved Sharonville electrical office identity comparisons (October 18, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. Ohio first. No statewide coverage counts advanced.
+Prior unit checkpoint: 6ad439acb1e867cc41f08afe, “Permitting Sharonville retained electrical role drafts saved and live readback verified”, Git a17f80f3913d674232f6a42fbb0f9145c3b3c5f1.
+
+Fresh starting HEAD a2be887cf36de3593f67e4f8d1f299c85ce0e164, clean. Sandbox access recovered. The previous live receipt exists at docs/official-evidence/ohio-sharonville-2026-10-07/electrical-reconciliation-live-2026-10-18.json; the already-successful live draft save was not repeated. The 13 interrupted electrical tests were re-established passing. Concurrent work through HEAD e618f81513e9a2d56ad5d75a2201a24d99316e30 was preserved, including AdminSettings/automation tests, SalesPipelineSpreadsheet, QuickClockSection/Time Clock validation, Fleet notes and Order Form duplicate-owner CSV/notes. Final source fingerprints checked that the three target UI/helper files retain exactly this implementation.
+
+Implemented:
+- OfficeResearchFindings now includes a separate saved electrical identity comparison view, with issuer and inspector cards, original role name, possible catalog reference, recorded identity status, reason for review, exact retained quote and physical PDF-page links.
+- References are manually selected exact saved catalog IDs, not automatic name/alias matches. The City issuer finding is compared to the unverified Community Development intake candidate without asserting the same office. The NIC finding references a legacy provider entry lacking canonical identity metadata; matching name/phone remain clues only.
+- Snapshot timestamps, catalog/source IDs, archive hash and physical-page text hash are available in collapsed details. Catalog references are explicitly recorded snapshots, not newly rechecked current records.
+- Inspect buttons expand and focus the corresponding current finding. All links/buttons meet 44px tap-target checks.
+- Staff editing preserves historical comparison evidence but marks only the changed finding as requiring reconciliation. Duplicate/reordered/mismatched position or profile evidence cannot appear current. Unsafe archive links are withheld; legacy research without comparisons remains compatible.
+- No new background API reads, source fetches, research calls, canonical office assignments, approvals or job writes.
+
+Live permitting-only change:
+Exact profile 6ac19f0e23bd8a65822f6d51 / Sharonville / OH / city.
+Version-guarded $set of office_research.identity_reconciliation only, from profile updated_date 2026-10-18T03:06:03.502000; response updated=1, has_more=false. Fresh readback updated_date 2026-10-18T04:09:02.663000 matched the comparison exactly. All prior office_research fields and all 15 documents were preserved. The entire permitOfficeCatalog setting, ID 69e14b004e01bf082f0f8c75 / version 2026-10-14T12:07:33.616000, compared exactly unchanged.
+
+Referenced catalog records:
+- Intake candidate office-candidate-3bec03c01bca831b10be20e83ee1fe0df109206adb02acec76b6613d352e8c9c, needs_verification.
+- NIC legacy entry 1776692992927-0.21800261198141846, no recorded government_office_id or canonical identity metadata.
+Neither is assigned to a locality or job. Current identity, delegation, service area, commercial-sign scope and exact-site applicability remain unverified.
+
+Source evidence unchanged:
+PermittingSourceDocument 6aced7f49bda8d3e61944a9d; profile document 19bc3643-d404-4bcf-8cde-92c91897fd21; committed segment 6acf6e3e1ae409cc63a3da41.
+Official URL https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026
+Archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9 / 11002258 bytes.
+Issuer quote physical page 8 (printed 6); inspector quote physical page 7 (printed 5). Residential administrative guidance only; no current commercial-sign responsibility inferred.
+
+Files:
+src/components/permitting/OfficeResearchFindings.jsx
+src/components/permitting/OfficeResearchIdentityComparison.jsx
+src/components/permitting/officeResearchIdentityComparison.mjs
+scripts/permitting-electrical-identity-comparison.test.mjs
+scripts/test-permitting-electrical-identity-browser.mjs
+docs/official-evidence/ohio-sharonville-2026-10-07/electrical-identity-comparison-fixture-2026-10-18.json
+docs/permitting-electrical-identity-browser-2026-10-18.json
+docs/permitting-electrical-identity-validation-2026-10-18.json
+
+Verification:
+19 focused synthetic tests; targeted ESLint; one final npm run build; git diff --check passed. Actual OfficeResearchFindings component/browser acceptance with production CSS at 320/390/1280 passed: separate roles/references, exact physical-page URLs, 44px targets, keyboard expansion/focus, staff-edit staleness and unchanged history, legacy/unsafe-link/profile-mismatch cases, no overflow, external requests or production writes. 390px expanded layout visually inspected. Browser tests are synthetic; authenticated employee acceptance and remote/native PDF loading remain pending. No final-source product changes after the passing build/browser run. Existing browser-database warnings only.
+
+Live controls observed after Eastern midnight:
+enabled true; interval 15 minutes; max_dispatch_per_cycle 5; max_in_flight 20; daily_dispatch_limit 40; retry_limit 3.
+State last_cycle_at 2026-10-18T04:00:01.496Z / daily_day_key 2026-10-18 / dispatched_today 5; last_result in_flight_before 0. These are observations, not current guarantees. Unrelated scheduled collection reported an HTTP 404 archive gap; it was not changed or retried here. No dispatcher settings, queue, source, archive or research activity was initiated by this chunk. Keep all gates and adjustable controls.
+
+Deployment: no frontend publication or backend/entity/schema/RLS/integration change. Only the exact permitting-only nested draft field above changed. No clients/jobs/shared-data/shared-file writes; shared permitting catalog unchanged. No known unfinished live write.
+
+Next one chunk: inspect fresh HEAD/status and current evidence, then collect/reconcile current Sharonville commercial-sign electrical issuer/inspection service-area/delegation evidence using the existing jurisdictionResearchAgent/refreshJurisdiction pathways only where needed. Verify fresh queue/credit controls; no manual bypass, no more than five canonical jurisdictions. Prefer Sharonville as the single bounded locality. Retain official URLs and exact evidence, preserve unknowns and all manual/archived documents. Do not equate the intake department with the issuer or assign legacy NIC identity without exact evidence. No authority approvals, job/client/shared-data writes or frontend publication. If current evidence is unavailable, expose the unresolved gap and advance another necessary prototype function rather than repeating historical proof refinements.
+
+Remaining roadmap: bounded source collection/archiving/text acceptance; canonical office/parent-authority reconciliation; Ohio then Kentucky coverage; source monitoring; exact matching/maps/action progress; evidence-based workflow features; explicit safe job integration; authenticated rollout/accessibility/mobile/concurrency. Phase/task counts do not advance from these draft comparisons.
+
+This top section supersedes historical next-chunk text below. The current named checkpoint is “Permitting saved electrical office identity comparisons and live snapshot verification”. Use its actual create_checkpoint response for ID/Git.
+
 ## Latest unit — Sharonville retained electrical office reconciliation (October 18 UTC / October 17 Eastern)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
