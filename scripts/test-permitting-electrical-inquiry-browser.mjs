@@ -4,7 +4,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {createServer} from 'vite';
 import react from '@vitejs/plugin-react';
-const {chromium}=await import('/tmp/sips-browser-check/node_modules/playwright/index.mjs');
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || '/tmp/permitting-inquiry-browser/node_modules/playwright/index.mjs');
 const root=process.cwd(),scratch=await mkdtemp(path.join(tmpdir(),'electrical-inquiry-'));
 let vite,browser;const checks=[];
 try {
