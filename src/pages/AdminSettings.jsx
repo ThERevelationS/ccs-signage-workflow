@@ -539,6 +539,9 @@ export default function AdminSettings() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [automationSaveError, setAutomationSaveError] = useState("");
   const [automationSaving, setAutomationSaving] = useState(false);
+  const automationSaveInFlight = useRef(false);
+  const automationEditorBaseline = useRef(null);
+  const [automationDraftParked, setAutomationDraftParked] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -559,6 +562,32 @@ export default function AdminSettings() {
     setAdminCapability(capability);
     setIsUnlocked(true);
   };
+
+  // Keep unsaved Automation form state above individual Admin panel error
+  // boundaries. Drafts stay in this mounted session only, never localStorage,
+  // and a retry or resume never invokes a write.
+  const automationDraftChanged = () => automationEditorBaseline.current !== null &&
+    automationEditorBaseline.current !== JSON.stringify({ formData, triggers, actions });
+  const closeAutomationEditor = (open) => {
+    if (open) { setIsDialogOpen(true); return; }
+    if (automationSaveInFlight.current) return;
+    setAutomationDraftParked(automationDraftChanged());
+    setIsDialogOpen(false);
+  };
+  const discardAutomationDraft = () => {
+    if (automationSaveInFlight.current) return;
+    automationEditorBaseline.current = null;
+    setAutomationDraftParked(false);
+    setIsDialogOpen(false);
+    setAutomationSaveError("");
+  };
+  useEffect(() => {
+    // An Admin session/identity change may not retain draft authority.
+    automationEditorBaseline.current = null;
+    automationSaveInFlight.current = false;
+    setAutomationDraftParked(false);
+    setIsDialogOpen(false);
+  }, [sessionToken, navigationKey, isUnlocked]);
 
   const loadEmailGroups = async () => {
     const requestSequence = ++emailGroupsLoadSequence.current;
@@ -662,32 +691,52 @@ export default function AdminSettings() {
   }, []);
 
   const openNewRule = async () => {
+    if (automationSaveInFlight.current) return;
+    if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
     setAutomationSaveError("");
     if (!(await loadEmailGroups())) return;
     setEditingRule(null);
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
-    setFormData({ name: "", enabled: true, priority: 0 });
+    const nextForm = { name: "", enabled: true, priority: 0 };
+    setFormData(nextForm);
+    automationEditorBaseline.current = JSON.stringify({
+      formData: nextForm,
+      triggers: [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
+      actions: [{ action_type: "", action_config: {} }]
+    });
+    setAutomationDraftParked(false);
     setIsDialogOpen(true);
   };
 
   const openEditRule = async (rule) => {
+    if (automationSaveInFlight.current) return;
+    if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
     setAutomationSaveError("");
     if (!(await loadEmailGroups())) return;
     setEditingRule(rule);
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
-    setFormData({
+    const nextForm = {
       name: rule.name || "",
       enabled: rule.enabled !== false,
       priority: rule.priority || 0
+    };
+    setFormData(nextForm);
+    automationEditorBaseline.current = JSON.stringify({
+      formData: nextForm,
+      triggers: rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
+      actions: rule.actions || [{ action_type: "", action_config: {} }]
     });
+    setAutomationDraftParked(false);
     setIsDialogOpen(true);
   };
 
   const duplicateRule = async (rule) => {
+    if (automationSaveInFlight.current) return;
+    if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
     setAutomationSaveError("");
     if (!(await loadEmailGroups())) return;
@@ -698,16 +747,26 @@ export default function AdminSettings() {
     let copyName = `${rule.name} (Copy)`;
     let suffix = 2;
     while (names.has(copyName.toLowerCase())) copyName = `${rule.name} (Copy ${suffix++})`;
-    setFormData({
+    const nextForm = {
       name: copyName,
       enabled: true,
       priority: rule.priority || 0
+    };
+    setFormData(nextForm);
+    automationEditorBaseline.current = JSON.stringify({
+      formData: nextForm,
+      triggers: rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
+      actions: rule.actions || [{ action_type: "", action_config: {} }]
     });
+    setAutomationDraftParked(false);
     setIsDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (automationSaving || emailGroupsLoading || emailGroupsLoadError) return;
+    if (automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
+        emailGroupsLoadError || !formData.name?.trim() ||
+        !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
+    automationSaveInFlight.current = true;
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
@@ -738,12 +797,15 @@ export default function AdminSettings() {
           throw new Error(`An automation named "${saveData.name}" already exists. The existing rule was kept instead of creating a duplicate.`);
         }
       }
+      automationEditorBaseline.current = null;
+      setAutomationDraftParked(false);
       setIsDialogOpen(false);
       await loadAutomations();
     } catch (error) {
       console.error("Automation save blocked:", error);
       setAutomationSaveError(error?.message || "This automation changed in another session. Reload before retrying.");
     } finally {
+      automationSaveInFlight.current = false;
       setAutomationSaving(false);
     }
   };
@@ -1314,6 +1376,22 @@ export default function AdminSettings() {
           )}
 
           <AdminPanelContent value="automations">
+            {automationDraftParked && !isDialogOpen && (
+              <div role="status" aria-label="Unsaved Automation draft" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                <p className="font-semibold">Unsaved Automation draft is still here</p>
+                <p className="mt-1">Resume editing or discard this draft. Nothing was saved or retried automatically.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => { setIsDialogOpen(true); setAutomationDraftParked(false); }}
+                    disabled={automationSaveInFlight.current} className="min-h-10 border-amber-500 bg-white">
+                    Resume Automation draft
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={discardAutomationDraft}
+                    disabled={automationSaveInFlight.current} className="min-h-10 border-amber-500 bg-white">
+                    Discard Automation draft
+                  </Button>
+                </div>
+              </div>
+            )}
             {/* Email Groups Section - moved under Automations */}
             <div className="mb-8">
               <GmailConnector sessionToken={sessionToken} />
@@ -1493,7 +1571,7 @@ export default function AdminSettings() {
         </Tabs>
 
         {/* Create/Edit Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={closeAutomationEditor}>
           <DialogContent className="clay-card border-none max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">
@@ -1774,7 +1852,7 @@ export default function AdminSettings() {
 
               {/* Save */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button variant="outline" disabled={automationSaving} onClick={discardAutomationDraft}>Cancel</Button>
                 <Button onClick={handleSave} disabled={automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
