@@ -162,7 +162,6 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         : data;
       if (mountedRef.current) setStatusRecord({ scope: scopeInstanceKey, data: confirmedStatus });
       signalPauseChanged(confirmedStatus);
-      if (mountedRef.current && scopeRef.current === scopeInstanceKey) void loadStatus();
     } catch (err) {
       const responseStatus = Number(err?.response?.status || 0);
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
