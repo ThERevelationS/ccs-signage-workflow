@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { validateOptionalFleetUnitCost } from './requestValidation.ts';
 
 const nowIso = () => new Date().toISOString();
 const num = (value: unknown, fallback = 0) => {
@@ -178,6 +179,10 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Fleet request create identity is missing or invalid. Reopen the New Request dialog and try again.' }, { status: 409 });
       }
       const requestedPatch = requestPatch(body?.request || body);
+      const requestedCost = validateOptionalFleetUnitCost(requestedPatch.unit_cost);
+      if (!requestedCost.valid) return Response.json({ error: 'Fleet request unit cost must be a finite non-negative amount.' }, { status: 400 });
+      if (requestedCost.provided) requestedPatch.unit_cost = requestedCost.value;
+      else delete requestedPatch.unit_cost;
       if (!['part', 'fluid'].includes(String(requestedPatch.item_type || ''))) return Response.json({ error: 'Request type must be part or fluid.' }, { status: 400 });
       const linked = await applyLinkedInventoryIdentity(requestedPatch);
       if (linked.error) return linked.error;
@@ -266,6 +271,10 @@ Deno.serve(async (req) => {
       if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before editing it.' }, { status: 409 });
       if (existing.status !== 'pending') return Response.json({ error: 'Only pending Fleet requests can be edited.' }, { status: 409 });
       const requestedPatch = requestPatch(body?.request || body);
+      const requestedCost = validateOptionalFleetUnitCost(requestedPatch.unit_cost);
+      if (!requestedCost.valid) return Response.json({ error: 'Fleet request unit cost must be a finite non-negative amount.' }, { status: 400 });
+      if (requestedCost.provided) requestedPatch.unit_cost = requestedCost.value;
+      else delete requestedPatch.unit_cost;
       if (existing.inventory_item_id && requestedPatch.inventory_item_id && requestedPatch.inventory_item_id !== existing.inventory_item_id) {
         return Response.json({ error: 'A linked Fleet inventory request cannot be reassigned to a different inventory item.' }, { status: 409 });
       }
@@ -314,6 +323,8 @@ Deno.serve(async (req) => {
       if (!isAdmin) return Response.json({ error: 'Only a CCS admin can mark Fleet requests as ordered.' }, { status: 403 });
       if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before changing order details.' }, { status: 409 });
       if (!['pending', 'ordered'].includes(existing.status)) return Response.json({ error: 'Only pending or ordered requests can have order details updated.' }, { status: 409 });
+      const requestedCost = validateOptionalFleetUnitCost(body?.unit_cost);
+      if (!requestedCost.valid) return Response.json({ error: 'Fleet request unit cost must be a finite non-negative amount.' }, { status: 400 });
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
       if (!expectedUpdatedAt) return Response.json({ error: 'Fleet request version is missing. Reload before changing order details.' }, { status: 409 });
       const updated = await updateFleetRecordIfCurrent({
@@ -323,7 +334,7 @@ Deno.serve(async (req) => {
         patch: {
           status: 'ordered',
           estimated_delivery_date: body?.estimated_delivery_date || existing.estimated_delivery_date || null,
-          unit_cost: body?.unit_cost == null || body?.unit_cost === '' ? existing.unit_cost : num(body.unit_cost),
+          unit_cost: requestedCost.provided ? requestedCost.value : existing.unit_cost,
         },
         label: 'Fleet request',
       });
@@ -359,6 +370,8 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'This request is marked received without an idempotency receipt. Inventory was not changed; review it manually.' }, { status: 409 });
       }
       if (existing.status !== 'ordered') return Response.json({ error: 'Mark the Fleet request as ordered before receiving it.' }, { status: 409 });
+      const storedCost = validateOptionalFleetUnitCost(existing.unit_cost);
+      if (!storedCost.valid) return Response.json({ error: 'This Fleet request has an invalid stored unit cost. Review the request before receiving it into Fleet inventory.' }, { status: 409 });
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
       const key = `fleetrequest:${id}:receive`;
       const existingReceiveLock = String(existing.receipt_key || '') === key;
