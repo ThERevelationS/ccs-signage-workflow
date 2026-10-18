@@ -549,6 +549,7 @@ export default function AdminSettings() {
   const [automationReviewStatus, setAutomationReviewStatus] = useState(null);
   const [automationReviewLoading, setAutomationReviewLoading] = useState(false);
   const automationReviewOwner = useRef(0);
+  const automationReviewInFlight = useRef(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -592,6 +593,7 @@ export default function AdminSettings() {
     // An Admin session/identity change may not retain draft authority.
     automationSessionEpoch.current += 1;
     automationReviewOwner.current += 1;
+    automationReviewInFlight.current = false;
     automationUncertainRef.current = null;
     setAutomationUncertain(null);
     setAutomationReviewStatus(null);
@@ -844,6 +846,7 @@ export default function AdminSettings() {
         };
         automationUncertainRef.current = attempt;
         automationReviewOwner.current += 1;
+        automationReviewInFlight.current = false;
         setAutomationUncertain(attempt);
         setAutomationReviewStatus(null);
         setAutomationSaveError("");
@@ -857,6 +860,87 @@ export default function AdminSettings() {
       }
     }
   };
+
+  const verifyUncertainAutomationSave = async () => {
+    const pending = automationUncertainRef.current;
+    if (!pending || automationReviewInFlight.current || automationSaveInFlight.current) return;
+    automationReviewInFlight.current = true;
+    const ownerEpoch = automationSessionEpoch.current;
+    const reviewId = ++automationReviewOwner.current;
+    setAutomationReviewLoading(true);
+    setAutomationReviewStatus(null);
+    try {
+      // Read complete entity state only, without any mutation.
+      const rows = await loadAllEntityRows({
+        entity: AutomationRule, sort: "-created_date",
+        label: "Admin Settings uncertain Automation verification",
+      });
+      if (ownerEpoch !== automationSessionEpoch.current ||
+          reviewId !== automationReviewOwner.current ||
+          automationUncertainRef.current !== pending) return;
+      setAutomationReviewStatus(reviewUncertainAutomationSave({ ...pending, rows }));
+    } catch {
+      if (ownerEpoch === automationSessionEpoch.current &&
+          reviewId === automationReviewOwner.current &&
+          automationUncertainRef.current === pending) setAutomationReviewStatus("read_failed");
+    } finally {
+      if (ownerEpoch === automationSessionEpoch.current &&
+          reviewId === automationReviewOwner.current) {
+        automationReviewInFlight.current = false;
+        setAutomationReviewLoading(false);
+      }
+    }
+  };
+  const abandonUncertainAutomationAttempt = () => {
+    // Explicit acknowledgement, never a retry or server-side rollback.
+    if (automationSaveInFlight.current || automationReviewInFlight.current ||
+        !automationUncertainRef.current ||
+        !["matching", "different", "not_found", "ambiguous"].includes(automationReviewStatus)) return;
+    automationReviewOwner.current += 1;
+    automationUncertainRef.current = null;
+    setAutomationUncertain(null);
+    setAutomationReviewStatus(null);
+    automationEditorBaseline.current = null;
+    setAutomationDraftParked(false);
+    setIsDialogOpen(false);
+    setEditingRule(null);
+    setAutomationSaveError("");
+  };
+  const uncertainAutomationReview = automationUncertain ? (
+    <div role="alert" aria-label="Automation save outcome requires review"
+      className="mb-4 rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950">
+      <p className="font-semibold">Automation save result is uncertain</p>
+      <p className="mt-1">The request might have succeeded. Your draft remains here, but saving it again is blocked. Checking status reads records only.</p>
+      {automationReviewStatus && (
+        <p className="mt-2" role="status">
+          {automationReviewStatus === "matching"
+            ? "A current rule matches the attempted values. This does not prove which request wrote it; do not resubmit."
+            : automationReviewStatus === "read_failed" || automationReviewStatus === "unverified"
+              ? "The rule list could not be verified. No new write is allowed."
+              : automationReviewStatus === "not_found"
+                ? "No matching rule was found. A delayed write is still possible; do not resubmit this attempt."
+                : automationReviewStatus === "ambiguous"
+                  ? "Multiple possible matches exist. No new write is allowed."
+                  : "A rule exists but its values differ from the attempted save. Review the latest record before making changes."}
+        </p>
+      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline"
+          disabled={automationReviewLoading || automationSaving}
+          onClick={() => { void verifyUncertainAutomationSave(); }}>
+          {automationReviewLoading ? "Checking rules..." : "Verify save status (read-only)"}
+        </Button>
+        {["matching", "different", "not_found", "ambiguous"].includes(automationReviewStatus) && (
+          <Button type="button" size="sm" variant="outline"
+            disabled={automationReviewLoading || automationSaving}
+            onClick={abandonUncertainAutomationAttempt}>
+            Acknowledge and discard this draft
+          </Button>
+        )}
+      </div>
+      <p className="mt-2 text-xs">Discarding ends this local draft, not a possibly completed server operation. A new save requires a separate action.</p>
+    </div>
+  ) : null;
 
   const handleDelete = async (rule) => {
     if (!rule?.id) return;
