@@ -86,6 +86,10 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [category, setCategory] = useState("base44_unlinked");
+  const [historicalRowIds, setHistoricalRowIds] = useState("");
+  const [historicalReport, setHistoricalReport] = useState(null);
+  const [historicalError, setHistoricalError] = useState("");
+  const [historicalLoading, setHistoricalLoading] = useState(false);
   const requestRef = useRef(0);
   const activeRef = useRef(null);
 
@@ -127,6 +131,38 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
     }
   }, [sessionToken]);
 
+  const auditHistoricalImportRows = useCallback(async () => {
+    if (historicalLoading) return;
+    setHistoricalError("");
+    setHistoricalReport(null);
+    const rowIds = historicalRowIds.split(/[\\s,;]+/).map(value => value.trim()).filter(Boolean);
+    if (rowIds.length < 1 || rowIds.length > 25 || rowIds.some(value => !/^\\d+$/.test(value)) ||
+        new Set(rowIds).size !== rowIds.length) {
+      setHistoricalError("Enter 1–25 unique positive numeric Smartsheet row IDs.");
+      return;
+    }
+    setHistoricalLoading(true);
+    try {
+      if (!sessionToken) throw new Error("An active administrator session is required.");
+      const response = await base44.functions.invoke("smartsheetSyncAction", {
+        action: "audit_order_import_sync_evidence",
+        session_token: sessionToken,
+        row_ids: rowIds,
+      });
+      const data = response?.data || response;
+      if (!data?.success || data.read_only !== true || data.writes_attempted !== false ||
+          data.local_readback_verified !== true || data.rows?.length !== rowIds.length) {
+        throw new Error(data?.error || "The historical import evidence check could not be verified.");
+      }
+      setHistoricalReport(data);
+    } catch (reason) {
+      setHistoricalError(reason?.response?.data?.error || reason?.data?.error || reason?.message ||
+        "The historical import evidence check failed.");
+    } finally {
+      setHistoricalLoading(false);
+    }
+  }, [historicalLoading, historicalRowIds, sessionToken]);
+
   useEffect(() => {
     if (open) load();
     else {
@@ -134,6 +170,9 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
       setLoading(false);
       setError("");
       setReport(null);
+      setHistoricalReport(null);
+      setHistoricalError("");
+      setHistoricalLoading(false);
     }
   }, [open, load]);
 
@@ -177,6 +216,69 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
             <AlertTriangle className="h-5 w-5 shrink-0" />
             <span>{error} No partial results are displayed and nothing was changed.</span>
           </div>}
+
+          <section className="space-y-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+            <div>
+              <h3 className="text-sm font-semibold text-amber-950">Historical import sync evidence</h3>
+              <p className="mt-1 text-xs text-amber-900">
+                Compare up to 25 explicit permanent row IDs. This checks active and deleted Base44 claims plus mapped remote values. Missing markers alone never prove sync.
+              </p>
+            </div>
+            <label htmlFor="order-import-audit-row-ids" className="block text-xs font-medium text-gray-700">
+              Smartsheet row IDs
+            </label>
+            <textarea
+              id="order-import-audit-row-ids"
+              className="min-h-20 w-full rounded-lg border bg-white p-2 text-xs"
+              placeholder="Paste 1–25 numeric row IDs, separated by spaces, commas, or lines"
+              value={historicalRowIds}
+              onChange={event => setHistoricalRowIds(event.target.value)}
+              disabled={historicalLoading}
+            />
+            <Button type="button" size="sm" variant="outline" onClick={auditHistoricalImportRows}
+              disabled={historicalLoading || !sessionToken}>
+              {historicalLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+              {historicalLoading ? "Comparing rows..." : "Run read-only evidence check"}
+            </Button>
+            {historicalError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+              {historicalError} Nothing was changed.
+            </p>}
+            {historicalReport && <>
+              <p className="text-xs text-gray-700">
+                Marker states across {number((historicalReport.counts?.local_marker_true || 0) + (historicalReport.counts?.local_marker_false || 0) +
+                  (historicalReport.counts?.local_marker_absent || 0) + (historicalReport.counts?.local_marker_other || 0))} Orders:
+                {" "}{number(historicalReport.counts?.local_marker_true)} queued, {number(historicalReport.counts?.local_marker_false)} false,
+                {" "}{number(historicalReport.counts?.local_marker_absent)} absent. Missing permanent IDs:
+                {" "}{number(historicalReport.counts?.missing_permanent_id_orders)}.
+              </p>
+              <div className="space-y-2">
+                {historicalReport.rows.map(row => <div key={row.row_id} className="rounded-lg border bg-white p-2 text-xs">
+                  <p className="font-semibold break-all">Row {row.row_id}: {row.classification.replaceAll("_", " ")}</p>
+                  {row.remote_modified_at && <p className="text-gray-500">Remote modified: {row.remote_modified_at}</p>}
+                  {row.claims.length === 0
+                    ? <p className="text-gray-600">No Base44 Order claims this permanent row ID.</p>
+                    : row.claims.map(claim => <div key={claim.order_id} className="mt-1 border-t pt-1">
+                      <p className="break-all">Order {claim.order_id} · {claim.deleted ? "deleted" : "active"} · marker {claim.marker_state}</p>
+                      <p>Current local vs remote: {claim.local_matches_remote ? "matches" : "differs"} · Saved snapshot vs remote: {claim.saved_snapshot_matches_remote ? "matches" : claim.snapshot_available ? "differs" : "unavailable"}</p>
+                      {[...new Set([
+                        ...claim.local_mismatched_fields.flatMap(field => field.fields),
+                        ...claim.saved_snapshot_mismatched_fields.flatMap(field => field.fields),
+                      ])].length > 0 && <p className="text-amber-800">
+                        Review fields: {[...new Set([
+                          ...claim.local_mismatched_fields.flatMap(field => field.fields),
+                          ...claim.saved_snapshot_mismatched_fields.flatMap(field => field.fields),
+                        ])].join(", ")}
+                      </p>}
+                    </div>)}
+                  <p className="mt-1 font-medium text-amber-900">
+                    {row.classification === "currently_aligned_with_remote"
+                      ? "Current alignment only; historical import success is not proven."
+                      : "Review required; no automatic repair or retry was attempted."}
+                  </p>
+                </div>)}
+              </div>
+            </>}
+          </section>
 
           {report && <>
             <div className={report.link_health?.clean
