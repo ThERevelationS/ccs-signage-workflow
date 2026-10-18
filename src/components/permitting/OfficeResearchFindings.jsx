@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import OfficeRoleOverview from "./OfficeRoleOverview";
 import ElectricalResearchTasks from "./ElectricalResearchTasks";
+import OfficeResearchIdentityComparison from "./OfficeResearchIdentityComparison";
 import { officeResearchChecklist, officeResearchFieldLabels } from "../../../base44/shared/permittingOfficeResearch.mjs";
 import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import { updateOfficeResearchDraft } from "./officeResearchDraftEditing.mjs";
@@ -75,6 +76,7 @@ export default function OfficeResearchFindings({
     {savedMessage && <p role="status" className="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-900">{savedMessage}</p>}
     <OfficeRoleOverview rows={rows} onInspect={inspect} onNavigate={onNavigate} />
     <ElectricalResearchTasks rows={rows} onInspect={inspect} onPreviewWorkflow={onPreviewWorkflow} />
+    <OfficeResearchIdentityComparison research={research} onInspect={inspect} />
     {rows.map((row, index) => {
       const source = safeGovernmentOfficeSourceUrl(row.official_source_url);
       const definition = officeResearchChecklist.roles.find(role => role.key === row.role);
