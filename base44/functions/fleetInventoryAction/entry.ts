@@ -480,6 +480,7 @@ Deno.serve(async (req) => {
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
       const wasLow = inventoryIsLow(itemType, existing);
       const beforeQuantity = itemType === 'part' ? num(existing.quantity_on_hand, NaN) : num(existing.quantity, NaN);
+      // Never substitute the freshly-read version; edits must prove the client snapshot is current.
       const expectedUpdatedAt = requireFleetInventoryExpectedVersion(body?.expected_updated_date);
       if (!expectedUpdatedAt) return Response.json({ error: 'Fleet inventory record version is missing. Reload this item before saving.' }, { status: 409 });
       const result = await Entity.updateMany(
