@@ -1729,7 +1729,7 @@ export default function AdminSettings() {
             </DialogHeader>
 
             {uncertainAutomationReview}
-            <div className="space-y-6 mt-4">
+            <fieldset disabled={automationSaving} className="min-w-0 space-y-6 mt-4">
               {/* Name & Priority */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -2009,7 +2009,7 @@ export default function AdminSettings() {
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
               </div>
-            </div>
+            </fieldset>
           </DialogContent>
         </Dialog>
 
