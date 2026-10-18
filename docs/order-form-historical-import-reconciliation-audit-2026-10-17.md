@@ -23,7 +23,7 @@ Scope: read-only Order Form audit for CCS Signage Workflow (Base44 app `68dfcc5e
 
 ## Stable-ID pagination correction and paired-row review (2026-10-18)
 
-The first pass paginated by non-unique `created_date`, which caused repeated records at page boundaries and inflated the reported duplicate count. That pass reported 249 groups/499 rows and 30 active-active groups; those counts are superseded. The corrected two-pass read sorted by unique Base44 `id`, had no duplicate Base44 IDs across pages, and agreed on all 1,902 IDs and selected sync evidence.
+This correction was performed from fresh clean Git HEAD `9a31957bcb866e03d4e54ba4adea88f6dd828332`. The first pass paginated by non-unique `created_date`, which caused repeated records at page boundaries and inflated the reported duplicate count. That pass reported 249 groups/499 rows and 30 active-active groups; those counts are superseded. The corrected two-pass read sorted by unique Base44 `id`, had no duplicate Base44 IDs across pages, and agreed on all 1,902 IDs and selected sync evidence.
 
 The corrected 220 active/deleted pairs have these local differences across the pair: `requestor_email` differs in 114; `date_needed` in 5; `date_ordered` in 11; `date_needed_option` in 220; `date_ordered_option` in 216; `receipt_option` in 220; `status` in 220; `smartsheet_last_synced_at` in 220; and `smartsheet_sync_snapshot` in 220. All active records currently show status `received`; all paired deleted records show `pending`. Both sides omit `smartsheet_pending_local_sync`. These differences prevent using snapshot equality, status, or deletion state alone to decide remote ownership.
 
