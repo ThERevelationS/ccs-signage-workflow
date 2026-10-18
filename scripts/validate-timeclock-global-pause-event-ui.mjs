@@ -201,4 +201,40 @@ await act(async () => { calls[10].resolve({ data: {
 assert.equal(renderer.toJSON(), null,
   'A successful status response for a different employee must fail closed instead of exposing their Work Pause state');
 console.log('PASS mismatched status identity fails closed');
-console.log('PASS 6/6 Global Work Pause session/event scenarios');
+
+await act(async () => {
+  windowStub.dispatchEvent(new CustomEvent('ccs-timeclock-work-pause-changed', { detail: null }));
+});
+assert.equal(calls.length, 12);
+assert.equal(calls[11].payload.target_email, 'second@synthetic.invalid');
+await act(async () => { calls[11].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
+} }); });
+assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
+let pendingCurrentAction;
+await act(async () => {
+  pendingCurrentAction = renderer.root.findByType('button').props.onClick();
+});
+assert.equal(calls.length, 13);
+assert.equal(calls[12].payload.action, 'work_pause_start');
+await act(async () => {
+  calls[12].resolve({ data: {
+    success: true, user: { email: 'second@synthetic.invalid' },
+    status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+    work_pause: { id: 'current-employee-pause' },
+  } });
+  await pendingCurrentAction;
+});
+assert.equal(calls.length, 14,
+  'A confirmed Work Pause action should schedule exactly one authoritative status refresh');
+assert.equal(calls[13].payload.action, 'status');
+assert.equal(calls[13].payload.target_email, 'second@synthetic.invalid');
+await act(async () => { calls[13].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+  active_work_pause: { id: 'current-employee-pause' }, break_status: 'working',
+} }); });
+assert.match(JSON.stringify(renderer.toJSON()), /Resume Work/);
+console.log('PASS confirmed action triggers one status refresh');
+console.log('PASS 7/7 Global Work Pause session/event scenarios');
