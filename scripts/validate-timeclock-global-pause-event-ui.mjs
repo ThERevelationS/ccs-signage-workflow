@@ -326,9 +326,11 @@ await act(async () => { calls[18].resolve({ data: {
 } }); });
 assert.equal(renderer.root.findByType('button').props.disabled, false);
 failStorageWrites = true;
-await act(async () => { await renderer.root.findByType('button').props.onClick(); });
+let storageBlockedAction;
+await act(async () => { storageBlockedAction = renderer.root.findByType('button').props.onClick(); });
 assert.equal(calls.length, 19,
   'Work Pause must not be sent when the exact request ID cannot be safely retained in session storage');
+await storageBlockedAction;
 assert.match(renderer.root.findByType('button').props.title, /session storage|retry request/i,
   'The employee should see why Work Pause was not submitted');
 console.log('PASS storage failure prevents Work Pause mutation without a durable retry ID');
