@@ -44,11 +44,11 @@ const end="    debounceTimers.current[orderId] = timerId;";
 const start=sheet.indexOf(begin),stop=sheet.indexOf(end,start);
 check(start>0&&stop>start,"Real Sales quick-edit timer is available for VM simulation.");
 const timerBlock=sheet.slice(start,stop+end.length);
-async function simulate({mode,observed=latest,blockedInitially=false}={}){
+async function simulate({mode,observed=latest,blockedInitially=false,reloadingInitially=false}={}){
  let writes=0,reads=0,syncs=0,warning="",timer=null;
  let display={...base,...patch},selection={...base,...patch};
  const blockedFollowUpSavesRef={current:new Set(blockedInitially?[id]:[])};
- const reloadingSalesQuickEditsRef={current:false};
+ const reloadingSalesQuickEditsRef={current:reloadingInitially};
  const pendingChangesRef={current:{[id]:{...patch}}};
  const pendingBaselinesRef={current:{[id]:{lead_source:base.lead_source}}};
  const pendingHistoryFieldsRef={current:{[id]:new Set(["lead_source"])}};
@@ -107,4 +107,8 @@ eq(second.writes,0,"Previously queued timer cannot dispatch another write after 
 eq(second.reads,0,"Blocked timer skips unnecessary readbacks.");
 check(second.blocked&&!!second.queued,"Blocked timer preserves pending state for review.");
 check(second.warning.includes("Reload latest"),"Blocked timer directs the user to manual reload.");
+const midReload=await simulate({mode:"lost",reloadingInitially:true});
+eq(midReload.writes,0,"A prequeued timer cannot dispatch while Reload latest is in flight.");
+eq(midReload.reads,0,"Reload-in-progress blocks redundant WorkOrder inspection.");
+check(!!midReload.queued,"Timer blocked by reload does not discard pending intent.");
 console.log("Sales Phase 6N uncertain general quick-edit safety: "+n+"/"+n+" PASS.");
