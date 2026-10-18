@@ -66,6 +66,7 @@ export default function PermitWorkflowDesigner({
   onClose,
   preselectedJurisdiction = null,
   initialSavedDraft = null,
+  initialStepIndex = null,
   electricalPlanningHandoff = null,
   workOrder = null,
   onLinesCreated = () => {},
@@ -110,6 +111,7 @@ export default function PermitWorkflowDesigner({
   const [creating, setCreating] = useState(false);
   const [createResult, setCreateResult] = useState(null);
   const [expandedSteps, setExpandedSteps] = useState(new Set());
+  const selectedStepButton = useRef(null), initialStepFocused = useRef(false);
 
   const reviewIssues = planningReviewIssues(draft?.steps || []);
   const reviewSummary = planningReviewSummary(draft?.steps || []);
@@ -131,8 +133,21 @@ export default function PermitWorkflowDesigner({
     setDraftTitle(initialSavedDraft.title); setReviewNotes(initialSavedDraft.review_notes || '');
     setSaved(initialSavedDraft); setRevisionSource(initialSavedDraft); setEditingSteps(false);
     setReviewed(true); setError(''); setCreateResult(null);
-    setExpandedSteps(new Set(initialSavedDraft.snapshot.steps.filter(s => s.basis !== 'approved_rule').map(s => s.step_index)));
-  }, [initialSavedDraft, isOpen]);
+    const expanded = initialSavedDraft.snapshot.steps.flatMap((step, index) => step.basis !== 'approved_rule' ? [index] : []);
+    if (Number.isInteger(initialStepIndex) && initialStepIndex >= 0 && initialStepIndex < initialSavedDraft.snapshot.steps.length) expanded.push(initialStepIndex);
+    setExpandedSteps(new Set(expanded));
+  }, [initialSavedDraft, isOpen, initialStepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || !saved?.id || !Number.isInteger(initialStepIndex) || initialStepIndex < 0 || initialStepIndex >= saved.snapshot.steps.length || initialStepFocused.current) return;
+    const frame = requestAnimationFrame(() => {
+      if (!selectedStepButton.current) return;
+      selectedStepButton.current.scrollIntoView({ block: 'start' });
+      selectedStepButton.current.focus({ preventScroll: true });
+      initialStepFocused.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen, saved, initialStepIndex]);
 
   const updateForm = useCallback((key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -508,6 +523,9 @@ export default function PermitWorkflowDesigner({
                   return (
                     <div key={idx} className={`rounded-lg border ${step.basis === "staff_confirmation_needed" ? "border-red-200 bg-red-50/30" : "border-gray-200 bg-white"}`}>
                       <button
+                        ref={node => { if (idx === initialStepIndex) selectedStepButton.current = node; }}
+                        aria-expanded={isExpanded}
+                        aria-controls={`pwd-proposed-step-${idx}`}
                         onClick={() => toggleStep(idx)}
                         className="flex min-h-11 w-full items-center gap-2 p-3 text-left"
                       >
@@ -523,7 +541,7 @@ export default function PermitWorkflowDesigner({
                         {isExpanded ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-gray-400" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />}
                       </button>
                       {isExpanded && (
-                        <div className="border-t p-3 space-y-2 text-xs">
+                        <div id={`pwd-proposed-step-${idx}`} className="border-t p-3 space-y-2 text-xs">
                           {editingSteps && <fieldset className="min-w-0 space-y-3 rounded border border-amber-300 bg-amber-50 p-3">
                             <legend className="px-1 font-semibold text-amber-950">Edit proposed step {idx + 1}</legend>
                             <p className="text-amber-900">These are staff overrides of a proposal. Source citations stay attached, while this step requires confirmation.</p>
