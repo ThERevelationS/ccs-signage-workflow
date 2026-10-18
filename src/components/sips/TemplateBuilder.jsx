@@ -2552,7 +2552,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         >
           <AlertDialogHeader>
             <AlertDialogTitle>Reloading latest checklist templates…</AlertDialogTitle>
-            <AlertDialogDescription role="status" aria-live="polite">
+            <AlertDialogDescription role="status" aria-live="polite" tabIndex={0} className="focus:outline-none">
               Checking the newest saved templates. Editing will resume when the reload finishes.
             </AlertDialogDescription>
           </AlertDialogHeader>
