@@ -1508,17 +1508,18 @@ export default function AdminSettings() {
           )}
 
           <AdminPanelContent value="automations">
+            {!isDialogOpen && uncertainAutomationReview}
             {automationDraftParked && !isDialogOpen && (
               <div role="status" aria-label="Unsaved Automation draft" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
                 <p className="font-semibold">Unsaved Automation draft is still here</p>
                 <p className="mt-1">Resume editing or discard this draft. Nothing was saved or retried automatically.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => { setIsDialogOpen(true); setAutomationDraftParked(false); }}
-                    disabled={automationSaveInFlight.current} className="min-h-10 border-amber-500 bg-white">
+                    disabled={automationSaveInFlight.current || !!automationUncertain} className="min-h-10 border-amber-500 bg-white">
                     Resume Automation draft
                   </Button>
                   <Button type="button" size="sm" variant="outline" onClick={discardAutomationDraft}
-                    disabled={automationSaveInFlight.current} className="min-h-10 border-amber-500 bg-white">
+                    disabled={automationSaveInFlight.current || !!automationUncertain} className="min-h-10 border-amber-500 bg-white">
                     Discard Automation draft
                   </Button>
                 </div>
@@ -1711,6 +1712,7 @@ export default function AdminSettings() {
               </DialogTitle>
             </DialogHeader>
 
+            {uncertainAutomationReview}
             <div className="space-y-6 mt-4">
               {/* Name & Priority */}
               <div className="grid grid-cols-2 gap-4">
@@ -1984,8 +1986,9 @@ export default function AdminSettings() {
 
               {/* Save */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" disabled={automationSaving} onClick={discardAutomationDraft}>Cancel</Button>
-                <Button onClick={handleSave} disabled={automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
+                <Button variant="outline" disabled={automationSaving} onClick={() => closeAutomationEditor(false)}>Close editor</Button>
+                {!automationUncertain && <Button variant="outline" disabled={automationSaving} onClick={discardAutomationDraft}>Discard draft</Button>}
+                <Button onClick={handleSave} disabled={!!automationUncertain || automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
