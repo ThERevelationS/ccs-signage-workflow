@@ -288,6 +288,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingSalesGuardsRef = useRef({});
   const pendingFollowUpGuardsRef = useRef({});
   const blockedFollowUpSavesRef = useRef(new Set());
+  const reloadingSalesQuickEditsRef = useRef(false);
+  const [reloadingSalesQuickEdits, setReloadingSalesQuickEdits] = useState(false);
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
@@ -757,13 +759,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
 
       const usersData = await usersPromise;
-      if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return;
+      if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return false;
       archiveSkipRef.current = pagedCount;
       setArchiveHasMore(hasMore);
       setWorkOrders((current) => mergeLoadedRows(rows, scopeAtStart, current));
       setUsers(usersData);
+      return true;
     } catch (error) {
       if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
+      return false;
     } finally {
       if (requestId === loadRequestRef.current) setIsLoading(false);
     }
@@ -909,6 +913,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false, confirmedTaskTransition = false, reconcileSameTask = false, followUpGuards = null) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
+    if (reloadingSalesQuickEditsRef.current) {
+      setQuickEditError("Reload latest is in progress. Review the refreshed WorkOrder before editing again.");
+      return;
+    }
     if (blockedFollowUpSavesRef.current.has(orderId)) {
       setQuickEditError("A previous Sales save has not been verified. Use Reload latest before editing this WorkOrder again; do not repeat the save.");
       return;
