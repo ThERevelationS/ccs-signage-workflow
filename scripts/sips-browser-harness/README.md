@@ -40,6 +40,18 @@ The board's completed-WIP reopen now recognizes a concurrent identical save **on
 
 The read-only WIP reopen reconciliation now tolerates one board-refresh supersession with **at most one bounded additional verification read**. A superseded response is never trusted to clear a conflict or request focus; only a successful current board snapshot matching **both** the intended `sip_completed` and `sip_revisit_date` can do so. If the fresh Revisit date differs or the verification read fails, the conflict stays visible and no additional write occurs. Deterministic synthetic regressions in `validate-sips-refresh-ordering.mjs` exercise the superseded matching case, divergent Revisit, and failed read. Chromium now also forces this race against the actual SIPS page: a synthetic conditional-write loser, a paused recovery snapshot, and the real Work Order Details `onUpdate` callback that supersedes it. The test asserts exactly one bounded verification read, zero resubmitted writes, and the correct focus/error behavior for both matching and divergent dates. Two additional browser cases inject a failure into that final verification read or supersede that read again with another Work Order Details refresh; they verify the conflict stays visible, no unbounded retry occurs, and deliberate focus changes are respected. Authenticated nonproduction acceptance remains separate.
 
+## Restored full SIPS regression and browser baseline (October 17, 2026)
+
+The earlier board regression failures were caused by synthetic VM harnesses missing the `verifySalesSaveAcknowledgment` function after a **concurrent shared tracked-field persistence change**. The board Revisit and refresh-ordering harnesses were already updated in separate CCS work before this verification; no production SIPS logic or shared persistence code was modified during this phase. Do not undo or duplicate those concurrent fixes.
+
+Verified from a clean working tree against current repository HEAD:
+
+- **227/227** checks across all nine `node scripts/validate-sips-*.mjs` regression scripts, including **41/41** board Revisit and **44/44** refresh ordering.
+- **46/46** isolated Chromium scenarios across the four browser scripts above: 16 board, 4 checklist reload/focus, 8 Template Builder selection, and 18 Template Builder unsaved navigation/conflict reload.
+- Targeted ESLint for the SIPS page/components and associated scripts; complete `npm run build`; Git status and diff validation all passed. The only build output was outdated browser-support metadata warnings.
+
+This documents **synthetic** verification only. No real CCS account, authorization rule, network save, or production Work Order was exercised. The mandatory checklist Save → Revisit confirmation → Save changes → board re-sort behavior remains covered by the existing regression suite; future Revisit dates go to Revisit Later and no/today/past dates remain Active.
+
 ## Outstanding: authenticated two-browser QA
 
 **The synthetic suite does not demonstrate backend authorization or authenticated cross-session behavior.** Before claiming full acceptance, use an explicitly authorized *nonproduction* CCS environment with two real, independent test accounts and test Work Orders. Do not test mutations on production Work Orders, use production credentials in scripts, bypass the normal sign-in system, copy confidential production records into fixtures, or publish as part of QA.
