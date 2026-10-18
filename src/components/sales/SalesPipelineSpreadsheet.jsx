@@ -1372,12 +1372,29 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const discardPendingQuickEdits = async () => {
+    if (reloadingSalesQuickEditsRef.current) return;
+    reloadingSalesQuickEditsRef.current = true;
+    setReloadingSalesQuickEdits(true);
+    // The loaded page merges queued optimistic edits. Temporarily remove
+    // those overlays for the authoritative read; restore them if the request
+    // fails or is superseded. A failed refresh must not release a write fence.
+    const prior = {
+      changes: pendingChangesRef.current,
+      baselines: pendingBaselinesRef.current,
+      salesGuards: pendingSalesGuardsRef.current,
+      followUpGuards: pendingFollowUpGuardsRef.current,
+      blocked: new Set(blockedFollowUpSavesRef.current),
+      history: pendingHistoryFieldsRef.current,
+      scopes: pendingRecordScopesRef.current,
+      repairs: new Set(pendingSameTaskRepairRef.current),
+      repairFailures: new Map(failedSameTaskRepairRef.current),
+      reviewExit: resolvedReviewExitRef.current,
+    };
     Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
     debounceTimers.current = {};
     pendingChangesRef.current = {};
     pendingSameTaskRepairRef.current.clear();
     failedSameTaskRepairRef.current.clear();
-    refreshSameTaskSaveNotice((version) => version + 1);
     resolvedReviewExitRef.current = null;
     pendingBaselinesRef.current = {};
     pendingSalesGuardsRef.current = {};
@@ -1385,8 +1402,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     blockedFollowUpSavesRef.current.clear();
     pendingHistoryFieldsRef.current = {};
     pendingRecordScopesRef.current = {};
-    setQuickEditError("");
-    await loadWorkOrders(false);
+    try {
+      const reloaded = await loadWorkOrders(false);
+      if (reloaded !== true) {
+        pendingChangesRef.current = prior.changes;
+        pendingBaselinesRef.current = prior.baselines;
+        pendingSalesGuardsRef.current = prior.salesGuards;
+        pendingFollowUpGuardsRef.current = prior.followUpGuards;
+        blockedFollowUpSavesRef.current = prior.blocked;
+        pendingHistoryFieldsRef.current = prior.history;
+        pendingRecordScopesRef.current = prior.scopes;
+        pendingSameTaskRepairRef.current = prior.repairs;
+        failedSameTaskRepairRef.current = prior.repairFailures;
+        resolvedReviewExitRef.current = prior.reviewExit;
+        setQuickEditError("Reload latest could not be verified. Pending Sales edits and the save safety block are preserved; retry Reload latest when the connection is available.");
+      } else {
+        setQuickEditError("");
+      }
+      refreshSameTaskSaveNotice((version) => version + 1);
+    } finally {
+      reloadingSalesQuickEditsRef.current = false;
+      setReloadingSalesQuickEdits(false);
+    }
   };
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -2852,8 +2889,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       <div className="mt-1">{quickEditError}</div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span>Reloading discards unsaved quick edits and keeps the newer saved Work Order values.</span>
-        <Button type="button" size="sm" variant="outline" onClick={discardPendingQuickEdits} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
-          Reload latest
+        <Button type="button" size="sm" variant="outline" onClick={discardPendingQuickEdits} disabled={reloadingSalesQuickEdits} className="min-h-9 shrink-0 border-red-300 bg-white text-red-800">
+          {reloadingSalesQuickEdits ? "Reloading…" : "Reload latest"}
         </Button>
       </div>
     </div>
