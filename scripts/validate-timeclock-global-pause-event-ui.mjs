@@ -237,4 +237,40 @@ await act(async () => { calls[13].resolve({ data: {
 } }); });
 assert.match(JSON.stringify(renderer.toJSON()), /Resume Work/);
 console.log('PASS confirmed action triggers one status refresh');
-console.log('PASS 7/7 Global Work Pause session/event scenarios');
+let pendingMismatchedAck;
+await act(async () => {
+  pendingMismatchedAck = renderer.root.findByType('button').props.onClick();
+});
+assert.equal(calls.length, 15);
+assert.equal(calls[14].payload.action, 'work_pause_resume');
+const expectedResumeRequestId = calls[14].payload.request_id;
+assert.ok(expectedResumeRequestId);
+await act(async () => {
+  calls[14].resolve({ data: {
+    success: true, user: { email: 'first@synthetic.invalid' },
+    status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true,
+  } });
+  await pendingMismatchedAck;
+});
+assert.equal(calls.length, 16, 'A mismatched action acknowledgement should trigger an authoritative signed-session refresh');
+assert.equal(calls[15].payload.action, 'status');
+assert.equal(calls[15].payload.target_email, 'second@synthetic.invalid');
+assert.equal(storage.get('ccs_timeclock_request:work_pause_resume:second@synthetic.invalid'), expectedResumeRequestId,
+  'A mismatched successful acknowledgement must retain its exact request ID until authoritative status verifies the action');
+const guardedButton = renderer.root.findByType('button');
+assert.equal(guardedButton.props.disabled, true,
+  'An identity-mismatched acknowledgement must keep the last known Work Pause state guarded until status is verified');
+assert.match(JSON.stringify(renderer.toJSON()), /Resume Work/);
+assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Pause Work/,
+  'A mismatched acknowledgement must not apply another employee\'s returned state');
+await act(async () => { calls[15].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
+} }); });
+const verifiedButton = renderer.root.findByType('button');
+assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
+assert.equal(verifiedButton.props.disabled, false);
+assert.equal(storage.has('ccs_timeclock_request:work_pause_resume:second@synthetic.invalid'), false,
+  'A signed-employee status response should clear the recovered Work Pause request ID');
+console.log('PASS mismatched Work Pause action acknowledgement stays isolated and retries safely');
+console.log('PASS 8/8 Global Work Pause session/event scenarios');
