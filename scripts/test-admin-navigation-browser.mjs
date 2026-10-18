@@ -1115,6 +1115,37 @@ try {
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
     });
 
+  await check('Late uncertain-save verification cannot affect a replacement Admin session', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationVerifyHold=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Old uncertain update');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await page.waitForFunction(()=>!!window.__adminAutomationVerifyRelease);
+      await page.evaluate(()=>{
+        window.__adminSyntheticSessionToken='synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await editor.waitFor({state:'detached'});
+      await page.evaluate(()=>window.__adminAutomationVerifyRelease());
+      await page.waitForTimeout(75);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      await page.getByRole('button',{name:'New Automation'}).click();
+      const next=page.getByRole('dialog',{name:/Create Automation/});
+      await next.waitFor();
+      assert.equal(await next.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'');
+      await next.getByRole('button',{name:'Discard draft'}).click();
+    });
+
   await check('Stale Automation update completion cannot change the next Admin session', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
