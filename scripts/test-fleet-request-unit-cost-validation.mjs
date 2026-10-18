@@ -48,7 +48,9 @@ test("create, edit, and order validate unit cost before writing the request", ()
 });
 
 test("receive blocks invalid legacy costs before claiming or changing Fleet inventory", () => {
-  const receive = blockBetween("if (action === 'receive')", "if (action === 'delete')");
+  const receiveStart = endpoint.indexOf("if (action === 'receive')");
+  assert.ok(receiveStart >= 0);
+  const receive = endpoint.slice(receiveStart);
   const validationIndex = receive.indexOf("const storedCost = validateOptionalFleetUnitCost(existing.unit_cost)");
   const claimIndex = receive.indexOf("const claim = await claimReceipt(Receipt");
   const inventoryIndex = receive.indexOf("Part.create({");
