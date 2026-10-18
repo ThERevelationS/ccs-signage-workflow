@@ -1,6 +1,69 @@
 # Permitting continuation handoff — October 17, 2026
 
-## Latest completed unit — saved workflow staff planning review checklist
+## Latest completed unit — loaded-only saved-draft follow-ups and direct step navigation
+
+This is the current continuation state and supersedes older next-chunk sections below. CCS Signage Workflow, app 68dfcc5e57bbbc35387da97c, account brettheinlein1@gmail.com. Legacy app 69b1840cf75aba55e115d020 remains reference-only.
+
+Phase 10 — Ohio/Kentucky coverage; Milestone 1 of 3 — Identity and office reconciliation; Task 2 partial; 2 of 4 tasks complete. No fixed coverage counts advanced. Ohio first. Current official OpenAI guidance was checked; GPT-6.1 Sol High was recommended. Picker access was unavailable; no switch was claimed.
+
+Previous verified checkpoint: 6ad401236266c494cc4f1e25, “Permitting saved workflow staff planning review checklist verified”, Git 6d524f3cdafd1d406ff123405e3c46cc046b1ec7.
+This chunk started from that fresh clean HEAD. After the pause, clean HEAD 3c2ef97deadbfd6bfc3b39a231d1cebbc3f83da7 retained the complete implementation/tests but temporary verification logs and browser tooling were absent. Results were re-established and durable validation receipts were added. No blind source retries or production writes.
+New concurrent Time Clock changes were preserved, including src/components/timeclock/GlobalWorkPauseControl.jsx, scripts/validate-timeclock-global-pause-event-ui.mjs and docs/timeclock-prepublication-acceptance.md. Target-source fingerprints confirmed the permitting files were unchanged by concurrent work before the final count-label clarification.
+
+### Implemented
+- Saved-draft library now shows per-snapshot planning review counts, open follow-up counts, explicit missing legacy reviews, unrecognized decisions and other recorded follow-up areas.
+- Filters for planning decision and evidence/office-provider/documents-forms follow-up match the same retained step. A decision from one step cannot match an area on another.
+- Search includes saved draft fields and matching step titles, offices, actions, reasons and notes. Search, state, decision and follow-up filters cover loaded snapshots only. Filter changes do not issue API requests.
+- Counts are explicitly per snapshot, not unique projects or statewide/global totals. Ancestors/sibling branches remain separate; no single current revision is inferred. Cards retain draft ID, recorded dates and revision root context.
+- Existing evidence/basis gap count is now labeled “evidence / confirmation items” so it is not mistaken for the staff follow-up count.
+- Review-step details list matching saved positions and open the selected position in the actual designer. The step expands, scrolls into view and receives focus even if its saved step_index differs from its array position.
+- Read-only return restores the exact opener, filters and loaded browse without re-fetching. If the opener is no longer present, focus falls back to the library heading.
+- Initial direct-step focus runs once per opened designer; ordinary opens remain compatible. Step headers now expose aria-expanded/aria-controls.
+- Explicit 100-row cursor reads, append/deduplication, same-cursor retry, loaded-page retention on older-load failure and manual older-page expansion remain intact.
+- Saving a new immutable revision retains the existing library-refresh behavior; loaded-page/focus retention was verified for read-only returns. No change was made to save semantics or job integration.
+
+### Source / receipts
+New:
+- src/components/permitting/savedDraftReviewFilters.mjs
+- scripts/permitting-draft-follow-up.test.mjs
+- scripts/test-permitting-draft-follow-up-browser.mjs
+- docs/permitting-draft-follow-up-browser-2026-10-17.json
+- docs/permitting-draft-follow-up-validation-2026-10-17.json
+
+Updated:
+- src/components/permitting/PermittingDraftLibrary.jsx
+- src/components/permitting/PermitWorkflowDesigner.jsx
+- this handoff
+
+The validation receipt records build exit 0, passed browser exit 0 and a SHA-256 fingerprint of the three target UI/helper files. It was checked against the actual final source.
+
+### Verification
+Passed:
+- Three focused filter tests: same-step decision/area/search matching; explicit missing legacy, unknown decisions/areas and empty snapshots; nonmutation and separate sibling branches.
+- Three existing planning-review rule/comparison tests.
+- Targeted ESLint and git diff --check.
+- Final npm run build, exit 0; only existing browser-database warnings.
+- Actual library/designer browser scenarios at 320, 390 and 1280 px with 205 immutable synthetic snapshots, production CSS and external requests blocked.
+- No filter API calls; 100-row cursor pages; older-page failure retention and same-cursor retry; review-note search for the oldest snapshot; saved-position expansion/focus/visibility despite mismatched step_index; exact return focus and retained filters/pages; explicit legacy/unknown annotations; distinct sibling branches; 44px direct-step controls; no overflow, snapshot mutations or source/provider/AI/job calls.
+- Existing library/ancestor-comparison/205-draft pagination browser regression passed at all three widths. The later product change only clarified the evidence-count wording; the final follow-up browser run asserted that wording at all three widths.
+- Mobile card layout visually inspected.
+
+One initial browser assertion incorrectly demanded the legacy-review phrase be the entire summary paragraph. The assertion was corrected to match the retained phrase; product behavior was not altered for that test. The evidence-count label was separately clarified for honest presentation.
+
+Temporary Playwright/Chromium/system browser dependencies were restored outside the repository after the pause; no app dependency changes. These remain synthetic component checks, not authenticated employee acceptance. Employee sign-in/persistence, native print-dialog acceptance, live physical-page text acceptance and the earlier external PDF byte-loading check remain pending. No failed login flow was repeated.
+
+### Deployment / records / settings
+This unit did not publish/deploy the frontend, change backend/entity/schema/RLS/integrations, write production/client/job/shared records or files, refresh sources, approve authority, call research AI or change dispatcher/settings. Live settings were not remeasured. Preserve all concurrent CCS changes. Research/archive policy defaults below remain unchanged and are not newly measured settings.
+
+### Next — one bounded Ohio office-reconciliation chunk
+Inspect fresh HEAD/status, current Phase 10 office-reconciliation source/notes and retained permitting-only office/source evidence. Select a bounded Ohio batch (no more than five canonical jurisdictions if research is needed) and complete one meaningful issuer/inspection reconciliation improvement or evidence batch. Keep electrical permit issuer and inspection provider responsibilities separate; require exact location/service-area/delegation evidence and official sources, retain unknown roles explicitly, and preserve manual/archived documents. Use jurisdictionResearchAgent/refreshJurisdiction only where genuinely needed, first verify live queue/credit controls and obey existing gates without manual bypass. No authority approvals, job/client/shared-data writes or frontend publication. Verify the actual changed roles/evidence and report any count changes only if established from fresh evidence; checkpoint and stop.
+
+Checkpoint name for this unit: “Permitting saved draft follow-up filters and direct step navigation verified”. Exact checkpoint ID/final Git are returned after checkpoint creation; use the final tool receipt/report or version history.
+
+Observed pre-handoff HEAD: 2ef26b9bbdec380ece1f646e35001a29e90469e4; status before the handoff update: clean. Inspect fresh HEAD/status before continuing.
+
+
+## Previous completed unit — saved workflow staff planning review checklist
 
 This is the current continuation state and supersedes older next-chunk sections below. Prior packet/citation-evidence implementation history remains preserved.
 
@@ -51,8 +114,8 @@ Tests used synthetic API fixtures and production CSS with external requests bloc
 ### Records / deployment / settings
 Nothing published or frontend-deployed. No backend/entity/schema/RLS/integration changes, production/client/job/shared-file writes, source refreshes, authority approvals, research AI calls or dispatcher/settings changes. Policy defaults and archive limits below remain unchanged; live settings were not remeasured.
 
-### Next — one functional chunk
-Surface staff follow-ups in the saved-draft library: per-draft/step review summaries, loaded-only filters for review decision and evidence/office/documents follow-up, and direct opening of the selected step. Preserve explicit 100-row cursor paging, append/deduplication, older-page retry, immutable snapshots, branches/ancestor distinctions and mobile usability. Do not label loaded-only counts as global totals or infer a single current revision. Legacy snapshots without reviews stay explicit. Use synthetic browser fixtures, no source refreshes, AI calls or job writes, checkpoint and do not publish.
+### Next — completed
+The follow-up library feature is now complete. Use the current next chunk at the top of this handoff.
 
 Checkpoint name for this completed unit: “Permitting saved workflow staff planning review checklist verified”. Exact checkpoint ID/final Git are returned after the handoff commit and checkpoint; use the final tool receipt/report or version history.
 
