@@ -18,6 +18,7 @@ const events = new Map();
 const docEvents = new Map();
 const savedSessionData = new Map();
 let blockClockOutRecoveryStorage = false;
+let blockRequestIdStorage = false;
 const fakeWindow = {
   addEventListener(name, listener) { events.set(name, listener); },
   removeEventListener(name, listener) { if (events.get(name) === listener) events.delete(name); },
@@ -75,6 +76,9 @@ vm.runInNewContext(compiled, {
     setItem: (key, value) => {
       if (blockClockOutRecoveryStorage && key.startsWith('ccs_timeclock_pending_clock_out:')) {
         throw new Error('Synthetic browser denies pending Clock Out storage');
+      }
+      if (blockRequestIdStorage && key.startsWith('ccs_timeclock_request:')) {
+        throw new Error('Synthetic browser denies Time Clock request ID storage');
       }
       savedSessionData.set(key, String(value));
     },
@@ -252,6 +256,21 @@ console.log('PASS previous employee break completion never contaminates new empl
 const firstDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.equal(firstDialog().props.breakStatus, 'working');
+const lunchRequestStorageKey = 'ccs_timeclock_request:break_start:lunch:unpaid:first@synthetic.invalid';
+const callsBeforeStorageDeniedLunch = calls.length;
+blockRequestIdStorage = true;
+let blockedLunch;
+await act(async () => {
+  blockedLunch = firstDialog().props.onStartBreak({ breakType: 'lunch', isPaid: false });
+  blockedLunch.catch(() => {});
+});
+assert.equal(calls.length, callsBeforeStorageDeniedLunch,
+  'Unpaid lunch must not reach the server when its exact retry ID cannot be retained');
+await assert.rejects(blockedLunch, /cannot preserve the exact Time Clock request ID/);
+assert.equal(savedSessionData.has(lunchRequestStorageKey), false,
+  'Storage failure must not leave an unverified retry ID behind');
+blockRequestIdStorage = false;
+console.log('PASS storage failure prevents unpaid lunch mutation without a durable retry ID');
 let failedLunch;
 await act(async () => {
   failedLunch = firstDialog().props.onStartBreak({ breakType: 'lunch', isPaid: false });
