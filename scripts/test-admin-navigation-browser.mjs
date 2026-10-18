@@ -124,9 +124,15 @@ try {
     'export function storeAdminSettingsAuthorization(){throw Error("Unexpected write to synthetic auth");}',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockPersistence.js'), [
-    'export async function createAutomationRuleIfAbsent(){throw Error("Unexpected write");}',
-    'export async function deleteAutomationRuleIfUnchanged(){throw Error("Unexpected write");}',
-    'export async function updateAutomationRuleIfUnchanged(){throw Error("Unexpected write");}',
+    'async function syntheticWrite(kind,record,data){',
+    'if(window.__adminAutomationAllowSyntheticWrite!==true)throw Error("Unexpected synthetic automation write");',
+    '(window.__adminAutomationWriteCalls??=[]).push({kind,id:record?.id,name:data?.name});',
+    'if(window.__adminAutomationHoldWrite)await new Promise(resolve=>{window.__adminAutomationPendingWrite=resolve;});',
+    'return kind==="create"?{status:"created",record:{id:"synthetic-created",...data}}:{...record,...data,updated_date:"synthetic-updated"};',
+    '}',
+    'export async function createAutomationRuleIfAbsent({data}={}){return syntheticWrite("create",null,data);}',
+    'export async function deleteAutomationRuleIfUnchanged(){throw Error("Unexpected delete");}',
+    'export async function updateAutomationRuleIfUnchanged({record,nextFields}={}){return syntheticWrite("update",record,nextFields);}',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockEmailGroupPersistence.js'), [
     'export async function createEmailGroupIfAbsent(){throw Error("Unexpected email group write");}',
@@ -135,7 +141,7 @@ try {
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockLogin.js'), 'export async function verifyLogin(){throw Error("Unexpected login");}');
   await writeFile(path.join(scratch, 'mockEntityList.js'),
-    'export async function loadAllEntityRows({label}={}){const q=new URLSearchParams(location.search);if(label==="Admin Settings automation rules"){window.__adminAutomationReadAttempts=(window.__adminAutomationReadAttempts||0)+1;if(window.__adminAutomationFailure===true||(window.__adminAutomationFailure!==false&&q.get("automation_read_fail")==="1"))throw Error("synthetic-private-automation-read-error");return q.get("automation_rows")==="1"?[{id:"synthetic-rule-1",name:"Synthetic rule",enabled:true,triggers:[],actions:[]}]:[];}if(label==="Email Groups admin catalog"){window.__adminEmailManagerAttempts=(window.__adminEmailManagerAttempts||0)+1;if(window.__adminEmailManagerFailure===true||(window.__adminEmailManagerFailure!==false&&q.get("email_manager_fail")==="1"))throw Error("synthetic-private-email-manager-read-error");return q.get("email_group_rows")==="1"?[{id:"synthetic-group-1",name:"Synthetic Email Group",description:"Synthetic only",emails:["test@example.invalid"]}]:[];}if(label==="Admin Settings email groups"){window.__adminEmailChoicesAttempts=(window.__adminEmailChoicesAttempts||0)+1;if(window.__adminEmailChoicesFailure===true||(window.__adminEmailChoicesFailure!==false&&q.get("email_parent_fail")==="1"))throw Error("synthetic-private-email-choices-read-error");return q.get("email_group_rows")==="1"?[{id:"synthetic-group-1",name:"Synthetic Email Group",emails:["test@example.invalid"]}]:[];}return [];}');
+    'export async function loadAllEntityRows({label}={}){const q=new URLSearchParams(location.search);if(label==="Admin Settings automation rules"){window.__adminAutomationReadAttempts=(window.__adminAutomationReadAttempts||0)+1;if(window.__adminAutomationFailure===true||(window.__adminAutomationFailure!==false&&q.get("automation_read_fail")==="1"))throw Error("synthetic-private-automation-read-error");return q.get("automation_rows")==="1"?[{id:"synthetic-rule-1",name:"Synthetic rule",enabled:true,updated_date:"synthetic",triggers:q.get("automation_editable")==="1"?[{trigger_type:"work_order_created",trigger_condition:{},logic:"or"}]:[],actions:q.get("automation_editable")==="1"?[{action_type:"send_email",action_config:{}}]:[]}]:[];}if(label==="Email Groups admin catalog"){window.__adminEmailManagerAttempts=(window.__adminEmailManagerAttempts||0)+1;if(window.__adminEmailManagerFailure===true||(window.__adminEmailManagerFailure!==false&&q.get("email_manager_fail")==="1"))throw Error("synthetic-private-email-manager-read-error");return q.get("email_group_rows")==="1"?[{id:"synthetic-group-1",name:"Synthetic Email Group",description:"Synthetic only",emails:["test@example.invalid"]}]:[];}if(label==="Admin Settings email groups"){window.__adminEmailChoicesAttempts=(window.__adminEmailChoicesAttempts||0)+1;if(window.__adminEmailChoicesFailure===true||(window.__adminEmailChoicesFailure!==false&&q.get("email_parent_fail")==="1"))throw Error("synthetic-private-email-choices-read-error");return q.get("email_group_rows")==="1"?[{id:"synthetic-group-1",name:"Synthetic Email Group",emails:["test@example.invalid"]}]:[];}return [];}');
   for (const name of syntheticPanels) {
     await writeFile(path.join(scratch, 'mock-' + name + '.jsx'),
       'import React from "react";export default function ' + name +
