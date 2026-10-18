@@ -1,3 +1,4 @@
+import ElectricalOfficeInquiry from './ElectricalOfficeInquiry';
 import { Button } from '@/components/ui/button';
 import { officeResearchChecklist, officeResearchFieldLabels } from '../../../base44/shared/permittingOfficeResearch.mjs';
 import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog';
@@ -8,7 +9,7 @@ const statusLabel = assessment => assessment.status === 'missing' ? 'No finding 
   : assessment.status === 'ambiguous' ? assessment.findings.length + ' findings · review separately'
     : assessment.status === 'incomplete' ? 'Incomplete · ' + (assessment.missing_field_count + assessment.missing_evidence_count) + ' open items'
       : 'Metadata present · unverified';
-export default function ElectricalResearchTasks({ rows = [], onInspect, onPreviewWorkflow }) {
+export default function ElectricalResearchTasks({ rows = [], research, onInspect, onPreviewWorkflow }) {
   return <section aria-label="Electrical permit and inspection task view" className="min-w-0 space-y-3 rounded border bg-white p-3 [overflow-wrap:anywhere]">
     <h5 className="text-sm font-semibold">Electrical work: permit and inspection planning</h5>
     <p className="text-xs">Saved research drafts for planning questions, not an approved job checklist. Confirm project applicability, office responsibility and current instructions before applying, booking or working. No task completion or job changes are saved here.</p>
@@ -48,6 +49,7 @@ export default function ElectricalResearchTasks({ rows = [], onInspect, onPrevie
               </div>;
             })}
           </>}
+          <ElectricalOfficeInquiry research={research} role={role.key} />
         </article>;
       })}
     </div>
