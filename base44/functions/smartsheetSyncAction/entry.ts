@@ -4444,7 +4444,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
       const bindings = profile?.column_bindings || {};
       const columnIds = numericIdList(Object.values(bindings), 100);
-      if (duplicateCount !== 1 || !/^\\d+$/.test(sheetId) || !columnIds.length) {
+      if (duplicateCount !== 1 || !/^\d+$/.test(sheetId) || !columnIds.length) {
         return Response.json({ success: false, error: 'The configured Order sheet or mapped columns could not be verified.' }, { status: 409 });
       }
 
