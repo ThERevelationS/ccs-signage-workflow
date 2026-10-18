@@ -118,6 +118,7 @@ same(missing,"missing_required","Deleted or missing record cannot clear the bloc
 same(visible.length,2,"Deleted recovered row is not left visible after refresh.");
 same(ctx.archiveSkipRef.current,2,"Failed recovery does not corrupt paging state.");
 index.set(id,old);
+ctx.activeRecordScopeRef.current="all";
 const allResult=await ctx.loadArchive(false,"all",[id]);
 same(allResult,true,"All Records can recover an out-of-first-page active/legacy record.");
 same(ctx.archiveSkipRef.current,2,"All Records paging offset remains tied to page length.");
