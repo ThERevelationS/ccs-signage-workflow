@@ -37,6 +37,7 @@ import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import { readBackUncertainSalesFollowUpSave } from "@/components/sales/salesFollowUpSaveRecovery.mjs";
+import { inspectUncertainSalesQuickEdit, uncertainSalesQuickEditWarning } from "@/components/sales/salesQuickEditUncertainRecovery.mjs";
 import { captureSalesFollowUpCompletionGuards, isSalesFollowUpCompletionSnapshotCurrent } from "@/components/sales/salesFollowUpCompletionGuards.mjs";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
@@ -909,7 +910,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
     if (blockedFollowUpSavesRef.current.has(orderId)) {
-      setQuickEditError("A prior follow-up completion has not been verified. Reload the latest opportunity before making more changes; do not log it again.");
+      setQuickEditError("A previous Sales save has not been verified. Use Reload latest before editing this WorkOrder again; do not repeat the save.");
       return;
     }
     if (reconcileSameTask) {
@@ -1141,7 +1142,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             label: "Sales Pipeline quick edit",
           });
         } catch (saveError) {
-          if (!pendingFollowUpGuardsRef.current[orderId]) throw saveError;
+          if (!pendingFollowUpGuardsRef.current[orderId]) {
+            // Non-completion Sales edits must not silently reuse a queued patch
+            // after a lost response. Observe current values once, without
+            // claiming authorship or issuing a second write.
+            blockedFollowUpSavesRef.current.add(orderId);
+            const observation = await inspectUncertainSalesQuickEdit({
+              workOrderId: orderId, changes, getLatest: (id) => WorkOrder.get(id),
+            });
+            throw new Error(uncertainSalesQuickEditWarning(observation.state) + " " + (saveError?.message || ""));
+          }
           // The write may have committed before the response disappeared.
           // Read the authoritative record once; NEVER issue a second save.
           const readBack = await readBackUncertainSalesFollowUpSave({
