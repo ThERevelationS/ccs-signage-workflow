@@ -23,6 +23,9 @@ const next={lead_source:"Website"};
 function harness(outcome){
  let fetches=0,warning="older uncertain save warning",renders=0,timersCancelled=0;
  let finishLoad;
+ const activeRecordScopeRef={current:"current"};
+ const liveViewSessionKeyRef={current:"filter-initial"};
+ const liveEditPinsRef={current:{[id]:{source:"active-in-this-view"}}};
  const reloadingSalesQuickEditsRef={current:false};
  const pendingChangesRef={current:{[id]:next}};
  const pendingBaselinesRef={current:{[id]:before}};
@@ -40,16 +43,22 @@ function harness(outcome){
   pendingSalesGuardsRef,pendingFollowUpGuardsRef,blockedFollowUpSavesRef,
   pendingHistoryFieldsRef,pendingRecordScopesRef,pendingSameTaskRepairRef,
   failedSameTaskRepairRef,resolvedReviewExitRef,debounceTimers,
+  activeRecordScopeRef,liveViewSessionKeyRef,liveEditPinsRef,
   Object,Map,Set,Promise,
+  setLiveEditPinVersion:fn=>{renders++;},
   setReloadingSalesQuickEdits:v=>{renders++;},
   setQuickEditError:v=>{warning=v;},
   refreshSameTaskSaveNotice:fn=>{renders++;},
   clearTimeout:()=>{timersCancelled++;},
-  loadWorkOrders:async()=>{
+  loadWorkOrders:async(_loading,scope,requiredIds)=>{
    fetches++;
-   ok(!pendingChangesRef.current[id]&&!blockedFollowUpSavesRef.current.has(id),
-    "Authoritative refresh never overlays uncertain local changes.");
+   eq(scope,"current","Reload request retains its original workspace.");
+   eq([...requiredIds],[id],"Reload requires the affected WorkOrder to be present.");
+   ok(!pendingChangesRef.current[id]&&!blockedFollowUpSavesRef.current.has(id) &&
+      !liveEditPinsRef.current[id],
+    "Authoritative refresh never overlays uncertain local changes or pins.");
    if(outcome==="deferred")return new Promise(resolve=>{finishLoad=resolve;});
+   if(outcome==="missing")return "missing_required";
    return outcome==="success";
   },
  };
@@ -68,6 +77,7 @@ ok(failed.ctx.pendingSameTaskRepairRef.current.has(id),"Failed reload preserves 
 ok(failed.ctx.failedSameTaskRepairRef.current.has(id),"Failed reload preserves same-task error evidence.");
 ok(failed.ctx.pendingHistoryFieldsRef.current[id].has("lead_source"),"Failed reload restores history intentions.");
 ok(failed.warning.includes("save safety block are preserved"),"Failure warning does not claim reload success.");
+ok(!!failed.ctx.liveEditPinsRef.current[id],"Failed same-view reload restores the original live-edit pin.");
 eq(failed.ctx.reloadingSalesQuickEditsRef.current,false,"Failed reload releases the click lock.");
 eq(failed.timersCancelled,1,"Reload cancels stale scheduled writes without silently retrying.");
 
@@ -77,6 +87,7 @@ eq(succeeded.fetches,1,"Successful reload performs one read.");
 ok(!succeeded.ctx.blockedFollowUpSavesRef.current.has(id),"Only a successful reload releases the safety fence.");
 ok(!succeeded.ctx.pendingChangesRef.current[id],"Successful explicit reload clears unsaved optimistic intent.");
 ok(!succeeded.ctx.pendingSalesGuardsRef.current[id],"Successful reload clears obsolete Sales guards.");
+ok(!succeeded.ctx.liveEditPinsRef.current[id],"Successful reload removes stale live-edit pins, even for out-of-scope rows.");
 eq(succeeded.warning,"","Successful reload clears the stale save warning.");
 eq(succeeded.ctx.reloadingSalesQuickEditsRef.current,false,"Successful reload releases button lock.");
 
@@ -92,4 +103,25 @@ await first;
 ok(simultaneous.ctx.blockedFollowUpSavesRef.current.has(id),
  "Superseded/failed refresh cannot unlock uncertain Sales save.");
 eq(simultaneous.ctx.reloadingSalesQuickEditsRef.current,false,"Reload lock releases after terminal outcome.");
+const absent=harness("missing");
+await absent.reload();
+ok(absent.ctx.blockedFollowUpSavesRef.current.has(id),"A row missing from the scoped result never clears an unresolved-save block.");
+ok(!absent.ctx.liveEditPinsRef.current[id],"A row that moved out of the workspace is not re-pinned as a phantom row.");
+ok(absent.warning.includes("Outcomes or All Records"),"Moved rows direct the user to a workspace where authoritative values can be inspected.");
+const changedWorkspace=harness("deferred");
+const changedWorkspaceRequest=changedWorkspace.reload();
+changedWorkspace.ctx.activeRecordScopeRef.current="outcomes";
+changedWorkspace.ctx.liveViewSessionKeyRef.current="filter-outcomes";
+changedWorkspace.finish(true);
+await changedWorkspaceRequest;
+ok(changedWorkspace.ctx.blockedFollowUpSavesRef.current.has(id),"Workspace change during a successful old request cannot unlock the save.");
+ok(!changedWorkspace.ctx.liveEditPinsRef.current[id],"Old workspace pins do not reappear after navigation.");
+ok(changedWorkspace.warning.includes("workspace or filter changed"),"Workspace changes require a fresh explicit reload.");
+const changedFilter=harness("deferred");
+const changedFilterRequest=changedFilter.reload();
+changedFilter.ctx.liveViewSessionKeyRef.current="different-filter";
+changedFilter.finish(true);
+await changedFilterRequest;
+ok(changedFilter.ctx.blockedFollowUpSavesRef.current.has(id),"Filter change during reload preserves the safety fence.");
+ok(!changedFilter.ctx.liveEditPinsRef.current[id],"Old filter pins are not restored after a view change.");
 console.log("Sales Phase 6N verified Reload latest write fencing: "+n+"/"+n+" PASS.");
