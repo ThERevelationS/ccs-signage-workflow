@@ -1,3 +1,4 @@
+# scripts/validate-order-historical-import-audit.mjs (lines 1-94 of 94)
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -7,7 +8,7 @@ import {
 
 const sheetId = '4963691473987460';
 const bindings = { customer_name: '11', description: '12' };
-const rowIds = ['101', '102', '103', '104', '105', '106'];
+const rowIds = ['101', '102', '103', '104', '105', '106', '108'];
 const orders = [
   { id: 'aligned', smartsheet_sheet_id: sheetId, smartsheet_row_id: '101',
     smartsheet_last_synced_at: '2026-10-01T00:00:00Z', smartsheet_sync_snapshot: { '11': 'Acme', '12': 'Sign' } },
@@ -20,6 +21,8 @@ const orders = [
     smartsheet_sync_snapshot: { '11': 'Acme', '12': 'Old' } },
   { id: 'missing-remote', smartsheet_sheet_id: sheetId, smartsheet_row_id: '104' },
   { id: 'deleted-only', deleted: true, smartsheet_sheet_id: sheetId, smartsheet_row_id: '106' },
+  { id: 'dup-missing-a', smartsheet_sheet_id: sheetId, smartsheet_row_id: '108' },
+  { id: 'dup-missing-b', smartsheet_sheet_id: sheetId, smartsheet_row_id: '108' },
   { id: 'no-permanent-id', smartsheet_sheet_id: sheetId, smartsheet_row_id: '' },
   { id: 'bad-permanent-id', smartsheet_sheet_id: sheetId, smartsheet_row_id: 'abc',
     smartsheet_pending_local_sync: false },
@@ -48,7 +51,7 @@ assert.equal(report.read_only, true);
 assert.equal(report.writes_attempted, false);
 assert.equal(report.counts.currently_aligned_with_remote, 1);
 assert.equal(report.counts.pending_local_sync, 1);
-assert.equal(report.counts.duplicate_permanent_id_claims, 1);
+assert.equal(report.counts.duplicate_permanent_id_claims, 2);
 assert.equal(report.counts.remote_row_missing, 1);
 assert.equal(report.counts.no_local_claim, 1);
 assert.equal(report.counts.soft_deleted_claims, 1);
@@ -60,6 +63,8 @@ assert.equal(report.counts.local_marker_false, 1);
 assert.equal(report.counts.local_marker_absent, 7);
 assert.equal(report.rows.find(row => row.row_id === '103').claims.length, 2);
 assert.equal(report.rows.find(row => row.row_id === '103').claims.some(claim => claim.deleted), true);
+assert.equal(report.rows.find(row => row.row_id === '108').classification, 'duplicate_permanent_id_claims');
+assert.equal(report.rows.find(row => row.row_id === '108').remote_found, false);
 assert.equal(report.rows.find(row => row.row_id === '104').review_required, true);
 assert.equal(report.rows.find(row => row.row_id === '101').classification, 'currently_aligned_with_remote');
 assert.match(report.interpretation, /does not prove that a historical Excel import was the source/);
