@@ -88,13 +88,13 @@ const simulate=async ({mode,latest=committed})=>{
   const pendingSalesGuardsRef={current:{}}, pendingRecordScopesRef={current:{[base.id]:"current"}};
   const pendingHistoryFieldsRef={current:{[base.id]:new Set(["sales_last_follow_up_completed_at","sales_last_follow_up_outcome","follow_up_date"])}};
   const pendingSameTaskRepairRef={current:new Set()}, failedSameTaskRepairRef={current:new Map()};
-  const blockedFollowUpSavesRef={current:new Set()}, debounceTimers={current:{}};
+  const blockedFollowUpSavesRef={current:new Set()}, reloadingSalesQuickEditsRef={current:false}, debounceTimers={current:{}};
   let display={...base,...changes},selected={...base,...changes};
   const ctx={
     orderId:base.id,currentWo:{...base},
     pendingChangesRef,pendingBaselinesRef,pendingSalesGuardsRef,
     pendingFollowUpGuardsRef,pendingRecordScopesRef,pendingHistoryFieldsRef,
-    pendingSameTaskRepairRef,failedSameTaskRepairRef,blockedFollowUpSavesRef,
+    pendingSameTaskRepairRef,failedSameTaskRepairRef,blockedFollowUpSavesRef,reloadingSalesQuickEditsRef,
     debounceTimers,
     setTimeout:(fn)=>{timerFn=fn;return 44;},clearTimeout:()=>{},
     replaceWorkOrderFieldsIfUnchanged:async()=>{writes++;
