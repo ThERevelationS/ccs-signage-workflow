@@ -1515,7 +1515,7 @@ export default function AdminSettings() {
                 <p className="mt-1">Resume editing or discard this draft. Nothing was saved or retried automatically.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => { setIsDialogOpen(true); setAutomationDraftParked(false); }}
-                    disabled={automationSaveInFlight.current || !!automationUncertain} className="min-h-10 border-amber-500 bg-white">
+                    disabled={automationSaveInFlight.current} className="min-h-10 border-amber-500 bg-white">
                     Resume Automation draft
                   </Button>
                   <Button type="button" size="sm" variant="outline" onClick={discardAutomationDraft}
