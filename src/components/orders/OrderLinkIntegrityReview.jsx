@@ -135,8 +135,8 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
     if (historicalLoading) return;
     setHistoricalError("");
     setHistoricalReport(null);
-    const rowIds = historicalRowIds.split(/[\\s,;]+/).map(value => value.trim()).filter(Boolean);
-    if (rowIds.length < 1 || rowIds.length > 25 || rowIds.some(value => !/^\\d+$/.test(value)) ||
+    const rowIds = historicalRowIds.split(/[\s,;]+/).map(value => value.trim()).filter(Boolean);
+    if (rowIds.length < 1 || rowIds.length > 25 || rowIds.some(value => !/^\d+$/.test(value)) ||
         new Set(rowIds).size !== rowIds.length) {
       setHistoricalError("Enter 1–25 unique positive numeric Smartsheet row IDs.");
       return;
