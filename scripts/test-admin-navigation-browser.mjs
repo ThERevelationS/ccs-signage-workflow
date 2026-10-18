@@ -985,6 +985,91 @@ try {
       assert.equal(await page.getByRole('button', { name: 'New Group' }).isEnabled(), true);
     });
 
+  await check('Automation draft resumes after a panel crash and retry without any save', 375,
+    '/?tab=automations', async page => {
+      await page.getByRole('button',{name:'New Automation'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Unsent synthetic automation');
+      await page.keyboard.press('Escape');
+      await editor.waitFor({state:'detached'});
+      await page.getByRole('status',{name:'Unsaved Automation draft'}).waitFor();
+      await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'People'}).click();
+      await page.evaluate(()=>{window.__adminPanelFailures=['GmailConnector'];});
+      await page.getByRole('group',{name:'Admin navigation categories'}).getByRole('button',{name:'Workflow'}).click();
+      const failed=page.getByRole('alert',{name:'Automations panel failed'});
+      await failed.waitFor();
+      await page.evaluate(()=>{window.__adminPanelFailures=[];});
+      await failed.getByRole('button',{name:'Retry panel'}).click();
+      const prompt=page.getByRole('status',{name:'Unsaved Automation draft'});
+      await prompt.waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length||0),0);
+      await prompt.getByRole('button',{name:'Resume Automation draft'}).click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Unsent synthetic automation');
+      await page.keyboard.press('Escape');
+      await prompt.waitFor();
+      await prompt.getByRole('button',{name:'Discard Automation draft'}).click();
+      assert.equal(await prompt.count(),0);
+      await page.getByRole('button',{name:'New Automation'}).click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'');
+      await editor.getByRole('button',{name:'Cancel'}).click();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length||0),0);
+    }, {allowSyntheticPanelError:true});
+
+  await check('Automation new/edit never overwrite a parked unsaved draft', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.getByRole('button',{name:'New Automation'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Protected synthetic draft');
+      await page.keyboard.press('Escape');
+      await editor.waitFor({state:'detached'});
+      await page.getByRole('button',{name:'New Automation'}).click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Protected synthetic draft');
+      await page.keyboard.press('Escape');
+      await page.getByRole('status',{name:'Unsaved Automation draft'}).waitFor();
+      await page.locator('button:has(svg.lucide-edit)').last().click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Protected synthetic draft');
+      await editor.getByRole('button',{name:'Cancel'}).click();
+      assert.equal(await page.getByRole('status',{name:'Unsaved Automation draft'}).count(),0);
+    });
+
+  await check('Automation concurrent double Save dispatches one synthetic update', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
+      await page.locator('button:has(svg.lucide-edit)').last().click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Updated synthetic rule');
+      const save=editor.getByRole('button',{name:'Update Automation'});
+      await save.evaluate(button=>{button.click();button.click();});
+      await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      assert.equal(await save.isDisabled(),true);
+      await page.evaluate(()=>{window.__adminAutomationPendingWrite();});
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      assert.equal(await page.getByRole('status',{name:'Unsaved Automation draft'}).count(),0);
+    });
+
+  await check('Stale Automation update completion cannot change the next Admin session', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
+      await page.locator('button:has(svg.lucide-edit)').last().click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Old session edit');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
+      await page.evaluate(()=>{window.__adminSyntheticSessionToken='synthetic-new';window.dispatchEvent(new Event('admin-synthetic-session-change'));});
+      await editor.waitFor({state:'detached'});
+      await page.evaluate(()=>{window.__adminAutomationPendingWrite();});
+      await page.waitForTimeout(75);
+      assert.equal(await page.getByRole('status',{name:'Unsaved Automation draft'}).count(),0);
+      assert.equal(await page.getByRole('dialog',{name:/Edit Automation/}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
   await check('User directory read failure is explicit and cannot authorize account changes', 375,
     '/?tab=users&real_users=1&user_rows=1&user_directory_fail=1', async page => {
       const error = page.getByRole('alert', { name: 'User directory unavailable' });
