@@ -1029,7 +1029,7 @@ try {
       assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Protected synthetic draft');
       await page.keyboard.press('Escape');
       await page.getByRole('status',{name:'Unsaved Automation draft'}).waitFor();
-      await page.locator('button:has(svg.lucide-edit)').last().click();
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
       await editor.waitFor();
       assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Protected synthetic draft');
       await editor.getByRole('button',{name:'Cancel'}).click();
@@ -1039,7 +1039,7 @@ try {
   await check('Automation concurrent double Save dispatches one synthetic update', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
-      await page.locator('button:has(svg.lucide-edit)').last().click();
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
       const editor=page.getByRole('dialog',{name:/Edit Automation/});
       await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Updated synthetic rule');
       const save=editor.getByRole('button',{name:'Update Automation'});
@@ -1056,7 +1056,7 @@ try {
   await check('Stale Automation update completion cannot change the next Admin session', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
-      await page.locator('button:has(svg.lucide-edit)').last().click();
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
       const editor=page.getByRole('dialog',{name:/Edit Automation/});
       await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Old session edit');
       await editor.getByRole('button',{name:'Update Automation'}).click();
