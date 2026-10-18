@@ -1068,6 +1068,12 @@ try {
       assert.equal(await page.getByRole('status',{name:'Unsaved Automation draft'}).count(),0);
       assert.equal(await page.getByRole('dialog',{name:/Edit Automation/}).count(),0);
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      await page.getByRole('button',{name:'New Automation'}).click();
+      const newEditor=page.getByRole('dialog',{name:/Create Automation/});
+      await newEditor.waitFor();
+      assert.equal(await newEditor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'',
+        'A changed Admin session cannot inherit an earlier user\'s hidden draft');
+      await newEditor.getByRole('button',{name:'Cancel'}).click();
     });
 
   await check('User directory read failure is explicit and cannot authorize account changes', 375,
