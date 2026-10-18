@@ -22,7 +22,13 @@ function storedRequestId(action, email) {
 }
 
 function persistRequestId(action, email, requestId) {
-  try { sessionStorage.setItem(requestStorageKey(action, email), requestId); } catch {}
+  try {
+    const key = requestStorageKey(action, email);
+    sessionStorage.setItem(key, requestId);
+    return sessionStorage.getItem(key) === requestId;
+  } catch {
+    return false;
+  }
 }
 
 function clearRequestId(action, email) {
@@ -141,8 +147,12 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   const runToggle = async () => {
     if (busy || transition || unavailable) return;
     const action = paused ? "work_pause_resume" : "work_pause_start";
-    const requestId = storedRequestId(action, email) || newRequestId();
-    persistRequestId(action, email, requestId);
+    const existingRequestId = storedRequestId(action, email);
+    const requestId = existingRequestId || newRequestId();
+    if (!existingRequestId && !persistRequestId(action, email, requestId)) {
+      setError("Work Pause was not sent because this tab could not retain the exact retry request. Enable session storage and try again.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
