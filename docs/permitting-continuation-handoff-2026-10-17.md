@@ -1,5 +1,40 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest unit — Sharonville retained electrical office reconciliation (October 18 UTC / October 17 Eastern)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+
+Fresh starting HEAD was 0acdb9d03336659aa2b797020971b4b96d4a799c, clean. Later clean HEADs included 9a31957bcb866e03d4e54ba4adea88f6dd828332 and ca2811101b77f9b2fd41ec0eb1bb2d46ce0d8d97. Preserve all newer concurrent CCS changes. Final HEAD/status and additional tests became unavailable when sandbox run_command and read_file repeatedly timed out. Do not claim those checks passed.
+
+Verified live change:
+- Exact JurisdictionProfile 6ac19f0e23bd8a65822f6d51 / Sharonville / OH / city.
+- Version-guarded connector update matched id/name/state/type, updated_date 2026-10-14T21:46:05.219000 and office_research $exists:false. Response updated=1, has_more=false.
+- Fresh full-record readback at updated_date 2026-10-18T03:06:03.502000 matched the candidate exactly. Only office_research and updated_date changed; all 15 documents and every other profile field were preserved.
+- Electrical issuer draft: City of Sharonville, explicitly named on retained guide physical page 8 (printed 6). Exact issuing department/canonical ID remains unknown.
+- Electrical inspection draft: National Inspection Corporation (NIC), explicitly named on physical pages 7 and 8; city intake remains distinct.
+- All roles remain needs_verification / applicability unknown. No authority event, canonical office link, address match, current contract or commercial-sign coverage approved. Other checklist roles remain empty/unknown.
+- Source 6aced7f49bda8d3e61944a9d; profile document 19bc3643-d404-4bcf-8cde-92c91897fd21; committed segment 6acf6e3e1ae409cc63a3da41.
+- Official URL https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026
+- Retained source/archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9, 11002258 bytes.
+- Page 7 live text hash cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141; page 8 76cc9f242a1dea694cdc5f991bbd9dbf77d5db0b5de69da70567fd93c3752cc4.
+- The retained source is administrative_guidance / needs_verification, not adopted/current commercial sign authority. Current source website and remote file bytes were not newly fetched.
+
+Passed validation: reconciliation script successfully validated exact profile/source/archive/catalog identity, local retained PDF byte/hash identity, existing shared committed-segment validator, exact page quotes/text hashes, separate roles, absent prior draft and unapproved scope. The first reduced input was rejected because it omitted the source preview; the full source snapshot passed without changing validators. Full live profile readback confirmed the single-field change.
+
+Artifacts confirmed created and read:
+- scripts/reconcile-sharonville-retained-electrical-research.mjs (read-only candidate generator; no live writes)
+- docs/official-evidence/ohio-sharonville-2026-10-07/electrical-reconciliation-input-2026-10-18.json
+- docs/official-evidence/ohio-sharonville-2026-10-07/electrical-reconciliation-candidate-2026-10-18.json
+Attempted receipt path: docs/official-evidence/ohio-sharonville-2026-10-07/electrical-reconciliation-live-2026-10-18.json. Its write and subsequent test/diff results are UNKNOWN because the command timed out and status/file inspection also timed out. Inspect once before rewriting. No live entity write is pending; do not repeat the successful live save.
+
+Live controls observed: enabled true; interval 15 minutes; max_dispatch_per_cycle 5; max_in_flight 20; daily_dispatch_limit 40; retry_limit 3. State day 2026-10-17 / dispatched_today 40. Bounded query for source_discovery rows with research_dispatch_version returned zero visible rows (permission-scoped, not global queue absence). No research calls, refreshes, dispatcher/settings writes or manual bypass. No new archives.
+
+Deployment: no frontend publication, application/backend/schema/RLS/integration code changes, source writes, client/job/shared-data writes or shared-file writes. Only the exact permitting office_research draft above changed. Authenticated employee/browser acceptance was not performed. Build not required for an evidence-only data/script chunk; no passing build claimed.
+
+Next single chunk: recover sandbox access; inspect fresh HEAD/status and this unit's actual files, tests and checkpoint before any mutation. Finish any missing evidence receipt/focused validation, preserving the already-saved draft. Then use the existing canonical office/publisher evidence to establish the exact Sharonville issuer/NIC identity candidates and seek official current commercial-sign/service-area evidence within normal gates; do not approve authority from this residential guide or infer county/site applicability. No frontend publication or client/job writes. Preserve all concurrent Time Clock/Admin/Sales/Order Form/Fleet/SIPS work.
+
+This top section supersedes older next-chunk directions below. Prior checkpoint 6ad42c27ff6321fbd4e912f9 / Git 9a99deb1a83f17824d53f22af12212129ae146dc remains the earlier saved-draft UI checkpoint. Use the current turn's create_checkpoint result for this unit's actual checkpoint ID/Git; do not assume success.
+
 ## Latest completed unit — loaded-only saved-draft follow-ups and direct step navigation
 
 This is the current continuation state and supersedes older next-chunk sections below. CCS Signage Workflow, app 68dfcc5e57bbbc35387da97c, account brettheinlein1@gmail.com. Legacy app 69b1840cf75aba55e115d020 remains reference-only.
