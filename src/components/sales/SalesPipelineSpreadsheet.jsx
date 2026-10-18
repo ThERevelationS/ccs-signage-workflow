@@ -37,6 +37,7 @@ import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import { readBackUncertainSalesFollowUpSave } from "@/components/sales/salesFollowUpSaveRecovery.mjs";
+import { recoverRequiredSalesArchiveRows } from "@/components/sales/salesArchiveRecovery.mjs";
 import { inspectUncertainSalesQuickEdit, uncertainSalesQuickEditWarning } from "@/components/sales/salesQuickEditUncertainRecovery.mjs";
 import { captureSalesFollowUpCompletionGuards, isSalesFollowUpCompletionSnapshotCurrent } from "@/components/sales/salesFollowUpCompletionGuards.mjs";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
@@ -758,6 +759,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         hasMore = activePage.length === ARCHIVE_PAGE_SIZE;
       }
 
+      // Recover only explicitly blocked IDs omitted from a paginated
+      // archive page. A direct read must still pass the authoritative scope
+      // predicate; do not expand routine loads or archive page offsets.
+      if (requiredIds.length && ['all', 'history'].includes(scope)) {
+        rows = await recoverRequiredSalesArchiveRows({
+          scope, rows, requiredIds,
+          getWorkOrder: (id) => WorkOrder.get(id),
+          belongsToScope: salesRecordBelongsToLoadedScope,
+        });
+      }
       const usersData = await usersPromise;
       if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return false;
       archiveSkipRef.current = pagedCount;
