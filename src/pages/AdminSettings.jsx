@@ -105,7 +105,7 @@ import {
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
-import { reviewUncertainAutomationSave } from "@/components/admin/automationSaveReconciliation";
+import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave } from "@/components/admin/automationSaveReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -804,6 +804,7 @@ export default function AdminSettings() {
     setAutomationSaveError("");
     setAutomationSaving(true);
     let writeDispatched = false;
+    let createReceiptStatus = null;
     try {
       if (editingRule) {
         const duplicateName = automations.find(rule => rule.id !== editingRule.id && String(rule.name || "").trim().toLowerCase() === saveData.name.toLowerCase());
@@ -826,8 +827,12 @@ export default function AdminSettings() {
           label: `Automation Rule ${saveData.name}`,
         });
         if (ownerEpoch !== automationSessionEpoch.current) return;
-        if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
-          throw new Error(`An automation named "${saveData.name}" already exists. The existing rule was kept instead of creating a duplicate.`);
+        createReceiptStatus = classifyAutomationCreateReceipt(result, saveData);
+        if (createReceiptStatus !== "created") {
+          // Includes a pre-existing name, a concurrent winner, a recovered
+          // response and missing/inconsistent receipts. None proves this
+          // particular create safely completed. Require read-only review.
+          throw new Error("Automation create receipt needs review.");
         }
       }
       automationEditorBaseline.current = null;
@@ -842,6 +847,7 @@ export default function AdminSettings() {
         const attempt = {
           kind: editingRule ? "update" : "create",
           originalId: editingRule?.id || null,
+          receiptStatus: editingRule ? null : createReceiptStatus,
           attempted: JSON.parse(JSON.stringify(saveData)),
         };
         automationUncertainRef.current = attempt;
@@ -911,6 +917,16 @@ export default function AdminSettings() {
       className="mb-4 rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950">
       <p className="font-semibold">Automation save result is uncertain</p>
       <p className="mt-1">The request might have succeeded. Your draft remains here, but saving it again is blocked. Checking status reads records only.</p>
+      {automationUncertain?.kind === "create" &&
+        ["existing", "recovered", "concurrent_duplicate_discarded"].includes(automationUncertain.receiptStatus) && (
+        <p className="mt-2">
+          {automationUncertain.receiptStatus === "existing"
+            ? "A rule already used this name before the create could be confirmed."
+            : automationUncertain.receiptStatus === "recovered"
+              ? "The server located a rule after processing the request, but ownership of that result is uncertain."
+              : "Concurrent creation left a different rule as the canonical record. Review it before proceeding."}
+        </p>
+      )}
       {automationReviewStatus && (
         <p className="mt-2" role="status">
           {automationReviewStatus === "matching"
