@@ -132,9 +132,9 @@ export function buildOrderHistoricalImportEvidence({
     });
 
     let classification = 'ambiguous';
-    if (!remoteRow) classification = 'remote_row_missing';
+    if (claims.length > 1) classification = 'duplicate_permanent_id_claims';
+    else if (!remoteRow) classification = 'remote_row_missing';
     else if (claims.length === 0) classification = 'no_local_claim';
-    else if (claims.length > 1) classification = 'duplicate_permanent_id_claims';
     else if (claims[0].deleted === true) classification = 'soft_deleted_claim';
     else if (markerState(claims[0]) === 'true') classification = 'pending_local_sync';
     else if (summaries[0].local_matches_remote && summaries[0].saved_snapshot_matches_remote &&
