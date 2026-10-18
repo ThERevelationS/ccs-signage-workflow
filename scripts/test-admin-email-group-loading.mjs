@@ -50,8 +50,8 @@ test('Automation editor opening and saving cannot use stale recipient-group choi
     const end = admin.indexOf('  };', start);
     const body = admin.slice(start, end);
     assert.match(body, /if \(emailGroupsLoading\) return/);
-    assert.match(body, /if \(!\(await loadEmailGroups\(\)\)\) return/);
+    assert.match(body, /if \(!\(await loadEmailGroups\(\)\) \|\| ownerEpoch !== automationSessionEpoch\.current\) return/);
   }
-  assert.match(admin, /if \(automationSaving \|\| emailGroupsLoading \|\| emailGroupsLoadError\) return/);
+  assert.match(admin, /if \(automationSaveInFlight\.current \|\| automationSaving \|\| emailGroupsLoading \|\|\s+emailGroupsLoadError/);
   assert.match(admin, /disabled=\{automationSaving \|\| emailGroupsLoading \|\| emailGroupsLoadError/);
 });
