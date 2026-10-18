@@ -1375,9 +1375,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (reloadingSalesQuickEditsRef.current) return;
     reloadingSalesQuickEditsRef.current = true;
     setReloadingSalesQuickEdits(true);
-    // The loaded page merges queued optimistic edits. Temporarily remove
-    // those overlays for the authoritative read; restore them if the request
-    // fails or is superseded. A failed refresh must not release a write fence.
+    const reloadScope = activeRecordScopeRef.current;
+    const reloadViewKey = liveViewSessionKeyRef.current;
+    // The loaded page merges queued optimistic edits AND live-edit pins.
+    // Exclude both from the authoritative reload; restore on failure only
+    // if the same workspace/filter is still active. Never re-pin an old view.
     const prior = {
       changes: pendingChangesRef.current,
       baselines: pendingBaselinesRef.current,
@@ -1389,7 +1391,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       repairs: new Set(pendingSameTaskRepairRef.current),
       repairFailures: new Map(failedSameTaskRepairRef.current),
       reviewExit: resolvedReviewExitRef.current,
+      pins: liveEditPinsRef.current,
     };
+    if (Object.keys(liveEditPinsRef.current).length > 0) {
+      liveEditPinsRef.current = {};
+      setLiveEditPinVersion((version) => version + 1);
+    }
     Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
     debounceTimers.current = {};
     pendingChangesRef.current = {};
@@ -1403,8 +1410,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     pendingHistoryFieldsRef.current = {};
     pendingRecordScopesRef.current = {};
     try {
-      const reloaded = await loadWorkOrders(false);
-      if (reloaded !== true) {
+      const reloaded = await loadWorkOrders(false, reloadScope);
+      const sameView = activeRecordScopeRef.current === reloadScope &&
+        liveViewSessionKeyRef.current === reloadViewKey;
+      if (reloaded !== true || !sameView) {
         pendingChangesRef.current = prior.changes;
         pendingBaselinesRef.current = prior.baselines;
         pendingSalesGuardsRef.current = prior.salesGuards;
@@ -1415,7 +1424,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         pendingSameTaskRepairRef.current = prior.repairs;
         failedSameTaskRepairRef.current = prior.repairFailures;
         resolvedReviewExitRef.current = prior.reviewExit;
-        setQuickEditError("Reload latest could not be verified. Pending Sales edits and the save safety block are preserved; retry Reload latest when the connection is available.");
+        if (sameView && liveEditPinsRef.current !== prior.pins) {
+          liveEditPinsRef.current = prior.pins;
+          setLiveEditPinVersion((version) => version + 1);
+        }
+        setQuickEditError(sameView
+          ? "Reload latest could not be verified. Pending Sales edits and the save safety block are preserved; retry Reload latest when the connection is available."
+          : "The Sales workspace or filter changed during Reload latest. Unverified saves remain blocked; review the new view and use Reload latest again.");
       } else {
         setQuickEditError("");
       }
