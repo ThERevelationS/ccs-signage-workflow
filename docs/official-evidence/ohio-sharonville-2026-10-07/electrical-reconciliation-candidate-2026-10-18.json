@@ -1,0 +1,290 @@
+{
+  "method": "retained-electrical-office-reconciliation-v1",
+  "profile_identity": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city"
+  },
+  "expected_profile_version": "2026-10-14T21:46:05.219000",
+  "queue_observation": {
+    "daily_day_key": "2026-10-17",
+    "dispatched_today": 40,
+    "daily_limit": 40,
+    "visible_active_rows": 0
+  },
+  "office_research": {
+    "method": "office-research-requirements-v1",
+    "researched_at": "2026-10-18T03:01:10.843Z",
+    "verification_status": "needs_verification",
+    "profile_snapshot": {
+      "id": "6ac19f0e23bd8a65822f6d51",
+      "name": "Sharonville",
+      "state": "OH",
+      "type": "city"
+    },
+    "roles": [
+      {
+        "role": "sign_permit",
+        "label": "Sign permit issuer",
+        "verification_status": "needs_verification",
+        "office_name": null,
+        "official_source_url": null,
+        "applicability": "unknown",
+        "service_area": null,
+        "responsibility_quote": null,
+        "delegation_quote": null,
+        "contact_info": {
+          "phone": null,
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": null,
+          "explicit_service_area": null,
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": null,
+          "phone_email_address": null,
+          "official_source_url": null,
+          "source_date_and_version": null,
+          "document_archives_or_online_form_links": null
+        },
+        "notes": null
+      },
+      {
+        "role": "zoning",
+        "label": "Zoning authority",
+        "verification_status": "needs_verification",
+        "office_name": null,
+        "official_source_url": null,
+        "applicability": "unknown",
+        "service_area": null,
+        "responsibility_quote": null,
+        "delegation_quote": null,
+        "contact_info": {
+          "phone": null,
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": null,
+          "explicit_service_area": null,
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": null,
+          "phone_email_address": null,
+          "official_source_url": null,
+          "source_date_and_version": null,
+          "document_archives_or_online_form_links": null
+        },
+        "notes": null
+      },
+      {
+        "role": "building",
+        "label": "Building permit and inspection authority",
+        "verification_status": "needs_verification",
+        "office_name": null,
+        "official_source_url": null,
+        "applicability": "unknown",
+        "service_area": null,
+        "responsibility_quote": null,
+        "delegation_quote": null,
+        "contact_info": {
+          "phone": null,
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": null,
+          "explicit_service_area": null,
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": null,
+          "phone_email_address": null,
+          "official_source_url": null,
+          "source_date_and_version": null,
+          "document_archives_or_online_form_links": null
+        },
+        "notes": null
+      },
+      {
+        "role": "electrical_permit",
+        "label": "Electrical permit issuer",
+        "verification_status": "needs_verification",
+        "office_name": "City of Sharonville",
+        "official_source_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+        "applicability": "unknown",
+        "service_area": "Sharonville, Ohio, as named in the retained residential guide; commercial-sign and exact-site coverage remain unconfirmed.",
+        "responsibility_quote": "Electric permits are\nissued by the City of\nSharonville.",
+        "delegation_quote": null,
+        "contact_info": {
+          "phone": null,
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": "Electric permits are\nissued by the City of\nSharonville.",
+          "explicit_service_area": "Sharonville, Ohio, as named in the retained residential guide; commercial-sign and exact-site coverage remain unconfirmed.",
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": null,
+          "phone_email_address": null,
+          "official_source_url": null,
+          "source_date_and_version": "Reconciled from the retained 2026-titled guide; no effective date or currentness verified.",
+          "document_archives_or_online_form_links": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+          "illuminated_sign_applicability": null,
+          "new_circuit_and_connection_scope": null,
+          "permit_application": "Physical page 7 describes email/drop-off intake at City of Sharonville Community Development. Intake is distinct from the named issuer on page 8; current application and submission route need confirmation.",
+          "online_application_portal": null,
+          "fees": null,
+          "contractor_registration_or_licensing": null,
+          "required_submittals": null
+        },
+        "notes": "Physical PDF page 8 (printed page 6) names the City as issuer. Exact issuing department/canonical office identity remains unknown. Page 7 describes intake and payment without a fee amount. Retained residential administrative guidance only. No current contract/delegation, canonical office ID, commercial-sign applicability, address authority or staff approval is established. Confirm before using for a project."
+      },
+      {
+        "role": "electrical_inspection",
+        "label": "Electrical inspection office",
+        "verification_status": "needs_verification",
+        "office_name": "National Inspection Corporation (NIC)",
+        "official_source_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+        "applicability": "unknown",
+        "service_area": "Sharonville, Ohio, as named in the retained residential guide; commercial-sign and exact-site coverage remain unconfirmed.",
+        "responsibility_quote": "All electrical inspections are handled directly by NIC.",
+        "delegation_quote": "In early 2020, the City of Sharonville partnered with National\nInspection Corporation (NIC) to perform electric plan review,\napprovals and inspections in an effort to improve the convenience to\nresidents and businesses.",
+        "contact_info": {
+          "phone": "888-433-4642",
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": "All electrical inspections are handled directly by NIC.",
+          "explicit_service_area": "Sharonville, Ohio, as named in the retained residential guide; commercial-sign and exact-site coverage remain unconfirmed.",
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": "In early 2020, the City of Sharonville partnered with National\nInspection Corporation (NIC) to perform electric plan review,\napprovals and inspections in an effort to improve the convenience to\nresidents and businesses.",
+          "phone_email_address": "Guide page 7 lists 888-433-4642 for specific electric permitting questions. This is not confirmed as an inspection-booking line.",
+          "official_source_url": null,
+          "source_date_and_version": "Reconciled from the retained 2026-titled guide; the described partnership began in early 2020, not a verified current contract.",
+          "document_archives_or_online_form_links": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+          "inspection_provider": "National Inspection Corporation (NIC), named on physical PDF pages 7 and 8; unverified candidate.",
+          "scheduling_contact_or_portal": null,
+          "required_inspection_stages": null,
+          "booking_lead_time": null,
+          "permit_number_or_prerequisites": null,
+          "access_and_concealment_conditions": null,
+          "reinspection_procedure_and_fees": null,
+          "utility_release_if_applicable": null
+        },
+        "notes": "Physical PDF page 7 (printed page 5) names NIC and says electrical inspections are handled directly by NIC; page 8 repeats the plan-review/inspection provider. Scheduling, stages, lead time, fees and utility release remain unknown. Retained residential administrative guidance only. No current contract/delegation, canonical office ID, commercial-sign applicability, address authority or staff approval is established. Confirm before using for a project."
+      },
+      {
+        "role": "right_of_way",
+        "label": "Right-of-way authority",
+        "verification_status": "needs_verification",
+        "office_name": null,
+        "official_source_url": null,
+        "applicability": "unknown",
+        "service_area": null,
+        "responsibility_quote": null,
+        "delegation_quote": null,
+        "contact_info": {
+          "phone": null,
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": null,
+          "explicit_service_area": null,
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": null,
+          "phone_email_address": null,
+          "official_source_url": null,
+          "source_date_and_version": null,
+          "document_archives_or_online_form_links": null
+        },
+        "notes": null
+      },
+      {
+        "role": "historic_review",
+        "label": "Historic/design review authority",
+        "verification_status": "needs_verification",
+        "office_name": null,
+        "official_source_url": null,
+        "applicability": "unknown",
+        "service_area": null,
+        "responsibility_quote": null,
+        "delegation_quote": null,
+        "contact_info": {
+          "phone": null,
+          "email": null,
+          "address": null
+        },
+        "research_fields": {
+          "canonical_office_identity": null,
+          "official_role_evidence": null,
+          "explicit_service_area": null,
+          "commercial_sign_scope": null,
+          "delegation_or_contract_provider": null,
+          "phone_email_address": null,
+          "official_source_url": null,
+          "source_date_and_version": null,
+          "document_archives_or_online_form_links": null
+        },
+        "notes": null
+      }
+    ],
+    "reconciliation": {
+      "method": "retained-electrical-office-reconciliation-v1",
+      "reconciled_at": "2026-10-18T03:01:10.843Z",
+      "performed_by": "Codex — authorized permitting development",
+      "research_attempts": 0,
+      "llm_calls": 0,
+      "source_document_id": "6aced7f49bda8d3e61944a9d",
+      "profile_document_id": "19bc3643-d404-4bcf-8cde-92c91897fd21",
+      "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "file_bytes": 11002258,
+      "source_retrieved_at": "2026-10-14T01:16:32.736Z",
+      "source_updated_date": "2026-10-14T12:17:05.372000",
+      "authority_classification": "administrative_guidance",
+      "pages": [
+        {
+          "physical_page": 7,
+          "text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+          "method": "pdfjs-4.8.69-text-v1"
+        },
+        {
+          "physical_page": 8,
+          "text_sha256": "76cc9f242a1dea694cdc5f991bbd9dbf77d5db0b5de69da70567fd93c3752cc4",
+          "method": "pdfjs-4.8.69-text-v1"
+        }
+      ],
+      "authority_approved": false,
+      "address_authority_resolved": false,
+      "commercial_sign_applicability": "unknown",
+      "untouched_roles": [
+        "sign_permit",
+        "zoning",
+        "building",
+        "right_of_way",
+        "historic_review"
+      ]
+    }
+  },
+  "validation": {
+    "archive_hash_and_bytes": true,
+    "committed_segment_validation": true,
+    "exact_quotes_and_page_hashes": true,
+    "existing_office_research_absent": true,
+    "roles_separate": true,
+    "unapproved_and_unknown_scope": true
+  },
+  "writes_allowed": [
+    "JurisdictionProfile.office_research"
+  ],
+  "write_performed": false
+}
