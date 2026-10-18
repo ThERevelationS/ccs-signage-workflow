@@ -399,7 +399,8 @@ try {
       assert.equal(await busy.isVisible(),true,"Escape/Tab cannot dismiss a pending reload");
     }
     await page.keyboard.type("DO-NOT-EDIT");
-    assert.equal(await draft.inputValue(),"","Underlying draft input is disabled during reload");
+    assert.equal(await page.locator('input[aria-label="New checklist option item"]').inputValue(),"",
+      "The inert editor cannot receive typed text during reload");
     assert.equal(await page.evaluate(()=>window.__saveCalls.length),1,"Reload does not resubmit");
     assert.equal(await page.evaluate(()=>window.__closeCount),0,"No close during reload");
     await page.evaluate(()=>window.__pendingTemplateReads.shift().resolve());
