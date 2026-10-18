@@ -51,6 +51,7 @@ try {
  assert.equal(await page.getByRole('button',{name:'Load older drafts',exact:true}).count(),0);
  const oldest=card('Oldest office follow-up'),open=oldest.getByRole('button',{name:'Open step 2 review',exact:true});
  assert.equal(await oldest.getByRole('button',{name:/Open step .* review/}).count(),1);
+ await oldest.getByText('3 proposed steps · 0 evidence / confirmation items',{exact:true}).waitFor();
  assert.ok((await open.boundingBox()).height>=44);await open.click();
  await page.getByText('Saved follow-up proposal',{exact:true}).waitFor();
  const target=page.locator('button[aria-controls="pwd-proposed-step-1"]');

@@ -72,7 +72,7 @@ export default function PermittingDraftLibrary({ onClose }) {
             const gaps = (row.snapshot?.gaps?.length || 0) + steps.filter(s => s.basis !== 'approved_rule').length;
             return <article key={row.id} className="min-w-0 rounded-lg border p-3 break-words">
               <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0 flex-1"><h3 className="font-semibold">{row.title || 'Untitled draft'}</h3><p className="text-sm text-gray-600">{row.jurisdiction_name || 'Jurisdiction unresolved'}{row.state ? `, ${row.state}` : ''}</p></div><span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">Draft · unapproved</span></div>
-              <p className="mt-2 text-sm">{row.snapshot?.steps?.length || 0} proposed steps · {gaps} review items</p>
+              <p className="mt-2 text-sm">{row.snapshot?.steps?.length || 0} proposed steps · {gaps} evidence / confirmation items</p>
               {row.snapshot?.draft_revision && <p className="mt-1 text-xs text-amber-800">Revision {row.snapshot.draft_revision.revision_number} · based on {row.snapshot.draft_revision.parent_title || row.snapshot.draft_revision.parent_draft_id}</p>}
               <p className="mt-1 text-xs text-gray-600 [overflow-wrap:anywhere]">Draft ID: {row.id} · Saved {row.created_date || row.reviewed_at || 'date not recorded'}{row.snapshot?.draft_revision?.root_draft_id ? ' · Recorded revision root: ' + row.snapshot.draft_revision.root_draft_id : ' · No revision root recorded'}</p>
               <section aria-label="Snapshot planning review summary" className="mt-3 space-y-2 rounded border border-purple-200 bg-purple-50 p-3 text-xs">
