@@ -53,6 +53,13 @@ function isSnapshot(value) {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+function isCompleteSnapshot(value, bindings = {}) {
+  if (!isSnapshot(value)) return false;
+  const columns = [...new Set(Object.values(bindings || {}).map(numericId).filter(Boolean))];
+  return columns.length > 0 && columns.every(columnId =>
+    Object.prototype.hasOwnProperty.call(value, columnId));
+}
+
 export function buildOrderHistoricalImportEvidence({
   orders, rowIds, remoteRows, configuredSheetId, bindings, localSnapshots,
 }) {
@@ -72,6 +79,7 @@ export function buildOrderHistoricalImportEvidence({
   const localMarkerCounts = { true: 0, false: 0, absent: 0, other: 0 };
   const missingPermanentIdOrders = [];
   const invalidPermanentIdOrders = [];
+  let wrongSheetOrderCount = 0;
   const claimsByRowId = new Map();
   for (const order of orders) {
     if (!order) continue;
@@ -79,16 +87,19 @@ export function buildOrderHistoricalImportEvidence({
     localMarkerCounts[markerState(order)]++;
     const orderSheet = clean(order?.smartsheet_sheet_id);
     const rowText = clean(order?.smartsheet_row_id);
-    if (!rowText) {
-      if (orderSheet === sheetId) missingPermanentIdOrders.push(clean(order?.id));
+    if (!orderSheet || !rowText) {
+      missingPermanentIdOrders.push(clean(order?.id));
       continue;
     }
     const rowId = numericId(rowText);
     if (!rowId) {
-      if (orderSheet === sheetId) invalidPermanentIdOrders.push(clean(order?.id));
+      invalidPermanentIdOrders.push(clean(order?.id));
       continue;
     }
-    if (orderSheet !== sheetId) continue;
+    if (orderSheet !== sheetId) {
+      wrongSheetOrderCount++;
+      continue;
+    }
     const claims = claimsByRowId.get(rowId) || [];
     claims.push(order);
     claimsByRowId.set(rowId, claims);
@@ -99,9 +110,11 @@ export function buildOrderHistoricalImportEvidence({
     const remoteSnapshot = remoteRow?.remote_snapshot || {};
     const claims = claimsByRowId.get(rowId) || [];
     const summaries = claims.map(order => {
-      const storedSnapshot = isSnapshot(order.smartsheet_sync_snapshot) ? order.smartsheet_sync_snapshot : null;
+      const storedSnapshot = isCompleteSnapshot(order.smartsheet_sync_snapshot, bindings)
+        ? order.smartsheet_sync_snapshot : null;
       const localSnapshot = localSnapshots?.[clean(order.id)] || {};
       const localComparison = compareSnapshots(localSnapshot, remoteSnapshot, bindings);
+      const localSnapshotComplete = isCompleteSnapshot(localSnapshot, bindings);
       const savedComparison = storedSnapshot
         ? compareSnapshots(storedSnapshot, remoteSnapshot, bindings)
         : { matches: false, mismatched_fields: [] };
@@ -111,7 +124,7 @@ export function buildOrderHistoricalImportEvidence({
         marker_state: markerState(order),
         last_synced_at: clean(order.smartsheet_last_synced_at) || null,
         snapshot_available: Boolean(storedSnapshot),
-        local_matches_remote: localComparison.matches,
+        local_matches_remote: localSnapshotComplete && localComparison.matches,
         local_mismatched_fields: localComparison.mismatched_fields,
         saved_snapshot_matches_remote: savedComparison.matches,
         saved_snapshot_mismatched_fields: savedComparison.mismatched_fields,
@@ -150,6 +163,7 @@ export function buildOrderHistoricalImportEvidence({
     ambiguous: rows.filter(row => row.classification === 'ambiguous').length,
     missing_permanent_id_orders: missingPermanentIdOrders.length,
     invalid_permanent_id_orders: invalidPermanentIdOrders.length,
+    wrong_sheet_order_records: wrongSheetOrderCount,
     local_marker_true: localMarkerCounts.true,
     local_marker_false: localMarkerCounts.false,
     local_marker_absent: localMarkerCounts.absent,
