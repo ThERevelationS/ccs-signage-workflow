@@ -46,6 +46,8 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   }
   const scopeInstanceKey = `${scopeGenerationRef.current}:${scopeKey}`;
   const [statusRecord, setStatusRecord] = useState({ scope: scopeInstanceKey, data: null });
+  const statusRecordRef = useRef(statusRecord);
+  statusRecordRef.current = statusRecord;
   const status = statusRecord.scope === scopeInstanceKey ? statusRecord.data : null;
   const [busyRecord, setBusyRecord] = useState({ scope: scopeInstanceKey, value: false });
   const busy = busyRecord.scope === scopeInstanceKey && busyRecord.value;
@@ -155,6 +157,26 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         const err = new Error(data?.error || `${paused ? "Resume Work" : "Work Pause"} was not confirmed by the server.`);
         err.retrySameRequest = data?.retry_same_request === true;
         throw err;
+      }
+      const acknowledgedEmail = String(data?.user?.email || "").trim().toLowerCase();
+      if (!acknowledgedEmail || acknowledgedEmail !== email) {
+        const message = "Work Pause confirmation did not match the signed-in employee.";
+        if (mountedRef.current && scopeRef.current === scopeInstanceKey) {
+          const latestRecord = statusRecordRef.current;
+          if (latestRecord.scope === scopeInstanceKey && latestRecord.data) {
+            const guardedRecord = {
+              scope: scopeInstanceKey,
+              data: { ...latestRecord.data, transition: action },
+            };
+            statusRecordRef.current = guardedRecord;
+            setStatusRecord(guardedRecord);
+          }
+          setError(message);
+        }
+        // Do not trust or broadcast an identity-mismatched action response. Retain
+        // its request ID and let each signed session verify its own authoritative state.
+        signalPauseChanged();
+        return;
       }
       clearRequestId(action, email);
       const confirmedStatus = data?.work_pause_status === "paused" && data?.work_pause?.id
