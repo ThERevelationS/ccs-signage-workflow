@@ -1118,6 +1118,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
         return;
       }
+      // A second timer may have been queued while the first request was in
+      // flight. Recheck the fence at dispatch, not only at user-edit time.
+      if (blockedFollowUpSavesRef.current.has(orderId)) {
+        setQuickEditError("A previous Sales save is still unverified. Use Reload latest; do not repeat the save.");
+        if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
+        return;
+      }
       try {
         const baselineSource = pendingBaselinesRef.current[orderId] || {};
         const historyFieldsAtSave = new Set(pendingHistoryFieldsRef.current[orderId] || []);
