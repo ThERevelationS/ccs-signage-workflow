@@ -1,5 +1,59 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — dated electrical office response evidence (October 18, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Previous verified checkpoint: 6ad4b49f6ae60eac39ea306f, “Permitting role-specific electrical office inquiry preparation verified”, Git 0ffabba9206ae4be7f2621239a8199bedf594a49.
+Fresh starting HEAD: fa2a5c8ecda5bca358d8d143de793e9bb27c3fdf. An unrelated deletion of base44/shared/fleetInventoryVersion.ts was initially in progress and was preserved. Latest pre-document HEAD: 0986dae775d18d021876abaf71e6749fe949ab76, clean. New Fleet request, Order Form historical import/link review, Sales archive recovery and SIPS template changes were preserved.
+
+Implemented:
+- Separate permit-issuer and inspection-provider response capture and read-only history within the electrical planning view.
+- Admin capture uses the existing handleOfficeResearchSave → saveJurisdictionFromLoadedSnapshot flow, its loaded-snapshot concurrency guards and existing activity append.
+- Each new office_research.staff_responses entry records response ID, role, responding office, actual response date, exact quote, source reference, optional safe HTTPS link, discussed site/work scope, notes, staff identity and capture time.
+- The exact saved locality identity and role findings are copied into the entry as historical context. New replies do not overwrite office findings, the saved identity comparison, canonical office assignments, requirements or authority decisions.
+- Currentness, commercial-sign scope and site applicability start unknown; other choices record only what an office claims, explicitly unverified. A claimed site coverage answer requires the discussed site/work scope.
+- Quotes reject overlength input instead of silently truncating evidence. Invalid dates, unsafe links and unsupported review states are rejected.
+- Explicit saving only. A successful callback must return the exact saved response receipt. Failed/uncertain saves retain the original request and inputs; explicit retry reuses the same ID and payload. Same-tick repeat clicks are blocked. Identical already-saved responses reconcile without another save; conflicting IDs and changed findings are rejected.
+- Existing responses are append-only in this UI; no edit/delete/approve/send actions were introduced.
+- refreshJurisdiction now retains staff_responses when new machine research replaces office findings, using retainOfficeResearchResponseHistory and the existing guarded profile persistence. Affected backend resource: refreshJurisdiction only.
+
+Files:
+src/components/permitting/OfficeResearchResponses.jsx
+src/components/permitting/officeResearchResponses.mjs
+src/components/permitting/ElectricalResearchTasks.jsx
+src/components/permitting/OfficeResearchFindings.jsx
+base44/shared/officeResearchResponseHistory.mjs
+base44/functions/refreshJurisdiction/entry.ts
+
+Validation passed:
+- New office-response checks: required date/quote/source, separate roles, unknown scope, immutable captured findings/comparison, same-ID replay, conflicting history rejection, changed-finding/profile rejection, safe URLs, no quote truncation, manual edit preservation and machine-refresh history retention.
+- Inquiry regression script and all 3 identity-comparison tests.
+- Targeted ESLint; refreshJurisdiction esbuild bundle; one npm run build; git diff --check.
+- Actual OfficeResearchFindings with production CSS in synthetic Chromium at 320/390/1280: no implicit save; interrupted save preserves input; same-tick save lock; keyboard retry with same response identity; separate roles; unchanged findings/comparison; read-only history with capture controls hidden; 44px history controls; no horizontal overflow, external requests or production writes.
+- 390px saved-history screenshot visually inspected.
+- Initial browser navigation timed out at its 8-second cold-Vite limit. The harness navigation allowance was changed to 30 seconds; no product changes were made after the passing build. Existing browser-database warnings only.
+- Source fingerprints are saved in docs/permitting-office-response-validation-2026-10-18.json.
+Synthetic checks are not authenticated employee acceptance, native mobile acceptance or live datastore persistence acceptance.
+
+Receipts/scripts:
+docs/permitting-office-response-browser-2026-10-18.json
+docs/permitting-office-response-validation-2026-10-18.json
+scripts/permitting-office-responses.test.mjs
+scripts/test-permitting-office-response-browser.mjs
+Browser reproduction uses PLAYWRIGHT_MODULE or /tmp/permitting-inquiry-browser/node_modules/playwright/index.mjs with Chromium/OS dependencies.
+
+Deployment/data:
+No frontend publication. Only the affected refreshJurisdiction backend source and its new helper were authored through the sandbox's automatic synchronization mechanism; no manual deploy command was used. Remote deployed bytes and live function behavior were not independently rechecked. No schema/RLS/integration changes. No production entity, source/archive, office catalog, client/job, shared-file, dispatcher/settings or queue writes. No office responses were fabricated into live data. No research/refresh/LLM invocation, email/message or authority approval. No known unfinished live write.
+
+Current Sharonville evidence is unchanged from prior unit: profile 6ac19f0e23bd8a65822f6d51 / Sharonville / OH / city was last read at updated_date 2026-10-18T04:09:02.663000. No fresh live profile/control observation was made in this chunk. Current commercial-sign issuer/intake/inspector responsibilities, delegation term, canonical identity and exact-site service area remain unresolved. Prior controls are historical observations; reread settings/state before research. Earlier CLI authentication check timed out; do not repeat a failed login loop or infer successful authentication.
+
+Next ONE chunk: carry these saved unverified office responses into the electrical workflow planning handoff and saved workflow review/print context. Preserve role separation, captured office/date/quote/source and unknown scope; later response changes must not silently rewrite immutable saved workflow revisions. No approval, automatic office selection, job writes or messaging. Inspect fresh source, verify, update handoff, checkpoint and stop. If a working authenticated session is available, current-source discovery remains a separate bounded task using existing refreshJurisdiction pathways and fresh controls, without bypasses.
+
+Remaining roadmap unchanged: bounded collection/archives/text acceptance; office/parent-authority reconciliation; Ohio then Kentucky coverage; source monitoring; exact matching/maps/action progress; evidence-based workflow features; safe explicit job integration; authenticated rollout/mobile/concurrency acceptance.
+Archive limits remain one new downloadable file per refresh, fetch 12s / upload 15s / extraction 20s. Preserve manual/pinned/hashed archives, exact-jurisdiction evidence, same-host deterministic discovery and all concurrent CCS work. No frontend publication without explicit permission.
+This unit is saved with checkpoint name “Permitting dated electrical office responses and refresh history retention verified”; obtain exact checkpoint ID/Git from the checkpoint tool receipt/final report. Older sections below are historical.
+
+
 ## Latest completed unit — electrical office inquiry preparation (October 18, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.

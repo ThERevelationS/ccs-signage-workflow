@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "recorded_at": "2026-10-18T12:16:15.666308+00:00",
+  "starting_head": "fa2a5c8ecda5bca358d8d143de793e9bb27c3fdf",
+  "pre_document_head": "148e7133a942e03a2b5c10554a5f8775c321d8aa",
+  "source_sha256": {
+    "src/components/permitting/OfficeResearchResponses.jsx": "2684bab8c8e84311e90bf114354c3a54fdf6d2bcf29ac0bf0741708c007b3bf9",
+    "src/components/permitting/officeResearchResponses.mjs": "b306fa4ba73c1e1cc94b4b5ee4f7ece622a9f2b3dc4deff3104bfb2f4cd22801",
+    "src/components/permitting/ElectricalResearchTasks.jsx": "03817f92686da65f9bfec96dc923221cb7f4e99c432eaf21b336f7d7c4dabf3b",
+    "src/components/permitting/OfficeResearchFindings.jsx": "f34600726f7a0d348f40826a7d6552e0ca9edbbd2b76d5b0303661b994103f92",
+    "base44/shared/officeResearchResponseHistory.mjs": "d9bd3b5c9a285480a76ca5e2ab4e9378e7709b332859975733f317eec7adbd8e",
+    "base44/functions/refreshJurisdiction/entry.ts": "56f99835e4cc0f465434649a9502039a3192997718b230f899fe71bf1daf74bf"
+  },
+  "focused_checks_lint_backend_bundle_build_exit_code": 0,
+  "browser_exit_code": 0,
+  "browser_receipt": "docs/permitting-office-response-browser-2026-10-18.json",
+  "visually_inspected_width": 390,
+  "synthetic_only": true,
+  "authenticated_employee_acceptance": false,
+  "live_datastore_acceptance": false,
+  "remote_deployed_bytes_rechecked": false,
+  "production_test_writes": 0,
+  "frontend_published": false,
+  "affected_backend_resource": "refreshJurisdiction",
+  "manual_deploy": false
+}
