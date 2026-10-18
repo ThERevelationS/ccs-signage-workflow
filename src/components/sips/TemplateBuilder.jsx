@@ -152,6 +152,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [subTemplateHasChanges, setSubTemplateHasChanges] = useState(false);
   const [subTemplateSaveStatus, setSubTemplateSaveStatus] = useState('idle'); // 'idle' | 'saved'
   const [savingChecklist, setSavingChecklist] = useState(null);
+  const [isReloading, setIsReloading] = useState(false);
+  const reloadInFlightRef = useRef(false);
   const checklistSaveInFlight = useRef(null);
   const subTemplateDraftRef = useRef(null);
   const productTypeDraftRef = useRef(null);
@@ -183,9 +185,18 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       setProductTypeTemplates(ptTemplates?.setting_value || {});
       setSubTemplateItems(stItems?.setting_value || {});
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+      // Return the verified read: React state updates are asynchronous and
+      // must not be used as the source for restoring an open editor draft.
+      return {
+        subTemplates: subTemplatesData,
+        productTypes: productTypesSetting?.setting_value?.items || [],
+        productTypeTemplates: ptTemplates?.setting_value || {},
+        subTemplateItems: stItems?.setting_value || {},
+      };
     } catch (error) {
       console.error("Error loading data:", error);
       setPersistenceError(error?.message || "Template Builder data could not be loaded safely.");
+      return null;
     }
   };
 
@@ -541,10 +552,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const blockNavigationWhileSaving = () => {
-    if (!checklistSaveInFlight.current) return false;
+    if (!checklistSaveInFlight.current && !reloadInFlightRef.current) return false;
     setNoticeDialog({
-      title: "Checklist save in progress",
-      message: "Finish saving your checklist before switching editors, changing tabs, or closing the builder.",
+      title: reloadInFlightRef.current ? "Checklist reload in progress" : "Checklist save in progress",
+      message: reloadInFlightRef.current
+        ? "Finish reloading your checklist before switching editors, changing tabs, or closing the builder."
+        : "Finish saving your checklist before switching editors, changing tabs, or closing the builder.",
     });
     return true;
   };
@@ -721,6 +734,49 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     || productTypeHasChanges
     || Boolean(newItemText.trim())
     || hasUnsavedNameDrafts;
+  const reloadLatest = async () => {
+    if (reloadInFlightRef.current || checklistSaveInFlight.current) return;
+    reloadInFlightRef.current = true;
+    setIsReloading(true);
+    try {
+      const latest = await loadData();
+      if (!latest) return; // Keep edits and the error if the read failed.
+      // An explicit reload is a fresh baseline, never a silent rebase of
+      // older unsaved local edits onto another person's template changes.
+      setSubTemplateChecklistItems(latest.subTemplateItems[selectedSubTemplate]?.items || []);
+      setProductTypeItems(latest.productTypeTemplates[selectedProductType]?.items || []);
+      setSubTemplateHasChanges(false);
+      setProductTypeHasChanges(false);
+      setSubTemplateSaveStatus('idle');
+      setProductTypeSaveStatus('idle');
+      setNewItemText("");
+      setNewSubTemplateName("");
+      setNewProductTypeName("");
+      setNewDropdownName("");
+      setEditingSubTemplateId(null);
+      setEditingSubTemplateName("");
+      setEditingProductTypeName(null);
+      setEditingProductTypeValue("");
+      setEditingDropdown(null);
+      setEditingDropdownName("");
+      setExpandedItems({});
+      if (selectedSubTemplate && !latest.subTemplates.some(st => st.id === selectedSubTemplate)) {
+        setSelectedSubTemplate(null);
+      }
+      if (selectedProductType && !latest.productTypes.includes(selectedProductType)) {
+        setSelectedProductType(null);
+      }
+      setPersistenceError("");
+    } finally {
+      reloadInFlightRef.current = false;
+      setIsReloading(false);
+    }
+  };
+  const requestReloadLatest = () => {
+    if (blockNavigationWhileSaving()) return;
+    if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'reload' });
+    else void reloadLatest();
+  };
   const requestTabChange = (tab) => {
     if (tab === activeTab || blockNavigationWhileSaving()) return;
     if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'tab', tab });
@@ -735,6 +791,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const next = pendingNavigation;
     setPendingNavigation(null);
     if (!next) return;
+    if (next.kind === 'reload') {
+      void reloadLatest();
+      return;
+    }
     // Discard both the dirty flags and their local drafts. Otherwise returning
     // to an editor tab can show discarded edits as though they were saved.
     if (subTemplateHasChanges && selectedSubTemplate) {
@@ -1392,6 +1452,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </Button>
           </div>
 
+          {isReloading && (
+            <div role="status" aria-live="polite" className="absolute inset-0 z-[125] flex items-center justify-center bg-white/75 px-4 text-center font-medium text-gray-800">
+              Reloading latest checklist templates…
+            </div>
+          )}
           {persistenceError && (
             <div className="mx-3 mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <div className="min-w-0">
@@ -1399,7 +1464,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <div className="mt-1 break-words">{persistenceError}</div>
               </div>
               <div className="grid grid-cols-2 gap-2 shrink-0 sm:flex sm:gap-1">
-                <Button type="button" size="sm" variant="outline" className="h-11 border-red-300 bg-white text-red-800 touch-manipulation lg:h-7" onClick={async () => { await loadData(); setPersistenceError(""); }}>Reload latest</Button>
+                <Button type="button" size="sm" variant="outline" className="h-11 border-red-300 bg-white text-red-800 touch-manipulation lg:h-7" onClick={requestReloadLatest} disabled={isReloading}>Reload latest</Button>
                 <Button type="button" size="sm" variant="ghost" className="h-11 text-red-800 touch-manipulation lg:h-7" onClick={() => setPersistenceError("")}>Dismiss</Button>
               </div>
             </div>
@@ -2478,12 +2543,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       <AlertDialog open={!!pendingNavigation} onOpenChange={(open) => { if (!open) setPendingNavigation(null); }}>
         <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard unsaved checklist edits?</AlertDialogTitle>
-            <AlertDialogDescription>{pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will discard unsaved checklist edits, unfinished names, and any new item you haven't added. Save or add your work first, or discard to continue.</AlertDialogDescription>
+            <AlertDialogTitle>{pendingNavigation?.kind === 'reload' ? 'Discard edits and reload latest templates?' : 'Discard unsaved checklist edits?'}</AlertDialogTitle>
+            <AlertDialogDescription>{pendingNavigation?.kind === 'reload'
+              ? 'Reloading the latest templates will discard unsaved checklist edits, unfinished names, and any new item you have not added. Your draft stays available if the reload fails. Choose Keep editing to preserve it.'
+              : `${pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will discard unsaved checklist edits, unfinished names, and any new item you haven't added. Save or add your work first, or discard to continue.`}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="h-11">Keep editing</AlertDialogCancel>
-            <AlertDialogAction className="h-11 bg-amber-700 hover:bg-amber-800" onClick={confirmNavigation}>{pendingNavigation?.kind === 'close' ? 'Discard and close' : 'Discard and switch'}</AlertDialogAction>
+            <AlertDialogAction className="h-11 bg-amber-700 hover:bg-amber-800" onClick={confirmNavigation}>{pendingNavigation?.kind === 'reload' ? 'Discard edits & reload latest' : pendingNavigation?.kind === 'close' ? 'Discard and close' : 'Discard and switch'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
