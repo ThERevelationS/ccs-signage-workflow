@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "explicit_save_only": true,
+      "failed_save_preserves_form": true,
+      "same_tick_save_lock": true,
+      "same_response_retry": true,
+      "separate_roles": true,
+      "immutable_findings_and_comparison": true,
+      "read_only_history": true,
+      "no_overflow": true,
+      "no_external_requests": true,
+      "production_writes": 0
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "explicit_save_only": true,
+      "failed_save_preserves_form": true,
+      "same_tick_save_lock": true,
+      "same_response_retry": true,
+      "separate_roles": true,
+      "immutable_findings_and_comparison": true,
+      "read_only_history": true,
+      "no_overflow": true,
+      "no_external_requests": true,
+      "production_writes": 0
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "explicit_save_only": true,
+      "failed_save_preserves_form": true,
+      "same_tick_save_lock": true,
+      "same_response_retry": true,
+      "separate_roles": true,
+      "immutable_findings_and_comparison": true,
+      "read_only_history": true,
+      "no_overflow": true,
+      "no_external_requests": true,
+      "production_writes": 0
+    }
+  ],
+  "synthetic_only": true,
+  "employee_acceptance": false
+}

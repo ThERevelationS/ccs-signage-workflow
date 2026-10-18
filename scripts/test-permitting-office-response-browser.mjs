@@ -25,7 +25,7 @@ try{
   const page=await browser.newPage({viewport:{width,height:1000}}),errors=[],outside=[];
   page.setDefaultTimeout(8000);page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/*',route=>{const url=route.request().url();if(url.startsWith('http')&&!url.startsWith(origin)){outside.push(url);return route.abort();}return route.continue();});
-  await page.goto(origin,{waitUntil:'networkidle'});
+  await page.goto(origin,{waitUntil:'networkidle',timeout:30000});
   const permit=page.getByRole('region',{name:'Office responses: electrical_permit',exact:true});
   const inspector=page.getByRole('region',{name:'Office responses: electrical_inspection',exact:true});
   const fill=async(region,office,quote)=>{
