@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "separate_roles": true,
+      "copy": true,
+      "manual_copy_fallback": true,
+      "keyboard_selection": true,
+      "updated_draft": true,
+      "no_overflow": true,
+      "no_external_requests": true,
+      "no_saves": true
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "separate_roles": true,
+      "copy": true,
+      "manual_copy_fallback": true,
+      "keyboard_selection": true,
+      "updated_draft": true,
+      "no_overflow": true,
+      "no_external_requests": true,
+      "no_saves": true
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "separate_roles": true,
+      "copy": true,
+      "manual_copy_fallback": true,
+      "keyboard_selection": true,
+      "updated_draft": true,
+      "no_overflow": true,
+      "no_external_requests": true,
+      "no_saves": true
+    }
+  ],
+  "synthetic_only": true,
+  "employee_acceptance": false
+}

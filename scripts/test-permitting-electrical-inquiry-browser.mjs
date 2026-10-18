@@ -50,7 +50,7 @@ try {
   if(width===390)await permit.screenshot({path:'/tmp/permitting-electrical-inquiry-390.png'});
   await page.getByRole('button',{name:'Change fixture',exact:true}).click();
   assert.match(await permitText.inputValue(),/Changed candidate/);
-  assert.equal(await permit.getByText(/Inquiry copied/).count(),0);
+  await permit.getByText(/Inquiry copied/).waitFor({state:'hidden'});
   assert.equal(await page.evaluate(()=>window.saves.length),0);
   assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
   checks.push({width,passed:true,separate_roles:true,copy:true,manual_copy_fallback:true,keyboard_selection:true,updated_draft:true,no_overflow:true,no_external_requests:true,no_saves:true});
