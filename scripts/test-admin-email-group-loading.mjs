@@ -53,5 +53,5 @@ test('Automation editor opening and saving cannot use stale recipient-group choi
     assert.match(body, /if \(!\(await loadEmailGroups\(\)\) \|\| ownerEpoch !== automationSessionEpoch\.current\) return/);
   }
   assert.match(admin, /if \(automationUncertainRef\.current \|\| automationSaveInFlight\.current \|\| automationSaving \|\| emailGroupsLoading \|\|\s+emailGroupsLoadError/);
-  assert.match(admin, /disabled=\{automationSaving \|\| emailGroupsLoading \|\| emailGroupsLoadError/);
+  assert.match(admin, /disabled=\{!!automationUncertain \|\| automationSaving \|\| emailGroupsLoading \|\| emailGroupsLoadError/);
 });
