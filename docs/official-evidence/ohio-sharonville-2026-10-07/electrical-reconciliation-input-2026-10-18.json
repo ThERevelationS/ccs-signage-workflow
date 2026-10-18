@@ -1,0 +1,669 @@
+{
+  "profile": {
+    "auto_refresh": true,
+    "notes": null,
+    "documents": [
+      {
+        "ai_summary": "Sign permit application form page with required submission attachments for permanent sign permits.",
+        "id": "ai_2026-10-04T00:36:39Z_1",
+        "doc_type": "application_form",
+        "source": "ai_discovered",
+        "title": "City of Sharonville Sign Application (official city site)",
+        "extracted_text": null,
+        "url": "https://www.sharonville.org/394/Sign-Application",
+        "last_fetched": "2026-10-14T00:43:52.976Z",
+        "resource_classification": {
+          "kind": "pdf",
+          "method": "http-mime-signature-v1",
+          "source_url": "https://www.sharonville.org/394/Sign-Application",
+          "final_url": "https://www.sharonville.org/DocumentCenter/View/1975/Application-for-Sign-Approval?bidId="
+        },
+        "archive_state": {
+          "status": "complete",
+          "claim_token": "e6af88dd-a2ca-41d7-89ec-d4b5c56aaf4e",
+          "attempts": 1,
+          "lease_expires_at": "",
+          "last_attempt_at": "2026-10-14T21:45:59.797Z",
+          "error": "",
+          "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+          "source_bytes": 733645,
+          "detected_format": "pdf",
+          "validation_method": "document-container-signature-v1",
+          "source_content_type": "application/pdf",
+          "source_final_url": "https://www.sharonville.org/DocumentCenter/View/1975/Application-for-Sign-Approval?bidId=",
+          "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/b4257d7ac_Sign-Application.pdf",
+          "uploaded_at": "2026-10-14T21:46:02.809Z",
+          "verification_attempts": 1,
+          "retry_after": "",
+          "completed_at": "2026-10-14T21:46:03.727Z"
+        },
+        "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/b4257d7ac_Sign-Application.pdf",
+        "source_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+        "source_bytes": 733645,
+        "stored_sha256": "ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6",
+        "stored_bytes": 733645,
+        "downloaded_at": "2026-10-14T21:46:02.809Z",
+        "catalog_state": {
+          "status": "complete",
+          "claim_token": "73c5cc35-d612-4679-9d8e-0bae0f9d4c99",
+          "registration_key": "[\"6ac19f0e23bd8a65822f6d51\",\"https://www.sharonville.org/394/Sign-Application\",\"ab0e2db03be02726a41dc7e0965b829ed47f441cb46d2e3136b4f0b5425774f6\"]",
+          "lease_expires_at": "",
+          "started_at": "2026-10-14T21:46:04.256Z",
+          "source_document_id": "6acff81c944664b7ee220406",
+          "registered_at": "2026-10-14T21:46:05.082Z",
+          "error": ""
+        }
+      },
+      {
+        "file_url": null,
+        "ai_summary": "Chapter 1123 governs sign regulations including applicability and certificate of zoning approval for sign face changes.",
+        "id": "ai_2026-10-04T00:36:39Z_2",
+        "doc_type": "sign_ordinance",
+        "source": "ai_discovered",
+        "title": "Sharonville Codified Ordinances Chapter 1123 - Sign Regulations (American Legal Publishing)",
+        "extracted_text": null,
+        "url": "https://codelibrary.amlegal.com/codes/sharonville/latest/sharonville_oh/0-0-0-49853",
+        "last_fetched": "2026-10-04T00:36:39Z"
+      },
+      {
+        "file_url": null,
+        "ai_summary": "Sign fees: Temporary signs $40.00, Residential signs over 6 sq ft $40.00.",
+        "id": "ai_2026-10-04T00:36:39Z_3",
+        "doc_type": "fee_schedule",
+        "source": "ai_discovered",
+        "title": "Sharonville Fee Schedule - Chapter 1309 Building, Planning and Zoning Fees",
+        "extracted_text": null,
+        "url": "https://www.sharonville.org/393/Fee-Schedule",
+        "last_fetched": "2026-10-04T00:36:39Z"
+      },
+      {
+        "ai_summary": "Department overview with contact info and permit guidance; notes some permits issued by county not city.",
+        "id": "ai_2026-10-04T00:36:39Z_4",
+        "doc_type": "other",
+        "source": "ai_discovered",
+        "title": "Building, Zoning, and Planning",
+        "extracted_text": null,
+        "url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "last_fetched": "2026-10-14T01:05:24.573Z",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0
+      },
+      {
+        "title": "Website Sign In",
+        "url": "https://www.sharonville.org/MyAccount",
+        "doc_type": "other",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "88649aa4-2483-4947-bf1c-19d4a523e3ba",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Community Development",
+        "url": "https://www.sharonville.org/122/Community-Development",
+        "doc_type": "other",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "df3e3416-fed2-4c72-9e04-aa33454bbf2b",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "2025 BOARD OF ZONING APPEALS & PLANNING COMMISSION Application Requirements & Meeting Schedule",
+        "url": "https://sharonville.org/DocumentCenter/View/3983/2025-BZA--PC-Meeting-Schedule-",
+        "doc_type": "checklist",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "a8ae8744-0a23-4d55-98ad-353c11840655",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Building Code Violations",
+        "url": "https://www.sharonville.org/forms.aspx?FID=72",
+        "doc_type": "permit_application",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "2d0a3e08-7415-4917-af52-2b47fbb53b76",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Line of Sight Obstruction",
+        "url": "https://www.sharonville.org/forms.aspx?FID=73",
+        "doc_type": "permit_application",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "34431362-cd4d-4e9c-b05d-30503fc2dba8",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Other - Nuisance/Code Violations",
+        "url": "https://www.sharonville.org/forms.aspx?FID=74",
+        "doc_type": "permit_application",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "d4a3d556-4f48-4262-b608-f6b4eefba8cd",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Residential Permitting Guide",
+        "url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+        "doc_type": "other",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "19bc3643-d404-4bcf-8cde-92c91897fd21",
+        "last_fetched": "2026-10-14T01:05:24.573Z",
+        "archive_state": {
+          "known_pdf": {
+            "sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+            "bytes": 11002258
+          },
+          "status": "complete",
+          "claim_token": "1e7b534e-07b1-4319-8f11-5472fd234bde",
+          "attempts": 1,
+          "lease_expires_at": "",
+          "last_attempt_at": "2026-10-14T01:16:27.675Z",
+          "error": "",
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "source_bytes": 11002258,
+          "detected_format": "pdf",
+          "validation_method": "document-container-signature-v1",
+          "source_content_type": "application/pdf",
+          "source_final_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+          "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+          "uploaded_at": "2026-10-14T01:16:32.736Z",
+          "verification_attempts": 1,
+          "retry_after": "",
+          "completed_at": "2026-10-14T01:16:34.358Z"
+        },
+        "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "source_bytes": 11002258,
+        "stored_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "stored_bytes": 11002258,
+        "downloaded_at": "2026-10-14T01:16:32.736Z",
+        "catalog_state": {
+          "status": "complete",
+          "claim_token": "73ad5338-cbc1-4fc6-9890-49f60cf39018",
+          "registration_key": "[\"6ac19f0e23bd8a65822f6d51\",\"https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026\",\"4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9\"]",
+          "lease_expires_at": "",
+          "started_at": "2026-10-14T01:16:35.804Z",
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "registered_at": "2026-10-14T01:16:36.293Z",
+          "error": ""
+        }
+      },
+      {
+        "title": "How do I obtain Building and/or Zoning Permits from the City of Sharonville?",
+        "url": "https://www.sharonville.org/Faq.aspx?QID=94",
+        "doc_type": "permit_application",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Code Enforcement - Property Maintenance - Zoning Enforcement",
+        "url": "https://www.sharonville.org/500/Code-Enforcement---Property-Maintenance-",
+        "doc_type": "zoning_code",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "6365b278-3da2-4f38-af5e-139a8866423b",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Zoning Map",
+        "url": "https://www.sharonville.org/455/Zoning-Map",
+        "doc_type": "other",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "502c0b0e-1c7e-4a7f-b5e1-a5bc8a806f34",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      },
+      {
+        "title": "Zoning Ordinance",
+        "url": "https://sharonville.org/DocumentCenter/View/3262/Sharonville-Planning-and-Zoning-Code",
+        "doc_type": "zoning_code",
+        "source": "official_page_harvest",
+        "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+        "discovery_depth": 0,
+        "id": "0b5a0fb2-3d81-4eb4-9f23-59076d3cc1c6",
+        "last_fetched": "2026-10-14T01:05:24.573Z"
+      }
+    ],
+    "setback_rules": "INFORMATION NOT FOUND",
+    "sqft_width_height_rules": "Chapter 1123 of the Codified Ordinances governs sign dimensional limits; full text of specific dimensional standards not yet archived, so sqft/width/height limits are not yet extracted.",
+    "contact_info": {
+      "address": "10900 Reading Road, Sharonville, OH 45241",
+      "department": "City of Sharonville - Building, Zoning, and Planning",
+      "phone": "(513) 563-1144",
+      "email": "INFORMATION NOT FOUND"
+    },
+    "type": "city",
+    "verification_status": null,
+    "activity_log": [],
+    "rewrite_authority": null,
+    "lighting_allowances": "INFORMATION NOT FOUND",
+    "cagis_database_url": "INFORMATION NOT FOUND",
+    "verified_at": null,
+    "state": "OH",
+    "permit_requirements": {
+      "processing_time": "INFORMATION NOT FOUND",
+      "max_sign_area_sqft": null,
+      "requires_permit": true,
+      "fee_range": "Temporary signs: $40.00; Residential signs (over 6 sq ft): $40.00 (per Chapter 1309 fee schedule)",
+      "electronic_signs_allowed": null,
+      "setback_requirements": "INFORMATION NOT FOUND",
+      "max_height_ft": null,
+      "illumination_allowed": null
+    },
+    "permitting_url": "https://www.sharonville.org/394/Sign-Application",
+    "last_updated": "2026-10-04T00:36:39Z",
+    "parent_county": {
+      "name": "Butler County",
+      "permitting_url": "INFORMATION NOT FOUND",
+      "contact_info": {
+        "department": "INFORMATION NOT FOUND",
+        "phone": "INFORMATION NOT FOUND",
+        "email": "INFORMATION NOT FOUND",
+        "address": "INFORMATION NOT FOUND"
+      },
+      "website_url": "https://www.butlercountyohio.org/",
+      "documents": []
+    },
+    "verification_notes": null,
+    "verified_by": null,
+    "height_allowances": "INFORMATION NOT FOUND",
+    "website_url": "https://www.sharonville.org/",
+    "ai_summary": "Sharonville sign permits are required for all permanent and temporary exterior signage, administered by the City Building, Zoning and Planning Department under Chapter 1123 of the Codified Ordinances. A sign application with scaled colored rendering is required; certificate of zoning approval is needed even for sign face changes with interchangeable panels. Some permits are issued by the county (Hamilton or Butler) rather than the City depending on location.",
+    "name": "Sharonville",
+    "discovery_scan_state": {
+      "external_initial_collection_drained": false,
+      "method": "official-page-frontier-v1",
+      "seed_url": "https://www.sharonville.org/394/Sign-Application",
+      "max_depth": 2,
+      "visited_urls": [
+        "https://sharonville.org/394/Sign-Application",
+        "https://sharonville.org/DocumentCenter/View/1975/Application-for-Sign-Approval?bidId="
+      ],
+      "pending_pages": [],
+      "gaps": [],
+      "external_referrals": [],
+      "attempted_pages_total": 1,
+      "saved_document_scans": [
+        {
+          "method": "explicit-saved-document-page-v1",
+          "document_id": "ai_2026-10-04T00:36:39Z_4",
+          "source_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "profile_version": "2026-10-14T00:43:53.215000",
+          "scanned_at": "2026-10-14T01:05:24.573Z",
+          "continuation_state": {
+            "external_initial_collection_drained": false,
+            "method": "official-page-frontier-v1",
+            "seed_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+            "max_depth": 2,
+            "visited_urls": [
+              "https://sharonville.org/123/Building-Zoning-and-Planning"
+            ],
+            "pending_pages": [
+              {
+                "url": "https://www.sharonville.org/MyAccount",
+                "depth": 1
+              },
+              {
+                "url": "https://sharonville.org/DocumentCenter/View/3983/2025-BZA--PC-Meeting-Schedule-",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/forms.aspx?FID=72",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/forms.aspx?FID=73",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/forms.aspx?FID=74",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/122/Community-Development",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/Faq.aspx?QID=94",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/500/Code-Enforcement---Property-Maintenance-",
+                "depth": 1
+              },
+              {
+                "url": "https://www.sharonville.org/455/Zoning-Map",
+                "depth": 1
+              },
+              {
+                "url": "https://sharonville.org/DocumentCenter/View/3262/Sharonville-Planning-and-Zoning-Code",
+                "depth": 1
+              }
+            ],
+            "gaps": [],
+            "external_referrals": [
+              {
+                "url": "https://msdgc.org/doing-business-with-us/development-services/",
+                "title": "Request for Availability of Sewer Service Form (online form)",
+                "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+                "linked_href": "https://msdgc.org/doing-business-with-us/development-services/",
+                "resolution_base_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+                "discovery_element": "anchor",
+                "referral_kind": "online_form",
+                "provenance_method": "official-page-external-link-v1",
+                "verification_status": "needs_verification",
+                "fetch_scope_approved": false,
+                "authority_established": false,
+                "source_page_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+              },
+              {
+                "url": "https://www.hazards.fema.gov/wps/portal/mapviewer",
+                "title": "FEMA Flood Plain Mapping Information",
+                "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+                "linked_href": "https://www.hazards.fema.gov/wps/portal/mapviewer",
+                "resolution_base_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+                "discovery_element": "anchor",
+                "referral_kind": "online_form",
+                "provenance_method": "official-page-external-link-v1",
+                "verification_status": "needs_verification",
+                "fetch_scope_approved": false,
+                "authority_established": false,
+                "source_page_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+              },
+              {
+                "url": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+                "title": "Civil Service Commission Rules and Regulations",
+                "source_page_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+                "linked_href": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+                "resolution_base_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+                "discovery_element": "anchor",
+                "referral_kind": "code_publisher",
+                "provenance_method": "official-page-external-link-v1",
+                "verification_status": "needs_verification",
+                "fetch_scope_approved": false,
+                "authority_established": false,
+                "source_page_sha256": "8d05afea47f4c70798d9bc882c8f64ff27b977498ab74748034bffa2069b4129"
+              }
+            ],
+            "attempted_pages_total": 1
+          },
+          "pages": [
+            {
+              "url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+              "depth": 0,
+              "final_url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+              "status": "scanned",
+              "discovered_resources": 12
+            }
+          ],
+          "attempted_pages": 1,
+          "jurisdiction_coverage_complete": false,
+          "authority_established": false
+        }
+      ]
+    },
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "created_date": "2026-10-04T00:34:22.542000",
+    "updated_date": "2026-10-14T21:46:05.219000",
+    "created_by_id": "68dfcc5e57bbbc35387da97d",
+    "created_by": "brettheinlein1@gmail.com",
+    "is_sample": false
+  },
+  "source": {
+    "authority_review_state": null,
+    "rule_import_state": null,
+    "text_extraction_pinned": null,
+    "supersedes": null,
+    "reviewer": null,
+    "source_registration_key": "[\"6ac19f0e23bd8a65822f6d51\",\"https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026\",\"4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9\"]",
+    "classified_at": "2026-10-14T12:16:29.502Z",
+    "file_hash_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+    "jurisdiction_id": "6ac19f0e23bd8a65822f6d51",
+    "title": "Residential Permitting Guide",
+    "authority_classification": "administrative_guidance",
+    "ocr_evidence": [],
+    "last_checked": null,
+    "extracted_text": "[Source 6aced7f49bda8d3e61944a9d; archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9; PDF page 1]\nRESIDENTIAL\nPERMITTING\nGUIDE\nCOMMUNITY DEVELOPMENT\n\n[Source 6aced7f49bda8d3e61944a9d; archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9; PDF page 2]\n“The Community Development Department\nis committed to providing outstanding\ncustomer service and maintaining a safe,\nvibrant, and well maintained community for\nboth residents and businesses.”\nCOMMUNITYDEVELOPMENT\nThe Community Development Department\nstaff is happy to assist you with any of your\npermitting questions.\n513-563-0033\npermits@cityofsharonville.com\n\n[Source 6aced7f49bda8d3e61944a9d; archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9; PDF page 3]\nTABLE OF\nCONTENTS\n1. Guide to Residential Permitting in Sharonville\n2. Sharonville Building Services\n3. Permit Information\na. How to Fill Out and Submit a Permit\nb . Projects Requiring a Building/ Zoning Permit\n4. Electric Permits\n5. Inspections\n6. Current Zoning Map\n7. Residential District Requirements\na . Building Setback Table\nb . Building Setback Examples\n8. Construction Plans and Details\n9. Zoning Code Regulations\na. Accessory Structures\nb. Swimming Pools\nc. Fences & Walls\nd. Fence and Wall Requirements\ne. Parking and Storage Regulations\n10. Residential Storm Water Information\na. Important Information About Gutters & Downspouts\nb. Information Regarding Storm Drainage Systems and Sump Pumps\nc. Construction Figure Examples of Drainage Systems\n11. Trees & Landscaping on Residential Property\n12. Excavations\n13. Residential Driveways\n14. Floodplain Development\n15. Code Enforcement and Property Maintenace\n16. Residential Home Improvement & Assistance Programs\na. Hamilton County Home Improvement Program (HIP)\nb. People Working Cooperatively (PWC)\n17. FAQS COMMUNITYDEVELOPMENT\npg. 2\npg. 2\npg. 3-4\npg. 3\npg. 4\npg. 5\npg. 6\npg. 7\npg. 8-9\npg. 8\npg. 9\npg. 10-11\npg. 12-15\npg. 12\npg. 13\npg. 13-14\npg. 14\npg. 15\npg. 16-18\npg. 16\npg. 17\npg. 18\npg. 19\npg. 20\npg. 20\npg. 21\npg. 22\npg. 23-24\npg. 23\npg. 24\npg. 25\n\n[Source 6aced7f49bda8d3e61944a9d; archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9; PDF page 4]\nA GUIDE TO RESIDENTIAL PERMITTING IN\nSHARONVILLE\n1.\nCOMMUNITYDEVELOPMENT\nSHARONVILLE BUILDING AND ZONING\nSERVICES\n2.\nThe Community Development Department is the City of\nSharonville's resource for all aspects of building and planning,\nfrom strategic planning initiatives to construction approvals,\ninspections and property maintenance / zoning code\nenforcement. Effective and proactive Community\nDevelopment benefits and improves the quality of life for\nSharonville residents and businesses. We conduct our daily\nactivities as partners and advocates for all Sharonville\nresidents, businesses, and visitors.\n• Residential Building Permit Review\n• Zoning Code Review\n• General Code Consultation\n• Issue Building and Zoning Permits\n• Conduct Building and Site Inspections\n• Process Variance, Zone Change, and Conditional Use Applications\n• Strategic and Comprehensive Planning Initiatives\n• Zoning and Property Maintenance Code Enforcement\n• Site Development Review and Approvals\n• Storm Water Review Information and Approval Coordination\n• FEMA and Floodplain management\n2\n\n[Source 6aced7f49bda8d3e61944a9d; archive SHA-256 4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9; PDF page 5]\nCOMMUNITYDEVELOPMENT\n3\nPERMIT INFORMATION 3.\nHow to Fill Out & Submit a Permit:\n10900 Reading Road ∙ Sharonville, OH 45241\n513 ∙ 563 ∙ 0033\npermits@cityofsharonville.com\nApplication for Building/ Electrical/ Zoning Approval\nPROJECT ADDRESS:\nBUSINESS/TENANT NAME ( If applicable ):\nNew Construction Interior Alteration Fire Alarm Reroof / Siding Deck Driveway\nAddition Exterior Alteration Suppression Accessory Structure Fence Shed\nElectrical HVAC Kitchen Hood Tent Pool Other (describe)\nElectrical Service Size (Line Drawing Required over 400 AMP)\nDESCRIBE PROPOSED WORK:\nDESCRIBE TYPE OF BUSINESS (If applicable):\nNAME ADDRESS (INCLUDE CITY, STATE, & ZIP) PHONE\nApplicant / Contractor\nOwner / Lessee\nApplicant Name (Print ) (Sign)\nApplicant Email\nESTIMATED COST & SQUARE FOOTAGE\nBuilding Structure Suppression/Fire Alarm\nHVAC TOTAL PROJECT COST\nMiscellaneous SQUARE FOOTAGE\nBELOW IS FOR OFFICE USE ONLY\nApproval Fee\nIssue Date Plan Review Fee\nUse Group Fire Dept. Review Fee\nConst. Type Sub Total\nApproval B y 1% (ORC) / 3% (OBC)\nZoning District TOTAL FEES DUE\n** SEE NEXT PAGE FOR COMMERCIAL CONSTRUCTION DOCUMENTATION CERTIFICATION **\nPROJECT # (office use)\n1. Go onto the City of Sharonville website\n(https://www.sharonville.org/)\n2. Hold Cursor over City Office\n3. Click on Community Development under\nDepartments\n4. Click on Online Documents on the left side of the\nscreen\n5. Fill out the form called “Application for Plan\nApproval”\nhttps://www.sharonville.org/documentcenter/\nview/4006/application-for-plan-approval\n6. Submit the completed application, along with two\n(2) sets of construction plans/drawings\nrequired for your project\n7. Once this is completed, EMAIL TO\npermits@cityofsharonville.com\nPlease call the Community\nDevelopment Department\nwith any questions at\n(513)-563-0033\na.\nScan the QR Code to take you\nto our document page which\nincludes all of our building\npermit applications.",
+    "jurisdiction_name": "Sharonville",
+    "issuing_office": null,
+    "derived_facts": null,
+    "effective_or_adopted_date": null,
+    "online_form_url": null,
+    "verification_status": "needs_verification",
+    "official_url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+    "http_outcome": null,
+    "superseded_by": null,
+    "authority_review": null,
+    "text_extraction_state": {
+      "status": "partial",
+      "method": "pdfjs-4.8.69-text-v1",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+      "claim_token": "9a91ddcc-46d9-43d5-9bad-7e8ee82330ab",
+      "lease_expires_at": "",
+      "last_attempt_at": "2026-10-14T11:57:48.661Z",
+      "attempts": 2,
+      "next_page": 11,
+      "error": "",
+      "retry_after": "",
+      "failures": 0,
+      "total_pages": 28,
+      "pages_extracted": 10,
+      "needs_ocr_pages": [],
+      "needs_ocr_page_count": 0,
+      "truncated_pages": [],
+      "truncated_page_count": 0,
+      "last_chunk_completed_at": "2026-10-14T11:57:50.682Z",
+      "completed_at": "",
+      "complete_document_text": false,
+      "storage_mode": "pdf-page-segments-v1",
+      "inline_page_count": 5,
+      "preview_only": true,
+      "segment_count": 1,
+      "pending_segment": null,
+      "last_segment": {
+        "id": "6acf6e3e1ae409cc63a3da41",
+        "registration_key": "pdf-page-segments-v1:6aced7f49bda8d3e61944a9d:4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9:pdfjs-4.8.69-text-v1:6",
+        "payload_sha256": "17c40e22abe89f89ec3c9935980eff7be4772aee99ccfab3c2887acd518bbef9",
+        "page_start": 6,
+        "page_end": 10,
+        "total_pages": 28
+      },
+      "extracted_text_scope": "inline_preview"
+    },
+    "extracted_pages": [
+      {
+        "page": 1,
+        "text": "RESIDENTIAL\nPERMITTING\nGUIDE\nCOMMUNITY DEVELOPMENT",
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "6c2c7ec79fbc606d8ef70f781a5fb0d03360047f7ce4e568bfd168b78a7814b3",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false
+      },
+      {
+        "page": 2,
+        "text": "“The Community Development Department\nis committed to providing outstanding\ncustomer service and maintaining a safe,\nvibrant, and well maintained community for\nboth residents and businesses.”\nCOMMUNITYDEVELOPMENT\nThe Community Development Department\nstaff is happy to assist you with any of your\npermitting questions.\n513-563-0033\npermits@cityofsharonville.com",
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "3f986dfa6679fb70e287faad42d489cc3ebfe1eb28ad0d7daf1021d87cd619a6",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false
+      },
+      {
+        "page": 3,
+        "text": "TABLE OF\nCONTENTS\n1. Guide to Residential Permitting in Sharonville\n2. Sharonville Building Services\n3. Permit Information\na. How to Fill Out and Submit a Permit\nb . Projects Requiring a Building/ Zoning Permit\n4. Electric Permits\n5. Inspections\n6. Current Zoning Map\n7. Residential District Requirements\na . Building Setback Table\nb . Building Setback Examples\n8. Construction Plans and Details\n9. Zoning Code Regulations\na. Accessory Structures\nb. Swimming Pools\nc. Fences & Walls\nd. Fence and Wall Requirements\ne. Parking and Storage Regulations\n10. Residential Storm Water Information\na. Important Information About Gutters & Downspouts\nb. Information Regarding Storm Drainage Systems and Sump Pumps\nc. Construction Figure Examples of Drainage Systems\n11. Trees & Landscaping on Residential Property\n12. Excavations\n13. Residential Driveways\n14. Floodplain Development\n15. Code Enforcement and Property Maintenace\n16. Residential Home Improvement & Assistance Programs\na. Hamilton County Home Improvement Program (HIP)\nb. People Working Cooperatively (PWC)\n17. FAQS COMMUNITYDEVELOPMENT\npg. 2\npg. 2\npg. 3-4\npg. 3\npg. 4\npg. 5\npg. 6\npg. 7\npg. 8-9\npg. 8\npg. 9\npg. 10-11\npg. 12-15\npg. 12\npg. 13\npg. 13-14\npg. 14\npg. 15\npg. 16-18\npg. 16\npg. 17\npg. 18\npg. 19\npg. 20\npg. 20\npg. 21\npg. 22\npg. 23-24\npg. 23\npg. 24\npg. 25",
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "5c814bfde65df5a39ad46685365afbe31b7aabc4889a4adf78470e86fa3da555",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false
+      },
+      {
+        "page": 4,
+        "text": "A GUIDE TO RESIDENTIAL PERMITTING IN\nSHARONVILLE\n1.\nCOMMUNITYDEVELOPMENT\nSHARONVILLE BUILDING AND ZONING\nSERVICES\n2.\nThe Community Development Department is the City of\nSharonville's resource for all aspects of building and planning,\nfrom strategic planning initiatives to construction approvals,\ninspections and property maintenance / zoning code\nenforcement. Effective and proactive Community\nDevelopment benefits and improves the quality of life for\nSharonville residents and businesses. We conduct our daily\nactivities as partners and advocates for all Sharonville\nresidents, businesses, and visitors.\n• Residential Building Permit Review\n• Zoning Code Review\n• General Code Consultation\n• Issue Building and Zoning Permits\n• Conduct Building and Site Inspections\n• Process Variance, Zone Change, and Conditional Use Applications\n• Strategic and Comprehensive Planning Initiatives\n• Zoning and Property Maintenance Code Enforcement\n• Site Development Review and Approvals\n• Storm Water Review Information and Approval Coordination\n• FEMA and Floodplain management\n2",
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "9a38c4c74c91bc70159cfc4450cf046c6f04784906fbdd8304303185e6bdbdde",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false
+      },
+      {
+        "page": 5,
+        "text": "COMMUNITYDEVELOPMENT\n3\nPERMIT INFORMATION 3.\nHow to Fill Out & Submit a Permit:\n10900 Reading Road ∙ Sharonville, OH 45241\n513 ∙ 563 ∙ 0033\npermits@cityofsharonville.com\nApplication for Building/ Electrical/ Zoning Approval\nPROJECT ADDRESS:\nBUSINESS/TENANT NAME ( If applicable ):\nNew Construction Interior Alteration Fire Alarm Reroof / Siding Deck Driveway\nAddition Exterior Alteration Suppression Accessory Structure Fence Shed\nElectrical HVAC Kitchen Hood Tent Pool Other (describe)\nElectrical Service Size (Line Drawing Required over 400 AMP)\nDESCRIBE PROPOSED WORK:\nDESCRIBE TYPE OF BUSINESS (If applicable):\nNAME ADDRESS (INCLUDE CITY, STATE, & ZIP) PHONE\nApplicant / Contractor\nOwner / Lessee\nApplicant Name (Print ) (Sign)\nApplicant Email\nESTIMATED COST & SQUARE FOOTAGE\nBuilding Structure Suppression/Fire Alarm\nHVAC TOTAL PROJECT COST\nMiscellaneous SQUARE FOOTAGE\nBELOW IS FOR OFFICE USE ONLY\nApproval Fee\nIssue Date Plan Review Fee\nUse Group Fire Dept. Review Fee\nConst. Type Sub Total\nApproval B y 1% (ORC) / 3% (OBC)\nZoning District TOTAL FEES DUE\n** SEE NEXT PAGE FOR COMMERCIAL CONSTRUCTION DOCUMENTATION CERTIFICATION **\nPROJECT # (office use)\n1. Go onto the City of Sharonville website\n(https://www.sharonville.org/)\n2. Hold Cursor over City Office\n3. Click on Community Development under\nDepartments\n4. Click on Online Documents on the left side of the\nscreen\n5. Fill out the form called “Application for Plan\nApproval”\nhttps://www.sharonville.org/documentcenter/\nview/4006/application-for-plan-approval\n6. Submit the completed application, along with two\n(2) sets of construction plans/drawings\nrequired for your project\n7. Once this is completed, EMAIL TO\npermits@cityofsharonville.com\nPlease call the Community\nDevelopment Department\nwith any questions at\n(513)-563-0033\na.\nScan the QR Code to take you\nto our document page which\nincludes all of our building\npermit applications.",
+        "source_document_id": "6aced7f49bda8d3e61944a9d",
+        "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+        "text_sha256": "bf8b269433eb75e5f6108018fcbefdeb729c23dbaa94b8ad20108ee219e28dbd",
+        "method": "pdfjs-4.8.69-text-v1",
+        "extracted_at": "2026-10-14T01:30:50.741Z",
+        "truncated": false,
+        "needs_ocr_review": false
+      }
+    ],
+    "category": null,
+    "document_revision_date": null,
+    "jurisdiction_profile_doc_id": "19bc3643-d404-4bcf-8cde-92c91897fd21",
+    "last_changed": null,
+    "retrieval_timestamp": "2026-10-14T01:16:32.736Z",
+    "ocr_transcriptions": [],
+    "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+    "archived_file_path": null,
+    "content_status": "unknown",
+    "rule_extraction_state": null,
+    "matched_signals": [
+      "retained residential permitting guide; administrative instructions, not adopted code"
+    ],
+    "authority_confidence": "unverified",
+    "jurisdiction_scope": null,
+    "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review. Classification describes residential administrative guidance only; reproduced zoning/code summaries do not establish adoption or current law. Commercial-sign applicability, currentness, publisher identity and electrical delegation require separate review.",
+    "source_type": "other",
+    "file_bytes": 11002258,
+    "id": "6aced7f49bda8d3e61944a9d",
+    "created_date": "2026-10-14T01:16:36.159000",
+    "updated_date": "2026-10-14T12:17:05.372000",
+    "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+    "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+    "is_sample": false
+  },
+  "segments": [
+    {
+      "source_document_id": "6aced7f49bda8d3e61944a9d",
+      "registration_key": "pdf-page-segments-v1:6aced7f49bda8d3e61944a9d:4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9:pdfjs-4.8.69-text-v1:6",
+      "page_end": 10,
+      "total_pages": 28,
+      "method": "pdfjs-4.8.69-text-v1",
+      "payload_sha256": "17c40e22abe89f89ec3c9935980eff7be4772aee99ccfab3c2887acd518bbef9",
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/194e1a2dc_Residential-Permitting-Guide-2026.pdf",
+      "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+      "page_start": 6,
+      "pages": [
+        {
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text": "COMMUNITYDEVELOPMENT\n4\nPERMIT INFORMATION 3.\nProjects Requiring a Building\nand/ or Zoning Permit:\nb.\n• Above ground and In-Ground Swimming Pools\n• Attached or Detached Garages\n• Building Additions\n• Building Remodeling\n• Carports\n• Decks/Porches\n• Demolitions\n• Driveways (A street opening permit from Public Works may be required)\n• Electric\n• Fences\n• Downspouts\n• Heating, Ventilation and Air Conditioning (HVAC)\n• New residential construction\n• Roof Replacement and Repair\n• Portable Storage Units / Construction Dumpsters\n• Retaining Walls (If over 4 feet in height)\n• Sheds or other Accessory Structures\n• Window or Door Replacements (If structural altercations are made)\nIf you’re not sure if a permit is required for the work you\nintend to do, just give us a call at (513)-563-0033\nTypical Projects:",
+          "needs_ocr_review": false,
+          "truncated": false,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "text_sha256": "91b6dcca367f57026e6b25a10d4e05aad4bc4c924f0dfd354bc341de5bd27c0b",
+          "method": "pdfjs-4.8.69-text-v1",
+          "page": 6,
+          "extracted_at": "2026-10-14T11:57:48.947Z"
+        },
+        {
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text": "COMMUNITYDEVELOPMENT\n5\nELECTRIC PERMITS 4.\nIn early 2020, the City of Sharonville partnered with National\nInspection Corporation (NIC) to perform electric plan review,\napprovals and inspections in an effort to improve the convenience to\nresidents and businesses.\nAll electric permits and plans can be emailed or dropped off at the\nCity of Sharonville Community Development Department Office to\nstart the electric permit approval process.\nOnce the permit is approved, you will be contacted for payment of\nthe electric permit fee, and the permit will be issued.\nAll electrical inspections are handled directly by NIC.\nIf you have any general\nadministrative questions\nabout electric permitting,\nplease contact us at\n513-563-0033\nFor specific electric\npermitting questions\nplease call NIC at\n888-433-4642",
+          "needs_ocr_review": false,
+          "truncated": false,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "text_sha256": "cc95889e7d21c9fadb22e381711193952bd5c8888c6e782e6720cf4761481141",
+          "method": "pdfjs-4.8.69-text-v1",
+          "page": 7,
+          "extracted_at": "2026-10-14T11:57:48.947Z"
+        },
+        {
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text": "6\nINSPECTIONS 5.\nList of Typical Residential Building Inspections\n• Soil / Footing Inspection\n• Site / Erosion Controls\n• Foundation / Steel Reinforcement\n• Under Slab / Vapor Barrier\n• Framing / Shear Wall\n• Above Ceiling HVAC / Duct Seal\n• HVAC\n• Insulation\n• Gas and Pressure piping test\n• Temporary structures (tents, special events)\n• Temporary Certificate of Occupancy\n• Site inspection, elevation certificate if in\nFlood zone\n• Special Inspection final report (if required)\n• Final inspection, Certificate of Complaince/\nor Certification of Occupancy\nPlumbing Permits are\nissed and inspected by\nthe\nHamilton County\nHealth Department\nElectric permits are\nissued by the City of\nSharonville. The plan\nreview and inspection\nare performed by the\nNational Inspection\nCorporation (NIC)\n888-433-4642",
+          "needs_ocr_review": false,
+          "truncated": false,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "text_sha256": "76cc9f242a1dea694cdc5f991bbd9dbf77d5db0b5de69da70567fd93c3752cc4",
+          "method": "pdfjs-4.8.69-text-v1",
+          "page": 8,
+          "extracted_at": "2026-10-14T11:57:48.947Z"
+        },
+        {
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text": "7\nCURRENT ZONING MAP 6.\n1. Go onto the City of Sharonville website sharonville.org\n2. Hold Cursor over City Office\n3. Click on Community Development under “Departments”\n4. Click on Zoning Map on the left side of the screen\n5. To find the legend , in the top left, click on the two arrows ( >> )\n6. To see individual layers and legends , click on the preffered layer arrow ( > ) to\nthe right of the name of the layer\nPlease call the Community\nDevelopment Department\nwith any questions\n(513) 563-0033\nHow to Access The Sharonville Zoning Map",
+          "needs_ocr_review": false,
+          "truncated": false,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "text_sha256": "dcdecb379e15a2d6210acc0e717327e66a189db050953edddae5f9b7bb0cce6f",
+          "method": "pdfjs-4.8.69-text-v1",
+          "page": 9,
+          "extracted_at": "2026-10-14T11:57:48.947Z"
+        },
+        {
+          "source_sha256": "4086899c8a7bceb4ebc12bc891bc2107729d17616503e4941c60390ed62104d9",
+          "text": "COMMUNITYDEVELOPMENT\n8\nRESIDENTIAL DISTRICT REQUIREMENTS 7.\nBuilding Setback Table\nZONING\nDISTRICTS\nMINIMUM LOT\nAREA\nMINIMUM LOT\nWIDTH\nFRONT\nYARD\nSETBACK\nSIDEYARD\nSETBACK\nREAR\nYARD\nSETBACK\nMINIMUM\nHEIGHT\nMAXIMUM\nLOT\nCOVERAGE\nR1-A 12,000’ 100’ 40’ 15’ 35’ 35 feet 35%\nR1-B 9,600’ 80’ 30’ 10’ 35’ 35 feet 35%\nR2-C\n9.600’ per each\nsingle family\ndwelling\n80’ for lots with\na single family\ndwelling\n30’\n10’ for\nsingle\nfamily\ndwellings\n35’ 35 feet 35% 8,500’ per each\ndwelling unit in a\ntwo family house\n100’ for lots with\na two family\ndwelling\n12’ for\nall other\ndwellings\n150’ for lots with\na rowhouse\ndwelling\n5,445’ per each\ndwelling unit in a\nrowhouse dwelling\nRM-D\n9,600’ per each\nsingke family\ndwelling\n80’ for lots with\na single family\ndwelling\n30’\n10’ for\nsingle\nfamily\ndwellings\n35’ 40 feet 35% 8,500’ per each\ndwelling unit in a\ntwo family house\n100’ for lots with\na single family\ndwelling\n12’ for\nall other\ndwellings\nthat are 2\nstories in\nheight or\nshorter\n4,000 per each\ndwelling unit in a\nrowhouse or multi\n- family dwelling\n200’ for lots\nwith rowhouse\ndwelling\n15’ for\nall other\ndwellings\na.",
+          "needs_ocr_review": false,
+          "truncated": false,
+          "source_document_id": "6aced7f49bda8d3e61944a9d",
+          "text_sha256": "c62b481aa5f39d316621e3ba79c23dce2574660e875306b18f4718a3bf02bb27",
+          "method": "pdfjs-4.8.69-text-v1",
+          "page": 10,
+          "extracted_at": "2026-10-14T11:57:48.947Z"
+        }
+      ],
+      "file_bytes": 11002258,
+      "id": "6acf6e3e1ae409cc63a3da41",
+      "created_date": "2026-10-14T11:57:50.703000",
+      "updated_date": "2026-10-14T11:57:50.703000",
+      "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+      "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+      "is_sample": false
+    }
+  ],
+  "observed_at": "2026-10-18T03:01:10.843Z",
+  "queue_observation": {
+    "daily_day_key": "2026-10-17",
+    "dispatched_today": 40,
+    "daily_limit": 40,
+    "visible_active_rows": 0
+  }
+}
