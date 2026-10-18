@@ -1046,7 +1046,7 @@ try {
       await save.evaluate(button=>{button.click();button.click();});
       await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
-      assert.equal(await save.isDisabled(),true);
+      assert.equal(await editor.getByRole('button',{name:'Saving...'}).isDisabled(),true);
       await page.evaluate(()=>{window.__adminAutomationPendingWrite();});
       await editor.waitFor({state:'detached'});
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
