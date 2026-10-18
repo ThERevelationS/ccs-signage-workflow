@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { verifySalesSaveAcknowledgment } from '../base44/shared/salesSaveAcknowledgmentGuard.mjs';
 
 // Run the actual SIPS handlers and shared conditional-write helper against
 // isolated in-memory Work Orders. No live Base44 records are accessed.
@@ -90,6 +91,7 @@ function harness(initialDate = tomorrow) {
   const ctx = {
     base44: { functions },
     localStorage: { getItem: () => '' },
+    verifySalesSaveAcknowledgment,
     today,
     boardLoadSequenceRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
@@ -463,6 +465,7 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
     const ctx = {
       base44: { functions },
       localStorage: { getItem: () => '' },
+      verifySalesSaveAcknowledgment,
       today,
       boardLoadSequenceRef: { current: 0 },
       boardSaveEpochRef: { current: 0 },
