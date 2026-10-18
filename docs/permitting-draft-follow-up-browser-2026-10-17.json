@@ -1,0 +1,20 @@
+{
+  "mode": "actual library/designer; synthetic saved drafts and cursor API; production CSS; external requests blocked; not authenticated employee acceptance",
+  "checks": [
+    {
+      "width": 320,
+      "passed": true,
+      "checks": "205 immutable snapshots; loaded-only same-step decision/area and review-note search; no filter API calls; 100-row cursor pages, older failure/retry same cursor; oldest step positional jump/expansion/focus; return focus, filters and browse retained; explicit missing legacy/unknown decision/other area; sibling branches remain separate; no snapshot mutations, source/provider/AI/job calls or overflow"
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": "205 immutable snapshots; loaded-only same-step decision/area and review-note search; no filter API calls; 100-row cursor pages, older failure/retry same cursor; oldest step positional jump/expansion/focus; return focus, filters and browse retained; explicit missing legacy/unknown decision/other area; sibling branches remain separate; no snapshot mutations, source/provider/AI/job calls or overflow"
+    },
+    {
+      "width": 1280,
+      "passed": true,
+      "checks": "205 immutable snapshots; loaded-only same-step decision/area and review-note search; no filter API calls; 100-row cursor pages, older failure/retry same cursor; oldest step positional jump/expansion/focus; return focus, filters and browse retained; explicit missing legacy/unknown decision/other area; sibling branches remain separate; no snapshot mutations, source/provider/AI/job calls or overflow"
+    }
+  ]
+}

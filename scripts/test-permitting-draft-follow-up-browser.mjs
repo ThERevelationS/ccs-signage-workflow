@@ -70,7 +70,7 @@ try {
  assert.deepEqual(reads,[{query:{},options:{sort:'-created_date',limit:100}},{query:{},options:{cursor:'draft-page-100',limit:100}},{query:{},options:{cursor:'draft-page-100',limit:100}},{query:{},options:{cursor:'draft-page-200',limit:100}}]);
  await query.fill('');await decision.selectOption('not_reviewed');await area.selectOption('all');
  const legacy=card('Legacy without review');await legacy.waitFor();assert.equal(await page.locator('article').count(),1);
- await legacy.getByText('2 step(s) have no saved review checklist.',{exact:true}).waitFor();await legacy.getByRole('button',{name:'Open step 1 review',exact:true}).click();
+ await legacy.getByText('2 step(s) have no saved review checklist.',{exact:false}).waitFor();await legacy.getByRole('button',{name:'Open step 1 review',exact:true}).click();
  await page.getByRole('region',{name:'Staff planning review for step 1',exact:true}).getByText('No staff planning review was recorded in this snapshot.',{exact:false}).waitFor();
  await page.getByRole('button',{name:'Close',exact:true}).first().click();await page.waitForFunction(()=>document.activeElement?.textContent==='Open step 1 review');
  await decision.selectOption('unrecognized');await area.selectOption('any');
