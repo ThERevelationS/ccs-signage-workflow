@@ -1054,6 +1054,67 @@ try {
       assert.equal(await page.getByRole('status',{name:'Unsaved Automation draft'}).count(),0);
     });
 
+  await check('Uncertain Automation update has read-only matching review and no duplicate save', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Updated synthetic rule');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      assert.equal(await editor.getByRole('button',{name:'Update Automation'}).isDisabled(),true);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Updated synthetic rule');
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      const before=await page.evaluate(()=>window.__adminAutomationVerifyReadCount||0);
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationVerifyReadCount),before+1);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+    });
+
+  await check('Failed or absent read leaves uncertain Automation save fenced until explicit discard', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Review pending synthetic');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await page.evaluate(()=>{window.__adminAutomationVerifyFail=true;});
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/rule list could not be verified/).waitFor();
+      assert.equal(await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).count(),0);
+      await page.evaluate(()=>{window.__adminAutomationVerifyFail=false;window.__adminAutomationVerifyAbsent=true;});
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/No matching rule was found/).waitFor();
+      assert.equal(await editor.getByRole('button',{name:'Update Automation'}).isDisabled(),true);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      await editor.getByRole('button',{name:'Close editor'}).click();
+      await editor.waitFor({state:'detached'});
+      const parked=page.getByRole('status',{name:'Unsaved Automation draft'});
+      await parked.waitFor();
+      assert.equal(await parked.getByRole('button',{name:'Discard Automation draft'}).isDisabled(),true);
+      await parked.getByRole('button',{name:'Resume Automation draft'}).click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Review pending synthetic');
+      await editor.getByRole('alert',{name:'Automation save outcome requires review'})
+        .getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
   await check('Stale Automation update completion cannot change the next Admin session', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
