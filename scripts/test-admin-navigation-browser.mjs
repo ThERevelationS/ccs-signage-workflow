@@ -1076,6 +1076,8 @@ try {
       await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
       assert.equal(await editor.getByRole('button',{name:'Saving...'}).isDisabled(),true);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').isDisabled(),true,
+        'Changes cannot be typed after the submitted create snapshot while its receipt is pending');
       await page.evaluate(()=>window.__adminAutomationPendingWrite());
       await editor.waitFor({state:'detached'});
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
