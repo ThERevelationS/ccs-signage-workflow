@@ -1,4 +1,3 @@
-# scripts/validate-order-historical-import-audit.mjs (lines 1-94 of 94)
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
