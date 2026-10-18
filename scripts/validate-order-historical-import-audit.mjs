@@ -54,6 +54,7 @@ assert.equal(report.counts.no_local_claim, 1);
 assert.equal(report.counts.soft_deleted_claims, 1);
 assert.equal(report.counts.missing_permanent_id_orders, 1);
 assert.equal(report.counts.invalid_permanent_id_orders, 1);
+assert.equal(report.counts.wrong_sheet_order_records, 1);
 assert.equal(report.counts.local_marker_true, 1);
 assert.equal(report.counts.local_marker_false, 1);
 assert.equal(report.counts.local_marker_absent, 7);
@@ -74,6 +75,7 @@ console.log('PASS audit batches reject empty, oversized, duplicate, and malforme
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const ui = readFileSync('src/components/orders/OrderLinkIntegrityReview.jsx', 'utf8');
+const helper = readFileSync('base44/shared/smartsheetOrderHistoricalImportAudit.mjs', 'utf8');
 const action = backend.slice(
   backend.indexOf("if (action === 'audit_order_import_sync_evidence')"),
   backend.indexOf("if (action === 'audit_order_link_integrity')"),
@@ -83,7 +85,8 @@ assert.match(action, /adminActor\?\.role !== 'admin' \|\| !hasSessionToken/);
 assert.match(action, /validateOrderImportAuditRowIds\(body\?\.row_ids\)/);
 assert.match(action, /smartsheetGet\(.*rows\/\$\{rowId\}/s);
 assert.match(action, /sameStableValue\(readSignature\(allOrders\), readSignature\(freshOrders\)\)/);
-assert.match(action, /writes_attempted: false/);
+assert.match(action, /success: true, \.\.\.audit/);
+assert.match(helper, /writes_attempted: false/);
 assert.doesNotMatch(action, /smartsheetWrite|\.bulkUpdate\(|\.create\(|\.update\(|\.delete\(/);
 assert.match(ui, /action: "audit_order_import_sync_evidence"/);
 assert.match(ui, /historicalRowIds\.split\(\/[\\s,;]\+\//);
