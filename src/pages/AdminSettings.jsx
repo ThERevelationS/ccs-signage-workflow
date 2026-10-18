@@ -540,6 +540,7 @@ export default function AdminSettings() {
   const [automationSaveError, setAutomationSaveError] = useState("");
   const [automationSaving, setAutomationSaving] = useState(false);
   const automationSaveInFlight = useRef(false);
+  const automationSessionEpoch = useRef(0);
   const automationEditorBaseline = useRef(null);
   const [automationDraftParked, setAutomationDraftParked] = useState(false);
   
@@ -583,6 +584,7 @@ export default function AdminSettings() {
   };
   useEffect(() => {
     // An Admin session/identity change may not retain draft authority.
+    automationSessionEpoch.current += 1;
     automationEditorBaseline.current = null;
     automationSaveInFlight.current = false;
     setAutomationDraftParked(false);
@@ -694,8 +696,9 @@ export default function AdminSettings() {
     if (automationSaveInFlight.current) return;
     if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
+    const ownerEpoch = automationSessionEpoch.current;
     setAutomationSaveError("");
-    if (!(await loadEmailGroups())) return;
+    if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
     setEditingRule(null);
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
@@ -714,8 +717,9 @@ export default function AdminSettings() {
     if (automationSaveInFlight.current) return;
     if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
+    const ownerEpoch = automationSessionEpoch.current;
     setAutomationSaveError("");
-    if (!(await loadEmailGroups())) return;
+    if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
     setEditingRule(rule);
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
@@ -738,8 +742,9 @@ export default function AdminSettings() {
     if (automationSaveInFlight.current) return;
     if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
+    const ownerEpoch = automationSessionEpoch.current;
     setAutomationSaveError("");
-    if (!(await loadEmailGroups())) return;
+    if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
     setEditingRule(null);
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
@@ -767,6 +772,7 @@ export default function AdminSettings() {
         emailGroupsLoadError || !formData.name?.trim() ||
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
     automationSaveInFlight.current = true;
+    const ownerEpoch = automationSessionEpoch.current;
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
@@ -786,6 +792,7 @@ export default function AdminSettings() {
           adminCapability,
           label: `Automation Rule ${editingRule.name || editingRule.id}`,
         });
+        if (ownerEpoch !== automationSessionEpoch.current) return;
         setAutomations(prev => prev.map(rule => rule.id === saved.id ? saved : rule));
       } else {
         const result = await createAutomationRuleIfAbsent({
@@ -793,6 +800,7 @@ export default function AdminSettings() {
           adminCapability,
           label: `Automation Rule ${saveData.name}`,
         });
+        if (ownerEpoch !== automationSessionEpoch.current) return;
         if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
           throw new Error(`An automation named "${saveData.name}" already exists. The existing rule was kept instead of creating a duplicate.`);
         }
@@ -802,11 +810,14 @@ export default function AdminSettings() {
       setIsDialogOpen(false);
       await loadAutomations();
     } catch (error) {
+      if (ownerEpoch !== automationSessionEpoch.current) return;
       console.error("Automation save blocked:", error);
       setAutomationSaveError(error?.message || "This automation changed in another session. Reload before retrying.");
     } finally {
-      automationSaveInFlight.current = false;
-      setAutomationSaving(false);
+      if (ownerEpoch === automationSessionEpoch.current) {
+        automationSaveInFlight.current = false;
+        setAutomationSaving(false);
+      }
     }
   };
 
