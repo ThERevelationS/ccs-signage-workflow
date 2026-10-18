@@ -1,6 +1,7 @@
 {
   "source_sha256": "a1b2c9c103e68dfe3270b6f6294acfdf4778583d8df35ec6a413fc67e342294f",
   "build_exit": 0,
-  "browser_stage": "pending",
-  "existing_205_draft_revision_browser": "passed at 320/390/1280 before final evidence-count wording only"
+  "browser_stage": "passed",
+  "existing_205_draft_revision_browser": "passed at 320/390/1280 before final evidence-count wording only",
+  "browser_exit": 0
 }
