@@ -128,7 +128,9 @@ try {
   '  }, dropdownConditions:{items:[]},',
   ' };',
   ' if(!(settingKey in settings))throw Error("Unknown setting: "+settingKey);',
-  ' return {id:settingKey,setting_key:settingKey,setting_value:settings[settingKey]};',
+  ' if(window.__failNextTemplateReload){window.__failNextTemplateReload=false;throw Error("Synthetic reload network failure");}',
+  ' const updated=window.__remoteTemplateSettings?.[settingKey] || settings[settingKey];',
+  ' return {id:settingKey,setting_key:settingKey,setting_value:updated};',
   '}',
   'export async function saveGlobalSettingValueIfUnchanged(){',
   ' window.__writeAttempts++;throw Error("Fixture forbids persistence");',
@@ -158,6 +160,7 @@ try {
   'window.__savedRows=[{id:"saved-1",text:"Completed installation",status:"Completed",approved_by:"Supervisor"}];',
   'window.__writeAttempts=0;window.__closeCount=0;window.__applyCount=0;',
   'window.__saveCalls=[];window.__pendingSaves=[];window.__settledSaves=[];',
+  'window.__remoteTemplateSettings={};window.__failNextTemplateReload=false;',
   'function Fixture(){const [open,setOpen]=React.useState(true);',
   'return <>{open&&<TemplateBuilder isOpen={true} isAdmin={true} existingChecklist={window.__savedRows}',
   'onClose={()=>{window.__closeCount++;setOpen(false)}}',
@@ -299,6 +302,62 @@ try {
     await page.getByRole("button",{name:"Checklist option saved"}).waitFor();
     assert.equal(await page.evaluate(()=>window.__settledSaves[1].items.some(item=>item.text==="Newer unsaved edit")),true);
     assert.equal(await page.evaluate(()=>window.__saveCalls.length),2,"Only requested retries saved");
+   });
+  await run(label+": reload after conflicted option save requires explicit discard and refreshes current editor",
+   origin,viewport,async page=>{
+    await optionEditor(page,"Safety Review");
+    await page.getByRole("textbox",{name:"New checklist option item"}).fill("Old local option draft");
+    await page.getByRole("button",{name:"Add checklist item",exact:true}).click();
+    await page.getByRole("button",{name:"Save checklist option"}).click();
+    await pendingSave(page,1);
+    await settleSave(page,"reject");
+    await page.getByText("Synthetic concurrent update blocked").waitFor();
+    await page.evaluate(()=>{window.__remoteTemplateSettings.subTemplateItems={
+      safety:{items:[{id:"remote-safety",text:"Other user saved safety review"}]},
+      permit:{items:[{id:"permit-1",text:"Check permit"}]}};});
+    await page.getByRole("button",{name:"Reload latest"}).click();
+    const prompt=page.getByRole("alertdialog",{name:"Discard edits and reload latest templates?"});
+    await prompt.waitFor();
+    assert.match(await prompt.innerText(),/will discard unsaved checklist edits/);
+    await prompt.getByRole("button",{name:"Keep editing"}).click();
+    await prompt.waitFor({state:"hidden"});
+    await page.getByRole("button",{name:"Edit checklist item Old local option draft"}).waitFor();
+    await page.getByRole("button",{name:"Save checklist option"}).waitFor();
+    await page.getByRole("button",{name:"Reload latest"}).click();
+    await prompt.getByRole("button",{name:"Discard edits & reload latest"}).click();
+    await page.getByRole("button",{name:"Edit checklist item Other user saved safety review"}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Edit checklist item Old local option draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Save checklist option"}).count(),0,
+      "A fresh remote editor must not remain marked dirty or allow stale retry");
+    assert.equal(await page.getByText("Synthetic concurrent update blocked").count(),0);
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),1,
+      "Reload is read-only and never writes the stale checklist");
+   });
+  await run(label+": failed confirmed reload keeps unfinished product draft and conflict visible",
+   origin,viewport,async page=>{
+    await productEditor(page,"Cabinet Sign");
+    await page.getByRole("textbox",{name:"New product checklist item"}).fill("Protected on reload failure");
+    await page.getByRole("button",{name:"Add product checklist item"}).click();
+    await page.getByRole("button",{name:"Save product checklist"}).click();
+    await pendingSave(page,1);
+    await settleSave(page,"reject");
+    await page.getByText("Synthetic concurrent update blocked").waitFor();
+    await page.evaluate(()=>{window.__failNextTemplateReload=true;});
+    await page.getByRole("button",{name:"Reload latest"}).click();
+    const prompt=page.getByRole("alertdialog",{name:"Discard edits and reload latest templates?"});
+    await prompt.getByRole("button",{name:"Discard edits & reload latest"}).click();
+    await page.getByText("Synthetic reload network failure").waitFor();
+    await page.getByRole("button",{name:"Edit checklist item Protected on reload failure"}).waitFor();
+    await page.getByRole("button",{name:"Save product checklist"}).waitFor();
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
+    await page.evaluate(()=>{window.__remoteTemplateSettings.productTypeTemplates={
+      "Cabinet Sign":{items:[{id:"remote-cabinet",text:"Concurrent fresh cabinet setup"}]},
+      Monument:{items:[{id:"base-2",text:"Build monument"}]}};});
+    await page.getByRole("button",{name:"Reload latest"}).click();
+    await prompt.getByRole("button",{name:"Discard edits & reload latest"}).click();
+    await page.getByRole("button",{name:"Edit checklist item Concurrent fresh cabinet setup"}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Edit checklist item Protected on reload failure"}).count(),0);
+    assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
    });
   await run(label+": failed product save releases lock and safely allows retry",
    origin,viewport,async page=>{
