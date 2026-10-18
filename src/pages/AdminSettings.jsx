@@ -105,6 +105,7 @@ import {
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
+import { reviewUncertainAutomationSave } from "@/components/admin/automationSaveReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -543,6 +544,11 @@ export default function AdminSettings() {
   const automationSessionEpoch = useRef(0);
   const automationEditorBaseline = useRef(null);
   const [automationDraftParked, setAutomationDraftParked] = useState(false);
+  const automationUncertainRef = useRef(null);
+  const [automationUncertain, setAutomationUncertain] = useState(null);
+  const [automationReviewStatus, setAutomationReviewStatus] = useState(null);
+  const [automationReviewLoading, setAutomationReviewLoading] = useState(false);
+  const automationReviewOwner = useRef(0);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -572,11 +578,11 @@ export default function AdminSettings() {
   const closeAutomationEditor = (open) => {
     if (open) { setIsDialogOpen(true); return; }
     if (automationSaveInFlight.current) return;
-    setAutomationDraftParked(automationDraftChanged());
+    setAutomationDraftParked(Boolean(automationUncertainRef.current) || automationDraftChanged());
     setIsDialogOpen(false);
   };
   const discardAutomationDraft = () => {
-    if (automationSaveInFlight.current) return;
+    if (automationSaveInFlight.current || automationUncertainRef.current) return;
     automationEditorBaseline.current = null;
     setAutomationDraftParked(false);
     setIsDialogOpen(false);
@@ -585,6 +591,11 @@ export default function AdminSettings() {
   useEffect(() => {
     // An Admin session/identity change may not retain draft authority.
     automationSessionEpoch.current += 1;
+    automationReviewOwner.current += 1;
+    automationUncertainRef.current = null;
+    setAutomationUncertain(null);
+    setAutomationReviewStatus(null);
+    setAutomationReviewLoading(false);
     automationEditorBaseline.current = null;
     automationSaveInFlight.current = false;
     setAutomationDraftParked(false);
@@ -700,6 +711,7 @@ export default function AdminSettings() {
 
   const openNewRule = async () => {
     if (automationSaveInFlight.current) return;
+    if (automationUncertainRef.current) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
     const ownerEpoch = automationSessionEpoch.current;
@@ -721,6 +733,7 @@ export default function AdminSettings() {
 
   const openEditRule = async (rule) => {
     if (automationSaveInFlight.current) return;
+    if (automationUncertainRef.current) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
     const ownerEpoch = automationSessionEpoch.current;
@@ -746,6 +759,7 @@ export default function AdminSettings() {
 
   const duplicateRule = async (rule) => {
     if (automationSaveInFlight.current) return;
+    if (automationUncertainRef.current) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (automationDraftParked) { setIsDialogOpen(true); setAutomationDraftParked(false); return; }
     if (emailGroupsLoading) return;
     const ownerEpoch = automationSessionEpoch.current;
@@ -774,7 +788,7 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
-    if (automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
+    if (automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
         emailGroupsLoadError || !formData.name?.trim() ||
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
     automationSaveInFlight.current = true;
@@ -787,10 +801,12 @@ export default function AdminSettings() {
     };
     setAutomationSaveError("");
     setAutomationSaving(true);
+    let writeDispatched = false;
     try {
       if (editingRule) {
         const duplicateName = automations.find(rule => rule.id !== editingRule.id && String(rule.name || "").trim().toLowerCase() === saveData.name.toLowerCase());
         if (duplicateName) throw new Error(`Another automation named "${saveData.name}" already exists.`);
+        writeDispatched = true;
         const saved = await updateAutomationRuleIfUnchanged({
           record: editingRule,
           nextFields: saveData,
@@ -801,6 +817,7 @@ export default function AdminSettings() {
         if (ownerEpoch !== automationSessionEpoch.current) return;
         setAutomations(prev => prev.map(rule => rule.id === saved.id ? saved : rule));
       } else {
+        writeDispatched = true;
         const result = await createAutomationRuleIfAbsent({
           data: saveData,
           adminCapability,
@@ -817,8 +834,22 @@ export default function AdminSettings() {
       await loadAutomations();
     } catch (error) {
       if (ownerEpoch !== automationSessionEpoch.current) return;
-      console.error("Automation save blocked:", error);
-      setAutomationSaveError(error?.message || "This automation changed in another session. Reload before retrying.");
+      if (writeDispatched) {
+        // The response does not prove whether the server committed. Fence the
+        // attempted draft; only an explicit read-only review may classify it.
+        const attempt = {
+          kind: editingRule ? "update" : "create",
+          originalId: editingRule?.id || null,
+          attempted: JSON.parse(JSON.stringify(saveData)),
+        };
+        automationUncertainRef.current = attempt;
+        automationReviewOwner.current += 1;
+        setAutomationUncertain(attempt);
+        setAutomationReviewStatus(null);
+        setAutomationSaveError("");
+      } else {
+        setAutomationSaveError(error?.message || "This automation could not be saved.");
+      }
     } finally {
       if (ownerEpoch === automationSessionEpoch.current) {
         automationSaveInFlight.current = false;
