@@ -154,6 +154,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [savingChecklist, setSavingChecklist] = useState(null);
   const [isReloading, setIsReloading] = useState(false);
   const reloadInFlightRef = useRef(false);
+  const builderHeadingRef = useRef(null);
+  const reloadButtonRef = useRef(null);
   const checklistSaveInFlight = useRef(null);
   const subTemplateDraftRef = useRef(null);
   const productTypeDraftRef = useRef(null);
@@ -1435,10 +1437,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-1 sm:p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-1 sm:p-4" inert={isReloading ? "" : undefined} onClick={(e) => e.stopPropagation()}>
         <div className="w-full sm:w-[95vw] max-w-[1600px] h-[96dvh] sm:h-[90vh] overflow-hidden flex flex-col bg-white rounded-lg sm:rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between gap-2">
-            <div className="min-w-0"><h2 className="text-lg font-bold truncate">Checklist Builder</h2></div>
+            <div className="min-w-0"><h2 ref={builderHeadingRef} tabIndex={-1} className="text-lg font-bold truncate focus:outline-none">Checklist Builder</h2></div>
             <Button
               type="button"
               variant="ghost"
@@ -1452,11 +1454,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </Button>
           </div>
 
-          {isReloading && (
-            <div role="status" aria-live="polite" className="absolute inset-0 z-[125] flex items-center justify-center bg-white/75 px-4 text-center font-medium text-gray-800">
-              Reloading latest checklist templates…
-            </div>
-          )}
           {persistenceError && (
             <div className="mx-3 mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <div className="min-w-0">
@@ -1464,7 +1461,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <div className="mt-1 break-words">{persistenceError}</div>
               </div>
               <div className="grid grid-cols-2 gap-2 shrink-0 sm:flex sm:gap-1">
-                <Button type="button" size="sm" variant="outline" className="h-11 border-red-300 bg-white text-red-800 touch-manipulation lg:h-7" onClick={requestReloadLatest} disabled={isReloading}>Reload latest</Button>
+                <Button ref={reloadButtonRef} type="button" size="sm" variant="outline" className="h-11 border-red-300 bg-white text-red-800 touch-manipulation lg:h-7" onClick={requestReloadLatest} disabled={isReloading}>Reload latest</Button>
                 <Button type="button" size="sm" variant="ghost" className="h-11 text-red-800 touch-manipulation lg:h-7" onClick={() => setPersistenceError("")}>Dismiss</Button>
               </div>
             </div>
@@ -2537,6 +2534,28 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 : (confirmDialog?.confirmLabel || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* The reload is modal for keyboard users as well as pointer users.
+          Keep the editable Builder inert until its verified read settles. */}
+      <AlertDialog open={isReloading}>
+        <AlertDialogContent
+          className="clay-card z-[140] w-[calc(100vw-1rem)] max-w-sm border-none"
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (reloadButtonRef.current?.isConnected) reloadButtonRef.current.focus();
+            else builderHeadingRef.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reloading latest checklist templates…</AlertDialogTitle>
+            <AlertDialogDescription role="status" aria-live="polite">
+              Checking the newest saved templates. Editing will resume when the reload finishes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
         </AlertDialogContent>
       </AlertDialog>
 

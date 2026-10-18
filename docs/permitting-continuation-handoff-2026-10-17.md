@@ -1,5 +1,56 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — electrical office inquiry preparation (October 18, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Previous verified checkpoint: 6ad447542e108eb57404c927, “Permitting saved electrical office identity comparisons and live snapshot verification”, Git b6f133cbf7c65a299ab382745e5e865ab535c53d.
+Fresh starting HEAD: 0186a19c2c92e295572310c858e0c98dcb776793, clean. Latest pre-document HEAD: 793fb3aea79e4e9c26c4260394159ae6c9582889, clean.
+
+The planned current-evidence discovery did not run. A normal CLI authentication check timed out after 60 seconds; no successful CLI identity or research invocation was established. Do not infer authentication failure or retry a login loop from that timeout. A fresh connector read confirmed Sharonville / OH / city profile 6ac19f0e23bd8a65822f6d51 remained at updated_date 2026-10-18T04:09:02.663000, with only its previously recorded saved department scan. No new discovery receipt, authority decision or live write was made. Current commercial-sign scope, issuer department, inspector delegation term and exact-site service area remain unresolved.
+
+Used Brett's authorized fallback to advance the usable prototype:
+- Added separate “Prepare permit issuer inquiry” and “Prepare inspection provider inquiry” controls inside the existing electrical planning view.
+- Each generates a copy-ready inquiry from the saved locality identity, role-specific candidates, exact saved responsibility/delegation quotes, safe source links and missing research fields.
+- Questions distinguish issuer, application intake and inspector; request current commercial-sign / circuit applicability, exact-site service area and official delegation/effective-date evidence.
+- Address/parcel and proposed-work placeholders require staff input; no project address or scope is guessed.
+- Missing and competing candidates remain explicit. Even fully populated metadata still prompts current responsibility and applicability confirmation.
+- Copy, manual text selection and clipboard-denied fallback work. Inquiry text updates when its research props change; previous copied status clears.
+- This tool sends nothing, saves nothing, makes no API/background/source requests, and does not approve authority or assign an office. Staff can edit the copied inquiry in their chosen communication tool.
+
+Product files:
+src/components/permitting/ElectricalOfficeInquiry.jsx
+src/components/permitting/electricalOfficeInquiry.mjs
+src/components/permitting/ElectricalResearchTasks.jsx
+src/components/permitting/OfficeResearchFindings.jsx
+
+Validation:
+- Focused inquiry regression script passed: separate roles, current evidence questions, missing and duplicate candidates, safe source URLs, locality validation and immutable input.
+- All 3 saved identity-comparison tests passed.
+- Targeted ESLint, one npm run build and git diff --check passed.
+- Actual OfficeResearchFindings with production CSS passed synthetic Chromium checks at 320/390/1280: separate inquiries, explicit copy, clipboard-denied/manual selection, keyboard selection, changed candidate text, status reset, 44px buttons, no horizontal overflow, external requests or saves.
+- 390px expanded inquiry screenshot visually inspected.
+- Browser harness first needed temporary Playwright/Chromium and system libraries restored after sandbox refresh. An initial assertion checked status before React's effect completed; the harness now waits for the cleared status. Product code was unchanged by this test correction.
+- Only existing baseline-browser-mapping data warning observed in the passing browser run.
+- Synthetic clipboard is mocked. Authenticated employee acceptance, native phone clipboard and real-office response acceptance remain pending; earlier PDF/print/authenticated workflow checks remain pending as documented.
+
+Receipts:
+docs/permitting-electrical-inquiry-browser-2026-10-18.json
+docs/permitting-electrical-inquiry-validation-2026-10-18.json
+scripts/permitting-electrical-office-inquiry.test.mjs
+scripts/test-permitting-electrical-inquiry-browser.mjs
+Browser reproduction requires Playwright/Chromium plus OS dependencies; default module path /tmp/permitting-inquiry-browser/node_modules/playwright/index.mjs or set PLAYWRIGHT_MODULE.
+
+Live controls were observed earlier in this turn before the long interruption, not guaranteed current: enabled true, interval_minutes 15, max_dispatch_per_cycle 5, max_in_flight 20, daily_dispatch_limit 40, retry_limit 3. State last_cycle_at 2026-10-18T04:15:33.959Z, daily_day_key 2026-10-18, dispatched_today 10, last_result.in_flight_before 0. Collection cycle completed at 2026-10-18T04:46:42.890Z. Refresh live settings/state before future research. No queue/settings changes or manual gate bypass.
+
+No frontend publication; no backend/entity/schema/RLS/integration changes by this unit. No production entity, source, archive, shared catalog, client/job, shared-file or office-review writes. No research AI calls, refreshes, emails/messages or authority approvals. No known unfinished live write.
+New concurrent Fleet inventory backend/version work, Admin automation reconciliation/navigation work, Sales uncertain reload/workspace changes and Order Form review notes were preserved; do not revert them.
+
+Next ONE chunk: add staff response/evidence capture for these separate office inquiries through the existing version-guarded office-research draft-save flow. Retain the role, responding office, response date, exact quote/source and unresolved currentness/commercial-sign/site applicability; preserve comparison history and require explicit saving. Do not treat a response as authority approval, silently choose a canonical office, send messages or write to jobs. If fresh authenticated current-source discovery is available, use existing refreshJurisdiction pathways and current live gates; avoid another login loop. Verify, update handoff, checkpoint and stop.
+
+Remaining roadmap: bounded collection/archives/text acceptance; office and parent-authority reconciliation; Ohio then Kentucky coverage; source monitoring; exact matching/maps/action progress; evidence-based workflow features; explicit safe job integration; authenticated rollout/mobile/concurrency acceptance. Archive limits remain one new downloadable file per refresh; fetch 12s / upload 15s / extraction 20s; retain manual/pinned/hashed archives and same-host deterministic discovery.
+This unit is saved with checkpoint name “Permitting role-specific electrical office inquiry preparation verified”; obtain its exact ID and Git from the checkpoint tool receipt/final report. Source fingerprints are in the validation receipt. Older sections below are history.
+
+
 ## Latest completed unit — saved Sharonville electrical office identity comparisons (October 18, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. Ohio first. No statewide coverage counts advanced.

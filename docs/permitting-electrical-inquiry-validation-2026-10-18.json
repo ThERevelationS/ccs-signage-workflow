@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "recorded_at": "2026-10-18T11:57:38.303598+00:00",
+  "starting_head": "0186a19c2c92e295572310c858e0c98dcb776793",
+  "pre_document_head": "2d28315fcb4d7da6e2fd8ea55e405c0565d0635b",
+  "source_sha256": {
+    "src/components/permitting/ElectricalOfficeInquiry.jsx": "a90e7637f2961cd3742195bce0d76badb9a6557ef00457a2c2091ae08a7f0624",
+    "src/components/permitting/electricalOfficeInquiry.mjs": "c5080c3ba1b9b8ccae39aae8114751075b6478e615521d9e03902271f3100b35",
+    "src/components/permitting/ElectricalResearchTasks.jsx": "d2013a109efaba4d00cc54edbdda603c746906cfdbbd6afcfb9a4453557676bc",
+    "src/components/permitting/OfficeResearchFindings.jsx": "53d42ba73beceec0b062abd591b1f35f76d3770da5546363bd5e9b3d81b41ec3"
+  },
+  "inquiry_regression": "passed",
+  "identity_comparison_tests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "targeted_eslint": "passed",
+  "npm_run_build": "passed",
+  "git_diff_check": "passed",
+  "browser_receipt": "docs/permitting-electrical-inquiry-browser-2026-10-18.json",
+  "mobile_capture_visually_inspected": 390,
+  "synthetic_only": true,
+  "authenticated_employee_acceptance": false,
+  "native_clipboard_acceptance": false,
+  "production_writes": 0,
+  "research_invocations": 0,
+  "frontend_published": false,
+  "research_blocker": "CLI authentication check timed out; no discovery invoked; saved profile readback unchanged."
+}
