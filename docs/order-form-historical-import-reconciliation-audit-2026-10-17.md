@@ -31,6 +31,16 @@ The current Order sync path loads the configured sheet's linked set, classifies 
 
 No live Smartsheet read was available, so all 220 pairs stay flagged for review. No marker repair, relinking, cleanup, or Smartsheet write is authorized by this audit.
 
+## Read-only route capability check (2026-10-18)
+
+Fresh app HEAD at inspection: `6512b1d26f500488b019ab1ac9be72875c92788d`; working tree was clean. Code inspection found an admin-only `audit_order_link_integrity` action reachable from the Order Form review UI. It reads all Base44 Orders and downloads the configured Smartsheet sheet through paginated GET requests, checks sheet identity and complete pagination, and returns `read_only: true`. The audit action is not in the trace-persistence allowlist, so this path does not create a sync trace record. This code path was inspected but not invoked; it supplies no new live Smartsheet evidence for this report.
+
+That action is not sufficient to classify historical import markers. `auditOrderPermanentLinks` filters soft-deleted Orders out before owner counts, while the known 220 repeated row-ID groups each consist of an active/deleted pair. It checks permanent row presence and reports identity-column evidence for unlinked rows; for matched rows it does not return the remote business fields needed to compare snapshots or determine whether an absent marker reflects a completed import or an unqueued local change. Category detail is capped at 100 records. Therefore it cannot resolve these 220 owner pairs or classify the 1,896 absent-marker records as already synced or unsynced.
+
+The last stable Base44-only read still classifies zero records as verified currently synced, zero as explicitly queued (`smartsheet_pending_local_sync: true`), six as explicitly false but not thereby proven current, and 1,896 as marker-absent and unresolved. The one record missing a permanent row ID and all 220 active/deleted permanent-ID pairs remain review cases. These counts overlap: the paired records are included among marker-absent rows. No new entity or Smartsheet read was performed in this capability check.
+
+**Safe next evidence step:** use a dedicated bounded read-only reconciliation that includes active and soft-deleted Order claims, validates a complete configured-sheet download, and returns only the selected permanent row IDs with local marker/snapshot and corresponding remote mapped values. Any repeated owner, missing ID, incomplete download, or source change during the read must remain ambiguous. Do not set markers, push rows, relink, or retire records from the current audit action.
+
 ## What the implementation establishes
 
 The current importer still builds its existing-record map from active Orders using `lower(customer_name|description|request_type)`; the key excludes `work_order_id`, and a repeated key replaces the earlier map entry. For a matched record it only writes nonempty changed import fields. The current persistence helper atomically includes `smartsheet_pending_local_sync: true` with a changed business-field update. New import-created Orders also start with that marker. No-op imports do not queue a write.
