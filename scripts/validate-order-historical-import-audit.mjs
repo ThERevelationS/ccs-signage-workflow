@@ -62,7 +62,7 @@ assert.equal(report.rows.find(row => row.row_id === '103').claims.some(claim => 
 assert.equal(report.rows.find(row => row.row_id === '104').review_required, true);
 assert.equal(report.rows.find(row => row.row_id === '101').classification, 'currently_aligned_with_remote');
 assert.match(report.interpretation, /does not prove that a historical Excel import was the source/);
-assert.doesNotMatch(JSON.stringify(report), /No Base44 owner|Queued|Current/);
+assert.doesNotMatch(JSON.stringify(report), /"(?:Acme|No Base44 owner|Queued|Current|Sign|Old|Only)"/);
 console.log('PASS classifications include active/deleted duplicates, queued, aligned, missing remote, no owner, and missing IDs without exposing cell values');
 
 assert.deepEqual(validateOrderImportAuditRowIds(['001', '25']), ['001', '25']);
