@@ -15,6 +15,7 @@ const calls = [];
 const listeners = new Map();
 const dispatchedEvents = [];
 const storage = new Map();
+let failStorageWrites = false;
 let authSession = {
   currentUser: { email: 'first@synthetic.invalid' },
   sessionToken: 'signed-session-A',
@@ -41,7 +42,10 @@ vm.runInNewContext(compiled, {
   setInterval: () => 1, clearInterval: () => {},
   sessionStorage: {
     getItem: (key) => storage.get(key) || null,
-    setItem: (key, value) => storage.set(key, String(value)),
+    setItem: (key, value) => {
+      if (failStorageWrites) throw new Error('Synthetic session storage write failure');
+      storage.set(key, String(value));
+    },
     removeItem: (key) => storage.delete(key),
   },
   localStorage: { setItem() {} },
@@ -312,4 +316,20 @@ assert.match(failedRefreshButton.props.title, /Synthetic authoritative status re
 assert.equal(storage.get('ccs_timeclock_request:work_pause_start:second@synthetic.invalid'), expectedStartRequestId,
   'A failed authoritative refresh must leave the original request ID available for safe recovery');
 console.log('PASS mismatched Work Pause action acknowledgement stays isolated and retries safely');
-console.log('PASS 8/8 Global Work Pause session/event scenarios');
+await act(async () => {
+  windowStub.dispatchEvent(new CustomEvent('ccs-timeclock-work-pause-changed', { detail: null }));
+});
+assert.equal(calls.length, 19);
+await act(async () => { calls[18].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
+} }); });
+assert.equal(renderer.root.findByType('button').props.disabled, false);
+failStorageWrites = true;
+await act(async () => { await renderer.root.findByType('button').props.onClick(); });
+assert.equal(calls.length, 19,
+  'Work Pause must not be sent when the exact request ID cannot be safely retained in session storage');
+assert.match(renderer.root.findByType('button').props.title, /session storage|retry request/i,
+  'The employee should see why Work Pause was not submitted');
+console.log('PASS storage failure prevents Work Pause mutation without a durable retry ID');
+console.log('PASS 9/9 Global Work Pause session/event scenarios');
