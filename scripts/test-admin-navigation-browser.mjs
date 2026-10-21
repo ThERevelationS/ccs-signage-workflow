@@ -1623,6 +1623,102 @@ try {
       await newEditor.getByRole('button',{name:'Discard draft'}).click();
     });
 
+  await check('Automation acknowledgment adopts complete verified list and rejects older pending list result', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Acknowledged recovered Automation');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await editor.getByRole('button',{name:'Close editor'}).click();
+      await editor.waitFor({state:'detached'});
+      await page.evaluate(()=>{window.__adminAutomationListHold=true;});
+      await page.getByRole('button',{name:'Refresh Automation rules (read-only)'}).click();
+      await page.waitForFunction(()=>!!window.__adminAutomationListRelease);
+      await page.getByRole('status',{name:'Unsaved Automation draft'})
+        .getByRole('button',{name:'Resume Automation draft'}).click();
+      await editor.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      await page.getByRole('status',{name:'Automation recovery list verified'}).waitFor();
+      await page.getByText('Acknowledged recovered Automation',{exact:true}).waitFor();
+      assert.equal(await page.getByText('Synthetic rule',{exact:true}).count(),0);
+      await page.evaluate(()=>window.__adminAutomationListRelease());
+      await page.waitForTimeout(85);
+      assert.equal(await page.getByText('Acknowledged recovered Automation',{exact:true}).count(),1);
+      assert.equal(await page.getByText('Synthetic rule',{exact:true}).count(),0);
+      assert.equal(await page.getByRole('alert',{name:'Automation rules unavailable'}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Acknowledgment of twice-verified missing Automation displays true empty state only', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationVerifyAbsent=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Missing verified synthetic rule');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/No matching rule was found/).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      await page.getByRole('status',{name:'Automation recovery list verified'}).waitFor();
+      await page.getByRole('heading',{name:'No Automations'}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation rules unavailable'}).count(),0);
+      assert.equal(await page.getByText('Synthetic rule',{exact:true}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Failed read after Automation acknowledgment hides earlier verified list and recovers safely', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Verified then reloaded recovered rule');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      await page.getByRole('status',{name:'Automation recovery list verified'}).waitFor();
+      await page.evaluate(()=>{window.__adminAutomationFailure=true;});
+      await page.getByRole('button',{name:'Refresh Automation rules (read-only)'}).click();
+      const error=page.getByRole('alert',{name:'Automation rules unavailable'});
+      await error.waitFor();
+      assert.equal(await page.getByRole('status',{name:'Automation recovery list verified'}).count(),0);
+      assert.equal(await page.getByRole('heading',{name:'No Automations'}).count(),0);
+      assert.equal(await page.getByText('Verified then reloaded recovered rule',{exact:true}).count(),0);
+      assert.equal(await page.getByText('Total Automations').count(),0);
+      assert.equal(await page.getByRole('button',{name:'New Automation'}).isDisabled(),true);
+      await page.evaluate(()=>{
+        window.__adminAutomationFailure=false;
+        window.__adminAutomationListOverrideRows=[window.__adminAutomationSavedSnapshot];
+      });
+      await error.getByRole('button',{name:'Retry loading rules'}).click();
+      await page.getByText('Verified then reloaded recovered rule',{exact:true}).waitFor();
+      assert.equal(await error.count(),0);
+      assert.equal(await page.getByRole('status',{name:'Automation recovery list verified'}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
   await check('User directory read failure is explicit and cannot authorize account changes', 375,
     '/?tab=users&real_users=1&user_rows=1&user_directory_fail=1', async page => {
       const error = page.getByRole('alert', { name: 'User directory unavailable' });
