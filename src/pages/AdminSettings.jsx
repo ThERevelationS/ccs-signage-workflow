@@ -1759,10 +1759,16 @@ export default function AdminSettings() {
                   </Button>
                 </div>
               </div>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => { void loadAutomations(); }}
+                  disabled={isLoading} aria-label="Refresh Automation rules (read-only)">
+                  Refresh rules
+                </Button>
               <Button onClick={openNewRule} disabled={isLoading || automationLoadError || emailGroupsLoading || emailGroupsLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                 <Plus className="w-5 h-5 mr-2" /> New Automation
               </Button>
+              </div>
             </div>
 
             {/* Stats are authoritative only after a complete successful read. */}
