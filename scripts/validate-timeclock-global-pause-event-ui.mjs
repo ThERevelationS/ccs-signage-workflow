@@ -349,6 +349,7 @@ await act(async () => { pendingSupersededStart = renderer.root.findByType('butto
 assert.equal(calls.length, 21);
 assert.equal(calls[20].payload.action, 'work_pause_start');
 const staleActionRequestId = calls[20].payload.request_id;
+assert.ok(staleActionRequestId);
 await act(async () => {
   windowStub.dispatchEvent(new CustomEvent('ccs-timeclock-work-pause-changed', { detail: null }));
 });
