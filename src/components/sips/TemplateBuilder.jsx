@@ -154,6 +154,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [savingChecklist, setSavingChecklist] = useState(null);
   const [isReloading, setIsReloading] = useState(false);
   const reloadInFlightRef = useRef(false);
+  const templateLoadSequenceRef = useRef(0);
+  const invalidatePendingTemplateLoads = () => { templateLoadSequenceRef.current += 1; };
   const builderHeadingRef = useRef(null);
   const reloadButtonRef = useRef(null);
   const checklistSaveInFlight = useRef(null);
@@ -167,6 +169,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   }, [isOpen]);
 
   const loadData = async () => {
+    // Older reads must not replace newer catalog/setting snapshots. Writes
+    // also invalidate reads started before their successful persistence.
+    const loadSequence = ++templateLoadSequenceRef.current;
     try {
       const [subTemplatesData, productTypesSetting, ptTemplates, stItems, dropdownsSetting] = await Promise.all([
         loadAllEntityRows({ entity: ChecklistSubItem, sort: null, label: "SIP checklist sub-templates" }),
@@ -175,7 +180,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'subTemplateItems', label: 'SIP Sub-Template Items' }),
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'dropdownConditions', label: 'SIP Dropdown Conditions' }),
       ]);
-      
+      if (loadSequence !== templateLoadSequenceRef.current) return null;
+
       setSubTemplates([...subTemplatesData].sort((a, b) => (a.order || 0) - (b.order || 0)));
       setSettingRecords({
         productTypes: productTypesSetting,
@@ -196,6 +202,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         subTemplateItems: stItems?.setting_value || {},
       };
     } catch (error) {
+      if (loadSequence !== templateLoadSequenceRef.current) return null;
       console.error("Error loading data:", error);
       setPersistenceError(error?.message || "Template Builder data could not be loaded safely.");
       return null;
@@ -212,6 +219,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         nextValue,
         label,
       });
+      invalidatePendingTemplateLoads();
       setSettingRecords(prev => ({ ...prev, [key]: saved }));
       applyLocal(saved.setting_value);
       return saved;
@@ -291,6 +299,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         remove,
         label,
       });
+      invalidatePendingTemplateLoads();
       setSettingRecords(prev => ({ ...prev, subTemplateItems: saved }));
       setSubTemplateItems(saved.setting_value || {});
       return saved;
@@ -318,6 +327,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         remove,
         label,
       });
+      invalidatePendingTemplateLoads();
       setSettingRecords(prev => ({ ...prev, productTypeTemplates: saved }));
       setProductTypeTemplates(saved.setting_value || {});
       return saved;
@@ -592,6 +602,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         nextFields: { name },
         label: `SIP sub-template rename ${subTemplate.name || subTemplate.id}`,
       });
+      invalidatePendingTemplateLoads();
       setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
       setEditingSubTemplateId(null);
       setEditingSubTemplateName("");
@@ -614,6 +625,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         nextFields: { applies_to_product_types: nextApplies },
         label: `SIP sub-template product types ${subTemplate.name || subTemplate.id}`,
       });
+      invalidatePendingTemplateLoads();
       setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
       return true;
     } catch (error) {
@@ -973,6 +985,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         }),
         label: 'SIP sub-template reorder',
       });
+      invalidatePendingTemplateLoads();
       setSubTemplates([...savedRows].sort((a, b) => (a.order || 0) - (b.order || 0)));
     } catch (error) {
       console.error("Error reordering:", error);
