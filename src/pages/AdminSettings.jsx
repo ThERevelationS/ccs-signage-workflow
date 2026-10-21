@@ -525,6 +525,7 @@ export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [automationLoadError, setAutomationLoadError] = useState(false);
   const automationLoadSequence = useRef(0);
+  const [automationRecoveryListVerified, setAutomationRecoveryListVerified] = useState(false);
 
   // Password/Face ID protection state. A UI unlock is valid only while the
   // backend-issued Admin Settings capability is still present and unexpired.
@@ -602,6 +603,11 @@ export default function AdminSettings() {
   useEffect(() => {
     // An Admin session/identity change may not retain draft authority.
     automationSessionEpoch.current += 1;
+    automationLoadSequence.current += 1;
+    setAutomationRecoveryListVerified(false);
+    setAutomations([]);
+    setAutomationLoadError(true);
+    setIsLoading(true);
     automationReviewOwner.current += 1;
     automationReviewInFlight.current = false;
     automationReviewSnapshotRef.current = null;
@@ -695,36 +701,43 @@ export default function AdminSettings() {
 
   const loadAutomations = async () => {
     const requestSequence = ++automationLoadSequence.current;
+    const ownerEpoch = automationSessionEpoch.current;
     setIsLoading(true);
+    setAutomationRecoveryListVerified(false);
     try {
-      const rules = await loadAllEntityRows({
+      const rules = await withAutomationReadDeadline(() => loadAllEntityRows({
         entity: AutomationRule,
         sort: "-created_date",
         label: "Admin Settings automation rules",
-      });
-      if (requestSequence === automationLoadSequence.current) {
-        setAutomations(rules);
-        setAutomationLoadError(false);
-      }
+      }));
+      if (requestSequence !== automationLoadSequence.current ||
+          ownerEpoch !== automationSessionEpoch.current) return null;
+      if (!Array.isArray(rules)) throw new Error("Unverified Automation list response.");
+      setAutomations(rules);
+      setAutomationLoadError(false);
       return rules;
     } catch {
-      // A failed read is not an empty automation list. Preserve the last known
-      // rows internally but do not offer stale data for editing until recovery.
-      if (requestSequence === automationLoadSequence.current) {
+      // A failed read is never a verified empty list. Keep internal cache
+      // inaccessible to editing until a complete, owned read succeeds.
+      if (requestSequence === automationLoadSequence.current &&
+          ownerEpoch === automationSessionEpoch.current) {
         setAutomationLoadError(true);
       }
       return null;
     } finally {
-      if (requestSequence === automationLoadSequence.current) {
+      if (requestSequence === automationLoadSequence.current &&
+          ownerEpoch === automationSessionEpoch.current) {
         setIsLoading(false);
       }
     }
   };
 
   useEffect(() => {
-    loadAutomations();
-    loadEmailGroups();
-    loadAllUsers();
+    void loadAutomations();
+  }, [sessionToken, navigationKey, isUnlocked]);
+  useEffect(() => {
+    void loadEmailGroups();
+    void loadAllUsers();
   }, []);
 
   const openNewRule = async () => {
@@ -972,6 +985,14 @@ export default function AdminSettings() {
         setAutomationReviewStatus(draftChanged ? "stale_draft" : "stale");
         return;
       }
+      // The acknowledgment's complete, fresh list read is authoritative for
+      // this instant. Adopt it directly instead of issuing a third read that
+      // could fail, and fence older in-flight list requests from replacing it.
+      automationLoadSequence.current += 1;
+      setAutomations(rows);
+      setAutomationLoadError(false);
+      setIsLoading(false);
+      setAutomationRecoveryListVerified(true);
       automationReviewSnapshotRef.current = null;
       automationRecoveryFocusRequested.current = false;
       setAutomationRecoveryFailures(0);
@@ -1647,6 +1668,13 @@ export default function AdminSettings() {
           )}
 
           <AdminPanelContent value="automations">
+            {!isLoading && !automationLoadError && automationRecoveryListVerified && (
+              <div role="status" aria-label="Automation recovery list verified"
+                className="mb-4 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-950">
+                The Automation list was refreshed from the complete, read-only acknowledgment snapshot.
+                This confirms the displayed list at the time of the read, not which request saved the rule.
+              </div>
+            )}
             {!isDialogOpen && uncertainAutomationReview}
             {automationDraftParked && !isDialogOpen && (
               <div role="status" aria-label="Unsaved Automation draft" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
@@ -1775,8 +1803,9 @@ export default function AdminSettings() {
               <div role="alert" aria-label="Automation rules unavailable" className="clay-card rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950">
                 <h3 className="font-semibold">Automation rules could not be loaded</h3>
                 <p className="mt-1 text-sm">
-                  The current rule list could not be verified. Existing rules have not been changed.
-                  Editing is paused until the list loads successfully.
+                  The current rule list could not be verified. An earlier verified snapshot, if any,
+                  is not being shown as current. Editing is paused until a complete read succeeds.
+                  No Automation write was retried.
                 </p>
                 <Button type="button" size="sm" variant="outline" disabled={isLoading}
                   onClick={() => { void loadAutomations(); }}
