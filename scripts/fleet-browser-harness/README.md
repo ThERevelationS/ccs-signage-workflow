@@ -21,4 +21,6 @@ Use `FLEET_PLAYWRIGHT_PATH=/absolute/path/to/playwright/index.mjs` if the packag
 
 For the **real Fleet Repair Estimate dialog** (rather than the stub in the work-order suite), run `node scripts/test-fleet-repair-estimate-browser.mjs` after the build. It uses the same external Playwright installation and an in-memory synthetic `fleetRepairEstimateAction` fixture. The recovery scenarios cover failed loads, keyboard retry, lost submission acknowledgments, server-status reconciliation, conflicting drafts and late GET responses across reopen. Every outside-origin request is blocked. Never point either suite at live records.
 
+For **Fleet Requests**, run `node scripts/test-fleet-requests-browser.mjs` after the build. It mounts the existing requests page and dialogs with synthetic requests, Fleet parts and fluids; the coverage checks request creation, ordering, the nested receive confirmation, and exact linked Fleet inventory updates. Outside-origin requests are blocked, and no live records are used.
+
 Retain real, authenticated production browser acceptance as a separate manual check: do not save or complete a live Fleet work order just for testing.
