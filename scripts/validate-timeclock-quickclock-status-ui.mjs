@@ -1046,4 +1046,78 @@ await act(async () => {
 assert.equal(breakIdentityDialog().props.breakStatus,'working');
 await act(async () => { breakIdentityRenderer.unmount(); });
 console.log('PASS mismatched break employee/shift acknowledgements fail closed and preserve exact retry IDs');
-console.log('PASS 26/26 Time Clock Quick Clock async status acceptance cases');
+// Current Work acknowledgements must match the employee, shift, and returned labor segment.
+let laborIdentityRenderer;
+await act(async () => {
+  laborIdentityRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'labor-identity-session', employeeSessionUser:first,
+  }));
+});
+const laborIdentityStatusIndex = calls.length - 1;
+await act(async () => { calls[laborIdentityStatusIndex].resolve(status(first,'labor-identity-shift')); });
+const laborIdentityDialog = () => laborIdentityRenderer.root.findAll((node) =>
+  typeof node.props?.onStartLabor === 'function')[0];
+let mismatchedLaborStart;
+await act(async () => { mismatchedLaborStart = laborIdentityDialog().props.onStartLabor({activityType:'fabrication'}); });
+const mismatchedLaborStartIndex = calls.length - 1;
+const mismatchedLaborStartId = calls[mismatchedLaborStartIndex].payload.request_id;
+await act(async () => {
+  calls[mismatchedLaborStartIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in',
+    active_labor:{id:'foreign-segment',user_email:second.email,time_entry_id:'other-shift'},
+    labor_summary:{count:1,total_minutes:12},
+    entry:{id:'labor-identity-shift',user_email:first.email},
+  }});
+  await assert.rejects(mismatchedLaborStart,/could not be matched/);
+});
+assert.equal(laborIdentityDialog().props.activeLabor,null,
+  'Mismatched labor segment must not appear as current work');
+assert.equal(savedSessionData.get('ccs_timeclock_request:labor_start:'+first.email),mismatchedLaborStartId,
+  'Mismatched Current Work acknowledgement must preserve the exact request');
+let recoveredLaborStart;
+await act(async () => { recoveredLaborStart = laborIdentityDialog().props.onStartLabor({activityType:'fabrication'}); });
+const recoveredLaborStartIndex = calls.length - 1;
+assert.equal(calls[recoveredLaborStartIndex].payload.request_id,mismatchedLaborStartId);
+await act(async () => {
+  calls[recoveredLaborStartIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in',
+    active_labor:{id:'verified-segment',user_email:first.email,time_entry_id:'labor-identity-shift'},
+    labor_summary:{count:1,total_minutes:12},
+    entry:{id:'labor-identity-shift',user_email:first.email},
+  }});
+  await recoveredLaborStart;
+});
+assert.equal(laborIdentityDialog().props.activeLabor.id,'verified-segment');
+let mismatchedLaborChange;
+await act(async () => { mismatchedLaborChange = laborIdentityDialog().props.onChangeLabor({activityType:'installation'}); });
+const mismatchedLaborChangeIndex = calls.length - 1;
+const mismatchedLaborChangeId = calls[mismatchedLaborChangeIndex].payload.request_id;
+await act(async () => {
+  calls[mismatchedLaborChangeIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in',
+    active_labor:{id:'wrong-shift-segment',user_email:first.email,time_entry_id:'different-shift'},
+    labor_summary:{count:2,total_minutes:22},
+    entry:{id:'labor-identity-shift',user_email:first.email},
+  }});
+  await assert.rejects(mismatchedLaborChange,/could not be matched/);
+});
+assert.equal(laborIdentityDialog().props.activeLabor.id,'verified-segment',
+  'Mismatched shift segment must not replace the current segment');
+assert.equal(savedSessionData.get('ccs_timeclock_request:labor_change:'+first.email),mismatchedLaborChangeId);
+let recoveredLaborChange;
+await act(async () => { recoveredLaborChange = laborIdentityDialog().props.onChangeLabor({activityType:'installation'}); });
+const recoveredLaborChangeIndex = calls.length - 1;
+assert.equal(calls[recoveredLaborChangeIndex].payload.request_id,mismatchedLaborChangeId);
+await act(async () => {
+  calls[recoveredLaborChangeIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in',
+    active_labor:{id:'verified-installation',user_email:first.email,time_entry_id:'labor-identity-shift'},
+    labor_summary:{count:2,total_minutes:22},
+    entry:{id:'labor-identity-shift',user_email:first.email},
+  }});
+  await recoveredLaborChange;
+});
+assert.equal(laborIdentityDialog().props.activeLabor.id,'verified-installation');
+await act(async () => { laborIdentityRenderer.unmount(); });
+console.log('PASS mismatched Current Work employee/shift/segment acknowledgements fail closed and preserve exact retry IDs');
+console.log('PASS 27/27 Time Clock Quick Clock async status acceptance cases');
