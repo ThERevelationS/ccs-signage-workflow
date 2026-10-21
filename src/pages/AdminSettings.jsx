@@ -927,6 +927,9 @@ export default function AdminSettings() {
           automationUncertainRef.current === pending) {
         automationReviewSnapshotRef.current = null;
         setAutomationReviewStatus(error instanceof AutomationReadTimeoutError ? "timed_out" : "read_failed");
+        setAutomationRecoveryFailures(count => Math.min(count + 1, 99));
+        setAutomationRecoveryFailedStep("verification");
+        automationRecoveryFocusRequested.current = true;
       }
     } finally {
       if (ownerEpoch === automationSessionEpoch.current &&
@@ -987,6 +990,9 @@ export default function AdminSettings() {
           automationUncertainRef.current === pending) {
         automationReviewSnapshotRef.current = null;
         setAutomationReviewStatus(error instanceof AutomationReadTimeoutError ? "timed_out" : "read_failed");
+        setAutomationRecoveryFailures(count => Math.min(count + 1, 99));
+        setAutomationRecoveryFailedStep("acknowledgment");
+        automationRecoveryFocusRequested.current = true;
       }
     } finally {
       if (ownerEpoch === automationSessionEpoch.current &&
