@@ -126,7 +126,7 @@ test("Only dispatched failed writes become uncertain; same attempt stays fenced"
   assert.match(source, /automationUncertainRef\.current = attempt/);
   assert.match(source, /if \(automationUncertainRef\.current \|\| automationSaveInFlight\.current/);
   assert.match(source, /disabled=\{!!automationUncertain \|\| automationSaving/);
-  assert.match(source, /const rows = await loadAllEntityRows\(\{/);
+  assert.match(source, /const rows = await withAutomationReadDeadline\(\(\) => loadAllEntityRows\(\{/);
   assert.match(source, /label: "Admin Settings uncertain Automation verification"/);
   assert.match(source, /reviewUncertainAutomationSave\(\{ \.\.\.pending, rows \}\)/);
   assert.match(source, /automationReviewOwner\.current \+= 1/);
