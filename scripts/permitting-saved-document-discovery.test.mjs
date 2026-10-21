@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import {validateSavedDiscoverySelection,discoverSelectedSavedDocument} from '../base44/shared/permittingSavedDocumentDiscovery.mjs';
 import {scanOfficialPermittingPages} from '../base44/shared/permittingDiscoveryScan.mjs';
+import {PDF_RESOURCE_METHOD} from '../base44/shared/permittingResourceResponse.mjs';
 globalThis.crypto ||= webcrypto;
 const url='https://www.sharonville.org/123/Building-Zoning-and-Planning';
 const seed='https://www.sharonville.org/394/Sign-Application';
@@ -134,7 +135,7 @@ test('successfully read selected page receives a date even when it exposes no re
 test('selected-page PDF classification retains routing metadata and timestamps only the fetched document',async()=>{
  const p=fixture(),entity=entityFor(p);
  const result=await discoverSelectedSavedDocument({entity,profile:p,selection:selection(p),
-  fetchPage:async()=>({resource_kind:'pdf',classification_method:'mime-and-signature-v1',finalUrl:url})});
+  fetchPage:async()=>({resource_kind:'pdf',classification_method:PDF_RESOURCE_METHOD,finalUrl:url})});
  const selected=result.jurisdiction.documents[0];
  assert.equal(selected.resource_classification.kind,'pdf');
  assert.equal(selected.last_fetched,result.selected_document_receipt.scanned_at);
