@@ -1002,6 +1002,20 @@ export default function AdminSettings() {
       }
     }
   };
+  useEffect(() => {
+    if (!automationRecoveryFocusRequested.current || automationReviewLoading || automationAckLoading ||
+        !["timed_out", "read_failed"].includes(automationReviewStatus)) return;
+    const button = automationRetryButtonRef.current;
+    const active = document.activeElement;
+    // Restore focus only for the recovery action; never take it from an
+    // unsent editor field, search input or other navigation control.
+    if (!button?.isConnected || button.disabled ||
+        (active !== document.body && active !== button &&
+          !active?.closest?.('[data-automation-recovery-controls]'))) return;
+    automationRecoveryFocusRequested.current = false;
+    button.focus({ preventScroll: true });
+  }, [automationReviewStatus, automationRecoveryFailures, automationReviewLoading, automationAckLoading, isDialogOpen]);
+
   const uncertainAutomationReview = automationUncertain ? (
     <div role="alert" aria-label="Automation save outcome requires review"
       className="mb-4 rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950">
@@ -1036,12 +1050,25 @@ export default function AdminSettings() {
                   : "A rule exists but its values differ from the attempted save. Review the latest record before making changes."}
         </p>
       )}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button type="button" size="sm" variant="outline"
+      {automationRecoveryFailures >= 2 && (
+        <div role="status" aria-label="Repeated Automation verification failures" className="mt-3 rounded-md border border-amber-300 bg-white p-2">
+          <p className="font-semibold">{automationRecoveryFailures} consecutive read-only checks failed or timed out.</p>
+          <p className="mt-1">Last affected step: {automationRecoveryFailedStep === "acknowledgment" ? "acknowledgment recheck" : "save verification"}. Your draft has not been discarded, and no Automation save was retried. You can verify again or close the editor and return to Automations; this draft remains available in this Admin session.</p>
+        </div>
+      )}
+      <div className="mt-3 flex flex-wrap gap-2" data-automation-recovery-controls>
+        <Button ref={automationRetryButtonRef} type="button" size="sm" variant="outline"
           disabled={automationReviewLoading || automationAckLoading || automationSaving}
           onClick={() => { void verifyUncertainAutomationSave(); }}>
           {automationReviewLoading ? "Checking rules..." : "Verify save status (read-only)"}
         </Button>
+        {isDialogOpen && (
+          <Button type="button" size="sm" variant="outline"
+            disabled={automationReviewLoading || automationAckLoading || automationSaving}
+            onClick={() => closeAutomationEditor(false)}>
+            Return to Automations (keep draft)
+          </Button>
+        )}
         {["matching", "different", "not_found", "ambiguous"].includes(automationReviewStatus) && (
           <Button type="button" size="sm" variant="outline"
             disabled={automationReviewLoading || automationAckLoading || automationSaving}
