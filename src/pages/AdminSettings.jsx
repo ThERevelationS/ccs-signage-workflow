@@ -106,6 +106,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
 import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapshotUncertainAutomationReview, reviewedAutomationSnapshotIsCurrent } from "@/components/admin/automationSaveReconciliation";
+import { AutomationReadTimeoutError, withAutomationReadDeadline } from "@/components/admin/automationReadDeadline";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -891,10 +892,10 @@ export default function AdminSettings() {
     setAutomationReviewStatus(null);
     try {
       // Read complete entity state only, without any mutation.
-      const rows = await loadAllEntityRows({
+      const rows = await withAutomationReadDeadline(() => loadAllEntityRows({
         entity: AutomationRule, sort: "-created_date",
         label: "Admin Settings uncertain Automation verification",
-      });
+      }));
       if (ownerEpoch !== automationSessionEpoch.current ||
           reviewId !== automationReviewOwner.current ||
           automationUncertainRef.current !== pending) return;
@@ -907,10 +908,13 @@ export default function AdminSettings() {
         } : null;
         setAutomationReviewStatus(review?.status || reviewUncertainAutomationSave({ ...pending, rows }));
       }
-    } catch {
+    } catch (error) {
       if (ownerEpoch === automationSessionEpoch.current &&
           reviewId === automationReviewOwner.current &&
-          automationUncertainRef.current === pending) setAutomationReviewStatus("read_failed");
+          automationUncertainRef.current === pending) {
+        automationReviewSnapshotRef.current = null;
+        setAutomationReviewStatus(error instanceof AutomationReadTimeoutError ? "timed_out" : "read_failed");
+      }
     } finally {
       if (ownerEpoch === automationSessionEpoch.current &&
           reviewId === automationReviewOwner.current) {
@@ -937,10 +941,10 @@ export default function AdminSettings() {
     const reviewId = ++automationReviewOwner.current;
     setAutomationAckLoading(true);
     try {
-      const rows = await loadAllEntityRows({
+      const rows = await withAutomationReadDeadline(() => loadAllEntityRows({
         entity: AutomationRule, sort: "-created_date",
         label: "Admin Settings uncertain Automation acknowledgment",
-      });
+      }));
       if (ownerEpoch !== automationSessionEpoch.current ||
           reviewId !== automationReviewOwner.current ||
           automationUncertainRef.current !== pending ||
@@ -960,12 +964,12 @@ export default function AdminSettings() {
       setIsDialogOpen(false);
       setEditingRule(null);
       setAutomationSaveError("");
-    } catch {
+    } catch (error) {
       if (ownerEpoch === automationSessionEpoch.current &&
           reviewId === automationReviewOwner.current &&
           automationUncertainRef.current === pending) {
         automationReviewSnapshotRef.current = null;
-        setAutomationReviewStatus("read_failed");
+        setAutomationReviewStatus(error instanceof AutomationReadTimeoutError ? "timed_out" : "read_failed");
       }
     } finally {
       if (ownerEpoch === automationSessionEpoch.current &&
@@ -994,8 +998,10 @@ export default function AdminSettings() {
         <p className="mt-2" role="status">
           {automationReviewStatus === "matching"
             ? "A current rule matches the attempted values. This does not prove which request wrote it; do not resubmit."
-            : automationReviewStatus === "stale"
-              ? "The reviewed rule changed before acknowledgment. Your draft is preserved; verify again to review the latest state."
+            : automationReviewStatus === "timed_out"
+              ? "The read-only check timed out. No result was verified; your draft is preserved. Verify again to start a fresh read."
+              : automationReviewStatus === "stale"
+                ? "The reviewed rule changed before acknowledgment. Your draft is preserved; verify again to review the latest state."
               : automationReviewStatus === "stale_draft"
                 ? "The draft changed during review. Your edits are preserved; verify again before acknowledgment."
                 : automationReviewStatus === "read_failed" || automationReviewStatus === "unverified"
