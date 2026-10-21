@@ -136,7 +136,9 @@ try {
       "Only the exact Fleet part linked by ID receives the quantity");
     assert.equal(state.requests[0].status, "received");
     assert.ok(state.requests[0].receipt_applied_at, "Synthetic durable receipt marker is set once");
-    assert.match(await row.innerText(), /received/);
+    await page.getByRole("combobox").selectOption("all");
+    const receivedRow = page.locator("div.rounded-xl").filter({ hasText: "Synthetic linked brake pad" }).first();
+    assert.match(await receivedRow.innerText(), /received/);
   });
 
   console.log("BROWSER_ACCEPTANCE_PASS=" + passed);
