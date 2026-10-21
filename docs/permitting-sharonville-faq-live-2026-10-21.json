@@ -1,0 +1,247 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "Phase 10 / Milestone 1 of 3 / Task 2 partial; 2 of 4 complete",
+  "starting_head": "036876ceceb8d6a567e56f8974be593d4cb9e8c4",
+  "access": {
+    "browser": "Edge",
+    "surface": "Signed-in Base44 editor Function Tester",
+    "displayed_identity": "Brett Heinlein (You) · Main",
+    "app": "CCS Signage Workflow",
+    "server_authenticated_admin_gate_passed": true,
+    "mode": "preview backend function, live entity datastore",
+    "cli_sdk_recovery_verified": false
+  },
+  "selection": {
+    "profile_id": "6ac19f0e23bd8a65822f6d51",
+    "profile_version": "2026-10-21T13:39:10.591000",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "document_id": "148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d",
+    "url": "https://www.sharonville.org/Faq.aspx?QID=94"
+  },
+  "invocation": {
+    "function": "refreshJurisdiction",
+    "count": 1,
+    "success": true,
+    "http_status": 200,
+    "discovery_only": true,
+    "defer_archive": true,
+    "attempted_pages": 1,
+    "research_attempts": 0,
+    "llm_calls": 0,
+    "archival": null,
+    "scan_run": null
+  },
+  "profile": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "before_updated_date": "2026-10-21T13:39:10.591000",
+    "after_updated_date": "2026-10-21T14:22:35.528000",
+    "documents_before": 16,
+    "documents_after": 20
+  },
+  "receipt": {
+    "method": "explicit-saved-document-page-v1",
+    "document_id": "148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d",
+    "source_url": "https://www.sharonville.org/Faq.aspx?QID=94",
+    "profile_version": "2026-10-21T13:39:10.591000",
+    "scanned_at": "2026-10-21T14:22:35.203Z",
+    "continuation_state": {
+      "external_initial_collection_drained": false,
+      "method": "official-page-frontier-v1",
+      "seed_url": "https://www.sharonville.org/Faq.aspx?QID=94",
+      "max_depth": 2,
+      "visited_urls": [
+        "https://sharonville.org/Faq.aspx?QID=94",
+        "https://sharonville.org/m/faq?cat=22"
+      ],
+      "pending_pages": [
+        {
+          "url": "https://www.sharonville.org/MyAccount",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/DocumentCenter/View/4006/Application-For-Plan-Approval",
+          "depth": 1
+        },
+        {
+          "url": "https://sharonville.org/DocumentCenter/View/1964/Fee-Schedule",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/DocumentCenter/View/3347/Short-Term-Rental-Ordinance",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/524/Permits",
+          "depth": 1
+        }
+      ],
+      "gaps": [],
+      "external_referrals": [
+        {
+          "url": "http://oh-sharonville.civicplus.com/FormCenter/Public-Forms-3/General-Inquiry-Request-for-Service-Comp-42",
+          "title": "online",
+          "source_page_url": "https://www.sharonville.org/m/faq?cat=22",
+          "linked_href": "http://oh-sharonville.civicplus.com/FormCenter/Public-Forms-3/General-Inquiry-Request-for-Service-Comp-42",
+          "resolution_base_url": "https://www.sharonville.org/m/faq?cat=22",
+          "discovery_element": "anchor",
+          "referral_kind": "online_form",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "029f402389b96d97cfee750201841f19390adc95cb4e56d03af638e036dfb4a6"
+        },
+        {
+          "url": "https://codes.iccsafe.org/codes/ohio",
+          "title": "here",
+          "source_page_url": "https://www.sharonville.org/m/faq?cat=22",
+          "linked_href": "https://codes.iccsafe.org/codes/ohio",
+          "resolution_base_url": "https://www.sharonville.org/m/faq?cat=22",
+          "discovery_element": "anchor",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "029f402389b96d97cfee750201841f19390adc95cb4e56d03af638e036dfb4a6"
+        },
+        {
+          "url": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "title": "Civil Service Commission Rules and Regulations",
+          "source_page_url": "https://www.sharonville.org/m/faq?cat=22",
+          "linked_href": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "resolution_base_url": "https://www.sharonville.org/m/faq?cat=22",
+          "discovery_element": "anchor",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "029f402389b96d97cfee750201841f19390adc95cb4e56d03af638e036dfb4a6"
+        }
+      ],
+      "attempted_pages_total": 1
+    },
+    "pages": [
+      {
+        "url": "https://www.sharonville.org/Faq.aspx?QID=94",
+        "depth": 0,
+        "final_url": "https://www.sharonville.org/m/faq?cat=22",
+        "status": "scanned",
+        "discovered_resources": 5
+      }
+    ],
+    "attempted_pages": 1,
+    "jurisdiction_coverage_complete": false,
+    "authority_established": false
+  },
+  "document_changes": [
+    {
+      "id": "148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d",
+      "url": "https://www.sharonville.org/Faq.aspx?QID=94",
+      "missing": false,
+      "fields": [
+        {
+          "key": "last_fetched",
+          "before": "2026-10-14T01:05:24.573Z",
+          "after": "2026-10-21T14:22:35.203Z"
+        }
+      ]
+    }
+  ],
+  "added_documents": [
+    {
+      "title": "here",
+      "url": "https://www.sharonville.org/DocumentCenter/View/3347/Short-Term-Rental-Ordinance",
+      "doc_type": "zoning_code",
+      "source": "official_page_harvest",
+      "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/m/faq?cat=22",
+      "discovery_page_url": "https://www.sharonville.org/m/faq?cat=22",
+      "discovery_depth": 0,
+      "id": "0c9c63fd-8025-4898-a22f-f70e45250dcc"
+    },
+    {
+      "title": "Application For Plan Approval",
+      "url": "https://www.sharonville.org/DocumentCenter/View/4006/Application-For-Plan-Approval",
+      "doc_type": "permit_application",
+      "source": "official_page_harvest",
+      "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/m/faq?cat=22",
+      "discovery_page_url": "https://www.sharonville.org/m/faq?cat=22",
+      "discovery_depth": 0,
+      "id": "073a06bb-2a02-4652-b417-b9d3758b8467"
+    },
+    {
+      "title": "Please refer to PDF of Fee Schedule",
+      "url": "https://sharonville.org/DocumentCenter/View/1964/Fee-Schedule",
+      "doc_type": "fee_schedule",
+      "source": "official_page_harvest",
+      "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/m/faq?cat=22",
+      "discovery_page_url": "https://www.sharonville.org/m/faq?cat=22",
+      "discovery_depth": 0,
+      "id": "e986e6dd-2b02-40a2-ba15-6c1df4112c10"
+    },
+    {
+      "title": "Permits",
+      "url": "https://www.sharonville.org/524/Permits",
+      "doc_type": "permit_application",
+      "source": "official_page_harvest",
+      "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/m/faq?cat=22",
+      "discovery_page_url": "https://www.sharonville.org/m/faq?cat=22",
+      "discovery_depth": 0,
+      "id": "705a3ce0-ccbe-4fa7-a251-770c730d1ae7"
+    }
+  ],
+  "readback_checks": {
+    "only_selected_existing_document_fetch_date_changed": true,
+    "new_links_have_no_fetch_dates": true,
+    "original_frontier_unchanged": true,
+    "previous_receipts_unchanged": true,
+    "one_receipt_added": true,
+    "office_research_unchanged": true,
+    "other_profile_fields_unchanged": true,
+    "selected_timestamp_matches_receipt": true
+  },
+  "live_controls_observed": [
+    {
+      "id": "6ac1b28c47233270cfeeb0f9",
+      "key": "permitting_research_dispatch_config",
+      "updated_date": "2026-10-04T15:30:40.303000",
+      "value": {
+        "enabled": true,
+        "interval_minutes": 15,
+        "max_dispatch_per_cycle": 5,
+        "max_in_flight": 20,
+        "daily_dispatch_limit": 40,
+        "retry_limit": 3
+      }
+    },
+    {
+      "id": "6ac1d0ffb44495caa0c3cf76",
+      "key": "permitting_research_dispatch_state",
+      "updated_date": "2026-10-21T14:02:20.474000",
+      "value": {
+        "daily_day_key": "2026-10-21",
+        "dispatched_today": 40
+      }
+    }
+  ],
+  "data_boundary": {
+    "only_permitting_profile_documents_and_discovery_receipt_changed": true,
+    "client_job_shared_records_modified": false,
+    "authority_approved": false,
+    "electrical_role_evidence_established": false,
+    "archives_uploaded": 0,
+    "frontend_published": false,
+    "backend_source_changed": false
+  },
+  "next": {
+    "document_id": "705a3ce0-ccbe-4fa7-a251-770c730d1ae7",
+    "url": "https://www.sharonville.org/524/Permits",
+    "action": "Fresh exact-version selected-document one-page discovery, if still eligible; do not replay completed FAQ or prior department pages."
+  }
+}
