@@ -554,6 +554,10 @@ export default function AdminSettings() {
   const automationReviewSnapshotRef = useRef(null);
   const automationAckInFlight = useRef(false);
   const [automationAckLoading, setAutomationAckLoading] = useState(false);
+  const [automationRecoveryFailures, setAutomationRecoveryFailures] = useState(0);
+  const [automationRecoveryFailedStep, setAutomationRecoveryFailedStep] = useState(null);
+  const automationRetryButtonRef = useRef(null);
+  const automationRecoveryFocusRequested = useRef(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -603,6 +607,9 @@ export default function AdminSettings() {
     automationReviewSnapshotRef.current = null;
     automationAckInFlight.current = false;
     setAutomationAckLoading(false);
+    setAutomationRecoveryFailures(0);
+    setAutomationRecoveryFailedStep(null);
+    automationRecoveryFocusRequested.current = false;
     automationUncertainRef.current = null;
     setAutomationUncertain(null);
     setAutomationReviewStatus(null);
@@ -865,6 +872,9 @@ export default function AdminSettings() {
         automationReviewSnapshotRef.current = null;
         automationAckInFlight.current = false;
         setAutomationAckLoading(false);
+        setAutomationRecoveryFailures(0);
+        setAutomationRecoveryFailedStep(null);
+        automationRecoveryFocusRequested.current = false;
         setAutomationUncertain(attempt);
         setAutomationReviewStatus(null);
         setAutomationSaveError("");
@@ -884,6 +894,7 @@ export default function AdminSettings() {
     if (!pending || automationReviewInFlight.current || automationAckInFlight.current ||
         automationSaveInFlight.current) return;
     automationReviewInFlight.current = true;
+    automationRecoveryFocusRequested.current = false;
     automationReviewSnapshotRef.current = null;
     const draftAtReviewStart = automationDraftFingerprintRef.current;
     const ownerEpoch = automationSessionEpoch.current;
@@ -900,6 +911,8 @@ export default function AdminSettings() {
           reviewId !== automationReviewOwner.current ||
           automationUncertainRef.current !== pending) return;
       const review = snapshotUncertainAutomationReview({ ...pending, rows });
+      setAutomationRecoveryFailures(0);
+      setAutomationRecoveryFailedStep(null);
       if (draftAtReviewStart !== automationDraftFingerprintRef.current) {
         setAutomationReviewStatus("stale_draft");
       } else {
@@ -937,6 +950,7 @@ export default function AdminSettings() {
       return;
     }
     automationAckInFlight.current = true;
+    automationRecoveryFocusRequested.current = false;
     const ownerEpoch = automationSessionEpoch.current;
     const reviewId = ++automationReviewOwner.current;
     setAutomationAckLoading(true);
@@ -956,6 +970,9 @@ export default function AdminSettings() {
         return;
       }
       automationReviewSnapshotRef.current = null;
+      automationRecoveryFocusRequested.current = false;
+      setAutomationRecoveryFailures(0);
+      setAutomationRecoveryFailedStep(null);
       automationUncertainRef.current = null;
       setAutomationUncertain(null);
       setAutomationReviewStatus(null);
