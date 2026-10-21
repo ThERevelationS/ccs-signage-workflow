@@ -109,7 +109,7 @@ try {
     await range.selectOption("30");
     await page.waitForFunction(() => window.__fleetTrackingFixture.pendingTripResolvers.length === 1);
     await range.selectOption("90");
-    await page.waitForFunction(() => document.querySelectorAll('[data-testid="trip-list"] button').length > initialCount + 4);
+    await page.waitForFunction(count => document.querySelectorAll('[data-testid="trip-list"] button').length > count + 4, initialCount);
     const currentRangeTrips = await page.getByTestId("trip-list").last().innerText();
 
     await page.evaluate(() => window.__fleetTrackingFixture.pendingTripResolvers.shift().resolve());
