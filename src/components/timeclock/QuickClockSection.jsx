@@ -1031,6 +1031,24 @@ export default function QuickClockSection({
     }
   };
 
+  const assertCurrentWorkAcknowledgementIdentity = (data, email, entryId) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const responseEntryId = String(data?.entry?.id || "");
+    const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
+    const labor = data?.active_labor;
+    const laborMatches = !labor || (
+      String(labor.user_email || "").trim().toLowerCase() === expectedEmail &&
+      String(labor.time_entry_id || "") === String(entryId || "")
+    );
+    if (responseEmail === expectedEmail && responseEntryId === String(entryId || "") &&
+        entryEmail === expectedEmail && laborMatches) return;
+
+    const error = new Error("Current Work response could not be matched to this employee, active shift, and labor segment. The exact request is preserved; refresh status and retry the same action.");
+    error.retrySameRequest = true;
+    throw error;
+  };
+
   const handleLaborAction = async (action, { activityType = "", workOrderId = "" } = {}) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Current Work identity is no longer verified. Close this dialog and identify again.");
@@ -1053,15 +1071,19 @@ export default function QuickClockSection({
       });
       actionEpoch = workViewEpochRef.current;
       const result = await pending;
-      clearRequest(action, email);
-      if (!stillCurrentEntry() || actionEpoch !== workViewEpochRef.current) return null;
+      if (!stillCurrentEntry() || actionEpoch !== workViewEpochRef.current) {
+        clearRequest(action, email, requestId);
+        return null;
+      }
+      assertCurrentWorkAcknowledgementIdentity(result, email, activeEntry.id);
+      clearRequest(action, email, requestId);
       setActiveLabor(result.active_labor || null);
       setLaborSummary(result.labor_summary || { count: 0, total_minutes: 0 });
       if (result?.entry?.id) setActiveEntry(result.entry);
       setRecognitionStatus(action === "labor_stop" ? "Current Work stopped and confirmed by server." : action === "labor_change" ? "Current Work changed and confirmed by server." : "Current Work started and confirmed by server.");
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest(action, email);
+      if (!shouldRetainRequest(err)) clearRequest(action, email, requestId);
       if (stillCurrentEntry() && actionEpoch === workViewEpochRef.current) {
         setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
       }
