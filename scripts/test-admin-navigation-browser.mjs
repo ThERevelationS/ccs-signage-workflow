@@ -1501,6 +1501,74 @@ try {
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
     });
 
+  await check('Repeated Automation read failures retain draft, restore retry focus, and allow safe Admin navigation', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationVerifyFail=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Synthetic retained repeated read failure');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      const retry=warning.getByRole('button',{name:'Verify save status (read-only)'});
+      for(let index=0;index<2;index++){
+        await retry.click();
+        await warning.getByText(/rule list could not be verified/).waitFor();
+        await page.waitForFunction(()=>document.activeElement?.textContent?.includes('Verify save status (read-only)'));
+      }
+      const summary=warning.getByRole('status',{name:'Repeated Automation verification failures'});
+      await summary.getByText(/2 consecutive read-only checks failed or timed out/).waitFor();
+      assert.match(await summary.innerText(),/save verification/);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Synthetic retained repeated read failure');
+      assert.equal(await editor.getByRole('button',{name:'Update Automation'}).isDisabled(),true);
+      await warning.getByRole('button',{name:'Return to Automations (keep draft)'}).click();
+      await editor.waitFor({state:'detached'});
+      await page.getByRole('status',{name:'Unsaved Automation draft'}).waitFor();
+      const group=page.getByRole('group',{name:'Admin navigation categories'});
+      await group.getByRole('button',{name:'People'}).click();
+      await group.getByRole('button',{name:'Workflow'}).click();
+      await page.getByRole('status',{name:'Unsaved Automation draft'}).getByRole('button',{name:'Resume Automation draft'}).click();
+      await editor.waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Synthetic retained repeated read failure');
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      await page.evaluate(()=>{window.__adminAutomationVerifyFail=false;});
+      await editor.getByRole('alert',{name:'Automation save outcome requires review'})
+        .getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      assert.equal(await summary.count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('Recovery focus does not steal typing focus on late failed Automation read', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationVerifyHold=true;
+        window.__adminAutomationVerifyFail=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Original before failed review');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await page.waitForFunction(()=>!!window.__adminAutomationVerifyRelease);
+      const field=editor.getByPlaceholder('e.g., Auto-assign fabrication jobs');
+      await field.fill('Unsent typing must retain focus');
+      await page.evaluate(()=>{window.__adminAutomationVerifyRelease();});
+      await warning.getByText(/rule list could not be verified/).waitFor();
+      assert.equal(await field.evaluate(element=>document.activeElement===element),true);
+      assert.equal(await field.inputValue(),'Unsent typing must retain focus');
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      assert.equal(await editor.getByRole('button',{name:'Update Automation'}).isDisabled(),true);
+    });
+
   await check('Late uncertain-save verification cannot affect a replacement Admin session', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{
