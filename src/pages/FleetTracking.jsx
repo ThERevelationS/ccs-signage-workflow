@@ -74,6 +74,7 @@ export default function FleetTracking() {
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(false);
   const refreshTimer = useRef(null);
+  const tripLoadGeneration = useRef(0);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -121,7 +122,12 @@ export default function FleetTracking() {
   }, [loadNotifications]);
 
   const loadTrips = useCallback(async (imei, days) => {
-    if (!imei) { setTrips([]); return; }
+    const loadId = ++tripLoadGeneration.current;
+    if (!imei) {
+      setTrips([]);
+      setTripsLoading(false);
+      return;
+    }
     setTripsLoading(true);
     try {
       const ranges = buildWeeklyRanges(days);
@@ -132,13 +138,14 @@ export default function FleetTracking() {
           query: { imei, "starts-after": r["starts-after"], "ends-before": r["ends-before"], "gps-format": "geojson" }
         }))
       );
+      if (loadId !== tripLoadGeneration.current) return;
       const all = results.flatMap(r => r?.data?.data || []);
       all.sort((a, b) => (Date.parse(b?.startTime || "") || 0) - (Date.parse(a?.startTime || "") || 0));
       setTrips(all);
     } catch {
-      setTrips([]);
+      if (loadId === tripLoadGeneration.current) setTrips([]);
     } finally {
-      setTripsLoading(false);
+      if (loadId === tripLoadGeneration.current) setTripsLoading(false);
     }
   }, [sessionToken]);
 
@@ -204,9 +211,12 @@ export default function FleetTracking() {
   // Load trips when selection / range changes
   useEffect(() => {
     setSelectedTrip(null);
-    if (!selectedVin) return;
+    if (!selectedVin) {
+      loadTrips("", daysBack);
+      return;
+    }
     const v = vehicles.find(v => v.vin === selectedVin);
-    if (v?.imei) loadTrips(v.imei, daysBack);
+    loadTrips(v?.imei || "", daysBack);
   }, [selectedVin, daysBack, vehicles, loadTrips]);
 
   const handleConnect = async () => {
