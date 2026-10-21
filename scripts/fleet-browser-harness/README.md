@@ -23,4 +23,6 @@ For the **real Fleet Repair Estimate dialog** (rather than the stub in the work-
 
 For **Fleet Requests**, run `node scripts/test-fleet-requests-browser.mjs` after the build. It mounts the existing requests page and dialogs with synthetic requests, Fleet parts and fluids; the coverage checks request creation, ordering, the nested receive confirmation, and exact linked Fleet inventory updates. Outside-origin requests are blocked, and no live records are used.
 
+For **Bouncie trip selection**, run `node scripts/test-fleet-tracking-trip-race-browser.mjs` after the build. It mounts the existing Fleet Tracking page with synthetic Bouncie responses and deterministically delays earlier trip-history requests across vehicle and date-range changes. Outside-origin requests are blocked.
+
 Retain real, authenticated production browser acceptance as a separate manual check: do not save or complete a live Fleet work order just for testing.
