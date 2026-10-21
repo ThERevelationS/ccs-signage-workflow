@@ -368,6 +368,74 @@ assert.equal(firstDialog().props.breakSummary.paid_minutes, 8);
 assert.equal(firstDialog().props.breakSummary.unpaid_minutes, 0);
 console.log('PASS paid break normal start/end preserves server paid versus unpaid totals');
 
+let earlyDuplicateBreak;
+let latestDuplicateBreak;
+await act(async () => {
+  earlyDuplicateBreak = firstDialog().props.onStartBreak({ breakType: 'break', isPaid: true });
+  latestDuplicateBreak = firstDialog().props.onStartBreak({ breakType: 'break', isPaid: true });
+});
+const earlyDuplicateBreakIndex = calls.length - 2;
+const latestDuplicateBreakIndex = calls.length - 1;
+const duplicateBreakRequestId = calls[earlyDuplicateBreakIndex].payload.request_id;
+assert.equal(calls[latestDuplicateBreakIndex].payload.request_id, duplicateBreakRequestId,
+  'Rapid duplicate taps must share one exact break request');
+const duplicatePaidBreakKey = `ccs_timeclock_request:break_start:break:paid:${second.email}`;
+await act(async () => {
+  calls[latestDuplicateBreakIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'on_break',
+    break: { id: 'confirmed-first-paid-break', is_paid: true, break_type: 'break', user_email: second.email },
+    break_summary: { count: 3, total_minutes: 21, paid_minutes: 21, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await latestDuplicateBreak;
+});
+assert.equal(firstDialog().props.breakStatus, 'on_break');
+let endFirstDuplicateBreak;
+await act(async () => { endFirstDuplicateBreak = firstDialog().props.onEndBreak(); });
+const endFirstDuplicateBreakIndex = calls.length - 1;
+await act(async () => {
+  calls[endFirstDuplicateBreakIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'working',
+    break_summary: { count: 3, total_minutes: 29, paid_minutes: 29, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await endFirstDuplicateBreak;
+});
+let newerPaidBreak;
+await act(async () => {
+  newerPaidBreak = firstDialog().props.onStartBreak({ breakType: 'break', isPaid: true });
+});
+const newerPaidBreakIndex = calls.length - 1;
+const newerPaidBreakRequestId = calls[newerPaidBreakIndex].payload.request_id;
+assert.notEqual(newerPaidBreakRequestId, duplicateBreakRequestId,
+  'A later break after a completed break needs a fresh request ID');
+assert.equal(savedSessionData.get(duplicatePaidBreakKey), newerPaidBreakRequestId,
+  'The newer pending break ID must remain durably stored');
+
+await act(async () => {
+  calls[earlyDuplicateBreakIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'on_break',
+    break: { id: 'stale-duplicate-paid-break', is_paid: true, break_type: 'break', user_email: second.email },
+    break_summary: { count: 3, total_minutes: 21, paid_minutes: 21, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await earlyDuplicateBreak;
+});
+assert.equal(firstDialog().props.breakStatus, 'working',
+  'A delayed duplicate acknowledgment must not restore an already-ended break');
+assert.equal(savedSessionData.get(duplicatePaidBreakKey), newerPaidBreakRequestId,
+  'A delayed duplicate acknowledgment must not clear a newer break retry ID');
+console.log('PASS delayed duplicate break acknowledgement cannot overwrite newer break state or retry ID');
+await act(async () => {
+  calls[newerPaidBreakIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'on_break',
+    break: { id: 'newest-paid-break', is_paid: true, break_type: 'break', user_email: second.email },
+    break_summary: { count: 4, total_minutes: 29, paid_minutes: 29, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await newerPaidBreak;
+});
+
 const laborDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartLabor === 'function')[0];
 assert.ok(laborDialog());
