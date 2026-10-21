@@ -1,0 +1,382 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "Phase 10 / Milestone 1 of 3 / Task 2 partial; 2 of 4 complete",
+  "authenticated_account": "brettheinlein1@gmail.com",
+  "authenticated_role": "admin",
+  "starting_head": "429840dcbbee7510f129940596c58b91a62d06d0",
+  "profile": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "before_updated_date": "2026-10-18T04:09:02.663000",
+    "scan_updated_date": "2026-10-21T13:37:07.050000",
+    "final_updated_date": "2026-10-21T13:39:10.591000"
+  },
+  "invocation": {
+    "function": "refreshJurisdiction",
+    "success": true,
+    "discovery_only": true,
+    "defer_archive": true,
+    "research_attempts": 0,
+    "llm_calls": 0,
+    "archival": null,
+    "attempted_pages": 1
+  },
+  "selected_document_receipt": {
+    "method": "explicit-saved-document-page-v1",
+    "document_id": "df3e3416-fed2-4c72-9e04-aa33454bbf2b",
+    "source_url": "https://www.sharonville.org/122/Community-Development",
+    "profile_version": "2026-10-18T04:09:02.663000",
+    "scanned_at": "2026-10-21T13:37:06.808Z",
+    "continuation_state": {
+      "external_initial_collection_drained": false,
+      "method": "official-page-frontier-v1",
+      "seed_url": "https://www.sharonville.org/122/Community-Development",
+      "max_depth": 2,
+      "visited_urls": [
+        "https://sharonville.org/122/Community-Development"
+      ],
+      "pending_pages": [
+        {
+          "url": "https://www.sharonville.org/MyAccount",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/forms.aspx?FID=72",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/forms.aspx?FID=73",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/forms.aspx?FID=74",
+          "depth": 1
+        },
+        {
+          "url": "https://sharonville.org/DocumentCenter/View/3983/2025-BZA--PC-Meeting-Schedule-",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/Calendar.aspx?EID=2107",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/DocumentCenter/View/4576/Residential-Permitting-Guide-2026",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/Faq.aspx?QID=94",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/123/Building-Zoning-and-Planning",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/500/Code-Enforcement---Property-Maintenance-",
+          "depth": 1
+        },
+        {
+          "url": "https://www.sharonville.org/455/Zoning-Map",
+          "depth": 1
+        },
+        {
+          "url": "https://sharonville.org/DocumentCenter/View/3262/Sharonville-Planning-and-Zoning-Code",
+          "depth": 1
+        }
+      ],
+      "gaps": [],
+      "external_referrals": [
+        {
+          "url": "https://www.hazards.fema.gov/wps/portal/mapviewer",
+          "title": "FEMA Flood Plain Mapping Information",
+          "source_page_url": "https://www.sharonville.org/122/Community-Development",
+          "linked_href": "https://www.hazards.fema.gov/wps/portal/mapviewer",
+          "resolution_base_url": "https://www.sharonville.org/122/Community-Development",
+          "discovery_element": "anchor",
+          "referral_kind": "online_form",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "f61a26842fe1917922a31163d5af6721a5a2d4b0bcfb6c0b481736c4997b4ed5"
+        },
+        {
+          "url": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "title": "Civil Service Commission Rules and Regulations",
+          "source_page_url": "https://www.sharonville.org/122/Community-Development",
+          "linked_href": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "resolution_base_url": "https://www.sharonville.org/122/Community-Development",
+          "discovery_element": "anchor",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "f61a26842fe1917922a31163d5af6721a5a2d4b0bcfb6c0b481736c4997b4ed5"
+        }
+      ],
+      "attempted_pages_total": 1
+    },
+    "pages": [
+      {
+        "url": "https://www.sharonville.org/122/Community-Development",
+        "depth": 0,
+        "final_url": "https://www.sharonville.org/122/Community-Development",
+        "status": "scanned",
+        "discovered_resources": 12
+      }
+    ],
+    "attempted_pages": 1,
+    "jurisdiction_coverage_complete": false,
+    "authority_established": false
+  },
+  "document_counts": {
+    "before": 15,
+    "after": 16
+  },
+  "added_documents": [
+    {
+      "title": "Board of Zoning Appeals",
+      "url": "https://www.sharonville.org/Calendar.aspx?EID=2107",
+      "doc_type": "other",
+      "source": "official_page_harvest",
+      "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.sharonville.org/122/Community-Development",
+      "discovery_page_url": "https://www.sharonville.org/122/Community-Development",
+      "discovery_depth": 0,
+      "id": "309c0a34-665b-40a1-acaa-580110f688e3"
+    }
+  ],
+  "timestamp_provenance_issue": {
+    "linked_documents_incorrectly_restamped": [
+      {
+        "id": "ai_2026-10-04T00:36:39Z_4",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "88649aa4-2483-4947-bf1c-19d4a523e3ba",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "a8ae8744-0a23-4d55-98ad-353c11840655",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "2d0a3e08-7415-4917-af52-2b47fbb53b76",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "34431362-cd4d-4e9c-b05d-30503fc2dba8",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "d4a3d556-4f48-4262-b608-f6b4eefba8cd",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "6365b278-3da2-4f38-af5e-139a8866423b",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "502c0b0e-1c7e-4a7f-b5e1-a5bc8a806f34",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      },
+      {
+        "id": "0b5a0fb2-3d81-4eb4-9f23-59076d3cc1c6",
+        "fields": [
+          {
+            "key": "last_fetched",
+            "before": "2026-10-14T01:05:24.573Z",
+            "after": "2026-10-21T13:37:06.808Z"
+          }
+        ]
+      }
+    ],
+    "cause": "Existing selected-page discovery stamps last_fetched on link candidates before merging; only the selected parent page was fetched.",
+    "source_fix_pending": true,
+    "repair": {
+      "query_version": "2026-10-21T13:37:07.050000",
+      "update": {
+        "set": {
+          "documents.3.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.4.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.6.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.7.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.8.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.9.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.11.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.12.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.13.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.14.last_fetched": "2026-10-14T01:05:24.573Z",
+          "documents.5.last_fetched": "2026-10-21T13:37:06.808Z"
+        },
+        "unset": {
+          "documents.15.last_fetched": ""
+        }
+      },
+      "write_result": {
+        "success": true,
+        "updated": 1,
+        "has_more": false
+      },
+      "readback": {
+        "all_prior_docs_match_expected": true,
+        "selected_page_timestamp_matches_actual_scan": true,
+        "new_link_has_no_fetch_timestamp": true,
+        "office_research_unchanged": true,
+        "discovery_receipt_unchanged": true,
+        "unrelated_profile_changes": []
+      }
+    }
+  },
+  "controls": [
+    {
+      "setting_key": "permitting_research_dispatch_config",
+      "id": "6ac1b28c47233270cfeeb0f9",
+      "updated_date": "2026-10-04T15:30:40.303000",
+      "setting_value": {
+        "enabled": true,
+        "interval_minutes": 15,
+        "max_dispatch_per_cycle": 5,
+        "max_in_flight": 20,
+        "daily_dispatch_limit": 40,
+        "retry_limit": 3
+      }
+    },
+    {
+      "setting_key": "permitting_research_dispatch_state",
+      "id": "6ac1d0ffb44495caa0c3cf76",
+      "updated_date": "2026-10-21T13:32:27.974000",
+      "setting_value": {
+        "last_cycle_at": "2026-10-21T07:01:48.735Z",
+        "daily_day_key": "2026-10-21",
+        "dispatched_today": 40,
+        "last_result": {
+          "at": "2026-10-21T07:01:48.735Z",
+          "manual": false,
+          "in_flight_before": 0,
+          "backlog_before": 747,
+          "identity_conflicts": 6,
+          "reconciled_existing_profiles": 0,
+          "reconciled_completed": 0,
+          "reconciled_failed": 0,
+          "attempted": 5,
+          "dispatched": 5,
+          "failed": 0
+        },
+        "collection_cycle": {
+          "token": "74ace532-8637-4b2a-a3d7-fa195652537c",
+          "status": "completed_with_errors",
+          "started_at": "2026-10-21T13:32:21.579Z",
+          "lease_expires_at": "",
+          "completed_at": "2026-10-21T13:32:27.772Z",
+          "stages": {
+            "discovery": {
+              "success": true,
+              "status": "complete",
+              "archived": 0,
+              "attempted_pages": 1
+            },
+            "archive": {
+              "success": false,
+              "status": "claim_conflict",
+              "archive_queue": "jurisdiction",
+              "archived": 0,
+              "attempted_pages": 0,
+              "error": "Use an HTTPS page on the canonical profile's official website or permitting host. Redirects to another host require separate review."
+            },
+            "text": {
+              "success": true,
+              "status": "needs_ocr",
+              "archived": 0,
+              "attempted_pages": 0
+            }
+          }
+        }
+      }
+    }
+  ],
+  "live_changes": [
+    "One permitting profile: saved one selected-page discovery receipt, merged one new calendar link, corrected timestamp provenance with a version-guarded update"
+  ],
+  "client_job_shared_writes": false,
+  "publication": false,
+  "product_code_changes": false,
+  "authority_approved": false,
+  "address_authority_resolved": false,
+  "statewide_coverage_counts_advanced": false,
+  "remaining_unknowns": [
+    "commercial-sign electrical scope",
+    "current issuing department/canonical identity",
+    "current inspection delegation and term",
+    "exact-site service area"
+  ],
+  "next": "Correct deterministic saved-document discovery timestamp provenance before another live scan; preserve original last_fetched for links and record dates only for actually fetched pages.",
+  "recorded_at": "2026-10-21T13:40:24.645424+00:00",
+  "documentation_head": "69322dfcd3d706bfd9981650acc2c0f5bd805b90",
+  "source_fingerprints": {
+    "base44/functions/refreshJurisdiction/entry.ts": "56f99835e4cc0f465434649a9502039a3192997718b230f899fe71bf1daf74bf",
+    "base44/shared/permittingSavedDocumentDiscovery.mjs": "45fdec4b655a5d3577acad788a623aea4ec8382ee3b74c94c637a0dde80b5241",
+    "base44/shared/jurisdictionResearchDocumentMerge.mjs": "7be833e41a0d616b28562c1c2338378ec0a0c052bd6b1b81d92c0679f1a8e734"
+  }
+}

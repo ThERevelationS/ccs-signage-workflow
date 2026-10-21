@@ -1,5 +1,47 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — authenticated Sharonville one-page discovery and live readback (October 21, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Previous checkpoint: 6ad8be949014e0f97c8743d5, “Permitting Sharonville discovery access blocker — committed live gate receipt”, Git dc066ab2e33034e5555321641be275f2e46e97b0.
+Fresh starting HEAD: 429840dcbbee7510f129940596c58b91a62d06d0, clean. User completed normal device authentication. CLI identity and executing SDK script both verified brettheinlein1@gmail.com; script required admin role before invocation. Authentication is now working; previous signed-out status is historical. Never copy tokens/device codes into handoffs. Preserve all newer/unfamiliar CCS work.
+
+Completed live:
+- Invoked existing refreshJurisdiction once with discovery_only=true, defer_archive=true and exact selected_saved_document for Community Development, document df3e3416-fed2-4c72-9e04-aa33454bbf2b, https://www.sharonville.org/122/Community-Development.
+- Server-side exact profile/version and saved-URL checks were used. Discovery-only execution returned success=true, attempted_pages=1, research_attempts=0, llm_calls=0, archival=null.
+- Profile before: 6ac19f0e23bd8a65822f6d51 / Sharonville / OH / city, updated_date 2026-10-18T04:09:02.663000.
+- Scan receipt saved at 2026-10-21T13:37:06.808Z; post-scan profile updated_date 2026-10-21T13:37:07.050000.
+- One new link merged: Board of Zoning Appeals calendar, document 309c0a34-665b-40a1-acaa-580110f688e3, https://www.sharonville.org/Calendar.aspx?EID=2107. Document count 15 → 16. It is a discovered link, not electrical responsibility evidence or a verified requirement.
+- Original frontier and previous saved department scan were retained. The new receipt has its own continuation frontier, two unapproved external referrals and a source-page hash f61a26842fe1917922a31163d5af6721a5a2d4b0bcfb6c0b481736c4997b4ed5. External referrals were not fetched or approved.
+- No current commercial-sign electrical issuer/inspection authority was established. Existing role drafts and saved identity comparison remain unchanged and unverified.
+
+Confirmed timestamp-provenance defect / bounded live correction:
+Readback showed that discovery stamped last_fetched on ten existing linked documents, although the backend fetched only the selected parent page. Actual differences were restricted to those timestamps; original content/archives were unchanged. The new link also received a fetch timestamp despite not being fetched, while the selected page retained its old timestamp.
+A narrow connector $set/$unset matched the exact profile identity and post-scan updated_date 2026-10-21T13:37:07.050000. It restored those ten old timestamps, set the selected Community Development page timestamp to the actual scan time, and removed last_fetched from the unfetched new calendar link. Updated=1, has_more=false. No other field or new link/receipt was removed.
+Final profile readback: updated_date 2026-10-21T13:39:10.591000. All prior documents match their original objects except the selected page's justified fetch timestamp. Office research and other profile fields match exactly; discovery receipt/frontier remain unchanged. The underlying helper defect is NOT FIXED; correct it before another live scan.
+
+Live controls:
+enabled true; interval_minutes 15; max_dispatch_per_cycle 5; max_in_flight 20; daily_dispatch_limit 40; retry_limit 3.
+Config unchanged at record 6ac1b28c47233270cfeeb0f9 / updated_date 2026-10-04T15:30:40.303000.
+State record 6ac1d0ffb44495caa0c3cf76 / updated_date 2026-10-21T13:32:27.974000: daily_day_key 2026-10-21, dispatched_today 40. No AI attempts made or cap bypasses. Background collection completed_with_errors at 2026-10-21T13:32:27.772Z (archive official-host claim conflict; text needs_ocr); its target is not identified here and must not be assumed to be Sharonville. Reread controls before later research.
+
+Evidence/verification:
+docs/permitting-sharonville-discovery-live-2026-10-21.json retains exact receipt, source identity, before/after versions, control observations, timestamp differences, guarded repair result and readback checks.
+Actual deployed-function invocation and datastore readback passed. This is not authenticated employee UI or native mobile/print acceptance.
+No product code changed, so no build or new synthetic suite was run. git diff --check applies to the receipt/handoff. Existing synthetic browser/print validations remain those of the previous tested implementation checkpoint 6ad8bc800c939caa0381be0a / Git 13e3e2445481f9a08eb2054e2f63fc9921d156a0.
+
+Deployment/data:
+No frontend publication or backend/schema/RLS/integration authoring. Authorized permitting-only live changes were the single scan and narrow timestamp correction above. No client/job/shared-file/catalog, dispatcher/settings/queue writes, archive uploads, messages, authority approvals or address resolution. No unfinished live write. No login/research loops.
+CLI credentials persist in the normal sandbox session; authentication may expire and must be checked normally without exposing secrets.
+
+Next ONE chunk:
+Fix deterministic saved-document discovery timestamp provenance in base44/shared/permittingSavedDocumentDiscovery.mjs and its directly required merge path/tests. Preserve an existing document's last_fetched when it is only rediscovered as a link; do not give an unfetched new link a fetch date; record the selected page's actual fetch date using the guarded save. Preserve manual/pinned/hashed archives, receipt history, original frontier, same-host rules and office research. Add focused regression checks based on this live case, bundle only affected backend code, verify and checkpoint. Do not run another live scan until this defect is fixed; no frontend publication.
+After that, resume bounded official-source discovery/capture for the unresolved electrical issuer/inspection responsibilities, without equating intake with issuance or residential guidance with current commercial-sign applicability.
+
+Remaining roadmap and safety/credit/archive limits unchanged: Ohio then Kentucky; one download/refresh; fetch 12s/upload 15s/extraction 20s; preserve exact source evidence, unknowns, manual archives and all concurrent CCS work.
+This unit is checkpointed as “Permitting authenticated Sharonville discovery and timestamp reconciliation verified”; obtain exact ID/Git from the checkpoint receipt/final report. Older sections below are historical.
+
+
 ## Latest checkpoint — bounded Sharonville discovery blocked by CLI sign-in (October 21, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
