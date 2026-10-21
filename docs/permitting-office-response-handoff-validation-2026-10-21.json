@@ -1,0 +1,40 @@
+{
+  "mode": "synthetic data only; actual workflow builder/save with stub writer and actual library/designer/packet in Chromium; no authenticated datastore acceptance",
+  "starting_head": "cbfd8076d19c247fca3e460ca88a30f1eaa09602",
+  "tested_source_head": "c2aa7f6565491e6d594b39418081364d9acd83af",
+  "checks_passed": [
+    "office response handoff regression",
+    "existing office response regression",
+    "3 planning-review tests",
+    "3 captured-source evidence tests",
+    "targeted ESLint",
+    "final npm run build",
+    "git diff --check",
+    "actual synthetic browser at 320/390/1280",
+    "15-page Chromium PDF token and isolation verification",
+    "390px response quote screenshot visually inspected"
+  ],
+  "browser_receipt": "docs/permitting-office-response-handoff-browser-2026-10-21.json",
+  "fingerprints": {
+    "src/components/permitting/electricalOfficeResponseHandoff.mjs": "53071f5e19da370389f33bec36c140c86213008ab7579f304bc077889064954d",
+    "src/components/permitting/ElectricalOfficeResponseContext.jsx": "1e1c7c58fd8ba7aeaf2b5112232654b1d27258a2be0453c8cefe0d908ca50965",
+    "src/components/permitting/permitWorkflowDesigner.js": "4443ceaed81b492a3db4ab1bbd12244591b0c4b2b06e3671b67df1aa257fc5bc",
+    "src/components/permitting/PermitWorkflowDesigner.jsx": "f1d35a37538d5f5f880b9bd81cc0e06f88157a380af7828e91b1d16235b56001",
+    "src/components/permitting/WorkflowReviewPacket.jsx": "2dfb0f7a5ccf8a1fb252277af96efd9dbcaebdb6d875d02fb09e0b38197ed318",
+    "src/components/permitting/officeResearchResponses.mjs": "b306fa4ba73c1e1cc94b4b5ee4f7ece622a9f2b3dc4deff3104bfb2f4cd22801",
+    "src/components/permitting/permitDraftComparison.mjs": "93bfc5ff861819ce84c6b5f3992076cf51640aee642be5bf167c980273225735",
+    "scripts/permitting-office-response-handoff.test.mjs": "416f2a2b029a02fd35c2cb22e3ae112cca6b14c7a725750b55ac190f5c343923",
+    "scripts/test-permitting-office-response-handoff-browser.mjs": "a1eb24e6be45ce31972fbeb86ef008e551289bdc3d7c3c9d6771903cb9411f6d"
+  },
+  "production_writes": false,
+  "frontend_publication": false,
+  "backend_changes": false,
+  "pending": [
+    "authenticated employee persistence",
+    "native mobile/print acceptance",
+    "real-office response/current commercial-sign evidence acceptance"
+  ],
+  "warnings": [
+    "existing baseline-browser-mapping/Browserslist data warnings"
+  ]
+}

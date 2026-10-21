@@ -1,5 +1,58 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — electrical office responses in saved workflow planning (October 21, 2026)
+
+Phase 10 — Ohio/Kentucky coverage → Milestone 1 of 3 — Identity and office reconciliation → Task 2 remains partial; 2 of 4 tasks complete. Ohio first. No statewide coverage counts advanced.
+Previous verified checkpoint: 6ad4b89716a8ab5a302dd6dd, “Permitting dated electrical office responses and refresh history retention verified”, Git 6bb8802339a1ff341161bb5fc75458b467436d44.
+Fresh starting HEAD: cbfd8076d19c247fca3e460ca88a30f1eaa09602, clean. Newer concurrent CCS work was preserved. Later target-file diff inspection at HEAD 430b95349735e64001d25d829acf5f90bdd9a52b showed only this unit's intended changes in the existing target files. No reset/revert was used.
+
+Implemented:
+- createElectricalPlanningHandoff captures saved office_research.staff_responses into electrical_planning_handoff.office_responses.
+- Permit issuer and inspection provider remain separate, with exact response ID, responding office, response date, full quote/source, safe optional HTTPS link, discussed site/work scope, office-claim review states, staff attribution and capture timestamp.
+- Every response retains its original locality and role-finding snapshots. Separate labels flag historical locality/finding differences and duplicate or missing response identities; they never reapply a response to changed research.
+- Capture requires an exact saved research-profile identity matching the handoff profile, including ID/name/state/type. Missing/malformed history or unsupported evidence remains explicitly unresolved. Claims of currentness, commercial-sign scope or site coverage remain unverified. No office is selected or approved.
+- A shared read-only response view appears in the workflow planning handoff and saved review/print packet. Original role findings use labeled fields. Legacy snapshots explicitly say response evidence was not captured; no current data is substituted.
+- Captured responses are detached deep copies. Later profile response changes cannot rewrite a saved workflow. Existing immutable revision saves and comparison of the entire electrical handoff retain and expose response differences without changing citation/review behavior.
+- No response text is sent to an LLM by this feature; it is local planning context attached after generation. No new background reads, message/send actions, job/client relationships or writes.
+
+Product files:
+src/components/permitting/electricalOfficeResponseHandoff.mjs
+src/components/permitting/ElectricalOfficeResponseContext.jsx
+src/components/permitting/permitWorkflowDesigner.js
+src/components/permitting/PermitWorkflowDesigner.jsx
+src/components/permitting/WorkflowReviewPacket.jsx
+Existing callers remain JurisdictionDetailPanel.jsx → createElectricalPlanningHandoff → PermitWorkflowDesigner; draft comparison is unchanged in permitDraftComparison.mjs.
+
+Validation passed:
+- scripts/permitting-office-response-handoff.test.mjs: separate roles, exact long quote and unknown/unverified scope, deep snapshot isolation, historical locality/finding and duplicate warnings, missing/malformed evidence, actual workflow handoff builder, actual draft-save function with a synthetic writer, no job relationship, and saved revision comparison.
+- Existing office response regressions; all 3 planning-review tests; all 3 captured-source evidence tests.
+- Targeted ESLint; final production build; git diff --check. Final build and browser run used a fail-fast shell after the final product refinement.
+- scripts/test-permitting-office-response-handoff-browser.mjs: actual library/designer/packet with synthetic response records and production CSS at 320/390/1280; full quote/source/date/office and unverified scope; role separation; unchanged saved data after later research changes; safe links/44px targets; no overflow; legacy missing evidence; saved-only print entry; revision edits excluded until saved; preserved notes/citations; keyboard return/focus; no external requests, source reads, backend/AI calls or production writes.
+- Actual Chromium Print/PDF produced a 15-page deliberately long fixture. Extracted PDF text retained both response-role tokens, full quote endpoints, response source/staff, original findings and existing citations/review notes; later research and unrelated application/navigation content were absent.
+- 390px response-quote screen screenshot visually inspected.
+- Browser runtime was restored in /tmp after sandbox refresh; Chromium install recovered a mirror DNS failure and completed. No app dependency/package changes. Existing baseline-browser-mapping/Browserslist warnings only.
+
+Receipts/scripts:
+docs/permitting-office-response-handoff-browser-2026-10-21.json
+docs/permitting-office-response-handoff-validation-2026-10-21.json
+scripts/permitting-office-response-handoff.test.mjs
+scripts/test-permitting-office-response-handoff-browser.mjs
+Browser reproduction: PLAYWRIGHT_MODULE override or /tmp/permitting-inquiry-browser/node_modules/playwright/index.mjs; Chromium plus OS dependencies. Cold navigation allowance remains 30 seconds.
+Synthetic checks are not authenticated employee persistence, real-office response acceptance or native mobile/print acceptance. Those remain pending.
+
+Deployment/data:
+No frontend publication. No backend/resource/schema/RLS/integration changes in this unit. No production entity/source/archive/catalog/client/job/shared-file or dispatcher/queue/settings writes. No research/refresh/LLM invocation, messages or authority approval. No known unfinished live write.
+Live Sharonville profile/control state was not freshly read in this unit. The historical profile, residential source evidence and dispatcher observations in the previous handoff remain historical, not newly verified. Current commercial-sign applicability, issuing department, inspection delegation term, canonical identity and exact-site service area remain unresolved. Earlier CLI authentication timeout remains unresolved; no login loop was retried.
+
+Next ONE chunk:
+Perform bounded current-source discovery for Sharonville's commercial-sign electrical permit issuer and inspection provider through existing refreshJurisdiction/jurisdictionResearchAgent pathways if normal authenticated invocation is available. Inspect fresh source and live dispatch/settings gates first; no admin/manual bypasses or login loops. Preserve separate roles, retain direct official evidence/delegation/effective-date and scope gaps, and advance no coverage count without qualifying evidence. Missing evidence must remain unresolved; do not infer Community Development intake is the issuer or that residential NIC guidance confirms current commercial work. If invocation is unavailable, record the exact access blocker and verified state. Verify, update handoff, checkpoint and stop.
+
+Remaining roadmap unchanged: bounded collection/archives/text acceptance; canonical office/parent-authority reconciliation; Ohio then Kentucky coverage; low-credit source monitoring; exact matching/maps/action progress; evidence-based workflows; explicit safe job integration; authenticated rollout/mobile/concurrency acceptance.
+Archive limits: one new downloadable file per refresh; fetch 12s/upload 15s/extraction 20s; preserve manual/pinned/hashed archives, same-host deterministic harvesting and exact-jurisdiction evidence.
+Research policy limits remain adjustable: enabled; 15 minutes; 5/cycle; 20 in-flight; 40 attempts/day; retry 3; failed LLM attempts count. Reread actual controls before research.
+Preserve all unfamiliar concurrent CCS changes. This unit is checkpointed under “Permitting office response workflow snapshots and review packets verified”; obtain exact ID/Git from the checkpoint receipt/final report. Older sections below are history.
+
+
 ## Latest completed unit — dated electrical office response evidence (October 18, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
