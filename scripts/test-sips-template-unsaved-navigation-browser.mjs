@@ -489,6 +489,61 @@ try {
     assert.equal(await page.getByRole("button",{name:"Edit checklist item Inspect safety"}).count(),0);
     assert.equal(await page.evaluate(()=>window.__writeAttempts),0);
    },"?holdInit=1");
+  await run(label+": old authorized-user success cannot replace reopened suggestions",
+   origin,viewport,async page=>{
+    await page.waitForFunction(()=>window.__pendingAuthorizedUserReads.length===1);
+    await page.getByRole("button",{name:"Close",exact:true}).click();
+    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor({state:"hidden"});
+    await page.evaluate(()=>{window.__syntheticAuthorizedUsers=[
+      {email:"current@example.test",full_name:"Current User"}];});
+    await page.getByRole("button",{name:"Reopen Builder"}).click();
+    await optionEditor(page,"Safety Review");
+    const approver=page.getByRole("combobox",{name:"Answered by for checklist item Inspect safety"});
+    await page.waitForFunction(()=>[...document.querySelectorAll('select[aria-label="Answered by for checklist item Inspect safety"] option')].some(o=>o.textContent==="Current User"));
+    assert.deepEqual(await approver.locator("option").allTextContents(),["Answered by...","Current User"]);
+    await page.evaluate(()=>window.__pendingAuthorizedUserReads.shift().resolve());
+    await page.waitForTimeout(30);
+    assert.deepEqual(await approver.locator("option").allTextContents(),["Answered by...","Current User"],
+      "Previous opening must not restore outdated directory suggestions");
+    assert.equal(await page.evaluate(()=>window.__closeCount),1);
+   },"?holdUsers=1");
+  await run(label+": old authorized-user failure cannot disrupt reopened suggestions",
+   origin,viewport,async page=>{
+    await page.waitForFunction(()=>window.__pendingAuthorizedUserReads.length===1);
+    await page.getByRole("button",{name:"Close",exact:true}).click();
+    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor({state:"hidden"});
+    await page.evaluate(()=>{window.__syntheticAuthorizedUsers=[
+      {email:"current@example.test",full_name:"Current User"}];});
+    await page.getByRole("button",{name:"Reopen Builder"}).click();
+    await optionEditor(page,"Safety Review");
+    const approver=page.getByRole("combobox",{name:"Answered by for checklist item Inspect safety"});
+    await page.waitForFunction(()=>[...document.querySelectorAll('select[aria-label="Answered by for checklist item Inspect safety"] option')].some(o=>o.textContent==="Current User"));
+    await page.evaluate(()=>window.__pendingAuthorizedUserReads.shift().reject());
+    await page.waitForTimeout(30);
+    assert.deepEqual(await approver.locator("option").allTextContents(),["Answered by...","Current User"]);
+    assert.equal(await page.getByText("Checklist Builder update blocked").count(),0);
+   },"?holdUsers=1");
+  await run(label+": reopening clears prior directory suggestions until current read resolves",
+   origin,viewport,async page=>{
+    await optionEditor(page,"Safety Review");
+    const approver=page.getByRole("combobox",{name:"Answered by for checklist item Inspect safety"});
+    assert.deepEqual(await approver.locator("option").allTextContents(),["Answered by...","Older User"]);
+    await page.getByRole("button",{name:"Close",exact:true}).click();
+    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor({state:"hidden"});
+    await page.evaluate(()=>{
+      window.__syntheticAuthorizedUsers=[{email:"current@example.test",full_name:"Current User"}];
+      window.__holdNextAuthorizedUserRead=true;
+    });
+    await page.getByRole("button",{name:"Reopen Builder"}).click();
+    await page.waitForFunction(()=>window.__pendingAuthorizedUserReads.length===1);
+    await optionEditor(page,"Safety Review");
+    const newApprover=page.getByRole("combobox",{name:"Answered by for checklist item Inspect safety"});
+    assert.deepEqual(await newApprover.locator("option").allTextContents(),["Answered by..."],
+      "Previous opening's suggestions must not remain available while new read is pending");
+    await page.evaluate(()=>window.__pendingAuthorizedUserReads.shift().resolve());
+    await page.waitForFunction(()=>[...document.querySelectorAll('select[aria-label="Answered by for checklist item Inspect safety"] option')].some(o=>o.textContent==="Current User"));
+    assert.deepEqual(await newApprover.locator("option").allTextContents(),["Answered by...","Current User"]);
+   });
   await run(label+": failed product save releases lock and safely allows retry",
    origin,viewport,async page=>{
     await productEditor(page,"Cabinet Sign");
