@@ -52,6 +52,10 @@ Verified from a clean working tree against current repository HEAD:
 
 This documents **synthetic** verification only. No real CCS account, authorization rule, network save, or production Work Order was exercised. The mandatory checklist Save → Revisit confirmation → Save changes → board re-sort behavior remains covered by the existing regression suite; future Revisit dates go to Revisit Later and no/today/past dates remain Active.
 
+## Template Builder overlapping-load protection (October 21, 2026)
+
+`validate-sips-template-loading.mjs` exercises the **production loader and persistence handlers** in a controlled in-memory harness. Each Template Builder catalog/setting read receives a monotonic sequence; out-of-order older successes and failures cannot replace a newer read's data or error. Successful template-setting and checklist-option persistence invalidates reads started before the confirmed write, so late responses cannot restore old template versions after saving. Six deterministic cases cover both read completion orders, latest-read failure, and older reads following confirmed type/option/product checklist writes. All **233/233** SIPS regression checks (ten scripts), targeted ESLint, and full production build passed. The existing **22/22** desktop/320px Template Builder Chromium navigation/reload cases also passed. No SDK, login, network save, or production Work Order is used by these tests. This does not substitute for authenticated nonproduction integration acceptance.
+
 ## Outstanding: authenticated two-browser QA
 
 **The synthetic suite does not demonstrate backend authorization or authenticated cross-session behavior.** Before claiming full acceptance, use an explicitly authorized *nonproduction* CCS environment with two real, independent test accounts and test Work Orders. Do not test mutations on production Work Orders, use production credentials in scripts, bypass the normal sign-in system, copy confidential production records into fixtures, or publish as part of QA.
