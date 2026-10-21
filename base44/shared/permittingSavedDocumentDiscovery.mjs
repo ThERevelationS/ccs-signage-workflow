@@ -47,12 +47,16 @@ export async function discoverSelectedSavedDocument({entity,profile,selection,fe
  const scan=await scanOfficialPermittingPages({seedUrl:doc.url,maxPages:1,maxDepth:2,
   existingDocuments:profile.documents || [],fetchPage,onProgress});
  if(!scan.success)throw Object.assign(Error('Selected saved source could not be read; nothing was saved.'),{status:409});
- const documents=scan.documents.map(d=>({...d,id:crypto.randomUUID(),last_fetched:new Date().toISOString()}));
+ // Harvested links were observed, not fetched. Only the selected page was
+ // actually read; commit its timestamp with the receipt under the same guards.
+ const scannedAt=new Date().toISOString();
+ const documents=scan.documents.map(d=>({...d,id:crypto.randomUUID()}));
  const receipt={method:'explicit-saved-document-page-v1',document_id:doc.id,source_url:doc.url,
-  profile_version:selection.profile_version,scanned_at:new Date().toISOString(),
+  profile_version:selection.profile_version,scanned_at:scannedAt,
   continuation_state:scan.continuation_state,pages:scan.pages,attempted_pages:scan.attempted_pages,
   jurisdiction_coverage_complete:false,authority_established:false};
- const nextFields={documents:mergeJurisdictionResearchDocuments(profile.documents,documents),
+ const nextFields={documents:mergeJurisdictionResearchDocuments(profile.documents,documents)
+  .map(d=>d.id===doc.id?{...d,last_fetched:scannedAt}:d),
   discovery_scan_state:{...profile.discovery_scan_state,saved_document_scans:[
    ...(profile.discovery_scan_state.saved_document_scans || []),receipt]}};
  await onProgress({kind:'saving',detail:'Saving selected source findings; original frontier retained.',progress:{stage:'Saving findings',indeterminate:true}});
