@@ -34,7 +34,7 @@ function persistRequestId(action, email, requestId) {
 function clearRequestId(action, email, expectedRequestId) {
   try {
     const key = requestStorageKey(action, email);
-    if (sessionStorage.getItem(key) === expectedRequestId) sessionStorage.removeItem(key);
+    if (expectedRequestId === undefined || sessionStorage.getItem(key) === expectedRequestId) sessionStorage.removeItem(key);
   } catch {}
 }
 
