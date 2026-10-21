@@ -1,0 +1,77 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "Phase 10 / Milestone 1 of 3 / Task 2 partial; 2 of 4 complete",
+  "starting_head": "4ec2efc21d4b6b4aefe0ad5cad629b9ab8bb1bb1",
+  "prior_checkpoint": "6ad8c44676f6ddd7f54c5e0d",
+  "prior_checkpoint_name": "Permitting selected saved-document fetch timestamp provenance verified",
+  "planned_selection": {
+    "profile_id": "6ac19f0e23bd8a65822f6d51",
+    "profile_version": "2026-10-21T13:39:10.591000",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "document_id": "148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d",
+    "url": "https://www.sharonville.org/Faq.aspx?QID=94"
+  },
+  "selection_status": "Eligible in connector readback: exact saved same-host unprotected document; no previous one-shot scan. Must reread/revalidate before invocation.",
+  "authentication": {
+    "cli_whoami": "Reports saved account brettheinlein1@gmail.com; source inspection shows it does not validate current app access.",
+    "cli_access_token_expired": false,
+    "cli_access_token_expires_at": "2026-11-20T13:35:06.179Z",
+    "sdk_default_host": {
+      "status": 401,
+      "message": "Authentication required to view users"
+    },
+    "sdk_explicit_app_host": {
+      "status": 401,
+      "message": "Authentication required to view users"
+    },
+    "normal_cli_read": {
+      "exit_code": 1,
+      "message": "Request timed out: POST https://app.base44.com/api/apps/68dfcc5e57bbbc35387da97c/sandbox-bridge/read_file"
+    },
+    "connector_entity_reads": "working",
+    "device_login_attempts": 0,
+    "independently_verified_sdk_account": false
+  },
+  "sandbox": {
+    "intermittent_busy_saving_background_changes": true,
+    "later_commands_succeeded": true
+  },
+  "controls": [
+    {
+      "id": "6ac1b28c47233270cfeeb0f9",
+      "setting_key": "permitting_research_dispatch_config",
+      "updated_date": "2026-10-04T15:30:40.303000",
+      "setting_value": {
+        "enabled": true,
+        "interval_minutes": 15,
+        "max_dispatch_per_cycle": 5,
+        "max_in_flight": 20,
+        "daily_dispatch_limit": 40,
+        "retry_limit": 3
+      }
+    },
+    {
+      "id": "6ac1d0ffb44495caa0c3cf76",
+      "setting_key": "permitting_research_dispatch_state",
+      "updated_date": "2026-10-21T14:02:20.474000",
+      "setting_value": {
+        "daily_day_key": "2026-10-21",
+        "dispatched_today": 40,
+        "collection_cycle_status": "completed_with_errors",
+        "collection_completed_at": "2026-10-21T14:02:20.200Z"
+      }
+    }
+  ],
+  "function_invocations": 0,
+  "source_fetches": 0,
+  "research_attempts": 0,
+  "llm_calls": 0,
+  "archive_uploads": 0,
+  "live_data_writes": 0,
+  "frontend_published": false,
+  "backend_source_changed": false,
+  "unfinished_live_writes": false,
+  "next": "Restore verified application authentication/function access without repeated device-login flows; independently verify correct account/admin and exact current profile before the single FAQ discovery-only invocation. Do not replay completed Community Development or Building/Zoning scans. Preserve all newer concurrent work; cap remains 40/40."
+}
