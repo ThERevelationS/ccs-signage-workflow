@@ -977,4 +977,73 @@ assert.equal(savedSessionData.has(malformedRequestKey),false,
   'Confirmed Clock Out must also remove its matching request id');
 await act(async () => { malformedSnapshotRenderer.unmount(); });
 console.log('PASS confirmed Clock Out removes malformed stale recovery payload');
-console.log('PASS 24/24 Time Clock Quick Clock async status acceptance cases');
+// Break acknowledgements must match both the signed employee and active shift.
+let breakIdentityRenderer;
+await act(async () => {
+  breakIdentityRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'break-identity-session', employeeSessionUser:first,
+  }));
+});
+const breakIdentityStatusIndex = calls.length - 1;
+await act(async () => { calls[breakIdentityStatusIndex].resolve(status(first,'break-identity-shift')); });
+const breakIdentityDialog = () => breakIdentityRenderer.root.findAll((node) =>
+  typeof node.props?.onStartBreak === 'function')[0];
+let mismatchedBreakStart;
+await act(async () => {
+  mismatchedBreakStart = breakIdentityDialog().props.onStartBreak({ breakType:'lunch', isPaid:false });
+});
+const mismatchedStartIndex = calls.length - 1;
+const mismatchedStartRequestId = calls[mismatchedStartIndex].payload.request_id;
+await act(async () => {
+  calls[mismatchedStartIndex].resolve({data:{
+    success:true, user:second, status:'clocked_in', break_status:'on_break',
+    break:{id:'foreign-break',user_email:second.email},
+    entry:{id:'break-identity-shift',user_email:first.email},
+  }});
+  await assert.rejects(mismatchedBreakStart,/could not be matched/);
+});
+assert.equal(breakIdentityDialog().props.breakStatus,'working');
+assert.equal(savedSessionData.get('ccs_timeclock_request:break_start:lunch:unpaid:'+first.email),mismatchedStartRequestId,
+  'Mismatched employee acknowledgement must preserve the exact break-start request');
+let recoveredBreakStart;
+await act(async () => { recoveredBreakStart = breakIdentityDialog().props.onStartBreak({ breakType:'lunch', isPaid:false }); });
+const recoveredStartIndex = calls.length - 1;
+assert.equal(calls[recoveredStartIndex].payload.request_id,mismatchedStartRequestId);
+await act(async () => {
+  calls[recoveredStartIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in', break_status:'on_break',
+    break:{id:'verified-break',user_email:first.email},
+    entry:{id:'break-identity-shift',user_email:first.email},
+  }});
+  await recoveredBreakStart;
+});
+assert.equal(breakIdentityDialog().props.breakStatus,'on_break');
+let mismatchedBreakEnd;
+await act(async () => { mismatchedBreakEnd = breakIdentityDialog().props.onEndBreak(); });
+const mismatchedEndIndex = calls.length - 1;
+const mismatchedEndRequestId = calls[mismatchedEndIndex].payload.request_id;
+await act(async () => {
+  calls[mismatchedEndIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in', break_status:'working',
+    entry:{id:'different-shift',user_email:first.email},
+  }});
+  await assert.rejects(mismatchedBreakEnd,/could not be matched/);
+});
+assert.equal(breakIdentityDialog().props.breakStatus,'on_break');
+assert.equal(savedSessionData.get('ccs_timeclock_request:break_end:'+first.email),mismatchedEndRequestId,
+  'Mismatched shift acknowledgement must preserve the exact break-end request');
+let recoveredBreakEnd;
+await act(async () => { recoveredBreakEnd = breakIdentityDialog().props.onEndBreak(); });
+const recoveredEndIndex = calls.length - 1;
+assert.equal(calls[recoveredEndIndex].payload.request_id,mismatchedEndRequestId);
+await act(async () => {
+  calls[recoveredEndIndex].resolve({data:{
+    success:true, user:first, status:'clocked_in', break_status:'working',
+    entry:{id:'break-identity-shift',user_email:first.email},
+  }});
+  await recoveredBreakEnd;
+});
+assert.equal(breakIdentityDialog().props.breakStatus,'working');
+await act(async () => { breakIdentityRenderer.unmount(); });
+console.log('PASS mismatched break employee/shift acknowledgements fail closed and preserve exact retry IDs');
+console.log('PASS 26/26 Time Clock Quick Clock async status acceptance cases');
