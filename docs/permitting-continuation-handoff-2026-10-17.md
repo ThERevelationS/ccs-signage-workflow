@@ -1,5 +1,31 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest unit — Sharonville FAQ live timestamp acceptance blocked before invocation (October 21, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Fresh starting HEAD: 4ec2efc21d4b6b4aefe0ad5cad629b9ab8bb1bb1, clean. Prior implementation checkpoint: 6ad8c44676f6ddd7f54c5e0d, “Permitting selected saved-document fetch timestamp provenance verified”. That fix remains implemented and synthetically verified; real deployed-function timestamp acceptance is still pending.
+
+Read-only live preflight:
+- Sharonville profile 6ac19f0e23bd8a65822f6d51 remained at observed updated_date 2026-10-21T13:39:10.591000, with 16 documents and two prior saved-document receipts.
+- Selected next source: saved FAQ document 148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d, https://www.sharonville.org/Faq.aspx?QID=94, “How do I obtain Building and/or Zoning Permits from the City of Sharonville?” It is on the saved official host, unprotected and has no prior one-shot receipt. Reread/version-check before actual invocation.
+- Completed Building/Zoning and Community Development actions must not be replayed.
+- Controls unchanged: enabled true; interval 15 minutes; 5/cycle; 20 in flight; daily limit 40; retry 3. Config 6ac1b28c47233270cfeeb0f9 updated 2026-10-04T15:30:40.303000. State 6ac1d0ffb44495caa0c3cf76 updated 2026-10-21T14:02:20.474000, daily_day_key 2026-10-21, dispatched_today 40. No AI attempt available under that observation; deterministic discovery would use zero LLM calls.
+
+Exact blocker:
+Normal npx base44 whoami reports the saved correct account, but CLI source inspection establishes that it reads local identity rather than validating app access. The saved access token is unexpired (observed expiration 2026-11-20T13:35:06.179Z). SDK auth.me returned 401 “Authentication required to view users” using both the default host and explicit https://app.base44.com. A single normal CLI sandbox read timed out on POST /api/apps/68dfcc5e57bbbc35387da97c/sandbox-bridge/read_file. No SDK account/admin verification succeeded this unit, and no function invocation was reached. Connector entity reads continue to work. No new device-login flow was attempted; do not infer that login recovery in earlier units guarantees current app access.
+Sandbox commands also intermittently returned SANDBOX_BUSY while background changes saved; waits preceded retries, and later commands succeeded. Do not rapidly retry.
+
+Receipt: docs/permitting-sharonville-faq-access-2026-10-21.json. No product source changed, so no build/test rerun was needed. Previous 93 focused test passes, affected backend bundle, lint and build remain those of checkpoint 6ad8c44676f6ddd7f54c5e0d; the separate office-research harness missing-import failure remains documented. Final documentation diff check and checkpoint identity are in the tool receipt/final report.
+
+No research attempt, function invocation, official-source fetch, archive upload, profile/document correction, client/job/shared-file/catalog mutation, queue/settings write, authority approval, message, frontend publication or backend resource change occurred. No unfinished live write. Electrical issuer/inspection office, commercial-sign scope, delegation currentness and exact-site applicability remain unresolved.
+
+Next ONE chunk:
+Recover independently verified authenticated application/function access through a supported normal path; do not repeat failed device-login or endpoint probes without new evidence. Then reread actual controls and exact FAQ profile/document selection, invoke refreshJurisdiction once with discovery_only=true, defer_archive=true and selected_saved_document. Verify live readback: only the fetched selected page gets the receipt timestamp; rediscovered links retain dates; new unfetched links have no date; original frontier, receipt history, offices and protected archives are preserved. Stop and document any unresolved access blocker. No frontend publication or job/client writes.
+
+Remaining roadmap and limits unchanged. Preserve all newer CCS work. Ohio first; one new download/refresh, fetch 12s/upload 15s/extraction 20s; no daily-cap bypass. Checkpoint name for this unit: “Permitting Sharonville FAQ authenticated access blocker verified”. Older sections below are historical.
+
+
+
 ## Latest completed unit — selected saved-document fetch timestamp provenance fixed (October 21, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
