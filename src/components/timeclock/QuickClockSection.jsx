@@ -949,6 +949,19 @@ export default function QuickClockSection({
       selectionRef.current.entryId === expectedEntryId;
   };
 
+  const assertBreakAcknowledgementIdentity = (data, email, entryId) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const responseEntryId = String(data?.entry?.id || "");
+    const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
+    if (responseEmail === expectedEmail && responseEntryId === String(entryId || "") &&
+        entryEmail === expectedEmail) return;
+
+    const error = new Error("Break response could not be matched to this employee and active shift. The exact request is preserved; refresh status and retry the same action.");
+    error.retrySameRequest = true;
+    throw error;
+  };
+
   const handleStartBreak = async ({ breakType, isPaid }) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
@@ -970,6 +983,7 @@ export default function QuickClockSection({
       });
       actionEpoch = workViewEpochRef.current;
       const result = await pending;
+      assertBreakAcknowledgementIdentity(result, email, activeEntry.id);
       clearRequest(actionKey, email, requestId);
       if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       applyBreakResponse(result);
@@ -1002,6 +1016,7 @@ export default function QuickClockSection({
       });
       actionEpoch = workViewEpochRef.current;
       const result = await pending;
+      assertBreakAcknowledgementIdentity(result, email, activeEntry.id);
       clearRequest("break_end", email, requestId);
       if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       applyBreakResponse(result);
