@@ -523,7 +523,7 @@ assert.equal(calls[laborRetryIndex].payload.request_id, originalLaborId);
 await act(async () => {
   calls[laborRetryIndex].resolve({ data: {
     success: true, user: second, status: 'clocked_in',
-    active_labor: { id: 'design-work', activity_type: 'design', user_email: second.email },
+    active_labor: { id: 'design-work', activity_type: 'design', user_email: second.email, time_entry_id: 'second-break-free' },
     labor_summary: { count: 1, total_minutes: 7 },
     entry: { id: 'second-break-free', user_email: second.email },
   } });
@@ -539,7 +539,7 @@ assert.equal(calls[changedLaborIndex].payload.action, 'labor_change');
 await act(async () => {
   calls[changedLaborIndex].resolve({ data: {
     success: true, user: second, status: 'clocked_in',
-    active_labor: { id: 'installation-work', activity_type: 'installation', user_email: second.email },
+    active_labor: { id: 'installation-work', activity_type: 'installation', user_email: second.email, time_entry_id: 'second-break-free' },
     labor_summary: { count: 2, total_minutes: 12 },
     entry: { id: 'second-break-free', user_email: second.email },
   } });
