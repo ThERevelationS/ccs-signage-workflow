@@ -441,6 +441,41 @@ try {
     assert.equal(await page.locator('[inert]').count(),0);
     assert.equal(await page.evaluate(()=>window.__saveCalls.length),1);
    });
+  await run(label+": failed old opening load is ignored after close and does not poison reopen",
+   origin,viewport,async page=>{
+    await page.waitForFunction(()=>window.__pendingTemplateReads.length===1);
+    await page.getByRole("button",{name:"Close",exact:true}).click();
+    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor({state:"hidden"});
+    await page.evaluate(()=>window.__pendingTemplateReads.shift().reject());
+    // Allow the old promise's rejected read to settle while the Builder is closed.
+    await page.waitForTimeout(60);
+    await page.getByRole("button",{name:"Reopen Builder"}).click();
+    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor();
+    await optionEditor(page,"Safety Review");
+    await page.getByRole("button",{name:"Edit checklist item Inspect safety"}).waitFor();
+    assert.equal(await page.getByText("Checklist Builder update blocked").count(),0,
+      "A failed read from a previous opening must not surface as a fresh error");
+    assert.equal(await page.evaluate(()=>window.__writeAttempts),0);
+    assert.equal(await page.evaluate(()=>window.__closeCount),1);
+   },"?holdInit=1");
+  await run(label+": old opening success cannot overwrite newer reopened template catalog",
+   origin,viewport,async page=>{
+    await page.waitForFunction(()=>window.__pendingTemplateReads.length===1);
+    await page.getByRole("button",{name:"Close",exact:true}).click();
+    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor({state:"hidden"});
+    await page.evaluate(()=>{window.__remoteTemplateSettings.subTemplateItems={
+      safety:{items:[{id:"fresh-after-reopen",text:"Newest reopened safety review"}]},
+      permit:{items:[{id:"permit-1",text:"Check permit"}]}
+    };});
+    await page.getByRole("button",{name:"Reopen Builder"}).click();
+    await optionEditor(page,"Safety Review");
+    await page.getByRole("button",{name:"Edit checklist item Newest reopened safety review"}).waitFor();
+    await page.evaluate(()=>window.__pendingTemplateReads.shift().resolve());
+    await page.waitForTimeout(50);
+    await page.getByRole("button",{name:"Edit checklist item Newest reopened safety review"}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Edit checklist item Inspect safety"}).count(),0);
+    assert.equal(await page.evaluate(()=>window.__writeAttempts),0);
+   },"?holdInit=1");
   await run(label+": failed product save releases lock and safely allows retry",
    origin,viewport,async page=>{
     await productEditor(page,"Cabinet Sign");
