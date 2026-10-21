@@ -105,7 +105,7 @@ import {
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
-import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave } from "@/components/admin/automationSaveReconciliation";
+import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapshotUncertainAutomationReview, reviewedAutomationSnapshotIsCurrent } from "@/components/admin/automationSaveReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -550,6 +550,9 @@ export default function AdminSettings() {
   const [automationReviewLoading, setAutomationReviewLoading] = useState(false);
   const automationReviewOwner = useRef(0);
   const automationReviewInFlight = useRef(false);
+  const automationReviewSnapshotRef = useRef(null);
+  const automationAckInFlight = useRef(false);
+  const [automationAckLoading, setAutomationAckLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -559,6 +562,8 @@ export default function AdminSettings() {
   
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
+  const automationDraftFingerprintRef = useRef(null);
+  automationDraftFingerprintRef.current = JSON.stringify({ formData, triggers, actions });
 
   const applyAdminAccess = (data) => {
     const capability = String(data?.capability || "").trim();
@@ -578,7 +583,7 @@ export default function AdminSettings() {
     automationEditorBaseline.current !== JSON.stringify({ formData, triggers, actions });
   const closeAutomationEditor = (open) => {
     if (open) { setIsDialogOpen(true); return; }
-    if (automationSaveInFlight.current) return;
+    if (automationSaveInFlight.current || automationAckInFlight.current) return;
     setAutomationDraftParked(Boolean(automationUncertainRef.current) || automationDraftChanged());
     setIsDialogOpen(false);
   };
@@ -594,6 +599,9 @@ export default function AdminSettings() {
     automationSessionEpoch.current += 1;
     automationReviewOwner.current += 1;
     automationReviewInFlight.current = false;
+    automationReviewSnapshotRef.current = null;
+    automationAckInFlight.current = false;
+    setAutomationAckLoading(false);
     automationUncertainRef.current = null;
     setAutomationUncertain(null);
     setAutomationReviewStatus(null);
@@ -853,6 +861,9 @@ export default function AdminSettings() {
         automationUncertainRef.current = attempt;
         automationReviewOwner.current += 1;
         automationReviewInFlight.current = false;
+        automationReviewSnapshotRef.current = null;
+        automationAckInFlight.current = false;
+        setAutomationAckLoading(false);
         setAutomationUncertain(attempt);
         setAutomationReviewStatus(null);
         setAutomationSaveError("");
