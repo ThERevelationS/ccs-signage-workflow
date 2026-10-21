@@ -13,7 +13,7 @@ const {chromium}=await import(process.env.SIPS_PLAYWRIGHT_PATH ||
  "/tmp/sips-browser-check/node_modules/playwright/index.mjs");
 let vite, browser, passed=0;
 
-async function run(name, origin, viewport, work) {
+async function run(name, origin, viewport, work, launchPath="") {
  const context=await browser.newContext({viewport});
  const page=await context.newPage();
  const errors=[];
@@ -25,7 +25,7 @@ async function run(name, origin, viewport, work) {
  page.route("**/*",route=>route.request().url().startsWith("http")&&!route.request().url().startsWith(origin)
    ?route.abort("blockedbyclient"):route.continue());
  try {
-   await page.goto(origin,{waitUntil:"networkidle"});
+   await page.goto(origin+launchPath,{waitUntil:"networkidle"});
    await page.getByRole("heading",{name:"Checklist Builder"}).waitFor();
    await work(page);
    assert.deepEqual(errors,[],"No runtime errors or outside-origin requests");
@@ -168,11 +168,12 @@ try {
   'window.__writeAttempts=0;window.__closeCount=0;window.__applyCount=0;',
   'window.__saveCalls=[];window.__pendingSaves=[];window.__settledSaves=[];',
   'window.__remoteTemplateSettings={};window.__failNextTemplateReload=false;',
-  'window.__pauseTemplateReload=false;window.__pendingTemplateReads=[];',
+  'window.__pauseTemplateReload=new URLSearchParams(location.search).has("holdInit");window.__pendingTemplateReads=[];',
   'function Fixture(){const [open,setOpen]=React.useState(true);',
-  'return <>{open&&<TemplateBuilder isOpen={true} isAdmin={true} existingChecklist={window.__savedRows}',
+  'return <><button type="button" hidden={open} onClick={()=>setOpen(true)}>Reopen Builder</button>',
+  '<TemplateBuilder isOpen={open} isAdmin={true} existingChecklist={window.__savedRows}',
   'onClose={()=>{window.__closeCount++;setOpen(false)}}',
-  'onApplyTemplate={()=>{window.__applyCount++}} />}</>;}',
+  'onApplyTemplate={()=>{window.__applyCount++}} /></>;}',
   'createRoot(document.getElementById("root")).render(<Fixture/>);',
  ].join("\n"));
  vite=await createServer({
