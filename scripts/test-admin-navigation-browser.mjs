@@ -1425,6 +1425,82 @@ try {
       await next.getByRole('button',{name:'Discard draft'}).click();
     });
 
+  await check('Timed-out Automation verification unlocks a fresh read and ignores the late old result', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1&automation_timeout=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationVerifyHold=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Synthetic interrupted verification');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      const verify=warning.getByRole('button',{name:'Verify save status (read-only)'});
+      await verify.click();
+      await page.waitForFunction(()=>!!window.__adminAutomationVerifyRelease);
+      await warning.getByText(/read-only check timed out/).waitFor();
+      assert.equal(await verify.isEnabled(),true);
+      assert.equal(await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).count(),0);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),
+        'Synthetic interrupted verification');
+      await page.evaluate(()=>{
+        window.__adminAutomationOldVerifyRelease=window.__adminAutomationVerifyRelease;
+        window.__adminAutomationVerifyHold=false;
+      });
+      await verify.click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationVerifyReadCount),2);
+      await page.evaluate(()=>window.__adminAutomationOldVerifyRelease());
+      await page.waitForTimeout(80);
+      assert.equal(await warning.getByText(/A current rule matches the attempted values/).count(),1);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount),1);
+    });
+
+  await check('Timed-out Automation acknowledgment requires new verification and rejects the late response', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1&automation_timeout=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationAckHold=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Synthetic interrupted acknowledgment');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      const verify=warning.getByRole('button',{name:'Verify save status (read-only)'});
+      await verify.click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      const ack=warning.getByRole('button',{name:'Acknowledge and discard this draft'});
+      await ack.evaluate(button=>{button.click();button.click();});
+      await page.waitForFunction(()=>!!window.__adminAutomationAckRelease);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount),1);
+      await warning.getByText(/read-only check timed out/).waitFor();
+      assert.equal(await ack.count(),0);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),
+        'Synthetic interrupted acknowledgment');
+      await page.evaluate(()=>{
+        window.__adminAutomationOldAckRelease=window.__adminAutomationAckRelease;
+        window.__adminAutomationAckHold=false;
+      });
+      await verify.click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await page.evaluate(()=>window.__adminAutomationOldAckRelease());
+      await page.waitForTimeout(80);
+      assert.equal(await warning.getByText(/A current rule matches the attempted values/).count(),1);
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount),2);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
   await check('Late uncertain-save verification cannot affect a replacement Admin session', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{
