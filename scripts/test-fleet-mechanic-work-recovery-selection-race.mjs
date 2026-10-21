@@ -87,6 +87,22 @@ test("save: confirmed not-applied recovery after switching to B leaves B's edito
   assert.equal(h.calls.length,1);
 });
 
+test("start: late applied recovery after switching to B does not apply A's snapshot to B",async()=>{
+  const h=harness({action:"start"});
+  const pending=startRecovery(h);
+  h.ctx.selectedWorkOrderRef.current="wo-B";
+  h.ctx.photoDraftEpochRef.current+=1;
+  h.gate.resolve({data:{status:"applied",work_order:{id:"wo-A",status:"in_progress",notes:"A-only data"}}});
+  await pending;
+  assert.deepEqual(h.snapshots,[]);
+  assert.deepEqual(h.draftClears,[]);
+  assert.equal(h.storedRecovery,null);
+  assert.equal(h.ctx.workRecovery,null);
+  assert.match(h.errors.at(-1),/earlier mechanic request was confirmed/i);
+  assert.doesNotMatch(h.errors.at(-1),/wo-A|A-only data|in_progress/i);
+  assert.equal(h.calls.length,1,"No Start replay after confirmed recovery");
+});
+
 test("start: inconclusive recovery after switching to B preserves A's durable lock",async()=>{
   const h=harness({action:"start"});
   const pending=startRecovery(h);
