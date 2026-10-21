@@ -31,8 +31,11 @@ function persistRequestId(action, email, requestId) {
   }
 }
 
-function clearRequestId(action, email) {
-  try { sessionStorage.removeItem(requestStorageKey(action, email)); } catch {}
+function clearRequestId(action, email, expectedRequestId) {
+  try {
+    const key = requestStorageKey(action, email);
+    if (sessionStorage.getItem(key) === expectedRequestId) sessionStorage.removeItem(key);
+  } catch {}
 }
 
 function signalPauseChanged(data = null) {
@@ -65,12 +68,15 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   const scopeRef = useRef(scopeInstanceKey);
   scopeRef.current = scopeInstanceKey;
   const statusSequenceRef = useRef(0);
+  const transitionSequenceRef = useRef(0);
 
   const loadStatus = useCallback(async () => {
     const requestScope = scopeInstanceKey;
     const requestSequence = ++statusSequenceRef.current;
+    const requestTransition = ++transitionSequenceRef.current;
     const isCurrent = () => mountedRef.current &&
       requestSequence === statusSequenceRef.current &&
+      requestTransition === transitionSequenceRef.current &&
       scopeRef.current === requestScope;
     if (!email || !sessionToken) {
       if (isCurrent()) {
@@ -153,6 +159,11 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       setError("Work Pause was not sent because this tab could not retain the exact retry request. Enable session storage and try again.");
       return;
     }
+    const actionTransition = ++transitionSequenceRef.current;
+    statusSequenceRef.current += 1;
+    const isCurrentAction = () => mountedRef.current &&
+      scopeRef.current === scopeInstanceKey &&
+      transitionSequenceRef.current === actionTransition;
     setBusy(true);
     setError("");
     try {
@@ -168,10 +179,16 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         err.retrySameRequest = data?.retry_same_request === true;
         throw err;
       }
+      if (!isCurrentAction()) {
+        // A later signed-session status read or transition superseded this
+        // acknowledgement. Keep its exact retry ID until status reconciles it.
+        signalPauseChanged();
+        return;
+      }
       const acknowledgedEmail = String(data?.user?.email || "").trim().toLowerCase();
       if (!acknowledgedEmail || acknowledgedEmail !== email) {
         const message = "Work Pause confirmation did not match the signed-in employee.";
-        if (mountedRef.current && scopeRef.current === scopeInstanceKey) {
+        if (isCurrentAction()) {
           const latestRecord = statusRecordRef.current;
           if (latestRecord.scope === scopeInstanceKey && latestRecord.data) {
             const guardedRecord = {
@@ -188,18 +205,19 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         signalPauseChanged();
         return;
       }
-      clearRequestId(action, email);
+      clearRequestId(action, email, requestId);
       const confirmedStatus = data?.work_pause_status === "paused" && data?.work_pause?.id
         ? { ...data, active_work_pause: data.work_pause }
         : data;
       if (mountedRef.current) setStatusRecord({ scope: scopeInstanceKey, data: confirmedStatus });
       signalPauseChanged(confirmedStatus);
     } catch (err) {
+      if (!isCurrentAction()) return;
       const responseStatus = Number(err?.response?.status || 0);
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
-      if (!retrySame) clearRequestId(action, email);
+      if (!retrySame) clearRequestId(action, email, requestId);
       setError(err?.response?.data?.error || err?.message || `${paused ? "Resume Work" : "Work Pause"} was not confirmed.`);
-      if (mountedRef.current && scopeRef.current === scopeInstanceKey) await loadStatus();
+      await loadStatus();
     } finally {
       setBusy(false);
     }
