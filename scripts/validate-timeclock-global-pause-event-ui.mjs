@@ -334,4 +334,55 @@ await storageBlockedAction;
 assert.match(renderer.root.findByType('button').props.title, /session storage|retry request/i,
   'The employee should see why Work Pause was not submitted');
 console.log('PASS storage failure prevents Work Pause mutation without a durable retry ID');
-console.log('PASS 9/9 Global Work Pause session/event scenarios');
+
+failStorageWrites = false;
+await act(async () => {
+  windowStub.dispatchEvent(new CustomEvent('ccs-timeclock-work-pause-changed', { detail: null }));
+});
+assert.equal(calls.length, 20);
+await act(async () => { calls[19].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
+} }); });
+let pendingSupersededStart;
+await act(async () => { pendingSupersededStart = renderer.root.findByType('button').props.onClick(); });
+assert.equal(calls.length, 21);
+assert.equal(calls[20].payload.action, 'work_pause_start');
+const staleActionRequestId = calls[20].payload.request_id;
+await act(async () => {
+  windowStub.dispatchEvent(new CustomEvent('ccs-timeclock-work-pause-changed', { detail: null }));
+});
+assert.equal(calls.length, 22);
+await act(async () => { calls[21].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+  active_work_pause: { id: 'newer-authoritative-pause' }, break_status: 'working',
+} }); });
+const pauseRequestKey = 'ccs_timeclock_request:work_pause_start:second@synthetic.invalid';
+const newerPauseRequestId = 'synthetic-newer-pause-request';
+storage.set(pauseRequestKey, newerPauseRequestId);
+await act(async () => {
+  calls[20].resolve({ data: {
+    success: true, user: { email: 'second@synthetic.invalid' },
+    status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+    work_pause: { id: 'stale-ack-pause' }, break_status: 'working',
+  } });
+  await pendingSupersededStart;
+});
+assert.equal(calls.length, 23,
+  'A superseded acknowledgement should trigger signed-session status reconciliation');
+assert.equal(calls[22].payload.action, 'status');
+assert.equal(storage.get(pauseRequestKey), newerPauseRequestId,
+  'A stale acknowledgement must retain a newer request ID');
+assert.equal(dispatchedEvents.at(-1).detail, null,
+  'A stale acknowledgement should publish only an invalidation signal, never its stale state');
+await act(async () => { calls[22].resolve({ data: {
+  success: true, user: { email: 'second@synthetic.invalid' },
+  status: 'clocked_in', work_pause_status: 'paused', work_pause_allowed: true,
+  active_work_pause: { id: 'newer-authoritative-pause' }, break_status: 'working',
+} }); });
+assert.match(JSON.stringify(renderer.toJSON()), /Resume Work/);
+assert.equal(storage.has(pauseRequestKey), false,
+  'Only authoritative status reconciliation may clear the retained request');
+console.log('PASS stale Work Pause acknowledgement cannot replace newer state or clear a newer request');
+console.log('PASS 10/10 Global Work Pause session/event scenarios');
