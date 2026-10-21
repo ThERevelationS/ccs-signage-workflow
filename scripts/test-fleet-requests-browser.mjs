@@ -138,7 +138,7 @@ try {
     assert.ok(state.requests[0].receipt_applied_at, "Synthetic durable receipt marker is set once");
     await page.getByRole("combobox").selectOption("all");
     const receivedRow = page.locator("div.rounded-xl").filter({ hasText: "Synthetic linked brake pad" }).first();
-    assert.match(await receivedRow.innerText(), /received/);
+    assert.match(await receivedRow.innerText(), /Received/);
   });
 
   console.log("BROWSER_ACCEPTANCE_PASS=" + passed);
