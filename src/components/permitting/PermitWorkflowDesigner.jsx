@@ -12,6 +12,7 @@ import WorkflowCitationList from "./WorkflowCitationList";
 import PermittingDraftHistory from "./PermittingDraftHistory";
 import WorkflowSourceEvidenceDialog from "./WorkflowSourceEvidenceDialog";
 import WorkflowReviewPacket from "./WorkflowReviewPacket";
+import ElectricalOfficeResponseContext from "./ElectricalOfficeResponseContext";
 import WorkflowPlanningReview from "./WorkflowPlanningReview";
 import { editPlanningReview, invalidatePlanningReview, planningReviewIssues, planningReviewSummary } from "./workflowPlanningReview.mjs";
 
@@ -24,7 +25,7 @@ function handoffText(value) {
   return String(value);
 }
 
-function ElectricalPlanningHandoffView({ handoff }) {
+export function ElectricalPlanningHandoffView({ handoff }) {
   const applicability = value => value === "potentially_applicable"
     ? "potentially applicable · confirm the proposed work"
     : value === "not_applicable_candidate"
@@ -58,6 +59,7 @@ function ElectricalPlanningHandoffView({ handoff }) {
           })}
       </article>)}
     </div>
+    <ElectricalOfficeResponseContext context={handoff.office_responses} />
   </section>;
 }
 
