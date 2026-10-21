@@ -6,6 +6,7 @@ import { safeExternalHttpUrl } from '@/utils/safeExternalUrl';
 import { planningReviewDecisionLabel } from './workflowPlanningReview.mjs';
 import { draftFieldLabel } from './permitDraftComparison.mjs';
 import './workflowReviewPacket.css';
+import ElectricalOfficeResponseContext from './ElectricalOfficeResponseContext';
 
 const empty = value => value === undefined || value === null || value === '';
 const labels = {
@@ -76,7 +77,8 @@ export default function WorkflowReviewPacket({ draftRow, trigger, onClose }) {
             <PacketSection title="Jurisdiction and authority uncertainty"><RecordedValue value={snapshot.jurisdiction} /><p><strong>Jurisdiction unresolved:</strong> <RecordedValue value={snapshot.jurisdiction_unresolved} /></p><p>Recorded identity is not a new location or authority verification.</p></PacketSection>
             <PacketSection title="Offices and separate electrical planning">
               <p>Permit issuer and inspection provider are separate responsibilities. A missing role or generic contact does not establish either responsibility. Confirm applicability, service area, delegation and inspection stages.</p>
-              <RecordedValue value={snapshot.electrical_planning_handoff} />
+              <RecordedValue value={snapshot.electrical_planning_handoff && Object.fromEntries(Object.entries(snapshot.electrical_planning_handoff).filter(([key]) => key !== "office_responses"))} />
+              <ElectricalOfficeResponseContext context={snapshot.electrical_planning_handoff?.office_responses} />
               {!snapshot.electrical_planning_handoff && <p>Separate electrical permit issuer and inspection provider planning was not recorded. Responsibility remains unresolved.</p>}
               {Object.keys(snapshot).filter(key => /office/i.test(key)).map(key => <div key={key}><h4>{draftFieldLabel(key)}</h4><RecordedValue value={snapshot[key]} /></div>)}
               <p>Other recorded offices appear in each proposed action below.</p>
