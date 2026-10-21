@@ -12,6 +12,7 @@
  */
 
 import { base44 } from "@/api/base44Client";
+import { captureElectricalOfficeResponses } from "./electricalOfficeResponseHandoff.mjs";
 import { captureWorkflowSources, WORKFLOW_SOURCE_FIELDS } from "./workflowSourceEvidence.mjs";
 
 const ELECTRICAL_RESEARCH_ROLES = [
@@ -25,6 +26,7 @@ export function createElectricalPlanningHandoff(research, jurisdiction = {}) {
     ? research.roles : [];
   return {
     classification: "saved_research_draft_non_operational",
+    office_responses: captureElectricalOfficeResponses(research, jurisdiction),
     research_method: research?.method || "",
     researched_at: research?.researched_at || "",
     jurisdiction: {
