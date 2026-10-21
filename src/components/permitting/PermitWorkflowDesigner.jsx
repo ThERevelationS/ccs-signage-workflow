@@ -25,7 +25,7 @@ function handoffText(value) {
   return String(value);
 }
 
-export function ElectricalPlanningHandoffView({ handoff }) {
+function ElectricalPlanningHandoffView({ handoff }) {
   const applicability = value => value === "potentially_applicable"
     ? "potentially applicable · confirm the proposed work"
     : value === "not_applicable_candidate"

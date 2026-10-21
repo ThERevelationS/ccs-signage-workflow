@@ -47,6 +47,11 @@ try {
  await page.getByRole('heading',{name:'Opened packet fixture',exact:true}).waitFor();
  const openedCard=page.locator('article').filter({has:page.getByRole('heading',{name:'Opened packet fixture',exact:true})});
  await openedCard.getByRole('button',{name:'Review draft',exact:true}).click();
+ const planning=page.getByRole('region',{name:'Electrical planning handoff',exact:true});
+ const planningResponses=planning.getByRole('region',{name:'Captured electrical office responses',exact:true});
+ assert.ok((await planningResponses.innerText()).includes('RESPONSE_END_TOKEN'));
+ assert.ok((await planningResponses.innerText()).includes('INSPECTION_RESPONSE_TOKEN'));
+ assert.ok(!(await planningResponses.innerText()).includes('LATER_LIVE_RESPONSE_TOKEN'));
  const packetButton=page.getByRole('button',{name:'Open saved review packet',exact:true});await packetButton.click();
  const packet=page.getByRole('dialog',{name:'Saved workflow review packet',exact:true});await packet.waitFor();
  await packet.getByText('SAVED_ACTION_TOKEN',{exact:true}).waitFor();await packet.getByText('ISSUER_ONLY_OFFICE',{exact:true}).first().waitFor();await packet.getByText('INSPECTOR_ONLY_OFFICE',{exact:true}).first().waitFor();
@@ -68,6 +73,7 @@ try {
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.ok((await packet.getByRole('button',{name:'Print / Save as PDF',exact:true}).boundingBox()).height>=44);
  await packet.getByRole('button',{name:'Print / Save as PDF',exact:true}).click();assert.equal(await page.evaluate(()=>window.fixture.printCalls),1);
+ if(width===390){await issuer.scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/permitting-response-handoff-390.png'});}
  if(width===320)await page.screenshot({path:'/tmp/permitting-response-packet-mobile.png'});
  if(width===1280){
    await page.screenshot({path:'/tmp/permitting-response-packet-desktop.png'});

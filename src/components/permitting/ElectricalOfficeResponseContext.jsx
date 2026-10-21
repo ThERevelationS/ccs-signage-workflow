@@ -1,9 +1,16 @@
 import { safeGovernmentOfficeSourceUrl } from './governmentOfficeCatalog.js';
 import { responseReviewLabels } from './officeResearchResponses.mjs';
 import { electricalResponseRoles } from './electricalOfficeResponseHandoff.mjs';
+import { draftFieldLabel } from './permitDraftComparison.mjs';
 
 const text = value => typeof value === 'string' && value ? value : 'Not recorded';
 const locality = value => [value?.name, value?.state, value?.type, value?.id].filter(Boolean).join(' · ') || 'Not recorded';
+function HistoricalValue({ value }) {
+  if (value === null || value === undefined || value === '') return <span>Not recorded</span>;
+  if (Array.isArray(value)) return value.length ? <ol className="space-y-2">{value.map((item, index) => <li key={index}><HistoricalValue value={item} /></li>)}</ol> : <span>None recorded</span>;
+  if (typeof value === 'object') return <dl className="space-y-1">{Object.entries(value).map(([key, item]) => <div key={key}><dt className="font-semibold">{draftFieldLabel(key)}</dt><dd className="whitespace-pre-wrap"><HistoricalValue value={item} /></dd></div>)}</dl>;
+  return <span className="whitespace-pre-wrap">{typeof value === 'boolean' ? value ? 'Yes' : 'No' : String(value)}</span>;
+}
 export default function ElectricalOfficeResponseContext({ context }) {
   return <section aria-label="Captured electrical office responses" className="min-w-0 space-y-3 [overflow-wrap:anywhere]">
     <h4 className="font-semibold">Captured electrical office responses · unverified</h4>
@@ -31,7 +38,7 @@ export default function ElectricalOfficeResponseContext({ context }) {
             <p className="whitespace-pre-wrap"><strong>Response notes:</strong> {text(row.notes)}</p>
             <p><strong>Captured by:</strong> {text(row.captured_by)} · <strong>Captured at:</strong> {text(row.captured_at)}</p>
             <section aria-label="Original role findings captured with response"><h6 className="font-semibold">Original role findings captured with response · historical</h6>
-              <pre className="whitespace-pre-wrap font-sans text-xs">{JSON.stringify(row.recorded_findings ?? null, null, 2)}</pre>
+              <HistoricalValue value={row.recorded_findings} />
             </section>
           </article>;
         })}
