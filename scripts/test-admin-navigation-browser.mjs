@@ -144,6 +144,13 @@ try {
     'export async function deleteAutomationRuleIfUnchanged(){throw Error("Unexpected delete");}',
     'export async function updateAutomationRuleIfUnchanged({record,nextFields}={}){return syntheticWrite("update",record,nextFields);}',
   ].join('\n'));
+  await writeFile(path.join(scratch, 'mockAutomationReadDeadline.js'), [
+    'import {AutomationReadTimeoutError,withAutomationReadDeadline as actual} from "/@fs' +
+      path.join(appRoot,'src/components/admin/automationReadDeadline.js') + '";',
+    'export {AutomationReadTimeoutError};',
+    'export const withAutomationReadDeadline=(operation)=>actual(operation,',
+    ' new URLSearchParams(location.search).get("automation_timeout")==="1"?160:25000);',
+  ].join('\n'));
   await writeFile(path.join(scratch, 'mockEmailGroupPersistence.js'), [
     'export async function createEmailGroupIfAbsent(){throw Error("Unexpected email group write");}',
     'export async function updateEmailGroupIfUnchanged(){throw Error("Unexpected email group write");}',
@@ -260,6 +267,7 @@ try {
     {find:'@/components/auth/EmailGate',replacement:path.join(scratch,'mockAuth.js')},
     {find:'@/functions/verifyLogin',replacement:path.join(scratch,'mockLogin.js')},
     {find:'@/components/admin/automationRulePersistence',replacement:path.join(scratch,'mockPersistence.js')},
+    {find:'@/components/admin/automationReadDeadline',replacement:path.join(scratch,'mockAutomationReadDeadline.js')},
     {find:'@/components/admin/emailGroupPersistence',replacement:path.join(scratch,'mockEmailGroupPersistence.js')},
     {find:'../components/admin/UserManagement',replacement:path.join(scratch,'mock-UserManagement.jsx')},
     {find:'@/components/admin/authorizedUserAdminPersistence',replacement:path.join(scratch,'mockAuthorizedUserPersistence.js')},
