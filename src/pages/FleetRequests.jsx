@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetRequestDialog from "@/components/fleet/FleetRequestDialog";
@@ -20,8 +20,10 @@ export default function FleetRequests() {
   const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState("");
   const [confirmCancel, setConfirmCancel] = useState(null);
+  const loadSequenceRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     try {
       const user = await base44.auth.me().catch(() => null);
@@ -31,11 +33,13 @@ export default function FleetRequests() {
         listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
         listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       let admin = user?.role === "admin";
       if (!admin && user?.email) {
         const authRows = await base44.entities.AuthorizedEmail.filter({ email: user.email }).catch(() => []);
         admin = authRows?.[0]?.role === "admin";
       }
+      if (requestSequence !== loadSequenceRef.current) return;
       setCurrentUser(user);
       setIsAdmin(admin);
       setRequests(r || []);
@@ -43,7 +47,7 @@ export default function FleetRequests() {
       setParts(p || []);
       setFluids(f || []);
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, []);
 
