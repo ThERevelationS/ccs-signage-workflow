@@ -1,5 +1,54 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — desktop-authenticated Sharonville FAQ discovery and live timestamp acceptance (October 21, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Fresh starting HEAD: 036876ceceb8d6a567e56f8974be593d4cb9e8c4, clean. Previous checkpoint: 6ad8c85e68466aad0e270867 / Git 1f26f4614f2221af69e45e893a379ba16e83d8ab, “Permitting Sharonville FAQ authenticated access blocker verified”. Preserve all newer/unfamiliar CCS work.
+
+Access and execution:
+- Brett's connected Edge browser had a signed-in Base44 editor session, displaying “Brett Heinlein (You) · Main” for CCS Signage Workflow. Browser Function Tester was used because the connector has no function-invocation tool and CLI-token SDK application access remained unverified.
+- Opened the actual app through the visible workspace app link, then Dashboard → Code → base44/functions/refreshJurisdiction/entry.ts → Test Function. No builder prompt was submitted.
+- Invoked refreshJurisdiction ONCE with discovery_only=true, defer_archive=true and exact selected_saved_document for FAQ 148af7ec-4fe9-40ff-8fd6-1d45e36b2f9d at https://www.sharonville.org/Faq.aspx?QID=94. Profile id 6ac19f0e23bd8a65822f6d51; exact pre-call version 2026-10-21T13:39:10.591000; Sharonville / OH / city.
+- The tester selected the PREVIEW backend function version. Its authenticated-admin gate passed and it wrote the live entity datastore. This verifies preview backend runtime plus live datastore behavior; it is not a published frontend test or a separately proven production-version deployment. CLI/SDK authentication recovery was not established.
+- Response HTTP 200, success true; attempted_pages 1; research_attempts 0; llm_calls 0; archival null; scan_run null. No repeated completed department/Community Development scan.
+
+Actual source and saved results:
+- Requested FAQ redirected on the same official host to https://www.sharonville.org/m/faq?cat=22. Five links discovered; four new links merged, document count 16 → 20:
+  - 073a06bb-2a02-4652-b417-b9d3758b8467 — Application For Plan Approval — https://www.sharonville.org/DocumentCenter/View/4006/Application-For-Plan-Approval
+  - e986e6dd-2b02-40a2-ba15-6c1df4112c10 — Fee Schedule — https://sharonville.org/DocumentCenter/View/1964/Fee-Schedule
+  - 705a3ce0-ccbe-4fa7-a251-770c730d1ae7 — Permits — https://www.sharonville.org/524/Permits
+  - 0c9c63fd-8025-4898-a22f-f70e45250dcc — Short-Term Rental Ordinance — https://www.sharonville.org/DocumentCenter/View/3347/Short-Term-Rental-Ordinance
+- These are retained links only, not fetched child documents or electrical responsibility evidence. The rental ordinance is not sign-scope evidence.
+- Three external referrals retained unapproved, not fetched. Official page SHA-256 from the receipt: 029f402389b96d97cfee750201841f19390adc95cb4e56d03af638e036dfb4a6.
+- Scan time 2026-10-21T14:22:35.203Z. Live profile updated_date 2026-10-21T14:22:35.528000. Observations only; reread fresh before further action.
+
+All eight exact live readback checks passed:
+1. Only the selected FAQ's last_fetched changed among prior documents (from 2026-10-14T01:05:24.573Z to the scan time).
+2. All four new links have no last_fetched field.
+3. Original frontier unchanged.
+4. Prior saved-document receipts unchanged.
+5. Exactly one new receipt added.
+6. Office research unchanged.
+7. All other profile fields unchanged apart from updated_date.
+8. Selected-page timestamp equals its receipt timestamp.
+No metadata repair was needed. The previous selected-document timestamp fix is therefore verified in the preview backend against live records. No further source change, build or synthetic suite was necessary this unit. Existing separately documented office-research test-harness missing-import failure is unchanged.
+
+Fresh controls before invocation:
+enabled true; interval_minutes 15; max_dispatch_per_cycle 5; max_in_flight 20; daily_dispatch_limit 40; retry_limit 3. Config 6ac1b28c47233270cfeeb0f9 / updated_date 2026-10-04T15:30:40.303000. State 6ac1d0ffb44495caa0c3cf76 / updated_date 2026-10-21T14:02:20.474000, daily_day_key 2026-10-21, dispatched_today 40. No LLM attempt or cap bypass occurred; no settings/queue changes. Background collection status remains completed_with_errors in that observation; do not attribute it to this FAQ scan.
+
+Evidence: docs/permitting-sharonville-faq-live-2026-10-21.json contains only selected source/result evidence and readback checks. Never persist or reprint the tester's entire Axios response: its config contains Authorization credentials. Capture only data/result fields needed for the receipt. No credentials were saved in project documents.
+
+Next ONE chunk:
+Fresh HEAD/status and exact profile/controls first. Use the still-authenticated browser Function Tester if available. Investigate newly retained Permits page 705a3ce0-ccbe-4fa7-a251-770c730d1ae7, https://www.sharonville.org/524/Permits, through ONE exact-version selected-document discovery-only call with archival deferred, provided no prior receipt or protection now blocks it. Do not replay FAQ, Building/Zoning or Community Development actions. Verify preserved dates/frontier/offices/archives and no AI spend; retain useful official electrical/inspection application links without approving authority. If a downloadable source is chosen instead, use its existing bounded archive path with at most one new download, not an HTML scan or inferred fetch.
+Electrical issuer department/canonical identity, current inspection delegation, commercial-sign applicability and exact-site coverage remain unresolved.
+
+No frontend publication, backend/schema/RLS/integration authoring, client/job/shared-file/catalog change, messages, authority approval, archive upload, queue/control write or address resolution. Only the authorized permitting profile document links/timestamp and scan receipt changed. No unfinished live write.
+Remaining roadmap: bounded collection/archives/text acceptance; canonical office and parent-authority reconciliation; Ohio then Kentucky coverage; source monitoring; exact matching/maps/action progress; evidence-based workflows; explicit safe job integration; authenticated rollout/mobile/concurrency acceptance. One download/refresh; fetch 12s/upload 15s/extraction 20s. General/continuation-route candidate timestamp behavior remains outside the selected-document fix.
+
+Checkpoint name for this unit: “Permitting desktop FAQ discovery and live timestamp provenance verified”. Exact ID/Git appear in the checkpoint receipt/final report. Older sections below are historical.
+
+
+
 ## Latest unit — Sharonville FAQ live timestamp acceptance blocked before invocation (October 21, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
