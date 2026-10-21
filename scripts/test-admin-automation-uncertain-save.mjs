@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave } from "../src/components/admin/automationSaveReconciliation.js";
+import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapshotUncertainAutomationReview, reviewedAutomationSnapshotIsCurrent } from "../src/components/admin/automationSaveReconciliation.js";
 
 const source = readFileSync("src/pages/AdminSettings.jsx", "utf8");
 const attempted = {
@@ -68,6 +68,56 @@ test("Changed fields and wrong record identities cannot certify an attempted upd
     kind:"update",originalId:"r1",attempted,
     rows:[{...record,actions:[{action_type:"send_email",action_config:{recipients:[]}}]}]
   }), "different");
+});
+
+test("Acknowledgment snapshot uses stable candidate identities, versions and fields", () => {
+  const context={kind:"create",attempted,rows:[record]};
+  const reviewed=snapshotUncertainAutomationReview(context);
+  assert.equal(reviewed.status,"matching");
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[{...record}]}),true);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[{...record,updated_date:"version-3"}]}),false);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[{...record,id:"r2"}]}),false);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[{...record,priority:2}]}),false);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[]}),false);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:null}),false);
+});
+
+test("Concurrent duplicate names invalidate reviewed creation snapshots", () => {
+  const context={kind:"create",attempted,rows:[record]};
+  const reviewed=snapshotUncertainAutomationReview(context);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[record,{...record,id:"r2"}]}),false);
+  const ambiguous=snapshotUncertainAutomationReview({...context,rows:[record,{...record,id:"r2"}]});
+  assert.equal(ambiguous.status,"ambiguous");
+  assert.equal(reviewedAutomationSnapshotIsCurrent(ambiguous,{...context,rows:[{...record,id:"r2"},record]}),true);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(ambiguous,{...context,rows:[record,{...record,id:"r2",updated_date:"v3"}]}),false);
+  assert.equal(snapshotUncertainAutomationReview({...context,rows:[record,{...record,id:"r2",updated_date:""}]}),null);
+});
+
+test("Unchanged absence is compared twice; delayed create becomes stale", () => {
+  const context={kind:"create",attempted,rows:[]};
+  const reviewed=snapshotUncertainAutomationReview(context);
+  assert.equal(reviewed.status,"not_found");
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,context),true);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[record]}),false);
+});
+
+test("Updated rule snapshot cannot be replaced by equal-looking row under another ID", () => {
+  const context={kind:"update",originalId:"r1",attempted,rows:[record]};
+  const reviewed=snapshotUncertainAutomationReview(context);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[{...record,id:"r9"}]}),false);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(reviewed,{...context,rows:[{...record,updated_date:null}]}),false);
+  assert.equal(reviewedAutomationSnapshotIsCurrent(null,context),false);
+});
+
+test("Acknowledgment runs a fresh owned read and preserves the draft when stale", () => {
+  assert.match(source,/label: "Admin Settings uncertain Automation acknowledgment"/);
+  assert.match(source,/reviewedAutomationSnapshotIsCurrent\(evidence\.review, \{ \.\.\.pending, rows \}\)/);
+  assert.match(source,/automationReviewSnapshotRef\.current !== evidence/);
+  assert.match(source,/automationAckInFlight\.current = true/);
+  assert.match(source,/automationDraftFingerprintRef\.current !== evidence\.draftFingerprint/);
+  assert.match(source,/setAutomationReviewStatus\(draftChanged \? "stale_draft" : "stale"\)/);
+  assert.match(source,/automationReviewSnapshotRef\.current = null/);
+  assert.match(source,/setAutomationAckLoading\(false\)/);
 });
 
 test("Only dispatched failed writes become uncertain; same attempt stays fenced", () => {
