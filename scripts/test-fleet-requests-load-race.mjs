@@ -19,6 +19,7 @@ function harness(){
   const calls=[],loading=[],state={requests:[],equipment:[],parts:[],fluids:[],currentUser:null,isAdmin:false};
   const entity={};
   const ctx={
+    loadSequenceRef:{current:0},
     base44:{
       auth:{me:async()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"})},
       entities:{FleetPartFluidRequest:entity,FleetEquipment:entity,FleetPart:entity,FleetFluid:entity},
