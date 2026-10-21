@@ -98,7 +98,7 @@ test("start: inconclusive recovery after switching to B preserves A's durable lo
   assert.deepEqual(h.draftClears,[]);
   assert.equal(h.storedRecovery?.workOrderId,"wo-A");
   assert.equal(h.ctx.workRecovery?.workOrderId,"wo-A");
-  assert.match(h.errors.at(-1),/earlier mechanic request is still being verified/i);
+  assert.match(h.errors.at(-1),/earlier mechanic request is still unverified/i);
   assert.doesNotMatch(h.errors.at(-1),/wo-A|A-only data/i);
   assert.equal(h.calls.length,1,"No replay when status is inconclusive");
 });
