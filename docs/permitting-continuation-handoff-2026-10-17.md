@@ -1,5 +1,41 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest checkpoint — bounded Sharonville discovery blocked by CLI sign-in (October 21, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Previous verified implementation checkpoint: 6ad8bc800c939caa0381be0a, “Permitting office response workflow snapshots and review packets verified — final receipts”, Git 13e3e2445481f9a08eb2054e2f63fc9921d156a0.
+Fresh starting HEAD: 8d34afb378e621b0b5679c94f8df12359afd9a3f, clean. Latest pre-document HEAD: 484ccfeedab200bb33004f8b6e353d2f85480adc, clean. All newer concurrent CCS changes preserved. No product code changed in this checkpoint.
+
+Live read-only verification:
+- Dispatcher enabled true; interval 15 minutes; max_dispatch_per_cycle 5; max_in_flight 20; daily_dispatch_limit 40; retry_limit 3. Config record 6ac1b28c47233270cfeeb0f9 / updated_date 2026-10-04T15:30:40.303000.
+- State record 6ac1d0ffb44495caa0c3cf76 / updated_date 2026-10-21T13:02:04.386000: daily_day_key 2026-10-21, dispatched_today 40. No further AI research attempt authorized under today's observed 40-attempt limit. No gate/settings changes or manual bypass.
+- Last dispatch cycle 2026-10-21T07:01:48.735Z. Last observed collection cycle ended 2026-10-21T13:02:04.205Z, completed_with_errors: discovery success/one page, archive claim_conflict with an official-host restriction error, text partial. This is background state, not an invocation by this chunk. The failing archive target is not identified by this receipt; do not attribute it to Sharonville.
+- Sharonville profile 6ac19f0e23bd8a65822f6d51 / Sharonville / OH / city remains updated_date 2026-10-18T04:09:02.663000, with 15 retained documents and no staff_responses field. Existing electrical role drafts/comparisons are unchanged.
+- The department page already has one saved-document discovery receipt. It must not be blindly rescanned via the one-shot saved-document action.
+- An eligible-looking separate saved source is Community Development, document df3e3416-fed2-4c72-9e04-aa33454bbf2b, https://www.sharonville.org/122/Community-Development. It is an unprotected saved same-host HTML link in the observed profile; final validation must run against a fresh profile/version.
+
+Source inspection:
+refreshJurisdiction accepts authenticated-admin discovery_only=true, defer_archive=true, selected_saved_document with exact profile ID/version/name/state/type/document ID/URL. It routes to discoverSelectedSavedDocument, not jurisdictionResearchAgent. That path fetches one selected official page, preserves original frontier/history and guarded document merging, and returns research_attempts=0 / llm_calls=0. No manual research-cap bypass, automatic approval or archive is needed.
+Relevant source: base44/functions/refreshJurisdiction/entry.ts; base44/shared/permittingSavedDocumentDiscovery.mjs; base44/shared/permittingResearchDispatchConfig.mjs.
+
+Exact blocker:
+The sandbox intermittently returned “busy saving background changes”; later reads and a shell command succeeded. One bounded normal CLI authentication check ran via npx --no-install base44 exec. The CLI reported “You need to login first to continue”, generated device authentication and waited. The 25-second process limit ended it (exit 124); no authenticated identity or completed sign-in was established. No backend discovery/research function ran. Do not use or retain that expired device code, infer successful auth, or repeat login loops.
+
+Receipt:
+docs/permitting-sharonville-discovery-access-2026-10-21.json
+It contains exact observed controls/state, selected-source request marked NOT INVOKED, and pending gates. No tests/build were run because no product source changed. git diff --check applies to this documentation checkpoint. This is live read-only datastore verification, not deployed-function or authenticated-browser acceptance.
+
+Deployment/data:
+Nothing published/deployed. No production entity/source/archive/catalog/client/job/shared-file, queue or settings writes. No research/refresh/LLM invocation, source fetch, messages or approvals. No unfinished live write or active login process is known.
+
+Next ONE chunk:
+Establish one normal authenticated Base44 CLI or staff session, then reread fresh HEAD/status, dispatcher gates, Sharonville profile version and exact saved document. Run the existing one-page no-AI selected Community Development source discovery with deferred archival if validation permits, and read back its receipt/documents. Preserve separate issuer/intake/inspection roles; retain commercial-sign/current delegation/exact-site unknowns; do not advance coverage counts without evidence. If authentication remains unavailable, report that exact blocker without another login loop.
+The AI daily limit must be reread for the current day before any later research attempt. No admin/manual bypass.
+
+The earlier response-to-workflow implementation remains the last tested product unit; its synthetic browser/print checks passed and employee persistence/native mobile acceptance remain pending.
+Remaining roadmap, record-protection rules and archive/research limits are unchanged. This documentation-only checkpoint is named “Permitting Sharonville discovery gates and signed-out CLI blocker recorded”; obtain exact ID/Git from the final checkpoint receipt. Older sections below are history.
+
+
 ## Latest completed unit — electrical office responses in saved workflow planning (October 21, 2026)
 
 Phase 10 — Ohio/Kentucky coverage → Milestone 1 of 3 — Identity and office reconciliation → Task 2 remains partial; 2 of 4 tasks complete. Ohio first. No statewide coverage counts advanced.

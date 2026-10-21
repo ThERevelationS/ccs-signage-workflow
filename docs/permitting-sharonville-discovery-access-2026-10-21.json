@@ -1,0 +1,138 @@
+{
+  "phase": "Phase 10 / Milestone 1 of 3 / Task 2 partial; 2 of 4 tasks complete",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "starting_head": "8d34afb378e621b0b5679c94f8df12359afd9a3f",
+  "last_observed_head": "484ccfeedab200bb33004f8b6e353d2f85480adc",
+  "controls": [
+    {
+      "id": "6ac1d0ffb44495caa0c3cf76",
+      "setting_key": "permitting_research_dispatch_state",
+      "updated_date": "2026-10-21T13:02:04.386000",
+      "setting_value": {
+        "last_cycle_at": "2026-10-21T07:01:48.735Z",
+        "daily_day_key": "2026-10-21",
+        "dispatched_today": 40,
+        "last_result": {
+          "at": "2026-10-21T07:01:48.735Z",
+          "manual": false,
+          "in_flight_before": 0,
+          "backlog_before": 747,
+          "identity_conflicts": 6,
+          "reconciled_existing_profiles": 0,
+          "reconciled_completed": 0,
+          "reconciled_failed": 0,
+          "attempted": 5,
+          "dispatched": 5,
+          "failed": 0
+        },
+        "collection_cycle": {
+          "token": "1ed24281-8c33-4231-a175-0acb836f3c62",
+          "status": "completed_with_errors",
+          "started_at": "2026-10-21T13:01:53.782Z",
+          "lease_expires_at": "",
+          "completed_at": "2026-10-21T13:02:04.205Z",
+          "stages": {
+            "discovery": {
+              "success": true,
+              "status": "complete",
+              "archived": 0,
+              "attempted_pages": 1
+            },
+            "archive": {
+              "success": false,
+              "status": "claim_conflict",
+              "archive_queue": "jurisdiction",
+              "archived": 0,
+              "attempted_pages": 0,
+              "error": "Use an HTTPS page on the canonical profile's official website or permitting host. Redirects to another host require separate review."
+            },
+            "text": {
+              "success": true,
+              "status": "partial",
+              "archived": 0,
+              "attempted_pages": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "6ac1b28c47233270cfeeb0f9",
+      "setting_key": "permitting_research_dispatch_config",
+      "updated_date": "2026-10-04T15:30:40.303000",
+      "setting_value": {
+        "enabled": true,
+        "interval_minutes": 15,
+        "max_dispatch_per_cycle": 5,
+        "max_in_flight": 20,
+        "daily_dispatch_limit": 40,
+        "retry_limit": 3
+      }
+    }
+  ],
+  "profile_observed": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "updated_date": "2026-10-18T04:09:02.663000",
+    "staff_responses_present": false,
+    "saved_department_scan_count": 1
+  },
+  "discovery_selection": {
+    "profile_id": "6ac19f0e23bd8a65822f6d51",
+    "profile_version": "2026-10-18T04:09:02.663000",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "document_id": "df3e3416-fed2-4c72-9e04-aa33454bbf2b",
+    "url": "https://www.sharonville.org/122/Community-Development"
+  },
+  "planned_body": {
+    "jurisdiction_id": "6ac19f0e23bd8a65822f6d51",
+    "discovery_only": true,
+    "defer_archive": true,
+    "selected_saved_document": {
+      "profile_id": "6ac19f0e23bd8a65822f6d51",
+      "profile_version": "2026-10-18T04:09:02.663000",
+      "name": "Sharonville",
+      "state": "OH",
+      "type": "city",
+      "document_id": "df3e3416-fed2-4c72-9e04-aa33454bbf2b",
+      "url": "https://www.sharonville.org/122/Community-Development"
+    }
+  },
+  "planned_body_status": "NOT INVOKED; must reread profile version and selection before use",
+  "gates": {
+    "llm_dispatches_today": 40,
+    "daily_limit": 40,
+    "llm_attempt_permitted": false,
+    "discovery_only_llm_calls": 0
+  },
+  "authentication": {
+    "connector_entity_read": "works",
+    "sandbox_cli": "login_required",
+    "bounded_check_exit": 124,
+    "identity_verified": false,
+    "function_invoked": false,
+    "device_login_completed": false,
+    "expired_device_code_retained": false
+  },
+  "sandbox_access": {
+    "intermittent_busy_saving_background_changes": true,
+    "later_read_and_command_succeeded": true
+  },
+  "production_writes": false,
+  "source_fetches": false,
+  "research_attempts": 0,
+  "llm_calls": 0,
+  "requirements_unresolved": [
+    "commercial-sign scope",
+    "electrical issuing department",
+    "canonical office identity",
+    "inspection delegation term/currentness",
+    "exact-site service area"
+  ],
+  "next": "Establish normal authenticated Base44 CLI or staff session once; reread gates and exact profile/version; invoke existing one-page saved-document discovery with deferred archiving. Do not bypass AI daily limit or replay expired device codes.",
+  "recorded_at": "2026-10-21T13:29:14.122665+00:00"
+}
