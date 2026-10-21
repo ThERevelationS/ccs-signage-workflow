@@ -131,19 +131,26 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   // Get users list
   const [users, setUsers] = useState([]);
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const usersData = await loadAllEntityRows({
-          entity: base44.entities.AuthorizedEmail,
-          sort: null,
-          label: "SIP Template Builder authorized users",
-        });
-        setUsers(usersData);
-      } catch (error) {
-        console.error("Error loading users:", error);
-      }
-    };
-    if (isOpen) loadUsers();
+    // Never reuse directory suggestions from a previous Builder opening.
+    // Cleanup also fences late success/failure responses after close/unmount.
+    let cancelled = false;
+    setUsers([]);
+    if (isOpen) {
+      const loadUsers = async () => {
+        try {
+          const usersData = await loadAllEntityRows({
+            entity: base44.entities.AuthorizedEmail,
+            sort: null,
+            label: "SIP Template Builder authorized users",
+          });
+          if (!cancelled) setUsers(usersData);
+        } catch (error) {
+          if (!cancelled) console.error("Error loading users:", error);
+        }
+      };
+      void loadUsers();
+    }
+    return () => { cancelled = true; };
   }, [isOpen]);
   
   // Track changes and save state for Product Templates and Sub-Templates
