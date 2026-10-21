@@ -957,24 +957,29 @@ export default function QuickClockSection({
     const stillCurrent = breakContextFor(email);
     const actionKey = `break_start:${breakType}:${isPaid ? "paid" : "unpaid"}`;
     const requestId = requestIdFor(actionKey, email);
+    let actionEpoch = workViewEpochRef.current;
     setPersistenceError("");
     try {
-      const result = await invokeTimeClock({
+      // invokeTimeClock increments the transition epoch synchronously before sending.
+      const pending = invokeTimeClock({
         action: "break_start",
         request_id: requestId,
         break_type: breakType,
         is_paid: isPaid,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest(actionKey, email);
-      if (stillCurrent()) {
-        applyBreakResponse(result);
-        setRecognitionStatus(isPaid ? "Paid break started and confirmed by server." : "Unpaid lunch started and confirmed by server.");
-      }
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      clearRequest(actionKey, email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
+      applyBreakResponse(result);
+      setRecognitionStatus(isPaid ? "Paid break started and confirmed by server." : "Unpaid lunch started and confirmed by server.");
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest(actionKey, email);
-      if (stillCurrent()) setPersistenceError(err?.message || "Break start was not confirmed by the server.");
+      if (!shouldRetainRequest(err)) clearRequest(actionKey, email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setPersistenceError(err?.message || "Break start was not confirmed by the server.");
+      }
       throw err;
     }
   };
@@ -986,22 +991,27 @@ export default function QuickClockSection({
     const email = selectedUser.email;
     const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("break_end", email);
+    let actionEpoch = workViewEpochRef.current;
     setPersistenceError("");
     try {
-      const result = await invokeTimeClock({
+      // Ignore an acknowledgement if any newer punch, break, or status restore wins.
+      const pending = invokeTimeClock({
         action: "break_end",
         request_id: requestId,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest("break_end", email);
-      if (stillCurrent()) {
-        applyBreakResponse(result);
-        setRecognitionStatus("Break ended and confirmed by server.");
-      }
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      clearRequest("break_end", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
+      applyBreakResponse(result);
+      setRecognitionStatus("Break ended and confirmed by server.");
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("break_end", email);
-      if (stillCurrent()) setPersistenceError(err?.message || "Break end was not confirmed by the server.");
+      if (!shouldRetainRequest(err)) clearRequest("break_end", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setPersistenceError(err?.message || "Break end was not confirmed by the server.");
+      }
       throw err;
     }
   };
