@@ -7,8 +7,9 @@ const loader = source.slice(source.indexOf('  const loadAutomations = async () =
 
 test('Automation reads track loading, error and latest-request ownership', () => {
   assert.match(loader, /requestSequence = \+\+automationLoadSequence\.current/);
-  assert.match(loader, /await loadAllEntityRows\(/);
+  assert.match(loader, /await withAutomationReadDeadline\(\(\) => loadAllEntityRows\(/);
   assert.match(loader, /if \(requestSequence === automationLoadSequence\.current\)/);
+  assert.match(loader, /ownerEpoch !== automationSessionEpoch\.current/);
   assert.match(loader, /setAutomations\(rules\)/);
   assert.match(loader, /setAutomationLoadError\(false\)/);
   assert.match(loader, /catch \{/);
