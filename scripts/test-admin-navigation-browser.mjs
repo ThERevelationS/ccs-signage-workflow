@@ -1276,6 +1276,147 @@ try {
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
     });
 
+  await check('Changed Automation version blocks stale acknowledgment without losing the draft', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationSimulateLostReceipt=true;});
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Stale snapshot synthetic');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await page.evaluate(()=>{
+        window.__adminAutomationAckOverrideRows=[{...window.__adminAutomationSavedSnapshot,updated_date:'newer-version'}];
+      });
+      const ack=warning.getByRole('button',{name:'Acknowledge and discard this draft'});
+      await ack.click();
+      await warning.getByText(/reviewed rule changed before acknowledgment/).waitFor();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Stale snapshot synthetic');
+      assert.equal(await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).count(),0);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount),1);
+      await page.evaluate(()=>{
+        window.__adminAutomationSavedSnapshot={...window.__adminAutomationSavedSnapshot,updated_date:'newer-version'};
+        delete window.__adminAutomationAckOverrideRows;
+      });
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount),2);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls?.length),1);
+    });
+
+  await check('New duplicate Automation blocks stale create acknowledgment', 320,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationCreateReceiptStatus='recovered';
+      });
+      await page.getByRole('button',{name:'Duplicate Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Create Automation/});
+      await editor.getByRole('button',{name:'Create Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await page.evaluate(()=>{
+        const original=window.__adminAutomationSavedSnapshot;
+        window.__adminAutomationAckOverrideRows=[original,{...original,id:'synthetic-concurrent-duplicate',updated_date:'v2'}];
+      });
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await warning.getByText(/reviewed rule changed before acknowledgment/).waitFor();
+      assert.equal(await editor.getByRole('button',{name:'Create Automation'}).isDisabled(),true);
+      await page.evaluate(()=>{
+        window.__adminAutomationVerifyOverrideRows=window.__adminAutomationAckOverrideRows;
+      });
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/Multiple possible matches exist/).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  await check('Failed acknowledgment read requires fresh review and never resends Automation', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationSimulateLostReceipt=true;});
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Recheck error synthetic');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await page.evaluate(()=>{window.__adminAutomationAckFail=true;});
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await warning.getByText(/rule list could not be verified/).waitFor();
+      assert.equal(await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).count(),0);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Recheck error synthetic');
+      await page.evaluate(()=>{window.__adminAutomationAckFail=false;});
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  await check('Post-review Automation draft edits cannot be discarded by stale acknowledgment', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationSimulateLostReceipt=true;});
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Submitted synthetic');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Unsent revised synthetic');
+      await warning.getByRole('button',{name:'Acknowledge and discard this draft'}).click();
+      await warning.getByText(/draft changed during review/).waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount||0),0);
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Unsent revised synthetic');
+      assert.equal(await editor.getByRole('button',{name:'Update Automation'}).isDisabled(),true);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  await check('Late acknowledgment read cannot discard next Admin session draft', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        window.__adminAutomationAckHold=true;
+      });
+      await page.getByRole('button',{name:'Edit Synthetic rule'}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Old user synthetic');
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      const warning=editor.getByRole('alert',{name:'Automation save outcome requires review'});
+      await warning.waitFor();
+      await warning.getByRole('button',{name:'Verify save status (read-only)'}).click();
+      await warning.getByText(/A current rule matches the attempted values/).waitFor();
+      const ack=warning.getByRole('button',{name:'Acknowledge and discard this draft'});
+      await ack.evaluate(button=>{button.click();button.click();});
+      await page.waitForFunction(()=>!!window.__adminAutomationAckRelease);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationAckReadCount),1);
+      await page.evaluate(()=>{
+        window.__adminSyntheticSessionToken='synthetic-new';
+        window.dispatchEvent(new Event('admin-synthetic-session-change'));
+      });
+      await editor.waitFor({state:'detached'});
+      await page.evaluate(()=>window.__adminAutomationAckRelease());
+      await page.waitForTimeout(90);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      await page.getByRole('button',{name:'New Automation'}).click();
+      const next=page.getByRole('dialog',{name:/Create Automation/});
+      await next.waitFor();
+      assert.equal(await next.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'');
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      await next.getByRole('button',{name:'Discard draft'}).click();
+    });
+
   await check('Late uncertain-save verification cannot affect a replacement Admin session', 375,
     '/?tab=automations&automation_rows=1&automation_editable=1', async page=>{
       await page.evaluate(()=>{
