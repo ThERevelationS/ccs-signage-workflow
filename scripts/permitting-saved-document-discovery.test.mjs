@@ -72,3 +72,71 @@ test('ordinary rescan still refuses saved department outside original frontier',
  await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,resume:p.discovery_scan_state,rescanUrl:url,existingDocuments:p.documents,fetchPage:()=>{fetches++;}}));
  assert.equal(fetches,0);
 });
+
+
+test('Sharonville live timestamp correction: ten rediscovered links retain fetch dates and new calendar has none',async()=>{
+ const live=JSON.parse(readFileSync('docs/permitting-sharonville-discovery-live-2026-10-21.json','utf8'));
+ const p=fixture();
+ const selectedUrl=live.selected_document_receipt.source_url;
+ p.documents[0]={...p.documents[0],url:selectedUrl,last_fetched:'2026-10-14T01:05:24.573Z',extracted_text:'Retained page text'};
+ const linked=live.timestamp_provenance_issue.linked_documents_incorrectly_restamped.map((row,i)=>({
+  id:row.id,url:`https://www.sharonville.org/forms/permit-${i}`,title:`Permit Form ${i}`,doc_type:'permit_application',
+  source:'official_page_harvest',last_fetched:row.fields.find(f=>f.key==='last_fetched').before,
+  extracted_text:`Retained content ${i}`,verification_notes:'Existing source evidence'
+ }));
+ p.documents.push(...linked);
+ p.office_research={roles:[{role:'electrical_permit',office_name:'Unverified office'}],saved_identity_comparisons:[{status:'unverified'}]};
+ const priorReceipt={document_id:'previous',source_url:url,scanned_at:'2026-10-18T00:00:00Z'};
+ p.discovery_scan_state.saved_document_scans=[priorReceipt];
+ const original=structuredClone(p),entity=entityFor(p),fetched=[];
+ const added=live.added_documents[0];
+ const s={...selection(p),url:selectedUrl};
+ const html=linked.map(d=>`<a href="${d.url}">${d.title}</a>`).join('')+
+  `<a href="${added.url}">${added.title}</a><a href="${guide}">Sign Permit Guide</a>`+
+  '<a href="https://external.example/permit-form">Electrical Permit Application</a>';
+ const before=Date.now();
+ const result=await discoverSelectedSavedDocument({entity,profile:p,selection:s,fetchPage:async target=>{
+  fetched.push(target);return{html,finalUrl:selectedUrl};
+ }});
+ const after=Date.now(),saved=result.jurisdiction,stamp=result.selected_document_receipt.scanned_at;
+ assert.deepEqual(fetched,[selectedUrl]);assert.equal(entity.writes(),1);
+ assert.equal(saved.documents.length,p.documents.length+1);
+ for(const old of linked){
+  const actual=saved.documents.find(d=>d.id===old.id);
+  assert.equal(actual.last_fetched,old.last_fetched);
+  for(const field of ['id','url','extracted_text','verification_notes'])assert.equal(actual[field],old[field]);
+ }
+ const calendar=saved.documents.find(d=>d.url===added.url);
+ assert.ok(calendar?.id);assert.equal(Object.hasOwn(calendar,'last_fetched'),false);
+ const selected=saved.documents.find(d=>d.id==='department');
+ assert.deepEqual(selected,{...p.documents[0],last_fetched:stamp});
+ assert.ok(Date.parse(stamp)>=before && Date.parse(stamp)<=after);
+ assert.deepEqual(saved.documents.find(d=>d.id==='protected'),p.documents[1]);
+ assert.deepEqual(saved.office_research,p.office_research);
+ const {saved_document_scans,...frontier}=saved.discovery_scan_state;
+ const {saved_document_scans:oldHistory,...oldFrontier}=p.discovery_scan_state;
+ assert.deepEqual(frontier,oldFrontier);assert.deepEqual(saved_document_scans[0],oldHistory[0]);
+ assert.equal(saved_document_scans.length,2);
+ assert.equal(result.research_attempts,0);assert.equal(result.llm_calls,0);assert.equal(result.archival,null);
+ assert.equal(saved_document_scans[1].authority_established,false);
+ assert.deepEqual(p,original);
+});
+
+test('successfully read selected page receives a date even when it exposes no relevant links',async()=>{
+ const p=fixture(),entity=entityFor(p);
+ const result=await discoverSelectedSavedDocument({entity,profile:p,selection:selection(p),
+  fetchPage:async()=>({html:'<p>No application links on this page.</p>',finalUrl:url})});
+ assert.equal(result.discovery_scan.documents.length,0);
+ assert.equal(result.jurisdiction.documents[0].last_fetched,result.selected_document_receipt.scanned_at);
+ assert.deepEqual(result.jurisdiction.documents[1],p.documents[1]);
+});
+
+test('selected-page PDF classification retains routing metadata and timestamps only the fetched document',async()=>{
+ const p=fixture(),entity=entityFor(p);
+ const result=await discoverSelectedSavedDocument({entity,profile:p,selection:selection(p),
+  fetchPage:async()=>({resource_kind:'pdf',classification_method:'mime-and-signature-v1',finalUrl:url})});
+ const selected=result.jurisdiction.documents[0];
+ assert.equal(selected.resource_classification.kind,'pdf');
+ assert.equal(selected.last_fetched,result.selected_document_receipt.scanned_at);
+ assert.deepEqual(result.jurisdiction.documents[1],p.documents[1]);
+});
