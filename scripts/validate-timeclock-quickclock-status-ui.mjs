@@ -435,6 +435,17 @@ await act(async () => {
   } });
   await newerPaidBreak;
 });
+let finishNewerPaidBreak;
+await act(async () => { finishNewerPaidBreak = firstDialog().props.onEndBreak(); });
+const finishNewerPaidBreakIndex = calls.length - 1;
+await act(async () => {
+  calls[finishNewerPaidBreakIndex].resolve({ data: {
+    success: true, user: second, status: 'clocked_in', break_status: 'working',
+    break_summary: { count: 4, total_minutes: 37, paid_minutes: 37, unpaid_minutes: 0 },
+    entry: { id: 'second-break-free', user_email: second.email },
+  } });
+  await finishNewerPaidBreak;
+});
 
 const laborDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartLabor === 'function')[0];
