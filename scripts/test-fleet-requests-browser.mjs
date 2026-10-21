@@ -105,7 +105,7 @@ try {
     const receiveDialog = page.getByRole("dialog", { name: "Receive Synthetic linked brake pad" });
     await receiveDialog.getByText("Exact Fleet inventory item linked").waitFor();
     assert.equal(await receiveDialog.getByLabel("Storage Location").isDisabled(), true);
-    assert.equal(await receiveDialog.getByLabel("Stock Unit").isDisabled(), true);
+    assert.match(await receiveDialog.innerText(), /exact Fleet inventory ID; no name-based matching is needed/);
     await receiveDialog.getByLabel("Quantity Received").fill("3");
     await receiveDialog.getByRole("button", { name: "Receive Into Fleet Inventory" }).click();
 
