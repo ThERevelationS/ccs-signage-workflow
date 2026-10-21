@@ -1,5 +1,35 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — selected saved-document fetch timestamp provenance fixed (October 21, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Starting HEAD: e6a1133d3b7ad0f16be8b9eea6eeaf42df0a19de, clean. Previous checkpoint: 6ad8c112dc2ff954e57014e8, “Permitting authenticated Sharonville discovery and timestamp reconciliation verified”, Git 68348b482bcaf1809e6428d132d8d2473fd644da. Newer concurrent CCS work preserved; target helper was rechecked after HEAD advanced.
+
+Fixed base44/shared/permittingSavedDocumentDiscovery.mjs:
+- Removed fabricated last_fetched values from harvested link candidates. Rediscovering existing links preserves their previous dates; new unfetched links have no last_fetched.
+- Assigns one actual completed-scan timestamp to the selected fetched document and its scan receipt, saved together through the existing exact profile/version guards.
+- Original frontier, prior saved-document receipts, protected archives, source content and office research remain preserved. No new authority or coverage assertion.
+- Inspected merge callers in refreshJurisdiction, batchUpdateJurisdictions, permittingDiscoveryContinuation and permittingAddressDiscoveryContinuation. Shared merge behavior and other callers were intentionally left unchanged. This fix applies to the explicit selected_saved_document route; it does not certify timestamp provenance in older/general research or continuation routes, which still assign candidate dates and need a separate scoped improvement.
+
+Validation:
+- 81/81 focused tests passed across saved-document discovery, document merge, known discovery continuation and address-page continuation.
+- 12/12 bounded refresh integration tests passed. One broader existing office-research test still fails because scripts/permitting-discovery-refresh.test.mjs does not inject retainOfficeResearchResponseHistory into its compiled-function harness; this test does not execute the changed selected-document helper. It was not changed here.
+- Three new regressions cover the verified Sharonville case (ten retained linked timestamps plus the new calendar without a date), a successfully read page with no relevant links, and extensionless PDF classification. They also check preserved selected content, protected archive, original frontier/history, office research, zero AI/archive calls and no input mutation.
+- Targeted ESLint passed. refreshJurisdiction backend esbuild bundle passed, 124877 bytes.
+- npm run build confirmed exit 0. Vite logLevel=error suppresses the normal completion banner; existing stale browser-data warnings remain. The initial silent build was repeated once to capture an explicit exit code.
+- Documentation/source git diff --check and final checkpoint verification are recorded in the checkpoint receipt/final report.
+
+Deployment/data:
+Backend helper source uses the sandbox's normal automatic synchronization. No explicit deployment command, frontend publication, schema/RLS/integration change, live scan, real profile/document write, job/client write, archive upload, LLM call, authority approval, message or queue/settings update. The corrected selected-document route was exercised synthetically, not invoked against live data. Authentication and live controls were not rechecked because no CLI, live research or live data operation was needed; prior observations below remain historical. No unfinished live write.
+
+Next ONE chunk:
+Resume one bounded official-source discovery/capture for unresolved electrical roles, after checking fresh HEAD/status, account and actual controls. Choose a different eligible saved source with no prior one-shot receipt; do not replay the completed Community Development action. Use exact identity/version and same-host gates. Verify that only the actually fetched selected page gets a date and linked existing/new resources retain correct provenance. Do not equate intake with issuance or residential evidence with commercial-sign applicability. If another discovery route is required, first address its separately noted candidate-timestamp behavior rather than claiming it is fixed by this unit. No frontend publication or client/job writes; checkpoint and stop.
+
+Sharonville roles remain unresolved. Live evidence and the earlier narrow repair remain in docs/permitting-sharonville-discovery-live-2026-10-21.json, unchanged. Daily cap last observed 40/40: re-read controls before research and do not bypass limits. Archive limits unchanged: one new downloadable file/refresh, fetch 12s/upload 15s/extraction 20s. Remaining roadmap: bounded collection/archives/text acceptance; canonical office/parent authority reconciliation; Ohio then Kentucky coverage; source monitoring; exact matching/maps/action progress; evidence-based workflows; explicit safe job integration; authenticated rollout/mobile/concurrency acceptance.
+
+Checkpoint name for this unit: “Permitting selected saved-document fetch timestamp provenance verified”. Obtain its exact ID/Git from the checkpoint receipt/final report. Older sections below are historical.
+
+
 ## Latest completed unit — authenticated Sharonville one-page discovery and live readback (October 21, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
