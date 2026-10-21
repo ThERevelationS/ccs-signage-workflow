@@ -165,7 +165,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   productTypeDraftRef.current = { id: selectedProductType, items: productTypeItems };
 
   useEffect(() => {
-    if (isOpen) loadData();
+    if (!isOpen) return undefined;
+    void loadData();
+    // Closing/unmounting cancels the authority of this opening's reads.
+    // A late response must not repopulate a hidden or newly reopened editor.
+    return () => { invalidatePendingTemplateLoads(); };
   }, [isOpen]);
 
   const loadData = async () => {
