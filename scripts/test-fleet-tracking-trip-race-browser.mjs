@@ -78,7 +78,7 @@ try {
     await page.evaluate(() => { window.__fleetTrackingFixture.deferNextTripImei = "IMEI-SYNTH-B"; });
     await page.getByRole("button", { name: "Select VIN-SYNTH-B" }).click();
     await page.waitForFunction(() => window.__fleetTrackingFixture.pendingTripResolvers.length === 2);
-    assert.equal(await page.getByTestId("selected-vehicle").innerText(), "VIN-SYNTH-B");
+    assert.equal(await page.getByTestId("selected-vehicle").last().innerText(), "VIN-SYNTH-B");
 
     await page.evaluate(() => {
       const index = window.__fleetTrackingFixture.pendingTripResolvers.findIndex(item => item.imei === "IMEI-SYNTH-A");
@@ -86,9 +86,9 @@ try {
     });
     await page.waitForFunction(() => window.__fleetTrackingFixture.completedTripRequests.some(query => query.imei === "IMEI-SYNTH-A"));
     await page.waitForTimeout(50);
-    assert.equal(await page.getByTestId("trip-load-state").innerText(), "loading",
+    assert.equal(await page.getByTestId("trip-load-state").last().innerText(), "loading",
       "An older request must not clear the current vehicle's loading state");
-    assert.equal(await page.getByTestId("trip-list").innerText(), "",
+    assert.equal(await page.getByTestId("trip-list").last().innerText(), "",
       "An older vehicle's trips must not appear under the current vehicle");
 
     await page.evaluate(() => {
@@ -96,28 +96,28 @@ try {
       window.__fleetTrackingFixture.pendingTripResolvers.splice(index, 1)[0].resolve();
     });
     await page.waitForFunction(() => document.querySelector('[data-testid="trip-list"]')?.innerText.includes("trip-IMEI-SYNTH-B"));
-    assert.equal(await page.getByTestId("trip-load-state").innerText(), "ready");
-    assert.equal(await page.getByTestId("selected-vehicle").innerText(), "VIN-SYNTH-B");
+    assert.equal(await page.getByTestId("trip-load-state").last().innerText(), "ready");
+    assert.equal(await page.getByTestId("selected-vehicle").last().innerText(), "VIN-SYNTH-B");
   });
 
   await runCase("Late range response cannot replace the more recent history range", async page => {
     await page.getByRole("button", { name: "Select VIN-SYNTH-B" }).click();
     await page.waitForFunction(() => document.querySelector('[data-testid="trip-list"]')?.innerText.includes("trip-IMEI-SYNTH-B"));
-    const initialCount = await page.getByTestId("trip-list").locator("button").count();
+    const initialCount = await page.getByTestId("trip-list").last().locator("button").count();
     await page.evaluate(() => { window.__fleetTrackingFixture.deferNextTripImei = "IMEI-SYNTH-B"; });
     const range = page.getByRole("combobox", { name: "Trip history range" });
     await range.selectOption("30");
     await page.waitForFunction(() => window.__fleetTrackingFixture.pendingTripResolvers.length === 1);
     await range.selectOption("90");
     await page.waitForFunction(() => document.querySelectorAll('[data-testid="trip-list"] button').length > initialCount + 4);
-    const currentRangeTrips = await page.getByTestId("trip-list").innerText();
+    const currentRangeTrips = await page.getByTestId("trip-list").last().innerText();
 
     await page.evaluate(() => window.__fleetTrackingFixture.pendingTripResolvers.shift().resolve());
     await page.waitForFunction(() => window.__fleetTrackingFixture.completedTripRequests.filter(query => query.imei === "IMEI-SYNTH-B").length > 5);
     await page.waitForTimeout(50);
-    assert.equal(await page.getByTestId("trip-list").innerText(), currentRangeTrips,
+    assert.equal(await page.getByTestId("trip-list").last().innerText(), currentRangeTrips,
       "The older 30-day response must not overwrite the current 90-day results");
-    assert.equal(await page.getByTestId("trip-load-state").innerText(), "ready");
+    assert.equal(await page.getByTestId("trip-load-state").last().innerText(), "ready");
   });
 
   console.log("BROWSER_ACCEPTANCE_PASS=" + passed);
