@@ -115,7 +115,7 @@ const run = backend.slice(backend.indexOf("if (action === 'run_sync' || action =
 const persistAt = run.indexOf('await saveOrderPullEvidence(');
 const coordinatorAt = run.indexOf('const saved = await saveSyncStatusForRun(base44, {', persistAt);
 assert.ok(persistAt > 0 && coordinatorAt > persistAt);
-assert.match(run, /if \(dataset === 'orders' && lastOrderPullBatchEvidence && !orderRunRequiresReview\(\[pullResult\]\)\)/);
+assert.match(run, /if \(dataset === 'orders' && lastOrderPullBatchEvidence && orderPullWritesVerified\(pullResult\)\)/);
 assert.match(run, /await verifyCompletedOrderPullEvidence\(/);
 assert.match(run, /order_pull_requested: steps\.some/);
 assert.match(backend, /await base44\.asServiceRole\.entities\[entityName\]\.bulkUpdate\(payload\)/);
