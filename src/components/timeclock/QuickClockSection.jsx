@@ -1284,15 +1284,17 @@ export default function QuickClockSection({
       setRecognitionStatus("Missing Clock In restored from your reported arrival time. Complete Clock Out now; this shift will require manager review.");
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("recover_missed_clock_in", email);
-      const message = err?.message || "Missed Clock In recovery was not confirmed by the server.";
-      setLateClockInError(message);
-      setRecognitionStatus(err?.retrySameRequest
-        ? "Missed Clock In may have been saved. Retry the same recovery to finish safely."
-        : "Missed Clock In recovery is blocked. Review the message in the window.");
+      if (!shouldRetainRequest(err)) clearRequest("recover_missed_clock_in", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        const message = err?.message || "Missed Clock In recovery was not confirmed by the server.";
+        setLateClockInError(message);
+        setRecognitionStatus(err?.retrySameRequest
+          ? "Missed Clock In may have been saved. Retry the same recovery to finish safely."
+          : "Missed Clock In recovery is blocked. Review the message in the window.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
