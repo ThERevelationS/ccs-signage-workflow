@@ -385,6 +385,65 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, intake: saved });
     }
 
+    if (action === "link_work_order") {
+      const opportunityId = clean(body?.opportunity_id);
+      const workOrderId = clean(body?.work_order_id);
+      const requestId = clean(body?.estimating_request_id);
+      if (!opportunityId || !workOrderId) throw bad("opportunity_id and work_order_id are required.");
+      const [opportunity, workOrder] = await Promise.all([
+        Opportunity.get(opportunityId).catch(() => null),
+        WorkOrder.get(workOrderId).catch(() => null),
+      ]);
+      if (!opportunity?.id) throw bad("Opportunity not found.", 404);
+      if (!workOrder?.id) throw bad("WorkOrder not found.", 404);
+      if (clean(workOrder.opportunity_id) && clean(workOrder.opportunity_id) !== opportunityId) {
+        throw bad("WorkOrder already links a different Opportunity.", 409);
+      }
+      if (clean(workOrder.estimating_request_id) && requestId && clean(workOrder.estimating_request_id) !== requestId) {
+        throw bad("WorkOrder already links a different EstimatingRequest.", 409);
+      }
+      if (clean(opportunity.compatibility_work_order_id) && clean(opportunity.compatibility_work_order_id) !== workOrderId) {
+        throw bad("Opportunity already links a different compatibility WorkOrder.", 409);
+      }
+
+      const now = new Date().toISOString();
+      const woDesired: any = {};
+      if (!clean(workOrder.opportunity_id)) woDesired.opportunity_id = opportunityId;
+      if (requestId && !clean(workOrder.estimating_request_id)) woDesired.estimating_request_id = requestId;
+      let savedWorkOrder = workOrder;
+      if (Object.keys(woDesired).length) {
+        savedWorkOrder = await replaceFoundationFieldsIfUnchanged({
+          entity: WorkOrder,
+          recordId: workOrderId,
+          expectedFields: expectedFor(workOrder, workOrder, woDesired),
+          nextFields: woDesired,
+          label: "WorkOrder opportunity compatibility links",
+        });
+      }
+
+      let savedOpportunity = opportunity;
+      if (!clean(opportunity.compatibility_work_order_id)) {
+        savedOpportunity = await replaceFoundationFieldsIfUnchanged({
+          entity: Opportunity,
+          recordId: opportunityId,
+          expectedFields: expectedFor(null, opportunity, {
+            compatibility_work_order_id: workOrderId,
+            last_activity_at: now,
+          }),
+          nextFields: { compatibility_work_order_id: workOrderId, last_activity_at: now },
+          label: "Opportunity compatibility WorkOrder link",
+        });
+      }
+
+      return Response.json({
+        success: true,
+        action,
+        opportunity: savedOpportunity,
+        work_order: savedWorkOrder,
+        reused: clean(opportunity.compatibility_work_order_id) === workOrderId && !Object.keys(woDesired).length,
+      });
+    }
+
     if (action === "request_estimate") {
       const opportunityId = clean(body?.opportunity_id);
       if (!opportunityId) throw bad("opportunity_id is required.");
