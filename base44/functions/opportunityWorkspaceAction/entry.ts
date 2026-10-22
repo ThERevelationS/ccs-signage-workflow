@@ -26,6 +26,7 @@ const REQUIREMENT_FIELDS = [
 
 const EDITABLE_OPPORTUNITY_FIELDS = [
   "title", "job_description", "customer_display_name", "customer_id",
+  "contact_id", "location_id",
   "stage", "lost_reason",
   "salesperson", "lead_source", "origination",
   "budget_amount", "budget_note",
@@ -126,6 +127,8 @@ Deno.serve(async (req) => {
     const Intake = base44.asServiceRole.entities.OpportunityIntake;
     const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;
     const Customer = base44.asServiceRole.entities.Customer;
+    const CustomerContact = base44.asServiceRole.entities.CustomerContact;
+    const CustomerLocation = base44.asServiceRole.entities.CustomerLocation;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
 
@@ -163,10 +166,12 @@ Deno.serve(async (req) => {
       if (!opportunityId) throw bad("opportunity_id is required.");
       const opportunity = await Opportunity.get(opportunityId).catch(() => null);
       if (!opportunity?.id) throw bad("Opportunity not found.", 404);
-      const [intakes, requests, customer, workOrder, estimates] = await Promise.all([
+      const [intakes, requests, customer, contact, location, workOrder, estimates] = await Promise.all([
         Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100),
         EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100),
         clean(opportunity?.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
+        clean(opportunity?.contact_id) ? CustomerContact.get(clean(opportunity.contact_id)).catch(() => null) : null,
+        clean(opportunity?.location_id) ? CustomerLocation.get(clean(opportunity.location_id)).catch(() => null) : null,
         clean(opportunity?.compatibility_work_order_id)
           ? WorkOrder.get(clean(opportunity.compatibility_work_order_id)).catch(() => null)
           : null,
@@ -177,6 +182,8 @@ Deno.serve(async (req) => {
         action,
         opportunity,
         customer: customer || null,
+        contact: contact || null,
+        location: location || null,
         intakes: Array.isArray(intakes) ? intakes : [],
         estimating_requests: Array.isArray(requests) ? requests : [],
         work_order: workOrder || null,
@@ -326,6 +333,22 @@ Deno.serve(async (req) => {
           if (!customer?.id) throw bad("The selected Customer no longer exists.", 409);
         }
         desired.customer_id = cid;
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "contact_id")) {
+        const cid = clean(desired.contact_id);
+        if (cid) {
+          const contact = await CustomerContact.get(cid).catch(() => null);
+          if (!contact?.id) throw bad("The selected CustomerContact no longer exists.", 409);
+        }
+        desired.contact_id = cid;
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "location_id")) {
+        const lid = clean(desired.location_id);
+        if (lid) {
+          const location = await CustomerLocation.get(lid).catch(() => null);
+          if (!location?.id) throw bad("The selected CustomerLocation no longer exists.", 409);
+        }
+        desired.location_id = lid;
       }
       if (Object.prototype.hasOwnProperty.call(desired, "budget_amount")) {
         const amount = Number(desired.budget_amount);
