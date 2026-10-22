@@ -1177,32 +1177,25 @@ const pauseAck = (pauseId) => ({ data: {
 await act(async () => { calls[latestPauseIndex].resolve(pauseAck('confirmed-pause')); await latestPause; });
 assert.equal(pauseFenceOverlay().props.disabled, false,
   'Confirmed Work Pause must surface the resume guard for the same employee');
-await act(async () => { events.get('focus')(); });
-const resumeStatusIndex = calls.length - 1;
-assert.equal(calls[resumeStatusIndex].payload.action,'status');
-await act(async () => {
-  calls[resumeStatusIndex].resolve({ data: {
-    success:true, user:first, status:'clocked_in',
-    entry:{id:'pause-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
-    break_status:'working', work_pause_status:'working', work_pause_allowed:true,
-  }});
-});
-assert.equal(pauseFenceOverlay().props.disabled, true);
+assert.equal(savedSessionData.has(pauseRequestKey), false);
 let newerPause;
 await act(async () => { newerPause = pauseFenceDialog().props.onStartWorkPause(); });
 const newerPauseIndex = calls.length - 1;
 const newerPauseId = calls[newerPauseIndex].payload.request_id;
 assert.notEqual(newerPauseId, sharedPauseId,
-  'A later Work Pause after resume needs a fresh request ID');
+  'A later Work Pause attempt needs a fresh request ID');
 assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId);
+await act(async () => { events.get('focus')(); });
+assert.equal(calls[calls.length - 1].payload.action,'work_pause_start',
+  'Passive status refresh stays suppressed while Work Pause requests are in flight');
 await act(async () => {
   calls[earlyPauseIndex].resolve(pauseAck('stale-duplicate-pause'));
   await earlyPause;
 });
 assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId,
   'A delayed duplicate Work Pause acknowledgement must not clear a newer retry ID');
-assert.equal(pauseFenceOverlay().props.disabled, true,
-  'A delayed duplicate Work Pause acknowledgement must not re-pause a resumed shift');
+assert.equal(pauseFenceOverlay().props.disabled, false,
+  'A delayed duplicate Work Pause acknowledgement must not change visible pause state');
 await act(async () => {
   calls[newerPauseIndex].resolve({ data: {
     success:true, user:second, status:'clocked_in', work_pause_status:'paused',
