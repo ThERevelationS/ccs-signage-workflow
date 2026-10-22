@@ -326,7 +326,7 @@ export default function PayPeriodManager({
     setError("");
     try {
       await invoke({ ...payload, session_token: sessionToken, request_id: requestId });
-      clearRequestId(key);
+      clearRequestId(key, requestId);
       setShowCreate(false);
       setLabel("");
       setStartDate("");
@@ -412,7 +412,7 @@ export default function PayPeriodManager({
     setError("");
     try {
       await invoke({ ...payload, session_token: sessionToken, request_id: requestId });
-      clearRequestId(key);
+      clearRequestId(key, requestId);
       setActionPeriod(null);
       setActionDecision("");
       setActionNote("");
