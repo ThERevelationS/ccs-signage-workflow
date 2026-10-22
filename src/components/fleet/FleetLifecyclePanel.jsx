@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { AlertTriangle, CalendarClock, CircleDollarSign, Gauge, Loader2, Pencil, Save, TrendingDown, X } from "lucide-react";
 
@@ -27,12 +27,15 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const loadSequenceRef = useRef(0);
 
   const load = async () => {
+    const requestSequence = ++loadSequenceRef.current;
     if (!isAdmin || !equipment?.id) { setLoading(false); return; }
     setLoading(true); setError("");
     try {
       const { data } = await base44.functions.invoke("fleetLifecycleAction", { action: "get", equipment_id: equipment.id });
+      if (requestSequence !== loadSequenceRef.current) return;
       if (data?.error) throw new Error(data.error);
       setProfile(data?.profile || null);
       setMetrics(data?.metrics || null);
@@ -40,8 +43,8 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
       setPriority(data?.priority || null);
       setForm(seed(data?.profile || null));
     } catch (err) {
-      setError(err?.message || "Unable to load lifecycle planning.");
-    } finally { setLoading(false); }
+      if (requestSequence === loadSequenceRef.current) setError(err?.message || "Unable to load lifecycle planning.");
+    } finally { if (requestSequence === loadSequenceRef.current) setLoading(false); }
   };
   useEffect(() => { load(); }, [equipment?.id, isAdmin]);
 
