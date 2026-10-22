@@ -13,7 +13,7 @@ import {normalizeOfficeResearch} from '../../shared/permittingOfficeResearch.mjs
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
-import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments } from '../../shared/permittingDiscoveryScan.mjs';
+import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments, applyDiscoveryFetchTimestamp } from '../../shared/permittingDiscoveryScan.mjs';
 import { RESEARCH_FETCH_TIMEOUT_MS } from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 
@@ -235,14 +235,17 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         source: d.source === "official_page_harvest" ? "official_page_harvest" : "ai_discovered",
         verification_notes: d.verification_notes || "",
         ...(d.resource_classification ? { resource_classification: d.resource_classification } : {}),
-        ...(d.discovery_page_url ? {discovery_page_url:d.discovery_page_url, discovery_depth:d.discovery_depth} : {}),
-        last_fetched: new Date().toISOString()
+        ...(d.discovery_page_url ? {discovery_page_url:d.discovery_page_url, discovery_depth:d.discovery_depth} : {})
       }));
 
       // Source retention commits before any network/upload work. Archival uses
       // the same durable per-document receipt as scheduled continuation.
       documentAuthorityEvidence = newAiDocs;
-      updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, newAiDocs);
+      // Only pages actually fetched in this run earn its timestamp; harvested
+      // links and AI suggestions stay undated until they are really fetched.
+      updateData.documents = applyDiscoveryFetchTimestamp(
+        mergeJurisdictionResearchDocuments(jurisdiction.documents, newAiDocs),
+        discoveryScan, new Date().toISOString());
     }
 
     if (!discoveryOnly) updateData.last_updated = new Date().toISOString();
