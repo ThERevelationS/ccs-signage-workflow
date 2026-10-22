@@ -129,6 +129,13 @@ const detailPayload=(asset,version)=>({
   liveStates:[],notifications:[],metadata:[],
 });
 
+const resolveOpen=(h,payload,excludeIndex=-1)=>{
+  for(const call of h.calls.filter((row,index)=>!row.settled&&index!==excludeIndex)){
+    call.settled=true;
+    call.gate.resolve(payload[call.label]??[]);
+  }
+};
+
 function detailHarness(){
   const calls=[],loading=[],errors=[],tripsLoading=[],state={equipment:null,workOrders:[],trips:[]};
   const gate=label=>{const g=defer();calls.push({label,gate:g,settled:false});return g.promise;};
@@ -189,9 +196,10 @@ test("FleetEquipmentDetail: stale earlier asset load cannot replace the newer as
   assert.equal(h.state.equipment?.id,"b");
   assert.equal(h.state.workOrders[0]?.id,"wo-new");
   resolveCall(h,0,detailPayload("a","old")["equipment:a"]);
-  await waitForCalls(h,20);                      // calls 11-19 = A's nine detail fetches
-  for(let i=11;i<20;i++)resolveCall(h,i,detailPayload("a","old")[h.calls[i].label]);
+  await tick();
+  resolveOpen(h,detailPayload("a","old"));        // resolves A's detail batch if it was issued (pre-fix)
   await older;
+  assert.equal(h.calls.length,11,"The superseded load must not even issue its detail fetches");
   assert.equal(h.state.equipment?.id,"b","Asset A's response must not replace Asset B's page");
   assert.equal(h.state.workOrders[0]?.id,"wo-new","Asset A's work orders must not replace Asset B's");
   assert.equal(h.loading.at(-1),false);
@@ -205,13 +213,13 @@ test("FleetEquipmentDetail: earlier asset load cannot clear loading while the ne
   const newer=h.load();
   await waitForCalls(h,2);
   resolveCall(h,0,detailPayload("a","old")["equipment:a"]);
-  await waitForCalls(h,11);                      // A's nine detail fetches (calls 2-10)
-  for(let i=2;i<11;i++)resolveCall(h,i,detailPayload("a","old")[h.calls[i].label]);
+  await tick();
+  resolveOpen(h,detailPayload("a","old"),1);      // resolves A's detail batch if it was issued (pre-fix), leaving B's equipment fetch open
   await older;
   assert.equal(h.loading.at(-1),true,"Only the newest asset's load controls the loading indicator");
   resolveCall(h,1,detailPayload("b","new")["equipment:b"]);
-  await waitForCalls(h,20);                      // B's nine detail fetches (calls 11-19)
-  for(let i=11;i<20;i++)resolveCall(h,i,detailPayload("b","new")[h.calls[i].label]);
+  await waitForCalls(h,11);                      // calls 2-10 = B's nine detail fetches
+  for(let i=2;i<11;i++)resolveCall(h,i,detailPayload("b","new")[h.calls[i].label]);
   await newer;
   assert.equal(h.loading.at(-1),false);
   assert.equal(h.state.equipment?.id,"b");
@@ -248,3 +256,4 @@ test("FleetEquipmentDetail: a stale asset's Bouncie trip fetch cannot land on th
   assert.deepEqual(h.state.trips,[],"Asset A's trips must not appear on Asset B's page");
   assert.equal(h.tripsLoading.at(-1),false,"The newer load must reset the stale trip indicator");
 });
+
