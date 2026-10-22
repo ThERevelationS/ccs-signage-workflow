@@ -99,6 +99,7 @@ export default function FleetRepairApprovalPolicies() {
       if (requestSequence !== loadSequenceRef.current) return true;
       setPolicies(rows);
       setRefreshWarning("");
+      setLoading(false);
       return true;
     } catch {
       if (requestSequence === loadSequenceRef.current) setRefreshWarning(`${verb} succeeded, but the policy list could not refresh. Use Retry refresh; do not repeat the operation.`);
