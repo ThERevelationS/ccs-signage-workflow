@@ -201,6 +201,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
       if (retrySameRequest) {
         const { session_token, ...frozenPayload } = payload;
         void session_token;
+        persistReviewRetry(selected.id, payload.request_id, decision, frozenPayload);
         setRetryReview({
           correctionRequestId: selected.id,
           decision,
