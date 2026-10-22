@@ -77,8 +77,11 @@ function persistNotesRequest(entryId, requestId, payload) {
   try { sessionStorage.setItem(notesRequestStorageKey(entryId), JSON.stringify({ request_id: requestId, payload })); } catch {}
 }
 
-function clearNotesRequest(entryId) {
-  try { sessionStorage.removeItem(notesRequestStorageKey(entryId)); } catch {}
+function clearNotesRequest(entryId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId && storedNotesRequest(entryId)?.request_id !== expectedRequestId) return;
+    sessionStorage.removeItem(notesRequestStorageKey(entryId));
+  } catch {}
 }
 
 function shouldRetainNotesRequest(err) {
@@ -480,13 +483,13 @@ export default function TimeClock() {
         error.confirmedServerResponse = true;
         throw error;
       }
-      clearNotesRequest(entryId);
+      clearNotesRequest(entryId, requestId);
       setEditingNotes(null);
       setEditNotesText("");
       await loadData();
     } catch (err) {
       console.error("Error saving notes:", err);
-      if (!shouldRetainNotesRequest(err)) clearNotesRequest(entryId);
+      if (!shouldRetainNotesRequest(err)) clearNotesRequest(entryId, requestId);
       setTimeEntryError(err?.response?.data?.error || err?.message || "The notes changed in another session. Latest data was reloaded.");
       await loadData();
     } finally {
