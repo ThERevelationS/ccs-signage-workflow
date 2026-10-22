@@ -2,10 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
-  AlertTriangle,
-  CheckCircle2,
   ChevronRight,
   DollarSign,
+  Download,
   FileText,
   Loader2,
   Plus,
@@ -449,6 +448,33 @@ export default function Invoices() {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [openId, setOpenId] = useState("");
+  const [exporting, setExporting] = useState(false);
+
+  const downloadCsv = (filename, text) => {
+    const blob = new Blob([text], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportCsv = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setError("");
+    try {
+      const data = await invokeAction(sessionToken, { action: "export_ar", status, query });
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadCsv(`invoices-${stamp}.csv`, data.invoices_csv || "");
+      downloadCsv(`payments-${stamp}.csv`, data.payments_csv || "");
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Export failed.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -482,6 +508,9 @@ export default function Invoices() {
         <div className="flex gap-2">
           <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
+          </button>
+          <button onClick={exportCsv} disabled={exporting} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Export CSV
           </button>
           <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
             <Plus className="h-4 w-4" />New Invoice
