@@ -317,6 +317,10 @@ export default function PayPeriodManager({
       end_date: endDate,
     };
     const requestId = requestIdFor(key, payload);
+    if (!requestId) {
+      setError("A previously submitted pay-period action still needs server confirmation. Retry the preserved request before changing it.");
+      return;
+    }
     markRequestSubmitted(key, requestId, payload);
     setBusy(true);
     setError("");
@@ -399,6 +403,10 @@ export default function PayPeriodManager({
       note: actionNote.trim(),
     };
     const requestId = requestIdFor(key, payload);
+    if (!requestId) {
+      setError("A previously submitted pay-period action still needs server confirmation. Retry the preserved request before changing it.");
+      return;
+    }
     markRequestSubmitted(key, requestId, payload);
     setBusy(true);
     setError("");
