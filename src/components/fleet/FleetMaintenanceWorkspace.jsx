@@ -65,6 +65,16 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
     return () => { mounted = false; };
   }, [equipment.id, equipment.name, initialTab]);
 
+  const refreshMeterStatus = async () => {
+    try {
+      const { data } = await base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id });
+      if (data?.error) throw new Error(data.error);
+      setMeterRows(data?.rows || []);
+    } catch (err) {
+      setError(err?.message || "Unable to refresh meter maintenance status.");
+    }
+  };
+
   const activeOrders = useMemo(() => workOrders.filter(row => ACTIVE.has(row.status)), [workOrders]);
   const historicalOrders = useMemo(() => workOrders.filter(row => !ACTIVE.has(row.status)), [workOrders]);
   const pendingSchedules = useMemo(() => tasks.filter(task => ["pending", "overdue"].includes(task.status)), [tasks]);
@@ -114,7 +124,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
         {tab === "history" && <HistoryTab equipment={equipment} workOrders={historicalOrders} logs={logs} />}
         {tab === "usage" && <UsageTab plannedParts={plannedParts} plannedFluids={plannedFluids} partLogs={partLogs} fluidLogs={fluidLogs} />}
       </>}
-      <FleetMeterRuleDialog open={!!meterDialog} equipment={equipment} tasks={tasks} rule={meterDialog?.rule || null} onClose={() => setMeterDialog(null)} onSaved={async () => { const { data } = await base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }); if (data?.error) throw new Error(data.error); setMeterRows(data?.rows || []); }} />
+      <FleetMeterRuleDialog open={!!meterDialog} equipment={equipment} tasks={tasks} rule={meterDialog?.rule || null} onClose={() => setMeterDialog(null)} onSaved={refreshMeterStatus} />
     </div>
   );
 }
