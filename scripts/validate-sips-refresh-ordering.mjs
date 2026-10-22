@@ -5,9 +5,9 @@ import { verifySalesSaveAcknowledgment } from '../base44/shared/salesSaveAcknowl
 
 // Exercise the actual SIPS board load, quick edit, save wrapper and shared
 // conditional persistence with deferred synthetic reads. No app API calls.
-const board = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8');
-const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8');
-const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8');
+const board = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 function block(source, begin, end) {
   const start = source.indexOf(begin);
   const stop = source.indexOf(end, start);
