@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -31,41 +31,50 @@ export default function FleetHistory() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", type: "bug_report", priority: "medium", attachment_urls: [] });
+  const loadSequenceRef = useRef(0);
+  const moreSequenceRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
       const currentUser = await base44.auth.me().catch(() => null);
+      if (requestSequence !== loadSequenceRef.current) return;
       setUser(currentUser);
       if (currentUser?.role !== "admin") return;
       const [reportRows, logRows] = await Promise.all([
         listAllFleetRows(base44.entities.FleetSystemReport, "-created_date", { label: "Fleet system reports" }),
         base44.entities.FleetSystemLog.list("-created_date", LOG_PAGE_SIZE + 1, 0),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
+      ++moreSequenceRef.current;
+      setLoadingMore(false);
       setReports(reportRows || []);
       setLogs((logRows || []).slice(0, LOG_PAGE_SIZE));
       setLogHasMore((logRows || []).length > LOG_PAGE_SIZE);
     } catch (e) {
-      setError(e?.message || "Unable to load Fleet history.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet history.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   const loadMoreLogs = async () => {
+    const requestSequence = ++moreSequenceRef.current;
     setLoadingMore(true);
     setError("");
     try {
       const next = await base44.entities.FleetSystemLog.list("-created_date", LOG_PAGE_SIZE + 1, logs.length);
+      if (requestSequence !== moreSequenceRef.current) return;
       setLogs(current => [...current, ...(next || []).slice(0, LOG_PAGE_SIZE)]);
       setLogHasMore((next || []).length > LOG_PAGE_SIZE);
     } catch (e) {
-      setError(e?.message || "Unable to load more Fleet logs.");
+      if (requestSequence === moreSequenceRef.current) setError(e?.message || "Unable to load more Fleet logs.");
     } finally {
-      setLoadingMore(false);
+      if (requestSequence === moreSequenceRef.current) setLoadingMore(false);
     }
   };
 
