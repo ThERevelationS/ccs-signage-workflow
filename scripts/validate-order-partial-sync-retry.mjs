@@ -48,7 +48,7 @@ console.log('PASS result counts and conflict resolution include only independent
 
 assert.match(ui, /const unresolvedTargets = syncTargets\.filter\(\(\{ id \}\) => pendingSyncIdsRef\.current\.has\(id\)\)/);
 assert.match(ui, /const completedCount = syncTargets\.length - unresolvedTargets\.length/);
-assert.match(ui, /synced successfully; \$\{unresolvedTargets\.length\} remain queued for Retry Sync/);
+assert.match(ui, /synced successfully; \$\{pendingSyncIdsRef\.current\.size\} remain queued for Retry Sync/);
 assert.match(ui, /const verificationLoaded = await loadData\(false\)/);
 assert.match(client, /summarizeSavedOrderSync\(result/);
 console.log('PASS client reloads durable markers after a partial result and reports only unresolved Orders for Retry Sync');
