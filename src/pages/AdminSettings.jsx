@@ -1212,6 +1212,8 @@ export default function AdminSettings() {
         setAutomationLoadError(false);
         setIsLoading(false);
         setAutomationRecoveryListVerified(true);
+        automationOperationReadBusy.current = false;
+        setAutomationOperationReading(false);
         automationOperationRef.current = null;
         setAutomationOperation(null);
         automationOperationEvidence.current = null;
