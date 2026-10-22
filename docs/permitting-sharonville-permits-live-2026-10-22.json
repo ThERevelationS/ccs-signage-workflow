@@ -1,0 +1,165 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "Phase 10 / Milestone 1 of 3 / Task 2 partial; 2 of 4 complete",
+  "starting_head": "8d401962db5dc3c08c917803c902610d0636f7f0",
+  "prior_checkpoint": {
+    "id": "6ad8cc5e5df4fc835b1112f1",
+    "git": "73ee6b25350230d98e8a36676971555b8a518e7d",
+    "name": "Permitting desktop FAQ discovery and live timestamp provenance verified"
+  },
+  "uncertain_request_reconciliation": {
+    "october_22_browser_run_function_timed_out": true,
+    "preflight_readback": "Profile byte-identical at 2026-10-21T14:22:35.528000: 20 documents, three prior receipts only; Permits document had no last_fetched and no receipt.",
+    "conclusion": "The timed-out click left no persisted write. Not replayed; the single invocation below was the first effective call for this document.",
+    "function_invocations_before_this_unit": 0
+  },
+  "access": {
+    "cli_whoami": "brettheinlein1@gmail.com",
+    "management_api_entity_reads": "working under CLI device token",
+    "raw_cli_token_function_call": {
+      "endpoint": "https://clay-flow-signage-suite-387da97c.base44.app/api/functions/refreshJurisdiction",
+      "status": 401,
+      "error": "Authentication required",
+      "effect": "Rejected at the in-function admin gate before any fetch or write. Device token is not an app-runtime user credential."
+    },
+    "successful_path": "npx base44@latest exec (local Deno installed to user profile), SDK pre-authenticated as app user",
+    "verified_identity": "brettheinlein1@gmail.com / role admin",
+    "mode": "deployed backend function, live entity datastore",
+    "deployed_bundle_verified": "backend-functions listing confirmed deployed refreshJurisdiction contains the fixed permittingSavedDocumentDiscovery.mjs before invocation"
+  },
+  "selection": {
+    "profile_id": "6ac19f0e23bd8a65822f6d51",
+    "profile_version": "2026-10-21T14:22:35.528000",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "document_id": "705a3ce0-ccbe-4fa7-a251-770c730d1ae7",
+    "url": "https://www.sharonville.org/524/Permits"
+  },
+  "invocation": {
+    "function": "refreshJurisdiction",
+    "count": 1,
+    "success": true,
+    "discovery_only": true,
+    "defer_archive": true,
+    "attempted_pages": 1,
+    "research_attempts": 0,
+    "llm_calls": 0,
+    "archival": null,
+    "scan_run": null
+  },
+  "profile": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "name": "Sharonville",
+    "state": "OH",
+    "type": "city",
+    "before_updated_date": "2026-10-21T14:22:35.528000",
+    "after_updated_date": "2026-10-22T20:15:20.607000",
+    "documents_before": 20,
+    "documents_after": 25
+  },
+  "receipt": {
+    "method": "explicit-saved-document-page-v1",
+    "document_id": "705a3ce0-ccbe-4fa7-a251-770c730d1ae7",
+    "source_url": "https://www.sharonville.org/524/Permits",
+    "profile_version": "2026-10-21T14:22:35.528000",
+    "scanned_at": "2026-10-22T20:15:20.338Z",
+    "continuation_state": {
+      "external_initial_collection_drained": false,
+      "method": "official-page-frontier-v1",
+      "seed_url": "https://www.sharonville.org/524/Permits",
+      "max_depth": 2,
+      "visited_urls": ["https://sharonville.org/524/Permits"],
+      "pending_pages": [
+        { "url": "https://www.sharonville.org/MyAccount", "depth": 1 },
+        { "url": "https://www.sharonville.org/DocumentCenter/View/963/Solicitor-Acknowledgement-2014?bidId=", "depth": 1 },
+        { "url": "https://www.sharonville.org/DocumentCenter/View/946/Solicitors-Application-2014?bidId=", "depth": 1 },
+        { "url": "https://www.sharonville.org/DocumentCenter/View/5198/Solicitor-Business-Tax-Registration-Form", "depth": 1 },
+        { "url": "https://sharonville.org/DocumentCenter/View/2965/Nightclub-Permit-Packet", "depth": 1 },
+        { "url": "https://www.sharonville.org/DocumentCenter/View/2411/Event--Assembly-Permit", "depth": 1 }
+      ],
+      "gaps": [],
+      "external_referrals": [
+        {
+          "url": "https://oh-sharonville.civicplus.com/DocumentCenter/View/1634",
+          "title": "Civil Service Commission Rules and Regulations",
+          "referral_kind": "code_publisher",
+          "provenance_method": "official-page-external-link-v1",
+          "verification_status": "needs_verification",
+          "fetch_scope_approved": false,
+          "authority_established": false,
+          "source_page_sha256": "bcd5caafb6ecdc4e035a7cd4bcb0105d0dbdab36add2117c7e2cb1415361d99b"
+        }
+      ],
+      "attempted_pages_total": 1
+    },
+    "pages": [
+      {
+        "url": "https://www.sharonville.org/524/Permits",
+        "depth": 0,
+        "final_url": "https://www.sharonville.org/524/Permits",
+        "status": "scanned",
+        "discovered_resources": 7
+      }
+    ],
+    "attempted_pages": 1,
+    "jurisdiction_coverage_complete": false,
+    "authority_established": false
+  },
+  "document_changes": [
+    {
+      "id": "705a3ce0-ccbe-4fa7-a251-770c730d1ae7",
+      "url": "https://www.sharonville.org/524/Permits",
+      "fields": [
+        { "key": "last_fetched", "before": null, "after": "2026-10-22T20:15:20.338Z" },
+        { "key": "title", "before": "Permits", "after": "Official permitting/forms page", "note": "Standard deterministic merge refreshed the selected source's title to the fetched page's own observed title; same URL, same record." }
+      ]
+    }
+  ],
+  "added_documents": [
+    { "id": "0fa9181b-3f40-4ff8-8b61-e5ed1883f4d3", "title": "Nightclub Permit Packet", "url": "https://sharonville.org/DocumentCenter/View/2965/Nightclub-Permit-Packet", "doc_type": "permit_application", "source": "official_page_harvest", "discovery_page_url": "https://www.sharonville.org/524/Permits", "discovery_depth": 0, "last_fetched": null },
+    { "id": "cd852a1e-a0cb-4bca-aecd-6a05eba1d386", "title": "Event Assembly Permit", "url": "https://www.sharonville.org/DocumentCenter/View/2411/Event--Assembly-Permit", "doc_type": "permit_application", "source": "official_page_harvest", "discovery_page_url": "https://www.sharonville.org/524/Permits", "discovery_depth": 0, "last_fetched": null },
+    { "id": "894393ff-de61-454f-b871-21bd7e6d6572", "title": "Solicitor Acknowledgement Form", "url": "https://www.sharonville.org/DocumentCenter/View/963/Solicitor-Acknowledgement-2014?bidId=", "doc_type": "permit_application", "source": "official_page_harvest", "discovery_page_url": "https://www.sharonville.org/524/Permits", "discovery_depth": 0, "last_fetched": null },
+    { "id": "6c3dbcb2-2986-4806-ba8c-6a671da0c61c", "title": "Solicitor Registration Form", "url": "https://www.sharonville.org/DocumentCenter/View/946/Solicitors-Application-2014?bidId=", "doc_type": "permit_application", "source": "official_page_harvest", "discovery_page_url": "https://www.sharonville.org/524/Permits", "discovery_depth": 0, "last_fetched": null },
+    { "id": "20de7813-277c-4690-8989-e76021151d5e", "title": "Solicitor Business Tax Registration Form", "url": "https://www.sharonville.org/DocumentCenter/View/5198/Solicitor-Business-Tax-Registration-Form", "doc_type": "permit_application", "source": "official_page_harvest", "discovery_page_url": "https://www.sharonville.org/524/Permits", "discovery_depth": 0, "last_fetched": null }
+  ],
+  "readback_checks": {
+    "only_selected_existing_document_changed": true,
+    "selected_document_fields_changed": ["title", "last_fetched"],
+    "all_other_existing_documents_byte_identical": true,
+    "new_links_have_no_fetch_dates": true,
+    "original_frontier_unchanged": true,
+    "previous_receipts_unchanged": true,
+    "one_receipt_added": true,
+    "office_research_unchanged": true,
+    "other_profile_fields_unchanged": true,
+    "selected_timestamp_matches_receipt": true
+  },
+  "live_controls_observed": [
+    {
+      "id": "6ac1b28c47233270cfeeb0f9",
+      "key": "permitting_research_dispatch_config",
+      "updated_date": "2026-10-04T15:30:40.303000",
+      "value": { "enabled": true, "interval_minutes": 15, "max_dispatch_per_cycle": 5, "max_in_flight": 20, "daily_dispatch_limit": 40, "retry_limit": 3 }
+    },
+    {
+      "id": "6ac1d0ffb44495caa0c3cf76",
+      "key": "permitting_research_dispatch_state",
+      "updated_date": "2026-10-22T20:01:32.699000",
+      "value": { "daily_day_key": "2026-10-22", "dispatched_today": 40 },
+      "note": "Unchanged across the invocation; the deterministic selected-document path consumed zero dispatch budget and zero LLM attempts."
+    }
+  ],
+  "data_boundary": {
+    "only_permitting_profile_documents_and_discovery_receipt_changed": true,
+    "client_job_shared_records_modified": false,
+    "authority_approved": false,
+    "electrical_role_evidence_established": false,
+    "archives_uploaded": 0,
+    "frontend_published": false,
+    "backend_source_changed": false,
+    "no_downloadable_archive": true
+  },
+  "notes": "New links are retained links only, not fetched documents or authority evidence. Electrical issuer department/canonical identity, current inspection delegation, commercial-sign applicability and exact-site coverage remain unresolved.",
+  "next": "Continue bounded selected-document discovery on other eligible undated saved sources, or reconcile offices/parent authority. Do not replay FAQ, Building/Zoning, Community Development, or this Permits page (now has a receipt)."
+}
