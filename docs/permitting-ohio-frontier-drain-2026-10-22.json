@@ -1,0 +1,40 @@
+{
+  "unit": "Milestone 2 — bounded Ohio-first deterministic frontier expansion (first drain pass)",
+  "date": "2026-10-22",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "method": "base44 exec --privileged ran the deployed continueKnownDiscovery module once per profile (maxPages=1 each) against live JurisdictionProfile records, using the same fetchPage contract as the scheduled dispatcher (safeExternalFetch + readPermittingResourceResponse, 12s timeout).",
+  "controls_observed": {
+    "permitting_research_dispatch_config": { "enabled": true, "interval_minutes": 15, "max_dispatch_per_cycle": 5, "max_in_flight": 20, "daily_dispatch_limit": 40, "retry_limit": 3 },
+    "permitting_research_dispatch_state": { "dispatched_today": 40, "daily_day_key": "2026-10-22" },
+    "note": "Daily LLM dispatch budget exhausted; this unit consumed zero dispatch budget, zero LLM calls, zero archive uploads."
+  },
+  "results": {
+    "profiles_processed": 10,
+    "pages_fetched": 10,
+    "documents_added": 4,
+    "fetch_timestamps_stamped": 10,
+    "provenance_violations": 0,
+    "errors": 0,
+    "detail": [
+      { "jurisdiction": "Unionville", "id": "6ad32456b6c7deb89cec4338", "fetched": "https://unionvillemi.us/ordinances-%26-resolutions", "pending_after": 0, "gaps_after": 0, "docs_delta": 0, "note": "frontier fully drained" },
+      { "jurisdiction": "Willoughby Hills", "id": "6ad3245e99c851494370c0a5", "fetched": "https://www.willoughbyhills-oh.gov/government/city_charter_and_ordinances.php", "pending_after": 8, "gaps_after": 2, "docs_delta": 2 },
+      { "jurisdiction": "Orange", "id": "6acc709d663818bfb072b037", "fetched": "https://www.orangevillage.com/ordinances/ord-2024-2-amend-officers-permitted-to-sign-checks-signed-1-10-24/", "pending_after": 3, "gaps_after": 1, "docs_delta": 1 },
+      { "jurisdiction": "Kenton", "id": "6ad1b345bc72872521b1e717", "fetched": "https://kentonoh.rja.revize.com/forms/6550", "pending_after": 17, "gaps_after": 3, "docs_delta": 0 },
+      { "jurisdiction": "Vanlue", "id": "6ad1b6fa7ae0403452a2c96a", "fetched": "https://www.villageofvanlue.com/planning-and-zoning", "pending_after": 6, "gaps_after": 0, "docs_delta": 0 },
+      { "jurisdiction": "Bloomingburg", "id": "6ad05e480031e5e6c2086992", "fetched": "https://www.fayette-co-oh.com/DocumentCenter/View/1550/Commerical-Permit-Fee-Schedule-revised-PDF", "pending_after": 7, "gaps_after": 1, "docs_delta": 0 },
+      { "jurisdiction": "Washington Court House", "id": "6ad05e50875b5bb6f5e6ecb9", "fetched": "https://www.cityofwch.com/DocumentCenter/View/1724/Flood-Plain-Permit-Application", "pending_after": 11, "gaps_after": 1, "docs_delta": 0 },
+      { "jurisdiction": "Valleyview", "id": "6acf1e5d1e44dcaa948c9aa3", "fetched": "https://www.valleyview.net/services/building_department/codified_ordinances_of_the_village_of_valley_view.php", "pending_after": 1, "gaps_after": 3, "docs_delta": 0 },
+      { "jurisdiction": "Worthington", "id": "6acf1e565e5d4fd1741db3af", "fetched": "https://www.worthington.org/DocumentCenter/View/11971/Conditional-Use-Permit-Application-Instructions-for-Filing", "pending_after": 17, "gaps_after": 2, "docs_delta": 0 },
+      { "jurisdiction": "Obetz", "id": "6acf1e68736e26971d8d0499", "fetched": "https://obetz.gov/research-development/", "pending_after": 6, "gaps_after": 0, "docs_delta": 1 }
+    ]
+  },
+  "provenance_verification": "Every newly stamped last_fetched belongs to a URL actually fetched in that run (10/10). No unfetched harvested link received a date. Failed pages and cross-host redirects become review gaps, not fetches.",
+  "boundaries": [
+    "One page per profile; each guarded write preserves manual/pinned/archive state and concurrent edits.",
+    "No LLM calls, no research dispatch, no cap changes, no archive uploads.",
+    "No authority, delegation, applicability, or coverage conclusions drawn.",
+    "No client/job/shared records touched."
+  ],
+  "remaining": "OH backlog continues beyond these 10 profiles; pending pages remain per profile (see pending_after). Additional bounded passes and the scheduled 15-minute continuation cycle will drain them over time."
+}
