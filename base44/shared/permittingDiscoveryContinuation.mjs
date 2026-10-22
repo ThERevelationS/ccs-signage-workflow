@@ -1,4 +1,4 @@
-import {scanOfficialPermittingPages} from './permittingDiscoveryScan.mjs';
+import {scanOfficialPermittingPages,applyDiscoveryFetchTimestamp} from './permittingDiscoveryScan.mjs';
 import {mergeJurisdictionResearchDocuments} from './jurisdictionResearchDocumentMerge.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
 
@@ -25,8 +25,9 @@ export async function continueKnownDiscovery({entity,jurisdictionId,fetchPage,in
   }
   throw error;
  }
- const docs=scan.documents.map(d=>({...d,id:d.id || crypto.randomUUID(),source:'official_page_harvest',last_fetched:new Date().toISOString()}));
- const nextFields=invalidateProfile(profile,{documents:mergeJurisdictionResearchDocuments(profile.documents,docs),discovery_scan_state:scan.continuation_state});
+ const docs=scan.documents.map(d=>({...d,id:d.id || crypto.randomUUID(),source:'official_page_harvest'}));
+ const documents=applyDiscoveryFetchTimestamp(mergeJurisdictionResearchDocuments(profile.documents,docs),scan,new Date().toISOString());
+ const nextFields=invalidateProfile(profile,{documents,discovery_scan_state:scan.continuation_state});
  await replaceJurisdictionFieldsIfUnchanged({entity,jurisdiction:profile,nextFields,guardFields:guards,label:'Discovery continuation'});
  return{success:true,jurisdiction_id:profile.id,attempted_pages:scan.attempted_pages,pending_pages:scan.pending_pages.length,
   external_referrals:scan.external_referrals.length,external_referrals_require_review:scan.external_referrals.length>0,external_requests_scheduled:0,
