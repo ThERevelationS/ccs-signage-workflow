@@ -282,13 +282,13 @@ export default function PayPeriodManager({
       for (const stored of pending) {
         try {
           await invoke({ ...stored.payload, session_token: sessionToken, request_id: stored.request_id });
-          clearRequestId(stored.key);
+          clearRequestId(stored.key, stored.request_id);
           changed = true;
         } catch (err) {
           if (shouldRetainPeriodRequest(err)) {
             unresolved = true;
           } else {
-            clearRequestId(stored.key);
+            clearRequestId(stored.key, stored.request_id);
             changed = true;
           }
         }
