@@ -68,5 +68,5 @@ const update = ui.slice(ui.indexOf('const updateOrder = (orderId, field, value, 
 assert.match(update, /field === 'customer_name' &&\s*\(shouldUnlinkOrderJobForTypedCustomer\(currentOrder, value\) \|\|\s*manuallyUnlinkedCustomerOrderIdsRef\.current\.has\(orderId\)\)/);
 assert.match(update, /\[field\]: value, \.\.\.\(unlinkCustomerJob \? \{ work_order_id: '' \} : \{\}\)/);
 assert.match(ui, /onClear=\{\(\) => clearCell\(contextMenu\.order\.id, contextMenu\.fieldName\)\}/);
-assert.match(ui, /const clearCell = \(orderId, fieldName\) => \{\s*updateOrder\(orderId, fieldName, ""\)/);
+assert.match(ui, /const clearCell = \(orderId, fieldName\) => \{[\s\S]*?updateOrder\(orderId, fieldName, ""\);\s*\};/);
 console.log('PASS Order Form typing, context-menu Clear, and verified job selection keep the customer/job association consistent');
