@@ -7,9 +7,11 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/components/sips/TemplateBuilder.jsx', import.meta.url), 'utf8');
 const names = [
-  'cancelDropdownRename', 'createSubTemplate', 'createProductType',
-  'createDropdownCondition', 'renameSubTemplate', 'renameProductType',
-  'saveDropdownRename', 'duplicateProductTypeTemplate',
+  'catalogActionBlockedNotice', 'beginCatalogAction', 'cancelDropdownRename',
+  'createSubTemplate', 'createProductType', 'createDropdownCondition',
+  'renameSubTemplate', 'renameProductType', 'saveDropdownRename',
+  'duplicateProductTypeTemplate', 'saveSubTemplateChecklist',
+  'runConfirmedAction', 'blockNavigationWhileSaving',
 ];
 const handlers = names.map(name => {
   const start = source.indexOf('  const ' + name + ' = ');
@@ -36,16 +38,24 @@ function setup() {
     editingSubTemplateId: null, editingSubTemplateName: '',
     editingProductTypeName: null, editingProductTypeValue: '',
     editingDropdown: null, editingDropdownName: '',
-    selectedProductType: null, persistenceError: '',
+    selectedProductType: null, selectedSubTemplate: null,
+    subTemplateChecklistItems: [], subTemplateHasChanges: false,
+    subTemplateSaveStatus: 'idle', savingChecklist: null,
+    noticeDialog: null, confirmDialog: null, isConfirming: false,
+    persistenceError: '',
     subTemplates: [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }],
     productTypes: ['Panels', 'Vinyl'],
     productTypeTemplates: { Panels: { items: [{ id: 'i1' }] } },
     dropdownConditions: [{ id: 'c1', name: 'Permit' }, { id: 'c2', name: 'Survey' }],
   };
-  const calls = { createSub: [], updateSub: [], saveTypes: [], saveTemplates: [], saveDropdowns: [], loads: 0 };
+  const calls = { createSub: [], updateSub: [], saveTypes: [], saveTemplates: [], saveDropdowns: [], saveSubEntry: [], loads: 0 };
   const renameDraftRef = { current: { subTemplateId: null, subTemplateName: '', productTypeId: null, productTypeName: '', conditionId: null, conditionName: '' } };
   const context = {
     ...state, renameDraftRef, JSON, Date, Math, ChecklistSubItem: {},
+    catalogActionInFlightRef: { current: false },
+    checklistSaveInFlight: { current: null },
+    reloadInFlightRef: { current: false },
+    subTemplateDraftRef: { current: { id: null, items: null } },
     console: { error: () => {} },
     invalidatePendingTemplateLoads: () => {},
     loadData: () => { calls.loads += 1; return Promise.resolve({}); },
@@ -55,6 +65,7 @@ function setup() {
     saveProductTypes: (...args) => { const d = deferred(); calls.saveTypes.push({ args, ...d }); return d.promise; },
     saveProductTypeTemplates: (...args) => { const d = deferred(); calls.saveTemplates.push({ args, ...d }); return d.promise; },
     saveDropdownConditions: (...args) => { const d = deferred(); calls.saveDropdowns.push({ args, ...d }); return d.promise; },
+    saveSubTemplateEntry: (...args) => { const d = deferred(); calls.saveSubEntry.push({ args, ...d }); return d.promise; },
   };
   const setter = key => v => {
     const next = typeof v === 'function' ? v(state[key]) : v;
@@ -288,6 +299,106 @@ await test('duplicateProductTypeTemplate failure is caught, not an unhandled rej
   s.calls.saveTypes[0].reject(new Error('simulated conflict'));
   await pending; // resolves normally; the error is logged internally
   assert.equal(s.state.productTypes.join(','), 'Panels,Vinyl');
+});
+
+// Catalog-action serialization: a second mutation must never double-submit or
+// race the same optimistic-concurrency record while another write is in flight.
+
+await test('a second create while the first is still in flight is blocked with a notice', async () => {
+  const s = setup();
+  s.type('newSubTemplateName', 'Safety');
+  const pending = s.createSubTemplate();
+  await until(s.calls.createSub);
+  s.type('newSubTemplateName', 'Second');
+  await s.createSubTemplate();
+  assert.equal(s.calls.createSub.length, 1, 'no duplicate create request');
+  assert.ok(s.state.noticeDialog?.title);
+  s.calls.createSub[0].resolve({ record: { id: 's1' }, status: 'created' });
+  await pending;
+});
+
+await test('a rename cannot start while another catalog action is in flight', async () => {
+  const s = setup();
+  s.type('newDropdownName', 'Access');
+  const pending = s.createDropdownCondition();
+  await until(s.calls.saveDropdowns);
+  const renamed = await s.renameSubTemplate(s.state.subTemplates[0], 'Alpha2');
+  assert.equal(renamed, false);
+  assert.equal(s.calls.updateSub.length, 0);
+  assert.ok(s.state.noticeDialog);
+  s.calls.saveDropdowns[0].resolve({ id: 'r1' });
+  await pending;
+});
+
+await test('the catalog lock releases after a failure so the next action can proceed', async () => {
+  const s = setup();
+  s.type('newProductTypeName', 'Awning');
+  const pending = s.createProductType();
+  await until(s.calls.saveTypes);
+  s.calls.saveTypes[0].reject(new Error('simulated conflict'));
+  await pending;
+  s.type('editingSubTemplateId', 'a');
+  s.type('editingSubTemplateName', 'Alpha2');
+  s.syncRef();
+  const renamed = s.renameSubTemplate(s.state.subTemplates[0], 'Alpha2');
+  await until(s.calls.updateSub);
+  s.calls.updateSub[0].resolve({ id: 'a', name: 'Alpha2', updated_date: '2' });
+  assert.equal(await renamed, true);
+});
+
+await test('a checklist save cannot start while a catalog action is in flight', async () => {
+  const s = setup();
+  s.type('selectedSubTemplate', 'a');
+  const pending = s.duplicateProductTypeTemplate('Panels');
+  await until(s.calls.saveTemplates);
+  await s.saveSubTemplateChecklist();
+  assert.equal(s.calls.saveSubEntry.length, 0);
+  assert.ok(s.state.noticeDialog);
+  s.calls.saveTemplates[0].resolve({ id: 'r2' });
+  await until(s.calls.saveTypes);
+  s.calls.saveTypes[0].resolve({ id: 'r1' });
+  await pending;
+});
+
+await test('a catalog action cannot start while a checklist save is in flight', async () => {
+  const s = setup();
+  s.type('selectedSubTemplate', 'a');
+  const pending = s.saveSubTemplateChecklist();
+  await until(s.calls.saveSubEntry);
+  s.type('newSubTemplateName', 'Late');
+  await s.createSubTemplate();
+  assert.equal(s.calls.createSub.length, 0);
+  assert.ok(s.state.noticeDialog);
+  s.calls.saveSubEntry[0].resolve({ id: 'r1' });
+  await pending;
+});
+
+await test('a confirmed action does not fire while another catalog action is in flight', async () => {
+  const s = setup();
+  s.type('newDropdownName', 'Access');
+  const pending = s.createDropdownCondition();
+  await until(s.calls.saveDropdowns);
+  let confirmed = 0;
+  s.type('confirmDialog', { title: 'x', onConfirm: () => { confirmed += 1; return Promise.resolve(); } });
+  await s.runConfirmedAction();
+  assert.equal(confirmed, 0, 'onConfirm must not fire');
+  assert.ok(s.state.confirmDialog, 'the confirmation stays open for a retry');
+  assert.ok(s.state.noticeDialog);
+  s.calls.saveDropdowns[0].resolve({ id: 'r1' });
+  await pending;
+});
+
+await test('editor switching and closing are blocked while a catalog action is in flight', async () => {
+  const s = setup();
+  s.type('newDropdownName', 'Access');
+  const pending = s.createDropdownCondition();
+  await until(s.calls.saveDropdowns);
+  assert.equal(s.blockNavigationWhileSaving(), true);
+  assert.ok(s.state.noticeDialog);
+  s.calls.saveDropdowns[0].resolve({ id: 'r1' });
+  await pending;
+  s.state.noticeDialog = null; s.context.noticeDialog = null;
+  assert.equal(s.blockNavigationWhileSaving(), false);
 });
 
 console.log(passed + '/' + passed + ' SIPS template name-action checks passed');
