@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -138,8 +138,10 @@ export default function FleetInspections() {
   const [templateDialog, setTemplateDialog] = useState(null);
   const [showPresets, setShowPresets] = useState(false);
   const [runner, setRunner] = useState(null);
+  const loadSequenceRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true); setError("");
     try {
       const [templateRows, inspectionRows, equipmentRows, me] = await Promise.all([
@@ -148,13 +150,14 @@ export default function FleetInspections() {
         listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
         base44.auth.me().catch(() => null),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setTemplates(templateRows || []);
       setInspections(inspectionRows || []);
       setEquipment(equipmentRows || []);
       setUser(me || null);
     } catch (err) {
-      setError(err?.message || "Unable to load Fleet inspections.");
-    } finally { setLoading(false); }
+      if (requestSequence === loadSequenceRef.current) setError(err?.message || "Unable to load Fleet inspections.");
+    } finally { if (requestSequence === loadSequenceRef.current) setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -192,21 +195,19 @@ export default function FleetInspections() {
   };
 
   const startInspection = async () => {
-    if (!startDialog?.equipment_id || !startDialog?.template_id) return setError("Choose equipment and an inspection template.");
+    if (!startDialog?.equipment_id || !startDialog?.template_id) throw new Error("Choose equipment and an inspection template.");
     setError("");
-    try {
-      const { data } = await base44.functions.invoke("fleetInspectionAction", {
-        action: "inspection_start",
-        creation_key: startDialog.creation_key,
-        equipment_id: startDialog.equipment_id,
-        template_id: startDialog.template_id,
-      });
-      if (data?.error) throw new Error(data.error);
-      const template = data.template || templates.find(item => item.id === startDialog.template_id);
-      setRunner({ inspection: data.inspection, template });
-      closeStartDialog();
-      await load();
-    } catch (err) { setError(err?.message || "Unable to start Fleet inspection."); }
+    const { data } = await base44.functions.invoke("fleetInspectionAction", {
+      action: "inspection_start",
+      creation_key: startDialog.creation_key,
+      equipment_id: startDialog.equipment_id,
+      template_id: startDialog.template_id,
+    });
+    if (data?.error) throw new Error(data.error);
+    const template = data.template || templates.find(item => item.id === startDialog.template_id);
+    setRunner({ inspection: data.inspection, template });
+    closeStartDialog();
+    await load();
   };
 
   const resumeInspection = inspection => {
@@ -217,15 +218,13 @@ export default function FleetInspections() {
 
   const saveTemplate = async ({ template, existing, creationKey }) => {
     setError("");
-    try {
-      const body = existing
-        ? { action: "template_update", id: existing.id, expected_updated_date: existing.updated_date || "", template }
-        : { action: "template_create", creation_key: creationKey, template };
-      const { data } = await base44.functions.invoke("fleetInspectionAction", body);
-      if (data?.error) throw new Error(data.error);
-      setTemplateDialog(null);
-      await load();
-    } catch (err) { setError(err?.message || "Unable to save inspection template."); }
+    const body = existing
+      ? { action: "template_update", id: existing.id, expected_updated_date: existing.updated_date || "", template }
+      : { action: "template_create", creation_key: creationKey, template };
+    const { data } = await base44.functions.invoke("fleetInspectionAction", body);
+    if (data?.error) throw new Error(data.error);
+    setTemplateDialog(null);
+    await load();
   };
 
   const openNewInspection = equipmentId => setStartDialog({ equipment_id: equipmentId || "", template_id: "", creation_key: crypto.randomUUID() });
@@ -275,9 +274,10 @@ export default function FleetInspections() {
 }
 
 function StartInspectionDialog({open,state,setState,equipment,templates,isAdmin,onClose,onStart,onOpenTemplateSetup}) {
+  const [startError, setStartError] = useState("");
   if (!open) return null;
   const selectedEquipment = equipment.find(item => item.id === state?.equipment_id);
-  return <div className="fixed inset-0 z-[100] bg-black/55 p-3 sm:p-6 flex items-center justify-center"><div role="dialog" aria-modal="true" className="w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"><div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between gap-3"><div className="min-w-0"><h2 className="font-bold text-lg">Start Fleet Inspection</h2><p className="text-xs text-gray-500 mt-1">Choose an asset and a compatible checklist.</p></div><button onClick={onClose} className="min-h-11 min-w-11 shrink-0 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900" aria-label="Close start inspection dialog"><X className="w-5 h-5 mx-auto"/></button></div><div className="p-4 space-y-4"><Field label="Equipment"><select value={state?.equipment_id || ""} onChange={e => setState(prev => ({...prev,equipment_id:e.target.value,template_id:""}))} className="field"><option value="">Select equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Inspection template"><select value={state?.template_id || ""} onChange={e => setState(prev => ({...prev,template_id:e.target.value}))} className="field" disabled={!selectedEquipment}><option value="">{selectedEquipment ? "Select template" : "Select equipment first"}</option>{templates.map(item => <option key={item.id} value={item.id}>{item.name} · {pretty(item.inspection_type)}</option>)}</select></Field>{selectedEquipment && templates.length===0 && <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 p-3 text-xs"><div>No active inspection template applies to {selectedEquipment.name}.</div>{isAdmin ? <button type="button" onClick={onOpenTemplateSetup} className="mt-2 min-h-11 px-3 rounded-lg border border-amber-300 bg-white/70 font-semibold text-amber-900 dark:border-amber-800 dark:bg-slate-900/60 dark:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">Review starter templates</button> : <div className="mt-2 font-semibold">Ask a Fleet administrator to configure an inspection template for this equipment type.</div>}</div>}<button onClick={onStart} disabled={!state?.equipment_id || !state?.template_id} className="w-full min-h-12 rounded-xl bg-indigo-600 text-white font-semibold disabled:opacity-40 inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><ClipboardCheck className="w-5 h-5"/>Begin Inspection</button></div></div></div>;
+  return <div className="fixed inset-0 z-[100] bg-black/55 p-3 sm:p-6 flex items-center justify-center"><div role="dialog" aria-modal="true" className="w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"><div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between gap-3"><div className="min-w-0"><h2 className="font-bold text-lg">Start Fleet Inspection</h2><p className="text-xs text-gray-500 mt-1">Choose an asset and a compatible checklist.</p></div><button onClick={onClose} className="min-h-11 min-w-11 shrink-0 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900" aria-label="Close start inspection dialog"><X className="w-5 h-5 mx-auto"/></button></div><div className="p-4 space-y-4"><Field label="Equipment"><select value={state?.equipment_id || ""} onChange={e => setState(prev => ({...prev,equipment_id:e.target.value,template_id:""}))} className="field"><option value="">Select equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Inspection template"><select value={state?.template_id || ""} onChange={e => setState(prev => ({...prev,template_id:e.target.value}))} className="field" disabled={!selectedEquipment}><option value="">{selectedEquipment ? "Select template" : "Select equipment first"}</option>{templates.map(item => <option key={item.id} value={item.id}>{item.name} · {pretty(item.inspection_type)}</option>)}</select></Field>{selectedEquipment && templates.length===0 && <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 p-3 text-xs"><div>No active inspection template applies to {selectedEquipment.name}.</div>{isAdmin ? <button type="button" onClick={onOpenTemplateSetup} className="mt-2 min-h-11 px-3 rounded-lg border border-amber-300 bg-white/70 font-semibold text-amber-900 dark:border-amber-800 dark:bg-slate-900/60 dark:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">Review starter templates</button> : <div className="mt-2 font-semibold">Ask a Fleet administrator to configure an inspection template for this equipment type.</div>}</div>}{startError && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{startError}</div>}<button onClick={async () => { setStartError(""); try { await onStart(); } catch (err) { setStartError(err?.message || "Unable to start Fleet inspection."); } }} disabled={!state?.equipment_id || !state?.template_id} className="w-full min-h-12 rounded-xl bg-indigo-600 text-white font-semibold disabled:opacity-40 inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><ClipboardCheck className="w-5 h-5"/>Begin Inspection</button></div></div></div>;
 }
 
 function TemplateDialog({open,existing,seed,creationKey,equipmentTypes,onClose,onSave}) {
