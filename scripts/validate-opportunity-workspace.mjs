@@ -55,6 +55,8 @@ const invoicing = readFileSync('base44/functions/invoicingAction/entry.ts', 'utf
 const invoicesPage = readFileSync('src/pages/Invoices.jsx', 'utf8');
 const changeOrders = readFileSync('base44/functions/changeOrderAction/entry.ts', 'utf8');
 const coPage = readFileSync('src/pages/ChangeOrders.jsx', 'utf8');
+const purchaseOrders = readFileSync('base44/functions/purchaseOrderAction/entry.ts', 'utf8');
+const poPage = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
 const sync = readFileSync('src/components/estimator/customerSync.js', 'utf8');
 assert.match(sync, /WorkOrder\.filter\(\{ estimating_request_id: estimateRequestId \}\)/,
   'sync must look up WorkOrders by estimating_request_id');
@@ -118,6 +120,21 @@ assert.ok(!coPage.includes('entities.ChangeOrder'), 'change orders page must not
 assert.match(coPage, /functions\.invoke\("changeOrderAction"/, 'change orders page must invoke the function');
 assert.match(config, /"ChangeOrders": ChangeOrders/, 'pages.config must register the ChangeOrders route');
 assert.match(layout, /title: "Change Orders", url: createPageUrl\("ChangeOrders"\)/, 'Layout nav must link Change Orders');
+
+// D2/D3: purchase orders — backend-only, server totals, guarded receiving.
+const poSchema = readFileSync('base44/entities/PurchaseOrder.jsonc', 'utf8');
+assert.match(poSchema, /backend_only/, 'PurchaseOrder must be backend-only');
+assert.match(poSchema, /quantity_received/, 'PO lines must track received quantities');
+assert.match(purchaseOrders, /authenticateSignShopSession/, 'purchaseOrderAction must authenticate the session');
+for (const action of ['list_purchase_orders', 'get_purchase_order', 'create_purchase_order', 'update_purchase_order', 'mark_sent', 'receive_items', 'cancel_purchase_order']) {
+  assert.ok(purchaseOrders.includes(`action === "${action}"`), `action ${action} must be handled`);
+}
+assert.match(purchaseOrders, /exceeds the open quantity/, 'receiving must reject over-receipts');
+assert.match(purchaseOrders, /Only draft purchase orders can be/, 'PO edits must be draft-only');
+assert.ok(!poPage.includes('entities.PurchaseOrder'), 'PO page must not touch backend-only entities');
+assert.match(poPage, /functions\.invoke\("purchaseOrderAction"/, 'PO page must invoke the function');
+assert.match(config, /"PurchaseOrders": PurchaseOrders/, 'pages.config must register the PurchaseOrders route');
+assert.match(layout, /title: "Purchase Orders", url: createPageUrl\("PurchaseOrders"\)/, 'Layout nav must link Purchase Orders');
 
 // Wiring: route + navigation.
 assert.match(config, /import Opportunities from '\.\/pages\/Opportunities'/, 'pages.config must import the page');
