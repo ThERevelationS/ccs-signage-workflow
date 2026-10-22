@@ -52,6 +52,14 @@ assert.match(entry, /open_pipeline_value/, 'list_opportunities must return funne
 assert.match(entry, /win_rate/, 'funnel must compute win rate');
 assert.match(page, /funnel\.stage_counts/, 'page must render the funnel strip');
 
+// Global search: backend-only records reachable through the workspace function.
+const globalSearch = readFileSync('src/components/workflow/GlobalSearch.jsx', 'utf8');
+assert.ok(entry.includes('action === "global_search"'), 'global_search must be handled server-side');
+assert.match(entry, /asServiceRole\.entities\.Invoice\b/, 'global search must read invoices via service role');
+assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 'search must invoke the workspace function');
+assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
+assert.ok(!globalSearch.includes('entities.Invoice'), 'search must not touch backend-only entities directly');
+
 // Convergence: estimate→pipeline sync must locate the compatibility WorkOrder
 // by stable links, carry the link fields, and back-link the Opportunity.
 const invoicing = readFileSync('base44/functions/invoicingAction/entry.ts', 'utf8');
