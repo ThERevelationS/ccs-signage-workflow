@@ -7,15 +7,15 @@ import { readFileSync } from "node:fs";
 const source = readFileSync(
   new URL("../src/components/sips/ProductChecklistDialog.jsx", import.meta.url),
   "utf8"
-);
+).replace(/\r\n/g, "\n");
 const completedSource = readFileSync(
   new URL("../src/components/sips/ChecklistCompletedSection.jsx", import.meta.url),
   "utf8"
-);
+).replace(/\r\n/g, "\n");
 const revisitPopupSource = readFileSync(
   new URL("../src/components/sips/RevisitDatePopup.jsx", import.meta.url),
   "utf8"
-);
+).replace(/\r\n/g, "\n");
 
 let passed = 0;
 function check(name, run) {
