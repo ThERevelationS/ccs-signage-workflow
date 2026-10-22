@@ -78,6 +78,13 @@ function Field({ label, children }) {
 
 const inputCls = "min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
 
+const invoke = async (sessionToken, body) => {
+  const r = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, ...body });
+  const data = r?.data || r;
+  if (!data?.success) throw new Error(data?.error || "Request failed.");
+  return data;
+};
+
 function RequirementSelect({ value, onChange }) {
   return (
     <select className={inputCls} value={value || "unknown"} onChange={(e) => onChange(e.target.value)}>
@@ -433,6 +440,152 @@ function PermitPanel({ sessionToken, detail, opportunity, onLinked }) {
   );
 }
 
+const REQUEST_STATUS_STYLES = {
+  draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  ready: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
+  in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
+  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300",
+};
+const PRIORITY_STYLES = {
+  rush: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300",
+  high: "bg-orange-100 text-orange-700 dark:bg-orange-900/60 dark:text-orange-300",
+  normal: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  low: "bg-slate-50 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400",
+};
+
+function EstimatingQueue({ sessionToken, onOpenOpportunity }) {
+  const [requests, setRequests] = useState([]);
+  const [includeClosed, setIncludeClosed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [edits, setEdits] = useState({});
+  const [saving, setSaving] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await invoke(sessionToken, { action: "list_estimating_requests", include_closed: includeClosed });
+      setRequests(data.estimating_requests || []);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Queue load failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken, includeClosed]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openOpportunity = async (row) => {
+    try {
+      const data = await invoke(sessionToken, { action: "get_opportunity", opportunity_id: row.opportunity_id });
+      onOpenOpportunity?.(data.opportunity);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Could not open the opportunity.");
+    }
+  };
+
+  const saveAssign = async (row) => {
+    const edit = edits[row.id] || {};
+    if (saving) return;
+    setSaving(row.id);
+    setError("");
+    try {
+      await invoke(sessionToken, {
+        action: "assign_estimator",
+        estimating_request_id: row.id,
+        baseline: row,
+        assigned_estimator: clean(edit.assigned_estimator ?? row.assigned_estimator),
+        priority: clean(edit.priority ?? row.priority),
+      });
+      setEdits((e) => ({ ...e, [row.id]: {} }));
+      await load();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Assignment failed.");
+    } finally {
+      setSaving("");
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
+          Open estimating requests, sorted by priority then request age.
+        </div>
+        <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={includeClosed} onChange={(e) => setIncludeClosed(e.target.checked)} />
+          Include completed/cancelled
+        </label>
+      </div>
+      {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        {loading ? (
+          <div className="flex items-center justify-center py-14 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading queue…</div>
+        ) : requests.length === 0 ? (
+          <div className="py-14 text-center text-slate-500">No estimating requests in the queue.</div>
+        ) : (
+          <table className="w-full min-w-[880px] text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <tr>
+                <th className="px-3 py-2.5">Priority</th><th className="px-3 py-2.5">Opportunity</th>
+                <th className="px-3 py-2.5">Customer</th><th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5">Requested</th><th className="px-3 py-2.5">Estimator</th>
+                <th className="px-3 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((r) => {
+                const edit = edits[r.id] || {};
+                const dirty = Object.keys(edit).length > 0;
+                return (
+                  <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                    <td className="px-3 py-2.5">
+                      <select className="rounded-lg border border-slate-200 bg-transparent px-1.5 py-1 text-xs font-semibold dark:border-slate-700"
+                        value={edit.priority ?? r.priority}
+                        onChange={(e) => setEdits((s) => ({ ...s, [r.id]: { ...s[r.id], priority: e.target.value } }))}>
+                        {["rush", "high", "normal", "low"].map((p) => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <button type="button" onClick={() => openOpportunity(r)} className="font-semibold text-violet-700 hover:underline dark:text-violet-300">
+                        {r.opportunity_title || "Untitled"}
+                      </button>
+                      {r.estimate_id && <div className="text-xs text-slate-400">Estimate linked</div>}
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.customer_display_name || "—"}</td>
+                    <td className="px-3 py-2.5">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${REQUEST_STATUS_STYLES[r.status] || REQUEST_STATUS_STYLES.draft}`}>
+                        {clean(r.status).replace(/_/g, " ") || "draft"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500">{clean(r.requested_at).slice(0, 10) || "—"}</td>
+                    <td className="px-3 py-2.5">
+                      <input className="w-40 rounded-lg border border-slate-200 bg-transparent px-2 py-1 text-xs dark:border-slate-700"
+                        placeholder="Estimator name/email"
+                        value={edit.assigned_estimator ?? r.assigned_estimator}
+                        onChange={(e) => setEdits((s) => ({ ...s, [r.id]: { ...s[r.id], assigned_estimator: e.target.value } }))} />
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      {dirty && (
+                        <button type="button" onClick={() => saveAssign(r)} disabled={saving === r.id}
+                          className="inline-flex items-center gap-1 rounded-lg bg-violet-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
+                          {saving === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}Save
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
   const navigate = useNavigate();
   const [detail, setDetail] = useState(null);
@@ -728,6 +881,7 @@ export default function Opportunities() {
   const [includeClosed, setIncludeClosed] = useState(false);
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [view, setView] = useState("pipeline");
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -806,6 +960,31 @@ export default function Opportunities() {
         </div>
       )}
 
+      <div className="flex gap-1.5">
+        {[["pipeline", "Pipeline"], ["queue", "Estimating queue"]].map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setView(key)}
+            className={`min-h-10 rounded-lg border px-4 text-sm font-semibold ${view === key
+              ? "border-violet-500 bg-violet-600 text-white"
+              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === "queue" && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <EstimatingQueue
+            sessionToken={sessionToken}
+            onOpenOpportunity={(opp) => { if (opp?.id) setSelected(opp); }}
+          />
+        </section>
+      )}
+
+      {view === "pipeline" && (
       <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2">
@@ -882,6 +1061,7 @@ export default function Opportunities() {
           <p className="mt-3 text-xs text-slate-400">{visible.length} shown · {total} loaded</p>
         </div>
       </section>
+      )}
 
       {intakeOpen && (
         <NewIntakeDialog
