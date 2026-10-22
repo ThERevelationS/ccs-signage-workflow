@@ -125,7 +125,7 @@ try {
     'React.useEffect(()=>{const refresh=()=>setToken(window.__adminSyntheticSessionToken||"synthetic");',
     'window.addEventListener("admin-synthetic-session-change",refresh);return ()=>window.removeEventListener("admin-synthetic-session-change",refresh);},[]);',
     'return {currentUser:{id:params.get("user")||"synthetic-admin-user",role:params.get("role")==="basic"?"user":"admin"},sessionToken:token};}',
-    'export function getStoredAdminSettingsCapability(){return "synthetic";}',
+    'export function getStoredAdminSettingsCapability(){return window.__adminCapabilityExpired?"":"synthetic";}',
     'export function hasStoredAdminSettingsAuthorization(){return true;}',
     'export function storeAdminSettingsAuthorization(){throw Error("Unexpected write to synthetic auth");}',
   ].join('\n'));
@@ -2352,6 +2352,31 @@ try {
       await editor.waitFor({state:'detached'});
       assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
       assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+    });
+
+  await check('Expired Admin capability re-locks instead of dispatching a stale credential', 375,
+    '/?tab=automations&automation_rows=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminCapabilityExpired=true;});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      // The write was never dispatched and no uncertain fence was created;
+      // the unlock gate returns with an actionable expired-session message.
+      await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor();
+      await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+    });
+
+  await check('Expired Admin capability re-locks an editor save without dispatching', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page => {
+      await page.getByRole('button',{name:'Edit Synthetic rule',exact:true}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Expiry draft');
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminCapabilityExpired=true;});
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor();
+      await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
     });
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
