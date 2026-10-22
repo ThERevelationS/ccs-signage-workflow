@@ -75,38 +75,47 @@ export default function FleetTracking() {
   const [connecting, setConnecting] = useState(false);
   const refreshTimer = useRef(null);
   const tripLoadGeneration = useRef(0);
+  const statusLoadGeneration = useRef(0);
+  const vehicleLoadGeneration = useRef(0);
+  const notificationLoadGeneration = useRef(0);
 
   const loadStatus = useCallback(async () => {
+    const loadId = ++statusLoadGeneration.current;
     try {
       const { data } = await base44.functions.invoke("bouncieStatus", { session_token: sessionToken });
-      setStatus(data);
+      if (loadId === statusLoadGeneration.current) setStatus(data);
       return data;
     } catch (e) {
-      setStatus({ connected: false, error: e.message });
+      const fallback = { connected: false, error: e.message };
+      if (loadId === statusLoadGeneration.current) setStatus(fallback);
+      return fallback;
     }
   }, [sessionToken]);
 
   const loadVehicles = useCallback(async () => {
+    const loadId = ++vehicleLoadGeneration.current;
     try {
       setVehiclesLoading(true);
       const { data } = await base44.functions.invoke("bouncieApi", {
         session_token: sessionToken,
         method: "GET", path: "/v1/vehicles", query: {}
       });
+      if (loadId !== vehicleLoadGeneration.current) return;
       setVehicles(data?.data || []);
       setError("");
     } catch (e) {
-      setError(e.message || "Failed to load vehicles");
+      if (loadId === vehicleLoadGeneration.current) setError(e.message || "Failed to load vehicles");
     } finally {
-      setVehiclesLoading(false);
+      if (loadId === vehicleLoadGeneration.current) setVehiclesLoading(false);
     }
   }, [sessionToken]);
 
   const loadNotifications = useCallback(async () => {
+    const loadId = ++notificationLoadGeneration.current;
     try {
       const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "list", session_token: sessionToken });
       if (data?.error) throw new Error(data.error);
-      setNotifications(data?.notifications || []);
+      if (loadId === notificationLoadGeneration.current) setNotifications(data?.notifications || []);
     } catch {
       // Keep the map usable if notification history is temporarily unavailable.
     }
