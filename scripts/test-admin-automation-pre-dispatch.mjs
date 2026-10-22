@@ -83,3 +83,17 @@ test("Pre-dispatch operation failures release the write lock without an uncertai
   assert.match(operation, /automationOperationRef\.current = null;\s*setAutomationOperation\(null\);\s*automationOperationEvidence\.current = null;\s*setAutomationOperationReview\(null\);\s*setAutomationSaveError\(error\?\.message/);
   assert.match(operation, /there is nothing to verify|nothing to verify/i);
 });
+
+test("An expired capability re-locks Admin Settings before any lock acquisition or dispatch", () => {
+  const save = pageSource.slice(pageSource.indexOf("  const handleSave = async () => {"),
+    pageSource.indexOf("  const verifyUncertainAutomationSave = async () => {"));
+  const operation = pageSource.slice(pageSource.indexOf("  const runAutomationOperation = async (kind, rule) => {"),
+    pageSource.indexOf("  const handleDelete = (rule) =>"));
+  for (const body of [save, operation]) {
+    assert.match(body, /if \(!writeCapability\) \{\s*setPasswordError\("Your Admin Settings authorization expired\. Sign in again to continue\."\);\s*setIsUnlocked\(false\);\s*return;\s*\}/);
+  }
+  // The capability check precedes write dispatch and lock acquisition.
+  assert.ok(save.indexOf("!writeCapability") < save.indexOf("automationSaveInFlight.current = true"));
+  assert.ok(operation.indexOf("!writeCapability") < operation.indexOf("automationOperationRef.current = operation"));
+  assert.match(pageSource, /Unlock Admin Settings/);
+});
