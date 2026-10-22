@@ -48,6 +48,9 @@ assert.match(page, /creation_request_key: (uuid\(\)|keyRef\.current)/, 'client m
 assert.match(page, /`\/EstimateDetail\?id=\$\{estimateId\}`|\/EstimateDetail\?id=/, 'handoff must navigate to the created estimate');
 assert.match(page, /action: "list_estimating_requests"/, 'page must expose the estimating queue');
 assert.match(page, /action: "assign_estimator"/, 'page must support estimator assignment');
+assert.match(entry, /open_pipeline_value/, 'list_opportunities must return funnel metrics');
+assert.match(entry, /win_rate/, 'funnel must compute win rate');
+assert.match(page, /funnel\.stage_counts/, 'page must render the funnel strip');
 
 // Convergence: estimate→pipeline sync must locate the compatibility WorkOrder
 // by stable links, carry the link fields, and back-link the Opportunity.
