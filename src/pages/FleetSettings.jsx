@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -69,6 +69,8 @@ export default function FleetSettings() {
   const [mechanicCopied, setMechanicCopied] = useState(false);
   const [mechanicRevoke, setMechanicRevoke] = useState(null);
   const [loading, setLoading] = useState(true);
+  const checkSequenceRef = useRef(0);
+  const integritySequenceRef = useRef(0);
 
   useEffect(() => {
     (async () => {
@@ -232,9 +234,11 @@ export default function FleetSettings() {
   }, [integrity, mechanicLinks]);
 
   const runServerCheck = async () => {
+    const requestSequence = ++checkSequenceRef.current;
     setChecking(true);
     try {
       const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
+      if (requestSequence !== checkSequenceRef.current) return;
       setServerStatus(data || null);
       const [settingsRows, bouncieStatusResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
         base44.entities.FleetSettings.list("-updated_date", 10),
@@ -248,20 +252,23 @@ export default function FleetSettings() {
       setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
       setQueueRows(health.notifications || []);
       setReceiptRows(health.receipts || []);
+      if (requestSequence !== checkSequenceRef.current) return;
       setMechanicLinks(mechanicResult?.data?.links || []);
       setMechanicEquipment(mechanicEquipmentRows || []);
     } finally {
-      setChecking(false);
+      if (requestSequence === checkSequenceRef.current) setChecking(false);
     }
   };
 
   const runIntegrityAudit = async () => {
+    const requestSequence = ++integritySequenceRef.current;
     setIntegrityBusy(true);
     try {
       const { data } = await base44.functions.invoke("fleetIntegrityAudit", {});
+      if (requestSequence !== integritySequenceRef.current) return;
       setIntegrity(data || null);
     } finally {
-      setIntegrityBusy(false);
+      if (requestSequence === integritySequenceRef.current) setIntegrityBusy(false);
     }
   };
 
