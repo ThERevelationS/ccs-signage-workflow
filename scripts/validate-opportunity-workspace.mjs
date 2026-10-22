@@ -60,6 +60,12 @@ assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 's
 assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
 assert.ok(!globalSearch.includes('entities.Invoice'), 'search must not touch backend-only entities directly');
 
+// Lifecycle hub: the Opportunity detail must surface linked financial records.
+assert.match(entry, /Invoice\.filter\(\{ opportunity_id: opportunityId \}\)/, 'detail must load linked invoices');
+assert.match(entry, /PurchaseOrder\.filter\(\{ opportunity_id: opportunityId \}\)/, 'detail must load linked POs');
+assert.match(entry, /financials: \{/, 'detail must return a financial rollup');
+assert.match(page, /detail\?\.financials|detail\.financials/, 'page must render the financial rollup');
+
 // Convergence: estimate→pipeline sync must locate the compatibility WorkOrder
 // by stable links, carry the link fields, and back-link the Opportunity.
 const invoicing = readFileSync('base44/functions/invoicingAction/entry.ts', 'utf8');
