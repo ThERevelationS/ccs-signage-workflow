@@ -1,0 +1,84 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "Phase 10 / Milestone 1 of 3 / Identity and office reconciliation",
+  "unit": "Task 2 + Task 4 live read-only acceptance — Milestone 1 complete",
+  "starting_head": "6fb244f8096d8d755b9dc1a543b02a79aeed7915",
+  "access": {
+    "method": "npx base44@latest exec (local Deno), SDK pre-authenticated as app user",
+    "verified_identity": "brettheinlein1@gmail.com / role admin",
+    "permission_scoped": true,
+    "frontend_serves": "GET https://clay-flow-signage-suite-387da97c.base44.app/ returned 200 text/html",
+    "read_contract": "Exact readRecordedCoverage contract from src/components/permitting/PermittingRecordedCoverage.jsx executed against live entities with the actual shipped reconciler modules"
+  },
+  "live_reads": {
+    "SourceCollectionQueue": { "filter": "state in [OH,KY]", "rows": 1775, "page_size": 500 },
+    "JurisdictionProfile": { "filter": "state in [OH,KY]", "rows": 1080, "note": "grew from 474 on the Oct 7 read via dispatcher research; identity fields only" },
+    "PermitLocality": { "filter": "state in [OH,KY]", "rows": 2 },
+    "PermittingOfficeAuthorityReview": { "filter": "method office-authority-v1", "rows": 4 },
+    "PermittingSourceDocument_metadata": { "rows": 0, "note": "no electrical verify events reference sources" }
+  },
+  "recorded_coverage": {
+    "items": 1775,
+    "single_profile_candidate": 1003,
+    "duplicate_queue_identity": 6,
+    "profile_missing": 752,
+    "ambiguous_profiles": 1,
+    "identity_incomplete": 13,
+    "invalid_profile_ids": 5,
+    "unmatched_profile_ids": 67
+  },
+  "official_inventory": {
+    "source_vintage": "2026-01-01",
+    "source_rows": 3647,
+    "all_rows_accounted_for": true,
+    "candidates": { "OH": 2318, "KY": 530 },
+    "status_review": 25,
+    "statistical_reference": 774,
+    "queue_missing_candidates": 1549,
+    "queue_identity_review_items": 1571,
+    "profiles_missing_candidates": 2015,
+    "profiles_identity_review_items": 868
+  },
+  "saved_locality_profile_links": {
+    "OH": { "saved": 2, "unlinked": 2 },
+    "KY": { "saved": 0, "unlinked": 0 },
+    "reviews": 2,
+    "note": "City of Cincinnati and Deerfield both unlinked; no name-based links inferred"
+  },
+  "electrical_role_separation_acceptance": {
+    "separate_counters_verified": true,
+    "OH": { "localities": 2, "electrical_permit_missing": 2, "electrical_inspection_missing": 2, "both_roles_reviewed": 0, "legacy_broad_role": 0 },
+    "KY": { "localities": 0 },
+    "explicit_gaps": ["City of Cincinnati: electrical_permit + electrical_inspection missing", "Deerfield: electrical_permit + electrical_inspection missing"],
+    "no_role_conflation": true,
+    "authority_approved": false
+  },
+  "authority_review_events": {
+    "office_authority_v1_events_read": 4,
+    "conflicts": 0,
+    "uncommitted": 0,
+    "unmirrored_histories": { "KY": 3, "note": "Alexandria sign_permit, Alexandria zoning, Campbell County sign_permit — no saved locality; explicit, not errors" }
+  },
+  "electrical_source_evidence": { "histories": 0, "items": 0, "retained_page_candidates": 0 },
+  "reconcilers_executed": [
+    "reconcileRecordedCoverage", "reconcileOfficialInventory", "reconcileSavedLocalityProfileLinks",
+    "reconcileElectricalOfficeCoverage", "reconcileSavedOfficeEvidence",
+    "reconcileRecordedAuthorityReviewEvents", "reconcileReviewedOfficesWithoutSavedCopies",
+    "reconcileRecordedElectricalEvidence"
+  ],
+  "errors": 0,
+  "production_writes": 0,
+  "full_result": "docs captured locally; full JSON result retained in session temp (C:/tmp/live-coverage-result.json)",
+  "task_outcomes": {
+    "task_2": "Complete — exhaustive reader + identity/gap reconciliation verified live end-to-end; all 3,647 official rows accounted; every gap class explicit (missing candidates, identity reviews, unlinked localities, missing electrical roles, unmirrored KY histories). Resolving gaps is Milestone 2 scope.",
+    "task_4": "Complete — full read-only live acceptance: authenticated session executed the entire coverage-read contract against production data with zero errors. Visual browser/mobile render acceptance remains Phase 15 scope and is not claimed."
+  },
+  "data_boundary": {
+    "client_job_shared_records_modified": false,
+    "no_writes": true,
+    "no_llm_calls": true,
+    "no_authority_approval": true,
+    "frontend_published": false
+  },
+  "checked_at": "2026-10-22T20:23:54.332Z"
+}
