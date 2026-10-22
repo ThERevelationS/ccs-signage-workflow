@@ -634,14 +634,16 @@ export default function QuickClockSection({
       scheduleDisplayReset(5000);
       return data;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("clock_in", email);
-      setPersistenceError(err.message || "Clock-in was not confirmed by the server.");
-      setRecognitionStatus(err.retrySameRequest
-        ? "Clock-in may have been saved. Retry the same action to recover safely."
-        : "Clock-in blocked. Review the message below.");
+      if (!shouldRetainRequest(err)) clearRequest("clock_in", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setPersistenceError(err.message || "Clock-in was not confirmed by the server.");
+        setRecognitionStatus(err.retrySameRequest
+          ? "Clock-in may have been saved. Retry the same action to recover safely."
+          : "Clock-in blocked. Review the message below.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
