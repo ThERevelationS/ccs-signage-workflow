@@ -166,6 +166,25 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const builderHeadingRef = useRef(null);
   const reloadButtonRef = useRef(null);
   const checklistSaveInFlight = useRef(null);
+  // Catalog mutations (create/rename/delete/duplicate/reorder) all write the
+  // same entity rows and settings maps. Serialize them — plus checklist saves —
+  // so a repeated click cannot double-submit and two writes cannot collide on
+  // the same optimistic-concurrency record while either is still in flight.
+  const catalogActionInFlightRef = useRef(false);
+  const catalogActionBlockedNotice = () => {
+    setNoticeDialog({
+      title: "Template change still saving",
+      message: "Another template change is still saving. Wait for it to finish, then try again.",
+    });
+  };
+  const beginCatalogAction = () => {
+    if (catalogActionInFlightRef.current || checklistSaveInFlight.current) {
+      catalogActionBlockedNotice();
+      return false;
+    }
+    catalogActionInFlightRef.current = true;
+    return true;
+  };
   const subTemplateDraftRef = useRef(null);
   const productTypeDraftRef = useRef(null);
   subTemplateDraftRef.current = { id: selectedSubTemplate, items: subTemplateChecklistItems };
@@ -285,7 +304,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const saveDropdownRename = async (condition) => {
     const submittedDraft = editingDropdownName;
     const name = submittedDraft.trim();
-    if (!name) return;
+    if (!name || !beginCatalogAction()) return;
     try {
       await saveDropdownConditions(dropdownConditions.map(item => item.id === condition.id ? { ...item, name } : item));
       // Only dismiss the rename editor when it still shows the draft this
@@ -295,19 +314,23 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       }
     } catch (error) {
       console.error("Error renaming condition:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const createDropdownCondition = async () => {
     const submittedName = newDropdownName;
     const name = submittedName.trim();
-    if (!name) return;
+    if (!name || !beginCatalogAction()) return;
     try {
       await saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name, is_completed: false, order: dropdownConditions.length }]);
       // Keep any newer name typed while the create was still in flight.
       setNewDropdownName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating condition:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -499,7 +522,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const createSubTemplate = async () => {
     const submittedName = newSubTemplateName;
     const name = submittedName.trim();
-    if (!name) return;
+    if (!name || !beginCatalogAction()) return;
     setPersistenceError("");
     try {
       const result = await createChecklistSubItemIfAbsent({
@@ -516,10 +539,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     } catch (error) {
       console.error("Error creating sub-template:", error);
       setPersistenceError(error?.message || "The sub-template could not be created safely.");
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const performDeleteSubTemplate = async (subTemplate) => {
+    if (!beginCatalogAction()) return;
     setPersistenceError("");
     try {
       await deleteChecklistSubItemIfUnchanged({
@@ -544,6 +570,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       console.error("Error deleting sub-template:", error);
       setPersistenceError(error?.message || "This sub-template changed in another session and was not deleted.");
       await loadData();
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -582,6 +610,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const runConfirmedAction = async () => {
     if (!confirmDialog?.onConfirm || isConfirming) return;
+    if (catalogActionInFlightRef.current || checklistSaveInFlight.current) {
+      catalogActionBlockedNotice();
+      return;
+    }
     setIsConfirming(true);
     try {
       await confirmDialog.onConfirm();
@@ -595,12 +627,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const blockNavigationWhileSaving = () => {
-    if (!checklistSaveInFlight.current && !reloadInFlightRef.current) return false;
+    if (!checklistSaveInFlight.current && !catalogActionInFlightRef.current && !reloadInFlightRef.current) return false;
     setNoticeDialog({
-      title: reloadInFlightRef.current ? "Checklist reload in progress" : "Checklist save in progress",
+      title: reloadInFlightRef.current ? "Checklist reload in progress" : "Template change in progress",
       message: reloadInFlightRef.current
         ? "Finish reloading your checklist before switching editors, changing tabs, or closing the builder."
-        : "Finish saving your checklist before switching editors, changing tabs, or closing the builder.",
+        : "Finish the current save before switching editors, changing tabs, or closing the builder.",
     });
     return true;
   };
@@ -624,6 +656,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const submittedDraft = String(nextName || '');
     const name = submittedDraft.trim();
     if (!subTemplate?.id || !name) return false;
+    if (!beginCatalogAction()) return false;
     setPersistenceError("");
     try {
       const duplicate = subTemplates.find(st => st.id !== subTemplate.id && String(st.name || '').trim().toLowerCase() === name.toLowerCase());
@@ -648,11 +681,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       setPersistenceError(error?.message || "This sub-template changed in another session. Reload before renaming it.");
       await loadData();
       return false;
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const updateSubTemplateProductTypes = async (subTemplate, nextApplies) => {
     if (!subTemplate?.id) return false;
+    if (!beginCatalogAction()) return false;
     setPersistenceError("");
     try {
       const saved = await updateChecklistSubItemIfUnchanged({
@@ -669,11 +705,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       setPersistenceError(error?.message || "This sub-template changed in another session. Latest data was reloaded.");
       await loadData();
       return false;
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const saveSubTemplateChecklist = async () => {
     if (!selectedSubTemplate || checklistSaveInFlight.current) return;
+    if (catalogActionInFlightRef.current) {
+      catalogActionBlockedNotice();
+      return;
+    }
     const snapshot = { kind: 'subTemplate', id: selectedSubTemplate, items: subTemplateChecklistItems };
     checklistSaveInFlight.current = snapshot;
     setSavingChecklist(snapshot.kind);
@@ -697,6 +739,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const duplicateSubTemplate = async (subTemplate) => {
+    if (!beginCatalogAction()) return;
     setPersistenceError("");
     const names = new Set(subTemplates.map(st => String(st.name || '').trim().toLowerCase()));
     let copyName = `${subTemplate.name} (Copy)`;
@@ -735,6 +778,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       console.error("Error duplicating sub-template:", error);
       setPersistenceError(error?.message || "The sub-template copy could not be completed safely.");
       await loadData();
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -742,13 +787,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const createProductType = async () => {
     const submittedName = newProductTypeName;
     const name = submittedName.trim();
-    if (!name) return;
+    if (!name || !beginCatalogAction()) return;
     try {
       await saveProductTypes([...productTypes, name]);
       // Keep any newer name typed while the create was still in flight.
       setNewProductTypeName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating product checklist:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -756,6 +803,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const submittedDraft = String(nextName || '');
     const newName = submittedDraft.trim();
     if (!type || !newName) return;
+    if (!beginCatalogAction()) return;
     try {
       await saveProductTypes(productTypes.map(t => (t === type ? newName : t)));
       if (productTypeTemplates[type]) {
@@ -775,6 +823,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       }
     } catch (error) {
       console.error("Error renaming product checklist:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -813,7 +863,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     || Boolean(newItemText.trim())
     || hasUnsavedNameDrafts;
   const reloadLatest = async () => {
-    if (reloadInFlightRef.current || checklistSaveInFlight.current) return;
+    if (reloadInFlightRef.current || checklistSaveInFlight.current || catalogActionInFlightRef.current) return;
     reloadInFlightRef.current = true;
     setIsReloading(true);
     try {
@@ -913,6 +963,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const saveProductTypeTemplate = async () => {
     if (!selectedProductType || checklistSaveInFlight.current) return;
+    if (catalogActionInFlightRef.current) {
+      catalogActionBlockedNotice();
+      return;
+    }
     const snapshot = { kind: 'productType', id: selectedProductType, items: productTypeItems };
     checklistSaveInFlight.current = snapshot;
     setSavingChecklist(snapshot.kind);
@@ -934,6 +988,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const duplicateProductTypeTemplate = async (productType) => {
+    if (!beginCatalogAction()) return;
     const names = new Set(productTypes.map(t => String(t || '').trim().toLowerCase()));
     let newTypeName = `${productType} (Copy)`;
     let suffix = 2;
@@ -950,6 +1005,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       await saveProductTypes([...productTypes, newTypeName]);
     } catch (error) {
       console.error("Error duplicating product checklist:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -1042,6 +1099,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const handleSubTemplateDragEnd = async (result) => {
     if (isSubTemplateReordering || !result.destination || result.source.index === result.destination.index) return;
+    if (!beginCatalogAction()) return;
     const reordered = Array.from(subTemplates);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
@@ -1067,11 +1125,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       await loadData();
     } finally {
       setIsSubTemplateReordering(false);
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const handleProductTypeDragEnd = async (result) => {
-    if (!result.destination) return;
+    if (!result.destination || !beginCatalogAction()) return;
     const reordered = Array.from(productTypes);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
@@ -1079,6 +1138,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       await saveProductTypes(reordered);
     } catch (error) {
       console.error("Error reordering product checklists:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -1102,11 +1163,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const handleCreateCustomDropdown = () => {
-    if (!customDropdownValue.trim()) return;
+    if (!customDropdownValue.trim() || !beginCatalogAction()) return;
     const newDropdown = { id: Date.now().toString(), name: customDropdownValue.trim() };
-    saveDropdownConditions([...dropdownConditions, newDropdown]).catch(error => {
-      console.error("Error creating condition:", error);
-    });
+    saveDropdownConditions([...dropdownConditions, newDropdown])
+      .catch(error => {
+        console.error("Error creating condition:", error);
+      })
+      .finally(() => {
+        catalogActionInFlightRef.current = false;
+      });
     if (showOtherPopup) handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, newDropdown.id);
     setCustomDropdownValue("");
   };
