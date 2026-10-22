@@ -245,8 +245,8 @@ export default function PayPeriodManager({
     persistPeriodRequest(key, requestId, payload, true);
   };
 
-  const clearRequestId = (key) => {
-    clearStoredPeriodRequestId(key);
+  const clearRequestId = (key, expectedRequestId = "") => {
+    clearStoredPeriodRequestId(key, expectedRequestId);
   };
 
   const invoke = async (payload) => {
