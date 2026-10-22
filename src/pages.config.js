@@ -61,6 +61,7 @@ import MainWorkflow from './pages/MainWorkflow';
 import MondayMorningMeeting from './pages/MondayMorningMeeting';
 import MyWorkflow from './pages/MyWorkflow';
 import NewUserSetup from './pages/NewUserSetup';
+import Invoices from './pages/Invoices';
 import Opportunities from './pages/Opportunities';
 import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
@@ -91,6 +92,7 @@ export const PAGES = {
     "MondayMorningMeeting": MondayMorningMeeting,
     "MyWorkflow": MyWorkflow,
     "NewUserSetup": NewUserSetup,
+    "Invoices": Invoices,
     "Opportunities": Opportunities,
     "OrderForm": OrderForm,
     "Permitting": Permitting,
