@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -56,8 +56,10 @@ export default function FleetMaintenance() {
   const [bulkPlannerOpen, setBulkPlannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const loadSequenceRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
@@ -71,6 +73,7 @@ export default function FleetMaintenance() {
         listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
         base44.auth.me().catch(() => null),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setTasks(t || []);
       setEquipment(e || []);
       setActiveWorkOrders([...(openWos || []), ...(assignedWos || []), ...(inProgressWos || [])]);
@@ -78,9 +81,9 @@ export default function FleetMaintenance() {
       setFluids(f || []);
       setCurrentUser(u || null);
     } catch (e) {
-      setError(e?.message || "Unable to load Fleet maintenance schedules.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet maintenance schedules.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, []);
 
