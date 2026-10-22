@@ -1220,15 +1220,17 @@ export default function QuickClockSection({
 
       throw new Error("Punch resolution returned an unexpected authoritative state. Reload before continuing.");
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("resolve_punch_exception", email);
-      const message = err?.message || "Punch resolution was not confirmed by the server.";
-      setPunchResolutionError(message);
-      setRecognitionStatus(err?.retrySameRequest
-        ? "Punch resolution may have been saved. Retry the same response to recover safely."
-        : "Punch resolution is blocked. Review the message in the window.");
+      if (!shouldRetainRequest(err)) clearRequest("resolve_punch_exception", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        const message = err?.message || "Punch resolution was not confirmed by the server.";
+        setPunchResolutionError(message);
+        setRecognitionStatus(err?.retrySameRequest
+          ? "Punch resolution may have been saved. Retry the same response to recover safely."
+          : "Punch resolution is blocked. Review the message in the window.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
