@@ -478,7 +478,7 @@ export default function TimeClockAdmin() {
       return;
     }
     if (recoveredRequestId && !recoveredPayload) {
-      clearAdminRequestId(requestAction, entry?.id);
+      clearAdminRequestId(requestAction, entry?.id, recoveredRequestId);
       clearApprovalRetry(decision, entry?.id);
     }
     const requestId = newRequestId();
