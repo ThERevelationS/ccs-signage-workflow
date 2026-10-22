@@ -1178,22 +1178,29 @@ export default function QuickClockSection({
     }
 
     const email = selectedUser.email;
+    const entryId = String(activeEntry.id);
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("resolve_punch_exception", email);
     const credential = credentialRef.current;
     const user = selectedUser;
+    let actionEpoch = workViewEpochRef.current;
     setPunchResolutionError("");
     setPersistenceError("");
     setIsLoading(true);
 
     try {
-      const result = await invokeTimeClock({
+      const pending = invokeTimeClock({
         action: "resolve_punch_exception",
         request_id: requestId,
         response,
         ...(claimedClockOut ? { claimed_clock_out: claimedClockOut } : {}),
         ...credentialPayload(credential, email),
       });
-      clearRequest("resolve_punch_exception", email);
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertPunchResolutionAcknowledgementIdentity(result, email, entryId);
+      clearRequest("resolve_punch_exception", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
 
       if (result?.worked_through === true && result?.status === "clocked_in") {
         setPunchResolution(null);
