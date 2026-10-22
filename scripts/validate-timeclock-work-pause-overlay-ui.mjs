@@ -213,4 +213,71 @@ assert.doesNotMatch(visible(identityRenderer), /WORK PAUSED/,
   'Stale previous-employee response must not show a pause guard when the current employee is working');
 console.log('PASS old employee paused status cannot reopen guard for newly signed-in working employee');
 await act(async () => { identityRenderer.unmount(); });
-console.log('PASS 6/6 Work Pause overlay session/refresh/event scenarios');
+
+// A change event carries only an invalidation signal now: while a Resume
+// acknowledgement is outstanding the payload may not clear the guard, and the
+// deferred invalidation re-verifies status once the request settles.
+let fenceRenderer;
+const fenceStart = calls.length;
+await act(async () => {
+  fenceRenderer = TestRenderer.create(React.createElement(Overlay, propsFor(first, 'session-fence-A')));
+});
+assert.equal(calls.length, fenceStart + 1);
+await act(async () => { calls.at(-1).resolve(paused(first, 'fence-A')); });
+assert.match(visible(fenceRenderer), /WORK PAUSED/);
+const fenceResume = () => fenceRenderer.root.findAllByType(Button).find((node) =>
+  [node.props.children].flat(Infinity).includes('Resume Work'));
+let fenceAttempt;
+await act(async () => { fenceAttempt = fenceResume().props.onClick(); });
+const fenceResumeIndex = calls.length - 1;
+assert.equal(calls[fenceResumeIndex].payload.action, 'work_pause_resume');
+await act(async () => {
+  listeners.get('ccs-timeclock-work-pause-changed')({
+    detail: { success: true, status: 'clocked_in', work_pause_status: 'working',
+      user: first, entry: { user_email: first.email } },
+  });
+});
+assert.match(visible(fenceRenderer), /WORK PAUSED/,
+  'A working event payload may not clear the guard while Resume is in flight');
+assert.equal(calls.length, fenceResumeIndex + 1,
+  'Invalidation during an in-flight Resume is deferred, not dropped');
+await act(async () => {
+  calls[fenceResumeIndex].reject(new Error('Synthetic lost acknowledgement'));
+  await fenceAttempt;
+});
+assert.match(visible(fenceRenderer), /WORK PAUSED/);
+assert.equal(calls.at(-1).payload.action, 'status',
+  'The deferred invalidation must re-verify status after the Resume settles');
+await act(async () => { calls.at(-1).resolve(working(first)); });
+assert.doesNotMatch(visible(fenceRenderer), /WORK PAUSED/);
+console.log('PASS same-employee event during Resume only invalidates; settled request re-verifies status');
+await act(async () => { fenceRenderer.unmount(); });
+
+// A paused payload for a working employee is unverified: it may trigger a
+// status read but must never fabricate the guard by itself.
+let passiveRenderer;
+const passiveStart = calls.length;
+await act(async () => {
+  passiveRenderer = TestRenderer.create(React.createElement(Overlay, propsFor(second, 'session-passive-B')));
+});
+assert.equal(calls.length, passiveStart + 1);
+await act(async () => { calls.at(-1).resolve(working(second)); });
+assert.doesNotMatch(visible(passiveRenderer), /WORK PAUSED/);
+const beforePassiveEvent = calls.length;
+await act(async () => {
+  listeners.get('ccs-timeclock-work-pause-changed')({
+    detail: { success: true, status: 'clocked_in', work_pause_status: 'paused',
+      user: second, entry: { user_email: second.email },
+      active_work_pause: { id: 'pause-unverified', started_at: '2026-10-13T13:00:00.000Z' } },
+  });
+});
+assert.equal(calls.length, beforePassiveEvent + 1);
+assert.equal(calls.at(-1).payload.action, 'status',
+  'A pause-changed event must trigger verification, not trusted state');
+assert.doesNotMatch(visible(passiveRenderer), /WORK PAUSED/,
+  'Event payload alone may not open the paused guard');
+await act(async () => { calls.at(-1).resolve(working(second)); });
+assert.doesNotMatch(visible(passiveRenderer), /WORK PAUSED/);
+console.log('PASS unverified paused event payload cannot fabricate the guard');
+await act(async () => { passiveRenderer.unmount(); });
+console.log('PASS 8/8 Work Pause overlay session/refresh/event scenarios');
