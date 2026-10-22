@@ -143,6 +143,8 @@ function normalizeOrderRequestTypes(values) {
   return normalized;
 }
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
+const ORDER_AUX_RELOAD_MS = 5 * 60 * 1000;
+const ORDER_FOCUS_RELOAD_THROTTLE_MS = 15 * 1000;
 
 const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
@@ -285,6 +287,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const syncInFlightRef = useRef(false);
   const manualPullInFlightRef = useRef(false);
   const orderLoadGenerationRef = useRef(0);
+  const loadInFlightRef = useRef(false); // Background loads may never stack; explicit loads may overlap.
+  const lastLoadStartedAtRef = useRef(0);
+  const cachedWorkOrdersRef = useRef(null);
+  const cachedUsersRef = useRef(null);
+  const lastAuxLoadAtRef = useRef(0); // Last successful WorkOrder + authorized-user read.
   const orderLocalEditGenerationRef = useRef(0); // Fence reads begun before a local edit/save.
   const customerNameDraftOrderRef = useRef(null); // Typing does not enter pendingChanges until blur.
   const [customerDraftActive, setCustomerDraftActive] = useState(false);
@@ -384,9 +391,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     // or rebuild their durable pending-SMARTSHEET marker queue from stale data.
     if ((manualPullInFlightRef.current && !manualPullReload) ||
         (importInFlightRef.current && !importReload) || hasActiveOrderEdits()) return false;
+    // Quiet background reloads (timers, focus/visibility/online) must never
+    // stack: while one is still paging entity rows another must not start or
+    // slow retrying pages multiply into a read avalanche. Explicit loads
+    // (loading spinner, manual pull, import, Retry) still run and may overlap;
+    // the generation fence below still discards stale commits.
+    const explicitLoad = showLoading || manualPullReload || importReload;
+    if (!explicitLoad && loadInFlightRef.current) return false;
+    const ownsLoadSlot = !loadInFlightRef.current;
+    if (ownsLoadSlot) loadInFlightRef.current = true;
+    lastLoadStartedAtRef.current = Date.now();
     const requestGeneration = ++orderLoadGenerationRef.current;
     const startedEditGeneration = orderLocalEditGenerationRef.current;
     if (showLoading && orders.length === 0) setIsLoading(true);
+    // Work Orders and authorized users change rarely; re-paging thousands of
+    // WorkOrder rows on every background reload is what tripped the entity
+    // read limit. Re-read them on explicit loads or once they are stale.
+    const reloadAux = explicitLoad ||
+      !lastAuxLoadAtRef.current || Date.now() - lastAuxLoadAtRef.current > ORDER_AUX_RELOAD_MS;
     // Keep an unverified-read error visible until a complete current reload
     // succeeds. Starting a retry must not make the toolbar Sync actionable.
     try {
@@ -399,13 +421,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           sort: "row_number",
           label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
         }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: { $ne: true }, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Order Spreadsheet Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
+        reloadAux
+          ? loadAllEntityRows({
+            entity: WorkOrder,
+            query: { completed: { $ne: true }, deleted: { $ne: true } },
+            sort: "created_date",
+            label: "Order Spreadsheet Work Orders",
+          })
+          : Promise.resolve(cachedWorkOrdersRef.current || []),
+        reloadAux
+          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
+          : Promise.resolve(cachedUsersRef.current || [])
       ]);
       // A manual Sync or a newer refresh can start while these reads are
       // in flight. Never let the older response replace the newer snapshot.
@@ -420,6 +446,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         latestEditGeneration: orderLocalEditGenerationRef.current,
         localEditInProgress: hasActiveOrderEdits(),
       })) return false;
+      if (reloadAux) {
+        cachedWorkOrdersRef.current = workOrdersData;
+        cachedUsersRef.current = usersData;
+        lastAuxLoadAtRef.current = Date.now();
+      }
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
@@ -458,13 +489,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setReadError(error?.message || "Orders could not be verified completely.");
       setIsLoading(false);
       return false;
+    } finally {
+      if (ownsLoadSlot) loadInFlightRef.current = false;
     }
   };
 
+  // Rapid focus/visibility churn must not each start a multi-page read; one
+  // quiet reload per window is enough while a load ran moments ago.
   useEffect(() => {
-    const refreshAuthoritativeOrders = () => loadData(false);
+    const refreshAuthoritativeOrders = () => {
+      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
+      loadData(false);
+    };
     const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') loadData(false);
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
+      loadData(false);
     };
     window.addEventListener('online', refreshAuthoritativeOrders);
     window.addEventListener('focus', refreshAuthoritativeOrders);
@@ -480,7 +520,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (pendingSyncCount <= 0) return undefined;
     // While durable Order markers are pending, reconcile them frequently so a
     // refreshed/reopened tab learns promptly which rows the backend completed.
-    const interval = setInterval(() => loadData(false), 5000);
+    const interval = setInterval(() => loadData(false), 30000);
     return () => clearInterval(interval);
   }, [pendingSyncCount, workOrderFilter]);
 
