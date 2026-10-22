@@ -1,5 +1,30 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — Phase 10 Milestone 1 of 3 completed via authenticated live read-only acceptance (October 22, 2026)
+
+Phase 10 → Milestone 1 of 3 — Identity and office reconciliation — COMPLETE; all 4 tasks complete. Next: Milestone 2 of 3 — OH/KY collection expansion, Ohio first.
+Starting HEAD: 6fb244f8096d8d755b9dc1a543b02a79aeed7915 (the Permits-page discovery checkpoint from the prior unit). All newer CCS work preserved.
+
+What was done:
+- Replicated the exact readRecordedCoverage contract from PermittingRecordedCoverage.jsx against live entities through npx base44@latest exec (authenticated brettheinlein1@gmail.com / admin), executing the actual shipped reconciler modules: SourceCollectionQueue 1,775 rows; JurisdictionProfile 1,080 (up from 474 on Oct 7 via dispatcher research); PermitLocality 2; PermittingOfficeAuthorityReview 4; electrical source metadata 0. Zero errors, zero writes, zero LLM.
+- Recorded reconciliation: 1,003 single_profile_candidate; 6 duplicate_queue_identity; 752 profile_missing; 1 ambiguous_profiles; 13 identity_incomplete; 5 invalid profiles; 67 unmatched profiles — all surfaced as explicit review classes.
+- Official inventory fully accounted: all 3,647 retained rows (2,318 OH + 530 KY candidates, 25 status/relationship reviews, 774 statistical references). Queue missing candidates 1,549; profile missing candidates 2,015 — exposed missing-candidate lists, not hidden gaps.
+- Saved locality profile links: 2 OH localities (City of Cincinnati, Deerfield), both unlinked — flagged, no name-based inference.
+- Electrical issuer/inspection separation accepted live: distinct per-role counters; both saved OH localities explicitly missing both electrical_permit and electrical_inspection (4 explicit gaps); zero role conflation; legacy broad role absent.
+- Authority events: 4 events form 3 committed KY relation histories (Alexandria sign_permit + zoning, Campbell County sign_permit) with no saved locality mirror — explicit unmirrored items, not errors. Zero conflicts/uncommitted/electrical-source issues.
+- Deployed frontend serves 200 text/html at the app origin.
+
+Outcome: Task 2 (exhaustive geographic identity and office reconciliation) and Task 4 (full read-only live acceptance) marked Complete in docs/permitting-intelligence-phased-roadmap.md; milestone header advanced to Milestone 2. Gap resolution (collecting/approving per-locality documents and authorities) is Milestone 2 scope, not a Milestone 1 exit requirement per the October 7 corrected scope.
+Evidence: docs/permitting-milestone1-live-acceptance-2026-10-22.json.
+Not verified here: visual browser/mobile render, employee UI session, native mobile/print — those remain Phase 15 acceptance items and are not claimed.
+
+Next ONE chunk:
+Begin Milestone 2 — Ohio-first collection expansion from the explicit gap inventory (2,318 OH candidates; missing-candidate lists and identity-review items are recorded in the acceptance receipt and live read). Reread dispatch controls before any research; current day cap 40 with dispatched_today already 40 — deterministic discovery routes only unless the day key resets. No replays of completed Sharonville saved-document scans; no authority approval without Brett.
+
+Checkpoint name for this unit: “Permitting Milestone 1 identity and office reconciliation live acceptance complete”. Exact ID/Git appear in the checkpoint receipt/final report. Older sections below are historical.
+
+
+
 ## Latest completed unit — CLI-authenticated Sharonville Permits discovery and live timestamp acceptance (October 22, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
