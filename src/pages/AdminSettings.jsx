@@ -1161,9 +1161,10 @@ export default function AdminSettings() {
           result?.id !== rule.id || result.enabled !== operation.enabled || !result.updated_date) {
         throw new Error("Automation operation receipt could not be verified.");
       }
+      await loadAutomations();
+      if (!owns()) return;
       automationOperationRef.current = null;
       setAutomationOperation(null);
-      await loadAutomations();
     } catch {
       if (!owns()) return;
       operation.phase = "uncertain";
@@ -2292,7 +2293,7 @@ export default function AdminSettings() {
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" disabled={automationSaving} onClick={() => closeAutomationEditor(false)}>Close editor</Button>
                 {!automationUncertain && <Button variant="outline" disabled={automationSaving} onClick={discardAutomationDraft}>Discard draft</Button>}
-                <Button onClick={handleSave} disabled={!!automationOperation || !!automationUncertain || automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
+                <Button onClick={handleSave} disabled={!!automationUncertain || automationSaving || !!automationOperation || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
