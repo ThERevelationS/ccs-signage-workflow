@@ -542,6 +542,21 @@ Deno.serve(async (req) => {
 
       const displayName = clean(customer?.company_name || opportunity.customer_display_name) || "Customer";
       const projectName = clean(opportunity.title) || `${displayName} — New estimate`;
+      const requirementSummary = [
+        ["Survey", snapshot.survey_requirement],
+        ["Permit", snapshot.permit_requirement],
+        ["Install", snapshot.installation_requirement],
+        ["Removal", snapshot.removal_requirement],
+        ["Electrical", snapshot.electrical_requirement],
+      ]
+        .filter(([, v]) => v && v !== "unknown" && v !== "na")
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(" · ");
+      const notesText = [
+        clean(snapshot.job_description),
+        requirementSummary ? `Requirements — ${requirementSummary}` : "",
+        clean(snapshot.notes),
+      ].filter(Boolean).join("\n");
       const estimateData: any = {
         creation_request_key: estimateKey,
         project_name: projectName,
@@ -550,6 +565,15 @@ Deno.serve(async (req) => {
         opportunity_id: opportunityId,
         estimating_request_id: clean(request.id),
         salesperson: clean(opportunity.salesperson),
+        site_address: clean(snapshot.captured_site_address),
+        contact_name: clean(snapshot.captured_contact_name),
+        order_contact: clean(snapshot.captured_contact_name),
+        contact_email: clean(snapshot.captured_contact_email),
+        contact_phone: clean(snapshot.captured_contact_phone),
+        office_phone: clean(snapshot.captured_contact_phone || customer?.company_phone),
+        target_install_date: clean(snapshot.desired_install_date || snapshot.desired_completion_date),
+        priority: clean(opportunity.priority) || "normal",
+        notes: notesText,
         status: "draft",
       };
       const estimateResult = await createFoundationRecordWithRecovery({
