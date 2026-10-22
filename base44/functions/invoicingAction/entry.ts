@@ -167,6 +167,12 @@ function agingSummary(invoices: any[]) {
   return summary;
 }
 
+function csvCell(value: any) {
+  const s = String(value ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+const csvRow = (cells: any[]) => cells.map(csvCell).join(",");
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -197,6 +203,59 @@ Deno.serve(async (req) => {
         .slice(0, 250)
         .map(invoiceSnapshot);
       return Response.json({ success: true, action, invoices, aging: agingSummary(rows) });
+    }
+
+    if (action === "export_ar") {
+      const status = clean(body?.status);
+      if (status && !INVOICE_STATUSES.includes(status)) throw bad("Unknown invoice status filter.");
+      const rows = await Invoice.filter(status ? { status } : {});
+      if (!Array.isArray(rows)) throw bad("Invoice lookup failed.", 500);
+      const query = clean(body?.query).toLowerCase();
+      const startDate = clean(body?.start_date);
+      const endDate = clean(body?.end_date);
+      const inRange = (r: any) => {
+        const d = clean(r?.issue_date || r?.created_date?.slice(0, 10));
+        return (!startDate || d >= startDate) && (!endDate || d <= endDate);
+      };
+      const invoices = rows
+        .filter((r: any) => (!query
+          || clean(r?.invoice_number).toLowerCase().includes(query)
+          || clean(r?.customer_display_name).toLowerCase().includes(query)) && inRange(r))
+        .sort((a: any, b: any) => clean(a?.invoice_number).localeCompare(clean(b?.invoice_number)));
+      const invoiceLines = [
+        csvRow(["Invoice Number", "Customer", "Issue Date", "Due Date", "Terms", "Item Description", "Qty", "Rate", "Line Total", "Subtotal", "Discount", "Tax", "Deposit Applied", "Total", "Amount Paid", "Balance Due", "Status"]),
+        ...invoices.flatMap((inv: any) => {
+          const items = Array.isArray(inv?.line_items) && inv.line_items.length ? inv.line_items : [{}];
+          return items.map((li: any, i: number) => csvRow([
+            inv.invoice_number, inv.customer_display_name, inv.issue_date, inv.due_date, inv.terms,
+            li.description || "", li.quantity ?? "", li.unit_price ?? "",
+            li.description ? money(num(li.quantity) * num(li.unit_price)) : "",
+            i === 0 ? inv.subtotal : "", i === 0 ? inv.discount_amount : "", i === 0 ? inv.tax_amount : "",
+            i === 0 ? inv.deposit_applied : "", i === 0 ? inv.total : "",
+            i === 0 ? inv.amount_paid : "", i === 0 ? inv.balance_due : "", i === 0 ? inv.status : "",
+          ]));
+        }),
+      ];
+      const payments = await Payment.filter({});
+      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const invoiceById = new Map(invoices.map((r: any) => [clean(r?.id), r]));
+      const paymentLines = [
+        csvRow(["Date", "Invoice Number", "Customer", "Amount", "Method", "Reference", "Status", "Notes"]),
+        ...payments
+          .filter((p: any) => invoiceById.has(clean(p?.invoice_id)))
+          .sort((a: any, b: any) => clean(a?.paid_date).localeCompare(clean(b?.paid_date)))
+          .map((p: any) => {
+            const inv = invoiceById.get(clean(p?.invoice_id));
+            return csvRow([p.paid_date, inv?.invoice_number, inv?.customer_display_name || p.customer_id, p.amount, p.method, p.reference_number, p.status, p.notes]);
+          }),
+      ];
+      return Response.json({
+        success: true,
+        action,
+        invoice_count: invoices.length,
+        invoices_csv: invoiceLines.join("\n"),
+        payments_csv: paymentLines.join("\n"),
+      });
     }
 
     if (action === "get_invoice") {
