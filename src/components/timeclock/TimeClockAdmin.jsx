@@ -83,8 +83,12 @@ function persistAdminRequestId(action, entryId, requestId) {
   try { sessionStorage.setItem(adminRequestStorageKey(action, entryId), requestId); } catch {}
 }
 
-function clearAdminRequestId(action, entryId) {
-  try { sessionStorage.removeItem(adminRequestStorageKey(action, entryId)); } catch {}
+function clearAdminRequestId(action, entryId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId &&
+        sessionStorage.getItem(adminRequestStorageKey(action, entryId)) !== expectedRequestId) return;
+    sessionStorage.removeItem(adminRequestStorageKey(action, entryId));
+  } catch {}
 }
 
 function approvalRetryStorageKey(decision, entryId) {
