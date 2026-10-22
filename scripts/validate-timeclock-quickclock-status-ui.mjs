@@ -22,6 +22,11 @@ let blockRequestIdStorage = false;
 const fakeWindow = {
   addEventListener(name, listener) { events.set(name, listener); },
   removeEventListener(name, listener) { if (events.get(name) === listener) events.delete(name); },
+  dispatchEvent(event) {
+    const listener = events.get(event?.type);
+    if (listener) listener(event);
+    return true;
+  },
 };
 const fakeDocument = {
   visibilityState: 'visible',
@@ -64,6 +69,14 @@ vm.runInNewContext(compiled, {
   })[id] || require(id),
   console, Promise, Date, Math, crypto: globalThis.crypto,
   window: fakeWindow, document: fakeDocument,
+  CustomEvent: class CustomEvent {
+    constructor(type, init) { this.type = type; Object.assign(this, init || {}); }
+  },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
   setTimeout: (callback, ms) => {
     const id = ++nextTimerId;
     timers.set(id, { callback, ms });
