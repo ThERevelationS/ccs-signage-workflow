@@ -68,7 +68,6 @@ export default function FleetAnalytics() {
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
 
   const loadSequenceRef = useRef(0);
-  const fuelSequenceRef = useRef(0);
 
   const load = useCallback(async () => {
     const requestSequence = ++loadSequenceRef.current;
@@ -111,21 +110,20 @@ export default function FleetAnalytics() {
   useEffect(() => {
     if (user?.role !== "admin") return;
     let mounted = true;
-    const fuelRequest = ++fuelSequenceRef.current;
     setFuelLoading(true);
     setFuelError("");
     base44.functions.invoke("fleetFuelAction", { action: "summary", start_date: `${selectedYear}-01-01`, end_date: `${selectedYear}-12-31` })
       .then(({ data }) => {
-        if (!mounted || fuelRequest !== fuelSequenceRef.current) return;
+        if (!mounted) return;
         if (data?.error) throw new Error(data.error);
         setFuelSummary(data || null);
       })
       .catch(error => {
-        if (!mounted || fuelRequest !== fuelSequenceRef.current) return;
+        if (!mounted) return;
         setFuelSummary(null);
         setFuelError(error?.message || "Fuel and operating-cost analytics are temporarily unavailable.");
       })
-      .finally(() => { if (mounted && fuelRequest === fuelSequenceRef.current) setFuelLoading(false); });
+      .finally(() => { if (mounted) setFuelLoading(false); });
     return () => { mounted = false; };
   }, [user?.role, selectedYear]);
 
