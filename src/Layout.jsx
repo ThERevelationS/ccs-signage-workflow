@@ -86,7 +86,7 @@ const meetingsDropdownItems = [
   { title: "Change Orders", url: createPageUrl("ChangeOrders"), icon: FileDiff, accent: "#F97316" },
   { title: "Purchase Orders", url: createPageUrl("PurchaseOrders"), icon: Package, accent: "#0EA5E9" },
   { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
-  { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
+  { title: "Inventory", url: createPageUrl("Inventory"), icon: Package, accent: "#84CC16" },
   { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
 
 ];
@@ -201,6 +201,7 @@ const ROOT_ROUTES = [
   createPageUrl("ChangeOrders"),
   createPageUrl("PurchaseOrders"),
   createPageUrl("JobCosting"),
+  createPageUrl("Inventory"),
   createPageUrl("OrderForm"),
   createPageUrl("TimeClock"),
   createPageUrl("AdminSettings"),
