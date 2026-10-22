@@ -32,6 +32,7 @@ import {
   LogIn,
   GitBranch,
   Receipt,
+  FileDiff,
   Minimize2,
   ChevronsLeft,
   ChevronsRight,
@@ -81,6 +82,7 @@ const meetingsDropdownItems = [
   { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, accent: "#A3E635" },
   { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, accent: "#3B82F6" },
   { title: "Invoices", url: createPageUrl("Invoices"), icon: Receipt, accent: "#10B981" },
+  { title: "Change Orders", url: createPageUrl("ChangeOrders"), icon: FileDiff, accent: "#F97316" },
   { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
 
 ];
@@ -192,6 +194,7 @@ const ROOT_ROUTES = [
   createPageUrl("SalesPipeline"),
   createPageUrl("Opportunities"),
   createPageUrl("Invoices"),
+  createPageUrl("ChangeOrders"),
   createPageUrl("OrderForm"),
   createPageUrl("TimeClock"),
   createPageUrl("AdminSettings"),
