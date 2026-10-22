@@ -26,6 +26,17 @@
       ],
       "default": "draft"
     },
+    "billing_type": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "deposit",
+        "progress",
+        "final"
+      ],
+      "default": "standard",
+      "description": "Progress-billing classification. deposit/progress/final are produced by create_from_estimate; standard is a free-standing invoice."
+    },
     "customer_id": {
       "type": "string",
       "description": "Canonical Customer being billed."
