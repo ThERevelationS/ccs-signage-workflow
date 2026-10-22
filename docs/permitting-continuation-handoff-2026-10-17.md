@@ -13,6 +13,12 @@ Checkpoint for this unit: `6ada87ffa4e9ed854f92a637` / Git `3a55da01492423a2279d
 - Live state at receipt time — OH: 781 frontier profiles, 2,993 pending, 190 profiles with pending, 721 review gaps; KY: 113 frontier, 374 pending, 32 with pending, 69 review gaps. 163 seed-failed jurisdictions need corrected `permitting_url` before discovery can proceed.
 - Receipt: `docs/permitting-collection-expansion-2026-10-23.json`.
 
+## Continuation — drain runs 8–12 (later Oct 23)
+- 5 more bounded 150-cycle passes: **750 pages, 0 errors** — entity-read limits no longer triggered after the frontend read-throttling work shipped. Bounded-drain total: **~1,858 pages**.
+- Gap triage (all review gaps classified): `page_fetch_failed` OH 454 / KY 38 (mostly cross-host portals correctly out of same-host scope + JS-gated pages — structural, not retryable); `depth_frontier` OH 247 / KY 25 (intentional depth bound); `page_link_limit` OH 20 / KY 6. Gaps are predominantly correct evidence boundaries, not defects.
+- State at continuation end — OH: 2,774 pending / 151 profiles with pending / 970 review gaps; KY: 326 pending / 26 with pending / 104 gaps. Pending is now net-declining (drain rate exceeds re-seed harvest).
+- Receipt doc updated with runs 8–12, final counts, and the gap classification.
+
 ## State notes
 - Entity reads use `P.filter(query, sort, limit, offset)` positional args; `list({filter...})` silently ignores filters (produced identical bogus counts for both states once).
 - The scheduled dispatcher continues draining frontiers autonomously (Ohio-first, 5 profiles/cycle). Residual ~3,367 pending pages are an active bounded frontier, not an unattempted gap.
