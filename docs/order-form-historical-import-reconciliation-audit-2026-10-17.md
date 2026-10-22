@@ -85,4 +85,14 @@ Started from clean Git HEAD `a841b08a7a5fa58311ac2c0940555869a784a41b`. This pha
 
 This prevents the confirmed known-match overwrite. It does not reconcile historical records or establish durable global uniqueness across concurrent imports; the existing per-record conditional-write and uncertain-create protections remain in place. Repeated source rows require review, including legitimate repeated orders, because this workbook format supplies no authoritative per-row identity to distinguish them.
 
-Remaining release work: add an Order-specific Save & Sync batch bound without altering shared configuration, complete authenticated desktop/mobile acceptance, and verify a controlled Smartsheet round trip using an explicitly authorized safe record. Historical remote comparison and duplicate-claim review remain outstanding; no bulk marker repair is supported.
+## Order Save & Sync batch bound verified (2026-10-22)
+
+Started from clean Git HEAD `cf6b675bd36307810643389c1364242fd6ab1954`. Explicit Order Save & Sync now sends at most 25 Orders per click. The backend independently enforces that cap before coordinator acquisition or Smartsheet writes, while respecting a smaller configured shared limit. Shared configuration and other dataset consumers remain unchanged.
+
+- Untouched Orders retain their durable pending markers and remain in the browser queue. Completion and partial-result messages include all remaining queued Orders, including those outside the attempted batch.
+- A typed lower-limit response is accepted only with explicit failure, a valid limit, and `smartsheet_writes_attempted: false`. The browser learns that limit for the next user click; it never automatically replays the rejected batch.
+- The new regression script executes actual backend action, client, and UI sync code with synthetic fixtures. Its ten scenarios cover cap parity, preservation of other consumers, pre-write rejection, strict error validation, 60 Orders across three clicks, lost acknowledgments, partial completion, newer local revisions, smaller server settings, and same-tick repeated clicks.
+- Nine targeted Order sync regression scripts pass. Targeted ESLint reports no errors and seven existing unused-variable warnings. The backend esbuild bundle passes with runtime imports externalized, the production Vite build passes, and Git diff whitespace checks pass. Browser compatibility database age notices remain nonblocking.
+- No production Order, configuration, or Smartsheet records were changed during testing. No publish was performed.
+
+Remaining release work: complete authenticated desktop/mobile acceptance and verify a controlled Smartsheet round trip using an explicitly authorized safe record. Historical remote comparison and duplicate-claim review remain outstanding; no bulk marker repair is supported.
