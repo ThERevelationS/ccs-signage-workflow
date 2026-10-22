@@ -95,7 +95,7 @@ const backend = readFileSync(new URL('../base44/functions/smartsheetSyncAction/e
 assert.match(ui, /useState\("all_with_received"\)/);
 assert.match(ui, /value="open_only"/);
 assert.match(ui, /value="all_with_received"/);
-assert.match(ui, /\["all", "not_received"\]\.includes\(me\.order_form_filter\)/);
+assert.match(ui, /\["all", "not_received"\]\.includes\(saved\)/);
 assert.match(spreadsheet, /orderHistoryLayout\(filteredOrders, filterStatus\)/);
 assert.match(spreadsheet, /key="received-history-heading"/);
 assert.match(spreadsheet, /historyLayout\.orderIndexAtVirtual\(virtualRow\.index\)/);
