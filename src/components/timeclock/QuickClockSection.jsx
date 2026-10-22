@@ -1246,18 +1246,24 @@ export default function QuickClockSection({
     }
 
     const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("recover_missed_clock_in", email);
+    let actionEpoch = workViewEpochRef.current;
     setLateClockInError("");
     setPersistenceError("");
     setIsLoading(true);
     try {
-      const result = await invokeTimeClock({
+      const pending = invokeTimeClock({
         action: "recover_missed_clock_in",
         request_id: requestId,
         claimed_clock_in: claimedClockIn,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest("recover_missed_clock_in", email);
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertEmployeeAcknowledgement(result, email, "Missed Clock In recovery");
+      clearRequest("recover_missed_clock_in", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       if (result?.recovered_missed_clock_in !== true || result?.status !== "clocked_in" || !result?.entry?.id) {
         throw new Error("Missed Clock In recovery returned an unexpected authoritative state. Reload before continuing.");
       }
