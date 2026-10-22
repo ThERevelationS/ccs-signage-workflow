@@ -617,9 +617,9 @@ export default function TimeClockAdmin() {
       setTimeEntryError("Enter an archive reason before continuing.");
       return;
     }
+    const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
     setDeleteBusy(true);
     try {
-      const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
       if (!archiveRequestId) {
         setArchiveRequestId(requestId);
         persistAdminRequestId("admin_archive_entry", entry.id, requestId);
