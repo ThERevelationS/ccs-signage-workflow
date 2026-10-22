@@ -73,6 +73,7 @@ function poSnapshot(row: any) {
     id: clean(row?.id),
     po_number: clean(row?.po_number),
     status: clean(row?.status),
+    payment_status: clean(row?.payment_status) || "unpaid",
     vendor_name: clean(row?.vendor_name),
     work_order_id: clean(row?.work_order_id),
     estimate_id: clean(row?.estimate_id),
@@ -274,12 +275,55 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, purchase_order: updated });
     }
 
+    if (action === "mark_invoiced") {
+      const id = clean(body?.purchase_order_id);
+      const current = await PurchaseOrder.get(id).catch(() => null);
+      if (!current?.id) throw bad("Purchase order not found.", 404);
+      if (!["sent", "partially_received", "received"].includes(clean(current.status))) {
+        throw bad("A vendor bill can only be recorded on a sent or received purchase order.", 409);
+      }
+      if (clean(current.payment_status) === "paid") throw bad("This purchase order is already paid.", 409);
+      if (clean(current.payment_status) === "invoiced") throw bad("A vendor bill is already recorded on this purchase order.", 409);
+      const desired = {
+        payment_status: "invoiced",
+        vendor_invoice_number: clean(body?.vendor_invoice_number),
+        updated_by: actor,
+      };
+      const expected = expectedFoundationFields(current, desired);
+      const updated = await replaceFoundationFieldsIfUnchanged({
+        entity: PurchaseOrder, recordId: id, expectedFields: expected, nextFields: desired, label: "Purchase Order vendor bill",
+      });
+      return Response.json({ success: true, action, purchase_order: updated });
+    }
+
+    if (action === "mark_paid") {
+      const id = clean(body?.purchase_order_id);
+      const current = await PurchaseOrder.get(id).catch(() => null);
+      if (!current?.id) throw bad("Purchase order not found.", 404);
+      if (clean(current.payment_status) !== "invoiced") {
+        throw bad("Record the vendor bill before marking the purchase order paid.", 409);
+      }
+      const amount = num(body?.paid_amount, NaN);
+      const desired = {
+        payment_status: "paid",
+        paid_date: clean(body?.paid_date) || today(),
+        paid_amount: Number.isFinite(amount) && amount > 0 ? money(amount) : num(current.total),
+        updated_by: actor,
+      };
+      const expected = expectedFoundationFields(current, desired);
+      const updated = await replaceFoundationFieldsIfUnchanged({
+        entity: PurchaseOrder, recordId: id, expectedFields: expected, nextFields: desired, label: "Purchase Order payment",
+      });
+      return Response.json({ success: true, action, purchase_order: updated });
+    }
+
     if (action === "cancel_purchase_order") {
       const id = clean(body?.purchase_order_id);
       const current = await PurchaseOrder.get(id).catch(() => null);
       if (!current?.id) throw bad("Purchase order not found.", 404);
       if (clean(current.status) === "received") throw bad("Received purchase orders cannot be cancelled.", 409);
       if (clean(current.status) === "cancelled") throw bad("Purchase order is already cancelled.", 409);
+      if (clean(current.payment_status) === "paid") throw bad("Paid purchase orders cannot be cancelled.", 409);
       const desired = { status: "cancelled", updated_by: actor };
       const expected = expectedFoundationFields(current, desired);
       const updated = await replaceFoundationFieldsIfUnchanged({
