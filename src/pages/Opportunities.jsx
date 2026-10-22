@@ -294,6 +294,145 @@ function NewIntakeDialog({ sessionToken, onClose, onCreated }) {
   );
 }
 
+function PermitPanel({ sessionToken, detail, opportunity, onLinked }) {
+  const intakes = detail?.intakes || [];
+  const captured = intakes.find((row) => clean(row?.captured_fields?.site_address || row?.captured_fields?.install_location))?.captured_fields || {};
+  const linkedLocation = detail?.location || null;
+  const customer = detail?.customer || null;
+  const defaultAddress = clean(captured.site_address || captured.install_location)
+    || [clean(linkedLocation?.address_line_1), clean(linkedLocation?.city), clean(linkedLocation?.state)].filter(Boolean).join(", ")
+    || [clean(customer?.location_address_1), clean(customer?.location_city), clean(customer?.location_state)].filter(Boolean).join(", ");
+
+  const [address, setAddress] = useState(defaultAddress);
+  const [checking, setChecking] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const check = async () => {
+    const a = clean(address);
+    if (!a || checking) return;
+    setChecking(true);
+    setError("");
+    setResult(null);
+    try {
+      const r = await base44.functions.invoke("findLocalityByAddress", {
+        address: a,
+        session_token: sessionToken,
+      });
+      const data = r?.data || r;
+      if (data?.success === false) throw new Error(data?.error || "Jurisdiction lookup failed.");
+      setResult(data);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Jurisdiction lookup failed.");
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const suggested = result?.suggested_locality || null;
+  const resolved = result?.apply_allowed === true && clean(suggested?.jurisdiction_profile_id);
+
+  const saveLocation = async () => {
+    if (!resolved || saving || !clean(opportunity?.customer_id)) return;
+    setSaving(true);
+    setError("");
+    try {
+      const a = clean(address);
+      const created = await base44.entities.CustomerLocation.create({
+        customer_id: clean(opportunity.customer_id),
+        label: a,
+        address_line_1: a,
+        city: clean(suggested?.name),
+        state: clean(suggested?.state),
+        site_type: "install",
+        jurisdiction_profile_id: clean(suggested.jurisdiction_profile_id),
+        jurisdiction_name: clean(suggested?.name),
+        source_summary: { resolved_via: "findLocalityByAddress", resolved_from_opportunity_id: clean(opportunity.id), match_confidence: clean(result?.match_confidence), resolved_at: new Date().toISOString() },
+      });
+      const r = await base44.functions.invoke("opportunityWorkspaceAction", {
+        session_token: sessionToken,
+        action: "update_opportunity",
+        opportunity_id: opportunity.id,
+        baseline: opportunity,
+        fields: { location_id: clean(created?.id) },
+      });
+      const data = r?.data || r;
+      if (!data?.success) throw new Error(data?.error || "The location was saved but could not be linked.");
+      setSaved(true);
+      onLinked?.();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "The location could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4 dark:border-rose-900 dark:bg-rose-950/20">
+      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Permitting</h3>
+      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+        Requirement: <span className="font-semibold">{clean(opportunity?.permit_requirement) || "unknown"}</span>
+        {linkedLocation?.jurisdiction_name ? ` · site jurisdiction: ${linkedLocation.jurisdiction_name}` : ""}
+      </p>
+      {linkedLocation && (
+        <div className="mt-2 rounded-lg bg-white/70 p-2 text-xs text-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+          <span className="font-semibold">Site:</span> {clean(linkedLocation.label || linkedLocation.address_line_1)}
+        </div>
+      )}
+      <div className="mt-2 flex gap-2">
+        <input
+          className={inputCls}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Site address for jurisdiction lookup"
+        />
+        <button
+          type="button"
+          onClick={check}
+          disabled={checking || !clean(address)}
+          className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-300"
+        >
+          {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          Check
+        </button>
+      </div>
+      {result && (
+        <div className="mt-2 rounded-lg bg-white/80 p-2.5 text-xs dark:bg-slate-900/70">
+          {resolved ? (
+            <div className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300">
+              <CheckCircle2 className="h-4 w-4" />
+              {suggested.name}{suggested.state ? `, ${suggested.state}` : ""} — jurisdiction resolved ({clean(result.match_confidence) || "high"})
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
+              <AlertTriangle className="h-4 w-4" />
+              {clean(result.match_reason) || "No configured jurisdiction matched — manual review needed."}
+            </div>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            <a href="/Permitting?view=jurisdictions" className="font-semibold text-violet-700 hover:underline dark:text-violet-300">Open Permitting</a>
+            {resolved && !saved && clean(opportunity?.customer_id) && (
+              <button
+                type="button"
+                onClick={saveLocation}
+                disabled={saving}
+                className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline disabled:opacity-60 dark:text-emerald-300"
+              >
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Save as customer site
+              </button>
+            )}
+            {saved && <span className="font-semibold text-emerald-700 dark:text-emerald-300">Saved + linked</span>}
+          </div>
+        </div>
+      )}
+      {error && <div className="mt-2 text-xs font-medium text-red-700 dark:text-red-300">{error}</div>}
+    </div>
+  );
+}
+
 function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
   const navigate = useNavigate();
   const [detail, setDetail] = useState(null);
@@ -492,6 +631,13 @@ function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
                   </div>
                 )}
               </div>
+
+              <PermitPanel
+                sessionToken={sessionToken}
+                detail={detail}
+                opportunity={o}
+                onLinked={async () => { await load(); onChanged?.(); }}
+              />
 
               {requests.length > 0 && (
                 <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
