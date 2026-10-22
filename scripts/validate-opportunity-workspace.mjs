@@ -46,6 +46,8 @@ assert.match(page, /`\/EstimateDetail\?id=\$\{estimateId\}`|\/EstimateDetail\?id
 
 // Convergence: estimate→pipeline sync must locate the compatibility WorkOrder
 // by stable links, carry the link fields, and back-link the Opportunity.
+const invoicing = readFileSync('base44/functions/invoicingAction/entry.ts', 'utf8');
+const invoicesPage = readFileSync('src/pages/Invoices.jsx', 'utf8');
 const sync = readFileSync('src/components/estimator/customerSync.js', 'utf8');
 assert.match(sync, /WorkOrder\.filter\(\{ estimating_request_id: estimateRequestId \}\)/,
   'sync must look up WorkOrders by estimating_request_id');
@@ -68,6 +70,31 @@ assert.match(page, /findLocalityByAddress/, 'permit panel must resolve jurisdict
 assert.match(page, /functions\.invoke\("findLocalityByAddress", \{[\s\S]{0,300}session_token: sessionToken/, 'jurisdiction lookup must pass the session token');
 assert.match(page, /CustomerLocation\.create\(/, 'resolved sites must persist as canonical CustomerLocation');
 assert.match(page, /location_id: clean\(created\?\.id\)/, 'saved location must back-link the Opportunity');
+
+// F1/F2/F3: invoicing foundation — backend-only ledger, server-side money math,
+// payments recompute invoice state, AR aging surfaced to the UI.
+for (const entity of ['Invoice', 'Payment']) {
+  const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
+  assert.match(schema, /backend_only/, `${entity} must be backend-only so balances cannot be edited around the function`);
+}
+assert.match(invoicing, /authenticateSignShopSession/, 'invoicingAction must authenticate the sign-shop session');
+for (const action of ['list_invoices', 'get_invoice', 'create_invoice', 'update_invoice', 'mark_sent', 'void_invoice', 'record_payment', 'void_payment']) {
+  assert.ok(invoicing.includes(`action === "${action}"`), `action ${action} must be handled`);
+}
+assert.match(invoicing, /computeTotals/, 'invoice totals must be computed server-side');
+assert.match(invoicing, /recomputeInvoiceAfterPayments/, 'payments must recompute invoice totals/status');
+assert.match(invoicing, /createFoundationRecordWithRecovery/, 'invoice/payment creates must be retry-safe');
+assert.match(invoicing, /replaceFoundationFieldsIfUnchanged/, 'invoice/payment updates must be compare-and-set');
+assert.match(invoicing, /exceeds the open balance/, 'overpayments must be rejected');
+assert.match(invoicing, /Void the recorded payments/, 'invoices with payments must not be voided directly');
+assert.match(invoicing, /agingSummary/, 'AR aging summary must be computed');
+assert.ok(!invoicesPage.includes('entities.Invoice'), 'invoices page must not touch backend-only entities directly');
+assert.ok(!invoicesPage.includes('entities.Payment'), 'invoices page must not touch backend-only entities directly');
+assert.match(invoicesPage, /functions\.invoke\("invoicingAction"/, 'invoices page must invoke invoicingAction');
+assert.match(invoicesPage, /creation_request_key: keyRef\.current|creation_request_key: payKeyRef\.current/, 'page must supply idempotent creation keys');
+assert.match(config, /import Invoices from '\.\/pages\/Invoices'/, 'pages.config must import Invoices');
+assert.match(config, /"Invoices": Invoices/, 'pages.config must register the Invoices route');
+assert.match(layout, /title: "Invoices", url: createPageUrl\("Invoices"\)/, 'Layout nav must link Invoices');
 
 // Wiring: route + navigation.
 assert.match(config, /import Opportunities from '\.\/pages\/Opportunities'/, 'pages.config must import the page');
