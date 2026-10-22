@@ -170,6 +170,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const productTypeDraftRef = useRef(null);
   subTemplateDraftRef.current = { id: selectedSubTemplate, items: subTemplateChecklistItems };
   productTypeDraftRef.current = { id: selectedProductType, items: productTypeItems };
+  // Rename sessions carry identity too: a late save response may only close
+  // the exact rename draft it came from, never a newer or reopened editor.
+  const renameDraftRef = useRef(null);
+  renameDraftRef.current = {
+    subTemplateId: editingSubTemplateId,
+    subTemplateName: editingSubTemplateName,
+    productTypeId: editingProductTypeName,
+    productTypeName: editingProductTypeValue,
+    conditionId: editingDropdown,
+    conditionName: editingDropdownName,
+  };
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -272,22 +283,29 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveDropdownRename = async (condition) => {
-    const name = editingDropdownName.trim();
+    const submittedDraft = editingDropdownName;
+    const name = submittedDraft.trim();
     if (!name) return;
     try {
       await saveDropdownConditions(dropdownConditions.map(item => item.id === condition.id ? { ...item, name } : item));
-      cancelDropdownRename();
+      // Only dismiss the rename editor when it still shows the draft this
+      // save came from; a newer rename session must not be closed by it.
+      if (renameDraftRef.current.conditionId === condition.id && renameDraftRef.current.conditionName === submittedDraft) {
+        cancelDropdownRename();
+      }
     } catch (error) {
       console.error("Error renaming condition:", error);
     }
   };
 
   const createDropdownCondition = async () => {
-    const name = newDropdownName.trim();
+    const submittedName = newDropdownName;
+    const name = submittedName.trim();
     if (!name) return;
     try {
       await saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name, is_completed: false, order: dropdownConditions.length }]);
-      setNewDropdownName("");
+      // Keep any newer name typed while the create was still in flight.
+      setNewDropdownName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating condition:", error);
     }
@@ -479,7 +497,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   // Sub-template Management
   const createSubTemplate = async () => {
-    const name = newSubTemplateName.trim();
+    const submittedName = newSubTemplateName;
+    const name = submittedName.trim();
     if (!name) return;
     setPersistenceError("");
     try {
@@ -492,7 +511,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         setPersistenceError(`A sub-template named "${name}" already exists. The existing template was kept instead of creating a duplicate.`);
       }
       await loadData();
-      setNewSubTemplateName("");
+      // Keep any newer name typed while the create was still in flight.
+      setNewSubTemplateName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating sub-template:", error);
       setPersistenceError(error?.message || "The sub-template could not be created safely.");
@@ -601,7 +621,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const renameSubTemplate = async (subTemplate, nextName) => {
-    const name = String(nextName || '').trim();
+    const submittedDraft = String(nextName || '');
+    const name = submittedDraft.trim();
     if (!subTemplate?.id || !name) return false;
     setPersistenceError("");
     try {
@@ -615,8 +636,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       });
       invalidatePendingTemplateLoads();
       setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
-      setEditingSubTemplateId(null);
-      setEditingSubTemplateName("");
+      // Only dismiss the rename editor when it still shows the draft this
+      // save came from; a newer rename session must not be closed by it.
+      if (renameDraftRef.current.subTemplateId === subTemplate.id && renameDraftRef.current.subTemplateName === submittedDraft) {
+        setEditingSubTemplateId(null);
+        setEditingSubTemplateName("");
+      }
       return true;
     } catch (error) {
       console.error("Sub-template rename blocked:", error);
@@ -715,13 +740,41 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   // Product Type Management
   const createProductType = async () => {
-    const name = newProductTypeName.trim();
+    const submittedName = newProductTypeName;
+    const name = submittedName.trim();
     if (!name) return;
     try {
       await saveProductTypes([...productTypes, name]);
-      setNewProductTypeName("");
+      // Keep any newer name typed while the create was still in flight.
+      setNewProductTypeName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating product checklist:", error);
+    }
+  };
+
+  const renameProductType = async (type, nextName) => {
+    const submittedDraft = String(nextName || '');
+    const newName = submittedDraft.trim();
+    if (!type || !newName) return;
+    try {
+      await saveProductTypes(productTypes.map(t => (t === type ? newName : t)));
+      if (productTypeTemplates[type]) {
+        const newTemplates = { ...productTypeTemplates };
+        newTemplates[newName] = newTemplates[type];
+        delete newTemplates[type];
+        await saveProductTypeTemplates(newTemplates);
+      }
+      // Retarget the open editor only when the renamed checklist is still
+      // open; a stale save must not steal a different open checklist.
+      setSelectedProductType(current => (current === type ? newName : current));
+      // Only dismiss the rename editor when it still shows the draft this
+      // save came from; a newer rename session must not be closed by it.
+      if (renameDraftRef.current.productTypeId === type && renameDraftRef.current.productTypeName === submittedDraft) {
+        setEditingProductTypeName(null);
+        setEditingProductTypeValue("");
+      }
+    } catch (error) {
+      console.error("Error renaming product checklist:", error);
     }
   };
 
@@ -881,12 +934,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const duplicateProductTypeTemplate = async (productType) => {
-    const newTypeName = `${productType} (Copy)`;
-    await saveProductTypes([...productTypes, newTypeName]);
-    const originalItems = productTypeTemplates[productType]?.items || [];
-    if (originalItems.length > 0) {
-      const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
-      await saveProductTypeTemplates({ ...productTypeTemplates, [newTypeName]: { items: copiedItems } });
+    const names = new Set(productTypes.map(t => String(t || '').trim().toLowerCase()));
+    let newTypeName = `${productType} (Copy)`;
+    let suffix = 2;
+    while (names.has(newTypeName.toLowerCase())) newTypeName = `${productType} (Copy ${suffix++})`;
+    try {
+      // Copy the item map before listing the new checklist so a failed first
+      // save leaves nothing behind and a failed name save only retains a
+      // hidden template entry, never an empty duplicate in the list.
+      const originalItems = productTypeTemplates[productType]?.items || [];
+      if (originalItems.length > 0) {
+        const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
+        await saveProductTypeTemplates({ ...productTypeTemplates, [newTypeName]: { items: copiedItems } });
+      }
+      await saveProductTypes([...productTypes, newTypeName]);
+    } catch (error) {
+      console.error("Error duplicating product checklist:", error);
     }
   };
 
@@ -1012,7 +1075,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const reordered = Array.from(productTypes);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
-    await saveProductTypes(reordered);
+    try {
+      await saveProductTypes(reordered);
+    } catch (error) {
+      console.error("Error reordering product checklists:", error);
+    }
   };
 
   const toggleItemExpanded = (itemId) => setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
@@ -1037,7 +1104,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const handleCreateCustomDropdown = () => {
     if (!customDropdownValue.trim()) return;
     const newDropdown = { id: Date.now().toString(), name: customDropdownValue.trim() };
-    saveDropdownConditions([...dropdownConditions, newDropdown]);
+    saveDropdownConditions([...dropdownConditions, newDropdown]).catch(error => {
+      console.error("Error creating condition:", error);
+    });
     if (showOtherPopup) handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, newDropdown.id);
     setCustomDropdownValue("");
   };
@@ -2083,41 +2152,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                       className="h-11 min-w-0 flex-1 text-sm lg:h-6 lg:text-xs"
                                       aria-label={`Rename product checklist ${type}`}
                                       autoFocus
-                                      onKeyDown={async (e) => { 
-                                        if (e.key === 'Enter' && editingProductTypeValue.trim()) { 
-                                          const newName = editingProductTypeValue.trim();
-                                          const newTypes = productTypes.map(t => t === type ? newName : t);
-                                          await saveProductTypes(newTypes);
-                                          // Update templates if the type had a template
-                                          if (productTypeTemplates[type]) {
-                                            const newTemplates = { ...productTypeTemplates };
-                                            newTemplates[newName] = newTemplates[type];
-                                            delete newTemplates[type];
-                                            await saveProductTypeTemplates(newTemplates);
-                                          }
-                                          if (selectedProductType === type) setSelectedProductType(newName);
-                                          setEditingProductTypeName(null);
-                                          setEditingProductTypeValue("");
-                                        }
-                                        if (e.key === 'Escape') { setEditingProductTypeName(null); setEditingProductTypeValue(""); } 
-                                      }} 
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') void renameProductType(type, editingProductTypeValue);
+                                        if (e.key === 'Escape') { setEditingProductTypeName(null); setEditingProductTypeValue(""); }
+                                      }}
                                     />
-                                    <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save product checklist name ${type}`} title={`Save product checklist name ${type}`} onClick={async () => { 
-                                      if (editingProductTypeValue.trim()) {
-                                        const newName = editingProductTypeValue.trim();
-                                        const newTypes = productTypes.map(t => t === type ? newName : t);
-                                        await saveProductTypes(newTypes);
-                                        if (productTypeTemplates[type]) {
-                                          const newTemplates = { ...productTypeTemplates };
-                                          newTemplates[newName] = newTemplates[type];
-                                          delete newTemplates[type];
-                                          await saveProductTypeTemplates(newTemplates);
-                                        }
-                                        if (selectedProductType === type) setSelectedProductType(newName);
-                                      }
-                                      setEditingProductTypeName(null);
-                                      setEditingProductTypeValue("");
-                                    }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
+                                    <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save product checklist name ${type}`} title={`Save product checklist name ${type}`} onClick={() => void renameProductType(type, editingProductTypeValue)}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                   </div>
                                 ) : (
                                   <>
