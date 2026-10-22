@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -88,7 +88,10 @@ export default function FleetEquipmentDetail() {
   const [metaForm, setMetaForm] = useState({});
   const [savingMeta, setSavingMeta] = useState(false);
 
+  const loadSequenceRef = useRef(0);
+
   const load = async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
@@ -97,10 +100,12 @@ export default function FleetEquipmentDetail() {
         base44.auth.me().catch(() => null),
       ]);
       const eq = (equipmentRows || [])[0] || null;
+      if (requestSequence !== loadSequenceRef.current) return;
       setEquipment(eq);
       setCurrentUser(user || null);
       setTrips([]);
       setTripIdentityWarning("");
+      setTripsLoading(false);
       if (!eq) {
         setWorkOrders([]); setTasks([]); setLogs([]); setInspections([]); setParts([]); setRequests([]); setLiveStates([]); setNotifications([]); setMetadata(null); setMetaForm({});
         return;
@@ -118,6 +123,7 @@ export default function FleetEquipmentDetail() {
         vin ? base44.entities.BouncieNotification.filter({ vehicle_vin: vin }, "-timestamp", 100) : Promise.resolve([]),
         vin ? base44.entities.FleetVehicleMetadata.filter({ vehicle_vin: vin }, "-updated_date", 10) : Promise.resolve([]),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setWorkOrders(woRows || []);
       setTasks(taskRows || []);
       setLogs(logRows || []);
@@ -131,9 +137,9 @@ export default function FleetEquipmentDetail() {
       setMetaForm(metadataSeed(meta, eq));
       if (eq.bouncie_imei && TRACKED_LINK.has(eq.bouncie_link_status)) loadTrips(eq);
     } catch (e) {
-      setError(e?.message || "Unable to load Fleet equipment detail.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet equipment detail.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   };
 
@@ -141,6 +147,7 @@ export default function FleetEquipmentDetail() {
   useEffect(() => { setActiveTab(TABS.some(tab => tab.key === requestedTab) ? requestedTab : "overview"); }, [id, requestedTab]);
 
   const loadTrips = async (eq) => {
+    const requestSequence = loadSequenceRef.current;
     setTripsLoading(true);
     setTripIdentityWarning("");
     try {
@@ -153,6 +160,7 @@ export default function FleetEquipmentDetail() {
       }
 
       const { data: vehicleResult } = await base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} });
+      if (requestSequence !== loadSequenceRef.current) return;
       const vehicles = vehicleResult?.data || [];
       const exactIdentity = vehicles.find(vehicle => normalizeVin(vehicle?.vin) === fleetVin && normalizeImei(vehicle?.imei) === fleetImei);
       if (!exactIdentity) {
@@ -166,13 +174,16 @@ export default function FleetEquipmentDetail() {
 
       const ranges = buildWeeklyRanges(7);
       const results = await Promise.all(ranges.map(range => base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/trips", query: { imei: fleetImei, ...range, "gps-format": "geojson" } })));
+      if (requestSequence !== loadSequenceRef.current) return;
       const all = results.flatMap(result => result?.data?.data || []).sort((a, b) => (Date.parse(b?.startTime || "") || 0) - (Date.parse(a?.startTime || "") || 0));
       setTrips(all);
     } catch {
-      setTrips([]);
-      setTripIdentityWarning("CCS could not verify the current Bouncie vehicle identity, so trip history is temporarily hidden.");
+      if (requestSequence === loadSequenceRef.current) {
+        setTrips([]);
+        setTripIdentityWarning("CCS could not verify the current Bouncie vehicle identity, so trip history is temporarily hidden.");
+      }
     } finally {
-      setTripsLoading(false);
+      if (requestSequence === loadSequenceRef.current) setTripsLoading(false);
     }
   };
 
