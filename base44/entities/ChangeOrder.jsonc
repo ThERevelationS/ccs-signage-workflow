@@ -1,0 +1,155 @@
+{
+  "name": "ChangeOrder",
+  "type": "object",
+  "description": "Canonical priced scope change against an estimate, work order, or opportunity. amount_delta is computed server-side from line_items; status moves proposed \u2192 approved/rejected \u2192 applied/cancelled through changeOrderAction only.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one change order create."
+    },
+    "change_order_number": {
+      "type": "string",
+      "description": "Human-facing number (e.g. CO-1042). Generated server-side."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "approved",
+        "rejected",
+        "applied",
+        "cancelled"
+      ],
+      "default": "proposed"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why the scope changed (customer request, site condition, code requirement, etc.)."
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_display_name": {
+      "type": "string"
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "estimate_id": {
+      "type": "string",
+      "description": "AllInOneEstimate the change applies to."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "WorkOrder/job the change applies to."
+    },
+    "invoice_id": {
+      "type": "string",
+      "description": "Optional invoice the delta should be billed on."
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Additive/credit lines; negative unit_price represents a credit."
+    },
+    "amount_delta": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of line extensions. Positive adds scope cost, negative credits it. Server-computed."
+    },
+    "schedule_impact_days": {
+      "type": "number",
+      "default": 0,
+      "description": "Days the change adds to (positive) or removes from the schedule."
+    },
+    "proposed_by": {
+      "type": "string"
+    },
+    "proposed_at": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string"
+    },
+    "rejected_by": {
+      "type": "string"
+    },
+    "rejected_at": {
+      "type": "string"
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "applied_at": {
+      "type": "string"
+    },
+    "applied_note": {
+      "type": "string"
+    },
+    "cancelled_at": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "internal_notes": {
+      "type": "string"
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__change_order_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__change_order_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__change_order_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__change_order_backend_only__"
+      }
+    }
+  }
+}
