@@ -100,6 +100,17 @@ assert.match(invoicing, /replaceFoundationFieldsIfUnchanged/, 'invoice/payment u
 assert.match(invoicing, /exceeds the open balance/, 'overpayments must be rejected');
 assert.match(invoicing, /Void the recorded payments/, 'invoices with payments must not be voided directly');
 assert.match(invoicing, /agingSummary/, 'AR aging summary must be computed');
+// C5: progress billing — invoices generated from approved estimates.
+for (const action of ['list_invoiceable_estimates', 'create_from_estimate']) {
+  assert.ok(invoicing.includes(`action === "${action}"`), `action ${action} must be handled`);
+}
+assert.match(invoicing, /Only approved estimates can be invoiced/, 'billing must require an approved estimate');
+assert.match(invoicing, /billing_type/, 'invoices must carry a progress-billing type');
+assert.match(invoicing, /already has .* invoiced|already fully invoiced|exceed the billable remainder/, 'billing must guard against over-billing');
+assert.match(invoicing, /Estimate\.filter\(\{ status: "approved" \}/, 'invoiceable list must only offer approved estimates');
+assert.match(invoicesPage, /action: "list_invoiceable_estimates"/, 'page must list invoiceable estimates');
+assert.match(invoicesPage, /action: "create_from_estimate"/, 'page must create invoices from estimates');
+assert.match(readFileSync('base44/entities/Invoice.jsonc', 'utf8'), /"deposit".*"progress".*"final"|deposit.*progress.*final/s, 'billing_type enum must include deposit/progress/final');
 assert.ok(!invoicesPage.includes('entities.Invoice'), 'invoices page must not touch backend-only entities directly');
 assert.ok(!invoicesPage.includes('entities.Payment'), 'invoices page must not touch backend-only entities directly');
 assert.match(invoicesPage, /functions\.invoke\("invoicingAction"/, 'invoices page must invoke invoicingAction');
