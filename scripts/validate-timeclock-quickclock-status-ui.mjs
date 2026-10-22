@@ -1120,4 +1120,95 @@ await act(async () => {
 assert.equal(laborIdentityDialog().props.activeLabor.id,'verified-installation');
 await act(async () => { laborIdentityRenderer.unmount(); });
 console.log('PASS mismatched Current Work employee/shift/segment acknowledgements fail closed and preserve exact retry IDs');
-console.log('PASS 27/27 Time Clock Quick Clock async status acceptance cases');
+// A delayed duplicate Work Pause acknowledgement cannot re-pause a resumed
+// shift or clear a newer request ID, and a mismatched acknowledgement fails
+// closed with the exact request preserved.
+let pauseFenceRenderer;
+await act(async () => {
+  pauseFenceRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'pause-fence-session', employeeSessionUser:first,
+  }));
+});
+const pauseFenceStatusIndex = calls.length - 1;
+await act(async () => {
+  calls[pauseFenceStatusIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_in',
+    entry:{id:'pause-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+    break_status:'working', work_pause_status:'working', work_pause_allowed:true,
+  }});
+});
+const pauseFenceDialog = () => pauseFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onStartWorkPause === 'function')[0];
+const pauseFenceOverlay = () => pauseFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onResumed === 'function')[0];
+assert.ok(pauseFenceDialog());
+assert.ok(pauseFenceOverlay());
+assert.equal(pauseFenceOverlay().props.disabled, true);
+let earlyPause, latestPause;
+await act(async () => {
+  earlyPause = pauseFenceDialog().props.onStartWorkPause();
+  latestPause = pauseFenceDialog().props.onStartWorkPause();
+});
+const earlyPauseIndex = calls.length - 2;
+const latestPauseIndex = calls.length - 1;
+const sharedPauseId = calls[earlyPauseIndex].payload.request_id;
+assert.equal(calls[latestPauseIndex].payload.request_id, sharedPauseId,
+  'Rapid duplicate Work Pause taps must share one exact request');
+const pauseRequestKey = `ccs_timeclock_request:work_pause_start:${first.email}`;
+const pauseAck = (pauseId) => ({ data: {
+  success:true, user:first, status:'clocked_in', work_pause_status:'paused',
+  work_pause:{id:pauseId,user_email:first.email,time_entry_id:'pause-fence-shift',started_at:'2026-10-13T13:00:00.000Z',status:'active'},
+  work_pause_summary:{count:1,total_minutes:0},
+  entry:{id:'pause-fence-shift',user_email:first.email}, work_pause_allowed:true,
+}});
+await act(async () => { calls[latestPauseIndex].resolve(pauseAck('confirmed-pause')); await latestPause; });
+assert.equal(pauseFenceOverlay().props.disabled, false,
+  'Confirmed Work Pause must surface the resume guard for the same employee');
+await act(async () => { events.get('focus')(); });
+const resumeStatusIndex = calls.length - 1;
+assert.equal(calls[resumeStatusIndex].payload.action,'status');
+await act(async () => {
+  calls[resumeStatusIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_in',
+    entry:{id:'pause-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+    break_status:'working', work_pause_status:'working', work_pause_allowed:true,
+  }});
+});
+assert.equal(pauseFenceOverlay().props.disabled, true);
+let newerPause;
+await act(async () => { newerPause = pauseFenceDialog().props.onStartWorkPause(); });
+const newerPauseIndex = calls.length - 1;
+const newerPauseId = calls[newerPauseIndex].payload.request_id;
+assert.notEqual(newerPauseId, sharedPauseId,
+  'A later Work Pause after resume needs a fresh request ID');
+assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId);
+await act(async () => {
+  calls[earlyPauseIndex].resolve(pauseAck('stale-duplicate-pause'));
+  await earlyPause;
+});
+assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId,
+  'A delayed duplicate Work Pause acknowledgement must not clear a newer retry ID');
+assert.equal(pauseFenceOverlay().props.disabled, true,
+  'A delayed duplicate Work Pause acknowledgement must not re-pause a resumed shift');
+await act(async () => {
+  calls[newerPauseIndex].resolve({ data: {
+    success:true, user:second, status:'clocked_in', work_pause_status:'paused',
+    work_pause:{id:'foreign-pause',user_email:second.email,time_entry_id:'pause-fence-shift'},
+    entry:{id:'pause-fence-shift',user_email:first.email}, work_pause_allowed:true,
+  }});
+  await assert.rejects(newerPause, /could not be matched/);
+});
+assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId,
+  'A mismatched Work Pause acknowledgement must preserve the exact retry request');
+assert.equal(pauseFenceOverlay().props.disabled, true);
+let recoveredPause;
+await act(async () => { recoveredPause = pauseFenceDialog().props.onStartWorkPause(); });
+const recoveredPauseIndex = calls.length - 1;
+assert.equal(calls[recoveredPauseIndex].payload.request_id, newerPauseId,
+  'Work Pause retry must reuse the exact preserved request ID');
+await act(async () => { calls[recoveredPauseIndex].resolve(pauseAck('verified-pause')); await recoveredPause; });
+assert.equal(pauseFenceOverlay().props.disabled, false);
+assert.equal(savedSessionData.has(pauseRequestKey), false);
+console.log('PASS Work Pause acknowledgements are fenced to employee, shift, epoch, and exact request');
+await act(async () => { pauseFenceRenderer.unmount(); });
+console.log('PASS 28/28 Time Clock Quick Clock async status acceptance cases');
