@@ -34,12 +34,12 @@ test('continuation stamps fetch time only on actually fetched pages, not harvest
  const f=await fixture();await continueDiscoveryBacklog(f.options);
  let docs=f.get().documents;
  assert.equal(typeof docs.find(d=>d.url.endsWith('/sign-forms')).last_fetched,'string');
- assert.equal(Object.hasOwn(docs.find(d=>d.url.endsWith('/fees')),'last_fetched'),false);
- assert.equal(Object.hasOwn(docs.find(d=>d.url.endsWith('/sign.pdf')),'last_fetched'),false);
+ assert.equal(docs.find(d=>d.url.endsWith('/fees')).last_fetched,undefined);
+ assert.equal(docs.find(d=>d.url.endsWith('/sign.pdf')).last_fetched,undefined);
  await continueDiscoveryBacklog(f.options);
  docs=f.get().documents;
  assert.equal(typeof docs.find(d=>d.url.endsWith('/fees')).last_fetched,'string');
- assert.equal(Object.hasOwn(docs.find(d=>d.url.endsWith('/sign.pdf')),'last_fetched'),false);
+ assert.equal(docs.find(d=>d.url.endsWith('/sign.pdf')).last_fetched,undefined);
 });
 test('manual and archived records at fetched URLs keep their earlier provenance',async()=>{
  const f=await fixture();
@@ -47,7 +47,7 @@ test('manual and archived records at fetched URLs keep their earlier provenance'
   {id:'arc',url:'https://city.example/fees',file_url:'https://cdn.example/fees.pdf',last_fetched:'2020-01-01T00:00:00Z'}]});
  await continueDiscoveryBacklog(f.options);await continueDiscoveryBacklog(f.options);
  const docs=f.get().documents;
- assert.equal(Object.hasOwn(docs.find(d=>d.id==='man'),'last_fetched'),false);
+ assert.equal(docs.find(d=>d.id==='man').last_fetched,undefined);
  assert.equal(docs.find(d=>d.id==='arc').last_fetched,'2020-01-01T00:00:00Z');
 });
 test('automatic query excludes disabled/manual/blocked collections and requires pending work',()=>{
