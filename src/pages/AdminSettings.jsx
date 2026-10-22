@@ -841,12 +841,18 @@ export default function AdminSettings() {
     if (automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
         emailGroupsLoadError || !formData.name?.trim() ||
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
-    automationSaveInFlight.current = true;
-    const ownerEpoch = automationSessionEpoch.current;
     // Reads the current stored authorization rather than the mount-time
     // snapshot, so an expired capability fails before dispatch instead of
-    // sending a stale credential to the server.
+    // sending a stale credential to the server. An expired authorization
+    // re-locks Admin Settings so the message's instruction is actionable.
     const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability) {
+      setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
+      setIsUnlocked(false);
+      return;
+    }
+    automationSaveInFlight.current = true;
+    const ownerEpoch = automationSessionEpoch.current;
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
@@ -1128,6 +1134,15 @@ export default function AdminSettings() {
   const runAutomationOperation = async (kind, rule) => {
     if (!rule?.id || automationOperationRef.current || automationSaveInFlight.current ||
         automationUncertainRef.current || isLoading || automationLoadError) return;
+    // Check stored authorization before acquiring the operation lock: an
+    // expired capability must re-lock, never fence the panel behind an
+    // unverifiable write that was never dispatched.
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability) {
+      setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
+      setIsUnlocked(false);
+      return;
+    }
     const operation = { kind, id: rule.id, name: rule.name || rule.id,
       enabled: !rule.enabled, settled: false, phase: "pending" };
     const epoch = automationSessionEpoch.current;
@@ -1143,9 +1158,6 @@ export default function AdminSettings() {
     // Any list already in flight predates this write and cannot become current.
     automationLoadSequence.current += 1;
     setAutomationRecoveryListVerified(false);
-    // Current stored authorization, not the mount-time snapshot: an expired
-    // capability fails before dispatch rather than reaching the server stale.
-    const writeCapability = getStoredAdminSettingsCapability();
     const write = Promise.resolve().then(() => kind === "delete"
       ? deleteAutomationRuleIfUnchanged({ record: rule, adminCapability: writeCapability,
           label: `Automation Rule ${operation.name} deletion` })
