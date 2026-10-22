@@ -84,7 +84,7 @@ console.log('PASS field differences, stale snapshots, local edits, deleted/incor
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const start = backend.indexOf("if (action === 'review_unresolved_order_pull_row')");
-const end = backend.indexOf("if (action === 'recover_stale_order_run')", start);
+const end = backend.indexOf("if (action === 'resolve_unresolved_order_pull_evidence')", start);
 assert.ok(start >= 0 && end > start);
 const action = backend.slice(start, end);
 assert.match(action, /adminActor\?\.role !== 'admin' \|\| !hasSessionToken/);
