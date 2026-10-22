@@ -1,5 +1,32 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest unit — Permits-page request blocked by cloud-browser credential-state loss (October 22, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Fresh starting HEAD a58d1f03e630a1710a16951a46d55c62516eb197, clean. Latest completed live acceptance checkpoint: 6ad8cc5e5df4fc835b1112f1 / Git 73ee6b25350230d98e8a36676971555b8a518e7d, “Permitting desktop FAQ discovery and live timestamp provenance verified”. Preserve all newer CCS work. A later HEAD/target-diff command returned SANDBOX_BUSY; no source was modified.
+
+Preflight:
+Live Sharonville profile 6ac19f0e23bd8a65822f6d51 / OH / city remained at 2026-10-21T14:22:35.528000 with 20 documents and three earlier saved-document receipts. Selected Permits source 705a3ce0-ccbe-4fa7-a251-770c730d1ae7 / https://www.sharonville.org/524/Permits was unprotected, had no last_fetched, and had no prior receipt.
+Today's controls: enabled true, interval 15 minutes, 5/cycle, 20 in flight, 40 attempts/day, retry 3. Config 6ac1b28c47233270cfeeb0f9 / updated_date 2026-10-04T15:30:40.303000. State 6ac1d0ffb44495caa0c3cf76 / updated_date 2026-10-22T13:01:28.342000, daily_day_key 2026-10-22, dispatched_today 40. No AI dispatch or cap bypass.
+
+Access / uncertain action:
+The prior desktop-browser plugin was unavailable this turn; plugin search did not restore it. The available cloud browser was signed out. Brett selected Google through secure browserAuth; the exact visible saved account brettheinlein1@gmail.com was used. Fresh Base44 editor evidence showed CCS Signage Workflow and “Brett Heinlein (You) · Main”. Opened the existing refreshJurisdiction Function Tester and filled/verified exact body with discovery_only=true, defer_archive=true and selected_saved_document at the observed profile version.
+ONE Run Function click call timed out: Runtime.evaluate timeout while waiting for the Run Function locator. Whether the click was delivered/function invoked is UNKNOWN. Do not call this a completed scan or a definitely unsubmitted request.
+The next response observation was blocked because native credential state could not safely resume. The one documented recovery navigation using the same tab to the retained Base44 editor URL failed before navigation with the same condition. Browser work stopped: no repeated click, runtime reset, credential probing, or extra login attempt.
+
+One live datastore readback after the timeout verified the ENTIRE profile unchanged: updated_date 2026-10-21T14:22:35.528000, 20 documents, same three receipts, same office research and all other fields. No Permits receipt or last_fetched was present. No live write observed at that read. Source-fetch outcome remains unknown; a delayed request cannot be ruled out solely from this snapshot.
+
+Receipt: docs/permitting-sharonville-permits-access-2026-10-22.json. No product/backend/schema/RLS/frontend change, build, synthetic-suite rerun, archive upload, approval, message, queue/control change or client/job/shared-record mutation. No authored unfinished source change. The only uncertain remote operation is the timed-out Run Function click above. Reconcile it before any future invocation.
+
+Next ONE chunk:
+Use a fresh supported authenticated browser runtime. First inspect current profile/version/history; if a delayed receipt for Permits 705a3ce0-ccbe-4fa7-a251-770c730d1ae7 exists, verify it and do not replay. If no receipt exists, revalidate exact source and current controls, then execute one bounded selected-document discovery-only call with archival deferred. Read only safe data/result fields from the tester; never print or save its whole Axios response because config includes credentials. Verify timestamps, document retention, original frontier, prior receipts, office research and zero LLM spend. Do not replay FAQ or either prior department page. No frontend publication.
+Electrical issuer department/canonical identity, current inspection delegation, commercial-sign applicability and exact-site coverage remain unresolved. Existing evidence and four new official links from the successful FAQ unit remain preserved.
+
+This conversation is now stopped for continuity after checkpointing. The final response supplies the complete NEW CHAT prompt; later Continue messages here must point to that prompt, not resume work.
+Checkpoint name for this unit: “Permitting Permits-page uncertain browser request and unchanged live profile verified”. Exact ID/Git appear in the checkpoint receipt/final report. Older sections below are historical.
+
+
+
 ## Latest completed unit — desktop-authenticated Sharonville FAQ discovery and live timestamp acceptance (October 21, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
