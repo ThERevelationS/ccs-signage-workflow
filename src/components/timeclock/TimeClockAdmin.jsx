@@ -578,8 +578,8 @@ export default function TimeClockAdmin() {
       setApprovalError(data?.error || err?.message || "The approval could not be completed safely.");
       if (!retainRequest) {
         const message = data?.error || err?.message || "The approval could not be completed safely.";
-        clearAdminRequestId(requestAction, approvalEntry.id);
-        clearApprovalRetry(approvalDecision, approvalEntry.id);
+        clearAdminRequestId(requestAction, approvalEntry.id, frozenPayload.request_id);
+        clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
         setApprovalRetryPayload(null);
         setPendingApprovalRecovery(null);
         await loadData();
