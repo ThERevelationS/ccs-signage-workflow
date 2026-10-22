@@ -26,6 +26,27 @@
       ],
       "default": "draft"
     },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "invoiced",
+        "paid"
+      ],
+      "default": "unpaid",
+      "description": "Vendor payment state: unpaid \u2192 invoiced (vendor bill received) \u2192 paid."
+    },
+    "vendor_invoice_number": {
+      "type": "string",
+      "description": "Vendor's bill/invoice number recorded when marked invoiced."
+    },
+    "paid_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "paid_amount": {
+      "type": "number"
+    },
     "vendor_name": {
       "type": "string"
     },
