@@ -828,6 +828,46 @@ function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
                 </div>
               )}
 
+              {detail?.financials && (
+                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                  <h3 className="mb-2 text-sm font-bold text-slate-900 dark:text-slate-100">Financials</h3>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    {[
+                      ["Invoiced", detail.financials.invoiced],
+                      ["Collected", detail.financials.collected],
+                      ["Open AR", detail.financials.open_ar],
+                      ["PO committed", detail.financials.po_committed],
+                      ["CO delta", detail.financials.co_delta],
+                    ].map(([label, val]) => (
+                      <div key={label} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800/60">
+                        <div className="font-semibold uppercase tracking-wide text-[10px] text-slate-400">{label}</div>
+                        <div className="font-bold text-slate-800 dark:text-slate-100">${Number(val || 0).toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 space-y-1.5 text-xs">
+                    {(detail.invoices || []).map((row) => (
+                      <a key={row.id} href="/Invoices" className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.invoice_number)} <span className="text-slate-400">({clean(row.status)})</span></span>
+                        <span className="text-slate-500">${Number(row.balance_due || 0).toFixed(2)} due</span>
+                      </a>
+                    ))}
+                    {(detail.purchase_orders || []).map((row) => (
+                      <a key={row.id} href="/PurchaseOrders" className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.po_number)} · {clean(row.vendor_name)} <span className="text-slate-400">({clean(row.status)})</span></span>
+                        <span className="text-slate-500">${Number(row.total || 0).toFixed(2)}</span>
+                      </a>
+                    ))}
+                    {(detail.change_orders || []).map((row) => (
+                      <a key={row.id} href="/ChangeOrders" className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.change_order_number)} · {clean(row.title)} <span className="text-slate-400">({clean(row.status)})</span></span>
+                        <span className="text-slate-500">{Number(row.amount_delta || 0) >= 0 ? "+" : "−"}${Math.abs(Number(row.amount_delta || 0)).toFixed(2)}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <h3 className="mb-2 text-sm font-bold text-slate-900 dark:text-slate-100">Intake history</h3>
                 {intakes.length === 0 ? (
