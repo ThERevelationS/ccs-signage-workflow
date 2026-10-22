@@ -1304,4 +1304,73 @@ assert.equal(savedSessionData.get(clockInKey), chainedClockInId,
   'A mismatched chained Clock In acknowledgement must preserve its exact retry request');
 console.log('PASS chained Clock In after punch resolution fails closed on a mismatched employee');
 await act(async () => { punchFenceRenderer.unmount(); });
-console.log('PASS 30/30 Time Clock Quick Clock async status acceptance cases');
+// Missed Clock In recovery acknowledgements are fenced to the employee,
+// epoch, and the exact preserved request ID.
+let recoveryFenceRenderer;
+await act(async () => {
+  recoveryFenceRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'recovery-fence-session', employeeSessionUser:first,
+  }));
+});
+const recoveryFenceStatusIndex = calls.length - 1;
+await act(async () => {
+  calls[recoveryFenceStatusIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_out',
+    break_status:'working', work_pause_status:'working', work_pause_allowed:false,
+  }});
+});
+const recoveryDialog = () => recoveryFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onRecoverMissedClockIn === 'function')[0];
+assert.ok(recoveryDialog());
+const recoveryRequestKey = `ccs_timeclock_request:recover_missed_clock_in:${first.email}`;
+const claimedClockIn = '2026-10-13T08:05:00.000Z';
+const recoveryAck = (entryId) => ({ data: {
+  success:true, status:'clocked_in', recovered_missed_clock_in:true,
+  entry:{id:entryId,user_email:first.email,status:'clocked_in',clock_in:claimedClockIn},
+  punch_exception:{id:'recovery-case',user_email:first.email,time_entry_id:entryId},
+  user:first,
+}});
+let earlyRecovery, latestRecovery;
+await act(async () => {
+  earlyRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn);
+  latestRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn);
+});
+const earlyRecoveryIndex = calls.length - 2;
+const latestRecoveryIndex = calls.length - 1;
+const sharedRecoveryId = calls[earlyRecoveryIndex].payload.request_id;
+assert.equal(calls[latestRecoveryIndex].payload.request_id, sharedRecoveryId,
+  'Rapid duplicate missed-Clock-In recoveries must share one exact request');
+await act(async () => { calls[latestRecoveryIndex].resolve(recoveryAck('recovered-entry')); await latestRecovery; });
+assert.equal(savedSessionData.has(recoveryRequestKey), false);
+let newerRecovery;
+await act(async () => { newerRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn); });
+const newerRecoveryIndex = calls.length - 1;
+const newerRecoveryId = calls[newerRecoveryIndex].payload.request_id;
+assert.notEqual(newerRecoveryId, sharedRecoveryId);
+assert.equal(savedSessionData.get(recoveryRequestKey), newerRecoveryId);
+await act(async () => {
+  calls[earlyRecoveryIndex].resolve(recoveryAck('stale-recovered-entry'));
+  await earlyRecovery;
+});
+assert.equal(savedSessionData.get(recoveryRequestKey), newerRecoveryId,
+  'A delayed duplicate missed-Clock-In acknowledgement must not clear a newer retry ID');
+await act(async () => {
+  calls[newerRecoveryIndex].resolve({ data: {
+    success:true, status:'clocked_in', recovered_missed_clock_in:true,
+    entry:{id:'foreign-entry',user_email:second.email,status:'clocked_in',clock_in:claimedClockIn},
+    user:second,
+  }});
+  await assert.rejects(newerRecovery, /could not be matched/);
+});
+assert.equal(savedSessionData.get(recoveryRequestKey), newerRecoveryId,
+  'A mismatched missed-Clock-In acknowledgement must preserve the exact retry request');
+let recoveredRecovery;
+await act(async () => { recoveredRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn); });
+const recoveredRecoveryIndex = calls.length - 1;
+assert.equal(calls[recoveredRecoveryIndex].payload.request_id, newerRecoveryId,
+  'Missed-Clock-In retry must reuse the exact preserved request ID');
+await act(async () => { calls[recoveredRecoveryIndex].resolve(recoveryAck('verified-recovered-entry')); await recoveredRecovery; });
+assert.equal(savedSessionData.has(recoveryRequestKey), false);
+console.log('PASS missed Clock In recovery acknowledgements are fenced to employee, epoch, and exact request');
+await act(async () => { recoveryFenceRenderer.unmount(); });
+console.log('PASS 31/31 Time Clock Quick Clock async status acceptance cases');
