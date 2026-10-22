@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -22,14 +22,17 @@ export default function FleetFluids() {
   const [usageBusy, setUsageBusy] = useState(false);
   const [usageError, setUsageError] = useState("");
   const [error, setError] = useState("");
+  const loadSequenceRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true); setError("");
     try {
       const [f,e,u] = await Promise.all([listAllFleetRows(base44.entities.FleetFluid,"fluid_name",{label:"Fleet fluids"}), listAllFleetRows(base44.entities.FleetEquipment,"name",{label:"Fleet equipment"}), base44.auth.me().catch(()=>null)]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setFluids(f||[]); setEquipment(e||[]); setUser(u||null);
-    } catch(e) { setError(e?.message || "Unable to load Fleet fluids."); }
-    finally { setLoading(false); }
+    } catch(e) { if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet fluids."); }
+    finally { if (requestSequence === loadSequenceRef.current) setLoading(false); }
   },[]);
   useEffect(()=>{load();},[load]);
   useEffect(()=>{const params=new URLSearchParams(window.location.search);const requested=params.get("stock")||"";const requestedSearch=params.get("search")||"";if(["all","low","incomplete"].includes(requested))setStockFilter(requested);if(requestedSearch)setSearch(requestedSearch);},[]);
