@@ -34,6 +34,9 @@ assert.match(entry, /createFoundationRecordWithRecovery/, 'creates must use retr
 assert.match(entry, /replaceFoundationFieldsIfUnchanged/, 'updates must be compare-and-set');
 assert.match(entry, /replaceEstimatingRequestFieldsIfUnchanged/, 'request updates must honor the frozen snapshot guard');
 assert.match(entry, /CLOSED_STAGES\.has\(clean\(opportunity\.stage\)\)/, 'closed opportunities must not request estimates');
+assert.match(entry, /site_address: clean\(snapshot\.captured_site_address\)/, 'handoff must prefill the estimate site address');
+assert.match(entry, /target_install_date: clean\(snapshot\.desired_install_date/, 'handoff must prefill the target install date');
+assert.match(entry, /Requirements — /, 'handoff must prefill a requirement summary into estimate notes');
 assert.match(shared, /handoff_snapshot is frozen after submission/, 'snapshot freeze guard must exist in shared persistence');
 
 // Frontend: backend-only entities are never touched directly from the page.
