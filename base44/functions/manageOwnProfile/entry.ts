@@ -82,6 +82,22 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, record: saved });
     }
 
+    if (action === 'update_order_form_filter') {
+      const allowedFilters = new Set(['all_with_received', 'open_only', 'pending', 'ordered', 'received']);
+      const orderFormFilter = String(body?.order_form_filter || '').trim();
+      if (!allowedFilters.has(orderFormFilter)) {
+        return Response.json({ error: 'Invalid Order Form filter.' }, { status: 400 });
+      }
+      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+        entity: AuthorizedEmail,
+        user,
+        nextFields: { order_form_filter: orderFormFilter },
+        guardFields: { email: user.email },
+        label: `Order Form filter for ${actorEmail}`,
+      });
+      return Response.json({ success: true, order_form_filter: saved?.order_form_filter });
+    }
+
     if (action === 'update_hr') {
       const hrData = body?.hr_data;
       if (!hrData || typeof hrData !== 'object' || Array.isArray(hrData)) {
