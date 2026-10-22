@@ -159,9 +159,26 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
 export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "", sessionToken = "" } = {}) => {
   const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
   const activeExistingRows = (existingRows || []).filter((row) => row?.deleted !== true);
-  const existing = canonicalEstimateWorkOrder(activeExistingRows);
+  let existing = canonicalEstimateWorkOrder(activeExistingRows);
   if (!existing && (existingRows || []).some((row) => row?.deleted === true)) {
     throw new Error("This estimate's linked Sales Pipeline Work Order is in Trash. Restore that Work Order before synchronizing the estimate again.");
+  }
+  // Converge on the compatibility WorkOrder through stable Opportunity /
+  // EstimatingRequest links before any create. A WorkOrder that already names
+  // a different estimate is evidence of a conflicting link, not a candidate.
+  const estimateOpportunityId = String(estimate.opportunity_id || "").trim();
+  const estimateRequestId = String(estimate.estimating_request_id || "").trim();
+  if (!existing && (estimateOpportunityId || estimateRequestId)) {
+    const [byRequest, byOpportunity] = await Promise.all([
+      estimateRequestId ? base44.entities.WorkOrder.filter({ estimating_request_id: estimateRequestId }) : Promise.resolve([]),
+      estimateOpportunityId ? base44.entities.WorkOrder.filter({ opportunity_id: estimateOpportunityId }) : Promise.resolve([]),
+    ]);
+    const seen = new Set();
+    const candidates = [...(byRequest || []), ...(byOpportunity || [])]
+      .filter((row) => row?.id && row?.deleted !== true)
+      .filter((row) => !seen.has(row.id) && seen.add(row.id))
+      .filter((row) => !String(row?.estimate_id || "").trim() || String(row.estimate_id) === String(estimate.id));
+    existing = canonicalEstimateWorkOrder(candidates);
   }
   const lifecycleDates = resolvePipelineLifecycleDates({
     estimateStatus: estimate.status,
@@ -180,6 +197,8 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     // estimate.customer_id into a new pipeline record.
     customer_id: firstNonBlank(customer?.id, existing?.customer_id),
     estimate_id: estimate.id,
+    opportunity_id: firstNonBlank(estimateOpportunityId, existing?.opportunity_id),
+    estimating_request_id: firstNonBlank(estimateRequestId, existing?.estimating_request_id),
     in_pipeline: true,
     sales_status: resolvePipelineSalesStatus(estimate.status, existing?.sales_status),
     contact_name: firstNonBlank(estimate.order_contact, estimate.contact_name, existing?.contact_name),
@@ -211,37 +230,56 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     }
   }
 
+  let workOrder;
   if (existing) {
-    return replaceWorkOrderFieldsIfUnchanged({
+    workOrder = await replaceWorkOrderFieldsIfUnchanged({
       workOrderId: existing.id,
       expectedFields: expectedWorkOrderFields(existing, fields),
       nextFields: fields,
       label: "Sales Pipeline estimate synchronization",
     });
+  } else {
+    const createFields = {
+      ...fields,
+      ...(fields.date_estimate_sent ? { sales_quote_sent_verified_at: new Date().toISOString() } : {}),
+      current_stage: "estimating",
+      date_initial_contact: new Date().toISOString().slice(0, 10),
+    };
+
+    // Preserve the existing estimate-ID convergence behavior, but also recover a
+    // durable create whose response was lost before the convergence step could run.
+    workOrder = await createEstimateLinkedWorkOrderWithRecovery({
+      entity: base44.entities.WorkOrder,
+      estimateId: estimate.id,
+      data: createFields,
+      label: "Sales Pipeline estimate synchronization",
+      convergeCreated: (created) => convergeCreatedEstimateWorkOrder({
+        estimateId: estimate.id,
+        created,
+        fields,
+        sessionToken,
+        duplicateLabel: "Sales Pipeline record",
+      }),
+    });
   }
 
-  const createFields = {
-    ...fields,
-    ...(fields.date_estimate_sent ? { sales_quote_sent_verified_at: new Date().toISOString() } : {}),
-    current_stage: "estimating",
-    date_initial_contact: new Date().toISOString().slice(0, 10),
-  };
-
-  // Preserve the existing estimate-ID convergence behavior, but also recover a
-  // durable create whose response was lost before the convergence step could run.
-  return createEstimateLinkedWorkOrderWithRecovery({
-    entity: base44.entities.WorkOrder,
-    estimateId: estimate.id,
-    data: createFields,
-    label: "Sales Pipeline estimate synchronization",
-    convergeCreated: (created) => convergeCreatedEstimateWorkOrder({
-      estimateId: estimate.id,
-      created,
-      fields,
-      sessionToken,
-      duplicateLabel: "Sales Pipeline record",
-    }),
-  });
+  // The canonical Opportunity is backend-only; keep its compatibility link in
+  // step through the workspace function. Failure leaves a held (not duplicated)
+  // bridge row that reconciliation can repair, so never fail the pipeline sync.
+  if (estimateOpportunityId && workOrder?.id && sessionToken) {
+    try {
+      await base44.functions.invoke("opportunityWorkspaceAction", {
+        session_token: sessionToken,
+        action: "link_work_order",
+        opportunity_id: estimateOpportunityId,
+        work_order_id: workOrder.id,
+        estimating_request_id: estimateRequestId,
+      });
+    } catch (linkError) {
+      console.warn("Opportunity compatibility WorkOrder link could not be saved:", linkError?.message || linkError);
+    }
+  }
+  return workOrder;
 };
 
 /**
