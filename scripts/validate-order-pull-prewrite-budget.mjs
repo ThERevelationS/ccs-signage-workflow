@@ -71,12 +71,14 @@ assert.equal(orderRunRequiresReview([{ dataset: 'sales', direction: 'pull', skip
 console.log('PASS post-write cutoff stops safely and explicitly treats earlier writes as uncertain');
 
 const continuationCalls = pull.match(/assertOrderPullContinuationBudget\(\{/g) || [];
-assert.equal(continuationCalls.length, 5, 'Order-only continuation checks must cover five write/verification boundaries');
+assert.equal(continuationCalls.length, 7, 'Order-only continuation checks must cover seven write/verification boundaries');
 for (const stage of [
+  'the Order Smartsheet-row auto-create batch',
   'the next Order business-field batch',
   'the next Order date/text verification',
   'the Order business-field read-back',
   'the next Order sync snapshot batch',
+  'the next Order snapshot-only metadata batch',
   'the final Order sync metadata read-back',
 ]) assert.ok(pull.includes(`stage: '${stage}'`));
 assert.match(pull, /if \(dataset === 'orders'\) assertOrderPullContinuationBudget\(\{[\s\S]*?stage: 'the next Order business-field batch'/);
