@@ -175,6 +175,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         serverError.retrySameRequest = data?.retry_same_request === true;
         throw serverError;
       }
+      clearReviewRetry(selected.id, payload.request_id);
       setRetryReview(null);
       setSelected(null);
       await Promise.all([loadRequests(), onEntriesChanged?.()]);
