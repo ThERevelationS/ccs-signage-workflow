@@ -1,3 +1,34 @@
+# Permitting continuation handoff — October 23, 2026 (Milestone 2 executed at scale: both states seeded, frontier draining)
+
+Checkpoint for this unit: `CHECKPOINT_TBD`. Prior: `6ada7633067620fe9ba90196` (first bounded drain) / `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
+
+## What ran — full Milestone 2 collection-expansion sequence (zero LLM, zero archives, zero dispatch budget)
+1. **Seeded every eligible frontier in both states** via deployed `refreshJurisdiction` `discovery_only=true defer_archive=true`: OH 189 candidates → 126 seeded / 63 persistent failures; KY 173 → 72 seeded / 101 failures. Failures are honest gaps (unreachable sites, JS portals, WAF, missing/invalid permitting_url e.g. Moscow literal `INFORMATION NOT FOUND`) — none marked successful; operational skip lists only prevented re-attempt storms.
+2. **Drained ~1,100 pages** in bounded `continueDiscoveryBacklog` passes (production fetcher contract, one page/cycle, breadth-first oldest-updated). Final 150-cycle runs ran at 0 errors; one run absorbed 7 transient 429 read-limit failures — affected profiles stayed eligible.
+
+## Results (live, verified)
+- `llm_calls` 0, archives 0, `dispatched_today` untouched (controls unchanged: 40/40 on Oct 22 key).
+- 0 timestamp-provenance violations — stamps land only on actually-fetched URLs.
+- Pending backlog is self-replenishing by design: each fetched page harvests new same-host links, so pending declines net of re-seeding.
+- Live state at receipt time — OH: 781 frontier profiles, 2,993 pending, 190 profiles with pending, 721 review gaps; KY: 113 frontier, 374 pending, 32 with pending, 69 review gaps. 163 seed-failed jurisdictions need corrected `permitting_url` before discovery can proceed.
+- Receipt: `docs/permitting-collection-expansion-2026-10-23.json`.
+
+## State notes
+- Entity reads use `P.filter(query, sort, limit, offset)` positional args; `list({filter...})` silently ignores filters (produced identical bogus counts for both states once).
+- The scheduled dispatcher continues draining frontiers autonomously (Ohio-first, 5 profiles/cycle). Residual ~3,367 pending pages are an active bounded frontier, not an unattempted gap.
+- Rate-limit policy that worked: fully serialize seed/drain, pace calls ~1.2s, treat 429 batches as truncated-not-failed.
+
+## Milestone 2 status
+Collection expansion executed: every reachable official source in OH and KY is now inside the deterministic discovery frontier, failures are explicit, and the drain is validated at scale. Statewide completeness is NOT claimed — that is Milestone 3's review, and the frontier continues draining via dispatcher.
+
+## Next chunk options
+1. Continue bounded drain passes to burn down the ~3.4k pending frontier (scheduled dispatcher also progresses 5/15min).
+2. Triage the ~790 `requires_review` gaps (cross-host, page_link_limit, page_fetch_failed) — some may be recoverable with corrected URLs.
+3. Source-repair pass on the 163 failed-seed jurisdictions (find correct permitting_url, then reseed).
+4. Milestone 3 statewide completeness review — only after frontier drain converges.
+
+---
+
 # Permitting continuation handoff — October 22, 2026 (Milestone 2 started: bounded Ohio-first frontier drain)
 
 Checkpoint for this unit: `6ada7633067620fe9ba90196` / Git `732648420e162b88275f4932e5994de1f2af443a`. Prior: `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
