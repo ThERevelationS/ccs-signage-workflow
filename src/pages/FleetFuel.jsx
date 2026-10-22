@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
@@ -35,20 +35,24 @@ export default function FleetFuelPage(){
   const [entryDialog,setEntryDialog]=useState(null);
   const [importOpen,setImportOpen]=useState(requestedImport);
   const isAdmin=user?.role==="admin";
+  const loadSequenceRef=useRef(0);
 
   const load = useCallback(async()=>{
+    const requestSequence=++loadSequenceRef.current;
     setLoading(true);setError("");
     try{
       const [equipmentRows,currentUser]=await Promise.all([
         listAllFleetRows(base44.entities.FleetEquipment,"name",{label:"Fleet equipment for fuel tracking"}),
         base44.auth.me().catch(()=>null),
       ]);
+      if(requestSequence!==loadSequenceRef.current)return;
       setEquipment(equipmentRows||[]);setUser(currentUser||null);
       const {data}=await base44.functions.invoke("fleetFuelAction",{action:"summary",equipment_id:equipmentId==="all"?"":equipmentId,start_date:`${year}-01-01`,end_date:`${year}-12-31`});
       if(data?.error)throw new Error(data.error);
+      if(requestSequence!==loadSequenceRef.current)return;
       setSummary(data||null);
-    }catch(err){setError(err?.message||"Unable to load Fleet fuel and operating costs.");}
-    finally{setLoading(false);}
+    }catch(err){if(requestSequence===loadSequenceRef.current)setError(err?.message||"Unable to load Fleet fuel and operating costs.");}
+    finally{if(requestSequence===loadSequenceRef.current)setLoading(false);}
   },[equipmentId,year]);
   useEffect(()=>{load();},[load]);
   useEffect(()=>{if(requestedNew&&!entryDialog)setEntryDialog({mode:"create",form:blankForm(requestedEquipment!=="all"?requestedEquipment:"")});},[requestedNew]);
