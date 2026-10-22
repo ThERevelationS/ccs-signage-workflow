@@ -66,8 +66,7 @@ Deno.serve(async (req) => {
             title: d.title || "Untitled",
             url: d.url || "",
             doc_type: d.doc_type || "other",
-            source: "ai_discovered",
-            last_fetched: new Date().toISOString()
+            source: "ai_discovered"
           }));
 
           const countyDocs = (data.parent_county?.documents || []).map((d, i) => ({
@@ -75,8 +74,7 @@ Deno.serve(async (req) => {
             title: `[${data.parent_county.name}] ${d.title || "Untitled"}`,
             url: d.url || "",
             doc_type: d.doc_type || "other",
-            source: "ai_discovered",
-            last_fetched: new Date().toISOString()
+            source: "ai_discovered"
           }));
 
           updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, [...newDocs, ...countyDocs]);
