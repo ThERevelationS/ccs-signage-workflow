@@ -930,23 +930,33 @@ export default function QuickClockSection({
     }
     if (breakStatus !== "working" || activeBreak?.id) throw new Error("End the active break before pausing work.");
     const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("work_pause_start", email);
+    let actionEpoch = workViewEpochRef.current;
     setPersistenceError("");
     try {
-      const result = await invokeTimeClock({
+      // The invocation increments the transition epoch synchronously before
+      // sending; a later transition or status restore invalidates this reply.
+      const pending = invokeTimeClock({
         action: "work_pause_start",
         request_id: requestId,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest("work_pause_start", email);
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertWorkPauseAcknowledgementIdentity(result, email, activeEntry.id);
+      clearRequest("work_pause_start", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       applyWorkPauseResponse(result);
       setShowClockOut(false);
       setRecognitionStatus("Work Pause confirmed by server.");
       signalWorkPauseChanged();
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("work_pause_start", email);
-      setPersistenceError(err?.message || "Work Pause was not confirmed by the server.");
+      if (!shouldRetainRequest(err)) clearRequest("work_pause_start", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setPersistenceError(err?.message || "Work Pause was not confirmed by the server.");
+      }
       throw err;
     }
   };
