@@ -51,6 +51,7 @@ import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBac
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged, classifyOrderPullBusinessReadback } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
+import { orderSaveSyncBatchLimit } from '../../shared/orderSaveSyncBatchLimit.mjs';
 import { orderPullPrewriteBudget, assertOrderPullContinuationBudget } from '../../shared/smartsheetOrderPullPrewriteBudget.mjs';
 import { loadOrderPullReadbackRows } from '../../shared/smartsheetOrderReadbackRows.mjs';
 import { recordOrderPullBatchEvidence } from '../../shared/smartsheetOrderPullBatchEvidence.mjs';
@@ -1620,7 +1621,9 @@ async function pushDataset(
     };
   }
 
-  const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
+  const massLimit = dataset === 'orders' && options?.requireOrderPendingMarker
+    ? orderSaveSyncBatchLimit(globalConfig?.mass_change_limit_count)
+    : Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
   if (requestedRecordIds.length > massLimit) {
     return { dataset, direction: 'push', skipped: true,
       reason: `${requestedRecordIds.length} saved ${dataset === 'sales' ? 'Sales WorkOrders' : 'Orders'} exceed the ${massLimit}-record Save & Sync safety limit. Sync a smaller batch.`,
@@ -4078,10 +4081,11 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({ success: false, error: 'Save & Sync requires valid permanent Order IDs.' }, { status: 400 });
       }
       const orderIds = [...new Set(cleanedIds)];
-      const massLimit = Math.max(1, Number(config?.mass_change_limit_count) || 25);
+      const massLimit = orderSaveSyncBatchLimit(config?.mass_change_limit_count);
       if (orderIds.length > massLimit) {
-        return Response.json({ success: false,
-          error: `${orderIds.length} saved Orders exceed the ${massLimit}-record Save & Sync safety limit.` }, { status: 400 });
+        return Response.json({ success: false, code: 'ORDER_SYNC_BATCH_LIMIT',
+          order_batch_limit: massLimit, smartsheet_writes_attempted: false,
+          error: `${orderIds.length} saved Orders exceed the ${massLimit}-record Save & Sync safety limit. Remaining Orders stay queued.` }, { status: 400 });
       }
 
       const startedAt = new Date().toISOString();
