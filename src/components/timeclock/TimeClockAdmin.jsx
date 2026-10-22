@@ -635,7 +635,7 @@ export default function TimeClockAdmin() {
       });
       const data = functionData(response);
       if (!data?.success) throw adminActionError(data, "The archive was not confirmed by the server.");
-      clearAdminRequestId("admin_archive_entry", entry.id);
+      clearAdminRequestId("admin_archive_entry", entry.id, requestId);
       setArchiveRequestId("");
       setDeleteConfirm(null);
       setArchiveReason("");
@@ -646,7 +646,7 @@ export default function TimeClockAdmin() {
       const retainRequest = shouldRetainAdminRequest(err);
       setTimeEntryError(message);
       if (!retainRequest) {
-        clearAdminRequestId("admin_archive_entry", entry.id);
+        clearAdminRequestId("admin_archive_entry", entry.id, requestId);
         setArchiveRequestId("");
         setDeleteConfirm(null);
         setArchiveReason("");
