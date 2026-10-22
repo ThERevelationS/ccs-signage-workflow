@@ -55,6 +55,7 @@ export default function WorkPauseOverlay({
   const [resumeBusy, setResumeBusy] = useState(false);
   const [error, setError] = useState("");
   const resumeRequestRef = useRef("");
+  const pendingStatusRefreshRef = useRef(false);
   const mountedRef = useRef(true);
   const pauseStateRef = useRef(null);
   const pauseIdRef = useRef("");
@@ -62,7 +63,12 @@ export default function WorkPauseOverlay({
   const lastActivityAtRef = useRef(Date.now());
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
-    if (resumeInFlightRef.current) return null;
+    if (resumeInFlightRef.current) {
+      // A Resume acknowledgement is still outstanding; remember the
+      // invalidation so status re-verifies once the acknowledgement settles.
+      pendingStatusRefreshRef.current = true;
+      return null;
+    }
     const sequence = ++statusSequenceRef.current;
     const isCurrent = () => mountedRef.current &&
       sequence === statusSequenceRef.current && scopeRef.current === scopeKey;
@@ -127,6 +133,7 @@ export default function WorkPauseOverlay({
     statusSequenceRef.current += 1;
     resumeSequenceRef.current += 1;
     resumeInFlightRef.current = false;
+    pendingStatusRefreshRef.current = false;
     setResumeBusy(false);
     pauseStateRef.current = null;
     pauseIdRef.current = "";
@@ -139,37 +146,10 @@ export default function WorkPauseOverlay({
     const interval = setInterval(() => loadStatus(), 15000);
     const onFocus = () => loadStatus();
     const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
-    const onPauseChanged = (event) => {
-      const confirmed = event?.detail;
-      const confirmedEmail = String(confirmed?.user?.email || confirmed?.entry?.user_email || "").trim().toLowerCase();
-      const matchesEmployee = confirmedEmail &&
-        confirmedEmail === String(currentUser?.email || "").trim().toLowerCase();
-      if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working") {
-        statusSequenceRef.current += 1;
-        pauseStateRef.current = null;
-        setPauseState(null);
-        setPauseStateScope("");
-        setShowResumePrompt(false);
-        setError("");
-        resumeRequestRef.current = "";
-        pauseIdRef.current = "";
-        dismissedAtRef.current = 0;
-      } else if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "paused") {
-        const activePause = confirmed.active_work_pause || confirmed.work_pause || null;
-        if (activePause?.id) {
-          statusSequenceRef.current += 1;
-          const normalized = { ...confirmed, active_work_pause: activePause };
-          pauseStateRef.current = normalized;
-          setPauseState(normalized);
-          setPauseStateScope(scopeKey);
-          if (pauseIdRef.current !== String(activePause.id)) {
-            pauseIdRef.current = String(activePause.id);
-            dismissedAtRef.current = 0;
-            lastActivityAtRef.current = Date.now();
-            setShowResumePrompt(true);
-          }
-        }
-      }
+    // Change events can carry a payload that is stale relative to this
+    // session's verified status. Treat them only as invalidation signals;
+    // the signed status read is authoritative.
+    const onPauseChanged = () => {
       void loadStatus();
     };
     const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
@@ -266,7 +246,14 @@ export default function WorkPauseOverlay({
         request_id: requestId,
         ...credentialPayload,
       });
-      if (!isCurrentResume()) return;
+      if (!isCurrentResume()) {
+        // A newer status read or transition superseded this acknowledgement.
+        // Keep its exact retry ID and send only an invalidation signal so each
+        // signed session re-verifies authoritative state.
+        try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
+        window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
+        return;
+      }
       const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || "Resume Work was not confirmed by the server.");
@@ -297,7 +284,9 @@ export default function WorkPauseOverlay({
       if (isCurrentScope()) {
         resumeInFlightRef.current = false;
         setResumeBusy(false);
-        if (refreshAfterResume) void loadStatus({ preservePausedOnError: true });
+        const refreshNeeded = refreshAfterResume || pendingStatusRefreshRef.current;
+        pendingStatusRefreshRef.current = false;
+        if (refreshNeeded) void loadStatus({ preservePausedOnError: true });
       }
     }
   };
