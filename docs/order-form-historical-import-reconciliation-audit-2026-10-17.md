@@ -43,7 +43,7 @@ The last stable Base44-only read still classifies zero records as verified curre
 
 ## What the implementation establishes
 
-The current importer still builds its existing-record map from active Orders using `lower(customer_name|description|request_type)`; the key excludes `work_order_id`, and a repeated key replaces the earlier map entry. For a matched record it only writes nonempty changed import fields. The current persistence helper atomically includes `smartsheet_pending_local_sync: true` with a changed business-field update. New import-created Orders also start with that marker. No-op imports do not queue a write.
+The importer at the original audit used `lower(customer_name|description|request_type)` and replaced earlier matches when a repeated key appeared. The 2026-10-22 prevention fix supersedes that behavior: it retains every active matching Order ID and reports a conflict when more than one Order matches within the selected job scope (or across all active Orders for an unscoped import). It also checks the whole uploaded workbook before processing and holds every source row whose normalized identity is repeated. Normalization trims and folds case, treats a missing type as `Other`, and uses a tuple to prevent delimiter collisions. Unique matches still receive only nonempty changed import fields. The persistence helper atomically includes `smartsheet_pending_local_sync: true` with a changed business-field update. New import-created Orders also start with that marker. No-op imports do not queue a write.
 
 Those guarantees apply to current code. They do not prove which historical records were touched by older code or whether a historical import already reached Smartsheet.
 
@@ -72,3 +72,17 @@ For historical rows, a missing marker means only that the field was absent or no
 ## Result and next safe step
 
 This audit does not support a bulk marker repair. No records can be certified as currently synced from Base44 snapshots alone. Before any repair or write, prepare a bounded review set that resolves duplicate permanent-ID ownership and duplicate legacy import targets, then compare only uniquely owned permanent row IDs against a complete read-only Smartsheet response. Keep the one no-ID soft-deleted record and all ambiguous groups flagged for review. The current `push_enabled: false` setting was left unchanged.
+
+## Import matching prevention verified (2026-10-22)
+
+Started from clean Git HEAD `a841b08a7a5fa58311ac2c0940555869a784a41b`. This phase changes only Order import matching, its completion warning, synthetic tests, and this Order Form report.
+
+- `base44/shared/orderImportMatching.mjs` retains all active claimants instead of choosing the last returned match. Repeated matching source rows are held before that identity's first write. Unique job-scoped matches remain eligible.
+- The backend reports matching conflicts through its existing conflict count and bounded issue list. The Order Form warning uses "import conflicts" and shows explanations for the first three valid issue entries after authoritative reload.
+- Eleven synthetic scenarios execute the real backend handler with in-memory entities: ambiguous existing matches, job scope, unchanged values and Trash preservation, repeated source rows, default Other type, case/whitespace, delimiter collisions, new creates, unique concurrent reuse, ambiguous create preflight, and permission enforcement.
+- Five targeted Order import regression scripts pass. Backend esbuild bundle, production Vite build, targeted ESLint (no errors; existing unused-variable warnings), and Git diff whitespace checks pass.
+- No production Order, configuration, or Smartsheet records were changed during testing. No publish was performed.
+
+This prevents the confirmed known-match overwrite. It does not reconcile historical records or establish durable global uniqueness across concurrent imports; the existing per-record conditional-write and uncertain-create protections remain in place. Repeated source rows require review, including legitimate repeated orders, because this workbook format supplies no authoritative per-row identity to distinguish them.
+
+Remaining release work: add an Order-specific Save & Sync batch bound without altering shared configuration, complete authenticated desktop/mobile acceptance, and verify a controlled Smartsheet round trip using an explicitly authorized safe record. Historical remote comparison and duplicate-claim review remain outstanding; no bulk marker repair is supported.
