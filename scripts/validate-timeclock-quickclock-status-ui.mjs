@@ -1157,10 +1157,11 @@ const pauseFenceOverlay = () => pauseFenceRenderer.root.findAll((node) =>
 assert.ok(pauseFenceDialog());
 assert.ok(pauseFenceOverlay());
 assert.equal(pauseFenceOverlay().props.disabled, true);
+const startFencePause = pauseFenceDialog().props.onStartWorkPause;
 let earlyPause, latestPause;
 await act(async () => {
-  earlyPause = pauseFenceDialog().props.onStartWorkPause();
-  latestPause = pauseFenceDialog().props.onStartWorkPause();
+  earlyPause = startFencePause();
+  latestPause = startFencePause();
 });
 const earlyPauseIndex = calls.length - 2;
 const latestPauseIndex = calls.length - 1;
@@ -1178,8 +1179,10 @@ await act(async () => { calls[latestPauseIndex].resolve(pauseAck('confirmed-paus
 assert.equal(pauseFenceOverlay().props.disabled, false,
   'Confirmed Work Pause must surface the resume guard for the same employee');
 assert.equal(savedSessionData.has(pauseRequestKey), false);
+assert.equal(pauseFenceDialog(), undefined,
+  'Confirmed Work Pause must hide the Clock Out dialog behind the pause guard');
 let newerPause;
-await act(async () => { newerPause = pauseFenceDialog().props.onStartWorkPause(); });
+await act(async () => { newerPause = startFencePause(); });
 const newerPauseIndex = calls.length - 1;
 const newerPauseId = calls[newerPauseIndex].payload.request_id;
 assert.notEqual(newerPauseId, sharedPauseId,
@@ -1209,7 +1212,7 @@ assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId,
 assert.equal(pauseFenceOverlay().props.disabled, false,
   'A mismatched Work Pause acknowledgement must not change visible pause state');
 let recoveredPause;
-await act(async () => { recoveredPause = pauseFenceDialog().props.onStartWorkPause(); });
+await act(async () => { recoveredPause = startFencePause(); });
 const recoveredPauseIndex = calls.length - 1;
 assert.equal(calls[recoveredPauseIndex].payload.request_id, newerPauseId,
   'Work Pause retry must reuse the exact preserved request ID');
