@@ -19,10 +19,18 @@ every prior guard is unchanged.
 
 Both write entry points also read the current stored Admin Settings capability
 (`getStoredAdminSettingsCapability()`) at dispatch time rather than the
-mount-time snapshot. A capability that expired while the page sat open fails
-pre-dispatch with an actionable message instead of carrying a stale credential
-to the server. This enforces the documented rule that a UI unlock is valid only
-while the issued capability is present and unexpired.
+mount-time snapshot. This enforces the documented rule that a UI unlock is
+valid only while the issued capability is present and unexpired.
+
+A capability that expired while the page sat open no longer surfaces an
+unactionable error: both `handleSave` and `runAutomationOperation` check the
+stored capability before acquiring any lock or dispatching, and when it is
+absent or expired they set an "authorization expired" message and return
+`isUnlocked` to false. The unlock gate reappears immediately with the message
+visible, Face ID/credential re-authentication issues a fresh capability, and no
+write was attempted — no uncertain fence, no parked draft, no lock held.
+Previously the only recovery was a page reload, which the old error text
+effectively required without saying so.
 
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
@@ -33,15 +41,18 @@ fixture mocks remain compatible.
 Verification:
 - node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 403/403
   passed under node --test (the Chromium script is excluded; it runs
-  standalone). Includes new scripts/test-admin-automation-pre-dispatch.mjs
-  (5 tests: marker coverage, post-dispatch isolation, fresh-capability
-  dispatch, save/op release semantics).
-- node scripts/test-admin-navigation-browser.mjs: 89/89 isolated Chromium
-  checks passed, including two new checks covering pre-dispatch toggle release
-  and editor-save draft preservation. The fixture gained an
-  `__adminAutomationPreDispatch` knob; the script was ported to Windows
-  (forward-slash /@fs URLs, realpath-canonical scratch roots, junction
-  node_modules link, ADMIN_PLAYWRIGHT_PATH env override).
+  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs
+  (6 tests: marker coverage, post-dispatch isolation, fresh-capability
+  dispatch, save/op release semantics, expired-capability re-lock before
+  lock acquisition or dispatch).
+- node scripts/test-admin-navigation-browser.mjs: 91/91 isolated Chromium
+  checks passed, including four new checks covering pre-dispatch toggle
+  release, editor-save draft preservation, and expired-capability re-lock on
+  both toggle and editor save (zero writes dispatched). The fixture gained an
+  `__adminAutomationPreDispatch` knob and an `__adminCapabilityExpired` flag;
+  the script was ported to Windows (forward-slash /@fs URLs, realpath-canonical
+  scratch roots, junction node_modules link, ADMIN_PLAYWRIGHT_PATH env
+  override — on Windows pass a file:/// URL, not a drive-letter path).
 - Two stale source-regex assertions were updated to the contracts that
   actually shipped on 2026-10-22 (operation lock disables editor save;
   pre-dispatch failures skip the uncertain fence).
