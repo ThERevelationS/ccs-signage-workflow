@@ -3,14 +3,20 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { mkdtemp, symlink, readFile, readdir, copyFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, symlink, readFile, readdir, copyFile, writeFile, rm, realpath } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const appRoot = process.cwd();
+// Canonical paths keep Vite's fs.allow check working when os.tmpdir() or the
+// shell cwd resolve through an 8.3 short name on Windows.
+const appRoot = realpathSync(process.cwd());
+// Vite /@fs/ URLs take an absolute filesystem path with forward slashes,
+// including the drive letter on Windows ("/@fs/C:/...").
+const viteFsPath = p => '/' + p.replace(/\\/g, '/');
 const { chromium } = await import(process.env.ADMIN_PLAYWRIGHT_PATH ||
   '/tmp/fleet-browser-check/node_modules/playwright/index.mjs');
-const scratch = await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-'));
+const scratch = await realpath(await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-')));
 let server, browser, passed = 0;
 
 const syntheticPanels = [
@@ -87,7 +93,7 @@ async function check(name, width, urlSuffix, fn, { allowSyntheticPanelError = fa
 
 let origin;
 try {
-  await symlink(path.join(appRoot, 'node_modules'), path.join(scratch, 'node_modules'), 'dir');
+  await symlink(path.join(appRoot, 'node_modules'), path.join(scratch, 'node_modules'), process.platform==='win32'?'junction':'dir');
   const css = (await readdir(path.join(appRoot, 'dist/assets'))).find(name => name.endsWith('.css'));
   assert.ok(css, 'Build the app first to provide actual Tailwind CSS');
   await copyFile(path.join(appRoot, 'dist/assets', css), path.join(scratch, 'styles.css'));
@@ -99,7 +105,7 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { BrowserRouter } from "react-router-dom";',
-    'import AdminSettings from "/@fs' + path.join(appRoot, 'src/pages/AdminSettings.jsx') + '";',
+    'import AdminSettings from "/@fs' + viteFsPath(path.join(appRoot, 'src/pages/AdminSettings.jsx')) + '";',
     'createRoot(document.getElementById("root")).render(<BrowserRouter><AdminSettings /></BrowserRouter>);',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockData.js'), [
@@ -125,6 +131,7 @@ try {
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockPersistence.js'), [
     'async function syntheticWrite(kind,record,data){',
+    'if(window.__adminAutomationPreDispatch===kind||window.__adminAutomationPreDispatch===true)throw Object.assign(new Error("synthetic-pre-dispatch-"+kind),{automationPreDispatch:true});',
     'if(window.__adminAutomationAllowSyntheticWrite!==true)throw Error("Unexpected synthetic automation write");',
     '(window.__adminAutomationWriteCalls??=[]).push({kind,id:record?.id,name:data?.name});',
     'if(window.__adminAutomationHoldWrite)await new Promise(resolve=>{window.__adminAutomationPendingWrite=resolve;});',
@@ -146,7 +153,7 @@ try {
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockAutomationReadDeadline.js'), [
     'import {AutomationReadTimeoutError,withAutomationReadDeadline as actual} from "/@fs' +
-      path.join(appRoot,'src/components/admin/automationReadDeadline.js') + '";',
+      viteFsPath(path.join(appRoot,'src/components/admin/automationReadDeadline.js')) + '";',
     'export {AutomationReadTimeoutError};',
     'export const withAutomationReadDeadline=(operation)=>actual(operation,',
     ' new URLSearchParams(location.search).get("automation_timeout")==="1"?160:25000);',
@@ -166,7 +173,7 @@ try {
   }
   await writeFile(path.join(scratch, 'mock-UserManagement.jsx'), [
     'import React from "react";',
-    'import RealUserManagement from "/@fs' + path.join(appRoot, 'src/components/admin/UserManagement.jsx') + '";',
+    'import RealUserManagement from "/@fs' + viteFsPath(path.join(appRoot, 'src/components/admin/UserManagement.jsx')) + '";',
     'export default function UserManagement(){',
     'if(window.__adminPanelFailures?.includes("UserManagement"))throw Error("synthetic-private-panel-error");',
     'return new URLSearchParams(location.search).get("real_users")==="1"?<RealUserManagement />:',
@@ -178,8 +185,8 @@ try {
       'import React from "react";export default function '+name+'(){return <div data-testid="synthetic-'+name+'"/>;}');
   }
   await writeFile(path.join(scratch, 'mockAuthorizedUserPersistence.js'), [
-    'import { validateDeletionImpactReport } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactValidation.js') + '";',
-    'import { runCoordinatedDeletionImpact } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactRetryCoordinator.js') + '";',
+    'import { validateDeletionImpactReport } from "/@fs' + viteFsPath(path.join(appRoot, 'src/components/admin/deletionImpactValidation.js')) + '";',
+    'import { runCoordinatedDeletionImpact } from "/@fs' + viteFsPath(path.join(appRoot, 'src/components/admin/deletionImpactRetryCoordinator.js')) + '";',
     'const fail=()=>{throw Error("Unexpected synthetic user mutation");};',
     'export const deleteAuthorizedUserAdmin=fail;',
     'export const updateAuthorizedUserHrAdmin=fail;',
@@ -2310,6 +2317,42 @@ try {
         assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
       });
   }
+
+  await check('Pre-dispatch toggle validation releases the operation lock without uncertain review', 375,
+    '/?tab=automations&automation_rows=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationPreDispatch='update';});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      await page.getByText('synthetic-pre-dispatch-update',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+      // The lock is released: a valid retry dispatches once, clears the error
+      // and never enters the uncertain-operation recovery.
+      await page.evaluate(()=>{window.__adminAutomationPreDispatch=null;});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      await page.waitForFunction(()=>(window.__adminAutomationWriteCalls||[]).length===1);
+      await page.waitForFunction(()=>!document.querySelector('[aria-label="Toggle Synthetic rule"]').disabled);
+      assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+      assert.equal(await page.getByText('synthetic-pre-dispatch-update',{exact:true}).count(),0);
+    });
+
+  await check('Pre-dispatch save validation keeps the editor draft without uncertain review', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page => {
+      await page.getByRole('button',{name:'Edit Synthetic rule',exact:true}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Pre-dispatch draft');
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationPreDispatch='update';});
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await editor.getByText('synthetic-pre-dispatch-update',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+      // The draft stays editable and a valid retry saves exactly once.
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Pre-dispatch draft');
+      await page.evaluate(()=>{window.__adminAutomationPreDispatch=null;});
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+    });
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
