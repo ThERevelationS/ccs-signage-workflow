@@ -175,7 +175,6 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         serverError.retrySameRequest = data?.retry_same_request === true;
         throw serverError;
       }
-      clearReviewRetry(selected.id, payload.request_id);
       setRetryReview(null);
       setSelected(null);
       await Promise.all([loadRequests(), onEntriesChanged?.()]);
@@ -193,6 +192,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         });
         setError(`${responseData?.error || err?.message || "The manager review was interrupted."} Retry the same manager decision to recover safely.`);
       } else {
+        clearReviewRetry(selected.id, payload.request_id);
         setRetryReview(null);
         setError(responseData?.error || err?.message || "The manager decision could not be completed safely.");
       }
