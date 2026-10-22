@@ -518,6 +518,10 @@ export default function TimeClockAdmin() {
     setApprovalBusy(true);
     setApprovalError("");
     const requestAction = approvalRequestStorageAction(approvalDecision);
+    const oppositeDecision = approvalDecision === "approve" ? "reopen" : "approve";
+    const oppositeAction = approvalRequestStorageAction(oppositeDecision);
+    const oppositeStoredRequestId = storedAdminRequestId(oppositeAction, approvalEntry.id);
+    const oppositeRetryRequestId = storedApprovalRetry(oppositeDecision, approvalEntry.id)?.request_id || "";
     const requestId = approvalRequestId || storedAdminRequestId(requestAction, approvalEntry.id) || newRequestId();
     if (!approvalRequestId) {
       setApprovalRequestId(requestId);
