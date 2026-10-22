@@ -1,0 +1,450 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import {
+  CheckCircle2,
+  ChevronRight,
+  Loader2,
+  Package,
+  Plus,
+  RefreshCw,
+  Search,
+  Send,
+  Truck,
+  X,
+} from "lucide-react";
+
+const clean = (v) => String(v ?? "").trim();
+const uuid = () => crypto.randomUUID();
+const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const STATUS_LABELS = {
+  draft: "Draft",
+  sent: "Sent",
+  partially_received: "Partial",
+  received: "Received",
+  cancelled: "Cancelled",
+};
+const STATUS_STYLES = {
+  draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  sent: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
+  partially_received: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
+  received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
+  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300",
+};
+
+const inputCls = "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400";
+
+const invokeAction = async (sessionToken, body) => {
+  const r = await base44.functions.invoke("purchaseOrderAction", { session_token: sessionToken, ...body });
+  const data = r?.data || r;
+  if (!data?.success) throw new Error(data?.error || "Request failed.");
+  return data;
+};
+
+function StatusBadge({ status }) {
+  const s = clean(status) || "draft";
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[s] || STATUS_STYLES.draft}`}>
+      {STATUS_LABELS[s] || s}
+    </span>
+  );
+}
+
+function PoItemsEditor({ items, onChange }) {
+  const update = (i, patch) => onChange(items.map((row, j) => (j === i ? { ...row, ...patch } : row)));
+  return (
+    <div>
+      <div className="mb-1 grid grid-cols-[1fr_80px_110px_28px] items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <span>Item</span><span>Qty</span><span>Unit cost</span><span />
+      </div>
+      {items.map((row, i) => (
+        <div key={i} className="mb-1.5 grid grid-cols-[1fr_80px_110px_28px] items-center gap-2">
+          <input className={inputCls} value={row.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Material / service" />
+          <input className={inputCls} type="number" min="0" step="any" value={row.quantity} onChange={(e) => update(i, { quantity: e.target.value })} />
+          <input className={inputCls} type="number" min="0" step="any" value={row.unit_cost} onChange={(e) => update(i, { unit_cost: e.target.value })} />
+          <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...items, { description: "", quantity: 1, unit_cost: "" }])}
+        className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:underline dark:text-violet-300">
+        <Plus className="h-3.5 w-3.5" /> Add line
+      </button>
+    </div>
+  );
+}
+
+function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
+  const editing = Boolean(purchaseOrder?.id);
+  const [form, setForm] = useState({
+    po_number: clean(purchaseOrder?.po_number),
+    vendor_name: clean(purchaseOrder?.vendor_name),
+    vendor_contact: clean(purchaseOrder?.vendor_contact),
+    vendor_email: clean(purchaseOrder?.vendor_email),
+    vendor_phone: clean(purchaseOrder?.vendor_phone),
+    vendor_reference: clean(purchaseOrder?.vendor_reference),
+    work_order_id: clean(purchaseOrder?.work_order_id),
+    estimate_id: clean(purchaseOrder?.estimate_id),
+    opportunity_id: clean(purchaseOrder?.opportunity_id),
+    shipping_fee: purchaseOrder?.shipping_fee ?? "",
+    order_date: clean(purchaseOrder?.order_date),
+    expected_date: clean(purchaseOrder?.expected_date),
+    ship_to: clean(purchaseOrder?.ship_to),
+    notes: clean(purchaseOrder?.notes),
+    internal_notes: clean(purchaseOrder?.internal_notes),
+  });
+  const [items, setItems] = useState(
+    (purchaseOrder?.line_items || []).map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_cost: r.unit_cost ?? "" }))
+      .length ? purchaseOrder.line_items.map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_cost: r.unit_cost ?? "" }))
+        : [{ description: "", quantity: 1, unit_cost: "" }]
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const keyRef = useRef(uuid());
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const subtotal = items.reduce((s, r) => s + (Number(r.quantity) || 0) * (Number(r.unit_cost) || 0), 0);
+
+  const save = async () => {
+    if (!clean(form.vendor_name)) { setError("A vendor name is required."); return; }
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const fields = {
+        ...Object.fromEntries(Object.entries(form).map(([k, v]) => [k, typeof v === "string" ? clean(v) : v])),
+        shipping_fee: Number(form.shipping_fee) || 0,
+        line_items: items.filter((r) => clean(r.description)).map((r) => ({
+          description: clean(r.description), quantity: Number(r.quantity) || 0, unit_cost: Number(r.unit_cost) || 0,
+        })),
+      };
+      if (editing) {
+        await invokeAction(sessionToken, { action: "update_purchase_order", purchase_order_id: purchaseOrder.id, baseline: purchaseOrder, fields });
+      } else {
+        await invokeAction(sessionToken, { action: "create_purchase_order", creation_request_key: keyRef.current, fields });
+      }
+      onSaved?.();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
+      <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{editing ? `Edit ${purchaseOrder.po_number}` : "New Purchase Order"}</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="grid gap-3 md:grid-cols-4">
+          <div><label className={labelCls}>Vendor *</label><input className={inputCls} value={form.vendor_name} onChange={set("vendor_name")} /></div>
+          <div><label className={labelCls}>Contact</label><input className={inputCls} value={form.vendor_contact} onChange={set("vendor_contact")} /></div>
+          <div><label className={labelCls}>Email</label><input className={inputCls} value={form.vendor_email} onChange={set("vendor_email")} /></div>
+          <div><label className={labelCls}>Phone</label><input className={inputCls} value={form.vendor_phone} onChange={set("vendor_phone")} /></div>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-4">
+          <div><label className={labelCls}>PO #</label><input className={inputCls} value={form.po_number} onChange={set("po_number")} placeholder="Auto" /></div>
+          <div><label className={labelCls}>Vendor ref #</label><input className={inputCls} value={form.vendor_reference} onChange={set("vendor_reference")} /></div>
+          <div><label className={labelCls}>Order date</label><input className={inputCls} type="date" value={form.order_date} onChange={set("order_date")} /></div>
+          <div><label className={labelCls}>Expected</label><input className={inputCls} type="date" value={form.expected_date} onChange={set("expected_date")} /></div>
+        </div>
+        <div className="mt-4"><label className={labelCls}>Line items</label><PoItemsEditor items={items} onChange={setItems} /></div>
+        <div className="mt-3 grid gap-3 md:grid-cols-4">
+          <div><label className={labelCls}>Shipping $</label><input className={inputCls} type="number" min="0" step="any" value={form.shipping_fee} onChange={set("shipping_fee")} /></div>
+          <div className="md:col-span-2"><label className={labelCls}>Ship to</label><input className={inputCls} value={form.ship_to} onChange={set("ship_to")} placeholder="Shop / job site" /></div>
+          <div className="flex items-end pb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">Total: {usd(subtotal + (Number(form.shipping_fee) || 0))}</div>
+        </div>
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs font-semibold text-slate-500 dark:text-slate-400">Job links (optional)</summary>
+          <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div><label className={labelCls}>WorkOrder ID</label><input className={inputCls} value={form.work_order_id} onChange={set("work_order_id")} /></div>
+            <div><label className={labelCls}>Estimate ID</label><input className={inputCls} value={form.estimate_id} onChange={set("estimate_id")} /></div>
+            <div><label className={labelCls}>Opportunity ID</label><input className={inputCls} value={form.opportunity_id} onChange={set("opportunity_id")} /></div>
+          </div>
+        </details>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div><label className={labelCls}>Vendor notes</label><textarea className={`${inputCls} min-h-14`} value={form.notes} onChange={set("notes")} /></div>
+          <div><label className={labelCls}>Internal notes</label><textarea className={`${inputCls} min-h-14`} value={form.internal_notes} onChange={set("internal_notes")} /></div>
+        </div>
+        {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button onClick={save} disabled={saving} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}{editing ? "Save changes" : "Create PO"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [receiveQtys, setReceiveQtys] = useState({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setDetail(await invokeAction(sessionToken, { action: "get_purchase_order", purchase_order_id: purchaseOrderId }));
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Load failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken, purchaseOrderId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const po = detail?.purchase_order;
+  const canReceive = ["sent", "partially_received"].includes(clean(po?.status));
+
+  const run = async (label, body) => {
+    if (busy) return;
+    setBusy(label);
+    setError("");
+    try {
+      await invokeAction(sessionToken, body);
+      setReceiveQtys({});
+      await load();
+      onChanged?.();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Action failed.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const receive = () => {
+    const lines = Object.entries(receiveQtys)
+      .map(([index, quantity]) => ({ index: Number(index), quantity: Number(quantity) }))
+      .filter((r) => r.quantity > 0);
+    if (lines.length === 0) { setError("Enter a quantity to receive on at least one line."); return; }
+    run("receive", { action: "receive_items", purchase_order_id: po.id, lines });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
+      <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        {loading && !detail ? (
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
+        ) : !po ? (
+          <div className="py-8 text-center text-sm text-red-600">{error || "Purchase order not found."}</div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{po.po_number}</h2>
+                  <StatusBadge status={po.status} />
+                </div>
+                <div className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">{po.vendor_name}</div>
+                <div className="mt-0.5 text-xs text-slate-500">
+                  {po.order_date ? `Ordered ${po.order_date}` : "Not ordered"}{po.expected_date ? ` · Expected ${po.expected_date}` : ""}{po.vendor_reference ? ` · Ref ${po.vendor_reference}` : ""}
+                </div>
+              </div>
+              <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <tr>
+                    <th className="px-3 py-2">Item</th><th className="px-3 py-2 text-right">Ordered</th>
+                    <th className="px-3 py-2 text-right">Received</th><th className="px-3 py-2 text-right">Cost</th>
+                    <th className="px-3 py-2 text-right">Total</th>
+                    {canReceive && <th className="px-3 py-2 text-right">Receive qty</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(po.line_items || []).map((r, i) => {
+                    const open = Math.max(0, (Number(r.quantity) || 0) - (Number(r.quantity_received) || 0));
+                    return (
+                      <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
+                        <td className="px-3 py-2 text-slate-800 dark:text-slate-100">{r.description}</td>
+                        <td className="px-3 py-2 text-right">{r.quantity}</td>
+                        <td className="px-3 py-2 text-right">{r.quantity_received || 0}</td>
+                        <td className="px-3 py-2 text-right">{usd(r.unit_cost)}</td>
+                        <td className="px-3 py-2 text-right font-medium">{usd((Number(r.quantity) || 0) * (Number(r.unit_cost) || 0))}</td>
+                        {canReceive && (
+                          <td className="px-3 py-2 text-right">
+                            {open > 0 ? (
+                              <input className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-800"
+                                type="number" min="0" max={open} step="any" placeholder={String(open)}
+                                value={receiveQtys[i] ?? ""}
+                                onChange={(e) => setReceiveQtys((s) => ({ ...s, [i]: e.target.value }))} />
+                            ) : <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-500" />}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                  {(po.line_items || []).length === 0 && <tr><td colSpan={6} className="px-3 py-4 text-center text-slate-400">No line items.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-2 text-right text-sm">
+              <span className="mr-4">Subtotal: <span className="font-medium">{usd(po.subtotal)}</span></span>
+              <span className="mr-4">Shipping: <span className="font-medium">{usd(po.shipping_fee)}</span></span>
+              <span className="text-base font-bold text-slate-900 dark:text-slate-100">Total: {usd(po.total)}</span>
+            </div>
+
+            <div className="mt-3 text-xs text-slate-500">
+              {po.ship_to && <div>Ship to: {po.ship_to}</div>}
+              {po.work_order_id && <div>WorkOrder: {po.work_order_id}</div>}
+              {po.estimate_id && <div>Estimate: <a className="text-violet-600 hover:underline dark:text-violet-300" href={`/EstimateDetail?id=${po.estimate_id}`}>{po.estimate_id}</a></div>}
+              {po.opportunity_id && <div>Opportunity: {po.opportunity_id}</div>}
+              {po.notes && <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{po.notes}</div>}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {po.status === "draft" && (
+                <>
+                  <button type="button" onClick={() => run("send", { action: "mark_sent", purchase_order_id: po.id })} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+                    {busy === "send" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Mark sent
+                  </button>
+                  <button type="button" onClick={() => setEditing(true)}
+                    className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Edit</button>
+                </>
+              )}
+              {canReceive && (
+                <button type="button" onClick={receive} disabled={Boolean(busy)}
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
+                  {busy === "receive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}Record receipt
+                </button>
+              )}
+              {!["received", "cancelled"].includes(po.status) && (
+                <button type="button" onClick={() => { if (confirm(`Cancel ${po.po_number}?`)) run("cancel", { action: "cancel_purchase_order", purchase_order_id: po.id }); }} disabled={Boolean(busy)}
+                  className="min-h-10 rounded-xl border border-red-300 px-4 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-400">
+                  Cancel PO
+                </button>
+              )}
+            </div>
+            {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+          </>
+        )}
+      </div>
+      {editing && po && (
+        <PoForm sessionToken={sessionToken} purchaseOrder={po} onClose={() => setEditing(false)}
+          onSaved={async () => { setEditing(false); await load(); onChanged?.(); }} />
+      )}
+    </div>
+  );
+}
+
+export default function PurchaseOrders() {
+  const { sessionToken, isRegistered } = useAuth();
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [status, setStatus] = useState("");
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [openId, setOpenId] = useState("");
+
+  const load = useCallback(async () => {
+    if (!sessionToken) return;
+    setLoading(true);
+    setError("");
+    try {
+      const data = await invokeAction(sessionToken, { action: "list_purchase_orders", status, query });
+      setPurchaseOrders(data.purchase_orders || []);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Load failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken, status, query]);
+
+  useEffect(() => {
+    const t = setTimeout(load, 200);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  if (!isRegistered) return null;
+
+  const openValue = purchaseOrders.filter((p) => ["sent", "partially_received"].includes(p.status)).reduce((s, p) => s + (Number(p.total) || 0), 0);
+
+  return (
+    <div className="mx-auto max-w-6xl p-4 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-violet-600" />
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Purchase Orders</h1>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Vendor POs and receiving.{openValue > 0 ? ` Open PO value: ${usd(openValue)}.` : ""}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
+          </button>
+          <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
+            <Plus className="h-4 w-4" />New PO
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-52 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search PO # or vendor…" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["", "draft", "sent", "partially_received", "received", "cancelled"].map((s) => (
+            <button key={s || "all"} onClick={() => setStatus(s)}
+              className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
+              {s ? STATUS_LABELS[s] : "All"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        {loading && purchaseOrders.length === 0 ? (
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading purchase orders…</div>
+        ) : purchaseOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <Package className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
+            No purchase orders yet.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <tr>
+                <th className="px-4 py-2.5">PO #</th><th className="px-4 py-2.5">Vendor</th>
+                <th className="px-4 py-2.5">Expected</th><th className="px-4 py-2.5 text-right">Total</th>
+                <th className="px-4 py-2.5">Status</th><th className="px-2 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {purchaseOrders.map((po) => (
+                <tr key={po.id} onClick={() => setOpenId(po.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
+                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</td>
+                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{po.vendor_name}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{po.expected_date || "—"}</td>
+                  <td className="px-4 py-2.5 text-right font-medium">{usd(po.total)}</td>
+                  <td className="px-4 py-2.5"><StatusBadge status={po.status} /></td>
+                  <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showCreate && <PoForm sessionToken={sessionToken} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
+      {openId && <PoDetail sessionToken={sessionToken} purchaseOrderId={openId} onClose={() => setOpenId("")} onChanged={load} />}
+    </div>
+  );
+}
