@@ -435,7 +435,7 @@ export default function TimeClockAdmin() {
       const data = functionData(response);
       if (!data?.success) throw adminActionError(data, "The correction was not confirmed by the server.");
 
-      clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id);
+      clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
       setCorrectionRequestId("");
       setShowEditDialog(false);
       setEditingEntry(null);
