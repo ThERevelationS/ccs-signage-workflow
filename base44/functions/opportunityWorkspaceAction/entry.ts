@@ -8,6 +8,11 @@ import {
 } from "../../shared/opportunityFoundationPersistence.mjs";
 
 const clean = (value: any) => String(value ?? "").trim();
+const num = (value: any, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+const money = (value: number) => Math.round(value * 100) / 100;
 
 const STAGES = ["new", "qualified", "estimating", "quoted", "follow_up", "on_hold", "won", "lost"];
 const CLOSED_STAGES = new Set(["won", "lost"]);
@@ -224,7 +229,7 @@ Deno.serve(async (req) => {
       if (!opportunityId) throw bad("opportunity_id is required.");
       const opportunity = await Opportunity.get(opportunityId).catch(() => null);
       if (!opportunity?.id) throw bad("Opportunity not found.", 404);
-      const [intakes, requests, customer, contact, location, workOrder, estimates] = await Promise.all([
+      const [intakes, requests, customer, contact, location, workOrder, estimates, invoices, purchaseOrders, changeOrders] = await Promise.all([
         Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100),
         EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100),
         clean(opportunity?.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
@@ -234,7 +239,17 @@ Deno.serve(async (req) => {
           ? WorkOrder.get(clean(opportunity.compatibility_work_order_id)).catch(() => null)
           : null,
         Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 50),
+        Invoice.filter({ opportunity_id: opportunityId }),
+        PurchaseOrder.filter({ opportunity_id: opportunityId }),
+        ChangeOrder.filter({ opportunity_id: opportunityId }),
       ]);
+      const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
+      const billedTotal = money(liveInvoices.filter((i: any) => clean(i?.status) !== "draft").reduce((s: number, i: any) => s + num(i?.total), 0));
+      const collectedTotal = money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0));
+      const committedTotal = money((Array.isArray(purchaseOrders) ? purchaseOrders : [])
+        .filter((p: any) => clean(p?.status) !== "cancelled").reduce((s: number, p: any) => s + num(p?.total), 0));
+      const coDelta = money((Array.isArray(changeOrders) ? changeOrders : [])
+        .filter((c: any) => ["approved", "applied"].includes(clean(c?.status))).reduce((s: number, c: any) => s + num(c?.amount_delta), 0));
       return Response.json({
         success: true,
         action,
@@ -246,6 +261,16 @@ Deno.serve(async (req) => {
         estimating_requests: Array.isArray(requests) ? requests : [],
         work_order: workOrder || null,
         estimates: Array.isArray(estimates) ? estimates : [],
+        invoices: Array.isArray(invoices) ? invoices : [],
+        purchase_orders: Array.isArray(purchaseOrders) ? purchaseOrders : [],
+        change_orders: Array.isArray(changeOrders) ? changeOrders : [],
+        financials: {
+          invoiced: billedTotal,
+          collected: collectedTotal,
+          open_ar: money(billedTotal - collectedTotal),
+          po_committed: committedTotal,
+          co_delta: coDelta,
+        },
       });
     }
 
