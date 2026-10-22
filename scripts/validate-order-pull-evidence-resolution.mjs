@@ -103,6 +103,25 @@ assert.doesNotMatch(action, /\.bulkUpdate\(|\.create\(|\.delete\(|claimInvocatio
 assert.match(backend, /'resolve_unresolved_order_pull_evidence'/);
 console.log('PASS resolution action is admin-gated, identity-checked, link-verified, and never replays writes');
 
+const relinkBegin = backend.indexOf("if (action === 'relink_order_smartsheet_row')");
+const relinkEnd = backend.indexOf("if (action === 'recover_stale_order_run')", relinkBegin);
+assert.ok(relinkBegin > 0 && relinkEnd > relinkBegin, 'relink action must sit beside the other admin actions');
+const relink = backend.slice(relinkBegin, relinkEnd);
+assert.match(relink, /hasSessionToken/);
+assert.match(relink, /adminActor\?\.role !== 'admin'/);
+assert.match(relink, /body\?\.confirm_relink !== true/);
+assert.match(relink, /currentRowId === newRowId/);
+assert.match(relink, /String\(order\.smartsheet_row_id \?\? ''\) !== currentRowId/);
+assert.match(relink, /smartsheetGet\(`\/sheets\/\$\{sheetId\}\/rows\/\$\{newRowId\}`, token\)/);
+assert.match(relink, /Order\.filter\(\{ smartsheet_row_id: newRowId \}\)/);
+assert.match(relink, /record\.deleted !== true/);
+assert.match(relink, /\{ id: orderId, smartsheet_row_id: currentRowId, updated_date: order\.updated_date \}/);
+assert.match(relink, /\$set: \{ smartsheet_row_id: newRowId \}/);
+assert.match(relink, /String\(verified\?\.smartsheet_row_id \?\? ''\) !== newRowId/);
+assert.doesNotMatch(relink, /customer_name.*===|bulkUpdate\(|\.create\(|\.delete\(|smartsheetPut|smartsheetPost/);
+assert.match(backend, /'relink_order_smartsheet_row'/);
+console.log('PASS relink action is admin-gated, permanent-ID-only, remote-verified, duplicate-guarded, and write-scoped');
+
 const panel = readFileSync('src/components/orders/OrderIndependentPullEvidence.jsx', 'utf8');
 assert.match(panel, /action: 'resolve_unresolved_order_pull_evidence'/);
 assert.match(panel, /confirm_reviewed: true/);
