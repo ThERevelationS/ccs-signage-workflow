@@ -3196,7 +3196,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -3758,6 +3758,90 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         success: true, read_only: true, writes_attempted: false, evidence_unresolved: true,
         run_started_at: requestedRun, sheet_id: sheetId,
         batch_number: match.batchNumber, batch_write_state: match.batchState, report,
+      });
+    }
+
+    if (action === 'resolve_unresolved_order_pull_evidence') {
+      // Admin-only explicit resolution for the independent Order pull evidence.
+      // Requires the exact recorded run identity plus confirm_reviewed, verifies
+      // every recorded permanent Base44 Order still exists and still links to its
+      // recorded Smartsheet row, then marks the evidence verified_complete through
+      // the same concurrency-guarded completion a finished pull uses. It never
+      // retries, replays, or relinks any write.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      const runStartedAt = cleanText(body?.run_started_at, 80);
+      const sheetId = cleanText(body?.sheet_id, 40);
+      if (!runStartedAt || body?.confirm_reviewed !== true) {
+        return Response.json({ success: false,
+          error: 'Resolution requires the exact run_started_at and confirm_reviewed:true after an administrator reviews the recorded pairs.' }, { status: 409 });
+      }
+      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+      const evidence = evidenceRecord?.setting_value;
+      if (evidence?.state !== 'unresolved' || evidence?.run_started_at !== runStartedAt ||
+          String(evidence?.smartsheet_sheet_id ?? '') !== String(sheetId)) {
+        return Response.json({ success: false,
+          error: 'The unresolved Order pull evidence does not match that run. Reload the review panel; nothing was changed.' }, { status: 409 });
+      }
+      // Evidence that omitted older attempted batches cannot be fully verified;
+      // their permanent-ID pairs are not retained, so they need manual review.
+      if (Number(evidence?.batch_evidence?.older_batches_omitted) > 0) {
+        return Response.json({ success: false,
+          error: 'This run attempted more batches than the evidence retains. The omitted permanent-ID pairs require manual reconciliation; the evidence stays unresolved.' }, { status: 409 });
+      }
+      // Reuse the batch review planner to enumerate every recorded permanent-ID
+      // pair; it rejects malformed or duplicate identities.
+      const pairs: { orderId: string; rowId: string }[] = [];
+      try {
+        for (const batch of evidence?.batch_evidence?.recent_batches || []) {
+          let offset: number | null = 0;
+          while (offset !== null) {
+            const plan = planUnresolvedOrderBatchReview(evidence, {
+              runStartedAt, sheetId, batchNumber: batch?.batch_number, offset,
+            });
+            pairs.push(...plan.pairs);
+            offset = plan.nextOffset;
+          }
+        }
+      } catch (error: any) {
+        return Response.json({ success: false,
+          error: error?.message || 'The unresolved Order batch evidence could not be enumerated.' }, { status: 409 });
+      }
+      if (!pairs.length) {
+        return Response.json({ success: false,
+          error: 'The unresolved Order evidence retained no permanent-ID pairs to verify.' }, { status: 409 });
+      }
+      // Every recorded Order must still exist and still link to its recorded
+      // permanent row; a moved or deleted link requires manual reconciliation.
+      const requestedIds = new Set(pairs.map((pair: any) => pair.orderId));
+      const orders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { id: { $in: pairs.map((pair: any) => pair.orderId) } }, sort: 'id',
+        pageSize: 50, maxRows: 600,
+        label: 'Order Form evidence resolution permanent-ID Orders',
+      });
+      const byOrderId = new Map(orders.map((order: any) => [String(order.id), order]));
+      const linkFailures = pairs
+        .filter((pair: any) => {
+          const order = byOrderId.get(pair.orderId);
+          return !order || order.deleted ||
+            String(order.smartsheet_row_id ?? '') !== pair.rowId ||
+            String(order.smartsheet_sheet_id ?? '') !== String(sheetId);
+        })
+        .map((pair: any) => ({ base44_order_id: pair.orderId, smartsheet_row_id: pair.rowId }));
+      if (orders.length !== requestedIds.size || linkFailures.length) {
+        return Response.json({ success: false,
+          error: 'One or more recorded Orders are missing, deleted, or no longer linked to their recorded Smartsheet row. Resolve those permanent links manually; the evidence stays unresolved.',
+          pairs_checked: pairs.length, link_failures: linkFailures }, { status: 409 });
+      }
+      // The completion helper re-reads the store, enforces same-run identity,
+      // writes through a conditional updateMany, and verifies the read-back.
+      const resolved = await verifyCompletedOrderPullEvidence(
+        base44.asServiceRole.entities.GlobalSettings, { startedAt: runStartedAt });
+      return Response.json({
+        success: true, evidence_state: resolved.state, verified_at: resolved.verified_at,
+        pairs_checked: pairs.length, run_started_at: runStartedAt, sheet_id: sheetId,
       });
     }
 
