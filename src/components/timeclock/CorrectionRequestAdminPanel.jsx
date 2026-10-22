@@ -209,6 +209,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         });
         setError(`${responseData?.error || err?.message || "The manager review was interrupted."} Retry the same manager decision to recover safely.`);
       } else {
+        clearReviewRetry(selected.id, payload.request_id);
         setRetryReview(null);
         setError(responseData?.error || err?.message || "The manager decision could not be completed safely.");
       }
