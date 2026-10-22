@@ -30,6 +30,26 @@ test('page fetch failure is saved as an unresolved gap and other pending pages r
 test('staff document edit during scanning blocks atomic cursor/document replacement',async()=>{
  const f=await fixture(),old=structuredClone(f.get().discovery_scan_state);await assert.rejects(continueKnownDiscovery({...f.options,fetchPage:async url=>{f.patch({documents:[{id:'staff',url:'https://city.example/manual.pdf',source:'manual'}]});return{html:'<a href="/sign.pdf">Sign Application</a>',finalUrl:url};}}));assert.equal(f.get().documents[0].id,'staff');assert.deepEqual(f.get().discovery_scan_state,old);
 });
+test('continuation stamps fetch time only on actually fetched pages, not harvested links',async()=>{
+ const f=await fixture();await continueDiscoveryBacklog(f.options);
+ let docs=f.get().documents;
+ assert.equal(typeof docs.find(d=>d.url.endsWith('/sign-forms')).last_fetched,'string');
+ assert.equal(Object.hasOwn(docs.find(d=>d.url.endsWith('/fees')),'last_fetched'),false);
+ assert.equal(Object.hasOwn(docs.find(d=>d.url.endsWith('/sign.pdf')),'last_fetched'),false);
+ await continueDiscoveryBacklog(f.options);
+ docs=f.get().documents;
+ assert.equal(typeof docs.find(d=>d.url.endsWith('/fees')).last_fetched,'string');
+ assert.equal(Object.hasOwn(docs.find(d=>d.url.endsWith('/sign.pdf')),'last_fetched'),false);
+});
+test('manual and archived records at fetched URLs keep their earlier provenance',async()=>{
+ const f=await fixture();
+ f.patch({documents:[{id:'man',url:'https://city.example/sign-forms',source:'manual'},
+  {id:'arc',url:'https://city.example/fees',file_url:'https://cdn.example/fees.pdf',last_fetched:'2020-01-01T00:00:00Z'}]});
+ await continueDiscoveryBacklog(f.options);await continueDiscoveryBacklog(f.options);
+ const docs=f.get().documents;
+ assert.equal(Object.hasOwn(docs.find(d=>d.id==='man'),'last_fetched'),false);
+ assert.equal(docs.find(d=>d.id==='arc').last_fetched,'2020-01-01T00:00:00Z');
+});
 test('automatic query excludes disabled/manual/blocked collections and requires pending work',()=>{
  const q=discoveryBacklogQuery();assert.deepEqual(q.auto_refresh,{$ne:false});assert.deepEqual(q._manual_documents,{$ne:true});assert.deepEqual(q['discovery_scan_state.blocked'],{$ne:true});assert.deepEqual(q['discovery_scan_state.pending_pages.0'],{$exists:true});
 });
