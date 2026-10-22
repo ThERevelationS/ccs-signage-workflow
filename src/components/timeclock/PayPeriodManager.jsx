@@ -234,6 +234,7 @@ export default function PayPeriodManager({
   const requestIdFor = (key, payload) => {
     const stored = storedPeriodRequest(key);
     if (stored && samePeriodPayload(stored.payload, payload)) return stored.request_id;
+    if (stored?.submitted) return null;
     if (stored) clearStoredPeriodRequestId(key);
     const id = newRequestId();
     persistPeriodRequest(key, id, payload, false);
