@@ -1,0 +1,145 @@
+{
+  "name": "PurchaseOrder",
+  "type": "object",
+  "description": "Canonical vendor purchase order for job materials and services. Distinct from the Smartsheet-synced Order spreadsheet. Totals and per-line received quantities are maintained server-side by purchaseOrderAction.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one PO create."
+    },
+    "po_number": {
+      "type": "string",
+      "description": "Human-facing number (e.g. PO-1042). Generated server-side."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "partially_received",
+        "received",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "vendor_name": {
+      "type": "string"
+    },
+    "vendor_contact": {
+      "type": "string"
+    },
+    "vendor_email": {
+      "type": "string"
+    },
+    "vendor_phone": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Job this PO buys for \u2014 feeds job material costing."
+    },
+    "estimate_id": {
+      "type": "string"
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_cost": {
+            "type": "number"
+          },
+          "quantity_received": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "default": 0
+    },
+    "shipping_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "total": {
+      "type": "number",
+      "default": 0
+    },
+    "order_date": {
+      "type": "string"
+    },
+    "expected_date": {
+      "type": "string"
+    },
+    "sent_date": {
+      "type": "string"
+    },
+    "received_date": {
+      "type": "string"
+    },
+    "ship_to": {
+      "type": "string"
+    },
+    "vendor_reference": {
+      "type": "string",
+      "description": "Vendor's confirmation/quote number."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "internal_notes": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "vendor_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__purchase_order_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__purchase_order_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__purchase_order_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__purchase_order_backend_only__"
+      }
+    }
+  }
+}
