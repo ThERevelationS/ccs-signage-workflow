@@ -39,10 +39,10 @@ import { auditSalesPermanentRowOwners } from '../../shared/smartsheetSalesPerman
 import { classifySalesRecoveryHistory, acknowledgeVerifiedSalesRecoveryHistory } from '../../shared/smartsheetSalesRecoveryHistory.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
-import { auditOrderPermanentLinks } from '../../shared/smartsheetOrderLinkIntegrity.mjs';
+import { auditOrderPermanentLinks, classifyRemoteUnlinkedOrderRow, orderRemoteRowIdentitySummary } from '../../shared/smartsheetOrderLinkIntegrity.mjs';
 import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
-import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
+import { orderRunRequiresReview, orderPullWritesVerified } from '../../shared/smartsheetOrderRunSafety.mjs';
 import { linkedOrderCustomerPullNeedsReview } from '../../shared/smartsheetOrderLinkedCustomerReview.mjs';
 import { checkOrderCustomerDecisionEvidence } from '../../shared/smartsheetOrderCustomerDecisionSafety.mjs';
 import { planOrderSmartsheetCustomerUnlink } from '../../shared/smartsheetOrderCustomerDecisionCommit.mjs';
@@ -389,6 +389,11 @@ async function pullDataset(
   const salesPendingSnapshotRepairs: any[] = [];
   const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
+  const orderSnapshotOnlyUpdates: any[] = [];
+  const orderToCreate: any[] = [];
+  const orderCreatesHeldForReview: { row_id: string; kind: string; reason: string }[] = [];
+  const ORDER_PULL_SNAPSHOT_ONLY_LIMIT = 300;
+  const ORDER_PULL_CREATE_LIMIT = 50;
   const orderLocalPendingConflicts: string[] = [];
   const orderLinkedCustomerNameReviews: { order_id: string; sheet_id: string; row_id: string; work_order_id: string; local_customer_name: string; smartsheet_customer_name: string; order_updated_date: string; remote_modified_at: string }[] = [];
   let orderDeletedLinkTombstonesPreserved = 0;
@@ -557,8 +562,22 @@ async function pullDataset(
       }
       if (dataset === 'orders') {
         const expectedOrderSnapshot = buildOrderPullSnapshot(row, bindings);
-        if (orderPulledFieldsUnchanged(existing, fieldValues) &&
-            orderPullSnapshotAligned(existing, expectedOrderSnapshot)) {
+        if (orderPulledFieldsUnchanged(existing, fieldValues)) {
+          // Fields already agree. A stale snapshot alone is not a business
+          // change: snapshots written before remote DATE cells were captured
+          // hold '' for every date column, so heal the baseline with a
+          // metadata-only write instead of a full record update. Capped per
+          // run — the next pull heals the remainder. Local-pending Orders are
+          // held earlier and never reach this branch.
+          if (!orderPullSnapshotAligned(existing, expectedOrderSnapshot) &&
+              existing?.smartsheet_pending_local_sync !== true &&
+              orderSnapshotOnlyUpdates.length < ORDER_PULL_SNAPSHOT_ONLY_LIMIT) {
+            orderSnapshotOnlyUpdates.push({
+              id: existing.id,
+              smartsheet_sync_snapshot: expectedOrderSnapshot,
+              smartsheet_last_synced_at: new Date().toISOString(),
+            });
+          }
           unchangedSkipped++;
           continue;
         }
@@ -601,6 +620,34 @@ async function pullDataset(
       newRecord.smartsheet_sheet_id = sheetId;
       newRecord.smartsheet_last_synced_at = new Date().toISOString();
       toCreate.push(newRecord);
+    } else if (dataset === 'orders' && profile?.create_base44_from_smartsheet === true) {
+      // Only a fully populated unlinked Order row may auto-create. Sparse,
+      // blank/placeholder, and duplicate-looking rows stay flagged for review.
+      if (orderToCreate.length >= ORDER_PULL_CREATE_LIMIT) {
+        orderCreatesHeldForReview.push({
+          row_id: rowId, kind: 'create_cap_reached',
+          reason: 'The per-run Order create limit was reached. This row is held for a later pull.',
+        });
+        continue;
+      }
+      const classification = classifyRemoteUnlinkedOrderRow(
+        orderRemoteRowIdentitySummary(row, bindings), existingRecords);
+      if (classification.kind !== 'populated_unlinked_order') {
+        orderCreatesHeldForReview.push({
+          row_id: rowId, kind: classification.kind, reason: classification.reason,
+        });
+        continue;
+      }
+      orderToCreate.push({
+        ...fieldValues,
+        smartsheet_row_id: rowId,
+        smartsheet_sheet_id: sheetId,
+        smartsheet_sync_snapshot: buildOrderPullSnapshot(row, bindings),
+        smartsheet_last_synced_at: new Date().toISOString(),
+        smartsheet_pending_local_sync: false,
+        row_number: row.row_number,
+        deleted: false,
+      });
     }
   }
   if (dataset === 'orders' && options.reportOrderPullProgress) {
@@ -695,6 +742,78 @@ async function pullDataset(
       createdCount += Array.isArray(result) ? result.length : 0;
     } catch (err) {
       errors.push(`Create batch ${Math.floor(i / 100) + 1}: ${(err as any)?.message || 'unknown error'}`);
+    }
+  }
+
+  // Order auto-create runs before the business batches: the new records are
+  // already verified linked below, so they cannot belong in the update or
+  // evidence pipelines of this same run. An unresolved app-side create attempt
+  // means a remote row could belong to an in-flight POST — hold every create.
+  let orderCreateVerificationFailures = 0;
+  const orderVerifiedCreatedRowIds = new Set<string>();
+  if (dataset === 'orders' && orderToCreate.length) {
+    assertOrderPullContinuationBudget({
+      startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the Order Smartsheet-row auto-create batch',
+    });
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    const orderCreateAttemptRisk = auditOrderCreateAttempts(existingRecords, allRows, sheetId);
+    const unresolvedCreateAttempts = Number(orderCreateAttemptRisk?.unresolved_markers || 0) +
+      Number(orderCreateAttemptRisk?.counts?.ambiguous || 0) +
+      Number(orderCreateAttemptRisk?.counts?.missing_row || 0);
+    if (unresolvedCreateAttempts > 0) {
+      orderCreatesHeldForReview.push(...orderToCreate.map((record: any) => ({
+        row_id: String(record.smartsheet_row_id), kind: 'create_attempts_unresolved',
+        reason: 'Unresolved app-side Order Smartsheet create attempts exist; no remote row can be proven free of an in-flight create.',
+      })));
+    } else {
+      // Permanent-row ownership re-check immediately before writing: no Order,
+      // including a deleted one or a row created moments ago, may already
+      // claim any row in this batch.
+      const claimedRows = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { smartsheet_row_id: { $in: orderToCreate.map((record: any) => String(record.smartsheet_row_id)) } },
+        sort: 'id',
+        label: 'Order pull auto-create permanent row recheck',
+      });
+      const claimedRowIds = new Set(claimedRows.map((record: any) => cleanText(record?.smartsheet_row_id, 40)).filter(Boolean));
+      const allowedCreates = orderToCreate.filter((record: any) => !claimedRowIds.has(String(record.smartsheet_row_id)));
+      for (const record of orderToCreate.filter((record: any) => claimedRowIds.has(String(record.smartsheet_row_id)))) {
+        orderCreatesHeldForReview.push({
+          row_id: String(record.smartsheet_row_id), kind: 'row_id_already_claimed',
+          reason: 'A fresh Base44 read shows an Order already linked to this permanent Smartsheet row.',
+        });
+      }
+      if (allowedCreates.length) {
+        try {
+          const created = await base44.asServiceRole.entities.Order.bulkCreate(allowedCreates);
+          createdCount += Array.isArray(created) ? created.length : 0;
+          // A bulk-create ACK is not proof of the permanent links. Re-read by
+          // exact row ID; each planned row must map to exactly one active
+          // Order on the configured sheet.
+          const createdReadback = await loadAllEntityRows({
+            entity: base44.asServiceRole.entities.Order,
+            query: { smartsheet_row_id: { $in: allowedCreates.map((record: any) => String(record.smartsheet_row_id)) } },
+            sort: 'id',
+            label: 'Order pull auto-create verification',
+          });
+          for (const planned of allowedCreates) {
+            const matches = createdReadback.filter((record: any) =>
+              String(record?.smartsheet_row_id) === String(planned.smartsheet_row_id) &&
+              record?.deleted !== true &&
+              cleanText(record?.smartsheet_sheet_id, 40) === sheetId);
+            if (matches.length === 1) {
+              orderVerifiedCreatedRowIds.add(String(planned.smartsheet_row_id));
+            } else {
+              orderCreateVerificationFailures++;
+              errors.push(`Order auto-create for Smartsheet row ${planned.smartsheet_row_id} ` +
+                `mapped to ${matches.length} verified active linked Order(s). No retry was attempted.`);
+            }
+          }
+        } catch (err: any) {
+          orderCreateVerificationFailures += allowedCreates.length;
+          errors.push(`Order auto-create batch: ${err?.message || 'unknown error'}. No retry was attempted.`);
+        }
+      }
     }
   }
 
@@ -1064,6 +1183,34 @@ async function pullDataset(
     }
   }
 
+  // Stale Order snapshot baselines queued during matching are metadata-only
+  // heals, not business writes: they stay out of orderPullBatchEvidence, and a
+  // short budget simply leaves the remainder for the next pull.
+  if (dataset === 'orders' && orderSnapshotOnlyUpdates.length) {
+    for (let i = 0; i < orderSnapshotOnlyUpdates.length; i += snapshotBatchSize) {
+      try {
+        assertOrderPullContinuationBudget({
+          startedAtMs: orderPullStartedAtMs, nowMs: Date.now(), stage: 'the next Order snapshot-only metadata batch',
+        });
+      } catch {
+        break;
+      }
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      const batch = orderSnapshotOnlyUpdates.slice(i, i + snapshotBatchSize);
+      try {
+        await base44.asServiceRole.entities.Order.bulkUpdate(batch);
+        verifiedMetadataExpected.push(...batch);
+      } catch (error: any) {
+        snapshotWriteFailures += batch.length;
+        errors.push(
+          `Order sync metadata was not confirmed for ${batch.length} records ` +
+          `(IDs: ${batch.slice(0, 5).map((row: any) => row.id).join(', ')}). ` +
+          `Review before treating this pull as complete: ${error?.message || 'unknown error'}`
+        );
+      }
+    }
+  }
+
   // Re-read every metadata write by permanent Base44 ID before declaring the
   // pull healthy. This catches silently dropped Sales snapshots/timestamps too.
   if (verifiedMetadataExpected.length) {
@@ -1170,14 +1317,18 @@ async function pullDataset(
       // A bulk-create ACK does not prove the exact permanent links were saved.
       // Keep originally unlinked rows visible for admin review; never delete
       // or recreate them merely to make the row counts agree.
-      unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
-      unlinked_row_ids: orderUnlinkedRowIds,
+      unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowIds.filter((rowId: string) => !orderVerifiedCreatedRowIds.has(String(rowId))).length,
+      unlinked_row_ids: orderUnlinkedRowIds.filter((rowId: string) => !orderVerifiedCreatedRowIds.has(String(rowId))),
+      orders_created_from_smartsheet: orderVerifiedCreatedRowIds.size,
+      order_creates_held_for_review: orderCreatesHeldForReview.length,
+      order_creates_held_reasons: orderCreatesHeldForReview.slice(0, 10).map((item: any) => `${item.row_id}: ${item.reason}`),
+      create_verification_failures: orderCreateVerificationFailures,
       missing_permanent_row_links: orderMissingPermanentRows.length,
       missing_permanent_row_record_ids: orderMissingPermanentRows.slice(0, 20).map((item: any) => item.record.id),
       missing_permanent_smartsheet_row_ids: orderMissingPermanentRows.slice(0, 20).map((item: any) => item.identity.row_id),
       permanent_row_matching_strategy: 'configured_sheet_and_permanent_row_id_only',
       automatic_relink_attempted: false,
-      automatic_smartsheet_to_base44_create_allowed: false,
+      automatic_smartsheet_to_base44_create_allowed: profile?.create_base44_from_smartsheet === true,
       deleted_order_link_tombstones_preserved: orderDeletedLinkTombstonesPreserved,
       deleted_order_links_shadowed_by_active: deletedOrderTombstones.shadowedDeletedRowIds.length,
     } : {}),
@@ -5047,7 +5198,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
               } : {}),
               ...(action === 'pull_dataset' && dataset === 'sales' ? { recordIds: body.work_order_ids || [] } : {}),
             });
-            if (dataset === 'orders' && lastOrderPullBatchEvidence && !orderRunRequiresReview([pullResult])) {
+            if (dataset === 'orders' && lastOrderPullBatchEvidence && orderPullWritesVerified(pullResult)) {
               // Only the fully verified Order pull can release the separate
               // uncertain evidence gate. Keep the record for later auditing.
               await verifyCompletedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {
