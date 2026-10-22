@@ -53,6 +53,8 @@ assert.match(page, /action: "assign_estimator"/, 'page must support estimator as
 // by stable links, carry the link fields, and back-link the Opportunity.
 const invoicing = readFileSync('base44/functions/invoicingAction/entry.ts', 'utf8');
 const invoicesPage = readFileSync('src/pages/Invoices.jsx', 'utf8');
+const changeOrders = readFileSync('base44/functions/changeOrderAction/entry.ts', 'utf8');
+const coPage = readFileSync('src/pages/ChangeOrders.jsx', 'utf8');
 const sync = readFileSync('src/components/estimator/customerSync.js', 'utf8');
 assert.match(sync, /WorkOrder\.filter\(\{ estimating_request_id: estimateRequestId \}\)/,
   'sync must look up WorkOrders by estimating_request_id');
@@ -101,6 +103,21 @@ assert.match(invoicesPage, /creation_request_key: keyRef\.current|creation_reque
 assert.match(config, /import Invoices from '\.\/pages\/Invoices'/, 'pages.config must import Invoices');
 assert.match(config, /"Invoices": Invoices/, 'pages.config must register the Invoices route');
 assert.match(layout, /title: "Invoices", url: createPageUrl\("Invoices"\)/, 'Layout nav must link Invoices');
+
+// C3: change orders — backend-only, server-computed delta, approval lifecycle.
+const coSchema = readFileSync('base44/entities/ChangeOrder.jsonc', 'utf8');
+assert.match(coSchema, /backend_only/, 'ChangeOrder must be backend-only');
+assert.match(coSchema, /amount_delta/, 'ChangeOrder must carry a server-computed delta');
+assert.match(changeOrders, /authenticateSignShopSession/, 'changeOrderAction must authenticate the session');
+for (const action of ['list_change_orders', 'get_change_order', 'create_change_order', 'update_change_order', 'approve_change_order', 'reject_change_order', 'apply_change_order', 'cancel_change_order']) {
+  assert.ok(changeOrders.includes(`action === "${action}"`), `action ${action} must be handled`);
+}
+assert.match(changeOrders, /Only proposed change orders can be/, 'lifecycle transitions must be guarded');
+assert.match(changeOrders, /at least one parent|Link the change order to an estimate, work order, or opportunity/, 'change orders must require a parent link');
+assert.ok(!coPage.includes('entities.ChangeOrder'), 'change orders page must not touch backend-only entities');
+assert.match(coPage, /functions\.invoke\("changeOrderAction"/, 'change orders page must invoke the function');
+assert.match(config, /"ChangeOrders": ChangeOrders/, 'pages.config must register the ChangeOrders route');
+assert.match(layout, /title: "Change Orders", url: createPageUrl\("ChangeOrders"\)/, 'Layout nav must link Change Orders');
 
 // Wiring: route + navigation.
 assert.match(config, /import Opportunities from '\.\/pages\/Opportunities'/, 'pages.config must import the page');
