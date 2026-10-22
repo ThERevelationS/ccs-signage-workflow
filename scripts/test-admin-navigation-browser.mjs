@@ -2198,6 +2198,118 @@ try {
       assert.deepEqual(await page.evaluate(() => window.__adminEditPasswordCalls), ['synthetic']);
     });
 
+
+  await check('Ordinary toggle fences synchronous duplicates and preserves parked draft through read-only recovery', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page => {
+      await page.getByRole('button',{name:'Edit Synthetic rule',exact:true}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Preserved ordinary-operation draft');
+      await editor.getByRole('button',{name:'Close editor',exact:true}).click();
+      await page.evaluate(()=>{
+        window.__adminAutomationAllowSyntheticWrite=true;
+        window.__adminAutomationSimulateLostReceipt=true;
+        const control=document.querySelector('[aria-label="Toggle Synthetic rule"]');
+        control.click(); control.click();
+      });
+      const warning=page.getByRole('alert',{name:'Automation operation requires review'}).first();
+      await warning.getByText('Automation operation outcome is uncertain',{exact:true}).waitFor();
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      assert.equal(await page.getByRole('switch',{name:'Toggle Synthetic rule'}).isDisabled(),true);
+      await page.getByRole('button',{name:'Refresh Automation rules (read-only)'}).click();
+      assert.equal(await page.getByRole('switch',{name:'Toggle Synthetic rule'}).isDisabled(),true);
+      await page.evaluate(()=>{window.__adminOperationRows=[{id:'synthetic-rule-1',name:'Synthetic rule',enabled:false,updated_date:'v2'}];});
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText('The rule currently has the requested enabled state.',{exact:true}).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge reviewed operation'}).click();
+      await warning.waitFor({state:'detached'});
+      assert.equal(await page.getByRole('switch',{name:'Toggle Synthetic rule'}).isChecked(),false);
+      await page.getByRole('status',{name:'Unsaved Automation draft'}).getByRole('button',{name:'Resume Automation draft'}).click();
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Preserved ordinary-operation draft');
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  await check('Interrupted delete requires fresh read-only acknowledgment; changed and failed reads retain fence', 320,
+    '/?tab=automations&automation_rows=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationSimulateLostReceipt=true;});
+      await page.getByRole('button',{name:'Delete Synthetic rule',exact:true}).click();
+      await page.getByRole('alertdialog').getByRole('button',{name:'Delete',exact:true}).click();
+      const warning=page.getByRole('alert',{name:'Automation operation requires review'});
+      await warning.getByText('Automation operation outcome is uncertain',{exact:true}).waitFor();
+      await page.evaluate(()=>{window.__adminOperationFail=true;});
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText(/Verification failed or timed out/).waitFor();
+      assert.equal(await warning.getByRole('button',{name:'Acknowledge reviewed operation'}).isDisabled(),true);
+      await page.evaluate(()=>{window.__adminOperationFail=false;window.__adminOperationRows=[];});
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText('The rule is absent from the complete current list.',{exact:true}).waitFor();
+      await page.evaluate(()=>{window.__adminOperationRows=[{id:'synthetic-rule-1',enabled:true,updated_date:'v3'}];});
+      await warning.getByRole('button',{name:'Acknowledge reviewed operation'}).click();
+      await warning.getByText('The reviewed rule changed. Verify again before acknowledgment.',{exact:true}).waitFor();
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText('The rule is still present in the current list.',{exact:true}).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge reviewed operation'}).click();
+      await warning.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  await check('Timed-out toggle stays fenced through late receipt and invalidates in-flight recovery evidence', 375,
+    '/?tab=automations&automation_rows=1&automation_timeout=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      const warning=page.getByRole('alert',{name:'Automation operation requires review'});
+      await warning.getByText(/original request is still pending/).waitFor();
+      await page.evaluate(()=>{window.__adminOperationRows=[{id:'synthetic-rule-1',name:'Synthetic rule',enabled:false,updated_date:'v2'}];});
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText('The rule currently has the requested enabled state.',{exact:true}).waitFor();
+      assert.equal(await warning.getByRole('button',{name:'Acknowledge reviewed operation'}).isDisabled(),true);
+      await page.evaluate(()=>window.__adminAutomationPendingWrite());
+      await warning.getByText('Verify the current rule before acknowledging this attempt.',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('switch',{name:'Toggle Synthetic rule'}).isDisabled(),true);
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText('The rule currently has the requested enabled state.',{exact:true}).waitFor();
+      await warning.getByRole('button',{name:'Acknowledge reviewed operation'}).click();
+      await warning.waitFor({state:'detached'});
+      assert.equal(await page.getByRole('switch',{name:'Toggle Synthetic rule'}).isChecked(),false);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  await check('Operation read timeout and late completion cannot replace a newer recovery read', 375,
+    '/?tab=automations&automation_rows=1&automation_timeout=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationSimulateLostReceipt=true;});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      const warning=page.getByRole('alert',{name:'Automation operation requires review'});
+      await warning.getByText('Automation operation outcome is uncertain',{exact:true}).waitFor();
+      await page.evaluate(()=>{window.__adminOperationHold=true;});
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText(/Verification failed or timed out/).waitFor();
+      await page.evaluate(()=>{window.__oldOperationRelease=window.__adminOperationRelease;window.__adminOperationHold=false;window.__adminOperationRows=[];});
+      await warning.getByRole('button',{name:'Verify operation status (read-only)'}).click();
+      await warning.getByText('The rule is absent from the complete current list.',{exact:true}).waitFor();
+      await page.evaluate(()=>{window.__adminOperationRows=[{id:'synthetic-rule-1',enabled:true,updated_date:'late'}];window.__oldOperationRelease();});
+      await page.waitForTimeout(220);
+      assert.equal(await warning.getByText('The rule is absent from the complete current list.',{exact:true}).count(),1);
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+    });
+
+  for (const kind of ['toggle','delete']) {
+    await check('Late ordinary '+kind+' cannot mutate the next Admin session', 375,
+      '/?tab=automations&automation_rows=1', async page => {
+        await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationHoldWrite=true;});
+        if(kind==='toggle') await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+        else {
+          await page.getByRole('button',{name:'Delete Synthetic rule',exact:true}).click();
+          await page.getByRole('alertdialog').getByRole('button',{name:'Delete',exact:true}).click();
+        }
+        await page.waitForFunction(()=>!!window.__adminAutomationPendingWrite);
+        await page.evaluate(()=>{window.dispatchEvent(new Event('admin-synthetic-session-change'));});
+        await page.getByRole('switch',{name:'Toggle Synthetic rule'}).waitFor();
+        await page.evaluate(()=>window.__adminAutomationPendingWrite());
+        await page.waitForTimeout(200);
+        assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+        assert.equal(await page.getByRole('switch',{name:'Toggle Synthetic rule'}).isChecked(),true);
+        assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      });
+  }
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
