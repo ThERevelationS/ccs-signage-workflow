@@ -81,7 +81,7 @@ for (const entity of ['Invoice', 'Payment']) {
   assert.match(schema, /backend_only/, `${entity} must be backend-only so balances cannot be edited around the function`);
 }
 assert.match(invoicing, /authenticateSignShopSession/, 'invoicingAction must authenticate the sign-shop session');
-for (const action of ['list_invoices', 'get_invoice', 'create_invoice', 'update_invoice', 'mark_sent', 'void_invoice', 'record_payment', 'void_payment']) {
+for (const action of ['list_invoices', 'get_invoice', 'create_invoice', 'update_invoice', 'mark_sent', 'void_invoice', 'record_payment', 'void_payment', 'export_ar']) {
   assert.ok(invoicing.includes(`action === "${action}"`), `action ${action} must be handled`);
 }
 assert.match(invoicing, /computeTotals/, 'invoice totals must be computed server-side');
@@ -94,6 +94,7 @@ assert.match(invoicing, /agingSummary/, 'AR aging summary must be computed');
 assert.ok(!invoicesPage.includes('entities.Invoice'), 'invoices page must not touch backend-only entities directly');
 assert.ok(!invoicesPage.includes('entities.Payment'), 'invoices page must not touch backend-only entities directly');
 assert.match(invoicesPage, /functions\.invoke\("invoicingAction"/, 'invoices page must invoke invoicingAction');
+assert.match(invoicesPage, /action: "export_ar"/, 'invoices page must offer the AR CSV export');
 assert.match(invoicesPage, /creation_request_key: keyRef\.current|creation_request_key: payKeyRef\.current/, 'page must supply idempotent creation keys');
 assert.match(config, /import Invoices from '\.\/pages\/Invoices'/, 'pages.config must import Invoices');
 assert.match(config, /"Invoices": Invoices/, 'pages.config must register the Invoices route');
