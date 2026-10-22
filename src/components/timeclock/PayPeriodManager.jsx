@@ -95,8 +95,14 @@ function persistPeriodRequest(key, requestId, payload, submitted = false) {
   } catch {}
 }
 
-function clearStoredPeriodRequestId(key) {
-  try { sessionStorage.removeItem(periodRequestStorageKey(key)); } catch {}
+function clearStoredPeriodRequestId(key, expectedRequestId = "") {
+  try {
+    if (expectedRequestId) {
+      const stored = storedPeriodRequest(key);
+      if (!stored || stored.request_id !== expectedRequestId) return;
+    }
+    sessionStorage.removeItem(periodRequestStorageKey(key));
+  } catch {}
 }
 
 function samePeriodPayload(left, right) {
