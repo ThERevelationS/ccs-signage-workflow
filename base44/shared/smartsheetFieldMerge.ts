@@ -44,7 +44,16 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
         reason='Smartsheet is blank while Base44 retains an older nonblank value. That Base44 field has no verified edit after the blank was observed, so Save & Sync will not repopulate Smartsheet without review.';
       }
     }
-    if(preservedBlankNeedsReview) {
+    // Order snapshots written before remote DATE cells were captured stored ''
+    // for every date column. A blank baseline with both sides nonblank cannot
+    // prove which side changed, so the date must go to conflict review.
+    const legacyOrderDateBaselineNeedsReview=dataset==='orders' &&
+      ['date_needed','date_ordered','date_received'].includes(field) &&
+      !text(prior[column]) && text(a) && text(b) && !same(a,b);
+    if(legacyOrderDateBaselineNeedsReview) {
+      reason='The saved sync baseline predates date tracking, so it cannot prove which side changed this date. Choose the correct value.';
+    }
+    if(preservedBlankNeedsReview || legacyOrderDateBaselineNeedsReview) {
       // Deliberately leave winner empty so the normal conflict/review path below
       // preserves both values. An approved review can still choose either side.
     } else if(known && !remoteChanged)winner='app';
