@@ -195,4 +195,29 @@ assert.match(config, /"Opportunities": Opportunities/, 'pages.config must regist
 assert.match(layout, /title: "Opportunities", url: createPageUrl\("Opportunities"\)/, 'Layout nav must link the page');
 assert.match(layout, /createPageUrl\("Opportunities"\)/, 'Opportunities must be a root route');
 
+// D4-lite inventory: stock quantities + append-only movement ledger.
+const invSchema = readFileSync('base44/entities/Inventory.jsonc', 'utf8');
+const invMoveSchema = readFileSync('base44/entities/InventoryMovement.jsonc', 'utf8');
+const inventoryFn = readFileSync('base44/functions/inventoryAction/entry.ts', 'utf8');
+const invPage = readFileSync('src/pages/Inventory.jsx', 'utf8');
+assert.match(invSchema, /quantity_on_hand/, 'Inventory must track on-hand quantity');
+assert.match(invSchema, /reorder_point/, 'Inventory must carry a reorder point');
+assert.match(invMoveSchema, /backend_only/, 'InventoryMovement must be backend-only');
+assert.match(invMoveSchema, /creation_request_key/, 'movements must be retry-safe');
+assert.match(invMoveSchema, /resulting_qty/, 'movements must record the resulting balance');
+assert.match(inventoryFn, /authenticateSignShopSession/, 'inventoryAction must authenticate the session');
+assert.match(inventoryFn, /asServiceRole\.entities\.InventoryMovement\b/, 'movements must be written via service role');
+assert.match(inventoryFn, /replaceFoundationFieldsIfUnchanged/, 'stock updates must be compare-and-set guarded');
+assert.match(inventoryFn, /Cannot move/, 'negative on-hand results must be rejected');
+assert.match(inventoryFn, /A work order is required to issue stock/, 'issues must link a work order');
+for (const action of ['list_stock', 'list_movements', 'receive_stock', 'issue_to_job', 'adjust_stock', 'return_stock']) {
+  assert.ok(inventoryFn.includes(`"${action}"`), `action ${action} must be handled`);
+}
+assert.ok(!invPage.includes('entities.InventoryMovement'), 'inventory page must not touch the backend-only ledger');
+assert.match(invPage, /functions\.invoke\("inventoryAction"/, 'inventory page must invoke the function');
+assert.match(config, /import Inventory from '\.\/pages\/Inventory'/, 'pages.config must import the Inventory page');
+assert.match(config, /"Inventory": Inventory/, 'pages.config must register the Inventory route');
+assert.match(layout, /title: "Inventory", url: createPageUrl\("Inventory"\)/, 'Layout nav must link Inventory');
+assert.match(layout, /createPageUrl\("Inventory"\)/, 'Inventory must be a root route');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
