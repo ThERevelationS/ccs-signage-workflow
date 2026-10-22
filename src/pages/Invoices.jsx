@@ -1,0 +1,565 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  DollarSign,
+  FileText,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Search,
+  Send,
+  X,
+} from "lucide-react";
+
+const clean = (v) => String(v ?? "").trim();
+const uuid = () => crypto.randomUUID();
+const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const STATUS_LABELS = {
+  draft: "Draft",
+  sent: "Sent",
+  partially_paid: "Partially paid",
+  paid: "Paid",
+  void: "Void",
+};
+const STATUS_STYLES = {
+  draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  sent: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
+  partially_paid: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
+  paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
+  void: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300",
+};
+const METHOD_LABELS = { cash: "Cash", check: "Check", card: "Card", ach: "ACH", financing: "Financing", other: "Other" };
+
+const inputCls = "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400";
+
+const invokeAction = async (sessionToken, body) => {
+  const r = await base44.functions.invoke("invoicingAction", { session_token: sessionToken, ...body });
+  const data = r?.data || r;
+  if (!data?.success) throw new Error(data?.error || "Request failed.");
+  return data;
+};
+
+function StatusBadge({ status }) {
+  const s = clean(status) || "draft";
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[s] || STATUS_STYLES.draft}`}>
+      {STATUS_LABELS[s] || s}
+    </span>
+  );
+}
+
+function CustomerPicker({ sessionToken, selected, onSelect }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!sessionToken) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const r = await base44.functions.invoke("opportunityWorkspaceAction", {
+          session_token: sessionToken, action: "search_customers", query: query.trim(),
+        });
+        const data = r?.data || r;
+        if (!cancelled) setResults(data?.customers || []);
+      } catch { if (!cancelled) setResults([]); }
+      if (!cancelled) setLoading(false);
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [query, sessionToken]);
+
+  return (
+    <div>
+      {selected && (
+        <div className="mb-2 flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-800 dark:bg-emerald-950/40">
+          <span className="font-semibold text-emerald-800 dark:text-emerald-200">{selected.company_name}</span>
+          <button type="button" onClick={() => onSelect(null)} className="text-emerald-700 hover:text-emerald-900 dark:text-emerald-300"><X className="h-4 w-4" /></button>
+        </div>
+      )}
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search customers…" />
+      </div>
+      {loading && <div className="mt-1 text-xs text-slate-500">Searching…</div>}
+      {!loading && results.length > 0 && !selected && (
+        <div className="mt-1 max-h-40 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
+          {results.map((c) => (
+            <button key={c.id} type="button" onClick={() => { onSelect(c); setResults([]); }}
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-violet-50 dark:hover:bg-slate-800">
+              <span className="font-medium text-slate-800 dark:text-slate-100">{c.company_name}</span>
+              <span className="text-xs text-slate-500">{c.contact_name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LineItemEditor({ items, onChange }) {
+  const update = (i, patch) => onChange(items.map((row, j) => (j === i ? { ...row, ...patch } : row)));
+  return (
+    <div>
+      <div className="mb-1 grid grid-cols-[1fr_70px_90px_24px_28px] items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <span>Description</span><span>Qty</span><span>Price</span><span>Tax</span><span />
+      </div>
+      {items.map((row, i) => (
+        <div key={i} className="mb-1.5 grid grid-cols-[1fr_70px_90px_24px_28px] items-center gap-2">
+          <input className={inputCls} value={row.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Line item" />
+          <input className={inputCls} type="number" min="0" step="any" value={row.quantity} onChange={(e) => update(i, { quantity: e.target.value })} />
+          <input className={inputCls} type="number" min="0" step="any" value={row.unit_price} onChange={(e) => update(i, { unit_price: e.target.value })} />
+          <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={row.taxable === true} onChange={(e) => update(i, { taxable: e.target.checked })} />
+          <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...items, { description: "", quantity: 1, unit_price: "", taxable: true }])}
+        className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:underline dark:text-violet-300">
+        <Plus className="h-3.5 w-3.5" /> Add line
+      </button>
+    </div>
+  );
+}
+
+function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
+  const editing = Boolean(invoice?.id);
+  const [customer, setCustomer] = useState(invoice ? { id: invoice.customer_id, company_name: invoice.customer_display_name } : null);
+  const [items, setItems] = useState(
+    (invoice?.line_items || []).map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_price: r.unit_price ?? "", taxable: r.taxable === true }))
+      .length ? invoice.line_items.map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_price: r.unit_price ?? "", taxable: r.taxable === true }))
+        : [{ description: "", quantity: 1, unit_price: "", taxable: true }]
+  );
+  const [form, setForm] = useState({
+    invoice_number: clean(invoice?.invoice_number),
+    discount_amount: invoice?.discount_amount ?? "",
+    tax_rate: invoice?.tax_rate ?? "",
+    deposit_applied: invoice?.deposit_applied ?? "",
+    issue_date: clean(invoice?.issue_date),
+    due_date: clean(invoice?.due_date),
+    terms: clean(invoice?.terms),
+    notes: clean(invoice?.notes),
+    internal_notes: clean(invoice?.internal_notes),
+    estimate_id: clean(invoice?.estimate_id),
+    work_order_id: clean(invoice?.work_order_id),
+    opportunity_id: clean(invoice?.opportunity_id),
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const keyRef = useRef(uuid());
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const previewSubtotal = items.reduce((s, r) => s + (Number(r.quantity) || 0) * (Number(r.unit_price) || 0), 0);
+
+  const save = async () => {
+    if (!clean(customer?.id)) { setError("Pick a customer."); return; }
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const fields = {
+        customer_id: clean(customer.id),
+        customer_display_name: clean(customer.company_name),
+        line_items: items
+          .filter((r) => clean(r.description))
+          .map((r) => ({ description: clean(r.description), quantity: Number(r.quantity) || 0, unit_price: Number(r.unit_price) || 0, taxable: r.taxable === true })),
+        invoice_number: clean(form.invoice_number),
+        discount_amount: Number(form.discount_amount) || 0,
+        tax_rate: Number(form.tax_rate) || 0,
+        deposit_applied: Number(form.deposit_applied) || 0,
+        issue_date: clean(form.issue_date),
+        due_date: clean(form.due_date),
+        terms: clean(form.terms),
+        notes: clean(form.notes),
+        internal_notes: clean(form.internal_notes),
+        estimate_id: clean(form.estimate_id),
+        work_order_id: clean(form.work_order_id),
+        opportunity_id: clean(form.opportunity_id),
+      };
+      if (editing) {
+        await invokeAction(sessionToken, { action: "update_invoice", invoice_id: invoice.id, baseline: invoice, fields });
+      } else {
+        await invokeAction(sessionToken, { action: "create_invoice", creation_request_key: keyRef.current, fields });
+      }
+      onSaved?.();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
+      <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{editing ? `Edit ${invoice.invoice_number}` : "New Invoice"}</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className={labelCls}>Customer *</label>
+            <CustomerPicker sessionToken={sessionToken} selected={customer} onSelect={setCustomer} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={labelCls}>Invoice #</label><input className={inputCls} value={form.invoice_number} onChange={set("invoice_number")} placeholder="Auto" /></div>
+            <div><label className={labelCls}>Terms</label><input className={inputCls} value={form.terms} onChange={set("terms")} placeholder="Net 30" /></div>
+            <div><label className={labelCls}>Issue date</label><input className={inputCls} type="date" value={form.issue_date} onChange={set("issue_date")} /></div>
+            <div><label className={labelCls}>Due date</label><input className={inputCls} type="date" value={form.due_date} onChange={set("due_date")} /></div>
+          </div>
+        </div>
+
+        <div className="mt-4"><label className={labelCls}>Line items</label><LineItemEditor items={items} onChange={setItems} /></div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div><label className={labelCls}>Discount $</label><input className={inputCls} type="number" min="0" step="any" value={form.discount_amount} onChange={set("discount_amount")} /></div>
+          <div><label className={labelCls}>Tax rate</label><input className={inputCls} type="number" min="0" step="any" value={form.tax_rate} onChange={set("tax_rate")} placeholder="0.0825" /></div>
+          <div><label className={labelCls}>Deposit applied $</label><input className={inputCls} type="number" min="0" step="any" value={form.deposit_applied} onChange={set("deposit_applied")} /></div>
+          <div className="flex items-end pb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">Subtotal: {usd(previewSubtotal)}</div>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div><label className={labelCls}>Customer notes</label><textarea className={`${inputCls} min-h-16`} value={form.notes} onChange={set("notes")} /></div>
+          <div><label className={labelCls}>Internal notes</label><textarea className={`${inputCls} min-h-16`} value={form.internal_notes} onChange={set("internal_notes")} /></div>
+        </div>
+
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs font-semibold text-slate-500 dark:text-slate-400">Linked records (optional)</summary>
+          <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div><label className={labelCls}>Estimate ID</label><input className={inputCls} value={form.estimate_id} onChange={set("estimate_id")} /></div>
+            <div><label className={labelCls}>WorkOrder ID</label><input className={inputCls} value={form.work_order_id} onChange={set("work_order_id")} /></div>
+            <div><label className={labelCls}>Opportunity ID</label><input className={inputCls} value={form.opportunity_id} onChange={set("opportunity_id")} /></div>
+          </div>
+        </details>
+
+        {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button onClick={save} disabled={saving}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {editing ? "Save changes" : "Create invoice"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [pay, setPay] = useState({ amount: "", method: "check", paid_date: "", reference_number: "", notes: "" });
+  const payKeyRef = useRef(uuid());
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await invokeAction(sessionToken, { action: "get_invoice", invoice_id: invoiceId });
+      setDetail(data);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Load failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken, invoiceId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const inv = detail?.invoice;
+  const payments = detail?.payments || [];
+  const openBalance = Number(inv?.balance_due) || 0;
+
+  const run = async (label, body) => {
+    if (busy) return;
+    setBusy(label);
+    setError("");
+    try {
+      await invokeAction(sessionToken, body);
+      payKeyRef.current = uuid();
+      await load();
+      onChanged?.();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Action failed.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const recordPayment = () => run("pay", {
+    action: "record_payment",
+    invoice_id: invoiceId,
+    creation_request_key: payKeyRef.current,
+    amount: Number(pay.amount) || 0,
+    method: pay.method,
+    paid_date: clean(pay.paid_date),
+    reference_number: clean(pay.reference_number),
+    notes: clean(pay.notes),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
+      <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        {loading && !detail ? (
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
+        ) : !inv ? (
+          <div className="py-8 text-center text-sm text-red-600">{error || "Invoice not found."}</div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{inv.invoice_number}</h2>
+                  <StatusBadge status={inv.status} />
+                </div>
+                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{inv.customer_display_name}</div>
+                <div className="mt-0.5 text-xs text-slate-500">
+                  {inv.issue_date ? `Issued ${inv.issue_date}` : "Not issued"}{inv.due_date ? ` · Due ${inv.due_date}` : ""}{inv.terms ? ` · ${inv.terms}` : ""}
+                </div>
+              </div>
+              <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <tr><th className="px-3 py-2">Description</th><th className="px-3 py-2 text-right">Qty</th><th className="px-3 py-2 text-right">Price</th><th className="px-3 py-2 text-right">Total</th><th className="px-3 py-2 text-center">Tax</th></tr>
+                </thead>
+                <tbody>
+                  {(inv.line_items || []).map((r, i) => (
+                    <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
+                      <td className="px-3 py-2 text-slate-800 dark:text-slate-100">{r.description}</td>
+                      <td className="px-3 py-2 text-right">{r.quantity}</td>
+                      <td className="px-3 py-2 text-right">{usd(r.unit_price)}</td>
+                      <td className="px-3 py-2 text-right font-medium">{usd((Number(r.quantity) || 0) * (Number(r.unit_price) || 0))}</td>
+                      <td className="px-3 py-2 text-center">{r.taxable ? "✓" : ""}</td>
+                    </tr>
+                  ))}
+                  {(inv.line_items || []).length === 0 && <tr><td colSpan={5} className="px-3 py-4 text-center text-slate-400">No line items.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                {inv.notes && <div><span className="text-xs font-semibold uppercase text-slate-400">Notes:</span> {inv.notes}</div>}
+                {inv.internal_notes && <div><span className="text-xs font-semibold uppercase text-slate-400">Internal:</span> {inv.internal_notes}</div>}
+                {(inv.estimate_id || inv.work_order_id || inv.opportunity_id) && (
+                  <div className="text-xs text-slate-500">
+                    {inv.estimate_id && <div>Estimate: <a className="text-violet-600 hover:underline dark:text-violet-300" href={`/EstimateDetail?id=${inv.estimate_id}`}>{inv.estimate_id}</a></div>}
+                    {inv.work_order_id && <div>WorkOrder: {inv.work_order_id}</div>}
+                    {inv.opportunity_id && <div>Opportunity: {inv.opportunity_id}</div>}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-0.5 text-right text-sm">
+                <div>Subtotal: <span className="font-medium">{usd(inv.subtotal)}</span></div>
+                {Number(inv.discount_amount) > 0 && <div>Discount: <span className="font-medium">-{usd(inv.discount_amount)}</span></div>}
+                {Number(inv.tax_amount) > 0 && <div>Tax ({(Number(inv.tax_rate) * 100).toFixed(2)}%): <span className="font-medium">{usd(inv.tax_amount)}</span></div>}
+                {Number(inv.deposit_applied) > 0 && <div>Deposit applied: <span className="font-medium">-{usd(inv.deposit_applied)}</span></div>}
+                <div className="text-base font-bold text-slate-900 dark:text-slate-100">Total: {usd(inv.total)}</div>
+                <div>Paid: <span className="font-medium text-emerald-600">{usd(inv.amount_paid)}</span></div>
+                <div className="text-base font-bold text-violet-700 dark:text-violet-300">Balance due: {usd(inv.balance_due)}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Payments</h3>
+              {payments.length === 0 && <div className="mt-1 text-xs text-slate-500">None recorded.</div>}
+              {payments.map((p) => (
+                <div key={p.id} className="mt-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-sm dark:bg-slate-800/60">
+                  <span className={p.status === "void" ? "text-slate-400 line-through" : ""}>
+                    {usd(p.amount)} · {METHOD_LABELS[p.method] || p.method}{p.paid_date ? ` · ${p.paid_date}` : ""}{p.reference_number ? ` · ${p.reference_number}` : ""}
+                  </span>
+                  {p.status === "recorded" && (
+                    <button type="button" disabled={Boolean(busy)} onClick={() => run("voidpay", { action: "void_payment", payment_id: p.id, void_reason: "Voided from Invoices" })}
+                      className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50 dark:text-red-400">Void</button>
+                  )}
+                  {p.status === "void" && <span className="text-xs text-slate-400">void</span>}
+                </div>
+              ))}
+              {["sent", "partially_paid"].includes(inv.status) && (
+                <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-[110px_110px_130px_1fr_auto]">
+                  <input className={inputCls} type="number" min="0" step="any" placeholder={`Balance ${usd(openBalance)}`} value={pay.amount} onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value }))} />
+                  <select className={inputCls} value={pay.method} onChange={(e) => setPay((p) => ({ ...p, method: e.target.value }))}>
+                    {Object.entries(METHOD_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                  <input className={inputCls} type="date" value={pay.paid_date} onChange={(e) => setPay((p) => ({ ...p, paid_date: e.target.value }))} />
+                  <input className={inputCls} placeholder="Check # / reference" value={pay.reference_number} onChange={(e) => setPay((p) => ({ ...p, reference_number: e.target.value }))} />
+                  <button type="button" onClick={recordPayment} disabled={Boolean(busy) || !(Number(pay.amount) > 0)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                    {busy === "pay" ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4" />}Record
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex gap-2">
+                {inv.status === "draft" && (
+                  <button type="button" onClick={() => run("send", { action: "mark_sent", invoice_id: invoiceId })} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+                    {busy === "send" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Mark sent
+                  </button>
+                )}
+                {["draft", "sent"].includes(inv.status) && (
+                  <button type="button" onClick={() => setEditing(true)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+                    Edit
+                  </button>
+                )}
+                {!["void", "paid"].includes(inv.status) && (
+                  <button type="button" onClick={() => { if (confirm(`Void ${inv.invoice_number}?`)) run("void", { action: "void_invoice", invoice_id: invoiceId, void_reason: "Voided from Invoices" }); }} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-red-300 px-4 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-400">
+                    Void invoice
+                  </button>
+                )}
+              </div>
+              {loading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+            </div>
+            {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+          </>
+        )}
+      </div>
+      {editing && inv && (
+        <InvoiceForm sessionToken={sessionToken} invoice={inv} onClose={() => setEditing(false)}
+          onSaved={async () => { setEditing(false); await load(); onChanged?.(); }} />
+      )}
+    </div>
+  );
+}
+
+export default function Invoices() {
+  const { sessionToken, isRegistered } = useAuth();
+  const [invoices, setInvoices] = useState([]);
+  const [aging, setAging] = useState(null);
+  const [status, setStatus] = useState("");
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [openId, setOpenId] = useState("");
+
+  const load = useCallback(async () => {
+    if (!sessionToken) return;
+    setLoading(true);
+    setError("");
+    try {
+      const data = await invokeAction(sessionToken, { action: "list_invoices", status, query });
+      setInvoices(data.invoices || []);
+      setAging(data.aging || null);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Load failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken, status, query]);
+
+  useEffect(() => {
+    const t = setTimeout(load, 200);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  if (!isRegistered) return null;
+
+  return (
+    <div className="mx-auto max-w-6xl p-4 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Invoices</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Accounts receivable — invoices, payments, aging.</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
+          </button>
+          <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
+            <Plus className="h-4 w-4" />New Invoice
+          </button>
+        </div>
+      </div>
+
+      {aging && (
+        <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+          {[
+            ["Open", aging.open_balance, `${aging.open_invoices} invoice${aging.open_invoices === 1 ? "" : "s"}`, "text-slate-900 dark:text-slate-100"],
+            ["Current", aging.buckets?.current, "", "text-emerald-600"],
+            ["1–30 days", aging.buckets?.days_1_30, "", "text-amber-600"],
+            ["31–60 days", aging.buckets?.days_31_60, "", "text-orange-600"],
+            ["60+ days", (aging.buckets?.days_61_90 || 0) + (aging.buckets?.days_90_plus || 0), "", "text-red-600"],
+          ].map(([label, val, sub, cls]) => (
+            <div key={label} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
+              <div className={`text-lg font-bold ${cls}`}>{usd(val)}</div>
+              {sub && <div className="text-xs text-slate-500">{sub}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-52 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search invoice # or customer…" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["", "draft", "sent", "partially_paid", "paid", "void"].map((s) => (
+            <button key={s || "all"} onClick={() => setStatus(s)}
+              className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
+              {s ? STATUS_LABELS[s] : "All"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        {loading && invoices.length === 0 ? (
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading invoices…</div>
+        ) : invoices.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <FileText className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
+            No invoices yet.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <tr>
+                <th className="px-4 py-2.5">Invoice</th><th className="px-4 py-2.5">Customer</th>
+                <th className="px-4 py-2.5">Due</th><th className="px-4 py-2.5 text-right">Total</th>
+                <th className="px-4 py-2.5 text-right">Balance</th><th className="px-4 py-2.5">Status</th><th className="px-2 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((inv) => (
+                <tr key={inv.id} onClick={() => setOpenId(inv.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
+                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
+                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{inv.due_date || "—"}</td>
+                  <td className="px-4 py-2.5 text-right font-medium">{usd(inv.total)}</td>
+                  <td className="px-4 py-2.5 text-right font-medium">{usd(inv.balance_due)}</td>
+                  <td className="px-4 py-2.5"><StatusBadge status={inv.status} /></td>
+                  <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showCreate && <InvoiceForm sessionToken={sessionToken} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
+      {openId && <InvoiceDetail sessionToken={sessionToken} invoiceId={openId} onClose={() => setOpenId("")} onChanged={load} />}
+    </div>
+  );
+}
