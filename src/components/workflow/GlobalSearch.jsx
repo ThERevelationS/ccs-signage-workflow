@@ -13,10 +13,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import { Search, Filter, X, Loader2, ChevronDown } from "lucide-react";
+import { Search, Filter, X, Loader2, ChevronDown, GitBranch, Receipt, Package, FileDiff, Calculator } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { useAuth } from "@/components/auth/EmailGate";
+import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -39,9 +42,12 @@ const stageNames = {
 };
 
 export default function GlobalSearch({ className = "", compact = false, shellGlass = false }) {
+  const { sessionToken } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState([]);
+  const [recordResults, setRecordResults] = useState({ opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [] });
   const [isSearching, setIsSearching] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   
@@ -100,8 +106,38 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
     } catch (error) {
       console.error("Search error:", error);
     }
+
+    if (sessionToken && searchTerm.trim().length >= 2) {
+      try {
+        const r = await base44.functions.invoke("opportunityWorkspaceAction", {
+          action: "global_search",
+          session_token: sessionToken,
+          query: searchTerm,
+        });
+        const data = r?.data || r;
+        if (data?.success && data.results) setRecordResults(data.results);
+      } catch (error) {
+        console.error("Record search error:", error);
+        setRecordResults({ opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [] });
+      }
+    } else {
+      setRecordResults({ opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [] });
+    }
     setIsSearching(false);
   };
+
+  const recordTotal = Object.values(recordResults).reduce((s, list) => s + (list?.length || 0), 0);
+  const goToRecord = (path) => {
+    setShowResults(false);
+    navigate(path);
+  };
+  const recordSections = [
+    ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${r.stage || "—"}`, (r) => createPageUrl("Opportunities")],
+    ["estimates", "Estimates", Calculator, (r) => `${r.client_name || "—"} · ${r.estimate_number || r.status || "—"}`, (r) => `/EstimateDetail?id=${r.id}`],
+    ["invoices", "Invoices", Receipt, (r) => `${r.customer_display_name || "—"} · ${r.status || "—"} · $${Number(r.total || 0).toFixed(2)}`, (r) => createPageUrl("Invoices")],
+    ["purchase_orders", "Purchase Orders", Package, (r) => `${r.vendor_name || "—"} · ${r.status || "—"}`, (r) => createPageUrl("PurchaseOrders")],
+    ["change_orders", "Change Orders", FileDiff, (r) => `${r.title || r.customer_display_name || "—"} · ${r.status || "—"}`, (r) => createPageUrl("ChangeOrders")],
+  ];
 
   const toggleStageFilter = (stage) => {
     setFilterStages(prev => 
@@ -145,7 +181,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <Search className="w-5 h-5 text-purple-600" />
-              Search Work Orders
+              Search
             </DialogTitle>
           </DialogHeader>
 
@@ -250,7 +286,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
             {/* Results count */}
             {searchTerm.length >= 2 && (
               <div className="text-sm text-gray-500">
-                {results.length} {results.length === 1 ? 'result' : 'results'} found
+                {results.length + recordTotal} {results.length + recordTotal === 1 ? 'result' : 'results'} found
               </div>
             )}
 
@@ -261,13 +297,40 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                 <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                 <p>Type at least 2 characters to search</p>
               </div>
-            ) : results.length === 0 ? (
+            ) : results.length === 0 && recordTotal === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p>No work orders found</p>
+                <p>No results found</p>
                 <p className="text-sm mt-1">Try adjusting your search or filters</p>
               </div>
             ) : (
-              results.map(wo => (
+              <>
+              {recordSections.map(([key, label, Icon, subline, target]) => {
+                const list = recordResults[key] || [];
+                if (list.length === 0) return null;
+                return (
+                  <div key={key}>
+                    <div className="px-1 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-gray-400 flex items-center gap-1.5">
+                      <Icon className="w-3.5 h-3.5" />{label}
+                    </div>
+                    {list.map((r) => (
+                      <div
+                        key={r.id}
+                        onClick={() => goToRecord(target(r))}
+                        className="p-3 mb-2 rounded-lg clay-card cursor-pointer hover:opacity-80 transition-all"
+                      >
+                        <h4 className="font-semibold text-sm text-gray-800 truncate">
+                          {r.title || r.project_name || r.invoice_number || r.po_number || r.change_order_number}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-0.5">{subline(r)}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              {results.length > 0 && (
+                <div className="px-1 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-gray-400">Work Orders</div>
+              )}
+              {results.map(wo => (
                 <div
                   key={wo.id}
                   onClick={() => handleWorkOrderClick(wo)}
@@ -316,7 +379,8 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                     </div>
                   </div>
                 </div>
-              ))
+              ))}
+              </>
             )}
             </div>
           </div>
