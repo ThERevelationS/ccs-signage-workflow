@@ -66,28 +66,35 @@ const resolveCall=(h,index,value)=>{
   call.gate.resolve(value);
 };
 
-test("FleetAnalytics: older fuel-year response cannot overwrite the selected year's summary",async()=>{
+// The year-scoped fuel effect already fences itself: React runs its returned
+// cleanup on every year/role change, flipping the stale fetch's `mounted` flag
+// before the next fetch starts. These tests lock that boundary in.
+test("FleetAnalytics: fuel effect cleanup drops the superseded year's response",async()=>{
   const h=analyticsHarness();
-  h.fuelEffect();
+  const cleanup1=h.fuelEffect();
   await waitForCalls(h,1);
   assert.equal(h.calls[0].label,"fuel:2025-01-01");
+  assert.equal(typeof cleanup1,"function","The fuel effect must return a cleanup that retires the in-flight fetch");
+  cleanup1();
   h.ctx.selectedYear="2024";
-  h.fuelEffect();
+  const cleanup2=h.fuelEffect();
   await waitForCalls(h,2);
   assert.equal(h.calls[1].label,"fuel:2024-01-01");
   resolveCall(h,1,{data:{summary:"for-2024"}});
   await tick();
   assert.equal(h.state.fuelSummary?.summary,"for-2024");
-  resolveCall(h,0,{data:{summary:"for-2024-stale-2025"}});
+  resolveCall(h,0,{data:{summary:"stale-2025"}});
   await tick();
-  assert.equal(h.state.fuelSummary?.summary,"for-2024","The superseded 2025 fetch must not replace the 2024 summary now on screen");
-  assert.equal(h.fuelLoading.at(-1),false,"The stale fetch must not clear the newer fetch's indicator");
+  assert.equal(h.state.fuelSummary?.summary,"for-2024","The cleaned-up 2025 fetch must not replace the 2024 summary");
+  assert.equal(h.fuelLoading.at(-1),false);
+  cleanup2();
 });
 
-test("FleetAnalytics: a superseded fuel-year failure cannot blank the newer summary",async()=>{
+test("FleetAnalytics: a cleaned-up fuel-year failure cannot blank the newer summary",async()=>{
   const h=analyticsHarness();
-  h.fuelEffect();
+  const cleanup1=h.fuelEffect();
   await waitForCalls(h,1);
+  cleanup1();
   h.ctx.selectedYear="2024";
   h.fuelEffect();
   await waitForCalls(h,2);
@@ -95,7 +102,7 @@ test("FleetAnalytics: a superseded fuel-year failure cannot blank the newer summ
   stale.settled=true;
   stale.gate.reject(new Error("2025 summary failed"));
   await tick();
-  assert.equal(h.fuelErrors.filter(Boolean).length,0,"The superseded fetch must not project its failure");
+  assert.equal(h.fuelErrors.filter(Boolean).length,0,"The cleaned-up fetch must not project its failure");
   resolveCall(h,1,{data:{summary:"for-2024"}});
   await tick();
   assert.equal(h.state.fuelSummary?.summary,"for-2024");
@@ -256,4 +263,5 @@ test("FleetEquipmentDetail: a stale asset's Bouncie trip fetch cannot land on th
   assert.deepEqual(h.state.trips,[],"Asset A's trips must not appear on Asset B's page");
   assert.equal(h.tripsLoading.at(-1),false,"The newer load must reset the stale trip indicator");
 });
+
 
