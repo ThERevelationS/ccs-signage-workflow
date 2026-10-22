@@ -4,7 +4,7 @@ import vm from 'node:vm';
 
 // Isolated checks of the actual SIPS dialog focus effect and close handler.
 // No Base44 records, browser session, or production writes are involved.
-const page = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8');
+const page = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 let passed = 0;
 
 function check(name, fn) {
