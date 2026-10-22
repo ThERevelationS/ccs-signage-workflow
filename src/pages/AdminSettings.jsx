@@ -613,6 +613,7 @@ export default function AdminSettings() {
   useEffect(() => {
     // An Admin session/identity change may not retain draft authority.
     automationSessionEpoch.current += 1;
+    automationLoadSequence.current += 1;
     automationOperationRef.current = null;
     setAutomationOperation(null);
     automationOperationReadOwner.current += 1;
@@ -621,7 +622,6 @@ export default function AdminSettings() {
     automationOperationEvidence.current = null;
     setAutomationOperationReview(null);
     setDeleteConfirm(null);
-    automationLoadSequence.current += 1;
     setAutomationRecoveryListVerified(false);
     setAutomations([]);
     setAutomationLoadError(true);
@@ -837,7 +837,8 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
-    if (automationOperationRef.current || automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
+    if (automationOperationRef.current) return;
+    if (automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
         emailGroupsLoadError || !formData.name?.trim() ||
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
     automationSaveInFlight.current = true;
@@ -1140,10 +1141,10 @@ export default function AdminSettings() {
     setAutomationRecoveryListVerified(false);
     const write = Promise.resolve().then(() => kind === "delete"
       ? deleteAutomationRuleIfUnchanged({ record: rule, adminCapability,
-          label: \`Automation Rule \${operation.name} deletion\` })
+          label: `Automation Rule ${operation.name} deletion` })
       : updateAutomationRuleIfUnchanged({ record: rule,
           nextFields: { enabled: operation.enabled }, exactVersion: false, adminCapability,
-          label: \`Automation Rule \${operation.name} enabled state\` }));
+          label: `Automation Rule ${operation.name} enabled state` }));
     // A timeout does not cancel a server write. Late receipts never release the
     // fence or overwrite a newer snapshot. They only permit a new review.
     const settled = write.then(result => {
@@ -1986,14 +1987,14 @@ export default function AdminSettings() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Switch aria-label={\`Toggle \${rule.name}\`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
+                        <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
                         <Button variant="ghost" size="icon" aria-label={`Duplicate ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
                         </Button>
                         <Button variant="ghost" size="icon" aria-label={`Edit ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" aria-label={\`Delete \${rule.name}\`} disabled={!!automationOperation || automationSaving || !!automationUncertain} onClick={() => setDeleteConfirm(rule)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label={`Delete ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} onClick={() => setDeleteConfirm(rule)} className="h-8 w-8">
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
                       </div>
