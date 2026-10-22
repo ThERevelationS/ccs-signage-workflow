@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { filterAllFleetRows } from "./fleetEntityLoaders";
 import FleetConfirmDialog from "./FleetConfirmDialog";
@@ -85,8 +85,10 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
   const [saving, setSaving] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
   const [archiving, setArchiving] = useState(false);
+  const loadSequenceRef = useRef(0);
 
   const loadDocuments = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     if (!equipment?.id) return;
     setLoading(true);
     setError("");
@@ -97,11 +99,12 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
         "-created_date",
         { label: `${equipment.name} Fleet documents` },
       );
+      if (requestSequence !== loadSequenceRef.current) return;
       setDocuments(rows || []);
     } catch (e) {
-      setError(e?.message || "Unable to load Fleet documents.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet documents.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, [equipment?.id, equipment?.name]);
 
