@@ -1,3 +1,29 @@
+# Permitting continuation handoff — October 22, 2026 (Milestone 2 started: bounded Ohio-first frontier drain)
+
+Checkpoint for this unit: recorded below after creation. Prior: `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
+
+## What ran
+First bounded Milestone 2 expansion pass: `base44 exec --privileged` invoked the deployed `continueKnownDiscovery` once on each of the 10 oldest-updated OH frontier profiles (one saved page each, production fetcher contract). Controls re-verified first: dispatcher enabled, 15 min cycle, 5/cycle, 20 in-flight, 40/day — `dispatched_today` still 40 for day key 2026-10-22, so zero LLM budget available or used.
+
+## Results (live, verified)
+- 10 profiles processed, 10 pages fetched, 0 errors, `llm_calls` 0.
+- 10/10 new `last_fetched` stamps land exactly on the fetched URL — the provenance gate holds live at scale; 0 violations.
+- 4 new official documents added (Willoughby Hills +2, Orange +1, Obetz +1). Unionville's frontier fully drained.
+- Failed/cross-host pages recorded as `page_fetch_failed` review gaps, never stamped.
+- Receipt: `docs/permitting-ohio-frontier-drain-2026-10-22.json`.
+
+## State notes
+- GlobalSettings entity (not Settings) holds `permitting_research_dispatch_config`/`_state` rows — queried via `base44.entities.GlobalSettings` with `setting_key`.
+- Remaining OH pending pages per profile: Kenton 17, Worthington 17, WCH 11, Willoughby Hills 8, Bloomingburg 7, Vanlue 6, Obetz 6, Orange 3, Valleyview 1; review gaps need human triage before depth recovery.
+- The scheduled 15-min collection cycle also drains one page/cycle automatically; manual bounded passes accelerate breadth.
+
+## Next chunk options
+1. Repeat bounded OH drain passes (breadth) or deep-drain a high-value frontier (e.g., Kenton/Worthington 17 pending).
+2. Seed new frontiers: `discovery_only` refresh on OH profiles with permitting_url but no frontier (zero LLM).
+3. Triage review gaps (depth_frontier / page_link_limit / cross-host) before recover_* routes.
+
+---
+
 # Permitting continuation handoff — October 22, 2026 (Discovery fetch-timestamp provenance fix; Milestone 2 enabler)
 
 Current checkpoint for this unit: `6ada74b9d3ee1c4a2ab3dbad` / Git `379e530bddbf79dbc013a1ddc7fc8e1682e2f653`. Prior unit checkpoint `6ada7188337b04b07e490bf5` / Git `6615d6d6303742d2c53b5d60aada00060eb6872f` remains the Milestone 1 completion point. Pre-edit checkpoint for this unit: `6ada72adc11fb6730b8827cc`.
