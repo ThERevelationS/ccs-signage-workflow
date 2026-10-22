@@ -18,3 +18,15 @@ export function orderRunRequiresReview(results = []) {
     )
   );
 }
+
+// The separate Order pull write-evidence gate releases on verified writes
+// alone. Review items (unlinked rows, orphans, missing links) are common on
+// live sheets and must not keep every later pull blocked forever.
+export function orderPullWritesVerified(result) {
+  return result?.dataset === 'orders' && result?.direction === 'pull' &&
+    result?.skipped !== true &&
+    Number(result?.errors || 0) === 0 &&
+    Number(result?.business_field_write_failures || 0) === 0 &&
+    Number(result?.snapshot_write_failures || 0) === 0 &&
+    Number(result?.create_verification_failures || 0) === 0;
+}
