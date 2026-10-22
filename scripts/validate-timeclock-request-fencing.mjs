@@ -25,7 +25,7 @@ assert.match(correctionDialog, /function clearCorrectionSubmission\(entryId, exp
 assert.match(timeOff, /function clearOperation\(key, expectedRequestId = ""\)/);
 assert.match(timeClockPage, /function clearNotesRequest\(entryId, expectedRequestId = ""\)/);
 assert.match(adminPanel, /function clearReviewRetry\(correctionRequestId, expectedRequestId = ""\)/);
-assert.match(quickClock, /clearRequest\(key, expectedRequestId\)/);
+assert.match(quickClock, /const clearRequest = \(action, email, expectedRequestId = ""\)/);
 console.log('PASS storage-backed request clears are fenced by the expected request ID');
 
 // Acknowledgement paths must pass the request ID they are settling.
