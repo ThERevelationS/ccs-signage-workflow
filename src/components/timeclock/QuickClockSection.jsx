@@ -591,16 +591,25 @@ export default function QuickClockSection({
     const email = user?.email;
     if (!email) throw new Error("Verified employee identity is missing an email address.");
 
+    const clockScope = currentActionScope();
+    const stillCurrent = () => clockScope === currentActionScope();
     const requestId = requestIdFor("clock_in", email);
+    let actionEpoch = workViewEpochRef.current;
     setIsLoading(true);
     setPersistenceError("");
     try {
-      const data = await invokeTimeClock({
+      // The invocation increments the transition epoch synchronously before
+      // sending; a later transition or status restore invalidates this reply.
+      const pending = invokeTimeClock({
         action: "clock_in",
         request_id: requestId,
         ...credentialPayload(credential, email),
       });
-      clearRequest("clock_in", email);
+      actionEpoch = workViewEpochRef.current;
+      const data = await pending;
+      assertEmployeeAcknowledgement(data, email, "Clock-in");
+      clearRequest("clock_in", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       credentialRef.current = credential;
       setSelectedUser(data.user || user);
       setBreakStatus(data.break_status || "working");
