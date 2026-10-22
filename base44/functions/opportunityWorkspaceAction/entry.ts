@@ -158,7 +158,29 @@ Deno.serve(async (req) => {
       const visible = rows
         .filter((row: any) => includeClosed || !CLOSED_STAGES.has(clean(row?.stage)))
         .slice(0, limit);
-      return Response.json({ success: true, action, opportunities: visible, total: visible.length });
+      const stageCounts: any = {};
+      let openPipelineValue = 0;
+      let wonValue = 0;
+      let wonCount = 0;
+      let decidedCount = 0;
+      for (const row of rows) {
+        const stage = clean(row?.stage) || "new";
+        stageCounts[stage] = (stageCounts[stage] || 0) + 1;
+        const budget = Number(row?.budget_amount) || 0;
+        if (!CLOSED_STAGES.has(stage)) openPipelineValue += budget;
+        if (stage === "won") { wonValue += budget; wonCount += 1; decidedCount += 1; }
+        if (stage === "lost") decidedCount += 1;
+      }
+      const funnel = {
+        stage_counts: stageCounts,
+        total: rows.length,
+        open_pipeline_value: Math.round(openPipelineValue * 100) / 100,
+        won_value: Math.round(wonValue * 100) / 100,
+        won_count: wonCount,
+        decided_count: decidedCount,
+        win_rate: decidedCount > 0 ? Math.round((wonCount / decidedCount) * 1000) / 10 : null,
+      };
+      return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
     }
 
     if (action === "get_opportunity") {
