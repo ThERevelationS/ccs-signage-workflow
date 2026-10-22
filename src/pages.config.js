@@ -62,6 +62,7 @@ import MondayMorningMeeting from './pages/MondayMorningMeeting';
 import MyWorkflow from './pages/MyWorkflow';
 import NewUserSetup from './pages/NewUserSetup';
 import ChangeOrders from './pages/ChangeOrders';
+import PurchaseOrders from './pages/PurchaseOrders';
 import Invoices from './pages/Invoices';
 import Opportunities from './pages/Opportunities';
 import OrderForm from './pages/OrderForm';
@@ -94,6 +95,7 @@ export const PAGES = {
     "MyWorkflow": MyWorkflow,
     "NewUserSetup": NewUserSetup,
     "ChangeOrders": ChangeOrders,
+    "PurchaseOrders": PurchaseOrders,
     "Invoices": Invoices,
     "Opportunities": Opportunities,
     "OrderForm": OrderForm,
