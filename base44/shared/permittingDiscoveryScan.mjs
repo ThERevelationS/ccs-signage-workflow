@@ -176,3 +176,27 @@ export function combineResearchAndDiscoveredDocuments(researched, discovered) {
   }
   return rows;
 }
+
+// Pages actually fetched during a scan are the only URLs allowed to carry that
+// run's fetch timestamp. Harvested link candidates stay undated until fetched.
+export function discoveryFetchedUrlKeys(scan) {
+  const keys = new Set();
+  for (const page of scan?.pages || []) {
+    if (!['scanned', 'classified_pdf'].includes(page.status)) continue;
+    for (const url of [page.url, page.final_url]) { try { keys.add(key(url)); } catch {} }
+  }
+  return keys;
+}
+
+// Stamp this run's fetch time only on records whose URL was really fetched.
+// Manual, pinned and archived records keep their existing provenance.
+export function applyDiscoveryFetchTimestamp(documents, scan, fetchedAt) {
+  const keys = discoveryFetchedUrlKeys(scan);
+  if (!keys.size || !Array.isArray(documents)) return documents;
+  return documents.map(doc => {
+    if (!doc || doc.source === 'manual' || doc.pinned === true || doc.archive_pinned === true ||
+        doc.file_url || doc.source_sha256) return doc;
+    try { return keys.has(key(doc.url)) ? { ...doc, last_fetched: fetchedAt } : doc; }
+    catch { return doc; }
+  });
+}
