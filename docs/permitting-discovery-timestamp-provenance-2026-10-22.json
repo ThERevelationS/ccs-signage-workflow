@@ -1,0 +1,50 @@
+{
+  "unit": "Discovery fetch-timestamp provenance fix (general and continuation routes)",
+  "date": "2026-10-22",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "pre_edit_checkpoint": "6ada72adc11fb6730b8827cc",
+  "defect": {
+    "summary": "General discovery, scheduled continuation, and batch research stamped last_fetched = invocation time on every harvested link candidate and AI suggestion, including documents that were never fetched. This was the defect family behind the October 21 Sharonville live repair; the selected-document route was fixed earlier, these routes were not.",
+    "evidence_of_prior_behavior": "Octa (6ad05ac8acc3c782f0027f9c) live readback showed all 15 documents carrying last_fetched dates from a previous cycle, including documents never fetched."
+  },
+  "code_changes": {
+    "base44/shared/permittingDiscoveryScan.mjs": [
+      "Added discoveryFetchedUrlKeys(scan): URL-key set of pages whose status is 'scanned' or 'classified_pdf' (both url and final_url normalized through the existing key()).",
+      "Added applyDiscoveryFetchTimestamp(documents, scan, fetchedAt): post-merge map that stamps fetchedAt only on records whose URL was actually fetched this run; manual, pinned, archive_pinned, file_url and source_sha256 records keep existing provenance."
+    ],
+    "base44/shared/permittingDiscoveryContinuation.mjs": [
+      "Removed fabricated last_fetched stamp from harvested scan documents.",
+      "Merged documents pass through applyDiscoveryFetchTimestamp before guarded persistence."
+    ],
+    "base44/functions/refreshJurisdiction/entry.ts": [
+      "Removed last_fetched: new Date().toISOString() from newAiDocs.",
+      "Merged documents pass through applyDiscoveryFetchTimestamp(merge, discoveryScan, now); no scan means no stamps."
+    ],
+    "base44/functions/batchUpdateJurisdictions/entry.ts": [
+      "Removed fabricated last_fetched stamps from both AI document maps (AI suggestions are never fetched in that function)."
+    ]
+  },
+  "test_changes": {
+    "scripts/permitting-discovery-continuation.test.mjs": "Two new regression tests: fetched pending pages receive the timestamp while pending and harvested-only links stay undated; manual and archived records at fetched URLs keep earlier provenance.",
+    "scripts/permitting-discovery-refresh.test.mjs": "Harness bindings added for applyDiscoveryFetchTimestamp and pre-existing missing retainOfficeResearchResponseHistory (pre-existing failure, unrelated to this change).",
+    "scripts/jurisdiction-discovery-refresh.test.mjs": "esbuild mock for safeExternalFetch.ts now also exports assertSafeExternalUrl (pre-existing failure; whole file could not build)."
+  },
+  "checks": {
+    "focused_tests": "176 tests pass across discovery, refresh, continuation, frontier, dispatch, collection-cycle, archive, external-referrals and merge suites; 0 failures.",
+    "prior_failures": "Two pre-existing harness gaps (missing dep bindings) existed before this change and were repaired in the same files.",
+    "live_verification": {
+      "method": "base44 exec --privileged ran the actual deployed shared module continueKnownDiscovery once (maxPages=1) on live profile Octa / OH / 6ad05ac8acc3c782f0027f9c.",
+      "fetch": "https://www.fayette-co-oh.com/DocumentCenter/View/217/Zoning-Permit-Fees-PDF returned a cross-host redirect/no usable HTML and was recorded as page_fetch_failed gap with requires_review.",
+      "outcome": "0 documents received new last_fetched; the failed page correctly received no fetch timestamp; all 15 pre-existing dates unchanged; 8 pending pages remain; llm_calls 0; provenance_violations [].",
+      "note": "Under the previous code every rediscovered harvested link would have been re-stamped this cycle. None were."
+    }
+  },
+  "known_remaining_data_quality": "Existing profile documents across OH/KY may still carry fabricated last_fetched dates written before this fix (Octa example: all 15 dated from a prior cycle). True fetch times are unknowable retroactively; bulk removal is a separate scoped decision requiring owner approval and is not performed here.",
+  "boundaries": [
+    "No LLM calls, no dispatch spend, no archive uploads, no cap changes.",
+    "No manual/pinned/archive_pinned/file_url/source_sha256 record was restamped.",
+    "No authority, delegation, applicability or coverage conclusions drawn.",
+    "No frontend changes or publication. No client/job/shared records touched."
+  ]
+}
