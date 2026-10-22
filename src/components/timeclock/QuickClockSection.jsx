@@ -962,6 +962,51 @@ export default function QuickClockSection({
     throw error;
   };
 
+  const assertEmployeeAcknowledgement = (data, email, label) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
+    if (responseEmail === expectedEmail && (!entryEmail || entryEmail === expectedEmail)) return;
+    const error = new Error(`${label} response could not be matched to this employee. The exact request is preserved; refresh status and retry the same action.`);
+    error.retrySameRequest = true;
+    throw error;
+  };
+
+  const assertWorkPauseAcknowledgementIdentity = (data, email, entryId) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const responseEntryId = String(data?.entry?.id || "");
+    const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
+    const pause = data?.work_pause || data?.active_work_pause || null;
+    const pauseMatches = !pause || (
+      String(pause.user_email || "").trim().toLowerCase() === expectedEmail &&
+      (!pause.time_entry_id || String(pause.time_entry_id) === String(entryId || ""))
+    );
+    if (responseEmail === expectedEmail && responseEntryId === String(entryId || "") &&
+        entryEmail === expectedEmail && pauseMatches) return;
+    const error = new Error("Work Pause response could not be matched to this employee and active shift. The exact request is preserved; refresh status and retry the same action.");
+    error.retrySameRequest = true;
+    throw error;
+  };
+
+  const assertPunchResolutionAcknowledgementIdentity = (data, email, entryId) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const entryMatches = !data?.entry || (
+      String(data.entry.id || "") === String(entryId || "") &&
+      (!data.entry.user_email || String(data.entry.user_email).trim().toLowerCase() === expectedEmail)
+    );
+    const punchCase = data?.punch_exception;
+    const punchCaseMatches = !punchCase || (
+      String(punchCase.user_email || "").trim().toLowerCase() === expectedEmail &&
+      String(punchCase.time_entry_id || "") === String(entryId || "")
+    );
+    if (responseEmail === expectedEmail && entryMatches && punchCaseMatches) return;
+    const error = new Error("Punch resolution response could not be matched to this employee and active shift. The exact request is preserved; refresh status and retry the same action.");
+    error.retrySameRequest = true;
+    throw error;
+  };
+
   const handleStartBreak = async ({ breakType, isPaid }) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
