@@ -107,6 +107,7 @@ import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminT
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
 import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapshotUncertainAutomationReview, reviewedAutomationSnapshotIsCurrent } from "@/components/admin/automationSaveReconciliation";
 import { AutomationReadTimeoutError, withAutomationReadDeadline } from "@/components/admin/automationReadDeadline";
+import { reviewAutomationOperation } from "@/components/admin/automationOperationReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -544,6 +545,15 @@ export default function AdminSettings() {
   const [automationSaving, setAutomationSaving] = useState(false);
   const automationSaveInFlight = useRef(false);
   const automationSessionEpoch = useRef(0);
+  const automationOperationRef = useRef(null);
+  const [automationOperation, setAutomationOperation] = useState(null);
+  const automationOperationReadOwner = useRef(0);
+  const automationOperationReadBusy = useRef(false);
+  const [automationOperationReading, setAutomationOperationReading] = useState(false);
+  const [automationOperationReview, setAutomationOperationReview] = useState(null);
+  const automationOperationEvidence = useRef(null);
+  useEffect(() => () => { automationSessionEpoch.current += 1; }, []);
+
   const automationEditorBaseline = useRef(null);
   const [automationDraftParked, setAutomationDraftParked] = useState(false);
   const automationUncertainRef = useRef(null);
@@ -603,6 +613,14 @@ export default function AdminSettings() {
   useEffect(() => {
     // An Admin session/identity change may not retain draft authority.
     automationSessionEpoch.current += 1;
+    automationOperationRef.current = null;
+    setAutomationOperation(null);
+    automationOperationReadOwner.current += 1;
+    automationOperationReadBusy.current = false;
+    setAutomationOperationReading(false);
+    automationOperationEvidence.current = null;
+    setAutomationOperationReview(null);
+    setDeleteConfirm(null);
     automationLoadSequence.current += 1;
     setAutomationRecoveryListVerified(false);
     setAutomations([]);
@@ -819,7 +837,7 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
-    if (automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
+    if (automationOperationRef.current || automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
         emailGroupsLoadError || !formData.name?.trim() ||
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
     automationSaveInFlight.current = true;
@@ -1102,42 +1120,149 @@ export default function AdminSettings() {
     </div>
   ) : null;
 
-  const handleDelete = async (rule) => {
-    if (!rule?.id) return;
+  const runAutomationOperation = async (kind, rule) => {
+    if (!rule?.id || automationOperationRef.current || automationSaveInFlight.current ||
+        automationUncertainRef.current || isLoading || automationLoadError) return;
+    const operation = { kind, id: rule.id, name: rule.name || rule.id,
+      enabled: !rule.enabled, settled: false, phase: "pending" };
+    const epoch = automationSessionEpoch.current;
+    const owns = () => epoch === automationSessionEpoch.current &&
+      automationOperationRef.current === operation;
+    // Acquire synchronously, before React can render or any request is dispatched.
+    automationOperationRef.current = operation;
+    setAutomationOperation({ ...operation });
+    automationOperationEvidence.current = null;
+    setAutomationOperationReview(null);
+    setDeleteConfirm(null);
     setAutomationSaveError("");
+    // Any list already in flight predates this write and cannot become current.
+    automationLoadSequence.current += 1;
+    setAutomationRecoveryListVerified(false);
+    const write = Promise.resolve().then(() => kind === "delete"
+      ? deleteAutomationRuleIfUnchanged({ record: rule, adminCapability,
+          label: \`Automation Rule \${operation.name} deletion\` })
+      : updateAutomationRuleIfUnchanged({ record: rule,
+          nextFields: { enabled: operation.enabled }, exactVersion: false, adminCapability,
+          label: \`Automation Rule \${operation.name} enabled state\` }));
+    // A timeout does not cancel a server write. Late receipts never release the
+    // fence or overwrite a newer snapshot. They only permit a new review.
+    const settled = write.then(result => {
+      operation.settled = true;
+      return result;
+    }, error => {
+      operation.settled = true;
+      throw error;
+    });
     try {
-      await deleteAutomationRuleIfUnchanged({
-        record: rule,
-        adminCapability,
-        label: `Automation Rule ${rule.name || rule.id} deletion`,
-      });
-      setDeleteConfirm(null);
-      setAutomations(prev => prev.filter(item => item.id !== rule.id));
-    } catch (error) {
-      console.error("Automation delete blocked:", error);
-      setAutomationSaveError(error?.message || "This automation changed in another session and was not deleted.");
-      setDeleteConfirm(null);
+      const result = await withAutomationReadDeadline(() => settled);
+      if (!owns()) return;
+      if (kind === "delete" ? result?.deleted !== true :
+          result?.id !== rule.id || result.enabled !== operation.enabled || !result.updated_date) {
+        throw new Error("Automation operation receipt could not be verified.");
+      }
+      automationOperationRef.current = null;
+      setAutomationOperation(null);
       await loadAutomations();
+    } catch {
+      if (!owns()) return;
+      operation.phase = "uncertain";
+      setAutomationOperation({ ...operation });
+    }
+    // Observe late completion without treating it as proof of current state.
+    void settled.catch(() => {}).finally(() => {
+      if (!owns() || operation.phase !== "uncertain") return;
+      automationOperationReadOwner.current += 1;
+      automationOperationReadBusy.current = false;
+      setAutomationOperationReading(false);
+      automationOperationEvidence.current = null;
+      setAutomationOperationReview(null);
+      setAutomationOperation({ ...operation });
+    });
+  };
+  const handleDelete = (rule) => runAutomationOperation("delete", rule);
+  const toggleEnabled = (rule) => runAutomationOperation("toggle", rule);
+
+  const reconcileAutomationOperation = async (acknowledge = false) => {
+    const operation = automationOperationRef.current;
+    if (!operation || operation.phase !== "uncertain" || automationOperationReadBusy.current) return;
+    const evidence = automationOperationEvidence.current;
+    if (acknowledge && (!operation.settled || !evidence)) return;
+    const epoch = automationSessionEpoch.current;
+    const owner = ++automationOperationReadOwner.current;
+    const owns = () => epoch === automationSessionEpoch.current &&
+      owner === automationOperationReadOwner.current && automationOperationRef.current === operation;
+    automationOperationReadBusy.current = true;
+    setAutomationOperationReading(true);
+    try {
+      const rows = await withAutomationReadDeadline(() => loadAllEntityRows({
+        entity: AutomationRule, sort: "name",
+        label: "Admin Settings Automation operation reconciliation",
+      }));
+      if (!owns()) return;
+      const review = reviewAutomationOperation(operation, rows);
+      if (acknowledge && review.snapshot !== evidence.snapshot) {
+        automationOperationEvidence.current = null;
+        setAutomationOperationReview("changed");
+        return;
+      }
+      if (acknowledge) {
+        // Adopt exactly the fresh complete list; invalidate older list requests.
+        automationLoadSequence.current += 1;
+        setAutomations(rows);
+        setAutomationLoadError(false);
+        setIsLoading(false);
+        setAutomationRecoveryListVerified(true);
+        automationOperationRef.current = null;
+        setAutomationOperation(null);
+        automationOperationEvidence.current = null;
+        setAutomationOperationReview(null);
+      } else {
+        automationOperationEvidence.current = operation.settled ? review : null;
+        setAutomationOperationReview(review.status);
+      }
+    } catch {
+      if (!owns()) return;
+      automationOperationEvidence.current = null;
+      setAutomationOperationReview("failed");
+    } finally {
+      if (owns()) {
+        automationOperationReadBusy.current = false;
+        setAutomationOperationReading(false);
+      }
     }
   };
 
-  const toggleEnabled = async (rule) => {
-    setAutomationSaveError("");
-    try {
-      const saved = await updateAutomationRuleIfUnchanged({
-        record: rule,
-        nextFields: { enabled: !rule.enabled },
-        exactVersion: false,
-        adminCapability,
-        label: `Automation Rule ${rule.name || rule.id} enabled state`,
-      });
-      setAutomations(prev => prev.map(item => item.id === saved.id ? saved : item));
-    } catch (error) {
-      console.error("Automation toggle blocked:", error);
-      setAutomationSaveError(error?.message || "This automation changed in another session. Latest rules were reloaded.");
-      await loadAutomations();
-    }
-  };
+  const ordinaryAutomationRecovery = automationOperation ? (
+    <div role="alert" aria-label="Automation operation requires review"
+      className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+      <p className="font-semibold">{automationOperation.phase === "pending" ? "Automation operation in progress" : "Automation operation outcome is uncertain"}</p>
+      <p className="mt-1">{automationOperation.kind === "delete" ? "Delete" : automationOperation.enabled ? "Enable" : "Disable"}: {automationOperation.name}.
+        Automation writes are paused. Your editor draft is preserved.</p>
+      <p className="mt-1">A list refresh cannot resolve this attempt. Verification reads current state only; it does not retry or cancel the request, or prove which request changed the rule.</p>
+      {automationOperation.phase === "uncertain" && <>
+        {!automationOperation.settled && <p className="mt-2">The original request is still pending. You can inspect current state; acknowledgment remains paused until it settles.</p>}
+        <p role="status" className="mt-2">{
+          automationOperationReview === "matching" ? "The rule currently has the requested enabled state." :
+          automationOperationReview === "different" ? "The rule currently has a different enabled state." :
+          automationOperationReview === "absent" ? "The rule is absent from the complete current list." :
+          automationOperationReview === "present" ? "The rule is still present in the current list." :
+          automationOperationReview === "changed" ? "The reviewed rule changed. Verify again before acknowledgment." :
+          automationOperationReview === "failed" ? "Verification failed or timed out. No current state was verified. Try the read again." :
+          "Verify the current rule before acknowledging this attempt."}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={automationOperationReading}
+            onClick={() => { void reconcileAutomationOperation(); }}>
+            {automationOperationReading ? "Checking operation..." : "Verify operation status (read-only)"}
+          </Button>
+          <Button type="button" variant="outline"
+            disabled={automationOperationReading || !automationOperation.settled || !automationOperationEvidence.current}
+            onClick={() => { void reconcileAutomationOperation(true); }}>
+            Acknowledge reviewed operation
+          </Button>
+        </div>
+      </>}
+    </div>
+  ) : null;
 
   // Trigger helpers
   const addTrigger = () => setTriggers([...triggers, { trigger_type: "", trigger_condition: {}, logic: "or" }]);
@@ -1668,6 +1793,7 @@ export default function AdminSettings() {
           )}
 
           <AdminPanelContent value="automations">
+            {ordinaryAutomationRecovery}
             {!isLoading && !automationLoadError && automationRecoveryListVerified && (
               <div role="status" aria-label="Automation recovery list verified"
                 className="mb-4 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-950">
@@ -1858,14 +1984,14 @@ export default function AdminSettings() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Switch checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
+                        <Switch aria-label={\`Toggle \${rule.name}\`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
                         <Button variant="ghost" size="icon" aria-label={`Duplicate ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
                         </Button>
                         <Button variant="ghost" size="icon" aria-label={`Edit ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(rule)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label={\`Delete \${rule.name}\`} disabled={!!automationOperation || automationSaving || !!automationUncertain} onClick={() => setDeleteConfirm(rule)} className="h-8 w-8">
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
                       </div>
@@ -1886,6 +2012,7 @@ export default function AdminSettings() {
               </DialogTitle>
             </DialogHeader>
 
+            {ordinaryAutomationRecovery}
             {uncertainAutomationReview}
             <fieldset disabled={automationSaving} className="min-w-0 space-y-6 mt-4">
               {/* Name & Priority */}
@@ -2162,7 +2289,7 @@ export default function AdminSettings() {
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" disabled={automationSaving} onClick={() => closeAutomationEditor(false)}>Close editor</Button>
                 {!automationUncertain && <Button variant="outline" disabled={automationSaving} onClick={discardAutomationDraft}>Discard draft</Button>}
-                <Button onClick={handleSave} disabled={!!automationUncertain || automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
+                <Button onClick={handleSave} disabled={!!automationOperation || !!automationUncertain || automationSaving || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
@@ -2180,7 +2307,7 @@ export default function AdminSettings() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDelete(deleteConfirm)} className="bg-red-600 text-white">Delete</AlertDialogAction>
+              <AlertDialogAction disabled={!!automationOperation || automationSaving || !!automationUncertain} onClick={() => handleDelete(deleteConfirm)} className="bg-red-600 text-white">Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
