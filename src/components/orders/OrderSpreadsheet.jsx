@@ -1196,11 +1196,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       const conflictCount = result.conflicts;
       const errorCount = result.errors;
       const hasIssues = conflictCount > 0 || errorCount > 0;
+      const issueDetails = Array.isArray(result.issues) ? result.issues
+        .filter(issue => Number.isSafeInteger(issue?.row) && issue.row > 0 &&
+          typeof issue.message === 'string' && issue.message.trim())
+        .slice(0, 3)
+        .map(issue => `Import row ${issue.row}: ${issue.message.slice(0, 300)}`)
+        .join(' ') : '';
       const summary = [
         `${result.created} created`,
         `${result.updated} updated`,
         ...(result.skipped ? [`${result.skipped} unchanged`] : []),
-        ...(conflictCount ? [`${conflictCount} concurrency conflict${conflictCount === 1 ? '' : 's'}`] : []),
+        ...(conflictCount ? [`${conflictCount} import conflict${conflictCount === 1 ? '' : 's'}`] : []),
         ...(errorCount ? [`${errorCount} failed`] : []),
       ].join(', ');
       // The import runs on the server and may finish while the browser still
@@ -1215,7 +1221,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       }
       finishImport(
         importId,
-        hasIssues ? `${summary}. Conflicted rows were not overwritten; review Orders before retrying them.` : summary,
+        hasIssues ? `${summary}. Conflicted rows were not overwritten; review Orders before retrying them. ${issueDetails}`.trim() : summary,
         hasIssues,
       );
     } catch (err) {
