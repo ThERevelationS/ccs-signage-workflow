@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,15 @@ export default function EmployeeTodayCard({
   const [statusError, setStatusError] = useState("");
   const [loading, setLoading] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const statusSeqRef = useRef(0);
+  const statusScopeRef = useRef("");
+  statusScopeRef.current = `${sessionToken || ""}|${String(user?.email || "").trim().toLowerCase()}`;
 
   const loadStatus = useCallback(async () => {
-    if (!user?.email || !sessionToken) return;
+    const requestEmail = String(user?.email || "").trim().toLowerCase();
+    if (!requestEmail || !sessionToken) return;
+    const requestSeq = ++statusSeqRef.current;
+    const requestScope = `${sessionToken}|${requestEmail}`;
     setLoading(true);
     try {
       const response = await base44.functions.invoke("timeClockAction", {
@@ -40,16 +46,24 @@ export default function EmployeeTodayCard({
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Current Time Clock status could not be verified.");
+      if (requestSeq !== statusSeqRef.current || statusScopeRef.current !== requestScope) return;
+      if (String(data?.user?.email || "").trim().toLowerCase() !== requestEmail) return;
       setStatusData(data);
       setStatusError("");
     } catch (err) {
+      if (requestSeq !== statusSeqRef.current || statusScopeRef.current !== requestScope) return;
       setStatusError(err?.response?.data?.error || err?.message || "Current Time Clock status could not be verified.");
     } finally {
-      setLoading(false);
+      if (requestSeq === statusSeqRef.current && statusScopeRef.current === requestScope) {
+        setLoading(false);
+      }
     }
   }, [sessionToken, user?.email]);
 
   useEffect(() => {
+    statusSeqRef.current += 1;
+    setStatusData(null);
+    setStatusError("");
     loadStatus();
     const poll = setInterval(loadStatus, 30000);
     const tick = setInterval(() => setNow(new Date()), 1000);
