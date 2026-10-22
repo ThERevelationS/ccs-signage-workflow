@@ -102,6 +102,7 @@ import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, pullOrdersFromSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
+import { ORDER_SAVE_SYNC_BATCH_LIMIT, OrderSaveSyncBatchLimitError, orderSaveSyncBatchMessage } from "@/components/orders/orderSaveSyncBatch.mjs";
 import { verifyUncertainOrderSyncReadback } from "@/components/orders/orderUncertainSyncReadback.mjs";
 import { canClearCompletedOrderSyncTarget } from "@/components/orders/orderSyncCompletionSafety.mjs";
 import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
@@ -278,6 +279,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const pendingSyncIdsRef = useRef(new Set()); // Saved locally but not yet confirmed in Smartsheet
   const pendingSyncVersionRef = useRef(new Map()); // Prevent an older sync from clearing a newer local save
+  const orderSyncBatchLimitRef = useRef(ORDER_SAVE_SYNC_BATCH_LIMIT); // A verified lower server limit applies to the next click.
   const originalOrdersRef = useRef({}); // Track original order data for comparison
   const saveInFlightRef = useRef(false);
   const syncInFlightRef = useRef(false);
@@ -584,10 +586,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       return false;
     }
 
+    // Keep unsubmitted Orders in the durable queue. One click handles one
+    // bounded batch; the next click continues from the remaining pending IDs.
     const syncTargets = [...pendingSyncIdsRef.current].map((id) => ({
       id,
       version: pendingSyncVersionRef.current.get(id) || 0,
-    }));
+    })).slice(0, orderSyncBatchLimitRef.current);
     const orderIds = syncTargets.map(({ id }) => id);
     if (orderIds.length === 0) {
       syncInFlightRef.current = false;
@@ -650,9 +654,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         : order));
       setLastSynced(new Date());
       setLastSyncDirection('push');
-      setSyncMessage(summary.message);
+      setSyncMessage(orderSaveSyncBatchMessage(summary.message, pendingSyncIdsRef.current.size));
       return true;
     } catch (error) {
+      // The typed error is accepted only from a verified pre-write limit
+      // rejection. Learn a stricter setting for the NEXT user click; never replay.
+      if (error instanceof OrderSaveSyncBatchLimitError) {
+        orderSyncBatchLimitRef.current = error.limit;
+        setSaveError(`Saved in Base44, but Smartsheet sync needs attention: ${error.message}`);
+        return false;
+      }
       // The request can lose its response after Smartsheet and Base44 have already
       // committed successfully. Re-read durable Order markers before telling the
       // user to retry so an acknowledged-on-server sync is not pushed again.
@@ -684,12 +695,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         const unresolvedTargets = syncTargets.filter(({ id }) => pendingSyncIdsRef.current.has(id));
         if (unresolvedTargets.length === 0) {
           setLastSynced(new Date());
-          setSyncMessage('Saved changes are synchronized.');
+          setSyncMessage(orderSaveSyncBatchMessage('Saved changes are synchronized.', pendingSyncIdsRef.current.size));
           return true;
         }
         const completedCount = syncTargets.length - unresolvedTargets.length;
         if (completedCount > 0) {
-          partialResultMessage = `${completedCount} Order${completedCount === 1 ? '' : 's'} synced successfully; ${unresolvedTargets.length} remain queued for Retry Sync. `;
+          partialResultMessage = `${completedCount} Order${completedCount === 1 ? '' : 's'} synced successfully; ${pendingSyncIdsRef.current.size} remain queued for Retry Sync. `;
           setLastSynced(new Date());
         }
       } catch (verificationError) {
