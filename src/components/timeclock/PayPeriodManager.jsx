@@ -333,7 +333,7 @@ export default function PayPeriodManager({
       setEndDate("");
       await loadPeriods();
     } catch (err) {
-      if (!shouldRetainPeriodRequest(err)) clearRequestId(key);
+      if (!shouldRetainPeriodRequest(err)) clearRequestId(key, requestId);
       setError(err?.message || "Pay period could not be created.");
     } finally {
       setBusy(false);
@@ -418,7 +418,7 @@ export default function PayPeriodManager({
       setActionNote("");
       await Promise.all([loadPeriods(), onEntriesChanged?.()]);
     } catch (err) {
-      if (!shouldRetainPeriodRequest(err)) clearRequestId(key);
+      if (!shouldRetainPeriodRequest(err)) clearRequestId(key, requestId);
       setError(err?.message || "Pay-period action could not be completed.");
     } finally {
       setBusy(false);
