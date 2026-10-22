@@ -105,7 +105,24 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const openReview = useCallback((request) => {
     if (!request?.id) return;
     const requested = request.requested_changes || {};
+    const storedRetry = storedReviewRetry(request.id);
     setSelected(request);
+    if (storedRetry) {
+      const frozenCorrection = storedRetry.payload?.correction || {};
+      setClockIn(companyDateTimeInputFromIso(frozenCorrection.clock_in || requested.clock_in));
+      setClockOut(companyDateTimeInputFromIso(frozenCorrection.clock_out || requested.clock_out));
+      setLunchMinutes(String(frozenCorrection.lunch_minutes ?? requested.lunch_minutes ?? 0));
+      setNotes(frozenCorrection.notes ?? requested.notes ?? "");
+      setReviewReason(storedRetry.payload?.reason || "");
+      setRetryReview({
+        correctionRequestId: request.id,
+        decision: storedRetry.decision,
+        requestId: storedRetry.request_id,
+        payload: storedRetry.payload,
+      });
+      setError("This manager review was interrupted after the server began processing it. Values are locked until you retry the same decision so the original request can finish safely.");
+      return;
+    }
     setClockIn(companyDateTimeInputFromIso(requested.clock_in));
     setClockOut(companyDateTimeInputFromIso(requested.clock_out));
     setLunchMinutes(String(requested.lunch_minutes || 0));
@@ -192,7 +209,6 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         });
         setError(`${responseData?.error || err?.message || "The manager review was interrupted."} Retry the same manager decision to recover safely.`);
       } else {
-        clearReviewRetry(selected.id, payload.request_id);
         setRetryReview(null);
         setError(responseData?.error || err?.message || "The manager decision could not be completed safely.");
       }
