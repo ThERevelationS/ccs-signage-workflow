@@ -33,7 +33,7 @@ assert.equal(orderRunRequiresReview([{ dataset: 'orders', direction: 'pull', bus
 assert.equal(orderRunRequiresReview([{ dataset: 'sales', direction: 'pull', business_field_write_failures: 1 }]), false);
 console.log('PASS read-back preserves Order permanent row and full business fields; failed or partial updates require review');
 
-const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
+const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8').replace(/\r\n/g, '\n');
 const pull = backend.slice(backend.indexOf('async function pullDataset('), backend.indexOf('async function loadSyncConfig('));
 const bulk = pull.indexOf('await base44.asServiceRole.entities[entityName].bulkUpdate(payload)');
 const candidate = pull.indexOf('orderBusinessVerifications.push({');
