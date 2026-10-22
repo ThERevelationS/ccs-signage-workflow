@@ -1,6 +1,6 @@
 # Permitting continuation handoff — October 23, 2026 (Milestone 2 executed at scale: both states seeded, frontier draining)
 
-Checkpoint for this unit: `CHECKPOINT_TBD`. Prior: `6ada7633067620fe9ba90196` (first bounded drain) / `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
+Checkpoint for this unit: `6ada87ffa4e9ed854f92a637` / Git `3a55da01492423a2279dbc1021a9762c97b76dba` (sandbox auto-named the checkpoint after concurrent smartsheet work in HEAD). Prior: `6ada7633067620fe9ba90196` (first bounded drain) / `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
 
 ## What ran — full Milestone 2 collection-expansion sequence (zero LLM, zero archives, zero dispatch budget)
 1. **Seeded every eligible frontier in both states** via deployed `refreshJurisdiction` `discovery_only=true defer_archive=true`: OH 189 candidates → 126 seeded / 63 persistent failures; KY 173 → 72 seeded / 101 failures. Failures are honest gaps (unreachable sites, JS portals, WAF, missing/invalid permitting_url e.g. Moscow literal `INFORMATION NOT FOUND`) — none marked successful; operational skip lists only prevented re-attempt storms.
