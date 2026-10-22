@@ -29,7 +29,7 @@ assert.match(spreadsheet, /window\.addEventListener\('online', refreshAuthoritat
 assert.match(spreadsheet, /window\.addEventListener\('focus', refreshAuthoritativeOrders\)/);
 assert.match(spreadsheet, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
 assert.match(spreadsheet, /if \(pendingSyncCount <= 0\) return undefined/);
-assert.match(spreadsheet, /setInterval\(\(\) => loadData\(false\), 5000\)/);
+assert.match(spreadsheet, /setInterval\(\(\) => loadData\(false\), 30000\)/);
 console.log('PASS reconnect/focus/visibility and active durable-pending polling refresh authoritative Order markers promptly');
 
 assert.match(widget, /const \[statusReadError, setStatusReadError\] = useState\(false\)/);
