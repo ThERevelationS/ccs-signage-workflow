@@ -843,6 +843,10 @@ export default function AdminSettings() {
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
     automationSaveInFlight.current = true;
     const ownerEpoch = automationSessionEpoch.current;
+    // Reads the current stored authorization rather than the mount-time
+    // snapshot, so an expired capability fails before dispatch instead of
+    // sending a stale credential to the server.
+    const writeCapability = getStoredAdminSettingsCapability();
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
@@ -862,7 +866,7 @@ export default function AdminSettings() {
           record: editingRule,
           nextFields: saveData,
           exactVersion: true,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `Automation Rule ${editingRule.name || editingRule.id}`,
         });
         if (ownerEpoch !== automationSessionEpoch.current) return;
@@ -871,7 +875,7 @@ export default function AdminSettings() {
         writeDispatched = true;
         const result = await createAutomationRuleIfAbsent({
           data: saveData,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `Automation Rule ${saveData.name}`,
         });
         if (ownerEpoch !== automationSessionEpoch.current) return;
@@ -889,7 +893,7 @@ export default function AdminSettings() {
       await loadAutomations();
     } catch (error) {
       if (ownerEpoch !== automationSessionEpoch.current) return;
-      if (writeDispatched) {
+      if (writeDispatched && error?.automationPreDispatch !== true) {
         // The response does not prove whether the server committed. Fence the
         // attempted draft; only an explicit read-only review may classify it.
         const attempt = {
@@ -1139,11 +1143,14 @@ export default function AdminSettings() {
     // Any list already in flight predates this write and cannot become current.
     automationLoadSequence.current += 1;
     setAutomationRecoveryListVerified(false);
+    // Current stored authorization, not the mount-time snapshot: an expired
+    // capability fails before dispatch rather than reaching the server stale.
+    const writeCapability = getStoredAdminSettingsCapability();
     const write = Promise.resolve().then(() => kind === "delete"
-      ? deleteAutomationRuleIfUnchanged({ record: rule, adminCapability,
+      ? deleteAutomationRuleIfUnchanged({ record: rule, adminCapability: writeCapability,
           label: `Automation Rule ${operation.name} deletion` })
       : updateAutomationRuleIfUnchanged({ record: rule,
-          nextFields: { enabled: operation.enabled }, exactVersion: false, adminCapability,
+          nextFields: { enabled: operation.enabled }, exactVersion: false, adminCapability: writeCapability,
           label: `Automation Rule ${operation.name} enabled state` }));
     // A timeout does not cancel a server write. Late receipts never release the
     // fence or overwrite a newer snapshot. They only permit a new review.
@@ -1165,8 +1172,19 @@ export default function AdminSettings() {
       if (!owns()) return;
       automationOperationRef.current = null;
       setAutomationOperation(null);
-    } catch {
+    } catch (error) {
       if (!owns()) return;
+      if (error?.automationPreDispatch === true) {
+        // A pre-dispatch validation failure cannot have reached the server, so
+        // there is nothing to verify. Release the lock and surface the real
+        // error instead of forcing an uncertain-outcome recovery.
+        automationOperationRef.current = null;
+        setAutomationOperation(null);
+        automationOperationEvidence.current = null;
+        setAutomationOperationReview(null);
+        setAutomationSaveError(error?.message || "This automation operation could not be started.");
+        return;
+      }
       operation.phase = "uncertain";
       setAutomationOperation({ ...operation });
     }
