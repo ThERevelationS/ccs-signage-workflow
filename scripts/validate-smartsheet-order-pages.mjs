@@ -30,8 +30,15 @@ const page = (totalRowCount, version, entries) => ({ totalRowCount, version, row
 {
   const guard = createSmartsheetOrderPageGuard({ pageSize: 2 });
   guard.accept(1, page(4, 1, rows(1, 2)), rows(1, 2));
-  assert.throws(() => guard.accept(2, page(4, 2, rows(3, 2)), rows(3, 2)), /changed/);
-  console.log('PASS sheet modification during pagination blocks import');
+  assert.equal(guard.accept(2, page(4, 2, rows(3, 2)), rows(3, 2)), true);
+  guard.assertComplete();
+  console.log('PASS sheet version bump during pagination is tolerated when the row set is unchanged');
+}
+{
+  const guard = createSmartsheetOrderPageGuard({ pageSize: 2 });
+  guard.accept(1, page(4, 1, rows(1, 2)), rows(1, 2));
+  assert.throws(() => guard.accept(2, page(5, 2, rows(3, 2)), rows(3, 2)), /changed/);
+  console.log('PASS sheet row-count change during pagination blocks import');
 }
 {
   const guard = createSmartsheetOrderPageGuard({ pageSize: 2 });
