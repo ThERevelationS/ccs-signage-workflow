@@ -61,6 +61,7 @@ export default function FleetRepairApprovalPolicies() {
   const uncertainRef = useRef(uncertain);
   const recoveryRef = useRef(null);
   const refreshRetryRef = useRef(null);
+  const loadSequenceRef = useRef(0);
   busyRef.current = busy;
   uncertainRef.current = uncertain;
 
@@ -71,29 +72,36 @@ export default function FleetRepairApprovalPolicies() {
     return data.policies;
   };
   const load = async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
       const rows = await fetchPolicies();
+      if (requestSequence !== loadSequenceRef.current) return false;
       setPolicies(rows);
       setLoadFailed(false);
       setRefreshWarning("");
       return true;
     } catch (err) {
-      setLoadFailed(true);
-      setError(err?.message || "Unable to load Fleet repair approval policies.");
+      if (requestSequence === loadSequenceRef.current) {
+        setLoadFailed(true);
+        setError(err?.message || "Unable to load Fleet repair approval policies.");
+      }
       return false;
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   };
   const refreshAfterMutation = async verb => {
+    const requestSequence = ++loadSequenceRef.current;
     try {
-      setPolicies(await fetchPolicies());
+      const rows = await fetchPolicies();
+      if (requestSequence !== loadSequenceRef.current) return true;
+      setPolicies(rows);
       setRefreshWarning("");
       return true;
     } catch {
-      setRefreshWarning(`${verb} succeeded, but the policy list could not refresh. Use Retry refresh; do not repeat the operation.`);
+      if (requestSequence === loadSequenceRef.current) setRefreshWarning(`${verb} succeeded, but the policy list could not refresh. Use Retry refresh; do not repeat the operation.`);
       return false;
     }
   };
