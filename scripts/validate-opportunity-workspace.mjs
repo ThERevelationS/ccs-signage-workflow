@@ -159,6 +159,11 @@ for (const action of ['list_purchase_orders', 'get_purchase_order', 'create_purc
 }
 assert.match(purchaseOrders, /exceeds the open quantity/, 'receiving must reject over-receipts');
 assert.match(purchaseOrders, /Only draft purchase orders can be/, 'PO edits must be draft-only');
+for (const action of ['mark_invoiced', 'mark_paid']) {
+  assert.ok(purchaseOrders.includes(`action === "${action}"`), `action ${action} must be handled`);
+}
+assert.match(purchaseOrders, /Record the vendor bill before marking the purchase order paid/, 'payment must require a recorded vendor bill');
+assert.match(poSchema, /payment_status/, 'PO must carry a vendor payment status');
 assert.ok(!poPage.includes('entities.PurchaseOrder'), 'PO page must not touch backend-only entities');
 assert.match(poPage, /functions\.invoke\("purchaseOrderAction"/, 'PO page must invoke the function');
 assert.match(config, /"PurchaseOrders": PurchaseOrders/, 'pages.config must register the PurchaseOrders route');
