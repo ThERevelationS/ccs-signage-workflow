@@ -139,6 +139,26 @@ assert.match(poPage, /functions\.invoke\("purchaseOrderAction"/, 'PO page must i
 assert.match(config, /"PurchaseOrders": PurchaseOrders/, 'pages.config must register the PurchaseOrders route');
 assert.match(layout, /title: "Purchase Orders", url: createPageUrl\("PurchaseOrders"\)/, 'Layout nav must link Purchase Orders');
 
+// C4/B4: job costing — read-only rollup over existing records, service-role.
+const jobCosting = readFileSync('base44/functions/jobCostingAction/entry.ts', 'utf8');
+const jcPage = readFileSync('src/pages/JobCosting.jsx', 'utf8');
+assert.match(jobCosting, /authenticateSignShopSession/, 'jobCostingAction must authenticate the session');
+assert.match(jobCosting, /asServiceRole\.entities\.WorkOrder\b/, 'cost rollup must read WorkOrders via service role');
+assert.match(jobCosting, /asServiceRole\.entities\.TimeClockLaborSegment\b/, 'labor hours must come from labor segments');
+assert.match(jobCosting, /asServiceRole\.entities\.Invoice\b/, 'invoiced totals must come from the Invoice ledger');
+assert.match(jobCosting, /asServiceRole\.entities\.PurchaseOrder\b/, 'committed material cost must come from POs');
+assert.match(jobCosting, /asServiceRole\.entities\.ChangeOrder\b/, 'contract value must include change-order deltas');
+for (const action of ['list_job_costs', 'get_job_cost']) {
+  assert.ok(jobCosting.includes(`action === "${action}"`), `action ${action} must be handled`);
+}
+assert.match(jobCosting, /contract_value: money\(estimated \+ coDelta\)|money\(estimated \+ coDelta\)/, 'contract value must be estimate + CO delta');
+assert.match(jobCosting, /clean\(i\?\.status\) !== "void" && clean\(i\?\.status\) !== "draft"/, 'draft/void invoices must not count as billed');
+assert.match(jobCosting, /clean\(p\?\.status\) !== "cancelled"/, 'cancelled POs must not count as committed cost');
+assert.match(jobCosting, /\["approved", "applied"\]\.includes\(clean\(c\?\.status\)\)/, 'only approved/applied COs change contract value');
+assert.match(jcPage, /functions\.invoke\("jobCostingAction"/, 'job costing page must invoke the function');
+assert.match(config, /"JobCosting": JobCosting/, 'pages.config must register the JobCosting route');
+assert.match(layout, /title: "Job Costing", url: createPageUrl\("JobCosting"\)/, 'Layout nav must link Job Costing');
+
 // Wiring: route + navigation.
 assert.match(config, /import Opportunities from '\.\/pages\/Opportunities'/, 'pages.config must import the page');
 assert.match(config, /"Opportunities": Opportunities/, 'pages.config must register the route');
