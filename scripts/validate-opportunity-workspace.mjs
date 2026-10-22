@@ -24,7 +24,7 @@ assert.match(entry, /authenticateSignShopSession/, 'function must authenticate t
 assert.match(entry, /asServiceRole\.entities\.Opportunity\b/, 'Opportunity must be accessed via service role');
 assert.match(entry, /asServiceRole\.entities\.OpportunityIntake\b/, 'OpportunityIntake must be accessed via service role');
 assert.match(entry, /asServiceRole\.entities\.EstimatingRequest\b/, 'EstimatingRequest must be accessed via service role');
-for (const action of ['search_customers', 'list_opportunities', 'get_opportunity', 'capture_intake', 'update_opportunity', 'resolve_intake', 'link_work_order', 'request_estimate']) {
+for (const action of ['search_customers', 'list_opportunities', 'get_opportunity', 'capture_intake', 'update_opportunity', 'resolve_intake', 'link_work_order', 'request_estimate', 'list_estimating_requests', 'assign_estimator']) {
   assert.ok(entry.includes(`"${action}"`) || entry.includes(`action === "${action}"`), `action ${action} must be handled`);
 }
 
@@ -46,6 +46,8 @@ assert.match(page, /action: "capture_intake"|action:"capture_intake"/, 'page mus
 assert.match(page, /action: "request_estimate"|action:"request_estimate"/, 'page must support the estimate handoff');
 assert.match(page, /creation_request_key: (uuid\(\)|keyRef\.current)/, 'client must supply idempotent creation keys');
 assert.match(page, /`\/EstimateDetail\?id=\$\{estimateId\}`|\/EstimateDetail\?id=/, 'handoff must navigate to the created estimate');
+assert.match(page, /action: "list_estimating_requests"/, 'page must expose the estimating queue');
+assert.match(page, /action: "assign_estimator"/, 'page must support estimator assignment');
 
 // Convergence: estimate→pipeline sync must locate the compatibility WorkOrder
 // by stable links, carry the link fields, and back-link the Opportunity.
