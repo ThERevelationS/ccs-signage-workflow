@@ -247,12 +247,12 @@ export default function FleetSettings() {
         base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
         listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
       ]);
+      if (requestSequence !== checkSequenceRef.current) return;
       setSettings((settingsRows || [])[0] || null);
       setConnection(bouncieStatusResult?.data || null);
       setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
       setQueueRows(health.notifications || []);
       setReceiptRows(health.receipts || []);
-      if (requestSequence !== checkSequenceRef.current) return;
       setMechanicLinks(mechanicResult?.data?.links || []);
       setMechanicEquipment(mechanicEquipmentRows || []);
     } finally {
