@@ -64,6 +64,7 @@ import NewUserSetup from './pages/NewUserSetup';
 import ChangeOrders from './pages/ChangeOrders';
 import PurchaseOrders from './pages/PurchaseOrders';
 import Invoices from './pages/Invoices';
+import JobCosting from './pages/JobCosting';
 import Opportunities from './pages/Opportunities';
 import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
@@ -97,6 +98,7 @@ export const PAGES = {
     "ChangeOrders": ChangeOrders,
     "PurchaseOrders": PurchaseOrders,
     "Invoices": Invoices,
+    "JobCosting": JobCosting,
     "Opportunities": Opportunities,
     "OrderForm": OrderForm,
     "Permitting": Permitting,
