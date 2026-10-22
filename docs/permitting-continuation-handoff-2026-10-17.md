@@ -1,6 +1,6 @@
 # Permitting continuation handoff — October 22, 2026 (Discovery fetch-timestamp provenance fix; Milestone 2 enabler)
 
-Current checkpoint for this unit: (see checkpoint ID recorded at end of this section). Prior unit checkpoint `6ada7188337b04b07e490bf5` / Git `6615d6d6303742d2c53b5d60aada00060eb6872f` remains the Milestone 1 completion point. Pre-edit checkpoint for this unit: `6ada72adc11fb6730b8827cc`.
+Current checkpoint for this unit: `6ada74b9d3ee1c4a2ab3dbad` / Git `379e530bddbf79dbc013a1ddc7fc8e1682e2f653`. Prior unit checkpoint `6ada7188337b04b07e490bf5` / Git `6615d6d6303742d2c53b5d60aada00060eb6872f` remains the Milestone 1 completion point. Pre-edit checkpoint for this unit: `6ada72adc11fb6730b8827cc`.
 
 ## What changed
 The October 21 handoff warned that "general research or continuation routes still assign candidate dates and need a separate scoped improvement." That fix is now shipped:
