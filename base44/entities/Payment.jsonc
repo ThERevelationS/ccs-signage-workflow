@@ -1,0 +1,103 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "description": "Canonical payment applied to an Invoice. Always written by invoicingAction so invoice balances stay consistent \u2014 never edited directly. Void/refund rather than delete to preserve the audit trail.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one payment record."
+    },
+    "invoice_id": {
+      "type": "string",
+      "description": "Invoice this payment applies to."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Denormalized from the invoice for AR queries."
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "estimate_id": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Positive amount applied to the invoice."
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "check",
+        "card",
+        "ach",
+        "financing",
+        "other"
+      ],
+      "default": "other"
+    },
+    "reference_number": {
+      "type": "string",
+      "description": "Check number, card auth, ACH trace, or other external reference."
+    },
+    "paid_date": {
+      "type": "string",
+      "description": "Date the money was received."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recorded",
+        "void",
+        "refunded"
+      ],
+      "default": "recorded"
+    },
+    "void_reason": {
+      "type": "string"
+    },
+    "voided_date": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "invoice_id",
+    "amount"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__payment_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__payment_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__payment_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__payment_backend_only__"
+      }
+    }
+  }
+}
