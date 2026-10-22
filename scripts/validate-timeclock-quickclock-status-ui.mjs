@@ -1206,7 +1206,8 @@ await act(async () => {
 });
 assert.equal(savedSessionData.get(pauseRequestKey), newerPauseId,
   'A mismatched Work Pause acknowledgement must preserve the exact retry request');
-assert.equal(pauseFenceOverlay().props.disabled, true);
+assert.equal(pauseFenceOverlay().props.disabled, false,
+  'A mismatched Work Pause acknowledgement must not change visible pause state');
 let recoveredPause;
 await act(async () => { recoveredPause = pauseFenceDialog().props.onStartWorkPause(); });
 const recoveredPauseIndex = calls.length - 1;
@@ -1215,6 +1216,18 @@ assert.equal(calls[recoveredPauseIndex].payload.request_id, newerPauseId,
 await act(async () => { calls[recoveredPauseIndex].resolve(pauseAck('verified-pause')); await recoveredPause; });
 assert.equal(pauseFenceOverlay().props.disabled, false);
 assert.equal(savedSessionData.has(pauseRequestKey), false);
+await act(async () => { events.get('focus')(); });
+const pauseResumeStatusIndex = calls.length - 1;
+assert.equal(calls[pauseResumeStatusIndex].payload.action,'status');
+await act(async () => {
+  calls[pauseResumeStatusIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_in',
+    entry:{id:'pause-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+    break_status:'working', work_pause_status:'working', work_pause_allowed:true,
+  }});
+});
+assert.equal(pauseFenceOverlay().props.disabled, true,
+  'Verified resumed status must release the pause guard');
 console.log('PASS Work Pause acknowledgements are fenced to employee, shift, epoch, and exact request');
 await act(async () => { pauseFenceRenderer.unmount(); });
 // Punch-resolution acknowledgements are fenced to the employee, shift, epoch,
