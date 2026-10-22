@@ -83,6 +83,15 @@
       "type": "boolean",
       "default": false,
       "description": "Internal compatibility row retained for Git-era Metal estimator behavior; hidden from the modern Master Inventory catalog."
+    },
+    "quantity_on_hand": {
+      "type": "number",
+      "default": 0,
+      "description": "Current stock on hand. Updated only through inventoryAction with compare-and-set guards."
+    },
+    "reorder_point": {
+      "type": "number",
+      "description": "On-hand level at or below which the item is flagged for reorder."
     }
   },
   "required": [
