@@ -29,7 +29,6 @@ export default function OrderForm() {
   // Show outstanding Orders and a visibly separate received history by default.
   const [filterStatus, setFilterStatus] = useState("all_with_received");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterLoaded, setFilterLoaded] = useState(false);
   const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, customerDraftActive: false, isSaving: false, isSyncing: false, isLoading: true, pendingSyncCount: 0, saveError: "", readError: "" });
@@ -56,31 +55,30 @@ export default function OrderForm() {
   }, []);
 
   useEffect(() => {
-    const loadSavedFilter = async () => {
-      if (currentUser?.email) {
-        try {
-          const me = await base44.auth.me();
-          if (me?.order_form_filter) {
-            // Migrate the former default (not_received) and legacy all view
-            // to the new split default. A new open_only value preserves future
-            // explicit Not Received Only selections.
-            setFilterStatus(["all", "not_received"].includes(me.order_form_filter)
-              ? "all_with_received" : me.order_form_filter);
-          }
-        } catch (e) {
-          // User might not have this field yet
-        }
-      }
-      setFilterLoaded(true);
-    };
-    loadSavedFilter();
-  }, [currentUser?.email]);
+    // The Order Form filter persists on the signed-in user's AuthorizedEmail
+    // record and arrives with the verified session payload.
+    const saved = currentUser?.order_form_filter;
+    if (saved) {
+      // Migrate the former default (not_received) and legacy all view to the
+      // new split default. A new open_only value preserves future explicit
+      // Not Received Only selections.
+      setFilterStatus(["all", "not_received"].includes(saved) ? "all_with_received" : saved);
+    }
+  }, [currentUser?.order_form_filter]);
 
   const handleFilterChange = async (value) => {
     setFilterStatus(value);
-    if (currentUser?.email) {
+    if (currentUser?.email && sessionToken) {
       try {
-        await base44.auth.updateMe({ order_form_filter: value });
+        const response = await base44.functions.invoke('manageOwnProfile', {
+          action: 'update_order_form_filter',
+          session_token: sessionToken,
+          order_form_filter: value,
+        });
+        const data = response?.data || response;
+        if (!data?.success || data?.order_form_filter !== value) {
+          throw new Error(data?.error || 'The Order filter preference could not be verified.');
+        }
       } catch (e) {
         console.error("Error saving filter preference:", e);
       }
