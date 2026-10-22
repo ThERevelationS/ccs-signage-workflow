@@ -132,9 +132,9 @@ try {
   console.log('PASS distinct column mappings retain their previous behavior');
 
   const engine = await readFile('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
-  assert.match(engine, /detectConflict\(currentCells, record\.smartsheet_sync_snapshot, bindings, dataset\)/);
+  assert.match(engine, /detectConflict\(freshRow\.cells, verification\.expectedSnapshot, bindings, 'orders'\)/);
   assert.match(engine, /const sharedContactId = dataset === 'orders' \? sharedOrderRequestorColumnId\(bindings\) : '';/);
-  assert.ok((engine.match(/displayValue: c\.displayValue/g) || []).length >= 2);
+  assert.ok((engine.match(/displayValue\s*:\s*c\.displayValue/g) || []).length >= 2);
   assert.match(engine, /freshCells\.map\(\(c\) =>/); // guarded Order create still sends contact display names
   assert.match(engine, /requestor_contacts_skipped_no_valid_email/);
   assert.match(engine, /if \(action === 'order_requestor_contact_sync'\)/);
@@ -151,8 +151,8 @@ try {
   console.log('PASS push payload and conflict guard use Order contact semantics');
 
   const salesCells = buildCells(
-    { contact_name: 'Sales Person', contact_email: 'sales@example.com' },
-    { contact_name: '456', contact_email: '457' }, 'sales',
+    { client_name: 'Sales Client', est_inv_at: '12345' },
+    { client_name: '456', est_inv_at: '457' }, 'sales',
   );
   assert.equal(salesCells.length, 2);
   console.log('PASS unrelated Sales field mapping remains unchanged');
