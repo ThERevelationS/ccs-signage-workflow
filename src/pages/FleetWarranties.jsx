@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -28,8 +28,10 @@ export default function FleetWarranties(){
   const [error,setError]=useState("");
   const [dialog,setDialog]=useState(null);
   const isAdmin=user?.role==="admin";
+  const loadSequenceRef=useRef(0);
 
   const load=useCallback(async()=>{
+    const requestSequence=++loadSequenceRef.current;
     setLoading(true);setError("");
     try{
       const [equipmentRows,currentUser,result]=await Promise.all([
@@ -38,9 +40,10 @@ export default function FleetWarranties(){
         base44.functions.invoke("fleetWarrantyAction",{action:"portfolio",equipment_id:equipmentId==="all"?"":equipmentId}),
       ]);
       if(result?.data?.error)throw new Error(result.data.error);
+      if(requestSequence!==loadSequenceRef.current)return;
       setEquipment(equipmentRows||[]);setUser(currentUser||null);setRows(result?.data?.rows||[]);setSummary(result?.data?.summary||{});
-    }catch(err){setError(err?.message||"Unable to load Fleet warranties.");}
-    finally{setLoading(false);}
+    }catch(err){if(requestSequence===loadSequenceRef.current)setError(err?.message||"Unable to load Fleet warranties.");}
+    finally{if(requestSequence===loadSequenceRef.current)setLoading(false);}
   },[equipmentId]);
   useEffect(()=>{load();},[load]);
   useEffect(()=>{if(requestedNew&&user?.role==="admin"&&!dialog)setDialog({mode:"create",creationKey:`fleet-warranty-${crypto.randomUUID()}`,form:blank(requestedEquipment!=="all"?requestedEquipment:"")});},[requestedNew,user]);
