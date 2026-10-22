@@ -21,7 +21,7 @@ const PAYMENT_METHODS = ["cash", "check", "card", "ach", "financing", "other"];
 const EDITABLE_INVOICE_FIELDS = [
   "invoice_number", "customer_id", "customer_display_name",
   "opportunity_id", "estimating_request_id", "estimate_id", "work_order_id",
-  "contact_id", "location_id",
+  "contact_id", "location_id", "billing_type",
   "line_items", "discount_amount", "tax_rate", "deposit_applied",
   "issue_date", "due_date", "terms", "notes", "internal_notes",
 ];
@@ -68,6 +68,7 @@ function invoiceSnapshot(row: any) {
     id: clean(row?.id),
     invoice_number: clean(row?.invoice_number),
     status: clean(row?.status),
+    billing_type: clean(row?.billing_type),
     customer_id: clean(row?.customer_id),
     customer_display_name: clean(row?.customer_display_name),
     opportunity_id: clean(row?.opportunity_id),
@@ -279,6 +280,142 @@ Deno.serve(async (req) => {
         estimate: estimate || null,
         work_order: workOrder || null,
         opportunity: opportunity || null,
+      });
+    }
+
+    if (action === "list_invoiceable_estimates") {
+      const rows = await Estimate.filter({ status: "approved" }, "-created_date", 100);
+      if (!Array.isArray(rows)) throw bad("Estimate lookup failed.", 500);
+      const query = clean(body?.query).toLowerCase();
+      const invoices = await Invoice.filter({});
+      if (!Array.isArray(invoices)) throw bad("Invoice lookup failed.", 500);
+      const billedByEstimate = new Map<string, number>();
+      for (const inv of invoices) {
+        const eid = clean(inv?.estimate_id);
+        if (!eid || clean(inv?.status) === "void") continue;
+        billedByEstimate.set(eid, money((billedByEstimate.get(eid) || 0) + num(inv?.total)));
+      }
+      const estimates = rows
+        .filter((e: any) => !e?.deleted && num(e?.quote_total) > 0)
+        .filter((e: any) => !query
+          || clean(e?.project_name).toLowerCase().includes(query)
+          || clean(e?.client_name).toLowerCase().includes(query)
+          || clean(e?.estimate_number).toLowerCase().includes(query))
+        .slice(0, 50)
+        .map((e: any) => {
+          const billed = billedByEstimate.get(clean(e?.id)) || 0;
+          return {
+            id: clean(e?.id),
+            estimate_number: clean(e?.estimate_number),
+            project_name: clean(e?.project_name),
+            client_name: clean(e?.client_name),
+            quote_total: num(e?.quote_total),
+            deposit_percent: num(e?.deposit_percent, 50),
+            already_billed: billed,
+            remaining_billable: money(num(e?.quote_total) - billed),
+          };
+        });
+      return Response.json({ success: true, action, estimates });
+    }
+
+    if (action === "create_from_estimate") {
+      const estimateId = clean(body?.estimate_id);
+      const estimate = await Estimate.get(estimateId).catch(() => null);
+      if (!estimate?.id) throw bad("Estimate not found.", 404);
+      if (clean(estimate.status) !== "approved") throw bad("Only approved estimates can be invoiced.", 409);
+      const quoteTotal = num(estimate.quote_total);
+      if (!(quoteTotal > 0)) throw bad("The approved estimate has no billable total.", 409);
+
+      const prior = await Invoice.filter({ estimate_id: estimateId });
+      if (!Array.isArray(prior)) throw bad("Prior invoice lookup failed.", 500);
+      const live = prior.filter((inv: any) => clean(inv?.status) !== "void");
+      const billed = money(live.reduce((s: number, inv: any) => s + num(inv?.total), 0));
+      const remaining = money(quoteTotal - billed);
+
+      const mode = clean(body?.billing_mode) || "full";
+      const projectName = clean(estimate.project_name) || `Estimate ${clean(estimate.estimate_number)}`;
+      const ref = clean(estimate.estimate_number) ? `Estimate ${clean(estimate.estimate_number)}` : "Approved estimate";
+      let amount = 0;
+      let billingType = "standard";
+      let lineDescription = `${ref} — ${projectName}`;
+
+      if (mode === "full") {
+        if (billed > 0) throw bad(`This estimate already has ${money(billed)} invoiced — use the final billing mode for the remainder.`, 409);
+        amount = quoteTotal;
+        billingType = "standard";
+      } else if (mode === "deposit") {
+        const explicitAmount = num(body?.deposit_amount, NaN);
+        const pct = num(body?.deposit_percent, NaN);
+        amount = Number.isFinite(explicitAmount) && explicitAmount > 0
+          ? money(explicitAmount)
+          : money(quoteTotal * (Number.isFinite(pct) && pct > 0 ? pct : num(estimate.deposit_percent, 50)) / 100);
+        if (!(amount > 0)) throw bad("A positive deposit amount is required.");
+        if (money(billed + amount) > quoteTotal) throw bad(`Deposit would exceed the billable remainder of ${money(remaining)}.`, 409);
+        billingType = "deposit";
+        lineDescription = `Deposit — ${ref} — ${projectName}`;
+      } else if (mode === "final") {
+        if (!(remaining > 0)) throw bad("Nothing left to bill — the estimate is already fully invoiced.", 409);
+        amount = remaining;
+        billingType = "final";
+        lineDescription = `Final billing — ${ref} — ${projectName}`;
+      } else {
+        throw bad("billing_mode must be full, deposit, or final.");
+      }
+
+      const customerId = clean(estimate.customer_id);
+      let customerDisplayName = clean(estimate.client_name);
+      if (customerId) {
+        const customer = await Customer.get(customerId).catch(() => null);
+        if (customer?.id) customerDisplayName = clean(customer.company_name) || customerDisplayName;
+      }
+      const invoiceNumber = await nextInvoiceNumber(Invoice);
+      const invoiceKey = clean(body?.creation_request_key)
+        || `invoice-from-estimate:${estimateId}:${mode}:${Date.now()}`;
+      const totals = computeTotals({
+        line_items: [{ description: lineDescription, quantity: 1, unit_price: amount, taxable: false }],
+        discount_amount: 0, tax_rate: 0, deposit_applied: 0,
+      });
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Invoice,
+        data: {
+          creation_request_key: invoiceKey,
+          invoice_number: invoiceNumber,
+          status: "draft",
+          billing_type: billingType,
+          customer_id: customerId,
+          customer_display_name: customerDisplayName,
+          opportunity_id: clean(estimate.opportunity_id),
+          estimating_request_id: clean(estimate.estimating_request_id),
+          estimate_id: estimateId,
+          work_order_id: clean(estimate.work_order_id),
+          line_items: sanitizeLineItems([{ description: lineDescription, quantity: 1, unit_price: amount, taxable: false }]),
+          ...totals,
+          amount_paid: 0,
+          balance_due: totals.total,
+          issue_date: clean(body?.issue_date) || today(),
+          due_date: clean(body?.due_date),
+          terms: clean(body?.terms),
+          notes: clean(body?.notes),
+          internal_notes: clean(body?.internal_notes),
+          created_by: actor,
+          updated_by: actor,
+          source_summary: {
+            kind: "create_from_estimate",
+            estimate_id: estimateId,
+            estimate_number: clean(estimate.estimate_number),
+            billing_mode: mode,
+            quote_total: quoteTotal,
+            previously_billed: billed,
+          },
+        },
+        readMatches: () => findByCreationKey(Invoice, invoiceKey),
+        label: "Invoice",
+      });
+      return Response.json({
+        success: true,
+        action,
+        invoice: createdResult.record,
+        billing: { mode, amount, quote_total: quoteTotal, previously_billed: billed, remaining_after: money(remaining - amount) },
       });
     }
 
