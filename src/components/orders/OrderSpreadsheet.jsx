@@ -912,12 +912,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       trackChange(orderId, field, oldValue, value);
     }
 
-    pendingChangesRef.current[orderId] = {
+    // Editing a field back to its loaded baseline value cancels that pending
+    // field instead of queueing a no-op write and an empty Smartsheet sync.
+    const nextPending = {
       ...pendingChangesRef.current[orderId],
       [field]: value,
       ...(unlinkCustomerJob ? { work_order_id: '' } : {}),
     };
-    setHasUnsavedChanges(true);
+    const baseline = originalOrdersRef.current[orderId];
+    if (baseline?.id) {
+      const empty = (v) => v === null || v === undefined || v === '';
+      for (const [key, pendingValue] of Object.entries(nextPending)) {
+        const base = baseline[key];
+        if ((empty(pendingValue) && empty(base)) || Object.is(pendingValue, base)) delete nextPending[key];
+      }
+    }
+    if (Object.keys(nextPending).length > 0) pendingChangesRef.current[orderId] = nextPending;
+    else delete pendingChangesRef.current[orderId];
+    setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
   };
 
   const persistImmediateOrderFields = async (orderId, nextFields, label, { supersedePendingFields = [] } = {}) => {
@@ -1408,6 +1420,36 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const clearCell = (orderId, fieldName) => {
+    // Context-menu Clear applies the same companion-field and derived-status
+    // rules as the dedicated Clear Date dialogs, staged as one pending save.
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+    if (fieldName === 'request_type' || fieldName === 'description') {
+      setSaveError(`${fieldName === 'request_type' ? 'Request Type' : 'Description'} is required for every Order and cannot be cleared.`);
+      return;
+    }
+    if (fieldName === 'date_received') {
+      updateOrder(orderId, 'receipt_option', '');
+      updateOrder(orderId, 'date_received', '');
+      updateOrder(orderId, 'status', order.date_ordered ? 'ordered' : 'pending');
+      return;
+    }
+    if (fieldName === 'date_ordered') {
+      updateOrder(orderId, 'date_ordered_option', '');
+      updateOrder(orderId, 'date_ordered', '');
+      updateOrder(orderId, 'status', orderStatusAfterOrderedDateChange(order, ''));
+      return;
+    }
+    if (fieldName === 'date_needed') {
+      updateOrder(orderId, 'date_needed_option', '');
+      updateOrder(orderId, 'date_needed', '');
+      return;
+    }
+    if (fieldName === 'requestor_name') {
+      updateOrder(orderId, 'requestor_email', '');
+      updateOrder(orderId, 'requestor_name', '');
+      return;
+    }
     updateOrder(orderId, fieldName, "");
   };
 
