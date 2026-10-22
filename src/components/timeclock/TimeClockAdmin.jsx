@@ -450,7 +450,7 @@ export default function TimeClockAdmin() {
       const retainRequest = shouldRetainAdminRequest(err);
       setTimeEntryError(message);
       if (!retainRequest && editingEntryBaseline?.id) {
-        clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id);
+        clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
         setCorrectionRequestId("");
       }
       await loadData();
