@@ -1,6 +1,6 @@
 # Permitting continuation handoff — October 22, 2026 (Milestone 2 started: bounded Ohio-first frontier drain)
 
-Checkpoint for this unit: recorded below after creation. Prior: `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
+Checkpoint for this unit: `6ada7633067620fe9ba90196` / Git `732648420e162b88275f4932e5994de1f2af443a`. Prior: `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
 
 ## What ran
 First bounded Milestone 2 expansion pass: `base44 exec --privileged` invoked the deployed `continueKnownDiscovery` once on each of the 10 oldest-updated OH frontier profiles (one saved page each, production fetcher contract). Controls re-verified first: dispatcher enabled, 15 min cycle, 5/cycle, 20 in-flight, 40/day — `dispatched_today` still 40 for day key 2026-10-22, so zero LLM budget available or used.
