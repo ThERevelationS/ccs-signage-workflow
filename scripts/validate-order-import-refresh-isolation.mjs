@@ -36,10 +36,16 @@ function fixture({ deferredInitial = false } = {}) {
     pendingSyncIdsRef: { current: new Set(['saved-pending-before-import']) },
     pendingSyncVersionRef: { current: new Map([['saved-pending-before-import', 7]]) },
     originalOrdersRef: { current: {} },
+    loadInFlightRef: { current: false },
+    lastLoadStartedAtRef: { current: 0 },
+    cachedWorkOrdersRef: { current: null },
+    cachedUsersRef: { current: null },
+    lastAuxLoadAtRef: { current: 0 },
   };
   const Order = { kind: 'orders' }, WorkOrder = { kind: 'workorders' }, AuthorizedEmail = { kind: 'users' };
   const env = {
     ...refs, Order, WorkOrder, AuthorizedEmail,
+    ORDER_AUX_RELOAD_MS: 5 * 60 * 1000,
     workOrderFilter: null,
     orders: before,
     hasActiveOrderEdits: () => Boolean(Object.keys(refs.pendingChangesRef.current).length ||
