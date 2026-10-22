@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import * as orderBatch from '../src/components/orders/orderSaveSyncBatch.mjs';
 
 // Exercise the actual Order Form handlers with isolated synthetic dependencies.
 // Never invoke Base44 entities, browser APIs, or real Smartsheet.
@@ -27,11 +28,13 @@ function syncFixture(overrides = {}) {
     dateNeededSaveInFlightRef: { current: false },
     pendingSyncIdsRef: { current: pendingIds },
     pendingSyncVersionRef: { current: versions },
+    orderSyncBatchLimitRef: { current: orderBatch.ORDER_SAVE_SYNC_BATCH_LIMIT },
     pendingChangesRef: { current: {} },
     originalOrdersRef: { current: {} },
   };
   let calls = 0;
   const dependencies = {
+    ...orderBatch,
     ...refs,
     readError: '',
     sessionToken: 'synthetic-only',
