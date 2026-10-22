@@ -882,6 +882,7 @@ export default function Opportunities() {
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState("pipeline");
+  const [funnel, setFunnel] = useState(null);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -897,6 +898,7 @@ export default function Opportunities() {
       if (!data?.success) throw new Error(data?.error || "Could not load opportunities.");
       setOpportunities(data.opportunities || []);
       setTotal(data.total ?? (data.opportunities || []).length);
+      setFunnel(data.funnel || null);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Could not load opportunities.");
     } finally {
@@ -958,6 +960,34 @@ export default function Opportunities() {
         <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/20 dark:text-red-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{error}
         </div>
+      )}
+
+      {funnel && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {STAGES.map((s) => (
+              <button key={s.key} type="button" onClick={() => { setView("pipeline"); setStageFilter(s.key); }}
+                className="text-left" title={`Show ${s.label}`}>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{s.label}</div>
+                <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{funnel.stage_counts?.[s.key] || 0}</div>
+              </button>
+            ))}
+            <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-1 text-right">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Open pipeline</div>
+                <div className="text-lg font-bold text-violet-700 dark:text-violet-300">${Number(funnel.open_pipeline_value || 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Won</div>
+                <div className="text-lg font-bold text-emerald-600">${Number(funnel.won_value || 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Win rate</div>
+                <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{funnel.win_rate == null ? "—" : `${funnel.win_rate}%`}</div>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
       <div className="flex gap-1.5">
