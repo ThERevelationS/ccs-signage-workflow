@@ -1,0 +1,90 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "Phase 10 / Milestone 1 of 3 / Task 2 partial; 2 of 4 complete",
+  "starting_head": "a58d1f03e630a1710a16951a46d55c62516eb197",
+  "prior_checkpoint": {
+    "id": "6ad8cc5e5df4fc835b1112f1",
+    "git": "73ee6b25350230d98e8a36676971555b8a518e7d",
+    "name": "Permitting desktop FAQ discovery and live timestamp provenance verified"
+  },
+  "planned_body": {
+    "jurisdiction_id": "6ac19f0e23bd8a65822f6d51",
+    "discovery_only": true,
+    "defer_archive": true,
+    "selected_saved_document": {
+      "profile_id": "6ac19f0e23bd8a65822f6d51",
+      "profile_version": "2026-10-21T14:22:35.528000",
+      "name": "Sharonville",
+      "state": "OH",
+      "type": "city",
+      "document_id": "705a3ce0-ccbe-4fa7-a251-770c730d1ae7",
+      "url": "https://www.sharonville.org/524/Permits"
+    }
+  },
+  "access": {
+    "desktop_browser_plugin_available": false,
+    "plugin_search_restored_desktop_access": false,
+    "cloud_browser": "Chrome / cdp",
+    "secure_auth_method_selected": "Google",
+    "selected_visible_google_account": "Brett Heinlein / brettheinlein1@gmail.com",
+    "base44_editor_verified_identity": "Brett Heinlein (You) · Main",
+    "base44_app": "CCS Signage Workflow",
+    "payload_visible_and_verified": true
+  },
+  "attempt": {
+    "run_click_calls": 1,
+    "run_click_result": "Runtime.evaluate timed out while waiting for Run Function locator; action delivery/execution unknown.",
+    "response_observation_result": "Native credential state cannot be safely resumed; browser observation unavailable.",
+    "allowed_existing_tab_navigation_recovery_result": "Same credential-state failure before navigation.",
+    "run_clicked_again": false,
+    "function_execution_confirmed": false,
+    "function_response_observed": false,
+    "live_profile_readbacks_after_timeout": 1,
+    "source_fetches": "unknown; no scan receipt saved",
+    "live_write_observed": false
+  },
+  "profile_readback": {
+    "id": "6ac19f0e23bd8a65822f6d51",
+    "updated_date": "2026-10-21T14:22:35.528000",
+    "documents_count": 20,
+    "saved_scan_count": 3,
+    "checks": {
+      "entire_profile_unchanged": true,
+      "version_unchanged": true,
+      "documents_unchanged": true,
+      "scan_history_unchanged": true,
+      "office_research_unchanged": true,
+      "selected_receipt_absent": true
+    }
+  },
+  "controls": [
+    {
+      "id": "6ac1b28c47233270cfeeb0f9",
+      "key": "permitting_research_dispatch_config",
+      "updated_date": "2026-10-04T15:30:40.303000",
+      "value": {
+        "enabled": true,
+        "interval_minutes": 15,
+        "max_dispatch_per_cycle": 5,
+        "max_in_flight": 20,
+        "daily_dispatch_limit": 40,
+        "retry_limit": 3
+      }
+    },
+    {
+      "id": "6ac1d0ffb44495caa0c3cf76",
+      "key": "permitting_research_dispatch_state",
+      "updated_date": "2026-10-22T13:01:28.342000",
+      "value": {
+        "daily_day_key": "2026-10-22",
+        "dispatched_today": 40
+      }
+    }
+  ],
+  "source_changes": false,
+  "frontend_published": false,
+  "job_client_shared_record_mutations": false,
+  "llm_research_attempts_made": 0,
+  "next": "In a fresh supported authenticated browser runtime, inspect latest profile/version/history before any invocation. If a delayed Permits receipt exists, verify it and do not rerun. Otherwise revalidate exact selection and execute one bounded discovery-only action. No repeated failed authentication flows; no daily-cap bypass.",
+  "continuity": "This chat must stop after this checkpoint; use the complete next-chat prompt from the final report."
+}
