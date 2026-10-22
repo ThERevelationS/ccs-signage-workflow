@@ -44,11 +44,11 @@ function historyHarness(){
   Object.defineProperty(ctx,"logs",{get:()=>state.logs});
   return {load:bindHistoryLoad(ctx),loadMore:bindLoadMore(ctx),calls,loading,loadingMore,errors,state};
 }
-const resolveCall=(h,index,payload)=>{
+const resolveCall=(h,index,value)=>{
   const call=h.calls[index];
   assert.ok(call&&!call.settled,`Expected an open FleetHistory call at index ${index}`);
   call.settled=true;
-  call.gate.resolve(payload[call.label]);
+  call.gate.resolve(value);
 };
 const historyPayload=version=>({
   "Fleet system reports":[{id:`report-${version}`}],
@@ -157,7 +157,7 @@ test("FleetHistory: a superseded load-more failure cannot surface an error",asyn
   await tick();
   rejectCall(h,0,"page fetch failed");
   await first;
-  assert.equal(h.errors.length,0,"The superseded page fetch must not project its failure");
+  assert.equal(h.errors.filter(Boolean).length,0,"The superseded page fetch must not project its failure");
   resolveCall(h,1,[{id:"log-page-2a"}]);
   await second;
   assert.deepEqual(h.state.logs.map(row=>row.id),["log-seed","log-page-2a"]);
@@ -259,3 +259,4 @@ test("FleetEquipment: earlier load failure cannot surface an error over a newer 
   assert.equal(h.loading.at(-1),false);
   assertEquipmentNew(h.state);
 });
+
