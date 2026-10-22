@@ -3,13 +3,14 @@ import { readFileSync } from 'node:fs';
 import { isActiveOrderCustomerJob, filterOrderCustomerJobs } from '../src/components/orders/orderCustomerJobPicker.mjs';
 
 const schema = JSON.parse(readFileSync('base44/entities/WorkOrder.jsonc', 'utf8'));
-const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
+const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8').replace(/\r\n/g, '\n');
+const syncUtils = readFileSync('base44/shared/smartsheetSyncUtils.ts', 'utf8').replace(/\r\n/g, '\n');
 
 assert.equal(schema.properties.smartsheet_parent_row_id.type, 'string');
 assert.match(schema.properties.smartsheet_parent_row_id.description, /parent-row identity/i);
 console.log('PASS WorkOrder has a stable Smartsheet parent-row metadata field');
 
-assert.match(backend, /parent_id: row\?\.parentId \? String\(row\.parentId\) : ''/);
+assert.match(syncUtils, /parent_id: row\?\.parentId \? String\(row\.parentId\) : ''/);
 assert.match(backend, /const salesParentRowId = dataset === 'sales' && \/\^\\d\+\$\/\.test\(cleanText\(row\?\.parent_id, 40\)\)/);
 assert.match(backend, /cleanText\(existing\?\.smartsheet_parent_row_id, 40\) === salesParentRowId/);
 assert.match(backend, /dataset === 'sales' \? \{ smartsheet_parent_row_id: salesParentRowId \} : \{\}/);
