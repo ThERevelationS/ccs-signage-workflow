@@ -191,6 +191,67 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "list_estimating_requests") {
+      const includeClosed = body?.include_closed === true;
+      const rows = await EstimatingRequest.filter({});
+      if (!Array.isArray(rows)) throw bad("Estimating request lookup failed.", 500);
+      const openStatuses = new Set(["draft", "ready", "in_progress"]);
+      const filtered = rows.filter((r: any) => includeClosed || openStatuses.has(clean(r?.status)));
+      const opportunityIds = [...new Set(filtered.map((r: any) => clean(r?.opportunity_id)).filter(Boolean))];
+      const opportunities = new Map(
+        (await Promise.all(opportunityIds.map((id) => Opportunity.get(id).catch(() => null))))
+          .filter((o: any) => o?.id)
+          .map((o: any) => [clean(o.id), o]),
+      );
+      const rank: any = { rush: 0, high: 1, normal: 2, low: 3 };
+      const requests = filtered
+        .sort((a: any, b: any) =>
+          (rank[clean(a?.priority)] ?? 2) - (rank[clean(b?.priority)] ?? 2)
+          || clean(a?.requested_at || a?.created_date).localeCompare(clean(b?.requested_at || b?.created_date)))
+        .slice(0, 250)
+        .map((r: any) => {
+          const opp = opportunities.get(clean(r?.opportunity_id));
+          return {
+            id: clean(r?.id),
+            opportunity_id: clean(r?.opportunity_id),
+            estimate_id: clean(r?.estimate_id),
+            status: clean(r?.status),
+            priority: clean(r?.priority) || "normal",
+            assigned_estimator: clean(r?.assigned_estimator),
+            requested_at: clean(r?.requested_at || r?.created_date),
+            submitted_at: clean(r?.submitted_at),
+            opportunity_title: clean(opp?.title),
+            customer_display_name: clean(opp?.customer_display_name),
+            opportunity_stage: clean(opp?.stage),
+            updated_date: clean(r?.updated_date),
+          };
+        });
+      return Response.json({ success: true, action, estimating_requests: requests });
+    }
+
+    if (action === "assign_estimator") {
+      const requestId = clean(body?.estimating_request_id);
+      const current = await EstimatingRequest.get(requestId).catch(() => null);
+      if (!current?.id) throw bad("Estimating request not found.", 404);
+      if (!OPEN_REQUEST_STATUSES.has(clean(current.status))) throw bad("Only open estimating requests can be assigned.", 409);
+      const desired: any = {
+        assigned_estimator: clean(body?.assigned_estimator),
+      };
+      if (Object.prototype.hasOwnProperty.call(body || {}, "priority")) {
+        desired.priority = requireEnum(body?.priority || "normal", PRIORITIES, "priority") || "normal";
+      }
+      const baseline = body?.baseline && typeof body.baseline === "object" ? body.baseline : current;
+      const expected = expectedFoundationFields({ ...current, ...baseline }, desired);
+      const updated = await replaceEstimatingRequestFieldsIfUnchanged({
+        entity: EstimatingRequest,
+        recordId: requestId,
+        expectedFields: expected,
+        nextFields: desired,
+        label: "Estimating Request assignment",
+      });
+      return Response.json({ success: true, action, estimating_request: updated });
+    }
+
     if (action === "capture_intake") {
       const key = clean(body?.creation_request_key);
       if (!key || key.length > 256) throw bad("A valid creation_request_key is required.");
