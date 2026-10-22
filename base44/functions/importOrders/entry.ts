@@ -4,6 +4,7 @@ import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { createImportedOrderWithRecovery, OrderImportConflictError, replaceImportedOrderFieldsIfUnchanged } from '../../shared/orderImportPersistence.mjs';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { buildOrderImportMatchIndex, countOrderImportSourceKeys, readOrderImportIdentity, rememberOrderImportMatch, selectOrderImportMatch, OrderImportMatchConflictError } from '../../shared/orderImportMatching.mjs';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -105,11 +106,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Existing Orders could not be verified before import.' }, { status: 500 });
   }
 
-  const existingMap = new Map();
-  existingOrders.forEach(o => {
-    const key = `${o.customer_name}|${o.description}|${o.request_type}`.toLowerCase();
-    existingMap.set(key, o);
-  });
+  // Retain every active claimant; a repeated natural key must never select
+  // whichever Order happened to be returned last.
+  const existingMatches = buildOrderImportMatchIndex(existingOrders);
 
   const maxRowNumber = existingOrders.length > 0
     ? Math.max(...existingOrders.map(o => o.row_number || 0))
@@ -120,20 +119,18 @@ Deno.serve(async (req) => {
   const issues = [];
 
   const validRows = jsonData.filter(row => {
-    const customer = String(row['Customer'] ?? row['Customer Name'] ?? row['customer'] ?? row['customer_name'] ?? '').trim();
-    const description = String(row['Description'] ?? row['description'] ?? '').trim();
-    const requestType = String(row['Type'] ?? row['Request Type'] ?? row['type'] ?? '').trim();
+    const { customer_name: customer, description, request_type: requestType } = readOrderImportIdentity(row);
     const quantity = String(row['How much?'] ?? row['Quantity'] ?? row['quantity'] ?? '').trim();
     return customer || description || requestType || quantity;
   });
+
+  const sourceKeyCounts = countOrderImportSourceKeys(validRows);
 
   // Process one row at a time with delay to avoid rate limits
   for (let i = 0; i < validRows.length; i++) {
     const row = validRows[i];
 
-    const customer = String(row['Customer'] ?? row['Customer Name'] ?? row['customer'] ?? row['customer_name'] ?? '').trim();
-    const description = String(row['Description'] ?? row['description'] ?? '').trim();
-    const requestType = String(row['Type'] ?? row['Request Type'] ?? row['type'] ?? '').trim();
+    const { customer_name: customer, description, request_type: requestType } = readOrderImportIdentity(row);
     const quantity = String(row['How much?'] ?? row['Quantity'] ?? row['quantity'] ?? '').trim();
     const requestor = String(row['Requestor'] ?? row['requestor'] ?? row['Requestor Name'] ?? '').trim();
     const vendor = String(row['Vendor (Anyone can fill out this column)'] ?? row['Vendor'] ?? row['vendor'] ?? '').trim();
@@ -142,10 +139,10 @@ Deno.serve(async (req) => {
     const dateOrdered = parseExcelDate(row['Ordered Date (Carl Fills out this column)'] ?? row['Date Ordered'] ?? row['date_ordered']);
     const dateReceived = parseExcelDate(row['Date Recieved (Anyone can fill out this column)'] ?? row['Date Received'] ?? row['date_received']);
 
-    const uniqueKey = `${customer}|${description}|${requestType}`.toLowerCase();
-    const existing = existingMap.get(uniqueKey);
-
     try {
+      const existing = selectOrderImportMatch(existingMatches, sourceKeyCounts, {
+        customer_name: customer, description, request_type: requestType,
+      });
       if (existing) {
         const updates = {};
         if (quantity && quantity !== (existing.quantity || '')) updates.quantity = quantity;
@@ -167,7 +164,7 @@ Deno.serve(async (req) => {
             nextFields: updates,
             label: `Order import row ${i + 1}`,
           }));
-          existingMap.set(uniqueKey, result.record);
+          rememberOrderImportMatch(existingMatches, result.record);
           if (result.status === 'already_desired') skipped++;
           else updated++;
         } else {
@@ -245,15 +242,15 @@ Deno.serve(async (req) => {
               nextFields: updates,
               label: `Order import row ${i + 1} concurrent convergence`,
             }));
-            existingMap.set(uniqueKey, result.record);
+            rememberOrderImportMatch(existingMatches, result.record);
             if (result.status === 'already_desired') skipped++;
             else updated++;
           } else {
-            existingMap.set(uniqueKey, concurrent);
+            rememberOrderImportMatch(existingMatches, concurrent);
             skipped++;
           }
         } else {
-          existingMap.set(uniqueKey, createResult.record);
+          rememberOrderImportMatch(existingMatches, createResult.record);
           created++;
         }
       }
@@ -268,9 +265,11 @@ Deno.serve(async (req) => {
           customer,
           description,
           type: isConflict ? 'conflict' : 'error',
-          message: isConflict
-            ? 'This row changed while the import was running and was not overwritten.'
-            : 'This row could not be imported safely.',
+          message: err instanceof OrderImportMatchConflictError
+            ? err.message
+            : isConflict
+              ? 'This row changed while the import was running and was not overwritten.'
+              : 'This row could not be imported safely.',
         });
       }
     }
