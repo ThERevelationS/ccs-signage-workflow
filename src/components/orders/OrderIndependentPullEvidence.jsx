@@ -17,6 +17,9 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   const [comparing, setComparing] = useState(false);
   const [batchReview, setBatchReview] = useState(null);
   const [reviewingBatch, setReviewingBatch] = useState(false);
+  const [reviewedBatches, setReviewedBatches] = useState(() => new Set());
+  const [resolving, setResolving] = useState(false);
+  const [resolveResult, setResolveResult] = useState(null);
   const reviewEpoch = useRef(0);
   const batchReviewInFlight = useRef(false);
 
@@ -26,6 +29,8 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
       batchReviewInFlight.current = false;
       setBatchReview(null);
       setReviewingBatch(false);
+      setReviewedBatches(new Set());
+      setResolveResult(null);
       setView({ kind: 'none' });
       return;
     }
@@ -34,6 +39,8 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
     let lastEvidenceVersion = null;
     setComparison(null);
     setBatchReview(null);
+    setReviewedBatches(new Set());
+    setResolveResult(null);
     const refresh = async () => {
       if (inFlight) return;
       inFlight = true;
@@ -50,6 +57,8 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
             setComparison(null);
             setBatchReview(null);
             setReviewingBatch(false);
+            setReviewedBatches(new Set());
+            setResolveResult(null);
           }
           lastEvidenceVersion = version;
           setView(nextView);
@@ -61,6 +70,8 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
           setComparison(null);
           setBatchReview(null);
           setReviewingBatch(false);
+          setReviewedBatches(new Set());
+          setResolveResult(null);
           setView(orderIndependentPullEvidenceModel(null, { readFailed: true }));
         }
       } finally {
@@ -135,6 +146,9 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         progress = appendOrderBatchReviewPage(progress, response?.data || response, batch);
         setBatchReview(progress);
       }
+      if (reviewEpoch.current === epoch && progress?.kind === 'complete') {
+        setReviewedBatches(previous => new Set(previous).add(batch.number));
+      }
     } catch (error) {
       if (reviewEpoch.current === epoch) {
         setBatchReview({
@@ -149,6 +163,36 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         batchReviewInFlight.current = false;
         setReviewingBatch(false);
       }
+    }
+  };
+
+  const allBatchesReviewed = view.kind === 'unresolved' && view.entries.length > 0 &&
+    view.entries.every(batch => reviewedBatches.has(batch.number));
+
+  const resolveEvidence = async () => {
+    if (!isAdmin || !sessionToken || resolving || view.kind !== 'unresolved' || !allBatchesReviewed) return;
+    setResolving(true);
+    setResolveResult(null);
+    try {
+      const response = await base44.functions.invoke('smartsheetSyncAction', {
+        action: 'resolve_unresolved_order_pull_evidence',
+        session_token: sessionToken,
+        run_started_at: view.startedAt,
+        sheet_id: view.sheetId,
+        confirm_reviewed: true,
+      });
+      const data = response?.data || response;
+      if (!data?.success || data.evidence_state !== 'verified_complete' ||
+          data.run_started_at !== view.startedAt || data.sheet_id !== view.sheetId) {
+        throw new Error(data?.error || 'Resolution was not confirmed. The review lock remains in place.');
+      }
+      setResolveResult({ kind: 'resolved', verifiedAt: data.verified_at, checked: data.pairs_checked });
+      setRefreshKey(value => value + 1);
+    } catch (error) {
+      setResolveResult({ kind: 'error',
+        message: error?.response?.data?.error || error?.message || 'Resolution failed; the review lock remains in place.' });
+    } finally {
+      setResolving(false);
     }
   };
 
@@ -304,6 +348,25 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
                 </details>
               ))}
             </div>
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+              <button type="button"
+                disabled={resolving || !allBatchesReviewed || !sessionToken}
+                onClick={resolveEvidence}
+                className="min-h-9 rounded-md border border-amber-400 px-3 text-[11px] font-semibold hover:bg-amber-100 disabled:opacity-50 dark:hover:bg-amber-900/40">
+                {resolving ? 'Resolving…' : 'Mark reviewed and resolve'}
+              </button>
+              {!allBatchesReviewed && (
+                <p className="text-[11px]">Review every recorded batch above before resolving this run.</p>
+              )}
+            </div>
+            {resolveResult && (
+              <p role="status" aria-live="polite"
+                className={`mt-2 text-[11px] font-medium ${resolveResult.kind === 'error' ? 'text-red-700 dark:text-red-300' : ''}`}>
+                {resolveResult.kind === 'resolved'
+                  ? `Resolved at ${resolveResult.verifiedAt} after checking ${resolveResult.checked} permanent link${resolveResult.checked === 1 ? '' : 's'}. Order pulls are unblocked; no writes were replayed.`
+                  : resolveResult.message}
+              </p>
+            )}
           </div>
         </details>
       )}
