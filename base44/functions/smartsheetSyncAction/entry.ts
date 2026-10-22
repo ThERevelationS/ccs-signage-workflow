@@ -1931,6 +1931,8 @@ async function pushDataset(
     expectedSnapshot: Record<string, any>;
     originalUpdatedDate: string;
     requiresRemoteWrite: boolean;
+    previous: any;
+    dateChanges: Record<string, string>;
   }>();
 
   for (let recordIndex = 0; recordIndex < pendingRecords.length; recordIndex++) {
@@ -2065,6 +2067,14 @@ async function pushDataset(
           }
           if(dataset!=='sales' || (!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming).length))continue;
         }
+        // Same as pull: when the sheet has no Status column, an incoming
+        // Date Ordered change (e.g. "keep Smartsheet" clearing the date) must
+        // reconcile the derived Base44 status without demoting a received or
+        // cancelled Order.
+        if (dataset === 'orders' && Object.hasOwn(fieldPlan.incoming, 'date_ordered') &&
+            !/^\d+$/.test(String(bindings?.status ?? '').trim())) {
+          fieldPlan.incoming = orderStatusFromPulledDates(fieldPlan.incoming, record, false);
+        }
         // Collect for batch write/update — no per-record GETs or verify reads.
         // This eliminates the per-record Smartsheet GET + Base44 GET + Base44
         // verify read that caused serverless function timeouts on large datasets.
@@ -2109,6 +2119,8 @@ async function pushDataset(
             expectedSnapshot: batchSnapshot,
             originalUpdatedDate: String(record.updated_date || ''),
             requiresRemoteWrite: fieldPlan.outgoing.length > 0,
+            previous: record,
+            dateChanges: changedPulledOrderDates(record, fieldPlan.incoming),
           });
         }
         if (fieldPlan.decisions?.length && !fieldPlan.taskStageHeld) {
@@ -2971,12 +2983,28 @@ async function pushDataset(
           const metadataFailed = !record ||
             findUnverifiedSyncMetadata([expected], record ? [record] : []).length > 0 ||
             record?.smartsheet_pending_local_sync !== false;
-          if (!metadataFailed) {
+          // Base44 bulk writes can silently drop date fields; re-read and
+          // repair Smartsheet-winning date/text changes exactly like pull does
+          // before this record may count as synced.
+          let dateVerificationError: any = null;
+          const verification = deferredOrderVerification.get(recordId);
+          if (!metadataFailed && verification && Object.keys(verification.dateChanges || {}).length) {
+            try {
+              await verifyPulledOrderDates(
+                base44.asServiceRole.entities.Order, recordId,
+                verification.previous, verification.dateChanges);
+            } catch (dateErr: any) {
+              dateVerificationError = dateErr;
+            }
+          }
+          if (!metadataFailed && !dateVerificationError) {
             updated.push(recordId);
             continue;
           }
           orderFailedRecordIds.add(recordId);
-          errors.push(recordId + ': Base44 could not verify the completed Order sync metadata. The Order was re-queued.');
+          errors.push(dateVerificationError
+            ? `${recordId}: Order date/text verification: ${dateVerificationError?.message || 'unknown error'}. The Order was re-queued.`
+            : recordId + ': Base44 could not verify the completed Order sync metadata. The Order was re-queued.');
           try {
             await base44.asServiceRole.entities.Order.updateMany(
               { id: recordId },
