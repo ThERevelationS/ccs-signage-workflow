@@ -8,6 +8,7 @@ import {
   FileText,
   Loader2,
   Plus,
+  Receipt,
   RefreshCw,
   Search,
   Send,
@@ -438,6 +439,169 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   );
 }
 
+function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
+  const [query, setQuery] = useState("");
+  const [estimates, setEstimates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [mode, setMode] = useState("full");
+  const [depositPercent, setDepositPercent] = useState("");
+  const [depositAmount, setDepositAmount] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const keyRef = useRef(uuid());
+
+  useEffect(() => {
+    let live = true;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const data = await invokeAction(sessionToken, { action: "list_invoiceable_estimates", query });
+        if (live) setEstimates(data.estimates || []);
+      } catch (err) {
+        if (live) setError(err?.response?.data?.error || err?.message || "Load failed.");
+      } finally {
+        if (live) setLoading(false);
+      }
+    }, 200);
+    return () => { live = false; clearTimeout(t); };
+  }, [sessionToken, query]);
+
+  const depositPreview = selected
+    ? (Number(depositAmount) > 0 ? Number(depositAmount)
+      : Number(depositPercent) > 0 ? selected.quote_total * Number(depositPercent) / 100
+      : selected.quote_total * (selected.deposit_percent || 50) / 100)
+    : 0;
+
+  const submit = async () => {
+    if (!selected || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await invokeAction(sessionToken, {
+        action: "create_from_estimate",
+        estimate_id: selected.id,
+        billing_mode: mode,
+        deposit_percent: depositPercent ? Number(depositPercent) : undefined,
+        deposit_amount: depositAmount ? Number(depositAmount) : undefined,
+        due_date: dueDate || undefined,
+        creation_request_key: keyRef.current,
+      });
+      keyRef.current = uuid();
+      onSaved();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Create failed.");
+      setSaving(false);
+    }
+  };
+
+  const MODES = [
+    ["full", "Full invoice", "Bill the entire approved total in one invoice."],
+    ["deposit", "Deposit", "Bill a percentage or flat amount now; remainder later."],
+    ["final", "Final / remainder", "Bill whatever is left after prior invoices."],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
+      <div className="my-8 w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Invoice from estimate</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+        </div>
+
+        {!selected ? (
+          <>
+            <div className="relative mt-3">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search approved estimates…" />
+            </div>
+            <div className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              {loading ? (
+                <div className="flex items-center justify-center py-10 text-sm text-slate-500"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading…</div>
+              ) : estimates.length === 0 ? (
+                <div className="py-10 text-center text-sm text-slate-500">No approved estimates found.</div>
+              ) : estimates.map((e) => (
+                <button key={e.id} onClick={() => setSelected(e)} className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-violet-50/60 last:border-0 dark:border-slate-800 dark:hover:bg-slate-800/60">
+                  <div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">{e.project_name || e.estimate_number}</div>
+                    <div className="text-xs text-slate-500">{e.client_name} · {e.estimate_number}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{usd(e.quote_total)}</div>
+                    {e.already_billed > 0 && <div className="text-xs text-amber-600">{usd(e.remaining_billable)} left to bill</div>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800">
+              <div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{selected.project_name || selected.estimate_number}</div>
+                <div className="text-xs text-slate-500">{selected.client_name} · {usd(selected.quote_total)} quote · {usd(selected.remaining_billable)} unbilled</div>
+              </div>
+              <button onClick={() => setSelected(null)} className="text-xs font-semibold text-violet-600">Change</button>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {MODES.map(([value, label, sub]) => (
+                <label key={value} className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-sm ${mode === value ? "border-violet-500 bg-violet-50/60 dark:bg-violet-950/30" : "border-slate-200 dark:border-slate-700"}`}>
+                  <input type="radio" className="mt-0.5 accent-violet-600" checked={mode === value} onChange={() => setMode(value)} />
+                  <span><span className="font-semibold">{label}</span><span className="block text-xs text-slate-500">{sub}</span></span>
+                </label>
+              ))}
+            </div>
+
+            {mode === "deposit" && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-semibold text-slate-500">Deposit %</label>
+                  <input className={inputCls} type="number" min="1" max="100" placeholder={String(selected.deposit_percent || 50)} value={depositPercent} onChange={(e) => setDepositPercent(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500">…or flat amount</label>
+                  <input className={inputCls} type="number" min="0" step="0.01" placeholder={depositPreview.toFixed(2)} value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
+                </div>
+                <div className="col-span-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  Deposit invoice: {usd(depositPreview)}
+                </div>
+              </div>
+            )}
+            {mode === "final" && (
+              <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                Final invoice: {usd(selected.remaining_billable)}
+              </div>
+            )}
+            {mode === "full" && (
+              <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                Invoice: {usd(selected.quote_total)}
+              </div>
+            )}
+
+            <div className="mt-3">
+              <label className="text-xs font-semibold text-slate-500">Due date (optional)</label>
+              <input className={inputCls} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </div>
+          </>
+        )}
+
+        {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          {selected && (
+            <button onClick={submit} disabled={saving} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white disabled:opacity-60 hover:bg-violet-700">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}Create invoice
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Invoices() {
   const { sessionToken, isRegistered } = useAuth();
   const [invoices, setInvoices] = useState([]);
@@ -447,6 +611,7 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showFromEstimate, setShowFromEstimate] = useState(false);
   const [openId, setOpenId] = useState("");
   const [exporting, setExporting] = useState(false);
 
@@ -511,6 +676,9 @@ export default function Invoices() {
           </button>
           <button onClick={exportCsv} disabled={exporting} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300">
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Export CSV
+          </button>
+          <button onClick={() => setShowFromEstimate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-500 px-3 text-sm font-semibold text-violet-700 dark:text-violet-300">
+            <Receipt className="h-4 w-4" />From Estimate
           </button>
           <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
             <Plus className="h-4 w-4" />New Invoice
@@ -588,6 +756,7 @@ export default function Invoices() {
       </div>
 
       {showCreate && <InvoiceForm sessionToken={sessionToken} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
+      {showFromEstimate && <FromEstimateDialog sessionToken={sessionToken} onClose={() => setShowFromEstimate(false)} onSaved={() => { setShowFromEstimate(false); load(); }} />}
       {openId && <InvoiceDetail sessionToken={sessionToken} invoiceId={openId} onClose={() => setOpenId("")} onChanged={load} />}
     </div>
   );
