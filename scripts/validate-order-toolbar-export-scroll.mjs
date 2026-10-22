@@ -22,7 +22,7 @@ for (const actor of [
   { role: 'user', can_import_export: true },
 ]) assert.equal(canUseOrderExport(actor), false, 'Unassigned users and non-admins never see Export');
 assert.match(adminUsers, /formData\.role === "admin" && \([\s\S]*?admin-order-form-export/);
-assert.match(adminUsers, /can_order_export: val === 'admin' \? formData\.can_order_export : false/);
+assert.match(adminUsers, /can_order_export: val === 'admin' \? activeAccountDraft\.current\.can_order_export : false/);
 assert.match(userBackend, /can_order_export: row\?\.role === 'admin' && row\?\.can_order_export === true/);
 assert.match(userBackend, /can_order_export: role === 'admin' && input\?\.can_order_export === true/);
 assert.match(userBackend, /if \(desired\.role === 'user'\) desired\.can_order_export = false/);
