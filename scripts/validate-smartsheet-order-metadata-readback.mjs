@@ -73,7 +73,7 @@ assert.match(backend, /sync metadata read-back failed/);
 assert.match(backend, /sync metadata could not be re-read/);
 assert.doesNotMatch(
   backend.slice(backend.indexOf('// Re-read every metadata write by permanent Base44 ID'),
-    backend.indexOf('// Preserve Base44 records whose linked Smartsheet row is missing.')),
+    backend.indexOf('// Preserve Base44 records whose exact permanent Smartsheet row ID is missing.')),
   /\.bulkUpdate\(|\.update\(|\.create\(/,
 );
 console.log('PASS Order metadata verification stays read-only after the metadata write and fails the run closed');
