@@ -1272,4 +1272,36 @@ assert.equal(calls[recoveredResolutionIndex].payload.request_id, newerResolution
 await act(async () => { calls[recoveredResolutionIndex].resolve(workedThroughAck); await recoveredResolution; });
 assert.equal(savedSessionData.has(punchRequestKey), false);
 console.log('PASS punch-resolution acknowledgements are fenced to employee, shift, epoch, and exact request');
-console.log('PASS 29/29 Time Clock Quick Clock async status acceptance cases');
+// A missed-Clock-Out resolution chains the employee Clock In; a mismatched
+// Clock In acknowledgement fails closed and keeps its exact retry request.
+let pendingResolution;
+await act(async () => {
+  pendingResolution = punchDialog().props.onMissedClockOut('2026-10-14T17:30:00.000Z');
+});
+const pendingResolutionIndex = calls.length - 1;
+assert.equal(calls[pendingResolutionIndex].payload.action,'resolve_punch_exception');
+const clockInKey = `ccs_timeclock_request:clock_in:${first.email}`;
+await act(async () => {
+  calls[pendingResolutionIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_out', punch_resolution_pending:true,
+    punch_exception:{id:'pending-case',user_email:first.email,time_entry_id:'punch-fence-shift'},
+    correction_request:{id:'corr-1'},
+  }});
+});
+const chainedClockInIndex = calls.length - 1;
+assert.equal(calls[chainedClockInIndex].payload.action,'clock_in',
+  'Pending punch resolution must chain the employee Clock In');
+const chainedClockInId = calls[chainedClockInIndex].payload.request_id;
+assert.equal(savedSessionData.get(clockInKey), chainedClockInId);
+await act(async () => {
+  calls[chainedClockInIndex].resolve({ data: {
+    success:true, user:second, status:'already_clocked_in',
+    entry:{id:'foreign-entry',user_email:second.email},
+  }});
+  await assert.rejects(pendingResolution, /could not be matched/);
+});
+assert.equal(savedSessionData.get(clockInKey), chainedClockInId,
+  'A mismatched chained Clock In acknowledgement must preserve its exact retry request');
+console.log('PASS chained Clock In after punch resolution fails closed on a mismatched employee');
+await act(async () => { punchFenceRenderer.unmount(); });
+console.log('PASS 30/30 Time Clock Quick Clock async status acceptance cases');
