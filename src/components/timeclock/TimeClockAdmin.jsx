@@ -409,9 +409,9 @@ export default function TimeClockAdmin() {
         return;
       }
     }
+    const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
     setSaveBusy(true);
     try {
-      const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
       if (!correctionRequestId) {
         setCorrectionRequestId(requestId);
         persistAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
