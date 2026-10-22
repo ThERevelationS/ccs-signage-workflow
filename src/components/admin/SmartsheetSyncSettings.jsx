@@ -252,7 +252,7 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
           ["importer_enabled", "Enable manual importer", "Admin-only spreadsheet fallback."],
           ["pull_enabled", "Pull Smartsheet → Base44", "Updates approved mapped fields only."],
           ["push_enabled", "Push Base44 → Smartsheet", dataset === "orders" ? "Order Form background push is locked OFF. Use Save & Sync for explicit writes." : "Updates approved mapped fields only."],
-          ["create_base44_from_smartsheet", "Create in Base44 from new Smartsheet rows", dataset === "orders" ? "Order Form automatic creation is locked OFF; unlinked rows are flagged for review." : "Requires client/relationship resolution."],
+          ["create_base44_from_smartsheet", "Create in Base44 from new Smartsheet rows", dataset === "orders" ? "Pull creates linked Orders for new Smartsheet rows. Duplicate-looking or sparse rows stay held for review." : "Requires client/relationship resolution."],
           ["create_smartsheet_from_base44", "Create in Smartsheet from new Base44 rows", dataset === "orders" ? "Order Form automatic creation is locked OFF. Save & Sync can explicitly create a row for a new Order." : "Creates one linked row per Base44 record."],
         ].map(([key, label, help]) => (
           <div key={key} className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
@@ -263,7 +263,7 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
             <Switch
               checked={Boolean(value[key])}
               onCheckedChange={(checked) => patch({ [key]: checked })}
-              disabled={dataset === "orders" && ["push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"].includes(key)}
+              disabled={dataset === "orders" && ["push_enabled", "create_smartsheet_from_base44"].includes(key)}
             />
           </div>
         ))}
@@ -329,7 +329,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         : {
             className: "border-emerald-200 bg-emerald-50 text-emerald-900",
             title: "Automatic sync is active.",
-            detail: "The scheduler runs every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled; background push and automatic record creation are locked OFF, so Order writes use Save & Sync. A live status indicator appears at the bottom-right corner of every page.",
+            detail: "The scheduler runs every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled; background push and Smartsheet row creation are locked OFF, so Order writes use Save & Sync. A live status indicator appears at the bottom-right corner of every page.",
           };
 
   const dirty = useMemo(() => {
