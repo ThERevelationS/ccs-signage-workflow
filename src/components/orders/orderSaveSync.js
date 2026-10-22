@@ -1,6 +1,7 @@
 import { queueSmartsheetSync } from "@/components/admin/syncRequestQueue";
 import { normalizeOrderLinkedCustomerReviews } from "@/components/orders/orderLinkedCustomerReviewPresentation.mjs";
 import { orderRemoteVerificationReviewMessage } from "@/components/orders/orderRemoteVerificationReview.mjs";
+import { ORDER_SAVE_SYNC_BATCH_LIMIT, OrderSaveSyncBatchLimitError, readOrderSaveSyncBatchLimitError } from "@/components/orders/orderSaveSyncBatch.mjs";
 
 function safeMessage(error, fallback) {
   return error?.response?.data?.error || error?.data?.error || error?.message || fallback;
@@ -81,6 +82,7 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
   if (ids.length !== rawIds.length || ids.some((id) => !/^[A-Za-z0-9_-]{6,80}$/.test(id))) {
     throw new Error("Saved Orders contain an invalid or duplicate permanent ID. Reload before syncing.");
   }
+  if (ids.length > ORDER_SAVE_SYNC_BATCH_LIMIT) throw new OrderSaveSyncBatchLimitError(ORDER_SAVE_SYNC_BATCH_LIMIT);
 
   try {
     const response = await queueSmartsheetSync({
@@ -95,9 +97,12 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
       retryCoordinatorBusy: true,
     });
     const data = response?.data || response;
-    if (!data?.success) throw new Error(data?.error || "Saved Orders could not be synced.");
+    if (!data?.success) throw readOrderSaveSyncBatchLimitError(data) || new Error(data?.error || "Saved Orders could not be synced.");
     return data;
   } catch (error) {
+    if (error instanceof OrderSaveSyncBatchLimitError) throw error;
+    const limitError = readOrderSaveSyncBatchLimitError(error?.response?.data || error?.data);
+    if (limitError) throw limitError;
     throw new Error(safeMessage(error, "Saved Orders could not be synced to Smartsheet safely."));
   }
 }
