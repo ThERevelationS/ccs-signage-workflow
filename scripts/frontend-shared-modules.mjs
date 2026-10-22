@@ -8,6 +8,7 @@ const names = new Set([
   'permittingSourceAuthorityPolicy.mjs', 'jurisdictionSourceTextSegments.mjs',
   'jurisdictionSourcePdfText.mjs',
   'salesTaskStatusAudit.mjs', 'salesTaskStageCatalog.mjs',
+  'salesOpportunityHistory.mjs', 'salesSaveAcknowledgmentGuard.mjs',
   'smartsheetSalesSafety.mjs', 'smartsheetSalesAssigneeTranslation.mjs',
   'smartsheetSalesImportEligibility.mjs', 'historicalSalesOutcomeReconciliation.mjs',
 ]);
