@@ -12,7 +12,7 @@ const built = await build({
     b.onResolve({ filter: /workflowInvocationCapability\.ts$/ }, () => ({ path: 'capability', namespace: 'mock' }));
     b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path }) => ({ contents:
       path === 'sdk' ? 'export const createClientFromRequest = () => globalThis.fixture.client;' :
-      path === 'fetch' ? 'export const safeExternalFetch = (...args) => globalThis.fixture.fetch(...args);' :
+      path === 'fetch' ? 'export const safeExternalFetch = (...args) => globalThis.fixture.fetch(...args); export const assertSafeExternalUrl = async url => url;' :
       'export const hasWorkflowInvocationCapability = async () => false;', loader: 'js' }));
   }}],
 });
