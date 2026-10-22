@@ -26,6 +26,46 @@ function displayTime(iso) {
   return formatCompanyDateTime(iso);
 }
 
+function reviewRetryStorageKey(correctionRequestId) {
+  return `ccs_timeclock_correction_review_retry:${String(correctionRequestId || "").trim()}`;
+}
+
+function storedReviewRetry(correctionRequestId) {
+  try {
+    const raw = sessionStorage.getItem(reviewRetryStorageKey(correctionRequestId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    const payload = parsed?.payload;
+    if (requestId.length < 8 || requestId.length > 128 || !payload || typeof payload !== "object" ||
+        payload.request_id !== requestId || payload.correction_request_id !== correctionRequestId ||
+        !parsed?.decision) return null;
+    return { request_id: requestId, decision: String(parsed.decision), payload };
+  } catch {
+    return null;
+  }
+}
+
+function persistReviewRetry(correctionRequestId, requestId, decision, payload) {
+  try {
+    sessionStorage.setItem(reviewRetryStorageKey(correctionRequestId), JSON.stringify({
+      request_id: requestId,
+      decision,
+      payload,
+    }));
+  } catch {}
+}
+
+function clearReviewRetry(correctionRequestId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId) {
+      const stored = storedReviewRetry(correctionRequestId);
+      if (!stored || stored.request_id !== expectedRequestId) return;
+    }
+    sessionStorage.removeItem(reviewRetryStorageKey(correctionRequestId));
+  } catch {}
+}
+
 export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
