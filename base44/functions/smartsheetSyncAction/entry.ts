@@ -1883,7 +1883,11 @@ async function pushDataset(
   {
     const preFetchColumnIds = [...new Set(Object.values(bindings).map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
     const preFetchPageSize = 500;
-    for (let preFetchPage = 1; ; preFetchPage++) {
+    // Smartsheet's GET /sheets/{id} returns totalRowCount, not totalPages; the
+    // guard pages until every declared row is seen so rows past the first page
+    // are never misreported as deleted permanent rows.
+    const preFetchGuard = createSmartsheetOrderPageGuard({ pageSize: preFetchPageSize, maxPages: 100, datasetLabel: dataset === 'sales' ? 'Sales' : 'Order Form' });
+    for (let preFetchPage = 1; preFetchPage <= 100; preFetchPage++) {
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       await reportSalesProgress({phase:'reading',total:pendingRecords.length,item_label:'Reading Smartsheet sheet'});
       await reportOrderProgress({phase:'reading',current:0,total:pendingRecords.length,fraction:0.08,item_label:'Reading Smartsheet sheet',detail:'Downloading current Order Request values by permanent IDs'});
@@ -1891,10 +1895,12 @@ async function pushDataset(
       const sheetResponse = await smartsheetGet(`/sheets/${sheetId}?${preFetchParams.toString()}`, token);
       if (preFetchPage === 1 && (String(sheetResponse.body?.id) !== sheetId || !Object.values(bindings).every(id => sheetResponse.body?.columns?.some(c => String(c.id) === String(id)))))
         throw new Error('Smartsheet sheet or column identity could not be verified. No rows were written.');
-      for (const row of normalizeSheetRows(sheetResponse.body)) sheetRowsMap.set(row.id, { row, raw: { columns: sheetResponse.body.columns, rows: sheetResponse.body.rows.filter((r: any) => String(r.id) === row.id) } });
-      const totalPages = Number(sheetResponse.body?.totalPages || 1);
-      if (preFetchPage >= totalPages) break;
+      const preFetchRows = normalizeSheetRows(sheetResponse.body);
+      const preFetchComplete = preFetchGuard.accept(preFetchPage, sheetResponse.body, preFetchRows);
+      for (const row of preFetchRows) sheetRowsMap.set(row.id, { row, raw: { columns: sheetResponse.body.columns, rows: sheetResponse.body.rows.filter((r: any) => String(r.id) === row.id) } });
+      if (preFetchComplete) break;
     }
+    preFetchGuard.assertComplete();
   }
   const sheetRowIds = new Set<string>([...sheetRowsMap.keys()].map((value: any) => String(value)));
   const orderPushStartedAt = Date.now();
