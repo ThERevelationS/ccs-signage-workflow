@@ -131,6 +131,9 @@ Deno.serve(async (req) => {
     const CustomerLocation = base44.asServiceRole.entities.CustomerLocation;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
+    const Invoice = base44.asServiceRole.entities.Invoice;
+    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
+    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
 
     if (action === "search_customers") {
       const query = clean(body?.query).toLowerCase();
@@ -181,6 +184,39 @@ Deno.serve(async (req) => {
         win_rate: decidedCount > 0 ? Math.round((wonCount / decidedCount) * 1000) / 10 : null,
       };
       return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
+    }
+
+    if (action === "global_search") {
+      const query = clean(body?.query).toLowerCase();
+      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [] };
+      if (query.length < 2) return Response.json({ success: true, action, results: empty });
+      const [opps, estimates, invoices, pos, cos] = await Promise.all([
+        Opportunity.filter({}, "-last_activity_at", 500),
+        Estimate.filter({}, "-created_date", 500),
+        Invoice.filter({}),
+        PurchaseOrder.filter({}),
+        ChangeOrder.filter({}),
+      ]);
+      for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
+        if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
+      }
+      const has = (row: any, fields: string[]) => fields.some((f) => clean(row?.[f]).toLowerCase().includes(query));
+      return Response.json({
+        success: true,
+        action,
+        results: {
+          opportunities: opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage) })),
+          estimates: estimates.filter((r: any) => !r?.deleted && has(r, ["project_name", "client_name", "estimate_number"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status) })),
+          invoices: invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), invoice_number: clean(r?.invoice_number), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), total: num(r?.total) })),
+          purchase_orders: pos.filter((r: any) => has(r, ["po_number", "vendor_name"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total) })),
+          change_orders: cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status) })),
+        },
+      });
     }
 
     if (action === "get_opportunity") {
