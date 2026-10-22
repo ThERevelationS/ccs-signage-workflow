@@ -114,8 +114,11 @@ function persistApprovalRetry(payload) {
   } catch {}
 }
 
-function clearApprovalRetry(decision, entryId) {
-  try { sessionStorage.removeItem(approvalRetryStorageKey(decision, entryId)); } catch {}
+function clearApprovalRetry(decision, entryId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId && storedApprovalRetry(decision, entryId)?.request_id !== expectedRequestId) return;
+    sessionStorage.removeItem(approvalRetryStorageKey(decision, entryId));
+  } catch {}
 }
 
 function approvalRequestStorageAction(decision) {
