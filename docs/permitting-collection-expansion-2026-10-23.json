@@ -13,38 +13,147 @@
       "frontiers_seeded": 126,
       "persistent_failures": 63,
       "pending_pages_added": 1201,
-      "failure_classes": ["unreachable site", "WAF-protected site", "JavaScript-only portal", "invalid/missing permitting_url (e.g. literal 'INFORMATION NOT FOUND')", "no usable static HTML"]
+      "failure_classes": [
+        "unreachable site",
+        "WAF-protected site",
+        "JavaScript-only portal",
+        "invalid/missing permitting_url (e.g. literal 'INFORMATION NOT FOUND')",
+        "no usable static HTML"
+      ]
     },
     "KY": {
       "candidates_attempted": 173,
       "frontiers_seeded": 72,
       "persistent_failures": 101,
       "pending_pages_added": 449,
-      "failure_classes": ["unreachable/dead county sites", "missing or placeholder permitting_url", "no usable static HTML", "WAF/JS portals"]
+      "failure_classes": [
+        "unreachable/dead county sites",
+        "missing or placeholder permitting_url",
+        "no usable static HTML",
+        "WAF/JS portals"
+      ]
     },
     "note": "Every eligible profile with a permitting_url and no frontier was attempted in both states. Failures remain explicit review gaps; none were marked successful."
   },
   "drain": {
     "route": "continueDiscoveryBacklog via deployed shared module; production fetcher contract (safeExternalFetch + readPermittingResourceResponse, 12s timeout); one page per cycle, breadth-first oldest-updated",
     "bounded_passes": [
-      { "run": "earlier-session drain1+drain2", "pages": 75 },
-      { "run": "run1", "cycles": 150, "pages": 149, "errors": 0 },
-      { "run": "run2", "cycles": 150, "pages": 150, "errors": 0 },
-      { "run": "run3", "cycles": 150, "pages": 150, "errors": 0 },
-      { "run": "run4", "cycles": 150, "pages": 150, "errors": 0 },
-      { "run": "run5", "cycles": 150, "pages": 134, "errors": 7, "note": "429 entity-read rate-limit retries" },
-      { "run": "run6", "cycles": 150, "pages": 150, "errors": 0 },
-      { "run": "run7", "cycles": 150, "pages": 150, "errors": 0 }
+      {
+        "run": "earlier-session drain1+drain2",
+        "pages": 75
+      },
+      {
+        "run": "run1",
+        "cycles": 150,
+        "pages": 149,
+        "errors": 0
+      },
+      {
+        "run": "run2",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run3",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run4",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run5",
+        "cycles": 150,
+        "pages": 134,
+        "errors": 7,
+        "note": "429 entity-read rate-limit retries"
+      },
+      {
+        "run": "run6",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run7",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run8",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run9",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run10",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run11",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run12",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      }
     ],
-    "pages_fetched_total_bounded_passes": 1108,
+    "pages_fetched_total_bounded_passes": 1858,
     "provenance_violations": 0,
-    "note": "Each fetched page also harvests new same-host links, so pending totals decline net of re-seeding. Failed/cross-host/JS pages record page_fetch_failed review gaps and receive no last_fetched."
+    "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining."
   },
   "final_state": {
-    "OH": { "frontier_profiles": 781, "no_frontier_remaining_failed": 62, "pending_pages": 2993, "profiles_with_pending": 190, "review_gaps": 721 },
-    "KY": { "frontier_profiles": 113, "no_frontier_remaining_failed": 101, "pending_pages": 374, "profiles_with_pending": 32, "review_gaps": 69 }
+    "OH": {
+      "frontier_profiles": 781,
+      "no_frontier_remaining_failed": 62,
+      "pending_pages": 2774,
+      "profiles_with_pending": 151,
+      "review_gaps": 970
+    },
+    "KY": {
+      "frontier_profiles": 113,
+      "no_frontier_remaining_failed": 101,
+      "pending_pages": 326,
+      "profiles_with_pending": 26,
+      "review_gaps": 104
+    }
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
   "protected_data": "No manual/pinned/archive-protected record was modified; all writes used guarded same-version persistence; no client/job/shared records touched; no authority or applicability conclusions drawn.",
-  "ongoing": "Scheduled permittingResearchBacklogDispatch continues draining frontiers at 5 profiles per 15-minute cycle, Ohio-first. Residual pending_pages backlog (~3,367) is an active, bounded discovery frontier, not an unattempted gap. Failed-seed jurisdictions (163 total) require corrected permitting_url sources before discovery can proceed."
+  "ongoing": "Scheduled permittingResearchBacklogDispatch continues draining frontiers at 5 profiles per 15-minute cycle, Ohio-first. Residual pending_pages backlog (~3,367) is an active, bounded discovery frontier, not an unattempted gap. Failed-seed jurisdictions (163 total) require corrected permitting_url sources before discovery can proceed.",
+  "gap_triage": {
+    "page_fetch_failed": {
+      "OH": 454,
+      "KY": 38,
+      "nature": "mostly cross-host portals (MyAccount, iworq, third-party hosts) correctly out of same-host scope, plus JS-gated same-host pages; largely structural, not retryable by static discovery"
+    },
+    "depth_frontier": {
+      "OH": 247,
+      "KY": 25,
+      "nature": "pages beyond max_depth - intentional depth bound, not failures"
+    },
+    "page_link_limit": {
+      "OH": 20,
+      "KY": 6,
+      "nature": "harvested links beyond per-page cap"
+    }
+  }
 }
