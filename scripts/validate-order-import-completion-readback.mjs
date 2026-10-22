@@ -129,9 +129,26 @@ console.log('PASS malformed or unaccounted import counts preserve uncertain comp
   await test.run();
   assert.equal(test.progress.length, 1);
   assert.equal(test.progress[0][2], true, 'Verified partial import keeps conflict/error review visible');
-  assert.match(test.progress[0][1], /1 concurrency conflict/);
+  assert.match(test.progress[0][1], /1 import conflict/);
   assert.equal(test.reloadCalls, 1);
   console.log('PASS verified partial import still requires review of conflicts and failures');
+}
+
+{
+  const test = fixture({ result: response({
+    created: 0, updated: 0, skipped: 0, conflicts: 4,
+    issues: [null, { row: -1, message: 'Invalid issue' },
+      ...[1, 2, 3, 4].map(row => ({ row,
+        message: 'Multiple existing Orders match this customer, description and item type.' }))],
+  }) });
+  await test.run();
+  assert.equal(test.reloadCalls, 1);
+  assert.equal(test.progress[0][2], true);
+  assert.match(test.progress[0][1], /4 import conflicts/);
+  assert.match(test.progress[0][1], /Import row 1: Multiple existing Orders/);
+  assert.match(test.progress[0][1], /Import row 3:/);
+  assert.doesNotMatch(test.progress[0][1], /Import row 4:|Invalid issue/);
+  console.log('PASS ambiguous matching explains the first three affected import rows after verified reload');
 }
 
 {
