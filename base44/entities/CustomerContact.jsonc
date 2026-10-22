@@ -1,0 +1,110 @@
+{
+  "name": "CustomerContact",
+  "type": "object",
+  "description": "Canonical person/contact record belonging to a shared Customer. Owns contact-level roles and authority. Opportunity, EstimatingRequest, and future flows link here by contact_id once resolved. Never merge contacts by name alone.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one contact create."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Owning canonical Customer id."
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Preferred display name; falls back to first+last when blank."
+    },
+    "position": {
+      "type": "string",
+      "description": "Job title/role at the customer (e.g. Owner, Facilities Manager)."
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "phone_ext": {
+      "type": "string"
+    },
+    "mobile_phone": {
+      "type": "string"
+    },
+    "authority_role": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "decision_maker",
+        "influencer",
+        "accounts_payable",
+        "site_contact",
+        "tenant",
+        "owner_rep",
+        "property_manager",
+        "other"
+      ],
+      "default": "unknown",
+      "description": "Contact-level authority for approvals, invoicing and site access."
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false,
+      "description": "Primary point of contact for the account."
+    },
+    "is_billing_contact": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_site_contact": {
+      "type": "boolean",
+      "default": false
+    },
+    "preferred_contact_method": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "phone",
+        "mobile",
+        "email",
+        "text"
+      ],
+      "default": "unknown"
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Provenance: which record/import promoted this contact (e.g. Customer embedded contact fields, WorkOrder representative, OpportunityIntake capture)."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "customer_id"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
