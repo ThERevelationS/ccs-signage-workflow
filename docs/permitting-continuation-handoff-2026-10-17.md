@@ -1,3 +1,32 @@
+# Permitting continuation handoff — October 22, 2026 (Discovery fetch-timestamp provenance fix; Milestone 2 enabler)
+
+Current checkpoint for this unit: (see checkpoint ID recorded at end of this section). Prior unit checkpoint `6ada7188337b04b07e490bf5` / Git `6615d6d6303742d2c53b5d60aada00060eb6872f` remains the Milestone 1 completion point. Pre-edit checkpoint for this unit: `6ada72adc11fb6730b8827cc`.
+
+## What changed
+The October 21 handoff warned that "general research or continuation routes still assign candidate dates and need a separate scoped improvement." That fix is now shipped:
+
+- `base44/shared/permittingDiscoveryScan.mjs`: new exports `discoveryFetchedUrlKeys(scan)` (pages with status `scanned`/`classified_pdf`, url+final_url normalized) and `applyDiscoveryFetchTimestamp(documents, scan, fetchedAt)` (stamps only actually-fetched URLs; manual/pinned/archive_pinned/file_url/source_sha256 records keep prior provenance).
+- `base44/shared/permittingDiscoveryContinuation.mjs`: harvested docs no longer receive a fabricated `new Date()` stamp; merged documents pass through the timestamp gate. This is the scheduled collection-cycle path (`permittingResearchBacklogDispatch`), so every future deterministic cycle is now provenance-correct.
+- `base44/functions/refreshJurisdiction/entry.ts`: `newAiDocs` no longer stamps invocation time; the post-merge gate applies timestamps only for pages the scan actually fetched.
+- `base44/functions/batchUpdateJurisdictions/entry.ts`: AI-suggested docs (never fetched there) no longer stamped.
+
+`archiveDocumentEligible`/backlog queries never read `last_fetched`; removing the stamps does not affect archive selection.
+
+## Verification
+- 176 focused tests pass (discovery, refresh, continuation, frontier, dispatch, collection-cycle, archive, external-referrals, merge). Two new regression tests cover fetched-vs-harvested stamping and manual/archived preservation. Two pre-existing harness gaps (`applyDiscoveryFetchTimestamp`/`retainOfficeResearchResponseHistory` bindings; esbuild mock missing `assertSafeExternalUrl`) were repaired.
+- Live: `base44 exec --privileged` ran the deployed `continueKnownDiscovery` once (maxPages=1, llm_calls=0) on Octa / OH / `6ad05ac8acc3c782f0027f9c`. The fetched URL redirected cross-host and was honestly recorded `page_fetch_failed` with `requires_review` — and correctly received NO `last_fetched`. 0 new stamps, 0 provenance violations, 8 pending pages remain. Under the old code every rediscovered link would have been re-dated.
+- Receipt: `docs/permitting-discovery-timestamp-provenance-2026-10-22.json`.
+
+## Known remaining data-quality item (needs owner decision, not done)
+Profiles may carry `last_fetched` dates fabricated by the pre-fix code (Octa: all 15 docs dated from an earlier cycle). True fetch times are unrecoverable retroactively; bulk removal is a separate scoped decision. The October 21 Sharonville 10-doc manual repair remains the precedent for case-by-case fixes where the real fetch time is known.
+
+## Notes for next chunk (Milestone 2 — Ohio-first collection expansion)
+- The deterministic continuation path is now safe to let run and safe to invoke bounded; it is the primary no-LLM expansion vehicle while the daily dispatch cap (last observed 40/40) is exhausted.
+- Dispatcher controls unchanged this session; recheck `permitting_research_dispatch_config` day key before assuming budget.
+- Octa still has 8 pending frontier pages and 2 review gaps (incl. a cross-host `MyAccount` link correctly rejected by host-scoping).
+
+---
+
 # Permitting continuation handoff — October 17, 2026
 
 ## Latest completed unit — Phase 10 Milestone 1 of 3 completed via authenticated live read-only acceptance (October 22, 2026)
