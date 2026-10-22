@@ -1,5 +1,39 @@
 # Permitting continuation handoff — October 17, 2026
 
+## Latest completed unit — CLI-authenticated Sharonville Permits discovery and live timestamp acceptance (October 22, 2026)
+
+Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
+Fresh starting HEAD 8d401962db5dc3c08c917803c902610d0636f7f0, clean. Prior verified live-acceptance checkpoint: 6ad8cc5e5df4fc835b1112f1 / Git 73ee6b25350230d98e8a36676971555b8a518e7d, “Permitting desktop FAQ discovery and live timestamp provenance verified”. All newer CCS work preserved.
+
+Uncertain-request reconciliation:
+Live profile readback before any action showed updated_date 2026-10-21T14:22:35.528000, 20 documents and the same three prior saved-document receipts only; Permits document 705a3ce0-ccbe-4fa7-a251-770c730d1ae7 had no last_fetched and no receipt. The October 22 timed-out browser Run Function click left no persisted write. It was not replayed; the single invocation below was the first effective call for this document.
+
+Access:
+- npx base44@latest whoami reports brettheinlein1@gmail.com; management-API entity reads (api fetch /entities/...) work under the CLI device token.
+- A raw POST of the device token to the deployed function endpoint returned 401 "Authentication required" at the in-function admin gate before any fetch or write. The device token is not an app-runtime user credential.
+- npx base44@latest exec (local Deno required; installed to the user profile this unit) runs SDK scripts pre-authenticated as the app user: auth.me returned brettheinlein1@gmail.com / role admin. This is the first verified CLI/SDK application-function access; earlier units had only connector or browser-tester paths.
+- Invocation used base44.functions.invoke through exec against the deployed backend. The deployed bundle was verified to contain the fixed permittingSavedDocumentDiscovery.mjs before invoking.
+
+Invocation and result:
+ONE refreshJurisdiction call with discovery_only=true, defer_archive=true and exact selected_saved_document identity at profile version 2026-10-21T14:22:35.528000 for https://www.sharonville.org/524/Permits. Response: success true; attempted_pages 1; research_attempts 0; llm_calls 0; archival null; scan_run null. The seed page scanned at its own URL (no cross-host redirect). Receipt scanned_at 2026-10-22T20:15:20.338Z; profile updated_date 2026-10-22T20:15:20.607000.
+Five new undated same-host links merged (documents 20 → 25): Nightclub Permit Packet, Event Assembly Permit, Solicitor Acknowledgement Form, Solicitor Registration Form, Solicitor Business Tax Registration Form — all sharonville.org DocumentCenter retained links only; not fetched, not authority evidence. One external referral (oh-sharonville.civicplus.com DocumentCenter/View/1634) retained unapproved and unfetched.
+
+Live readback checks (post-invocation entity get vs pre-invocation snapshot):
+- Only the selected existing document changed: last_fetched set equal to the receipt scanned_at, and title refreshed "Permits" → "Official permitting/forms page" by the standard deterministic merge of the page's own observed title (same URL, same record; documented merge contract, not a separate write).
+- All other 19 existing documents byte-identical, including every prior date. All five new links carry no last_fetched.
+- Original frontier, all three prior receipts, office research and every other profile field byte-identical; exactly one receipt appended (total 4). Selected doc last_fetched equals receipt scanned_at.
+- Controls untouched: config 6ac1b28c47233270cfeeb0f9 still enabled/15min/5-per-cycle/20-in-flight/40-per-day/retry-3; state 6ac1d0ffb44495caa0c3cf76 still daily_day_key 2026-10-22, dispatched_today 40, updated_date unchanged at 2026-10-22T20:01:32.699000. Zero dispatch budget and zero LLM attempts consumed.
+
+Receipt: docs/permitting-sharonville-permits-live-2026-10-22.json. No product/backend/schema/RLS/frontend change, build, synthetic-suite rerun, archive upload, approval, message, queue/control change or client/job/shared-record mutation. No unfinished live write.
+Electrical issuer department/canonical identity, current inspection delegation, commercial-sign applicability and exact-site coverage remain unresolved. Retained links are not evidence.
+
+Next ONE chunk:
+Fresh HEAD/status and exact profile/controls first. Choose another eligible undated saved source without a prior receipt (e.g. retained DocumentCenter application links such as Application For Plan Approval 073a06bb-2a02-4652-b417-b9d3758b8467 or the new permit packets after eligibility check — PDF-classified/protected selections require their existing review path, not this route), or advance office and parent-authority reconciliation. One exact-version selected-document discovery-only call with archival deferred; do not replay FAQ, Building/Zoning, Community Development or Permits. Keep zero-LLM deterministic scope; no frontend publication.
+
+Checkpoint name for this unit: “Permitting CLI-authenticated Permits-page discovery and live timestamp verified”. Exact ID/Git appear in the checkpoint receipt/final report. Older sections below are historical.
+
+
+
 ## Latest unit — Permits-page request blocked by cloud-browser credential-state loss (October 22, 2026)
 
 Phase 10 → Milestone 1 of 3 → Task 2 remains partial; 2 of 4 tasks complete. No statewide coverage counts advanced.
