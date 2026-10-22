@@ -7,6 +7,7 @@ import {
   Loader2,
   Package,
   Plus,
+  Receipt,
   RefreshCw,
   Search,
   Send,
@@ -242,6 +243,12 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{po.po_number}</h2>
                   <StatusBadge status={po.status} />
+                  {po.payment_status === "paid" && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">Paid</span>
+                  )}
+                  {po.payment_status === "invoiced" && (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">Vendor bill received</span>
+                  )}
                 </div>
                 <div className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">{po.vendor_name}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
@@ -318,6 +325,27 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
                   className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
                   {busy === "receive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}Record receipt
                 </button>
+              )}
+              {po.payment_status !== "paid" && po.payment_status !== "invoiced" && ["sent", "partially_received", "received"].includes(po.status) && (
+                <button type="button" onClick={() => {
+                  const vendor_invoice_number = prompt("Vendor invoice/bill number (optional):", po.vendor_invoice_number || "");
+                  if (vendor_invoice_number !== null) run("invoice", { action: "mark_invoiced", purchase_order_id: po.id, vendor_invoice_number });
+                }} disabled={Boolean(busy)}
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-60">
+                  {busy === "invoice" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Receipt className="h-4 w-4" />}Vendor bill
+                </button>
+              )}
+              {po.payment_status === "invoiced" && (
+                <button type="button" onClick={() => {
+                  const paid_amount = prompt("Amount paid:", String(po.total || ""));
+                  if (paid_amount !== null) run("paid", { action: "mark_paid", purchase_order_id: po.id, paid_amount: Number(paid_amount) || undefined });
+                }} disabled={Boolean(busy)}
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
+                  {busy === "paid" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Mark paid
+                </button>
+              )}
+              {po.payment_status === "paid" && po.paid_amount > 0 && (
+                <span className="text-xs font-semibold text-emerald-600">Paid {usd(po.paid_amount)}{po.paid_date ? ` on ${po.paid_date}` : ""}</span>
               )}
               {!["received", "cancelled"].includes(po.status) && (
                 <button type="button" onClick={() => { if (confirm(`Cancel ${po.po_number}?`)) run("cancel", { action: "cancel_purchase_order", purchase_order_id: po.id }); }} disabled={Boolean(busy)}
