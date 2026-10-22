@@ -36,8 +36,11 @@ function persistOperation(key, requestId, payload) {
   try { sessionStorage.setItem(key, JSON.stringify({ request_id: requestId, payload })); } catch {}
 }
 
-function clearOperation(key) {
-  try { sessionStorage.removeItem(key); } catch {}
+function clearOperation(key, expectedRequestId = "") {
+  try {
+    if (expectedRequestId && storedOperation(key)?.request_id !== expectedRequestId) return;
+    sessionStorage.removeItem(key);
+  } catch {}
 }
 
 function shouldRetainOperation(err) {
@@ -155,12 +158,12 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, ses
         throw actionError;
       }
 
-      clearOperation(storageKey);
+      clearOperation(storageKey, requestId);
       if (onSubmit) await onSubmit();
       onClose();
     } catch (err) {
       console.error("Time off request save blocked:", err);
-      if (!shouldRetainOperation(err)) clearOperation(storageKey);
+      if (!shouldRetainOperation(err)) clearOperation(storageKey, requestId);
       setError(err?.response?.data?.error || err?.message || "Failed to submit request safely. Reload your requests before trying again.");
     } finally {
       setIsSubmitting(false);
