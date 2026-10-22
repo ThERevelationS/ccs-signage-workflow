@@ -562,10 +562,10 @@ export default function TimeClockAdmin() {
       });
       const data = functionData(response);
       if (!data?.success) throw adminActionError(data, "The approval was not confirmed by the server.");
-      clearAdminRequestId(approvalRequestStorageAction("approve"), approvalEntry.id);
-      clearAdminRequestId(approvalRequestStorageAction("reopen"), approvalEntry.id);
-      clearApprovalRetry("approve", approvalEntry.id);
-      clearApprovalRetry("reopen", approvalEntry.id);
+      clearAdminRequestId(requestAction, approvalEntry.id, frozenPayload.request_id);
+      if (oppositeStoredRequestId) clearAdminRequestId(oppositeAction, approvalEntry.id, oppositeStoredRequestId);
+      clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
+      if (oppositeRetryRequestId) clearApprovalRetry(oppositeDecision, approvalEntry.id, oppositeRetryRequestId);
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
