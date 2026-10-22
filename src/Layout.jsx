@@ -200,6 +200,7 @@ const ROOT_ROUTES = [
   createPageUrl("Invoices"),
   createPageUrl("ChangeOrders"),
   createPageUrl("PurchaseOrders"),
+  createPageUrl("JobCosting"),
   createPageUrl("OrderForm"),
   createPageUrl("TimeClock"),
   createPageUrl("AdminSettings"),
