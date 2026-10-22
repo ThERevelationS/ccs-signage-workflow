@@ -1211,4 +1211,65 @@ assert.equal(pauseFenceOverlay().props.disabled, false);
 assert.equal(savedSessionData.has(pauseRequestKey), false);
 console.log('PASS Work Pause acknowledgements are fenced to employee, shift, epoch, and exact request');
 await act(async () => { pauseFenceRenderer.unmount(); });
-console.log('PASS 28/28 Time Clock Quick Clock async status acceptance cases');
+// Punch-resolution acknowledgements are fenced to the employee, shift, epoch,
+// and the exact preserved request ID.
+let punchFenceRenderer;
+await act(async () => {
+  punchFenceRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'punch-fence-session', employeeSessionUser:first,
+  }));
+});
+const punchFenceStatusIndex = calls.length - 1;
+await act(async () => { calls[punchFenceStatusIndex].resolve(status(first,'punch-fence-shift')); });
+const punchDialog = () => punchFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onWorkedThrough === 'function')[0];
+assert.ok(punchDialog());
+let earlyResolution, latestResolution;
+await act(async () => {
+  earlyResolution = punchDialog().props.onWorkedThrough();
+  latestResolution = punchDialog().props.onWorkedThrough();
+});
+const earlyResolutionIndex = calls.length - 2;
+const latestResolutionIndex = calls.length - 1;
+const sharedResolutionId = calls[earlyResolutionIndex].payload.request_id;
+assert.equal(calls[latestResolutionIndex].payload.request_id, sharedResolutionId,
+  'Rapid duplicate punch-resolution taps must share one exact request');
+const punchRequestKey = `ccs_timeclock_request:resolve_punch_exception:${first.email}`;
+const workedThroughAck = { data: {
+  success:true, user:first, status:'clocked_in', worked_through:true,
+  entry:{id:'punch-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+  punch_exception:{id:'punch-case-1',user_email:first.email,time_entry_id:'punch-fence-shift'},
+}};
+await act(async () => { calls[latestResolutionIndex].resolve(workedThroughAck); await latestResolution; });
+assert.equal(savedSessionData.has(punchRequestKey), false);
+let newerResolution;
+await act(async () => { newerResolution = punchDialog().props.onWorkedThrough(); });
+const newerResolutionIndex = calls.length - 1;
+const newerResolutionId = calls[newerResolutionIndex].payload.request_id;
+assert.notEqual(newerResolutionId, sharedResolutionId);
+assert.equal(savedSessionData.get(punchRequestKey), newerResolutionId);
+await act(async () => {
+  calls[earlyResolutionIndex].resolve(workedThroughAck);
+  await earlyResolution;
+});
+assert.equal(savedSessionData.get(punchRequestKey), newerResolutionId,
+  'A delayed duplicate punch-resolution acknowledgement must not clear a newer retry ID');
+await act(async () => {
+  calls[newerResolutionIndex].resolve({ data: {
+    success:true, user:second, status:'clocked_in', worked_through:true,
+    entry:{id:'punch-fence-shift',user_email:second.email},
+    punch_exception:{id:'foreign-case',user_email:second.email,time_entry_id:'punch-fence-shift'},
+  }});
+  await assert.rejects(newerResolution, /could not be matched/);
+});
+assert.equal(savedSessionData.get(punchRequestKey), newerResolutionId,
+  'A mismatched punch-resolution acknowledgement must preserve the exact retry request');
+let recoveredResolution;
+await act(async () => { recoveredResolution = punchDialog().props.onWorkedThrough(); });
+const recoveredResolutionIndex = calls.length - 1;
+assert.equal(calls[recoveredResolutionIndex].payload.request_id, newerResolutionId,
+  'Punch-resolution retry must reuse the exact preserved request ID');
+await act(async () => { calls[recoveredResolutionIndex].resolve(workedThroughAck); await recoveredResolution; });
+assert.equal(savedSessionData.has(punchRequestKey), false);
+console.log('PASS punch-resolution acknowledgements are fenced to employee, shift, epoch, and exact request');
+console.log('PASS 29/29 Time Clock Quick Clock async status acceptance cases');
