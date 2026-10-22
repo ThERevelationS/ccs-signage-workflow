@@ -1,0 +1,165 @@
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
+import {
+  createFoundationRecordWithRecovery,
+  expectedFoundationFields,
+  replaceFoundationFieldsIfUnchanged,
+} from "../../shared/opportunityFoundationPersistence.mjs";
+
+const clean = (value: any) => String(value ?? "").trim();
+const num = (value: any, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+const money = (value: number) => Math.round(value * 1000) / 1000;
+
+const bad = (message: string, status = 400) =>
+  Object.assign(new Error(message), { statusCode: status });
+
+const itemLabel = (row: any) =>
+  [clean(row?.material_type), clean(row?.product_type), clean(row?.size)]
+    .filter(Boolean).join(" · ") || "Item";
+
+function stockSnapshot(row: any) {
+  const onHand = num(row?.quantity_on_hand);
+  const reorderPoint = num(row?.reorder_point, NaN);
+  return {
+    id: clean(row?.id),
+    material_type: clean(row?.material_type),
+    product_type: clean(row?.product_type),
+    size: clean(row?.size),
+    thickness_gauge: clean(row?.thickness_gauge),
+    unit_type: clean(row?.unit_type),
+    cost_per_unit: num(row?.cost_per_unit),
+    supplier: clean(row?.supplier),
+    quantity_on_hand: onHand,
+    reorder_point: Number.isFinite(reorderPoint) ? reorderPoint : null,
+    low_stock: Number.isFinite(reorderPoint) && onHand <= reorderPoint,
+    updated_date: clean(row?.updated_date),
+  };
+}
+
+async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, note, actor, key }: any) {
+  const current = num(item?.quantity_on_hand);
+  const next = money(current + delta);
+  if (next < -0.0005) {
+    throw bad(`Cannot move ${Math.abs(delta)} — only ${current} on hand for ${itemLabel(item)}.`, 409);
+  }
+  const desired: any = { quantity_on_hand: Math.max(0, next) };
+  const expected = expectedFoundationFields(item, desired);
+  await replaceFoundationFieldsIfUnchanged({
+    entity: Inventory,
+    recordId: clean(item.id),
+    expectedFields: expected,
+    nextFields: desired,
+    label: `Stock for ${itemLabel(item)}`,
+  });
+  const result = await createFoundationRecordWithRecovery({
+    entity: Movement,
+    data: {
+      creation_request_key: key,
+      item_id: clean(item.id),
+      item_label: itemLabel(item),
+      reason,
+      delta: money(delta),
+      resulting_qty: Math.max(0, next),
+      work_order_id: workOrderId,
+      note,
+      created_by: actor,
+    },
+    readMatches: async () => Movement.filter({ creation_request_key: key }),
+    label: "Inventory movement",
+  });
+  return { movement: result.record, quantity_on_hand: Math.max(0, next) };
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
+    const actor = clean(user?.email) || clean(user?.id) || "unknown";
+    const action = clean(body?.action);
+    if (!action) throw bad("An action is required.");
+
+    const Inventory = base44.asServiceRole.entities.Inventory;
+    const Movement = base44.asServiceRole.entities.InventoryMovement;
+    const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+
+    if (action === "list_stock") {
+      const rows = await Inventory.filter({});
+      if (!Array.isArray(rows)) throw bad("Inventory lookup failed.", 500);
+      const query = clean(body?.query).toLowerCase();
+      const lowOnly = body?.low_only === true;
+      const items = rows
+        .filter((r: any) => r?.legacy_compatibility !== true && r?.deleted !== true)
+        .map(stockSnapshot)
+        .filter((r: any) => !lowOnly || r.low_stock)
+        .filter((r: any) => !query
+          || [r.material_type, r.product_type, r.size, r.supplier].join(" ").toLowerCase().includes(query))
+        .slice(0, 400);
+      return Response.json({
+        success: true,
+        action,
+        items,
+        low_stock_count: rows.filter((r: any) => {
+          const rp = num(r?.reorder_point, NaN);
+          return r?.legacy_compatibility !== true && r?.deleted !== true
+            && Number.isFinite(rp) && num(r?.quantity_on_hand) <= rp;
+        }).length,
+      });
+    }
+
+    if (action === "list_movements") {
+      const query: any = {};
+      const itemId = clean(body?.item_id);
+      if (itemId) query.item_id = itemId;
+      const rows = await Movement.filter(query, "-created_date", 200);
+      if (!Array.isArray(rows)) throw bad("Movement lookup failed.", 500);
+      return Response.json({ success: true, action, movements: rows.slice(0, 200) });
+    }
+
+    if (["receive_stock", "issue_to_job", "adjust_stock", "return_stock"].includes(action)) {
+      const itemId = clean(body?.item_id);
+      const item = await Inventory.get(itemId).catch(() => null);
+      if (!item?.id || item?.legacy_compatibility === true) throw bad("Inventory item not found.", 404);
+
+      let delta = 0;
+      let reason = "adjust";
+      let workOrderId = "";
+      if (action === "receive_stock" || action === "return_stock") {
+        delta = num(body?.quantity, NaN);
+        if (!(delta > 0)) throw bad("Quantity must be positive.");
+        reason = action === "receive_stock" ? "receive" : "return";
+        workOrderId = clean(body?.work_order_id);
+      } else if (action === "issue_to_job") {
+        const qty = num(body?.quantity, NaN);
+        if (!(qty > 0)) throw bad("Issue quantity must be positive.");
+        workOrderId = clean(body?.work_order_id);
+        if (!workOrderId) throw bad("A work order is required to issue stock.");
+        const wo = await WorkOrder.get(workOrderId).catch(() => null);
+        if (!wo?.id) throw bad("The linked work order no longer exists.", 409);
+        delta = -qty;
+        reason = "issue";
+      } else {
+        delta = num(body?.delta, NaN);
+        if (!Number.isFinite(delta) || delta === 0) throw bad("A non-zero delta is required.");
+        reason = "adjust";
+      }
+      const key = clean(body?.creation_request_key) || `movement:${itemId}:${action}:${Date.now()}`;
+      const result = await applyMovement({
+        Inventory, Movement, item, delta, reason, workOrderId,
+        note: clean(body?.note), actor, key,
+      });
+      return Response.json({ success: true, action, ...result });
+    }
+
+    throw bad(`Unsupported action "${action}".`);
+  } catch (error: any) {
+    const status = error?.statusCode || error?.status || 500;
+    return Response.json(
+      { success: false, error: error?.message || "Request failed." },
+      { status: status >= 400 && status < 600 ? status : 500 },
+    );
+  }
+});
