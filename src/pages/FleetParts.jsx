@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -61,8 +61,10 @@ export default function FleetParts() {
   const [usageBusy, setUsageBusy] = useState(false);
   const [usageError, setUsageError] = useState("");
   const [error, setError] = useState("");
+  const loadSequenceRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true); setError("");
     try {
       const [p,e,i,u] = await Promise.all([
@@ -71,9 +73,10 @@ export default function FleetParts() {
         listAllFleetRows(base44.entities.FleetPartIdentification,"-created_date",{label:"Fleet part identification inbox"}).catch(() => []),
         base44.auth.me().catch(()=>null),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setParts(p||[]); setEquipment(e||[]); setIdentifications(i||[]); setUser(u||null);
-    } catch(e) { setError(e?.message || "Unable to load Fleet parts."); }
-    finally { setLoading(false); }
+    } catch(e) { if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet parts."); }
+    finally { if (requestSequence === loadSequenceRef.current) setLoading(false); }
   },[]);
   useEffect(()=>{load();},[load]);
   useEffect(()=>{
