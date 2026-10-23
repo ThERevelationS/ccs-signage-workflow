@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 
 const PRIORITIES = new Set(['low','medium','high','critical']);
 const RATE_WINDOW_MS = 15 * 60 * 1000;
@@ -188,8 +189,7 @@ Deno.serve(async (req) => {
     const payload = parsed.payload || {};
     const action = String(payload?.action || '').trim();
 
-    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({state_key:'primary'});
-    const cutover = cutoverRows?.[0];
+    const cutover = await getCanonicalCutoverState(base44);
     if (!cutover?.public_reporting_enabled) {
       if (action === 'list') return Response.json({success:true,disabled:true,equipment:[]});
       return Response.json({error:'Public Fleet issue reporting is not currently enabled.'},{status:503});
