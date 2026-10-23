@@ -36,6 +36,7 @@ import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import SceneCanvas from "@/components/motion/SceneCanvas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
@@ -738,7 +739,7 @@ export default function TimeClock() {
                 </div>
 
                 {/* Time Entries List */}
-                <div className="space-y-3">
+                <Stagger className="space-y-3">
                   {weeklyEntries.length === 0 ? (
                     <div className="clay-card p-6 text-center text-gray-500">
                       <Clock className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -755,7 +756,7 @@ export default function TimeClock() {
                       const entryOT = Math.max(0, entryHours - entryRegular);
                       
                       return (
-                      <div key={entry.id} className="clay-card p-4">
+                      <StaggerItem key={entry.id} className="clay-card p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -925,10 +926,10 @@ export default function TimeClock() {
                             )}
                           </div>
                         )}
-                      </div>
+                      </StaggerItem>
                     );})
                   )}
-                </div>
+                </Stagger>
               </TabsContent>
 
               <TabsContent value="timeoff">
