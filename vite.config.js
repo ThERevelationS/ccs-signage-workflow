@@ -6,6 +6,12 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
+  // Keep original identifier names while still minifying whitespace and syntax.
+  // Renaming can produce an identifier literally named "of"; a division right after it
+  // inside a `for (...)` header is mis-lexed during the build and fails publishing.
+  esbuild: {
+    minifyIdentifiers: false,
+  },
   plugins: [
     // Resolve the exact browser-safe shared helpers before Base44 blocks /base44/** imports.
     frontendSharedModules(),
