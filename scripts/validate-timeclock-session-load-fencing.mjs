@@ -69,7 +69,15 @@ const loadComponent = (path, extraMocks, contextExtra = {}) => {
         });
       }
       if (id.startsWith('@/components/ui/')) return uiFallback;
-      if (id.startsWith('@/components/motion/')) return uiFallback;
+      if (id.startsWith('@/components/motion/')) return {
+        __esModule: true,
+        default: passthrough(id),
+        FadeIn: passthrough('FadeIn'),
+        Stagger: passthrough('Stagger'),
+        StaggerItem: passthrough('StaggerItem'),
+        CountUp: passthrough('CountUp'),
+        GlowCard: passthrough('GlowCard'),
+      };
       // Default-imported components: return the component function itself so
       // esbuild's CJS interop exposes it as `.default`.
       if (id.startsWith('@/components/')) return passthrough(id);
