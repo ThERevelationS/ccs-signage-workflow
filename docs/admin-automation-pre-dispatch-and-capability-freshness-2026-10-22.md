@@ -119,6 +119,27 @@ capability that expires mid-draft fails pre-dispatch with the actionable
 message, records zero writes, and keeps the dialog/draft open (a mount-time
 snapshot would still have dispatched "synthetic").
 
+A follow-up audit of the automation builder itself found the honest-status
+gap: ~145 triggers and 9 actions are advertised, but only three execution
+paths exist — NotificationService (in-browser, send_email only),
+workflowTriggerEngine (server, permit events only), and
+checkDeadlineReminders (daily, 4 action types) — so most pickable triggers
+can never fire and most non-email actions silently skip. AdminSettings now
+carries a capability map (EMAIL_ONLY/WORKFLOW_ENGINE/DEADLINE trigger sets +
+supported-action sets, getTriggerSupportedActions, actionRunsForTriggers,
+ruleIsRunnable) wired into the builder: un-wired triggers and create_rider
+are marked "(not working yet)" in the pickers, a dead trigger warns under
+the editor, an action that cannot run for the chosen triggers warns it will
+be skipped, AND between different event types warns the combination may
+never match, set order filters warn they are not applied yet, saved rules
+that cannot run show a "Won't run — not wired yet" badge, and the editor
+shows an "In plain terms:" sentence (describeAutomation).
+scripts/test-admin-automation-honesty.mjs locks the matrix: every live-set
+trigger must appear in a real emitter/matcher (NotificationService,
+workflowTriggerEngine, checkDeadlineReminders), every supported action must
+have a real executor case, the three sets may not overlap, and every
+advertised trigger resolves to a status.
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -144,7 +165,11 @@ Verification:
   invoke is credentialed or platform-auth allowlisted), and
   scripts/test-admin-settings-conflict-reload.mjs (4 tests: all six
   GlobalSettings admin panels keep a save conflict actionable via auto-reload
-  or a wired reload action, and the shared helper's guards stay intact).
+  or a wired reload action, and the shared helper's guards stay intact), and
+  scripts/test-admin-automation-honesty.mjs (4 tests: live trigger sets match
+  real emitters, supported action sets match real executors, dead options are
+  marked and warned about in the builder, every advertised trigger resolves
+  to a status).
 - node scripts/test-admin-navigation-browser.mjs: 95/95 isolated Chromium
   checks passed, including six checks covering pre-dispatch toggle
   release, editor-save draft preservation, write-time expired-capability
