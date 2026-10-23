@@ -106,6 +106,7 @@ export const ADMIN_NESTED_TABS = {
     { value: 'wip_import', label: 'WIP Import', keywords: 'work in progress importer' },
     { value: 'permitting', label: 'Permitting Repository', keywords: 'permit documents' },
     { value: 'monitoring', label: 'Jurisdiction Monitoring', keywords: 'permit research jurisdictions' },
+    { value: 'scheduled_jobs', label: 'Scheduled Jobs', keywords: 'workflows cron schedules background jobs' },
   ],
 };
 
