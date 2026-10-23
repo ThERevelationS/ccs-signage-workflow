@@ -271,3 +271,62 @@ tr.sips-focus-row {
 @media (prefers-reduced-motion: reduce) {
   .ambient-mesh { animation: none; }
 }
+
+/* ── Face-scan reticle (Time Clock kiosk) ────────────────────────────── */
+@keyframes scanSweep {
+  0%   { top: 6%;  opacity: 0; }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.9; }
+  100% { top: 92%; opacity: 0; }
+}
+@keyframes scanBreath {
+  0%, 100% { transform: scale(1);     opacity: 0.55; }
+  50%      { transform: scale(1.05);  opacity: 0.95; }
+}
+@keyframes successRing {
+  0%   { transform: scale(0.65); opacity: 1; }
+  100% { transform: scale(1.6);  opacity: 0; }
+}
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+.scan-reticle { position: absolute; inset: 0; pointer-events: none; }
+.scan-bracket {
+  position: absolute; width: 26px; height: 26px;
+  border: 3px solid var(--scan-color, #818cf8);
+  transition: border-color 300ms ease;
+}
+.scan-bracket.tl { top: 8px;    left: 8px;   border-right: 0;  border-bottom: 0; border-radius: 12px 0 0 0; }
+.scan-bracket.tr { top: 8px;    right: 8px;  border-left: 0;   border-bottom: 0; border-radius: 0 12px 0 0; }
+.scan-bracket.bl { bottom: 8px; left: 8px;   border-right: 0;  border-top: 0;    border-radius: 0 0 0 12px; }
+.scan-bracket.br { bottom: 8px; right: 8px;  border-left: 0;   border-top: 0;    border-radius: 0 0 12px 0; }
+.scan-oval {
+  position: absolute; inset: 16% 24%;
+  border: 2px solid var(--scan-color, #818cf8);
+  border-radius: 50%;
+  animation: scanBreath 2.1s ease-in-out infinite;
+}
+.scan-line {
+  position: absolute; left: 8%; right: 8%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--scan-color, #818cf8), transparent);
+  box-shadow: 0 0 14px 2px var(--scan-color, #818cf8);
+  animation: scanSweep 2.4s ease-in-out infinite;
+}
+.scan-tone-scanning  { --scan-color: #818cf8; }
+.scan-tone-verifying { --scan-color: #fbbf24; }
+.scan-tone-dim       { --scan-color: #f59e0b; }
+.scan-tone-success   { --scan-color: #34d399; }
+.success-burst {
+  position: absolute; inset: 0;
+  border: 3px solid #34d399; border-radius: 1rem;
+  animation: successRing 700ms ease-out forwards;
+  pointer-events: none;
+}
+.check-draw {
+  stroke-dasharray: 34; stroke-dashoffset: 34;
+  animation: drawCheck 450ms 150ms ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
+  .check-draw { stroke-dashoffset: 0; }
+}
