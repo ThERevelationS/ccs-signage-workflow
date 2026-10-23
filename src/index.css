@@ -274,7 +274,6 @@ tr.sales-focus-row > td :where(*) {
   .sales-focus-gap-inner { animation: none; }
 }
 
-
 /* ── Ambient surfaces & status glows ─────────────────────────────────── */
 @keyframes ambientDrift {
   0% { background-position: 0% 40%; }
