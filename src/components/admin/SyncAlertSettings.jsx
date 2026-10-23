@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,53 +6,68 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, Bell, Check, Loader2, Mail, Send } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function SyncAlertSettings() {
+  const { sessionToken } = useAuth();
   const [config, setConfig] = useState({ enabled: false, recipient_email: "brettheinlein1@gmail.com" });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [testing, setTesting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
-      const res = await base44.functions.invoke("smartsheetSyncAction", { action: "sync_alert_get" });
-      if (res?.config) setConfig(res.config);
-    } catch {
-      // keep defaults
+      const res = await base44.functions.invoke("smartsheetSyncAction", { action: "sync_alert_get", session_token: sessionToken });
+      const data = res?.data || res;
+      if (data?.error) throw new Error(data.error);
+      if (data?.config) setConfig(data.config);
+    } catch (err) {
+      setLoadError(err?.message || "Sync alert settings could not be loaded.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sessionToken]);
 
   useEffect(() => { load(); }, [load]);
 
   const save = async () => {
+    if (!sessionToken) return;
     setSaving(true);
     setSaved(false);
+    setSaveError("");
     try {
-      await base44.functions.invoke("smartsheetSyncAction", {
+      const res = await base44.functions.invoke("smartsheetSyncAction", {
         action: "sync_alert_save",
+        session_token: sessionToken,
         enabled: config.enabled,
         recipient_email: config.recipient_email,
       });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "Sync alert settings could not be saved.");
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      // ignore
+    } catch (err) {
+      setSaveError(err?.message || "Sync alert settings could not be saved. Reload before retrying.");
     } finally {
       setSaving(false);
     }
   };
 
   const sendTest = async () => {
+    if (!sessionToken) return;
     setTesting(true);
     setTestResult(null);
     try {
-      const res = await base44.functions.invoke("smartsheetSyncAction", { action: "sync_alert_test" });
-      setTestResult({ success: true, recipient: res?.recipient });
+      const res = await base44.functions.invoke("smartsheetSyncAction", { action: "sync_alert_test", session_token: sessionToken });
+      const data = res?.data || res;
+      if (data?.error) throw new Error(data.error);
+      setTestResult({ success: true, recipient: data?.recipient });
     } catch (err) {
       setTestResult({ success: false, error: err?.message || "Failed to send test email" });
     } finally {
@@ -64,6 +79,20 @@ export default function SyncAlertSettings() {
     return (
       <div className="clay-card p-5 flex items-center gap-2 text-gray-500">
         <Loader2 className="h-4 w-4 animate-spin" /> Loading alert settings…
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="clay-card p-5">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Sync alert settings could not be loaded</div>
+            <div className="mt-1 text-xs">{loadError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => { void load(); }}>Retry</Button>
+        </div>
       </div>
     );
   }
@@ -113,11 +142,11 @@ export default function SyncAlertSettings() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 pt-1">
-        <Button type="button" size="sm" onClick={save} disabled={saving}>
+        <Button type="button" size="sm" onClick={save} disabled={saving || !sessionToken}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : saved ? <Check className="h-4 w-4 mr-2" /> : null}
           {saved ? "Saved" : "Save Alert Settings"}
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={sendTest} disabled={testing || !config.enabled}>
+        <Button type="button" size="sm" variant="outline" onClick={sendTest} disabled={testing || !config.enabled || !sessionToken}>
           {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
           Send Test Email
         </Button>
@@ -126,6 +155,9 @@ export default function SyncAlertSettings() {
         )}
         {testResult?.success === false && (
           <span className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{testResult.error}</span>
+        )}
+        {saveError && (
+          <span className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{saveError}</span>
         )}
       </div>
     </div>
