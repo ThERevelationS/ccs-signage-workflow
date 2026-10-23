@@ -47,7 +47,6 @@ import { linkedOrderCustomerPullNeedsReview } from '../../shared/smartsheetOrder
 import { checkOrderCustomerDecisionEvidence } from '../../shared/smartsheetOrderCustomerDecisionSafety.mjs';
 import { planOrderSmartsheetCustomerUnlink } from '../../shared/smartsheetOrderCustomerDecisionCommit.mjs';
 import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue, orderStaleBatchEvidencePreserved } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
-import { assertOrderBackgroundSyncPolicy } from '../../shared/smartsheetOrderBackgroundPolicy.mjs';
 import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged, classifyOrderPullBusinessReadback } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderPullChangeLimit } from '../../shared/smartsheetOrderPullChangeLimit.mjs';
@@ -1459,7 +1458,6 @@ async function saveSyncConfigIfUnchanged(base44: any, body: any) {
     throw Object.assign(new Error('Smartsheet sync settings changed in another session. Reload before saving.'), { status: 409 });
   }
   assertRolloutBaselinesPreserved(record.setting_value, nextValue);
-  assertOrderBackgroundSyncPolicy(nextValue?.orders || {});
   const serialized = JSON.stringify(nextValue);
   if (serialized.length > 500_000) {
     throw Object.assign(new Error('Smartsheet sync settings are unexpectedly large and were not saved.'), { status: 400 });
@@ -5263,7 +5261,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         }
 
         const wantPull = action === 'pull_dataset' || (isRunAction && profile.pull_enabled);
-        const wantPush = action === 'push_dataset' || (isRunAction && dataset !== 'orders' && profile.push_enabled);
+        const wantPush = action === 'push_dataset' || (isRunAction && profile.push_enabled);
 
         if (!wantPull && !wantPush) {
           results.push({ dataset, skipped: true, reason: 'Neither push nor pull enabled for this dataset.' });
