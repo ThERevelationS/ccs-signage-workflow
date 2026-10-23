@@ -1202,6 +1202,7 @@ export default function Opportunities() {
                 </tbody>
               </table>
             </div>
+          )}
           {Array.isArray(funnel.lost_reasons) && funnel.lost_reasons.length > 0 && (
             <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Loss reasons</p>
