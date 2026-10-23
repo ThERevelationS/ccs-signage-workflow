@@ -192,6 +192,25 @@ Deno.serve(async (req) => {
     const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;
     const OpportunityActivity = base44.asServiceRole.entities.OpportunityActivity;
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
+    const Announcement = base44.asServiceRole.entities.Announcement;
+
+    // Announcements reach the portal only when staff explicitly targets the
+    // "customerportal" display page — empty display_pages means "all staff app
+    // pages", which must never leak into the customer-facing surface.
+    const loadPortalAnnouncements = async () => {
+      const rows = await Announcement.filter({ is_active: true }).catch(() => []);
+      const rank: any = { urgent: 0, high: 1, normal: 2, low: 3 };
+      return (Array.isArray(rows) ? rows : [])
+        .filter((a: any) => Array.isArray(a?.display_pages) && a.display_pages.some((p: any) => clean(p).toLowerCase() === "customerportal"))
+        .sort((a: any, b: any) => (rank[clean(a?.priority)] ?? 2) - (rank[clean(b?.priority)] ?? 2))
+        .slice(0, 5)
+        .map((a: any) => ({
+          title: clean(a?.title),
+          message: clean(a?.message),
+          image_url: clean(a?.image_url),
+          priority: clean(a?.priority) || "normal",
+        }));
+    };
 
     const opportunityIdForEstimate = async (estimateId: string) => {
       const requests = await EstimatingRequest.filter({ estimate_id: estimateId }).catch(() => []);
@@ -208,12 +227,14 @@ Deno.serve(async (req) => {
         const invoice = await Invoice.get(clean(link.record_id)).catch(() => null);
         if (!invoice?.id) throw bad("The linked record is no longer available.", 404);
         const payments = await Payment.filter({ invoice_id: clean(invoice.id) }).catch(() => []);
+        const announcements = await loadPortalAnnouncements();
         return Response.json({
           success: true,
           action,
           kind: "invoice",
           label: clean(link.label),
           expires_at: clean(link.expires_at),
+          announcements,
           invoice: invoicePortalView(invoice),
           payments: (Array.isArray(payments) ? payments : [])
             .filter((p: any) => clean(p?.status) !== "void")
@@ -229,12 +250,13 @@ Deno.serve(async (req) => {
       // Account-level link: one call returns the whole customer workspace.
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const customer = await Customer.get(customerId).catch(() => null);
-      const [estimates, orders, invoices, payments, thread] = await Promise.all([
+      const [estimates, orders, invoices, payments, thread, announcements] = await Promise.all([
         Estimate.filter({ customer_id: customerId }).catch(() => []),
         WorkOrder.filter({ customer_id: customerId }).catch(() => []),
         Invoice.filter({ customer_id: customerId }).catch(() => []),
         Payment.filter({ customer_id: customerId }).catch(() => []),
         loadCustomerThread(PortalMessage, customerId, true),
+        loadPortalAnnouncements(),
       ]);
       const invoiceList = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const paidByInvoice = new Map();
@@ -250,6 +272,7 @@ Deno.serve(async (req) => {
         kind: "customer",
         label: clean(link.label),
         expires_at: clean(link.expires_at),
+        announcements,
         customer: {
           name: clean(customer?.name) || clean(customer?.company_name) || clean(link.label) || "Customer",
           contact_name: clean(customer?.contact_name),
