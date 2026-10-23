@@ -155,9 +155,9 @@ console.log('PASS an in-flight badge read cannot bleed across an employee switch
   assert.ok(textOf(renderer.toJSON()).includes(`TIMECLOCK2:${alice.email}:v2`));
 
   await act(async () => { qrCalls[0].resolve(badgeFor(alice.email, 1)); await flush(); });
-  assert.ok(textOf(renderer.toJSON()).includes('v2'), 'the superseded view read must not restore the old badge');
-  assert.ok(!textOf(renderer.toJSON()).includes(`TIMECLOCK2:${alice.email}:v1`) ||
-         textOf(renderer.toJSON()).includes('v2'));
+  const text = textOf(renderer.toJSON());
+  assert.ok(text.includes(`TIMECLOCK2:${alice.email}:v2`), 'the superseded view read must not restore the old badge');
+  assert.ok(!text.includes(`TIMECLOCK2:${alice.email}:v1`));
   renderer.unmount();
 }
 console.log('PASS a superseded badge read cannot overwrite a newer rotated badge');
