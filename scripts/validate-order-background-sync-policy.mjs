@@ -1,89 +1,49 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import {
-  ORDER_BACKGROUND_SYNC_POLICY,
-  orderBackgroundSyncPolicyViolations,
-  enforceOrderBackgroundSyncPolicy,
-  assertOrderBackgroundSyncPolicy,
-} from '../base44/shared/smartsheetOrderBackgroundPolicy.mjs';
+import { existsSync, readFileSync } from 'node:fs';
 
-assert.deepEqual(ORDER_BACKGROUND_SYNC_POLICY, {
-  push_enabled: false,
-  create_smartsheet_from_base44: false,
-});
+// The Order background-push lock was retired: Order Form sync is now
+// configured the same way as Sales Pipeline — pull_enabled, push_enabled and
+// create_smartsheet_from_base44 are all admin-controlled toggles. Scheduled
+// Order push still writes ONLY Orders carrying the durable
+// smartsheet_pending_local_sync marker (onlyPendingOrderRecords), so a
+// scheduled run can never reinterpret preserved values as local edits.
 
-const safe = {
-  mirror_enabled: true,
-  pull_enabled: true,
-  push_enabled: false,
-  create_base44_from_smartsheet: false,
-  create_smartsheet_from_base44: false,
-};
-assert.deepEqual(orderBackgroundSyncPolicyViolations(safe), []);
-assert.deepEqual(orderBackgroundSyncPolicyViolations({
-  ...safe,
-  push_enabled: true,
-  create_smartsheet_from_base44: true,
-}), ['push_enabled', 'create_smartsheet_from_base44']);
-// Pull-side Base44 Order creation is an admin-controlled feature, not a lock.
-assert.deepEqual(orderBackgroundSyncPolicyViolations({
-  ...safe, create_base44_from_smartsheet: true,
-}), []);
-
-assert.deepEqual(enforceOrderBackgroundSyncPolicy({
-  mirror_enabled: false,
-  pull_enabled: false,
-  push_enabled: true,
-  create_base44_from_smartsheet: true,
-  create_smartsheet_from_base44: true,
-}), {
-  mirror_enabled: false,
-  pull_enabled: false,
-  push_enabled: false,
-  create_base44_from_smartsheet: true,
-  create_smartsheet_from_base44: false,
-});
-assert.equal(assertOrderBackgroundSyncPolicy(safe), safe);
-assert.throws(() => assertOrderBackgroundSyncPolicy({
-  ...safe, create_smartsheet_from_base44: true,
-}), /background push and automatic Smartsheet row creation are locked OFF/i);
-console.log('PASS Order background policy locks push/create-row automation but leaves pull and Base44-from-Smartsheet creation controllable');
+assert.equal(existsSync('base44/shared/smartsheetOrderBackgroundPolicy.mjs'), false,
+  'retired Order background lock module must not remain in backend shared code');
+assert.equal(existsSync('src/shared/smartsheetOrderBackgroundPolicy.mjs'), false,
+  'retired Order background lock module must not remain in frontend shared code');
+assert.equal(existsSync('base44/functions/smartsheetSyncAction/base44/shared/smartsheetOrderBackgroundPolicy.mjs'), false,
+  'retired Order background lock module must not remain in the deploy bundle');
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
+const bundle = readFileSync('base44/functions/smartsheetSyncAction/base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const settings = readFileSync('src/components/admin/SmartsheetSyncSettings.jsx', 'utf8');
-const workflow = readFileSync('base44/workflows/Smartsheet Scheduled Sync.jsonc', 'utf8');
 const orderWorkflow = readFileSync('base44/workflows/Smartsheet Scheduled Order Sync.jsonc', 'utf8');
 
-assert.match(backend, /assertOrderBackgroundSyncPolicy\(nextValue\?\.orders \|\| \{\}\)/);
-const scheduledOrderPushGuards = backend.match(/isRunAction && dataset !== 'orders' && profile\.push_enabled/g) || [];
-assert.equal(scheduledOrderPushGuards.length, 1);
-assert.doesNotMatch(backend, /isRunAction && profile\.push_enabled/);
-assert.match(settings, /merged\.orders = enforceOrderBackgroundSyncPolicy\(merged\.orders\)/);
-assert.match(settings, /Order Form background push is locked OFF\. Use Save & Sync for explicit writes/);
-assert.match(settings, /Pull creates linked Orders for new Smartsheet rows\. Duplicate-looking or sparse rows stay held for review\./);
-assert.match(settings, /Order Form automatic creation is locked OFF\. Save & Sync can explicitly create a row for a new Order/);
-assert.match(settings, /disabled=\{dataset === "orders" && \["push_enabled", "create_smartsheet_from_base44"\]\.includes\(key\)\}/);
-assert.doesNotMatch(settings, /dataset === "sales" && \["push_enabled"/);
-assert.match(settings, /Sales Pipeline follows its enabled pull\/push directions/);
-assert.match(settings, /Order Form can pull automatically when enabled; background push and Smartsheet row creation are locked OFF, so Order writes use Save & Sync/);
-assert.doesNotMatch(settings, /Both directions \(pull and push\) run for every dataset/);
-assert.match(settings, /title: "Automatic sync is off\."/);
-assert.match(settings, /title: "Automatic sync is paused\."/);
-assert.match(settings, /title: "Automatic sync has no enabled directions\."/);
-assert.match(settings, /title: "Automatic sync is active\."/);
-assert.match(settings, /scheduledOrderPullEnabled = Boolean\(\s*config\.orders\.mirror_enabled && config\.orders\.pull_enabled\s*\)/);
-assert.match(settings, /config\.orders\.mirror_enabled && config\.orders\.pull_enabled\)\)\s*\), \[config\]\);/);
-assert.doesNotMatch(settings, /config\.orders\.mirror_enabled && \(config\.orders\.pull_enabled \|\| config\.orders\.push_enabled\)/);
-assert.match(settings, /<strong>\{automaticSyncBanner\.title\}<\/strong> \{automaticSyncBanner\.detail\}/);
-console.log('PASS Admin settings cannot re-enable or misdescribe Order background writes, and all four automatic-sync banner states are rendered from current config');
+for (const [label, source] of [['backend', backend], ['deploy bundle', bundle]]) {
+  assert.ok(!source.includes('assertOrderBackgroundSyncPolicy'),
+    `${label} must not re-assert the retired Order background lock`);
+  assert.match(source, /const wantPush = action === 'push_dataset' \|\| \(isRunAction && profile\.push_enabled\)/,
+    `${label} scheduled push must honor push_enabled for every dataset`);
+  assert.doesNotMatch(source, /dataset !== 'orders' && profile\.push_enabled/,
+    `${label} must not exclude Orders from scheduled push`);
+  assert.match(source, /onlyPendingOrderRecords: isRunAction/,
+    `${label} scheduled Order push must stay scoped to durable pending markers`);
+}
+console.log('PASS retired Order background lock is gone; scheduled Order push honors push_enabled via pending markers only');
 
-assert.match(workflow, /Run scheduled Sales Pipeline sync/);
-assert.match(workflow, /Runs configured Sales Pipeline pull\/push directions only, on its own coordinator/);
-assert.match(orderWorkflow, /Order Form background push is locked OFF; use explicit Save & Sync/);
-assert.match(orderWorkflow, /Order Form can pull automatically when enabled and may create Base44 Orders from new verified Smartsheet rows; background push and automatic Smartsheet row creation stay locked OFF/);
-assert.doesNotMatch(workflow, /both directions \(push and pull\) for Sales Pipeline and Order Form/);
-console.log('PASS scheduled workflow metadata describes Sales directions separately from Order pull-only background behavior');
+assert.doesNotMatch(settings, /enforceOrderBackgroundSyncPolicy/,
+  'admin settings must not force Order push/create toggles off on load or save');
+assert.doesNotMatch(settings, /disabled=\{dataset === "orders"/,
+  'Order Form sync toggles must be editable like Sales');
+assert.match(settings, /Pushes durably-marked local Order edits on the schedule\./);
+assert.match(settings, /Creates one linked sheet row per pending Order\./);
+assert.match(settings, /config\.orders\.mirror_enabled && \(config\.orders\.pull_enabled \|\| config\.orders\.push_enabled\)/,
+  'automatic-sync detection must count Order push as an enabled direction');
+assert.match(settings, /Sales Pipeline and Order Form each follow their enabled pull\/push directions/);
+console.log('PASS Admin settings exposes Order push/create toggles and counts them as automatic-sync directions');
 
-assert.match(backend, /allowExplicitOrderCreate: true/);
-assert.match(backend, /if \(action === 'push_saved_orders'\)/);
-console.log('PASS explicit Save & Sync path remains separate from background policy');
+assert.doesNotMatch(orderWorkflow, /locked OFF/);
+assert.match(orderWorkflow, /Run scheduled Order Form sync/);
+assert.match(orderWorkflow, /configured Order Form pull\/push directions/);
+console.log('PASS scheduled Order workflow metadata describes pull/push, not pull-only');
