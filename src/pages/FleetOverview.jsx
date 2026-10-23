@@ -90,7 +90,7 @@ export default function FleetOverview() {
       try {
         const user = await base44.auth.me().catch(() => null);
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, inspectionRows, parts, partIdentificationRows, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, dashboardPreferenceResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, inspectionRows, parts, partIdentificationRows, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, dashboardPreferenceResult, liveState, bouncieAlertRows, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
           listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
@@ -105,33 +105,31 @@ export default function FleetOverview() {
           user?.role === "admin" ? listAllFleetRows(base44.entities.FleetRepairEstimate, "-updated_date", { label: "Fleet repair-estimate approvals" }).catch(() => []) : Promise.resolve([]),
           base44.functions.invoke("fleetDashboardPreferenceAction", { action: "get" }).catch(() => null),
           listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
-          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warnings" }),
-          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie alerts" }),
+          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: { $in: ["warning", "critical"] } }, "-timestamp", { label: "Unread Bouncie alerts" }),
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
         if (mounted) {
-          setData({ equipment, tasks, workOrders, inspections: inspectionRows || [], parts, partIdentificationRows: partIdentificationRows || [], fluids, requests, reservations: reservationResult?.data?.reservations || [], warranties: warrantyResult?.data?.rows || [], lifecycleRows: lifecycleResult?.data?.rows || [], repairEstimates: repairEstimates || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+          setData({ equipment, tasks, workOrders, inspections: inspectionRows || [], parts, partIdentificationRows: partIdentificationRows || [], fluids, requests, reservations: reservationResult?.data?.reservations || [], warranties: warrantyResult?.data?.rows || [], lifecycleRows: lifecycleResult?.data?.rows || [], repairEstimates: repairEstimates || [], liveState, bouncieFaults: bouncieAlertRows || [], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
           setDashboardPreference(normalizeDashboardPreference(dashboardPreferenceResult?.data?.preference || {}));
           setDashboardPreferenceRecord(dashboardPreferenceResult?.data?.record || null);
         }
         if (user?.role === "admin") {
-          const [maintenanceLog, reminderLog, workerLog, bouncieLog, bouncieStatusResult, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
-            base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
-            base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
-            base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
-            base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
+          const [systemLogRows, bouncieStatusResult, queueRows, receiptRows] = await Promise.all([
+            base44.entities.FleetSystemLog.filter({ source: { $in: ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "bouncieSyncNotifications"] } }, "-created_date", 500).catch(() => []),
             base44.functions.invoke("bouncieStatus", {}).catch(() => null),
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
-            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
-            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
+            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notifications" }),
+            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
           ]);
+          const latestBySource = new Map();
+          for (const row of systemLogRows || []) {
+            const source = String(row?.source || "");
+            if (source && !latestBySource.has(source)) latestBySource.set(source, row);
+          }
           const bouncieStatus = bouncieStatusResult?.data || null;
           const connectionFreshMs = Math.max(Date.parse(bouncieStatus?.lastSyncAt || "") || 0, Date.parse(bouncieStatus?.lastWebhookAt || "") || 0);
           if (mounted) setAdminHealth({
-            logs: [maintenanceLog?.[0], reminderLog?.[0], workerLog?.[0], bouncieLog?.[0]].filter(Boolean),
-            unresolved: (pendingQueue?.length || 0) + (sendingQueue?.length || 0) + (failedQueue?.length || 0) + (startedReceipts?.length || 0) + (failedReceipts?.length || 0),
+            logs: [...latestBySource.values()],
+            unresolved: (queueRows?.length || 0) + (receiptRows?.length || 0),
             bouncieHealthy: !!bouncieStatus?.connected && !bouncieStatus.needsReconnect && !bouncieStatus.lastError && !bouncieStatus.webhookError && bouncieStatus.webhookActive === true,
             bouncieFreshMinutes: connectionFreshMs ? Math.floor((Date.now() - connectionFreshMs) / 60000) : null,
           });
