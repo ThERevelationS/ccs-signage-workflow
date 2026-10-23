@@ -12,45 +12,87 @@ const PERMIT_CONTEXT_FIELDS = [
   'permit_received_date',
 ];
 
-function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any) {
+const STAGE_LABELS: Record<string, string> = {
+  estimating: 'Estimating',
+  sales: 'Sales',
+  permitting: 'Permitting',
+  design: 'Design',
+  production: 'Production',
+  fabrication: 'Fabrication',
+  installation: 'Installation',
+  completed: 'Completed',
+};
+const formatStage = (s: unknown) => STAGE_LABELS[String(s || '')] || String(s || '');
+
+// Named events arrive with event_type === the UI's trigger vocabulary; the
+// legacy 'create'/'update' vocabulary is still honored for field-diff checks.
+function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any) {
   const condition = trigger?.trigger_condition || {};
 
   switch (trigger?.trigger_type) {
     case 'work_order_created':
-      if (eventType !== 'create') return false;
+      if (eventType !== 'create' && eventType !== 'work_order_created') return false;
       break;
     case 'work_order_completed':
-      if (eventType !== 'update' || !workOrder.completed) return false;
+      if (eventType === 'work_order_completed') break;
+      if (eventType !== 'update' || !workOrder?.completed) return false;
       if (oldData?.completed === true) return false;
       break;
     case 'stage_changed':
+      if (eventType === 'stage_changed') {
+        if (condition.from_stage && extra?.previousStage !== condition.from_stage) return false;
+        if (condition.to_stage && extra?.newStage !== condition.to_stage) return false;
+        break;
+      }
       if (eventType !== 'update') return false;
-      if (oldData?.current_stage === workOrder.current_stage) return false;
+      if (oldData?.current_stage === workOrder?.current_stage) return false;
       if (condition.from_stage && oldData?.current_stage !== condition.from_stage) return false;
-      if (condition.to_stage && workOrder.current_stage !== condition.to_stage) return false;
+      if (condition.to_stage && workOrder?.current_stage !== condition.to_stage) return false;
       break;
     case 'stage_entered':
+      if (eventType === 'stage_entered') {
+        if (condition.stage && extra?.newStage !== condition.stage) return false;
+        break;
+      }
       if (eventType !== 'update') return false;
-      if (oldData?.current_stage === workOrder.current_stage) return false;
-      if (condition.stage && workOrder.current_stage !== condition.stage) return false;
+      if (oldData?.current_stage === workOrder?.current_stage) return false;
+      if (condition.stage && workOrder?.current_stage !== condition.stage) return false;
       break;
     case 'stage_exited':
+      if (eventType === 'stage_exited') {
+        if (condition.stage && extra?.previousStage !== condition.stage) return false;
+        break;
+      }
       if (eventType !== 'update') return false;
-      if (oldData?.current_stage === workOrder.current_stage) return false;
+      if (oldData?.current_stage === workOrder?.current_stage) return false;
       if (condition.stage && oldData?.current_stage !== condition.stage) return false;
       break;
     case 'asap_toggled_on':
+      if (eventType === 'asap_toggled_on') break;
       if (eventType !== 'update') return false;
-      if (!workOrder.asap || oldData?.asap === true) return false;
+      if (!workOrder?.asap || oldData?.asap === true) return false;
       break;
     case 'asap_toggled_off':
+      if (eventType === 'asap_toggled_off') break;
       if (eventType !== 'update') return false;
-      if (workOrder.asap || oldData?.asap !== true) return false;
+      if (workOrder?.asap || oldData?.asap !== true) return false;
       break;
     case 'assigned_to_changed':
+      if (eventType === 'assigned_to_changed') break;
       if (eventType !== 'update') return false;
-      if (oldData?.assigned_to === workOrder.assigned_to) return false;
+      if (oldData?.assigned_to === workOrder?.assigned_to) return false;
       break;
+    case 'work_order_deleted':
+    case 'rider_created':
+    case 'task_added':
+    case 'task_completed':
+    case 'task_deleted':
+    case 'note_added':
+    case 'note_deleted':
+    case 'image_uploaded':
+    case 'order_created':
+    case 'order_ordered':
+    case 'order_received':
     case 'permit_submitted':
     case 'permit_received':
     case 'permit_followup_due':
@@ -61,13 +103,21 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
       return false;
   }
 
-  if (condition.is_asap === true && !workOrder.asap) return false;
-  if (condition.is_rider === true && !workOrder.is_rider) return false;
-  if (condition.is_rider === false && workOrder.is_rider) return false;
+  // Generic conditions shared by every trigger type. Order events carry no
+  // Work Order, so WO-bound conditions simply cannot match there.
+  if (condition.is_asap === true && !workOrder?.asap) return false;
+  if (condition.is_rider === true && !workOrder?.is_rider) return false;
+  if (condition.is_rider === false && workOrder?.is_rider) return false;
+  if (condition.assigned_to && workOrder?.assigned_to !== condition.assigned_to) return false;
+  if (condition.stage && trigger?.trigger_type !== 'stage_entered' && trigger?.trigger_type !== 'stage_exited'
+      && workOrder?.current_stage !== condition.stage) return false;
   return true;
 }
 
-async function sendEmailAction(base44: any, config: any, workOrder: any, changedBy: string) {
+async function sendEmailAction(base44: any, config: any, context: any, changedBy: string) {
+  const workOrder = context?.workOrder || {};
+  const order = context?.order;
+  const extra = context?.extras || {};
   const recipients: string[] = [];
 
   for (const recipient of (config.recipients || [])) {
@@ -96,6 +146,14 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
         admins.forEach((admin: any) => admin.email && recipients.push(admin.email));
         break;
       }
+      case 'custom_list':
+        if (recipient.value) {
+          for (const email of String(recipient.value).split(',')) {
+            const trimmed = email.trim();
+            if (trimmed) recipients.push(trimmed);
+          }
+        }
+        break;
       case 'email_group':
         if (recipient.value) {
           const groups = await base44.asServiceRole.entities.EmailGroup.filter({ id: recipient.value });
@@ -109,20 +167,26 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
 
   if (recipients.length === 0) return { skipped: true, reason: 'No recipients' };
 
-  let subject = config.subject || 'Work Order Update';
+  let subject = config.subject || (order ? 'Order Update' : 'Work Order Update');
   let body = config.body || '';
-  // HTML-escape all work-order-derived values before substituting into
+  // HTML-escape all record-derived values before substituting into
   // subject/body templates to prevent injected markup from rendering.
   const vars: Record<string, string> = {
     '{{title}}': esc(workOrder.title),
     '{{client_name}}': esc(workOrder.client_name),
-    '{{description}}': esc(workOrder.description),
-    '{{current_stage}}': esc(workOrder.current_stage),
+    '{{description}}': esc(order?.description || workOrder.description),
+    '{{current_stage}}': esc(formatStage(workOrder.current_stage)),
     '{{assigned_to}}': esc(workOrder.assigned_to),
     '{{due_date}}': esc(workOrder.due_date),
     '{{created_by}}': esc(workOrder.created_by),
     '{{is_rider}}': workOrder.is_rider ? 'Yes' : 'No',
     '{{is_asap}}': workOrder.asap ? 'Yes' : 'No',
+    '{{previous_stage}}': esc(formatStage(extra.previousStage)),
+    '{{new_stage}}': esc(formatStage(extra.newStage)),
+    '{{task_text}}': esc(extra.taskText),
+    '{{note_text}}': esc(extra.noteText),
+    '{{note_type}}': esc(extra.noteType),
+    '{{work_order_id}}': esc(workOrder.id),
     '{{changed_by}}': esc(changedBy || 'System'),
     '{{timestamp}}': new Date().toLocaleString(),
     '{{locality_name}}': esc(workOrder.locality_name),
@@ -131,6 +195,17 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
     '{{submitted_date}}': esc(workOrder.submitted_date),
     '{{next_followup_date}}': esc(workOrder.next_followup_date),
     '{{permit_received_date}}': esc(workOrder.permit_received_date),
+    // Order context for order_* events.
+    '{{customer_name}}': esc(order?.customer_name),
+    '{{request_type}}': esc(order?.request_type),
+    '{{quantity}}': esc(order?.quantity),
+    '{{requestor_name}}': esc(order?.requestor_name),
+    '{{requestor_email}}': esc(order?.requestor_email),
+    '{{date_needed}}': esc(order?.date_needed),
+    '{{date_ordered}}': esc(order?.date_ordered),
+    '{{date_received}}': esc(order?.date_received),
+    '{{vendor}}': esc(order?.vendor),
+    '{{status}}': esc(order?.status),
   };
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
@@ -138,8 +213,11 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
   }
 
   if (config.use_ai) {
+    const recordContext = order
+      ? `Order Details:\n- Customer: ${esc(order.customer_name)}\n- Request Type: ${esc(order.request_type)}\n- Vendor: ${esc(order.vendor || 'Not specified')}\n- Date Needed: ${esc(order.date_needed || 'Not set')}\n- Status: ${esc(order.status || 'pending')}`
+      : `Work Order Details:\n- Title: ${esc(workOrder.title)}\n- Client: ${esc(workOrder.client_name)}\n- Stage: ${esc(formatStage(workOrder.current_stage))}\n- Due Date: ${esc(workOrder.due_date || 'Not set')}\n- Assigned To: ${esc(workOrder.assigned_to || 'Unassigned')}\n- ASAP: ${workOrder.asap ? 'Yes' : 'No'}\n- Description: ${esc(workOrder.description || 'None')}`;
     const aiResult = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate a professional email notification about a work order update.\n\nWork Order Details:\n- Title: ${esc(workOrder.title)}\n- Client: ${esc(workOrder.client_name)}\n- Stage: ${esc(workOrder.current_stage)}\n- Due Date: ${esc(workOrder.due_date || 'Not set')}\n- Assigned To: ${esc(workOrder.assigned_to || 'Unassigned')}\n- ASAP: ${workOrder.asap ? 'Yes' : 'No'}\n- Description: ${esc(workOrder.description || 'None')}\n\nContext from user: ${esc(body || 'Standard notification')}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
+      prompt: `Generate a professional email notification about a ${order ? 'order' : 'work order'} update.\n\n${recordContext}\n\nContext from user: ${esc(body || 'Standard notification')}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
       response_json_schema: {
         type: 'object',
         properties: { subject: { type: 'string' }, body: { type: 'string' } },
@@ -161,11 +239,16 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
   return { emails_sent: sent.length, recipients: sent };
 }
 
-async function executeAction(base44: any, action: any, workOrder: any, eventWorkOrder: any, changedBy: string) {
+async function executeAction(base44: any, action: any, workOrder: any, context: any, changedBy: string) {
   const config = action?.action_config || {};
+  // Mutating actions all write through workOrder; events without one (order
+  // events) can only send email.
+  if (action?.action_type !== 'send_email' && !workOrder?.id) {
+    return { skipped: true, reason: 'Action requires a Work Order' };
+  }
   switch (action?.action_type) {
     case 'send_email':
-      return sendEmailAction(base44, config, eventWorkOrder, changedBy);
+      return sendEmailAction(base44, config, context, changedBy);
     case 'change_stage':
       if (config.stage) {
         const nextFields = { current_stage: config.stage };
@@ -234,29 +317,59 @@ async function executeAction(base44: any, action: any, workOrder: any, eventWork
 export async function processWorkflowTriggerEvent({ base44, payload, changedByOverride = '' }: any) {
   const eventType = String(payload?.event_type || '').trim();
   const suppliedWorkOrder = payload?.work_order;
-  if (!eventType || !suppliedWorkOrder?.id) throw Object.assign(new Error('Missing event_type or work_order id'), { status: 400 });
+  const suppliedOrder = payload?.order;
+  const isOrderEvent = eventType.startsWith('order_');
+  if (!eventType) throw Object.assign(new Error('Missing event_type'), { status: 400 });
+  if (isOrderEvent) {
+    if (!suppliedOrder?.id) throw Object.assign(new Error('Missing order id'), { status: 400 });
+  } else if (!suppliedWorkOrder?.id) {
+    throw Object.assign(new Error('Missing work_order id'), { status: 400 });
+  }
 
-  const currentWorkOrder = await base44.asServiceRole.entities.WorkOrder.get(suppliedWorkOrder.id);
-  if (!currentWorkOrder?.id) throw Object.assign(new Error('Work Order not found'), { status: 404 });
-  if (currentWorkOrder.deleted === true) throw Object.assign(new Error('Workflow automation cannot run against a Work Order in Project Trash'), { status: 409 });
+  let currentWorkOrder: any = null;
+  if (suppliedWorkOrder?.id) {
+    currentWorkOrder = await base44.asServiceRole.entities.WorkOrder.get(suppliedWorkOrder.id);
+    if (!currentWorkOrder?.id) throw Object.assign(new Error('Work Order not found'), { status: 404 });
+    // work_order_deleted events legitimately describe a record already in
+    // Project Trash; every other event must target a live Work Order.
+    if (currentWorkOrder.deleted === true && eventType !== 'work_order_deleted') {
+      throw Object.assign(new Error('Workflow automation cannot run against a Work Order in Project Trash'), { status: 409 });
+    }
+  }
+
+  let orderRecord: any = null;
+  if (isOrderEvent) {
+    orderRecord = await base44.asServiceRole.entities.Order.get(suppliedOrder.id);
+    if (!orderRecord?.id) throw Object.assign(new Error('Order not found'), { status: 404 });
+  }
 
   const permitContext: Record<string, unknown> = {};
   for (const field of PERMIT_CONTEXT_FIELDS) {
-    if (Object.prototype.hasOwnProperty.call(suppliedWorkOrder, field)) permitContext[field] = suppliedWorkOrder[field];
+    if (suppliedWorkOrder && Object.prototype.hasOwnProperty.call(suppliedWorkOrder, field)) permitContext[field] = suppliedWorkOrder[field];
   }
-  const eventWorkOrder = { ...currentWorkOrder, ...permitContext };
-  const actionWorkOrder = { ...currentWorkOrder };
+  const eventWorkOrder = currentWorkOrder ? { ...currentWorkOrder, ...permitContext } : null;
+  const actionWorkOrder = currentWorkOrder ? { ...currentWorkOrder } : null;
   const oldData = payload?.old_data && typeof payload.old_data === 'object' ? payload.old_data : {};
+  const extras = payload?.extras && typeof payload.extras === 'object' ? payload.extras : {};
   const changedBy = String(changedByOverride || payload?.changed_by || 'System').trim() || 'System';
+  const context = { workOrder: eventWorkOrder, order: orderRecord, extras };
 
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
   for (const rule of automations) {
-    const triggered = (rule.triggers || []).some((trigger: any) => matchesTrigger(trigger, eventType, eventWorkOrder, oldData));
-    if (!triggered) continue;
+    // Triggers combine with each row's declared logic (and/or). AND only
+    // holds when several trigger rows can match the same event — the same
+    // semantics the Admin editor warns about for mixed event types.
+    let triggered: boolean | null = null;
+    for (const trigger of rule.triggers || []) {
+      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras);
+      if (triggered === null) triggered = m;
+      else triggered = trigger?.logic === 'and' ? (triggered && m) : (triggered || m);
+    }
+    if (triggered !== true) continue;
     for (const action of rule.actions || []) {
       try {
-        const result = await executeAction(base44, action, actionWorkOrder, eventWorkOrder, changedBy);
+        const result = await executeAction(base44, action, actionWorkOrder, context, changedBy);
         triggeredActions.push({ rule: rule.name, action: action.action_type, result });
       } catch (error) {
         console.error(`Action error for rule ${rule.name}:`, error?.message || error);
