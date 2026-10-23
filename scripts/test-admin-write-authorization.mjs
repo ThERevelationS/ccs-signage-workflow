@@ -90,6 +90,27 @@ test("Only the audited helpers perform direct entity writes inside admin compone
     "a new direct entity write inside admin components must be audited for RLS before shipping");
 });
 
+test("Inline credentialed-function invokes inside admin components carry a credential", () => {
+  // These backend functions derive the actor from the request credential; an
+  // invoke without session_token/admin_capability is rejected server-side —
+  // which is how SyncAlertSettings silently no-oped until the 2026-10 fix.
+  const CREDENTIALED = ["smartsheetSyncAction", "corebridgeApiAction", "manageAutomationConfig",
+    "manageAuthorizedUsers", "onboardingAccountAction", "issuePasswordReset"];
+  const CREDENTIAL = /session_token|admin_capability|sessionToken|writeCapability|requireSessionToken/;
+  for (const file of readdirSync("src/components/admin")) {
+    if (!/\.(jsx?|mjs)$/.test(file)) continue;
+    const source = readFileSync(`src/components/admin/${file}`, "utf8");
+    for (const fn of CREDENTIALED) {
+      const pattern = new RegExp(`functions\\.invoke\\(["']${fn}["'],\\s*\\{`, "g");
+      for (const match of source.matchAll(pattern)) {
+        const payload = source.slice(match.index, match.index + 1500);
+        assert.match(payload, CREDENTIAL,
+          `${file} invokes ${fn} with an inline payload lacking a credential`);
+      }
+    }
+  }
+});
+
 test("UserManagement fences in-flight writes against session-token changes", () => {
   const source = readFileSync("src/components/admin/UserManagement.jsx", "utf8");
   assert.match(source, /activeSessionToken\.current = sessionToken/);
