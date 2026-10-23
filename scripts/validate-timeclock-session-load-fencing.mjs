@@ -99,6 +99,7 @@ const ENTRY_A = { id: 'e-a', user_email: 'amy@example.com', status: 'clocked_out
 const ENTRY_B = { id: 'e-b', user_email: 'brian@example.com', status: 'clocked_out', clock_in: '2024-01-01T08:00:00Z', notes: 'B-FRESH-NOTE', job_allocations: [] };
 
 async function sessionSwitchScenario() {
+  const vmWindow = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {}, __LOGIN_USER: null, __LOGIN_TOKEN: '' };
   const loaderCalls = [];
   const loaderQueue = [];
   const invokeCalls = [];
@@ -130,31 +131,30 @@ async function sessionSwitchScenario() {
     '@/components/estimator/loadAllEntityRows': {
       loadAllEntityRows: (args) => { loaderCalls.push(args); const d = deferred(); loaderQueue.push(d); return d.promise; },
     },
+    '@/components/timeclock/timeClockSessionSecurity': {
+      TIME_CLOCK_IDLE_LOGOUT_MS: 15 * 60 * 1000,
+      remainingTimeClockSessionMs: () => 60 * 1000,
+      classifyTimeClockLoginStatus: (s) => s,
+    },
     '@/components/timeclock/TimeClockLoginDialog': ({ onLogin }) =>
-      React.createElement('button', { onClick: () => onLogin?.(window.__LOGIN_USER, window.__LOGIN_TOKEN) }, 'do-login'),
+      React.createElement('button', { onClick: () => onLogin?.(vmWindow.__LOGIN_USER, vmWindow.__LOGIN_TOKEN) }, 'do-login'),
   }, {
-    // exposed for the scenario below
+    window: vmWindow,
   });
 
   let renderer;
-  try {
-    await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
-  } catch (e) {
-    console.log('BAD JSX TYPES:', JSON.stringify(globalThis.__badJsx || []));
-    throw e;
-  }
+  await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
   // Release the mount-time user-list load so the gate UI renders.
   await act(async () => { loaderQueue.forEach((d) => d.resolve([])); loaderQueue.length = 0; await flush(); });
 
   // Log in as employee A.
-  globalThis.window = globalThis.window || {};
   const loginBtn = buttonByText(renderer, 'Login for Full Access');
   assert.ok(loginBtn, 'login button should render on mount');
   await act(async () => { loginBtn.props.onClick(); await flush(); });
   const doLogin = () => buttonByText(renderer, 'do-login');
   const invokeAs = async (user, token) => {
-    globalThis.window.__LOGIN_USER = user;
-    globalThis.window.__LOGIN_TOKEN = token;
+    vmWindow.__LOGIN_USER = user;
+    vmWindow.__LOGIN_TOKEN = token;
     await act(async () => { doLogin().props.onClick(); await flush(); });
   };
   await invokeAs(USER_A, 'tok-a');
@@ -210,6 +210,11 @@ async function overlappingLoadsScenario() {
     },
     '@/components/estimator/loadAllEntityRows': {
       loadAllEntityRows: () => { const d = deferred(); loaderQueue.push(d); return d.promise; },
+    },
+    '@/components/timeclock/timeClockSessionSecurity': {
+      TIME_CLOCK_IDLE_LOGOUT_MS: 15 * 60 * 1000,
+      remainingTimeClockSessionMs: () => 60 * 1000,
+      classifyTimeClockLoginStatus: (s) => s,
     },
     '@/components/timeclock/TimeClockLoginDialog': ({ onLogin }) =>
       React.createElement('button', { onClick: () => onLogin?.(USER_B, 'tok-b') }, 'do-login'),
