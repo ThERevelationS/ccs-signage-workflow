@@ -44,8 +44,12 @@ function persistBadgeRotationRequest(email, requestId) {
   try { sessionStorage.setItem(badgeRotationStorageKey(email), requestId); } catch {}
 }
 
-function clearBadgeRotationRequest(email) {
-  try { sessionStorage.removeItem(badgeRotationStorageKey(email)); } catch {}
+function clearBadgeRotationRequest(email, expectedRequestId = "") {
+  try {
+    if (expectedRequestId &&
+        sessionStorage.getItem(badgeRotationStorageKey(email)) !== expectedRequestId) return;
+    sessionStorage.removeItem(badgeRotationStorageKey(email));
+  } catch {}
 }
 
 function shouldRetainBadgeRotation(err) {
@@ -64,12 +68,20 @@ export default function UserQRCode({ user, sessionToken = "" }) {
   const [isReplacing, setIsReplacing] = useState(false);
   const [error, setError] = useState("");
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const badgeSeqRef = useRef(0);
+  const badgeScopeRef = useRef("");
+  badgeScopeRef.current = `${sessionToken || ""}|${String(user?.email || "").trim().toLowerCase()}`;
 
   const loadBadge = async ({ rotate = false } = {}) => {
-    if (!user?.email || !sessionToken) {
+    const requestEmail = String(user?.email || "").trim().toLowerCase();
+    if (!requestEmail || !sessionToken) {
       setError("Sign in to Time Clock before viewing or replacing your secure badge.");
       return;
     }
+    const requestSeq = ++badgeSeqRef.current;
+    const requestScope = `${sessionToken}|${requestEmail}`;
+    const stillCurrent = () =>
+      requestSeq === badgeSeqRef.current && badgeScopeRef.current === requestScope;
 
     const requestId = rotate
       ? (storedBadgeRotationRequest(user.email) || newBadgeRequestId())
@@ -92,16 +104,20 @@ export default function UserQRCode({ user, sessionToken = "" }) {
         actionError.confirmedServerResponse = true;
         throw actionError;
       }
-      if (rotate) clearBadgeRotationRequest(user.email);
+      if (rotate) clearBadgeRotationRequest(user.email, requestId);
+      if (!stillCurrent()) return;
       setBadgeCode(data.badge_code);
       setBadgeVersion(data.badge_version || null);
     } catch (err) {
-      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email);
+      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email, requestId);
+      if (!stillCurrent()) return;
       const apiError = err?.response?.data?.error;
       setError(apiError || err?.message || "Secure Time Clock badge could not be loaded.");
     } finally {
-      setIsLoading(false);
-      setIsReplacing(false);
+      if (stillCurrent()) {
+        setIsLoading(false);
+        setIsReplacing(false);
+      }
     }
   };
 
@@ -112,6 +128,7 @@ export default function UserQRCode({ user, sessionToken = "" }) {
   }, [open, user?.email, sessionToken]);
 
   useEffect(() => {
+    badgeSeqRef.current += 1;
     setBadgeCode("");
     setBadgeVersion(null);
     setError("");
