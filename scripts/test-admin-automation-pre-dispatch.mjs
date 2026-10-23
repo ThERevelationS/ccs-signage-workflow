@@ -112,10 +112,30 @@ test("A mounted expiry timer re-locks the panel when the stored capability expir
   assert.match(pageSource, /getStoredAdminSettingsCapabilityExpiry,[\s\S]*?from "@\/components\/auth\/EmailGate"/);
   const effect = pageSource.slice(pageSource.indexOf("A capability that expires while the page sits open"),
     pageSource.indexOf("const loadEmailGroups = async"));
-  assert.match(effect, /if \(!isUnlocked\) return;/);
+  assert.match(effect, /if \(!isUnlocked\) \{ setCapabilityExpiryLabel\(""\); return; \}/);
   assert.match(effect, /if \(expiresAt <= Date\.now\(\)\) \{ relock\(\); return; \}/);
   assert.match(effect, /setTimeout\(relock, expiresAt - Date\.now\(\)\)/);
   assert.match(effect, /setPasswordError\("Your Admin Settings authorization expired\. Sign in again to continue\."\);\s*setIsUnlocked\(false\);/);
   assert.match(effect, /clearTimeout\(timer\)/);
   assert.match(effect, /\}, \[isUnlocked\]\);/, "the timer must re-arm whenever the unlock state changes");
+});
+
+test("The unlocked panel surfaces the stored capability expiry as a static label", () => {
+  const effect = pageSource.slice(pageSource.indexOf("A capability that expires while the page sits open"),
+    pageSource.indexOf("const loadEmailGroups = async"));
+  // The label is populated from the same stored expiry the relock timer reads,
+  // and cleared on every path that leaves the unlocked state without a usable
+  // expiry (locked, non-finite expiry, and expiry firing).
+  assert.match(effect, /setCapabilityExpiryLabel\(new Date\(expiresAt\)\.toLocaleTimeString\(\[\], \{ hour: "numeric", minute: "2-digit" \}\)\)/);
+  assert.ok((effect.match(/setCapabilityExpiryLabel\(""\)/g) || []).length >= 3,
+    "the label must clear when locked, when expiry is unusable, and at relock");
+  assert.match(effect, /if \(!Number\.isFinite\(expiresAt\)\) \{ setCapabilityExpiryLabel\(""\); return; \}/);
+  assert.match(effect, /setCapabilityExpiryLabel\(""\);\s*setPasswordError\(/, "relock must clear the label");
+  // Rendered inside the unlocked tree only, as a static timestamp — no ticking
+  // interval may re-render the page to keep it fresh.
+  const unlockedRender = pageSource.slice(pageSource.indexOf("data-admin-scroll-area"));
+  assert.match(unlockedRender, /\{capabilityExpiryLabel && \(/);
+  assert.match(unlockedRender, /data-admin-capability-expiry/);
+  assert.match(unlockedRender, /Admin authorization expires at \{capabilityExpiryLabel\}/);
+  assert.doesNotMatch(pageSource, /setInterval/, "the expiry label must be static; no ticking re-render");
 });
