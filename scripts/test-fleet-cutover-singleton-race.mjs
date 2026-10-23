@@ -8,10 +8,19 @@ const start = source.indexOf("async function getCutoverState");
 assert.notEqual(start, -1, "getCutoverState not found");
 const end = source.indexOf("\n}\n", start);
 assert.notEqual(end, -1, "getCutoverState body end not found");
-const body = source.slice(start, end + 3).replace(/:(any|string|number|boolean)(\s*[,)])/g, "$2");
+const body = source.slice(start, end + 3).replace(/:(any|string|number|boolean)(\s*[,)=])/g, "$2");
+
+const sharedSource = readFileSync("base44/shared/fleetCutoverState.ts", "utf8").replace(/\r\n/g, "\n");
+const canonicalCutoverRow = new Function(
+  sharedSource
+    .replace(/^export /gm, "")
+    .replace(/:(any|string|number|boolean|any\[\])(\s*[,)=])/g, "$2")
+    .split("async function getCanonicalCutoverState")[0]
+    + "\nreturn canonicalCutoverRow;"
+)();
 
 const buildFn = () => {
-  const ctx = { CUTOVER_STATE_KEY: "primary" };
+  const ctx = { CUTOVER_STATE_KEY: "primary", canonicalCutoverRow };
   const fn = new Function(
     ...Object.keys(ctx),
     `${body}\nreturn getCutoverState;`,
