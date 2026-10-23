@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetSidebar from "@/components/fleet/FleetSidebar";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { Skeleton } from "@/components/ui/skeleton";
 import FleetMap from "@/components/fleet/FleetMap";
 import VehiclePanel from "@/components/fleet/VehiclePanel";
 import AlertSettingsModal from "@/components/fleet/AlertSettingsModal";
@@ -345,8 +346,8 @@ export default function FleetTracking() {
     return (
       <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
         <FleetModuleNav />
-        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: "#1b2029" }}>
-          <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <div className="flex-1 min-h-0 flex p-4" style={{ background: "#1b2029" }}>
+          <Skeleton className="flex-1 rounded-2xl" />
         </div>
       </div>
     );
@@ -487,7 +488,7 @@ export default function FleetTracking() {
         {/* Center dispatch map. */}
         <main className="flex-1 min-w-0 relative">
           {vehiclesLoading && vehicles.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+            <Skeleton className="absolute inset-0" />
           ) : (
             <FleetMap
               vehicles={vehicles}
