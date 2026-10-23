@@ -1,0 +1,85 @@
+{
+  "name": "CustomerPortalLink",
+  "type": "object",
+  "description": "Bearer-token share link for the customer portal. The token itself is the capability \u2014 whoever holds it can read the linked record's sanitized view. Backend-only; created/revoked by staff through customerPortalAction.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one portal link."
+    },
+    "token": {
+      "type": "string",
+      "description": "Random bearer token embedded in the share URL."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "invoice"
+      ]
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_opened_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "open_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "creation_request_key",
+    "token",
+    "kind",
+    "record_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__portal_link_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__portal_link_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__portal_link_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__portal_link_backend_only__"
+      }
+    }
+  }
+}
