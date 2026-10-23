@@ -305,6 +305,10 @@ assert.match(portalFn, /logPortalOpportunityActivity/, 'portal activity helper m
 assert.match(portalFn, /Customer approved \$\{quoteLabel\} via the portal/, 'approvals must reach the opportunity timeline');
 assert.match(portalFn, /Customer requested revisions on \$\{quoteLabel\} via the portal/, 'revision requests must reach the opportunity timeline');
 assert.match(portalFn, /Customer sent a payment notice for \$\{invLabel\} via the portal/, 'payment notices must reach the opportunity timeline');
+assert.match(portalFn, /action === "email_link"/, 'staff must be able to email the portal link');
+assert.match(portalFn, /invoke\("sendGmail"/, 'email_link must send through the gmail function');
+assert.match(portalFn, /portal_base/, 'email_link must build the portal URL from the caller origin');
+assert.match(portalFn, /Portal link emailed to \$\{to\} by \$\{actorName\}/, 'portal emails must be logged to the thread');
 assert.doesNotMatch(portalFn.slice(portalFn.indexOf('action === "bootstrap"'), portalFn.indexOf('authenticateSignShopSession')), /session_token/, 'bootstrap must not require a session token');
 const portalPage = readFileSync('src/pages/CustomerPortal.jsx', 'utf8');
 assert.match(portalPage, /\.get\("token"\)/, 'portal page must read the token from the URL');
@@ -320,6 +324,7 @@ assert.match(portalPanel, /action: "list_thread"/, 'the portal panel must load t
 assert.match(portalPanel, /action: "reply_message"/, 'the portal panel must send staff replies');
 assert.match(portalPanel, /kind: "customer"/, 'the portal panel must create account-level links');
 assert.match(portalPanel, /action: "revoke_link"/, 'the portal panel must revoke links');
+assert.match(portalPanel, /action: "email_link"/, 'the portal panel must email the link to the customer');
 const custDetailPage = readFileSync('src/pages/EstimatorCustomers.jsx', 'utf8');
 assert.match(custDetailPage, /from "@\/components\/portal\/PortalPanel"/, 'customer 360 must use the shared portal panel');
 assert.match(custDetailPage, /<PortalPanel/, 'customer 360 must render the portal panel');
