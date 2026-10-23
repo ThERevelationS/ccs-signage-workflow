@@ -605,6 +605,21 @@ export default function SIPs() {
     setChecklistDialog(current => current.open ? current : { open: true, workOrder: wo });
   };
 
+  // Radix restores focus to the original opener only while that element
+  // stays mounted; a save can move the row between sections or filter it
+  // out. Give keyboard users the same landing spot the WIP-reopen path uses.
+  const closeChecklistDialog = (wo) => {
+    const workOrderId = wo?.id;
+    setChecklistDialog({ open: false, workOrder: null });
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (active && active !== document.body && active.isConnected) return;
+      const button = Array.from(document.querySelectorAll("[data-sips-active-focus-id]"))
+        .find(node => node.dataset.sipsActiveFocusId === workOrderId && node.getClientRects().length > 0);
+      (button || revisitClearBoardRef.current)?.focus();
+    });
+  };
+
   const dropdownConditionByName = useMemo(
     () => new Map(dropdownConditions.map(condition => [condition.name, condition])),
     [dropdownConditions]
@@ -1095,7 +1110,7 @@ export default function SIPs() {
                         onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                           focusedRowId === wo.id 
-                            ? 'sips-focus-num text-white' 
+                            ? 'sips-focus-num text-white'
                             : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
                         }`}
                         style={focusedRowId !== wo.id ? { 
@@ -1831,7 +1846,7 @@ export default function SIPs() {
       {checklistDialog.open && checklistDialog.workOrder && (
         <ProductChecklistDialog
           isOpen={checklistDialog.open}
-          onClose={() => setChecklistDialog({ open: false, workOrder: null })}
+          onClose={() => closeChecklistDialog(checklistDialog.workOrder)}
           workOrder={checklistDialog.workOrder}
           onUpdate={() => loadWorkOrders(false)}
           isRegistered={isRegistered}
