@@ -1,3 +1,20 @@
+# Portland repair audit and automatic-processing hold
+
+- Live Census OH incorporated-place source matches retained hash e1e961c10cb7513360d0dd4514d4735ff784cabcdb09070c29da88f829d03b27 and contains no Portland. The legacy localityQueueSeed wrongly labels Portland a Meigs County village; it is not an authoritative inventory.
+- Retained official inventory identifies Lebanon township / Meigs / OH:county_subdivision:3910542336. State Auditor correspondence uses a Portland OH postal address. Neither establishes parcel-specific sign/electrical authority; no identity/type/URL change or Portland-to-Lebanon merge performed.
+- The County Tax Map building application is described as a Notice of Building Improvement/New Construction, not accepted here as a commercial sign permit. County-road right-of-way guidance remains scoped to that purpose. Electrical issuer and inspection provider remain unresolved and separate.
+- Read-only inventory: all 1866 documents use portland.gov; 2 ai_discovered + 1864 official_page_harvest. Zero missing/duplicate IDs; zero manual/pinned/archive protections under shipped merge rules; all 1866 archive_state statuses absent, with zero upload receipts.
+- Exact-ID reference queries found zero linked sources, HTML evidence, authority reviews, rules, workflow drafts, extraction runs and saved localities; source-child queries cover only linked source IDs. This does not prove there are no URL-only or external/client references.
+- The regular archive query does not consult discovery cursor blocking. Additional reversible containment applied: profile auto_refresh true -> false; queue 6ac191cbcd668397c81e7c51 sources_found -> blocked with explicit missing_next and refreshed last_activity. Apart from these controls and platform updated_date, all profile/queue fields, documents, URLs and cursor were readback-verified unchanged.
+- Frozen current profile version: 2026-10-23T11:06:08.916000. Canonical document-array SHA-256: 0a0bcd4a1180c867d9a1848ab50e8c3251fa22418211781cf2171f5f48d6fb6d.
+- Plan: docs/permitting-portland-remediation-plan-2026-10-23.json. Itemized IDs/URLs/record hashes: docs/permitting-portland-remediation-manifest-2026-10-23.json. Every one of 1866 item hashes and identities verified against the full local snapshot.
+- No cleanup is authorized or performed. Proposed next action requires specific approval: disassociate exactly those 1866 entries from this one blocked profile, only after a verified durable full snapshot and fresh version/hash/reference checks. Preserve all other fields/records, hold and cursor.
+- The checked-in manifest is NOT a restoration backup. Full snapshot is local at C:/tmp/permitting-portland-remediation-inventory.json; create/verify durable backup before any approved removal. Code checkpoints do not restore entity data.
+- Upstream identity/source gates and invalid seed correction are documented follow-ups, not implemented or claimed fixed. Do not resume expansion based solely on same-host scoping.
+- No document deletion, URL replacement, authority approval, LLM calls, archive uploads, cap changes, client/job/shared-record writes, deployment or publication.
+
+---
+
 # Necessary safety stop - wrong-state Portland source
 
 - Continued through run46: 6686 recorded bounded attempts total; runs29-46 added 2638 attempts. One 429 was honored with cooldown and slower 2.5s pacing; run46 stopped on a document conflict.
