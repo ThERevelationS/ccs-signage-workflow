@@ -306,6 +306,78 @@ const ACTION_TYPES = [
   { value: "mark_complete", label: "Mark Complete", icon: CheckCircle2, color: "emerald" }
 ];
 
+// Which advertised triggers actually fire today, and which actions can run
+// for them. Three execution paths exist with different capabilities:
+//   - NotificationService (in-browser): fires the EMAIL_ONLY set and only
+//     ever executes send_email actions.
+//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set and
+//     executes every action except create_rider / set_priority.
+//   - checkDeadlineReminders (daily job): fires the DEADLINE set and runs
+//     send_email, set_asap, add_task and add_note only.
+// Any trigger outside these sets cannot run yet — the editor marks it so
+// nobody builds a rule that silently does nothing.
+const EMAIL_ONLY_TRIGGER_SET = new Set([
+  "work_order_created", "work_order_completed", "work_order_deleted",
+  "rider_created",
+  "stage_changed", "stage_entered", "stage_exited",
+  "task_added", "task_completed", "task_deleted",
+  "note_added", "note_deleted",
+  "image_uploaded",
+  "asap_toggled_on", "asap_toggled_off",
+  "assigned_to_changed",
+  "order_created", "order_ordered", "order_received",
+]);
+
+const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
+  "permit_submitted", "permit_received",
+  "permit_followup_due", "permit_followup_overdue",
+]);
+
+const DEADLINE_TRIGGER_SET = new Set([
+  "due_date_approaching", "due_date_passed",
+]);
+
+const EMAIL_ONLY_SUPPORTED_ACTIONS = new Set(["send_email"]);
+
+const ENGINE_SUPPORTED_ACTIONS = new Set([
+  "send_email", "change_stage", "set_asap", "assign_to",
+  "add_task", "add_note", "set_due_date", "mark_complete",
+]);
+
+const DEADLINE_SUPPORTED_ACTIONS = new Set([
+  "send_email", "set_asap", "add_task", "add_note",
+]);
+
+const getTriggerSupportedActions = (triggerType) => {
+  if (EMAIL_ONLY_TRIGGER_SET.has(triggerType)) return EMAIL_ONLY_SUPPORTED_ACTIONS;
+  if (WORKFLOW_ENGINE_TRIGGER_SET.has(triggerType)) return ENGINE_SUPPORTED_ACTIONS;
+  if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
+  return null;
+};
+
+const actionRunsForTriggers = (actionType, triggers) =>
+  (triggers || []).some(t => getTriggerSupportedActions(t?.trigger_type)?.has(actionType));
+
+const ruleIsRunnable = (rule) =>
+  (rule?.triggers || []).some(t => getTriggerSupportedActions(t?.trigger_type)) &&
+  (rule?.actions || []).some(a => actionRunsForTriggers(a?.action_type, rule?.triggers));
+
+const triggerHasOrderFilters = (condition) =>
+  !!(condition?.request_type || condition?.vendor || condition?.requestor ||
+     condition?.min_quantity != null || condition?.max_quantity != null);
+
+const describeAutomation = (triggers, actions) => {
+  const triggerText = (triggers || [])
+    .filter(t => t?.trigger_type)
+    .map((t, i) => `${i > 0 ? ` ${t.logic === "and" ? "and" : "or"} ` : ""}${TRIGGER_TYPES.find(tt => tt.value === t.trigger_type)?.label || t.trigger_type}`)
+    .join("");
+  const actionText = (actions || [])
+    .filter(a => a?.action_type)
+    .map(a => ACTION_TYPES.find(at => at.value === a.action_type)?.label || a.action_type)
+    .join(" and ");
+  return triggerText && actionText ? `When ${triggerText}, then ${actionText}.` : "";
+};
+
 const STAGES = [
   { value: "estimating", label: "Estimating" },
   { value: "sales", label: "Sales" },
@@ -2025,6 +2097,11 @@ export default function AdminSettings() {
                           <Badge className="text-xs" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #FFD6E8 100%)' }}>
                             {rule.actions?.length || 0} action{(rule.actions?.length || 0) !== 1 ? 's' : ''}
                           </Badge>
+                          {!ruleIsRunnable(rule) && (
+                            <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300">
+                              Won't run — not wired yet
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex flex-wrap gap-2 text-xs text-gray-600">
                           {rule.triggers?.slice(0, 2).map((t, i) => (
@@ -2124,7 +2201,7 @@ export default function AdminSettings() {
                           {Object.entries(groupedTriggers).map(([category, list]) => (
                             <div key={category}>
                               <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100">{category}</div>
-                              {list.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                              {list.map(t => <SelectItem key={t.value} value={t.value}>{t.label}{getTriggerSupportedActions(t.value) ? "" : " (not working yet)"}</SelectItem>)}
                             </div>
                           ))}
                         </SelectContent>
@@ -2266,10 +2343,28 @@ export default function AdminSettings() {
                               </SelectContent>
                             </Select>
                           </div>
+
+                          {triggerHasOrderFilters(trigger.trigger_condition) && (
+                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                              Order filters aren't applied yet — this rule will fire for every matching order.
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {trigger.trigger_type && !getTriggerSupportedActions(trigger.trigger_type) && (
+                        <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                          This trigger isn't connected to anything yet, so a rule using it won't run.
                         </div>
                       )}
                     </div>
                   ))}
+
+                  {triggers.some(t => t.logic === "and") && new Set(triggers.map(t => t.trigger_type).filter(Boolean)).size > 1 && (
+                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                      AND only works when the triggers can happen at the same moment — different events each happen one at a time, so this combination may never match. Use OR, or pick triggers that can match together.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2309,18 +2404,30 @@ export default function AdminSettings() {
                               <SelectItem key={t.value} value={t.value}>
                                 <div className="flex items-center gap-2">
                                   <t.icon className="w-4 h-4" />
-                                  {t.label}
+                                  {t.label}{t.value === "create_rider" ? " (not working yet)" : ""}
                                 </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         {renderActionConfig(action, index)}
+                        {action.action_type && triggers.some(t => t.trigger_type) && !actionRunsForTriggers(action.action_type, triggers) && (
+                          <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                            This action can't run for the selected trigger(s) yet — it will be skipped.
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               </div>
+
+              {triggers[0]?.trigger_type && actions[0]?.action_type && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                  <span className="font-medium">In plain terms: </span>
+                  {describeAutomation(triggers, actions)}
+                </div>
+              )}
 
               {automationSaveError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
