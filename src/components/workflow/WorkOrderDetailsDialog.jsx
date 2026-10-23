@@ -311,7 +311,7 @@ export default function WorkOrderDetailsDialog({
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error uploading Work Order image:", error);
-      alert(error?.message || "This Work Order image changed in another session. Reload and try the upload again.");
+      setInlineEditError(error?.message || "This Work Order image changed in another session. Reload and try the upload again.");
       if (onUpdate) onUpdate();
     } finally {
       setUploading(false);
@@ -772,12 +772,12 @@ export default function WorkOrderDetailsDialog({
           deleted: { $ne: true }
         });
         if (attachedRiders.length > 0) {
-          alert("Cannot delete: This work order has active riders. Delete riders first.");
+          setInlineEditError("Cannot delete: this Work Order has active riders. Delete the riders first.");
           return;
         }
       } catch (error) {
         console.error("Could not verify attached riders before delete:", error);
-        alert("Attached riders could not be verified. Delete was not opened. Please retry.");
+        setInlineEditError("Attached riders could not be verified. Delete was not opened. Please retry.");
         return;
       }
     }
@@ -2026,7 +2026,7 @@ export default function WorkOrderDetailsDialog({
               if (onUpdate) await onUpdate();
             } catch (refreshError) {
               console.error("Duplicated Work Order was saved but refresh failed:", refreshError);
-              alert("The duplicated Work Order was saved successfully, but the screen could not finish refreshing. Do not duplicate it again; reload to see the saved job.");
+              setInlineEditError("The duplicated Work Order was saved successfully, but the screen could not finish refreshing. Do not duplicate it again; reload to see the saved job.");
             }
           }}
           initialData={duplicateData}
