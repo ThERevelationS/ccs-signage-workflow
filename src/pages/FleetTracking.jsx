@@ -162,13 +162,11 @@ export default function FleetTracking() {
     let mounted = true;
     Promise.all([
       listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "open" }, "-created_date", { label: "Open Fleet work orders" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "assigned" }, "-created_date", { label: "Assigned Fleet work orders" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "in_progress" }, "-created_date", { label: "In-progress Fleet work orders" }),
-    ]).then(([equipmentRows, openRows, assignedRows, inProgressRows]) => {
+      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work orders" }),
+    ]).then(([equipmentRows, activeRows]) => {
       if (!mounted) return;
       setFleetEquipment(equipmentRows || []);
-      setFleetWorkOrders([...(openRows || []), ...(assignedRows || []), ...(inProgressRows || [])]);
+      setFleetWorkOrders(activeRows || []);
     }).catch(() => {});
     return () => { mounted = false; };
   }, []);
