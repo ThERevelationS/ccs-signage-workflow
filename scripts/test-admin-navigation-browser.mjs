@@ -126,6 +126,8 @@ try {
     'window.addEventListener("admin-synthetic-session-change",refresh);return ()=>window.removeEventListener("admin-synthetic-session-change",refresh);},[]);',
     'return {currentUser:{id:params.get("user")||"synthetic-admin-user",role:params.get("role")==="basic"?"user":"admin"},sessionToken:token};}',
     'export function getStoredAdminSettingsCapability(){return window.__adminCapabilityExpired?"":"synthetic";}',
+    'export function getStoredAdminSettingsCapabilityExpiry(){',
+    'const m=window.location.search.match(/admin_cap_expire_ms=(\\d+)/);return m?Date.now()+Number(m[1]):null;}',
     'export function hasStoredAdminSettingsAuthorization(){return true;}',
     'export function storeAdminSettingsAuthorization(){throw Error("Unexpected write to synthetic auth");}',
   ].join('\n'));
@@ -2376,6 +2378,14 @@ try {
       await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor();
       await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
       assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+    });
+
+  await check('Admin re-locks itself at the moment the stored capability expires', 375,
+    '/?tab=automations&automation_rows=1&admin_cap_expire_ms=1500', async page => {
+      // No interaction: the mounted expiry timer re-locks on its own.
+      await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor({timeout:15000});
+      await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
       assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
     });
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
