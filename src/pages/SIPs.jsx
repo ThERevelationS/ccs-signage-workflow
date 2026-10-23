@@ -608,16 +608,22 @@ export default function SIPs() {
   // Radix restores focus to the original opener only while that element
   // stays mounted; a save can move the row between sections or filter it
   // out. Give keyboard users the same landing spot the WIP-reopen path uses.
+  const restoreBoardFocus = (workOrderId) => {
+    const active = document.activeElement;
+    if (active && active !== document.body && active.isConnected) return;
+    const button = Array.from(document.querySelectorAll("[data-sips-active-focus-id],[data-sips-job-focus-id]"))
+      .find(node => (node.dataset.sipsActiveFocusId || node.dataset.sipsJobFocusId) === workOrderId && node.getClientRects().length > 0);
+    (button || revisitClearBoardRef.current)?.focus();
+  };
   const closeChecklistDialog = (wo) => {
     const workOrderId = wo?.id;
     setChecklistDialog({ open: false, workOrder: null });
-    requestAnimationFrame(() => {
-      const active = document.activeElement;
-      if (active && active !== document.body && active.isConnected) return;
-      const button = Array.from(document.querySelectorAll("[data-sips-active-focus-id],[data-sips-job-focus-id]"))
-        .find(node => (node.dataset.sipsActiveFocusId || node.dataset.sipsJobFocusId) === workOrderId && node.getClientRects().length > 0);
-      (button || revisitClearBoardRef.current)?.focus();
-    });
+    requestAnimationFrame(() => restoreBoardFocus(workOrderId));
+  };
+  const closeDetailsDialog = (wo) => {
+    const workOrderId = wo?.id;
+    setSelectedWorkOrder(null);
+    requestAnimationFrame(() => restoreBoardFocus(workOrderId));
   };
 
   const dropdownConditionByName = useMemo(
@@ -1690,7 +1696,7 @@ export default function SIPs() {
       {selectedWorkOrder && (
         <WorkOrderDetailsDialog
           isOpen={true}
-          onClose={() => setSelectedWorkOrder(null)}
+          onClose={() => closeDetailsDialog(selectedWorkOrder)}
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders()}
           onMove={async (wo, newStage) => {
