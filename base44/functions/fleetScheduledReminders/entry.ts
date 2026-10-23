@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const weekday = () => new Intl.DateTimeFormat('en-US',{ weekday:'long', timeZone:'America/New_York' }).format(new Date()).toLowerCase();
@@ -19,8 +20,7 @@ Deno.serve(async (req) => {
     const cutover = await getCanonicalCutoverState(base44);
     if (!cutover?.scheduled_reminders_enabled || !cutover?.notifications_enabled) return Response.json({ success:true, disabled:true, queued:0 });
 
-    const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
-    const settings = settingsRows?.[0];
+    const settings = await getCanonicalFleetSettings(base44);
     if (!settings) return Response.json({ error:'FleetSettings record missing.' }, { status:409 });
 
     const Queue = base44.asServiceRole.entities.FleetNotificationQueue;
