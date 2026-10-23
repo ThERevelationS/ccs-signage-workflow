@@ -29,10 +29,16 @@ export function assessOfficialQueueIdentity(row = {}) {
 
 export function assertOfficialProfileResearchIdentity(profile) {
   if (!['OH', 'KY'].includes(String(profile.state || '').toUpperCase())) return;
-  const assessment = assessOfficialQueueIdentity({
+  let assessment = assessOfficialQueueIdentity({
     state: profile.state, jurisdiction_type: profile.type, jurisdiction_name: profile.name,
     parent_county_name: profile.parent_county?.name || profile.parent_county_name,
   });
+  if (norm(profile.type) === 'municipality') {
+    const matches = ['city', 'village'].map(jurisdiction_type => assessOfficialQueueIdentity({
+      state:profile.state,jurisdiction_name:profile.name,jurisdiction_type,
+    })).filter(result => result.eligible);
+    if (matches.length === 1) assessment = matches[0];
+  }
   if (!assessment.eligible) throw Object.assign(
     Error('Official geographic identity requires review before automatic jurisdiction research.'),
     { status: 409, code: 'JURISDICTION_IDENTITY_REVIEW_REQUIRED', assessment },
