@@ -457,9 +457,52 @@ Deno.serve(async (req) => {
         })
         .sort((a: any, b: any) =>
           Number(b.overdue) - Number(a.overdue)
-          || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"))
-        .slice(0, 200);
-      return Response.json({ success: true, action, follow_ups: items, today });
+          || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
+
+      // Stale sent quotes on quoted-stage opportunities become implicit follow-ups:
+      // aging after 7 days without a response, "expired" past quote_valid_days.
+      const requests = await EstimatingRequest.filter({}).catch(() => []);
+      const estimateIdByOpp = new Map();
+      for (const r of Array.isArray(requests) ? requests : []) {
+        const oppId = clean(r?.opportunity_id);
+        const estId = clean(r?.estimate_id);
+        if (oppId && estId && !estimateIdByOpp.has(oppId)) estimateIdByOpp.set(oppId, estId);
+      }
+      for (const o of rows.filter((x: any) => clean(x?.stage) === "quoted").slice(0, 100)) {
+        const estId = estimateIdByOpp.get(clean(o?.id));
+        if (!estId) continue;
+        const est = await Estimate.get(estId).catch(() => null);
+        if (!est || clean(est?.status) !== "sent") continue;
+        const issued = clean(est?.quote_issue_date) || clean(est?.updated_date).slice(0, 10);
+        const issuedMs = Date.parse(issued);
+        if (!Number.isFinite(issuedMs)) continue;
+        const ageDays = Math.floor((Date.now() - issuedMs) / 86400000);
+        if (ageDays < 7) continue;
+        const validDays = num(est?.quote_valid_days, 30);
+        const expired = ageDays >= validDays;
+        items.push({
+          id: clean(o?.id),
+          title: clean(o?.title),
+          customer_display_name: clean(o?.customer_display_name),
+          stage: "quoted",
+          salesperson: clean(o?.salesperson),
+          next_action: expired
+            ? `Quote ${clean(est?.estimate_number) || ""} expired (${validDays}d validity) — re-issue or follow up`
+            : `Quote ${clean(est?.estimate_number) || ""} sent ${ageDays}d ago — no response`,
+          next_action_due: new Date(issuedMs + Math.min(validDays, ageDays + 3) * 86400000).toISOString().slice(0, 10),
+          next_action_assignee: clean(o?.next_action_assignee),
+          overdue: expired,
+          stale_quote: true,
+          quote_age_days: ageDays,
+          quote_expired: expired,
+          stage_changed_at: clean(o?.stage_changed_at),
+          last_activity_at: clean(o?.last_activity_at),
+        });
+      }
+      items.sort((a: any, b: any) =>
+        Number(b.overdue) - Number(a.overdue)
+        || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
+      return Response.json({ success: true, action, follow_ups: items.slice(0, 200), today });
     }
 
     if (action === "assign_estimator") {
