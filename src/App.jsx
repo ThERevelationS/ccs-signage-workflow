@@ -62,6 +62,7 @@ import FleetAnalytics from './pages/FleetAnalytics';
 import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
 import FleetMechanic from './pages/FleetMechanic';
+import CustomerPortal from './pages/CustomerPortal';
 import NewUserSetup from './pages/NewUserSetup';
 import PermittingDocs from './pages/PermittingDocs';
 
@@ -213,6 +214,7 @@ function standaloneFleetPage() {
   const path = window.location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   if (path === '/fleetmechanic') return FleetMechanic;
   if (path === '/fleetreport') return FleetPublicReport;
+  if (path === '/customerportal') return CustomerPortal;
   return null;
 }
 
