@@ -1,3 +1,20 @@
+# Permitting continuation - runs 29-32 recorded
+
+- run29: 150 attempts, 150 cycles, errors=0; run30: 150 attempts, 150 cycles, errors=0; run31: 150 attempts, 150 cycles, errors=0; run32: 123 attempts, 124 cycles, errors=1.
+- This unit: 573 attempts; historical bounded total: 4621 attempts, not verified successful fetches.
+- Interruptions: run32: Rate limit exceeded: entity_list allows 210 requests per 60s for each caller of this app (a signed-in user, a visitor's IP or a service token). Retry after 4s..
+- OH: 1485 pending / 81 profiles / 1549 review gaps / 821 frontiers.
+- KY: 105 pending / 9 profiles / 191 review gaps / 113 frontiers.
+- No-frontier eligibility-query counts: OH 62, KY 101. Readbacks may include concurrent scheduler activity.
+- Local runner retains jurisdiction, last operation and write-attempt flag; stops on returned failure or exception. Fresh profile reads and guarded persistence remain mandatory.
+- All nine local collection module hashes matched sandbox at this unit's preflight. Last verified tests remain 29 discovery tests plus 3 synthetic runner checks; unchanged product code.
+- Previous conflicts and run26 interrupted-cycle uncertainty remain in receipt/history; no stale payload replay.
+- Zero LLM calls, archive uploads, cap changes, authority conclusions or unrelated client/job/shared-record writes. No publication or product source edits.
+- No new per-document live provenance audit. Same-host/depth/link bounds unchanged. Statewide completeness remains unclaimed.
+- Receipt: docs/permitting-collection-expansion-2026-10-23.json. Continue until eligible frontier exhaustion or a necessary safety stop; source repair and completeness review remain separate.
+
+---
+
 # Permitting continuation - run27 through run28 recorded
 
 - run27: 3 attempts / 4 cycles / errors=1; run28: 150 attempts / 150 cycles / errors=0. This unit: 153 attempts; historical bounded total: 4048 attempts, not verified successful fetches.
