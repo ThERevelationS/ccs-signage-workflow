@@ -143,10 +143,11 @@ export function AnnouncementProvider({ children, currentPageName }) {
     };
 
     checkForAnnouncements();
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
   }, [allActive, currentUser, currentPageName]);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
 
   const dismiss = () => setDismissed(true);
 
