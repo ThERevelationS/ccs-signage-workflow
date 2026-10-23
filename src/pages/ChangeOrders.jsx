@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import {
   CheckCircle2,
   ChevronRight,
@@ -226,7 +227,7 @@ function ChangeOrderDetail({ sessionToken, changeOrderId, onClose, onChanged }) 
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <div className="my-8 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         {loading && !detail ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
+          <ListSkeleton rows={3} />
         ) : !co ? (
           <div className="py-8 text-center text-sm text-red-600">{error || "Change order not found."}</div>
         ) : (
