@@ -58,6 +58,7 @@ const KIND_LABELS = {
   estimate_approved: "Quote approved",
   estimate_revision_requested: "Revision requested",
   payment_notice: "Payment notice",
+  job_revision_requested: "Job change requested",
   system: null,
 };
 
@@ -228,11 +229,14 @@ function QuoteCard({ quote, onRespond, busy }) {
   );
 }
 
-function JobCard({ job }) {
+function JobCard({ job, onRequestChange, busy }) {
   const style = JOB_STYLES[job.status] || { label: (job.status || "open").replace(/_/g, " "), cls: "bg-slate-100 text-slate-700" };
   const stepIndex = JOB_STEPS.indexOf(job.status);
   const progress = job.task_progress;
   const pct = progress && progress.total ? Math.round((progress.completed / progress.total) * 100) : (job.status === "completed" ? 100 : stepIndex > 0 ? 50 : 0);
+  const [changing, setChanging] = useState(false);
+  const [note, setNote] = useState("");
+  const active = !["completed", "cancelled"].includes(job.status);
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -256,6 +260,26 @@ function JobCard({ job }) {
         {job.install_location && <span>Site: <span className="font-medium text-slate-700">{job.install_location}</span></span>}
         {progress && <span>Tasks: <span className="font-medium text-slate-700">{progress.completed}/{progress.total}</span></span>}
       </div>
+      {active && onRequestChange && !changing && (
+        <button onClick={() => setChanging(true)} disabled={busy}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+          Request a change to this job
+        </button>
+      )}
+      {active && changing && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-900">What should change on this job? We'll draft a change order for review.</p>
+          <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Move the install date, swap the panel color, add a vinyl banner…"
+            className="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => onRequestChange(job, note)} disabled={busy || !note.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
+            </button>
+            <button onClick={() => { setChanging(false); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -441,6 +465,17 @@ export default function CustomerPortal() {
     } finally { setBusy(false); }
   };
 
+  const requestJobChange = async (job, note) => {
+    setBusy(true);
+    try {
+      const d = await call({ action: "request_job_revision", token, work_order_id: job.id, note, creation_request_key: crypto.randomUUID() });
+      setToast(`Change request sent${d?.change_order_number ? ` — ${d.change_order_number} drafted for review` : ""}.`);
+      await load();
+    } catch (error) {
+      setToast(error?.message || "Could not send the change request.");
+    } finally { setBusy(false); }
+  };
+
   const sendMessage = async (text) => {
     setBusy(true);
     try {
@@ -595,7 +630,7 @@ export default function CustomerPortal() {
                 {jobs.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No jobs on your account yet.</div>
                 )}
-                {jobs.map((j) => <JobCard key={j.id} job={j} />)}
+                {jobs.map((j) => <JobCard key={j.id} job={j} onRequestChange={requestJobChange} busy={busy} />)}
               </div>
             )}
 
