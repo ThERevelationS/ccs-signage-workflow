@@ -114,7 +114,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     };
 
     poll();
-    const timer = setInterval(poll, 1000);
+    const timer = setInterval(poll, 3000);
     return () => {
       mounted = false;
       clearInterval(timer);
