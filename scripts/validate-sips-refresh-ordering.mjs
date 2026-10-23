@@ -114,6 +114,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     today,
     todayMs: today.getTime(),
     wipTaskDescriptions: [],
+    dropdownConditions: [],
     useMemo: (fn) => fn(),
     useCallback: (fn) => fn,
     workOrders: [structuredClone(record)],
@@ -494,6 +495,49 @@ await check('superseded Reload latest cannot dismiss a conflict after unrelated 
   h.reads[0].finish();
   await oldReload;
   assert.match(h.ctx.quickEditError, /needs review/);
+});
+
+await check('identical refresh data keeps memo input identities; only changed data resets them', async () => {
+  const h = fixture();
+  // Seed prior committed state that differs from what the server returns,
+  // so the first load exercises the "changed" branch of each guard.
+  h.ctx.users = [{ id: 'stale-user' }];
+  h.ctx.wipTaskDescriptions = ['stale wip'];
+  h.ctx.dropdownConditions = [{ name: 'stale' }];
+  const counts = { Users: 0, WipTaskDescriptions: 0, DropdownConditions: 0 };
+  for (const prop of Object.keys(counts)) {
+    const inner = h.ctx['set' + prop];
+    h.ctx['set' + prop] = (value) => { counts[prop] += 1; inner(value); };
+  }
+  const first = h.loadWorkOrders(false);
+  h.reads[0].finish();
+  await first;
+  assert.deepEqual(counts, { Users: 1, WipTaskDescriptions: 1, DropdownConditions: 1 },
+    'Changed server data must replace each memo input once');
+
+  const sameUsers = h.ctx.users;
+  const sameConditions = h.ctx.dropdownConditions;
+  const second = h.loadWorkOrders(false);
+  h.reads[1].finish();
+  await second;
+  assert.deepEqual(counts, { Users: 1, WipTaskDescriptions: 1, DropdownConditions: 1 },
+    'A timer refresh returning identical data must not invalidate memoized derivations');
+  assert.equal(h.ctx.users, sameUsers);
+  assert.equal(h.ctx.dropdownConditions, sameConditions);
+
+  const originalSettings = h.ctx.loadSingleGlobalSetting;
+  h.ctx.loadSingleGlobalSetting = async (options) => {
+    if (options.settingKey === 'dropdownConditions') {
+      return { setting_value: { items: [{ name: 'Changed condition', action: 'SIPs' }] } };
+    }
+    return originalSettings(options);
+  };
+  const third = h.loadWorkOrders(false);
+  h.reads[2].finish();
+  await third;
+  assert.deepEqual(counts, { Users: 1, WipTaskDescriptions: 1, DropdownConditions: 2 },
+    'Only the actually changed memo input may be replaced');
+  assert.notEqual(h.ctx.dropdownConditions, sameConditions);
 });
 
 await check('conflicted quick edit releases save lock and refreshes latest state', async () => {
