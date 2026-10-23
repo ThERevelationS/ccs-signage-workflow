@@ -3391,7 +3391,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -4113,6 +4113,54 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         smartsheet_sheet_id: sheetId, fields_changed: false,
         relinked_by: cleanText(adminActor?.email, 320),
         message: 'Permanent Smartsheet row link updated. Order fields, snapshot, and pending-sync marker are unchanged; the next pull or Save & Sync reconciles values by the new permanent row ID.',
+      });
+    }
+
+    if (action === 'delete_order_record') {
+      // Admin-only permanent delete for an Order already in Order Trash.
+      // Refuses any record still carrying Smartsheet relationship evidence so
+      // the permanent-ID tombstone that prevents orphan/recreated Orders is
+      // never erased by this path. Conditional delete + read-back verify.
+      if (!hasSessionToken || adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'An authenticated Order Form administrator is required.' }, { status: 403 });
+      }
+      const orderId = cleanText(body?.order_id, 100);
+      if (!orderId || body?.confirm_delete !== true) {
+        return Response.json({ success: false,
+          error: 'Permanent delete requires order_id and confirm_delete:true.' }, { status: 400 });
+      }
+      const order = await base44.asServiceRole.entities.Order.get(orderId).catch(() => null);
+      if (!order?.id) {
+        return Response.json({ success: false, error: 'No Order with that ID exists.' }, { status: 404 });
+      }
+      if (order.deleted !== true) {
+        return Response.json({ success: false,
+          error: 'Only an Order already in Order Trash can be permanently deleted. Move it to Order Trash first.' }, { status: 409 });
+      }
+      const snapshot = order.smartsheet_sync_snapshot;
+      const hasSnapshot = typeof snapshot === 'string' ? snapshot.trim().length > 0 && snapshot.trim() !== '{}'
+        : Boolean(snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) && Object.keys(snapshot).length > 0);
+      if (cleanText(order.smartsheet_row_id, 40) || cleanText(order.smartsheet_sheet_id, 40) ||
+          cleanText(order.smartsheet_last_synced_at, 60) || order.smartsheet_create_attempt || hasSnapshot) {
+        return Response.json({ success: false,
+          error: 'This Order preserves a Smartsheet relationship or create history. Its permanent-ID tombstone prevents orphan/recreated Orders; clear the relationship through the documented recovery flow before permanent deletion.' }, { status: 409 });
+      }
+      const deleteResult = await base44.asServiceRole.entities.Order.deleteMany(
+        { id: orderId, updated_date: order.updated_date, deleted: true },
+      );
+      if (!deleteResult || Number(deleteResult.deleted) !== 1) {
+        return Response.json({ success: false,
+          error: 'The Order changed while the delete was attempted or the delete could not be applied. Reload Order Trash before retrying.' }, { status: 409 });
+      }
+      const verify = await base44.asServiceRole.entities.Order.get(orderId).then(() => true).catch(() => false);
+      if (verify) {
+        return Response.json({ success: false,
+          error: 'The permanent delete could not be verified. Review Order Trash before retrying.' }, { status: 500 });
+      }
+      return Response.json({
+        success: true, order_id: orderId, permanently_deleted: true,
+        deleted_by: cleanText(adminActor?.email, 320),
+        message: 'Order permanently deleted. It had no Smartsheet relationship, so no permanent-ID tombstone was lost.',
       });
     }
 
