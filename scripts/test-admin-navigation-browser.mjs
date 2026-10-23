@@ -161,9 +161,23 @@ try {
     ' new URLSearchParams(location.search).get("automation_timeout")==="1"?160:25000);',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockEmailGroupPersistence.js'), [
-    'export async function createEmailGroupIfAbsent(){throw Error("Unexpected email group write");}',
-    'export async function updateEmailGroupIfUnchanged(){throw Error("Unexpected email group write");}',
-    'export async function deleteEmailGroupIfUnused(){throw Error("Unexpected email group write");}',
+    'function requireCapability(adminCapability,label){',
+    'const capability=String(adminCapability||"").trim();',
+    'if(!capability)throw new Error(`${label} requires a current Admin Settings authorization. Lock and unlock Admin Settings before retrying.`);',
+    'return capability;}',
+    'function dispatch(kind,args){const capability=requireCapability(args.adminCapability,args.label||"Email group");',
+    '(window.__adminEmailGroupWriteCalls??=[]).push({kind,capability});',
+    'throw Error("Unexpected email group write");}',
+    'export async function createEmailGroupIfAbsent(args={}){const name=String(args?.data?.name||"").trim();',
+    'if(!name||!Array.isArray(args?.data?.emails)||args.data.emails.length===0)',
+    'throw new Error(`${args.label||"Email group"} requires a name and at least one email address.`);',
+    'dispatch("create",args);}',
+    'export async function updateEmailGroupIfUnchanged(args={}){',
+    'if(!args?.group?.id)throw new Error(`${args.label||"Email group"} is no longer loaded. Reload before saving.`);',
+    'dispatch("update",args);}',
+    'export async function deleteEmailGroupIfUnused(args={}){',
+    'if(!args?.group?.id)throw new Error(`${args.label||"Email group deletion"} is no longer loaded. Reload before deleting.`);',
+    'dispatch("delete",args);}',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockLogin.js'), 'export async function verifyLogin(){throw Error("Unexpected login");}');
   await writeFile(path.join(scratch, 'mockEntityList.js'),
@@ -2394,6 +2408,37 @@ try {
       const expiry = page.locator('[data-admin-capability-expiry]');
       await expiry.waitFor();
       assert.match(await expiry.innerText(),/Admin authorization expires at \d/);
+    });
+
+  await check('Email Groups forwards the current stored capability at write time', 377,
+    '/?tab=automations', async page => {
+      await page.getByRole('button',{name:'New Group'}).click();
+      const dialog=page.getByRole('dialog',{name:'Create Email Group'});
+      await dialog.getByPlaceholder('e.g., Sales Team').fill('Dispatch Check');
+      await dialog.getByPlaceholder('email@example.com').fill('check@example.invalid');
+      await dialog.getByPlaceholder('email@example.com').press('Enter');
+      await dialog.getByRole('button',{name:'Create Group'}).click();
+      await page.getByText('Unexpected email group write').waitFor();
+      const calls=await page.evaluate(()=>window.__adminEmailGroupWriteCalls||[]);
+      assert.equal(calls.length,1);
+      assert.equal(calls[0].kind,'create');
+      assert.equal(calls[0].capability,'synthetic');
+    });
+
+  await check('Email Groups capability expiring mid-draft fails before dispatch and keeps the draft', 378,
+    '/?tab=automations', async page => {
+      await page.getByRole('button',{name:'New Group'}).click();
+      const dialog=page.getByRole('dialog',{name:'Create Email Group'});
+      await dialog.getByPlaceholder('e.g., Sales Team').fill('Expiry Check');
+      await dialog.getByPlaceholder('email@example.com').fill('expiry@example.invalid');
+      await dialog.getByPlaceholder('email@example.com').press('Enter');
+      // Unlock happened before this draft existed: a stale snapshot would still
+      // dispatch "synthetic", so the fresh read must see the expired storage.
+      await page.evaluate(()=>{window.__adminCapabilityExpired=true;});
+      await dialog.getByRole('button',{name:'Create Group'}).click();
+      await page.getByText('requires a current Admin Settings authorization. Lock and unlock Admin Settings').waitFor();
+      assert.equal(await page.evaluate(()=>(window.__adminEmailGroupWriteCalls||[]).length),0);
+      await dialog.getByRole('button',{name:'Create Group'}).waitFor();
     });
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
