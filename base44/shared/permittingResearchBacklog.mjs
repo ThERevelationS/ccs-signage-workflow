@@ -69,7 +69,7 @@ export function ohioFirstResearchRows(rows = []) {
   return [...rows].sort((a, b) => rank(a) - rank(b));
 }
 
-export function classifyBacklogRows({ queueRows = [], profiles = [], identityProfiles = profiles, inFlightCount = 0, inFlightTarget = 250, maxDispatchPerRun = 50 } = {}) {
+export function classifyBacklogRows({ queueRows = [], profiles = [], identityProfiles = profiles, inFlightCount = 0, inFlightTarget = 250, maxDispatchPerRun = 50, geographicGate = null } = {}) {
   const target = Math.max(1, Number(inFlightTarget) || 250);
   const perRun = Math.max(1, Number(maxDispatchPerRun) || 50);
   const room = Math.max(0, target - Math.max(0, Number(inFlightCount) || 0));
@@ -82,6 +82,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], identityPro
   }
 
   const conflicts = [];
+  const identityReview = [];
   const reconcile = [];
   const dispatch = [];
   const seen = new Set();
@@ -90,9 +91,21 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], identityPro
     const identity = queueResearchIdentity(row);
     if (!identity || seen.has(identity)) continue;
     seen.add(identity);
+    if (geographicGate) {
+      const assessment = geographicGate(row);
+      if (!assessment?.eligible) {
+        identityReview.push({ queue_id: row.id, ...assessment });
+        continue;
+      }
+    }
 
     const resolution = resolveResearchProfile(row, identityProfiles);
     if (resolution.conflict) { conflicts.push(row); continue; }
+    if (geographicGate && resolution.profile &&
+        (resolution.profile.auto_refresh === false || resolution.profile.discovery_scan_state?.blocked)) {
+      identityReview.push({queue_id:row.id,eligible:false,reason:'automatic_profile_held_for_review',authority_verified:false});
+      continue;
+    }
     const nameState = `${norm(row?.jurisdiction_name)}|${norm(row?.state)}`;
     const matchingProfiles = byNameState.get(nameState) || [];
     if (matchingProfiles.some((profile) => profileMatchesQueueRow(row, profile, matchingProfiles))) {
@@ -109,6 +122,7 @@ export function classifyBacklogRows({ queueRows = [], profiles = [], identityPro
     reconcile,
     dispatch,
     atCapacity: room === 0,
+    ...(geographicGate ? { identity_review: identityReview } : {}),
   };
 }
 
