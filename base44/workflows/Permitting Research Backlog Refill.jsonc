@@ -1,4 +1,23 @@
 {
+  "name": "Permitting Research Backlog Refill",
+  "description": "Runs every 15 minutes and invokes the cost-controlled permitting research dispatcher. Runtime admin settings can pause dispatch, reduce batch size, cap active research, or impose a daily release limit without shrinking the statewide backlog.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "4-59/15 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -24,24 +43,5 @@
         }
       }
     ]
-  },
-  "description": "Runs every 15 minutes and invokes the cost-controlled permitting research dispatcher. Runtime admin settings can pause dispatch, reduce batch size, cap active research, or impose a daily release limit without shrinking the statewide backlog.",
-  "name": "Permitting Research Backlog Refill",
-  "trigger": {
-    "condition": null,
-    "config": {
-      "trigger_type": "scheduled",
-      "events": [],
-      "schedule_mode": "recurring",
-      "cron_expression": "*/15 * * * *",
-      "one_time_date": null,
-      "timezone": "America/New_York",
-      "interval_value": null,
-      "interval_unit": null,
-      "interval_anchor": null,
-      "ends_type": "never",
-      "ends_on_date": null,
-      "ends_after_count": null
-    }
   }
 }
