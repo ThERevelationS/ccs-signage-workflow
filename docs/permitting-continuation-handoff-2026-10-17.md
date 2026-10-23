@@ -1,3 +1,19 @@
+# Permitting continuation - run27 through run28 recorded
+
+- run27: 3 attempts / 4 cycles / errors=1; run28: 150 attempts / 150 cycles / errors=0. This unit: 153 attempts; historical bounded total: 4048 attempts, not verified successful fetches.
+- OH: 1804 pending / 95 profiles / 1378 review gaps / 816 frontiers.
+- KY: 161 pending / 12 profiles / 170 review gaps / 113 frontiers.
+- No-frontier eligibility-query counts: OH 62, KY 101. Readbacks may include concurrent scheduler activity.
+- Local runner now records jurisdiction, last operation and write-attempt flag per cycle. Three isolated synthetic diagnostic checks pass. Collection behavior unchanged; stops on returned failure or exception.
+- Run27 document conflict identified Day Heights / OH / 6ad2f390754798aae804c1d4 before any write attempt. Fresh targeted and aggregate reads reconciled the current profile before run28; no stale payload replay.
+- Nine collection module hashes matched sandbox before execution; 29/29 sandbox discovery continuation/frontier/scan tests passed.
+- Run26 interrupted-cycle outcome remains unverified and was not replayed. Prior continuation snapshot preserved in the receipt history.
+- Zero LLM calls, archive uploads, cap changes, authority conclusions or unrelated client/job/shared-record writes. No publication or product source edits.
+- No new per-document live provenance audit. Same-host/depth/link bounds unchanged. Statewide completeness remains unclaimed.
+- Receipt: docs/permitting-collection-expansion-2026-10-23.json. Next: bounded continuation, then evidence-safe failed-seed and gap review.
+
+---
+
 # Permitting continuation - run25 through run26 recorded
 
 - run25: 150 attempts / 150 cycles / errors=0; run26: 106 attempts / 107 cycles / errors=1. This unit: 256 page attempts; historical bounded total: 3895 attempts, not verified successful fetches.
