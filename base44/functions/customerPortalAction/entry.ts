@@ -582,6 +582,93 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, message: messageView(result.record) });
     }
 
+    if (action === "email_link") {
+      const customerId = clean(body?.customer_id);
+      if (!customerId) throw bad("customer_id is required.");
+      const customer = await Customer.get(customerId).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+      const to = clean(body?.email) || clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_email);
+      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
+      const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
+      if (!/^https?:\/\//.test(portalBase)) throw bad("portal_base is required.");
+
+      const existing = await PortalLink.filter({ kind: "customer", record_id: customerId }).catch(() => []);
+      let link = (Array.isArray(existing) ? existing : []).find(linkIsUsable);
+      if (!link) {
+        const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+        const key = `portal-link:customer:${customerId}:${clean(body?.creation_request_key) || String(Date.now())}`.slice(0, 256);
+        const created = await createFoundationRecordWithRecovery({
+          entity: PortalLink,
+          data: {
+            creation_request_key: key,
+            token,
+            kind: "customer",
+            record_id: customerId,
+            customer_id: customerId,
+            label: clean(customer.name) || clean(customer.company_name) || "Customer portal",
+            created_by: actor,
+            expires_at: new Date(Date.now() + LINK_TTL_MS).toISOString(),
+            revoked: false,
+            open_count: 0,
+          },
+          readMatches: () => PortalLink.filter({ creation_request_key: key }),
+          label: "Customer portal link",
+        });
+        link = created.record;
+      }
+      const portalToken = linkIsUsable(link) ? clean(link.token) : "";
+      if (!portalToken) throw bad("A usable portal link could not be created.");
+      const url = `${portalBase}/customerportal?token=${encodeURIComponent(portalToken)}`;
+      const customerName = clean(customer.contact_name) || clean(customer.name) || clean(customer.company_name) || "there";
+      const companyName = clean(body?.company_name) || "CCS Signage";
+      const subject = `${companyName} — your customer portal link`;
+      const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
+        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName} Customer Portal</h2>
+        <p style="margin-top:0;color:#64748b;font-size:13px">Quotes · job tracking · invoices · messages</p>
+        <p>Hi ${customerName},</p>
+        <p>You now have a secure portal where you can:</p>
+        <ul style="line-height:1.7;padding-left:20px">
+          <li>Review and <strong>approve quotes</strong>, or request changes</li>
+          <li>Track your <strong>jobs</strong> and install dates</li>
+          <li>View <strong>invoices</strong>, payments, and your open balance</li>
+          <li>Message our team — replies land right in the portal</li>
+        </ul>
+        <p style="text-align:center;margin:28px 0">
+          <a href="${url}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">Open your portal</a>
+        </p>
+        <p style="font-size:12px;color:#64748b">No account or password needed — this link is yours alone and works for 90 days. Bookmark it or keep this email.</p>
+        <p style="font-size:12px;color:#94a3b8">If the button does not work, paste this into your browser:<br><span style="word-break:break-all">${url}</span></p>
+      </div>`;
+      const sent = await base44.asServiceRole.functions
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d" })
+        .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+      const sendResult = sent?.data || sent;
+      if (sendResult?.error || sendResult?.success === false) {
+        throw bad(`Portal email could not be sent: ${sendResult?.error || "sendGmail failed"}`);
+      }
+      const msgKey = `portal-email-note:${customerId}:${crypto.randomUUID()}`.slice(0, 256);
+      await createFoundationRecordWithRecovery({
+        entity: PortalMessage,
+        data: {
+          creation_request_key: msgKey,
+          customer_id: customerId,
+          author_side: "staff",
+          author_name: "System",
+          author_email: actor,
+          kind: "message",
+          body: `Portal link emailed to ${to} by ${actorName}.`,
+          related_kind: "none",
+          related_id: "",
+          related_label: "",
+          read_by_staff: true,
+          read_by_customer: true,
+        },
+        readMatches: () => PortalMessage.filter({ creation_request_key: msgKey }),
+        label: "Portal email notice",
+      }).catch(() => null);
+      return Response.json({ success: true, action, sent_to: to, link });
+    }
+
     if (action === "portal_inbox") {
       const rows = await PortalMessage.filter({ read_by_staff: false }).catch(() => []);
       const unread = (Array.isArray(rows) ? rows : []).filter((m: any) => clean(m?.author_side) === "customer");
