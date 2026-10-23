@@ -138,6 +138,12 @@ export default function EmployeeTodayCard({
     }
   }
 
+  const cardGlow = hasProblem ? "glow-danger"
+    : statusData?.status === "clocked_in" && statusData.work_pause_status === "paused" ? "glow-warning"
+    : statusData?.status === "clocked_in" && statusData.break_status === "on_break" ? "glow-warning"
+    : statusData?.status === "clocked_in" ? "glow-success"
+    : "";
+
   const recentActivity = [];
   for (const entry of todayEntries) {
     if (entry.clock_in) recentActivity.push({ key: `${entry.id}:in`, at: new Date(entry.clock_in), label: "Clocked in" });
@@ -158,7 +164,7 @@ export default function EmployeeTodayCard({
   if (!user?.email || !sessionToken) return null;
 
   return (
-    <div className="clay-card p-4 mb-6">
+    <div className={`clay-card glow-card p-4 mb-6 ${cardGlow}`}>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
