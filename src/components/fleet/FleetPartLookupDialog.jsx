@@ -65,6 +65,15 @@ const LOOKUP_MODES = [
   { key: "combined", label: "Combine", icon: Sparkles },
 ];
 
+const FIT_LABEL = { fits: "Fits", likely: "Likely fits", uncertain: "Uncertain", unlikely: "Unlikely", does_not_fit: "Doesn't fit" };
+const FIT_STYLE = {
+  fits: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
+  likely: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900",
+  uncertain: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  unlikely: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
+  does_not_fit: "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900",
+};
+
 const confidenceStyle = {
   high: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
   medium: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
@@ -72,6 +81,8 @@ const confidenceStyle = {
 };
 
 const BARCODE_FORMATS = ["code_128","code_39","ean_13","ean_8","upc_a","upc_e","qr_code","data_matrix"];
+
+const normKeyLocal = (value) => String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 const newPhoto = (file) => ({ file, previewUrl: URL.createObjectURL(file), uploadedUrl: "", name: file.name || "part photo" });
 const remotePhoto = (url) => ({ file: null, previewUrl: url, uploadedUrl: url, name: String(url).split("/").pop() || "part photo" });
@@ -111,6 +122,8 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
   const [requestDone, setRequestDone] = useState(null);
   const [requestBusy, setRequestBusy] = useState(false);
   const [requestError, setRequestError] = useState("");
+  const [fitBusy, setFitBusy] = useState(false);
+  const [fitResults, setFitResults] = useState(null);
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
   const previousFocus = useRef(null);
@@ -184,6 +197,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setRequestDone(null);
     setRequestError("");
     setRequestBusy(false);
+    setFitResults(null);
     setSavedMessage("Resumed from the Parts Identification Review Inbox.");
   };
 
@@ -211,6 +225,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setRequestDone(null);
     setRequestError("");
     setRequestBusy(false);
+    setFitResults(null);
   };
 
   useEffect(() => {
@@ -309,6 +324,23 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
   const activeEquipment = useMemo(() => equipment.filter(item => item.status !== "retired"), [equipment]);
   const resumableSessions = useMemo(() => identifications.filter(row => !["promoted","matched_existing","dismissed"].includes(row.status) && row.id !== identification?.id).slice(0, 6), [identifications, identification?.id]);
   const sourceLinks = useMemo(() => (candidate.source_urls || []).filter(url => /^https?:\/\//i.test(url)), [candidate.source_urls]);
+
+  // Live inventory awareness: exact number/barcode hits plus name contains,
+  // surfaced before any AI call is spent.
+  const inventoryMatches = useMemo(() => {
+    const q = normKeyLocal(query.trim());
+    const bc = normKeyLocal(barcodeValue.trim());
+    if (!q && !bc) return [];
+    const nameNeedle = query.trim().toLowerCase();
+    return parts.filter(part => {
+      const numbers = [part.part_number, part.barcode_value, ...(part.alternate_part_numbers || [])].map(normKeyLocal).filter(Boolean);
+      if (bc && numbers.includes(bc)) return true;
+      if (q && numbers.some(value => value === q)) return true;
+      if (nameNeedle.length >= 3 && String(part.part_name || "").toLowerCase().includes(nameNeedle)) return true;
+      if (q.length >= 5 && numbers.some(value => value.includes(q))) return true;
+      return false;
+    }).slice(0, 4);
+  }, [parts, query, barcodeValue]);
 
   if (!open) return null;
 
@@ -450,7 +482,33 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setActionedPart(null);
     setRequestFor(null);
     setRequestDone(null);
+    setFitResults(null);
     setSavedMessage(`Loaded ${num} for a new lookup. The previous review is saved in the inbox.`);
+  };
+
+  // Review-only AI fitment verdicts for the human-selected equipment list.
+  // Verdicts render as badges; they never toggle a selection on their own.
+  const checkFitment = async () => {
+    const selected = candidate.compatible_equipment_ids;
+    if (!selected.length) return setError("Select at least one equipment unit first — fitment verdicts stay review-only.");
+    if (!candidate.part_name.trim() && !candidate.part_number.trim()) return setError("Identify or name the part before checking fitment.");
+    setFitBusy(true); setError("");
+    try {
+      const targets = selected.map(id => activeEquipment.find(eq => eq.id === id)).filter(Boolean)
+        .map(eq => ({ id: eq.id, name: eq.name, type: eq.type, year: eq.year, make: eq.make, model: eq.model, vin: eq.vin || "", engine_details: eq.engine_details || "" }));
+      const schema = { type: "object", properties: { fitment: { type: "array", items: { type: "object", properties: {
+        equipment_id: { type: "string", enum: targets.map(t => t.id) },
+        verdict: { type: "string", enum: ["fits","likely","uncertain","unlikely","does_not_fit"] },
+        reason: { type: "string" },
+      }, required: ["equipment_id","verdict","reason"] } } }, required: ["fitment"] };
+      const prompt = `You are a fleet-maintenance parts fitment checker with internet research enabled. Decide whether this part fits each listed equipment unit.\n\nPart: ${JSON.stringify({ name: candidate.part_name, part_number: candidate.part_number, alternate_numbers: candidate.alternate_part_numbers, manufacturer: candidate.manufacturer, specification: candidate.specification, category: candidate.category, barcode: candidate.barcode_value })}\n\nEquipment units: ${JSON.stringify(targets)}\n\nRules:\n- Verdicts are REVIEW-ONLY guidance for a human; never claim certainty you lack.\n- fits only when OEM/aftermarket documentation or fitment data supports it; likely for strong indirect evidence; uncertain when information is missing; unlikely or does_not_fit when evidence contradicts.\n- reason: one short sentence citing the deciding factor (engine option, year range, model variant).`;
+      const ai = await base44.integrations.Core.InvokeLLM({ prompt, add_context_from_internet: true, response_json_schema: schema });
+      const map = {};
+      for (const row of ai?.fitment || []) if (row?.equipment_id) map[row.equipment_id] = { verdict: row.verdict || "uncertain", reason: String(row.reason || "") };
+      setFitResults(map);
+      setSavedMessage(`AI fitment check complete for ${Object.keys(map).length} selection${Object.keys(map).length === 1 ? "" : "s"} — verdicts are review-only.`);
+    } catch (e) { setError(e?.message || "Fitment check failed."); }
+    finally { setFitBusy(false); }
   };
 
   const analyze = async () => {
@@ -458,6 +516,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setBusy(true);
     setError("");
     setSavedMessage("");
+    setFitResults(null);
     try {
       const uploaded = photos.map(photo => photo.uploadedUrl || "");
       for (let i = 0; i < photos.length; i++) {
@@ -523,10 +582,13 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
             },
           },
           candidates: { type: "array", items: candidateSchema },
+          vendor_options: { type: "array", items: { type: "object", properties: {
+            vendor: { type: "string" }, sku: { type: "string" }, url: { type: "string" }, est_price: { type: "string" },
+          }, required: ["vendor"] } },
         },
         required: ["part_name","part_number","category","manufacturer","description","confidence","reasoning","verification_notes","suggested_equipment_ids","candidates"],
       };
-      const prompt = `You are the review-only CCS Fleet Part Identifier. Identify the physical fleet-maintenance part from the supplied number, barcode, text and/or photos. Internet research is enabled.\n\nUser text/part number: ${query.trim() || "(none)"}\nBarcode detected/entered: ${barcodeValue.trim() || "(none)"}\n\nCurrent active Fleet equipment (ONLY suggest ids from this exact list, and only when fitment is supported): ${JSON.stringify(equipmentContext)}\n\nExisting Fleet parts for duplicate awareness: ${JSON.stringify(inventoryContext)}\n\nRules:\n- Never invent a part number, OEM fitment, specification, vendor, price, or equipment compatibility.\n- Read visible labels/markings from every photo when possible. Put extracted label text in detected_text.\n- Use internet research to corroborate exact part numbers/manufacturers/cross-references.\n- source_urls should contain useful corroborating pages when available, not generic search pages.\n- candidates: return the BEST candidate first, plus up to 2 plausible alternatives when the identity is genuinely uncertain (different OEM vs aftermarket equivalent, superseded number, similar part). Return only the best candidate when the evidence is strong. Each candidate needs a confidence and a one-line fit_summary.\n- The top-level part_* fields must mirror candidates[0].\n- field_confidence: grade part_number, manufacturer, category, specification, and fitment independently — low when guessed rather than evidenced.\n- suggested_equipment_ids are REVIEW-ONLY. Return [] unless the evidence strongly supports fitment to equipment from the supplied list.\n- Keep part_name concise and inventory-friendly. category should be practical (filters, belts, electrical, brakes, engine, hydraulic, hardware, lighting, body, drivetrain, ignition, fuel, cooling, other, etc.).\n- This result does NOT create inventory.`;
+      const prompt = `You are the review-only CCS Fleet Part Identifier. Identify the physical fleet-maintenance part from the supplied number, barcode, text and/or photos. Internet research is enabled.\n\nUser text/part number: ${query.trim() || "(none)"}\nBarcode detected/entered: ${barcodeValue.trim() || "(none)"}\n\nCurrent active Fleet equipment (ONLY suggest ids from this exact list, and only when fitment is supported): ${JSON.stringify(equipmentContext)}\n\nExisting Fleet parts for duplicate awareness: ${JSON.stringify(inventoryContext)}\n\nRules:\n- Never invent a part number, OEM fitment, specification, vendor, price, or equipment compatibility.\n- Read visible labels/markings from every photo when possible. Put extracted label text in detected_text.\n- Use internet research to corroborate exact part numbers/manufacturers/cross-references.\n- source_urls should contain useful corroborating pages when available, not generic search pages.\n- candidates: return the BEST candidate first, plus up to 2 plausible alternatives when the identity is genuinely uncertain (different OEM vs aftermarket equivalent, superseded number, similar part). Return only the best candidate when the evidence is strong. Each candidate needs a confidence and a one-line fit_summary.\n- The top-level part_* fields must mirror candidates[0].\n- field_confidence: grade part_number, manufacturer, category, specification, and fitment independently — low when guessed rather than evidenced.\n- vendor_options: up to 3 real purchasable sources for this exact part — vendor name, sku, url, and est_price as a range like "$12-18". Only real, researched vendors; return [] when unsure.\n- suggested_equipment_ids are REVIEW-ONLY. Return [] unless the evidence strongly supports fitment to equipment from the supplied list.\n- Keep part_name concise and inventory-friendly. category should be practical (filters, belts, electrical, brakes, engine, hydraulic, hardware, lighting, body, drivetrain, ignition, fuel, cooling, other, etc.).\n- This result does NOT create inventory.`;
       const ai = /** @type {any} */ (await base44.integrations.Core.InvokeLLM({
         prompt,
         ...(photoUrls.length ? { file_urls: photoUrls } : {}),
@@ -713,6 +775,8 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">{LOOKUP_MODES.map(({key,icon:Icon,label}) => <button key={key} type="button" onClick={() => setSearchMode(key)} className={`min-h-20 rounded-xl border p-3 text-left ${searchMode === key ? "border-indigo-400 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/30" : "border-gray-200 dark:border-slate-700"}`}><Icon className="w-5 h-5 text-indigo-500" /><div className="mt-2 text-sm font-semibold">{label}</div></button>)}</div>
             <label className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Part number, label text, or description</span><textarea rows={3} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); analyze(); } }} placeholder="Example: WIX 51515, alternator label, Kubota fuel filter… (Ctrl+Enter identifies)" className="field mt-1" /></label>
             <div className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Barcode / UPC / QR value</span><div className="relative mt-1"><Barcode className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={barcodeValue} onChange={e => setBarcodeValue(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && barcodeValue.trim()) { e.preventDefault(); analyze(); } }} className="field pl-9 pr-24" placeholder="Detected automatically, scanned, or typed" />{barcodeSupported && <button type="button" onClick={() => { setScanError(""); setScanning(true); }} disabled={busy || scanning} className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-40 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"><ScanLine className="w-3.5 h-3.5" />Scan</button>}</div>{scanError && <div role="alert" className="mt-1 text-xs text-amber-700 dark:text-amber-300">{scanError}</div>}</div>
+            {inventoryMatches.length > 0 && <section className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900 dark:bg-emerald-950/20"><div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300"><Package className="w-3.5 h-3.5" />Already in Fleet inventory</div><div className="mt-2 space-y-1.5">{inventoryMatches.map(part => <div key={part.id} className="flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 dark:border-emerald-900 dark:bg-slate-900"><div className="min-w-0"><div className="truncate text-sm font-semibold text-gray-900 dark:text-slate-100">{part.part_name}</div><div className="truncate text-[11px] text-gray-500">{[part.part_number, part.manufacturer, `stock ${part.quantity_on_hand ?? 0}`, [part.storage_zone,part.storage_cabinet,part.storage_shelf,part.storage_bin].filter(Boolean).join(" · ") || part.location].filter(Boolean).join(" · ")}</div></div><button type="button" onClick={() => openRequest(part)} disabled={busy} className="shrink-0 rounded-lg border border-sky-300 px-2.5 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-300 disabled:opacity-50">Request more</button></div>)}</div></section>}
+            {requestPanel}
             <label
               onDragOver={e => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={e => { e.preventDefault(); setDragActive(false); }}
@@ -753,9 +817,9 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
           <div><h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">Where does it belong?</h3><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Connect the digital record to the actual shelf and the equipment it fits.</p></div>
           <div className="grid lg:grid-cols-2 gap-5">
             <section className="rounded-xl border border-gray-200 p-4 dark:border-slate-700 space-y-4"><h4 className="font-bold text-gray-900 dark:text-slate-100">Stock & physical location</h4><div className="grid grid-cols-2 gap-3"><Field label="Quantity found"><input type="number" min="0" step="1" value={candidate.quantity_on_hand} onChange={e => set("quantity_on_hand", Number(e.target.value || 0))} className="field" /></Field><Field label="Minimum stock"><input type="number" min="0" step="1" value={candidate.minimum_stock} onChange={e => set("minimum_stock", Number(e.target.value || 0))} className="field" /></Field><Field label="Area / Zone"><input value={candidate.storage_zone} onChange={e => set("storage_zone", e.target.value)} className="field" placeholder="Parts room" /></Field><Field label="Cabinet / Rack"><input value={candidate.storage_cabinet} onChange={e => set("storage_cabinet", e.target.value)} className="field" placeholder="Rack A" /></Field><Field label="Shelf"><input value={candidate.storage_shelf} onChange={e => set("storage_shelf", e.target.value)} className="field" placeholder="Shelf 3" /></Field><Field label="Bin"><input value={candidate.storage_bin} onChange={e => set("storage_bin", e.target.value)} className="field" placeholder="Bin B12" /></Field></div><Field label="Legacy/freeform location"><input value={candidate.location} onChange={e => set("location", e.target.value)} className="field" placeholder="Optional existing location wording" /></Field></section>
-            <section className="rounded-xl border border-gray-200 p-4 dark:border-slate-700"><div className="flex items-start justify-between gap-3"><div><h4 className="font-bold text-gray-900 dark:text-slate-100">Compatible equipment</h4><p className="text-xs text-gray-500 mt-1">Select only fitment you are comfortable confirming.{fieldConfidence("fitment") ? " AI graded this fitment " + fieldConfidence("fitment") + " confidence." : ""}</p></div>{(aiResult?.suggested_equipment_ids || []).length > 0 && <span className="text-[10px] rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 px-2 py-1">AI suggested {(aiResult.suggested_equipment_ids || []).length}</span>}</div><div className="mt-3 grid sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto">{activeEquipment.map(eq => { const selected = candidate.compatible_equipment_ids.includes(eq.id); const suggested = (aiResult?.suggested_equipment_ids || []).includes(eq.id); return <button key={eq.id} type="button" onClick={() => toggleEquipment(eq.id)} className={`text-left rounded-lg border p-3 ${selected ? "border-indigo-400 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/30" : suggested ? "border-amber-300 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 dark:border-slate-700"}`}><div className="flex items-center justify-between gap-2"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{eq.name}</div>{selected && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}</div><div className="text-xs text-gray-500 mt-1">{[eq.year,eq.make,eq.model].filter(Boolean).join(" ") || eq.type}</div>{suggested && !selected && <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 mt-1">AI suggestion — tap to confirm</div>}</button>; })}</div><Field label="Fitment notes"><textarea rows={3} value={candidate.compatibility_notes} onChange={e => set("compatibility_notes", e.target.value)} className="field mt-3" placeholder="Example: fits both Isuzu trucks; verify engine option before installation" /></Field></section>
+            <section className="rounded-xl border border-gray-200 p-4 dark:border-slate-700"><div className="flex items-start justify-between gap-3"><div><h4 className="font-bold text-gray-900 dark:text-slate-100">Compatible equipment</h4><p className="text-xs text-gray-500 mt-1">Select only fitment you are comfortable confirming.{fieldConfidence("fitment") ? " AI graded this fitment " + fieldConfidence("fitment") + " confidence." : ""}</p></div><div className="flex flex-col items-end gap-1.5">{(aiResult?.suggested_equipment_ids || []).length > 0 && <span className="text-[10px] rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 px-2 py-1">AI suggested {(aiResult.suggested_equipment_ids || []).length}</span>}<button type="button" onClick={checkFitment} disabled={fitBusy || busy || !candidate.compatible_equipment_ids.length} title="Ask AI to verify fitment for the selected equipment — verdicts are review-only" className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-40 dark:border-indigo-800 dark:text-indigo-300">{fitBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WandSparkles className="w-3.5 h-3.5" />}Check fitment</button></div></div><div className="mt-3 grid sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto">{activeEquipment.map(eq => { const selected = candidate.compatible_equipment_ids.includes(eq.id); const suggested = (aiResult?.suggested_equipment_ids || []).includes(eq.id); return <button key={eq.id} type="button" onClick={() => toggleEquipment(eq.id)} className={`text-left rounded-lg border p-3 ${selected ? "border-indigo-400 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/30" : suggested ? "border-amber-300 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 dark:border-slate-700"}`}><div className="flex items-center justify-between gap-2"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{eq.name}</div>{selected && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}</div><div className="text-xs text-gray-500 mt-1">{[eq.year,eq.make,eq.model].filter(Boolean).join(" ") || eq.type}</div>{suggested && !selected && <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 mt-1">AI suggestion — tap to confirm</div>}{fitResults?.[eq.id] && <div className={`mt-1.5 rounded-md border px-2 py-1 text-[10px] font-semibold ${FIT_STYLE[fitResults[eq.id].verdict] || FIT_STYLE.uncertain}`}>{FIT_LABEL[fitResults[eq.id].verdict] || "Uncertain"}{fitResults[eq.id].reason ? ` — ${fitResults[eq.id].reason}` : ""}</div>}</button>; })}</div><Field label="Fitment notes"><textarea rows={3} value={candidate.compatibility_notes} onChange={e => set("compatibility_notes", e.target.value)} className="field mt-3" placeholder="Example: fits both Isuzu trucks; verify engine option before installation" /></Field></section>
           </div>
-          <section className="rounded-xl border border-gray-200 p-4 dark:border-slate-700"><h4 className="font-bold text-gray-900 dark:text-slate-100 mb-3">Procurement</h4><div className="grid md:grid-cols-3 gap-3"><Field label="Preferred vendor"><input value={candidate.preferred_vendor} onChange={e => set("preferred_vendor", e.target.value)} className="field" /></Field><Field label="Vendor SKU"><input value={candidate.vendor_sku} onChange={e => set("vendor_sku", e.target.value)} className="field" /></Field><Field label="Unit cost"><input type="number" min="0" step="0.01" value={candidate.unit_cost} onChange={e => set("unit_cost", e.target.value)} className="field" /></Field></div></section>
+          <section className="rounded-xl border border-gray-200 p-4 dark:border-slate-700"><h4 className="font-bold text-gray-900 dark:text-slate-100 mb-3">Procurement</h4><div className="grid md:grid-cols-3 gap-3"><Field label="Preferred vendor"><input value={candidate.preferred_vendor} onChange={e => set("preferred_vendor", e.target.value)} className="field" /></Field><Field label="Vendor SKU"><input value={candidate.vendor_sku} onChange={e => set("vendor_sku", e.target.value)} className="field" /></Field><Field label="Unit cost"><input type="number" min="0" step="0.01" value={candidate.unit_cost} onChange={e => set("unit_cost", e.target.value)} className="field" /></Field></div>{(aiResult?.vendor_options || []).filter(opt => opt?.vendor).length > 0 && <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/40"><div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-slate-400">AI vendor options — tap to apply</div><div className="mt-2 grid sm:grid-cols-3 gap-2">{aiResult.vendor_options.filter(opt => opt?.vendor).slice(0, 3).map((opt, index) => <button key={index} type="button" onClick={() => { set("preferred_vendor", opt.vendor || ""); set("vendor_sku", opt.sku || ""); set("vendor_url", opt.url || ""); }} className="text-left rounded-lg border border-gray-200 bg-white p-2.5 hover:border-indigo-400 hover:bg-indigo-50/40 dark:border-slate-700 dark:bg-slate-900"><div className="text-sm font-semibold text-gray-900 dark:text-slate-100">{opt.vendor}</div><div className="text-[11px] text-gray-500 mt-0.5">{[opt.sku, opt.est_price].filter(Boolean).join(" · ") || "Details unverified"}</div>{opt.url && <div className="truncate text-[10px] text-indigo-600 dark:text-indigo-300 mt-0.5">{String(opt.url).replace(/^https?:\/\//i, "").slice(0, 50)}</div>}</button>)}</div></div>}</section>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2"><button type="button" onClick={() => setStep("verify")} disabled={busy} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2"><ArrowLeft className="w-4 h-4" />Back to identity</button><div className="flex flex-col sm:flex-row gap-2"><button type="button" onClick={saveReview} disabled={busy} className="px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 font-semibold">Save for Later</button>{isAdmin && <button type="button" onClick={() => promote(false)} disabled={busy || duplicates.length > 0} title={duplicates.length ? "Resolve the possible duplicate before creating another part." : "Add reviewed part to Fleet inventory"} className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}Add to Fleet Parts</button>}{isAdmin && duplicates.length > 0 && <button type="button" onClick={() => promote(true)} disabled={busy} className="px-4 py-2 rounded-lg border border-red-300 text-red-700 dark:text-red-300 font-semibold">Create Separate Anyway</button>}</div></div>
         </div>}
 
