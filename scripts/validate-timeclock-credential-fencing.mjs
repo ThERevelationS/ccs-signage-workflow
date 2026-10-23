@@ -143,7 +143,7 @@ console.log('PASS an in-flight badge read cannot bleed across an employee switch
   // User rotates while the view read is still in flight.
   await act(async () => { buttonByText(renderer, 'Replace Badge').props.onClick(); await flush(); });
   const replaceActions = buttons(renderer).filter((b) => textOf(b).includes('Replace Badge'));
-  await act(async () => { await replaceActions[replaceActions.length - 1].props.onClick({ preventDefault() {} }); await flush(); });
+  await act(async () => { replaceActions[replaceActions.length - 1].props.onClick({ preventDefault() {} }).catch(() => {}); await flush(); });
   assert.equal(qrCalls.length, 2, 'rotation issues a second request');
   assert.equal(qrCalls[1].payload.rotate, true);
   const rotateRequestId = qrCalls[1].payload.request_id;
@@ -173,7 +173,7 @@ console.log('PASS a superseded badge read cannot overwrite a newer rotated badge
 
   await act(async () => { buttonByText(renderer, 'Replace Badge').props.onClick(); await flush(); });
   const replaceActions = buttons(renderer).filter((b) => textOf(b).includes('Replace Badge'));
-  await act(async () => { await replaceActions[replaceActions.length - 1].props.onClick({ preventDefault() {} }); await flush(); });
+  await act(async () => { replaceActions[replaceActions.length - 1].props.onClick({ preventDefault() {} }).catch(() => {}); await flush(); });
   assert.equal(qrCalls.length, 2);
   const r1 = qrCalls[1].payload.request_id;
   assert.equal(sessionStore.get(rotationKey(alice.email)), r1);
@@ -198,7 +198,7 @@ console.log('PASS a delayed rotation acknowledgement cannot clear a newer reques
 
   await act(async () => { buttonByText(renderer, 'Replace Badge').props.onClick(); await flush(); });
   const replaceActions = buttons(renderer).filter((b) => textOf(b).includes('Replace Badge'));
-  await act(async () => { await replaceActions[replaceActions.length - 1].props.onClick({ preventDefault() {} }); await flush(); });
+  await act(async () => { replaceActions[replaceActions.length - 1].props.onClick({ preventDefault() {} }).catch(() => {}); await flush(); });
   assert.equal(qrCalls.length, 2);
 
   // Switch employees while the rotation is in flight.
