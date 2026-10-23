@@ -1136,8 +1136,8 @@ export default function SIPs() {
                 const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
                 
                 return [
-                  focusedRowId === wo.id && <tr key="focus-gap-top" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
-                  <tr 
+                  focusedRowId === wo.id && <tr key="focus-gap-top" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>,
+                  <tr key="row"
                     className={`sips-board-row border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'sips-focus-row' : ''}`}
                     style={{ height: focusedRowId === wo.id ? '62px' : '50px' }}
                   >
