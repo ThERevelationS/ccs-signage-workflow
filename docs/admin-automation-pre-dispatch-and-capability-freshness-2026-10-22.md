@@ -140,6 +140,27 @@ workflowTriggerEngine, checkDeadlineReminders), every supported action must
 have a real executor case, the three sets may not overlap, and every
 advertised trigger resolves to a status.
 
+Automation execution was then unified server-side. NotificationService no
+longer evaluates AutomationRule rows in the browser (which silently ran
+send_email only); it posts each emitted event to processWorkflowTriggers
+with the session token, and the endpoint re-reads the Work Order or Order
+itself before running actions. workflowTriggerEngine's matchesTrigger now
+accepts the named client event vocabulary alongside the legacy
+create/update diff vocabulary (stage/ASAP/assignment conditions read event
+extras like previousStage/newStage), trigger rows combine with their
+declared and/or logic, mutating actions skip cleanly on order events that
+carry no Work Order, send_email gained the custom_list recipient type,
+formatted stage names, and order template variables, and work_order_deleted
+is allowed to describe a trashed record (mutating actions still CAS-fail
+against Project Trash, which is the desired outcome — only notifications
+make sense there). checkDeadlineReminders gained durable dedup: a firing
+is claimed via a conditional write of automation_deadline_fired
+(ruleId|trigger|dueDate -> run-dated marker) on the Work Order before any
+action runs, mirroring the permit follow-up claim pattern, with a per-run
+nonce so a second same-day run cannot satisfy the already-desired
+early-return; markers over 90 days are pruned. Its recipient resolver also
+gained the previously missing creator and custom_list types.
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -166,10 +187,11 @@ Verification:
   scripts/test-admin-settings-conflict-reload.mjs (4 tests: all six
   GlobalSettings admin panels keep a save conflict actionable via auto-reload
   or a wired reload action, and the shared helper's guards stay intact), and
-  scripts/test-admin-automation-honesty.mjs (4 tests: live trigger sets match
+  scripts/test-admin-automation-honesty.mjs (5 tests: live trigger sets match
   real emitters, supported action sets match real executors, dead options are
   marked and warned about in the builder, every advertised trigger resolves
-  to a status).
+  to a status, and automation rules execute server-side through the engine
+  endpoint).
 - node scripts/test-admin-navigation-browser.mjs: 95/95 isolated Chromium
   checks passed, including six checks covering pre-dispatch toggle
   release, editor-save draft preservation, write-time expired-capability
