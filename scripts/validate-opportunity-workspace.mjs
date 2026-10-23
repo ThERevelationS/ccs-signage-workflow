@@ -309,6 +309,11 @@ assert.match(portalFn, /action === "email_link"/, 'staff must be able to email t
 assert.match(portalFn, /invoke\("sendGmail"/, 'email_link must send through the gmail function');
 assert.match(portalFn, /portal_base/, 'email_link must build the portal URL from the caller origin');
 assert.match(portalFn, /Portal link emailed to \$\{to\} by \$\{actorName\}/, 'portal emails must be logged to the thread');
+assert.match(portalFn, /action === "request_job_revision"/, 'customers must be able to request job changes');
+assert.match(portalFn, /clean\(order\.customer_id\) !== customerId/, 'job revision requests must be ownership-scoped');
+assert.match(portalFn, /status: "proposed"[\s\S]*?reason: "Customer request via portal"/, 'job revisions must draft a proposed change order');
+assert.match(portalFn, /asServiceRole\.entities\.ChangeOrder\b/, 'portal must create change orders');
+assert.match(portalFn, /kind: "job_revision_requested"/, 'job revisions must hit the staff inbox');
 assert.doesNotMatch(portalFn.slice(portalFn.indexOf('action === "bootstrap"'), portalFn.indexOf('authenticateSignShopSession')), /session_token/, 'bootstrap must not require a session token');
 const portalPage = readFileSync('src/pages/CustomerPortal.jsx', 'utf8');
 assert.match(portalPage, /\.get\("token"\)/, 'portal page must read the token from the URL');
@@ -319,6 +324,7 @@ assert.match(portalPage, /post_message/, 'portal page must send portal messages'
 assert.match(portalPage, /payment_notice/, 'portal page must send payment notices');
 assert.match(portalPage, /key: "messages"/, 'portal page must have a messages tab');
 assert.match(portalPage, /key: "jobs"/, 'portal page must have a jobs tab');
+assert.match(portalPage, /action: "request_job_revision"/, 'portal page must submit job change requests');
 const portalPanel = readFileSync('src/components/portal/PortalPanel.jsx', 'utf8');
 assert.match(portalPanel, /action: "list_thread"/, 'the portal panel must load the thread');
 assert.match(portalPanel, /action: "reply_message"/, 'the portal panel must send staff replies');
