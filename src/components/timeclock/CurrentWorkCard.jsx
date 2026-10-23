@@ -105,7 +105,7 @@ export default function CurrentWorkCard({
   };
 
   return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
+    <div className={`rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3 glow-card ${activeLabor ? "glow-info" : ""}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 font-semibold text-blue-900"><Wrench className="w-4 h-4" />Current Work</div>
