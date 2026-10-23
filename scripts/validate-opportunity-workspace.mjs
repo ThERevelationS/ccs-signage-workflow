@@ -66,6 +66,7 @@ assert.match(page, /FollowUps/, 'the page must render a follow-ups view');
 assert.match(entry, /ar_aging/, 'customer 360 must return AR aging buckets');
 assert.match(entry, /d90_plus/, 'aging must include a 90+ bucket');
 assert.match(entry, /days_overdue/, 'invoice rows must carry days overdue');
+assert.match(entry, /by_salesperson/, 'funnel must break down results by salesperson');
 assert.match(entry, /asServiceRole\.entities\.Invoice\b/, 'global search must read invoices via service role');
 assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 'search must invoke the workspace function');
 assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
