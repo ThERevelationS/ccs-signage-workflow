@@ -24,13 +24,13 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { MemoryRouter } from "react-router-dom";',
-    'import FleetWorkOrders from "/@fs/app/src/pages/FleetWorkOrders.jsx";',
+    `import FleetWorkOrders from "/@fs/${appRoot.replace(/\\/g, "/")}/src/pages/FleetWorkOrders.jsx";`,
     'createRoot(document.getElementById("root")).render(<MemoryRouter><FleetWorkOrders /></MemoryRouter>);',
   ].join("\n"));
 
   // Wrap the established Fleet browser fixture without changing its existing suite.
   await writeFile(path.join(scratch, "mockEstimate.js"), [
-    'import { base44 as original, createPageUrl } from "/@fs/app/scripts/fleet-browser-harness/mockBase44.js";',
+    `import { base44 as original, createPageUrl } from "/@fs/${appRoot.replace(/\\/g, "/")}/scripts/fleet-browser-harness/mockBase44.js";`,
     'export { createPageUrl };',
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 0;',
@@ -73,7 +73,7 @@ try {
       { find: "@/components/fleet/FleetModuleNav", replacement: path.join(source, "mockComponents.jsx") },
       { find: /^@\//, replacement: path.join(appRoot, "src") + "/" },
     ] },
-    server: { host:"127.0.0.1",port:0,strictPort:false,fs:{allow:[appRoot,scratch]} },
+    server: { host:"127.0.0.1",port:0,strictPort:false,fs:{allow:[appRoot,scratch],strict:false} },
     logLevel:"error",
   });
   await vite.listen();
@@ -108,6 +108,12 @@ try {
     return dialog;
   }
   const focusedRole = (page,role) => page.waitForFunction(r=>document.activeElement?.getAttribute("role")===r,role);
+  // Focus is applied through deferred effects; evaluate-then-assert races the
+  // apply. Wait until the element is actually focused before asserting.
+  const expectFocused = async (page,locator,message) => {
+    await page.waitForFunction(el=>document.activeElement===el,await locator.elementHandle());
+    assert.equal(await locator.evaluate(el=>document.activeElement===el),true,message);
+  };
 
   await run("Desktop: acknowledged draft plus failed refresh keeps retry and keyboard focus",1440,async page=>{
     const dialog=await openEstimate(page);
@@ -119,13 +125,12 @@ try {
     assert.match(await dialog.getByRole("status").innerText(),/draft saved/);
     await focusedRole(page,"alert");
     await page.keyboard.press("Tab");
-    assert.equal(await dialog.getByRole("button",{name:"Close repair estimate"})
-      .evaluate(el=>document.activeElement===el),true,"Tab remains trapped after warning focus");
+    await expectFocused(page,dialog.getByRole("button",{name:"Close repair estimate"}),"Tab remains trapped after warning focus");
     await dialog.getByRole("button",{name:"Close repair estimate"}).click();
     await dialog.waitFor({state:"hidden"});
     const retry=page.getByRole("button",{name:"Retry refresh"});
     await retry.waitFor();
-    assert.equal(await retry.evaluate(el=>document.activeElement===el),true,"Focus moves to retry");
+    await expectFocused(page,retry,"Focus moves to retry");
     assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="save").length),1);
     await retry.click();
     await page.waitForFunction(()=>document.activeElement?.getAttribute("aria-label")==="Filter by work order status");
@@ -138,8 +143,7 @@ try {
     await dialog.getByRole("status").getByText(/submitted for approval/).waitFor();
     await focusedRole(page,"status");
     await page.keyboard.press("Tab");
-    assert.equal(await dialog.getByRole("button",{name:"Close repair estimate"})
-      .evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,dialog.getByRole("button",{name:"Close repair estimate"}));
     await page.keyboard.press("Escape");
     await dialog.waitFor({state:"hidden"});
     await page.waitForFunction(()=>document.activeElement?.dataset?.fleetEstimateOpen==="wo-open");
@@ -155,8 +159,7 @@ try {
     await focusedRole(page,"status");
     assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).count(),0);
     await page.keyboard.press("Tab");
-    assert.equal(await dialog.getByRole("button",{name:"Close repair estimate"})
-      .evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,dialog.getByRole("button",{name:"Close repair estimate"}));
   });
 
   await run("Mobile: submitted estimate filtered out returns focus to status filter",390,async page=>{
@@ -189,11 +192,10 @@ try {
     await retry.waitFor();
     assert.match(await dialog.getByRole("alert").innerText(),/Retry loading before making changes/);
     assert.equal(await dialog.getByRole("button",{name:"Save Draft"}).count(),0);
-    assert.equal(await retry.evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,retry);
     await page.keyboard.press("Enter");
     await dialog.getByRole("button",{name:"Save Draft"}).waitFor();
-    assert.equal(await dialog.getByRole("button",{name:"Close repair estimate"})
-      .evaluate(el=>document.activeElement===el),true,"Focus returns to a surviving control after retry");
+    await expectFocused(page,dialog.getByRole("button",{name:"Close repair estimate"}),"Focus returns to a surviving control after retry");
     assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
       ["get","get"],"Failed loading cannot create an estimate");
   });
@@ -225,7 +227,7 @@ try {
     await page.evaluate(()=>{window.__fleetEstimateFixture.failNextGet=true;});
     await check.click();
     await dialog.getByRole("alert").getByText(/Submission remains unconfirmed/).waitFor();
-    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,check);
     assert.equal(await dialog.getByRole("button",{name:"Save Draft"}).count(),0);
     await check.click();
     await dialog.getByRole("status").getByText(/Server confirms this estimate remains a draft/).waitFor();
@@ -260,7 +262,7 @@ try {
     await check.click();
     await dialog.getByRole("alert").getByText(/cannot be reconciled/).waitFor();
     assert.equal(await dialog.getByRole("button",{name:"Save & Submit"}).count(),0);
-    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,check);
     assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
       ["get","save","submit","get"]);
   });
@@ -336,7 +338,7 @@ try {
     await page.evaluate(()=>{window.__fleetEstimateFixture.failNextGet=true;});
     await check.click();
     await dialog.getByRole("alert").getByText(/decision remains unconfirmed; do not repeat it/i).waitFor();
-    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,check);
     assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).isDisabled(),true);
     assert.equal(await dialog.getByRole("button",{name:"Request Changes",exact:true}).isDisabled(),true);
     assert.equal(await dialog.getByRole("button",{name:"Reject",exact:true}).isDisabled(),true);
@@ -355,7 +357,7 @@ try {
     });
     await check.click();
     await dialog.getByRole("alert").getByText(/changed while the approval response was uncertain/i).waitFor();
-    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    await expectFocused(page,check);
     assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).isDisabled(),true);
     assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),1);
   });
