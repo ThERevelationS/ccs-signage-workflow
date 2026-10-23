@@ -299,6 +299,12 @@ assert.match(portalFn, /action === "portal_inbox"/, 'staff must get an unread po
 assert.match(portalFn, /estimatePortalView/, 'portal must sanitize estimates');
 assert.match(portalFn, /jobPortalView/, 'portal must sanitize work orders');
 assert.match(portalFn, /estimate\.customer_id\) !== customerId/, 'quote responses must be ownership-scoped');
+assert.match(portalFn, /asServiceRole\.entities\.OpportunityActivity\b/, 'portal must log to the opportunity audit trail');
+assert.match(portalFn, /asServiceRole\.entities\.EstimatingRequest\b/, 'portal must resolve the estimate\'s opportunity');
+assert.match(portalFn, /logPortalOpportunityActivity/, 'portal activity helper must exist');
+assert.match(portalFn, /Customer approved \$\{quoteLabel\} via the portal/, 'approvals must reach the opportunity timeline');
+assert.match(portalFn, /Customer requested revisions on \$\{quoteLabel\} via the portal/, 'revision requests must reach the opportunity timeline');
+assert.match(portalFn, /Customer sent a payment notice for \$\{invLabel\} via the portal/, 'payment notices must reach the opportunity timeline');
 assert.doesNotMatch(portalFn.slice(portalFn.indexOf('action === "bootstrap"'), portalFn.indexOf('authenticateSignShopSession')), /session_token/, 'bootstrap must not require a session token');
 const portalPage = readFileSync('src/pages/CustomerPortal.jsx', 'utf8');
 assert.match(portalPage, /\.get\("token"\)/, 'portal page must read the token from the URL');
