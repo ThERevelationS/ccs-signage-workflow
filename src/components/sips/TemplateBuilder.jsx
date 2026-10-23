@@ -291,6 +291,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     return saved;
   };
 
+  // Inline condition mutations (section reorder, group move) may not overlap
+  // another catalog write or a checklist save; the lock is held until the
+  // write settles and released on failure too.
+  const saveDropdownConditionsCatalog = (nextConditions, label) => {
+    if (!beginCatalogAction()) return;
+    saveDropdownConditions(nextConditions)
+      .catch(error => {
+        console.error(`Error saving dropdown conditions (${label}):`, error);
+      })
+      .finally(() => {
+        catalogActionInFlightRef.current = false;
+      });
+  };
+
   const startDropdownRename = (condition) => {
     setEditingDropdown(condition.id);
     setEditingDropdownName(condition.name || "");
@@ -590,10 +604,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       message: `Remove “${type}” from the SIPS Product Checklists list? Work Orders that already use this checklist keep their saved checklist rows and answers. This stops the checklist from appearing for new selections; its stored template configuration is retained internally.`,
       confirmLabel: "Remove from Builder",
       onConfirm: async () => {
-        await saveProductTypes(productTypes.filter((_, i) => i !== index));
-        if (selectedProductType === type) {
-          setSelectedProductType(null);
-          setProductTypeItems([]);
+        if (!beginCatalogAction()) return;
+        try {
+          await saveProductTypes(productTypes.filter((_, i) => i !== index));
+          if (selectedProductType === type) {
+            setSelectedProductType(null);
+            setProductTypeItems([]);
+          }
+        } catch (error) {
+          console.error("Error removing product checklist:", error);
+        } finally {
+          catalogActionInFlightRef.current = false;
         }
       },
     });
@@ -604,7 +625,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       title: "Delete condition?",
       message: `Delete “${condition.name}”? Existing saved checklist answers are not rewritten, but this condition will no longer be available for new selections.`,
       confirmLabel: "Delete Condition",
-      onConfirm: () => saveDropdownConditions(dropdownConditions.filter(d => d.id !== condition.id)),
+      onConfirm: async () => {
+        if (!beginCatalogAction()) return;
+        try {
+          await saveDropdownConditions(dropdownConditions.filter(d => d.id !== condition.id));
+        } catch (error) {
+          console.error("Error deleting condition:", error);
+        } finally {
+          catalogActionInFlightRef.current = false;
+        }
+      },
     });
   };
 
@@ -2433,7 +2463,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       // Update order values
                       const updatedCompleted = reordered.map((item, idx) => ({ ...item, order: idx }));
                       const continuedItems = dropdownConditions.filter(d => !d.is_completed);
-                      saveDropdownConditions([...updatedCompleted, ...continuedItems]);
+                      saveDropdownConditionsCatalog([...updatedCompleted, ...continuedItems], 'completed reorder');
                     }}>
                       <Droppable droppableId="completed-conditions">
                         {(provided) => (
@@ -2456,7 +2486,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed);
                                         const completedItems = dropdownConditions.filter(d => d.is_completed && d.id !== dd.id);
                                         const movedItem = { ...dd, is_completed: false, order: continuedItems.length };
-                                        saveDropdownConditions([...completedItems, ...continuedItems, movedItem]);
+                                        saveDropdownConditionsCatalog([...completedItems, ...continuedItems, movedItem], 'mark continued');
                                       }}
                                       className="h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 lg:h-7 lg:w-7"
                                       title={`Mark ${dd.name} as Continued`}
@@ -2533,7 +2563,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       // Update order values
                       const updatedContinued = reordered.map((item, idx) => ({ ...item, order: idx }));
                       const completedItems = dropdownConditions.filter(d => d.is_completed);
-                      saveDropdownConditions([...completedItems, ...updatedContinued]);
+                      saveDropdownConditionsCatalog([...completedItems, ...updatedContinued], 'continued reorder');
                     }}>
                       <Droppable droppableId="continued-conditions">
                         {(provided) => (
@@ -2556,7 +2586,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         const completedItems = dropdownConditions.filter(d => d.is_completed);
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed && d.id !== dd.id);
                                         const movedItem = { ...dd, is_completed: true, order: completedItems.length };
-                                        saveDropdownConditions([...completedItems, movedItem, ...continuedItems]);
+                                        saveDropdownConditionsCatalog([...completedItems, movedItem, ...continuedItems], 'mark completed');
                                       }}
                                       className="h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-600 focus-visible:ring-offset-2 lg:h-7 lg:w-7"
                                       title={`Mark ${dd.name} as Completed`}
