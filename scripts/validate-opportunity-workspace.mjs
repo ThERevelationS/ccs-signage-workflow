@@ -314,6 +314,9 @@ assert.match(portalFn, /clean\(order\.customer_id\) !== customerId/, 'job revisi
 assert.match(portalFn, /status: "proposed"[\s\S]*?reason: "Customer request via portal"/, 'job revisions must draft a proposed change order');
 assert.match(portalFn, /asServiceRole\.entities\.ChangeOrder\b/, 'portal must create change orders');
 assert.match(portalFn, /kind: "job_revision_requested"/, 'job revisions must hit the staff inbox');
+assert.match(portalFn, /client_product_name/, 'portal quotes must expose customer-facing section names');
+assert.match(portalFn, /include_in_customer/, 'portal must honor section bundling');
+assert.doesNotMatch(portalFn.slice(portalFn.indexOf('function estimatePortalView'), portalFn.indexOf('function jobPortalView')), /total_snapshot:|builder_name/, 'portal quote sections must not leak internal costs or builder names');
 assert.doesNotMatch(portalFn.slice(portalFn.indexOf('action === "bootstrap"'), portalFn.indexOf('authenticateSignShopSession')), /session_token/, 'bootstrap must not require a session token');
 const portalPage = readFileSync('src/pages/CustomerPortal.jsx', 'utf8');
 assert.match(portalPage, /\.get\("token"\)/, 'portal page must read the token from the URL');
@@ -325,6 +328,7 @@ assert.match(portalPage, /payment_notice/, 'portal page must send payment notice
 assert.match(portalPage, /key: "messages"/, 'portal page must have a messages tab');
 assert.match(portalPage, /key: "jobs"/, 'portal page must have a jobs tab');
 assert.match(portalPage, /action: "request_job_revision"/, 'portal page must submit job change requests');
+assert.match(portalPage, /View\}? quote details|quote details/, 'portal quotes must show line-item detail');
 const portalPanel = readFileSync('src/components/portal/PortalPanel.jsx', 'utf8');
 assert.match(portalPanel, /action: "list_thread"/, 'the portal panel must load the thread');
 assert.match(portalPanel, /action: "reply_message"/, 'the portal panel must send staff replies');
