@@ -17,6 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  Megaphone,
+  X,
 } from "lucide-react";
 
 const money = (value) => {
@@ -435,6 +437,7 @@ export default function CustomerPortal() {
   const [tab, setTab] = useState("overview");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
+  const [dismissed, setDismissed] = useState(() => new Set());
   const msgKeyRef = useRef(crypto.randomUUID());
 
   const load = useCallback(async () => {
@@ -471,6 +474,7 @@ export default function CustomerPortal() {
   const awaiting = estimates.filter((e) => e.can_respond);
   const activeJobs = jobs.filter((j) => !["completed", "cancelled"].includes(j.status));
   const unreadFromStaff = data?.unread_for_customer || 0;
+  const announcements = (data?.announcements || []).filter((a) => !dismissed.has(a.title));
 
   const respond = async (quote, decision, note) => {
     setBusy(true);
@@ -538,6 +542,20 @@ export default function CustomerPortal() {
             </button>
           )}
         </div>
+
+        {!state.loading && announcements.length > 0 && announcements.map((a) => (
+          <div key={a.title} className={`flex gap-3 rounded-2xl border p-4 ${a.priority === "urgent" || a.priority === "high" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
+            <Megaphone className={`mt-0.5 h-5 w-5 shrink-0 ${a.priority === "urgent" || a.priority === "high" ? "text-red-500" : "text-amber-500"}`} />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-900">{a.title}</p>
+              {a.message && <p className="mt-0.5 whitespace-pre-line text-sm text-slate-600">{a.message}</p>}
+              {a.image_url && <img src={a.image_url} alt="" className="mt-2 max-h-40 rounded-lg" />}
+            </div>
+            <button onClick={() => setDismissed((s) => new Set([...s, a.title]))} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
 
         {state.loading && (
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">
