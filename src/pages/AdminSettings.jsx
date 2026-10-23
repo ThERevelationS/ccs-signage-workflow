@@ -360,6 +360,7 @@ export default function AdminSettings() {
   const isAdmin = currentUser?.role === "admin";
   const [searchParams, setSearchParams] = useSearchParams();
   const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
+  const [capabilityExpiryLabel, setCapabilityExpiryLabel] = useState("");
   const navigationKey = getAdminNavigationStorageKey(currentUser);
   // Restore only after identity and Admin unlock are established; direct URLs win.
   const browserStorage = (() => {
@@ -655,14 +656,16 @@ export default function AdminSettings() {
     // A capability that expires while the page sits open re-locks at the
     // moment of expiry rather than waiting for the next write to discover it.
     // Re-unlocking stores a fresh expiry and this effect re-arms itself.
-    if (!isUnlocked) return;
+    if (!isUnlocked) { setCapabilityExpiryLabel(""); return; }
     const expiresAt = getStoredAdminSettingsCapabilityExpiry();
-    if (!Number.isFinite(expiresAt)) return;
+    if (!Number.isFinite(expiresAt)) { setCapabilityExpiryLabel(""); return; }
     const relock = () => {
+      setCapabilityExpiryLabel("");
       setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
       setIsUnlocked(false);
     };
     if (expiresAt <= Date.now()) { relock(); return; }
+    setCapabilityExpiryLabel(new Date(expiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
     const timer = setTimeout(relock, expiresAt - Date.now());
     return () => clearTimeout(timer);
   }, [isUnlocked]);
@@ -1687,6 +1690,11 @@ export default function AdminSettings() {
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} onNavigate={handleAdminTabChange} />
+            {capabilityExpiryLabel && (
+              <p data-admin-capability-expiry className="px-2 pb-1 text-right text-[11px] font-medium text-red-900/60">
+                Admin authorization expires at {capabilityExpiryLabel}
+              </p>
+            )}
             <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70 pb-2 [scrollbar-width:thin]">
               {availableAdminGroups.map((group) => (
                 <button
