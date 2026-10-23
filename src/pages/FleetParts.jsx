@@ -166,7 +166,7 @@ export default function FleetParts() {
     <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-slate-900 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"><div><div className="text-xs uppercase font-semibold text-gray-400">Inventory value</div><div className="text-2xl font-bold text-gray-900 dark:text-slate-100">${metrics.value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div><div className="text-xs text-gray-500 dark:text-slate-400">Based only on current Fleet quantity × stored unit cost. Missing costs are treated as $0.</div></div>
   </div>
 
-  <FleetPartLookupDialog open={!!lookup} equipment={equipment} parts={parts} isAdmin={isAdmin} organizeMode={lookup?.organizeMode===true} initialEquipmentId={lookup?.equipmentId||""} resumeIdentification={lookup?.resumeIdentification||null} onClose={closeLookup} onChanged={load}/>
+  <FleetPartLookupDialog open={!!lookup} equipment={equipment} parts={parts} identifications={identifications} isAdmin={isAdmin} organizeMode={lookup?.organizeMode===true} initialEquipmentId={lookup?.equipmentId||""} resumeIdentification={lookup?.resumeIdentification||null} onClose={closeLookup} onChanged={load}/>
   <FleetInventoryDialog open={!!dialog} itemType="part" item={dialog?.item||null} equipment={equipment} onClose={()=>!saving&&setDialog(null)} onSave={save} saving={saving}/>
   <FleetInventoryUsageDialog open={!!usageItem} item={usageItem} itemType="part" equipment={equipment} busy={usageBusy} error={usageError} onClose={()=>{if(!usageBusy){setUsageItem(null);setUsageError("");}}} onConfirm={recordUsage}/>
   </div>;
