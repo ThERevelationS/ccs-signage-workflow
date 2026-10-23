@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { callBouncieApi, getActiveConnection } from '../../shared/bouncie.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { canonicalCutoverRow } from '../../shared/fleetCutoverState.ts';
 
 const SOURCE_APP_ID = '68accb163a1b474cdb95ea70';
 const DEST_APP_ID = '68dfcc5e57bbbc35387da97c';
@@ -30,7 +31,7 @@ async function latestVerification(base44:any) {
 
 async function getCutoverState(base44:any, createIfMissing = false) {
   const rows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:CUTOVER_STATE_KEY });
-  const existing = (rows || []).sort((a:any,b:any)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
+  const existing = canonicalCutoverRow(rows);
   if (existing || !createIfMissing) return existing;
   const created = await base44.asServiceRole.entities.FleetCutoverState.create({
     state_key:CUTOVER_STATE_KEY,
@@ -46,7 +47,7 @@ async function getCutoverState(base44:any, createIfMissing = false) {
   // receipt claims. Downstream readers index [0] unsorted, so a surviving
   // duplicate would make the cutover gate non-deterministic.
   const contenders = (await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:CUTOVER_STATE_KEY }).catch(() => [])) || [];
-  const canonical = contenders.sort((a:any,b:any)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
+  const canonical = canonicalCutoverRow(contenders);
   if (canonical && canonical.id !== created.id) {
     await base44.asServiceRole.entities.FleetCutoverState.delete(created.id).catch(() => null);
     return canonical;
