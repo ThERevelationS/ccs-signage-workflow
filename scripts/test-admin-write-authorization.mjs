@@ -90,23 +90,37 @@ test("Only the audited helpers perform direct entity writes inside admin compone
     "a new direct entity write inside admin components must be audited for RLS before shipping");
 });
 
-test("Inline credentialed-function invokes inside admin components carry a credential", () => {
-  // These backend functions derive the actor from the request credential; an
-  // invoke without session_token/admin_capability is rejected server-side —
-  // which is how SyncAlertSettings silently no-oped until the 2026-10 fix.
-  const CREDENTIALED = ["smartsheetSyncAction", "corebridgeApiAction", "manageAutomationConfig",
-    "manageAuthorizedUsers", "onboardingAccountAction", "issuePasswordReset"];
+test("Inline function invokes inside admin components are credentialed or platform-audited", () => {
+  // Every inline invoke("name", {...}) in admin components must either carry a
+  // request credential or target a function verified to authenticate via
+  // createClientFromRequest(req).auth.me() + admin role server-side (the
+  // platform ambient session). A new function invoke lands here as a test
+  // failure until its backend auth is audited — this is the tripwire that
+  // would have caught SyncAlertSettings' uncredentialed smartsheetSyncAction
+  // calls, which silently 403'd until the 2026-10 fix.
   const CREDENTIAL = /session_token|admin_capability|sessionToken|writeCapability|requireSessionToken/;
+  const PLATFORM_AUTHED = new Set([
+    "auditJurisdictionAccuracy",          // auth.me() + role==='admin'
+    "opportunityBridgeSimulation",        // auth.me() + role==='admin'
+    "permittingHtmlEvidence",             // auth.me() + role==='admin' on mutating actions
+    "permittingOfficeAuthorityReview",    // auth.me() + role==='admin' on mutating actions
+    "permittingOfficeCandidate",          // auth.me() + role==='admin'
+    "permittingResearchBacklogDispatch",  // auth.me() + role==='admin'
+    "permittingSourceAuthorityReview",    // auth.me() + role==='admin'
+    "updateJurisdictionRewriteAuthority", // auth.me() + role==='admin'
+  ]);
+  // Variable-name and variable-payload invokes (invoke(name, body),
+  // invokePermittingReview, queueSmartsheetSync) are not inline literals and
+  // are covered by the helper-payload test or the caller's own contract.
   for (const file of readdirSync("src/components/admin")) {
     if (!/\.(jsx?|mjs)$/.test(file)) continue;
     const source = readFileSync(`src/components/admin/${file}`, "utf8");
-    for (const fn of CREDENTIALED) {
-      const pattern = new RegExp(`functions\\.invoke\\(["']${fn}["'],\\s*\\{`, "g");
-      for (const match of source.matchAll(pattern)) {
-        const payload = source.slice(match.index, match.index + 1500);
-        assert.match(payload, CREDENTIAL,
-          `${file} invokes ${fn} with an inline payload lacking a credential`);
-      }
+    for (const match of source.matchAll(/functions\.invoke\(["']([\w]+)["'],\s*\{/g)) {
+      const fn = match[1];
+      const payload = source.slice(match.index, match.index + 1500);
+      if (CREDENTIAL.test(payload)) continue;
+      assert.ok(PLATFORM_AUTHED.has(fn),
+        `${file} invokes ${fn} without a credential and ${fn} is not on the audited platform-auth allowlist`);
     }
   }
 });
