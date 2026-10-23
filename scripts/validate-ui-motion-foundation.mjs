@@ -251,9 +251,9 @@ test("TimeClock detail dialogs use list skeletons", () => {
   const sd = readFileSync("src/components/timeclock/TimeClockShiftDetail.jsx", "utf8");
   const at = readFileSync("src/components/timeclock/TimeClockAuditTrail.jsx", "utf8");
   assert.ok(sd.includes("import { ListSkeleton } from"), "shift detail imports ListSkeleton");
-  assert.doesNotMatch(sd, /animate-spin/, "shift detail must not spin");
-  assert.match(at, /<ListSkeleton rows={5} />/);
-  assert.doesNotMatch(at, /Loading audit history/, "audit trail spinner text gone");
+  assert.ok(!sd.includes("animate-spin"), "shift detail must not spin");
+  assert.ok(at.includes("<ListSkeleton rows={5}"), "audit trail uses ListSkeleton");
+  assert.ok(!at.includes("Loading audit history"), "audit trail spinner text gone");
 });
 
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
