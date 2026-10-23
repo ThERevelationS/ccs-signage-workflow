@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -371,19 +371,24 @@ export default function SIPs() {
     }
   };
 
+  // The WIP description list becomes a Set once per data change instead of a
+  // linear includes() scan for every row on every render.
+  const wipTaskDescriptionSet = useMemo(() => new Set(wipTaskDescriptions), [wipTaskDescriptions]);
+
   // Check if a work order is a WIP item (has WIP task description)
-  const isWipItem = (wo) => {
-    return wo.current_task_description && wipTaskDescriptions.includes(wo.current_task_description);
-  };
+  const isWipItem = useCallback((wo) => {
+    return wo.current_task_description && wipTaskDescriptionSet.has(wo.current_task_description);
+  }, [wipTaskDescriptionSet]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
 
-  const isRevisitFuture = (wo) => {
+  const isRevisitFuture = useCallback((wo) => {
     if (!wo.sip_revisit_date) return false;
     const d = parseLocalDate(wo.sip_revisit_date);
-    return d && d > today;
-  };
+    return d && d.getTime() > todayMs;
+  }, [todayMs]);
 
   // Completion must go through the checklist dialog so approvals, statuses,
   // child tasks, and concurrency-safe completion are validated consistently.
@@ -529,10 +534,10 @@ export default function SIPs() {
   };
 
   // All non-completed active items
-  const allActive = workOrders.filter(wo => (!isWipItem(wo) || !wo.sip_completed));
+  const allActive = useMemo(() => workOrders.filter(wo => (!isWipItem(wo) || !wo.sip_completed)), [workOrders, isWipItem]);
 
   // Jobs with NO revisit date or revisit date <= today go to main active list
-  const activeWorkOrders = allActive
+  const activeWorkOrders = useMemo(() => allActive
     .filter(wo => !isRevisitFuture(wo))
     .sort((a, b) => {
       // No date => top; then sort ascending by revisit date
@@ -540,20 +545,20 @@ export default function SIPs() {
       if (!a.sip_revisit_date) return -1;
       if (!b.sip_revisit_date) return 1;
       return a.sip_revisit_date.localeCompare(b.sip_revisit_date);
-    });
+    }), [allActive, isRevisitFuture]);
 
   // Jobs with a FUTURE revisit date
-  const futureRevisitOrders = allActive
+  const futureRevisitOrders = useMemo(() => allActive
     .filter(wo => isRevisitFuture(wo))
-    .sort((a, b) => a.sip_revisit_date.localeCompare(b.sip_revisit_date));
+    .sort((a, b) => a.sip_revisit_date.localeCompare(b.sip_revisit_date)), [allActive, isRevisitFuture]);
   const nextRevisitDate = futureRevisitOrders[0]?.sip_revisit_date
     ? parseLocalDate(futureRevisitOrders[0].sip_revisit_date)
     : null;
 
-  const completedWipItems = workOrders.filter(wo => isWipItem(wo) && wo.sip_completed);
+  const completedWipItems = useMemo(() => workOrders.filter(wo => isWipItem(wo) && wo.sip_completed), [workOrders, isWipItem]);
 
-  const normalizedSearch = searchQuery.trim().toLowerCase();
-  const matchesSearch = (wo) => {
+  const normalizedSearch = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
+  const matchesSearch = useCallback((wo) => {
     if (!normalizedSearch) return true;
     return [
       wo.client_name,
@@ -566,17 +571,17 @@ export default function SIPs() {
       wo.est_inv_at,
       wo.corbridge_invoice_number,
     ].some(value => String(value || "").toLowerCase().includes(normalizedSearch));
-  };
+  }, [normalizedSearch]);
 
-  const getDeadlineStatus = (dateString) => {
+  const getDeadlineStatus = useCallback((dateString) => {
     const deadline = parseLocalDate(dateString);
     if (!deadline || Number.isNaN(deadline.getTime())) return null;
-    const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+    const diffDays = Math.ceil((deadline.getTime() - todayMs) / 86400000);
     if (diffDays < 0) return { bucket: "overdue", label: `${Math.abs(diffDays)}d overdue`, className: "bg-red-100 text-red-700 border-red-200" };
     if (diffDays === 0) return { bucket: "today", label: "Due today", className: "bg-red-100 text-red-700 border-red-200" };
     if (diffDays <= 7) return { bucket: "soon", label: `${diffDays}d left`, className: "bg-amber-100 text-amber-800 border-amber-200" };
     return { bucket: "future", label: null, className: "" };
-  };
+  }, [todayMs]);
 
   const openChecklist = (wo) => {
     if (!wo?.id) return;
@@ -602,7 +607,7 @@ export default function SIPs() {
   // a stale result cannot survive a real data change — and look conditions up
   // by name instead of scanning the whole list for each checklist item.
   const checklistProgressCacheRef = useRef({ conditions: null, results: new WeakMap() });
-  const getChecklistProgress = (wo) => {
+  const getChecklistProgress = useCallback((wo) => {
     const cache = checklistProgressCacheRef.current;
     if (cache.conditions !== dropdownConditionByName) {
       cache.conditions = dropdownConditionByName;
@@ -634,18 +639,18 @@ export default function SIPs() {
     };
     cache.results.set(wo, result);
     return result;
-  };
+  }, [dropdownConditionByName]);
 
-  const needsAttention = (wo) => {
+  const needsAttention = useCallback((wo) => {
     const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
     return Boolean(
       wo.asap ||
       deadlineStatus?.bucket === "overdue" ||
       ["at_risk", "delayed", "blocked"].includes(wo.project_health)
     );
-  };
+  }, [getDeadlineStatus]);
 
-  const matchesStatusFilter = (wo) => {
+  const matchesStatusFilter = useCallback((wo) => {
     if (statusFilter === "all") return true;
     const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
     if (statusFilter === "attention") return needsAttention(wo);
@@ -656,9 +661,9 @@ export default function SIPs() {
       return progress.total === 0 || progress.completed < progress.total;
     }
     return true;
-  };
+  }, [statusFilter, getDeadlineStatus, needsAttention, getChecklistProgress]);
 
-  const sortOrders = (orders) => [...orders].sort((a, b) => {
+  const sortOrders = useCallback((orders) => [...orders].sort((a, b) => {
     if (sortMode === "deadline") {
       if (!a.current_task_deadline && !b.current_task_deadline) return 0;
       if (!a.current_task_deadline) return 1;
@@ -668,21 +673,30 @@ export default function SIPs() {
     if (sortMode === "customer") return (a.client_name || "").localeCompare(b.client_name || "");
     if (sortMode === "amount") return Number(b.estimate_amount || 0) - Number(a.estimate_amount || 0);
     return 0;
-  });
+  }), [sortMode]);
 
-  const visibleActiveWorkOrders = sortOrders(
+  // Derive the visible sections and badge counts once per input change; an
+  // unrelated render (dialog flag, in-flight marker) no longer refilters and
+  // resorts every row.
+  const visibleActiveWorkOrders = useMemo(() => sortOrders(
     activeWorkOrders.filter(matchesSearch).filter(matchesStatusFilter)
-  );
-  const visibleFutureRevisitOrders = futureRevisitOrders.filter(matchesSearch);
-  const visibleCompletedWipItems = completedWipItems.filter(matchesSearch);
-  const overdueCount = activeWorkOrders.filter((wo) => getDeadlineStatus(wo.current_task_deadline)?.bucket === "overdue").length;
-  const dueSoonCount = activeWorkOrders.filter((wo) => ["today", "soon"].includes(getDeadlineStatus(wo.current_task_deadline)?.bucket)).length;
-  const attentionCount = activeWorkOrders.filter(needsAttention).length;
-  const incompleteChecklistCount = activeWorkOrders.filter((wo) => {
+  ), [activeWorkOrders, matchesSearch, matchesStatusFilter, sortOrders]);
+  const visibleFutureRevisitOrders = useMemo(() => futureRevisitOrders.filter(matchesSearch), [futureRevisitOrders, matchesSearch]);
+  const visibleCompletedWipItems = useMemo(() => completedWipItems.filter(matchesSearch), [completedWipItems, matchesSearch]);
+  const overdueCount = useMemo(() => activeWorkOrders.filter((wo) => getDeadlineStatus(wo.current_task_deadline)?.bucket === "overdue").length, [activeWorkOrders, getDeadlineStatus]);
+  const dueSoonCount = useMemo(() => activeWorkOrders.filter((wo) => ["today", "soon"].includes(getDeadlineStatus(wo.current_task_deadline)?.bucket)).length, [activeWorkOrders, getDeadlineStatus]);
+  const attentionCount = useMemo(() => activeWorkOrders.filter(needsAttention).length, [activeWorkOrders, needsAttention]);
+  const incompleteChecklistCount = useMemo(() => activeWorkOrders.filter((wo) => {
     const progress = getChecklistProgress(wo);
     return progress.total === 0 || progress.completed < progress.total;
-  }).length;
-  const activeValue = activeWorkOrders.reduce((sum, wo) => sum + Number(wo.estimate_amount || 0), 0);
+  }).length, [activeWorkOrders, getChecklistProgress]);
+  const activeValue = useMemo(() => activeWorkOrders.reduce((sum, wo) => sum + Number(wo.estimate_amount || 0), 0), [activeWorkOrders]);
+
+  // Role-filtered pick lists are shared by every row; build them once.
+  const taskAssignedUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Task Assigned")), [users]);
+  const designerUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Designer")), [users]);
+  const projectManagerUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")), [users]);
+  const estimatorUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Estimator")), [users]);
   const hasBoardViewFilters = Boolean(searchQuery || statusFilter !== "all" || sortMode !== "meeting");
   const resetBoardView = () => {
     setSearchQuery("");
@@ -1164,7 +1178,7 @@ export default function SIPs() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SIPs">SIPs</SelectItem>
-                          {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => (
+                          {taskAssignedUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1183,7 +1197,7 @@ export default function SIPs() {
                           <SelectValue placeholder="-">{wo.designer || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.sales_roles?.includes("Designer")).map(u => (
+                          {designerUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1202,7 +1216,7 @@ export default function SIPs() {
                           <SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")).map(u => (
+                          {projectManagerUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1221,7 +1235,7 @@ export default function SIPs() {
                           <SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => (
+                          {estimatorUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
