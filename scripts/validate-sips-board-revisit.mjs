@@ -943,4 +943,12 @@ await check('details dialog delete confirm cannot double-submit', async () => {
   assert.match(details, /AlertDialogAction onClick=\{confirmDelete\} disabled=\{deletingWorkOrder\}/, 'the confirm action must be disabled while deleting');
 });
 
+await check('details dialog inline field save cannot double-submit its own CAS', async () => {
+  const details = readFileSync('src/components/workflow/WorkOrderDetailsDialog.jsx', 'utf8');
+  const save = block(details, '  const saveEdit = async (field) => {', '\n  const cancelEdit');
+  assert.match(save, /if \(inlineEditSavingRef\.current\.has\(field\)\) return;/, 'a second save while one is in flight must be ignored');
+  assert.match(save, /inlineEditSavingRef\.current\.add\(field\)[\s\S]*?replaceWorkOrderFieldsIfUnchanged/, 'the in-flight flag must be set before the conditional write');
+  assert.match(save, /finally \{\s*inlineEditSavingRef\.current\.delete\(field\);/, 'the flag must reset even when the save throws');
+});
+
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
