@@ -1135,9 +1135,8 @@ export default function SIPs() {
                 const isWip = isWipItem(wo);
                 const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
                 
-                return (
-                  <React.Fragment key={wo.id}>
-                  {focusedRowId === wo.id && <tr className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
+                return [
+                  focusedRowId === wo.id && <tr key="focus-gap-top" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
                   <tr 
                     className={`sips-board-row border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'sips-focus-row' : ''}`}
                     style={{ height: focusedRowId === wo.id ? '62px' : '50px' }}
@@ -1396,9 +1395,8 @@ export default function SIPs() {
                       </Popover>
                     </td>
                   </tr>
-                  {focusedRowId === wo.id && <tr className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
-                  </React.Fragment>
-                );
+                  focusedRowId === wo.id && <tr key="focus-gap-bottom" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>
+                ];
               })}
               {visibleActiveWorkOrders.length === 0 && (
                 <tr>
