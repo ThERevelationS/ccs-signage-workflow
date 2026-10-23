@@ -280,6 +280,22 @@ export const NotificationTriggers = {
     await triggerNotification("stage_changed", workOrder, { previousStage, newStage, changedBy, eventDescription });
     await triggerNotification("stage_exited", workOrder, { previousStage, newStage, changedBy, eventDescription: `Work order exited ${formatStageName(previousStage)} stage` });
     await triggerNotification("stage_entered", workOrder, { previousStage, newStage, changedBy, eventDescription: `Work order entered ${formatStageName(newStage)} stage` });
+    // Stage-specific convenience events so a rule can select "entered
+    // Fabrication" directly instead of configuring a stage condition.
+    const STAGE_ENTERED_TRIGGERS = {
+      estimating: "stage_estimating_entered",
+      sales: "stage_sales_entered",
+      permitting: "stage_permitting_entered",
+      design: "stage_design_entered",
+      production: "stage_production_entered",
+      fabrication: "stage_fabrication_entered",
+      installation: "stage_installation_entered",
+      completed: "stage_completed_entered",
+    };
+    const stageSpecific = STAGE_ENTERED_TRIGGERS[newStage];
+    if (stageSpecific) {
+      await triggerNotification(stageSpecific, workOrder, { previousStage, newStage, changedBy, eventDescription });
+    }
   },
   
   taskAdded: async (workOrder, taskText, changedBy) => {
@@ -390,5 +406,101 @@ export const NotificationTriggers = {
         newValue
       });
     }
-  }
+  },
+
+  orderCancelled: async (order, changedBy) => {
+    await triggerNotification("order_cancelled", null, {
+      changedBy,
+      eventDescription: "Order was cancelled",
+      orderData: order
+    });
+  },
+
+  workOrderRestored: async (workOrder, changedBy) => {
+    await triggerNotification("work_order_restored", workOrder, { changedBy, eventDescription: "Work order restored from trash" });
+  },
+
+  // Emits one event per changed field after a Work Order save, plus the
+  // generic "any field" event. Callers pass the saved record and the
+  // pre-save baseline; the endpoint re-reads the record server-side.
+  workOrderFieldsChanged: async (savedWorkOrder, baselineWorkOrder, changedBy) => {
+    if (!savedWorkOrder?.id) return;
+    const changed = (field) => {
+      const before = baselineWorkOrder?.[field];
+      const after = savedWorkOrder?.[field];
+      if (field === "files") {
+        return (Array.isArray(after) ? after.length : 0) > (Array.isArray(before) ? before.length : 0);
+      }
+      return JSON.stringify(before ?? null) !== JSON.stringify(after ?? null);
+    };
+    const emit = (type, fieldName) => triggerNotification(type, savedWorkOrder, {
+      changedBy,
+      fieldChanged: fieldName,
+      oldValue: baselineWorkOrder?.[fieldName],
+      newValue: savedWorkOrder?.[fieldName],
+      eventDescription: `Work order ${String(fieldName || "").replace(/_/g, " ")} changed`,
+    });
+
+    let anyField = false;
+    if (changed("client_name")) { await emit("work_order_client_changed", "client_name"); anyField = true; }
+    if (changed("description")) { await emit("work_order_description_changed", "description"); anyField = true; }
+    if (changed("title")) { await emit("work_order_title_changed", "title"); anyField = true; }
+    if (changed("estimate_amount")) { await emit("work_order_estimate_changed", "estimate_amount"); anyField = true; }
+    if (changed("contact_name") || changed("contact_email") || changed("contact_phone") || changed("additional_contact")) {
+      await emit("work_order_contact_changed", "contact_info"); anyField = true;
+    }
+    if (changed("install_location")) { await emit("work_order_install_location_changed", "install_location"); anyField = true; }
+    if (!baselineWorkOrder?.permit_number && savedWorkOrder?.permit_number) { await emit("work_order_permit_number_set", "permit_number"); anyField = true; }
+    if (!baselineWorkOrder?.permit_approved_date && savedWorkOrder?.permit_approved_date) { await emit("work_order_permit_approved", "permit_approved_date"); anyField = true; }
+    if (!baselineWorkOrder?.permit_submitted_date && savedWorkOrder?.permit_submitted_date) { await emit("work_order_permit_submitted", "permit_submitted_date"); anyField = true; }
+    if (!baselineWorkOrder?.est_inv_at && savedWorkOrder?.est_inv_at) { await emit("work_order_est_inv_set", "est_inv_at"); anyField = true; }
+    if (changed("project_install_date")) { await emit("work_order_install_date_set", "project_install_date"); anyField = true; }
+    if (changed("project_health")) {
+      await emit("work_order_project_health_changed", "project_health");
+      // Health-specific convenience events ("Project Health At Risk" etc.)
+      // fire the literal advertised trigger for the new health value.
+      const HEALTH_TRIGGERS = {
+        on_track: "project_health_on_track",
+        at_risk: "project_health_at_risk",
+        delayed: "project_health_delayed",
+        blocked: "project_health_blocked",
+      };
+      const healthEvent = HEALTH_TRIGGERS[savedWorkOrder?.project_health];
+      if (healthEvent) await emit(healthEvent, "project_health");
+      anyField = true;
+    }
+    if (changed("production_type")) { await emit("work_order_production_type_changed", "production_type"); anyField = true; }
+    if (changed("files")) { await emit("work_order_file_uploaded", "files"); await emit("file_attached", "files"); anyField = true; }
+    if (!baselineWorkOrder?.permit_receipt_confirmed_date && savedWorkOrder?.permit_receipt_confirmed_date) { await emit("permit_receipt_confirmed", "permit_receipt_confirmed_date"); anyField = true; }
+    if (!baselineWorkOrder?.permit_approved_date && savedWorkOrder?.permit_approved_date) { await emit("permit_approved", "permit_approved_date"); anyField = true; }
+    if (changed("due_date")) {
+      if (savedWorkOrder?.due_date) await emit("due_date_set", "due_date");
+      else await emit("due_date_cleared", "due_date");
+      anyField = true;
+    }
+    if (!baselineWorkOrder?.start_date && savedWorkOrder?.start_date) { await emit("start_date_set", "start_date"); anyField = true; }
+    if (!baselineWorkOrder?.site_survey_date && savedWorkOrder?.site_survey_date) { await emit("site_survey_scheduled", "site_survey_date"); anyField = true; }
+    if (!baselineWorkOrder?.google_drive_folder_url && savedWorkOrder?.google_drive_folder_url) { await emit("google_drive_linked", "google_drive_folder_url"); anyField = true; }
+    if (anyField) {
+      await triggerNotification("work_order_updated", savedWorkOrder, { changedBy, eventDescription: "Work order updated" });
+    }
+  },
+
+  // Fires once per reorder for the work order that moved furthest — a drag
+  // renumbers many rows, and an event per row would flood every rule.
+  workOrderPriorityReordered: async (loadedItems, reorderedItems, changedBy) => {
+    const beforeIndex = new Map((loadedItems || []).map((wo, i) => [wo?.id, i]));
+    let moved = null;
+    let movedDelta = 0;
+    (reorderedItems || []).forEach((wo, i) => {
+      const delta = Math.abs(i - (beforeIndex.get(wo?.id) ?? i));
+      if (delta > movedDelta) { movedDelta = delta; moved = wo; }
+    });
+    if (moved) {
+      await triggerNotification("priority_changed", moved, {
+        changedBy,
+        eventDescription: `Work order moved ${movedDelta} position${movedDelta === 1 ? "" : "s"} in the list`,
+      });
+    }
+  },
 };
