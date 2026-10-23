@@ -342,6 +342,12 @@ assert.match(custDetailPage, /action: "portal_inbox"/, 'customers page must load
 const oppPage2 = readFileSync('src/pages/Opportunities.jsx', 'utf8');
 assert.match(oppPage2, /from "@\/components\/portal\/PortalPanel"/, 'opportunity detail must use the shared portal panel');
 assert.match(oppPage2, /<PortalPanel sessionToken=\{sessionToken\} customerId=\{clean\(o\.customer_id\)\} \/>/, 'opportunity detail must render the portal panel for linked customers');
+assert.match(entry, /stale_quote: true/, 'follow-ups must surface stale sent quotes');
+assert.match(entry, /quote_valid_days/, 'follow-ups must flag expired quotes');
+assert.match(oppPage2, /Quote expired/, 'follow-ups UI must badge expired quotes');
+assert.match(invoicing, /action === "email_invoice"/, 'staff must be able to email invoices');
+assert.match(invoicing, /invoke\("sendGmail"/, 'email_invoice must send through gmail');
+assert.match(invoicing, /kind: "invoice"[\s\S]*?customer_id: clean\(invoice\.customer_id\)/, 'email_invoice must mint an invoice-scoped portal link');
 const appShell = readFileSync('src/App.jsx', 'utf8');
 assert.match(appShell, /path === '\/customerportal'/, 'portal must be a standalone unauthenticated route');
 const invPortalPage = readFileSync('src/pages/Invoices.jsx', 'utf8');
@@ -349,5 +355,7 @@ assert.match(invPortalPage, /PortalLinks\b/, 'invoice detail must render the por
 assert.match(invPortalPage, /action: "create_link"/, 'invoice detail must create portal links');
 assert.match(invPortalPage, /action: "revoke_link"/, 'invoice detail must revoke portal links');
 assert.match(invPortalPage, /\/customerportal\?token=/, 'invoice detail must build the portal URL');
+assert.match(invPortalPage, /action: "email_invoice"/, 'invoice detail must offer email-to-customer');
+assert.match(invPortalPage, /Overdue/, 'invoice list must flag overdue rows');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
