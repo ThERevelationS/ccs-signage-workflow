@@ -10,8 +10,8 @@ let passed = 0;
 function test(name, fn) { fn(); console.log('PASS ' + name); passed++; }
 
 // --- Board: getChecklistProgress must be cached per Work Order object ---
-const progressStart = page.indexOf('  const getChecklistProgress = (wo) => {');
-const progressSource = page.slice(progressStart, page.indexOf('\n  };', progressStart) + 6);
+const progressStart = page.indexOf('  const getChecklistProgress = useCallback((wo) => {');
+const progressSource = page.slice(progressStart, page.indexOf('\n  const needsAttention', progressStart));
 
 function progressSetup() {
   let lookups = 0;
@@ -19,10 +19,11 @@ function progressSetup() {
   const ctx = {
     checklistProgressCacheRef: { current: { conditions: null, results: new WeakMap() } },
     WeakMap,
+    useCallback: (fn) => fn,
   };
+  ctx.dropdownConditionByName = { get: (name) => { lookups += 1; return conditions.get(name); } };
   vm.createContext(ctx);
   vm.runInContext(progressSource + '\nthis.getChecklistProgress = getChecklistProgress;', ctx);
-  ctx.dropdownConditionByName = { get: (name) => { lookups += 1; return conditions.get(name); } };
   return { run: ctx.getChecklistProgress, ctx, lookups: () => lookups, conditions };
 }
 
@@ -138,6 +139,48 @@ test('the dirty check recomputes only when checklist or products change', () => 
 test('raw stringification only happens inside the memoized diff', () => {
   const withoutMemos = dirtySource.replace(/useMemo\(\s*\(\) => [^,]+,\s*\[[^\]]+\]\s*\)/g, '');
   assert.doesNotMatch(withoutMemos, /JSON\.stringify/);
+});
+
+// --- Board sections must not refilter/resort every row on unrelated renders ---
+test('every board section derivation is memoized on its inputs', () => {
+  for (const name of [
+    'allActive', 'activeWorkOrders', 'futureRevisitOrders', 'completedWipItems',
+    'visibleActiveWorkOrders', 'visibleFutureRevisitOrders', 'visibleCompletedWipItems',
+    'overdueCount', 'dueSoonCount', 'attentionCount', 'incompleteChecklistCount', 'activeValue',
+  ]) {
+    assert.match(page, new RegExp('const ' + name + ' = useMemo\\('), name + ' must be memoized');
+  }
+});
+
+test('WIP classification uses a Set lookup, not a per-row includes scan', () => {
+  assert.match(page, /const wipTaskDescriptionSet = useMemo\(\(\) => new Set\(wipTaskDescriptions\), \[wipTaskDescriptions\]\)/);
+  const wipFn = page.slice(page.indexOf('const isWipItem = '), page.indexOf('const today ='));
+  assert.match(wipFn, /wipTaskDescriptionSet\.has\(/);
+  assert.doesNotMatch(wipFn, /wipTaskDescriptions\.includes\(/);
+});
+
+test('role pick lists are built once, not filtered inside every row', () => {
+  for (const name of ['taskAssignedUsers', 'designerUsers', 'projectManagerUsers', 'estimatorUsers']) {
+    assert.match(page, new RegExp('const ' + name + ' = useMemo\\('), name + ' must be memoized');
+  }
+  // Exactly four sales_roles user filters remain — the memoized definitions.
+  assert.equal((page.match(/users\.filter\(u => u\.sales_roles/g) || []).length, 4);
+});
+
+test('deadline bucketing keeps its day-boundary semantics inside useCallback', () => {
+  const start = page.indexOf('  const getDeadlineStatus = useCallback((dateString) => {');
+  const end = page.indexOf('\n  }, [todayMs]);', start);
+  assert.ok(start > 0 && end > start, 'getDeadlineStatus must be a todayMs-keyed useCallback');
+  const source = page.slice(start, end + 17);
+  const ctx = { useCallback: (fn) => fn, parseLocalDate: (s) => { if (!s) return undefined; const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }, todayMs: new Date(2026, 9, 22).getTime(), Math, Number };
+  vm.createContext(ctx);
+  vm.runInContext(source + '\nthis.getDeadlineStatus = getDeadlineStatus;', ctx);
+  assert.equal(ctx.getDeadlineStatus(null), null);
+  assert.equal(ctx.getDeadlineStatus('not-a-date'), null);
+  assert.equal(ctx.getDeadlineStatus('2026-10-21').bucket, 'overdue');
+  assert.equal(ctx.getDeadlineStatus('2026-10-22').bucket, 'today');
+  assert.equal(ctx.getDeadlineStatus('2026-10-25').bucket, 'soon');
+  assert.equal(ctx.getDeadlineStatus('2026-11-05').bucket, 'future');
 });
 
 console.log(passed + '/' + passed + ' SIPS render-performance checks passed');
