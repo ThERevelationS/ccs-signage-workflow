@@ -1377,7 +1377,17 @@ function LayoutContent({ children }) {
                     <LoginGate>{children}</LoginGate>
                   </motion.div>
                 </AnimatePresence>
-              ) : <LoginGate>{children}</LoginGate>}
+              ) : (
+                <motion.div
+                  key={location.pathname}
+                  initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ minHeight: "100%" }}
+                >
+                  <LoginGate>{children}</LoginGate>
+                </motion.div>
+              )}
             </MultiPageContainer>
           </MultiPageContext.Provider>
         </motion.main>
