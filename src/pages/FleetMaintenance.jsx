@@ -63,12 +63,10 @@ export default function FleetMaintenance() {
     setLoading(true);
     setError("");
     try {
-      const [t, e, openWos, assignedWos, inProgressWos, p, f, u] = await Promise.all([
+      const [t, e, activeWos, p, f, u] = await Promise.all([
         listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
         listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "open" }, "-created_date", { label: "Open Fleet maintenance work orders" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "assigned" }, "-created_date", { label: "Assigned Fleet maintenance work orders" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "in_progress" }, "-created_date", { label: "In-progress Fleet maintenance work orders" }),
+        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet maintenance work orders" }),
         listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
         listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
         base44.auth.me().catch(() => null),
@@ -76,7 +74,7 @@ export default function FleetMaintenance() {
       if (requestSequence !== loadSequenceRef.current) return;
       setTasks(t || []);
       setEquipment(e || []);
-      setActiveWorkOrders([...(openWos || []), ...(assignedWos || []), ...(inProgressWos || [])]);
+      setActiveWorkOrders(activeWos || []);
       setParts(p || []);
       setFluids(f || []);
       setCurrentUser(u || null);
