@@ -85,6 +85,29 @@ const MobileDescription = ({ value, fallback = "No description", label = "Job de
   );
 };
 
+// Keep the clicked row pinned under the pointer while the focus gaps and
+// cell growth animate around it: re-anchor its screen position every frame
+// through the nearest vertical scroller instead of letting it drift down.
+const anchorFocusedRow = (el) => {
+  const row = el?.closest?.("tr");
+  if (!row) return;
+  let scroller = row.parentElement;
+  while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) {
+    scroller = scroller.parentElement;
+  }
+  const target = scroller || document.scrollingElement;
+  if (!target) return;
+  const beforeTop = row.getBoundingClientRect().top;
+  const start = performance.now();
+  const tick = () => {
+    if (!row.isConnected) return;
+    const drift = row.getBoundingClientRect().top - beforeTop;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+    if (performance.now() - start < 360) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+};
+
 export default function SIPs() {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
@@ -1115,7 +1138,7 @@ export default function SIPs() {
                     {/* Row Number - Clickable Focus Button */}
                     <td className="px-0 py-0 border-r">
                       <button
-                        onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
+                        onClick={(e) => { anchorFocusedRow(e.currentTarget); setFocusedRowId(focusedRowId === wo.id ? null : wo.id); }}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                           focusedRowId === wo.id 
                             ? 'sips-focus-num text-white'
