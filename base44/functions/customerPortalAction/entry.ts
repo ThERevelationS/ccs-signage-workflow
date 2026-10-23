@@ -71,6 +71,21 @@ function invoicePortalView(invoice: any) {
 }
 
 function estimatePortalView(estimate: any) {
+  // Customer-facing section price = unit snapshot x customer qty x (1 + adj%).
+  // Sections flagged include_in_customer=false roll up into a single bundled line.
+  const items = Array.isArray(estimate?.line_items) ? estimate.line_items : [];
+  const priceOf = (i: any) => num(i?.total_snapshot) * (num(i?.customer_quantity) || 1) * (1 + num(i?.adjustment_percent) / 100);
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const sections = items
+    .filter((i: any) => i?.include_in_customer !== false)
+    .map((i: any) => ({
+      name: clean(i?.client_product_name) || clean(i?.project_name) || clean(i?.product_category) || "Item",
+      description: clean(i?.customer_description),
+      quantity: num(i?.customer_quantity) || 1,
+      amount: round2(priceOf(i)),
+    }));
+  const bundled = round2(items.filter((i: any) => i?.include_in_customer === false).reduce((s: number, i: any) => s + priceOf(i), 0));
+  if (bundled > 0) sections.push({ name: "Additional project scope", description: "", quantity: 1, amount: bundled });
   return {
     id: clean(estimate?.id),
     estimate_number: clean(estimate?.estimate_number),
@@ -83,6 +98,7 @@ function estimatePortalView(estimate: any) {
     quote_valid_days: num(estimate?.quote_valid_days),
     updated_date: clean(estimate?.updated_date),
     can_respond: clean(estimate?.status) === "sent",
+    sections,
   };
 }
 
