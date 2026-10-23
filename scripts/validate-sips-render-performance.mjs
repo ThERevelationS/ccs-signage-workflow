@@ -59,6 +59,19 @@ test('a refreshed Work Order object is recomputed, not served stale data', () =>
   assert.equal(JSON.stringify(s.run(refreshed)), JSON.stringify({ completed: 3, total: 4 }));
 });
 
+test('in-place Object.assign of a new checklist array invalidates cached progress', () => {
+  const s = progressSetup();
+  const row = { ...wo };
+  s.run(row);
+  // WorkOrderDetailsDialog reloads patch the loaded row via Object.assign —
+  // the same object must not serve the old checklist's cached progress.
+  Object.assign(row, { sip_checklist: [{ id: 'z', type: 'checklist', approved_by: 'Kim', custom_dropdown_value: 'Done' }] });
+  assert.equal(JSON.stringify(s.run(row)), JSON.stringify({ completed: 1, total: 1 }));
+  const lookupsAfterReplace = s.lookups();
+  assert.equal(JSON.stringify(s.run(row)), JSON.stringify({ completed: 1, total: 1 }));
+  assert.equal(s.lookups(), lookupsAfterReplace, 'the replaced checklist is itself cached');
+});
+
 test('a changed condition list invalidates cached progress', () => {
   const s = progressSetup();
   s.run(wo);
