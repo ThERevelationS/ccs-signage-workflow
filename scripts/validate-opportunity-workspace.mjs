@@ -63,6 +63,9 @@ assert.ok(entry.includes('action === "list_follow_ups"'), 'follow-ups list must 
 assert.match(entry, /follow_ups: items/, 'follow-ups must return the sorted item list');
 assert.match(page, /action: "list_follow_ups"/, 'the page must request follow-ups through the function');
 assert.match(page, /FollowUps/, 'the page must render a follow-ups view');
+assert.match(entry, /ar_aging/, 'customer 360 must return AR aging buckets');
+assert.match(entry, /d90_plus/, 'aging must include a 90+ bucket');
+assert.match(entry, /days_overdue/, 'invoice rows must carry days overdue');
 assert.match(entry, /asServiceRole\.entities\.Invoice\b/, 'global search must read invoices via service role');
 assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 'search must invoke the workspace function');
 assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
