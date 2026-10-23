@@ -34,6 +34,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, p
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
 import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
+import SceneCanvas from "@/components/motion/SceneCanvas";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
@@ -547,7 +548,9 @@ export default function TimeClock() {
     <div className="min-h-screen p-4 sm:p-6 ambient-mesh">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="relative mb-6 overflow-hidden rounded-2xl px-3 py-2">
+          <SceneCanvas className="absolute inset-0 opacity-60" />
+          <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="clay-card p-3">
               <Clock className="w-6 h-6 text-purple-600" />
@@ -575,6 +578,7 @@ export default function TimeClock() {
               Login for Full Access
             </Button>
           )}
+          </div>
         </div>
 
         {sessionNotice && (
