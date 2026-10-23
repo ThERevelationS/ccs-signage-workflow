@@ -145,7 +145,7 @@ async function sessionSwitchScenario() {
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
   // Release the mount-time user-list load so the gate UI renders.
-  await act(async () => { loaderQueue.forEach((d) => d.resolve([])); loaderQueue.length = 0; await flush(); });
+  await act(async () => { loaderQueue.forEach((d) => d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
 
   // Log in as employee A.
   const loginBtn = buttonByText(renderer, 'Login for Full Access');
@@ -221,7 +221,7 @@ async function overlappingLoadsScenario() {
   });
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
-  await act(async () => { loaderQueue.forEach((d) => d.resolve([])); loaderQueue.length = 0; await flush(); });
+  await act(async () => { loaderQueue.forEach((d) => d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
   await act(async () => { buttonByText(renderer, 'Login for Full Access').props.onClick(); await flush(); });
   await act(async () => { buttonByText(renderer, 'do-login').props.onClick(); await flush(); });
   // Trigger a second refresh ("Reload latest") while the first is in flight.
