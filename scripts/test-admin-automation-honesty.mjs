@@ -24,9 +24,10 @@ test("live trigger sets match real emitters", () => {
   const engine = setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET");
   const order = setLiteral(adminSettings, "ORDER_TRIGGER_SET");
   const deadline = setLiteral(adminSettings, "DEADLINE_TRIGGER_SET");
+  const orderDeadline = setLiteral(adminSettings, "ORDER_DEADLINE_TRIGGER_SET");
 
-  // No overlap between the three execution paths.
-  const all = [...engine, ...order, ...deadline];
+  // No overlap between the execution paths.
+  const all = [...engine, ...order, ...deadline, ...orderDeadline];
   assert.equal(new Set(all).size, all.length, "trigger sets must not overlap");
 
   // Every client-emitted engine/order trigger must actually be emitted by
@@ -57,7 +58,7 @@ test("live trigger sets match real emitters", () => {
   }
 
   // Every deadline trigger must be evaluated by the daily checker.
-  for (const t of deadline) {
+  for (const t of [...deadline, ...orderDeadline]) {
     assert.ok(
       deadlineReminders.includes(`'${t}'`),
       `"${t}" is advertised as live but checkDeadlineReminders never evaluates it`
@@ -100,11 +101,17 @@ test("dead options are marked and warned about in the builder", () => {
     adminSettings.includes("isn't connected to anything yet, so a rule using it won't run"),
     "dead trigger warning missing"
   );
-  // create_rider is advertised but unimplemented everywhere — must be marked.
-  assert.ok(
-    adminSettings.includes('t.value === "create_rider" ? " (not working yet)"'),
-    "create_rider must be marked as not working yet"
-  );
+  // Every advertised action must have a server-side executor — nothing in
+  // the picker may be a dead option.
+  const actionBlock = adminSettings.match(/const ACTION_TYPES = \[([\s\S]*?)\];/);
+  assert.ok(actionBlock, "ACTION_TYPES must exist");
+  const advertisedActions = [...actionBlock[1].matchAll(/value: "([^"]+)"/g)].map(m => m[1]);
+  for (const a of advertisedActions) {
+    assert.ok(
+      workflowEngine.includes(`case '${a}'`),
+      `"${a}" is selectable in the builder but executeAction has no case for it`
+    );
+  }
   // Per-action unsupported warning.
   assert.ok(
     adminSettings.includes("it will be skipped"),
@@ -115,10 +122,10 @@ test("dead options are marked and warned about in the builder", () => {
     adminSettings.includes('triggers.some(t => t.logic === "and")'),
     "AND-mixed-event warning missing"
   );
-  // Ignored order-filter warning.
+  // Order filters are applied server-side — the engine must evaluate them.
   assert.ok(
-    adminSettings.includes("Order filters aren't applied yet"),
-    "order-filter honesty warning missing"
+    workflowEngine.includes("condition.request_type") && workflowEngine.includes("condition.min_quantity"),
+    "engine must evaluate order filters"
   );
   // Plain-English summary.
   assert.ok(adminSettings.includes("describeAutomation(triggers, actions)"), "plain-English summary missing");
@@ -136,6 +143,7 @@ test("every advertised trigger resolves to a status", () => {
     ...setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET"),
     ...setLiteral(adminSettings, "ORDER_TRIGGER_SET"),
     ...setLiteral(adminSettings, "DEADLINE_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "ORDER_DEADLINE_TRIGGER_SET"),
   ]);
   for (const v of values) {
     assert.ok(typeof v === "string" && v.length > 0, "trigger values must be non-empty strings");
