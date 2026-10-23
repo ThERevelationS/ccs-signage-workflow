@@ -240,4 +240,14 @@ assert.match(jobCosting, /stock_issued: stockIssued/, 'rollup must expose issued
 assert.match(jobCosting, /stock_movements:/, 'job detail must list stock movements');
 assert.match(jcPage, /j\.stock_issued/, 'job costing page must show issued stock');
 
+// Customer 360: EstimatorCustomers opens a cross-domain detail per customer.
+const custPage = readFileSync('src/pages/EstimatorCustomers.jsx', 'utf8');
+assert.ok(entry.includes('action === "get_customer_360"'), 'get_customer_360 must be handled');
+assert.match(entry, /asServiceRole\.entities\.CustomerContact\b/, 'customer 360 must read canonical contacts via service role');
+assert.match(entry, /asServiceRole\.entities\.CustomerLocation\b/, 'customer 360 must read canonical locations via service role');
+assert.match(entry, /open_pipeline_value/, 'customer 360 must aggregate open pipeline value');
+assert.match(entry, /open_ar:/, 'customer 360 must aggregate open AR');
+assert.match(custPage, /action: "get_customer_360"/, 'customer page must invoke get_customer_360');
+assert.match(custPage, /opportunityWorkspaceAction/, 'customer page must go through the workspace function');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
