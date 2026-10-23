@@ -85,6 +85,23 @@ them, and disables Save/Test without a session token. The write-authorization
 contract test gained an inline-invoke sweep so any future admin-component
 invoke of a credentialed function without a credential fails tests.
 
+The remaining uncredentialed admin invokes were then audited individually:
+every one targets a backend function that authenticates via
+createClientFromRequest(req).auth.me() with a server-side role === 'admin'
+check (the platform ambient session), not a request credential — so they are
+correct by design, unlike SyncAlertSettings which hit session_token-deriving
+actions. The contract test now enforces the full rule: any inline invoke in
+admin components must carry a credential OR name a function on the audited
+platform-auth allowlist (auditJurisdictionAccuracy,
+opportunityBridgeSimulation, permittingHtmlEvidence,
+permittingOfficeAuthorityReview, permittingOfficeCandidate,
+permittingResearchBacklogDispatch, permittingSourceAuthorityReview,
+updateJurisdictionRewriteAuthority). A new uncredentialed invoke fails tests
+until its backend auth is verified and allowlisted deliberately.
+Known informational item: sync_alert_get requires no credential server-side
+and returns the alert recipient email; hardening it is a backend change and
+awaits explicit approval.
+
 While unlocked, the admin navigation card now shows the stored capability's
 expiry as a static "Admin authorization expires at <time>" label
 (`data-admin-capability-expiry`). The label is populated by the same effect
