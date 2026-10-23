@@ -1,3 +1,4 @@
+import {assertResearchSourceIdentity} from './permittingSourceIdentity.mjs';
 import {scanOfficialPermittingPages,applyDiscoveryFetchTimestamp} from './permittingDiscoveryScan.mjs';
 import {mergeJurisdictionResearchDocuments} from './jurisdictionResearchDocumentMerge.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
@@ -15,12 +16,13 @@ export async function continueKnownDiscovery({entity,jurisdictionId,fetchPage,in
  const guards={_manual_documents:profile._manual_documents,auto_refresh:profile.auto_refresh,
   permitting_url:profile.permitting_url,website_url:profile.website_url};
  let scan;
- try{scan=await scanOfficialPermittingPages({seedUrl:profile.permitting_url,resume:cursor,
+ try{assertResearchSourceIdentity(profile,profile);
+ scan=await scanOfficialPermittingPages({jurisdiction:profile,seedUrl:profile.permitting_url,resume:cursor,
   existingDocuments:profile.documents || [],maxPages,fetchPage});}
  catch(error){
   if(error.frontier_review_required){
    await replaceJurisdictionFieldsIfUnchanged({entity,jurisdiction:profile,guardFields:guards,
-    nextFields:{discovery_scan_state:{...cursor,blocked:true,block_reason:String(error.message).slice(0,300)}},label:'Discovery frontier review block'});
+    nextFields:{...(error.code==='SOURCE_IDENTITY_REVIEW_REQUIRED'?{auto_refresh:false}:{}),discovery_scan_state:{...cursor,blocked:true,block_reason:String(error.message).slice(0,300),...(error.code==='SOURCE_IDENTITY_REVIEW_REQUIRED'?{block_code:error.code}:{})}},label:'Discovery frontier review block'});
    return{success:false,status:'frontier_review_required',jurisdiction_id:profile.id,llm_calls:0};
   }
   throw error;
