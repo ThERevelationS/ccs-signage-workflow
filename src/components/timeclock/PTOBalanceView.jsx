@@ -11,9 +11,9 @@ import {
   Baby,
   Calendar,
   Clock,
-  AlertCircle,
-  Loader2
+  AlertCircle
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
@@ -109,8 +109,12 @@ export default function PTOBalanceView({ currentUser }) {
 
   if (isLoading) {
     return (
-      <div className="clay-card p-6 text-center">
-        <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
+      <div className="clay-card p-6">
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-3 w-56" />
+        </div>
       </div>
     );
   }
