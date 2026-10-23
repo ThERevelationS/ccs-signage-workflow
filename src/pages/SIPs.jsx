@@ -269,7 +269,7 @@ export default function SIPs() {
       // snapshot guard above already discarded superseded loads, so the
       // rendered value is the last committed one.
       const sameData = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-      if (!sameData(wipDescs, wipTaskDescriptions)) setWipTaskDescriptions(wipDescs);
+      setWipTaskDescriptions(prev => sameData(wipDescs, prev) ? prev : wipDescs);
       setBoardError("");
       if (clearQuickEditErrorOnSuccess) setQuickEditError("");
       if (dropdownsSetting?.error) {
@@ -278,7 +278,7 @@ export default function SIPs() {
       } else {
         setChecklistConfigWarning("");
         const nextConditions = dropdownsSetting?.setting?.setting_value?.items || [];
-        if (!sameData(nextConditions, dropdownConditions)) setDropdownConditions(nextConditions);
+        setDropdownConditions(prev => sameData(nextConditions, prev) ? prev : nextConditions);
       }
       
       // Filter for SIPs - items where:
@@ -292,7 +292,7 @@ export default function SIPs() {
       );
       boardHasLoadedRef.current = true;
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
-      if (!sameData(usersData, users)) setUsers(usersData);
+      setUsers(prev => sameData(usersData, prev) ? prev : usersData);
       setLastUpdated(new Date());
       // Callers reconciling a rejected write may use only this verified,
       // current snapshot, never a stale or failed board refresh.
