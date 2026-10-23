@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import FleetEquipmentDialog from "@/components/fleet/FleetEquipmentDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -181,7 +182,7 @@ export default function FleetEquipment() {
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
-        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : (
+        {loading ? <ListSkeleton rows={6} /> : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(eq => {
               const activeOrders = workOrders.filter(order => order.equipment_id === eq.id && !["completed", "cancelled"].includes(order.status));
