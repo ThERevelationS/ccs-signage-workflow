@@ -59,6 +59,10 @@ assert.match(entry, /reconcileEstimatingRequest/, 'estimating requests must reco
 assert.match(entry, /QUOTE_OUT_STATUSES/, 'quote-out estimate statuses must drive request completion');
 assert.match(entry, /status: "completed", completed_at/, 'reconciliation must mark the request completed');
 assert.match(entry, /stage: "quoted", stage_changed_at/, 'reconciliation must advance an estimating opportunity to quoted');
+assert.ok(entry.includes('action === "list_follow_ups"'), 'follow-ups list must be served by the workspace function');
+assert.match(entry, /follow_ups: items/, 'follow-ups must return the sorted item list');
+assert.match(page, /action: "list_follow_ups"/, 'the page must request follow-ups through the function');
+assert.match(page, /FollowUps/, 'the page must render a follow-ups view');
 assert.match(entry, /asServiceRole\.entities\.Invoice\b/, 'global search must read invoices via service role');
 assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 'search must invoke the workspace function');
 assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
