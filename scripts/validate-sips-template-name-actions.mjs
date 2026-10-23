@@ -12,6 +12,7 @@ const names = [
   'renameSubTemplate', 'renameProductType', 'saveDropdownRename',
   'duplicateProductTypeTemplate', 'saveSubTemplateChecklist',
   'runConfirmedAction', 'blockNavigationWhileSaving',
+  'saveDropdownConditionsCatalog', 'requestDeleteProductType', 'requestDeleteCondition',
 ];
 const handlers = names.map(name => {
   const start = source.indexOf('  const ' + name + ' = ');
@@ -40,6 +41,7 @@ function setup() {
     editingDropdown: null, editingDropdownName: '',
     selectedProductType: null, selectedSubTemplate: null,
     subTemplateChecklistItems: [], subTemplateHasChanges: false,
+    productTypeItems: [],
     subTemplateSaveStatus: 'idle', savingChecklist: null,
     noticeDialog: null, confirmDialog: null, isConfirming: false,
     persistenceError: '',
@@ -399,6 +401,59 @@ await test('editor switching and closing are blocked while a catalog action is i
   await pending;
   s.state.noticeDialog = null; s.context.noticeDialog = null;
   assert.equal(s.blockNavigationWhileSaving(), false);
+});
+
+await test('the condition reorder/move helper holds the catalog lock until the write settles', async () => {
+  const s = setup();
+  s.saveDropdownConditionsCatalog([{ id: 'c1' }], 'reorder');
+  await until(s.calls.saveDropdowns);
+  assert.equal(s.context.catalogActionInFlightRef.current, true);
+  assert.equal(s.beginCatalogAction(), false, 'a second catalog action stays blocked');
+  s.calls.saveDropdowns[0].resolve({ id: 'r1' });
+  await tick(); await tick();
+  assert.equal(s.context.catalogActionInFlightRef.current, false);
+});
+
+await test('the condition helper releases the lock after a failed write', async () => {
+  const s = setup();
+  s.saveDropdownConditionsCatalog([{ id: 'c1' }], 'reorder');
+  await until(s.calls.saveDropdowns);
+  s.calls.saveDropdowns[0].reject(new Error('blocked'));
+  await tick(); await tick();
+  assert.equal(s.context.catalogActionInFlightRef.current, false);
+});
+
+await test('the condition helper cannot overlap an in-flight checklist save', async () => {
+  const s = setup();
+  s.context.checklistSaveInFlight.current = { kind: 'productType', id: 'x', items: [] };
+  s.saveDropdownConditionsCatalog([{ id: 'c1' }], 'reorder');
+  assert.equal(s.calls.saveDropdowns.length, 0, 'no write may start during a checklist save');
+  assert.ok(s.state.noticeDialog);
+});
+
+await test('the product-type removal confirm holds the catalog lock during its write', async () => {
+  const s = setup();
+  s.type('selectedProductType', 'Vinyl');
+  s.requestDeleteProductType('Vinyl', 1);
+  const pending = s.state.confirmDialog.onConfirm();
+  await until(s.calls.saveTypes);
+  assert.equal(s.beginCatalogAction(), false, 'a second catalog action cannot overlap the confirmed removal');
+  s.calls.saveTypes[0].resolve({ id: 'r1' });
+  await pending;
+  assert.equal(s.context.catalogActionInFlightRef.current, false);
+  assert.equal(s.state.selectedProductType, null, 'the open editor is cleared after removal');
+  assert.equal(s.state.productTypeItems.length, 0);
+});
+
+await test('the condition delete confirm holds the catalog lock during its write', async () => {
+  const s = setup();
+  s.requestDeleteCondition({ id: 'c2', name: 'Survey' });
+  const pending = s.state.confirmDialog.onConfirm();
+  await until(s.calls.saveDropdowns);
+  assert.equal(s.beginCatalogAction(), false);
+  s.calls.saveDropdowns[0].resolve({ id: 'r1' });
+  await pending;
+  assert.equal(s.context.catalogActionInFlightRef.current, false);
 });
 
 console.log(passed + '/' + passed + ' SIPS template name-action checks passed');
