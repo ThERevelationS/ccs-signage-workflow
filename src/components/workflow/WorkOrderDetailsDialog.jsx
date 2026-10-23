@@ -127,6 +127,7 @@ export default function WorkOrderDetailsDialog({
   const [parentWorkOrder, setParentWorkOrder] = useState(null);
   const [dependencies, setDependencies] = useState([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingWorkOrder, setDeletingWorkOrder] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showCompletedNotes, setShowCompletedNotes] = useState(false);
   const [isEditingDependency, setIsEditingDependency] = useState(false);
@@ -777,8 +778,14 @@ export default function WorkOrderDetailsDialog({
   };
 
   const confirmDelete = async () => {
-    if (onDelete) {
-      await onDelete(workOrder);
+    if (deletingWorkOrder) return;
+    setDeletingWorkOrder(true);
+    try {
+      if (onDelete) {
+        await onDelete(workOrder);
+      }
+    } finally {
+      setDeletingWorkOrder(false);
     }
     setShowDeleteDialog(false);
     onClose();
@@ -1920,8 +1927,8 @@ export default function WorkOrderDetailsDialog({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
-              Delete
+            <AlertDialogAction onClick={confirmDelete} disabled={deletingWorkOrder} className="bg-red-600 text-white">
+              {deletingWorkOrder ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
