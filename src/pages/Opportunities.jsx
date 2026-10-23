@@ -1232,6 +1232,21 @@ export default function Opportunities() {
                       {o.next_action ? ` · next: ${o.next_action}${o.next_action_due ? ` (${o.next_action_due})` : ""}` : ""}
                     </div>
                   </div>
+                  {(() => {
+                    const since = Date.parse(clean(o.stage_changed_at));
+                    const days = Number.isFinite(since) ? Math.max(0, Math.floor((Date.now() - since) / 86400000)) : null;
+                    return days == null ? null : (
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${days >= 30
+                        ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
+                        : days >= 14
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}
+                        title="Days in current stage">
+                        {days}d
+                      </span>
+                    );
+                  })()}
+                  </div>
                   {Number.isFinite(Number(o.budget_amount)) && Number(o.budget_amount) > 0 && (
                     <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">${Number(o.budget_amount).toLocaleString()}</span>
                   )}
