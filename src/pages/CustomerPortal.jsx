@@ -1,7 +1,23 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Receipt, ShieldCheck, Clock, Ban } from "lucide-react";
+import {
+  Receipt,
+  ShieldCheck,
+  Clock,
+  Ban,
+  FileText,
+  Hammer,
+  MessageSquare,
+  LayoutGrid,
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+  Send,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+} from "lucide-react";
 
 const money = (value) => {
   const n = Number(value);
@@ -9,21 +25,373 @@ const money = (value) => {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-const STATUS_STYLES = {
+const INVOICE_STYLES = {
   draft: "bg-slate-100 text-slate-700",
   sent: "bg-blue-100 text-blue-800",
   partial: "bg-amber-100 text-amber-800",
+  partially_paid: "bg-amber-100 text-amber-800",
   paid: "bg-emerald-100 text-emerald-800",
   overdue: "bg-red-100 text-red-800",
   void: "bg-slate-100 text-slate-500",
 };
 
+const QUOTE_STYLES = {
+  sent: "bg-blue-100 text-blue-800",
+  approved: "bg-emerald-100 text-emerald-800",
+  draft: "bg-slate-100 text-slate-700",
+  calculated: "bg-slate-100 text-slate-700",
+};
+
+const JOB_STYLES = {
+  open: { label: "Open", cls: "bg-slate-100 text-slate-700" },
+  in_progress: { label: "In progress", cls: "bg-blue-100 text-blue-800" },
+  scheduled: { label: "Scheduled", cls: "bg-indigo-100 text-indigo-800" },
+  on_hold: { label: "On hold", cls: "bg-amber-100 text-amber-800" },
+  completed: { label: "Completed", cls: "bg-emerald-100 text-emerald-800" },
+  cancelled: { label: "Cancelled", cls: "bg-slate-100 text-slate-500" },
+};
+
+const JOB_STEPS = ["open", "in_progress", "completed"];
+
+const KIND_LABELS = {
+  message: null,
+  estimate_approved: "Quote approved",
+  estimate_revision_requested: "Revision requested",
+  payment_notice: "Payment notice",
+  system: null,
+};
+
+const call = (body) =>
+  base44.functions.invoke("customerPortalAction", body).then((r) => {
+    const data = r?.data || r;
+    if (!data?.success) throw new Error(data?.error || "Request failed.");
+    return data;
+  });
+
+function InvoiceView({ invoice, payments }) {
+  return (
+    <>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Invoice</p>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-900">{invoice.invoice_number || "Invoice"}</h2>
+            <p className="mt-1 text-sm text-slate-500">{invoice.customer_display_name}</p>
+            {invoice.description && <p className="mt-2 max-w-xl text-sm text-slate-600">{invoice.description}</p>}
+          </div>
+          <div className="text-right">
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${INVOICE_STYLES[invoice.status] || INVOICE_STYLES.draft}`}>
+              {(invoice.status || "draft").replace(/_/g, " ")}
+            </span>
+            <p className="mt-3 text-3xl font-bold text-slate-900">{money(invoice.total)}</p>
+            {Number(invoice.balance_due) > 0 && (
+              <p className="mt-1 text-sm font-medium text-red-700">{money(invoice.balance_due)} due</p>
+            )}
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-4">
+          <div><p className="text-xs text-slate-500">Issued</p><p className="mt-0.5 text-sm font-medium text-slate-800">{invoice.issue_date || "—"}</p></div>
+          <div>
+            <p className="text-xs text-slate-500">Due</p>
+            <p className="mt-0.5 flex items-center gap-1 text-sm font-medium text-slate-800">
+              {invoice.due_date || "—"}
+              {Number(invoice.balance_due) > 0 && invoice.due_date && new Date(invoice.due_date) < new Date() && <Clock className="h-3.5 w-3.5 text-red-500" />}
+            </p>
+          </div>
+          <div><p className="text-xs text-slate-500">Paid to date</p><p className="mt-0.5 text-sm font-medium text-slate-800">{money(invoice.amount_paid)}</p></div>
+          <div><p className="text-xs text-slate-500">Billing</p><p className="mt-0.5 text-sm font-medium text-slate-800">{(invoice.billing_type || "standard").replace(/_/g, " ")}</p></div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3">Description</th>
+              <th className="px-4 py-3 text-right">Qty</th>
+              <th className="px-4 py-3 text-right">Rate</th>
+              <th className="px-4 py-3 text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(invoice.line_items || []).map((item, index) => (
+              <tr key={index} className="border-b border-slate-100 last:border-0">
+                <td className="px-4 py-3 text-slate-800">{item.description || "Item"}</td>
+                <td className="px-4 py-3 text-right text-slate-600">{Number(item.quantity) || 0}</td>
+                <td className="px-4 py-3 text-right text-slate-600">{money(item.unit_price)}</td>
+                <td className="px-4 py-3 text-right font-medium text-slate-900">{money(item.amount)}</td>
+              </tr>
+            ))}
+            {(!invoice.line_items || invoice.line_items.length === 0) && (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No line items on this invoice.</td></tr>
+            )}
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-slate-200 bg-slate-50">
+              <td colSpan={3} className="px-4 py-2.5 text-right text-sm text-slate-500">Subtotal</td>
+              <td className="px-4 py-2.5 text-right text-sm font-medium">{money(invoice.subtotal)}</td>
+            </tr>
+            {Number(invoice.tax) > 0 && (
+              <tr className="bg-slate-50">
+                <td colSpan={3} className="px-4 py-2.5 text-right text-sm text-slate-500">Tax</td>
+                <td className="px-4 py-2.5 text-right text-sm font-medium">{money(invoice.tax)}</td>
+              </tr>
+            )}
+            <tr className="bg-slate-50">
+              <td colSpan={3} className="px-4 py-2.5 text-right font-semibold text-slate-900">Total</td>
+              <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{money(invoice.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {(payments || []).length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-900">Payments received</h3>
+          <ul className="mt-3 divide-y divide-slate-100">
+            {payments.map((p, index) => (
+              <li key={index} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-slate-600">{p.paid_at || "—"} · {(p.method || "payment").replace(/_/g, " ")}</span>
+                <span className="font-medium text-emerald-700">{money(p.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
+function QuoteCard({ quote, onRespond, busy }) {
+  const [mode, setMode] = useState("");
+  const [note, setNote] = useState("");
+  const respondable = quote.can_respond;
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Quote {quote.estimate_number}</p>
+          <h3 className="mt-1 text-lg font-semibold text-slate-900">{quote.quote_title || quote.project_name || "Estimate"}</h3>
+          {quote.quote_valid_days > 0 && <p className="mt-0.5 text-xs text-slate-400">Valid {quote.quote_valid_days} days</p>}
+        </div>
+        <div className="text-right">
+          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${QUOTE_STYLES[quote.status] || QUOTE_STYLES.draft}`}>
+            {(quote.status || "draft").replace(/_/g, " ")}
+          </span>
+          {Number(quote.quote_total) > 0 && <p className="mt-2 text-2xl font-bold text-slate-900">{money(quote.quote_total)}</p>}
+        </div>
+      </div>
+      {respondable && !mode && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button onClick={() => setMode("approve")} disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+            <CheckCircle2 className="h-4 w-4" />Approve quote
+          </button>
+          <button onClick={() => setMode("changes")} disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            Request changes
+          </button>
+        </div>
+      )}
+      {respondable && mode === "approve" && (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm font-medium text-emerald-900">Approve {quote.estimate_number || "this quote"} for {money(quote.quote_total)}?</p>
+          <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note for the team…"
+            className="mt-2 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => onRespond(quote, "approve", note)} disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Confirm approval
+            </button>
+            <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
+      {respondable && mode === "changes" && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-900">What should change on this quote?</p>
+          <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Describe the revisions you'd like…"
+            className="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => onRespond(quote, "request_changes", note)} disabled={busy || !note.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
+            </button>
+            <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
+      {quote.status === "approved" && (
+        <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" />Approved — thank you. We'll take it from here.</p>
+      )}
+    </div>
+  );
+}
+
+function JobCard({ job }) {
+  const style = JOB_STYLES[job.status] || { label: (job.status || "open").replace(/_/g, " "), cls: "bg-slate-100 text-slate-700" };
+  const stepIndex = JOB_STEPS.indexOf(job.status);
+  const progress = job.task_progress;
+  const pct = progress && progress.total ? Math.round((progress.completed / progress.total) * 100) : (job.status === "completed" ? 100 : stepIndex > 0 ? 50 : 0);
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{job.work_order_number || "Job"}</p>
+          <h3 className="mt-1 text-lg font-semibold text-slate-900">{job.title || "Work order"}</h3>
+        </div>
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${style.cls}`}>{style.label}</span>
+      </div>
+      <div className="mt-4">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className={`h-full rounded-full ${job.status === "completed" ? "bg-emerald-500" : "bg-blue-500"}`} style={{ width: `${Math.max(4, pct)}%` }} />
+        </div>
+        <div className="mt-1.5 flex justify-between text-[11px] text-slate-500">
+          <span>Started</span><span>In progress</span><span>Complete</span>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
+        {job.install_date && <span>Install: <span className="font-medium text-slate-700">{job.install_date}</span></span>}
+        {job.due_date && <span>Due: <span className="font-medium text-slate-700">{job.due_date}</span></span>}
+        {job.install_location && <span>Site: <span className="font-medium text-slate-700">{job.install_location}</span></span>}
+        {progress && <span>Tasks: <span className="font-medium text-slate-700">{progress.completed}/{progress.total}</span></span>}
+      </div>
+    </div>
+  );
+}
+
+function InvoiceRow({ invoice, payments, onNotice, busy }) {
+  const [open, setOpen] = useState(false);
+  const [noticing, setNoticing] = useState(false);
+  const [note, setNote] = useState("");
+  const due = Number(invoice.balance_due) > 0;
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <button onClick={() => setOpen(!open)} className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left">
+        <div>
+          <p className="font-semibold text-slate-900">{invoice.invoice_number || "Invoice"}</p>
+          <p className="text-xs text-slate-500">{invoice.issue_date ? `Issued ${invoice.issue_date}` : "Draft"}{invoice.due_date ? ` · due ${invoice.due_date}` : ""}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="font-semibold text-slate-900">{money(invoice.total)}</p>
+            {due && <p className="text-xs font-medium text-red-700">{money(invoice.balance_due)} due</p>}
+          </div>
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${INVOICE_STYLES[invoice.status] || INVOICE_STYLES.draft}`}>
+            {(invoice.status || "draft").replace(/_/g, " ")}
+          </span>
+          {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-slate-100 p-4">
+          <InvoiceView invoice={invoice} payments={payments} />
+          {due && !noticing && (
+            <button onClick={() => setNoticing(true)}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+              <AlertCircle className="h-4 w-4" />Let us know a payment is on the way
+            </button>
+          )}
+          {due && noticing && (
+            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-medium text-blue-900">Tell us how you're paying (optional):</p>
+              <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Check #1042 mailed today, ACH tomorrow…"
+                className="mt-2 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm" />
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => { onNotice(invoice, note); setNoticing(false); setNote(""); }} disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send notice
+                </button>
+                <button onClick={() => setNoticing(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Thread({ messages, onSend, busy, customerName }) {
+  const [draft, setDraft] = useState("");
+  const endRef = useRef(null);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
+  const send = () => {
+    const text = draft.trim();
+    if (!text) return;
+    onSend(text);
+    setDraft("");
+  };
+  return (
+    <div className="flex min-h-[420px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+        {messages.length === 0 && (
+          <div className="flex h-full items-center justify-center text-sm text-slate-400">
+            No messages yet — send one below and we'll reply here.
+          </div>
+        )}
+        {messages.map((m) => {
+          const mine = m.author_side === "customer";
+          const label = KIND_LABELS[m.kind];
+          return (
+            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+                mine ? "bg-blue-600 text-white" : m.author_side === "system" ? "bg-slate-100 text-slate-600" : "bg-slate-100 text-slate-800"
+              }`}>
+                {label && <p className={`mb-0.5 text-[10px] font-bold uppercase tracking-wide ${mine ? "text-blue-200" : "text-slate-500"}`}>{label}</p>}
+                {!mine && m.author_side === "staff" && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{m.author_name || "CCS Signage"}</p>}
+                {m.related_label && <p className={`mb-0.5 text-[11px] ${mine ? "text-blue-200" : "text-slate-500"}`}>Re: {m.related_label}</p>}
+                <p className="whitespace-pre-wrap">{m.body}</p>
+                <p className={`mt-1 text-[10px] ${mine ? "text-blue-200" : "text-slate-400"}`}>
+                  {m.created_date ? new Date(m.created_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={endRef} />
+      </div>
+      <div className="border-t border-slate-100 p-3">
+        <div className="flex items-end gap-2">
+          <textarea rows={2} value={draft} onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            placeholder={`Message CCS Signage about your ${customerName ? "account" : "project"}…`}
+            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" />
+          <button onClick={send} disabled={busy || !draft.trim()}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </button>
+        </div>
+        <p className="mt-1 text-[10px] text-slate-400">Enter to send · Shift+Enter for a new line</p>
+      </div>
+    </div>
+  );
+}
+
+const TABS = [
+  { key: "overview", label: "Overview", icon: LayoutGrid },
+  { key: "quotes", label: "Quotes", icon: FileText },
+  { key: "jobs", label: "Jobs", icon: Hammer },
+  { key: "invoices", label: "Invoices", icon: Receipt },
+  { key: "messages", label: "Messages", icon: MessageSquare },
+];
+
 export default function CustomerPortal() {
-  const token = useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    return (params.get("token") || "").trim();
-  }, []);
+  const token = useMemo(() => new URLSearchParams(window.location.search).get("token")?.trim() || "", []);
   const [state, setState] = useState({ loading: true, data: null, error: "" });
+  const [tab, setTab] = useState("overview");
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState("");
+  const msgKeyRef = useRef(crypto.randomUUID());
+
+  const load = useCallback(async () => {
+    try {
+      const data = await call({ action: "bootstrap", token });
+      setState({ loading: false, data, error: "" });
+    } catch (error) {
+      setState({ loading: false, data: null, error: error?.message || "This portal link is invalid, expired, or revoked." });
+    }
+  }, [token]);
 
   useEffect(() => {
     document.title = "Customer Portal | CCS Signage";
@@ -31,39 +399,85 @@ export default function CustomerPortal() {
       setState({ loading: false, data: null, error: "This portal link is incomplete. Please use the link exactly as it was sent to you." });
       return;
     }
-    let cancelled = false;
-    base44.functions.invoke("customerPortalAction", { action: "bootstrap", token })
-      .then((response) => {
-        if (cancelled) return;
-        const data = response?.data;
-        if (data?.success) setState({ loading: false, data, error: "" });
-        else setState({ loading: false, data: null, error: data?.error || "This portal link is invalid, expired, or revoked." });
-      })
-      .catch((error) => {
-        if (!cancelled) setState({ loading: false, data: null, error: error?.message || "This portal link is invalid, expired, or revoked." });
-      });
-    return () => { cancelled = true; };
-  }, [token]);
+    load();
+  }, [token, load]);
 
-  const invoice = state.data?.invoice;
-  const payments = state.data?.payments || [];
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const data = state.data;
+  const isCustomer = data?.kind === "customer";
+  const estimates = data?.estimates || [];
+  const jobs = data?.jobs || [];
+  const invoices = data?.invoices || [];
+  const messages = data?.messages || [];
+  const openBalance = invoices.reduce((sum, i) => sum + (Number(i.balance_due) || 0), 0);
+  const awaiting = estimates.filter((e) => e.can_respond);
+  const activeJobs = jobs.filter((j) => !["completed", "cancelled"].includes(j.status));
+  const unreadFromStaff = data?.unread_for_customer || 0;
+
+  const respond = async (quote, decision, note) => {
+    setBusy(true);
+    try {
+      await call({ action: "estimate_respond", token, estimate_id: quote.id, decision, note, creation_request_key: crypto.randomUUID() });
+      setToast(decision === "approve" ? "Quote approved — thank you!" : "Revision request sent.");
+      await load();
+    } catch (error) {
+      setToast(error?.message || "Could not submit your response.");
+    } finally { setBusy(false); }
+  };
+
+  const notice = async (invoice, note) => {
+    setBusy(true);
+    try {
+      await call({ action: "payment_notice", token, invoice_id: invoice.id, note, creation_request_key: crypto.randomUUID() });
+      setToast("Payment notice sent — thank you.");
+      await load();
+    } catch (error) {
+      setToast(error?.message || "Could not send the notice.");
+    } finally { setBusy(false); }
+  };
+
+  const sendMessage = async (text) => {
+    setBusy(true);
+    try {
+      await call({ action: "post_message", token, body: text, creation_request_key: msgKeyRef.current });
+      msgKeyRef.current = crypto.randomUUID();
+      await load();
+    } catch (error) {
+      setToast(error?.message || "Message could not be sent.");
+    } finally { setBusy(false); }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-10">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white">
-            <Receipt className="h-5 w-5" />
+    <div className="min-h-screen bg-slate-100 px-4 py-6 sm:py-10">
+      <div className="mx-auto max-w-4xl space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white">
+              <Receipt className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-slate-900">CCS Signage</h1>
+              <p className="text-sm text-slate-500">
+                {isCustomer ? `Customer portal — ${data?.customer?.name || "your account"}` : "Customer portal"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900">CCS Signage</h1>
-            <p className="text-sm text-slate-500">Customer portal</p>
-          </div>
+          {!state.loading && !state.error && (
+            <button onClick={() => { setState((s) => ({ ...s, loading: true })); load(); }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+              <RefreshCw className="h-3.5 w-3.5" />Refresh
+            </button>
+          )}
         </div>
 
         {state.loading && (
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-            Loading your document…
+            <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />Loading your portal…
           </div>
         )}
 
@@ -76,128 +490,133 @@ export default function CustomerPortal() {
           </div>
         )}
 
-        {!state.loading && invoice && (
+        {!state.loading && data && !isCustomer && (
           <>
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Invoice</p>
-                  <h2 className="mt-1 text-2xl font-semibold text-slate-900">
-                    {invoice.invoice_number || "Invoice"}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">{invoice.customer_display_name}</p>
-                  {invoice.description && (
-                    <p className="mt-2 max-w-xl text-sm text-slate-600">{invoice.description}</p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[invoice.status] || STATUS_STYLES.draft}`}>
-                    {(invoice.status || "draft").replace(/_/g, " ")}
-                  </span>
-                  <p className="mt-3 text-3xl font-bold text-slate-900">{money(invoice.total)}</p>
-                  {Number(invoice.balance_due) > 0 && (
-                    <p className="mt-1 text-sm font-medium text-red-700">{money(invoice.balance_due)} due</p>
-                  )}
-                </div>
+            <InvoiceView invoice={data.invoice} payments={data.payments} />
+            {Number(data.invoice?.balance_due) > 0 && (
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                <p className="text-sm font-medium text-blue-900">Balance due: <span className="font-bold">{money(data.invoice.balance_due)}</span></p>
+                <p className="mt-1 text-xs text-blue-700">To pay, contact CCS Signage and reference invoice {data.invoice.invoice_number}.</p>
               </div>
+            )}
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Read-only view — this page reflects live billing records.</span>
+              <Button variant="outline" size="sm" onClick={() => window.print()}>Print / PDF</Button>
+            </div>
+          </>
+        )}
 
-              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-4">
-                <div>
-                  <p className="text-xs text-slate-500">Issued</p>
-                  <p className="mt-0.5 text-sm font-medium text-slate-800">{invoice.issue_date || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Due</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-sm font-medium text-slate-800">
-                    {invoice.due_date || "—"}
-                    {Number(invoice.balance_due) > 0 && invoice.due_date && new Date(invoice.due_date) < new Date() && (
-                      <Clock className="h-3.5 w-3.5 text-red-500" />
+        {!state.loading && isCustomer && (
+          <>
+            <div className="flex flex-wrap gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+              {TABS.map((t) => {
+                const Icon = t.icon;
+                const badge = t.key === "messages" && unreadFromStaff > 0 ? unreadFromStaff : t.key === "quotes" && awaiting.length > 0 ? awaiting.length : 0;
+                return (
+                  <button key={t.key} onClick={() => setTab(t.key)}
+                    className={`relative inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
+                      tab === t.key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+                    }`}>
+                    <Icon className="h-4 w-4" />{t.label}
+                    {badge > 0 && (
+                      <span className="ml-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">{badge}</span>
                     )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Paid to date</p>
-                  <p className="mt-0.5 text-sm font-medium text-slate-800">{money(invoice.amount_paid)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Billing</p>
-                  <p className="mt-0.5 text-sm font-medium text-slate-800">{(invoice.billing_type || "standard").replace(/_/g, " ")}</p>
-                </div>
-              </div>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <th className="px-4 py-3">Description</th>
-                    <th className="px-4 py-3 text-right">Qty</th>
-                    <th className="px-4 py-3 text-right">Rate</th>
-                    <th className="px-4 py-3 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(invoice.line_items || []).map((item, index) => (
-                    <tr key={index} className="border-b border-slate-100 last:border-0">
-                      <td className="px-4 py-3 text-slate-800">{item.description || "Item"}</td>
-                      <td className="px-4 py-3 text-right text-slate-600">{Number(item.quantity) || 0}</td>
-                      <td className="px-4 py-3 text-right text-slate-600">{money(item.unit_price)}</td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-900">{money(item.amount)}</td>
-                    </tr>
-                  ))}
-                  {(!invoice.line_items || invoice.line_items.length === 0) && (
-                    <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No line items on this invoice.</td></tr>
-                  )}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-slate-200 bg-slate-50">
-                    <td colSpan={3} className="px-4 py-2.5 text-right text-sm text-slate-500">Subtotal</td>
-                    <td className="px-4 py-2.5 text-right text-sm font-medium">{money(invoice.subtotal)}</td>
-                  </tr>
-                  {Number(invoice.tax) > 0 && (
-                    <tr className="bg-slate-50">
-                      <td colSpan={3} className="px-4 py-2.5 text-right text-sm text-slate-500">Tax</td>
-                      <td className="px-4 py-2.5 text-right text-sm font-medium">{money(invoice.tax)}</td>
-                    </tr>
-                  )}
-                  <tr className="bg-slate-50">
-                    <td colSpan={3} className="px-4 py-2.5 text-right font-semibold text-slate-900">Total</td>
-                    <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{money(invoice.total)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+            {toast && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800">{toast}</div>
+            )}
 
-            {payments.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-900">Payments received</h3>
-                <ul className="mt-3 divide-y divide-slate-100">
-                  {payments.map((p, index) => (
-                    <li key={index} className="flex items-center justify-between py-2 text-sm">
-                      <span className="text-slate-600">{p.paid_at || "—"} · {(p.method || "payment").replace(/_/g, " ")}</span>
-                      <span className="font-medium text-emerald-700">{money(p.amount)}</span>
-                    </li>
-                  ))}
-                </ul>
+            {tab === "overview" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="text-xs text-slate-500">Quotes awaiting you</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{awaiting.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="text-xs text-slate-500">Active jobs</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{activeJobs.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="text-xs text-slate-500">Open invoices</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{invoices.filter((i) => Number(i.balance_due) > 0).length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="text-xs text-slate-500">Balance due</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{money(openBalance)}</p>
+                  </div>
+                </div>
+
+                {awaiting.length > 0 && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-amber-900">
+                      {awaiting.length === 1 ? "A quote is waiting for your response." : `${awaiting.length} quotes are waiting for your response.`}
+                    </p>
+                    <button onClick={() => setTab("quotes")} className="mt-2 text-sm font-semibold text-amber-800 underline">Review quotes →</button>
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h3 className="text-sm font-semibold text-slate-900">Recent activity</h3>
+                  {messages.length === 0 && <p className="mt-2 text-sm text-slate-400">Nothing yet — activity will appear here as your project moves.</p>}
+                  <ul className="mt-3 space-y-2.5">
+                    {messages.slice(-6).reverse().map((m) => (
+                      <li key={m.id} className="flex items-start gap-2.5 text-sm">
+                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${m.author_side === "customer" ? "bg-blue-500" : "bg-slate-400"}`} />
+                        <div>
+                          <p className="text-slate-700">
+                            <span className="font-medium">{KIND_LABELS[m.kind] || (m.author_side === "customer" ? "You" : m.author_name || "CCS Signage")}</span>
+                            {m.kind === "message" ? `: ${m.body.slice(0, 90)}${m.body.length > 90 ? "…" : ""}` : ` ${m.related_label ? `— ${m.related_label}` : ""}`}
+                          </p>
+                          <p className="text-[11px] text-slate-400">{m.created_date ? new Date(m.created_date).toLocaleString() : ""}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
 
-            {Number(invoice.balance_due) > 0 && (
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <p className="text-sm font-medium text-blue-900">
-                  Balance due: <span className="font-bold">{money(invoice.balance_due)}</span>
-                </p>
-                <p className="mt-1 text-xs text-blue-700">
-                  Online payment is coming soon. To pay now, contact CCS Signage and reference invoice {invoice.invoice_number}.
-                </p>
+            {tab === "quotes" && (
+              <div className="space-y-4">
+                {estimates.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No quotes shared with you yet.</div>
+                )}
+                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} busy={busy} />)}
               </div>
+            )}
+
+            {tab === "jobs" && (
+              <div className="space-y-4">
+                {jobs.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No jobs on your account yet.</div>
+                )}
+                {jobs.map((j) => <JobCard key={j.id} job={j} />)}
+              </div>
+            )}
+
+            {tab === "invoices" && (
+              <div className="space-y-4">
+                {invoices.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No invoices on your account yet.</div>
+                )}
+                {invoices.map((i) => (
+                  <InvoiceRow key={i.id} invoice={i} payments={data.payments_by_invoice?.[i.id] || []} onNotice={notice} busy={busy} />
+                ))}
+              </div>
+            )}
+
+            {tab === "messages" && (
+              <Thread messages={messages} onSend={sendMessage} busy={busy} customerName={data?.customer?.name} />
             )}
 
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="h-3.5 w-3.5" /> Read-only view — this page reflects live billing records.
-              </span>
-              <Button variant="outline" size="sm" onClick={() => window.print()}>Print / PDF</Button>
+              <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Secure link · reflects live account records</span>
+              <Button variant="outline" size="sm" onClick={() => window.print()}>Print</Button>
             </div>
           </>
         )}
