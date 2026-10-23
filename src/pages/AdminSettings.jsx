@@ -303,6 +303,7 @@ const ACTION_TYPES = [
   { value: "add_note", label: "Add Note", icon: FileText, color: "orange" },
   { value: "set_due_date", label: "Set Due Date", icon: Calendar, color: "pink" },
   { value: "create_rider", label: "Create Rider", icon: GitBranch, color: "indigo" },
+  { value: "set_priority", label: "Set List Position", icon: SortAsc, color: "cyan" },
   { value: "mark_complete", label: "Mark Complete", icon: CheckCircle2, color: "emerald" }
 ];
 
@@ -311,8 +312,7 @@ const ACTION_TYPES = [
 //   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set —
 //     client-emitted work-order events are routed there by
 //     NotificationService, and permit events arrive via processWorkflowTriggers
-//     and checkPermitFollowupReminders. Runs every action except
-//     create_rider / set_priority.
+//     and checkPermitFollowupReminders. Runs every advertised action.
 //   - ORDER events also run through the engine but carry no Work Order, so
 //     only send_email can execute for them.
 //   - checkDeadlineReminders (daily job): fires the DEADLINE set and runs
@@ -321,6 +321,24 @@ const ACTION_TYPES = [
 // nobody builds a rule that silently does nothing.
 const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "work_order_created", "work_order_completed", "work_order_deleted",
+  "work_order_updated", "work_order_restored",
+  "work_order_client_changed", "work_order_description_changed",
+  "work_order_title_changed", "work_order_estimate_changed",
+  "work_order_contact_changed", "work_order_install_location_changed",
+  "work_order_permit_number_set", "work_order_permit_approved",
+  "work_order_permit_submitted", "work_order_est_inv_set",
+  "work_order_install_date_set", "work_order_project_health_changed",
+  "work_order_production_type_changed", "work_order_file_uploaded",
+  "stage_estimating_entered", "stage_sales_entered",
+  "stage_permitting_entered", "stage_design_entered",
+  "stage_production_entered", "stage_fabrication_entered",
+  "stage_installation_entered", "stage_completed_entered",
+  "project_health_on_track", "project_health_at_risk",
+  "project_health_delayed", "project_health_blocked",
+  "due_date_set", "due_date_cleared", "start_date_set",
+  "site_survey_scheduled", "google_drive_linked", "file_attached",
+  "permit_approved", "permit_receipt_confirmed",
+  "priority_changed",
   "rider_created",
   "stage_changed", "stage_entered", "stage_exited",
   "task_added", "task_completed", "task_deleted",
@@ -333,18 +351,32 @@ const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
 ]);
 
 const ORDER_TRIGGER_SET = new Set([
-  "order_created", "order_ordered", "order_received",
+  "order_created", "order_ordered", "order_received", "order_cancelled",
+  "order_customer_name_changed", "order_request_type_changed",
+  "order_description_changed", "order_quantity_changed",
+  "order_requestor_changed", "order_date_needed_changed",
+  "order_date_ordered_changed", "order_vendor_changed",
+  "order_date_received_changed",
 ]);
 
 const DEADLINE_TRIGGER_SET = new Set([
   "due_date_approaching", "due_date_passed",
+  "work_order_install_date_approaching", "work_order_install_date_passed",
+  "site_survey_approaching",
+]);
+
+// Fired by checkDeadlineReminders against Orders awaiting delivery — order
+// context only, so send_email is the sole supported action.
+const ORDER_DEADLINE_TRIGGER_SET = new Set([
+  "order_date_needed_approaching", "order_date_needed_passed", "order_overdue",
 ]);
 
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
 
 const ENGINE_SUPPORTED_ACTIONS = new Set([
   "send_email", "change_stage", "set_asap", "assign_to",
-  "add_task", "add_note", "set_due_date", "mark_complete",
+  "add_task", "add_note", "set_due_date", "create_rider",
+  "set_priority", "mark_complete",
 ]);
 
 const DEADLINE_SUPPORTED_ACTIONS = new Set([
@@ -353,7 +385,7 @@ const DEADLINE_SUPPORTED_ACTIONS = new Set([
 
 const getTriggerSupportedActions = (triggerType) => {
   if (WORKFLOW_ENGINE_TRIGGER_SET.has(triggerType)) return ENGINE_SUPPORTED_ACTIONS;
-  if (ORDER_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
+  if (ORDER_TRIGGER_SET.has(triggerType) || ORDER_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
@@ -1647,12 +1679,25 @@ export default function AdminSettings() {
       
       case "create_rider":
         return (
-          <Select value={config.rider_stage || ""} onValueChange={(val) => updateAction(index, "rider_stage", val)}>
-            <SelectTrigger className="mt-2"><SelectValue placeholder="Rider stage" /></SelectTrigger>
-            <SelectContent>
-              {STAGES.filter(s => s.value !== "completed").map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2 mt-2">
+            <Input placeholder="Rider title (optional — defaults to 'Work order title - Rider')" value={config.title || ""} onChange={(e) => updateAction(index, "title", e.target.value)} />
+            <Select value={config.rider_stage || ""} onValueChange={(val) => updateAction(index, "rider_stage", val)}>
+              <SelectTrigger><SelectValue placeholder="Rider stage (defaults to current stage)" /></SelectTrigger>
+              <SelectContent>
+                {STAGES.filter(s => s.value !== "completed").map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Input placeholder="First task on the rider (optional)" value={config.task || ""} onChange={(e) => updateAction(index, "task", e.target.value)} />
+            <p className="text-xs text-gray-500">The rider is named after its parent work order. If a rider with the same title already exists, a duplicate will not be created.</p>
+          </div>
+        );
+      
+      case "set_priority":
+        return (
+          <div className="flex items-center gap-2 mt-2">
+            <Input type="number" placeholder="1" value={config.priority || ""} onChange={(e) => updateAction(index, "priority", e.target.value)} className="w-24" />
+            <Label className="text-sm text-gray-600">Position in list — lower numbers sit higher</Label>
+          </div>
         );
       
       default:
@@ -2348,8 +2393,8 @@ export default function AdminSettings() {
                           </div>
 
                           {triggerHasOrderFilters(trigger.trigger_condition) && (
-                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                              Order filters aren't applied yet — this rule will fire for every matching order.
+                            <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md p-2">
+                              Filters set — this rule only runs for orders matching them.
                             </div>
                           )}
                         </div>
@@ -2407,7 +2452,7 @@ export default function AdminSettings() {
                               <SelectItem key={t.value} value={t.value}>
                                 <div className="flex items-center gap-2">
                                   <t.icon className="w-4 h-4" />
-                                  {t.label}{t.value === "create_rider" ? " (not working yet)" : ""}
+                                  {t.label}
                                 </div>
                               </SelectItem>
                             ))}
