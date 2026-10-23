@@ -230,4 +230,14 @@ assert.match(purchaseOrders, /stock_warnings/, 'stock failures must surface as w
 assert.match(poPage, /functions\.invoke\("inventoryAction"/, 'PO form must load stock items via the function');
 assert.match(poPage, /inventory_item_id: clean\(r\.inventory_item_id\)/, 'PO form must submit the stock link');
 
+// Job costing: issued stock counts as material actuals.
+assert.match(invMoveSchema, /unit_cost/, 'movements must snapshot the unit cost for job costing');
+assert.match(inventoryFn, /unit_cost: num\(item\?\.cost_per_unit\)/, 'inventoryAction must freeze the unit cost on each movement');
+assert.match(purchaseOrders, /unit_cost: num\(item\?\.cost_per_unit\)/, 'PO receipts must freeze the unit cost');
+assert.match(jobCosting, /asServiceRole\.entities\.InventoryMovement\b/, 'cost rollup must read the movement ledger');
+assert.match(jobCosting, /\["issue", "return"\]\.includes\(clean\(m\?\.reason\)\)/, 'only issues and returns count as issued material');
+assert.match(jobCosting, /stock_issued: stockIssued/, 'rollup must expose issued stock cost');
+assert.match(jobCosting, /stock_movements:/, 'job detail must list stock movements');
+assert.match(jcPage, /j\.stock_issued/, 'job costing page must show issued stock');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
