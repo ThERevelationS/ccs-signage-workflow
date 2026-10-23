@@ -1,0 +1,150 @@
+{
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "branch": "main",
+  "status": "contained_itemized_remediation_awaits_specific_approval",
+  "profile_id": "6adaf8efc137885e5c4143d0",
+  "profile_version": "2026-10-23T11:06:08.916000",
+  "audit_started_at": "2026-10-23T11:06:13.282Z",
+  "audit_finished_at": "2026-10-23T11:06:16.182Z",
+  "identity_findings": {
+    "current_saved_identity": "Portland / OH / village / Meigs County (unchanged; unsupported village classification)",
+    "census_incorporated_place_source": "https://tigerweb.geo.census.gov/tigerwebmain/Files/acs26/tigerweb_acs26_incplace_oh.html",
+    "live_census_sha256": "e1e961c10cb7513360d0dd4514d4735ff784cabcdb09070c29da88f829d03b27",
+    "live_census_matches_retained_source_hash": true,
+    "portland_name_present_in_live_oh_incorporated_places": false,
+    "retained_official_township_candidate": {
+      "key": "OH:county_subdivision:3910542336",
+      "state": "OH",
+      "name": "Lebanon",
+      "type": "township",
+      "category": "candidate",
+      "county_name": "Meigs",
+      "source_file": "oh-cousub.html",
+      "funcstat": "A",
+      "lsadc": "44"
+    },
+    "supported_conclusion": "The retained legacy village label is contradicted by the live matching Census incorporated-place list. Official township correspondence uses a Portland OH postal address.",
+    "not_established": "A postal address does not prove parcel-specific township boundaries or sign/electrical authority. No profile rename, township merge or incorporation-status approval performed."
+  },
+  "official_evidence": [
+    {
+      "url": "https://ohioauditor.gov/AuditSearch/Reports/2024/Lebanon_Township_23_22_Meigs_FINAL.pdf",
+      "captured_file_sha256": "d8a150225d1e1b15961bf5f4c090a6dafb62cb8011bae51d60ff0ab641d39f77",
+      "finding": "Board of Trustees / Lebanon Township / 54342 New Portland Road / Portland, Ohio 45770; Meigs County.",
+      "boundary": "2022-2023 financial audit correspondence, not current permitting policy or proof of authority."
+    },
+    {
+      "url": "https://meigscountyauditor.org/news/meigs-county-tax-map",
+      "captured_file_sha256": "20b7299005f5d6ca9d58691ceecd3baa3949c47b84da15ae1afbc8da5d2810cd",
+      "finding": "County Auditor identifies www.meigscountytaxmap.com as its Tax Map office website.",
+      "boundary": "Establishes official source relationship, not permitting applicability."
+    },
+    {
+      "url": "https://www.meigscountytaxmap.com/frequently-asked-questions",
+      "captured_file_sha256": "7e28e8aae5f0a118e652e55b7f92ab115c8bb28bc290230ff32dc447b15ddc30",
+      "finding": "The building application is geared toward a Notice of Building Improvement or New Construction; villages may have additional requirements; commercial/industrial projects should follow State guidelines.",
+      "boundary": "This notice is not accepted as a commercial sign permit or electrical issuer/inspection determination."
+    },
+    {
+      "url": "https://www.meigsengineer.org/faq",
+      "captured_file_sha256": "f419f15c0aa1d5836aa2fe2088eaca62a46babea42148fed91ca3ad9408f4547",
+      "finding": "Work within county-road right-of-way is referred to the County Highway/Engineering office for reviewed permit packets.",
+      "boundary": "County-road right-of-way only; not general signage or electrical authority."
+    }
+  ],
+  "inventory": {
+    "document_count": 1866,
+    "confirmed_portland_gov_host": 1866,
+    "sources": {
+      "ai_discovered": 2,
+      "official_page_harvest": 1864
+    },
+    "protected_by_shipped_merge_rules": 0,
+    "missing_ids": 0,
+    "duplicate_ids": [],
+    "documents_sha256": "0a0bcd4a1180c867d9a1848ab50e8c3251fa22418211781cf2171f5f48d6fb6d",
+    "direct_reference_counts": {
+      "PermittingSourceDocument": 0,
+      "PermittingHtmlEvidence": 0,
+      "PermittingOfficeAuthorityReview": 0,
+      "PermittingRule": 0,
+      "PermittingWorkflowDraft": 0,
+      "PermittingRuleExtractionRun": 0,
+      "PermitLocality": 0,
+      "PermittingSourceTextSegment": 0,
+      "PermittingSourceAuthorityReview": 0
+    },
+    "reference_scope_limit": "Exact saved ID links and exact Portland source-name candidates only; absence does not prove no URL-only, client/job or external references exist. No such records were changed.",
+    "itemized_manifest": "docs/permitting-portland-remediation-manifest-2026-10-23.json",
+    "itemized_manifest_sha256": "7650b5c2098171be64280930d7d0ea0f64a118482cdb608d0fa671e6b0100fa7",
+    "itemized_manifest_bytes": 811081,
+    "full_snapshot_local_only": "C:/tmp/permitting-portland-remediation-inventory.json",
+    "backup_boundary": "The checked-in manifest is not a full restoration backup. A verified durable full snapshot is required before any approved disassociation."
+  },
+  "containment_completed": {
+    "observed_at": "2026-10-23T11:06:10.719Z",
+    "profile_id": "6adaf8efc137885e5c4143d0",
+    "queue_id": "6ac191cbcd668397c81e7c51",
+    "profile_before_version": "2026-10-23T10:34:23.215000",
+    "profile_after_version": "2026-10-23T11:06:08.916000",
+    "queue_before_version": "2026-10-23T06:04:41.089000",
+    "queue_after_version": "2026-10-23T11:06:10.059000",
+    "profile_changes": {
+      "auto_refresh": {
+        "before": true,
+        "after": false
+      }
+    },
+    "queue_changes": {
+      "status": {
+        "before": "sources_found",
+        "after": "blocked"
+      },
+      "missing_next": "Blocked: saved Portland OH/Meigs village identity and portland.gov Oregon sources conflict. Do not archive/extract/verify or redispatch these sources. Reconcile official locality identity, then approve itemized wrong-state document remediation; preserve all existing evidence."
+    },
+    "all_other_profile_fields_unchanged": true,
+    "all_other_queue_fields_unchanged": true,
+    "documents_unchanged": true,
+    "cursor_unchanged": true,
+    "source_urls_unchanged": true,
+    "llm_calls": 0,
+    "archive_uploads": 0,
+    "deleted_documents": 0
+  },
+  "automatic_processing_review": {
+    "regular_archive_gap": "archiveBacklogQuery and regular archive entry use auto_refresh but do not require an unblocked discovery cursor.",
+    "hold": "auto_refresh=false on this one profile; queue status=blocked. Cursor quarantine retained. No in-flight/other-consumer guarantee is inferred.",
+    "queue_id": "6ac191cbcd668397c81e7c51"
+  },
+  "other_untrusted_fields_retained": [
+    "website_url",
+    "permitting_url",
+    "cagis_database_url",
+    "ai_summary"
+  ],
+  "ai_summary_finding": "Current summary explicitly describes City of Portland, Oregon. It remains stored and needs separate reviewed remediation.",
+  "proposed_next_action_requires_confirmation": {
+    "action": "Disassociate exactly the 1866 manifest-listed wrong-state automatic document entries from this profile only.",
+    "preconditions": [
+      "Specific user approval for this itemized 1866-record disassociation; generic continue is not deletion approval.",
+      "Create and verify a durable full snapshot before changing the documents array.",
+      "Fresh-read current profile version and entire documents hash; abort if any ID, hash, protection flag or linked-reference status changed.",
+      "Use one guarded conditional profile update; preserve blocked cursor, pending URLs, automatic hold, all unrelated fields and all other entity records.",
+      "Verify readback before claiming success; do not replay an uncertain write."
+    ],
+    "not_included": "No URL replacement, profile rename/type change, queue deletion, rule/authority approval, archive deletion or edits to other profiles."
+  },
+  "upstream_follow_up_not_implemented": [
+    "Validate legacy queue identities against official inventory before allowing research dispatch; do not treat the recalled seed list as official.",
+    "Require jurisdiction/state source-identity reconciliation before expansion; same-host scope is not sufficient.",
+    "Retain legitimate unincorporated locality coverage separately rather than inventing a village or renaming Portland to Lebanon."
+  ],
+  "not_done": {
+    "document_deletions": 0,
+    "url_changes": 0,
+    "authority_approvals": 0,
+    "llm_calls": 0,
+    "archive_uploads": 0,
+    "deploy_or_publish": false
+  }
+}
