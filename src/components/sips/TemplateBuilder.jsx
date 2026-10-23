@@ -658,11 +658,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const blockNavigationWhileSaving = () => {
     if (!checklistSaveInFlight.current && !catalogActionInFlightRef.current && !reloadInFlightRef.current) return false;
+    const savingChecklistNow = checklistSaveInFlight.current && !reloadInFlightRef.current;
     setNoticeDialog({
-      title: reloadInFlightRef.current ? "Checklist reload in progress" : "Template change in progress",
+      title: reloadInFlightRef.current ? "Checklist reload in progress"
+        : savingChecklistNow ? "Checklist save in progress"
+        : "Template change in progress",
       message: reloadInFlightRef.current
         ? "Finish reloading your checklist before switching editors, changing tabs, or closing the builder."
-        : "Finish the current save before switching editors, changing tabs, or closing the builder.",
+        : savingChecklistNow
+          ? "Finish saving your checklist before switching editors, changing tabs, or closing the builder."
+          : "Finish the current save before switching editors, changing tabs, or closing the builder.",
     });
     return true;
   };
