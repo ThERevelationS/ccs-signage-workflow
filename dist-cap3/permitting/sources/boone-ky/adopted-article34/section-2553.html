@@ -1,0 +1,245 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+    
+    <title>BOONE COUNTY ZONING REGULATIONS</title>
+    <link type="text/css" rel="Stylesheet" href="jqueryui/css/jqueryui.css" media="all" />
+    <link type="text/css" rel="Stylesheet" href="css/ui.css" media="all" />
+    <link type="text/css" rel="Stylesheet" href="css/customui.css" media="all" />
+    <link type="text/css" rel="Stylesheet" href="css/document.css" media="all" />
+    <link type="text/css" rel="Stylesheet" href="css/customdoc.css" media="all" />
+    <link type="text/css" rel="Stylesheet" href="tablestyles.aspx" media="all" />
+ <link rel="StyleSheet" type="text/css" href="/common/font-awesome/css/font-awesome.min.css">
+    <link type="text/css" rel="Stylesheet" href="css/docprint.css" media="print" />
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script type="text/javascript" src="jqueryui/js/jquery-ui-1.8.21.custom.min.js"></script>
+    <script type="text/javascript" src="js/doc-view.js?_t=269"></script>
+    <script type="text/javascript" src="js/tabletools.js"></script>
+       <script type="text/javascript" src="js/tabs.js"></script>
+	<script type="text/javascript">
+			var iframeReady = false;
+	</script>	
+    
+</head>
+<body class='doc-view' >
+<script type="text/javascript">
+    $(document).ready(function () {
+        ZP.DocView.InitDef();
+        ZP.DocView.OpenDefinitionPage = null;
+        ZP.DocView.OpenDefinitionMode = '_self';
+        ZP.DocView.OpenXRefPage = 'doc-viewer.aspx#$2-';
+        ZP.DocView.OpenXRefMode = '_blank';
+        $(window).bind('hashchange', ZP.DocView.HashChanged);
+        
+        if (typeof  ZP.DocView.ZoomClasses == 'undefined') {
+            ZP.DocView.ZoomClasses = ["Unzoom1", "", "Zoom1", "Zoom2", "Zoom3", "Zoom4"];
+        }
+        ZP.DocView.InitializeZoom();
+        EC.SortedTable.Init(".ord-tbl, .stat-tbl");
+        EC.Tabs.PositionLeftTabs();
+    });
+
+    
+</script>  
+
+
+    <div id="doc-viewer">
+        
+<div id="doc-view">
+<div id="doc-view-content">
+    
+<div id="pageControls">
+<script type="text/javascript" >
+    function clearEffDate() {
+        jQuery.get("doc-view-helper.aspx?task=currentversion", function () {
+            window.location.reload();
+        });
+        return false;
+    }
+</script>
+     <div class="pageControls psuedoTable" role="navigation" aria-label="Document Navigation">  
+        <div class="psuedoTableBody" >     
+            <div class="psuedoTableRow">         
+                <div class="pageControls_outer" ></div>
+                <div class="pageControls_inner left">
+                    <a id='button1' onclick='ZP.DocView.PrintDoc("002.034.001",false);return false;' href="#" title="Print" role="button"> 
+                        <img alt="Print" src="resources/btn-print-white.png" /></a>
+                    <a id='Button2' onclick='ZP.DocView.OpenPDF("002.034.001",false);return false;' href="#" title="Export PDF" role="button">
+                        <img alt="Generate PDF" src="resources/btn-makepdf-white.png" /></a>
+                        <a class="popup" params="toobar=0,menubar=0,scrollbars=1,height=436,width=626" href="https://www.facebook.com/sharer/sharer.php?s=100&p[title]=BOONE+COUNTY+ZONING+REGULATIONS&p[summary]=Boone+County%2c+KY+Zoning+Ordinance&p[url]=https%3a%2f%2fonline.encodeplus.com%2fregs%2fboonecounty-ky%2fdoc-viewer.aspx%3fsecid%3d2005" title="Click to Share this page" style="text-decoration:none;border:none;" ><img src="resources/share-icon-white.png" alt="Click to Share this page on facebook" /></a>     
+                </div>
+                <div  class="pageControls_inner breadCrumbs" title="Navigation 'breadcrumbs'">
+                     <div class='breadCrumbs'><a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002' >BOONE COUNTY ZONING REGULATIONS</a> &gt; <a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002.034' >ARTICLE 34 SIGNS</a> &gt; <a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002.034.001' >SECTION 3400 PURPOSE AND INTENT</a></div>
+                </div>
+                 <div  class="pageControls_inner right">       
+                     <ul >  
+                         <li>
+                            <a id='button3' class="nav" onclick="ZP.DocView.LoadPrevDoc('002.034.001');return false;" href="#"  title="Previous Section" accesskey="," role="button"><img alt="Go to Previous Section" src="resources/btn-back-white.png" /></a>
+                         </li>  
+                         <li>
+                             <a id='Button4'  class="nav" onclick="ZP.DocView.LoadNextDoc('002.034.001');return false;" href="#"  title="Next Section" accesskey="." role="button"> <img alt="Go to Next Section" src="resources/btn-forward-white.png" /></a>
+                         </li>   
+                         <li>
+                             <a id="pageControls-overflow" onclick="ZP.DocView.PgCntrlOverflowClick(event);return false;" href="#" title="Click for more options" role="button" >
+                            <img src="resources/overflow-btn-white.png" alt="Click for more options" /></a>
+                               
+  <ul class="submenu" role="dialog">
+            <li><a href="/regs/boonecounty-ky/doc-viewer.aspx?secid=2005" onclick="javascript:alert('Right click this icon and select \'add to favorites\' or \'Bookmark this Link\' to bookmark this page');return false;" title="Bookmark this page" >Bookmark</a></li>
+            <li>
+                                        
+                <a id="zoomMinus" onclick="ZP.DocView.DecreaseZoom();return false;" href="#" title="Decrease Zoom" class="zoomLink glyphicon" >&#x2212;</a>
+                <a onclick="ZP.DocView.DefaultZoom();return false;"  href="#" title="Default Zoom"  class="zoomLink" >100%</a>
+                <a id="zoomPlus" onclick="ZP.DocView.IncreaseZoom();return false;" href="#" title="Increase Zoom"  class="zoomLink glyphicon" > &#x2b; </a>
+            </li>
+           
+                           
+                
+</ul>
+                         </li>        
+                        
+                        </ul>   
+                </div>
+                <div class="pageControls_outer"></div>
+            </div>
+        </div>
+    </div> 
+    <div id="subscribe-dialog" title="" aria-live="polite" >
+        <div id="sub-message"></div>
+        <div id="sub-form-cntr"></div>
+    </div>
+</div>
+
+
+    <div id="thePage-outer" >
+        <div id="thePage-wrap" class="thePage-wrap ">
+           <div id="outer-doc-banner"></div>
+           <div id="thePage-border">
+            <div id="thePage" class="textPage " tocid="002.034.001" secid="2553" role="main" aria-label="Document">
+                <img id="sectionBanner" title="Document text banner" src="resources/docbanner.png" width="720" valign="Top"  alt="Document text banner">
+                
+                <!--div id="MicrosoftTranslatorWidget" style="width: 200px; min-height: 83px; border-color: #3A5770; background-color: #78ADD0;"><noscript><a href="http://www.microsofttranslator.com/bv.aspx?a=http%3a%2f%2fwww.fast-forward-it.com%2f">Translate this page</a><br />Powered by <a href="http://www.bing.com/translator">Microsoft® Translator</a></noscript></div> <script type="text/javascript"> /* <![CDATA[ */ setTimeout(function() { var s = document.createElement("script"); s.type = "text/javascript"; s.charset = "UTF-8"; s.src = ((location && location.href && location.href.indexOf('https') == 0) ? "https://ssl.microsofttranslator.com" : "http://www.microsofttranslator.com" ) + "/ajax/v2/widget.aspx?mode=manual&from=en&layout=ts"; var p = document.getElementsByTagName('head')[0] || document.documentElement; p.insertBefore(s, p.firstChild); }, 0); /* ]]> */ </script>--> 
+                
+                <section id='secid-2005' class='secLvl1 _002' tabindex='-1' data-secid='2005'> 
+<h1>BOONE COUNTY ZONING REGULATIONS</h1>
+
+
+
+
+</section> 
+<section id='secid-2552' class='secLvl2 _002 _002-034' tabindex='-1' data-secid='2552'> 
+<h2>ARTICLE 34 SIGNS</h2>
+
+
+
+
+</section> 
+<section id='secid-2553' class='secLvl3 _002 _002-034 _002-034-001' tabindex='-1' data-secid='2553'> 
+<h3>SECTION 3400 PURPOSE AND INTENT</h3>
+
+<ol class="list-v2">
+	<li>
+	<div class="li-num">A.</div>
+
+	<div class="li-cont">The purpose of this Article is to: coordinate the type, placement and physical dimensions of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> within the different <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2893">districts</a>; to recognize the commercial communication requirements of all sectors of the business community; to recognize free speech;&nbsp;and to encourage the innovative <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2864">use</a> of design through Special <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">Sign</a> <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2893">Districts</a>.&nbsp; This&nbsp; article is intended to protect property values, create a&nbsp;more attractive economic and business climate, and enhance and protect the physical appearance of the community.&nbsp; This&nbsp; article is further intended to reduce <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">sign</a> or advertising distractions and obstructions that may contribute to traffic accidents, reduce hazards that may be caused by <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> overhanging or projecting over public rights-of-way, and generally enhance community development.</div>
+	</li>
+	<li>
+	<div class="li-num">B.</div>
+
+	<div class="li-cont">As a basis for adopting these regulations, the legislative body finds:
+	<ol>
+		<li>
+		<div class="li-num">1.</div>
+
+		<div class="li-cont"><a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">Signs</a> are an essential form of communication in the built environment, providing way-finding guides to residents, visitors, public safety officials, customers and potential customers of local businesses, delivery people and others.</div>
+		</li>
+		<li>
+		<div class="li-num">2.</div>
+
+		<div class="li-cont"><a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">Signs</a> provide communication on public issues.&nbsp; Often placed on lawns or in windows, residential <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> play an important part in political campaigns, during which they are displayed to signal the resident&#39;s support for particular candidates, parties, or causes.&nbsp; They may not afford the same opportunities for conveying complex ideas as do other media, but residential <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> have long been an important and distinct medium of expression.</div>
+		</li>
+		<li>
+		<div class="li-num">3.</div>
+
+		<div class="li-cont">Retailers and other businesses depend on <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> to help people find their businesses, and, in a&nbsp;large and expensive media market like that of Cincinnati (a&nbsp;market which includes Boone County), many small businesses depend on <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>&nbsp;as one of the most affordable forms of advertising.</div>
+		</li>
+		<li>
+		<div class="li-num">4.</div>
+
+		<div class="li-cont"><a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">Signs</a> may distract drivers and lead to deaths and injuries to pedestrians and cyclists as well as to drivers and passengers and to property damage.&nbsp; Moving, flashing and rapidly changing <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> are particularly distracting to drivers.&nbsp; A&nbsp;proliferation of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> on a&nbsp;particular site or along the <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2802">right-of-way</a> can have the same effect as moving <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>, as drivers try to sort through the visual noise&nbsp;to find the information that they want or need.</div>
+		</li>
+		<li>
+		<div class="li-num">5.</div>
+
+		<div class="li-cont">The legislative body, with the advice of the Boone County <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2782">Planning Commission</a> and its professional staff, and with input from residents through the Our Boone County Plan 2040 planning process, have placed an increasing emphasis on preserving the sense of place and the design of the built environment; limiting the size, height and number of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> is an important tool in preserving a&nbsp;sense of place, a&nbsp;tool that accompanies the County&#39;s standards for <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2747">landscaping</a>.</div>
+		</li>
+		<li>
+		<div class="li-num">6.</div>
+
+		<div class="li-cont">Our Boone County Plan 2040 recommends that policies, regulations and incentives be developed and implemented that preserve and improve the existing community fabric.</div>
+		</li>
+		<li>
+		<div class="li-num">7.</div>
+
+		<div class="li-cont">Balancing these competing considerations is particularly difficult in residential areas, where people value both their&nbsp;visually appealing environments and their ability to communicate their opinions regarding candidates and public issues through <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2891">yard</a> <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>.</div>
+		</li>
+		<li>
+		<div class="li-num">8.</div>
+
+		<div class="li-cont">In updating its ordinance, the legislative body has made a&nbsp;major effort to limit content as a factor in its <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">sign</a> regulations.&nbsp; After due consideration, however, it has concluded that one way to leave room for extensive free expression through <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> in residential areas while limiting total <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">sign</a> clutter is to maintain significant limits on commercial <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> in residential areas.&nbsp; Recognizing the importance of &quot;for sale&quot; and &quot;for lease&quot; <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> in maintaining the occupancy of healthy neighborhoods, those <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> must remain.&nbsp; There is a&nbsp;similar <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=3275">utility</a> in providing &#39;for sale&#39; <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2891">yard</a> <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>, which allow people to dispose of unwanted items without sending them to a&nbsp;<a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2742">landfill</a>.</div>
+		</li>
+		<li>
+		<div class="li-num">9.</div>
+
+		<div class="li-cont">Although time limits on <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> can be arbitrary, a&nbsp;significant distinction between speakers expressing an opinion and <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> is that &quot;Speakers, however long-winded, will eventually come to the end of their remarks.&quot;&nbsp; Members of the legislative body have long noted that <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> for political campaigns, as well as those advertising pancake breakfast&#39;s&nbsp;and spaghetti dinners for civic organizations, are often abandoned after the events, contributing to clutter long after they have served their purpose.&nbsp; Although such <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> were once typically paper or cardboard that would eventually decay, many today are plastic and will remain until removed.&nbsp; Thus, despite the expressed concern of the Supreme Court with time limits, the legislative body finds that it has a&nbsp;substantial governmental interest in clarifying the status of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> for past events that thus no longer serve a purpose&nbsp;so that there is a&nbsp;legal basis for the legislative body to remove them or force their removal.</div>
+		</li>
+		<li>
+		<div class="li-num">10.</div>
+
+		<div class="li-cont">The legislative body has long allowed unlimited numbers of small <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> bearing non-commercial messages to allow merchants and others to designate handicapped parking places, provide directions to ATM&#39;s and restrooms, warn of guard dogs and other hazards and provide a&nbsp;variety of other place-based information.&nbsp; With the prohibition of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=3247">commercial messages</a> on such <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>, it has been the observation of legislative body members, and their professional staff, that property <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2777">owners</a> are judicious and appropriate in posting such <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>.&nbsp; The legislative body thus finds that it has a&nbsp;substantial interest in allowing merchants and property <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2777">owners</a> freely to post necessary informational <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> but without allowing an endless proliferation of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=3247">commercial messages</a>.</div>
+		</li>
+		<li>
+		<div class="li-num">11.</div>
+
+		<div class="li-cont">Although in the findings above, the legislative body has recognized the multiple values of <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> in the built environment.&nbsp; Legislative body officials have concluded that there is no place for <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> of overwhelming size and no relation to context in an urban and urbanizing environment.&nbsp; Although previous versions of these regulations followed the pattern of state and federal laws by defining such <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=3287">billboards</a>&nbsp;as &quot;off-premise&quot; <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a>, this ordinance addresses the same issue by establishing a&nbsp;form of circuit breaker size limit, prohibiting very large <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2827">signs</a> on small <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2751">lots</a>, on vacant <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2751">lots</a>, or on <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2751">lots</a> with only small <a class="iLink" target="_blank" href="doc-view.aspx?pn=0&ajax=0&secid=2653">buildings</a>.</div>
+		</li>
+		<li>
+		<div class="li-num">12.</div>
+
+		<div class="li-cont">These are complex public policy issues.&nbsp; The legislative body has attempted to balance the competing considerations in a&nbsp;way that it believes best protects the public health, safety and welfare of the citizens of Boone County, including its many valued businesses and the tens of thousands of visitors who arrive or pass through the County each month.</div>
+		</li>
+	</ol>
+	</div>
+	</li>
+</ol>
+
+<p class='archiveNotice  '>Effective on:&nbsp;12/20/2022</p>
+</section> 
+
+                
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- hidden div below is for definition popup -->
+<div id="defFrame"><img alt='loading progress' src="resources/progress.gif"/></div>
+<!-- hidden div below is for ajax loading progress-->
+<div id='progress-template' style='display:none;'>
+<div class="progress" style='padding:100px;'>
+    <div style='margin:auto;display:block;width:200px;border:1px solid #ccc; background-color:#eee;padding:10px;'>
+        <img alt='loading progress' src='resources/progress.gif' style='margin:auto;display:block;'/>
+        <br />
+        <span style='margin:auto;display:block;width:75px;padding-left:10px;'>Loading...</span>
+    </div>
+</div>
+</div>
+<iframe style="width:1px;height:1px" src=""  id="printiframe" name="printiframe" onload="ZP.DocView.IFrameReady();" title="Print frame" aria-hidden="true" role="presentation"></iframe>
+    </div>
+
+
+</body>
+</html>
