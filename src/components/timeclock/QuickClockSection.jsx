@@ -196,6 +196,7 @@ export default function QuickClockSection({
   // An acknowledged Current Work result cannot supersede a later break,
   // Work Pause, Clock Out, labor action, or authoritative status restoration.
   const workViewEpochRef = useRef(0);
+  const identifyFlowSeqRef = useRef(0);
   // In-flight actions are isolated by the signed Time Clock session: a slow
   // request for one employee must not block status restoration for another.
   const activeActionCountRef = useRef(new Map());
@@ -688,6 +689,7 @@ export default function QuickClockSection({
 
   const handleFaceRecognized = async (user) => {
     if (recognitionLockedRef.current) return;
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = true;
     stopFaceCamera();
     setIsRecognizing(false);
@@ -711,6 +713,7 @@ export default function QuickClockSection({
 
   const startFaceMode = async () => {
     await stopAllMedia();
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
     setRecognitionMethod("face");
@@ -782,6 +785,7 @@ export default function QuickClockSection({
 
   const handleQrDecoded = async (decodedText) => {
     if (recognitionLockedRef.current) return;
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = true;
 
     if (!String(decodedText || "").startsWith("TIMECLOCK2:")) {
@@ -815,6 +819,7 @@ export default function QuickClockSection({
 
   const startQrMode = async () => {
     await stopAllMedia();
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
     setRecognitionMethod("qr");
@@ -840,6 +845,7 @@ export default function QuickClockSection({
 
   const startManualMode = async () => {
     await stopAllMedia();
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
     setRecognitionMethod("manual");
@@ -853,6 +859,7 @@ export default function QuickClockSection({
       return;
     }
     workViewEpochRef.current += 1;
+    identifyFlowSeqRef.current += 1;
     cancelDisplayReset();
     setPersistenceError("");
     setUsernameInput("");
@@ -871,6 +878,10 @@ export default function QuickClockSection({
       setUsernameError("Enter your username and password.");
       return;
     }
+    const identifySeq = ++identifyFlowSeqRef.current;
+    const requestEpoch = workViewEpochRef.current;
+    const stillCurrent = () =>
+      identifyFlowSeqRef.current === identifySeq && workViewEpochRef.current === requestEpoch;
 
     setIsLoading(true);
     setUsernameError("");
@@ -880,6 +891,7 @@ export default function QuickClockSection({
         password: manualPassword,
       });
       const data = response?.data || response;
+      if (!stillCurrent()) return;
       if (!data?.success || !data?.user || !data?.token) {
         throw new Error(data?.error || "Invalid username or password.");
       }
@@ -889,13 +901,14 @@ export default function QuickClockSection({
       setIsRecognizing(false);
       await resolveVerifiedIdentity({ user: data.user, credential: { sessionToken: data.token } });
     } catch (err) {
+      if (!stillCurrent()) return;
       const message = err?.response?.data?.error || err?.message || "Invalid username or password.";
       setUsernameError(message);
       setIsRecognizing(true);
       setRecognitionMethod("manual");
       recognitionLockedRef.current = false;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
