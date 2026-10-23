@@ -141,9 +141,8 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const expectedCloseOverdue = Boolean(expectedCloseStamp && expectedCloseStamp < todayStamp && isOpen);
   const expectedCloseNear = Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp && isOpen);
 
-  return (
-    <React.Fragment>
-      {isFocused && <tr className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>}
+  return [
+      isFocused && <tr key="focus-gap-top" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>}
       <tr className={`sales-board-row border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'sales-focus-row' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
         style={{ backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined }}>
         <td className="px-0 py-0 border-r">
@@ -410,9 +409,8 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
           </div>
         </td>
       </tr>
-      {isFocused && <tr className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>}
-    </React.Fragment>
-  );
+      isFocused && <tr key="focus-gap-bottom" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>
+    ];
 }, (prevProps, nextProps) => {
   // Custom comparison: only re-render if the row data or relevant props changed
   return (
