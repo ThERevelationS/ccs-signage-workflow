@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,8 +41,11 @@ export default function TimeClockReportsDashboard() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
 
+  const mountedRef = useRef(true);
+
   useEffect(() => {
     loadData();
+    return () => { mountedRef.current = false; };
   }, []);
 
   const loadData = async () => {
@@ -53,15 +56,17 @@ export default function TimeClockReportsDashboard() {
         loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock entries" }),
         loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" })
       ]);
+      if (!mountedRef.current) return;
       setTimeEntries(entries);
       setWorkOrders(orders);
     } catch (err) {
       console.error("Error loading data:", err);
+      if (!mountedRef.current) return;
       setTimeEntries([]);
       setWorkOrders([]);
       setReadError(err?.message || "Time Clock reporting data could not be verified completely.");
     }
-    setIsLoading(false);
+    if (mountedRef.current) setIsLoading(false);
   };
 
   // Calculate date range
