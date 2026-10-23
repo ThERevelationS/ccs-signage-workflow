@@ -71,10 +71,10 @@ function PoItemsEditor({ items, onChange, stockItems = [] }) {
           {stockItems.length > 0 && (
             <select className={`${inputCls} mt-1 !min-h-8 py-1 text-xs`} value={row.inventory_item_id || ""}
               onChange={(e) => update(i, { inventory_item_id: e.target.value })}>
-              <option value="">No stock link â€” receipt won't change inventory</option>
+              <option value="">No stock link — receipt won't change inventory</option>
               {stockItems.map((it) => (
                 <option key={it.id} value={it.id}>
-                  {[it.material_type, it.product_type, it.size].filter(Boolean).join(" Â· ") || it.id}
+                  {[it.material_type, it.product_type, it.size].filter(Boolean).join(" · ") || it.id}
                   {` (on hand ${it.quantity_on_hand})`}
                 </option>
               ))}
@@ -385,7 +385,7 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
             </div>
             {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
             {notice && <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{notice}</div>}
-          </>
+     </>
         )}
       </div>
       {editing && po && (
@@ -404,7 +404,7 @@ export default function PurchaseOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [openId, setOpenId] = useState("");
+  const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("po") || "");
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
