@@ -55,12 +55,22 @@ export function TimeClockStatusProvider({ children }) {
 
     const launch = () => {
       const promise = (async () => {
-        const response = await base44.functions.invoke("timeClockAction", {
-          action: "status",
+        const payload = {
           session_token: requestToken,
           target_email: requestEmail,
+        };
+        const liteResponse = await base44.functions.invoke("timeClockAction", {
+          action: "status_lite",
+          ...payload,
         });
-        const data = response?.data || response;
+        let data = liteResponse?.data || liteResponse;
+        if (data?.requires_full_status) {
+          const response = await base44.functions.invoke("timeClockAction", {
+            action: "status",
+            ...payload,
+          });
+          data = response?.data || response;
+        }
         if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
         if (scopeRef.current.scope === requestScope) {
           cacheRef.current = { scope: requestScope, at: Date.now(), promise: Promise.resolve(data) };
