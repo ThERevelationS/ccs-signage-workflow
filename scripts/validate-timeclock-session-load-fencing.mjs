@@ -120,10 +120,13 @@ async function sessionSwitchScenario() {
 
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
+  // Release the mount-time user-list load so the gate UI renders.
+  await act(async () => { loaderQueue.forEach((d) => d.resolve([])); loaderQueue.length = 0; await flush(); });
 
   // Log in as employee A.
   globalThis.window = globalThis.window || {};
   const loginBtn = buttonByText(renderer, 'Login for Full Access');
+  assert.ok(loginBtn, 'login button should render on mount');
   await act(async () => { loginBtn.props.onClick(); await flush(); });
   const doLogin = () => buttonByText(renderer, 'do-login');
   const invokeAs = async (user, token) => {
@@ -150,12 +153,13 @@ async function sessionSwitchScenario() {
   // Log in as employee B; B's reads resolve normally.
   await act(async () => { buttonByText(renderer, 'Login for Full Access').props.onClick(); await flush(); });
   const loaderBefore = loaderCalls.length;
+  const queueBefore = loaderQueue.length;
   const corrBefore = correctionQueue.length;
   await invokeAs(USER_B, 'tok-b');
   const bCalls = loaderCalls.slice(loaderBefore).filter((c) => String(c.query?.user_email || '') === 'brian@example.com');
   assert.ok(bCalls.length >= 2, 'B session should issue fresh employee-scoped reads');
   await act(async () => {
-    for (const d of loaderQueue.slice(loaderBefore)) d.resolve([ENTRY_B]);
+    for (const d of loaderQueue.slice(queueBefore)) d.resolve([ENTRY_B]);
     for (const d of correctionQueue.slice(corrBefore)) d.resolve({ success: true, requests: [{ id: 'cr-b', employee_reason: 'B-CORRECTION' }] });
     await flush();
   });
@@ -189,6 +193,7 @@ async function overlappingLoadsScenario() {
   });
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
+  await act(async () => { loaderQueue.forEach((d) => d.resolve([])); loaderQueue.length = 0; await flush(); });
   await act(async () => { buttonByText(renderer, 'Login for Full Access').props.onClick(); await flush(); });
   await act(async () => { buttonByText(renderer, 'do-login').props.onClick(); await flush(); });
   // Trigger a second refresh ("Reload latest") while the first is in flight.
