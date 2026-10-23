@@ -1,11 +1,26 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
+import { processWorkflowTriggerEvent } from "../../shared/workflowTriggerEngine.ts";
 import {
   createFoundationRecordWithRecovery,
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
   replaceEstimatingRequestFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+
+// Emitting an automation event must never break the workspace action itself —
+// a failed rule evaluation is a missed notification, not a failed save.
+async function emitOpportunityAutomation(base44: any, eventType: string, opportunityId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: opportunityId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Opportunity automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -373,6 +388,9 @@ Deno.serve(async (req) => {
           summary: "Stage advanced to quoted — linked estimate sent/approved",
           details: { from_stage: clean(opportunity.stage), to_stage: "quoted" },
         });
+        if (clean(finalOpportunity?.stage) === "quoted" && clean(opportunity.stage) !== "quoted") {
+          await emitOpportunityAutomation(base44, "sales_status_changed", opportunityId, actor);
+        }
       }
       return Response.json({
         success: true,
@@ -659,6 +677,9 @@ Deno.serve(async (req) => {
           : "Intake resolved against an existing opportunity",
         details: { source_type: sourceType, intake_id: clean(intake?.id), reused: oppResult.status !== "created" },
       });
+      if (oppResult.status === "created") {
+        await emitOpportunityAutomation(base44, "sales_lead_created", clean(opportunity.id), actor);
+      }
       return Response.json({
         success: true,
         action,
@@ -764,6 +785,14 @@ Deno.serve(async (req) => {
             : `${changed.length || 1} field${(changed.length || 1) === 1 ? "" : "s"} updated: ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "…" : ""}`,
           details: { fields: changed, from_stage: clean(current.stage), to_stage: clean(saved?.stage) },
         });
+        if (stageChanged) {
+          await emitOpportunityAutomation(base44, "sales_status_changed", opportunityId, actor);
+          const stageEvent = { won: "sales_status_won", lost: "sales_status_lost", on_hold: "sales_status_on_hold" }[clean(saved?.stage)];
+          if (stageEvent) await emitOpportunityAutomation(base44, stageEvent, opportunityId, actor);
+        }
+        if (changed.includes("salesperson") && clean(desired.salesperson) !== clean(current.salesperson)) {
+          await emitOpportunityAutomation(base44, "sales_rep_changed", opportunityId, actor);
+        }
       }
       return Response.json({
         success: true, action, opportunity: saved,
@@ -1032,6 +1061,9 @@ Deno.serve(async (req) => {
           reused: requestResult.status !== "created",
         },
       });
+      if (opportunityDesired.stage && clean(freshOpportunity?.stage) === "estimating" && clean(opportunity.stage) !== "estimating") {
+        await emitOpportunityAutomation(base44, "sales_status_changed", opportunityId, actor);
+      }
 
       return Response.json({
         success: true,
