@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 
 const GeneralTask = base44.entities.GeneralTask;
 
@@ -30,11 +31,11 @@ export default function StageTasksPanel({ stage }) {
     setIsLoading(false);
   };
 
+  usePolling(() => load(), 120000, { runOnMount: false });
+
   useEffect(() => {
     setIsLoading(true);
     load();
-    const interval = setInterval(load, 60000);
-    return () => clearInterval(interval);
   }, [stage]);
 
   const toggleComplete = async (task) => {
