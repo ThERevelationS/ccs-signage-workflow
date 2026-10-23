@@ -205,12 +205,41 @@
             "llm_calls": 0
           }
         ]
+      },
+      {
+        "run": "run25",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T06:08:00.112Z",
+        "finished_at": "2026-10-23T06:15:37.200Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "failure_detection": "Both returned success/error fields and thrown errors checked; stop on first failure.",
+        "failures": []
+      },
+      {
+        "run": "run26",
+        "cycles": 107,
+        "pages": 106,
+        "errors": 1,
+        "started_at": "2026-10-23T06:15:46.331Z",
+        "finished_at": "2026-10-23T06:21:59.716Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "failure_detection": "Both returned success/error fields and thrown errors checked; stop on first failure.",
+        "failures": [
+          {
+            "success": false,
+            "error": "aborted"
+          }
+        ]
       }
     ],
-    "pages_fetched_total_bounded_passes": 3639,
+    "pages_fetched_total_bounded_passes": 3895,
     "provenance_violations": 0,
     "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining.",
-    "page_metric_clarification": "The historical pages/pages_fetched_total_bounded_passes keys count attempted_pages, not verified successful fetches. Failed fetches persist explicit gaps. Historical provenance_violations is retained from prior receipts; runs 23-24 did not perform a separate per-document live provenance audit.",
+    "page_metric_clarification": "The historical pages/pages_fetched_total_bounded_passes keys count attempted_pages, not verified successful fetches. Failed fetches persist explicit gaps. Historical provenance_violations is retained from prior receipts; runs 23 onward did not perform a separate per-document live provenance audit.",
     "latest_verification": {
       "tests": "29/29 discovery continuation/frontier/scan tests passed in sandbox",
       "module_parity": "Nine shared modules and their complete local import closure matched sandbox SHA-256 hashes before execution",
@@ -220,23 +249,23 @@
   },
   "final_state": {
     "OH": {
-      "frontier_profiles": 807,
+      "frontier_profiles": 811,
       "no_frontier_remaining": 62,
-      "pending_pages": 1915,
-      "profiles_with_pending": 103,
-      "review_gaps": 1341
+      "pending_pages": 1822,
+      "profiles_with_pending": 102,
+      "review_gaps": 1359
     },
     "KY": {
       "frontier_profiles": 113,
       "no_frontier_remaining": 101,
-      "pending_pages": 207,
-      "profiles_with_pending": 14,
-      "review_gaps": 157
+      "pending_pages": 171,
+      "profiles_with_pending": 12,
+      "review_gaps": 168
     }
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
   "protected_data": "No manual/pinned/archive-protected record was modified; all writes used guarded same-version persistence; no client/job/shared records touched; no authority or applicability conclusions drawn.",
-  "ongoing": "Readback after run24: OH 1915 pending pages across 103 profiles; KY 207 across 14. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or new scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
+  "ongoing": "Readback after run26: OH 1822 pending pages across 102 profiles; KY 171 across 12. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
   "gap_triage": {
     "page_fetch_failed": {
       "OH": 454,
@@ -253,5 +282,47 @@
       "KY": 6,
       "nature": "harvested links beyond per-page cap"
     }
+  },
+  "latest_continuation": {
+    "runs": [
+      "run25",
+      "run26"
+    ],
+    "attempts": 256,
+    "errors": 1,
+    "before_state": {
+      "OH": {
+        "frontier_profiles": 811,
+        "no_frontier_remaining": 62,
+        "pending_pages": 1968,
+        "profiles_with_pending": 106,
+        "review_gaps": 1341
+      },
+      "KY": {
+        "frontier_profiles": 113,
+        "no_frontier_remaining": 101,
+        "pending_pages": 207,
+        "profiles_with_pending": 14,
+        "review_gaps": 157
+      }
+    },
+    "after_state": {
+      "OH": {
+        "frontier_profiles": 811,
+        "no_frontier_remaining": 62,
+        "pending_pages": 1822,
+        "profiles_with_pending": 102,
+        "review_gaps": 1359
+      },
+      "KY": {
+        "frontier_profiles": 113,
+        "no_frontier_remaining": 101,
+        "pending_pages": 171,
+        "profiles_with_pending": 12,
+        "review_gaps": 168
+      }
+    },
+    "snapshot_note": "Changes between readbacks may include concurrent scheduled activity; not attributed solely to these runs.",
+    "interruption_note": "Run26 stopped on SDK 'aborted'. The runner did not retain the interrupted operation stage or jurisdiction ID; persistence outcome for that cycle is unverified. It is excluded from the attempt total and was not replayed. Fresh aggregate queue readback succeeded."
   }
 }
