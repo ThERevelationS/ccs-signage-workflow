@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import DragDropList from "@/components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
@@ -263,9 +264,7 @@ export default function Estimating() {
       {!isFullscreen && <StageTasksPanel stage="estimating" />}
       <div className={isFullscreen ? "h-full" : "max-w-7xl mx-auto"}>
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          </div>
+          <ListSkeleton rows={5} />
         ) : (
           <DragDropList
             workOrders={workOrders}
