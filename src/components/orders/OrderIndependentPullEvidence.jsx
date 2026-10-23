@@ -6,6 +6,7 @@ import {
   orderIndependentPullEvidenceModel,
 } from './orderIndependentPullEvidenceModel.mjs';
 import { startOrderBatchReview, appendOrderBatchReviewPage } from './orderBatchReviewSummary.mjs';
+import { usePolling } from '@/lib/usePolling';
 
 // Order Form ONLY: read-only admin review. The shared Sales coordinator can
 // change without affecting this independent permanent-ID evidence.
@@ -22,6 +23,10 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   const [resolveResult, setResolveResult] = useState(null);
   const reviewEpoch = useRef(0);
   const batchReviewInFlight = useRef(false);
+  const refreshRef = useRef(async () => {});
+
+  // Read only for Order Form admins and never at the coordinator's 1s rate.
+  usePolling(() => refreshRef.current(), 30000, { enabled: isAdmin, runOnMount: false });
 
   useEffect(() => {
     if (!isAdmin) {
@@ -78,21 +83,13 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
         inFlight = false;
       }
     };
+    refreshRef.current = refresh;
     refresh();
-    // Read only for Order Form admins and never at the coordinator's 1s rate.
-    const interval = setInterval(refresh, 15000);
-    const refreshVisible = () => {
-      if (document.visibilityState === 'visible') refresh();
-    };
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refreshVisible);
     return () => {
       active = false;
       reviewEpoch.current++;
       batchReviewInFlight.current = false;
-      clearInterval(interval);
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refreshVisible);
+      refreshRef.current = async () => {};
     };
   }, [isAdmin, refreshKey]);
 
