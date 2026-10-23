@@ -168,4 +168,19 @@ test("Estimating board loading renders a card-list skeleton", () => {
   assert.match(skel, /rows = 5/);
 });
 
+test("WorkPauseOverlay entrance uses motion with reduced-motion fallback", () => {
+  const src = readFileSync("src/components/timeclock/WorkPauseOverlay.jsx", "utf8");
+  assert.match(src, /import \{ motion, useReducedMotion \} from "framer-motion"/);
+  assert.match(src, /const reduceMotion = useReducedMotion\(\)/);
+  assert.match(src, /initial=\{reduceMotion \? false : \{ opacity: 0 \}\}/, "backdrop fades in");
+  assert.match(src, /initial=\{reduceMotion \? false : \{ opacity: 0, scale: 0\.92, y: 24 \}\}/, "card springs in");
+  assert.match(src, /transition=\{spring\.soft\}/);
+});
+
+test("TimeClockLoginDialog animates the error banner", () => {
+  const src = readFileSync("src/components/timeclock/TimeClockLoginDialog.jsx", "utf8");
+  assert.match(src, /import FadeIn from "@\/components\/motion\/FadeIn"/);
+  assert.match(src, /<FadeIn>/);
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
