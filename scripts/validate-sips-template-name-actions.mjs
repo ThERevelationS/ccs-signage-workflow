@@ -397,6 +397,7 @@ await test('editor switching and closing are blocked while a catalog action is i
   await until(s.calls.saveDropdowns);
   assert.equal(s.blockNavigationWhileSaving(), true);
   assert.ok(s.state.noticeDialog);
+  assert.equal(s.state.noticeDialog.title, 'Template change in progress');
   s.calls.saveDropdowns[0].resolve({ id: 'r1' });
   await pending;
   s.state.noticeDialog = null; s.context.noticeDialog = null;
