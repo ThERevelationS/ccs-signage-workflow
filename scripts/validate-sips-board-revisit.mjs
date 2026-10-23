@@ -816,7 +816,7 @@ await check('an open checklist cannot be replaced by another Work Order', async 
 
 await check('checklist close returns focus to the job or the board heading when the opener is gone', async () => {
   const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
-  const makeClose = new Function('setChecklistDialog', 'document', 'requestAnimationFrame', 'revisitClearBoardRef',
+  const makeClose = new Function('setChecklistDialog', 'setSelectedWorkOrder', 'document', 'requestAnimationFrame', 'revisitClearBoardRef',
     handler + '\nreturn closeChecklistDialog;');
   const wo = { id: 'W1' };
 
@@ -829,7 +829,7 @@ await check('checklist close returns focus to the job or the board heading when 
     body: {},
     querySelectorAll: () => [],
   };
-  makeClose((v) => { closedWith = v; }, docRestored, (fn) => calls.push(fn), { current: null })(wo);
+  makeClose((v) => { closedWith = v; }, () => {}, docRestored, (fn) => calls.push(fn), { current: null })(wo);
   assert.deepEqual(closedWith, { open: false, workOrder: null });
   calls.shift()();
   assert.equal(connected.focused, undefined, 'a successful Radix restore must not be overridden');
@@ -853,7 +853,7 @@ await check('checklist close returns focus to the job or the board heading when 
     querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [hidden, visible] : [],
   };
   const calls2 = [];
-  makeClose(() => {}, docDetached, (fn) => calls2.push(fn), { current: null })(wo);
+  makeClose(() => {}, () => {}, docDetached, (fn) => calls2.push(fn), { current: null })(wo);
   calls2.shift()();
   assert.equal(visible.focused, true);
   assert.equal(hidden.focused, undefined);
@@ -874,7 +874,7 @@ await check('checklist close returns focus to the job or the board heading when 
     querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [jobAnchor] : [],
   };
   const callsSection = [];
-  makeClose(() => {}, docSection, (fn) => callsSection.push(fn), { current: heading })(wo);
+  makeClose(() => {}, () => {}, docSection, (fn) => callsSection.push(fn), { current: heading })(wo);
   callsSection.shift()();
   assert.equal(jobAnchor.focused, true, 'a non-active row must land on its own section anchor');
   assert.equal(heading.focused, undefined);
@@ -886,7 +886,50 @@ await check('checklist close returns focus to the job or the board heading when 
     querySelectorAll: () => [],
   };
   const calls3 = [];
-  makeClose(() => {}, docGone, (fn) => calls3.push(fn), { current: heading })(wo);
+  makeClose(() => {}, () => {}, docGone, (fn) => calls3.push(fn), { current: heading })(wo);
+  calls3.shift()();
+  assert.equal(heading.focused, true);
+});
+
+await check('details dialog close uses the same job-anchor focus fallback', async () => {
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
+  const makeCloseDetails = new Function('setChecklistDialog', 'setSelectedWorkOrder', 'document', 'requestAnimationFrame', 'revisitClearBoardRef',
+    handler + '\nreturn closeDetailsDialog;');
+  const wo = { id: 'W1' };
+  assert.match(board, /onClose=\{\(\) => closeDetailsDialog\(selectedWorkOrder\)\}/);
+
+  // Clears the selection and does not override a successful Radix restore.
+  let closedWith = undefined;
+  const connected = { isConnected: true, focus() { this.focused = true; } };
+  const docRestored = { activeElement: connected, body: {}, querySelectorAll: () => [] };
+  const calls = [];
+  makeCloseDetails(() => {}, (v) => { closedWith = v; }, docRestored, (fn) => calls.push(fn), { current: null })(wo);
+  assert.equal(closedWith, null);
+  calls.shift()();
+  assert.equal(connected.focused, undefined, 'a successful Radix restore must not be overridden');
+
+  // Opener detached after the row moved sections: the job anchor still wins.
+  const jobAnchor = {
+    isConnected: true,
+    dataset: { sipsJobFocusId: 'W1' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const docSection = {
+    activeElement: { isConnected: false },
+    body: {},
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [jobAnchor] : [],
+  };
+  const calls2 = [];
+  makeCloseDetails(() => {}, () => {}, docSection, (fn) => calls2.push(fn), { current: null })(wo);
+  calls2.shift()();
+  assert.equal(jobAnchor.focused, true, 'details close must land on the same job anchor');
+
+  // Job filtered out everywhere: the board heading remains the fallback.
+  const heading = { focus() { this.focused = true; } };
+  const docGone = { activeElement: null, body: {}, querySelectorAll: () => [] };
+  const calls3 = [];
+  makeCloseDetails(() => {}, () => {}, docGone, (fn) => calls3.push(fn), { current: heading })(wo);
   calls3.shift()();
   assert.equal(heading.focused, true);
 });
