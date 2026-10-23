@@ -38,6 +38,7 @@
         "estimate_approved",
         "estimate_revision_requested",
         "payment_notice",
+        "job_revision_requested",
         "system"
       ],
       "default": "message"
