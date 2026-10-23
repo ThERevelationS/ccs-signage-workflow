@@ -112,6 +112,10 @@
       "type": "object",
       "description": "Order Form-only write-ahead marker for Smartsheet row creation. Stores the intended mapped snapshot before POST and, when returned, the permanent row ID before final link completion. Preserve unresolved attempts; never infer identity from values or retry an ambiguous POST."
     },
+    "automation_deadline_fired": {
+      "type": "object",
+      "description": "Durable deadline-automation claim markers. Keys are ruleId|triggerType|dateNeeded, values are the ISO date the rule last fired for that combination, so daily reminder runs never re-fire the same rule for the same deadline."
+    },
     "deleted": {
       "type": "boolean",
       "default": false,
