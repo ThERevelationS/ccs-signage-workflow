@@ -1,3 +1,4 @@
+import {assertPageSourceIdentity} from './permittingSourceIdentity.mjs';
 import { validateExternalPermittingReferral } from './permittingExternalReferrals.mjs';
 import { PDF_RESOURCE_METHOD } from './permittingResourceResponse.mjs';
 import { discoverOfficialPermittingResources, isDownloadableResearchDocument, permittingResourcePriority, permittingResourceSnapshot, discoverOfficialPermittingReferrals } from './jurisdictionPermittingLinkDiscovery.mjs';
@@ -41,7 +42,7 @@ function validateCursor(cursor, seedUrl, maxDepth) {
   } catch (error) { throw frontierError(error.message || 'Saved discovery frontier requires review.'); }
 }
 
-export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null, onProgress = async()=>{}, rescanUrl=null }) {
+export async function scanOfficialPermittingPages({ jurisdiction = null, seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null, onProgress = async()=>{}, rescanUrl=null }) {
   seedUrl = scopedUrl(seedUrl, seedUrl);
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 30 ||
       !Number.isInteger(maxDepth) || maxDepth < 0 || maxDepth > 5) throw Error('Invalid discovery request size.');
@@ -101,6 +102,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         continue;
       }
       if (typeof response.html !== 'string' || !response.html.trim()) throw Error('Official page returned no usable static HTML.');
+      if (jurisdiction) assertPageSourceIdentity(jurisdiction, response.html);
       const contentHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(permittingResourceSnapshot(response.html,finalUrl).map(d=>({url:d.url,title:d.title}))))))].map(b => b.toString(16).padStart(2,'0')).join('');
       if (recoveryGap?.link_hash_method === 'ordered-resource-list-v1' && recoveryGap.link_content_sha256 && recoveryGap.link_content_sha256 !== contentHash)
         throw Error('Capped page changed during recovery; saved offset requires review.');
