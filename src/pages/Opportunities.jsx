@@ -17,6 +17,7 @@ import {
   Search,
   Send,
   X,
+  History,
 } from "lucide-react";
 
 const STAGES = [
@@ -966,6 +967,25 @@ function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
                         <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.change_order_number)} · {clean(row.title)} <span className="text-slate-400">({clean(row.status)})</span></span>
                         <span className="text-slate-500">{Number(row.amount_delta || 0) >= 0 ? "+" : "−"}${Math.abs(Number(row.amount_delta || 0)).toFixed(2)}</span>
                       </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {Array.isArray(detail?.activity) && detail.activity.length > 0 && (
+                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <History className="h-4 w-4 text-slate-400" /> Activity
+                  </h3>
+                  <div className="space-y-1.5">
+                    {detail.activity.slice(0, 30).map((a) => (
+                      <div key={a.id} className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs dark:bg-slate-800/60">
+                        <span className="min-w-0 text-slate-700 dark:text-slate-200">
+                          {clean(a.summary)}
+                          {a.actor && <span className="text-slate-400"> · {a.actor}</span>}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-slate-400">{clean(a.created_date).slice(0, 16).replace("T", " ")}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
