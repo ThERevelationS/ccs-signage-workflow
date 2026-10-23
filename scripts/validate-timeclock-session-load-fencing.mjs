@@ -220,15 +220,17 @@ async function overlappingLoadsScenario() {
     },
     '@/components/timeclock/TimeClockLoginDialog': ({ onLogin }) =>
       React.createElement('button', { onClick: () => onLogin?.(USER_B, 'tok-b') }, 'do-login'),
+    '@/components/timeclock/EmployeeTodayCard': ({ onRefresh }) =>
+      React.createElement('button', { onClick: () => onRefresh?.() }, 'refresh-now'),
   });
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
   await act(async () => { loaderQueue.forEach((q) => q.d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
   await act(async () => { buttonByText(renderer, 'Login for Full Access').props.onClick(); await flush(); });
   await act(async () => { buttonByText(renderer, 'do-login').props.onClick(); await flush(); });
-  // Trigger a second refresh ("Reload latest") while the first is in flight.
-  const reload = buttonByText(renderer, 'Reload latest');
-  assert.ok(reload, 'reload button should exist once logged in');
+  // Trigger a second refresh (EmployeeTodayCard onRefresh) while the first is in flight.
+  const reload = buttonByText(renderer, 'refresh-now');
+  assert.ok(reload, 'refresh trigger should exist once logged in');
   await act(async () => { reload.props.onClick(); await flush(); });
   // Resolve the stale first batch (first two calls) with poisoned data after
   // the newer batch (last two calls) already applied.
