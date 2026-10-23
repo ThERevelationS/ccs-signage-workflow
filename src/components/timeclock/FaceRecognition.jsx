@@ -23,7 +23,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
   const matchFaceRef = useRef(matchFace);
   matchFaceRef.current = matchFace;
-  
+
   const [errorMsg, setErrorMsg] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [recognizedUser, setRecognizedUser] = useState(null);
