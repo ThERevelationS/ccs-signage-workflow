@@ -3,16 +3,17 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
   ChevronRight,
+  Copy,
   DollarSign,
   Download,
   FileText,
+  Link2,
   Loader2,
+  Mail,
   Plus,
   Receipt,
   RefreshCw,
   Search,
-  Copy,
-  Link2,
   Send,
   X,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import {
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const today = () => new Date().toISOString().slice(0, 10);
 
 const STATUS_LABELS = {
   draft: "Draft",
@@ -346,6 +348,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [editing, setEditing] = useState(false);
+  const [notice, setNotice] = useState("");
   const [pay, setPay] = useState({ amount: "", method: "check", paid_date: "", reference_number: "", notes: "" });
   const payKeyRef = useRef(uuid());
 
@@ -367,15 +370,17 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   const payments = detail?.payments || [];
   const openBalance = Number(inv?.balance_due) || 0;
 
-  const run = async (label, body) => {
+  const run = async (label, body, after) => {
     if (busy) return;
     setBusy(label);
     setError("");
+    setNotice("");
     try {
-      await invokeAction(sessionToken, body);
+      const data = await invokeAction(sessionToken, body);
       payKeyRef.current = uuid();
       await load();
       onChanged?.();
+      await after?.(data);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Action failed.");
     } finally {
@@ -507,6 +512,12 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                     Edit
                   </button>
                 )}
+                {!["draft", "void"].includes(inv.status) && (
+                  <button type="button" onClick={() => run("email", { action: "email_invoice", invoice_id: invoiceId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setNotice(`Invoice emailed to ${d.sent_to}.`); })} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-emerald-300 px-4 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-400">
+                    {busy === "email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}Email to customer
+                  </button>
+                )}
                 {!["void", "paid"].includes(inv.status) && (
                   <button type="button" onClick={() => { if (confirm(`Void ${inv.invoice_number}?`)) run("void", { action: "void_invoice", invoice_id: invoiceId, void_reason: "Voided from Invoices" }); }} disabled={Boolean(busy)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-red-300 px-4 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-400">
@@ -516,6 +527,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
               </div>
               {loading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
             </div>
+            {notice && <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</div>}
             {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
           </>
         )}
@@ -828,17 +840,22 @@ export default function Invoices() {
               </tr>
             </thead>
             <tbody>
-              {invoices.map((inv) => (
-                <tr key={inv.id} onClick={() => setOpenId(inv.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
+              {invoices.map((inv) => {
+                const overdue = Number(inv.balance_due) > 0 && ["sent", "partially_paid"].includes(inv.status) && inv.due_date && inv.due_date < today();
+                return (
+                <tr key={inv.id} onClick={() => setOpenId(inv.id)} className={`cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${overdue ? "bg-red-50/60 dark:bg-red-950/20" : ""}`}>
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{inv.due_date || "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">
+                    {inv.due_date || "—"}
+                    {overdue && <span className="ml-1.5 inline-flex rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>}
+                  </td>
                   <td className="px-4 py-2.5 text-right font-medium">{usd(inv.total)}</td>
-                  <td className="px-4 py-2.5 text-right font-medium">{usd(inv.balance_due)}</td>
+                  <td className={`px-4 py-2.5 text-right font-medium ${overdue ? "text-red-700 dark:text-red-300" : ""}`}>{usd(inv.balance_due)}</td>
                   <td className="px-4 py-2.5"><StatusBadge status={inv.status} /></td>
                   <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         )}
