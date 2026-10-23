@@ -86,6 +86,9 @@
           },
           "quantity_received": {
             "type": "number"
+          },
+          "inventory_item_id": {
+            "type": "string"
           }
         }
       }
