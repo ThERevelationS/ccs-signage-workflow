@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -88,7 +89,7 @@ function WorkflowReportingTab() {
     .map(([name, count]) => ({ name: name.split(" ")[0] || name, count }))
     .sort((a, b) => b.count - a.count).slice(0, 10);
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <ListSkeleton rows={5} />;
   if (readError) return <div className="clay-card p-6 text-center"><div className="text-sm font-bold text-red-700">Workflow reporting data could not be verified.</div><div className="mt-1 text-xs text-red-600">{readError}</div></div>;
 
   return (
