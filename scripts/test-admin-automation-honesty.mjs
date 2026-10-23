@@ -18,28 +18,41 @@ const setLiteral = (source, name) => {
   return [...match[1].matchAll(/"([^"]+)"/g)].map(m => m[1]);
 };
 
+const processTriggersEntry = read("base44/functions/processWorkflowTriggers/entry.ts");
+
 test("live trigger sets match real emitters", () => {
-  const emailOnly = setLiteral(adminSettings, "EMAIL_ONLY_TRIGGER_SET");
   const engine = setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET");
+  const order = setLiteral(adminSettings, "ORDER_TRIGGER_SET");
   const deadline = setLiteral(adminSettings, "DEADLINE_TRIGGER_SET");
 
   // No overlap between the three execution paths.
-  const all = [...emailOnly, ...engine, ...deadline];
+  const all = [...engine, ...order, ...deadline];
   assert.equal(new Set(all).size, all.length, "trigger sets must not overlap");
 
-  // Every email-only trigger must actually be emitted by NotificationService.
-  for (const t of emailOnly) {
+  // Every client-emitted engine/order trigger must actually be emitted by
+  // NotificationService (permit events arrive from other callers).
+  const clientEmitted = [...engine, ...order].filter(t => !t.startsWith("permit_"));
+  for (const t of clientEmitted) {
     assert.ok(
       notificationService.includes(`"${t}"`),
       `"${t}" is advertised as live but NotificationService never emits it`
     );
   }
 
-  // Every engine trigger must have a matchesTrigger case server-side.
-  for (const t of engine) {
+  // Every engine/order trigger must have a matchesTrigger case server-side.
+  for (const t of [...engine, ...order]) {
     assert.ok(
       workflowEngine.includes(`'${t}'`),
       `"${t}" is advertised as live but workflowTriggerEngine never matches it`
+    );
+  }
+  // Externally-emitted events must be accepted by the endpoint.
+  // permit_followup_* are internal — checkPermitFollowupReminders calls the
+  // engine directly, so they legitimately aren't in the endpoint's allowlist.
+  for (const t of [...clientEmitted, "permit_submitted", "permit_received"]) {
+    assert.ok(
+      processTriggersEntry.includes(`'${t}'`),
+      `"${t}" is advertised as live but processWorkflowTriggers rejects it`
     );
   }
 
@@ -68,10 +81,11 @@ test("supported action sets match real executors", () => {
       `"${a}" is advertised as deadline-supported but checkDeadlineReminders has no case for it`
     );
   }
-  // Email-only triggers genuinely only execute send_email client-side.
+  // Order events carry no Work Order, so only send_email can execute — the
+  // engine must guard mutations accordingly.
   assert.ok(
-    notificationService.includes('action.action_type === "send_email"'),
-    "client-side executor must run send_email actions"
+    workflowEngine.includes("Action requires a Work Order"),
+    "engine must skip mutating actions when no Work Order exists"
   );
 });
 
@@ -119,8 +133,8 @@ test("every advertised trigger resolves to a status", () => {
   assert.ok(values.length > 50, "expected the full advertised trigger list");
 
   const live = new Set([
-    ...setLiteral(adminSettings, "EMAIL_ONLY_TRIGGER_SET"),
     ...setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "ORDER_TRIGGER_SET"),
     ...setLiteral(adminSettings, "DEADLINE_TRIGGER_SET"),
   ]);
   for (const v of values) {
@@ -133,4 +147,36 @@ test("every advertised trigger resolves to a status", () => {
   assert.ok(adminSettings.includes("const ruleIsRunnable"));
   assert.ok(adminSettings.includes("getTriggerSupportedActions(t.value)"), "picker consults capability map");
   assert.ok(live.size > 0, "at least some triggers must be live");
+});
+
+test("automation rules execute server-side through the engine endpoint", () => {
+  // NotificationService must hand AutomationRule processing to
+  // processWorkflowTriggers with a session credential — not evaluate
+  // rule actions client-side (which silently ran send_email only).
+  assert.ok(
+    notificationService.includes("invoke('processWorkflowTriggers'"),
+    "NotificationService must route automation events to the engine endpoint"
+  );
+  assert.ok(
+    notificationService.includes("session_token:"),
+    "the engine call must carry a session credential"
+  );
+  assert.ok(
+    !notificationService.includes("entities.AutomationRule"),
+    "client must not load or evaluate AutomationRule rows itself"
+  );
+  assert.ok(
+    !notificationService.includes('action.action_type === "send_email"'),
+    "client must not execute rule actions itself"
+  );
+  // The endpoint still authenticates every request.
+  assert.ok(
+    processTriggersEntry.includes("authenticateSignShopSession"),
+    "endpoint must authenticate the session"
+  );
+  // Engine honors each trigger row's declared AND/OR logic.
+  assert.ok(
+    workflowEngine.includes("trigger?.logic === 'and'"),
+    "engine must combine triggers with their declared logic"
+  );
 });
