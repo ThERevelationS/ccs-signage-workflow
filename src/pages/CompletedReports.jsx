@@ -10,7 +10,6 @@ import {
   Lightbulb,
   TrendingUp,
   CheckCircle2,
-  Loader2,
   Trash2,
   RotateCcw,
   ChevronLeft
