@@ -16,6 +16,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
@@ -222,14 +223,14 @@ export default function SIPs() {
     document.title = "SIPs - Workflow Manager";
   }, []);
 
+  usePolling(() => {
+    // A timer tick should not compete with an in-flight load or local save.
+    // Save/conflict recovery still invokes loadWorkOrders directly.
+    if (boardSavesPendingRef.current === 0) void refreshBoardWhenIdle();
+  }, 60000, { runOnMount: false });
+
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => {
-      // A timer tick should not compete with an in-flight load or local save.
-      // Save/conflict recovery still invokes loadWorkOrders directly.
-      if (boardSavesPendingRef.current === 0) void refreshBoardWhenIdle();
-    }, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const loadWorkOrders = async (showLoading = true, { clearQuickEditErrorOnSuccess = false } = {}) => {
