@@ -301,4 +301,15 @@ test("TimeClock admin surfaces use content-shaped skeletons", () => {
   assert.ok(!cra.includes("Loading requests"), "correction panel spinner gone");
 });
 
+test("TimeClock admin surfaces use content-shaped skeletons", () => {
+  const ppm = readFileSync("src/components/timeclock/PayPeriodManager.jsx", "utf8");
+  const rpt = readFileSync("src/components/timeclock/TimeClockReportsDashboard.jsx", "utf8");
+  const cra = readFileSync("src/components/timeclock/CorrectionRequestAdminPanel.jsx", "utf8");
+  assert.ok(ppm.includes("<ListSkeleton rows={3}"), "pay periods list skeleton");
+  assert.ok(!ppm.includes("Verifying payroll snapshot chain"), "payroll verify spinner gone");
+  assert.ok(rpt.includes("<Skeleton"), "reports dashboard skeleton");
+  assert.ok(!rpt.includes("animate-spin text-purple-600"), "reports spinner gone");
+  assert.ok(!cra.includes("Loading requests"), "correction panel spinner gone");
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
