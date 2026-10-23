@@ -25,6 +25,7 @@ const TASKS_BY_STATUS = {
     "WIP - In Final Design Queue",
     "WIP - Designing",
     "WIP - Prepare/Submit Permit",
+    "WIP - Prepare Permit Docs for Customer",
     "WIP - Follow Up On Status of Accepted Permit",
     "WIP - Permitting Follow-ups",
     "WIP - Production/Fabrication",
