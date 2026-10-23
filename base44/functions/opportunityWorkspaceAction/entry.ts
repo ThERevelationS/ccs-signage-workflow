@@ -254,6 +254,19 @@ Deno.serve(async (req) => {
           win_rate: s.decided_count > 0 ? Math.round((s.won_count / s.decided_count) * 1000) / 10 : null,
         }))
         .sort((a: any, b: any) => b.open_value - a.open_value || b.won_value - a.won_value);
+      const lostReasonMap: any = {};
+      for (const row of rows) {
+        if (clean(row?.stage) !== "lost") continue;
+        const raw = clean(row?.lost_reason).slice(0, 120);
+        const key = raw.toLowerCase() || "no reason given";
+        const slot = lostReasonMap[key] || (lostReasonMap[key] = { reason: raw || "No reason given", count: 0, lost_value: 0 });
+        slot.count += 1;
+        slot.lost_value += Number(row?.budget_amount) || 0;
+      }
+      const lostReasons = Object.values(lostReasonMap)
+        .map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 }))
+        .sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value)
+        .slice(0, 12);
       const funnel = {
         stage_counts: stageCounts,
         total: rows.length,
@@ -263,6 +276,7 @@ Deno.serve(async (req) => {
         decided_count: decidedCount,
         win_rate: decidedCount > 0 ? Math.round((wonCount / decidedCount) * 1000) / 10 : null,
         by_salesperson: salespeople,
+        lost_reasons: lostReasons,
       };
       return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
     }
