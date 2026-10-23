@@ -429,6 +429,9 @@ export default function PurchaseOrders() {
   if (!isRegistered) return null;
 
   const openValue = purchaseOrders.filter((p) => ["sent", "partially_received"].includes(p.status)).reduce((s, p) => s + (Number(p.total) || 0), 0);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isOverdue = (p) => ["sent", "partially_received"].includes(p.status) && p.expected_date && p.expected_date < todayStr;
+  const overdueCount = purchaseOrders.filter(isOverdue).length;
 
   return (
     <div className="mx-auto max-w-6xl p-4 md:p-6">
@@ -439,7 +442,7 @@ export default function PurchaseOrders() {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Purchase Orders</h1>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Vendor POs and receiving.{openValue > 0 ? ` Open PO value: ${usd(openValue)}.` : ""}
+            Vendor POs and receiving.{openValue > 0 ? ` Open PO value: ${usd(openValue)}.` : ""}{overdueCount > 0 ? ` ${overdueCount} overdue.` : ""}
           </p>
         </div>
         <div className="flex gap-2">
@@ -491,7 +494,10 @@ export default function PurchaseOrders() {
                 <tr key={po.id} onClick={() => setOpenId(po.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</td>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{po.vendor_name}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{po.expected_date || "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-500">
+                    {po.expected_date || "—"}
+                    {isOverdue(po) && <span className="ml-1.5 inline-flex rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>}
+                  </td>
                   <td className="px-4 py-2.5 text-right font-medium">{usd(po.total)}</td>
                   <td className="px-4 py-2.5"><StatusBadge status={po.status} /></td>
                   <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
