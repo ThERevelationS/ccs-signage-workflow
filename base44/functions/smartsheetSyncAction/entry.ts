@@ -1516,9 +1516,19 @@ async function claimSyncRun(base44: any, status: any) {
   // A new Order pull must not erase prior permanent-ID evidence after an
   // interrupted or review-required pull. This is read-only preflight: no
   // coordinator reset, Base44 Order write, or Smartsheet retry occurs.
-  const priorOrderPull = classifyPriorUncertainOrderPull(current, {
+  let priorOrderPull = classifyPriorUncertainOrderPull(current, {
     orderPullRequested: status?.order_pull_requested === true,
   });
+  if (priorOrderPull.blocked) {
+    // Consult independent evidence storage before refusing: a verified run
+    // may still carry needs_review status plus batch evidence on the shared
+    // coordinator record.
+    const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+    priorOrderPull = classifyPriorUncertainOrderPull(current, {
+      orderPullRequested: status?.order_pull_requested === true,
+      verifiedEvidence: evidenceRecord?.setting_value,
+    });
+  }
   if (priorOrderPull.blocked) {
     throw Object.assign(new Error(priorOrderPull.reason), { status: 409 });
   }
