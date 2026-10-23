@@ -640,7 +640,7 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
   return (
     <div>
       <div className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-        Open opportunities with a next action on record — overdue first. "Done" clears the action.
+        Open opportunities with a next action on record — overdue first. Sent quotes aging 7+ days (or past their validity window) also surface here. "Done" clears the action.
       </div>
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
@@ -673,13 +673,27 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
                   </td>
                   <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.customer_display_name || "—"}</td>
                   <td className="px-3 py-2.5"><StageBadge stage={r.stage} /></td>
-                  <td className="px-3 py-2.5 text-slate-700 dark:text-slate-200">{r.next_action || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-700 dark:text-slate-200">
+                    {r.stale_quote && (
+                      <span className={`mr-1.5 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${r.quote_expired ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"}`}>
+                        {r.quote_expired ? "Quote expired" : "Quote aging"}
+                      </span>
+                    )}
+                    {r.next_action || "—"}
+                  </td>
                   <td className="px-3 py-2.5 text-xs text-slate-500">{r.next_action_assignee || "—"}</td>
                   <td className="px-3 py-2.5 text-right">
-                    <button type="button" onClick={() => markDone(r)} disabled={clearing === r.id}
-                      className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40">
-                      {clearing === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}Done
-                    </button>
+                    {r.stale_quote ? (
+                      <button type="button" onClick={() => openOpportunity(r)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">
+                        Open
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => markDone(r)} disabled={clearing === r.id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40">
+                        {clearing === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}Done
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
