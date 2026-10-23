@@ -4,7 +4,7 @@ const API_BASE = 'https://app.base44.com';
 const HISTORY_PAGE = 200;
 
 function fail(status: any, code: any, message: any) {
-  const error = new Error(message);
+  const error: any = new Error(message);
   error.status = status;
   error.code = code;
   throw error;
@@ -21,7 +21,7 @@ function scheduleFields(workflow: any) {
 
 function buildRow(workflow: any, now: any) {
   const { trigger_type, cron, timezone } = scheduleFields(workflow);
-  const row = {
+  const row: any = {
     id: workflow?.id || '',
     name: String(workflow?.name || ''),
     description: workflow?.description || null,
@@ -73,7 +73,7 @@ function actorFields(actor: any) {
 export function createWorkflowScheduleManager({
   fetchImpl, token, appId, historyEntity,
   now = () => new Date(),
-  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  sleep = (ms: any) => new Promise((resolve) => setTimeout(resolve, ms)),
 }: any = {}) {
   const app = String(appId || '').trim();
 
@@ -104,13 +104,13 @@ export function createWorkflowScheduleManager({
     }
   }
 
-  async function api(method: any, path: any, body: any) {
+  async function api(method: any, path: any, body?: any) {
     let response;
     try {
       response = await rawFetch(method, path, body);
     } catch (error) {
-      if (error?.status) throw error;
-      fail(502, 'base44_unreachable', `Base44 could not be reached. ${String(error?.message || error).slice(0, 200)}`);
+      if ((error as any)?.status) throw error;
+      fail(502, 'base44_unreachable', `Base44 could not be reached. ${String((error as any)?.message || error).slice(0, 200)}`);
     }
     if (response.status === 429) {
       const retryAfter = Number(response?.headers?.get?.('retry-after'));
@@ -118,8 +118,8 @@ export function createWorkflowScheduleManager({
       try {
         response = await rawFetch(method, path, body);
       } catch (error) {
-        if (error?.status) throw error;
-        fail(502, 'base44_unreachable', `Base44 could not be reached. ${String(error?.message || error).slice(0, 200)}`);
+        if ((error as any)?.status) throw error;
+        fail(502, 'base44_unreachable', `Base44 could not be reached. ${String((error as any)?.message || error).slice(0, 200)}`);
       }
     }
     if (response.status === 429) {
