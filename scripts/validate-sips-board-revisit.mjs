@@ -850,7 +850,7 @@ await check('checklist close returns focus to the job or the board heading when 
   const docDetached = {
     activeElement: { isConnected: false },
     body: {},
-    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id]' ? [hidden, visible] : [],
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [hidden, visible] : [],
   };
   const calls2 = [];
   makeClose(() => {}, docDetached, (fn) => calls2.push(fn), { current: null })(wo);
@@ -858,8 +858,28 @@ await check('checklist close returns focus to the job or the board heading when 
   assert.equal(visible.focused, true);
   assert.equal(hidden.focused, undefined);
 
-  // Job filtered out everywhere: the board heading is the safe fallback.
   const heading = { focus() { this.focused = true; } };
+
+  // A job in Revisit Later or Completed WIP has no active-section control —
+  // its per-section focus anchor still receives focus before the heading.
+  const jobAnchor = {
+    isConnected: true,
+    dataset: { sipsJobFocusId: 'W1' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const docSection = {
+    activeElement: null,
+    body: {},
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [jobAnchor] : [],
+  };
+  const callsSection = [];
+  makeClose(() => {}, docSection, (fn) => callsSection.push(fn), { current: heading })(wo);
+  callsSection.shift()();
+  assert.equal(jobAnchor.focused, true, 'a non-active row must land on its own section anchor');
+  assert.equal(heading.focused, undefined);
+
+  // Job filtered out everywhere: the board heading is the safe fallback.
   const docGone = {
     activeElement: null,
     body: {},
