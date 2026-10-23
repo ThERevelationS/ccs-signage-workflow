@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { AlertTriangle, CalendarRange, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Download, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
@@ -449,7 +450,7 @@ export default function PayPeriodManager({
       )}
 
       {loading ? (
-        <div className="py-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-purple-600" /></div>
+        <ListSkeleton rows={3} />
       ) : periods.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center text-sm text-gray-500">
           No pay periods created yet. Nothing is assumed automatically.
@@ -529,7 +530,7 @@ export default function PayPeriodManager({
         <DialogContent className="clay-card border-none max-w-2xl">
           <DialogHeader><DialogTitle>Verified Payroll History</DialogTitle></DialogHeader>
           {historyLoading ? (
-            <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain…</div>
+            <ListSkeleton rows={4} />
           ) : historyResult?.verified ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
