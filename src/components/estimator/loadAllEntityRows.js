@@ -30,6 +30,9 @@ export async function withRateLimitRetry(fn) {
     try {
       return await fn();
     } catch (error) {
+      // The request governor already retried this call with backoff; a second
+      // retry loop here would multiply the delay without helping.
+      if (typeof error?.ccsGovernorRetried === "number") throw error;
       if (attempt < RATE_LIMIT_MAX_RETRIES && isRateLimitError(error)) {
         await sleep(RATE_LIMIT_BASE_DELAY_MS * Math.pow(2, attempt));
         continue;
