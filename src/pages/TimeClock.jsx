@@ -235,6 +235,15 @@ export default function TimeClock() {
   const idleTimerRef = useRef(null);
   const lastActivityAtRef = useRef(0);
   const loginReportRunRef = useRef(0);
+  const dataSeqRef = useRef(0);
+  const dataScopeRef = useRef("");
+  // Update the data scope during render so a stale employee-session read that
+  // resolves between a session-switch render and the effect cannot apply.
+  const dataScope = `${timeClockSessionToken}|${String(loggedInUser?.email || "").toLowerCase()}`;
+  if (dataScopeRef.current !== dataScope) {
+    dataScopeRef.current = dataScope;
+    dataSeqRef.current += 1;
+  }
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -267,8 +276,14 @@ export default function TimeClock() {
   };
 
   const loadData = async () => {
-    if (!loggedInUser?.email) return;
-    
+    const requestEmail = String(loggedInUser?.email || "").toLowerCase();
+    const requestToken = timeClockSessionToken;
+    const requestScope = `${requestToken}|${requestEmail}`;
+    const requestSeq = ++dataSeqRef.current;
+    const current = () =>
+      requestSeq === dataSeqRef.current && dataScopeRef.current === requestScope;
+    if (!requestEmail) return;
+
     setIsLoading(true);
     try {
       const [entries, requests] = await Promise.all([
@@ -285,39 +300,42 @@ export default function TimeClock() {
           label: `Time off requests for ${loggedInUser.email}`,
         })
       ]);
-      
+
+      if (!current()) return;
+
       entries.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
       requests.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       
       setTimeEntries(entries);
       setTimeOffRequests(requests);
 
-      if (timeClockSessionToken) {
+      if (requestToken) {
         try {
           const correctionResponse = await base44.functions.invoke("timeClockAction", {
             action: "list_correction_requests",
-            session_token: timeClockSessionToken,
+            session_token: requestToken,
             target_email: loggedInUser.email,
             request_id: newRequestId(),
           });
+          if (!current()) return;
           const correctionData = correctionResponse?.data || correctionResponse;
           setCorrectionRequests(correctionData?.success && Array.isArray(correctionData.requests) ? correctionData.requests : []);
         } catch (correctionError) {
           console.error("Error loading correction requests:", correctionError);
-          setCorrectionRequests([]);
+          if (current()) setCorrectionRequests([]);
         }
       } else {
         setCorrectionRequests([]);
       }
       
       const activeEntries = entries.filter(e => e.status === "clocked_in");
-      if (activeEntries.length > 1) {
+      if (current() && activeEntries.length > 1) {
         setTimeEntryError(`Multiple active time entries were found for ${loggedInUser.email}. No clock-out row was selected automatically; an admin must review the duplicates.`);
       }
     } catch (err) {
       console.error("Error loading data:", err);
     }
-    setIsLoading(false);
+    if (current()) setIsLoading(false);
   };
 
   const clearEmployeeSession = useCallback(({ reason = "manual" } = {}) => {
