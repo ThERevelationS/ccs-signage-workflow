@@ -5,10 +5,18 @@ import { usePolling } from "@/lib/usePolling";
 
 const TimeClockStatusContext = createContext(null);
 
+const FALLBACK_STATUS = {
+  isFallback: true,
+  data: null,
+  error: null,
+  loadedAt: 0,
+  version: 0,
+  refresh: async () => null,
+};
+
 export function useTimeClockStatus() {
   const ctx = useContext(TimeClockStatusContext);
-  if (!ctx) throw new Error("useTimeClockStatus must be used inside TimeClockStatusProvider");
-  return ctx;
+  return ctx || FALLBACK_STATUS;
 }
 
 export function TimeClockStatusProvider({ children }) {
