@@ -1,3 +1,19 @@
+# Permitting continuation - runs 23-24 verified
+
+- Two serialized passes bounded at 150 cycles: run23 completed 150 attempts; run24 stopped after 131 attempts / 132 cycles on one returned document concurrency conflict. Total 281 attempts, zero LLM calls. Historical bounded total: 3639 attempts (not a successful-fetch count).
+- Run24 conflict: Discovery continuation changed in another session (documents). The newer value was not overwritten. No blind retry; profile remains subject to normal eligibility and fresh-version reads.
+- Fresh OH/KY readback: OH 807 frontiers, 1915 pending / 103 profiles / 1341 review gaps; KY 113 frontiers, 207 pending / 14 profiles / 157 review gaps.
+- Current no-frontier query: OH 62, KY 101; these are eligibility-query counts, not a new source-failure diagnosis.
+- Runner now detects returned success=false/error as well as exceptions and stops on the first failure; 1.2s pacing. Older reduced run receipts did not retain returned failure fields.
+- Nine local shared modules and their import closure matched sandbox SHA-256 hashes; actual discovery code was executed locally through authenticated SDK, not inside a deployed function. All 29 sandbox continuation/frontier/scan tests passed.
+- Historical provenance claims are retained as historical evidence only; no separate per-document live provenance audit in these two passes.
+- Helper selects oldest-updated eligible OH/KY profile; it does not strictly prioritize OH. No dispatcher cadence or capacity claim reverified here.
+- No LLM, archives, cap changes, authority conclusions, unrelated client/job/shared-record writes, or publication. No product source edits. Concurrent local work left untouched.
+- Milestone 3 statewide completeness remains pending. Earlier wording that every reachable official source is covered is not established by these profile/frontier counts.
+- Receipt: docs/permitting-collection-expansion-2026-10-23.json. Next: bounded continuation, then evidence-safe failed-seed and gap review.
+
+---
+
 # Permitting continuation handoff — October 23, 2026 (Milestone 2 executed at scale: both states seeded, frontier draining)
 
 Checkpoint for this unit: `6ada87ffa4e9ed854f92a637` / Git `3a55da01492423a2279dbc1021a9762c97b76dba` (sandbox auto-named the checkpoint after concurrent smartsheet work in HEAD). Prior: `6ada7633067620fe9ba90196` (first bounded drain) / `6ada74b9d3ee1c4a2ab3dbad` (provenance fix) / `6ada7188337b04b07e490bf5` (Milestone 1 complete).
