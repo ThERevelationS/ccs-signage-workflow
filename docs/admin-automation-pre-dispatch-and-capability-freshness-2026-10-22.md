@@ -74,6 +74,17 @@ wired to their loader (matching the existing OvertimeRulesManager pattern);
 the invariant is enforced by scripts/test-admin-settings-conflict-reload.mjs
 for all six panels plus the shared helper.
 
+A credentialed-invoke sweep then found SyncAlertSettings (inside
+SmartsheetSyncSettings) calling smartsheetSyncAction's sync_alert_save and
+sync_alert_test with no session_token — both require adminActor server-side,
+so Save was a silent 403 no-op and the panel also never unwrapped res.data,
+meaning load and the test-email result could never render real state. The
+panel now sends session_token on all three invokes, unwraps response.data,
+surfaces load/save/test errors with a Retry affordance instead of swallowing
+them, and disables Save/Test without a session token. The write-authorization
+contract test gained an inline-invoke sweep so any future admin-component
+invoke of a credentialed function without a credential fails tests.
+
 While unlocked, the admin navigation card now shows the stored capability's
 expiry as a static "Admin authorization expires at <time>" label
 (`data-admin-capability-expiry`). The label is populated by the same effect
