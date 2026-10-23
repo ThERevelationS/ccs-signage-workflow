@@ -370,5 +370,10 @@ assert.match(entry, /lost_reasons: lostReasons/, 'funnel must report loss reason
 assert.match(entry, /No reason given/, 'funnel must bucket unreasoned losses');
 assert.match(oppPage2, /Loss reasons/, 'pipeline view must render loss reasons');
 assert.match(palette, /getSessionToken\(\)/, 'command palette must use the shared token helper');
+assert.match(portalFn, /loadPortalAnnouncements/, 'portal bootstrap must load announcements');
+assert.match(portalFn, /display_pages.*customerportal|customerportal.*display_pages/, 'portal announcements must be explicitly targeted');
+assert.match(portalPage, /data\?\.announcements/, 'portal page must render announcements');
+const annManager = readFileSync('src/components/announcements/AnnouncementManager.jsx', 'utf8');
+assert.match(annManager, /customerportal/, 'announcement manager must offer the portal page target');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
