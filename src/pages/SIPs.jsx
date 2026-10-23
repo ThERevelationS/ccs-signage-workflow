@@ -89,19 +89,20 @@ const MobileDescription = ({ value, fallback = "No description", label = "Job de
 // cell growth animate around it: re-anchor its screen position every frame
 // through the nearest vertical scroller instead of letting it drift down.
 const anchorFocusedRow = (el) => {
-  const row = el?.closest?.("tr");
-  if (!row) return;
-  let scroller = row.parentElement;
+  if (!el?.isConnected) return;
+  let scroller = el.parentElement;
   while (scroller && (!/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) || scroller.scrollHeight <= scroller.clientHeight)) {
     scroller = scroller.parentElement;
   }
   const target = scroller || document.scrollingElement;
   if (!target) return;
-  const beforeTop = row.getBoundingClientRect().top;
+  const beforeRect = el.getBoundingClientRect();
+  const beforeCenter = beforeRect.top + beforeRect.height / 2;
   const start = performance.now();
   const tick = () => {
-    if (!row.isConnected) return;
-    const drift = row.getBoundingClientRect().top - beforeTop;
+    if (!el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const drift = r.top + r.height / 2 - beforeCenter;
     if (Math.abs(drift) > 0.5) target.scrollTop += drift;
     if (performance.now() - start < 360) requestAnimationFrame(tick);
   };
