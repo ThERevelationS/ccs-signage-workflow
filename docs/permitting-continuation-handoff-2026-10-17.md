@@ -1,3 +1,20 @@
+# FULL STOP - approved Portland cleanup complete
+
+- Exactly 1866 manifest-listed Oregon document entries removed from profile 6adaf8efc137885e5c4143d0. One conditional update, acknowledgement updated=1, readback verified, zero documents remain.
+- Full profile and queue backup stored at docs/permitting-portland-full-precleanup-backup-2026-10-23.json, 1373483 bytes, SHA-256 6bdf01ceb79543383090121496a849b371169243601515610733c05c3af5312b. Every manifest record hash verified. Backup checkpoint 6adb553adf6cd61eef8185b3.
+- Frozen profile version 2026-10-23T11:06:08.916000 -> 2026-10-23T12:38:59.063000. Apart from documents and updated_date, every field unchanged.
+- Cursor remains blocked; 88 pending URLs preserved; auto_refresh remains false. Entire queue row 6ac191cbcd668397c81e7c51 unchanged and blocked. No source URL, AI summary, identity/type or authority change.
+- User explicitly approved this itemized removal and directed Continue. Fresh versions, all 1866 hashes/protection flags and exact-ID references checked before execution. No other entity writes; no stale write retry.
+- Existing wrong-state website/permitting/GIS URLs and Oregon AI summary remain untrusted and intentionally unchanged. No reseeding or collection restart.
+- Receipt: docs/permitting-portland-approved-cleanup-2026-10-23.json. Historical manifest retained unchanged; plan status advanced with an explicit historical-baseline boundary.
+- Full backup is a saved data snapshot, not an automatic restore: any restoration requires a fresh separately reviewed conditional operation. No silent rollback over newer data.
+- Six synthetic cleanup checks passed: exact update, lost acknowledgment readback, conflict handling, backup gate, protected change and stale version. Receipt/backup/manifest verification and targeted tests recorded at unit close.
+- FULL STOP after verification and checkpoint. No collection or cleanup runner remains active; recurrence-prevention unit has NOT started.
+- Next separate unit: official-inventory queue identity gating and source jurisdiction/state validation, plus separately scoped remaining profile-field repair. Do not rename Portland to Lebanon or infer sign/electrical authority.
+- No LLM calls, archive uploads, deployment/publication, unrelated source edits or client/job/shared-record changes.
+
+---
+
 # Portland repair audit and automatic-processing hold
 
 - Live Census OH incorporated-place source matches retained hash e1e961c10cb7513360d0dd4514d4735ff784cabcdb09070c29da88f829d03b27 and contains no Portland. The legacy localityQueueSeed wrongly labels Portland a Meigs County village; it is not an authoritative inventory.
