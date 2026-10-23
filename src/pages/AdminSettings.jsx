@@ -88,6 +88,7 @@ import PermittingCompletenessDashboard from "@/components/permitting/PermittingC
 import PermittingRulesReview from "@/components/admin/PermittingRulesReview";
 import PermittingTestSuite from "@/components/permitting/PermittingTestSuite";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
+import WorkflowSchedulesPanel from "@/components/admin/WorkflowSchedulesPanel";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import {
   getStoredAdminSettingsCapability,
@@ -1897,6 +1898,7 @@ export default function AdminSettings() {
                     <TabsTrigger value="wip_import" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">WIP Import</TabsTrigger>
                     <TabsTrigger value="permitting" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Permitting Repository</TabsTrigger>
                     <TabsTrigger value="monitoring" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Jurisdiction Monitoring</TabsTrigger>
+                    <TabsTrigger value="scheduled_jobs" className="min-h-11 min-w-0 max-w-full whitespace-normal break-words px-2 py-2 text-center focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Scheduled Jobs</TabsTrigger>
                   </TabsList>
                     <AdminPanelContent value="backup">
                     <BackupManager />
@@ -1918,6 +1920,9 @@ export default function AdminSettings() {
                   </AdminPanelContent>
                   <AdminPanelContent value="monitoring">
                     <JurisdictionMonitoringSettings />
+                  </AdminPanelContent>
+                  <AdminPanelContent value="scheduled_jobs">
+                    <WorkflowSchedulesPanel />
                   </AdminPanelContent>
                   </Tabs>
                   </AdminPanelContent>
