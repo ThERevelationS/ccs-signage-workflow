@@ -9,7 +9,7 @@ import {
   Scan,
   Square
 } from "lucide-react";
-import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
+import { createFaceMatcher, createMatchVoter, detectDetailedFace, estimateFaceBrightness, loadFaceModelsOnce, passesFaceQualityGate } from '@/components/timeclock/faceScanRuntime';
 
 export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
   // Support both old and new prop names
@@ -23,6 +23,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
   const matchFaceRef = useRef(matchFace);
   matchFaceRef.current = matchFace;
+  const matchVoterRef = useRef(null);
   
   const [errorMsg, setErrorMsg] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -42,7 +43,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
         });
         
         if (!mounted) {
@@ -132,11 +133,14 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     detectionBusyRef.current = true;
     try {
       const detection = await detectDetailedFace(videoRef.current);
-      if (detection && (detection.detection.score < 0.5 || detection.detection.box.width < 80)) {
-        setScanStatus("Move closer and face the light for a clearer capture.");
+      if (detection && !passesFaceQualityGate(detection)) {
         return null;
       }
-      return detection;
+      if (detection) {
+        const brightness = estimateFaceBrightness(videoRef.current, detection.detection.box);
+        return { detection, dim: Number.isFinite(brightness) && brightness < 45 };
+      }
+      return null;
     } catch (err) {
       console.error("Detection error:", err);
       return null;
@@ -151,22 +155,29 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setIsScanning(true);
     setRecognizedUser(null);
     setScanStatus("Looking for face...");
+    // Recognition requires the same identity to win 3 of the last 5 frames so
+    // single-frame jitter or a passer's face cannot trigger a punch.
+    const voter = createMatchVoter({ required: 3, window: 5 });
     
     scanIntervalRef.current = setInterval(async () => {
       if (!videoRef.current) return;
-      const detection = await detectFace();
-      if (detection) {
-        setScanStatus("Face detected, identifying...");
-        const user = findMatchingUser(detection.descriptor);
-        if (user) {
-          setRecognizedUser(user);
-          setScanStatus(`Recognized: ${user.full_name || user.email}`);
+      const frame = await detectFace();
+      if (frame) {
+        const { detection, dim } = frame;
+        const user = dim ? null : findMatchingUser(detection.descriptor);
+        const winner = voter(user);
+        if (winner) {
+          setRecognizedUser(winner);
+          setScanStatus(`Recognized: ${winner.full_name || winner.email}`);
           stopScanning();
-          onRecognized?.(user, Array.from(detection.descriptor));
+          onRecognized?.(winner, Array.from(detection.descriptor));
         } else {
-          setScanStatus("Face not recognized.");
+          setScanStatus(dim
+            ? "Lighting is dim. Move to better light or closer to the camera."
+            : "Face detected, verifying...");
         }
       } else {
+        voter(null);
         setScanStatus("No face detected. Look at camera.");
       }
     }, 300);
@@ -202,8 +213,14 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   const captureForEnrollmentAuto = async (currentDescriptors) => {
     setScanStatus("Capturing...");
-    const detection = await detectFace();
+    const frame = await detectFace();
+    const detection = frame?.detection;
     
+    if (frame?.dim) {
+      setScanStatus("Lighting is too dim to enroll well. Move to better light. Retrying...");
+      setTimeout(() => startCountdown(currentDescriptors), 500);
+      return;
+    }
     if (detection) {
       const newDescriptors = [...currentDescriptors, Array.from(detection.descriptor)];
       setCapturedDescriptors(newDescriptors);
