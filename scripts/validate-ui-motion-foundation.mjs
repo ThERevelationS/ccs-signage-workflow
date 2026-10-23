@@ -159,4 +159,13 @@ for (const [file, cols, gone] of [["src/pages/Inventory.jsx", 7, "Loading stock"
   });
 }
 
+test("Estimating board loading renders a card-list skeleton", () => {
+  const src = readFileSync("src/pages/Estimating.jsx", "utf8");
+  assert.match(src, /import \{ ListSkeleton \} from "@\/components\/ui\/list-skeleton"/);
+  assert.match(src, /<ListSkeleton rows=\{5\} \/>/);
+  assert.doesNotMatch(src, /animate-spin rounded-full h-12 w-12/, "board loader must not be a spinner");
+  const skel = readFileSync("src/components/ui/list-skeleton.jsx", "utf8");
+  assert.match(skel, /rows = 5/);
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
