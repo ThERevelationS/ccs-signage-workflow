@@ -316,7 +316,8 @@ await check('failed manual refresh releases synchronous lock and retains error u
 
 await check('60-second refresh skips pending save and in-flight board fetch', async () => {
   const h = fixture();
-  const timer = board.match(/const interval = setInterval\(\(\) => \{([\s\S]*?)\}, 60000\);/);
+  const timer = board.match(/usePolling\(\(\) => \{([\s\S]*?)\},\s*60000/) ||
+    board.match(/const interval = setInterval\(\(\) => \{([\s\S]*?)\}, 60000\);/);
   assert.ok(timer, 'Actual board interval exists');
   const tick = vm.runInNewContext('() => {' + timer[1] + '}', {
     boardSavesPendingRef: h.ctx.boardSavesPendingRef,
