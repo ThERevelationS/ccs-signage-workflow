@@ -145,7 +145,10 @@ export default function JurisdictionMonitoringSettings() {
               <div className="font-medium">Monitoring settings update blocked</div>
               <div className="mt-1 text-xs">{settingsSaveError}</div>
             </div>
-            <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => setSettingsSaveError("")}>Dismiss</Button>
+            <div className="flex shrink-0 gap-2">
+              <Button type="button" size="sm" variant="outline" className="border-red-300 bg-white text-red-800" onClick={async () => { setSettingsSaveError(""); await loadSettings(); }}>Reload latest</Button>
+              <Button type="button" size="sm" variant="outline" className="border-red-300 bg-white text-red-800" onClick={() => setSettingsSaveError("")}>Dismiss</Button>
+            </div>
           </div>
         )}
 
