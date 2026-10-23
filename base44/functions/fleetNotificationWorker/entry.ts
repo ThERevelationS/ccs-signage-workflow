@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const nowIso = () => new Date().toISOString();
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -99,7 +100,7 @@ async function claimReceipt(Receipt: any, key: string, queue: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 });
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
@@ -172,7 +173,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, processed: results.length, sent, results });
   } catch (error) {
     console.error('fleetNotificationWorker error:', error);
-    try { await logWorker(createClientFromRequest(req), 'error', 'Fleet notification worker failed.', { error: error?.message || String(error) }); } catch {}
+    try { await logWorker(withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 }), 'error', 'Fleet notification worker failed.', { error: error?.message || String(error) }); } catch {}
     return Response.json({ error: error?.message || 'Fleet notification worker failed.' }, { status: 500 });
   }
 });
