@@ -41,6 +41,18 @@ effect re-arms via its `[isUnlocked]` dependency. The reader never touches
 storage: `getStoredAdminSettingsCapability()` remains the only path that
 clears expired credentials.
 
+The same freshness rule now covers every capability-bearing Admin panel, not
+just automations: `EmailGroupsManager`, `PTOManagement` (including balance
+assignment) and `AdminCalendarSettings` (including its event dialog) each read
+`getStoredAdminSettingsCapability()` inside their write handlers and pass that
+fresh value into `emailGroupPersistence` / `ptoPersistence` /
+`calendarEventPersistence`. The `adminCapability` prop and the mount-time
+state that fed it are removed entirely, so a stale snapshot cannot be
+forwarded again. On an empty read the helpers throw before dispatch; the
+expiry timer re-locks the page for the common case and only an invalid stored
+timestamp or an externally cleared storage can still surface the message —
+which is then genuinely actionable through the unlock gate.
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -48,9 +60,12 @@ before the invoke call; component code checks the property defensively so
 fixture mocks remain compatible.
 
 Verification:
-- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 403/403
+- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 405/405
   passed under node --test (the Chromium script is excluded; it runs
-  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs
+  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs and
+  scripts/test-admin-panel-capability-freshness.mjs (3 tests: no snapshot
+  prop remains, every panel write handler resolves the stored capability at
+  dispatch time, helpers still reject empty credentials pre-dispatch).
   (7 tests: marker coverage, post-dispatch isolation, fresh-capability
   dispatch, save/op release semantics, expired-capability re-lock before
   lock acquisition or dispatch, mounted expiry-timer re-lock).
