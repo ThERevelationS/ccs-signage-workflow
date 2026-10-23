@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Camera, 
   Loader2, 
-  
   UserX, 
   RefreshCw,
   Scan,
