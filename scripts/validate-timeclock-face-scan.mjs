@@ -170,4 +170,13 @@ await test("scan CSS provides all tones and reduced-motion fallbacks", () => {
   assert.match(rmBlock, /\.scan-line, \.scan-oval, \.success-burst, \.check-draw \{ animation: none !important; \}/);
 });
 
+await test("QuickClockSection inline face scan uses the same reticle", () => {
+  const qc = readFileSync("src/components/timeclock/QuickClockSection.jsx", "utf8");
+  assert.match(qc, /scan-reticle scan-tone-scanning/);
+  assert.doesNotMatch(qc, /border-4 border-purple-500[^]*animate-pulse/, "old pulsing border must be gone from the kiosk scan too");
+  for (const cls of ["scan-bracket", "scan-oval", "scan-line"]) {
+    assert.ok(qc.includes(cls), "kiosk reticle must render " + cls);
+  }
+});
+
 console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`);
