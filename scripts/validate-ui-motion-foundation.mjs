@@ -201,4 +201,23 @@ for (const file of ["src/pages/MondayMorningMeeting.jsx", "src/pages/ResourcePla
   });
 }
 
+test("CurrentWorkCard glows while a labor segment is tracked", () => {
+  const src = readFileSync("src/components/timeclock/CurrentWorkCard.jsx", "utf8");
+  assert.match(src, /glow-card \$\{activeLabor \? "glow-info" : ""\}/);
+});
+
+test("TimeClock weekly entries list staggers in", () => {
+  const src = readFileSync("src/pages/TimeClock.jsx", "utf8");
+  assert.match(src, /import \{ Stagger, StaggerItem \} from "@\/components\/motion\/Stagger"/);
+  assert.match(src, /<Stagger className="space-y-3">/);
+  assert.match(src, /<StaggerItem key=\{entry\.id\} className="clay-card p-4">/);
+});
+
+test("FaceEnrollmentDialog success state animates the check", () => {
+  const src = readFileSync("src/components/timeclock/FaceEnrollmentDialog.jsx", "utf8");
+  assert.match(src, /success-burst/);
+  assert.match(src, /check-draw/);
+  assert.doesNotMatch(src, /CheckCircle2/, "static icon replaced by animated svg");
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
