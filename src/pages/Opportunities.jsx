@@ -586,6 +586,109 @@ function EstimatingQueue({ sessionToken, onOpenOpportunity }) {
   );
 }
 
+function FollowUps({ sessionToken, onOpenOpportunity }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [clearing, setClearing] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await invoke(sessionToken, { action: "list_follow_ups" });
+      setItems(data.follow_ups || []);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Follow-ups failed to load.");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openOpportunity = async (row) => {
+    try {
+      const data = await invoke(sessionToken, { action: "get_opportunity", opportunity_id: row.id });
+      onOpenOpportunity?.(data.opportunity);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Could not open the opportunity.");
+    }
+  };
+
+  const markDone = async (row) => {
+    if (clearing) return;
+    setClearing(row.id);
+    setError("");
+    try {
+      await invoke(sessionToken, {
+        action: "update_opportunity",
+        opportunity_id: row.id,
+        baseline: row,
+        fields: { next_action: "", next_action_due: "", next_action_assignee: "" },
+      });
+      await load();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Could not clear the follow-up.");
+    } finally {
+      setClearing("");
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+        Open opportunities with a next action on record — overdue first. "Done" clears the action.
+      </div>
+      {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        {loading ? (
+          <div className="flex items-center justify-center py-14 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading follow-ups…</div>
+        ) : items.length === 0 ? (
+          <div className="py-14 text-center text-slate-500">Nothing on the follow-up list.</div>
+        ) : (
+          <table className="w-full min-w-[880px] text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <tr>
+                <th className="px-3 py-2.5">Due</th><th className="px-3 py-2.5">Opportunity</th>
+                <th className="px-3 py-2.5">Customer</th><th className="px-3 py-2.5">Stage</th>
+                <th className="px-3 py-2.5">Next action</th><th className="px-3 py-2.5">Assignee</th>
+                <th className="px-3 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((r) => (
+                <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className={`px-3 py-2.5 text-xs font-semibold ${r.overdue ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`}>
+                    {r.next_action_due || "No date"}
+                    {r.overdue && <div className="text-[10px] uppercase tracking-wide">Overdue</div>}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <button type="button" onClick={() => openOpportunity(r)} className="font-semibold text-violet-700 hover:underline dark:text-violet-300">
+                      {r.title || "Untitled"}
+                    </button>
+                    {r.salesperson && <div className="text-xs text-slate-400">{r.salesperson}</div>}
+                  </td>
+                  <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.customer_display_name || "—"}</td>
+                  <td className="px-3 py-2.5"><StageBadge stage={r.stage} /></td>
+                  <td className="px-3 py-2.5 text-slate-700 dark:text-slate-200">{r.next_action || "—"}</td>
+                  <td className="px-3 py-2.5 text-xs text-slate-500">{r.next_action_assignee || "—"}</td>
+                  <td className="px-3 py-2.5 text-right">
+                    <button type="button" onClick={() => markDone(r)} disabled={clearing === r.id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40">
+                      {clearing === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}Done
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
   const navigate = useNavigate();
   const [detail, setDetail] = useState(null);
@@ -1031,7 +1134,7 @@ export default function Opportunities() {
       )}
 
       <div className="flex gap-1.5">
-        {[["pipeline", "Pipeline"], ["queue", "Estimating queue"]].map(([key, label]) => (
+        {[["pipeline", "Pipeline"], ["queue", "Estimating queue"], ["follow_ups", "Follow-ups"]].map(([key, label]) => (
           <button
             key={key}
             type="button"
@@ -1048,6 +1151,15 @@ export default function Opportunities() {
       {view === "queue" && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <EstimatingQueue
+            sessionToken={sessionToken}
+            onOpenOpportunity={(opp) => { if (opp?.id) setSelected(opp); }}
+          />
+        </section>
+      )}
+
+      {view === "follow_ups" && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <FollowUps
             sessionToken={sessionToken}
             onOpenOpportunity={(opp) => { if (opp?.id) setSelected(opp); }}
           />
