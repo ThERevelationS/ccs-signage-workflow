@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 function b64urlDecode(str) {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -17,7 +18,7 @@ Deno.serve(async (req) => {
       return Response.json({ valid: false, error: 'No token provided' }, { status: 400 });
     }
 
-    const base44 = withEmployeeAccessReads(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)));
     let user;
     try {
       user = await authenticateSignShopSession(base44, token);
