@@ -1,0 +1,1 @@
+// Canonical CCS task classification, shared by Sales UI and Smartsheet safety.
