@@ -132,4 +132,14 @@ test("TimeClock header mounts the ambient 3D layer behind content", () => {
   assert.match(header, /relative flex items-center justify-between/, "header content must sit above the canvas");
 });
 
+test("TimeClock mount loading renders a layout skeleton, not a bare spinner", () => {
+  const page = readFileSync("src/pages/TimeClock.jsx", "utf8");
+  const branch = page.slice(page.indexOf("if (isLoading && allUsers.length === 0)"), page.indexOf("const shellAlreadyGuards"));
+  assert.match(branch, /<Skeleton className="h-12 w-12 rounded-xl" \/>/);
+  assert.match(branch, /<Skeleton className="mb-4 h-64 w-full rounded-2xl" \/>/);
+  assert.match(branch, /ambient-mesh/, "the skeleton keeps the ambient backdrop");
+  assert.doesNotMatch(branch, /animate-spin/, "no bare spinner during first paint");
+  assert.match(page, /import \{ Skeleton \} from "@\/components\/ui\/skeleton"/);
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
