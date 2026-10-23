@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
 
 const nowIso = () => new Date().toISOString();
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -34,8 +35,7 @@ async function maybeRunReminderFallback(base44: any, cutover: any) {
   const local = easternNow();
   if (local.minutes < 7 * 60 + 10) return;
 
-  const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type: 'general' });
-  const settings = settingsRows?.[0];
+  const settings = await getCanonicalFleetSettings(base44);
   if (!settings) return;
   const configuredToday = (settings.item_order_reminder_days || []).includes(local.day) || (settings.open_work_order_reminder_days || []).includes(local.day);
   if (!configuredToday) return;
