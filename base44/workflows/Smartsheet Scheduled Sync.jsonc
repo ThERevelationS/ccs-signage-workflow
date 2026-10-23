@@ -1,4 +1,23 @@
 {
+  "name": "Smartsheet Scheduled Sales Sync",
+  "description": "Runs every 15 minutes server-side. Sales Pipeline follows its enabled pull/push directions and reports to its own smartsheetSalesSyncStatus coordinator. Order Form sync runs separately on its own schedule. Only runs when global sync is enabled and observation mode is off.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "3-59/15 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -25,24 +44,5 @@
         }
       }
     ]
-  },
-  "name": "Smartsheet Scheduled Sales Sync",
-  "trigger": {
-    "condition": null,
-    "config": {
-      "trigger_type": "scheduled",
-      "events": [],
-      "schedule_mode": "recurring",
-      "cron_expression": "*/15 * * * *",
-      "one_time_date": null,
-      "timezone": "America/New_York",
-      "interval_value": null,
-      "interval_unit": null,
-      "interval_anchor": null,
-      "ends_type": "never",
-      "ends_on_date": null,
-      "ends_after_count": null
-    }
-  },
-  "description": "Runs every 15 minutes server-side. Sales Pipeline follows its enabled pull/push directions and reports to its own smartsheetSalesSyncStatus coordinator. Order Form sync runs separately on its own schedule. Only runs when global sync is enabled and observation mode is off."
+  }
 }
