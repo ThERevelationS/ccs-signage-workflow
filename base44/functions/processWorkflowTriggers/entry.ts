@@ -6,9 +6,34 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 // PermitLineItem fields below; order events carry an Order; the rest carry a
 // Work Order the engine re-reads server-side before running any action.
 const PERMIT_EVENTS = new Set(['permit_submitted', 'permit_received']);
-const ORDER_EVENTS = new Set(['order_created', 'order_ordered', 'order_received']);
+const ORDER_EVENTS = new Set([
+  'order_created', 'order_ordered', 'order_received', 'order_cancelled',
+  'order_customer_name_changed', 'order_request_type_changed',
+  'order_description_changed', 'order_quantity_changed',
+  'order_requestor_changed', 'order_date_needed_changed',
+  'order_date_ordered_changed', 'order_vendor_changed',
+  'order_date_received_changed',
+]);
 const WORK_ORDER_EVENTS = new Set([
   'work_order_created', 'work_order_completed', 'work_order_deleted',
+  'work_order_updated', 'work_order_restored',
+  'work_order_client_changed', 'work_order_description_changed',
+  'work_order_title_changed', 'work_order_estimate_changed',
+  'work_order_contact_changed', 'work_order_install_location_changed',
+  'work_order_permit_number_set', 'work_order_permit_approved',
+  'work_order_permit_submitted', 'work_order_est_inv_set',
+  'work_order_install_date_set', 'work_order_project_health_changed',
+  'work_order_production_type_changed', 'work_order_file_uploaded',
+  'stage_estimating_entered', 'stage_sales_entered',
+  'stage_permitting_entered', 'stage_design_entered',
+  'stage_production_entered', 'stage_fabrication_entered',
+  'stage_installation_entered', 'stage_completed_entered',
+  'project_health_on_track', 'project_health_at_risk',
+  'project_health_delayed', 'project_health_blocked',
+  'due_date_set', 'due_date_cleared', 'start_date_set',
+  'site_survey_scheduled', 'google_drive_linked', 'file_attached',
+  'permit_approved', 'permit_receipt_confirmed',
+  'priority_changed',
   'rider_created',
   'stage_changed', 'stage_entered', 'stage_exited',
   'task_added', 'task_completed', 'task_deleted',
