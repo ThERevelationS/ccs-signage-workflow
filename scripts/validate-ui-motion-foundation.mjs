@@ -207,4 +207,30 @@ test("FaceEnrollmentDialog success state animates the check", () => {
   assert.doesNotMatch(src, /CheckCircle2/, "static icon replaced by animated svg");
 });
 
+for (const [file, shape] of [
+  ["src/pages/MyWorkflow.jsx", /ListSkeleton rows=\{8\}/],
+  ["src/pages/Financials.jsx", /ListSkeleton rows=\{5\}/],
+  ["src/pages/CompletedReports.jsx", /ListSkeleton rows=\{6\}/],
+  ["src/pages/FeatureReports.jsx", /ListSkeleton rows=\{6\}/],
+]) {
+  test(`${file} renders a list skeleton while loading`, () => {
+    const src = readFileSync(file, "utf8");
+    assert.match(src, /import \{ ListSkeleton \} from "@\/components\/ui\/list-skeleton"/);
+    assert.match(src, shape);
+  });
+}
+
+test("ReportingDashboard renders a dashboard skeleton while loading", () => {
+  const src = readFileSync("src/pages/ReportingDashboard.jsx", "utf8");
+  assert.match(src, /import \{ Skeleton \} from "@\/components\/ui\/skeleton"/);
+  assert.match(src, /<Skeleton className="h-72 w-full rounded-xl" \/>/);
+  assert.doesNotMatch(src, /min-h-96[\s\S]{0,120}animate-spin/, "full-page spinner must be gone");
+});
+
+test("ChangeOrders loaders use content-shaped skeletons", () => {
+  const src = readFileSync("src/pages/ChangeOrders.jsx", "utf8");
+  assert.match(src, /<ListSkeleton rows=\{3\} \/>/, "dialog detail skeleton");
+  assert.match(src, /<TableSkeleton columns=\{6\} \/>/, "list table skeleton");
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
