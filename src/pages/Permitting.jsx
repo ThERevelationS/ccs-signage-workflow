@@ -109,14 +109,24 @@ export default function Permitting() {
 
   useEffect(() => {
     let debounce = null;
+    let lastSubscriptionLoadAt = 0;
     let unsubscribe = null;
+    const fire = () => {
+      debounce = null;
+      const remaining = lastSubscriptionLoadAt + 15000 - Date.now();
+      if (remaining > 0) {
+        // Background jobs can stream line-item events; one quiet reload per
+        // gap is enough regardless of event volume.
+        debounce = setTimeout(fire, remaining);
+        return;
+      }
+      lastSubscriptionLoadAt = Date.now();
+      loadData(false);
+    };
     try {
       unsubscribe = PermitLineItem.subscribe(() => {
         if (debounce) clearTimeout(debounce);
-        debounce = setTimeout(() => {
-          debounce = null;
-          loadData(false);
-        }, 2000);
+        debounce = setTimeout(fire, 2000);
       });
     } catch {}
     return () => {
