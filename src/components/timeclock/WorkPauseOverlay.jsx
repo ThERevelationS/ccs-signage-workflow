@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
+import { usePolling } from "@/lib/usePolling";
 import { Button } from "@/components/ui/button";
 import { motion, useReducedMotion } from "framer-motion";
 import { duration, easing, spring } from "@/components/motion/motion";
@@ -28,6 +30,8 @@ export default function WorkPauseOverlay({
   onResumed = null,
 } = {}) {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
+  const timeClockStatus = useTimeClockStatus();
+  const sharedStatus = !userOverride && !sessionTokenOverride && !credentialOverride;
   const currentUser = userOverride || shellUser;
   const sessionToken = sessionTokenOverride || shellSessionToken;
   const credentialPayload = credentialOverride?.badgeCode
@@ -65,7 +69,8 @@ export default function WorkPauseOverlay({
   const dismissedAtRef = useRef(0);
   const lastActivityAtRef = useRef(Date.now());
 
-  const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
+  const refreshSharedStatus = timeClockStatus.refresh;
+  const loadStatus = useCallback(async ({ preservePausedOnError = true, force = false } = {}) => {
     if (resumeInFlightRef.current) {
       // A Resume acknowledgement is still outstanding; remember the
       // invalidation so status re-verifies once the acknowledgement settles.
@@ -85,11 +90,17 @@ export default function WorkPauseOverlay({
       return null;
     }
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
-        action: "status",
-        ...credentialPayload,
-      });
-      const data = response?.data || response;
+      let data;
+      if (sharedStatus) {
+        data = await refreshSharedStatus({ force });
+        if (data === null) return null;
+      } else {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "status",
+          ...credentialPayload,
+        });
+        data = response?.data || response;
+      }
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
       if (!isCurrent()) return null;
       if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
@@ -129,7 +140,15 @@ export default function WorkPauseOverlay({
       if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey]);
+  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey, sharedStatus, refreshSharedStatus]);
+
+  useEffect(() => {
+    if (sharedStatus) void loadStatus();
+  }, [timeClockStatus.version, loadStatus, sharedStatus]);
+
+  usePolling(() => loadStatus({ force: true }), 30000, {
+    enabled: !sharedStatus && !disabled && Boolean(currentUser?.email) && hasCredential,
+  });
 
   useEffect(() => {
     mountedRef.current = true;
@@ -145,33 +164,25 @@ export default function WorkPauseOverlay({
     setPauseStateScope("");
     setShowResumePrompt(false);
     setError("");
-    loadStatus({ preservePausedOnError: false });
-    const interval = setInterval(() => loadStatus(), 15000);
-    const onFocus = () => loadStatus();
-    const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
+    loadStatus({ preservePausedOnError: false, force: sharedStatus });
     // Change events can carry a payload that is stale relative to this
     // session's verified status. Treat them only as invalidation signals;
     // the signed status read is authoritative.
     const onPauseChanged = () => {
-      void loadStatus();
+      void loadStatus({ force: true });
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
-    window.addEventListener("focus", onFocus);
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus({ force: true }); };
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mountedRef.current = false;
       statusSequenceRef.current += 1;
       resumeSequenceRef.current += 1;
       resumeInFlightRef.current = false;
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
       window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [loadStatus]);
+  }, [loadStatus, sharedStatus]);
 
   useEffect(() => {
     if (!pauseState) return undefined;
@@ -289,7 +300,7 @@ export default function WorkPauseOverlay({
         setResumeBusy(false);
         const refreshNeeded = refreshAfterResume || pendingStatusRefreshRef.current;
         pendingStatusRefreshRef.current = false;
-        if (refreshNeeded) void loadStatus({ preservePausedOnError: true });
+        if (refreshNeeded) void loadStatus({ preservePausedOnError: true, force: true });
       }
     }
   };
