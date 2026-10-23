@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { callBouncieApi, getActiveConnection } from '../../shared/bouncie.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { canonicalCutoverRow } from '../../shared/fleetCutoverState.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
 
 const SOURCE_APP_ID = '68accb163a1b474cdb95ea70';
 const DEST_APP_ID = '68dfcc5e57bbbc35387da97c';
@@ -129,8 +130,7 @@ async function mirrorSettings(base44:any, settings:any, patch:any) {
 }
 
 async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
-  const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
-  const settings = settingsRows?.[0] || null;
+  const settings = await getCanonicalFleetSettings(base44);
   const state = await getCutoverState(base44, true);
   const audit = await latestVerification(base44);
   const counts = await currentCounts(base44);
@@ -251,8 +251,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(()=>({}));
     const action = String(body.action || 'status');
-    const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
-    const settings = settingsRows?.[0];
+    const settings = await getCanonicalFleetSettings(base44);
     if (!settings) return Response.json({ error:'FleetSettings record missing.' }, { status:409 });
     const state = await getCutoverState(base44, true);
 
