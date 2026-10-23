@@ -331,7 +331,6 @@ Deno.serve(async (req) => {
       }
       return Response.json({ success: true, action, purchase_order: updated, stock_received: stockReceived, stock_warnings: stockWarnings });
     }
-    }
 
     if (action === "mark_invoiced") {
       const id = clean(body?.purchase_order_id);
