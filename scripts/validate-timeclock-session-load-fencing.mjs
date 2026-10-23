@@ -129,7 +129,7 @@ async function sessionSwitchScenario() {
       storeAdminSettingsAuthorization: () => {},
     },
     '@/components/estimator/loadAllEntityRows': {
-      loadAllEntityRows: (args) => { loaderCalls.push(args); const d = deferred(); loaderQueue.push(d); return d.promise; },
+      loadAllEntityRows: (args) => { loaderCalls.push(args); const d = deferred(); loaderQueue.push({ d, args }); return d.promise; },
     },
     '@/components/timeclock/timeClockSessionSecurity': {
       TIME_CLOCK_IDLE_LOGOUT_MS: 15 * 60 * 1000,
@@ -145,7 +145,7 @@ async function sessionSwitchScenario() {
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
   // Release the mount-time user-list load so the gate UI renders.
-  await act(async () => { loaderQueue.forEach((d) => d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
+  await act(async () => { loaderQueue.forEach((q) => q.d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
 
   // Log in as employee A.
   const loginBtn = buttonByText(renderer, 'Login for Full Access');
@@ -165,8 +165,10 @@ async function sessionSwitchScenario() {
   await act(async () => { buttonByText(renderer, 'Logout').props.onClick(); await flush(); });
 
   // Resolve A's pending reads — nothing may apply after the session closed.
+  const resolveEntries = (q, entry) =>
+    q.d.resolve(String(q.args?.label || '').startsWith('Time entries') ? [entry] : []);
   await act(async () => {
-    for (const d of loaderQueue) d.resolve([ENTRY_A]);
+    for (const q of loaderQueue) resolveEntries(q, ENTRY_A);
     for (const d of correctionQueue) d.resolve({ success: true, requests: [{ id: 'cr-a', status: 'pending', employee_reason: 'A-STALE-CORRECTION' }] });
     await flush();
   });
@@ -182,7 +184,7 @@ async function sessionSwitchScenario() {
   const bCalls = loaderCalls.slice(loaderBefore).filter((c) => String(c.query?.user_email || '') === 'brian@example.com');
   assert.ok(bCalls.length >= 2, 'B session should issue fresh employee-scoped reads');
   await act(async () => {
-    for (const d of loaderQueue.slice(queueBefore)) d.resolve([ENTRY_B]);
+    for (const q of loaderQueue.slice(queueBefore)) resolveEntries(q, ENTRY_B);
     for (const d of correctionQueue.slice(corrBefore)) d.resolve({ success: true, requests: [{ id: 'cr-b', status: 'pending', employee_reason: 'B-CORRECTION' }] });
     await flush();
   });
@@ -209,7 +211,7 @@ async function overlappingLoadsScenario() {
       storeAdminSettingsAuthorization: () => {},
     },
     '@/components/estimator/loadAllEntityRows': {
-      loadAllEntityRows: () => { const d = deferred(); loaderQueue.push(d); return d.promise; },
+      loadAllEntityRows: (args) => { const d = deferred(); loaderQueue.push({ d, args }); return d.promise; },
     },
     '@/components/timeclock/timeClockSessionSecurity': {
       TIME_CLOCK_IDLE_LOGOUT_MS: 15 * 60 * 1000,
@@ -221,7 +223,7 @@ async function overlappingLoadsScenario() {
   });
   let renderer;
   await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
-  await act(async () => { loaderQueue.forEach((d) => d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
+  await act(async () => { loaderQueue.forEach((q) => q.d.resolve([USER_A, USER_B])); loaderQueue.length = 0; await flush(); });
   await act(async () => { buttonByText(renderer, 'Login for Full Access').props.onClick(); await flush(); });
   await act(async () => { buttonByText(renderer, 'do-login').props.onClick(); await flush(); });
   // Trigger a second refresh ("Reload latest") while the first is in flight.
@@ -230,12 +232,14 @@ async function overlappingLoadsScenario() {
   await act(async () => { reload.props.onClick(); await flush(); });
   // Resolve the stale first batch (first two calls) with poisoned data after
   // the newer batch (last two calls) already applied.
+  const resolveEntries = (q, entry) =>
+    q.d.resolve(String(q.args?.label || '').startsWith('Time entries') ? [entry] : []);
   await act(async () => {
-    for (const d of loaderQueue.slice(2)) d.resolve([ENTRY_B]);
+    for (const q of loaderQueue.slice(2)) resolveEntries(q, ENTRY_B);
     await flush();
   });
   await act(async () => {
-    for (const d of loaderQueue.slice(0, 2)) d.resolve([ENTRY_A]);
+    for (const q of loaderQueue.slice(0, 2)) resolveEntries(q, ENTRY_A);
     await flush();
   });
   assert.ok(allText(renderer).includes('B-FRESH-NOTE'), 'newer read must win');
