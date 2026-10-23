@@ -59,7 +59,7 @@ const loadComponent = (path, extraMocks, contextExtra = {}) => {
             if (name === 'jsx' || name === 'jsxs' || name === 'jsxDEV') {
               return (type, props, ...rest) => {
                 if (type === undefined || (typeof type === 'object' && type !== null)) {
-                  (globalThis.__badJsx = globalThis.__badJsx || []).push({ keys: Object.keys(props || {}) });
+                  throw new Error(`JSX type invalid: ${JSON.stringify(props, (k, v) => typeof v === 'function' ? 'fn' : v)?.slice(0, 400)}`);
                 }
                 return t[name](type, props, ...rest);
               };
