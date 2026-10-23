@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import SyncConflictCard from '@/components/admin/SyncConflictCard';
+import { usePolling } from '@/lib/usePolling';
 export default function SyncConflictReview({sessionToken}) {
   const [items,setItems]=useState([]),[count,setCount]=useState(0),[page,setPage]=useState({}),[status,setStatus]=useState('open'),[dataset,setDataset]=useState('all'),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const flight=useRef(false);
@@ -10,7 +11,8 @@ export default function SyncConflictReview({sessionToken}) {
     setLoading(true);
     try{const response=await base44.functions.invoke('smartsheetSyncAction',{action:'conflict_list',session_token:sessionToken,status,dataset,cursor});const data=response.data;if(!data?.success)throw new Error(data?.error||'Reviews could not be loaded.');setItems(old=>cursor?[...old,...data.page.items]:data.page.items);setPage(data.page);setCount(data.count);}catch(error){setMessage(error?.response?.data?.error||error.message);}finally{setLoading(false);}
   },[sessionToken,status,dataset]);
-  useEffect(()=>{load();const timer=setInterval(()=>{if(!flight.current)load();},30000);return()=>clearInterval(timer);},[load]);
+  usePolling(()=>{if(!flight.current)return load();},60000,{runOnMount:false});
+  useEffect(()=>{load();},[load]);
   const resolve=async(item,decision)=>{
     if(flight.current)return;
     if(!window.confirm(`Keep the ${decision==='app'?'app':'Smartsheet'} value for ${item.field_label} on ${item.record_label}? Both sides will be rechecked before applying it.`))return;
