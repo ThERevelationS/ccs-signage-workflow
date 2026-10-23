@@ -1468,23 +1468,85 @@ async function saveSyncConfigIfUnchanged(base44: any, body: any) {
   return safeConfigRecord(saved);
 }
 
-async function loadSingleSyncStatusRecord(base44: any) {
-  const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+// Each dataset owns one coordinator record so a Sales review/failure never
+// marks Order sync unhealthy and vice versa. The legacy shared record stays a
+// read mirror for older readers; it is never authoritative for claims.
+const LEGACY_SYNC_STATUS_KEY = 'smartsheetSyncStatus';
+const SYNC_STATUS_KEYS: Record<string, string> = {
+  orders: 'smartsheetOrderSyncStatus',
+  sales: 'smartsheetSalesSyncStatus',
+};
+function syncStatusKeyForDataset(dataset: any) {
+  return SYNC_STATUS_KEYS[String(dataset || '')] || LEGACY_SYNC_STATUS_KEY;
+}
+
+async function loadSingleSyncStatusRecord(base44: any, key: string = LEGACY_SYNC_STATUS_KEY) {
+  const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });
   const matches = Array.isArray(existing) ? existing.filter((record: any) => record?.id) : (existing?.id ? [existing] : []);
   if (matches.length !== 1) {
-    throw Object.assign(new Error(`Smartsheet sync status has ${matches.length} records. Exactly one coordinator record is required before starting a sync.`), { status: 409 });
+    throw Object.assign(new Error(`Smartsheet sync status "${key}" has ${matches.length} records. Exactly one coordinator record is required before starting a sync.`), { status: 409 });
   }
   return matches[0];
 }
 
-async function claimSyncRun(base44: any, status: any) {
-  const record = await loadSingleSyncStatusRecord(base44);
+// Dataset coordinators are created lazily on first claim; a duplicate row
+// still fails closed rather than becoming a second authoritative owner.
+async function ensureSyncStatusRecord(base44: any, key: string) {
+  const load = async () => {
+    const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });
+    return Array.isArray(existing) ? existing.filter((record: any) => record?.id) : (existing?.id ? [existing] : []);
+  };
+  let matches = await load();
+  if (matches.length > 1) {
+    throw Object.assign(new Error(`Smartsheet sync status "${key}" has ${matches.length} records. Exactly one coordinator record is required.`), { status: 409 });
+  }
+  if (matches.length === 1) return matches[0];
+  await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: key, setting_value: {} });
+  matches = await load();
+  if (matches.length !== 1) {
+    throw Object.assign(new Error(`Smartsheet sync status "${key}" could not be initialized to exactly one record.`), { status: 409 });
+  }
+  return matches[0];
+}
+
+// A best-effort mirror keeps the legacy shared record truthful for readers
+// that predate per-dataset coordinators. The dataset record is authoritative;
+// a mirror miss never blocks or falsifies a verified run.
+async function mirrorSyncStatusToLegacy(base44: any, status: any, dataset: string) {
+  try {
+    const record = await loadSingleSyncStatusRecord(base44, LEGACY_SYNC_STATUS_KEY);
+    const value = { ...status, mirrored_dataset: dataset, updated_at: new Date().toISOString() };
+    await base44.asServiceRole.entities.GlobalSettings.updateMany(
+      { id: record.id, setting_key: LEGACY_SYNC_STATUS_KEY, updated_date: record.updated_date },
+      { $set: { setting_value: value } },
+    );
+  } catch {}
+}
+
+async function claimSyncRun(base44: any, status: any, dataset?: string) {
+  const key = syncStatusKeyForDataset(dataset);
+  const record = key === LEGACY_SYNC_STATUS_KEY
+    ? await loadSingleSyncStatusRecord(base44, key)
+    : await ensureSyncStatusRecord(base44, key);
   const current = record?.setting_value || {};
-  const currentIsOrderRun = current?.status === 'running' && (
-    current?.progress_dataset === 'orders' ||
-    /^Order Form\\b/.test(String(current?.current_step_label || '').trim()) ||
-    current?.action === 'push_saved_orders'
-  );
+
+  // Cross-dataset serialization: the other pipeline shares the same Smartsheet
+  // API and Base44 read budget, so an actively-running run on the other
+  // dataset still blocks a claim here. A stale/abandoned record does NOT
+  // block — its own dataset's recovery path owns that cleanup.
+  const otherKey = dataset === 'orders' ? SYNC_STATUS_KEYS.sales
+    : dataset === 'sales' ? SYNC_STATUS_KEYS.orders : null;
+  if (otherKey) {
+    const other = await ensureSyncStatusRecord(base44, otherKey);
+    const otherValue = other?.setting_value || {};
+    const otherActivity = Date.parse(String(otherValue?.updated_at || otherValue?.started_at || ''));
+    const otherAbandoned = Number.isFinite(otherActivity) && Date.now() - otherActivity > 2 * 60_000;
+    if (otherValue?.status === 'running' && !otherAbandoned) {
+      throw Object.assign(new Error('Another Smartsheet sync is already running.'), { status: 409 });
+    }
+  }
+
+  const currentIsOrderRun = dataset === 'orders' && current?.status === 'running';
   // Order Save & Sync is never auto-reclaimed merely because a transport wait
   // is quiet. A 429 Retry-After/backoff is still active work, and another user
   // must not start competing writes. After the Order stale threshold, require
@@ -1500,42 +1562,44 @@ async function claimSyncRun(base44: any, status: any) {
   // A manual link recovery must never take over another running sync just
   // because it stopped reporting progress for two minutes. That older sync
   // may still be writing the same permanent Smartsheet row identity.
-  if (status?.action === 'recover_verified_sales_create' && current?.status === 'running') {
-    throw Object.assign(new Error('Another Smartsheet sync still owns the coordinator. Review or explicitly recover its stale run before attempting a Sales permanent-row link.'), {status:409});
+  if (dataset === 'sales' && status?.action === 'recover_verified_sales_create' && current?.status === 'running') {
+    throw Object.assign(new Error('Another Smartsheet sync still owns the Sales coordinator. Review or explicitly recover its stale run before attempting a Sales permanent-row link.'), {status:409});
   }
 
-  // Manually verified Sales permanent-row recovery shares this SAME
-  // coordinator with Sales/Order pull, push and Save & Sync. Never
-  // automatically supersede an old recovery after the 2-minute generic
-  // timeout: it may have committed a WorkOrder link before the reply failed.
-  // Explicit stale Sales run recovery is required before another claim.
-  if (current?.status === 'running' && current?.action === 'recover_verified_sales_create') {
-    throw Object.assign(new Error('A Sales permanent-row recovery still owns the Smartsheet coordinator. If stalled, review the original WorkOrder and explicitly recover the stale Sales run before any retry.'), {status:409});
+  // Manually verified Sales permanent-row recovery shares the Sales
+  // coordinator with Sales pull, push and Save & Sync. Never automatically
+  // supersede an old recovery after the 2-minute generic timeout: it may have
+  // committed a WorkOrder link before the reply failed. Explicit stale Sales
+  // run recovery is required before another claim.
+  if (dataset === 'sales' && current?.status === 'running' && current?.action === 'recover_verified_sales_create') {
+    throw Object.assign(new Error('A Sales permanent-row recovery still owns the Sales coordinator. If stalled, review the original WorkOrder and explicitly recover the stale Sales run before any retry.'), {status:409});
   }
 
   // A new Order pull must not erase prior permanent-ID evidence after an
   // interrupted or review-required pull. This is read-only preflight: no
   // coordinator reset, Base44 Order write, or Smartsheet retry occurs.
-  let priorOrderPull = classifyPriorUncertainOrderPull(current, {
-    orderPullRequested: status?.order_pull_requested === true,
-  });
-  if (priorOrderPull.blocked) {
-    // Consult independent evidence storage before refusing: a verified run
-    // may still carry needs_review status plus batch evidence on the shared
-    // coordinator record.
-    const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
-    priorOrderPull = classifyPriorUncertainOrderPull(current, {
+  if (dataset === 'orders') {
+    let priorOrderPull = classifyPriorUncertainOrderPull(current, {
       orderPullRequested: status?.order_pull_requested === true,
-      verifiedEvidence: evidenceRecord?.setting_value,
     });
-  }
-  if (priorOrderPull.blocked) {
-    throw Object.assign(new Error(priorOrderPull.reason), { status: 409 });
-  }
-  if (status?.order_pull_requested === true) {
-    // The shared coordinator can be replaced by a later Sales-only run. Keep
-    // Order uncertainty authoritative in a separate verified settings record.
-    await assertNoUnresolvedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings);
+    if (priorOrderPull.blocked) {
+      // Consult independent evidence storage before refusing: a verified run
+      // may still carry needs_review status plus batch evidence on the Order
+      // coordinator record.
+      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);
+      priorOrderPull = classifyPriorUncertainOrderPull(current, {
+        orderPullRequested: status?.order_pull_requested === true,
+        verifiedEvidence: evidenceRecord?.setting_value,
+      });
+    }
+    if (priorOrderPull.blocked) {
+      throw Object.assign(new Error(priorOrderPull.reason), { status: 409 });
+    }
+    if (status?.order_pull_requested === true) {
+      // The Order coordinator can hold review state long after a run. Keep
+      // Order uncertainty authoritative in a separate verified settings record.
+      await assertNoUnresolvedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings);
+    }
   }
 
   // Preserve the existing coordinator behavior for non-Order consumers.
@@ -1549,7 +1613,7 @@ async function claimSyncRun(base44: any, status: any) {
   }
   const value = { ...status, updated_at: new Date().toISOString() };
   const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
-    { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
+    { id: record.id, setting_key: key, updated_date: record.updated_date },
     { $set: { setting_value: value } },
   );
   if (!result || result.updated !== 1) {
@@ -1560,6 +1624,9 @@ async function claimSyncRun(base44: any, status: any) {
       verified?.setting_value?.started_at !== status?.started_at ||
       verified?.setting_value?.action !== status?.action) {
     throw Object.assign(new Error('Smartsheet sync coordinator claim could not be verified. No sync work was started.'), { status: 409 });
+  }
+  if (dataset === 'orders' || dataset === 'sales') {
+    await mirrorSyncStatusToLegacy(base44, value, dataset);
   }
   return verified;
 }
@@ -1604,32 +1671,38 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
   try { await base44.integrations.Core.SendEmail({ to: recipient, subject: `Smartsheet Sync Alert \u2014 ${alertType}`, body }); } catch {}
 }
 
-async function syncRunOwned(base44: any, startedAt: string) {
-  const record = await loadSingleSyncStatusRecord(base44);
+async function syncRunOwned(base44: any, startedAt: string, dataset?: string) {
+  const record = await loadSingleSyncStatusRecord(base44, syncStatusKeyForDataset(dataset));
   return record?.setting_value?.status === 'running' &&
     cleanText(record?.setting_value?.started_at, 80) === cleanText(startedAt, 80);
 }
 
-async function assertSyncRunOwnership(base44: any, startedAt: string) {
-  if (!(await syncRunOwned(base44, startedAt))) {
+async function assertSyncRunOwnership(base44: any, startedAt: string, dataset?: string) {
+  if (!(await syncRunOwned(base44, startedAt, dataset))) {
     throw Object.assign(new Error('This Smartsheet sync no longer owns the active run coordinator. No further sync writes are allowed.'), { status: 409 });
   }
 }
 
-// Status updates are run-identity scoped. A timed-out/recovered older process
-// cannot overwrite the status of a newer run that claimed the coordinator.
-async function saveSyncStatusForRun(base44: any, status: any, startedAt: string) {
+// Status updates are run-identity and dataset scoped. A timed-out/recovered
+// older process cannot overwrite the status of a newer run that claimed the
+// coordinator, and one dataset's run cannot write the other's status.
+async function saveSyncStatusForRun(base44: any, status: any, startedAt: string, dataset?: string) {
   traceSyncStatus(status);
   await checkpointSyncTrace();
+  const key = syncStatusKeyForDataset(dataset);
   try {
-    const record = await loadSingleSyncStatusRecord(base44);
+    const record = await loadSingleSyncStatusRecord(base44, key);
     if (record?.setting_value?.status !== 'running' ||
         cleanText(record?.setting_value?.started_at, 80) !== cleanText(startedAt, 80)) return false;
     const value = { ...status, started_at: startedAt, updated_at: new Date().toISOString() };
     const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
-      { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
+      { id: record.id, setting_key: key, updated_date: record.updated_date },
       { $set: { setting_value: value } },
     );
+    if (result?.updated === 1 &&
+        (dataset === 'orders' || dataset === 'sales') && status?.status !== 'running') {
+      await mirrorSyncStatusToLegacy(base44, value, dataset);
+    }
     return Boolean(result && result.updated === 1);
   } catch {
     return false;
@@ -1689,12 +1762,12 @@ async function pushDataset(
     const now = Date.now();
     if (progress.phase === lastSalesProgressPhase && now-lastSalesProgressAt < 10_000) return;
     lastSalesProgressAt = now; lastSalesProgressPhase = progress.phase;
-    const active = await loadSingleSyncStatusRecord(base44);
+    const active = await loadSingleSyncStatusRecord(base44, SYNC_STATUS_KEYS.sales);
     await saveSyncStatusForRun(base44, {...active.setting_value,
       progress_dataset:'sales', progress_direction:'push', progress_phase:progress.phase || 'checking',
       progress_current:Number(progress.current)||0, progress_total:Number(progress.total)||0,
       progress_item_label:cleanText(progress.item_label,220), progress_detail:cleanText(progress.detail,260),
-      progress_updated_at:new Date().toISOString()}, options.runStartedAt);
+      progress_updated_at:new Date().toISOString()}, options.runStartedAt, 'sales');
   };
   await reportSalesProgress({phase:'preflight',item_label:'Loading saved Sales changes'});
 
@@ -3341,15 +3414,17 @@ async function pushDataset(
 async function smartsheetSyncHandler(req: Request): Promise<Response> {
   let base44Instance: any = null;
   let claimedRunStartedAt = '';
+  let claimedDataset: string | null = null;
   try {
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
-    const backgroundSync = ['run_sync', 'push_dataset', 'pull_dataset'].includes(action);
+    const backgroundSync = ['run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset'].includes(action);
     const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0 });
     base44Instance = base44;
-    const claimInvocationRun = async (status: any) => {
-      const claimed = await claimSyncRun(base44, status);
+    const claimInvocationRun = async (status: any, dataset?: string) => {
+      const claimed = await claimSyncRun(base44, status, dataset);
       claimedRunStartedAt = cleanText(status?.started_at, 80);
+      claimedDataset = cleanText(dataset, 20) || null;
       return claimed;
     };
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
@@ -3359,7 +3434,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     // the exact scheduled run_sync action with its workflow-only capability
     // may run without an authenticated admin session. Dataset actions never do.
     const hasSessionToken = Boolean(String(body?.session_token || '').trim());
-    const scheduledRun = !hasSessionToken && action === 'run_sync' &&
+    const scheduledRun = !hasSessionToken && ['run_sync', 'run_sales_sync', 'run_order_sync'].includes(action) &&
       await hasWorkflowInvocationCapability(body, 'smartsheetSyncAction');
     let adminActor: any = null;
     if (hasSessionToken) {
@@ -3379,19 +3454,26 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
 
     await beginSyncTraceStorage(base44);
     if (['conflict_list','conflict_count','resolve_conflict'].includes(action)) {
-      return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:state=>claimInvocationRun(state),finish:(state,start)=>saveSyncStatusForRun(base44,state,start),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:start=>assertSyncRunOwnership(base44,start)}));
+      return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:(state,dataset)=>claimInvocationRun(state,dataset),finish:(state,start,dataset)=>saveSyncStatusForRun(base44,state,start,dataset),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:(start,dataset)=>assertSyncRunOwnership(base44,start,dataset)}));
     }
     if (action === 'status') {
+      const [orderStatusRecord, salesStatusRecord] = await Promise.all([
+        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.orders).catch(() => null),
+        ensureSyncStatusRecord(base44, SYNC_STATUS_KEYS.sales).catch(() => null),
+      ]);
       return Response.json({
         success: true,
         // Read-only deployment fingerprint. An absent marker means the active
         // backend has not yet picked up the Order run-scoped cleanup contract.
         order_sync_backend_contract: 'order-run-scoped-cleanup-v1',
+        dataset_coordinators: 'per-dataset-v1',
+        status_orders: orderStatusRecord?.setting_value || null,
+        status_sales: salesStatusRecord?.setting_value || null,
         configured,
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'order_request_types_save', 'order_requestor_contact_sync', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_link_integrity', 'audit_order_import_sync_evidence', 'audit_order_dates', 'audit_order_backup_readiness', 'review_unresolved_order_pull_row', 'review_unresolved_order_pull_batch', 'resolve_unresolved_order_pull_evidence', 'relink_order_smartsheet_row', 'delete_order_record', 'preview_order_customer_decision', 'commit_order_customer_decision', 'audit_sales_create_attempts', 'audit_sales_permanent_ownership', 'review_sales_create_candidate', 'recover_verified_sales_create', 'audit_sales_recovery_history', 'acknowledge_sales_recovery_history', 'run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run', 'recover_stale_sales_run'],
         write_actions_available: true,
       });
     }
@@ -3703,12 +3785,12 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           progress_dataset:'sales',progress_direction:'recovery',
           current_step_label:'Sales Pipeline permanent-row recovery',
           total_steps:1,completed_steps:0,results:[],
-        });
+        },'sales');
         const result = await recoverVerifiedSalesCreateLink({
           entity,historyEntity:base44.asServiceRole.entities.CellHistory,
           workorderId,sheetId,rowId,expectedVersion,expectedAttemptId,
           bindings,readCompetingClaims,readRemoteSnapshot,actor:adminActor,
-          assertRunOwnership:()=>assertSyncRunOwnership(base44,recoveryRunStartedAt),
+          assertRunOwnership:()=>assertSyncRunOwnership(base44,recoveryRunStartedAt,'sales'),
         });
         const completed = await saveSyncStatusForRun(base44,{
           status:'completed',needs_review:false,action,
@@ -3716,7 +3798,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           completed_at:new Date().toISOString(),
           results:[{dataset:'sales',direction:'recovery',workorder_id:workorderId,
             row_id:rowId,recovered:true,history_verified:true}],
-        },recoveryRunStartedAt);
+        },recoveryRunStartedAt,'sales');
         if (!completed) throw new Error('Sales row was recovered, but the run coordinator completion could not be verified. Review its status and WorkOrder before any further action.');
         return Response.json({success:true,dataset:'sales',...result});
       } catch (error:any) {
@@ -3728,7 +3810,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
             results:[{dataset:'sales',direction:'recovery',workorder_id:workorderId,
               row_id:rowId,skipped:true,outcome_unverified:true,errors:1,
               reason:'Permanent-row recovery requires inspection of the original WorkOrder and coordinator before retry.'}],
-          },recoveryRunStartedAt);
+          },recoveryRunStartedAt,'sales');
         }
         return Response.json({success:false,needs_review:true,
           error:error?.message || 'The Sales recovery could not be verified. Review before trying again.'},{status:409});
@@ -3778,7 +3860,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     }
 
     if (action === 'recover_stale_sales_run') {
-      const record=await loadSingleSyncStatusRecord(base44), current=record.setting_value;
+      const record=await loadSingleSyncStatusRecord(base44,SYNC_STATUS_KEYS.sales), current=record.setting_value;
       const expected=cleanText(body.expected_started_at,80);
       if(!expected || expected!==current?.started_at || !classifyRecoverableStaleSalesSync(current).recoverable) return Response.json({success:false,error:'Sales is still reporting recent progress or the run changed. Reload before retrying.'},{status:409});
       const at=new Date().toISOString(), next={...recoveredStaleSalesSyncValue(current,at),updated_at:at};
@@ -4165,11 +4247,11 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     }
 
     if (action === 'recover_stale_order_run') {
-      const records = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+      const records = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SYNC_STATUS_KEYS.orders });
       const matches = Array.isArray(records) ? records.filter((record: any) => record?.id) : (records?.id ? [records] : []);
       if (matches.length !== 1) {
         return Response.json({ success: false,
-          error: `Smartsheet sync status has ${matches.length} records. Recovery requires exactly one status record.` }, { status: 409 });
+          error: `Order Smartsheet sync status has ${matches.length} records. Recovery requires exactly one Order status record.` }, { status: 409 });
       }
       const record = matches[0];
       const current = record?.setting_value || {};
@@ -4193,7 +4275,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         stale_recovered_by: cleanText(adminActor?.email, 320),
       };
       const updateResult = await base44.asServiceRole.entities.GlobalSettings.updateMany(
-        { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
+        { id: record.id, setting_key: SYNC_STATUS_KEYS.orders, updated_date: record.updated_date },
         { $set: { setting_value: nextValue } },
       );
       if (!updateResult || updateResult.updated !== 1) {
@@ -4497,7 +4579,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
         requested_order_ids: orderIds, requested_by: requestedBy, results: [],
-      });
+      }, 'orders');
 
       const pushResult = await pushDataset(base44, token, 'orders', profile, config, {
         recordIds: orderIds,
@@ -4517,8 +4599,8 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           progress_record_id: cleanText(progress?.record_id, 100),
           progress_smartsheet_row_id: cleanText(progress?.smartsheet_row_id, 40),
           progress_updated_at: new Date().toISOString(),
-        }, startedAt),
-        assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt),
+        }, startedAt, 'orders'),
+        assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt, 'orders'),
         // Explicit Save & Sync may create a row for a brand-new Order without
         // enabling automatic/background Order creation for any other path.
         allowExplicitOrderCreate: true,
@@ -4530,7 +4612,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         completed_at: new Date().toISOString(), action, total_steps: 1, completed_steps: 1,
         current_step_label: '', requested_order_ids: orderIds,
         requested_by: requestedBy, results: [result],
-      }, startedAt);
+      }, startedAt, 'orders');
       return Response.json({ success: true, configured: true, write_actions_available: true,
         sync_complete: !needsReview, needs_review: needsReview, results: [result] });
     }
@@ -4564,13 +4646,13 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Sales Pipeline → Smartsheet',
         requested_work_order_ids: workOrderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
-      });
+      }, 'sales');
 
       const pushResult = await pushDataset(base44, token, 'sales', profile, config, {
         recordIds: workOrderIds,
         respectSalesCreateSetting: true,
         runStartedAt: startedAt,
-        assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt),
+        assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt, 'sales'),
       });
       const result = { ...pushResult, dataset: 'sales', direction: 'push' };
       const needsReview = salesRunRequiresReview([result]);
@@ -4579,7 +4661,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         completed_at: new Date().toISOString(), total_steps: 1, completed_steps: 1,
         current_step_label: '', requested_work_order_ids: workOrderIds,
         requested_by: cleanText(adminActor?.email, 320), results: [result],
-      }, startedAt);
+      }, startedAt, 'sales');
       return Response.json({
         success: true, configured: true, write_actions_available: true,
         sync_complete: !needsReview, needs_review: needsReview, results: [result],
@@ -5130,7 +5212,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       return await smartsheetDateDiagnostic({ base44, config, token, smartsheetGet, normalizeSheetRows, cleanText });
     }
 
-    if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset') {
+    if (['run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset'].includes(action)) {
       const { config } = await loadSyncConfig(base44);
       if (!config) {
         return Response.json({ success: false, error: 'No Smartsheet sync configuration saved yet. Configure and save settings first.' }, { status: 400 });
@@ -5142,40 +5224,27 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({ success: false, error: 'Observation mode is ON. Turn it off in settings to allow sync execution.' }, { status: 400 });
       }
 
+      const isRunAction = ['run_sync', 'run_sales_sync', 'run_order_sync'].includes(action);
       const isSingleDataset = action === 'push_dataset' || action === 'pull_dataset';
       const datasetsToRun: ('sales' | 'orders')[] =
-        isSingleDataset && body?.dataset === 'orders'
-          ? ['orders']
-          : isSingleDataset
+        isSingleDataset
+          ? [body?.dataset === 'orders' ? 'orders' : 'sales']
+          : action === 'run_sales_sync'
             ? ['sales']
-            : ['sales', 'orders'];
+            : action === 'run_order_sync'
+              ? ['orders']
+              : body?.dataset === 'orders'
+                ? ['orders']
+                : body?.dataset === 'sales'
+                  ? ['sales']
+                  : ['sales', 'orders'];
 
-      // Build the list of steps so the UI can show a real progress bar.
-      const steps: { dataset: string; direction: string; label: string }[] = [];
-      for (const dataset of datasetsToRun) {
-        const profile = config?.[dataset] || {};
-        if (!profile.mirror_enabled) continue;
-        const wantPull = action === 'pull_dataset' || (action === 'run_sync' && profile.pull_enabled);
-        const wantPush = action === 'push_dataset' || (action === 'run_sync' && dataset !== 'orders' && profile.push_enabled);
-        if (wantPull) steps.push({ dataset, direction: 'pull', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ← Smartsheet` });
-        if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} → Smartsheet` });
-      }
-
-      const runStartedAt = new Date().toISOString();
-      await claimInvocationRun({
-        status: 'running',
-        started_at: runStartedAt,
-        action,
-        total_steps: steps.length,
-        completed_steps: 0,
-        current_step_label: steps[0]?.label || '',
-        order_pull_requested: steps.some(step => step.dataset === 'orders' && step.direction === 'pull'),
-        results: [],
-      });
-
+      // Each dataset claims, runs and finishes its own coordinator record. A
+      // Sales review or failure can never leave the Order status unhealthy
+      // (and vice versa), and a crashed combined run only leaves the in-flight
+      // dataset marked running.
       const results: any[] = [];
-      let lastOrderPullBatchEvidence: any = null;
-      let completedSteps = 0;
+      let runNeedsReview = false;
       for (const dataset of datasetsToRun) {
         const profile = config?.[dataset] || {};
         if (!profile.mirror_enabled) {
@@ -5183,14 +5252,33 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           continue;
         }
 
-        const wantPull = action === 'pull_dataset' || (action === 'run_sync' && profile.pull_enabled);
-        const wantPush = action === 'push_dataset' || (action === 'run_sync' && dataset !== 'orders' && profile.push_enabled);
+        const wantPull = action === 'pull_dataset' || (isRunAction && profile.pull_enabled);
+        const wantPush = action === 'push_dataset' || (isRunAction && dataset !== 'orders' && profile.push_enabled);
 
         if (!wantPull && !wantPush) {
           results.push({ dataset, skipped: true, reason: 'Neither push nor pull enabled for this dataset.' });
           continue;
         }
 
+        const steps: { dataset: string; direction: string; label: string }[] = [];
+        if (wantPull) steps.push({ dataset, direction: 'pull', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ← Smartsheet` });
+        if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} → Smartsheet` });
+
+        const runStartedAt = new Date().toISOString();
+        const datasetResults: any[] = [];
+        let lastOrderPullBatchEvidence: any = null;
+        let completedSteps = 0;
+        let datasetNeedsReview = false;
+        await claimInvocationRun({
+          status: 'running',
+          started_at: runStartedAt,
+          action,
+          total_steps: steps.length,
+          completed_steps: 0,
+          current_step_label: steps[0]?.label || '',
+          order_pull_requested: dataset === 'orders' && wantPull,
+          results: [],
+        }, dataset);
         let activeDirection: 'pull' | 'push' | null = null;
         try {
           if (wantPull) {
@@ -5202,7 +5290,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
               total_steps: steps.length,
               completed_steps: completedSteps,
               current_step_label: stepLabel,
-              results,
+              results: datasetResults,
               ...(dataset === 'orders' ? {
                 progress_dataset: 'orders', progress_direction: 'pull', progress_phase: 'reading',
                 progress_current: 0, progress_total: 0,
@@ -5210,29 +5298,29 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                 progress_detail: 'Downloading the configured Smartsheet by permanent row and column IDs',
                 progress_updated_at: new Date().toISOString(),
               } : {}),
-            }, runStartedAt);
+            }, runStartedAt, dataset);
             if (dataset === 'orders' && !readingStatusSaved) {
               throw new Error('Order pull progress ownership could not be verified before reading. No Orders were changed.');
             }
             const pullResult = await pullDataset(base44, token, dataset, profile, config, {
-              assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+              assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt, dataset),
               ...(dataset === 'orders' ? {
                 reportOrderReadProgress: async ({ page, rowsLoaded, totalRows }) => {
                   const saved = await saveSyncStatusForRun(base44, {
                     status: 'running', action,
                     total_steps: steps.length, completed_steps: completedSteps,
-                    current_step_label: stepLabel, results,
+                    current_step_label: stepLabel, results: datasetResults,
                     progress_dataset: 'orders', progress_direction: 'pull', progress_phase: 'reading',
                     progress_current: rowsLoaded, progress_total: Math.max(totalRows, rowsLoaded),
                     progress_item_label: `Read Smartsheet page ${page}: ${rowsLoaded} rows`,
                     progress_detail: 'Reading Order Request rows by permanent Smartsheet row and column IDs; no Orders changed yet',
                     progress_updated_at: new Date().toISOString(),
-                  }, runStartedAt);
+                  }, runStartedAt, dataset);
                   if (!saved) throw new Error('Order pull lost progress checkpoint ownership. No further pull writes are allowed.');
                 },
                 reportOrderPullProgress: async ({ phase, current, total, itemLabel, detail, batchEvidence }) => {
                   if (batchEvidence) {
-                    // Persist independently of the shared Sales/Order coordinator
+                    // Persist independently of the Order pull coordinator
                     // before the actual Order bulkUpdate. Fail closed on lost ACK.
                     await saveOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {
                       startedAt: runStartedAt,
@@ -5243,14 +5331,14 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                   const saved = await saveSyncStatusForRun(base44, {
                     status: 'running', action,
                     total_steps: steps.length, completed_steps: completedSteps,
-                    current_step_label: stepLabel, results,
+                    current_step_label: stepLabel, results: datasetResults,
                     progress_dataset: 'orders', progress_direction: 'pull', progress_phase: phase,
                     progress_current: current, progress_total: total,
                     progress_item_label: cleanText(itemLabel, 220),
                     progress_detail: cleanText(detail, 260),
                     ...(lastOrderPullBatchEvidence ? { order_pull_batch_evidence: lastOrderPullBatchEvidence } : {}),
                     progress_updated_at: new Date().toISOString(),
-                  }, runStartedAt);
+                  }, runStartedAt, dataset);
                   if (!saved) throw new Error('Order pull lost its progress checkpoint before completion. Further writes are blocked.');
                 },
               } : {}),
@@ -5263,7 +5351,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                 startedAt: runStartedAt,
               });
             }
-            results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
+            datasetResults.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
             completedSteps++;
           }
           if (wantPush) {
@@ -5275,19 +5363,19 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
               total_steps: steps.length,
               completed_steps: completedSteps,
               current_step_label: stepLabel,
-              results,
-            }, runStartedAt);
+              results: datasetResults,
+            }, runStartedAt, dataset);
             const pushResult = await pushDataset(base44, token, dataset, profile, config,
               dataset === 'orders' ? {
                 // A normal combined sync must never reinterpret every preserved
                 // Base44 value as a local edit after pull. Only durable local
                 // Order edits are eligible for the background push step.
-                onlyPendingOrderRecords: action === 'run_sync',
+                onlyPendingOrderRecords: isRunAction,
                 orderPushTimeBudgetMs: 4 * 60 * 1000,
                 reportOrderProgress: async (progress: any) => saveSyncStatusForRun(base44, {
                   status: 'running', action,
                   total_steps: steps.length, completed_steps: completedSteps,
-                  current_step_label: stepLabel, results,
+                  current_step_label: stepLabel, results: datasetResults,
                   progress_dataset: 'orders', progress_direction: 'push',
                   progress_phase: progress?.phase || '',
                   progress_current: Number(progress?.current) || 0,
@@ -5298,38 +5386,43 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
                   progress_record_id: cleanText(progress?.record_id, 100),
                   progress_smartsheet_row_id: cleanText(progress?.smartsheet_row_id, 40),
                   progress_updated_at: new Date().toISOString(),
-                }, runStartedAt),
-                assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+                }, runStartedAt, dataset),
+                assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt, dataset),
               } : {
-                assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+                assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt, dataset),
                 runStartedAt,
               });
 
-            results.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);
+            datasetResults.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);
             completedSteps++;
           }
         } catch (err) {
-          results.push({ dataset, ...(activeDirection ? { direction: activeDirection } : {}), skipped: true, reason: (err as any)?.message || 'Sync failed.' });
+          datasetResults.push({ dataset, ...(activeDirection ? { direction: activeDirection } : {}), skipped: true, reason: (err as any)?.message || 'Sync failed.' });
           completedSteps++;
         }
+
+        // Each dataset's record reports only its own stages. A Sales review or
+        // failure can never leave the Order status unhealthy, and vice versa.
+        datasetNeedsReview = dataset === 'sales'
+          ? salesRunRequiresReview(datasetResults)
+          : orderRunRequiresReview(datasetResults);
+        await saveSyncStatusForRun(base44, {
+          status: datasetNeedsReview ? 'needs_review' : 'completed',
+          needs_review: datasetNeedsReview,
+          completed_at: new Date().toISOString(),
+          total_steps: steps.length,
+          completed_steps: steps.length,
+          current_step_label: '',
+          results: datasetResults,
+          ...(lastOrderPullBatchEvidence ? { order_pull_batch_evidence: lastOrderPullBatchEvidence } : {}),
+        }, runStartedAt, dataset);
+
+        results.push(...datasetResults);
+        runNeedsReview = runNeedsReview || datasetNeedsReview;
       }
 
-      // Both datasets must report blocked stages and partial writes honestly.
-      // Sales review rules remain unchanged; Order review is strictly isolated.
-      const runNeedsReview = salesRunRequiresReview(results) || orderRunRequiresReview(results);
-      await saveSyncStatusForRun(base44, {
-        status: runNeedsReview ? 'needs_review' : 'completed',
-        needs_review: runNeedsReview,
-        completed_at: new Date().toISOString(),
-        total_steps: steps.length,
-        completed_steps: steps.length,
-        current_step_label: '',
-        results,
-        ...(lastOrderPullBatchEvidence ? { order_pull_batch_evidence: lastOrderPullBatchEvidence } : {}),
-      }, runStartedAt);
-
       // Check for alert conditions and send email if enabled
-      const finalStatusRecord = await loadSingleSyncStatusRecord(base44).catch(() => null);
+      const finalStatusRecord = await loadSingleSyncStatusRecord(base44, LEGACY_SYNC_STATUS_KEY).catch(() => null);
       if (finalStatusRecord?.setting_value) await checkAndSendSyncAlert(base44, finalStatusRecord.setting_value, results);
 
       return Response.json({
@@ -5357,7 +5450,8 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     // future runs aren't blocked. Also send an alert if enabled.
     if (base44Instance && claimedRunStartedAt) {
       try {
-        const record = await base44Instance.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+        const key = syncStatusKeyForDataset(claimedDataset);
+        const record = await base44Instance.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });
         const matches = Array.isArray(record) ? record.filter((r: any) => r?.id) : (record?.id ? [record] : []);
         if (matches.length === 1 &&
             matches[0]?.setting_value?.status === 'running' &&
@@ -5365,9 +5459,12 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
           const failedAt = new Date().toISOString();
           const failedStatus = { ...matches[0].setting_value, status: 'failed', failed_at: failedAt, error: 'Sync run did not complete; marked as failed by cleanup.' };
           await base44Instance.asServiceRole.entities.GlobalSettings.updateMany(
-            { id: matches[0].id, setting_key: 'smartsheetSyncStatus', updated_date: matches[0].updated_date },
+            { id: matches[0].id, setting_key: key, updated_date: matches[0].updated_date },
             { $set: { setting_value: failedStatus } },
           );
+          if (claimedDataset === 'orders' || claimedDataset === 'sales') {
+            await mirrorSyncStatusToLegacy(base44Instance, failedStatus, claimedDataset);
+          }
           await checkAndSendSyncAlert(base44Instance, failedStatus, []);
         }
       } catch { /* cleanup must never mask the original error */ }
