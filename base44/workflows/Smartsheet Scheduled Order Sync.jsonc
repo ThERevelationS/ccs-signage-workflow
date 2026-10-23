@@ -1,4 +1,23 @@
 {
+  "name": "Smartsheet Scheduled Order Sync",
+  "description": "Runs every 15 minutes server-side, offset 8 minutes after the Sales Pipeline sync so the two pipelines do not compete for the Smartsheet read budget. Order Form follows its enabled pull/push directions: pull may create Base44 Orders from new verified Smartsheet rows; push writes only Orders durably marked for sync and may create a linked Smartsheet row for a new pending Order when creation is enabled. Save & Sync remains available for immediate explicit writes. Only runs when global sync is enabled and observation mode is off.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "14,29,44,59 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -25,24 +44,5 @@
         }
       }
     ]
-  },
-  "name": "Smartsheet Scheduled Order Sync",
-  "trigger": {
-    "condition": null,
-    "config": {
-      "trigger_type": "scheduled",
-      "events": [],
-      "schedule_mode": "recurring",
-      "cron_expression": "8,23,38,53 * * * *",
-      "one_time_date": null,
-      "timezone": "America/New_York",
-      "interval_value": null,
-      "interval_unit": null,
-      "interval_anchor": null,
-      "ends_type": "never",
-      "ends_on_date": null,
-      "ends_after_count": null
-    }
-  },
-  "description": "Runs every 15 minutes server-side, offset 8 minutes after the Sales Pipeline sync so the two pipelines do not compete for the Smartsheet read budget. Order Form follows its enabled pull/push directions: pull may create Base44 Orders from new verified Smartsheet rows; push writes only Orders durably marked for sync and may create a linked Smartsheet row for a new pending Order when creation is enabled. Save & Sync remains available for immediate explicit writes. Only runs when global sync is enabled and observation mode is off."
+  }
 }
