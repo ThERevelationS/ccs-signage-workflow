@@ -950,19 +950,19 @@ function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
                   </div>
                   <div className="mt-2 space-y-1.5 text-xs">
                     {(detail.invoices || []).map((row) => (
-                      <a key={row.id} href="/Invoices" className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
+                      <a key={row.id} href={`/Invoices?invoice=${row.id}`} className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
                         <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.invoice_number)} <span className="text-slate-400">({clean(row.status)})</span></span>
                         <span className="text-slate-500">${Number(row.balance_due || 0).toFixed(2)} due</span>
                       </a>
                     ))}
                     {(detail.purchase_orders || []).map((row) => (
-                      <a key={row.id} href="/PurchaseOrders" className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
+                      <a key={row.id} href={`/PurchaseOrders?po=${row.id}`} className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
                         <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.po_number)} · {clean(row.vendor_name)} <span className="text-slate-400">({clean(row.status)})</span></span>
                         <span className="text-slate-500">${Number(row.total || 0).toFixed(2)}</span>
                       </a>
                     ))}
                     {(detail.change_orders || []).map((row) => (
-                      <a key={row.id} href="/ChangeOrders" className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
+                      <a key={row.id} href={`/ChangeOrders?co=${row.id}`} className="flex items-center justify-between rounded-lg bg-slate-50 p-2 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800">
                         <span className="font-semibold text-slate-700 dark:text-slate-200">{clean(row.change_order_number)} · {clean(row.title)} <span className="text-slate-400">({clean(row.status)})</span></span>
                         <span className="text-slate-500">{Number(row.amount_delta || 0) >= 0 ? "+" : "−"}${Math.abs(Number(row.amount_delta || 0)).toFixed(2)}</span>
                       </a>
@@ -1050,6 +1050,15 @@ export default function Opportunities() {
   }, [sessionToken, includeClosed]);
 
   useEffect(() => { if (sessionToken) load(); }, [sessionToken, load]);
+
+  useEffect(() => {
+    if (!sessionToken) return;
+    const openId = new URLSearchParams(window.location.search).get("open");
+    if (!openId) return;
+    invoke(sessionToken, { action: "get_opportunity", opportunity_id: openId })
+      .then((data) => { if (data?.opportunity?.id) setSelected(data.opportunity); })
+      .catch(() => {});
+  }, [sessionToken]);
 
   const visible = useMemo(() => {
     const q = clean(search).toLowerCase();
