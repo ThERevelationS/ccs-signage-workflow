@@ -14,8 +14,10 @@ import {
   ImagePlus,
   Loader2,
   Package,
+  RotateCcw,
   ScanLine,
   Search,
+  ShoppingCart,
   Sparkles,
   Trash2,
   WandSparkles,
@@ -100,6 +102,15 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [actionedPart, setActionedPart] = useState(null);
+  const [requestFor, setRequestFor] = useState(null);
+  const [requestQty, setRequestQty] = useState(1);
+  const [requestEquipmentId, setRequestEquipmentId] = useState("");
+  const [requestJustification, setRequestJustification] = useState("");
+  const [requestKey, setRequestKey] = useState("");
+  const [requestDone, setRequestDone] = useState(null);
+  const [requestBusy, setRequestBusy] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
   const previousFocus = useRef(null);
@@ -168,6 +179,11 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setDuplicateIds(row.duplicate_part_ids || []);
     setBusy(false);
     setError("");
+    setActionedPart(null);
+    setRequestFor(null);
+    setRequestDone(null);
+    setRequestError("");
+    setRequestBusy(false);
     setSavedMessage("Resumed from the Parts Identification Review Inbox.");
   };
 
@@ -190,6 +206,11 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setSavedMessage("");
     setScanning(false);
     setScanError("");
+    setActionedPart(null);
+    setRequestFor(null);
+    setRequestDone(null);
+    setRequestError("");
+    setRequestBusy(false);
   };
 
   useEffect(() => {
@@ -348,6 +369,88 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
       identification_confidence: ["low","medium","high"].includes(chosen.confidence) ? chosen.confidence : (aiResult?.confidence || "low"),
       compatibility_notes: String(chosen.fit_summary || aiResult?.compatibility_notes || prev.compatibility_notes || ""),
     }));
+  };
+
+  const newRequestKey = () => `partlookup-request-${crypto.randomUUID()}`;
+  const openRequest = (part = null) => {
+    setRequestFor(part ? {
+      inventory_item_id: part.id,
+      item_name: part.part_name,
+      part_number: part.part_number || "",
+      manufacturer_brand: part.manufacturer || "",
+      unit_cost: part.unit_cost,
+      vendor_link: "",
+      photo_urls: [],
+    } : {
+      inventory_item_id: "",
+      item_name: candidate.part_name,
+      part_number: candidate.part_number,
+      manufacturer_brand: candidate.manufacturer,
+      unit_cost: candidate.unit_cost,
+      vendor_link: candidate.vendor_url,
+      photo_urls: candidate.photo_urls,
+    });
+    setRequestQty(1);
+    setRequestEquipmentId(initialEquipmentId || candidate.compatible_equipment_ids?.[0] || "");
+    const number = part?.part_number || candidate.part_number;
+    setRequestJustification(`Identified via AI Part Finder${number ? ` — ${number}` : ""}`);
+    setRequestKey(newRequestKey());
+    setRequestDone(null);
+    setRequestError("");
+  };
+
+  // Any edit to the request draft regenerates the creation key, so a transport
+  // retry of an unchanged draft stays idempotent while a genuinely different
+  // draft can never collide with the backend's same-key/different-intent guard.
+  const submitRequest = async () => {
+    if (!requestFor || requestBusy) return;
+    if (!requestJustification.trim()) return setRequestError("A short justification is required for the request.");
+    if (!requestFor.item_name) return setRequestError("The part needs a name before it can be requested.");
+    setRequestBusy(true); setRequestError("");
+    try {
+      const { data } = await base44.functions.invoke("fleetRequestAction", {
+        action: "create", creation_key: requestKey,
+        request: {
+          item_type: "part",
+          ...(requestFor.inventory_item_id ? { inventory_item_id: requestFor.inventory_item_id } : {}),
+          item_name: requestFor.item_name,
+          part_number: requestFor.part_number || "",
+          manufacturer_brand: requestFor.manufacturer_brand || "",
+          quantity_needed: Number(requestQty) || 1,
+          justification: requestJustification.trim(),
+          ...(requestEquipmentId ? { equipment_id: requestEquipmentId } : {}),
+          ...(requestFor.unit_cost !== "" && requestFor.unit_cost != null ? { unit_cost: requestFor.unit_cost } : {}),
+          ...(requestFor.vendor_link ? { vendor_link: requestFor.vendor_link } : {}),
+          ...(requestFor.photo_urls?.length ? { photo_urls: requestFor.photo_urls } : {}),
+        },
+      });
+      if (data?.error) throw new Error(data.error);
+      setRequestDone(data.request || { id: "" });
+      setSavedMessage(`Fleet request submitted for ${requestFor.item_name}.`);
+      await onChanged?.();
+    } catch (e) { setRequestError(e?.message || "Unable to submit the Fleet request."); }
+    finally { setRequestBusy(false); }
+  };
+
+  // Cross-reference research keeps the same physical part's photos/barcode but
+  // starts a fresh identification session so both lookups stay in the inbox.
+  const reSearch = (value) => {
+    const num = String(value || "").trim();
+    if (!num || busy) return;
+    setStep("identify");
+    setSessionKey(`partlookup-${crypto.randomUUID()}`);
+    setIdentification(null);
+    setQuery(num);
+    setSearchMode("part_number");
+    setCandidates([]);
+    setActiveCandidateIndex(0);
+    setAiResult(null);
+    setDuplicateIds([]);
+    setError("");
+    setActionedPart(null);
+    setRequestFor(null);
+    setRequestDone(null);
+    setSavedMessage(`Loaded ${num} for a new lookup. The previous review is saved in the inbox.`);
   };
 
   const analyze = async () => {
@@ -546,6 +649,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
       const { data } = await base44.functions.invoke("fleetPartLookupAction", { action: "match_existing", id: identification.id, expected_updated_date: identification.updated_date || "", part_id: part.id });
       if (data?.error) throw new Error(data.error);
       setIdentification(data.identification);
+      setActionedPart(part);
       setSavedMessage(`Matched to existing Fleet part: ${part.part_name}.`);
       await onChanged?.();
       setStep("done");
@@ -567,6 +671,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
       });
       if (data?.error) throw new Error(data.error);
       setIdentification(data.identification);
+      setActionedPart(data.part || null);
       setSavedMessage(`Added ${data.part?.part_name || "part"} to Fleet inventory.`);
       await onChanged?.();
       setStep("done");
@@ -578,6 +683,18 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
   const toggleEquipment = id => setCandidate(prev => ({ ...prev, compatible_equipment_ids: prev.compatible_equipment_ids.includes(id) ? prev.compatible_equipment_ids.filter(value => value !== id) : [...prev.compatible_equipment_ids, id] }));
   const set = (key, value) => setCandidate(prev => ({ ...prev, [key]: value }));
   const fieldConfidence = key => aiResult?.field_confidence?.[key] || "";
+
+  const requestPanel = requestFor && <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/20">
+    <div className="flex items-start gap-2"><ShoppingCart className="w-4 h-4 text-sky-600 mt-0.5 shrink-0" /><div className="min-w-0"><div className="font-bold text-sky-900 dark:text-sky-100">Request {requestFor.item_name || "this part"}</div><div className="text-xs text-sky-800 dark:text-sky-300 mt-0.5">{requestFor.inventory_item_id ? "Linked to the exact Fleet inventory record — receipt lands on the right part automatically." : "Free-text request — a reviewer links or creates the inventory record on receipt."}</div></div></div>
+    <div className="mt-3 grid sm:grid-cols-[1fr_1.2fr_2fr] gap-2">
+      <Field label="Qty needed"><input type="number" min="1" step="1" value={requestQty} onChange={e => { setRequestQty(Number(e.target.value || 1)); setRequestKey(newRequestKey()); }} className="field" /></Field>
+      <Field label="For equipment"><select value={requestEquipmentId} onChange={e => { setRequestEquipmentId(e.target.value); setRequestKey(newRequestKey()); }} className="field"><option value="">Unspecified</option>{activeEquipment.map(eq => <option key={eq.id} value={eq.id}>{eq.name}</option>)}</select></Field>
+      <Field label="Justification *"><input value={requestJustification} onChange={e => { setRequestJustification(e.target.value); setRequestKey(newRequestKey()); }} className="field" /></Field>
+    </div>
+    {requestError && <div role="alert" className="mt-2 text-xs font-semibold text-red-700 dark:text-red-300">{requestError}</div>}
+    {requestDone ? <div role="status" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" />Request submitted — track it on the Fleet Requests page.</div> :
+    <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={submitRequest} disabled={requestBusy || busy} className="px-3 py-2 rounded-lg bg-sky-600 text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50">{requestBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShoppingCart className="w-3.5 h-3.5" />}Submit Request</button><button type="button" onClick={() => { setRequestFor(null); setRequestError(""); }} disabled={requestBusy} className="px-3 py-2 rounded-lg border border-sky-300 text-sky-800 dark:text-sky-200 text-xs font-semibold">Cancel</button></div>}
+  </section>;
 
   return <div className="fixed inset-0 z-[110] bg-black/60 p-2 sm:p-4 overflow-y-auto">
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-part-lookup-title" aria-describedby="fleet-part-lookup-description" tabIndex={-1} className="mx-auto w-full max-w-6xl min-h-[min(760px,96dvh)] rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 overflow-hidden flex flex-col">
@@ -595,7 +712,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
             <div><h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">What do you have?</h3><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Use whatever is easiest. A clear label/photo plus a visible number gives the best result.</p></div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">{LOOKUP_MODES.map(({key,icon:Icon,label}) => <button key={key} type="button" onClick={() => setSearchMode(key)} className={`min-h-20 rounded-xl border p-3 text-left ${searchMode === key ? "border-indigo-400 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/30" : "border-gray-200 dark:border-slate-700"}`}><Icon className="w-5 h-5 text-indigo-500" /><div className="mt-2 text-sm font-semibold">{label}</div></button>)}</div>
             <label className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Part number, label text, or description</span><textarea rows={3} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); analyze(); } }} placeholder="Example: WIX 51515, alternator label, Kubota fuel filter… (Ctrl+Enter identifies)" className="field mt-1" /></label>
-            <div className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Barcode / UPC / QR value</span><div className="relative mt-1"><Barcode className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={barcodeValue} onChange={e => setBarcodeValue(e.target.value)} className="field pl-9 pr-24" placeholder="Detected automatically, scanned, or typed" />{barcodeSupported && <button type="button" onClick={() => { setScanError(""); setScanning(true); }} disabled={busy || scanning} className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-40 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"><ScanLine className="w-3.5 h-3.5" />Scan</button>}</div>{scanError && <div role="alert" className="mt-1 text-xs text-amber-700 dark:text-amber-300">{scanError}</div>}</div>
+            <div className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Barcode / UPC / QR value</span><div className="relative mt-1"><Barcode className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={barcodeValue} onChange={e => setBarcodeValue(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && barcodeValue.trim()) { e.preventDefault(); analyze(); } }} className="field pl-9 pr-24" placeholder="Detected automatically, scanned, or typed" />{barcodeSupported && <button type="button" onClick={() => { setScanError(""); setScanning(true); }} disabled={busy || scanning} className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-40 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"><ScanLine className="w-3.5 h-3.5" />Scan</button>}</div>{scanError && <div role="alert" className="mt-1 text-xs text-amber-700 dark:text-amber-300">{scanError}</div>}</div>
             <label
               onDragOver={e => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={e => { e.preventDefault(); setDragActive(false); }}
@@ -616,7 +733,8 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
         {step === "verify" && <div className="space-y-5">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3"><div><h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">Verify the identity</h3><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Pick the right candidate, then correct anything AI got wrong before this becomes inventory.</p></div>{aiResult?.confidence && <span className={`inline-flex w-fit rounded-full border px-3 py-1.5 text-sm font-bold capitalize ${confidenceStyle[aiResult.confidence] || confidenceStyle.low}`}>{aiResult.confidence} confidence</span>}</div>
           {candidates.length > 1 && <section className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-950/20"><div className="flex items-center gap-2"><ClipboardList className="w-4 h-4 text-indigo-600" /><div className="text-sm font-bold text-indigo-900 dark:text-indigo-100">AI returned {candidates.length} plausible identities — choose the right one</div></div><div className="mt-3 grid md:grid-cols-3 gap-2">{candidates.map((option, index) => <button key={index} type="button" onClick={() => applyCandidate(index)} disabled={busy} className={`text-left rounded-lg border p-3 ${index === activeCandidateIndex ? "border-indigo-500 bg-white ring-2 ring-indigo-200 dark:bg-slate-900 dark:ring-indigo-800" : "border-indigo-200 bg-white/60 dark:border-indigo-900 dark:bg-slate-900/50"}`}><div className="flex items-start justify-between gap-2"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{option.part_name || "Candidate " + (index + 1)}</div>{index === activeCandidateIndex && <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />}</div><div className="text-xs text-gray-500 mt-1">{option.manufacturer || "Unknown manufacturer"} · {option.part_number || "No part #"}</div>{option.fit_summary && <div className="mt-1 text-[11px] text-gray-600 dark:text-slate-400">{option.fit_summary}</div>}<span className={`mt-2 inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold capitalize ${confidenceStyle[option.confidence] || confidenceStyle.low}`}>{option.confidence || "low"} confidence</span></button>)}</div></section>}
-          {duplicates.length > 0 && <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/20"><div className="flex items-start gap-2"><AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" /><div><div className="font-bold text-amber-900 dark:text-amber-100">Possible duplicate found</div><div className="text-xs text-amber-800 dark:text-amber-300 mt-1">Do not create another record if this is already the same physical part type.</div></div></div><div className="mt-3 grid md:grid-cols-2 gap-2">{duplicates.map(part => <div key={part.id} className="rounded-lg border border-amber-200 bg-white p-3 dark:border-amber-900 dark:bg-slate-900"><div className="font-semibold text-gray-900 dark:text-slate-100">{part.part_name}</div><div className="text-xs text-gray-500 mt-1">{part.manufacturer || "Unknown manufacturer"} · {part.part_number || "No part #"} · stock {part.quantity_on_hand ?? 0}</div>{isAdmin && <button type="button" onClick={() => matchExisting(part)} disabled={busy} className="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-300">This is the same part → match it</button>}</div>)}</div></section>}
+          {duplicates.length > 0 && <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/20"><div className="flex items-start gap-2"><AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" /><div><div className="font-bold text-amber-900 dark:text-amber-100">Possible duplicate found</div><div className="text-xs text-amber-800 dark:text-amber-300 mt-1">Do not create another record if this is already the same physical part type.</div></div></div><div className="mt-3 grid md:grid-cols-2 gap-2">{duplicates.map(part => <div key={part.id} className="rounded-lg border border-amber-200 bg-white p-3 dark:border-amber-900 dark:bg-slate-900"><div className="font-semibold text-gray-900 dark:text-slate-100">{part.part_name}</div><div className="text-xs text-gray-500 mt-1">{part.manufacturer || "Unknown manufacturer"} · {part.part_number || "No part #"} · stock {part.quantity_on_hand ?? 0}</div>{([part.storage_zone,part.storage_cabinet,part.storage_shelf,part.storage_bin].filter(Boolean).join(" · ") || part.location) && <div className="text-[11px] text-gray-500 mt-0.5">Location: {[part.storage_zone,part.storage_cabinet,part.storage_shelf,part.storage_bin].filter(Boolean).join(" · ") || part.location}</div>}<div className="mt-2 flex flex-wrap gap-3">{isAdmin && <button type="button" onClick={() => matchExisting(part)} disabled={busy} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">This is the same part → match it</button>}<button type="button" onClick={() => openRequest(part)} disabled={busy} className="text-xs font-semibold text-sky-700 dark:text-sky-300">Request more of this</button></div></div>)}</div></section>}
+          {requestPanel}
           <div className="grid lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 rounded-xl border border-gray-200 p-4 dark:border-slate-700"><div className="grid md:grid-cols-2 gap-3">
               <Field label="Part name *"><input value={candidate.part_name} onChange={e => set("part_name", e.target.value)} className="field" /></Field>
@@ -626,7 +744,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
               <Field label="Category *" confidence={fieldConfidence("category")}><input value={candidate.category} onChange={e => set("category", e.target.value)} className="field" /></Field>
               <Field label="Subcategory"><input value={candidate.subcategory} onChange={e => set("subcategory", e.target.value)} className="field" /></Field>
             </div><Field label="Alternate / cross-reference numbers"><input value={(candidate.alternate_part_numbers || []).join(", ")} onChange={e => set("alternate_part_numbers", e.target.value.split(",").map(value => value.trim()).filter(Boolean))} className="field" placeholder="Separate numbers with commas" /></Field><Field label="Description"><textarea rows={3} value={candidate.description} onChange={e => set("description", e.target.value)} className="field" /></Field><Field label="Specification / identifying details" confidence={fieldConfidence("specification")}><textarea rows={3} value={candidate.specification} onChange={e => set("specification", e.target.value)} className="field" /></Field></div>
-            <div className="space-y-4"><InfoCard title="Why AI chose this" text={aiResult?.reasoning || "No reasoning returned."} /><InfoCard title="Verify before use" text={aiResult?.verification_notes || "Confirm identity and fitment before use."} attention /><InfoCard title="Detected label text" text={aiResult?.detected_text || identification?.detected_text || "No readable label text extracted."} />{(sourceLinks.length > 0 || candidate.vendor_url) && <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"><div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-slate-400">Research sources</div><ul className="mt-2 space-y-1.5">{sourceLinks.slice(0, 5).map(url => <li key={url}><a href={url} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300"><ExternalLink className="h-3 w-3 shrink-0" />{url.replace(/^https?:\/\//i, "").slice(0, 60)}</a></li>)}{candidate.vendor_url && /^https?:\/\//i.test(candidate.vendor_url) && <li><a href={candidate.vendor_url} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"><ExternalLink className="h-3 w-3 shrink-0" />{candidate.preferred_vendor || "Vendor"} listing</a></li>}</ul></div>}</div>
+            <div className="space-y-4"><InfoCard title="Why AI chose this" text={aiResult?.reasoning || "No reasoning returned."} /><InfoCard title="Verify before use" text={aiResult?.verification_notes || "Confirm identity and fitment before use."} attention /><InfoCard title="Detected label text" text={aiResult?.detected_text || identification?.detected_text || "No readable label text extracted."} />{(sourceLinks.length > 0 || candidate.vendor_url) && <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"><div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-slate-400">Research sources</div><ul className="mt-2 space-y-1.5">{sourceLinks.slice(0, 5).map(url => <li key={url}><a href={url} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300"><ExternalLink className="h-3 w-3 shrink-0" />{url.replace(/^https?:\/\//i, "").slice(0, 60)}</a></li>)}{candidate.vendor_url && /^https?:\/\//i.test(candidate.vendor_url) && <li><a href={candidate.vendor_url} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"><ExternalLink className="h-3 w-3 shrink-0" />{candidate.preferred_vendor || "Vendor"} listing</a></li>}</ul></div>}{(candidate.alternate_part_numbers || []).length > 0 && <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"><div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-slate-400">Cross-reference numbers</div><div className="mt-2 flex flex-wrap gap-1.5">{candidate.alternate_part_numbers.slice(0, 8).map(num => <button key={num} type="button" onClick={() => reSearch(num)} disabled={busy} className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-2 py-1 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-900 dark:text-indigo-300"><RotateCcw className="w-3 h-3" />{num}</button>)}</div><div className="mt-1.5 text-[10px] text-gray-400">Tap a number to research it — this review stays saved in the inbox.</div></div>}</div>
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2"><button type="button" onClick={() => setStep("identify")} disabled={busy} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2"><ArrowLeft className="w-4 h-4" />Try another search</button><div className="flex flex-col sm:flex-row gap-2"><button type="button" onClick={saveReview} disabled={busy} className="px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 font-semibold">Save to Review Inbox</button><button type="button" onClick={() => setStep("organize")} disabled={busy} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2">Organize It <ArrowRight className="w-4 h-4" /></button></div></div>
         </div>}
@@ -641,7 +759,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2"><button type="button" onClick={() => setStep("verify")} disabled={busy} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2"><ArrowLeft className="w-4 h-4" />Back to identity</button><div className="flex flex-col sm:flex-row gap-2"><button type="button" onClick={saveReview} disabled={busy} className="px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 font-semibold">Save for Later</button>{isAdmin && <button type="button" onClick={() => promote(false)} disabled={busy || duplicates.length > 0} title={duplicates.length ? "Resolve the possible duplicate before creating another part." : "Add reviewed part to Fleet inventory"} className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}Add to Fleet Parts</button>}{isAdmin && duplicates.length > 0 && <button type="button" onClick={() => promote(true)} disabled={busy} className="px-4 py-2 rounded-lg border border-red-300 text-red-700 dark:text-red-300 font-semibold">Create Separate Anyway</button>}</div></div>
         </div>}
 
-        {step === "done" && <div className="min-h-[420px] flex flex-col items-center justify-center text-center"><div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center"><Check className="w-10 h-10 text-emerald-600" /></div><h3 className="mt-5 text-2xl font-bold text-gray-900 dark:text-slate-100">Part processed</h3><p className="mt-2 max-w-md text-sm text-gray-500 dark:text-slate-400">{savedMessage || "The part lookup has been reviewed."}</p><div className="mt-5 flex flex-col sm:flex-row gap-2"><button type="button" onClick={resetForNewLookup} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><Camera className="w-4 h-4" />Process Next Part</button><button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Done</button></div></div>}
+        {step === "done" && <div className="min-h-[420px] flex flex-col items-center justify-center text-center"><div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center"><Check className="w-10 h-10 text-emerald-600" /></div><h3 className="mt-5 text-2xl font-bold text-gray-900 dark:text-slate-100">Part processed</h3><p className="mt-2 max-w-md text-sm text-gray-500 dark:text-slate-400">{savedMessage || "The part lookup has been reviewed."}</p><div className="mt-5 w-full max-w-lg">{requestPanel}</div><div className="mt-5 flex flex-col sm:flex-row gap-2">{actionedPart && !requestFor && !requestDone && <button type="button" onClick={() => openRequest(actionedPart)} className="px-4 py-2 rounded-lg border border-sky-300 text-sky-800 dark:text-sky-200 font-semibold inline-flex items-center justify-center gap-2"><ShoppingCart className="w-4 h-4" />Request more of this part</button>}<button type="button" onClick={resetForNewLookup} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><Camera className="w-4 h-4" />Process Next Part</button><button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Done</button></div></div>}
       </div>
     </div>
     <style>{`.field{width:100%;border:1px solid rgb(209 213 219);border-radius:.6rem;padding:.6rem .72rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}.field:focus{outline:2px solid rgb(99 102 241 / .35);outline-offset:1px}`}</style>
