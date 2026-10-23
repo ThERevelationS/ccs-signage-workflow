@@ -262,7 +262,14 @@ export default function SIPs() {
           }
         });
       }
-      setWipTaskDescriptions(wipDescs);
+      // A refresh that returns identical data must keep the existing array
+      // identities — replacing them would invalidate the memoized board
+      // sections, the checklist-progress cache, and the role pick lists on
+      // every timer tick. These states are only ever written here, and the
+      // snapshot guard above already discarded superseded loads, so the
+      // rendered value is the last committed one.
+      const sameData = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+      if (!sameData(wipDescs, wipTaskDescriptions)) setWipTaskDescriptions(wipDescs);
       setBoardError("");
       if (clearQuickEditErrorOnSuccess) setQuickEditError("");
       if (dropdownsSetting?.error) {
@@ -270,7 +277,8 @@ export default function SIPs() {
         setChecklistConfigWarning("Checklist status definitions could not refresh. Work Orders are current, but checklist progress may use the last loaded rules.");
       } else {
         setChecklistConfigWarning("");
-        setDropdownConditions(dropdownsSetting?.setting?.setting_value?.items || []);
+        const nextConditions = dropdownsSetting?.setting?.setting_value?.items || [];
+        if (!sameData(nextConditions, dropdownConditions)) setDropdownConditions(nextConditions);
       }
       
       // Filter for SIPs - items where:
@@ -284,7 +292,7 @@ export default function SIPs() {
       );
       boardHasLoadedRef.current = true;
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
-      setUsers(usersData);
+      if (!sameData(usersData, users)) setUsers(usersData);
       setLastUpdated(new Date());
       // Callers reconciling a rejected write may use only this verified,
       // current snapshot, never a stale or failed board refresh.
@@ -925,7 +933,7 @@ export default function SIPs() {
               const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
               const isWip = isWipItem(wo);
               return (
-                <div key={wo.id} className={`rounded-xl border p-3 bg-white transition-all duration-300 ${focusedRowId === wo.id ? "ring-2 ring-purple-400 scale-[1.02] shadow-lg shadow-purple-300/50" : ""}`}>
+                <div key={wo.id} className={`rounded-xl border p-3 bg-white ${focusedRowId === wo.id ? "ring-2 ring-purple-400" : ""}`}>
                   <div className="flex items-start gap-3">
                     <button
                       type="button"
@@ -1073,10 +1081,10 @@ export default function SIPs() {
                 
                 return (
                   <React.Fragment key={wo.id}>
-                  {focusedRowId === wo.id && <tr className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
+                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   <tr 
-                    className={`sips-board-row border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'sips-focus-row' : ''}`}
-                    style={{ height: focusedRowId === wo.id ? '62px' : '50px' }}
+                    className={`border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                    style={{ height: '50px' }}
                   >
                     {/* Row Number - Clickable Focus Button */}
                     <td className="px-0 py-0 border-r">
@@ -1084,7 +1092,7 @@ export default function SIPs() {
                         onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                           focusedRowId === wo.id 
-                            ? 'sips-focus-num text-white' 
+                            ? 'bg-purple-500 text-white' 
                             : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
                         }`}
                         style={focusedRowId !== wo.id ? { 
@@ -1332,7 +1340,7 @@ export default function SIPs() {
                       </Popover>
                     </td>
                   </tr>
-                  {focusedRowId === wo.id && <tr className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
+                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   </React.Fragment>
                 );
               })}
