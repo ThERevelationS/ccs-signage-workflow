@@ -42,6 +42,10 @@ const parseLocalDate = (dateString) => {
   }
 };
 
+// Local yyyy-MM-dd for due checks and same-day quick actions.
+const localDateStr = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 // Safe format date for display
 const safeFormatDate = (dateString, formatStr) => {
   const date = parseLocalDate(dateString);
@@ -65,7 +69,10 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Archive
+  Archive,
+  ShoppingCart,
+  PackageCheck,
+  AlertTriangle
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import {
@@ -94,6 +101,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
+import OrderMobileDetail from "@/components/orders/OrderMobileDetail";
 import OrderLinkedCustomerReview from "@/components/orders/OrderLinkedCustomerReview";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { isStaleVerifiedOrderCustomerBlur } from "@/components/orders/orderCustomerBlurSafety.mjs";
@@ -108,6 +116,7 @@ import { canClearCompletedOrderSyncTarget } from "@/components/orders/orderSyncC
 import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
+import { orderDueState } from "@/shared/orderDueState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 
@@ -268,6 +277,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }, [currentUser?.role]);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
+  const [mobileDetailOrderId, setMobileDetailOrderId] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [validationError, setValidationError] = useState(null);
   const [editingCustomerName, setEditingCustomerName] = useState(null);
@@ -1030,6 +1040,76 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   };
 
+  // Quick actions write the same verified fields as the date pickers.
+  const markOrderOrdered = async (order) => {
+    if (!order?.id || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') {
+      return { ok: false, fields: ["Only an open Order can be marked ordered"] };
+    }
+    const today = localDateStr();
+    await persistImmediateOrderFields(
+      order.id,
+      { date_ordered: today, date_ordered_option: "", status: orderStatusAfterOrderedDateChange(order, today) },
+      "Mark ordered today"
+    );
+    return { ok: true };
+  };
+
+  const markOrderReceived = async (order) => {
+    if (!order?.id || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') {
+      return { ok: false, fields: ["Only an open Order can be marked received"] };
+    }
+    const missingFields = validateOrderForReceived(order);
+    if (missingFields.length > 0) return { ok: false, fields: missingFields };
+    const today = localDateStr();
+    if (order.date_ordered && order.date_ordered > today) {
+      return { ok: false, fields: ["Date received cannot be before date ordered"] };
+    }
+    if (order.date_needed && order.date_needed > today) {
+      return { ok: false, fields: ["Date received cannot be before date needed"] };
+    }
+    await persistImmediateOrderFields(
+      order.id,
+      { date_received: today, receipt_option: "", status: "received" },
+      "Mark received today"
+    );
+    return { ok: true };
+  };
+
+  const runQuickOrderAction = async (order, kind) => {
+    try {
+      setSaveError("");
+      const result = kind === "ordered" ? await markOrderOrdered(order) : await markOrderReceived(order);
+      if (!result.ok) {
+        setValidationError({
+          orderId: order.id,
+          fields: result.fields || ["Unable to update this Order"],
+          type: kind === "received" ? "date_received" : "date_ordered",
+        });
+      }
+    } catch (error) {
+      setSaveError(error?.message || "This Order changed in another session. Reload before retrying.");
+    }
+  };
+
+  const orderContextActions = (order) => {
+    if (!order || !isRegistered || isPulling || isFulfilledOrder(order) ||
+        effectiveOrderStatus(order) === 'cancelled') return [];
+    const actions = [];
+    if (!order.date_ordered) {
+      actions.push({
+        label: "Mark Ordered",
+        icon: <ShoppingCart className="w-4 h-4 text-blue-600" />,
+        onSelect: () => void runQuickOrderAction(order, "ordered"),
+      });
+    }
+    actions.push({
+      label: "Mark Received",
+      icon: <PackageCheck className="w-4 h-4 text-green-600" />,
+      onSelect: () => void runQuickOrderAction(order, "received"),
+    });
+    return actions;
+  };
+
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const deleteOrder = async (order) => {
@@ -1341,17 +1421,58 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   // Memoized filtered and sorted orders with optimized sorting
+  const todayStr = useMemo(() => localDateStr(), []);
+
+  const workOrdersById = useMemo(
+    () => new Map(workOrders.map(workOrder => [workOrder.id, workOrder])),
+    [workOrders]
+  );
+
+  // Open Orders sharing the same customer, description, and vendor are almost
+  // always accidental re-entries. Flag them without blocking any save.
+  const { duplicateOrderIds, duplicateGroupSizes } = useMemo(() => {
+    const groups = new Map();
+    for (const order of orders) {
+      if (order.deleted || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') continue;
+      const parts = ['customer_name', 'description', 'vendor']
+        .map(field => String(order[field] ?? '').trim().toLowerCase());
+      if (parts.some(part => !part)) continue;
+      const key = parts.join('|');
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(order.id);
+    }
+    const ids = new Set();
+    const sizes = new Map();
+    for (const groupIds of groups.values()) {
+      if (groupIds.length > 1) {
+        groupIds.forEach(id => { ids.add(id); sizes.set(id, groupIds.length); });
+      }
+    }
+    return { duplicateOrderIds: ids, duplicateGroupSizes: sizes };
+  }, [orders]);
+
+  const overdueCount = useMemo(
+    () => orders.filter(order => orderDueState(order, todayStr) === "overdue").length,
+    [orders, todayStr]
+  );
+
   const filteredOrders = useMemo(() => {
     let result = orders.filter(order => {
       if (!orderMatchesReceivedFilter(order, filterStatus)) return false;
+      if (filterStatus === "overdue" && orderDueState(order, todayStr) !== "overdue") return false;
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
+        const linkedJob = workOrdersById.get(order.work_order_id);
         const searchable = [
           order.customer_name,
           order.description,
           order.requestor_name,
+          order.requestor_email,
           order.vendor,
-          order.request_type
+          order.request_type,
+          linkedJob?.title,
+          linkedJob?.client_name,
+          linkedJob?.est_inv_at
         ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
       }
@@ -1433,7 +1554,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     notReceived.sort(defaultSortFn);
     received.sort(defaultSortFn);
     return [...notReceived, ...received];
-  }, [orders, filterStatus, searchTerm, sortConfig]);
+  }, [orders, filterStatus, searchTerm, sortConfig, todayStr, workOrdersById]);
 
   const historyLayout = useMemo(() => orderHistoryLayout(filteredOrders, filterStatus), [filteredOrders, filterStatus]);
 
@@ -1531,8 +1652,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           orders={filteredOrders}
           separateHistory={historyLayout.split}
           openCount={historyLayout.openCount}
-          onOpenDetails={(order) => alert(`Order: ${order.description}`)}
+          onOpenDetails={(order) => setMobileDetailOrderId(order.id)}
         />
+        {mobileDetailOrderId && (
+          <OrderMobileDetail
+            order={orders.find(o => o.id === mobileDetailOrderId)}
+            workOrder={workOrdersById.get(orders.find(o => o.id === mobileDetailOrderId)?.work_order_id) || null}
+            vendors={vendors}
+            requestTypes={requestTypes}
+            onUpdate={updateOrder}
+            onMarkOrdered={markOrderOrdered}
+            onMarkReceived={markOrderReceived}
+            busy={isSaving || isPulling || isSyncing}
+            isRegistered={isRegistered}
+            onClose={() => setMobileDetailOrderId(null)}
+          />
+        )}
       </>
     );
   }
@@ -1630,11 +1765,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       `}</style>
 
       {/* Compact counts and a shortcut, without adding a separate dashboard-style banner. */}
-      {historyLayout.split && (
+      {(historyLayout.split || overdueCount > 0) && (
         <div className="mb-1 flex min-h-8 items-center justify-between gap-2 px-1 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1.5" aria-label={`${historyLayout.openCount} open orders`}>
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-400" aria-hidden="true" />
-            Open <span className="font-semibold tabular-nums text-slate-700">{historyLayout.openCount}</span>
+          <span className="inline-flex items-center gap-3">
+            {historyLayout.split && (
+              <span className="inline-flex items-center gap-1.5" aria-label={`${historyLayout.openCount} open orders`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-violet-400" aria-hidden="true" />
+                Open <span className="font-semibold tabular-nums text-slate-700">{historyLayout.openCount}</span>
+              </span>
+            )}
+            {overdueCount > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-red-600" aria-label={`${overdueCount} overdue orders`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+                Overdue <span className="font-semibold tabular-nums">{overdueCount}</span>
+              </span>
+            )}
           </span>
           {historyLayout.receivedCount > 0 && (
             <button type="button"
@@ -2026,6 +2171,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         className="h-7 text-xs flex items-center gap-1 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
                         onClick={() => setExpandedDescription(order.id)}
                       >
+                        {duplicateOrderIds.has(order.id) && (
+                          <span
+                            title={`Possible duplicate — ${duplicateGroupSizes.get(order.id)} open orders share this customer, description, and vendor`}
+                            aria-label="Possible duplicate order"
+                          >
+                            <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                          </span>
+                        )}
                         <span className="truncate">{order.description || "Description..."}</span>
                         {order.description && order.description.length > 30 && (
                           <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
@@ -2113,7 +2266,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}
+                      <span className="truncate">{order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}</span>
+                      {orderDueState(order, todayStr) === "overdue" && (
+                        <span className="ml-auto inline-flex shrink-0 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>
+                      )}
+                      {orderDueState(order, todayStr) === "due_soon" && (
+                        <span className="ml-auto inline-flex shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">Due soon</span>
+                      )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -2672,6 +2831,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         <CellContextMenu
           position={{ x: contextMenu.x, y: contextMenu.y }}
           onClose={() => setContextMenu(null)}
+          actions={orderContextActions(contextMenu.order)}
           entityType="Order"
           entityId={contextMenu.order.id}
           fieldName={contextMenu.fieldName}
