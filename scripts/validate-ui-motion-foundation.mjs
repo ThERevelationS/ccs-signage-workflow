@@ -192,4 +192,13 @@ test("EmployeeTodayCard glows by live clock status", () => {
   assert.match(src, /clay-card glow-card p-4 mb-6 \$\{cardGlow\}/);
 });
 
+for (const file of ["src/pages/MondayMorningMeeting.jsx", "src/pages/ResourcePlanning.jsx"]) {
+  test(`${file} renders skeletons during its loading branch`, () => {
+    const src = readFileSync(file, "utf8");
+    assert.match(src, /import \{ ListSkeleton \} from "@\/components\/ui\/list-skeleton"/);
+    assert.match(src, /<ListSkeleton rows=\{\d+\} \/>/);
+    assert.doesNotMatch(src, /min-h-screen[\s\S]{0,200}animate-spin/, "full-screen spinner must be gone");
+  });
+}
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
