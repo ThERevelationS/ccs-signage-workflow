@@ -16,7 +16,6 @@ import {
   CircleOff,
   ClipboardList,
   Link2,
-  Loader2,
   MapPin,
   Pencil,
   Plus,
