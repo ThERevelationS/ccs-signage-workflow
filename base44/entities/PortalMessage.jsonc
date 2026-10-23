@@ -1,0 +1,101 @@
+{
+  "name": "PortalMessage",
+  "type": "object",
+  "description": "Two-way customer portal thread. Messages flow customer<->staff per customer account; kind distinguishes plain messages from structured events (estimate approval, revision request, payment notice). Backend-only; written through customerPortalAction.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one message."
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "portal_link_id": {
+      "type": "string"
+    },
+    "author_side": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "staff",
+        "system"
+      ]
+    },
+    "author_name": {
+      "type": "string"
+    },
+    "author_email": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "message",
+        "estimate_approved",
+        "estimate_revision_requested",
+        "payment_notice",
+        "system"
+      ],
+      "default": "message"
+    },
+    "body": {
+      "type": "string"
+    },
+    "related_kind": {
+      "type": "string",
+      "enum": [
+        "estimate",
+        "invoice",
+        "work_order",
+        "none"
+      ],
+      "default": "none"
+    },
+    "related_id": {
+      "type": "string"
+    },
+    "related_label": {
+      "type": "string"
+    },
+    "read_by_staff": {
+      "type": "boolean",
+      "default": false
+    },
+    "read_by_customer": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "creation_request_key",
+    "customer_id",
+    "author_side",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__portal_message_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__portal_message_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__portal_message_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__portal_message_backend_only__"
+      }
+    }
+  }
+}
