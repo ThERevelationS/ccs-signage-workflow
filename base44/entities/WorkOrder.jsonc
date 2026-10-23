@@ -401,6 +401,10 @@
       "type": "object",
       "description": "Sales-only durable Smartsheet row creation reservation. Stores a pre-POST mapped snapshot and, if confirmed, a permanent row ID for verified one-time recovery. Never auto-repeat an uncertain create or infer row identity from its values."
     },
+    "automation_deadline_fired": {
+      "type": "object",
+      "description": "Durable deadline-automation claim markers. Keys are ruleId|triggerType|dueDate, values are the ISO date the rule last fired for that combination, so daily reminder runs never re-fire the same rule for the same deadline."
+    },
     "sales_status": {
       "type": "string",
       "enum": [
