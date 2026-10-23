@@ -23,6 +23,11 @@ const SOURCE_TYPES = [
   "smartsheet", "repeat_customer", "walk_in", "historical", "integration",
 ];
 const OPEN_REQUEST_STATUSES = new Set(["draft", "ready", "in_progress"]);
+const OPP_TO_WO_STAGE: Record<string, string> = {
+  new: "lead", qualified: "lead", estimating: "lead",
+  quoted: "quoted", follow_up: "follow_up", on_hold: "on_hold",
+  won: "won", lost: "lost",
+};
 
 const REQUIREMENT_FIELDS = [
   "survey_requirement", "permit_requirement", "installation_requirement",
@@ -43,6 +48,21 @@ const EDITABLE_OPPORTUNITY_FIELDS = [
 
 const bad = (message: string, status = 400) =>
   Object.assign(new Error(message), { statusCode: status });
+
+async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any) {
+  const next = OPP_TO_WO_STAGE[clean(stage)];
+  const wo = await WorkOrder.get(clean(workOrderId)).catch(() => null);
+  if (!next || !wo?.id || clean(wo.sales_status) === next) return "";
+  const desired = { sales_status: next };
+  await replaceFoundationFieldsIfUnchanged({
+    entity: WorkOrder,
+    recordId: clean(wo.id),
+    expectedFields: expectedFoundationFields(wo, desired),
+    nextFields: desired,
+    label: "Work order sales status",
+  });
+  return next;
+}
 
 function requireEnum(value: any, allowed: string[], label: string) {
   const v = clean(value);
@@ -520,7 +540,23 @@ Deno.serve(async (req) => {
         nextFields: desired,
         label: "Opportunity fields",
       });
-      return Response.json({ success: true, action, opportunity: saved });
+      let syncedStage = "";
+      let stageSyncWarning = "";
+      if (Object.prototype.hasOwnProperty.call(desired, "stage")) {
+        const linkedWoId = clean(saved?.compatibility_work_order_id) || clean(current?.compatibility_work_order_id);
+        if (linkedWoId) {
+          try {
+            syncedStage = await syncWorkOrderStage(WorkOrder, linkedWoId, saved?.stage);
+          } catch (e: any) {
+            stageSyncWarning = e?.message || "Work order stage sync failed.";
+          }
+        }
+      }
+      return Response.json({
+        success: true, action, opportunity: saved,
+        work_order_stage: syncedStage || undefined,
+        stage_sync_warning: stageSyncWarning || undefined,
+      });
     }
 
     if (action === "resolve_intake") {
@@ -602,11 +638,21 @@ Deno.serve(async (req) => {
         });
       }
 
+      let syncedStage = "";
+      let stageSyncWarning = "";
+      try {
+        syncedStage = await syncWorkOrderStage(WorkOrder, workOrderId, savedOpportunity?.stage);
+      } catch (e: any) {
+        stageSyncWarning = e?.message || "Work order stage sync failed.";
+      }
+
       return Response.json({
         success: true,
         action,
         opportunity: savedOpportunity,
         work_order: savedWorkOrder,
+        work_order_stage: syncedStage || undefined,
+        stage_sync_warning: stageSyncWarning || undefined,
         reused: clean(opportunity.compatibility_work_order_id) === workOrderId && !Object.keys(woDesired).length,
       });
     }
