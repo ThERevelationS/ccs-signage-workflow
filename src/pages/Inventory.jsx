@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -161,7 +162,7 @@ export default function Inventory() {
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && items.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading stock…</div>
+          <TableSkeleton columns={7} />
         ) : items.length === 0 ? (
           <div className="py-16 text-center text-slate-500">No inventory items.</div>
         ) : (
