@@ -1,0 +1,89 @@
+{
+  "name": "WorkflowScheduleChange",
+  "type": "object",
+  "properties": {
+    "workflow_id": {
+      "type": "string"
+    },
+    "workflow_name": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "schedule_update",
+        "status_change",
+        "adopt_external"
+      ]
+    },
+    "previous_cron": {
+      "type": "string"
+    },
+    "previous_timezone": {
+      "type": "string"
+    },
+    "previous_status": {
+      "type": "string"
+    },
+    "new_cron": {
+      "type": "string"
+    },
+    "new_timezone": {
+      "type": "string"
+    },
+    "new_status": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "applied",
+        "failed",
+        "conflict"
+      ]
+    },
+    "error": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "workflow_id",
+    "action",
+    "outcome"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
