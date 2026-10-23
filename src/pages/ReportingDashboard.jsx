@@ -4,7 +4,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
-import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
+import { BarChart3, CheckCircle2, Clock, Users, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Skeleton } from "@/components/ui/skeleton";
