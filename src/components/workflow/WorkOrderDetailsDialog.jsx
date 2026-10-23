@@ -137,6 +137,7 @@ export default function WorkOrderDetailsDialog({
   const [editingField, setEditingField] = useState(null);
   const [editValues, setEditValues] = useState({});
   const inlineEditBaselineRef = useRef({});
+  const inlineEditSavingRef = useRef(new Set());
   const [inlineEditError, setInlineEditError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [newDependency, setNewDependency] = useState({
@@ -333,6 +334,10 @@ export default function WorkOrderDetailsDialog({
   };
 
   const saveEdit = async (field) => {
+    // A duplicate submission would CAS-fail against this request's own write
+    // and report a spurious "changed in another session" conflict.
+    if (inlineEditSavingRef.current.has(field)) return;
+    inlineEditSavingRef.current.add(field);
     const oldValue = Object.prototype.hasOwnProperty.call(inlineEditBaselineRef.current, field)
       ? inlineEditBaselineRef.current[field]
       : workOrder[field];
@@ -358,6 +363,8 @@ export default function WorkOrderDetailsDialog({
     } catch (error) {
       console.error(`Could not save Work Order ${field}:`, error);
       setInlineEditError(error?.message || "This Work Order field changed in another session. Reload the latest value before saving.");
+    } finally {
+      inlineEditSavingRef.current.delete(field);
     }
   };
 
