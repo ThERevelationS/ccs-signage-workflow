@@ -2,7 +2,7 @@
 // steady states; anything the full 'status' action would recover, resolve, or
 // reject with canonical 409 behavior maps to requires_full_status so the caller
 // can fall back. Never performs entity writes.
-export async function buildStatusLite({ stateEntity, entryEntity, breakEntity, workPauseEntity, target, helpers }) {
+export async function buildStatusLite({ stateEntity, entryEntity, breakEntity, workPauseEntity, target, helpers }: any) {
   const {
     publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
     breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
