@@ -1,26 +1,49 @@
-import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useState, useEffect, useMemo } from "react";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
 
-const WorkOrder = base44.entities.WorkOrder;
 import { Button } from "@/components/ui/button";
 import { SelectItem } from "@/components/ui/select";
 import MobileSelect from "@/components/mobile/MobileSelect";
 import { ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { useAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
 import { hasAnyTimelineSegment, earliestSegmentDue } from "@/components/workflow/workOrderTimelineSegments";
 
 const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation'];
 
 export default function MainWorkflow() {
-  const [workOrders, setWorkOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [readError, setReadError] = useState("");
+  const { data: allWorkOrders, isLoading, error: workOrdersError } = useAllWorkOrders();
+  const readError = workOrdersError?.message || (workOrdersError ? "Main Workflow Work Orders could not be verified completely." : "");
   const [sortBy, setSortBy] = useState("due_date");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const workOrders = useMemo(() => {
+    // Only active jobs belong on the Main Workflow board — exclude anything
+    // completed, closed (completed stage), lost, or soft-deleted. Also exclude
+    // jobs whose current task places them out of active production: prospect
+    // initiation, completed sale, lost (including "Lost - We took too long"),
+    // and closed sections ("Closed - ...").
+    const EXCLUDED_TASK_PATTERN = /^Prospect Initiation|^Completed Sale|^Lost$|^Lost -|^Closed -/i;
+    const activeOrders = (allWorkOrders || []).filter(
+      wo => !wo.completed && !wo.deleted && wo.current_stage !== "completed" && wo.sales_status !== "lost"
+        && !EXCLUDED_TASK_PATTERN.test(wo.current_task_description || "")
+    );
+
+    // Separate parent work orders and riders. A work order is a rider if its
+    // `is_rider` property is true; otherwise it is a parent.
+    const parents = activeOrders.filter(wo => !wo.is_rider);
+    const riders = activeOrders.filter(wo => wo.is_rider);
+
+    // Attach riders to their parent work orders, then keep only jobs that
+    // have at least one dated portion (whole-job due date, rider, task, or
+    // Sales Pipeline milestone). Jobs with no assigned due date are hidden.
+    return parents.map(parent => ({
+      ...parent,
+      riders: riders.filter(rider => rider.parent_work_order_id === parent.id)
+    })).filter(wo => hasAnyTimelineSegment(wo));
+  }, [allWorkOrders]);
 
   const handleWorkOrderClick = (wo) => {
     setSelectedWorkOrder(wo);
@@ -35,60 +58,6 @@ export default function MainWorkflow() {
   useEffect(() => {
     document.title = "Main Workflow - Workflow Manager";
   }, []);
-
-  useEffect(() => {
-    loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 30000);
-    
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  const loadWorkOrders = async (showLoading = false) => {
-    if (showLoading) setIsLoading(true);
-    setReadError("");
-    try {
-      // Preserve the existing list-based read (rather than a broad filter) to
-      // avoid the historical filter timeout, but page it completely so older
-      // active Work Orders are not silently omitted from the workflow board.
-      const allWorkOrders = await loadAllEntityRows({
-        entity: WorkOrder,
-        sort: "-updated_date",
-        label: "Main Workflow Work Orders",
-      });
-      // Only active jobs belong on the Main Workflow board — exclude anything
-      // completed, closed (completed stage), lost, or soft-deleted. Also exclude
-      // jobs whose current task places them out of active production: prospect
-      // initiation, completed sale, lost (including "Lost - We took too long"),
-      // and closed sections ("Closed - ...").
-      const EXCLUDED_TASK_PATTERN = /^Prospect Initiation|^Completed Sale|^Lost$|^Lost -|^Closed -/i;
-      const activeOrders = allWorkOrders.filter(
-        wo => !wo.completed && !wo.deleted && wo.current_stage !== "completed" && wo.sales_status !== "lost"
-          && !EXCLUDED_TASK_PATTERN.test(wo.current_task_description || "")
-      );
-
-      // Separate parent work orders and riders. A work order is a rider if its
-      // `is_rider` property is true; otherwise it is a parent.
-      const parents = activeOrders.filter(wo => !wo.is_rider);
-      const riders = activeOrders.filter(wo => wo.is_rider);
-
-      // Attach riders to their parent work orders, then keep only jobs that
-      // have at least one dated portion (whole-job due date, rider, task, or
-      // Sales Pipeline milestone). Jobs with no assigned due date are hidden.
-      const groupedWorkOrders = parents.map(parent => ({
-        ...parent,
-        riders: riders.filter(rider => rider.parent_work_order_id === parent.id)
-      })).filter(wo => hasAnyTimelineSegment(wo));
-
-      setWorkOrders(groupedWorkOrders);
-    } catch (error) {
-      console.error("Error loading work orders:", error);
-      setReadError(error?.message || "Main Workflow Work Orders could not be verified completely.");
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  };
 
   const getSortedWorkOrders = () => {
     const sorted = [...workOrders];
@@ -109,7 +78,7 @@ export default function MainWorkflow() {
   };
 
   return (
-    <PullToRefresh onRefresh={() => loadWorkOrders(false)}>
+    <PullToRefresh onRefresh={() => refreshAllWorkOrders()}>
     <div className="min-h-screen p-4">
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
@@ -143,7 +112,7 @@ export default function MainWorkflow() {
             <div className="text-center py-12">
               <p className="text-red-700 font-semibold">Workflow data could not be verified.</p>
               <p className="text-red-600 text-sm mt-2">{readError}</p>
-              <Button variant="outline" className="mt-3" onClick={() => loadWorkOrders(true)}>Retry</Button>
+              <Button variant="outline" className="mt-3" onClick={() => refreshAllWorkOrders()}>Retry</Button>
             </div>
           ) : workOrders.length === 0 ? (
             <div className="text-center py-12">
@@ -161,7 +130,7 @@ export default function MainWorkflow() {
           isOpen={isDialogOpen}
           onClose={handleDialogClose}
           workOrder={selectedWorkOrder}
-          onUpdate={() => loadWorkOrders(false)}
+          onUpdate={() => refreshAllWorkOrders()}
         />
       )}
     </div>
