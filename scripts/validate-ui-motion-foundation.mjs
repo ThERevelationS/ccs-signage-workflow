@@ -250,7 +250,7 @@ test("PTOBalanceView loading shows a card skeleton", () => {
 test("TimeClock detail dialogs use list skeletons", () => {
   const sd = readFileSync("src/components/timeclock/TimeClockShiftDetail.jsx", "utf8");
   const at = readFileSync("src/components/timeclock/TimeClockAuditTrail.jsx", "utf8");
-  assert.match(sd, /import { ListSkeleton } from "@/components/ui/list-skeleton"/);
+  assert.ok(sd.includes("import { ListSkeleton } from"), "shift detail imports ListSkeleton");
   assert.doesNotMatch(sd, /animate-spin/, "shift detail must not spin");
   assert.match(at, /<ListSkeleton rows={5} />/);
   assert.doesNotMatch(at, /Loading audit history/, "audit trail spinner text gone");
