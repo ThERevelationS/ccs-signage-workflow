@@ -51,6 +51,22 @@ const bad = (message: string, status = 400) =>
 
 const QUOTE_OUT_STATUSES = new Set(["sent", "approved"]);
 
+async function logActivity(Activity: any, args: any) {
+  try {
+    const key = `act:${args.event_type}:${args.opportunity_id}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+    await Activity.create({
+      creation_request_key: key,
+      opportunity_id: clean(args.opportunity_id),
+      event_type: args.event_type,
+      summary: clean(args.summary),
+      actor: clean(args.actor) || "unknown",
+      details: args.details && typeof args.details === "object" ? args.details : {},
+    });
+  } catch (error: any) {
+    console.error("opportunity activity log failed:", error?.message || error);
+  }
+}
+
 async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request }: any) {
   if (!OPEN_REQUEST_STATUSES.has(clean(request?.status))) return { request, completed: false };
   const estimateId = clean(request?.estimate_id);
@@ -179,6 +195,7 @@ Deno.serve(async (req) => {
     const Invoice = base44.asServiceRole.entities.Invoice;
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
+    const Activity = base44.asServiceRole.entities.OpportunityActivity;
 
     if (action === "search_customers") {
       const query = clean(body?.query).toLowerCase();
@@ -288,7 +305,7 @@ Deno.serve(async (req) => {
       if (!opportunityId) throw bad("opportunity_id is required.");
       const opportunity = await Opportunity.get(opportunityId).catch(() => null);
       if (!opportunity?.id) throw bad("Opportunity not found.", 404);
-      const [intakes, requests, customer, contact, location, workOrder, estimates, invoices, purchaseOrders, changeOrders] = await Promise.all([
+      const [intakes, requests, customer, contact, location, workOrder, estimates, invoices, purchaseOrders, changeOrders, activity] = await Promise.all([
         Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100),
         EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100),
         clean(opportunity?.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
@@ -301,6 +318,7 @@ Deno.serve(async (req) => {
         Invoice.filter({ opportunity_id: opportunityId }),
         PurchaseOrder.filter({ opportunity_id: opportunityId }),
         ChangeOrder.filter({ opportunity_id: opportunityId }),
+        Activity.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
       ]);
       const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const billedTotal = money(liveInvoices.filter((i: any) => clean(i?.status) !== "draft").reduce((s: number, i: any) => s + num(i?.total), 0));
@@ -335,6 +353,12 @@ Deno.serve(async (req) => {
         try {
           await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted");
         } catch {}
+        await logActivity(Activity, {
+          opportunity_id: opportunityId, actor,
+          event_type: "reconciled",
+          summary: "Stage advanced to quoted — linked estimate sent/approved",
+          details: { from_stage: clean(opportunity.stage), to_stage: "quoted" },
+        });
       }
       return Response.json({
         success: true,
@@ -350,6 +374,7 @@ Deno.serve(async (req) => {
         invoices: Array.isArray(invoices) ? invoices : [],
         purchase_orders: Array.isArray(purchaseOrders) ? purchaseOrders : [],
         change_orders: Array.isArray(changeOrders) ? changeOrders : [],
+        activity: Array.isArray(activity) ? activity : [],
         financials: {
           invoiced: billedTotal,
           collected: collectedTotal,
@@ -457,6 +482,12 @@ Deno.serve(async (req) => {
         nextFields: desired,
         label: "Estimating Request assignment",
       });
+      await logActivity(Activity, {
+        opportunity_id: clean(current.opportunity_id), actor,
+        event_type: "estimator_assigned",
+        summary: `Estimator assigned: ${clean(desired.assigned_estimator) || "unassigned"} (${clean(desired.priority || current.priority) || "normal"})`,
+        details: { estimating_request_id: requestId, assigned_estimator: clean(desired.assigned_estimator), priority: clean(desired.priority) },
+      });
       return Response.json({ success: true, action, estimating_request: updated });
     }
 
@@ -563,6 +594,14 @@ Deno.serve(async (req) => {
       }
 
       const fresh = await Opportunity.get(clean(opportunity.id)).catch(() => opportunity);
+      await logActivity(Activity, {
+        opportunity_id: clean(opportunity.id), actor,
+        event_type: "created",
+        summary: oppResult.status === "created"
+          ? `Opportunity captured (${sourceType})`
+          : "Intake resolved against an existing opportunity",
+        details: { source_type: sourceType, intake_id: clean(intake?.id), reused: oppResult.status !== "created" },
+      });
       return Response.json({
         success: true,
         action,
@@ -657,6 +696,18 @@ Deno.serve(async (req) => {
           }
         }
       }
+      {
+        const changed = Object.keys(desired).filter((k) => !["last_activity_at", "stage_changed_at", "closed_at"].includes(k));
+        const stageChanged = changed.includes("stage") && desired.stage !== clean(current.stage);
+        await logActivity(Activity, {
+          opportunity_id: opportunityId, actor,
+          event_type: stageChanged ? "stage_changed" : "updated",
+          summary: stageChanged
+            ? `Stage ${clean(current.stage) || "new"} → ${desired.stage}`
+            : `${changed.length || 1} field${(changed.length || 1) === 1 ? "" : "s"} updated: ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "…" : ""}`,
+          details: { fields: changed, from_stage: clean(current.stage), to_stage: clean(saved?.stage) },
+        });
+      }
       return Response.json({
         success: true, action, opportunity: saved,
         work_order_stage: syncedStage || undefined,
@@ -750,6 +801,13 @@ Deno.serve(async (req) => {
       } catch (e: any) {
         stageSyncWarning = e?.message || "Work order stage sync failed.";
       }
+
+      await logActivity(Activity, {
+        opportunity_id: opportunityId, actor,
+        event_type: "linked_work_order",
+        summary: `Linked compatibility WorkOrder ${clean(savedWorkOrder?.title) || workOrderId}`,
+        details: { work_order_id: workOrderId, work_order_stage: syncedStage || clean(savedWorkOrder?.sales_status) },
+      });
 
       return Response.json({
         success: true,
@@ -904,6 +962,19 @@ Deno.serve(async (req) => {
         nextFields: opportunityDesired,
         label: "Opportunity estimating link",
       }).catch(() => null);
+
+      await logActivity(Activity, {
+        opportunity_id: opportunityId, actor,
+        event_type: "estimate_requested",
+        summary: `Estimate requested — ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
+        details: {
+          estimating_request_id: clean(request?.id),
+          estimate_id: clean(estimate?.id),
+          priority: clean(request?.priority),
+          assigned_estimator: clean(request?.assigned_estimator),
+          reused: requestResult.status !== "created",
+        },
+      });
 
       return Response.json({
         success: true,
