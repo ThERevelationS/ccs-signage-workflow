@@ -62,6 +62,7 @@ async function applyMovement({ Inventory, Movement, item, delta, reason, workOrd
       item_label: itemLabel(item),
       reason,
       delta: money(delta),
+      unit_cost: num(item?.cost_per_unit),
       resulting_qty: Math.max(0, next),
       work_order_id: workOrderId,
       note,
