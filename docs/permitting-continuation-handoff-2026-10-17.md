@@ -1,3 +1,18 @@
+# Recurrence guards - official identity gate and fail-closed source checks
+
+- New shared module base44/shared/permittingSourceIdentity.mjs: assessOfficialQueueIdentity, assertOfficialProfileResearchIdentity, assertResearchSourceIdentity, assertPageSourceIdentity. Backed by base44/shared/permittingGeographicCandidates.mjs (2848 official Census-derived candidates, source SHA-256 c6c64b5c263e601beeb4e595cf056622d66d092b954eba509ef1ce91b6c8eecd, vintage 2026-01-01).
+- Automatic eligibility now requires exactly one official geographic candidate; unmatched or ambiguous queue identities are held for review (active rows preserved, never deleted, never dispatched). Name match alone never establishes permitting authority: authority_verified stays false. Municipality fallback accepts only a single city/village hit; townships require their parent county.
+- Dispatcher (permittingResearchBacklogDispatch) gates ensureProfileForQueueRow and source-discovery rows, tracks sourceIdentityReviews/identity_reviews, refuses auto_refresh===false or blocked-frontier profiles, and sends automatic_research:true so refresh uses the stricter path.
+- refreshJurisdiction: batch refresh skips held/blocked profiles and records identity_reviews; automatic calls assert official identity and reject held profiles (409). AI research is validated by assertResearchSourceIdentity before sanitize/retention; SOURCE_IDENTITY_REVIEW_REQUIRED rethrows instead of degrading to a retryable discovery gap. discovery_only also asserts profile-vs-research identity.
+- jurisdictionResearchAgent validates sanitized LLM output before return; explicit wrong-state summaries return HTTP 409 SOURCE_IDENTITY_REVIEW_REQUIRED with frontier_review_required.
+- Discovery scan accepts optional jurisdiction and asserts page title/H1/footer branding; conflicts throw SOURCE_IDENTITY_REVIEW_REQUIRED. Continuation quarantines the frontier (blocked cursor, block_code, auto_refresh=false) via concurrency-guarded write, preserving all documents and pending pages. Saved-document discovery passes profile context while keeping explicit selection/manual/pinned/archive protections.
+- Explicit-identity checks fire only on Name, State identity statements in research summaries and page title/H1/footer branding; ordinary body references, provider contacts and citations are intentionally not treated as conflicts.
+- Verification (sandbox): 13 source-identity + 3 holds + 8 identity-guard + 13 discovery-refresh + 9 continuation + 11 scan + 9 frontier + 10 backlog-dispatch + 30 saved-document tests = 106 pass, 0 fail. Local broader batch: 871/884 pass; 13 failures all pre-existing evidence-sha working-tree drift (346 re-fetched official files), unrelated.
+- Checkpoint 6adbb143103ef92faea4b9fa (git 54f347216). Companion checkpoint 6adbb13c3a4d113106dcb8d7 was auto-named by the bridge.
+- Portland profile remains quarantined: blocked cursor, auto_refresh false, blocked queue row, zero documents after approved cleanup. Wrong URLs and Oregon AI summary still require separately scoped identity repair; no collection restart.
+- Note: writes intermittently timed out at the sandbox bridge but landed with propagation lag; every file was re-read and hash-verified before checkpointing.
+- This unit changes automatic collection safety only. Portland source repair, failed-seed URL repair (163 profiles), review-gap triage (~4667) and Milestone 3 completeness review remain separately scoped.
+
 # FULL STOP - approved Portland cleanup complete
 
 - Exactly 1866 manifest-listed Oregon document entries removed from profile 6adaf8efc137885e5c4143d0. One conditional update, acknowledgement updated=1, readback verified, zero documents remain.
