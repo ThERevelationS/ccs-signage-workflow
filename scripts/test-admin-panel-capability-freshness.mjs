@@ -56,3 +56,15 @@ test("The persistence helpers still reject empty capabilities before dispatch", 
     assert.match(source, /admin_capability: require(?:Admin)?Capability\(adminCapability, label\)/);
   }
 });
+
+test("The browser fixture exercises dispatch-time freshness end to end", () => {
+  const browser = readFileSync("scripts/test-admin-navigation-browser.mjs", "utf8");
+  assert.match(browser, /function requireCapability\(adminCapability,label\)/,
+    "mockEmailGroupPersistence must mirror the real helper's pre-dispatch guard");
+  assert.match(browser, /__adminEmailGroupWriteCalls/,
+    "the mock must record the capability forwarded across the helper boundary");
+  assert.match(browser, /forwards the current stored capability at write time/);
+  assert.match(browser, /capability expiring mid-draft fails before dispatch and keeps the draft/);
+  assert.match(browser, /__adminCapabilityExpired=true/,
+    "the mid-draft expiry check must expire storage after the dialog opened");
+});
