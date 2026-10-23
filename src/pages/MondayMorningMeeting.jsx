@@ -13,6 +13,7 @@ import { Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
@@ -44,10 +45,10 @@ export default function MondayMorningMeeting() {
     document.title = "Monday Morning Meeting - Workflow Manager";
   }, []);
 
+  usePolling(() => loadWorkOrders(false), 120000, { runOnMount: false });
+
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => loadWorkOrders(false), 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const loadWorkOrders = async (showLoading = true) => {
