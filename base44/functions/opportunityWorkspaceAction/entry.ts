@@ -219,6 +219,24 @@ Deno.serve(async (req) => {
         if (stage === "won") { wonValue += budget; wonCount += 1; decidedCount += 1; }
         if (stage === "lost") decidedCount += 1;
       }
+      const bySalesperson: any = {};
+      for (const row of rows) {
+        const rep = clean(row?.salesperson) || "Unassigned";
+        const slot = bySalesperson[rep] || (bySalesperson[rep] = { salesperson: rep, open_count: 0, open_value: 0, won_count: 0, won_value: 0, decided_count: 0 });
+        const stage = clean(row?.stage) || "new";
+        const budget = Number(row?.budget_amount) || 0;
+        if (!CLOSED_STAGES.has(stage)) { slot.open_count += 1; slot.open_value += budget; }
+        if (stage === "won") { slot.won_count += 1; slot.won_value += budget; slot.decided_count += 1; }
+        if (stage === "lost") slot.decided_count += 1;
+      }
+      const salespeople = Object.values(bySalesperson)
+        .map((s: any) => ({
+          ...s,
+          open_value: Math.round(s.open_value * 100) / 100,
+          won_value: Math.round(s.won_value * 100) / 100,
+          win_rate: s.decided_count > 0 ? Math.round((s.won_count / s.decided_count) * 1000) / 10 : null,
+        }))
+        .sort((a: any, b: any) => b.open_value - a.open_value || b.won_value - a.won_value);
       const funnel = {
         stage_counts: stageCounts,
         total: rows.length,
@@ -227,6 +245,7 @@ Deno.serve(async (req) => {
         won_count: wonCount,
         decided_count: decidedCount,
         win_rate: decidedCount > 0 ? Math.round((wonCount / decidedCount) * 1000) / 10 : null,
+        by_salesperson: salespeople,
       };
       return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
     }
