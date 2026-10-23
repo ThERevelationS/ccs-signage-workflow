@@ -97,4 +97,20 @@ test("motion barrel re-exports the full primitive set", () => {
   }
 });
 
+test("StatCards adopt stagger, count-up, and status glow", () => {
+  const stat = readFileSync("src/components/estimator/home/StatCards.jsx", "utf8");
+  assert.match(stat, /<Stagger className=/);
+  assert.match(stat, /<StaggerItem key=/);
+  assert.match(stat, /<CountUp value=\{counts\[c\.key\]/);
+  assert.match(stat, /glow-card/);
+  assert.match(stat, /glow-danger/, "sync-issue card must glow when nonzero");
+});
+
+test("SalesHome wraps its sections in FadeIn", () => {
+  const home = readFileSync("src/pages/SalesHome.jsx", "utf8");
+  assert.match(home, /import FadeIn from "@\/components\/motion\/FadeIn"/);
+  assert.ok((home.match(/<FadeIn/g) || []).length >= 2);
+  assert.match(home, /<FadeIn delay=\{0\.12\}>/);
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
