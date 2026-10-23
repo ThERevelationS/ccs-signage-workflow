@@ -448,9 +448,65 @@
         "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
         "failures": [],
         "skips": []
+      },
+      {
+        "run": "run41",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T09:15:23.104Z",
+        "finished_at": "2026-10-23T09:28:05.018Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
+      },
+      {
+        "run": "run42",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T09:28:14.571Z",
+        "finished_at": "2026-10-23T09:41:11.394Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
+      },
+      {
+        "run": "run43",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T09:41:22.205Z",
+        "finished_at": "2026-10-23T09:54:48.065Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
+      },
+      {
+        "run": "run44",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T09:54:59.673Z",
+        "finished_at": "2026-10-23T10:06:06.688Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
       }
     ],
-    "pages_fetched_total_bounded_passes": 5821,
+    "pages_fetched_total_bounded_passes": 6421,
     "provenance_violations": 0,
     "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining.",
     "page_metric_clarification": "The historical pages/pages_fetched_total_bounded_passes keys count attempted_pages, not verified successful fetches. Failed fetches persist explicit gaps. Historical provenance_violations is retained from prior receipts; runs 23 onward did not perform a separate per-document live provenance audit.",
@@ -465,21 +521,21 @@
     "OH": {
       "frontier_profiles": 821,
       "no_frontier_remaining": 62,
-      "pending_pages": 636,
-      "profiles_with_pending": 18,
-      "review_gaps": 2483
+      "pending_pages": 359,
+      "profiles_with_pending": 4,
+      "review_gaps": 2918
     },
     "KY": {
       "frontier_profiles": 113,
       "no_frontier_remaining": 101,
-      "pending_pages": 10,
-      "profiles_with_pending": 1,
-      "review_gaps": 259
+      "pending_pages": 0,
+      "profiles_with_pending": 0,
+      "review_gaps": 414
     }
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
   "protected_data": "No manual/pinned/archive-protected record was modified; all writes used guarded same-version persistence; no client/job/shared records touched; no authority or applicability conclusions drawn.",
-  "ongoing": "Readback after run40: OH 636 pending pages across 18 profiles; KY 10 across 1. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
+  "ongoing": "Readback after run44: OH 359 pending pages across 4 profiles; KY 0 across 0. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
   "gap_triage": {
     "page_fetch_failed": {
       "OH": 454,
@@ -499,30 +555,14 @@
   },
   "latest_continuation": {
     "runs": [
-      "run37",
-      "run38",
-      "run39",
-      "run40"
+      "run41",
+      "run42",
+      "run43",
+      "run44"
     ],
     "attempts": 600,
     "errors": 0,
     "before_state": {
-      "OH": {
-        "frontier_profiles": 821,
-        "no_frontier_remaining": 62,
-        "pending_pages": 1132,
-        "profiles_with_pending": 54,
-        "review_gaps": 2073
-      },
-      "KY": {
-        "frontier_profiles": 113,
-        "no_frontier_remaining": 101,
-        "pending_pages": 53,
-        "profiles_with_pending": 5,
-        "review_gaps": 208
-      }
-    },
-    "after_state": {
       "OH": {
         "frontier_profiles": 821,
         "no_frontier_remaining": 62,
@@ -536,6 +576,22 @@
         "pending_pages": 10,
         "profiles_with_pending": 1,
         "review_gaps": 259
+      }
+    },
+    "after_state": {
+      "OH": {
+        "frontier_profiles": 821,
+        "no_frontier_remaining": 62,
+        "pending_pages": 359,
+        "profiles_with_pending": 4,
+        "review_gaps": 2918
+      },
+      "KY": {
+        "frontier_profiles": 113,
+        "no_frontier_remaining": 101,
+        "pending_pages": 0,
+        "profiles_with_pending": 0,
+        "review_gaps": 414
       }
     },
     "snapshot_note": "Readbacks may include concurrent scheduler activity; changes are not attributed solely to these runs.",
@@ -751,6 +807,52 @@
           "pending_pages": 53,
           "profiles_with_pending": 5,
           "review_gaps": 208
+        }
+      },
+      "snapshot_note": "Readbacks may include concurrent scheduler activity; changes are not attributed solely to these runs.",
+      "interruptions": [],
+      "prior_uncertainty": "Run26 interrupted-cycle stage/target/persistence outcome remains unverified and was not replayed. Prior receipts/history retained.",
+      "bounds": "One page/cycle, same-host static fetches, 12s fetch timeout; pacing_ms per run: [2500, 2500, 2500, 2500]. No recovery routes, LLM calls, uploads or cap changes."
+    },
+    {
+      "runs": [
+        "run37",
+        "run38",
+        "run39",
+        "run40"
+      ],
+      "attempts": 600,
+      "errors": 0,
+      "before_state": {
+        "OH": {
+          "frontier_profiles": 821,
+          "no_frontier_remaining": 62,
+          "pending_pages": 1132,
+          "profiles_with_pending": 54,
+          "review_gaps": 2073
+        },
+        "KY": {
+          "frontier_profiles": 113,
+          "no_frontier_remaining": 101,
+          "pending_pages": 53,
+          "profiles_with_pending": 5,
+          "review_gaps": 208
+        }
+      },
+      "after_state": {
+        "OH": {
+          "frontier_profiles": 821,
+          "no_frontier_remaining": 62,
+          "pending_pages": 636,
+          "profiles_with_pending": 18,
+          "review_gaps": 2483
+        },
+        "KY": {
+          "frontier_profiles": 113,
+          "no_frontier_remaining": 101,
+          "pending_pages": 10,
+          "profiles_with_pending": 1,
+          "review_gaps": 259
         }
       },
       "snapshot_note": "Readbacks may include concurrent scheduler activity; changes are not attributed solely to these runs.",
