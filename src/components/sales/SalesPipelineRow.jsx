@@ -88,9 +88,15 @@ const anchorFocusedRow = (el) => {
     const r = el.getBoundingClientRect();
     const drift = r.top + r.height / 2 - beforeCenter;
     if (Math.abs(drift) > 0.5) target.scrollTop += drift;
-    if (performance.now() - start < 360) requestAnimationFrame(tick);
+    if (performance.now() - start < 450) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+  setTimeout(() => {
+    if (!el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const drift = r.top + r.height / 2 - beforeCenter;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+  }, 500);
 };
 
 const SalesPipelineRow = memo(function SalesPipelineRow({
