@@ -24,9 +24,12 @@ const STAGE_LABELS: Record<string, string> = {
 };
 const formatStage = (s: unknown) => STAGE_LABELS[String(s || '')] || String(s || '');
 
+// rider_stage excludes 'completed' — the enum stops at installation.
+const RIDER_STAGES = new Set(['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation']);
+
 // Named events arrive with event_type === the UI's trigger vocabulary; the
 // legacy 'create'/'update' vocabulary is still honored for field-diff checks.
-function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any) {
+function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any) {
   const condition = trigger?.trigger_condition || {};
 
   switch (trigger?.trigger_type) {
@@ -83,6 +86,44 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
       if (oldData?.assigned_to === workOrder?.assigned_to) return false;
       break;
     case 'work_order_deleted':
+    case 'work_order_updated':
+    case 'work_order_restored':
+    case 'work_order_client_changed':
+    case 'work_order_description_changed':
+    case 'work_order_title_changed':
+    case 'work_order_estimate_changed':
+    case 'work_order_contact_changed':
+    case 'work_order_install_location_changed':
+    case 'work_order_permit_number_set':
+    case 'work_order_permit_approved':
+    case 'work_order_permit_submitted':
+    case 'work_order_est_inv_set':
+    case 'work_order_install_date_set':
+    case 'work_order_install_date_approaching':
+    case 'work_order_install_date_passed':
+    case 'work_order_project_health_changed':
+    case 'work_order_production_type_changed':
+    case 'work_order_file_uploaded':
+    case 'stage_estimating_entered':
+    case 'stage_sales_entered':
+    case 'stage_permitting_entered':
+    case 'stage_design_entered':
+    case 'stage_production_entered':
+    case 'stage_fabrication_entered':
+    case 'stage_installation_entered':
+    case 'stage_completed_entered':
+    case 'project_health_on_track':
+    case 'project_health_at_risk':
+    case 'project_health_delayed':
+    case 'project_health_blocked':
+    case 'due_date_set':
+    case 'due_date_cleared':
+    case 'start_date_set':
+    case 'site_survey_scheduled':
+    case 'google_drive_linked':
+    case 'file_attached':
+    case 'permit_approved':
+    case 'permit_receipt_confirmed':
     case 'rider_created':
     case 'task_added':
     case 'task_completed':
@@ -90,9 +131,23 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'note_added':
     case 'note_deleted':
     case 'image_uploaded':
+    case 'priority_changed':
     case 'order_created':
     case 'order_ordered':
     case 'order_received':
+    case 'order_cancelled':
+    case 'order_overdue':
+    case 'order_customer_name_changed':
+    case 'order_request_type_changed':
+    case 'order_description_changed':
+    case 'order_quantity_changed':
+    case 'order_requestor_changed':
+    case 'order_date_needed_changed':
+    case 'order_date_ordered_changed':
+    case 'order_vendor_changed':
+    case 'order_date_received_changed':
+    case 'order_date_needed_approaching':
+    case 'order_date_needed_passed':
     case 'permit_submitted':
     case 'permit_received':
     case 'permit_followup_due':
@@ -111,6 +166,16 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
   if (condition.assigned_to && workOrder?.assigned_to !== condition.assigned_to) return false;
   if (condition.stage && trigger?.trigger_type !== 'stage_entered' && trigger?.trigger_type !== 'stage_exited'
       && workOrder?.current_stage !== condition.stage) return false;
+
+  // Order filters the builder collects for order_* triggers. A filter that
+  // does not match the incoming order's current value rejects the trigger.
+  if (order && String(trigger?.trigger_type || '').startsWith('order_')) {
+    if (condition.request_type && String(order.request_type || '') !== condition.request_type) return false;
+    if (condition.vendor && String(order.vendor || '') !== condition.vendor) return false;
+    if (condition.requestor && String(order.requestor_name || order.requestor || '') !== condition.requestor) return false;
+    if (condition.min_quantity != null && !(Number(order.quantity) >= Number(condition.min_quantity))) return false;
+    if (condition.max_quantity != null && !(Number(order.quantity) <= Number(condition.max_quantity))) return false;
+  }
   return true;
 }
 
@@ -308,6 +373,44 @@ async function executeAction(base44: any, action: any, workOrder: any, context: 
       Object.assign(workOrder, saved);
       return { marked_complete: true };
     }
+    case 'set_priority': {
+      const priority = Number(config.priority);
+      if (!Number.isFinite(priority)) break;
+      const nextFields = { priority };
+      const saved = await replaceWorkOrderFieldsIfUnchanged({ entity: base44.asServiceRole.entities.WorkOrder, workOrderId: workOrder.id, expectedFields: expectedWorkOrderFields(workOrder, nextFields), nextFields, label: 'Workflow automation priority update' });
+      Object.assign(workOrder, saved);
+      return { priority_set: priority };
+    }
+    case 'create_rider': {
+      const titleTemplate = String(config.title || '').trim();
+      const title = (titleTemplate ? titleTemplate.replace(/\{\{title\}\}/g, String(workOrder.title || '')) : `${workOrder.title || 'Work Order'} - Rider`).trim();
+      if (!title) break;
+      // A rule that already created a rider with this title for this parent
+      // does not create another — re-fired events must not duplicate riders.
+      const existing = await base44.asServiceRole.entities.WorkOrder.filter({ parent_work_order_id: workOrder.id, is_rider: true, title });
+      if (!Array.isArray(existing)) throw new Error('Workflow rider dedup lookup could not be verified.');
+      if (existing.length > 0) return { skipped: true, reason: 'A rider with this title already exists for this work order', rider_id: existing[0].id };
+      const stage = String(config.rider_stage || workOrder.current_stage || '').trim();
+      const days = parseInt(config.days, 10);
+      const dueDate = Number.isFinite(days)
+        ? (() => { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]; })()
+        : '';
+      const riderData = {
+        title,
+        client_name: workOrder.client_name || '',
+        description: config.note || '',
+        is_rider: true,
+        parent_work_order_id: workOrder.id,
+        current_stage: stage || 'production',
+        rider_stage: RIDER_STAGES.has(stage) ? stage : undefined,
+        assigned_to: config.assignee || '',
+        due_date: dueDate,
+        in_pipeline: true,
+        notes: config.task ? [{ text: config.task, timestamp: new Date().toISOString(), created_by: 'Automation', completed: false, sub_tasks: [] }] : [],
+      };
+      const rider = await base44.asServiceRole.entities.WorkOrder.create(riderData);
+      return { rider_created: rider?.id, title };
+    }
     default:
       return { skipped: true, reason: 'Unknown action type' };
   }
@@ -362,7 +465,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     // semantics the Admin editor warns about for mixed event types.
     let triggered: boolean | null = null;
     for (const trigger of rule.triggers || []) {
-      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras);
+      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras, orderRecord);
       if (triggered === null) triggered = m;
       else triggered = trigger?.logic === 'and' ? (triggered && m) : (triggered || m);
     }
