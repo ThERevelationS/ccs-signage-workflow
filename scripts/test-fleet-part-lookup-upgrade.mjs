@@ -117,4 +117,48 @@ test("scanning state is cleared when the dialog closes", () => {
   assert.match(cleanup, /setScanning\(false\)/);
 });
 
+test("in-dialog request creation posts to fleetRequestAction with a stable creation key", () => {
+  const submit = src.slice(src.indexOf("const submitRequest"), src.indexOf("const reSearch"));
+  assert.match(submit, /invoke\("fleetRequestAction",\s*\{/);
+  assert.match(submit, /action:\s*"create",\s*creation_key:\s*requestKey/);
+  assert.match(submit, /item_type:\s*"part"/);
+  assert.match(submit, /inventory_item_id: requestFor\.inventory_item_id/);
+  assert.match(submit, /justification:\s*requestJustification\.trim\(\)/);
+  assert.match(submit, /justification is required/);
+  assert.match(src, /const newRequestKey = \(\) => `partlookup-request-\$\{crypto\.randomUUID\(\)\}`/);
+});
+
+test("request edits regenerate the creation key so unchanged retries stay idempotent", () => {
+  const regens = src.match(/setRequestKey\(newRequestKey\(\)\)/g) || [];
+  assert.ok(regens.length >= 4, `expected at least 4 key regenerations (open + qty + equipment + justification), got ${regens.length}`);
+});
+
+test("duplicate matches and the done step can raise a linked request", () => {
+  assert.match(src, /onClick=\{\(\) => openRequest\(part\)\}/);
+  assert.match(src, /Request more of this/);
+  assert.match(src, /onClick=\{\(\) => openRequest\(actionedPart\)\}/);
+  assert.match(src, /setActionedPart\(part\)/);
+  assert.match(src, /setActionedPart\(data\.part \|\| null\)/);
+  assert.match(src, /Linked to the exact Fleet inventory record/);
+});
+
+test("cross-reference chips start a fresh session without losing the saved review", () => {
+  const body = src.slice(src.indexOf("const reSearch"), src.indexOf("const analyze"));
+  assert.match(body, /setSessionKey\(`partlookup-\$\{crypto\.randomUUID\(\)\}`\)/);
+  assert.match(body, /setQuery\(num\)/);
+  assert.match(body, /setSearchMode\("part_number"\)/);
+  assert.doesNotMatch(body, /setPhotos\(\[\]\)/, "re-search keeps the physical part's photos");
+  assert.match(src, /Cross-reference numbers/);
+  assert.match(src, /onClick=\{\(\) => reSearch\(num\)\}/);
+});
+
+test("a hardware wedge scanner's Enter in the barcode field triggers identification", () => {
+  assert.match(src, /e\.key === "Enter" && barcodeValue\.trim\(\)\) \{ e\.preventDefault\(\); analyze\(\); \}/);
+});
+
+test("duplicate cards surface the existing part's physical location", () => {
+  assert.match(src, /part\.storage_zone,part\.storage_cabinet,part\.storage_shelf,part\.storage_bin/);
+  assert.match(src, /Location: \{/);
+});
+
 console.log(`${passed}/${passed} part-lookup upgrade contract checks passed`);
