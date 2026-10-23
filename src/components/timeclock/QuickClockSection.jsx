@@ -1442,9 +1442,18 @@ export default function QuickClockSection({
 
       {notification && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setNotification(null)}>
-          <div className={`px-12 py-10 rounded-3xl shadow-2xl text-center transform animate-in zoom-in-95 ${notification.type === "in" ? "bg-green-500 text-white" : "bg-orange-500 text-white"}`}>
+          <div className={`relative overflow-hidden px-12 py-10 rounded-3xl shadow-2xl text-center transform animate-in zoom-in-95 ${notification.type === "in" ? "bg-green-500 text-white" : "bg-orange-500 text-white"}`}>
+            <div className="success-burst" />
             <div className="flex flex-col items-center gap-4">
-              {notification.type === "in" ? <Play className="w-16 h-16" /> : <Square className="w-16 h-16" />}
+              {notification.type === "in" ? (
+                <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path className="check-draw" d="M4 12.5l5 5L20 6.5" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path className="check-draw" d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              )}
               <div>
                 <p className="text-3xl font-bold mb-2">{notification.userName}</p>
                 <p className="text-xl">Successfully Clocked {notification.type === "in" ? "In" : "Out"}</p>
@@ -1502,7 +1511,7 @@ export default function QuickClockSection({
             <button
               onClick={startRecognition}
               disabled={isLoading}
-              className="relative w-64 h-32 rounded-2xl shadow-lg disabled:opacity-50 overflow-hidden hover:scale-105 transition-transform"
+              className="relative w-64 h-32 rounded-2xl shadow-lg hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-105 motion-safe:active:scale-95 transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
             >
               <div className="absolute inset-0 bg-green-600" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
               <div className="absolute inset-0 bg-red-600" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
