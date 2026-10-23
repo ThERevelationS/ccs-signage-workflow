@@ -6,6 +6,7 @@ import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
@@ -24,10 +25,11 @@ export default function Design() {
     document.title = "Design - Workflow Manager";
   }, []);
 
+  usePolling(() => loadWorkOrders(false), 120000, { runOnMount: false });
+
   useEffect(() => {
     loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 60000);
-    
+
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
     };
@@ -38,9 +40,8 @@ export default function Design() {
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
-      clearInterval(interval);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
     };
