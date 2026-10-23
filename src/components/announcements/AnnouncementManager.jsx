@@ -34,7 +34,7 @@ const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
   "Design", "Production", "Fabrication", "InstallationDeliver", "OrderForm",
   "SIPs", "MondayMorningMeeting", "Financials",
-  "WorkOrderCalendar", "TimeClock"
+  "WorkOrderCalendar", "TimeClock", "customerportal"
 ];
 
 const STOCK_SOUNDS = [
