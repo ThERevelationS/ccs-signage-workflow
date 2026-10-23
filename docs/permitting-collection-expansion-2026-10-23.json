@@ -336,9 +336,65 @@
           }
         ],
         "skips": []
+      },
+      {
+        "run": "run33",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T07:28:48.700Z",
+        "finished_at": "2026-10-23T07:40:22.865Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
+      },
+      {
+        "run": "run34",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T07:40:31.899Z",
+        "finished_at": "2026-10-23T07:52:22.734Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
+      },
+      {
+        "run": "run35",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T07:52:33.163Z",
+        "finished_at": "2026-10-23T08:07:18.702Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
+      },
+      {
+        "run": "run36",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T08:07:30.312Z",
+        "finished_at": "2026-10-23T08:20:37.242Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "pacing_ms": 2500,
+        "failure_detection": "Returned failures and exceptions checked; stop on first failure. Per-cycle jurisdiction, last operation and write-attempt flag retained locally.",
+        "failures": [],
+        "skips": []
       }
     ],
-    "pages_fetched_total_bounded_passes": 4621,
+    "pages_fetched_total_bounded_passes": 5221,
     "provenance_violations": 0,
     "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining.",
     "page_metric_clarification": "The historical pages/pages_fetched_total_bounded_passes keys count attempted_pages, not verified successful fetches. Failed fetches persist explicit gaps. Historical provenance_violations is retained from prior receipts; runs 23 onward did not perform a separate per-document live provenance audit.",
@@ -346,28 +402,28 @@
       "tests": "29/29 discovery continuation/frontier/scan tests passed in sandbox",
       "module_parity": "Nine shared modules and their complete local import closure matched sandbox SHA-256 hashes before execution",
       "runner": "C:/tmp/permitting-drain-verified.ts",
-      "pacing_ms": 1200
+      "pacing_ms": 2500
     }
   },
   "final_state": {
     "OH": {
       "frontier_profiles": 821,
       "no_frontier_remaining": 62,
-      "pending_pages": 1485,
-      "profiles_with_pending": 81,
-      "review_gaps": 1549
+      "pending_pages": 1132,
+      "profiles_with_pending": 54,
+      "review_gaps": 2073
     },
     "KY": {
       "frontier_profiles": 113,
       "no_frontier_remaining": 101,
-      "pending_pages": 105,
-      "profiles_with_pending": 9,
-      "review_gaps": 191
+      "pending_pages": 53,
+      "profiles_with_pending": 5,
+      "review_gaps": 208
     }
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
   "protected_data": "No manual/pinned/archive-protected record was modified; all writes used guarded same-version persistence; no client/job/shared records touched; no authority or applicability conclusions drawn.",
-  "ongoing": "Readback after run32: OH 1485 pending pages across 81 profiles; KY 105 across 9. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
+  "ongoing": "Readback after run36: OH 1132 pending pages across 54 profiles; KY 53 across 5. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
   "gap_triage": {
     "page_fetch_failed": {
       "OH": 454,
@@ -387,30 +443,14 @@
   },
   "latest_continuation": {
     "runs": [
-      "run29",
-      "run30",
-      "run31",
-      "run32"
+      "run33",
+      "run34",
+      "run35",
+      "run36"
     ],
-    "attempts": 573,
-    "errors": 1,
+    "attempts": 600,
+    "errors": 0,
     "before_state": {
-      "OH": {
-        "frontier_profiles": 816,
-        "no_frontier_remaining": 62,
-        "pending_pages": 1804,
-        "profiles_with_pending": 95,
-        "review_gaps": 1378
-      },
-      "KY": {
-        "frontier_profiles": 113,
-        "no_frontier_remaining": 101,
-        "pending_pages": 161,
-        "profiles_with_pending": 12,
-        "review_gaps": 170
-      }
-    },
-    "after_state": {
       "OH": {
         "frontier_profiles": 821,
         "no_frontier_remaining": 62,
@@ -426,20 +466,26 @@
         "review_gaps": 191
       }
     },
-    "snapshot_note": "Readbacks may include concurrent scheduler activity; changes are not attributed solely to these runs.",
-    "interruptions": [
-      {
-        "success": false,
-        "error": "Rate limit exceeded: entity_list allows 210 requests per 60s for each caller of this app (a signed-in user, a visitor's IP or a service token). Retry after 4s.",
-        "diagnostic": {
-          "jurisdiction_id": null,
-          "last_operation": "entity.filter:threw",
-          "write_attempted": false
-        }
+    "after_state": {
+      "OH": {
+        "frontier_profiles": 821,
+        "no_frontier_remaining": 62,
+        "pending_pages": 1132,
+        "profiles_with_pending": 54,
+        "review_gaps": 2073
+      },
+      "KY": {
+        "frontier_profiles": 113,
+        "no_frontier_remaining": 101,
+        "pending_pages": 53,
+        "profiles_with_pending": 5,
+        "review_gaps": 208
       }
-    ],
+    },
+    "snapshot_note": "Readbacks may include concurrent scheduler activity; changes are not attributed solely to these runs.",
+    "interruptions": [],
     "prior_uncertainty": "Run26 interrupted-cycle stage/target/persistence outcome remains unverified and was not replayed. Prior receipts/history retained.",
-    "bounds": "One page/cycle, same-host static fetches, 12s fetch timeout; pacing_ms per run: [1200, 1200, 1200, 1200]. No recovery routes, LLM calls, uploads or cap changes."
+    "bounds": "One page/cycle, same-host static fetches, 12s fetch timeout; pacing_ms per run: [2500, 2500, 2500, 2500]. No recovery routes, LLM calls, uploads or cap changes."
   },
   "continuation_history": [
     {
@@ -553,6 +599,62 @@
         },
         "decision": "Known document conflict before any write attempt; fresh targeted and aggregate reads completed before starting run28. No stale payload or cycle replay."
       }
+    },
+    {
+      "runs": [
+        "run29",
+        "run30",
+        "run31",
+        "run32"
+      ],
+      "attempts": 573,
+      "errors": 1,
+      "before_state": {
+        "OH": {
+          "frontier_profiles": 816,
+          "no_frontier_remaining": 62,
+          "pending_pages": 1804,
+          "profiles_with_pending": 95,
+          "review_gaps": 1378
+        },
+        "KY": {
+          "frontier_profiles": 113,
+          "no_frontier_remaining": 101,
+          "pending_pages": 161,
+          "profiles_with_pending": 12,
+          "review_gaps": 170
+        }
+      },
+      "after_state": {
+        "OH": {
+          "frontier_profiles": 821,
+          "no_frontier_remaining": 62,
+          "pending_pages": 1485,
+          "profiles_with_pending": 81,
+          "review_gaps": 1549
+        },
+        "KY": {
+          "frontier_profiles": 113,
+          "no_frontier_remaining": 101,
+          "pending_pages": 105,
+          "profiles_with_pending": 9,
+          "review_gaps": 191
+        }
+      },
+      "snapshot_note": "Readbacks may include concurrent scheduler activity; changes are not attributed solely to these runs.",
+      "interruptions": [
+        {
+          "success": false,
+          "error": "Rate limit exceeded: entity_list allows 210 requests per 60s for each caller of this app (a signed-in user, a visitor's IP or a service token). Retry after 4s.",
+          "diagnostic": {
+            "jurisdiction_id": null,
+            "last_operation": "entity.filter:threw",
+            "write_attempted": false
+          }
+        }
+      ],
+      "prior_uncertainty": "Run26 interrupted-cycle stage/target/persistence outcome remains unverified and was not replayed. Prior receipts/history retained.",
+      "bounds": "One page/cycle, same-host static fetches, 12s fetch timeout; pacing_ms per run: [1200, 1200, 1200, 1200]. No recovery routes, LLM calls, uploads or cap changes."
     }
   ]
 }
