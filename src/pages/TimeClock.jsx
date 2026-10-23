@@ -35,6 +35,7 @@ import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
 import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import SceneCanvas from "@/components/motion/SceneCanvas";
+import { Skeleton } from "@/components/ui/skeleton";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
@@ -524,8 +525,24 @@ export default function TimeClock() {
 
   if (isLoading && allUsers.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <div className="min-h-screen p-4 sm:p-6 ambient-mesh">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative mb-6 flex items-center justify-between overflow-hidden rounded-2xl px-3 py-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-36" />
+          </div>
+          <Skeleton className="mb-4 h-64 w-full rounded-2xl" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
