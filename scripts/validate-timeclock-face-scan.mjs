@@ -1,14 +1,14 @@
-// Synthetic coverage for the Tier-1 face scan hardening: scaled quality gate,
+import assert from "node:assert/strict";// Synthetic coverage for the Tier-1 face scan hardening: scaled quality gate,
 // two-pass detection fallback, brightness estimate, and the 3-of-5 match voter.
 // No camera, models, or production data are involved.
-import assert from "node:assert/strict";
+
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const runtimeSource = readFileSync("src/components/timeclock/faceScanRuntime.js", "utf8");
 const componentSource = readFileSync("src/components/timeclock/FaceRecognition.jsx", "utf8");
 let passed = 0;
-const test = (name, fn) => { fn(); passed += 1; console.log("PASS " + name); };
+const test = async (name, fn) => { await fn(); passed += 1; console.log("PASS " + name); };
 
 function loadRuntime({ firstPass = null, secondPass = null } = {}) {
   const calls = [];
@@ -17,7 +17,7 @@ function loadRuntime({ firstPass = null, secondPass = null } = {}) {
       constructor(opts) { this.opts = opts; }
     },
     detectSingleFace(_video, opts) {
-      calls.push(opts.inputSize);
+      calls.push(opts?.opts?.inputSize ?? opts?.inputSize);
       const value = calls.length === 1 ? firstPass : secondPass;
       return {
         withFaceLandmarks() { return this; },
@@ -43,7 +43,7 @@ function loadRuntime({ firstPass = null, secondPass = null } = {}) {
 
 const det = (score, width) => ({ detection: { score, box: { width, height: width } } });
 
-test("quality gate enforces score floor and scaled 32px size floor", () => {
+await test("quality gate enforces score floor and scaled 32px size floor", () => {
   const { x } = loadRuntime();
   assert.equal(x.FACE_QUALITY.minScore, 0.5);
   assert.equal(x.FACE_QUALITY.minBoxWidth, 32);
@@ -55,7 +55,7 @@ test("quality gate enforces score floor and scaled 32px size floor", () => {
   assert.equal(x.passesFaceQualityGate({}), false);
 });
 
-test("two-pass detection: cheap 320 pass wins when a face is found", async () => {
+await test("two-pass detection: cheap 320 pass wins when a face is found", async () => {
   const { x, calls } = loadRuntime({ firstPass: det(0.8, 120) });
   const video = { readyState: 4, videoWidth: 1280 };
   const result = await x.detectDetailedFace(video);
@@ -63,7 +63,7 @@ test("two-pass detection: cheap 320 pass wins when a face is found", async () =>
   assert.deepEqual(calls, [320], "no deep pass when the cheap pass detects");
 });
 
-test("two-pass detection: 512 fallback finds smaller/distant faces", async () => {
+await test("two-pass detection: 512 fallback finds smaller/distant faces", async () => {
   const { x, calls } = loadRuntime({ firstPass: null, secondPass: det(0.6, 40) });
   const video = { readyState: 4, videoWidth: 1280 };
   const result = await x.detectDetailedFace(video);
@@ -71,14 +71,14 @@ test("two-pass detection: 512 fallback finds smaller/distant faces", async () =>
   assert.deepEqual(calls, [320, 512], "deep pass only runs after a miss");
 });
 
-test("detectDetailedFace skips unready video without detector calls", async () => {
+await test("detectDetailedFace skips unready video without detector calls", async () => {
   const { x, calls } = loadRuntime();
   assert.equal(await x.detectDetailedFace(null), null);
   assert.equal(await x.detectDetailedFace({ readyState: 1, videoWidth: 1280 }), null);
   assert.deepEqual(calls, []);
 });
 
-test("match voter requires 3-of-5 on the same identity", () => {
+await test("match voter requires 3-of-5 on the same identity", () => {
   const { x } = loadRuntime();
   const user = { id: "u1" };
   const vote = x.createMatchVoter({ required: 3, window: 5 });
@@ -87,7 +87,7 @@ test("match voter requires 3-of-5 on the same identity", () => {
   assert.equal(vote(user), user, "3 consecutive frames confirm");
 });
 
-test("match voter tolerates a miss inside the window", () => {
+await test("match voter tolerates a miss inside the window", () => {
   const { x } = loadRuntime();
   const user = { id: "u1" };
   const vote = x.createMatchVoter({ required: 3, window: 5 });
@@ -97,7 +97,7 @@ test("match voter tolerates a miss inside the window", () => {
   assert.equal(vote(user), user, "3-of-5 with one miss confirms");
 });
 
-test("match voter cannot confirm while latest frame is a different user or a miss", () => {
+await test("match voter cannot confirm while latest frame is a different user or a miss", () => {
   const { x } = loadRuntime();
   const a = { id: "a" }, b = { id: "b" };
   const vote = x.createMatchVoter({ required: 3, window: 5 });
@@ -109,7 +109,7 @@ test("match voter cannot confirm while latest frame is a different user or a mis
   assert.equal(vote2(null), null, "a trailing miss cannot confirm a stale identity");
 });
 
-test("match voter evicts votes older than the window", () => {
+await test("match voter evicts votes older than the window", () => {
   const { x } = loadRuntime();
   const a = { id: "a" };
   const vote = x.createMatchVoter({ required: 3, window: 5 });
@@ -119,13 +119,13 @@ test("match voter evicts votes older than the window", () => {
   assert.equal(vote(a), a);
 });
 
-test("brightness estimator guards malformed boxes", () => {
+await test("brightness estimator guards malformed boxes", () => {
   const { x } = loadRuntime();
   assert.equal(x.estimateFaceBrightness({}, null), null);
   assert.equal(x.estimateFaceBrightness({}, { width: 0, height: 10 }), null);
 });
 
-test("component requests higher-resolution video and uses the voter", () => {
+await test("component requests higher-resolution video and uses the voter", () => {
   assert.match(componentSource, /width: \{ ideal: 1280 \}, height: \{ ideal: 720 \}/);
   assert.match(componentSource, /createMatchVoter\(\{ required: 3, window: 5 \}\)/);
   assert.match(componentSource, /voter\(null\)/, "misses must enter the window");
@@ -133,7 +133,7 @@ test("component requests higher-resolution video and uses the voter", () => {
   assert.doesNotMatch(componentSource, /box\.width < 80/, "fixed 80px floor must be gone");
 });
 
-test("component dims out instead of matching under poor light", () => {
+await test("component dims out instead of matching under poor light", () => {
   assert.match(componentSource, /const user = dim \? null : findMatchingUser/);
   assert.match(componentSource, /Lighting is dim\. Move to better light/);
   assert.match(componentSource, /Lighting is too dim to enroll well/, "enrollment rejects dim captures");
