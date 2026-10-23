@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -45,6 +46,8 @@ function signalPauseChanged(data = null) {
 
 export default function GlobalWorkPauseControl({ className = "", fullWidth = false, paired = false, compact = false } = {}) {
   const { currentUser, sessionToken } = useAuth();
+  const timeClockStatus = useTimeClockStatus();
+  const refreshTimeClockStatus = timeClockStatus.refresh;
   const email = String(currentUser?.email || "").trim().toLowerCase();
   const scopeKey = JSON.stringify([email, String(sessionToken || "")]);
   const previousScopeKeyRef = useRef(scopeKey);
@@ -70,7 +73,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   const statusSequenceRef = useRef(0);
   const transitionSequenceRef = useRef(0);
 
-  const loadStatus = useCallback(async () => {
+  const loadStatus = useCallback(async ({ force = false } = {}) => {
     const requestScope = scopeInstanceKey;
     const requestSequence = ++statusSequenceRef.current;
     const requestTransition = ++transitionSequenceRef.current;
@@ -86,13 +89,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       return null;
     }
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
-        action: "status",
-        session_token: sessionToken,
-        target_email: email,
-      });
-      const data = response?.data || response;
-      if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
+      const data = await refreshTimeClockStatus({ force });
       if (!isCurrent()) return null;
       const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
       if (!responseEmail || responseEmail !== email) {
@@ -111,32 +108,28 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       setError(err?.response?.data?.error || err?.message || "Work Pause status could not be verified.");
       return null;
     }
-  }, [email, sessionToken, scopeInstanceKey]);
+  }, [email, sessionToken, scopeInstanceKey, refreshTimeClockStatus]);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [timeClockStatus.version, loadStatus]);
 
   useEffect(() => {
     mountedRef.current = true;
     loadStatus();
-    const interval = setInterval(loadStatus, 15000);
-    const onFocus = () => loadStatus();
-    const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
     // Change events can originate from another employee session or arrive late.
     // Treat them only as invalidation signals; signed-session status is authoritative.
     const onPauseChanged = () => {
-      void loadStatus();
+      void loadStatus({ force: true });
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
-    window.addEventListener("focus", onFocus);
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus({ force: true }); };
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mountedRef.current = false;
       statusSequenceRef.current += 1;
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
       window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [loadStatus]);
 
@@ -217,7 +210,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
       if (!retrySame) clearRequestId(action, email, requestId);
       setError(err?.response?.data?.error || err?.message || `${paused ? "Resume Work" : "Work Pause"} was not confirmed.`);
-      await loadStatus();
+      await loadStatus({ force: true });
     } finally {
       setBusy(false);
     }
