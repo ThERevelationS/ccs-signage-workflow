@@ -1,4 +1,5 @@
 import { secrets } from "base44:runtime";
+import { getCanonicalFleetSettings } from "./fleetSettingsSingleton.ts";
 
 const AUTH_BASE = "https://auth.bouncie.com";
 const API_BASE = "https://api.bouncie.dev";
@@ -109,44 +110,174 @@ export async function exchangeAuthorizationCode(base44, code, redirectUri) {
   return await res.json();
 }
 
+const REFRESH_CLAIM_STALE_MS = 30000;
+const REFRESH_CLAIM_WAIT_MS = 900;
+const REFRESH_TRANSIENT_ATTEMPTS = 3;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Alert admins through the existing Fleet notification queue the first time a
+// refresh is rejected, so a dead grant is found in minutes instead of at the
+// next manual inspection. notification_key dedupes to one email per recipient
+// per day.
+async function queueReconnectAlert(base44, conn) {
+  try {
+    const settings = await getCanonicalFleetSettings(base44);
+    const emails = (settings?.report_emails || [])
+      .map((r) => String(typeof r === "string" ? r : r?.email || "").trim().toLowerCase())
+      .filter(Boolean);
+    if (!emails.length) return;
+
+    const Queue = base44.asServiceRole.entities.FleetNotificationQueue;
+    const day = new Date().toISOString().slice(0, 10);
+    const bodyHtml = `<div style="font-family:Arial,sans-serif"><p>Bouncie rejected the stored authorization for the CCS fleet connection, so live vehicle data (map, trips, odometer) is paused until an administrator reconnects it.</p><p><b>Fix (about 30 seconds):</b> open <a href="${APP_BASE}/fleettracking">Fleet Tracking</a> and click <b>Reconnect Bouncie</b>, then approve access in the Bouncie window.</p><p>Vehicle webhooks may continue independently; REST sync resumes once the connection is renewed.</p><p style="color:#666;font-size:12px">Bouncie account: ${String(conn?.user_email || "").replace(/[<>&]/g, "")}</p></div>`;
+    for (const email of emails) {
+      const key = `bouncie-reconnect:${conn.id}:${day}:${email}`;
+      const existing = await Queue.filter({ notification_key: key });
+      if (existing?.length) continue;
+      await Queue.create({
+        notification_key: key,
+        event_type: "bouncie_reconnect_required",
+        target_entity: "BouncieConnection",
+        target_id: conn.id,
+        source_operation_key: `bouncie-reconnect:${conn.id}:${day}`,
+        recipient_email: email,
+        subject: "CCS Fleet: Bouncie connection needs to be renewed",
+        body_html: bodyHtml,
+        send_after: new Date().toISOString(),
+        status: "pending",
+        attempts: 0
+      });
+    }
+  } catch {}
+}
+
+// Serialize refreshes through a claim on the shared connection row. Bouncie
+// rotates the refresh token on every refresh, so each stored refresh token is
+// single-use: concurrent refreshes burn the grant, and the losing caller used
+// to flag needs_reconnect even though a valid token had just been saved. The
+// claimant re-reads after a short delay to confirm it still owns the claim;
+// waiters reuse the winner's rotated token.
+async function claimRefreshLock(base44, connection) {
+  const Conn = base44.asServiceRole.entities.BouncieConnection;
+  let conn = connection;
+  const attemptedRefreshToken = conn.refresh_token;
+
+  for (let i = 0; i < 4; i++) {
+    if (conn.needs_reconnect) throw new Error("BOUNCIE_REAUTH_REQUIRED");
+    // Another caller rotated the grant while we waited — reuse it.
+    if (conn.refresh_token !== attemptedRefreshToken) {
+      const fresh = conn.expires_at ? new Date(conn.expires_at).getTime() : 0;
+      if (fresh - Date.now() > 120000) return { token: conn.access_token };
+    }
+
+    const claimAt = Date.parse(conn.refresh_claim_at || "") || 0;
+    const claimLive = conn.refresh_claim_token && Date.now() - claimAt < REFRESH_CLAIM_STALE_MS;
+    if (!claimLive) {
+      const claim = crypto.randomUUID();
+      await Conn.update(conn.id, { refresh_claim_token: claim, refresh_claim_at: new Date().toISOString() });
+      await sleep(250);
+      const check = await Conn.get(conn.id).catch(() => null);
+      if (!check) throw new Error("BOUNCIE_NOT_CONNECTED");
+      conn = check;
+      if (conn.refresh_claim_token === claim) return { claimed: true, conn };
+      continue;
+    }
+
+    await sleep(REFRESH_CLAIM_WAIT_MS);
+    conn = await Conn.get(conn.id).catch(() => conn);
+    if (!conn) throw new Error("BOUNCIE_NOT_CONNECTED");
+  }
+
+  const err = new Error("BOUNCIE_REFRESH_IN_PROGRESS");
+  err.status = 503;
+  throw err;
+}
+
 // Rotates BOTH tokens. Bouncie issues a new refresh token on every refresh.
 export async function refreshAccessToken(base44, connection) {
-  const res = await fetch(AUTH_BASE + "/oauth/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
-      client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
-      grant_type: "refresh_token",
-      refresh_token: connection.refresh_token
-    })
+  const Conn = base44.asServiceRole.entities.BouncieConnection;
+  const attemptedRefreshToken = connection.refresh_token;
+
+  const grant = await claimRefreshLock(base44, connection);
+  if (grant.token) return grant.token;
+  const conn = grant.conn;
+
+  let status = 0;
+  let detail = "";
+  for (let attempt = 1; attempt <= REFRESH_TRANSIENT_ATTEMPTS; attempt++) {
+    let res = null;
+    try {
+      res = await fetch(AUTH_BASE + "/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
+          client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
+          grant_type: "refresh_token",
+          refresh_token: conn.refresh_token
+        })
+      });
+    } catch (e) {
+      detail = String(e?.message || e || "network error");
+    }
+
+    if (res && res.ok) {
+      const tokens = await res.json();
+      await Conn.update(conn.id, {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || conn.refresh_token,
+        expires_at: new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString(),
+        token_type: tokens.token_type || "Bearer",
+        needs_reconnect: false,
+        last_error: "",
+        refresh_claim_token: "",
+        refresh_claim_at: ""
+      });
+      return tokens.access_token;
+    }
+
+    status = res ? res.status : 0;
+    if (res) detail = await res.text().catch(() => detail);
+    // A 4xx rejects the grant itself — retrying the same refresh token is useless.
+    if (status >= 400 && status < 500) break;
+    if (attempt < REFRESH_TRANSIENT_ATTEMPTS) await sleep(1000 * attempt);
+  }
+
+  // A concurrent caller may have completed a refresh while ours was failing —
+  // if the grant rotated, reuse it instead of flagging a false disconnect.
+  const latest = await Conn.get(conn.id).catch(() => null);
+  if (latest && latest.refresh_token !== attemptedRefreshToken) {
+    const fresh = latest.expires_at ? new Date(latest.expires_at).getTime() : 0;
+    if (fresh > Date.now()) return latest.access_token;
+  }
+
+  const rejected = status >= 400 && status < 500;
+  const alreadyFlagged = conn.needs_reconnect === true;
+  await Conn.update(conn.id, {
+    ...(rejected ? { needs_reconnect: true } : {}),
+    last_error: rejected
+      ? `Token refresh rejected by Bouncie (${status}). Reauthorization required.`
+      : `Token refresh failed (${status || "network"}): ${String(detail || "").slice(0, 160)}`,
+    last_error_at: new Date().toISOString()
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    await base44.asServiceRole.entities.BouncieConnection.update(connection.id, {
-      needs_reconnect: true,
-      last_error: `Token refresh rejected by Bouncie (${res.status}). Reauthorization required.`,
-      last_error_at: new Date().toISOString()
-    });
+  if (rejected) {
+    if (!alreadyFlagged) await queueReconnectAlert(base44, latest || conn);
     throw new Error("BOUNCIE_REAUTH_REQUIRED");
   }
 
-  const tokens = await res.json();
-  await base44.asServiceRole.entities.BouncieConnection.update(connection.id, {
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token || connection.refresh_token,
-    expires_at: new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString(),
-    token_type: tokens.token_type || "Bearer",
-    needs_reconnect: false,
-    last_error: ""
-  });
-  return tokens.access_token;
+  const err = new Error(`BOUNCIE_REFRESH_TRANSIENT (${status || "network"}): ${String(detail || "").slice(0, 160)}`);
+  err.status = 503;
+  throw err;
 }
 
 export async function getValidAccessToken(base44) {
   const conn = await getActiveConnection(base44);
   if (!conn) throw new Error("BOUNCIE_NOT_CONNECTED");
+  // A rejected grant cannot self-heal — fail fast instead of hammering the
+  // Bouncie token endpoint on every poll cycle until an admin reconnects.
+  if (conn.needs_reconnect) throw new Error("BOUNCIE_REAUTH_REQUIRED");
   const expiresAt = conn.expires_at ? new Date(conn.expires_at).getTime() : 0;
   // Refresh a couple of minutes early so in-flight requests don't race expiry.
   if (!expiresAt || expiresAt - Date.now() < 120000) {
@@ -182,6 +313,7 @@ export async function callBouncieApi(base44, method, path, { query, body } = {})
   if (res.status === 401) {
     const conn = await getActiveConnection(base44);
     if (!conn) throw new Error("BOUNCIE_NOT_CONNECTED");
+    if (conn.needs_reconnect) throw new Error("BOUNCIE_REAUTH_REQUIRED");
     const newToken = await refreshAccessToken(base44, conn);
     res = await send(newToken);
   }
