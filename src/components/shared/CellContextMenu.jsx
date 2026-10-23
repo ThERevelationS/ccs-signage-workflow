@@ -17,7 +17,8 @@ export function CellContextMenu({
   fieldLabel,
   currentValue,
   onClear,
-  isRegistered
+  isRegistered,
+  actions = []
 }) {
   const menuRef = useRef(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -53,6 +54,22 @@ export function CellContextMenu({
       className="fixed bg-white border rounded-lg shadow-xl py-1 z-[9999] min-w-[160px]"
       style={{ top: position.y, left: position.x }}
     >
+      {(Array.isArray(actions) ? actions : []).map((action, index) => (
+        <button
+          key={index}
+          disabled={action.disabled}
+          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 disabled:opacity-40"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            action.onSelect?.();
+            onClose();
+          }}
+        >
+          {action.icon || <History className="w-4 h-4 text-gray-400" />}
+          {action.label}
+        </button>
+      ))}
       <button
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
         onMouseDown={(e) => {
