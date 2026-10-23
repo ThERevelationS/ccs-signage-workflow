@@ -52,6 +52,22 @@ const loadComponent = (path, extraMocks, contextExtra = {}) => {
     module, exports: module.exports,
     require: (id) => {
       if (id in extraMocks) return extraMocks[id];
+      if (id === 'react/jsx-runtime' || id === 'react/jsx-dev-runtime') {
+        const real = require(id);
+        return new Proxy(real, {
+          get: (t, name) => {
+            if (name === 'jsx' || name === 'jsxs' || name === 'jsxDEV') {
+              return (type, props, ...rest) => {
+                if (type === undefined || (typeof type === 'object' && type !== null)) {
+                  (globalThis.__badJsx = globalThis.__badJsx || []).push({ keys: Object.keys(props || {}) });
+                }
+                return t[name](type, props, ...rest);
+              };
+            }
+            return t[name];
+          },
+        });
+      }
       if (id.startsWith('@/components/ui/')) return uiFallback;
       if (id.startsWith('@/components/')) return new Proxy({}, { get: (_t, name) => passthrough(String(name)) });
       return require(id);
@@ -119,7 +135,12 @@ async function sessionSwitchScenario() {
   });
 
   let renderer;
-  await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
+  try {
+    await act(async () => { renderer = TestRenderer.create(React.createElement(TimeClockPage)); });
+  } catch (e) {
+    console.log('BAD JSX TYPES:', JSON.stringify(globalThis.__badJsx || []));
+    throw e;
+  }
   // Release the mount-time user-list load so the gate UI renders.
   await act(async () => { loaderQueue.forEach((d) => d.resolve([])); loaderQueue.length = 0; await flush(); });
 
