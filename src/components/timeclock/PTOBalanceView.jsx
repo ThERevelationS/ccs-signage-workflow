@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -35,14 +35,27 @@ export default function PTOBalanceView({ currentUser }) {
   const [policy, setPolicy] = useState(null);
   const [upcomingRequests, setUpcomingRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const balanceSeqRef = useRef(0);
+  const balanceScopeRef = useRef("");
 
   useEffect(() => {
-    if (currentUser?.email) {
+    const email = String(currentUser?.email || "").toLowerCase();
+    balanceScopeRef.current = email;
+    balanceSeqRef.current += 1;
+    setBalance(null);
+    setPolicy(null);
+    setUpcomingRequests([]);
+    setIsLoading(Boolean(email));
+    if (email) {
       loadBalanceData();
     }
   }, [currentUser]);
 
   const loadBalanceData = async () => {
+    const requestEmail = String(currentUser?.email || "").toLowerCase();
+    const requestSeq = ++balanceSeqRef.current;
+    const current = () =>
+      requestSeq === balanceSeqRef.current && balanceScopeRef.current === requestEmail;
     setIsLoading(true);
     setBalance(null);
     setPolicy(null);
@@ -71,24 +84,27 @@ export default function PTOBalanceView({ currentUser }) {
         throw new Error(`Multiple PTO balance records were found for ${currentUser.email}. An administrator must review the duplicates before balances can be shown safely.`);
       }
       
+      if (!current()) return;
+
       if (balanceData.length === 1) {
         const userBalance = balanceData[0];
         setBalance(userBalance);
         
         // Load policy
         const policyData = await PTOPolicy.filter({ id: userBalance.policy_id });
+        if (!current()) return;
         if (policyData.length > 0) {
           setPolicy(policyData[0]);
         }
       }
       
-      setUpcomingRequests(requests.sort((a, b) => 
+      setUpcomingRequests(requests.sort((a, b) =>
         new Date(a.start_date) - new Date(b.start_date)
       ));
     } catch (err) {
       console.error("Error loading PTO balance:", err);
     }
-    setIsLoading(false);
+    if (current()) setIsLoading(false);
   };
 
   if (isLoading) {
