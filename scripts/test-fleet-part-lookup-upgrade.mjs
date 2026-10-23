@@ -161,4 +161,42 @@ test("duplicate cards surface the existing part's physical location", () => {
   assert.match(src, /Location: \{/);
 });
 
+test("live inventory matches surface already-stocked parts before any AI call", () => {
+  const memo = src.slice(src.indexOf("const inventoryMatches"), src.indexOf("}, [parts, query, barcodeValue]);"));
+  assert.match(memo, /normKeyLocal\(barcodeValue\.trim\(\)\)/);
+  assert.match(memo, /numbers\.includes\(bc\)/);
+  assert.match(memo, /part_name.*toLowerCase\(\)\.includes/);
+  assert.match(memo, /\.slice\(0, 4\)/);
+  assert.match(src, /Already in Fleet inventory/);
+  assert.match(src, /onClick=\{\(\) => openRequest\(part\)\} disabled=\{busy\} className="shrink-0/);
+});
+
+test("AI fitment check sends selected equipment detail and keeps verdicts review-only", () => {
+  const body = src.slice(src.indexOf("const checkFitment"), src.indexOf("const analyze"));
+  assert.match(body, /Select at least one equipment unit first/);
+  assert.match(body, /InvokeLLM\(\{ prompt, add_context_from_internet: true, response_json_schema: schema \}\)/);
+  assert.match(body, /verdict:\s*\{\s*type:\s*"string",\s*enum:\s*\["fits","likely","uncertain","unlikely","does_not_fit"\]\s*\}/);
+  assert.match(body, /REVIEW-ONLY/);
+  assert.match(body, /fitment check failed/i);
+  assert.doesNotMatch(body, /toggleEquipment|compatible_equipment_ids:\s*\[/, "fitment check must never mutate selections");
+  assert.match(src, /Check fitment/);
+  assert.match(src, /fitResults\?\.\[eq\.id\]/);
+  assert.match(src, /FIT_LABEL\[fitResults\[eq\.id\]\.verdict\]/);
+});
+
+test("AI vendor options render as an apply-on-click comparison in Procurement", () => {
+  assert.match(src, /vendor_options:\s*\{\s*type:\s*"array"/);
+  assert.match(src, /est_price/);
+  assert.match(src, /Only real, researched vendors/);
+  const card = src.slice(src.indexOf("AI vendor options"));
+  assert.match(card, /set\("preferred_vendor", opt\.vendor \|\| ""\)/);
+  assert.match(card, /set\("vendor_sku", opt\.sku \|\| ""\)/);
+  assert.match(card, /set\("vendor_url", opt\.url \|\| ""\)/);
+});
+
+test("fitment verdicts reset on every new analysis, resume, reset, and re-search", () => {
+  const resets = src.match(/setFitResults\(null\)/g) || [];
+  assert.ok(resets.length >= 4, `expected fitResults reset in applyResume/reset/reSearch/analyze, got ${resets.length}`);
+});
+
 console.log(`${passed}/${passed} part-lookup upgrade contract checks passed`);
