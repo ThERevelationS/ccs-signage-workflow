@@ -575,7 +575,48 @@
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
   "protected_data": "No manual/pinned/archive-protected record was modified; all writes used guarded same-version persistence; no client/job/shared records touched; no authority or applicability conclusions drawn.",
-  "ongoing": "Readback after run46: OH 88 pending pages across 1 profiles; KY 0 across 0. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
+  "ongoing": "Zero eligible frontiers in two final reads. KY has zero pending pages; OH has 88 pending URLs solely in the reversibly blocked Portland OH / Oregon-source mismatch. All 1866 documents preserved for review. No corrected source or document cleanup approved. Source identity repair is required before resuming that cursor. 163 eligible no-frontier profiles and recorded review gaps remain; statewide completeness is not claimed.",
+  "frontier_drain_acceptance": {
+    "status": "eligible_frontier_exhausted_except_identity_quarantine",
+    "audit_started_at": "2026-10-23T10:34:26.870Z",
+    "audit_finished_at": "2026-10-23T10:34:35.321Z",
+    "eligible_before": 0,
+    "eligible_after": 0,
+    "OH": {
+      "frontier_profiles": 821,
+      "no_frontier_remaining": 62,
+      "pending_pages": 88,
+      "profiles_with_pending": 1,
+      "review_gaps": 4253,
+      "review_gap_reasons": {
+        "page_fetch_failed": 712,
+        "depth_frontier": 3481,
+        "page_link_limit": 60
+      },
+      "external_referrals": 15648,
+      "blocked_frontiers": 1
+    },
+    "KY": {
+      "frontier_profiles": 113,
+      "no_frontier_remaining": 101,
+      "pending_pages": 0,
+      "profiles_with_pending": 0,
+      "review_gaps": 414,
+      "review_gap_reasons": {
+        "depth_frontier": 340,
+        "page_fetch_failed": 67,
+        "page_link_limit": 7
+      },
+      "external_referrals": 1957,
+      "blocked_frontiers": 0
+    },
+    "source_identity_block_receipt": "docs/permitting-portland-source-identity-block-2026-10-23.json",
+    "quarantined_profile_id": "6adaf8efc137885e5c4143d0",
+    "quarantined_pending_pages": 88,
+    "stored_documents_preserved": 1866,
+    "identity_gate_gap": "Same-host discovery does not validate jurisdiction/state. Wrong-state evidence was collected; this is a necessary stop, not clean statewide completion.",
+    "milestone3_complete": false
+  },
   "gap_triage": {
     "page_fetch_failed": {
       "OH": 454,
