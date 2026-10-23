@@ -14,6 +14,7 @@ import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesign
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
@@ -26,6 +27,18 @@ const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
 const PermitLocality = base44.entities.PermitLocality;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+
+const REFERENCE_CACHE_TTL_MS = 10 * 60 * 1000;
+const referenceRowsCache = new Map();
+
+function cachedReferenceRows(cacheKey, loader) {
+  const hit = referenceRowsCache.get(cacheKey);
+  if (hit && Date.now() - hit.loadedAt < REFERENCE_CACHE_TTL_MS) return Promise.resolve(hit.rows);
+  return Promise.resolve(loader()).then((rows) => {
+    referenceRowsCache.set(cacheKey, { rows, loadedAt: Date.now() });
+    return rows;
+  });
+}
 
 function localDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -92,27 +105,49 @@ export default function Permitting() {
   const workScrollRef = useRef(null);
   const workScrollTopRef = useRef(0);
 
+  usePolling(() => loadData(false), 120000, { runOnMount: false });
+
   useEffect(() => {
-    document.title = "Permitting - Workflow Manager";
-    loadData();
-    const interval = setInterval(() => loadData(false), 60000);
-    return () => clearInterval(interval);
+    let debounce = null;
+    let unsubscribe = null;
+    try {
+      unsubscribe = PermitLineItem.subscribe(() => {
+        if (debounce) clearTimeout(debounce);
+        debounce = setTimeout(() => {
+          debounce = null;
+          loadData(false);
+        }, 2000);
+      });
+    } catch (e) {}
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+      if (debounce) clearTimeout(debounce);
+    };
   }, []);
 
-  const loadData = async (showLoading = true) => {
+  useEffect(() => {
+    document.title = "Permitting - Workflow Manager";
+    loadData(true, true);
+  }, []);
+
+  const loadData = async (showLoading = true, force = false) => {
     if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
         loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
-        loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities" }),
+        force
+          ? loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities" })
+          : cachedReferenceRows("PermitLocality", () => loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities" })),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
           sort: "created_date",
           label: "Permitting Work Orders",
         }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
+        force
+          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" })
+          : cachedReferenceRows("AuthorizedEmail", () => loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" })),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "permitOfficeTypes",
@@ -668,7 +703,7 @@ export default function Permitting() {
     } catch (error) {
       console.error("Could not update Permitting Work Order field:", error);
       setWorkOrderEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
-      await loadData(false);
+      await loadData(false, true);
       if (selectedWorkOrder?.id === workOrderId) {
         const latest = await WorkOrder.get(workOrderId).catch(() => null);
         if (latest?.id) setSelectedWorkOrder(latest);
@@ -710,7 +745,7 @@ export default function Permitting() {
     } catch (error) {
       console.error("Could not repair Permitting workflow stage:", error);
       setWorkOrderEditError(error?.message || "The Work Order changed in another session. Reload before changing its workflow stage.");
-      await loadData(false);
+      await loadData(false, true);
       return false;
     }
   }, [workOrders]);
@@ -944,7 +979,7 @@ export default function Permitting() {
                 onShowJurisdictionInfo={openJurisdictionKnowledge}
                 onDeleteLine={deleteLineItem}
                 onUpdateWorkOrderField={updateWorkOrderField}
-                onWorkNotesChanged={() => loadData(false)}
+                onWorkNotesChanged={() => loadData(false, true)}
                 onFixPermittingStage={fixPermittingStage}
                 currentUser={currentUser}
                 isRegistered={isRegistered}
@@ -1150,7 +1185,7 @@ export default function Permitting() {
               <div className="font-medium">Permit line update blocked</div>
               <div className="mt-1 text-xs">{permitLineEditError}</div>
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={async () => { setPermitLineEditError(""); await loadData(true); }} className="shrink-0 border-red-300 bg-white text-red-800">
+            <Button type="button" size="sm" variant="outline" onClick={async () => { setPermitLineEditError(""); await loadData(true, true); }} className="shrink-0 border-red-300 bg-white text-red-800">
               Reload latest
             </Button>
           </div>
@@ -1162,7 +1197,7 @@ export default function Permitting() {
               <div className="font-medium">Permitting Work Order update blocked</div>
               <div className="mt-1 text-xs">{workOrderEditError}</div>
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={async () => { setWorkOrderEditError(""); await loadData(false); }} className="shrink-0 border-red-300 bg-white text-red-800">
+            <Button type="button" size="sm" variant="outline" onClick={async () => { setWorkOrderEditError(""); await loadData(false, true); }} className="shrink-0 border-red-300 bg-white text-red-800">
               Reload latest
             </Button>
           </div>
@@ -1184,7 +1219,7 @@ export default function Permitting() {
       {showSettings && (
         <PermitSettingsDialog
           isOpen={showSettings}
-          onClose={() => { setShowSettings(false); loadData(false); }}
+          onClose={() => { setShowSettings(false); loadData(false, true); }}
           localities={localities}
           officeTypes={officeTypes}
         />
@@ -1195,7 +1230,7 @@ export default function Permitting() {
           isOpen={true}
           onClose={() => setSelectedWorkOrder(null)}
           workOrder={selectedWorkOrder}
-          onUpdate={() => loadData(false)}
+          onUpdate={() => loadData(false, true)}
         />
       )}
 
@@ -1203,9 +1238,9 @@ export default function Permitting() {
       {showWorkflowDesigner && (
         <PermitWorkflowDesigner
           isOpen={showWorkflowDesigner}
-          onClose={() => { setShowWorkflowDesigner(false); loadData(false); }}
+          onClose={() => { setShowWorkflowDesigner(false); loadData(false, true); }}
           workOrder={selectedWorkOrder}
-          onLinesCreated={() => loadData(false)}
+          onLinesCreated={() => loadData(false, true)}
         />
       )}
     </div>
