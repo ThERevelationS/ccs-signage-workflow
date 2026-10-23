@@ -63,7 +63,23 @@ export async function saveConnection(base44, data) {
   if (existing) {
     return await base44.asServiceRole.entities.BouncieConnection.update(existing.id, data);
   }
-  return await base44.asServiceRole.entities.BouncieConnection.create(data);
+  const created = await base44.asServiceRole.entities.BouncieConnection.create(data);
+  // Concurrent first connections can each observe an empty list and create a
+  // duplicate row. Re-read contenders, elect the earliest-created row, and
+  // retire duplicates so getActiveConnection stays deterministic.
+  const contenders = await base44.asServiceRole.entities.BouncieConnection.list().catch(() => []);
+  const winner = (contenders || []).slice().sort((a, b) => {
+    const at = Date.parse(a?.created_date || '') || 0;
+    const bt = Date.parse(b?.created_date || '') || 0;
+    if (at !== bt) return at - bt;
+    return String(a?.id || '').localeCompare(String(b?.id || ''));
+  })[0] || created;
+  for (const duplicate of contenders || []) {
+    if (duplicate.id !== winner.id) {
+      await base44.asServiceRole.entities.BouncieConnection.delete(duplicate.id).catch(() => null);
+    }
+  }
+  return winner;
 }
 
 export async function patchConnection(base44, patch) {
