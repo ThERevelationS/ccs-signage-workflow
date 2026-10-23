@@ -51,6 +51,7 @@ import {
   updatePTOPolicyIfUnchanged,
 } from "@/components/timeclock/ptoPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 
 const PTOPolicy = base44.entities.PTOPolicy;
 const UserPTOBalance = base44.entities.UserPTOBalance;
@@ -87,7 +88,7 @@ const TYPE_ICONS = {
   parental: Baby
 };
 
-export default function PTOManagement({ adminCapability }) {
+export default function PTOManagement() {
   const [policies, setPolicies] = useState([]);
   const [userBalances, setUserBalances] = useState([]);
   const [users, setUsers] = useState([]);
@@ -196,6 +197,9 @@ export default function PTOManagement({ adminCapability }) {
     if (!nextPolicy.name) return;
     setPtoError("");
     setPtoSaving(true);
+    // Current stored authorization, not a mount-time snapshot: an expired
+    // capability must fail before dispatch rather than reach the server.
+    const writeCapability = getStoredAdminSettingsCapability();
     try {
       if (editingPolicy) {
         const duplicateName = policies.find(policy => policy.id !== editingPolicy.id && String(policy.name || "").trim().toLowerCase() === nextPolicy.name.toLowerCase());
@@ -203,13 +207,13 @@ export default function PTOManagement({ adminCapability }) {
         await updatePTOPolicyIfUnchanged({
           policy: editingPolicy,
           nextFields: nextPolicy,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `PTO policy ${editingPolicy.name || editingPolicy.id}`,
         });
       } else {
         const result = await createPTOPolicyIfAbsent({
           data: nextPolicy,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `PTO policy ${nextPolicy.name}`,
         });
         if (result.status === "existing") {
@@ -231,10 +235,11 @@ export default function PTOManagement({ adminCapability }) {
     if (!deleteConfirm?.id || ptoSaving) return;
     setPtoError("");
     setPtoSaving(true);
+    const writeCapability = getStoredAdminSettingsCapability();
     try {
       await deletePTOPolicyIfUnused({
         policy: deleteConfirm,
-        adminCapability,
+        adminCapability: writeCapability,
         label: `PTO policy ${deleteConfirm.name || deleteConfirm.id} deletion`,
       });
       setDeleteConfirm(null);
@@ -313,6 +318,7 @@ export default function PTOManagement({ adminCapability }) {
     if (ptoSaving) return;
     setPtoError("");
     setPtoSaving(true);
+    const writeCapability = getStoredAdminSettingsCapability();
     try {
       const policy = policies.find(p => p.id === policyId);
       const user = users.find(u => u.email === userEmail);
@@ -346,7 +352,7 @@ export default function PTOManagement({ adminCapability }) {
       await assignPTOBalanceIfUnchanged({
         existingBalance,
         data: balanceData,
-        adminCapability,
+        adminCapability: writeCapability,
         label: `PTO balance for ${user?.full_name || userEmail}`,
       });
       
