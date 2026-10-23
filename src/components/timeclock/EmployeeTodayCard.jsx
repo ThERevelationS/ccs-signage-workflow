@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { usePolling } from "@/lib/usePolling";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock3, Coffee, History, Loader2, Pause, Play, RefreshCw } from "lucide-react";
@@ -65,16 +66,18 @@ export default function EmployeeTodayCard({
     setStatusData(null);
     setStatusError("");
     loadStatus();
-    const poll = setInterval(loadStatus, 30000);
     const tick = setInterval(() => setNow(new Date()), 1000);
     const onPauseChanged = () => loadStatus();
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     return () => {
-      clearInterval(poll);
       clearInterval(tick);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     };
   }, [loadStatus]);
+
+  usePolling(loadStatus, 60000, {
+    enabled: Boolean(user?.email) && Boolean(sessionToken),
+  });
 
   const todayEntries = useMemo(() => {
     return timeEntries.filter(entry => {
