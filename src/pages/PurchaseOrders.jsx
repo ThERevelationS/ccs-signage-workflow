@@ -53,7 +53,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function PoItemsEditor({ items, onChange }) {
+function PoItemsEditor({ items, onChange, stockItems = [] }) {
   const update = (i, patch) => onChange(items.map((row, j) => (j === i ? { ...row, ...patch } : row)));
   return (
     <div>
@@ -61,11 +61,25 @@ function PoItemsEditor({ items, onChange }) {
         <span>Item</span><span>Qty</span><span>Unit cost</span><span />
       </div>
       {items.map((row, i) => (
-        <div key={i} className="mb-1.5 grid grid-cols-[1fr_80px_110px_28px] items-center gap-2">
-          <input className={inputCls} value={row.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Material / service" />
-          <input className={inputCls} type="number" min="0" step="any" value={row.quantity} onChange={(e) => update(i, { quantity: e.target.value })} />
-          <input className={inputCls} type="number" min="0" step="any" value={row.unit_cost} onChange={(e) => update(i, { unit_cost: e.target.value })} />
-          <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
+        <div key={i} className="mb-1.5">
+          <div className="grid grid-cols-[1fr_80px_110px_28px] items-center gap-2">
+            <input className={inputCls} value={row.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Material / service" />
+            <input className={inputCls} type="number" min="0" step="any" value={row.quantity} onChange={(e) => update(i, { quantity: e.target.value })} />
+            <input className={inputCls} type="number" min="0" step="any" value={row.unit_cost} onChange={(e) => update(i, { unit_cost: e.target.value })} />
+            <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
+          </div>
+          {stockItems.length > 0 && (
+            <select className={`${inputCls} mt-1 !min-h-8 py-1 text-xs`} value={row.inventory_item_id || ""}
+              onChange={(e) => update(i, { inventory_item_id: e.target.value })}>
+              <option value="">No stock link â€” receipt won't change inventory</option>
+              {stockItems.map((it) => (
+                <option key={it.id} value={it.id}>
+                  {[it.material_type, it.product_type, it.size].filter(Boolean).join(" Â· ") || it.id}
+                  {` (on hand ${it.quantity_on_hand})`}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       ))}
       <button type="button" onClick={() => onChange([...items, { description: "", quantity: 1, unit_cost: "" }])}
@@ -96,15 +110,24 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
     internal_notes: clean(purchaseOrder?.internal_notes),
   });
   const [items, setItems] = useState(
-    (purchaseOrder?.line_items || []).map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_cost: r.unit_cost ?? "" }))
-      .length ? purchaseOrder.line_items.map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_cost: r.unit_cost ?? "" }))
-        : [{ description: "", quantity: 1, unit_cost: "" }]
+    (purchaseOrder?.line_items || []).map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_cost: r.unit_cost ?? "", inventory_item_id: r.inventory_item_id || "" }))
+      .length ? purchaseOrder.line_items.map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_cost: r.unit_cost ?? "", inventory_item_id: r.inventory_item_id || "" }))
+        : [{ description: "", quantity: 1, unit_cost: "", inventory_item_id: "" }]
   );
+  const [stockItems, setStockItems] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const keyRef = useRef(uuid());
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const subtotal = items.reduce((s, r) => s + (Number(r.quantity) || 0) * (Number(r.unit_cost) || 0), 0);
+
+  useEffect(() => {
+    let live = true;
+    base44.functions.invoke("inventoryAction", { session_token: sessionToken, action: "list_stock" })
+      .then((r) => { const d = r?.data || r; if (live && d?.success) setStockItems(d.items || []); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [sessionToken]);
 
   const save = async () => {
     if (!clean(form.vendor_name)) { setError("A vendor name is required."); return; }
@@ -117,6 +140,7 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
         shipping_fee: Number(form.shipping_fee) || 0,
         line_items: items.filter((r) => clean(r.description)).map((r) => ({
           description: clean(r.description), quantity: Number(r.quantity) || 0, unit_cost: Number(r.unit_cost) || 0,
+          inventory_item_id: clean(r.inventory_item_id),
         })),
       };
       if (editing) {
@@ -151,7 +175,7 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
           <div><label className={labelCls}>Order date</label><input className={inputCls} type="date" value={form.order_date} onChange={set("order_date")} /></div>
           <div><label className={labelCls}>Expected</label><input className={inputCls} type="date" value={form.expected_date} onChange={set("expected_date")} /></div>
         </div>
-        <div className="mt-4"><label className={labelCls}>Line items</label><PoItemsEditor items={items} onChange={setItems} /></div>
+        <div className="mt-4"><label className={labelCls}>Line items</label><PoItemsEditor items={items} onChange={setItems} stockItems={stockItems} /></div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
           <div><label className={labelCls}>Shipping $</label><input className={inputCls} type="number" min="0" step="any" value={form.shipping_fee} onChange={set("shipping_fee")} /></div>
           <div className="md:col-span-2"><label className={labelCls}>Ship to</label><input className={inputCls} value={form.ship_to} onChange={set("ship_to")} placeholder="Shop / job site" /></div>
@@ -186,6 +210,7 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(false);
   const [receiveQtys, setReceiveQtys] = useState({});
 
@@ -209,8 +234,12 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
     if (busy) return;
     setBusy(label);
     setError("");
+    setNotice("");
     try {
-      await invokeAction(sessionToken, body);
+      const data = await invokeAction(sessionToken, body);
+      if (Array.isArray(data?.stock_warnings) && data.stock_warnings.length > 0) {
+        setNotice(`Received, but ${data.stock_warnings.length} stock update(s) need attention: ${data.stock_warnings.join(" ")}`);
+      }
       setReceiveQtys({});
       await load();
       onChanged?.();
@@ -355,6 +384,7 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
               )}
             </div>
             {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+            {notice && <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{notice}</div>}
           </>
         )}
       </div>
