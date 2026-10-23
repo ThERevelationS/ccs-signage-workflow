@@ -26,7 +26,6 @@ import {
   Calendar,
   TrendingUp,
   XCircle,
-  Loader2,
   Settings,
   Save
 } from "lucide-react";
