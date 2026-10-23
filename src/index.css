@@ -222,3 +222,52 @@ tr.sips-focus-row {
   tr.sips-board-row { transition: none; }
   .sips-focus-gap-inner { animation: none; }
 }
+
+/* ── Ambient surfaces & status glows ─────────────────────────────────── */
+@keyframes ambientDrift {
+  0% { background-position: 0% 40%; }
+  50% { background-position: 100% 60%; }
+  100% { background-position: 0% 40%; }
+}
+.ambient-mesh {
+  background-image:
+    radial-gradient(at 18% 22%, rgba(99, 102, 241, 0.28) 0, transparent 55%),
+    radial-gradient(at 82% 18%, rgba(34, 211, 238, 0.22) 0, transparent 55%),
+    radial-gradient(at 55% 85%, rgba(168, 85, 247, 0.20) 0, transparent 60%);
+  background-size: 200% 200%;
+  animation: ambientDrift 22s ease-in-out infinite;
+}
+.dark .ambient-mesh {
+  background-image:
+    radial-gradient(at 18% 22%, rgba(99, 102, 241, 0.35) 0, transparent 55%),
+    radial-gradient(at 82% 18%, rgba(34, 211, 238, 0.26) 0, transparent 55%),
+    radial-gradient(at 55% 85%, rgba(168, 85, 247, 0.24) 0, transparent 60%);
+}
+
+.glow-card {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -12px rgba(15, 23, 42, 0.18);
+  transition: box-shadow 280ms ease, transform 280ms ease;
+}
+.glow-card:hover {
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08), 0 16px 40px -14px rgba(15, 23, 42, 0.28);
+}
+.glow-success {
+  border-color: rgba(34, 197, 94, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.12), 0 10px 30px -10px rgba(34, 197, 94, 0.35);
+}
+.glow-warning {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.12), 0 10px 30px -10px rgba(245, 158, 11, 0.35);
+}
+.glow-danger {
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.12), 0 10px 30px -10px rgba(239, 68, 68, 0.35);
+}
+.glow-info {
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12), 0 10px 30px -10px rgba(59, 130, 246, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-mesh { animation: none; }
+}
