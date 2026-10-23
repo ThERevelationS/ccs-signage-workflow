@@ -31,6 +31,7 @@ vm.runInNewContext(compiled, {
     }) } } },
     '@/components/auth/EmailGate': { useAuth: () => ({ currentUser: null, sessionToken: '' }) },
     '@/components/ui/button': { Button },
+    '@/components/motion/motion': { duration: { ui: 0.18 }, easing: { decelerate: [0, 0, 0.2, 1] }, spring: { soft: { type: 'spring' } } },
     'lucide-react': Object.fromEntries(['Clock3', 'Loader2', 'Pause', 'Play', 'X'].map((name) => [name, icon])),
   })[id] || require(id),
   console, window: windowStub, document: documentStub,
