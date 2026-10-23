@@ -52,10 +52,34 @@ Deno.serve(async (req) => {
         t.trigger_type === 'due_date_passed'
       )
     );
+
+    const ORDER_DEADLINE_TRIGGERS = ['order_date_needed_approaching', 'order_date_needed_passed', 'order_overdue'];
+    const orderDeadlineRules = automations.filter(a =>
+      a.triggers?.some(t => ORDER_DEADLINE_TRIGGERS.includes(t.trigger_type))
+    );
+    const installDateRules = automations.filter(a =>
+      a.triggers?.some(t =>
+        t.trigger_type === 'work_order_install_date_approaching' ||
+        t.trigger_type === 'work_order_install_date_passed'
+      )
+    );
+    const siteSurveyRules = automations.filter(a =>
+      a.triggers?.some(t => t.trigger_type === 'site_survey_approaching')
+    );
+    const activeOrders = orderDeadlineRules.length > 0
+      ? await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Order,
+          query: { deleted: false },
+          sort: 'date_needed',
+          label: 'Deadline reminder Orders',
+        })
+      : [];
     
     const results = {
       overdue: [],
       approaching: [],
+      orders_overdue: [],
+      orders_approaching: [],
       triggered_automations: []
     };
     
@@ -124,15 +148,100 @@ Deno.serve(async (req) => {
           }
         }
       }
+
+      // Install-date reminders run the same claim/action path as due dates,
+      // keyed on project_install_date.
+      if (installDateRules.length > 0 && wo.project_install_date) {
+        const installDate = new Date(wo.project_install_date + 'T23:59:59');
+        const daysUntilInstall = Math.ceil((installDate - now) / (1000 * 60 * 60 * 24));
+        for (const rule of installDateRules) {
+          if (installDate < now) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'work_order_install_date_passed');
+            if (!trigger) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|work_order_install_date_passed|${wo.project_install_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'work_order_install_date_passed');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'work_order_install_date_passed', actions: actionResults });
+          } else if (daysUntilInstall <= 7 && daysUntilInstall > 0) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'work_order_install_date_approaching');
+            if (!trigger) continue;
+            const condition = trigger.trigger_condition || {};
+            if (daysUntilInstall > (condition.days_before_due || 7)) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|work_order_install_date_approaching|${wo.project_install_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'work_order_install_date_approaching');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'work_order_install_date_approaching', days_until_due: daysUntilInstall, actions: actionResults });
+          }
+        }
+      }
+
+      // Site-survey reminders fire only on approach — there is no advertised
+      // "survey passed" trigger.
+      if (siteSurveyRules.length > 0 && wo.site_survey_date) {
+        const surveyDate = new Date(wo.site_survey_date + 'T23:59:59');
+        const daysUntilSurvey = Math.ceil((surveyDate - now) / (1000 * 60 * 60 * 24));
+        if (surveyDate >= now && daysUntilSurvey <= 7 && daysUntilSurvey > 0) {
+          for (const rule of siteSurveyRules) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'site_survey_approaching');
+            if (!trigger) continue;
+            const condition = trigger.trigger_condition || {};
+            if (daysUntilSurvey > (condition.days_before_due || 7)) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|site_survey_approaching|${wo.site_survey_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'site_survey_approaching');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'site_survey_approaching', days_until_due: daysUntilSurvey, actions: actionResults });
+          }
+        }
+      }
     }
     
+    // Orders awaiting delivery get the same once-per-rule/due-date treatment:
+    // approaching when date_needed is inside the threshold window, overdue
+    // (and order_overdue) once it has passed. Both overdue trigger types fire
+    // for the same order — they are distinct advertised triggers.
+    for (const order of activeOrders) {
+      if (!order.date_needed || order.status === 'received' || order.status === 'cancelled') continue;
+
+      const neededDate = new Date(order.date_needed + 'T23:59:59');
+      const daysUntilNeeded = Math.ceil((neededDate - now) / (1000 * 60 * 60 * 24));
+
+      if (neededDate < now) {
+        results.orders_overdue.push({ id: order.id, customer: order.customer_name, date_needed: order.date_needed, days_overdue: Math.abs(daysUntilNeeded) });
+        for (const rule of orderDeadlineRules) {
+          for (const triggerType of ['order_date_needed_passed', 'order_overdue']) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === triggerType);
+            if (!trigger || !orderMatchesTriggerFilters(order, trigger)) continue;
+            const claim = await claimOrderDeadlineFire(base44, order, `${rule.id}|${triggerType}|${order.date_needed}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeOrderRuleActions(base44, rule, order, triggerType);
+            results.triggered_automations.push({ rule: rule.name, order: order.customer_name, trigger: triggerType, actions: actionResults });
+          }
+        }
+      } else if (daysUntilNeeded <= 7 && daysUntilNeeded > 0) {
+        results.orders_approaching.push({ id: order.id, customer: order.customer_name, date_needed: order.date_needed, days_until_due: daysUntilNeeded });
+        for (const rule of orderDeadlineRules) {
+          const trigger = rule.triggers?.find(t => t.trigger_type === 'order_date_needed_approaching');
+          if (!trigger || !orderMatchesTriggerFilters(order, trigger)) continue;
+          const condition = trigger.trigger_condition || {};
+          if (daysUntilNeeded > (condition.days_before_due || 7)) continue;
+          const claim = await claimOrderDeadlineFire(base44, order, `${rule.id}|order_date_needed_approaching|${order.date_needed}`, today);
+          if (!claim.claimed) continue;
+          const actionResults = await executeOrderRuleActions(base44, rule, order, 'order_date_needed_approaching');
+          results.triggered_automations.push({ rule: rule.name, order: order.customer_name, trigger: 'order_date_needed_approaching', days_until_due: daysUntilNeeded, actions: actionResults });
+        }
+      }
+    }
+
     return Response.json({
       success: true,
       checked_at: now.toISOString(),
       summary: {
         total_work_orders: workOrders.length,
+        total_orders: activeOrders.length,
         overdue_count: results.overdue.length,
         approaching_count: results.approaching.length,
+        orders_overdue_count: results.orders_overdue.length,
+        orders_approaching_count: results.orders_approaching.length,
         automations_triggered: results.triggered_automations.length
       },
       details: results
@@ -321,14 +430,16 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
     return { skipped: true, reason: 'No recipients' };
   }
   
-  const isOverdue = trigger_type === 'due_date_passed';
-  const dueDate = new Date(work_order.due_date);
+  const isInstall = trigger_type === 'work_order_install_date_passed' || trigger_type === 'work_order_install_date_approaching';
+  const isOverdue = trigger_type === 'due_date_passed' || trigger_type === 'work_order_install_date_passed';
+  const effectiveDate = isInstall ? work_order.project_install_date : work_order.due_date;
+  const dueDate = new Date(effectiveDate);
   const now = new Date();
   const daysDiff = Math.ceil(Math.abs(dueDate - now) / (1000 * 60 * 60 * 24));
   
   let subject = config.subject || (isOverdue 
-    ? `⚠️ OVERDUE: ${work_order.title}` 
-    : `📅 Deadline Approaching: ${work_order.title}`);
+    ? `⚠️ ${isInstall ? 'INSTALL DATE PASSED' : 'OVERDUE'}: ${work_order.title}` 
+    : `📅 ${isInstall ? 'Install Date Approaching' : 'Deadline Approaching'}: ${work_order.title}`);
     
   let body = config.body || '';
   
@@ -338,6 +449,7 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
     '{{title}}': esc(work_order.title),
     '{{client_name}}': esc(work_order.client_name),
     '{{due_date}}': esc(work_order.due_date),
+    '{{install_date}}': esc(work_order.project_install_date),
     '{{current_stage}}': esc(work_order.current_stage),
     '{{assigned_to}}': esc(work_order.assigned_to || 'Unassigned'),
     '{{days_overdue}}': isOverdue ? String(daysDiff) : '0',
@@ -353,18 +465,19 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
   if (!body) {
     const safeTitle = esc(work_order.title);
     const safeClient = esc(work_order.client_name);
-    const safeDue = esc(work_order.due_date);
+    const safeDue = esc(effectiveDate);
     const safeStage = esc(work_order.current_stage);
     const safeAssigned = esc(work_order.assigned_to || 'Unassigned');
+    const dateLabel = isInstall ? 'Install Date' : 'Due Date';
     if (isOverdue) {
       body = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #FEE2E2; padding: 20px; border-radius: 8px; border-left: 4px solid #EF4444;">
-            <h2 style="color: #991B1B; margin: 0 0 10px 0;">⚠️ Work Order Overdue</h2>
-            <p style="color: #7F1D1D; margin: 0;"><strong>${safeTitle}</strong> for <strong>${safeClient}</strong> is ${daysDiff} day(s) overdue.</p>
+            <h2 style="color: #991B1B; margin: 0 0 10px 0;">⚠️ ${isInstall ? 'Install Date Passed' : 'Work Order Overdue'}</h2>
+            <p style="color: #7F1D1D; margin: 0;"><strong>${safeTitle}</strong> for <strong>${safeClient}</strong> is ${daysDiff} day(s) ${isInstall ? 'past its install date' : 'overdue'}.</p>
           </div>
           <div style="padding: 20px;">
-            <p><strong>Due Date:</strong> ${safeDue}</p>
+            <p><strong>${dateLabel}:</strong> ${safeDue}</p>
             <p><strong>Current Stage:</strong> ${safeStage}</p>
             <p><strong>Assigned To:</strong> ${safeAssigned}</p>
           </div>
@@ -374,11 +487,11 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
       body = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #FEF3C7; padding: 20px; border-radius: 8px; border-left: 4px solid #F59E0B;">
-            <h2 style="color: #92400E; margin: 0 0 10px 0;">📅 Deadline Approaching</h2>
-            <p style="color: #78350F; margin: 0;"><strong>${safeTitle}</strong> for <strong>${safeClient}</strong> is due in ${daysDiff} day(s).</p>
+            <h2 style="color: #92400E; margin: 0 0 10px 0;">📅 ${isInstall ? 'Install Date Approaching' : 'Deadline Approaching'}</h2>
+            <p style="color: #78350F; margin: 0;"><strong>${safeTitle}</strong> for <strong>${safeClient}</strong> is ${isInstall ? 'scheduled to install' : 'due'} in ${daysDiff} day(s).</p>
           </div>
           <div style="padding: 20px;">
-            <p><strong>Due Date:</strong> ${safeDue}</p>
+            <p><strong>${dateLabel}:</strong> ${safeDue}</p>
             <p><strong>Current Stage:</strong> ${safeStage}</p>
             <p><strong>Assigned To:</strong> ${safeAssigned}</p>
           </div>
@@ -397,5 +510,213 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
     }
   }
   
+  return { emails_sent: sent.length, recipients: sent };
+}
+
+// Order filters must match the same semantics as the workflow engine's
+// order_* matching, so a rule behaves identically whichever path fires it.
+function orderMatchesTriggerFilters(order, trigger) {
+  const condition = trigger?.trigger_condition || {};
+  if (condition.request_type && String(order.request_type || '') !== condition.request_type) return false;
+  if (condition.vendor && String(order.vendor || '') !== condition.vendor) return false;
+  if (condition.requestor && String(order.requestor_name || order.requestor || '') !== condition.requestor) return false;
+  if (condition.min_quantity != null && !(Number(order.quantity) >= Number(condition.min_quantity))) return false;
+  if (condition.max_quantity != null && !(Number(order.quantity) <= Number(condition.max_quantity))) return false;
+  return true;
+}
+
+// Order version of the Work Order claim: conditional write on the loaded
+// version so two runs cannot both claim the same rule/due-date firing.
+async function claimOrderDeadlineFire(base44, order, key, today) {
+  const markers = (order.automation_deadline_fired && typeof order.automation_deadline_fired === 'object' && !Array.isArray(order.automation_deadline_fired))
+    ? order.automation_deadline_fired : {};
+  if (markers[key]) return { claimed: false, reason: 'already_fired' };
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffDate = cutoff.toISOString().split('T')[0];
+  const nextMarkers = {};
+  for (const [k, v] of Object.entries(markers)) {
+    if (String(v).slice(0, 10) >= cutoffDate) nextMarkers[k] = v;
+  }
+  nextMarkers[key] = `${today}|${crypto.randomUUID().slice(0, 12)}`;
+
+  const version = String(order.updated_date || '').trim();
+  if (!version) {
+    console.warn(`Order deadline claim has no loaded version for Order ${order.id} — skipping.`);
+    return { claimed: false, reason: 'claim_failed' };
+  }
+  let result;
+  try {
+    result = await base44.asServiceRole.entities.Order.updateMany(
+      { id: order.id, updated_date: version },
+      { $set: { automation_deadline_fired: nextMarkers } },
+    );
+  } catch (error) {
+    let afterError;
+    try {
+      afterError = await base44.asServiceRole.entities.Order.get(order.id);
+    } catch (verificationError) {
+      console.warn(`Order deadline claim errored and its outcome could not be verified for ${order.id}:`, verificationError?.message || verificationError);
+      return { claimed: false, reason: 'claim_failed' };
+    }
+    if (afterError?.automation_deadline_fired?.[key] === nextMarkers[key]) {
+      Object.assign(order, afterError);
+      return { claimed: true };
+    }
+    console.warn(`Order deadline claim failed for Order ${order.id}:`, error?.message || error);
+    return { claimed: false, reason: 'claim_failed' };
+  }
+  if (!result || typeof result.updated !== 'number') {
+    console.warn(`Order deadline claim result could not be verified for ${order.id}.`);
+    return { claimed: false, reason: 'claim_failed' };
+  }
+  if (result.updated === 1) {
+    const saved = await base44.asServiceRole.entities.Order.get(order.id).catch(() => null);
+    if (!saved?.id || saved.automation_deadline_fired?.[key] !== nextMarkers[key]) {
+      console.warn(`Order deadline claim succeeded but could not be verified for ${order.id} — skipping to avoid a duplicate firing.`);
+      return { claimed: false, reason: 'claim_failed' };
+    }
+    Object.assign(order, saved);
+    return { claimed: true };
+  }
+  // updated === 0: a concurrent write owns the record — skip; the next daily
+  // run re-evaluates.
+  return { claimed: false, reason: 'conflict' };
+}
+
+// Order deadline rules are send_email only: an Order carries no Work Order,
+// so mutating actions are reported as skipped rather than attempted.
+async function executeOrderRuleActions(base44, rule, order, trigger_type) {
+  const results = [];
+  for (const action of rule.actions || []) {
+    try {
+      if (action.action_type === 'send_email') {
+        results.push({ type: 'send_email', result: await sendOrderDeadlineEmail(base44, action.action_config || {}, order, trigger_type) });
+      } else {
+        results.push({ type: action.action_type, skipped: true, reason: 'Action requires a Work Order' });
+      }
+    } catch (err) {
+      console.error(`Order deadline automation action failed (${rule?.name || 'unnamed rule'} / ${action?.action_type || 'unknown'} / Order ${order?.id || 'unknown'}):`, err);
+      results.push({ type: action.action_type, error: 'Order deadline automation action could not be completed safely' });
+    }
+  }
+  return results;
+}
+
+async function sendOrderDeadlineEmail(base44, config, order, trigger_type) {
+  const recipients = [];
+
+  for (const recipient of (config.recipients || [])) {
+    switch (recipient.type) {
+      case 'email':
+        if (recipient.value) recipients.push(recipient.value);
+        break;
+      case 'all_admins': {
+        const admins = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.AuthorizedEmail,
+          query: { role: 'admin' },
+          sort: null,
+          label: 'Order deadline admin recipients',
+        });
+        admins.forEach(a => a.email && recipients.push(a.email));
+        break;
+      }
+      case 'custom_list':
+        if (recipient.value) {
+          for (const email of String(recipient.value).split(',')) {
+            const trimmed = email.trim();
+            if (trimmed) recipients.push(trimmed);
+          }
+        }
+        break;
+      case 'email_group':
+        if (recipient.value) {
+          const groups = await base44.asServiceRole.entities.EmailGroup.filter({ id: recipient.value });
+          if (groups[0]?.emails) recipients.push(...groups[0].emails);
+        }
+        break;
+    }
+  }
+
+  if (recipients.length === 0) {
+    return { skipped: true, reason: 'No recipients' };
+  }
+
+  const isOverdue = trigger_type === 'order_date_needed_passed' || trigger_type === 'order_overdue';
+  const neededDate = new Date(order.date_needed);
+  const now = new Date();
+  const daysDiff = Math.ceil(Math.abs(neededDate - now) / (1000 * 60 * 60 * 24));
+
+  let subject = config.subject || (isOverdue
+    ? `⚠️ OVERDUE ORDER: ${order.customer_name || 'Customer'}`
+    : `📅 Order Date Needed Approaching: ${order.customer_name || 'Customer'}`);
+  let body = config.body || '';
+
+  const vars: Record<string, string> = {
+    '{{customer_name}}': esc(order.customer_name),
+    '{{request_type}}': esc(order.request_type),
+    '{{description}}': esc(order.description),
+    '{{quantity}}': esc(order.quantity),
+    '{{requestor_name}}': esc(order.requestor_name),
+    '{{requestor_email}}': esc(order.requestor_email),
+    '{{vendor}}': esc(order.vendor),
+    '{{date_needed}}': esc(order.date_needed),
+    '{{date_ordered}}': esc(order.date_ordered),
+    '{{status}}': esc(order.status),
+    '{{days_overdue}}': isOverdue ? String(daysDiff) : '0',
+    '{{days_until_due}}': !isOverdue ? String(daysDiff) : '0',
+  };
+  for (const [key, value] of Object.entries(vars)) {
+    subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+    body = body.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+  }
+
+  if (!body) {
+    const safeCustomer = esc(order.customer_name);
+    const safeRequest = esc(order.request_type);
+    const safeVendor = esc(order.vendor || 'Not specified');
+    const safeNeeded = esc(order.date_needed);
+    const safeDescription = esc(order.description || 'None');
+    if (isOverdue) {
+      body = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #FEE2E2; padding: 20px; border-radius: 8px; border-left: 4px solid #EF4444;">
+            <h2 style="color: #991B1B; margin: 0 0 10px 0;">⚠️ Order Overdue</h2>
+            <p style="color: #7F1D1D; margin: 0;"><strong>${safeCustomer}</strong> — ${safeRequest} is ${daysDiff} day(s) past its needed date.</p>
+          </div>
+          <div style="padding: 20px;">
+            <p><strong>Date Needed:</strong> ${safeNeeded}</p>
+            <p><strong>Vendor:</strong> ${safeVendor}</p>
+            <p><strong>Description:</strong> ${safeDescription}</p>
+          </div>
+        </div>
+      `;
+    } else {
+      body = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #FEF3C7; padding: 20px; border-radius: 8px; border-left: 4px solid #F59E0B;">
+            <h2 style="color: #92400E; margin: 0 0 10px 0;">📅 Order Date Needed Approaching</h2>
+            <p style="color: #78350F; margin: 0;"><strong>${safeCustomer}</strong> — ${safeRequest} is needed in ${daysDiff} day(s).</p>
+          </div>
+          <div style="padding: 20px;">
+            <p><strong>Date Needed:</strong> ${safeNeeded}</p>
+            <p><strong>Vendor:</strong> ${safeVendor}</p>
+            <p><strong>Description:</strong> ${safeDescription}</p>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  const sent = [];
+  for (const to of [...new Set(recipients)]) {
+    try {
+      await base44.integrations.Core.SendEmail({ to, subject, body });
+      sent.push(to);
+    } catch (e) {
+      console.error(`Failed to send to ${to}:`, e);
+    }
+  }
+
   return { emails_sent: sent.length, recipients: sent };
 }
