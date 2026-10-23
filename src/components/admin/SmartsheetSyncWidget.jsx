@@ -93,7 +93,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
         if (event?.type === "delete" || event?.data?.deleted === true) {
           recordsRef.current.delete(key);
         } else {
-          recordsRef.current.set(key, event?.data || event);
+          recordsRef.current.set(key, { ...(recordsRef.current.get(key) || {}), ...(event?.data || {}) });
         }
         recompute();
       });
