@@ -9,11 +9,12 @@ import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 const WorkOrder = base44.entities.WorkOrder;
 
 export default function Estimating() {
-  const { isRegistered } = useAuth();
+  const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingWorkOrder, setEditingWorkOrder] = useState(null);
@@ -112,6 +113,8 @@ export default function Estimating() {
         label: "Estimating priority reorder",
       });
       setWorkOrders(result.items);
+      NotificationTriggers.workOrderPriorityReordered(loadedItems, reorderedItems, currentUser?.full_name || currentUser?.email)
+        .catch((e) => console.error("Priority-change notification failed:", e));
     } catch (error) {
       console.error("Error reordering Estimating Work Orders:", error);
       alert(error?.message || "The Estimating priority order changed in another session. Reload and try the reorder again.");
