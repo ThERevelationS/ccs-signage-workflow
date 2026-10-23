@@ -92,7 +92,7 @@ const anchorFocusedRow = (el) => {
   const row = el?.closest?.("tr");
   if (!row) return;
   let scroller = row.parentElement;
-  while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) {
+  while (scroller && (!/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) || scroller.scrollHeight <= scroller.clientHeight)) {
     scroller = scroller.parentElement;
   }
   const target = scroller || document.scrollingElement;
