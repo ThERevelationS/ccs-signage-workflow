@@ -79,8 +79,8 @@ test("ambient mesh and status glows exist with reduced-motion fallbacks", () => 
   for (const tone of ["glow-success", "glow-warning", "glow-danger", "glow-info"]) {
     assert.match(css, new RegExp("\\." + tone));
   }
-  const rmBlock = css.slice(css.lastIndexOf("prefers-reduced-motion"));
-  assert.match(rmBlock, /\.ambient-mesh \{ animation: none; \}/);
+  const ambientBlock = css.slice(css.indexOf("@keyframes ambientDrift"), css.indexOf("Face-scan reticle"));
+  assert.match(ambientBlock, /prefers-reduced-motion[\s\S]*\.ambient-mesh \{ animation: none; \}/, "ambient-mesh must have a reduced-motion fallback");
 });
 
 test("glow-card transforms only paint-safe properties", () => {
