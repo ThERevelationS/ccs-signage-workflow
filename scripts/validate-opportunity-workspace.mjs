@@ -276,4 +276,28 @@ assert.match(entry, /stage_sync_warning/, 'sync failures must surface as warning
 assert.match(entry, /sales_status: next/, 'sync must write the work order sales_status');
 assert.ok(entry.indexOf('syncWorkOrderStage') > 0 && entry.lastIndexOf('syncWorkOrderStage') > entry.indexOf('link_work_order'), 'link_work_order must sync the stage too');
 
+// Customer portal: token-scoped read-only invoice sharing.
+const portalEntity = readFileSync('base44/entities/CustomerPortalLink.jsonc', 'utf8');
+assert.match(portalEntity, /"__portal_link_backend_only__"/, 'portal link entity must be backend-only');
+assert.match(portalEntity, /"creation_request_key"/, 'portal link entity must carry a retry-safe key');
+const portalFn = readFileSync('base44/functions/customerPortalAction/entry.ts', 'utf8');
+assert.match(portalFn, /action === "bootstrap"/, 'portal function must expose token bootstrap');
+assert.match(portalFn, /token\.length < 16/, 'bootstrap must reject short tokens');
+assert.match(portalFn, /authenticateSignShopSession/, 'staff portal actions must authenticate');
+assert.match(portalFn, /action === "create_link"/, 'portal function must create share links');
+assert.match(portalFn, /action === "revoke_link"/, 'portal function must revoke share links');
+assert.match(portalFn, /invoicePortalView/, 'bootstrap must return a sanitized invoice view');
+assert.doesNotMatch(portalFn.slice(portalFn.indexOf('action === "bootstrap"'), portalFn.indexOf('authenticateSignShopSession')), /session_token/, 'bootstrap must not require a session token');
+const portalPage = readFileSync('src/pages/CustomerPortal.jsx', 'utf8');
+assert.match(portalPage, /params\.get\("token"\)/, 'portal page must read the token from the URL');
+assert.match(portalPage, /customerPortalAction/, 'portal page must call the portal function');
+assert.match(portalPage, /Print \/ PDF/, 'portal page must offer a printable view');
+const appShell = readFileSync('src/App.jsx', 'utf8');
+assert.match(appShell, /path === '\/customerportal'/, 'portal must be a standalone unauthenticated route');
+const invPortalPage = readFileSync('src/pages/Invoices.jsx', 'utf8');
+assert.match(invPortalPage, /PortalLinks\b/, 'invoice detail must render the portal link section');
+assert.match(invPortalPage, /action: "create_link"/, 'invoice detail must create portal links');
+assert.match(invPortalPage, /action: "revoke_link"/, 'invoice detail must revoke portal links');
+assert.match(invPortalPage, /\/customerportal\?token=/, 'invoice detail must build the portal URL');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
