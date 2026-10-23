@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
 import { stripInheritedWorkOrderSyncIdentity } from './workOrderCreationIdentity.mjs';
+import { NotificationTriggers } from "./NotificationService";
 
 const SYSTEM_FIELDS = new Set([
   "id",
@@ -374,6 +375,11 @@ export async function restoreWorkOrderFromLoadedTrashSnapshot({
   if (result.updated === 1) {
     const saved = await entity.get(id).catch(() => null);
     if (!saved) throw new Error(`${label} succeeded but the recovered Work Order could not be re-read.`);
+    try {
+      await NotificationTriggers.workOrderRestored(saved);
+    } catch (notificationError) {
+      console.error(`${label} succeeded but its restore notification failed:`, notificationError);
+    }
     return saved;
   }
 
@@ -420,6 +426,11 @@ export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, l
   if (result.updated === 1) {
     const saved = await entity.get(id).catch(() => null);
     if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+    try {
+      await NotificationTriggers.workOrderFieldsChanged(saved, workOrder);
+    } catch (notificationError) {
+      console.error(`${label} succeeded but its field-change notifications failed:`, notificationError);
+    }
     return saved;
   }
 
