@@ -1,3 +1,18 @@
+# Permitting continuation - run25 through run26 recorded
+
+- run25: 150 attempts / 150 cycles / errors=0; run26: 106 attempts / 107 cycles / errors=1. This unit: 256 page attempts; historical bounded total: 3895 attempts, not verified successful fetches.
+- OH: 1822 pending / 102 profiles / 1359 review gaps / 811 frontiers.
+- KY: 171 pending / 12 profiles / 168 review gaps / 113 frontiers.
+- No-frontier eligibility-query counts: OH 62, KY 101. Readbacks can include concurrent scheduler activity.
+- Returned failures and exceptions checked; 1.2s pacing; stop on first failure without blind retry. Previous run24 document conflict remains in the historical receipt.
+- Run26 stopped on SDK 'aborted'. Interrupted operation stage, jurisdiction ID and persistence outcome were not captured. That cycle is excluded from the total and was not replayed; fresh aggregate readback succeeded.
+- Nine local shared module hashes matched sandbox before execution; 29/29 sandbox discovery continuation/frontier/scan tests passed.
+- Zero LLM calls, archives, cap changes, authority conclusions or unrelated client/job/shared-record writes. No publication or product source edits; concurrent local work preserved.
+- No new per-document live provenance audit. Same-host/depth/link bounds unchanged. Statewide completeness remains unclaimed.
+- Receipt: docs/permitting-collection-expansion-2026-10-23.json. Continue bounded draining, followed by evidence-safe failed-seed and gap review.
+
+---
+
 # Permitting continuation - runs 23-24 verified
 
 - Two serialized passes bounded at 150 cycles: run23 completed 150 attempts; run24 stopped after 131 attempts / 132 cycles on one returned document concurrency conflict. Total 281 attempts, zero LLM calls. Historical bounded total: 3639 attempts (not a successful-fetch count).
