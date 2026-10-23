@@ -529,6 +529,78 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, invoice: updated });
     }
 
+    if (action === "email_invoice") {
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("Invoice not found.", 404);
+      if (clean(invoice.status) === "void" || clean(invoice.status) === "draft") {
+        throw bad("Only issued invoices (sent/partial/paid) can be emailed.", 409);
+      }
+      const customer = clean(invoice.customer_id)
+        ? await Customer.get(clean(invoice.customer_id)).catch(() => null)
+        : null;
+      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email);
+      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
+      const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
+
+      // Reuse or mint an invoice-scoped portal link so the recipient can view/pay online.
+      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
+      let portalUrl = "";
+      const existing = await PortalLink.filter({ kind: "invoice", record_id: invoiceId }).catch(() => []);
+      let link = (Array.isArray(existing) ? existing : []).find((l: any) => l?.id && l?.revoked !== true && (!l?.expires_at || Date.parse(String(l.expires_at)) > Date.now()));
+      if (!link) {
+        const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+        const key = `portal-link:invoice:${invoiceId}:email:${clean(body?.creation_request_key) || Date.now()}`.slice(0, 256);
+        const created = await createFoundationRecordWithRecovery({
+          entity: PortalLink,
+          data: {
+            creation_request_key: key,
+            token,
+            kind: "invoice",
+            record_id: invoiceId,
+            customer_id: clean(invoice.customer_id),
+            label: `Invoice ${clean(invoice.invoice_number) || invoiceId}`,
+            created_by: actor,
+            expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+            revoked: false,
+            open_count: 0,
+          },
+          readMatches: () => PortalLink.filter({ creation_request_key: key }),
+          label: "Invoice portal link",
+        });
+        link = created.record;
+      }
+      if (portalBase && link?.token) portalUrl = `${portalBase}/customerportal?token=${encodeURIComponent(clean(link.token))}`;
+
+      const invNum = clean(invoice.invoice_number) || "Invoice";
+      const companyName = clean(body?.company_name) || "CCS Signage";
+      const items = Array.isArray(invoice.line_items) ? invoice.line_items : [];
+      const money = (n: any) => `$${num(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const rows = items.map((i: any) =>
+        `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.description || i?.name) || "Item"}${num(i?.quantity) > 1 ? ` × ${num(i.quantity)}` : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(num(i?.quantity) * num(i?.unit_price))}</td></tr>`).join("");
+      const subject = `${companyName} — ${invNum} ${num(invoice.balance_due) > 0 ? `(${money(invoice.balance_due)} due)` : ""}`;
+      const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName}</h2>
+        <p style="margin-top:0;color:#64748b;font-size:13px">${invNum}${clean(invoice.issue_date) ? ` · issued ${clean(invoice.issue_date)}` : ""}${clean(invoice.due_date) ? ` · due ${clean(invoice.due_date)}` : ""}</p>
+        ${rows ? `<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">${rows}</table>` : ""}
+        <table style="width:100%;font-size:14px;margin-top:8px">
+          <tr><td style="color:#64748b">Total</td><td style="text-align:right;font-weight:600">${money(invoice.total)}</td></tr>
+          <tr><td style="color:#64748b">Paid</td><td style="text-align:right;color:#059669">${money(num(invoice.total) - num(invoice.balance_due))}</td></tr>
+          <tr><td style="color:#64748b;font-weight:600">Balance due</td><td style="text-align:right;font-weight:700;color:${num(invoice.balance_due) > 0 ? "#b91c1c" : "#059669"}">${money(invoice.balance_due)}</td></tr>
+        </table>
+        ${portalUrl ? `<p style="text-align:center;margin:28px 0"><a href="${portalUrl}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View invoice online</a></p>
+        <p style="font-size:12px;color:#64748b;text-align:center">Your portal link is valid for 90 days — view the invoice, message us, or let us know a payment is on the way.</p>` : ""}
+      </div>`;
+      const sent = await base44.asServiceRole.functions
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d" })
+        .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+      const sendResult = sent?.data || sent;
+      if (sendResult?.error || sendResult?.success === false) {
+        throw bad(`Invoice email could not be sent: ${sendResult?.error || "sendGmail failed"}`);
+      }
+      return Response.json({ success: true, action, sent_to: to, portal_url: portalUrl || undefined });
+    }
+
     if (action === "void_invoice") {
       const invoiceId = clean(body?.invoice_id);
       const current = await Invoice.get(invoiceId).catch(() => null);
