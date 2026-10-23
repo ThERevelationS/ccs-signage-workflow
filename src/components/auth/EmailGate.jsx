@@ -11,6 +11,10 @@ const ADMIN_UNLOCKED_KEY = "adminUnlocked";
 const ADMIN_CAPABILITY_KEY = "adminSettingsCapability";
 const ADMIN_CAPABILITY_EXPIRES_KEY = "adminSettingsCapabilityExpires";
 
+export function getSessionToken() {
+  try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; }
+}
+
 export function clearAdminSettingsAuthorization() {
   try {
     sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
