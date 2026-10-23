@@ -120,6 +120,7 @@ export default function OrderForm() {
             >
               <SelectItem value="all_with_received">All Orders + History</SelectItem>
               <SelectItem value="open_only">Not Received Only</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="ordered">Ordered</SelectItem>
               <SelectItem value="received">Received</SelectItem>
