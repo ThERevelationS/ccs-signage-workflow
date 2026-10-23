@@ -55,6 +55,10 @@ assert.match(page, /funnel\.stage_counts/, 'page must render the funnel strip');
 // Global search: backend-only records reachable through the workspace function.
 const globalSearch = readFileSync('src/components/workflow/GlobalSearch.jsx', 'utf8');
 assert.ok(entry.includes('action === "global_search"'), 'global_search must be handled server-side');
+assert.match(entry, /reconcileEstimatingRequest/, 'estimating requests must reconcile against their linked estimate');
+assert.match(entry, /QUOTE_OUT_STATUSES/, 'quote-out estimate statuses must drive request completion');
+assert.match(entry, /status: "completed", completed_at/, 'reconciliation must mark the request completed');
+assert.match(entry, /stage: "quoted", stage_changed_at/, 'reconciliation must advance an estimating opportunity to quoted');
 assert.match(entry, /asServiceRole\.entities\.Invoice\b/, 'global search must read invoices via service role');
 assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 'search must invoke the workspace function');
 assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
