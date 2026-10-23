@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Clock, Trash2, Loader2, RefreshCw, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
+import { usePolling } from "@/lib/usePolling";
 
 export default function RegulationAlertPanel() {
   const { sessionToken } = useAuth();
@@ -13,10 +14,10 @@ export default function RegulationAlertPanel() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [filter, setFilter] = useState("unread"); // unread, all, critical, high
 
+  usePolling(() => loadAlerts(), 300000, { runOnMount: false });
+
   useEffect(() => {
     loadAlerts();
-    const interval = setInterval(loadAlerts, 60000); // Refresh every minute
-    return () => clearInterval(interval);
   }, []);
 
   const loadAlerts = async () => {
