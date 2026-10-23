@@ -7,6 +7,7 @@ import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalPolicies";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
 
 const LEGACY_FLEET_PUBLIC_REPORT_URL = "https://app--ccsfleet-master-db95ea70.base44.app/PublicReport";
@@ -30,7 +31,9 @@ async function loadAutomationHealthData() {
 }
 
 export default function FleetSettings() {
+  const { sessionToken } = useAuth();
   const [user, setUser] = useState(null);
+  const [bouncieReconnectBusy, setBouncieReconnectBusy] = useState(false);
   const [settings, setSettings] = useState(null);
   const [connection, setConnection] = useState(null);
   const [audit, setAudit] = useState(null);
@@ -75,7 +78,7 @@ export default function FleetSettings() {
         if (u?.role === "admin") {
           const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
-            base44.functions.invoke("bouncieStatus", {}).catch(() => null),
+            base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
             base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
             base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
@@ -237,7 +240,7 @@ export default function FleetSettings() {
       setServerStatus(data || null);
       const [settingsRows, bouncieStatusResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
         base44.entities.FleetSettings.list("-updated_date", 10),
-        base44.functions.invoke("bouncieStatus", {}).catch(() => null),
+        base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
         loadAutomationHealthData(),
         base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
         listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
@@ -429,6 +432,23 @@ export default function FleetSettings() {
     }
   };
 
+  const reconnectBouncie = async () => {
+    setBouncieReconnectBusy(true);
+    setActionError("");
+    try {
+      const { data } = await base44.functions.invoke("bouncieAuthInitiate", { session_token: sessionToken });
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+        return;
+      }
+      setActionError(data?.error || "Bouncie authorization could not be started. You can also reconnect from the Fleet Tracking page.");
+    } catch (error) {
+      setActionError(error?.message || "Bouncie authorization could not be started. You can also reconnect from the Fleet Tracking page.");
+    } finally {
+      setBouncieReconnectBusy(false);
+    }
+  };
+
   if (loading) return <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
   if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div></div></div>;
 
@@ -555,7 +575,7 @@ export default function FleetSettings() {
 
     <div id="fleet-data-integrity" className="scroll-mt-36"><IntegrityPanel data={integrity} busy={integrityBusy} onRefresh={runIntegrityAudit} /></div>
 
-    {connection?.needsReconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips must be reauthorized from the Tracking page to restore full Fleet tracking.</p></div></div>}
+    {connection?.needsReconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips need a fresh authorization to restore full Fleet tracking.</p><button type="button" onClick={reconnectBouncie} disabled={bouncieReconnectBusy} className="mt-3 min-h-11 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 inline-flex items-center gap-2"><Link2 className="w-4 h-4"/>{bouncieReconnectBusy ? "Opening Bouncie…" : "Reconnect Bouncie"}</button></div></div>}
 
     {oldUrl && <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-amber-600 shrink-0"/><div><div className="font-semibold text-amber-800 dark:text-amber-200">Legacy FleetMaster URL still preserved in a template</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Notifications are live. Update this template immediately so future Fleet messages do not send users to the retired FleetMaster route.</p></div></div>}
 
