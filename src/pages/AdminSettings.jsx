@@ -372,6 +372,20 @@ const ORDER_DEADLINE_TRIGGER_SET = new Set([
   "order_date_needed_approaching", "order_date_needed_passed", "order_overdue",
 ]);
 
+// Emitted server-side by opportunityWorkspaceAction after verified saves —
+// Opportunity record context, send_email only.
+const SALES_TRIGGER_SET = new Set([
+  "sales_lead_created", "sales_status_changed", "sales_status_won",
+  "sales_status_lost", "sales_status_on_hold", "sales_rep_changed",
+]);
+
+// Fired by checkDeadlineReminders against open Opportunities —
+// send_email only.
+const SALES_DEADLINE_TRIGGER_SET = new Set([
+  "sales_follow_up_date_approaching", "sales_follow_up_date_passed",
+  "sales_close_date_approaching",
+]);
+
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
 
 const ENGINE_SUPPORTED_ACTIONS = new Set([
@@ -387,6 +401,7 @@ const DEADLINE_SUPPORTED_ACTIONS = new Set([
 const getTriggerSupportedActions = (triggerType) => {
   if (WORKFLOW_ENGINE_TRIGGER_SET.has(triggerType)) return ENGINE_SUPPORTED_ACTIONS;
   if (ORDER_TRIGGER_SET.has(triggerType) || ORDER_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
+  if (SALES_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
