@@ -24,10 +24,11 @@ import {
 import { Plus, Trash2, Edit, Users, Mail, X } from "lucide-react";
 import { createEmailGroupIfAbsent, deleteEmailGroupIfUnused, updateEmailGroupIfUnchanged } from "@/components/admin/emailGroupPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 
 const EmailGroup = base44.entities.EmailGroup;
 
-export default function EmailGroupsManager({ adminCapability }) {
+export default function EmailGroupsManager() {
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -97,6 +98,9 @@ export default function EmailGroupsManager({ adminCapability }) {
 
   const handleSave = async () => {
     if (isSaving || isLoading || loadError || !formData.name || formData.emails.length === 0) return;
+    // Current stored authorization, not a mount-time snapshot: an expired
+    // capability must fail before dispatch rather than reach the server.
+    const writeCapability = getStoredAdminSettingsCapability();
     setIsSaving(true);
     setPersistenceError("");
     try {
@@ -104,13 +108,13 @@ export default function EmailGroupsManager({ adminCapability }) {
         await updateEmailGroupIfUnchanged({
           group: editingGroup,
           nextFields: formData,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `Email group ${editingGroup.name || editingGroup.id}`,
         });
       } else {
         const result = await createEmailGroupIfAbsent({
           data: formData,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `Email group ${formData.name}`,
         });
         if (result.status === "existing") {
@@ -130,12 +134,13 @@ export default function EmailGroupsManager({ adminCapability }) {
 
   const handleDelete = async (group) => {
     if (!group?.id || isSaving || isLoading || loadError) return;
+    const writeCapability = getStoredAdminSettingsCapability();
     setIsSaving(true);
     setPersistenceError("");
     try {
       await deleteEmailGroupIfUnused({
         group,
-        adminCapability,
+        adminCapability: writeCapability,
         label: `Email group ${group.name || group.id} deletion`,
       });
       setDeleteConfirm(null);
