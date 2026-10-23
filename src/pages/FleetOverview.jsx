@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { easternTodayText, isFluidLowStock, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { fleetHealthScore } from "@/components/fleet/fleetHealth";
@@ -258,7 +259,7 @@ export default function FleetOverview() {
     return (
       <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
         <FleetModuleNav />
-        <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-4"><ListSkeleton rows={6} /></div>
       </div>
     );
   }
