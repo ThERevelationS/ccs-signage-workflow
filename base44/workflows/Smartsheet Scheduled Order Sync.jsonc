@@ -1,0 +1,48 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "smartsheet_scheduled_order_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_order_sync": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "smartsheetSyncAction",
+            "args": {
+              "action": "run_order_sync",
+              "_workflow_capability": "PkqkW1Iclz6ucp1fDEYC3Vxx-rxRGl6gFDbm5wiPLyr0VvCk40iucbbdS1fXHsSV"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run scheduled Order Form pull",
+            "description": "Runs the Order Form pull only, on its own coordinator. Order Form background push is locked OFF; use explicit Save & Sync for Base44 \u2192 Smartsheet Order writes."
+          }
+        }
+      }
+    ]
+  },
+  "name": "Smartsheet Scheduled Order Sync",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "8,23,38,53 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Runs every 15 minutes server-side, offset 8 minutes after the Sales Pipeline sync so the two pipelines do not compete for the Smartsheet read budget. Order Form can pull automatically when enabled and may create Base44 Orders from new verified Smartsheet rows; background push and automatic Smartsheet row creation stay locked OFF. Order writes use explicit Save & Sync. Only runs when global sync is enabled and observation mode is off."
+}
