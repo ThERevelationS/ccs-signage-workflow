@@ -36,7 +36,7 @@
     "note": "Every eligible profile with a permitting_url and no frontier was attempted in both states. Failures remain explicit review gaps; none were marked successful."
   },
   "drain": {
-    "route": "continueDiscoveryBacklog via deployed shared module; production fetcher contract (safeExternalFetch + readPermittingResourceResponse, 12s timeout); one page per cycle, breadth-first oldest-updated",
+    "route": "continueDiscoveryBacklog from nine SHA-256 sandbox-matched local shared modules executed via authenticated Base44 exec; production fetcher contract (safeExternalFetch + readPermittingResourceResponse, 12s timeout), one page per cycle, oldest-updated eligible OH/KY profile. The helper does not enforce strict OH-before-KY ordering.",
     "bounded_passes": [
       {
         "run": "earlier-session drain1+drain2",
@@ -174,31 +174,69 @@
         "cycles": 150,
         "pages": 150,
         "errors": 0
+      },
+      {
+        "run": "run23",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0,
+        "started_at": "2026-10-23T05:47:44.740Z",
+        "finished_at": "2026-10-23T05:56:36.502Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "failure_detection": "Both returned success/error fields and thrown errors checked; stop on first failure.",
+        "failures": []
+      },
+      {
+        "run": "run24",
+        "cycles": 132,
+        "pages": 131,
+        "errors": 1,
+        "started_at": "2026-10-23T05:56:52.215Z",
+        "finished_at": "2026-10-23T06:03:50.212Z",
+        "llm_calls": 0,
+        "page_metric": "attempted_pages, not verified successful fetches",
+        "failure_detection": "Both returned success/error fields and thrown errors checked; stop on first failure.",
+        "failures": [
+          {
+            "success": false,
+            "status": "discovery_continuation_conflict",
+            "error": "Discovery continuation changed in another session (documents). The newer value was not overwritten.",
+            "llm_calls": 0
+          }
+        ]
       }
     ],
-    "pages_fetched_total_bounded_passes": 3358,
+    "pages_fetched_total_bounded_passes": 3639,
     "provenance_violations": 0,
-    "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining."
+    "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining.",
+    "page_metric_clarification": "The historical pages/pages_fetched_total_bounded_passes keys count attempted_pages, not verified successful fetches. Failed fetches persist explicit gaps. Historical provenance_violations is retained from prior receipts; runs 23-24 did not perform a separate per-document live provenance audit.",
+    "latest_verification": {
+      "tests": "29/29 discovery continuation/frontier/scan tests passed in sandbox",
+      "module_parity": "Nine shared modules and their complete local import closure matched sandbox SHA-256 hashes before execution",
+      "runner": "C:/tmp/permitting-drain-verified.ts",
+      "pacing_ms": 1200
+    }
   },
   "final_state": {
     "OH": {
-      "frontier_profiles": 781,
-      "no_frontier_remaining_failed": 62,
-      "pending_pages": 2069,
-      "profiles_with_pending": 109,
-      "review_gaps": 1288
+      "frontier_profiles": 807,
+      "no_frontier_remaining": 62,
+      "pending_pages": 1915,
+      "profiles_with_pending": 103,
+      "review_gaps": 1341
     },
     "KY": {
       "frontier_profiles": 113,
-      "no_frontier_remaining_failed": 101,
-      "pending_pages": 220,
+      "no_frontier_remaining": 101,
+      "pending_pages": 207,
       "profiles_with_pending": 14,
-      "review_gaps": 149
+      "review_gaps": 157
     }
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
   "protected_data": "No manual/pinned/archive-protected record was modified; all writes used guarded same-version persistence; no client/job/shared records touched; no authority or applicability conclusions drawn.",
-  "ongoing": "Scheduled permittingResearchBacklogDispatch continues draining frontiers at 5 profiles per 15-minute cycle, Ohio-first. Residual pending_pages backlog (~3,367) is an active, bounded discovery frontier, not an unattempted gap. Failed-seed jurisdictions (163 total) require corrected permitting_url sources before discovery can proceed.",
+  "ongoing": "Readback after run24: OH 1915 pending pages across 103 profiles; KY 207 across 14. Snapshot may include concurrent scheduler activity. No dispatcher settings changed or new scheduler throughput claim verified. No statewide completeness or comprehensive official-source coverage is claimed.",
   "gap_triage": {
     "page_fetch_failed": {
       "OH": 454,
