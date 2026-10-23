@@ -38,3 +38,15 @@ test('backend files and non-approved helpers cannot resolve through frontend bri
  for (const source of ['../../../base44/functions/findLocalityByAddress/entry.ts', '../../../base44/shared/permittingSecrets.js', '../../../base44/config.jsonc']) assert.equal(plugin.resolveId(source, importer), null);
  await assert.rejects(plugin.load('\0ccs-frontend-shared:' + process.cwd() + '/base44/config.jsonc'), /Unapproved/);
 });
+
+test('every base44/shared import inside src resolves through the approved frontend bridge', async () => {
+ const { readdirSync, statSync, readFileSync } = await import('node:fs');
+ const { join } = await import('node:path');
+ const files = [];
+ const walk = (dir) => { for (const entry of readdirSync(dir)) { const path = join(dir, entry); if (statSync(path).isDirectory()) walk(path); else if (/\.[jt]sx?$/.test(entry)) files.push(path); } };
+ walk(process.cwd() + '/src');
+ const plugin = frontendSharedModules(); plugin.addWatchFile = () => {};
+ const blocked = [];
+ for (const file of files) for (const match of readFileSync(file, 'utf8').matchAll(/['"]((?:\.\.\/)+base44\/shared\/[^'"]+)['"]/g)) if (!plugin.resolveId(match[1], file)) blocked.push(file + ' -> ' + match[1]);
+ assert.deepEqual(blocked, []);
+});
