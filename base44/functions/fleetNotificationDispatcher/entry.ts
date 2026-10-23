@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const replaceVars = (text: string, vars: Record<string,string>) => Object.entries(vars).reduce((out,[k,v]) => out.split(k).join(v), text || '');
@@ -27,8 +28,7 @@ Deno.serve(async (req) => {
     const cutover = await getCanonicalCutoverState(base44);
     if (!cutover?.notifications_enabled) return Response.json({ success: true, disabled: true, queued: 0 });
 
-    const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type: 'general' });
-    const settings = settingsRows?.[0];
+    const settings = await getCanonicalFleetSettings(base44);
     if (!settings) return Response.json({ error: 'FleetSettings record missing.' }, { status: 409 });
 
     let recipients: any[] = [];
