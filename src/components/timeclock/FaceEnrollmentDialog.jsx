@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   UserPlus, 
   Save, 
-  Loader2,
-  CheckCircle2
+  Loader2
 } from "lucide-react";
 import FaceRecognition from "./FaceRecognition";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
@@ -100,7 +99,13 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
 
         {saved ? (
           <div className="flex flex-col items-center py-8">
-            <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+            <div className="relative mb-4 h-16 w-16">
+              <span className="success-burst" />
+              <svg className="h-16 w-16 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path className="check-draw" d="m8 12.5 2.5 2.5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <p className="text-lg font-medium text-green-600">Face Enrolled Successfully!</p>
             <p className="text-sm text-gray-500 mt-1">
               {user?.full_name} can now clock in using facial recognition.
