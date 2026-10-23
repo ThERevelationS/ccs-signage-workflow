@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -3081,7 +3083,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
     const sessionToken = String(body?.session_token || '').trim();
@@ -3229,6 +3231,22 @@ Deno.serve(async (req) => {
         ...(heldReview ? { review_audit: reviewEvidence } : {}),
         attention: 'A company correction claim is held. Inspect the request, audits, TimeEntry and employee state; never clear or time out the coordinator without authoritative reconciliation.',
       });
+    }
+
+    // status_lite is strictly read-only and returns only steady states. It must
+    // run before ensureState and every recover* hook, for the same reason as the
+    // diagnostics block above. Anything the full status action would recover or
+    // reject comes back as requires_full_status and the caller retries 'status'.
+    if (action === 'status_lite') {
+      const liteResult = await buildStatusLite({
+        stateEntity, entryEntity, breakEntity, workPauseEntity, target,
+        helpers: {
+          publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
+          breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
+          MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
+        },
+      });
+      return Response.json(liteResult);
     }
 
     if (action === 'admin_load_data') {
