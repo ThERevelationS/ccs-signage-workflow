@@ -49,6 +49,26 @@ const EDITABLE_OPPORTUNITY_FIELDS = [
 const bad = (message: string, status = 400) =>
   Object.assign(new Error(message), { statusCode: status });
 
+const QUOTE_OUT_STATUSES = new Set(["sent", "approved"]);
+
+async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request }: any) {
+  if (!OPEN_REQUEST_STATUSES.has(clean(request?.status))) return { request, completed: false };
+  const estimateId = clean(request?.estimate_id);
+  if (!estimateId) return { request, completed: false };
+  const estimate = await Estimate.get(estimateId).catch(() => null);
+  if (!estimate?.id || !QUOTE_OUT_STATUSES.has(clean(estimate.status))) return { request, completed: false };
+  const now = new Date().toISOString();
+  const desired = { status: "completed", completed_at: now };
+  const saved = await replaceEstimatingRequestFieldsIfUnchanged({
+    entity: EstimatingRequest,
+    recordId: clean(request.id),
+    expectedFields: expectedFoundationFields(request, desired),
+    nextFields: desired,
+    label: "Estimating request completion",
+  });
+  return { request: saved, completed: true, estimate_status: clean(estimate.status) };
+}
+
 async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any) {
   const next = OPP_TO_WO_STAGE[clean(stage)];
   const wo = await WorkOrder.get(clean(workOrderId)).catch(() => null);
@@ -270,15 +290,42 @@ Deno.serve(async (req) => {
         .filter((p: any) => clean(p?.status) !== "cancelled").reduce((s: number, p: any) => s + num(p?.total), 0));
       const coDelta = money((Array.isArray(changeOrders) ? changeOrders : [])
         .filter((c: any) => ["approved", "applied"].includes(clean(c?.status))).reduce((s: number, c: any) => s + num(c?.amount_delta), 0));
+
+      let finalOpportunity = opportunity;
+      const reconciledRequests: any[] = [];
+      let anyCompleted = false;
+      for (const r of Array.isArray(requests) ? requests : []) {
+        try {
+          const res = await reconcileEstimatingRequest({ EstimatingRequest, Estimate, request: r });
+          reconciledRequests.push(res.request);
+          if (res.completed) anyCompleted = true;
+        } catch {
+          reconciledRequests.push(r);
+        }
+      }
+      if (anyCompleted && clean(opportunity.stage) === "estimating") {
+        const now = new Date().toISOString();
+        const desired = { stage: "quoted", stage_changed_at: now, last_activity_at: now };
+        finalOpportunity = await replaceFoundationFieldsIfUnchanged({
+          entity: Opportunity,
+          recordId: opportunityId,
+          expectedFields: expectedFor(opportunity, opportunity, desired),
+          nextFields: desired,
+          label: "Opportunity stage advance",
+        }).catch(() => opportunity);
+        try {
+          await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted");
+        } catch {}
+      }
       return Response.json({
         success: true,
         action,
-        opportunity,
+        opportunity: finalOpportunity,
         customer: customer || null,
         contact: contact || null,
         location: location || null,
         intakes: Array.isArray(intakes) ? intakes : [],
-        estimating_requests: Array.isArray(requests) ? requests : [],
+        estimating_requests: reconciledRequests,
         work_order: workOrder || null,
         estimates: Array.isArray(estimates) ? estimates : [],
         invoices: Array.isArray(invoices) ? invoices : [],
@@ -296,10 +343,20 @@ Deno.serve(async (req) => {
 
     if (action === "list_estimating_requests") {
       const includeClosed = body?.include_closed === true;
-      const rows = await EstimatingRequest.filter({});
+      let rows = await EstimatingRequest.filter({});
       if (!Array.isArray(rows)) throw bad("Estimating request lookup failed.", 500);
-      const openStatuses = new Set(["draft", "ready", "in_progress"]);
-      const filtered = rows.filter((r: any) => includeClosed || openStatuses.has(clean(r?.status)));
+      // Close out open requests whose linked estimate has gone to the customer.
+      let reconciles = 0;
+      for (let i = 0; i < rows.length && reconciles < 60; i += 1) {
+        const r = rows[i];
+        if (!OPEN_REQUEST_STATUSES.has(clean(r?.status)) || !clean(r?.estimate_id)) continue;
+        reconciles += 1;
+        try {
+          const res = await reconcileEstimatingRequest({ EstimatingRequest, Estimate, request: r });
+          rows[i] = res.request;
+        } catch {}
+      }
+      const filtered = rows.filter((r: any) => includeClosed || OPEN_REQUEST_STATUSES.has(clean(r?.status)));
       const opportunityIds = [...new Set(filtered.map((r: any) => clean(r?.opportunity_id)).filter(Boolean))];
       const opportunities = new Map(
         (await Promise.all(opportunityIds.map((id) => Opportunity.get(id).catch(() => null))))
