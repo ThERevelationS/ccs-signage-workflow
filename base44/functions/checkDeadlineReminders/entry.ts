@@ -66,6 +66,13 @@ Deno.serve(async (req) => {
     const siteSurveyRules = automations.filter(a =>
       a.triggers?.some(t => t.trigger_type === 'site_survey_approaching')
     );
+    const SALES_DEADLINE_TRIGGERS = [
+      'sales_follow_up_date_approaching', 'sales_follow_up_date_passed',
+      'sales_close_date_approaching',
+    ];
+    const salesDeadlineRules = automations.filter(a =>
+      a.triggers?.some(t => SALES_DEADLINE_TRIGGERS.includes(t.trigger_type))
+    );
     const activeOrders = orderDeadlineRules.length > 0
       ? await loadAllEntityRows({
           entity: base44.asServiceRole.entities.Order,
@@ -74,7 +81,15 @@ Deno.serve(async (req) => {
           label: 'Deadline reminder Orders',
         })
       : [];
-    
+    const openOpportunities = salesDeadlineRules.length > 0
+      ? await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Opportunity,
+          query: {},
+          sort: 'next_action_due',
+          label: 'Deadline reminder Opportunities',
+        })
+      : [];
+
     const results = {
       overdue: [],
       approaching: [],
@@ -211,9 +226,9 @@ Deno.serve(async (req) => {
           for (const triggerType of ['order_date_needed_passed', 'order_overdue']) {
             const trigger = rule.triggers?.find(t => t.trigger_type === triggerType);
             if (!trigger || !orderMatchesTriggerFilters(order, trigger)) continue;
-            const claim = await claimOrderDeadlineFire(base44, order, `${rule.id}|${triggerType}|${order.date_needed}`, today);
+            const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Order, order, `${rule.id}|${triggerType}|${order.date_needed}`, today);
             if (!claim.claimed) continue;
-            const actionResults = await executeOrderRuleActions(base44, rule, order, triggerType);
+            const actionResults = await executeRecordRuleActions(base44, rule, order, triggerType);
             results.triggered_automations.push({ rule: rule.name, order: order.customer_name, trigger: triggerType, actions: actionResults });
           }
         }
@@ -224,10 +239,48 @@ Deno.serve(async (req) => {
           if (!trigger || !orderMatchesTriggerFilters(order, trigger)) continue;
           const condition = trigger.trigger_condition || {};
           if (daysUntilNeeded > (condition.days_before_due || 7)) continue;
-          const claim = await claimOrderDeadlineFire(base44, order, `${rule.id}|order_date_needed_approaching|${order.date_needed}`, today);
+          const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Order, order, `${rule.id}|order_date_needed_approaching|${order.date_needed}`, today);
           if (!claim.claimed) continue;
-          const actionResults = await executeOrderRuleActions(base44, rule, order, 'order_date_needed_approaching');
+          const actionResults = await executeRecordRuleActions(base44, rule, order, 'order_date_needed_approaching');
           results.triggered_automations.push({ rule: rule.name, order: order.customer_name, trigger: 'order_date_needed_approaching', days_until_due: daysUntilNeeded, actions: actionResults });
+        }
+      }
+    }
+
+    // Sales-pipeline reminders: open opportunities only (won/lost are done).
+    // next_action_due covers follow-up approaching + passed; the desired
+    // completion date covers close-date approaching only.
+    for (const opp of openOpportunities) {
+      const oppStage = String(opp.stage || '').trim();
+      if (oppStage === 'won' || oppStage === 'lost') continue;
+
+      for (const [field, approachingType, passedType] of [
+        ['next_action_due', 'sales_follow_up_date_approaching', 'sales_follow_up_date_passed'],
+        ['desired_completion_date', 'sales_close_date_approaching', null],
+      ]) {
+        const dateStr = String(opp[field] || '').trim();
+        if (!dateStr) continue;
+        const target = new Date(dateStr + 'T23:59:59');
+        const daysUntil = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+
+        for (const rule of salesDeadlineRules) {
+          if (target < now && passedType) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === passedType);
+            if (!trigger) continue;
+            const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Opportunity, opp, `${rule.id}|${passedType}|${field}|${dateStr}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRecordRuleActions(base44, rule, opp, passedType, sendOpportunityDeadlineEmail);
+            results.triggered_automations.push({ rule: rule.name, opportunity: opp.title, trigger: passedType, actions: actionResults });
+          } else if (daysUntil <= 7 && daysUntil > 0) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === approachingType);
+            if (!trigger) continue;
+            const condition = trigger.trigger_condition || {};
+            if (daysUntil > (condition.days_before_due || 7)) continue;
+            const claim = await claimRecordDeadlineFire(base44, base44.asServiceRole.entities.Opportunity, opp, `${rule.id}|${approachingType}|${field}|${dateStr}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRecordRuleActions(base44, rule, opp, approachingType, sendOpportunityDeadlineEmail);
+            results.triggered_automations.push({ rule: rule.name, opportunity: opp.title, trigger: approachingType, days_until_due: daysUntil, actions: actionResults });
+          }
         }
       }
     }
@@ -238,6 +291,7 @@ Deno.serve(async (req) => {
       summary: {
         total_work_orders: workOrders.length,
         total_orders: activeOrders.length,
+        total_opportunities: openOpportunities.length,
         overdue_count: results.overdue.length,
         approaching_count: results.approaching.length,
         orders_overdue_count: results.orders_overdue.length,
@@ -527,7 +581,7 @@ function orderMatchesTriggerFilters(order, trigger) {
 
 // Order version of the Work Order claim: conditional write on the loaded
 // version so two runs cannot both claim the same rule/due-date firing.
-async function claimOrderDeadlineFire(base44, order, key, today) {
+async function claimRecordDeadlineFire(base44, entityApi, order, key, today) {
   const markers = (order.automation_deadline_fired && typeof order.automation_deadline_fired === 'object' && !Array.isArray(order.automation_deadline_fired))
     ? order.automation_deadline_fired : {};
   if (markers[key]) return { claimed: false, reason: 'already_fired' };
@@ -542,38 +596,38 @@ async function claimOrderDeadlineFire(base44, order, key, today) {
 
   const version = String(order.updated_date || '').trim();
   if (!version) {
-    console.warn(`Order deadline claim has no loaded version for Order ${order.id} — skipping.`);
+    console.warn(`Record deadline claim has no loaded version for Order ${order.id} — skipping.`);
     return { claimed: false, reason: 'claim_failed' };
   }
   let result;
   try {
-    result = await base44.asServiceRole.entities.Order.updateMany(
+    result = await entityApi.updateMany(
       { id: order.id, updated_date: version },
       { $set: { automation_deadline_fired: nextMarkers } },
     );
   } catch (error) {
     let afterError;
     try {
-      afterError = await base44.asServiceRole.entities.Order.get(order.id);
+      afterError = await entityApi.get(order.id);
     } catch (verificationError) {
-      console.warn(`Order deadline claim errored and its outcome could not be verified for ${order.id}:`, verificationError?.message || verificationError);
+      console.warn(`Record deadline claim errored and its outcome could not be verified for ${order.id}:`, verificationError?.message || verificationError);
       return { claimed: false, reason: 'claim_failed' };
     }
     if (afterError?.automation_deadline_fired?.[key] === nextMarkers[key]) {
       Object.assign(order, afterError);
       return { claimed: true };
     }
-    console.warn(`Order deadline claim failed for Order ${order.id}:`, error?.message || error);
+    console.warn(`Record deadline claim failed for Order ${order.id}:`, error?.message || error);
     return { claimed: false, reason: 'claim_failed' };
   }
   if (!result || typeof result.updated !== 'number') {
-    console.warn(`Order deadline claim result could not be verified for ${order.id}.`);
+    console.warn(`Record deadline claim result could not be verified for ${order.id}.`);
     return { claimed: false, reason: 'claim_failed' };
   }
   if (result.updated === 1) {
-    const saved = await base44.asServiceRole.entities.Order.get(order.id).catch(() => null);
+    const saved = await entityApi.get(order.id).catch(() => null);
     if (!saved?.id || saved.automation_deadline_fired?.[key] !== nextMarkers[key]) {
-      console.warn(`Order deadline claim succeeded but could not be verified for ${order.id} — skipping to avoid a duplicate firing.`);
+      console.warn(`Record deadline claim succeeded but could not be verified for ${order.id} — skipping to avoid a duplicate firing.`);
       return { claimed: false, reason: 'claim_failed' };
     }
     Object.assign(order, saved);
@@ -584,20 +638,20 @@ async function claimOrderDeadlineFire(base44, order, key, today) {
   return { claimed: false, reason: 'conflict' };
 }
 
-// Order deadline rules are send_email only: an Order carries no Work Order,
-// so mutating actions are reported as skipped rather than attempted.
-async function executeOrderRuleActions(base44, rule, order, trigger_type) {
+// Record deadline rules are send_email only: Orders and Opportunities carry
+// no Work Order, so mutating actions are reported as skipped.
+async function executeRecordRuleActions(base44, rule, record, trigger_type, sendEmail = sendOrderDeadlineEmail) {
   const results = [];
   for (const action of rule.actions || []) {
     try {
       if (action.action_type === 'send_email') {
-        results.push({ type: 'send_email', result: await sendOrderDeadlineEmail(base44, action.action_config || {}, order, trigger_type) });
+        results.push({ type: 'send_email', result: await sendEmail(base44, action.action_config || {}, record, trigger_type) });
       } else {
         results.push({ type: action.action_type, skipped: true, reason: 'Action requires a Work Order' });
       }
     } catch (err) {
-      console.error(`Order deadline automation action failed (${rule?.name || 'unnamed rule'} / ${action?.action_type || 'unknown'} / Order ${order?.id || 'unknown'}):`, err);
-      results.push({ type: action.action_type, error: 'Order deadline automation action could not be completed safely' });
+      console.error(`Record deadline automation action failed (${rule?.name || 'unnamed rule'} / ${action?.action_type || 'unknown'} / ${record?.id || 'unknown'}):`, err);
+      results.push({ type: action.action_type, error: 'Deadline automation action could not be completed safely' });
     }
   }
   return results;
@@ -720,3 +774,127 @@ async function sendOrderDeadlineEmail(base44, config, order, trigger_type) {
 
   return { emails_sent: sent.length, recipients: sent };
 }
+async function sendOpportunityDeadlineEmail(base44, config, opp, trigger_type) {
+  const recipients = [];
+
+  for (const recipient of (config.recipients || [])) {
+    switch (recipient.type) {
+      case 'email':
+        if (recipient.value) recipients.push(recipient.value);
+        break;
+      case 'all_admins': {
+        const admins = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.AuthorizedEmail,
+          query: { role: 'admin' },
+          sort: null,
+          label: 'Sales deadline admin recipients',
+        });
+        admins.forEach(a => a.email && recipients.push(a.email));
+        break;
+      }
+      case 'custom_list':
+        if (recipient.value) {
+          for (const email of String(recipient.value).split(',')) {
+            const trimmed = email.trim();
+            if (trimmed) recipients.push(trimmed);
+          }
+        }
+        break;
+      case 'email_group':
+        if (recipient.value) {
+          const groups = await base44.asServiceRole.entities.EmailGroup.filter({ id: recipient.value });
+          if (groups[0]?.emails) recipients.push(...groups[0].emails);
+        }
+        break;
+    }
+  }
+
+  if (recipients.length === 0) {
+    return { skipped: true, reason: 'No recipients' };
+  }
+
+  const isOverdue = trigger_type === 'sales_follow_up_date_passed';
+  const isFollowUp = trigger_type.startsWith('sales_follow_up');
+  const dateStr = isFollowUp ? opp.next_action_due : opp.desired_completion_date;
+  const target = new Date(dateStr);
+  const now = new Date();
+  const daysDiff = Math.ceil(Math.abs(target - now) / (1000 * 60 * 60 * 24));
+  const title = opp.title || 'Opportunity';
+
+  let subject = config.subject || (isOverdue
+    ? `OVERDUE FOLLOW-UP: ${title}`
+    : isFollowUp
+      ? `Follow-Up Approaching: ${title}`
+      : `Close Date Approaching: ${title}`);
+  let body = config.body || '';
+
+  const vars = {
+    '{{opportunity_title}}': esc(opp.title),
+    '{{opportunity_stage}}': esc(opp.stage),
+    '{{customer_display_name}}': esc(opp.customer_display_name),
+    '{{salesperson}}': esc(opp.salesperson),
+    '{{budget_amount}}': esc(opp.budget_amount),
+    '{{next_action}}': esc(opp.next_action),
+    '{{next_action_due}}': esc(opp.next_action_due),
+    '{{desired_completion_date}}': esc(opp.desired_completion_date),
+    '{{days_overdue}}': isOverdue ? String(daysDiff) : '0',
+    '{{days_until_due}}': !isOverdue ? String(daysDiff) : '0',
+  };
+  for (const [key, value] of Object.entries(vars)) {
+    subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+    body = body.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+  }
+
+  if (!body) {
+    const safeTitle = esc(title);
+    const safeCustomer = esc(opp.customer_display_name || 'Unknown customer');
+    const safeSalesperson = esc(opp.salesperson || 'Unassigned');
+    const safeAction = esc(opp.next_action || 'Follow up');
+    const safeDate = esc(dateStr);
+    if (isOverdue) {
+      body = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #FEE2E2; padding: 20px; border-radius: 8px; border-left: 4px solid #EF4444;">
+            <h2 style="color: #991B1B; margin: 0 0 10px 0;">Sales Follow-Up Overdue</h2>
+            <p style="color: #7F1D1D; margin: 0;"><strong>${safeTitle}</strong> — follow-up is ${daysDiff} day(s) past due.</p>
+          </div>
+          <div style="padding: 20px;">
+            <p><strong>Customer:</strong> ${safeCustomer}</p>
+            <p><strong>Salesperson:</strong> ${safeSalesperson}</p>
+            <p><strong>Next Action:</strong> ${safeAction}</p>
+            <p><strong>Due:</strong> ${safeDate}</p>
+          </div>
+        </div>
+      `;
+    } else {
+      const heading = isFollowUp ? 'Sales Follow-Up Approaching' : 'Desired Close Date Approaching';
+      const label = isFollowUp ? 'Follow-Up Due' : 'Desired Completion';
+      body = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #FEF3C7; padding: 20px; border-radius: 8px; border-left: 4px solid #F59E0B;">
+            <h2 style="color: #92400E; margin: 0 0 10px 0;">${heading}</h2>
+            <p style="color: #78350F; margin: 0;"><strong>${safeTitle}</strong> — ${daysDiff} day(s) out.</p>
+          </div>
+          <div style="padding: 20px;">
+            <p><strong>Customer:</strong> ${safeCustomer}</p>
+            <p><strong>Salesperson:</strong> ${safeSalesperson}</p>
+            <p><strong>${label}:</strong> ${safeDate}</p>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  const sent = [];
+  for (const to of [...new Set(recipients)]) {
+    try {
+      await base44.integrations.Core.SendEmail({ to, subject, body });
+      sent.push(to);
+    } catch (e) {
+      console.error(`Failed to send to ${to}:`, e);
+    }
+  }
+
+  return { emails_sent: sent.length, recipients: sent };
+}
+
