@@ -32,7 +32,7 @@ async function getCutoverState(base44:any, createIfMissing = false) {
   const rows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:CUTOVER_STATE_KEY });
   const existing = (rows || []).sort((a:any,b:any)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
   if (existing || !createIfMissing) return existing;
-  return await base44.asServiceRole.entities.FleetCutoverState.create({
+  const created = await base44.asServiceRole.entities.FleetCutoverState.create({
     state_key:CUTOVER_STATE_KEY,
     source_freeze_confirmed:false,
     notifications_enabled:false,
@@ -40,6 +40,18 @@ async function getCutoverState(base44:any, createIfMissing = false) {
     maintenance_generation_enabled:false,
     public_reporting_enabled:false,
   });
+  // Concurrent first-ever calls can each observe an empty table and create a
+  // duplicate. The canonical row is the lowest id — retire our row if we lost,
+  // the same loser-election protocol the Fleet notification worker uses for
+  // receipt claims. Downstream readers index [0] unsorted, so a surviving
+  // duplicate would make the cutover gate non-deterministic.
+  const contenders = (await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:CUTOVER_STATE_KEY }).catch(() => [])) || [];
+  const canonical = contenders.sort((a:any,b:any)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
+  if (canonical && canonical.id !== created.id) {
+    await base44.asServiceRole.entities.FleetCutoverState.delete(created.id).catch(() => null);
+    return canonical;
+  }
+  return created;
 }
 
 async function currentCounts(base44:any) {
