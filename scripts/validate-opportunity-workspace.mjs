@@ -220,4 +220,14 @@ assert.match(config, /"Inventory": Inventory/, 'pages.config must register the I
 assert.match(layout, /title: "Inventory", url: createPageUrl\("Inventory"\)/, 'Layout nav must link Inventory');
 assert.match(layout, /createPageUrl\("Inventory"\)/, 'Inventory must be a root route');
 
+// D4-fuller-lite: receiving a PO line linked to a stock item updates inventory.
+assert.match(poSchema, /inventory_item_id/, 'PO lines must allow a stock-item link');
+assert.match(purchaseOrders, /inventory_item_id: clean\(row\?\.inventory_item_id\)/, 'line sanitization must preserve the stock link');
+assert.match(purchaseOrders, /applyStockReceipt/, 'receiving must apply stock receipts');
+assert.match(purchaseOrders, /asServiceRole\.entities\.InventoryMovement\b/, 'PO receipts must write the movement ledger via service role');
+assert.match(purchaseOrders, /po-receive:/, 'stock movements must carry a deterministic receipt key');
+assert.match(purchaseOrders, /stock_warnings/, 'stock failures must surface as warnings, not silent drops');
+assert.match(poPage, /functions\.invoke\("inventoryAction"/, 'PO form must load stock items via the function');
+assert.match(poPage, /inventory_item_id: clean\(r\.inventory_item_id\)/, 'PO form must submit the stock link');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
