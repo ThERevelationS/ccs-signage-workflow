@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -592,30 +592,48 @@ export default function SIPs() {
     setChecklistDialog(current => current.open ? current : { open: true, workOrder: wo });
   };
 
+  const dropdownConditionByName = useMemo(
+    () => new Map(dropdownConditions.map(condition => [condition.name, condition])),
+    [dropdownConditions]
+  );
+
+  // Progress is evaluated for every row on every board render. Cache the
+  // result per Work Order object — board refreshes deliver fresh objects, so
+  // a stale result cannot survive a real data change — and look conditions up
+  // by name instead of scanning the whole list for each checklist item.
+  const checklistProgressCacheRef = useRef({ conditions: null, results: new WeakMap() });
   const getChecklistProgress = (wo) => {
+    const cache = checklistProgressCacheRef.current;
+    if (cache.conditions !== dropdownConditionByName) {
+      cache.conditions = dropdownConditionByName;
+      cache.results = new WeakMap();
+    }
+    const cached = cache.results.get(wo);
+    if (cached) return cached;
     const checklist = wo.sip_checklist || [];
-    if (checklist.length === 0) return { completed: 0, total: 0 };
-    
+
     // Only count main checklist items (type === 'checklist' or no type AND no parent_id)
-    const mainChecklistItems = checklist.filter(item => 
+    const mainChecklistItems = checklist.filter(item =>
       (!item.type || item.type === 'checklist') && !item.parent_id
     );
-    
+
     if (mainChecklistItems.length === 0) return { completed: 0, total: 0 };
-    
+
     // Match ProductChecklistDialog completion semantics exactly:
     // an approver + status is required, configured Continued statuses stay open,
     // and legacy/custom statuses that are no longer configured remain complete.
     const mainCompleted = mainChecklistItems.filter(item => {
       if (!item.approved_by || !item.custom_dropdown_value) return false;
-      const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+      const condition = dropdownConditionByName.get(item.custom_dropdown_value);
       return !condition || condition.is_completed;
     }).length;
-    
-    return { 
-      completed: mainCompleted, 
-      total: mainChecklistItems.length 
+
+    const result = {
+      completed: mainCompleted,
+      total: mainChecklistItems.length
     };
+    cache.results.set(wo, result);
+    return result;
   };
 
   const needsAttention = (wo) => {
