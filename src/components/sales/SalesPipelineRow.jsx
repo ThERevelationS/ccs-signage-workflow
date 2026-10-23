@@ -408,7 +408,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
             )}
           </div>
         </td>
-      </tr>
+      </tr>,
       isFocused && <tr key="focus-gap-bottom" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>
     ];
 }, (prevProps, nextProps) => {
