@@ -27,6 +27,21 @@ const formatStage = (s: unknown) => STAGE_LABELS[String(s || '')] || String(s ||
 // rider_stage excludes 'completed' — the enum stops at installation.
 const RIDER_STAGES = new Set(['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation']);
 
+// Event vocabularies that carry a business record other than a Work Order
+// or Order. The engine resolves the record server-side by entity+id; only
+// send_email can execute for them (the mutating actions all target WOs).
+const RECORD_CONTEXT_EVENTS: Record<string, string> = {
+  sales_lead_created: 'Opportunity',
+  sales_status_changed: 'Opportunity',
+  sales_status_won: 'Opportunity',
+  sales_status_lost: 'Opportunity',
+  sales_status_on_hold: 'Opportunity',
+  sales_rep_changed: 'Opportunity',
+  sales_follow_up_date_approaching: 'Opportunity',
+  sales_follow_up_date_passed: 'Opportunity',
+  sales_close_date_approaching: 'Opportunity',
+};
+
 // Named events arrive with event_type === the UI's trigger vocabulary; the
 // legacy 'create'/'update' vocabulary is still honored for field-diff checks.
 function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any) {
@@ -127,9 +142,17 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'rider_created':
     case 'task_added':
     case 'task_completed':
+    case 'task_uncompleted':
+    case 'task_edited':
     case 'task_deleted':
     case 'note_added':
     case 'note_deleted':
+    case 'sub_note_added':
+    case 'sub_note_deleted':
+    case 'rider_completed':
+    case 'rider_deleted':
+    case 'rider_stage_changed':
+    case 'rider_assigned_to_changed':
     case 'image_uploaded':
     case 'priority_changed':
     case 'order_created':
@@ -148,6 +171,15 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'order_date_received_changed':
     case 'order_date_needed_approaching':
     case 'order_date_needed_passed':
+    case 'sales_lead_created':
+    case 'sales_status_changed':
+    case 'sales_status_won':
+    case 'sales_status_lost':
+    case 'sales_status_on_hold':
+    case 'sales_rep_changed':
+    case 'sales_follow_up_date_approaching':
+    case 'sales_follow_up_date_passed':
+    case 'sales_close_date_approaching':
     case 'permit_submitted':
     case 'permit_received':
     case 'permit_followup_due':
@@ -232,7 +264,8 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
 
   if (recipients.length === 0) return { skipped: true, reason: 'No recipients' };
 
-  let subject = config.subject || (order ? 'Order Update' : 'Work Order Update');
+  const record = context?.record;
+  let subject = config.subject || (order ? 'Order Update' : record ? 'Opportunity Update' : 'Work Order Update');
   let body = config.body || '';
   // HTML-escape all record-derived values before substituting into
   // subject/body templates to prevent injected markup from rendering.
@@ -271,6 +304,18 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{date_received}}': esc(order?.date_received),
     '{{vendor}}': esc(order?.vendor),
     '{{status}}': esc(order?.status),
+    // Record context (Opportunity events today; extends cleanly to other
+    // record-bearing domains later).
+    '{{opportunity_title}}': esc(record?.title),
+    '{{opportunity_stage}}': esc(record?.stage),
+    '{{customer_display_name}}': esc(record?.customer_display_name),
+    '{{salesperson}}': esc(record?.salesperson),
+    '{{budget_amount}}': esc(record?.budget_amount),
+    '{{lost_reason}}': esc(record?.lost_reason),
+    '{{lead_source}}': esc(record?.lead_source),
+    '{{next_action}}': esc(record?.next_action),
+    '{{next_action_due}}': esc(record?.next_action_due),
+    '{{desired_completion_date}}': esc(record?.desired_completion_date),
   };
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
@@ -280,9 +325,11 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   if (config.use_ai) {
     const recordContext = order
       ? `Order Details:\n- Customer: ${esc(order.customer_name)}\n- Request Type: ${esc(order.request_type)}\n- Vendor: ${esc(order.vendor || 'Not specified')}\n- Date Needed: ${esc(order.date_needed || 'Not set')}\n- Status: ${esc(order.status || 'pending')}`
+      : record
+      ? `Opportunity Details:\n- Title: ${esc(record.title)}\n- Customer: ${esc(record.customer_display_name)}\n- Stage: ${esc(record.stage)}\n- Salesperson: ${esc(record.salesperson || 'Unassigned')}\n- Budget: ${esc(record.budget_amount ?? 'Not set')}`
       : `Work Order Details:\n- Title: ${esc(workOrder.title)}\n- Client: ${esc(workOrder.client_name)}\n- Stage: ${esc(formatStage(workOrder.current_stage))}\n- Due Date: ${esc(workOrder.due_date || 'Not set')}\n- Assigned To: ${esc(workOrder.assigned_to || 'Unassigned')}\n- ASAP: ${workOrder.asap ? 'Yes' : 'No'}\n- Description: ${esc(workOrder.description || 'None')}`;
     const aiResult = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate a professional email notification about a ${order ? 'order' : 'work order'} update.\n\n${recordContext}\n\nContext from user: ${esc(body || 'Standard notification')}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
+      prompt: `Generate a professional email notification about a ${order ? 'order' : record ? 'sales opportunity' : 'work order'} update.\n\n${recordContext}\n\nContext from user: ${esc(body || 'Standard notification')}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
       response_json_schema: {
         type: 'object',
         properties: { subject: { type: 'string' }, body: { type: 'string' } },
@@ -422,9 +469,12 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const suppliedWorkOrder = payload?.work_order;
   const suppliedOrder = payload?.order;
   const isOrderEvent = eventType.startsWith('order_');
+  const recordEntity = RECORD_CONTEXT_EVENTS[eventType];
   if (!eventType) throw Object.assign(new Error('Missing event_type'), { status: 400 });
   if (isOrderEvent) {
     if (!suppliedOrder?.id) throw Object.assign(new Error('Missing order id'), { status: 400 });
+  } else if (recordEntity) {
+    if (!payload?.record?.id) throw Object.assign(new Error('Missing record id'), { status: 400 });
   } else if (!suppliedWorkOrder?.id) {
     throw Object.assign(new Error('Missing work_order id'), { status: 400 });
   }
@@ -446,6 +496,12 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     if (!orderRecord?.id) throw Object.assign(new Error('Order not found'), { status: 404 });
   }
 
+  let contextRecord: any = null;
+  if (recordEntity) {
+    contextRecord = await base44.asServiceRole.entities[recordEntity].get(String(payload.record.id));
+    if (!contextRecord?.id) throw Object.assign(new Error(`${recordEntity} not found`), { status: 404 });
+  }
+
   const permitContext: Record<string, unknown> = {};
   for (const field of PERMIT_CONTEXT_FIELDS) {
     if (suppliedWorkOrder && Object.prototype.hasOwnProperty.call(suppliedWorkOrder, field)) permitContext[field] = suppliedWorkOrder[field];
@@ -455,7 +511,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const oldData = payload?.old_data && typeof payload.old_data === 'object' ? payload.old_data : {};
   const extras = payload?.extras && typeof payload.extras === 'object' ? payload.extras : {};
   const changedBy = String(changedByOverride || payload?.changed_by || 'System').trim() || 'System';
-  const context = { workOrder: eventWorkOrder, order: orderRecord, extras };
+  const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, extras };
 
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
