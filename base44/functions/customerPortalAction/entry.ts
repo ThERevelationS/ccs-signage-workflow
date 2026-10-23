@@ -102,6 +102,26 @@ function jobPortalView(order: any) {
   };
 }
 
+function logPortalOpportunityActivity(OpportunityActivity: any, input: {
+  opportunityId: string; eventType: string; summary: string; details?: any; key: string;
+}) {
+  if (!clean(input.opportunityId)) return Promise.resolve(null);
+  const key = input.key.slice(0, 256);
+  return createFoundationRecordWithRecovery({
+    entity: OpportunityActivity,
+    data: {
+      creation_request_key: key,
+      opportunity_id: clean(input.opportunityId),
+      event_type: clean(input.eventType) || "note",
+      summary: clean(input.summary).slice(0, 500),
+      details: input.details && typeof input.details === "object" ? input.details : {},
+      actor: "customer_portal",
+    },
+    readMatches: () => OpportunityActivity.filter({ creation_request_key: key }),
+    label: "Portal opportunity activity",
+  }).catch(() => null);
+}
+
 function messageView(m: any) {
   return {
     id: clean(m?.id),
@@ -153,6 +173,13 @@ Deno.serve(async (req) => {
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
     const Customer = base44.asServiceRole.entities.Customer;
+    const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;
+    const OpportunityActivity = base44.asServiceRole.entities.OpportunityActivity;
+
+    const opportunityIdForEstimate = async (estimateId: string) => {
+      const requests = await EstimatingRequest.filter({ estimate_id: estimateId }).catch(() => []);
+      return clean((Array.isArray(requests) ? requests : [])[0]?.opportunity_id);
+    };
 
     // ---------- Public token actions (the bearer token IS the credential) ----------
 
@@ -313,6 +340,13 @@ Deno.serve(async (req) => {
           readMatches: () => PortalMessage.filter({ creation_request_key: key }),
           label: "Portal estimate approval message",
         });
+        logPortalOpportunityActivity(OpportunityActivity, {
+          opportunityId: await opportunityIdForEstimate(estimateId),
+          eventType: "note",
+          summary: `Customer approved ${quoteLabel} via the portal`,
+          details: { estimate_id: estimateId, quote_total: num(estimate.quote_total), source: "customer_portal" },
+          key: `portal-act:approve:${estimateId}:${clean(msg.record?.id) || key}`,
+        });
         return Response.json({ success: true, action, estimate: estimatePortalView(saved), message: messageView(msg.record) });
       }
 
@@ -334,6 +368,13 @@ Deno.serve(async (req) => {
         },
         readMatches: () => PortalMessage.filter({ creation_request_key: key }),
         label: "Portal revision request",
+      });
+      logPortalOpportunityActivity(OpportunityActivity, {
+        opportunityId: await opportunityIdForEstimate(estimateId),
+        eventType: "note",
+        summary: `Customer requested revisions on ${quoteLabel} via the portal`,
+        details: { estimate_id: estimateId, note_preview: note.slice(0, 240), source: "customer_portal" },
+        key: `portal-act:revise:${estimateId}:${clean(msg.record?.id) || key}`,
       });
       return Response.json({ success: true, action, estimate: estimatePortalView(estimate), message: messageView(msg.record) });
     }
@@ -366,6 +407,13 @@ Deno.serve(async (req) => {
         },
         readMatches: () => PortalMessage.filter({ creation_request_key: key }),
         label: "Portal payment notice",
+      });
+      logPortalOpportunityActivity(OpportunityActivity, {
+        opportunityId: clean(invoice.opportunity_id),
+        eventType: "note",
+        summary: `Customer sent a payment notice for ${invLabel} via the portal`,
+        details: { invoice_id: invoiceId, method_planned: method, source: "customer_portal" },
+        key: `portal-act:paynotice:${invoiceId}:${clean(msg.record?.id) || key}`,
       });
       return Response.json({ success: true, action, message: messageView(msg.record) });
     }
