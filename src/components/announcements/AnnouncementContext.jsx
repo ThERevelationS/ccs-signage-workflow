@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 
 const AnnouncementContext = createContext(null);
 
@@ -62,67 +63,90 @@ export const playSoundEffect = (soundType, customUrl = null) => {
 };
 
 export function AnnouncementProvider({ children, currentPageName }) {
+  const [allActive, setAllActive] = useState([]);
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
   const [dismissed, setDismissed] = useState(false);
   const { currentUser } = useAuth();
   const lastSeenIdRef = useRef(null);
   const timerRef = useRef(null);
+  const subscribeDebounceRef = useRef(null);
+
+  const fetchActive = useCallback(async () => {
+    try {
+      const all = await loadAllEntityRows({
+        entity: base44.entities.Announcement,
+        query: { is_active: true },
+        sort: null,
+        label: "Active announcements",
+      });
+      setAllActive(all || []);
+    } catch (e) {}
+  }, []);
+
+  usePolling(fetchActive, 300000);
 
   useEffect(() => {
-    const checkForAnnouncements = async () => {
-      try {
-        const all = await loadAllEntityRows({
-          entity: base44.entities.Announcement,
-          query: { is_active: true },
-          sort: null,
-          label: "Active announcements",
-        });
-        const applicable = (all || []).filter((ann) => {
-          if (ann.target_users && ann.target_users.length > 0) {
-            if (!currentUser?.email || !ann.target_users.includes(currentUser.email)) return false;
-          }
-          if (ann.display_pages && ann.display_pages.length > 0) {
-            const pageTargets = currentPageName === "Permitting"
-              ? [...ann.display_pages, ...(ann.display_pages.includes("PermittingRepository") ? ["Permitting"] : [])]
-              : ann.display_pages;
-            if (!currentPageName || !pageTargets.includes(currentPageName)) return false;
-          }
-          return true;
-        });
-        if (applicable.length === 0) {
-          setActiveAnnouncement(null);
-          return;
+    let unsubscribe = null;
+    try {
+      unsubscribe = base44.entities.Announcement.subscribe(() => {
+        if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
+        subscribeDebounceRef.current = setTimeout(() => {
+          subscribeDebounceRef.current = null;
+          fetchActive();
+        }, 1000);
+      });
+    } catch (e) {}
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+      if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
+    };
+  }, [fetchActive]);
+
+  useEffect(() => {
+    const checkForAnnouncements = () => {
+      const applicable = (allActive || []).filter((ann) => {
+        if (ann.target_users && ann.target_users.length > 0) {
+          if (!currentUser?.email || !ann.target_users.includes(currentUser.email)) return false;
         }
-
-        // Pick the most recent announcement that actually applies to this user/page.
-        const sorted = applicable.sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0));
-        const ann = sorted[0];
-
-        // If it's a new announcement, show it and play sound
-        if (ann.id !== lastSeenIdRef.current) {
-          lastSeenIdRef.current = ann.id;
-          setDismissed(false);
-          setActiveAnnouncement(ann);
-          playSoundEffect(ann.sound_type, ann.custom_sound_url);
-
-          // Auto-dismiss after duration
-          if (ann.duration_seconds > 0) {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            timerRef.current = setTimeout(() => {
-              setDismissed(true);
-            }, ann.duration_seconds * 1000);
-          }
+        if (ann.display_pages && ann.display_pages.length > 0) {
+          const pageTargets = currentPageName === "Permitting"
+            ? [...ann.display_pages, ...(ann.display_pages.includes("PermittingRepository") ? ["Permitting"] : [])]
+            : ann.display_pages;
+          if (!currentPageName || !pageTargets.includes(currentPageName)) return false;
         }
-      } catch (e) {}
+        return true;
+      });
+      if (applicable.length === 0) {
+        setActiveAnnouncement(null);
+        return;
+      }
+
+      // Pick the most recent announcement that actually applies to this user/page.
+      const sorted = applicable.sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0));
+      const ann = sorted[0];
+
+      // If it's a new announcement, show it and play sound
+      if (ann.id !== lastSeenIdRef.current) {
+        lastSeenIdRef.current = ann.id;
+        setDismissed(false);
+        setActiveAnnouncement(ann);
+        playSoundEffect(ann.sound_type, ann.custom_sound_url);
+
+        // Auto-dismiss after duration
+        if (ann.duration_seconds > 0) {
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => {
+            setDismissed(true);
+          }, ann.duration_seconds * 1000);
+        }
+      }
     };
 
     checkForAnnouncements();
-    const interval = setInterval(checkForAnnouncements, 5000);
     return () => {
-      clearInterval(interval);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [currentUser, currentPageName]);
+  }, [allActive, currentUser, currentPageName]);
 
   const dismiss = () => setDismissed(true);
 
