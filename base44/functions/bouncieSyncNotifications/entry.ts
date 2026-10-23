@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { callBouncieApi, coalesceLiveStateRows, milSemanticState } from '../../shared/bouncie.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // Durable CCS-local alert evaluation against Bouncie vehicle stats.
 // Bouncie remains the owner of tracking/webhooks/native alert configuration.
@@ -194,7 +195,7 @@ async function evaluateThreshold({ Runtime, Notification, vehicle, stats, ruleKe
 
 export default async function(req) {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 });
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -344,7 +345,7 @@ export default async function(req) {
     });
     return Response.json({ synced: true, vehicles: vehicles.length, created, live_state_vins_checked: liveStateVinsChecked, live_state_duplicates_collapsed: liveStateDuplicatesCollapsed, live_state_cleanup_errors: liveStateCleanupErrors });
   } catch (error) {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 });
     await maybeLogSync(base44, 'error', 'Fleet Bouncie alert sync failed.', {
       error: error?.message || String(error),
     }).catch(() => null);
