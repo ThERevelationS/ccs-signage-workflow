@@ -1,8 +1,7 @@
 import { base44 } from "@/api/base44Client";
+import { getSessionToken } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
-const AutomationRule = base44.entities.AutomationRule;
-const EmailGroup = base44.entities.EmailGroup;
 const User = base44.entities.User;
 
 // Generate AI-enhanced email content
@@ -197,170 +196,6 @@ const matchesConditions = (rule, workOrder, extraData = {}) => {
   return true;
 };
 
-// Check if automation triggers match (with AND/OR logic support)
-const checkAutomationTriggers = (automation, triggerType, workOrder, extraData = {}) => {
-  const triggers = automation.triggers || [];
-  if (triggers.length === 0) return false;
-  
-  // Check if ANY trigger matches the current trigger type
-  const hasMatchingTriggerType = triggers.some(t => t.trigger_type === triggerType);
-  if (!hasMatchingTriggerType) return false;
-  
-  // For single trigger, just check if it matches
-  if (triggers.length === 1) {
-    const trigger = triggers[0];
-    return trigger.trigger_type === triggerType && 
-      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData, triggerType);
-  }
-  
-  // For multiple triggers, evaluate with AND/OR logic
-  let result = null;
-  
-  for (let i = 0; i < triggers.length; i++) {
-    const trigger = triggers[i];
-    const triggerMatches = trigger.trigger_type === triggerType && 
-      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData, triggerType);
-    
-    if (i === 0) {
-      result = triggerMatches;
-    } else {
-      const logic = trigger.logic || "or";
-      if (logic === "and") {
-        result = result && triggerMatches;
-      } else {
-        result = result || triggerMatches;
-      }
-    }
-  }
-  
-  return result === true;
-};
-
-// Check trigger conditions for a single trigger
-const matchesTriggerConditions = (conditions, workOrder, extraData = {}, triggerType = "") => {
-  if (!conditions) return true;
-  
-  // For stage_entered, check against the NEW stage (to_stage)
-  // For stage_exited, check against the OLD stage (from_stage)
-  if (conditions.stage) {
-    if (triggerType === "stage_entered" && extraData.newStage !== conditions.stage) {
-      return false;
-    } else if (triggerType === "stage_exited" && extraData.previousStage !== conditions.stage) {
-      return false;
-    } else if (triggerType !== "stage_entered" && triggerType !== "stage_exited" && workOrder?.current_stage !== conditions.stage) {
-      return false;
-    }
-  }
-  
-  if (conditions.from_stage && extraData.previousStage !== conditions.from_stage) {
-    return false;
-  }
-  
-  if (conditions.to_stage && extraData.newStage !== conditions.to_stage) {
-    return false;
-  }
-  
-  if (conditions.assigned_to && workOrder?.assigned_to !== conditions.assigned_to) {
-    return false;
-  }
-  
-  if (conditions.is_asap === true && !workOrder?.asap) {
-    return false;
-  }
-  
-  // Rider filtering - if is_rider is explicitly set, enforce it
-  // is_rider: true means ONLY riders
-  // is_rider: false means ONLY non-riders (full work orders)
-  if (conditions.is_rider === true && !workOrder?.is_rider) {
-    return false;
-  }
-  
-  if (conditions.is_rider === false && workOrder?.is_rider) {
-    return false;
-  }
-  
-  return true;
-};
-
-// Get recipients for automation email action
-const getAutomationRecipients = async (actionConfig, workOrder) => {
-  const emails = new Set();
-  const recipients = actionConfig.recipients || [];
-  
-  for (const recipient of recipients) {
-    switch (recipient.type) {
-      case "email":
-        if (recipient.value) emails.add(recipient.value);
-        break;
-      case "assigned_user":
-        if (workOrder?.assigned_to) {
-          const users = await loadAllEntityRows({ entity: User, sort: null, label: "Notification user catalog" });
-          const user = users.find(u => 
-            u.email === workOrder.assigned_to || 
-            u.full_name === workOrder.assigned_to
-          );
-          if (user?.email) emails.add(user.email);
-        }
-        break;
-      case "creator":
-        if (workOrder?.created_by) emails.add(workOrder.created_by);
-        break;
-      case "all_admins":
-        const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
-        admins.forEach(admin => emails.add(admin.email));
-        break;
-      case "custom_list":
-        if (recipient.value) {
-          recipient.value.split(",").forEach(email => {
-            const trimmed = email.trim();
-            if (trimmed) emails.add(trimmed);
-          });
-        }
-        break;
-      case "email_group":
-        if (recipient.value) {
-          try {
-            const groups = await loadAllEntityRows({ entity: EmailGroup, sort: null, label: "Notification email groups" });
-            const group = groups.find(g => g.id === recipient.value);
-            if (group?.emails) {
-              group.emails.forEach(email => emails.add(email));
-            }
-          } catch (e) {
-            console.error("Error fetching email group:", e);
-          }
-        }
-        break;
-    }
-  }
-  
-  return Array.from(emails);
-};
-
-// Variable replacements for order templates
-const replaceOrderVariables = (template, order) => {
-  if (!template || !order) return template || "";
-  
-  const variables = {
-    "{{customer_name}}": order.customer_name || "",
-    "{{request_type}}": order.request_type || "",
-    "{{description}}": order.description || "",
-    "{{quantity}}": order.quantity || "",
-    "{{requestor_name}}": order.requestor_name || "",
-    "{{requestor_email}}": order.requestor_email || "",
-    "{{date_needed}}": order.date_needed || "Not set",
-    "{{date_ordered}}": order.date_ordered || "Not set",
-    "{{date_received}}": order.date_received || "Not set",
-    "{{vendor}}": order.vendor || "Not specified",
-    "{{status}}": order.status || "pending",
-    "{{timestamp}}": new Date().toLocaleString()
-  };
-
-  let result = template;
-  for (const [key, value] of Object.entries(variables)) {
-    result = result.replace(new RegExp(key.replace(/[{}]/g, "\\$&"), "g"), value);
-  }
-  return result;
-};
 
 // Main notification trigger function
 export const triggerNotification = async (triggerType, workOrder, extraData = {}) => {
@@ -398,59 +233,23 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
       }
     }
     
-    // Check new AutomationRule rules
-    const allAutomations = await loadAllEntityRows({ entity: AutomationRule, query: { enabled: true }, sort: null, label: "Enabled notification automations" });
-    const matchingAutomations = allAutomations
-      .filter(automation => checkAutomationTriggers(automation, triggerType, workOrder, extraData))
-      .sort((a, b) => (a.priority || 0) - (b.priority || 0));
-    
-    // Process automation rules
-    for (const automation of matchingAutomations) {
-      const actions = automation.actions || [];
-      
-      for (const action of actions) {
-        if (action.action_type === "send_email") {
-          const config = action.action_config || {};
-          const recipients = await getAutomationRecipients(config, workOrder);
-
-          if (recipients.length === 0) continue;
-
-          // Apply variable replacements based on context (order vs work order)
-          let templateSubject = config.subject || "";
-          let templateBody = config.body || "";
-          
-          if (extraData.orderData) {
-            templateSubject = replaceOrderVariables(templateSubject, extraData.orderData);
-            templateBody = replaceOrderVariables(templateBody, extraData.orderData);
-          } else {
-            templateSubject = replaceVariables(templateSubject, workOrder, extraData);
-            templateBody = replaceVariables(templateBody, workOrder, extraData);
-          }
-
-          // Check if AI generation is enabled
-          let subject, body;
-          if (config.use_ai) {
-            const aiResult = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
-            subject = aiResult.subject;
-            body = aiResult.body;
-          } else {
-            subject = templateSubject;
-            body = `<p>${templateBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
-          }
-
-          for (const email of recipients) {
-            try {
-              await base44.functions.invoke('sendGmail', {
-                to: email,
-                subject: subject,
-                body: body
-              });
-              console.log(`Automation "${automation.name}" sent email to ${email}`);
-            } catch (emailError) {
-              console.error(`Failed to send automation email to ${email}:`, emailError);
-            }
-          }
-        }
+    // AutomationRule processing runs server-side in workflowTriggerEngine via
+    // processWorkflowTriggers so every action type executes with service-role
+    // consistency — not just send_email. The endpoint re-reads the Work
+    // Order/Order itself, so only the record id and event extras cross the
+    // wire. Fire-and-forget like the rest of this module.
+    const sessionToken = getSessionToken();
+    if (sessionToken) {
+      try {
+        await base44.functions.invoke('processWorkflowTriggers', {
+          event_type: triggerType,
+          work_order: workOrder?.id ? { id: workOrder.id } : undefined,
+          order: extraData.orderData?.id ? { id: extraData.orderData.id } : undefined,
+          extras: { ...extraData, orderData: undefined },
+          session_token: sessionToken,
+        });
+      } catch (automationError) {
+        console.error(`Automation processing failed for trigger "${triggerType}":`, automationError);
       }
     }
   } catch (error) {
