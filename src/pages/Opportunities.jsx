@@ -1202,6 +1202,19 @@ export default function Opportunities() {
                 </tbody>
               </table>
             </div>
+          {Array.isArray(funnel.lost_reasons) && funnel.lost_reasons.length > 0 && (
+            <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Loss reasons</p>
+              <div className="flex flex-wrap gap-1.5">
+                {funnel.lost_reasons.map((r) => (
+                  <span key={r.reason} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-800 dark:bg-red-950/40 dark:text-red-200" title={r.lost_value ? `$${Number(r.lost_value).toLocaleString()} in lost pipeline` : undefined}>
+                    <span className="font-medium">{r.reason}</span>
+                    <span className="font-semibold text-red-500">×{r.count}</span>
+                    {r.lost_value > 0 && <span className="text-red-400">($${Number(r.lost_value).toLocaleString()})</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </section>
       )}
