@@ -198,4 +198,13 @@ await test("TimeClock page has the ambient backdrop", () => {
   assert.match(page, /min-h-screen p-4 sm:p-6 ambient-mesh/);
 });
 
+test("QRScanner shows the scan reticle while scanning", () => {
+  const src = readFileSync("src/components/timeclock/QRScanner.jsx", "utf8");
+  assert.match(src, /scan-reticle scan-tone-scanning/);
+  for (const cls of ["tl", "tr", "bl", "br"]) assert.match(src, new RegExp(`scan-bracket ${cls}`));
+  assert.match(src, /scan-oval/);
+  assert.match(src, /scan-line/);
+  assert.match(src, /\{isScanning && \(/, "reticle only renders while scanning");
+});
+
 console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`);
