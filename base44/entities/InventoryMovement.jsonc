@@ -33,6 +33,10 @@
       "type": "number",
       "description": "Signed quantity change (positive increases on-hand)."
     },
+    "unit_cost": {
+      "type": "number",
+      "description": "Item cost_per_unit frozen at movement time, for issued-material costing."
+    },
     "resulting_qty": {
       "type": "number",
       "description": "On-hand quantity immediately after this movement."
