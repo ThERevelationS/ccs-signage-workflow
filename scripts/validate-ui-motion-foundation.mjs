@@ -183,4 +183,13 @@ test("TimeClockLoginDialog animates the error banner", () => {
   assert.match(src, /<FadeIn>/);
 });
 
+test("EmployeeTodayCard glows by live clock status", () => {
+  const src = readFileSync("src/components/timeclock/EmployeeTodayCard.jsx", "utf8");
+  assert.match(src, /hasProblem \? "glow-danger"/);
+  assert.match(src, /work_pause_status === "paused" \? "glow-warning"/);
+  assert.match(src, /break_status === "on_break" \? "glow-warning"/);
+  assert.match(src, /"glow-success"/);
+  assert.match(src, /clay-card glow-card p-4 mb-6 \$\{cardGlow\}/);
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
