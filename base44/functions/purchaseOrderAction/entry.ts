@@ -116,6 +116,7 @@ async function applyStockReceipt({ Inventory, Movement, itemId, qty, poNumber, a
       item_label: [clean(item.material_type), clean(item.product_type), clean(item.size)].filter(Boolean).join(" Â· ") || "Item",
       reason: "receive",
       delta: qty,
+      unit_cost: num(item?.cost_per_unit),
       resulting_qty: next,
       work_order_id: workOrderId,
       note: `Received on ${poNumber}`,
