@@ -358,4 +358,13 @@ assert.match(invPortalPage, /\/customerportal\?token=/, 'invoice detail must bui
 assert.match(invPortalPage, /action: "email_invoice"/, 'invoice detail must offer email-to-customer');
 assert.match(invPortalPage, /Overdue/, 'invoice list must flag overdue rows');
 
+const palette = readFileSync('src/components/CommandPalette.jsx', 'utf8');
+assert.match(palette, /ctrlKey \|\| e\.metaKey/, 'command palette must bind ctrl/cmd+k');
+assert.match(palette, /action: "global_search"/, 'command palette must reuse the global_search action');
+assert.match(palette, /pagesConfig\?\.Pages/, 'command palette must index routed pages');
+assert.match(palette, /\/Opportunities\?open=/, 'command palette must deep-link opportunities');
+assert.match(palette, /\/Invoices\?invoice=/, 'command palette must deep-link invoices');
+assert.match(appShell, /<CommandPalette \/>/, 'app shell must mount the command palette');
+assert.match(poPage, /Overdue/, 'PO list must flag overdue rows');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
