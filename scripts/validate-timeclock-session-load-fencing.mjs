@@ -69,6 +69,7 @@ const loadComponent = (path, extraMocks, contextExtra = {}) => {
         });
       }
       if (id.startsWith('@/components/ui/')) return uiFallback;
+      if (id.startsWith('@/components/motion/')) return uiFallback;
       // Default-imported components: return the component function itself so
       // esbuild's CJS interop exposes it as `.default`.
       if (id.startsWith('@/components/')) return passthrough(id);
