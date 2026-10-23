@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
 
 const DAYS = new Set(['monday','tuesday','wednesday','thursday','friday','saturday','sunday']);
 const MAX_DELAY_MINUTES = 1440;
@@ -40,8 +41,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
-    const rows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type: 'general' });
-    const settings = rows?.[0] || null;
+    const settings = await getCanonicalFleetSettings(base44);
     if (!settings) return Response.json({ error: 'FleetSettings record missing.' }, { status: 404 });
 
     if (action === 'get') return Response.json({ success: true, settings });
