@@ -167,7 +167,7 @@ async function sessionSwitchScenario() {
   // Resolve A's pending reads — nothing may apply after the session closed.
   await act(async () => {
     for (const d of loaderQueue) d.resolve([ENTRY_A]);
-    for (const d of correctionQueue) d.resolve({ success: true, requests: [{ id: 'cr-a', employee_reason: 'A-STALE-CORRECTION' }] });
+    for (const d of correctionQueue) d.resolve({ success: true, requests: [{ id: 'cr-a', status: 'pending', employee_reason: 'A-STALE-CORRECTION' }] });
     await flush();
   });
   assert.ok(!allText(renderer).includes('A-STALE-NOTE'), 'A entries must not render after logout');
@@ -183,7 +183,7 @@ async function sessionSwitchScenario() {
   assert.ok(bCalls.length >= 2, 'B session should issue fresh employee-scoped reads');
   await act(async () => {
     for (const d of loaderQueue.slice(queueBefore)) d.resolve([ENTRY_B]);
-    for (const d of correctionQueue.slice(corrBefore)) d.resolve({ success: true, requests: [{ id: 'cr-b', employee_reason: 'B-CORRECTION' }] });
+    for (const d of correctionQueue.slice(corrBefore)) d.resolve({ success: true, requests: [{ id: 'cr-b', status: 'pending', employee_reason: 'B-CORRECTION' }] });
     await flush();
   });
   assert.ok(allText(renderer).includes('B-FRESH-NOTE'), 'B entries must render for B session');
