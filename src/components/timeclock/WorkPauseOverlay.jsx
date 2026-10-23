@@ -31,7 +31,7 @@ export default function WorkPauseOverlay({
 } = {}) {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
   const timeClockStatus = useTimeClockStatus();
-  const sharedStatus = !userOverride && !sessionTokenOverride && !credentialOverride;
+  const sharedStatus = !timeClockStatus.isFallback && !userOverride && !sessionTokenOverride && !credentialOverride;
   const currentUser = userOverride || shellUser;
   const sessionToken = sessionTokenOverride || shellSessionToken;
   const credentialPayload = credentialOverride?.badgeCode
@@ -164,7 +164,7 @@ export default function WorkPauseOverlay({
     setPauseStateScope("");
     setShowResumePrompt(false);
     setError("");
-    loadStatus({ preservePausedOnError: false, force: sharedStatus });
+    loadStatus({ preservePausedOnError: false, force: false });
     // Change events can carry a payload that is stale relative to this
     // session's verified status. Treat them only as invalidation signals;
     // the signed status read is authoritative.
