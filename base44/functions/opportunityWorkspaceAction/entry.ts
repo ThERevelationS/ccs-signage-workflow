@@ -389,6 +389,35 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, estimating_requests: requests });
     }
 
+    if (action === "list_follow_ups") {
+      const rows = await Opportunity.filter({});
+      if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
+      const today = new Date().toISOString().slice(0, 10);
+      const items = rows
+        .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && (clean(o?.next_action) || clean(o?.next_action_due)))
+        .map((o: any) => {
+          const due = clean(o?.next_action_due);
+          return {
+            id: clean(o?.id),
+            title: clean(o?.title),
+            customer_display_name: clean(o?.customer_display_name),
+            stage: clean(o?.stage),
+            salesperson: clean(o?.salesperson),
+            next_action: clean(o?.next_action),
+            next_action_due: due,
+            next_action_assignee: clean(o?.next_action_assignee),
+            overdue: Boolean(due) && due < today,
+            stage_changed_at: clean(o?.stage_changed_at),
+            last_activity_at: clean(o?.last_activity_at),
+          };
+        })
+        .sort((a: any, b: any) =>
+          Number(b.overdue) - Number(a.overdue)
+          || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"))
+        .slice(0, 200);
+      return Response.json({ success: true, action, follow_ups: items, today });
+    }
+
     if (action === "assign_estimator") {
       const requestId = clean(body?.estimating_request_id);
       const current = await EstimatingRequest.get(requestId).catch(() => null);
