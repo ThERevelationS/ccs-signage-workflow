@@ -25,6 +25,9 @@ export function usePolling(
     lastRunAtRef.current = Date.now();
     try {
       await fnRef.current();
+    } catch {
+      // Poll errors are handled by the polled functions themselves;
+      // a rejection must never kill the schedule.
     } finally {
       inFlightRef.current = false;
     }
