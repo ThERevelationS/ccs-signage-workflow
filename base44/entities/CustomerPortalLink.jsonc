@@ -18,7 +18,8 @@
     "kind": {
       "type": "string",
       "enum": [
-        "invoice"
+        "invoice",
+        "customer"
       ]
     },
     "record_id": {
