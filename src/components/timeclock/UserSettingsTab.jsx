@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { 
@@ -19,9 +19,17 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
   const [resetSent, setResetSent] = useState(false);
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
   const [resetError, setResetError] = useState("");
+  const resetSeqRef = useRef(0);
+  const resetScopeRef = useRef("");
+  resetScopeRef.current = `${sessionToken || ""}|${String(currentUser?.email || "").trim().toLowerCase()}`;
 
   const handleSendPasswordReset = async () => {
-    if (!currentUser?.email || !sessionToken) return;
+    const requestEmail = String(currentUser?.email || "").trim().toLowerCase();
+    if (!requestEmail || !sessionToken) return;
+    const requestSeq = ++resetSeqRef.current;
+    const requestScope = `${sessionToken}|${requestEmail}`;
+    const stillCurrent = () =>
+      requestSeq === resetSeqRef.current && resetScopeRef.current === requestScope;
 
     setSendingReset(true);
     setResetError("");
@@ -32,13 +40,15 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
       });
       const result = response?.data || response;
       if (!result?.success) throw new Error(result?.error || "Password reset could not be issued.");
+      if (!stillCurrent()) return;
       setResetSent(true);
-      setTimeout(() => setResetSent(false), 5000);
+      setTimeout(() => { if (stillCurrent()) setResetSent(false); }, 5000);
     } catch (err) {
+      if (!stillCurrent()) return;
       console.error("Error sending reset email:", err);
       setResetError(err?.message || "Failed to issue the password reset safely. Reload and try again.");
     }
-    setSendingReset(false);
+    if (stillCurrent()) setSendingReset(false);
   };
 
   const hasFaceData = currentUser?.face_descriptors && currentUser.face_descriptors.length > 0;
