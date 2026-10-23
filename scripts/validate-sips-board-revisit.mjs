@@ -934,4 +934,13 @@ await check('details dialog close uses the same job-anchor focus fallback', asyn
   assert.equal(heading.focused, true);
 });
 
+await check('details dialog delete confirm cannot double-submit', async () => {
+  const details = readFileSync('src/components/workflow/WorkOrderDetailsDialog.jsx', 'utf8');
+  const confirm = block(details, '  const confirmDelete = async () => {', '\n  };');
+  assert.match(confirm, /if \(deletingWorkOrder\) return;/, 'a second confirm while the delete is in flight must be ignored');
+  assert.match(confirm, /setDeletingWorkOrder\(true\)[\s\S]*?await onDelete\(workOrder\)/, 'the in-flight flag must be set before the write begins');
+  assert.match(confirm, /finally \{\s*setDeletingWorkOrder\(false\);/, 'the flag must reset even when the delete throws');
+  assert.match(details, /AlertDialogAction onClick=\{confirmDelete\} disabled=\{deletingWorkOrder\}/, 'the confirm action must be disabled while deleting');
+});
+
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
