@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
+import { motion, useReducedMotion } from "framer-motion";
+import { duration, easing, spring } from "@/components/motion/motion";
 import { Clock3, Loader2, Pause, Play, X } from "lucide-react";
 import { format } from "date-fns";
 
@@ -53,6 +55,7 @@ export default function WorkPauseOverlay({
   const [now, setNow] = useState(() => new Date());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [resumeBusy, setResumeBusy] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [error, setError] = useState("");
   const resumeRequestRef = useRef("");
   const pendingStatusRefreshRef = useRef(false);
@@ -306,7 +309,10 @@ export default function WorkPauseOverlay({
   const countedWorkMinutes = Math.max(0, shiftSpanMinutes - unpaidBreakMinutes - priorPauseMinutes - pauseElapsedMinutes);
 
   return (
-    <div
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: duration.ui, ease: easing.decelerate }}
       className="pointer-events-auto fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-[2px] sm:p-6"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top))",
@@ -317,7 +323,10 @@ export default function WorkPauseOverlay({
       }}
       role="presentation"
     >
-      <div
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={spring.soft}
         className="relative w-full max-w-xl rounded-[28px] border border-purple-200 bg-white p-6 text-center shadow-2xl sm:p-9"
         onClick={(event) => event.stopPropagation()}
       >
@@ -390,7 +399,7 @@ export default function WorkPauseOverlay({
           <Clock3 className="h-3.5 w-3.5" />
           <span>If you ignore this reminder and keep using the app, it returns in 2 minutes.</span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
