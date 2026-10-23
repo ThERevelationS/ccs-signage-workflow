@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { AlertTriangle, CheckCircle2, Clock3, Loader2, Pencil, XCircle } from "lucide-react";
 import {
   TIME_CLOCK_COMPANY_TIME_LABEL,
@@ -251,7 +252,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           <Badge className={requests.length ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>{requests.length} awaiting review</Badge>
         </div>
         {loading ? (
-          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
+          <ListSkeleton rows={3} />
         ) : error && !selected ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
         ) : requests.length === 0 ? (
