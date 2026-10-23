@@ -175,6 +175,7 @@ Deno.serve(async (req) => {
     const Customer = base44.asServiceRole.entities.Customer;
     const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;
     const OpportunityActivity = base44.asServiceRole.entities.OpportunityActivity;
+    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
 
     const opportunityIdForEstimate = async (estimateId: string) => {
       const requests = await EstimatingRequest.filter({ estimate_id: estimateId }).catch(() => []);
@@ -416,6 +417,78 @@ Deno.serve(async (req) => {
         key: `portal-act:paynotice:${invoiceId}:${clean(msg.record?.id) || key}`,
       });
       return Response.json({ success: true, action, message: messageView(msg.record) });
+    }
+
+    if (action === "request_job_revision") {
+      const link = await resolveLink(PortalLink, clean(body?.token));
+      if (clean(link.kind) !== "customer") throw bad("This portal link cannot request job changes.", 403);
+      const customerId = clean(link.customer_id) || clean(link.record_id);
+      const workOrderId = clean(body?.work_order_id);
+      const note = clean(body?.note).slice(0, MESSAGE_MAX);
+      if (!note) throw bad("Describe the change you'd like so the team can scope it.");
+      const order = await WorkOrder.get(workOrderId).catch(() => null);
+      if (!order?.id || clean(order.customer_id) !== customerId) throw bad("Job not found.", 404);
+      if (["cancelled"].includes(clean(order.status))) throw bad("This job is no longer active.", 409);
+      const woLabel = clean(order.work_order_number) || clean(order.title) || "Job";
+
+      // Draft a proposed change order so the request lands in the CO queue.
+      const coRows = await ChangeOrder.filter({}).catch(() => []);
+      let seq = (Array.isArray(coRows) ? coRows.length : 0) + 1001;
+      const taken = new Set((Array.isArray(coRows) ? coRows : []).map((r: any) => clean(r?.change_order_number)));
+      while (taken.has(`CO-${seq}`)) seq += 1;
+      const coKey = `portal-co:${workOrderId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+      const co = await createFoundationRecordWithRecovery({
+        entity: ChangeOrder,
+        data: {
+          creation_request_key: coKey,
+          change_order_number: `CO-${seq}`,
+          status: "proposed",
+          title: `Customer revision request — ${woLabel}`,
+          description: note,
+          reason: "Customer request via portal",
+          customer_id: customerId,
+          customer_display_name: clean(link.label),
+          opportunity_id: clean(order.opportunity_id),
+          estimate_id: clean(order.estimate_id),
+          work_order_id: workOrderId,
+          line_items: [],
+          amount_delta: 0,
+          proposed_by: "customer_portal",
+          proposed_at: new Date().toISOString(),
+          source_summary: { source: "customer_portal" },
+        },
+        readMatches: () => ChangeOrder.filter({ creation_request_key: coKey }),
+        label: "Portal change order",
+      });
+      const coNumber = clean(co.record?.change_order_number) || `CO-${seq}`;
+
+      const key = `portal-job-rev:${workOrderId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+      const msg = await createFoundationRecordWithRecovery({
+        entity: PortalMessage,
+        data: {
+          creation_request_key: key,
+          customer_id: customerId,
+          portal_link_id: clean(link.id),
+          author_side: "customer",
+          kind: "job_revision_requested",
+          body: note,
+          related_kind: "work_order",
+          related_id: workOrderId,
+          related_label: `${woLabel} · ${coNumber}`,
+          read_by_staff: false,
+          read_by_customer: true,
+        },
+        readMatches: () => PortalMessage.filter({ creation_request_key: key }),
+        label: "Portal job revision request",
+      });
+      logPortalOpportunityActivity(OpportunityActivity, {
+        opportunityId: clean(order.opportunity_id),
+        eventType: "note",
+        summary: `Customer requested changes on ${woLabel} via the portal (${coNumber} drafted)`,
+        details: { work_order_id: workOrderId, change_order_id: clean(co.record?.id), note_preview: note.slice(0, 240), source: "customer_portal" },
+        key: `portal-act:jobrev:${workOrderId}:${clean(msg.record?.id) || key}`,
+      });
+      return Response.json({ success: true, action, change_order_number: coNumber, message: messageView(msg.record) });
     }
 
     // ---------- Staff actions (session-authenticated) ----------
