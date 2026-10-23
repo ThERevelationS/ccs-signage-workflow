@@ -1,0 +1,69 @@
+{
+  "name": "OpportunityActivity",
+  "type": "object",
+  "description": "Append-only audit log for an Opportunity: stage transitions, field edits, links, estimating handoffs, and reconciliation advances. Written only by opportunityWorkspaceAction via service role.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one activity entry."
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "created",
+        "updated",
+        "stage_changed",
+        "linked_work_order",
+        "estimate_requested",
+        "estimate_attached",
+        "estimator_assigned",
+        "reconciled",
+        "note"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "actor": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "opportunity_id",
+    "event_type",
+    "summary"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__opportunity_activity_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__opportunity_activity_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__opportunity_activity_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__opportunity_activity_backend_only__"
+      }
+    }
+  }
+}
