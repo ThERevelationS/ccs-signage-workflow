@@ -91,6 +91,7 @@ import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonit
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import {
   getStoredAdminSettingsCapability,
+  getStoredAdminSettingsCapabilityExpiry,
   hasStoredAdminSettingsAuthorization,
   storeAdminSettingsAuthorization,
   useAuth,
@@ -649,6 +650,22 @@ export default function AdminSettings() {
     setAutomationSaveError("");
     setAutomationSaving(false);
   }, [sessionToken, navigationKey, isUnlocked]);
+
+  useEffect(() => {
+    // A capability that expires while the page sits open re-locks at the
+    // moment of expiry rather than waiting for the next write to discover it.
+    // Re-unlocking stores a fresh expiry and this effect re-arms itself.
+    if (!isUnlocked) return;
+    const expiresAt = getStoredAdminSettingsCapabilityExpiry();
+    if (!Number.isFinite(expiresAt)) return;
+    const relock = () => {
+      setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
+      setIsUnlocked(false);
+    };
+    if (expiresAt <= Date.now()) { relock(); return; }
+    const timer = setTimeout(relock, expiresAt - Date.now());
+    return () => clearTimeout(timer);
+  }, [isUnlocked]);
 
   const loadEmailGroups = async () => {
     const requestSequence = ++emailGroupsLoadSequence.current;
