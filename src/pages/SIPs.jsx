@@ -86,8 +86,8 @@ const MobileDescription = ({ value, fallback = "No description", label = "Job de
 };
 
 // Keep the clicked row pinned under the pointer while the focus gaps and
-// cell growth animate around it: re-anchor its screen position every frame
-// through the nearest vertical scroller instead of letting it drift down.
+// cell growth animate around it: re-anchor the clicked element's center on
+// screen every frame through the nearest vertical scroller.
 const anchorFocusedRow = (el) => {
   if (!el?.isConnected) return;
   let scroller = el.parentElement;
