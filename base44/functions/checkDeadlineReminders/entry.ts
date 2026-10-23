@@ -23,6 +23,7 @@ Deno.serve(async (req) => {
     }
     
     const now = new Date();
+    const today = now.toISOString().split('T')[0];
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const threeDaysOut = new Date(now);
@@ -74,10 +75,13 @@ Deno.serve(async (req) => {
           days_overdue: Math.abs(daysUntilDue)
         });
         
-        // Trigger due_date_passed automations
+        // Trigger due_date_passed automations — claimed durably on the Work
+        // Order so the same rule cannot re-fire for the same due date.
         for (const rule of deadlineRules) {
           const passedTrigger = rule.triggers?.find(t => t.trigger_type === 'due_date_passed');
           if (passedTrigger) {
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|due_date_passed|${wo.due_date}`, today);
+            if (!claim.claimed) continue;
             const actionResults = await executeRuleActions(base44, rule, wo, 'due_date_passed');
             results.triggered_automations.push({
               rule: rule.name,
@@ -106,6 +110,8 @@ Deno.serve(async (req) => {
             const daysThreshold = condition.days_before_due || 7;
             
             if (daysUntilDue <= daysThreshold) {
+              const claim = await claimDeadlineFire(base44, wo, `${rule.id}|due_date_approaching|${wo.due_date}`, today);
+              if (!claim.claimed) continue;
               const actionResults = await executeRuleActions(base44, rule, wo, 'due_date_approaching');
               results.triggered_automations.push({
                 rule: rule.name,
@@ -137,6 +143,46 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Deadline reminders could not be checked safely' }, { status: 500 });
   }
 });
+
+// Claims a deadline firing on the Work Order so a rule fires only once per
+// record/due-date combination. The marker is written BEFORE the actions run
+// (same philosophy as permit follow-up claims): a failed run is ambiguous
+// after downstream emails, so the claim intentionally stands — it trades a
+// possible missed reminder for a guarantee of no duplicate sends. Markers
+// older than 90 days are pruned on each write to bound growth.
+async function claimDeadlineFire(base44, wo, key, today) {
+  const markers = (wo.automation_deadline_fired && typeof wo.automation_deadline_fired === 'object' && !Array.isArray(wo.automation_deadline_fired))
+    ? wo.automation_deadline_fired : {};
+  if (markers[key]) return { claimed: false, reason: 'already_fired' };
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffDate = cutoff.toISOString().split('T')[0];
+  const nextMarkers = {};
+  for (const [k, v] of Object.entries(markers)) {
+    if (String(v).slice(0, 10) >= cutoffDate) nextMarkers[k] = v;
+  }
+  // A per-run nonce in the marker value prevents a second same-day run from
+  // satisfying the conditional write's "already desired" early-return and
+  // re-firing a key the first run already claimed.
+  nextMarkers[key] = `${today}|${crypto.randomUUID().slice(0, 12)}`;
+  const nextFields = { automation_deadline_fired: nextMarkers };
+  try {
+    const saved = await replaceWorkOrderFieldsIfUnchanged({
+      entity: base44.asServiceRole.entities.WorkOrder,
+      workOrderId: wo.id,
+      expectedFields: expectedWorkOrderFields(wo, nextFields),
+      nextFields,
+      label: 'Deadline reminder claim',
+    });
+    Object.assign(wo, saved);
+    return { claimed: true };
+  } catch (error) {
+    // A conflicting write or a trashed Work Order means another process owns
+    // the record — skip rather than risk a duplicate firing.
+    console.warn(`Deadline reminder claim failed for Work Order ${wo.id}:`, error?.message || error);
+    return { claimed: false, reason: 'claim_failed' };
+  }
+}
 
 async function executeRuleActions(base44, rule, work_order, trigger_type) {
   const results = [];
@@ -250,6 +296,17 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
           label: 'Deadline reminder admin recipients',
         });
         admins.forEach(a => a.email && recipients.push(a.email));
+        break;
+      case 'creator':
+        if (work_order.created_by) recipients.push(work_order.created_by);
+        break;
+      case 'custom_list':
+        if (recipient.value) {
+          for (const email of String(recipient.value).split(',')) {
+            const trimmed = email.trim();
+            if (trimmed) recipients.push(trimmed);
+          }
+        }
         break;
       case 'email_group':
         if (recipient.value) {
