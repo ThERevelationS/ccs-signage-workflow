@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,12 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [saved, setSaved] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const saveSeqRef = useRef(0);
+  const capturedForRef = useRef("");
+  const completionTimerRef = useRef(null);
+
+  // A pending completion callback must not outlive an unmounted dialog.
+  useEffect(() => () => clearTimeout(completionTimerRef.current), []);
 
   // Reset camera key when dialog opens to force fresh mount
   useEffect(() => {
@@ -28,12 +34,21 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   }, [isOpen]);
 
   const handleCapture = (descriptors) => {
+    // Descriptors belong to the employee shown when they were captured.
+    capturedForRef.current = String(user?.email || "").toLowerCase();
     setFaceDescriptors(descriptors);
   };
 
   const handleSave = async () => {
-    if (faceDescriptors.length < 3) return;
-    
+    const recordEmail = String(user?.email || "").toLowerCase();
+    if (faceDescriptors.length < 3 || !recordEmail) return;
+    // Never bind a face captured for one employee to another record.
+    if (capturedForRef.current !== recordEmail) {
+      setSaveError("The captured face data was recorded for a different employee. Close and recapture before saving.");
+      return;
+    }
+    const requestSeq = ++saveSeqRef.current;
+    const current = () => requestSeq === saveSeqRef.current;
     setIsSaving(true);
     setSaveError("");
     try {
@@ -45,19 +60,29 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
         enforceIdentity: false,
         label: `Face enrollment for ${user?.full_name || user?.email || user?.id}`
       });
+      if (!current()) return;
       setSaved(true);
-      setTimeout(() => {
+      completionTimerRef.current = setTimeout(() => {
+        if (!current()) return;
         onSuccess?.();
         onClose();
       }, 1500);
     } catch (err) {
       console.error("Error saving face data:", err);
-      setSaveError(err?.message || "Face enrollment could not be saved safely. Reload the user and try again.");
+      if (current()) {
+        setSaveError(err?.message || "Face enrollment could not be saved safely. Reload the user and try again.");
+      }
     }
-    setIsSaving(false);
+    if (current()) setIsSaving(false);
   };
 
   const handleClose = () => {
+    // Invalidate in-flight saves and any pending completion callback so a
+    // stale acknowledgement cannot act on the next enrollment.
+    saveSeqRef.current += 1;
+    clearTimeout(completionTimerRef.current);
+    completionTimerRef.current = null;
+    capturedForRef.current = "";
     setFaceDescriptors([]);
     setSaved(false);
     onClose();
