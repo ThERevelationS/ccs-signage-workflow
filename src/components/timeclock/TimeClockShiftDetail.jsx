@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
@@ -202,7 +203,7 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
         )}
 
         {loading ? (
-          <div className="py-12 flex items-center justify-center text-gray-500"><Loader2 className="w-5 h-5 animate-spin mr-2" />Loading authoritative shift history…</div>
+          <ListSkeleton rows={4} />
         ) : (
           <div className="space-y-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
