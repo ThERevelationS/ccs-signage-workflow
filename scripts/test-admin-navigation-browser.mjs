@@ -2388,6 +2388,13 @@ try {
       await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
       assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
     });
+
+  await check('Admin shows the stored capability expiry time while unlocked', 376,
+    '/?tab=automations&automation_rows=1&admin_cap_expire_ms=600000', async page => {
+      const expiry = page.locator('[data-admin-capability-expiry]');
+      await expiry.waitFor();
+      assert.match(await expiry.innerText(),/Admin authorization expires at \d/);
+    });
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();
