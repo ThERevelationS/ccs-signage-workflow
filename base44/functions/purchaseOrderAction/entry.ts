@@ -47,6 +47,7 @@ function sanitizeLineItems(raw: any) {
       quantity: money(quantity),
       unit_cost: money(unit_cost),
       quantity_received: Math.max(0, money(num(row?.quantity_received))),
+      inventory_item_id: clean(row?.inventory_item_id),
       line_total: money(quantity * unit_cost),
     };
   });
@@ -94,6 +95,38 @@ function receiveStatus(items: any[]) {
   return "sent";
 }
 
+async function applyStockReceipt({ Inventory, Movement, itemId, qty, poNumber, actor, workOrderId, key }: any) {
+  const item = await Inventory.get(itemId).catch(() => null);
+  if (!item?.id) return "The linked stock item no longer exists.";
+  const next = Math.round((num(item.quantity_on_hand) + qty) * 1000) / 1000;
+  const desired = { quantity_on_hand: next };
+  const expected = expectedFoundationFields(item, desired);
+  await replaceFoundationFieldsIfUnchanged({
+    entity: Inventory,
+    recordId: clean(item.id),
+    expectedFields: expected,
+    nextFields: desired,
+    label: `Stock for ${clean(item.material_type) || itemId}`,
+  });
+  await createFoundationRecordWithRecovery({
+    entity: Movement,
+    data: {
+      creation_request_key: key,
+      item_id: clean(item.id),
+      item_label: [clean(item.material_type), clean(item.product_type), clean(item.size)].filter(Boolean).join(" Â· ") || "Item",
+      reason: "receive",
+      delta: qty,
+      resulting_qty: next,
+      work_order_id: workOrderId,
+      note: `Received on ${poNumber}`,
+      created_by: actor,
+    },
+    readMatches: async () => Movement.filter({ creation_request_key: key }),
+    label: "Inventory movement",
+  });
+  return null;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -107,6 +140,8 @@ Deno.serve(async (req) => {
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
     const Opportunity = base44.asServiceRole.entities.Opportunity;
+    const Inventory = base44.asServiceRole.entities.Inventory;
+    const InventoryMovement = base44.asServiceRole.entities.InventoryMovement;
 
     if (action === "list_purchase_orders") {
       const status = clean(body?.status);
@@ -272,7 +307,29 @@ Deno.serve(async (req) => {
       const updated = await replaceFoundationFieldsIfUnchanged({
         entity: PurchaseOrder, recordId: id, expectedFields: expected, nextFields: desired, label: "Purchase Order receipt",
       });
-      return Response.json({ success: true, action, purchase_order: updated });
+      const stockWarnings: string[] = [];
+      let stockReceived = 0;
+      for (const rec of receipts) {
+        const idx = Math.trunc(num(rec?.index, -1));
+        const line = items[idx];
+        const itemId = clean(line?.inventory_item_id);
+        if (!itemId) continue;
+        const qty = num(rec?.quantity);
+        const key = `po-receive:${id}:${idx}:${num(line.quantity_received) - qty}:${qty}`;
+        try {
+          const warn = await applyStockReceipt({
+            Inventory, Movement: InventoryMovement, itemId, qty,
+            poNumber: clean(current.po_number) || id,
+            actor, workOrderId: clean(current.work_order_id), key,
+          });
+          if (warn) stockWarnings.push(`Line ${idx + 1}: ${warn}`);
+          else stockReceived += 1;
+        } catch (e: any) {
+          stockWarnings.push(`Line ${idx + 1} stock update failed: ${e?.message || "error"}`);
+        }
+      }
+      return Response.json({ success: true, action, purchase_order: updated, stock_received: stockReceived, stock_warnings: stockWarnings });
+    }
     }
 
     if (action === "mark_invoiced") {
