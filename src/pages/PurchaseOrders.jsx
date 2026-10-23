@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import {
   CheckCircle2,
   ChevronRight,
@@ -470,7 +471,7 @@ export default function PurchaseOrders() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && purchaseOrders.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading purchase orders…</div>
+          <TableSkeleton columns={6} />
         ) : purchaseOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-500">
             <Package className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
