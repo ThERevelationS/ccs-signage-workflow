@@ -233,4 +233,18 @@ test("ChangeOrders loaders use content-shaped skeletons", () => {
   assert.match(src, /<TableSkeleton columns=\{6\} \/>/, "list table skeleton");
 });
 
+test("TimeClock time-off list staggers in", () => {
+  const src = readFileSync("src/pages/TimeClock.jsx", "utf8");
+  const tab = src.slice(src.indexOf('TabsContent value="timeoff"'), src.indexOf('TabsContent value="balance"'));
+  assert.match(tab, /<Stagger className="space-y-3">/);
+  assert.match(tab, /<StaggerItem key=\{request\.id\} className="clay-card p-4">/);
+});
+
+test("PTOBalanceView loading shows a card skeleton", () => {
+  const src = readFileSync("src/components/timeclock/PTOBalanceView.jsx", "utf8");
+  assert.match(src, /import \{ Skeleton \} from "@\/components\/ui\/skeleton"/);
+  assert.match(src, /<Skeleton className="h-9 w-24" \/>/);
+  assert.doesNotMatch(src, /animate-spin/, "PTO balance loading must not spin");
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
