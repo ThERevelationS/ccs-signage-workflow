@@ -72,17 +72,18 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
               <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
               {[
                 ["Contract", usd(j.contract_value), j.co_delta ? `incl. ${usd(j.co_delta)} CO` : ""],
                 ["PO committed", usd(j.po_committed), "materials + services"],
+                ["Stock issued", usd(j.stock_issued), "from inventory"],
                 ["Labor", hrs(j.labor_hours), "tracked segments"],
                 ["Margin vs materials", "", ""],
               ].map(([label, val, sub], i) => (
                 <div key={label} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                   <div className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{label}</div>
                   <div className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {i === 3 ? <MarginCell value={j.margin_vs_materials} /> : val}
+                    {i === 4 ? <MarginCell value={j.margin_vs_materials} /> : val}
                   </div>
                   {sub && <div className="text-xs text-slate-400">{sub}</div>}
                 </div>
@@ -125,6 +126,16 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
                   <div key={c.id} className="mt-1 flex justify-between text-sm">
                     <span>{c.change_order_number} · {c.title} <span className="text-xs text-slate-400">({c.status})</span></span>
                     <MarginCell value={c.amount_delta} />
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Stock issued / returned</h3>
+                {(detail.stock_movements || []).length === 0 && <div className="mt-1 text-xs text-slate-400">None</div>}
+                {(detail.stock_movements || []).map((m) => (
+                  <div key={m.id} className="mt-1 flex justify-between text-sm">
+                    <span>{m.item_label} <span className="text-xs text-slate-400">({m.reason} {Math.abs(m.delta)})</span></span>
+                    <span>{usd(m.issued_cost)}</span>
                   </div>
                 ))}
               </div>
@@ -200,6 +211,7 @@ export default function JobCosting() {
           {[
             ["Contract value", usd(totals.contract_value)],
             ["PO committed", usd(totals.po_committed)],
+            ["Stock issued", usd(totals.stock_issued)],
             ["Labor", hrs(totals.labor_hours)],
             ["Invoiced", usd(totals.invoiced)],
             ["Collected", usd(totals.collected)],
@@ -237,7 +249,7 @@ export default function JobCosting() {
               <tr>
                 <th className="px-4 py-2.5">Job</th><th className="px-4 py-2.5">Client</th><th className="px-4 py-2.5">Stage</th>
                 <th className="px-4 py-2.5 text-right">Contract</th><th className="px-4 py-2.5 text-right">PO</th>
-                <th className="px-4 py-2.5 text-right">Labor</th><th className="px-4 py-2.5 text-right">CO Δ</th>
+                <th className="px-4 py-2.5 text-right">Stock</th><th className="px-4 py-2.5 text-right">Labor</th><th className="px-4 py-2.5 text-right">CO Δ</th>
                 <th className="px-4 py-2.5 text-right">Invoiced</th><th className="px-4 py-2.5 text-right">Collected</th>
                 <th className="px-4 py-2.5 text-right">Margin</th><th className="px-2 py-2.5" />
               </tr>
@@ -250,6 +262,7 @@ export default function JobCosting() {
                   <td className="px-4 py-2.5 text-xs text-slate-500">{j.current_stage || j.sales_status || "—"}</td>
                   <td className="px-4 py-2.5 text-right font-medium">{usd(j.contract_value)}</td>
                   <td className="px-4 py-2.5 text-right">{usd(j.po_committed)}</td>
+                  <td className="px-4 py-2.5 text-right">{usd(j.stock_issued)}</td>
                   <td className="px-4 py-2.5 text-right">{hrs(j.labor_hours)}</td>
                   <td className="px-4 py-2.5 text-right"><MarginCell value={j.co_delta} /></td>
                   <td className="px-4 py-2.5 text-right">{usd(j.invoiced)}</td>
