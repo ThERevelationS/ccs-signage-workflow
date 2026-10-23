@@ -54,6 +54,7 @@ import AnnouncementManager from "@/components/announcements/AnnouncementManager"
 import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
+import { TimeClockStatusProvider } from "@/components/timeclock/TimeClockStatusContext";
 import FocusPausePair from "@/components/timeclock/FocusPausePair";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 import SyncConflictAlert from '@/components/admin/SyncConflictAlert';
@@ -1634,14 +1635,16 @@ function LayoutContentWrapper({ children, currentPageName }) {
   ) : children;
   return (
     <ImportProgressProvider currentUserEmail={currentUser?.email}>
-      <ResearchProgressProvider>
-        <MultiImportProvider>
-          <AnnouncementProvider currentPageName={currentPageName}>
-            <LayoutContent>{protectedChildren}</LayoutContent>
-            <ResearchProgressBar />
-          </AnnouncementProvider>
-        </MultiImportProvider>
-      </ResearchProgressProvider>
+      <TimeClockStatusProvider>
+        <ResearchProgressProvider>
+          <MultiImportProvider>
+            <AnnouncementProvider currentPageName={currentPageName}>
+              <LayoutContent>{protectedChildren}</LayoutContent>
+              <ResearchProgressBar />
+            </AnnouncementProvider>
+          </MultiImportProvider>
+        </ResearchProgressProvider>
+      </TimeClockStatusProvider>
     </ImportProgressProvider>
   );
 }
