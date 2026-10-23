@@ -15,22 +15,17 @@ const LEGACY_FLEET_QR_DOWNLOAD_SRC = "/fleet/fleetmaster-public-report-qr-400.pn
 const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback", "bouncieSyncNotifications"];
 
 async function loadAutomationHealthData() {
-  const [maintenance, reminders, worker, reminderFallback, bouncieAlerts, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
-    base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "fleetReminderFallback" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
-    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
+  // One $in query per entity keeps entity_list volume low; consumers already
+  // select by source/status, and the -created_date sort preserves latest-first.
+  const [logs, notifications, receipts] = await Promise.all([
+    base44.entities.FleetSystemLog.filter({ source: { $in: AUTOMATION_SOURCES } }, "-created_date", 500),
+    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notifications" }),
+    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
   ]);
   return {
-    logs: [...(maintenance || []), ...(reminders || []), ...(worker || []), ...(reminderFallback || []), ...(bouncieAlerts || [])],
-    notifications: [...queuePending, ...queueSending, ...queueFailed],
-    receipts: [...receiptStarted, ...receiptFailed],
+    logs: logs || [],
+    notifications: notifications || [],
+    receipts: receipts || [],
   };
 }
 
