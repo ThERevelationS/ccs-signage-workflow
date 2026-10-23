@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const TYPES = new Set(['filter', 'column_preset']);
 const MAX_CONDITIONS = 100;
@@ -322,7 +323,7 @@ async function copyUnique(SalesFilter: any, actor: any, source: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     const action = String(body?.action || '').trim();
@@ -359,11 +360,18 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Invalid saved-filter action.' }, { status: 400 });
   } catch (error) {
-    const status = Number(error?.status || 500);
+    // Database throttling is not a saved-filter problem: report it as a temporary
+    // busy state instead of the misleading "could not be changed safely" message.
+    const message = String(error?.message || error || '');
+    const throttled = Number(error?.status) === 429 || /rate limit|traffic volume|too many requests|throttl/i.test(message);
+    const status = throttled ? 503 : Number(error?.status || 500);
     const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
-    console.error('manageSalesFilters error:', error?.message || error);
-    return Response.json({
-      error: safeStatus === 500 ? 'Saved filter could not be changed safely.' : error?.message,
-    }, { status: safeStatus });
+    console.error('manageSalesFilters error:', message || error);
+    const safeMessage = throttled
+      ? 'The app is busy right now. Wait a moment and try again.'
+      : safeStatus === 500
+        ? 'Saved filter could not be changed safely.'
+        : error?.message;
+    return Response.json({ error: safeMessage }, { status: safeStatus });
   }
 });
