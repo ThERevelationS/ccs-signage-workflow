@@ -250,4 +250,11 @@ assert.match(entry, /open_ar:/, 'customer 360 must aggregate open AR');
 assert.match(custPage, /action: "get_customer_360"/, 'customer page must invoke get_customer_360');
 assert.match(custPage, /opportunityWorkspaceAction/, 'customer page must go through the workspace function');
 
+// A9-lite: Opportunity stage changes cascade to the linked compatibility WorkOrder.
+assert.match(entry, /OPP_TO_WO_STAGE/, 'a stage map must drive work-order sync');
+assert.match(entry, /syncWorkOrderStage/, 'stage sync helper must exist');
+assert.match(entry, /stage_sync_warning/, 'sync failures must surface as warnings');
+assert.match(entry, /sales_status: next/, 'sync must write the work order sales_status');
+assert.ok(entry.indexOf('syncWorkOrderStage') > 0 && entry.lastIndexOf('syncWorkOrderStage') > entry.indexOf('link_work_order'), 'link_work_order must sync the stage too');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
