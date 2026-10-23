@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Copy, Link2, Loader2, MessageSquare, Send } from "lucide-react";
+import { Copy, Link2, Loader2, Mail, MessageSquare, Send } from "lucide-react";
 
 export const invokePortal = async (sessionToken, body) => {
   const r = await base44.functions.invoke("customerPortalAction", { session_token: sessionToken, ...body });
@@ -22,6 +22,7 @@ export default function PortalPanel({ sessionToken, customerId }) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+  const [emailed, setEmailed] = useState("");
   const replyKeyRef = useRef(crypto.randomUUID());
   const endRef = useRef(null);
 
@@ -80,6 +81,10 @@ export default function PortalPanel({ sessionToken, customerId }) {
               className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-300 bg-white px-2.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
               <Copy className="h-3 w-3" />{copied === "link" ? "Copied" : "Copy link"}
             </button>
+            <button type="button" disabled={Boolean(busy)} onClick={() => run("email", { action: "email_link", customer_id: customerId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setEmailed(d.sent_to); })}
+              className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-300 bg-white px-2.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50">
+              {busy === "email" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}Email link
+            </button>
             <button type="button" disabled={Boolean(busy)} onClick={() => { if (window.confirm("Revoke this customer's portal link? They will lose access immediately.")) run("revoke", { action: "revoke_link", link_id: customerLink.id }); }}
               className="inline-flex h-8 items-center rounded-md border border-red-300 bg-white px-2.5 text-[11px] font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
               Revoke
@@ -90,6 +95,7 @@ export default function PortalPanel({ sessionToken, customerId }) {
       {customerLink && (
         <p className="mt-1 text-[11px] text-blue-800/70">
           {customerLink.open_count > 0 ? `Opened ${customerLink.open_count}×${customerLink.last_opened_at ? ` · last ${new Date(customerLink.last_opened_at).toLocaleDateString()}` : ""}` : "Not opened yet"} · expires {customerLink.expires_at ? new Date(customerLink.expires_at).toLocaleDateString() : "never"}
+          {emailed && <span className="ml-1 font-semibold text-emerald-700">· link emailed to {emailed}</span>}
         </p>
       )}
 
