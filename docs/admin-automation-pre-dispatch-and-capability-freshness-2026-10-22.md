@@ -64,6 +64,13 @@ written by the client SDK at all. The audit invariant is now enforced by
 scripts/test-admin-write-authorization.mjs so a future panel cannot
 reintroduce an uncredentialed or ungated write without failing tests.
 
+While unlocked, the admin navigation card now shows the stored capability's
+expiry as a static "Admin authorization expires at <time>" label
+(`data-admin-capability-expiry`). The label is populated by the same effect
+that arms the re-lock timer, is cleared on every exit path (locked,
+unusable expiry, expiry firing), and never ticks — a fixed timestamp avoids
+re-rendering the page to keep a countdown fresh.
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -71,23 +78,25 @@ before the invoke call; component code checks the property defensively so
 fixture mocks remain compatible.
 
 Verification:
-- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 409/409
+- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 410/410
   passed under node --test (the Chromium script is excluded; it runs
-  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs,
+  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs
+  (8 tests: marker coverage, post-dispatch isolation, fresh-capability
+  dispatch, save/op release semantics, expired-capability re-lock before
+  lock acquisition or dispatch, mounted expiry-timer re-lock, static expiry
+  label),
   scripts/test-admin-panel-capability-freshness.mjs (3 tests: no snapshot
   prop remains, every panel write handler resolves the stored capability at
   dispatch time, helpers still reject empty credentials pre-dispatch), and
   scripts/test-admin-write-authorization.mjs (4 tests: helper payloads carry
   a verified credential, SDK-written entities are RLS-gated, the direct-write
   allowlist is fixed, session-token fencing holds).
-  (7 tests: marker coverage, post-dispatch isolation, fresh-capability
-  dispatch, save/op release semantics, expired-capability re-lock before
-  lock acquisition or dispatch, mounted expiry-timer re-lock).
-- node scripts/test-admin-navigation-browser.mjs: 92/92 isolated Chromium
-  checks passed, including five new checks covering pre-dispatch toggle
+- node scripts/test-admin-navigation-browser.mjs: 93/93 isolated Chromium
+  checks passed, including six new checks covering pre-dispatch toggle
   release, editor-save draft preservation, write-time expired-capability
-  re-lock (zero writes dispatched), and unattended re-lock at the exact
-  expiry moment. The fixture gained an `__adminAutomationPreDispatch` knob,
+  re-lock (zero writes dispatched), unattended re-lock at the exact
+  expiry moment, and the visible expiry-time label. The fixture gained an
+  `__adminAutomationPreDispatch` knob,
   an `__adminCapabilityExpired` flag, and an `admin_cap_expire_ms` URL param;
   the script was ported to Windows (forward-slash /@fs URLs, realpath-canonical
   scratch roots, junction node_modules link, ADMIN_PLAYWRIGHT_PATH env
