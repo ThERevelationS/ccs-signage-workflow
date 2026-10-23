@@ -332,7 +332,7 @@ export default function ChangeOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [openId, setOpenId] = useState("");
+  const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("co") || "");
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
