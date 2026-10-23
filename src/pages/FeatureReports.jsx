@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { sendGmail } from "@/functions/sendGmail";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -300,9 +301,7 @@ export default function FeatureReports() {
 
         {/* Reports List */}
         {isLoading ? (
-          <div className="clay-card p-12 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
-          </div>
+          <ListSkeleton rows={6} />
         ) : filteredReports.length === 0 ? (
           <div className="clay-card p-12 text-center">
             <Lightbulb className="w-12 h-12 text-gray-300 mx-auto mb-4" />
