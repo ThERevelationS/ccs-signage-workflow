@@ -366,5 +366,9 @@ assert.match(palette, /\/Opportunities\?open=/, 'command palette must deep-link 
 assert.match(palette, /\/Invoices\?invoice=/, 'command palette must deep-link invoices');
 assert.match(appShell, /<CommandPalette \/>/, 'app shell must mount the command palette');
 assert.match(poPage, /Overdue/, 'PO list must flag overdue rows');
+assert.match(entry, /lost_reasons: lostReasons/, 'funnel must report loss reasons');
+assert.match(entry, /No reason given/, 'funnel must bucket unreasoned losses');
+assert.match(oppPage2, /Loss reasons/, 'pipeline view must render loss reasons');
+assert.match(palette, /getSessionToken\(\)/, 'command palette must use the shared token helper');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
