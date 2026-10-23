@@ -20,7 +20,7 @@ try {
   await writeFile(path.join(scratch, "main.jsx"), [
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
-    'import FleetRepairApprovalPolicies from "/@fs/app/src/components/fleet/FleetRepairApprovalPolicies.jsx";',
+    `import FleetRepairApprovalPolicies from "/@fs/${appRoot.replace(/\\/g, "/")}/src/components/fleet/FleetRepairApprovalPolicies.jsx";`,
     'createRoot(document.getElementById("root")).render(<FleetRepairApprovalPolicies />);',
   ].join("\n"));
 
@@ -48,7 +48,7 @@ try {
       {find:"@/api/base44Client",replacement:path.join(scratch,"mockPolicy.js")},
       {find:/^@\//,replacement:path.join(appRoot,"src")+"/"},
     ]},
-    server:{host:"127.0.0.1",port:0,strictPort:false,fs:{allow:[appRoot,scratch]}},
+    server:{host:"127.0.0.1",port:0,strictPort:false,fs:{allow:[appRoot,scratch],strict:false}},
     logLevel:"error",
   });
   await vite.listen();
