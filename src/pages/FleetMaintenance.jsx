@@ -17,7 +17,6 @@ import {
   Clock3,
   LayoutGrid,
   List,
-  Loader2,
   Pencil,
   Plus,
   Search,
