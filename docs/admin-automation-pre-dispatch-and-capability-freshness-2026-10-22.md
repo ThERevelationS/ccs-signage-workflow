@@ -32,6 +32,15 @@ write was attempted — no uncertain fence, no parked draft, no lock held.
 Previously the only recovery was a page reload, which the old error text
 effectively required without saying so.
 
+Re-locking is also proactive: `getStoredAdminSettingsCapabilityExpiry()` (a
+pure, non-mutating reader added to EmailGate) exposes the stored expiry
+timestamp, and an `isUnlocked`-gated effect schedules a `setTimeout` that
+re-locks the panel at the exact moment the capability expires — even when the
+user is idle or only viewing. Re-unlocking stores a fresh expiry and the
+effect re-arms via its `[isUnlocked]` dependency. The reader never touches
+storage: `getStoredAdminSettingsCapability()` remains the only path that
+clears expired credentials.
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -42,14 +51,15 @@ Verification:
 - node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 403/403
   passed under node --test (the Chromium script is excluded; it runs
   standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs
-  (6 tests: marker coverage, post-dispatch isolation, fresh-capability
+  (7 tests: marker coverage, post-dispatch isolation, fresh-capability
   dispatch, save/op release semantics, expired-capability re-lock before
-  lock acquisition or dispatch).
-- node scripts/test-admin-navigation-browser.mjs: 91/91 isolated Chromium
-  checks passed, including four new checks covering pre-dispatch toggle
-  release, editor-save draft preservation, and expired-capability re-lock on
-  both toggle and editor save (zero writes dispatched). The fixture gained an
-  `__adminAutomationPreDispatch` knob and an `__adminCapabilityExpired` flag;
+  lock acquisition or dispatch, mounted expiry-timer re-lock).
+- node scripts/test-admin-navigation-browser.mjs: 92/92 isolated Chromium
+  checks passed, including five new checks covering pre-dispatch toggle
+  release, editor-save draft preservation, write-time expired-capability
+  re-lock (zero writes dispatched), and unattended re-lock at the exact
+  expiry moment. The fixture gained an `__adminAutomationPreDispatch` knob,
+  an `__adminCapabilityExpired` flag, and an `admin_cap_expire_ms` URL param;
   the script was ported to Windows (forward-slash /@fs URLs, realpath-canonical
   scratch roots, junction node_modules link, ADMIN_PLAYWRIGHT_PATH env
   override — on Windows pass a file:/// URL, not a drive-letter path).
