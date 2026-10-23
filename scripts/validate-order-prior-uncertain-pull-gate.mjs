@@ -38,6 +38,20 @@ assert.equal(classify(prior, false).blocked, false,
   'Sales-only and unrelated coordinator consumers are unchanged');
 assert.equal(classify({ ...prior, results: [], status: 'needs_review' }).blocked, true,
   'An interrupted pull may have no completed results but retains batch evidence');
+const verifiedForRun = { state: 'verified_complete', run_started_at: prior.started_at };
+assert.equal(classifyPriorUncertainOrderPull(prior, { orderPullRequested: true, verifiedEvidence: verifiedForRun }).blocked, false,
+  'Independent verified-complete evidence for the same run releases the gate');
+assert.equal(classifyPriorUncertainOrderPull(prior, {
+  orderPullRequested: true,
+  verifiedEvidence: { state: 'verified_complete', run_started_at: '2026-10-08T13:00:00.000Z' },
+}).blocked, true, 'Verified evidence for a different run must not release the gate');
+assert.equal(classifyPriorUncertainOrderPull(prior, {
+  orderPullRequested: true,
+  verifiedEvidence: { state: 'unresolved', run_started_at: prior.started_at },
+}).blocked, true, 'Unresolved independent evidence still blocks');
+assert.equal(classifyPriorUncertainOrderPull({ ...prior, started_at: undefined }, {
+  orderPullRequested: true, verifiedEvidence: verifiedForRun,
+}).blocked, true, 'Missing run identity cannot be matched to verified evidence');
 console.log('PASS uncertain prior Order pull blocks new Order pulls while preserving prior status, completed runs and Sales-only claims');
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
@@ -51,6 +65,9 @@ const overwrite = claim.indexOf('entities.GlobalSettings.updateMany(');
 assert.ok(priorCheck > 0 && guard > priorCheck && overwrite > guard,
   'Prior evidence must be checked before replacing the coordinator status');
 assert.match(claim, /orderPullRequested: status\?\.order_pull_requested === true/);
+assert.match(claim, /readOrderPullEvidenceStore\(base44\.asServiceRole\.entities\.GlobalSettings\)/,
+  'A blocked prior must consult independent verified evidence before refusing');
+assert.match(claim, /verifiedEvidence: evidenceRecord\?\.setting_value/);
 assert.match(claim, /throw Object\.assign\(new Error\(priorOrderPull\.reason\), \{ status: 409 \}\)/);
 const main = backend.slice(backend.indexOf("if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset')"));
 assert.match(main, /order_pull_requested: steps\.some\(step => step\.dataset === 'orders' && step\.direction === 'pull'\)/);
