@@ -2,7 +2,7 @@
 // shared tokens, reduced-motion guards on every animated primitive, button
 // press feedback, the desktop page transition, and the CSS utilities.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const css = readFileSync("src/index.css", "utf8");
@@ -113,23 +113,10 @@ test("SalesHome wraps its sections in FadeIn", () => {
   assert.match(home, /<FadeIn delay=\{0\.12\}>/);
 });
 
-test("SceneCanvas lazy-loads three and respects motion + visibility", () => {
-  const sc = readFileSync("src/components/motion/SceneCanvas.jsx", "utf8");
-  assert.match(sc, /await import\("three"\)/, "three must load lazily inside the effect");
-  assert.match(sc, /useReducedMotion/);
-  assert.match(sc, /if \(reduceMotion\) \{\s*render\(0\)/, "reduced motion must render one static frame only");
-  assert.match(sc, /visibilitychange/, "the RAF loop must pause on hidden tabs");
-  assert.match(sc, /geometry\?\.dispose\?\.\(\)/);
-  assert.match(sc, /renderer\?\.dispose\?\.\(\)/);
-  assert.match(sc, /aria-hidden="true"/);
-});
-
-test("TimeClock header mounts the ambient 3D layer behind content", () => {
+test("TimeClock header has no decorative 3D canvas", () => {
   const page = readFileSync("src/pages/TimeClock.jsx", "utf8");
-  assert.match(page, /import SceneCanvas from "@\/components\/motion\/SceneCanvas"/);
-  assert.match(page, /<SceneCanvas className="absolute inset-0 opacity-60" \/>/);
-  const header = page.slice(page.indexOf("{/* Header */}"), page.indexOf("{sessionNotice"));
-  assert.match(header, /relative flex items-center justify-between/, "header content must sit above the canvas");
+  assert.doesNotMatch(page, /SceneCanvas/, "the ambient 3D hero was removed");
+  assert.ok(!existsSync("src/components/motion/SceneCanvas.jsx"), "SceneCanvas.jsx must be deleted");
 });
 
 test("TimeClock mount loading renders a layout skeleton, not a bare spinner", () => {
