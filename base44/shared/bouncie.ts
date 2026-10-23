@@ -149,6 +149,8 @@ async function queueReconnectAlert(base44, conn) {
         attempts: 0
       });
     }
+    // Trigger immediate delivery instead of waiting for the next scheduled pass.
+    await base44.asServiceRole.functions.invoke("fleetNotificationWorker", {}).catch(() => null);
   } catch {}
 }
 
