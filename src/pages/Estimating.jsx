@@ -7,6 +7,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
@@ -27,10 +28,10 @@ export default function Estimating() {
     document.title = "Estimating - Workflow Manager";
   }, []);
 
+  usePolling(() => loadWorkOrders(), 120000, { runOnMount: false });
+
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => loadWorkOrders(), 60000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
