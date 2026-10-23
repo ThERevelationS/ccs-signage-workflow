@@ -1246,7 +1246,6 @@ export default function Opportunities() {
                       </span>
                     );
                   })()}
-                  </div>
                   {Number.isFinite(Number(o.budget_amount)) && Number(o.budget_amount) > 0 && (
                     <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">${Number(o.budget_amount).toLocaleString()}</span>
                   )}
