@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import {
   BarChart3,
   ChevronRight,
@@ -240,7 +241,7 @@ export default function JobCosting() {
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && jobs.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading job costs…</div>
+          <TableSkeleton columns={12} />
         ) : visible.length === 0 ? (
           <div className="py-16 text-center text-slate-500">No jobs to show.</div>
         ) : (
