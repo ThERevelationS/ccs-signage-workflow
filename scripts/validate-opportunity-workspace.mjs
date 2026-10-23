@@ -7,7 +7,7 @@ const layout = readFileSync('src/Layout.jsx', 'utf8');
 const config = readFileSync('src/pages.config.js', 'utf8');
 const shared = readFileSync('base44/shared/opportunityFoundationPersistence.mjs', 'utf8');
 
-for (const entity of ['Opportunity', 'OpportunityIntake', 'EstimatingRequest']) {
+for (const entity of ['Opportunity', 'OpportunityIntake', 'EstimatingRequest', 'OpportunityActivity']) {
   const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
   assert.match(schema, /backend_only/, `${entity} must remain backend-only via RLS`);
   assert.match(schema, /creation_request_key/, `${entity} requires a retry-safe creation key`);
@@ -70,6 +70,8 @@ assert.match(entry, /by_salesperson/, 'funnel must break down results by salespe
 assert.ok(globalSearch.includes('/Invoices?invoice='), 'search must deep-link invoice records');
 assert.ok(page.includes('?invoice=${row.id}'), 'opportunity financials must deep-link invoices');
 assert.ok(page.includes('get_opportunity", opportunity_id: openId'), 'opportunities must honor an ?open= deep link');
+assert.match(entry, /logActivity\(Activity/, 'opportunity mutations must write activity log entries');
+assert.ok(page.includes('detail.activity'), 'the detail view must render the activity timeline');
 assert.match(entry, /asServiceRole\.entities\.Invoice\b/, 'global search must read invoices via service role');
 assert.match(globalSearch, /functions\.invoke\("opportunityWorkspaceAction"/, 'search must invoke the workspace function');
 assert.match(globalSearch, /action: "global_search"/, 'search must request global_search');
