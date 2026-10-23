@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { resolveFleetMeterReading, fleetMeterState } from '../../shared/fleetMeterReading.ts';
+import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const TASK_READY = new Set(['pending','overdue']);
@@ -44,7 +45,7 @@ Deno.serve(async req => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(()=>null);
     if (!user || user.role !== 'admin') return Response.json({error:'Forbidden'},{status:403});
-    const cutover = (await base44.asServiceRole.entities.FleetCutoverState.filter({state_key:'primary'}))?.[0];
+    const cutover = await getCanonicalCutoverState(base44);
     if (!cutover?.maintenance_generation_enabled) return Response.json({success:true,disabled:true,due:0,created:0,results:[]});
 
     const Rule = base44.asServiceRole.entities.FleetMaintenanceMeterRule;
