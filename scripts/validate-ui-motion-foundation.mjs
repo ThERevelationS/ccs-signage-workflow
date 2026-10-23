@@ -256,4 +256,16 @@ test("TimeClock detail dialogs use list skeletons", () => {
   assert.ok(!at.includes("Loading audit history"), "audit trail spinner text gone");
 });
 
+test("fleet pages use content-shaped skeletons", () => {
+  const listPages = ["FleetOverview", "FleetEquipment", "FleetInspections", "FleetMaintenance", "FleetRequests"];
+  for (const name of listPages) {
+    const src = readFileSync("src/pages/" + name + ".jsx", "utf8");
+    assert.ok(src.includes("@/components/ui/list-skeleton"), name + " imports ListSkeleton");
+    assert.ok(!src.includes("py-20 flex justify-center"), name + " py-20 spinner gone");
+  }
+  const tracking = readFileSync("src/pages/FleetTracking.jsx", "utf8");
+  assert.ok(tracking.includes("<Skeleton"), "FleetTracking uses Skeleton");
+  assert.ok(!tracking.includes("animate-spin text-white"), "FleetTracking fullscreen spinner gone");
+});
+
 console.log(`\nMOTION FOUNDATION VALIDATOR: ${passed} checks PASS`);
