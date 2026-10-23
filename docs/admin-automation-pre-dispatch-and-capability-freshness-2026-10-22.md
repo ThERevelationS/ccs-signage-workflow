@@ -64,6 +64,16 @@ written by the client SDK at all. The audit invariant is now enforced by
 scripts/test-admin-write-authorization.mjs so a future panel cannot
 reintroduce an uncredentialed or ungated write without failing tests.
 
+A conditional-save audit across the six Admin panels that write GlobalSettings
+through `saveGlobalSettingValueIfUnchanged` found the concurrency contract
+correct everywhere, but two panels (JurisdictionMonitoringSettings,
+JurisdictionAccuracyAudit) rejected a conflict with "Reload before retrying"
+while offering only Dismiss — the stale loaded record guaranteed every retry
+failed identically. Both error banners now carry a "Reload latest" action
+wired to their loader (matching the existing OvertimeRulesManager pattern);
+the invariant is enforced by scripts/test-admin-settings-conflict-reload.mjs
+for all six panels plus the shared helper.
+
 While unlocked, the admin navigation card now shows the stored capability's
 expiry as a static "Admin authorization expires at <time>" label
 (`data-admin-capability-expiry`). The label is populated by the same effect
@@ -78,7 +88,7 @@ before the invoke call; component code checks the property defensively so
 fixture mocks remain compatible.
 
 Verification:
-- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 410/410
+- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 414/414
   passed under node --test (the Chromium script is excluded; it runs
   standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs
   (8 tests: marker coverage, post-dispatch isolation, fresh-capability
@@ -90,7 +100,10 @@ Verification:
   dispatch time, helpers still reject empty credentials pre-dispatch), and
   scripts/test-admin-write-authorization.mjs (4 tests: helper payloads carry
   a verified credential, SDK-written entities are RLS-gated, the direct-write
-  allowlist is fixed, session-token fencing holds).
+  allowlist is fixed, session-token fencing holds), and
+  scripts/test-admin-settings-conflict-reload.mjs (4 tests: all six
+  GlobalSettings admin panels keep a save conflict actionable via auto-reload
+  or a wired reload action, and the shared helper's guards stay intact).
 - node scripts/test-admin-navigation-browser.mjs: 93/93 isolated Chromium
   checks passed, including six new checks covering pre-dispatch toggle
   release, editor-save draft preservation, write-time expired-capability
