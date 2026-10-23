@@ -1,3 +1,4 @@
+import {assertOfficialProfileResearchIdentity,assertResearchSourceIdentity} from '../../shared/permittingSourceIdentity.mjs';
 import { retainOfficeResearchResponseHistory } from '../../shared/officeResearchResponseHistory.mjs';
 import {validateSavedDiscoverySelection,discoverSelectedSavedDocument} from '../../shared/permittingSavedDocumentDiscovery.mjs';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
             (candidate:URL)=>candidate.hostname.replace(/^www\./,'')===selectedHost && !candidate.port);
           return {...await readPermittingResourceResponse(response),finalUrl:response.url || url};
         }
-      }) : await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter,rescanSourceUrl);
+      }) : await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl,reporter,rescanSourceUrl,isTargetedAutomation || body.automatic_research === true);
       const scanRun=await reporter.finish(result.archival?.success===false || result.discovery_scan?.success===false?'completed_with_errors':'complete');
       return Response.json({...result,scan_run:scanRun});
     }
@@ -95,17 +96,23 @@ Deno.serve(async (req) => {
       sort: 'last_updated',
       label: 'Scheduled jurisdiction refresh catalog',
     });
-    const toRefresh = all.filter(j => j.auto_refresh !== false).slice(0, 5);
+    const identityReviews = [];
+    const toRefresh = all.filter(j => {
+      if (j.auto_refresh === false) return false;
+      if (j.discovery_scan_state?.blocked) { identityReviews.push({id:j.id,reason:'automatic_profile_held_for_review'}); return false; }
+      try { assertOfficialProfileResearchIdentity(j); return true; }
+      catch (error) { identityReviews.push({id:j.id,reason:error.message}); return false; }
+    }).slice(0, 5);
     const results = [];
     for (const j of toRefresh) {
       try {
-        await refreshJurisdictionRecord(base44, j.id, undefined);
+        await refreshJurisdictionRecord(base44, j.id, undefined, false, true, false, false, null, silentScanReporter, null, true);
         results.push({ id: j.id, name: j.name, success: true });
       } catch (e) {
         results.push({ id: j.id, name: j.name, success: false, error: e.message });
       }
     }
-    return Response.json({ batch: true, processed: results.length, results });
+    return Response.json({ batch: true, processed: results.length, results, identity_reviews: identityReviews });
   } catch (error) {
     await reporter.finish('failed',String(error?.message || error));
     const status = Number(error?.status || 500);
@@ -117,10 +124,13 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null,reporter:any=silentScanReporter,rescanSourceUrl:string|null=null) {
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null,reporter:any=silentScanReporter,rescanSourceUrl:string|null=null,automatic=false) {
     const startedAt = Date.now();
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
+    if (automatic && (jurisdiction.auto_refresh === false || jurisdiction.discovery_scan_state?.blocked)) throw Object.assign(new Error('Automatic research is held for this jurisdiction; review before dispatch.'),{status:409});
+    if (automatic) assertOfficialProfileResearchIdentity(jurisdiction);
+    if (discoveryOnly) assertResearchSourceIdentity(jurisdiction,jurisdiction);
 
     const batchSettings = discoveryOnly ? {
       updateWebsites: false, updatePermittingUrls: false, updateRequirements: false,
@@ -150,9 +160,10 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         includeParentCounty,
         ...(reporter.id?{scan_run_id:reporter.id}:{})
       });
-      await reporter.emit({kind:'found',detail:'AI returned source candidates; discovery and authority review still required.',resources:((agentResult?.data?.data || agentResult?.data || agentResult)?.documents || [])});
-      if(agentResult?.data?.research_instructions)await reporter.emit({kind:'search_instructions',detail:agentResult.data.research_instructions});
       researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
+      assertResearchSourceIdentity(jurisdiction,researchData);
+      await reporter.emit({kind:'found',detail:'AI returned source candidates; discovery and authority review still required.',resources:researchData?.documents || []});
+      if(agentResult?.data?.research_instructions)await reporter.emit({kind:'search_instructions',detail:agentResult.data.research_instructions});
     }
     if (!researchData) throw Object.assign(new Error('No research data returned'), { status: 400 });
 
@@ -163,7 +174,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       try {
         discoveryScan = await scanOfficialPermittingPages({
           onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
-          seedUrl: researchData.permitting_url, maxPages: rescanSourceUrl?1:discoveryOnly ? 3 : 1,rescanUrl:rescanSourceUrl, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
+          jurisdiction, seedUrl: researchData.permitting_url, maxPages: rescanSourceUrl?1:discoveryOnly ? 3 : 1,rescanUrl:rescanSourceUrl, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
           resume: jurisdiction.discovery_scan_state || null, existingDocuments: jurisdiction.documents || [],
           fetchPage: async (url: string) => {
             const response = await safeExternalFetch(url, {
@@ -177,7 +188,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         if (discoveryOnly && !discoveryScan.success && !jurisdiction.discovery_scan_state) throw new Error('Official-page discovery could not read the selected source.');
         researchData.documents = combineResearchAndDiscoveredDocuments(researchData.documents, discoveryScan.documents);
       } catch (error) {
-        if (discoveryOnly) throw error;
+        if (discoveryOnly || error?.code === 'SOURCE_IDENTITY_REVIEW_REQUIRED') throw error;
         discoveryScan = { success: false, documents: [], gaps: [{ reason: 'discovery_failed', requires_review: true }],
           jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0 };
         console.warn(`Official-page discovery failed for ${jurisdiction.name || id}: ${error?.message || error}`);
