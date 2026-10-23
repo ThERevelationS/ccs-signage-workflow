@@ -6,6 +6,7 @@ import {useAuth} from '@/components/auth/EmailGate';
 import {useState,useEffect,useRef,useMemo} from 'react';
 import {verifiedOriginal,remainingOriginals,saveOriginalBatch,originalFileStatus} from './addressOriginalBatch.mjs';
 import {useResearchProgress} from './ResearchProgressContext';
+import {usePolling} from '@/lib/usePolling';
 function webUrl(value){
  try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}
 }
@@ -44,23 +45,16 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
   finally{if(manualCheckRef.current===request){manualCheckRef.current=null;if(refreshScopeRef.current===request.scope)setChecking(false);}}
  }
 
- useEffect(()=>{
+ usePolling(async()=>{
   const ids=(archives?.collections || []).map(row=>row.id).filter(Boolean);
-  if(!ids.length||!sessionToken)return;
-  let stopped=false,polling=false;
-  async function sync(){
-   if(stopped||polling||manualCheckRef.current||batchRef.current||discoveryBusyRef.current.size)return;
-   polling=true;const version=refreshVersion.current;
-   const current=()=>!stopped&&refreshScopeRef.current===refreshScope&&version===refreshVersion.current&&!manualCheckRef.current&&!discoveryBusyRef.current.size;
-   try{
-    const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});
-    if(current()){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}
-   }catch{if(current())setError('Saved file status could not update. Use Check saved files to try again.');}
-   finally{polling=false;}
-  }
-  const timer=setInterval(()=>void sync(),10000);
-  return()=>{stopped=true;clearInterval(timer);};
- },[archives,sessionToken,refreshScope,trackAction]);
+  if(!ids.length||manualCheckRef.current||batchRef.current||discoveryBusyRef.current.size)return;
+  const version=refreshVersion.current;
+  const current=()=>refreshScopeRef.current===refreshScope&&version===refreshVersion.current&&!manualCheckRef.current&&!discoveryBusyRef.current.size;
+  try{
+   const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});
+   if(current()){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}
+  }catch{if(current())setError('Saved file status could not update. Use Check saved files to try again.');}
+ },15000,{enabled:Boolean(sessionToken)&&(archives?.collections || []).some(row=>row.id),runOnMount:false});
 
  async function saveFile(collection,doc,forBatch=false){
   const key=collection.id+'|'+doc.id;
