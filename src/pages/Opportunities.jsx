@@ -1130,6 +1130,31 @@ export default function Opportunities() {
               </div>
             </div>
           </div>
+          {Array.isArray(funnel.by_salesperson) && funnel.by_salesperson.length > 0 && (
+            <div className="mt-3 overflow-x-auto border-t border-slate-100 pt-3 dark:border-slate-800">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <th className="py-1 pr-3">Salesperson</th><th className="py-1 pr-3 text-right">Open</th>
+                    <th className="py-1 pr-3 text-right">Open value</th><th className="py-1 pr-3 text-right">Won</th>
+                    <th className="py-1 pr-3 text-right">Won value</th><th className="py-1 text-right">Win rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {funnel.by_salesperson.map((r) => (
+                    <tr key={r.salesperson} className="border-t border-slate-50 dark:border-slate-800/60">
+                      <td className="py-1.5 pr-3 font-medium text-slate-700 dark:text-slate-200">{r.salesperson}</td>
+                      <td className="py-1.5 pr-3 text-right text-slate-600 dark:text-slate-300">{r.open_count}</td>
+                      <td className="py-1.5 pr-3 text-right font-semibold text-violet-700 dark:text-violet-300">${Number(r.open_value || 0).toLocaleString()}</td>
+                      <td className="py-1.5 pr-3 text-right text-slate-600 dark:text-slate-300">{r.won_count}</td>
+                      <td className="py-1.5 pr-3 text-right font-semibold text-emerald-600">${Number(r.won_value || 0).toLocaleString()}</td>
+                      <td className="py-1.5 text-right text-slate-700 dark:text-slate-200">{r.win_rate == null ? "—" : `${r.win_rate}%`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 
