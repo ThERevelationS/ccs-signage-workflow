@@ -621,8 +621,11 @@ export default function SIPs() {
       cache.conditions = dropdownConditionByName;
       cache.results = new WeakMap();
     }
+    // WorkOrderDetailsDialog patches the loaded row in place via
+    // Object.assign, so the same object can gain a different checklist array.
+    // The cache is only valid while the stored checklist identity matches.
     const cached = cache.results.get(wo);
-    if (cached) return cached;
+    if (cached && cached.checklist === wo.sip_checklist) return cached.result;
     const checklist = wo.sip_checklist || [];
 
     // Only count main checklist items (type === 'checklist' or no type AND no parent_id)
@@ -645,7 +648,7 @@ export default function SIPs() {
       completed: mainCompleted,
       total: mainChecklistItems.length
     };
-    cache.results.set(wo, result);
+    cache.results.set(wo, { checklist: wo.sip_checklist, result });
     return result;
   }, [dropdownConditionByName]);
 
@@ -933,7 +936,7 @@ export default function SIPs() {
               const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
               const isWip = isWipItem(wo);
               return (
-                <div key={wo.id} className={`rounded-xl border p-3 bg-white transition-all duration-300 ${focusedRowId === wo.id ? "ring-2 ring-purple-400 scale-[1.02] shadow-lg shadow-purple-300/50" : ""}`}>
+                <div key={wo.id} className={`rounded-xl border p-3 bg-white ${focusedRowId === wo.id ? "ring-2 ring-purple-400" : ""}`}>
                   <div className="flex items-start gap-3">
                     <button
                       type="button"
@@ -1081,10 +1084,10 @@ export default function SIPs() {
                 
                 return (
                   <React.Fragment key={wo.id}>
-                  {focusedRowId === wo.id && <tr className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
+                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   <tr 
-                    className={`sips-board-row border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'sips-focus-row' : ''}`}
-                    style={{ height: focusedRowId === wo.id ? '62px' : '50px' }}
+                    className={`border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                    style={{ height: '50px' }}
                   >
                     {/* Row Number - Clickable Focus Button */}
                     <td className="px-0 py-0 border-r">
@@ -1092,7 +1095,7 @@ export default function SIPs() {
                         onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                           focusedRowId === wo.id 
-                            ? 'sips-focus-num text-white' 
+                            ? 'bg-purple-500 text-white' 
                             : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
                         }`}
                         style={focusedRowId !== wo.id ? { 
@@ -1340,7 +1343,7 @@ export default function SIPs() {
                       </Popover>
                     </td>
                   </tr>
-                  {focusedRowId === wo.id && <tr className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>}
+                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   </React.Fragment>
                 );
               })}
