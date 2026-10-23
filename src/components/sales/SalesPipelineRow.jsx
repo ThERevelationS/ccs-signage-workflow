@@ -142,8 +142,8 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const expectedCloseNear = Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp && isOpen);
 
   return [
-      isFocused && <tr key="focus-gap-top" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>}
-      <tr className={`sales-board-row border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'sales-focus-row' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
+      isFocused && <tr key="focus-gap-top" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>,
+      <tr key="row" className={`sales-board-row border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'sales-focus-row' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
         style={{ backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined }}>
         <td className="px-0 py-0 border-r">
           <button type="button" aria-label={`${isFocused ? 'Unfocus' : 'Focus'} sales row ${index + 1}: ${opportunityDisplayName}`} aria-pressed={isFocused}
