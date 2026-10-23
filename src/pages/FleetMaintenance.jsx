@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
 import FleetBulkMaintenanceDialog from "@/components/fleet/FleetBulkMaintenanceDialog";
 import FleetMaintenanceCalendar from "@/components/fleet/FleetMaintenanceCalendar";
@@ -270,7 +271,7 @@ export default function FleetMaintenance() {
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
-        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : view === "workspace" ? (
+        {loading ? <ListSkeleton rows={6} /> : view === "workspace" ? (
           selectedEquipment ? <FleetMaintenanceWorkspace equipment={selectedEquipment} tasks={selectedTasks} isAdmin={isAdmin} initialTab={workspaceInitialTab} onBack={showEquipmentView} onEditSchedule={(task) => setDialog({ task })} onNewSchedule={() => openCreateDialog(selectedEquipment.id)} /> : <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-5 text-red-700 dark:text-red-300"><div className="font-semibold">Fleet equipment not found.</div><button type="button" onClick={showEquipmentView} className="mt-2 min-h-11 px-2 text-sm underline rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Back to Maintenance</button></div>
         ) : view === "calendar" ? (
           <FleetMaintenanceCalendar tasks={tasks.filter(task => activeEquipmentIds.has(task.equipment_id))} equipment={activeEquipment} search={search} onOpenSchedule={(task) => openEquipmentMaintenance(task.equipment_id, "schedule")} />
