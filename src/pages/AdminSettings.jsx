@@ -531,7 +531,8 @@ export default function AdminSettings() {
 
   // Password/Face ID protection state. A UI unlock is valid only while the
   // backend-issued Admin Settings capability is still present and unexpired.
-  const [adminCapability, setAdminCapability] = useState(() => getStoredAdminSettingsCapability());
+  // Admin Settings authorization lives in sessionStorage; write paths read
+  // the current value at dispatch time instead of holding a snapshot here.
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -589,7 +590,6 @@ export default function AdminSettings() {
       throw new Error("Admin Settings authorization could not be verified.");
     }
     storeAdminSettingsAuthorization(capability, expiresAt);
-    setAdminCapability(capability);
     setIsUnlocked(true);
   };
 
@@ -1751,7 +1751,7 @@ export default function AdminSettings() {
                     <TimeClockReportsDashboard />
                   </AdminPanelContent>
                   <AdminPanelContent value="pto">
-                    <PTOManagement adminCapability={adminCapability} />
+                    <PTOManagement />
                   </AdminPanelContent>
                   <AdminPanelContent value="overtime">
                     <OvertimeRulesManager />
@@ -1830,7 +1830,7 @@ export default function AdminSettings() {
           </AdminPanelContent>
 
           <AdminPanelContent value="calendar">
-            <AdminCalendarSettings adminCapability={adminCapability} />
+            <AdminCalendarSettings />
           </AdminPanelContent>
 
           <AdminPanelContent value="activity">
@@ -1873,7 +1873,7 @@ export default function AdminSettings() {
             <div className="mb-8">
               <GmailConnector sessionToken={sessionToken} />
               <div className="mt-6">
-                <EmailGroupsManager adminCapability={adminCapability} />
+                <EmailGroupsManager />
               </div>
             </div>
 
