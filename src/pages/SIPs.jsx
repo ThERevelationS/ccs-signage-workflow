@@ -266,8 +266,10 @@ export default function SIPs() {
       // identities — replacing them would invalidate the memoized board
       // sections, the checklist-progress cache, and the role pick lists on
       // every timer tick. These states are only ever written here, and the
-      // snapshot guard above already discarded superseded loads, so the
-      // rendered value is the last committed one.
+      // snapshot guard above already discarded superseded loads. Functional
+      // updaters are required: the 60s interval captured this function's
+      // first-render closure, so comparing against rendered state would
+      // measure stale initial values and replace every input on every tick.
       const sameData = (a, b) => JSON.stringify(a) === JSON.stringify(b);
       setWipTaskDescriptions(prev => sameData(wipDescs, prev) ? prev : wipDescs);
       setBoardError("");
