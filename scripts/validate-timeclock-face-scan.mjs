@@ -179,4 +179,23 @@ await test("QuickClockSection inline face scan uses the same reticle", () => {
   }
 });
 
+await test("clock-in notification draws its check/x and bursts", () => {
+  const qc = readFileSync("src/components/timeclock/QuickClockSection.jsx", "utf8");
+  const notif = qc.slice(qc.indexOf("{notification && ("), qc.indexOf("clay-card p-6"));
+  assert.match(notif, /success-burst/);
+  assert.match(notif, /check-draw" d="M4 12\.5l5 5L20 6\.5"/);
+  assert.match(notif, /check-draw" d="M6 6l12 12M18 6L6 18"/);
+});
+
+await test("punch button has press feedback and focus ring", () => {
+  const qc = readFileSync("src/components/timeclock/QuickClockSection.jsx", "utf8");
+  assert.match(qc, /motion-safe:active:scale-95/);
+  assert.match(qc, /focus-visible:ring-purple-400\/60/);
+});
+
+await test("TimeClock page has the ambient backdrop", () => {
+  const page = readFileSync("src/pages/TimeClock.jsx", "utf8");
+  assert.match(page, /min-h-screen p-4 sm:p-6 ambient-mesh/);
+});
+
 console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`);
