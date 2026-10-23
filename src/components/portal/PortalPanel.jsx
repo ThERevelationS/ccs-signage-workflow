@@ -13,6 +13,7 @@ export const MESSAGE_KIND_LABELS = {
   estimate_approved: "Quote approved",
   estimate_revision_requested: "Revision requested",
   payment_notice: "Payment notice",
+  job_revision_requested: "Job change requested",
 };
 
 export default function PortalPanel({ sessionToken, customerId }) {
