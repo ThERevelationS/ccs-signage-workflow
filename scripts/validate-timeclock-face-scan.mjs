@@ -140,4 +140,34 @@ await test("component dims out instead of matching under poor light", () => {
   assert.match(componentSource, /estimateFaceBrightness\(videoRef\.current, detection\.detection\.box\)/);
 });
 
+await test("scan reticle is a pointer-events-none overlay keyed to scan state", () => {
+  assert.match(componentSource, /scan-reticle scan-tone-\$\{scanTone\}/);
+  assert.match(componentSource, /aria-hidden="true"/);
+  assert.match(componentSource, /isScanning && !recognizedUser/);
+  for (const cls of ["scan-bracket", "scan-oval", "scan-line"]) {
+    assert.ok(componentSource.includes(cls), "reticle must render " + cls);
+  }
+  assert.doesNotMatch(componentSource, /border-4 border-purple-500 animate-pulse/, "old pulsing border must be gone");
+});
+
+await test("reticle tone derives from recognition state", () => {
+  assert.match(componentSource, /recognizedUser \? "success"/);
+  assert.match(componentSource, /includes\("verifying"\) \? "verifying"/);
+  assert.match(componentSource, /includes\("dim"\) \? "dim"/);
+});
+
+await test("success overlay draws the check and bursts the ring", () => {
+  assert.match(componentSource, /success-burst/);
+  assert.match(componentSource, /check-draw/);
+});
+
+await test("scan CSS provides all tones and reduced-motion fallbacks", () => {
+  const cssSource = readFileSync("src/index.css", "utf8");
+  for (const cls of ["scanSweep", "scanBreath", "successRing", "drawCheck", "scan-reticle", "scan-tone-scanning", "scan-tone-verifying", "scan-tone-dim", "scan-tone-success", "success-burst", "check-draw"]) {
+    assert.ok(cssSource.includes(cls), "index.css must define " + cls);
+  }
+  const rmBlock = cssSource.slice(cssSource.lastIndexOf("prefers-reduced-motion"));
+  assert.match(rmBlock, /\.scan-line, \.scan-oval, \.success-burst, \.check-draw \{ animation: none !important; \}/);
+});
+
 console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`);
