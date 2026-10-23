@@ -19,15 +19,18 @@ const setLiteral = (source, name) => {
 };
 
 const processTriggersEntry = read("base44/functions/processWorkflowTriggers/entry.ts");
+const opportunityWorkspace = read("base44/functions/opportunityWorkspaceAction/entry.ts");
 
 test("live trigger sets match real emitters", () => {
   const engine = setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET");
   const order = setLiteral(adminSettings, "ORDER_TRIGGER_SET");
   const deadline = setLiteral(adminSettings, "DEADLINE_TRIGGER_SET");
   const orderDeadline = setLiteral(adminSettings, "ORDER_DEADLINE_TRIGGER_SET");
+  const sales = setLiteral(adminSettings, "SALES_TRIGGER_SET");
+  const salesDeadline = setLiteral(adminSettings, "SALES_DEADLINE_TRIGGER_SET");
 
   // No overlap between the execution paths.
-  const all = [...engine, ...order, ...deadline, ...orderDeadline];
+  const all = [...engine, ...order, ...deadline, ...orderDeadline, ...sales, ...salesDeadline];
   assert.equal(new Set(all).size, all.length, "trigger sets must not overlap");
 
   // Every client-emitted engine/order trigger must actually be emitted by
@@ -58,10 +61,23 @@ test("live trigger sets match real emitters", () => {
   }
 
   // Every deadline trigger must be evaluated by the daily checker.
-  for (const t of [...deadline, ...orderDeadline]) {
+  for (const t of [...deadline, ...orderDeadline, ...salesDeadline]) {
     assert.ok(
       deadlineReminders.includes(`'${t}'`),
       `"${t}" is advertised as live but checkDeadlineReminders never evaluates it`
+    );
+  }
+
+  // Sales events are emitted server-side by opportunityWorkspaceAction after
+  // verified saves, and matched by the engine via its record-context map.
+  for (const t of sales) {
+    assert.ok(
+      opportunityWorkspace.includes(`"${t}"`),
+      `"${t}" is advertised as live but opportunityWorkspaceAction never emits it`
+    );
+    assert.ok(
+      workflowEngine.includes(`${t}: 'Opportunity'`),
+      `"${t}" is advertised as live but the engine maps no record context for it`
     );
   }
 });
@@ -144,6 +160,8 @@ test("every advertised trigger resolves to a status", () => {
     ...setLiteral(adminSettings, "ORDER_TRIGGER_SET"),
     ...setLiteral(adminSettings, "DEADLINE_TRIGGER_SET"),
     ...setLiteral(adminSettings, "ORDER_DEADLINE_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "SALES_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "SALES_DEADLINE_TRIGGER_SET"),
   ]);
   for (const v of values) {
     assert.ok(typeof v === "string" && v.length > 0, "trigger values must be non-empty strings");
