@@ -267,6 +267,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("Camera ready.");
   };
 
+  // Reticle color tracks the live scan state — indigo scanning, amber
+  // verifying or dim-light, green on a confirmed identity.
+  const scanTone = recognizedUser ? "success"
+    : scanStatus.toLowerCase().includes("verifying") ? "verifying"
+    : scanStatus.toLowerCase().includes("dim") ? "dim" : "scanning";
+
   if (errorMsg) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -311,8 +317,15 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         )}
         <canvas ref={canvasRef} width={320} height={240} className="absolute inset-0 pointer-events-none" />
         
-        {isScanning && (
-          <div className="absolute inset-0 border-4 border-purple-500 animate-pulse rounded-2xl" />
+        {isScanning && !recognizedUser && (
+          <div className={`scan-reticle scan-tone-${scanTone}`} aria-hidden="true">
+            <div className="scan-bracket tl" />
+            <div className="scan-bracket tr" />
+            <div className="scan-bracket bl" />
+            <div className="scan-bracket br" />
+            <div className="scan-oval" />
+            <div className="scan-line" />
+          </div>
         )}
         
         {countdown !== null && (
@@ -325,8 +338,11 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         
         {recognizedUser && (
           <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+            <div className="success-burst" />
             <div className="bg-white/90 px-4 py-2 rounded-full flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-green-600" />
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path className="check-draw" d="M4 12.5l5 5L20 6.5" />
+              </svg>
               <span className="font-medium text-green-700">{recognizedUser.full_name}</span>
             </div>
           </div>
@@ -334,7 +350,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       </div>
 
       {/* Status */}
-      <p className={`text-sm mb-4 text-center ${recognizedUser ? "text-green-600" : "text-gray-600"}`}>
+      <p className={`text-sm mb-4 text-center font-medium transition-colors duration-300 ${
+        recognizedUser ? "text-green-600"
+        : scanTone === "verifying" || scanTone === "dim" ? "text-amber-600"
+        : "text-gray-600"}`}>
         {scanStatus}
       </p>
 
