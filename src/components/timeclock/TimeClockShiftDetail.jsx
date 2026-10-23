@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -75,21 +75,38 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
   const [payPeriod, setPayPeriod] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const detailSeqRef = useRef(0);
+  const detailScopeRef = useRef("");
 
   const loadDetails = async () => {
-    if (!entry?.id || !open) return;
+    const entryId = entry?.id;
+    if (!entryId || !open) return;
+    const requestSeq = ++detailSeqRef.current;
+    const switchedScope = detailScopeRef.current !== entryId;
+    detailScopeRef.current = entryId;
+    const current = () =>
+      requestSeq === detailSeqRef.current && detailScopeRef.current === entryId;
+    if (switchedScope) {
+      setBreaks([]);
+      setPauses([]);
+      setLaborSegments([]);
+      setCorrections([]);
+      setAudits([]);
+      setPayPeriod(null);
+    }
     setLoading(true);
     setError("");
     try {
       const [breakRows, pauseRows, laborRows, correctionRows, auditRows, periodRows] = await Promise.all([
-        TimeClockBreak.filter({ time_entry_id: entry.id }),
-        TimeClockWorkPause.filter({ time_entry_id: entry.id }),
-        TimeClockLaborSegment.filter({ time_entry_id: entry.id }),
-        TimeClockCorrectionRequest.filter({ time_entry_id: entry.id }),
-        TimeClockAudit.filter({ time_entry_id: entry.id }),
+        TimeClockBreak.filter({ time_entry_id: entryId }),
+        TimeClockWorkPause.filter({ time_entry_id: entryId }),
+        TimeClockLaborSegment.filter({ time_entry_id: entryId }),
+        TimeClockCorrectionRequest.filter({ time_entry_id: entryId }),
+        TimeClockAudit.filter({ time_entry_id: entryId }),
         entry.pay_period_id ? TimeClockPayPeriod.filter({ id: entry.pay_period_id }) : Promise.resolve([]),
       ]);
 
+      if (!current()) return;
       setBreaks((Array.isArray(breakRows) ? breakRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setPauses((Array.isArray(pauseRows) ? pauseRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setLaborSegments((Array.isArray(laborRows) ? laborRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
@@ -98,15 +115,17 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
       setPayPeriod(Array.isArray(periodRows) && periodRows.length === 1 ? periodRows[0] : null);
     } catch (err) {
       console.error("Error loading Time Clock shift detail:", err);
-      setError(err?.message || "Shift details could not be loaded.");
+      if (current()) setError(err?.message || "Shift details could not be loaded.");
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (open && entry?.id) loadDetails();
     if (!open) {
+      detailSeqRef.current += 1;
+      detailScopeRef.current = "";
       setBreaks([]);
       setPauses([]);
       setLaborSegments([]);
