@@ -162,7 +162,9 @@ function fixture(date = yesterday, { completed = false } = {}) {
     'Users', 'LastUpdated',
   ]) {
     const key = prop[0].toLowerCase() + prop.slice(1);
-    ctx['set' + prop] = (value) => { ctx[key] = value; };
+    ctx['set' + prop] = (updater) => {
+      ctx[key] = typeof updater === 'function' ? updater(ctx[key]) : updater;
+    };
   }
   ctx.setWorkOrders = (updater) => {
     ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
@@ -504,26 +506,33 @@ await check('identical refresh data keeps memo input identities; only changed da
   h.ctx.users = [{ id: 'stale-user' }];
   h.ctx.wipTaskDescriptions = ['stale wip'];
   h.ctx.dropdownConditions = [{ name: 'stale' }];
-  const counts = { Users: 0, WipTaskDescriptions: 0, DropdownConditions: 0 };
-  for (const prop of Object.keys(counts)) {
-    const inner = h.ctx['set' + prop];
-    h.ctx['set' + prop] = (value) => { counts[prop] += 1; inner(value); };
-  }
+  // Functional updaters are required here — the 60s interval invokes the
+  // first-render closure, so comparing rendered state would read stale
+  // initial values. Identity, not setter-call count, is the invariant:
+  // a bail-out updater still passes through the setter but returns prev.
+  assert.match(source, /setUsers\(prev => sameData\(usersData, prev\) \? prev : usersData\)/,
+    'users must update via a bail-out functional setter, not a rendered-value comparison');
+  assert.match(source, /setWipTaskDescriptions\(prev => sameData\(wipDescs, prev\) \? prev : wipDescs\)/,
+    'wipTaskDescriptions must update via a bail-out functional setter');
+  assert.match(source, /setDropdownConditions\(prev => sameData\(nextConditions, prev\) \? prev : nextConditions\)/,
+    'dropdownConditions must update via a bail-out functional setter');
   const first = h.loadWorkOrders(false);
   h.reads[0].finish();
   await first;
-  assert.deepEqual(counts, { Users: 1, WipTaskDescriptions: 1, DropdownConditions: 1 },
-    'Changed server data must replace each memo input once');
+  assert.notEqual(h.ctx.users[0]?.id, 'stale-user', 'Changed server data must replace the memo input');
+  assert.notDeepEqual(h.ctx.wipTaskDescriptions, ['stale wip']);
+  assert.notDeepEqual(h.ctx.dropdownConditions, [{ name: 'stale' }]);
 
   const sameUsers = h.ctx.users;
   const sameConditions = h.ctx.dropdownConditions;
+  const sameWip = h.ctx.wipTaskDescriptions;
   const second = h.loadWorkOrders(false);
   h.reads[1].finish();
   await second;
-  assert.deepEqual(counts, { Users: 1, WipTaskDescriptions: 1, DropdownConditions: 1 },
+  assert.equal(h.ctx.users, sameUsers,
     'A timer refresh returning identical data must not invalidate memoized derivations');
-  assert.equal(h.ctx.users, sameUsers);
   assert.equal(h.ctx.dropdownConditions, sameConditions);
+  assert.equal(h.ctx.wipTaskDescriptions, sameWip);
 
   const originalSettings = h.ctx.loadSingleGlobalSetting;
   h.ctx.loadSingleGlobalSetting = async (options) => {
@@ -535,9 +544,10 @@ await check('identical refresh data keeps memo input identities; only changed da
   const third = h.loadWorkOrders(false);
   h.reads[2].finish();
   await third;
-  assert.deepEqual(counts, { Users: 1, WipTaskDescriptions: 1, DropdownConditions: 2 },
+  assert.notEqual(h.ctx.dropdownConditions, sameConditions,
     'Only the actually changed memo input may be replaced');
-  assert.notEqual(h.ctx.dropdownConditions, sameConditions);
+  assert.equal(h.ctx.users, sameUsers);
+  assert.equal(h.ctx.wipTaskDescriptions, sameWip);
 });
 
 await check('conflicted quick edit releases save lock and refreshes latest state', async () => {
