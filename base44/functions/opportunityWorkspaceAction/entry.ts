@@ -914,6 +914,20 @@ Deno.serve(async (req) => {
       const jobs = (Array.isArray(workOrders) ? workOrders : [])
         .filter((w: any) => w?.deleted !== true)
         .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const asOf = new Date().toISOString().slice(0, 10);
+      const aging = { current: 0, d1_30: 0, d31_60: 0, d61_90: 0, d90_plus: 0 };
+      for (const i of liveInvoices) {
+        const balance = num(i?.balance_due);
+        if (balance <= 0) continue;
+        const due = clean(i?.due_date) || asOf;
+        const days = Math.floor((Date.parse(asOf) - Date.parse(due)) / 86400000);
+        if (days <= 0) aging.current += balance;
+        else if (days <= 30) aging.d1_30 += balance;
+        else if (days <= 60) aging.d31_60 += balance;
+        else if (days <= 90) aging.d61_90 += balance;
+        else aging.d90_plus += balance;
+      }
+      for (const key of Object.keys(aging)) (aging as any)[key] = money((aging as any)[key]);
       return Response.json({
         success: true, action,
         customer,
@@ -937,6 +951,9 @@ Deno.serve(async (req) => {
             billing_type: clean(i?.billing_type), total: num(i?.total),
             amount_paid: num(i?.amount_paid), balance_due: num(i?.balance_due),
             due_date: clean(i?.due_date), created_date: clean(i?.created_date),
+            days_overdue: clean(i?.due_date)
+              ? Math.max(0, Math.floor((Date.parse(asOf) - Date.parse(clean(i.due_date))) / 86400000))
+              : 0,
           })),
         summary: {
           open_opportunities: opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).length,
@@ -946,6 +963,7 @@ Deno.serve(async (req) => {
           open_ar: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.balance_due), 0)),
           jobs_count: jobs.length,
         },
+        ar_aging: { ...aging, as_of: asOf },
       });
     }
 
