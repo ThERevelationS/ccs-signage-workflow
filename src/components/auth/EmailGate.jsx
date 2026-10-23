@@ -29,6 +29,18 @@ export function getStoredAdminSettingsCapability() {
   return "";
 }
 
+// Read-only: the stored capability's expiry timestamp (ms) so callers can
+// schedule a re-lock exactly at expiry. Returns null when nothing usable is
+// stored; unlike getStoredAdminSettingsCapability it never mutates storage.
+export function getStoredAdminSettingsCapabilityExpiry() {
+  try {
+    const capability = String(sessionStorage.getItem(ADMIN_CAPABILITY_KEY) || "").trim();
+    const expiresAt = Date.parse(String(sessionStorage.getItem(ADMIN_CAPABILITY_EXPIRES_KEY) || ""));
+    if (capability && Number.isFinite(expiresAt)) return expiresAt;
+  } catch {}
+  return null;
+}
+
 export function hasStoredAdminSettingsAuthorization() {
   try {
     return sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === "true" && !!getStoredAdminSettingsCapability();
