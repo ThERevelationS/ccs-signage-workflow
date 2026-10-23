@@ -765,7 +765,7 @@ await check('clear confirmation renders inline accessible failure and requires r
 });
 
 await check('an open checklist cannot be replaced by another Work Order', async () => {
-  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const getChecklistProgress');
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
   const makeOpen = new Function('checklistDialog', 'setChecklistDialog', 'setActionError',
     handler + '\nreturn openChecklist;');
   let current = { open: false, workOrder: null };
