@@ -24,6 +24,8 @@ import {
 import { safeExternalFetch } from "../../shared/safeExternalFetch.ts";
 import { continueSourceTextBacklog, automaticSourceTextGuard } from "../../shared/jurisdictionSourceTextContinuation.mjs";
 
+import {assessOfficialQueueIdentity} from '../../shared/permittingSourceIdentity.mjs';
+
 const DISPATCH_VERSION = "continuous_v3_local_research";
 const PAGE_SIZE = 500;
 
@@ -75,9 +77,13 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
 }
 
 async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any) {
+  if (!assessOfficialQueueIdentity(row).eligible)
+    throw new Error("Official geographic identity requires review before creating or researching this profile.");
   const resolution = resolveResearchProfile(row, profiles);
   if (resolution.conflict) throw new Error("Existing locality identity is conflicting or duplicated; admin review required before research or profile creation.");
   const existing = resolution.profile;
+  if (existing?.auto_refresh === false || existing?.discovery_scan_state?.blocked)
+    throw new Error("Automatic research is held for this profile; review before dispatch.");
   if (existing) return { profile: existing, created: false };
 
   const now = new Date().toISOString();
@@ -208,10 +214,22 @@ Deno.serve(async (req) => {
     let reconciledCompleted = 0;
     let reconciledFailed = 0;
     const activeRows: any[] = [];
+    const sourceIdentityReviews: any[] = [];
 
     for (const row of sourceDiscovery) {
+      const assessment = assessOfficialQueueIdentity(row);
+      if (!assessment.eligible) {
+        sourceIdentityReviews.push({ queue_id: row.id, ...assessment });
+        activeRows.push(row);
+        continue;
+      }
       const resolution = resolveResearchProfile(row, profiles);
       const matchingProfile = resolution.profile;
+      if (matchingProfile?.auto_refresh === false || matchingProfile?.discovery_scan_state?.blocked) {
+        sourceIdentityReviews.push({queue_id:row.id,eligible:false,reason:'automatic_profile_held_for_review',authority_verified:false});
+        activeRows.push(row);
+        continue;
+      }
       if (matchingProfile && profileHasResearchEvidence(matchingProfile)) {
         await Queue.updateMany(
           { id: row.id, status: "source_discovery" },
@@ -279,7 +297,10 @@ Deno.serve(async (req) => {
       inFlightCount,
       inFlightTarget: config.max_in_flight,
       maxDispatchPerRun: dispatchLimit,
+      geographicGate: assessOfficialQueueIdentity,
     });
+
+    const identityReviews = [...sourceIdentityReviews, ...(plan.identity_review || [])];
 
     if (plan.reconcile.length) {
       const ids = plan.reconcile.map((row: any) => row.id);
@@ -330,7 +351,7 @@ Deno.serve(async (req) => {
       attempted += 1;
       try {
         const { profile } = await ensureProfileForQueueRow(row, profiles, Profiles);
-        const refreshArgs: Record<string, unknown> = { jurisdiction_id: profile.id, defer_archive: true };
+        const refreshArgs: Record<string, unknown> = { jurisdiction_id: profile.id, defer_archive: true, automatic_research: true };
         if (refreshCapability) refreshArgs._workflow_capability = refreshCapability;
 
         const refreshResponse = await base44.functions.invoke("refreshJurisdiction", refreshArgs);
@@ -406,6 +427,7 @@ Deno.serve(async (req) => {
         in_flight_before: inFlightCount,
         backlog_before: backlog.length,
         identity_conflicts: plan.conflicts.length,
+        official_identity_reviews: identityReviews.length,
         reconciled_existing_profiles: plan.reconcile.length,
         reconciled_completed: reconciledCompleted,
         reconciled_failed: reconciledFailed,
@@ -433,6 +455,8 @@ Deno.serve(async (req) => {
       dispatched,
       failed: failures.length,
       failures,
+      identity_review_count: identityReviews.length,
+      identity_reviews: identityReviews.slice(0, 100),
     });
   } catch (error) {
     console.error("permittingResearchBacklogDispatch error:", error?.message || error);
