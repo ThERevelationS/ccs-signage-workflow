@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { getSessionToken } from "@/components/auth/EmailGate";
 import { pagesConfig } from "@/pages.config";
 import { Calculator, FileDiff, FileText, GitBranch, Loader2, Package, Receipt, Search } from "lucide-react";
 
@@ -44,8 +45,6 @@ const EXTRA_PAGE_NAMES = [
 const pageLabel = (name) =>
   PAGE_LABEL_OVERRIDES[name] || String(name).replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ");
 
-const TOKEN_KEY = "sss_session_token";
-
 export default function CommandPalette() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -84,7 +83,7 @@ export default function CommandPalette() {
 
   // Debounced record search.
   useEffect(() => {
-    const sessionToken = localStorage.getItem(TOKEN_KEY) || "";
+    const sessionToken = getSessionToken();
     if (!open || !sessionToken || query.trim().length < 2) { setRecords(null); setSearching(false); return; }
     setSearching(true);
     const t = setTimeout(async () => {
