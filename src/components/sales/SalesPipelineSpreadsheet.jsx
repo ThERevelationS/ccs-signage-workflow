@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { usePolling } from "@/lib/usePolling";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { format, differenceInDays } from "date-fns";
@@ -469,11 +470,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setArchiveHasMore(false);
     setArchiveLoadingMore(false);
     loadWorkOrders(true, recordScope);
-    const interval = ["current", "outcomes"].includes(recordScope)
-      ? setInterval(() => loadWorkOrders(false, recordScope), 60000)
-      : null;
-    return () => interval && clearInterval(interval);
   }, [recordScope, sessionToken, releaseLiveEditPins]);
+
+  usePolling(() => loadWorkOrders(false, recordScope), 60000, {
+    enabled: ["current", "outcomes"].includes(recordScope),
+    runOnMount: false,
+  });
 
   useEffect(() => {
     if (!sessionToken) return undefined;
