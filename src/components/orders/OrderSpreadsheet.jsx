@@ -119,6 +119,8 @@ import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, ord
 import { orderDueState } from "@/shared/orderDueState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
+import { usePolling } from "@/lib/usePolling";
+import { shouldRunFocusRefresh } from "@/lib/pollingSchedule.mjs";
 
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
@@ -336,10 +338,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     });
   };
 
+  usePolling(() => loadData(false), 60000, { runOnMount: false, refreshOnFocus: false });
+
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => loadData(false), 60000); // Reduced frequency
-    return () => clearInterval(interval);
   }, [workOrderFilter]);
 
   const markOrderNeedsSync = useCallback((orderId) => {
@@ -508,12 +510,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   // quiet reload per window is enough while a load ran moments ago.
   useEffect(() => {
     const refreshAuthoritativeOrders = () => {
-      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
+      if (!shouldRunFocusRefresh(lastLoadStartedAtRef.current, Date.now(), ORDER_FOCUS_RELOAD_THROTTLE_MS)) return;
       loadData(false);
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState !== 'visible') return;
-      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
+      if (!shouldRunFocusRefresh(lastLoadStartedAtRef.current, Date.now(), ORDER_FOCUS_RELOAD_THROTTLE_MS)) return;
       loadData(false);
     };
     window.addEventListener('online', refreshAuthoritativeOrders);
@@ -526,13 +528,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     };
   }, [workOrderFilter]);
 
-  useEffect(() => {
-    if (pendingSyncCount <= 0) return undefined;
-    // While durable Order markers are pending, reconcile them frequently so a
-    // refreshed/reopened tab learns promptly which rows the backend completed.
-    const interval = setInterval(() => loadData(false), 30000);
-    return () => clearInterval(interval);
-  }, [pendingSyncCount, workOrderFilter]);
+  // While durable Order markers are pending, reconcile them frequently so a
+  // refreshed/reopened tab learns promptly which rows the backend completed.
+  usePolling(() => loadData(false), 30000, {
+    enabled: pendingSyncCount > 0,
+    runOnMount: false,
+    refreshOnFocus: false,
+  });
 
   const saveAllChanges = async () => {
     if (saveInFlightRef.current || dateNeededSaveInFlightRef.current) return { complete: false, savedIds: [], busy: true };
