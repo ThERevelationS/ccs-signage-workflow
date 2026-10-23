@@ -132,11 +132,11 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
     navigate(path);
   };
   const recordSections = [
-    ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${r.stage || "—"}`, (r) => createPageUrl("Opportunities")],
+    ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${r.stage || "—"}`, (r) => `/Opportunities?open=${r.id}`],
     ["estimates", "Estimates", Calculator, (r) => `${r.client_name || "—"} · ${r.estimate_number || r.status || "—"}`, (r) => `/EstimateDetail?id=${r.id}`],
-    ["invoices", "Invoices", Receipt, (r) => `${r.customer_display_name || "—"} · ${r.status || "—"} · $${Number(r.total || 0).toFixed(2)}`, (r) => createPageUrl("Invoices")],
-    ["purchase_orders", "Purchase Orders", Package, (r) => `${r.vendor_name || "—"} · ${r.status || "—"}`, (r) => createPageUrl("PurchaseOrders")],
-    ["change_orders", "Change Orders", FileDiff, (r) => `${r.title || r.customer_display_name || "—"} · ${r.status || "—"}`, (r) => createPageUrl("ChangeOrders")],
+    ["invoices", "Invoices", Receipt, (r) => `${r.customer_display_name || "—"} · ${r.status || "—"} · $${Number(r.total || 0).toFixed(2)}`, (r) => `/Invoices?invoice=${r.id}`],
+    ["purchase_orders", "Purchase Orders", Package, (r) => `${r.vendor_name || "—"} · ${r.status || "—"}`, (r) => `/PurchaseOrders?po=${r.id}`],
+    ["change_orders", "Change Orders", FileDiff, (r) => `${r.title || r.customer_display_name || "—"} · ${r.status || "—"}`, (r) => `/ChangeOrders?co=${r.id}`],
   ];
 
   const toggleStageFilter = (stage) => {
