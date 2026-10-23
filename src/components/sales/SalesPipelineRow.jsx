@@ -69,6 +69,29 @@ const DateCell = memo(function DateCell({ woId, field, value, popoverKey, openDa
   );
 });
 
+// Keep the clicked row pinned under the pointer while the focus gaps and
+// cell growth animate around it: re-anchor its screen position every frame
+// through the nearest vertical scroller instead of letting it drift down.
+const anchorFocusedRow = (el) => {
+  const row = el?.closest?.("tr");
+  if (!row) return;
+  let scroller = row.parentElement;
+  while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) {
+    scroller = scroller.parentElement;
+  }
+  const target = scroller || document.scrollingElement;
+  if (!target) return;
+  const beforeTop = row.getBoundingClientRect().top;
+  const start = performance.now();
+  const tick = () => {
+    if (!row.isConnected) return;
+    const drift = row.getBoundingClientRect().top - beforeTop;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+    if (performance.now() - start < 360) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+};
+
 const SalesPipelineRow = memo(function SalesPipelineRow({
   wo, index, visibleColumnIds, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
@@ -118,7 +141,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
         style={{ backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined }}>
         <td className="px-0 py-0 border-r">
           <button type="button" aria-label={`${isFocused ? 'Unfocus' : 'Focus'} sales row ${index + 1}: ${opportunityDisplayName}`} aria-pressed={isFocused}
-            onClick={() => { if (isFocused) { setFocusedRowId(null); setFocusedRowIndex(null); } else { setFocusedRowId(wo.id); setFocusedRowIndex(index); } }}
+            onClick={(e) => { anchorFocusedRow(e.currentTarget); if (isFocused) { setFocusedRowId(null); setFocusedRowIndex(null); } else { setFocusedRowId(wo.id); setFocusedRowIndex(index); } }}
             className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 ${isFocused ? 'sales-focus-num text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700'}`}>
             {index + 1}
           </button>
