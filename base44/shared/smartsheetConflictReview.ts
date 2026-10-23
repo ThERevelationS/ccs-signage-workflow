@@ -18,7 +18,7 @@ export async function handleConflictReview({base44,body,actor,token,loadConfig,g
   const profile=config[conflict.dataset];
   if(String(profile.smartsheet_sheet_id)!==conflict.sheet_id || String(profile.column_bindings?.[conflict.field_name])!==conflict.column_id)throw Object.assign(new Error('The field mapping changed. Run sync to refresh this review first.'),{status:409});
   const started=new Date().toISOString();
-  await claim({status:'running',started_at:started,action:'resolve_conflict',total_steps:1,completed_steps:0,current_step_label:'Admin field conflict review',results:[]});
+  await claim({status:'running',started_at:started,action:'resolve_conflict',total_steps:1,completed_steps:0,current_step_label:'Admin field conflict review',results:[]},conflict.dataset);
   try {
     const record=await base44.asServiceRole.entities[conflict.dataset==='sales'?'WorkOrder':'Order'].get(conflict.entity_id);
     const remote=await get(`/sheets/${conflict.sheet_id}/rows/${conflict.row_id}`);
@@ -28,9 +28,9 @@ export async function handleConflictReview({base44,body,actor,token,loadConfig,g
       throw Object.assign(new Error('One side changed since this review was created. Your choice was not applied; run sync to produce a fresh review.'),{status:409});
     }
     await entity.update(conflict.id,{status:'approved',decision:body.decision,resolved_by:actor.full_name||actor.email});
-    const result=await push(conflict.dataset,profile,config,{recordIds:[conflict.entity_id],respectSalesCreateSetting:true,runStartedAt:started,assertRunOwnership:()=>assertOwner(started)});
+    const result=await push(conflict.dataset,profile,config,{recordIds:[conflict.entity_id],respectSalesCreateSetting:true,runStartedAt:started,assertRunOwnership:()=>assertOwner(started,conflict.dataset)});
     const needsReview=Boolean(result.skipped || result.conflicts || result.errors || result.snapshot_review_required);
-    await finish({status:needsReview?'needs_review':'completed',needs_review:needsReview,completed_at:new Date().toISOString(),completed_steps:1,total_steps:1,current_step_label:'',results:[result]},started);
+    await finish({status:needsReview?'needs_review':'completed',needs_review:needsReview,completed_at:new Date().toISOString(),completed_steps:1,total_steps:1,current_step_label:'',results:[result]},started,conflict.dataset);
     return {success:true,needs_review:needsReview,result,message:needsReview?'Choice recorded. Other fields or a sync safeguard still require review; nothing was marked fully synced.':'Chosen field values were reconciled and verified.'};
-  }catch(error){await finish({status:'needs_review',needs_review:true,completed_at:new Date().toISOString(),current_step_label:'',results:[{dataset:conflict.dataset,direction:'push',errors:1,error_details:[error.message]}]},started);throw error;}
+  }catch(error){await finish({status:'needs_review',needs_review:true,completed_at:new Date().toISOString(),current_step_label:'',results:[{dataset:conflict.dataset,direction:'push',errors:1,error_details:[error.message]}]},started,conflict.dataset);throw error;}
 }
