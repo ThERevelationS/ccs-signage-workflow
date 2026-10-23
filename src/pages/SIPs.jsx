@@ -1394,7 +1394,7 @@ export default function SIPs() {
                         </PopoverContent>
                       </Popover>
                     </td>
-                  </tr>
+                  </tr>,
                   focusedRowId === wo.id && <tr key="focus-gap-bottom" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>
                 ];
               })}
