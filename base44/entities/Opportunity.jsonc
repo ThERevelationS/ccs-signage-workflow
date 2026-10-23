@@ -222,6 +222,11 @@
       "type": "object",
       "additionalProperties": true,
       "description": "Compact current source/provenance summary. Raw source evidence remains on OpportunityIntake."
+    },
+    "automation_deadline_fired": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Durable per-rule deadline-firing markers so scheduled sales reminders fire once per opportunity/date."
     }
   },
   "required": [
