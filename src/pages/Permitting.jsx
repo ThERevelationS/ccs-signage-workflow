@@ -118,7 +118,7 @@ export default function Permitting() {
           loadData(false);
         }, 2000);
       });
-    } catch (e) {}
+    } catch {}
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
       if (debounce) clearTimeout(debounce);
