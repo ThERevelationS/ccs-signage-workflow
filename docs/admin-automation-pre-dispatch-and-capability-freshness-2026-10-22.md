@@ -109,6 +109,16 @@ that arms the re-lock timer, is cleared on every exit path (locked,
 unusable expiry, expiry firing), and never ticks — a fixed timestamp avoids
 re-rendering the page to keep a countdown fresh.
 
+Child-panel capability freshness is also covered behaviorally now, not just
+by source-level contracts: the Chromium fixture's mockEmailGroupPersistence
+mirrors the real helper's requireCapability guard and records the capability
+that crosses the component->helper boundary (`__adminEmailGroupWriteCalls`).
+Two checks exercise the real EmailGroupsManager end to end — a create
+forwards the current stored "synthetic" capability at dispatch time, and a
+capability that expires mid-draft fails pre-dispatch with the actionable
+message, records zero writes, and keeps the dialog/draft open (a mount-time
+snapshot would still have dispatched "synthetic").
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -116,29 +126,36 @@ before the invoke call; component code checks the property defensively so
 fixture mocks remain compatible.
 
 Verification:
-- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 414/414
+- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 416/416
   passed under node --test (the Chromium script is excluded; it runs
   standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs
   (8 tests: marker coverage, post-dispatch isolation, fresh-capability
   dispatch, save/op release semantics, expired-capability re-lock before
   lock acquisition or dispatch, mounted expiry-timer re-lock, static expiry
   label),
-  scripts/test-admin-panel-capability-freshness.mjs (3 tests: no snapshot
+  scripts/test-admin-panel-capability-freshness.mjs (4 tests: no snapshot
   prop remains, every panel write handler resolves the stored capability at
-  dispatch time, helpers still reject empty credentials pre-dispatch), and
-  scripts/test-admin-write-authorization.mjs (4 tests: helper payloads carry
+  dispatch time, helpers still reject empty credentials pre-dispatch, and
+  the browser fixture mirrors the helper guard and covers dispatch-time
+  freshness end to end), and
+  scripts/test-admin-write-authorization.mjs (5 tests: helper payloads carry
   a verified credential, SDK-written entities are RLS-gated, the direct-write
-  allowlist is fixed, session-token fencing holds), and
+  allowlist is fixed, session-token fencing holds, and every inline admin
+  invoke is credentialed or platform-auth allowlisted), and
   scripts/test-admin-settings-conflict-reload.mjs (4 tests: all six
   GlobalSettings admin panels keep a save conflict actionable via auto-reload
   or a wired reload action, and the shared helper's guards stay intact).
-- node scripts/test-admin-navigation-browser.mjs: 93/93 isolated Chromium
-  checks passed, including six new checks covering pre-dispatch toggle
+- node scripts/test-admin-navigation-browser.mjs: 95/95 isolated Chromium
+  checks passed, including six checks covering pre-dispatch toggle
   release, editor-save draft preservation, write-time expired-capability
   re-lock (zero writes dispatched), unattended re-lock at the exact
-  expiry moment, and the visible expiry-time label. The fixture gained an
+  expiry moment, the visible expiry-time label, and two Email Groups
+  checks covering write-time capability forwarding and mid-draft expiry
+  failing pre-dispatch with the draft preserved. The fixture gained an
   `__adminAutomationPreDispatch` knob,
-  an `__adminCapabilityExpired` flag, and an `admin_cap_expire_ms` URL param;
+  an `__adminCapabilityExpired` flag, an `admin_cap_expire_ms` URL param,
+  and a `__adminEmailGroupWriteCalls` recorder in mockEmailGroupPersistence
+  (which mirrors the real helper's requireCapability guard);
   the script was ported to Windows (forward-slash /@fs URLs, realpath-canonical
   scratch roots, junction node_modules link, ADMIN_PLAYWRIGHT_PATH env
   override — on Windows pass a file:/// URL, not a drive-letter path).
