@@ -929,7 +929,7 @@ export default function TimeClock() {
               </TabsContent>
 
               <TabsContent value="timeoff">
-                <div className="space-y-3">
+                <Stagger className="space-y-3">
                   {timeOffRequests.length === 0 ? (
                     <div className="clay-card p-6 text-center text-gray-500">
                       <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -944,7 +944,7 @@ export default function TimeClock() {
                     </div>
                   ) : (
                     timeOffRequests.map(request => (
-                      <div key={request.id} className="clay-card p-4">
+                      <StaggerItem key={request.id} className="clay-card p-4">
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="font-semibold capitalize">{request.request_type.replace("_", " ")}</p>
@@ -984,10 +984,10 @@ export default function TimeClock() {
                         {request.admin_notes && (
                           <p className="text-sm text-gray-500 mt-2 italic">Admin: {request.admin_notes}</p>
                         )}
-                      </div>
+                      </StaggerItem>
                     ))
                   )}
-                </div>
+                </Stagger>
               </TabsContent>
 
               <TabsContent value="balance">
