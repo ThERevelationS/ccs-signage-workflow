@@ -810,8 +810,65 @@ await check('an open checklist cannot be replaced by another Work Order', async 
   assert.strictEqual(current.workOrder, other);
   makeOpen(current, update, warn)(null);
   assert.strictEqual(current.workOrder, other);
-  assert.match(board, /onClose=\{\(\) => setChecklistDialog\(\{ open: false, workOrder: null \}\)\}/);
+  assert.match(board, /onClose=\{\(\) => closeChecklistDialog\(checklistDialog\.workOrder\)\}/);
   assert.match(board, /<ProductChecklistDialog[\s\S]*?workOrder=\{checklistDialog\.workOrder\}/);
+});
+
+await check('checklist close returns focus to the job or the board heading when the opener is gone', async () => {
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
+  const makeClose = new Function('setChecklistDialog', 'document', 'requestAnimationFrame', 'revisitClearBoardRef',
+    handler + '\nreturn closeChecklistDialog;');
+  const wo = { id: 'W1' };
+
+  // Radix restored focus to the still-mounted opener: leave it alone.
+  const connected = { isConnected: true, focus() { this.focused = true; } };
+  let closedWith = null;
+  const calls = [];
+  const docRestored = {
+    activeElement: connected,
+    body: {},
+    querySelectorAll: () => [],
+  };
+  makeClose((v) => { closedWith = v; }, docRestored, (fn) => calls.push(fn), { current: null })(wo);
+  assert.deepEqual(closedWith, { open: false, workOrder: null });
+  calls.shift()();
+  assert.equal(connected.focused, undefined, 'a successful Radix restore must not be overridden');
+
+  // Opener detached after the row moved sections: focus the job's visible control.
+  const visible = {
+    isConnected: true,
+    dataset: { sipsActiveFocusId: 'W1' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const hidden = {
+    isConnected: true,
+    dataset: { sipsActiveFocusId: 'W2' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const docDetached = {
+    activeElement: { isConnected: false },
+    body: {},
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id]' ? [hidden, visible] : [],
+  };
+  const calls2 = [];
+  makeClose(() => {}, docDetached, (fn) => calls2.push(fn), { current: null })(wo);
+  calls2.shift()();
+  assert.equal(visible.focused, true);
+  assert.equal(hidden.focused, undefined);
+
+  // Job filtered out everywhere: the board heading is the safe fallback.
+  const heading = { focus() { this.focused = true; } };
+  const docGone = {
+    activeElement: null,
+    body: {},
+    querySelectorAll: () => [],
+  };
+  const calls3 = [];
+  makeClose(() => {}, docGone, (fn) => calls3.push(fn), { current: heading })(wo);
+  calls3.shift()();
+  assert.equal(heading.focused, true);
 });
 
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
