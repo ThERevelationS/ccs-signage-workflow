@@ -1,3 +1,20 @@
+# Permitting continuation - runs 45-46 recorded
+
+- run45: 150 attempts, 150 cycles, errors=0; run46: 115 attempts, 116 cycles, errors=1.
+- This unit: 265 attempts; historical bounded total: 6686 attempts, not verified successful fetches.
+- Interruptions: run46: Discovery continuation changed in another session (documents). The newer value was not overwritten..
+- OH: 88 pending / 1 profiles / 4253 review gaps / 821 frontiers.
+- KY: 0 pending / 0 profiles / 414 review gaps / 113 frontiers.
+- No-frontier eligibility-query counts: OH 62, KY 101. Readbacks may include concurrent scheduler activity.
+- Local runner retains jurisdiction, last operation and write-attempt flag; stops on returned failure or exception. Fresh profile reads and guarded persistence remain mandatory.
+- All nine local collection module hashes matched sandbox at this unit's preflight. Last verified tests remain 29 discovery tests plus 3 synthetic runner checks; unchanged product code.
+- Previous conflicts and run26 interrupted-cycle uncertainty remain in receipt/history; no stale payload replay.
+- Zero LLM calls, archive uploads, cap changes, authority conclusions or unrelated client/job/shared-record writes. No publication or product source edits.
+- No new per-document live provenance audit. Same-host/depth/link bounds unchanged. Statewide completeness remains unclaimed.
+- Receipt: docs/permitting-collection-expansion-2026-10-23.json. Continue until eligible frontier exhaustion or a necessary safety stop; source repair and completeness review remain separate.
+
+---
+
 # Permitting continuation - runs 41-44 recorded
 
 - run41: 150 attempts, 150 cycles, errors=0; run42: 150 attempts, 150 cycles, errors=0; run43: 150 attempts, 150 cycles, errors=0; run44: 150 attempts, 150 cycles, errors=0.
