@@ -132,6 +132,9 @@ export default function UserQRCode({ user, sessionToken = "" }) {
     setBadgeCode("");
     setBadgeVersion(null);
     setError("");
+    setIsLoading(false);
+    setIsReplacing(false);
+    if (open && sessionToken) loadBadge();
   }, [user?.email]);
 
   if (!user?.email) return null;
