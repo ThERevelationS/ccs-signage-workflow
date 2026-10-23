@@ -122,7 +122,15 @@ check(syncAction.includes("canonicalBase44SalesAssignee(val, salesAssigneeUsers)
   "Sales Smartsheet pull must write canonical authorized full names into Base44");
 check(syncAction.includes("assignee_translation_review_required: salesAssigneeTranslationIssues.length") &&
       syncAction.includes("linked records keep their existing Base44 assignee") &&
-      !syncAction.includes("No Sales records were changed."),
+      syncAction.includes("salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue)"),
   "Unresolved or ambiguous historical Smartsheet assignees must be reported without freezing the entire Sales pull");
+const pendingIssueSite = syncAction.indexOf("pendingSalesAssigneeIssue = {");
+const updateIssueSite = syncAction.indexOf("salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue);", pendingIssueSite);
+const createIssueSite = syncAction.indexOf("salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue);", updateIssueSite + 1);
+const updateQueueSite = syncAction.indexOf("toUpdate.push({ id: existing.id");
+const createQueueSite = syncAction.indexOf("toCreate.push(newRecord);");
+check(pendingIssueSite >= 0 && updateIssueSite > updateQueueSite && updateQueueSite > pendingIssueSite &&
+      createIssueSite > createQueueSite && createQueueSite > updateIssueSite,
+  "Unresolved assignee labels may flag review only when their row actually queues a Sales update or create");
 
 console.log(`Sales person alias + Smartsheet first-name translation: ${checks}/${checks} PASS.`);
