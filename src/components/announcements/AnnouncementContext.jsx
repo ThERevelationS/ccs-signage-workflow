@@ -80,7 +80,7 @@ export function AnnouncementProvider({ children, currentPageName }) {
         label: "Active announcements",
       });
       setAllActive(all || []);
-    } catch (e) {}
+    } catch {}
   }, []);
 
   usePolling(fetchActive, 300000);
@@ -95,7 +95,7 @@ export function AnnouncementProvider({ children, currentPageName }) {
           fetchActive();
         }, 1000);
       });
-    } catch (e) {}
+    } catch {}
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
       if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
