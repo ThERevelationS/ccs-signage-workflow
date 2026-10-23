@@ -3,14 +3,14 @@ import { describeCron, nextRuns, firingMinutesOverlap, validateSchedule } from '
 const API_BASE = 'https://app.base44.com';
 const HISTORY_PAGE = 200;
 
-function fail(status, code, message) {
+function fail(status: any, code: any, message: any) {
   const error = new Error(message);
   error.status = status;
   error.code = code;
   throw error;
 }
 
-function scheduleFields(workflow) {
+function scheduleFields(workflow: any) {
   const config = workflow?.trigger?.config || {};
   return {
     trigger_type: String(config.trigger_type || ''),
@@ -19,7 +19,7 @@ function scheduleFields(workflow) {
   };
 }
 
-function buildRow(workflow, now) {
+function buildRow(workflow: any, now: any) {
   const { trigger_type, cron, timezone } = scheduleFields(workflow);
   const row = {
     id: workflow?.id || '',
@@ -49,7 +49,7 @@ function buildRow(workflow, now) {
   return row;
 }
 
-async function loadHistoryRows(historyEntity, query, maxRows = 2000) {
+async function loadHistoryRows(historyEntity: any, query: any, maxRows = 2000) {
   const rows = [];
   let skip = 0;
   while (rows.length < maxRows) {
@@ -63,7 +63,7 @@ async function loadHistoryRows(historyEntity, query, maxRows = 2000) {
   return rows;
 }
 
-function actorFields(actor) {
+function actorFields(actor: any) {
   return {
     actor_email: String(actor?.email || '').trim().toLowerCase(),
     actor_name: String(actor?.full_name || actor?.email || ''),
@@ -74,7 +74,7 @@ export function createWorkflowScheduleManager({
   fetchImpl, token, appId, historyEntity,
   now = () => new Date(),
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-} = {}) {
+}: any = {}) {
   const app = String(appId || '').trim();
 
   function requireToken() {
@@ -85,7 +85,7 @@ export function createWorkflowScheduleManager({
     return secret;
   }
 
-  async function rawFetch(method, path, body) {
+  async function rawFetch(method: any, path: any, body: any) {
     const secret = requireToken();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
@@ -104,7 +104,7 @@ export function createWorkflowScheduleManager({
     }
   }
 
-  async function api(method, path, body) {
+  async function api(method: any, path: any, body: any) {
     let response;
     try {
       response = await rawFetch(method, path, body);
@@ -139,9 +139,9 @@ export function createWorkflowScheduleManager({
   }
 
   const workflowsPath = () => `/api/apps/${app}/workflows`;
-  const workflowPath = (id) => `${workflowsPath()}/${encodeURIComponent(String(id || '').trim())}`;
+  const workflowPath = (id: any) => `${workflowsPath()}/${encodeURIComponent(String(id || '').trim())}`;
 
-  async function getWorkflow(id) {
+  async function getWorkflow(id: any) {
     const workflow = await api('GET', workflowPath(id));
     if (!workflow?.id) fail(502, 'base44_error', 'Base44 returned an unreadable workflow record.');
     return workflow;
@@ -163,7 +163,7 @@ export function createWorkflowScheduleManager({
     return { schedule, status, any };
   }
 
-  function markExternal(row, current, marks) {
+  function markExternal(row: any, current: any, marks: any) {
     const scheduleRow = marks.schedule.get(row.id);
     const statusRow = marks.status.get(row.id);
     if (!scheduleRow && !statusRow) return false;
@@ -176,7 +176,7 @@ export function createWorkflowScheduleManager({
     return Boolean(scheduleChanged || statusChanged);
   }
 
-  function lastAppliedFor(row, marks) {
+  function lastAppliedFor(row: any, marks: any) {
     const historyRow = marks.any.get(row.id);
     if (!historyRow) return null;
     return {
@@ -221,7 +221,7 @@ export function createWorkflowScheduleManager({
     return rows;
   }
 
-  async function runs({ workflow_id } = {}) {
+  async function runs({ workflow_id }: any = {}) {
     const id = String(workflow_id || '').trim();
     if (!id) fail(400, 'invalid_request', 'A workflow id is required.');
     const items = await api('GET', `${workflowPath(id)}/runs?limit=10`);
@@ -236,14 +236,14 @@ export function createWorkflowScheduleManager({
     }));
   }
 
-  async function findAppliedRequest(requestId) {
+  async function findAppliedRequest(requestId: any) {
     if (!requestId) return null;
     const rows = await historyEntity.filter({ request_id: requestId }, '-created_date', 1, 0).catch(() => []);
     const row = Array.isArray(rows) ? rows[0] : null;
     return row && String(row.outcome || '') === 'applied' ? row : null;
   }
 
-  function requireRequestId(requestId) {
+  function requireRequestId(requestId: any) {
     const id = String(requestId || '').trim();
     if (id.length < 8 || id.length > 128) {
       fail(400, 'invalid_request', 'A request id between 8 and 128 characters is required.');
@@ -251,11 +251,11 @@ export function createWorkflowScheduleManager({
     return id;
   }
 
-  async function writeHistory(fields) {
+  async function writeHistory(fields: any) {
     await historyEntity.create(fields);
   }
 
-  async function updateSchedule({ workflow_id, cron_expression, timezone, expected_cron, expected_timezone, request_id } = {}, actor) {
+  async function updateSchedule({ workflow_id, cron_expression, timezone, expected_cron, expected_timezone, request_id }: any = {}, actor: any) {
     const id = String(workflow_id || '').trim();
     if (!id) fail(400, 'invalid_request', 'A workflow id is required.');
     const requestId = requireRequestId(request_id);
@@ -321,7 +321,7 @@ export function createWorkflowScheduleManager({
     return { row };
   }
 
-  async function setStatus({ workflow_id, desired_status, expected_status, request_id } = {}, actor) {
+  async function setStatus({ workflow_id, desired_status, expected_status, request_id }: any = {}, actor: any) {
     const id = String(workflow_id || '').trim();
     if (!id) fail(400, 'invalid_request', 'A workflow id is required.');
     const desired = String(desired_status || '').trim();
@@ -369,7 +369,7 @@ export function createWorkflowScheduleManager({
     return { row: buildRow(stored, now) };
   }
 
-  async function adoptExternal({ workflow_id } = {}, actor) {
+  async function adoptExternal({ workflow_id }: any = {}, actor: any) {
     const id = String(workflow_id || '').trim();
     if (!id) fail(400, 'invalid_request', 'A workflow id is required.');
     const current = await getWorkflow(id);
@@ -388,7 +388,7 @@ export function createWorkflowScheduleManager({
     return { adopted: true, workflow_id: id };
   }
 
-  async function history({ workflow_id, limit = 50 } = {}) {
+  async function history({ workflow_id, limit = 50 }: any = {}) {
     const capped = Math.max(1, Math.min(100, Number(limit) || 50));
     const query = workflow_id ? { workflow_id: String(workflow_id) } : {};
     return loadHistoryRows(historyEntity, query, capped);
