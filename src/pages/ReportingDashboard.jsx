@@ -7,6 +7,7 @@ import {
 import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
 const STAGE_COLORS = {
@@ -113,8 +114,18 @@ export default function ReportingDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <div className="p-6 space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+        </div>
+        <Skeleton className="h-72 w-full rounded-xl" />
       </div>
     );
   }
