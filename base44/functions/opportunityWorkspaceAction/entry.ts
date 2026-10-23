@@ -764,6 +764,59 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "get_customer_360") {
+      const customerId = clean(body?.customer_id);
+      const customer = await Customer.get(customerId).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+      const [contacts, locations, opportunities, invoices, workOrders] = await Promise.all([
+        CustomerContact.filter({ customer_id: customerId }).catch(() => []),
+        CustomerLocation.filter({ customer_id: customerId }).catch(() => []),
+        Opportunity.filter({ customer_id: customerId }).catch(() => []),
+        Invoice.filter({ customer_id: customerId }).catch(() => []),
+        WorkOrder.filter({ customer_id: customerId }).catch(() => []),
+      ]);
+      const inv = Array.isArray(invoices) ? invoices : [];
+      const liveInvoices = inv.filter((i: any) => !["draft", "void"].includes(clean(i?.status)));
+      const opps = (Array.isArray(opportunities) ? opportunities : [])
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const jobs = (Array.isArray(workOrders) ? workOrders : [])
+        .filter((w: any) => w?.deleted !== true)
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      return Response.json({
+        success: true, action,
+        customer,
+        contacts: Array.isArray(contacts) ? contacts : [],
+        locations: Array.isArray(locations) ? locations : [],
+        opportunities: opps.slice(0, 50).map((o: any) => ({
+          id: clean(o?.id), title: clean(o?.title), stage: clean(o?.stage),
+          budget_amount: num(o?.budget_amount), salesperson: clean(o?.salesperson),
+          desired_install_date: clean(o?.desired_install_date), created_date: clean(o?.created_date),
+        })),
+        jobs: jobs.slice(0, 50).map((w: any) => ({
+          id: clean(w?.id), title: clean(w?.title), client_name: clean(w?.client_name),
+          current_stage: clean(w?.current_stage), sales_status: clean(w?.sales_status),
+          estimate_amount: num(w?.estimate_amount), created_date: clean(w?.created_date),
+        })),
+        invoices: inv
+          .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
+          .slice(0, 50)
+          .map((i: any) => ({
+            id: clean(i?.id), invoice_number: clean(i?.invoice_number), status: clean(i?.status),
+            billing_type: clean(i?.billing_type), total: num(i?.total),
+            amount_paid: num(i?.amount_paid), balance_due: num(i?.balance_due),
+            due_date: clean(i?.due_date), created_date: clean(i?.created_date),
+          })),
+        summary: {
+          open_opportunities: opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).length,
+          open_pipeline_value: money(opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).reduce((s: number, o: any) => s + num(o?.budget_amount), 0)),
+          invoiced_total: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.total), 0)),
+          collected_total: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0)),
+          open_ar: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.balance_due), 0)),
+          jobs_count: jobs.length,
+        },
+      });
+    }
+
     throw bad(`Unsupported opportunity workspace action: ${action}`);
   } catch (error: any) {
     const status = Number(error?.status || error?.statusCode || 500);
