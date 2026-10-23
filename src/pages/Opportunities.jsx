@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import PortalPanel from "@/components/portal/PortalPanel";
 import {
   AlertTriangle,
   ArrowRight,
@@ -970,6 +971,10 @@ function OpportunityDetail({ sessionToken, opportunity, onClose, onChanged }) {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {clean(o.customer_id) && (
+                <PortalPanel sessionToken={sessionToken} customerId={clean(o.customer_id)} />
               )}
 
               {Array.isArray(detail?.activity) && detail.activity.length > 0 && (
