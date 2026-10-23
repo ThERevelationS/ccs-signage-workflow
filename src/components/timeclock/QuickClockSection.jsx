@@ -1524,7 +1524,14 @@ export default function QuickClockSection({
             {recognitionMethod === "face" && (
               <div className="relative mb-4">
                 <video ref={videoRef} autoPlay muted playsInline className="w-80 h-60 object-cover rounded-2xl bg-gray-900 scale-x-[-1]" />
-                <div className="absolute inset-0 border-4 border-purple-500 rounded-2xl animate-pulse pointer-events-none" />
+                <div className="scan-reticle scan-tone-scanning" aria-hidden="true">
+                  <div className="scan-bracket tl" />
+                  <div className="scan-bracket tr" />
+                  <div className="scan-bracket bl" />
+                  <div className="scan-bracket br" />
+                  <div className="scan-oval" />
+                  <div className="scan-line" />
+                </div>
                 <Button variant="ghost" size="icon" onClick={resetState} className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full">
                   <X className="w-5 h-5" />
                 </Button>
