@@ -614,8 +614,8 @@ export default function SIPs() {
     requestAnimationFrame(() => {
       const active = document.activeElement;
       if (active && active !== document.body && active.isConnected) return;
-      const button = Array.from(document.querySelectorAll("[data-sips-active-focus-id]"))
-        .find(node => node.dataset.sipsActiveFocusId === workOrderId && node.getClientRects().length > 0);
+      const button = Array.from(document.querySelectorAll("[data-sips-active-focus-id],[data-sips-job-focus-id]"))
+        .find(node => (node.dataset.sipsActiveFocusId || node.dataset.sipsJobFocusId) === workOrderId && node.getClientRects().length > 0);
       (button || revisitClearBoardRef.current)?.focus();
     });
   };
@@ -1402,7 +1402,7 @@ export default function SIPs() {
                         <CalendarClock className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                        <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                           <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -1509,7 +1509,7 @@ export default function SIPs() {
                         </Button>
                       </td>
                       <td className="px-2 py-2 border-r">
-                        <button onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
+                        <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
                           <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -1570,7 +1570,7 @@ export default function SIPs() {
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                      <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -1660,6 +1660,7 @@ export default function SIPs() {
                     </td>
                     <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
                       <button
+                        data-sips-job-focus-id={wo.id}
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full"
                       >
