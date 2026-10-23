@@ -1,5 +1,6 @@
-import { buildSnapshot, buildSalesPullSnapshot } from './smartsheetSyncFields.ts';
-import { preview } from './fieldAudit.ts';
+import { buildSnapshot, buildSalesPullSnapshot, parseRowToFields } from './smartsheetSyncFields.ts';
+import { preview, trackedConditionalSave } from './fieldAudit.ts';
+import { mapSalesTaskToStage } from './salesTaskStageCatalog.mjs';
 
 export async function handleConflictReview({base44,body,actor,token,loadConfig,get,claim,finish,push,assertOwner}) {
   if(actor?.role!=='admin')throw Object.assign(new Error('Only admins can review sync conflicts.'),{status:403});
@@ -26,6 +27,45 @@ export async function handleConflictReview({base44,body,actor,token,loadConfig,g
     if(record.deleted || (conflict.dataset==='sales' ? !sameSalesValues : record.updated_date!==conflict.local_version || String(remote.body?.modifiedAt||'')!==conflict.remote_version)) {
       await entity.update(conflict.id,{status:'superseded'});
       throw Object.assign(new Error('One side changed since this review was created. Your choice was not applied; run sync to produce a fresh review.'),{status:409});
+    }
+    // A held Sales task review is a stage decision, not a field overwrite.
+    // Choosing Smartsheet adopts the remote task AND its mapped stage in one
+    // conditional write, matching the confirmed pipeline transition semantics.
+    // The bulk push guard intentionally cannot perform this transition.
+    if(conflict.dataset==='sales' && conflict.field_name==='current_task_description' && body.decision==='smartsheet') {
+      const remoteTask=String(buildSalesPullSnapshot(remote.body,profile.column_bindings)[conflict.column_id]??'').trim();
+      const mapped=mapSalesTaskToStage(remoteTask);
+      const stamp=new Date().toISOString();
+      const today=stamp.slice(0,10);
+      const currentStatus=String(record.sales_status||'lead').trim().toLowerCase();
+      const patch={current_task_description:remoteTask};
+      if(mapped.kind==='neutral_close') {
+        if(record.in_pipeline!==true || ['won','lost'].includes(currentStatus)) {
+          await entity.update(conflict.id,{status:'superseded'});
+          throw Object.assign(new Error('This record is no longer an active Sales opportunity; the neutral closure could not be applied. Reload before reviewing again.'),{status:409});
+        }
+        Object.assign(patch,{in_pipeline:false,sales_neutral_closed_at:stamp,follow_up_date:''});
+      } else if(mapped.kind==='stage' && mapped.status!==currentStatus) {
+        patch.sales_status=mapped.status;patch.sales_stage_changed_at=stamp;
+        if(['won','lost'].includes(mapped.status)) {
+          patch.close_date=today;patch.follow_up_date='';
+          patch.lost_reason=mapped.status==='lost'
+            ? String(parseRowToFields(remote.body,profile.column_bindings,'sales')?.lost_reason??'').trim()
+            : '';
+        } else if(['won','lost'].includes(currentStatus)) {
+          patch.close_date='';patch.lost_reason='';
+        }
+      }
+      // Advance the task-column baseline so no later pull treats the applied
+      // task as an unverified local change.
+      patch.smartsheet_sync_snapshot={...(record.smartsheet_sync_snapshot||{}),[conflict.column_id]:remoteTask};
+      await trackedConditionalSave(base44,'WorkOrder',record,patch,
+        {full_name:actor.full_name||'Sync conflict review',email:actor.email},'smartsheet',
+        {current_task_description:conflict.remote_version||stamp,sales_status:stamp});
+      await entity.update(conflict.id,{status:'resolved',decision:'smartsheet',resolved_at:new Date().toISOString(),resolved_by:actor.full_name||actor.email});
+      await finish({status:'completed',needs_review:false,completed_at:new Date().toISOString(),completed_steps:1,total_steps:1,current_step_label:'',results:[{dataset:'sales',direction:'pull',applied_task_transition:mapped.kind==='stage'?mapped.status:mapped.kind}]},started,'sales');
+      const outcome=mapped.kind==='neutral_close'?'closed without an outcome':mapped.kind==='stage'?`moved to ${mapped.status}`:'task updated';
+      return {success:true,needs_review:false,message:`Smartsheet task applied — record ${outcome}.`};
     }
     await entity.update(conflict.id,{status:'approved',decision:body.decision,resolved_by:actor.full_name||actor.email});
     const result=await push(conflict.dataset,profile,config,{recordIds:[conflict.entity_id],respectSalesCreateSetting:true,runStartedAt:started,assertRunOwnership:()=>assertOwner(started,conflict.dataset)});
