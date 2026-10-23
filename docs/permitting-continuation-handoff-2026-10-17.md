@@ -1,3 +1,20 @@
+# Necessary safety stop - wrong-state Portland source
+
+- Continued through run46: 6686 recorded bounded attempts total; runs29-46 added 2638 attempts. One 429 was honored with cooldown and slower 2.5s pacing; run46 stopped on a document conflict.
+- Final read-only audit found zero eligible frontiers both before and after inventory reads. KY pending is 0; OH pending is 88, solely the blocked Portland cursor. This is NOT statewide completeness.
+- Confirmed source mismatch: profile 6adaf8efc137885e5c4143d0 is saved as Portland, OH / village / Meigs County, but website/permitting URLs point to portland.gov, whose official page identifies City of Portland, Oregon.
+- Own impact: 232 recorded runner attempts expanded that already-assigned wrong source. The profile holds 1866 documents; this count is not an attribution of every document to these runs or validation of Ohio applicability.
+- Reversible containment: only discovery_scan_state.blocked/block_reason changed via current-version guarded persistence. All 1866 documents, timestamps, 88 pending URLs and other profile fields verified unchanged. No URLs changed or documents deleted.
+- Cursor blocking prevents further deterministic backlog processing only; existing documents remain stored and other consumers may still expose them. Profile remains needs_verification; no authority approval.
+- Run46 interrupted-cycle write outcome was not retained; counted only its 115 acknowledged attempts. No stale payload replay. Earlier run26 uncertainty remains recorded.
+- OH recorded gaps: 4253 (712 fetch, 3481 depth, 60 link-limit); KY: 414 (67 fetch, 340 depth, 7 link-limit). OH counts include the quarantined misassigned profile and are not validated Ohio findings.
+- No-frontier eligibility-query counts remain OH62 + KY101 = 163. External referrals remain unreviewed; no scope expansion or recovery routes invoked.
+- Next necessary unit: verified Portland identity/source repair and separately approved, provenance-preserving document remediation; address upstream source-identity validation. Milestone3 remains pending.
+- Evidence and guarded readback: docs/permitting-portland-source-identity-block-2026-10-23.json. Full run history: docs/permitting-collection-expansion-2026-10-23.json.
+- No LLM calls, archive uploads, cap changes, client/job/shared-record writes, deployment or publication.
+
+---
+
 # Permitting continuation - runs 45-46 recorded
 
 - run45: 150 attempts, 150 cycles, errors=0; run46: 115 attempts, 116 cycles, errors=1.
