@@ -430,6 +430,7 @@ async function pullDataset(
     if (dataset === 'sales' && targetedIds.size && !recordsByRowId[rowId]) continue;
     const rawFields = parseRowToFields(row, bindings, dataset);
     let salesAssigneeTranslationUnresolved = false;
+    let pendingSalesAssigneeIssue: any = null;
     // Normalize enum fields to valid Base44 values
     const fieldValues: Record<string, any> = {};
     for (const [key, val] of Object.entries(rawFields)) {
@@ -458,12 +459,15 @@ async function pullDataset(
           fieldValues[key] = resolution.name;
         } else if (String(val ?? '').trim()) {
           salesAssigneeTranslationUnresolved = true;
-          salesAssigneeTranslationIssues.push({
+          // Report this label only when the row actually writes or creates a
+          // record below. A steady-state historical label is preserved safely
+          // and must not hold the run at Needs Review forever.
+          pendingSalesAssigneeIssue = {
             row_id: rowId,
             value: cleanText(val, 120),
             state: resolution.state,
             candidates: resolution.candidates.slice(0, 5).map((candidate: any) => cleanText(candidate?.full_name, 120)).filter(Boolean),
-          });
+          };
         }
         continue;
       }
@@ -594,6 +598,9 @@ async function pullDataset(
             : {}),
         ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
         ...fieldValues });
+      if (dataset === 'sales' && pendingSalesAssigneeIssue) {
+        salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue);
+      }
     } else if (dataset === 'sales' && profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
@@ -620,6 +627,9 @@ async function pullDataset(
       newRecord.smartsheet_sheet_id = sheetId;
       newRecord.smartsheet_last_synced_at = new Date().toISOString();
       toCreate.push(newRecord);
+      if (pendingSalesAssigneeIssue) {
+        salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue);
+      }
     } else if (dataset === 'orders' && profile?.create_base44_from_smartsheet === true) {
       // Only a fully populated unlinked Order row may auto-create. Sparse,
       // blank/placeholder, and duplicate-looking rows stay flagged for review.
