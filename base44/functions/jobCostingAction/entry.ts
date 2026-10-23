@@ -21,15 +21,16 @@ const groupSum = (rows: any[], keyFn: (r: any) => string, valFn: (r: any) => num
   return out;
 };
 
-async function loadCostInputs({ Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment }: any) {
-  const [invoices, payments, purchaseOrders, changeOrders, segments] = await Promise.all([
+async function loadCostInputs({ Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment, Movement }: any) {
+  const [invoices, payments, purchaseOrders, changeOrders, segments, movements] = await Promise.all([
     Invoice.filter({}),
     Payment.filter({}),
     PurchaseOrder.filter({}),
     ChangeOrder.filter({}),
     LaborSegment.filter({}),
+    Movement.filter({}),
   ]);
-  for (const [label, rows] of [["Invoice", invoices], ["Payment", payments], ["PurchaseOrder", purchaseOrders], ["ChangeOrder", changeOrders], ["TimeClockLaborSegment", segments]] as const) {
+  for (const [label, rows] of [["Invoice", invoices], ["Payment", payments], ["PurchaseOrder", purchaseOrders], ["ChangeOrder", changeOrders], ["TimeClockLaborSegment", segments], ["InventoryMovement", movements]] as const) {
     if (!Array.isArray(rows)) throw bad(`${label} lookup failed.`, 500);
   }
   return {
@@ -43,6 +44,9 @@ async function loadCostInputs({ Invoice, Payment, PurchaseOrder, ChangeOrder, La
       (c: any) => clean(c?.work_order_id), (c: any) => num(c?.amount_delta)),
     laborMinutes: groupSum(segments,
       (s: any) => clean(s?.work_order_id), (s: any) => num(s?.duration_minutes)),
+    stockIssued: groupSum(
+      movements.filter((m: any) => ["issue", "return"].includes(clean(m?.reason))),
+      (m: any) => clean(m?.work_order_id), (m: any) => -num(m?.delta) * num(m?.unit_cost)),
   };
 }
 
@@ -50,6 +54,7 @@ function rollup(workOrder: any, inputs: any) {
   const id = clean(workOrder?.id);
   const estimated = num(workOrder?.estimate_amount);
   const poCommitted = inputs.poCommitted.get(id) || 0;
+  const stockIssued = money(inputs.stockIssued.get(id) || 0);
   const coDelta = inputs.coDelta.get(id) || 0;
   const invoiced = inputs.invoiced.get(id) || 0;
   const collected = inputs.collected.get(id) || 0;
@@ -66,6 +71,7 @@ function rollup(workOrder: any, inputs: any) {
     co_delta: coDelta,
     contract_value: contractValue,
     po_committed: poCommitted,
+    stock_issued: stockIssued,
     labor_hours: laborHours,
     invoiced,
     collected,
@@ -88,7 +94,8 @@ Deno.serve(async (req) => {
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
     const LaborSegment = base44.asServiceRole.entities.TimeClockLaborSegment;
-    const deps = { Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment };
+    const Movement = base44.asServiceRole.entities.InventoryMovement;
+    const deps = { Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment, Movement };
 
     if (action === "list_job_costs") {
       const rows = await WorkOrder.filter({}, "-created_date", 400);
@@ -106,6 +113,7 @@ Deno.serve(async (req) => {
         jobs: jobs.length,
         contract_value: money(jobs.reduce((s: number, j: any) => s + j.contract_value, 0)),
         po_committed: money(jobs.reduce((s: number, j: any) => s + j.po_committed, 0)),
+        stock_issued: money(jobs.reduce((s: number, j: any) => s + j.stock_issued, 0)),
         labor_hours: money(jobs.reduce((s: number, j: any) => s + j.labor_hours, 0)),
         invoiced: money(jobs.reduce((s: number, j: any) => s + j.invoiced, 0)),
         collected: money(jobs.reduce((s: number, j: any) => s + j.collected, 0)),
@@ -119,11 +127,12 @@ Deno.serve(async (req) => {
       const workOrder = await WorkOrder.get(workOrderId).catch(() => null);
       if (!workOrder?.id) throw bad("Work order not found.", 404);
       const inputs = await loadCostInputs(deps);
-      const [invoices, purchaseOrders, changeOrders, segments] = await Promise.all([
+      const [invoices, purchaseOrders, changeOrders, segments, movements] = await Promise.all([
         Invoice.filter({ work_order_id: workOrderId }),
         PurchaseOrder.filter({ work_order_id: workOrderId }),
         ChangeOrder.filter({ work_order_id: workOrderId }),
         LaborSegment.filter({ work_order_id: workOrderId }),
+        Movement.filter({ work_order_id: workOrderId }),
       ]);
       const laborByUser = new Map<string, number>();
       for (const s of (Array.isArray(segments) ? segments : [])) {
@@ -148,6 +157,14 @@ Deno.serve(async (req) => {
           title: clean(c?.title), amount_delta: num(c?.amount_delta),
         })),
         labor_by_user: [...laborByUser.entries()].map(([user, minutes]) => ({ user, hours: money(minutes / 60) })),
+        stock_movements: (Array.isArray(movements) ? movements : [])
+          .filter((m: any) => ["issue", "return"].includes(clean(m?.reason)))
+          .map((m: any) => ({
+            id: clean(m?.id), item_label: clean(m?.item_label), reason: clean(m?.reason),
+            delta: num(m?.delta), unit_cost: num(m?.unit_cost),
+            issued_cost: money(-num(m?.delta) * num(m?.unit_cost)),
+            note: clean(m?.note), created_by: clean(m?.created_by), created_date: clean(m?.created_date),
+          })),
       });
     }
 
