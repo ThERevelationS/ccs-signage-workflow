@@ -1,7 +1,9 @@
 {
   "app_id": "68dfcc5e57bbbc35387da97c",
   "branch": "main",
-  "status": "contained_itemized_remediation_awaits_specific_approval",
+  "status": "approved_document_disassociation_completed",
+  "execution_receipt": "docs/permitting-portland-approved-cleanup-2026-10-23.json",
+  "historical_plan_boundary": "Inventory, profile version and proposal below describe the pre-cleanup approval baseline. Execution receipt records the approved removal and current state.",
   "profile_id": "6adaf8efc137885e5c4143d0",
   "profile_version": "2026-10-23T11:06:08.916000",
   "audit_started_at": "2026-10-23T11:06:13.282Z",
