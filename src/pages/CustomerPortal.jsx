@@ -166,7 +166,9 @@ function InvoiceView({ invoice, payments }) {
 function QuoteCard({ quote, onRespond, busy }) {
   const [mode, setMode] = useState("");
   const [note, setNote] = useState("");
+  const [open, setOpen] = useState(false);
   const respondable = quote.can_respond;
+  const sections = Array.isArray(quote.sections) ? quote.sections : [];
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -182,6 +184,33 @@ function QuoteCard({ quote, onRespond, busy }) {
           {Number(quote.quote_total) > 0 && <p className="mt-2 text-2xl font-bold text-slate-900">{money(quote.quote_total)}</p>}
         </div>
       </div>
+      {sections.length > 0 && (
+        <div className="mt-3">
+          <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
+            {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {open ? "Hide" : "View"} quote details
+          </button>
+          {open && (
+            <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+              <ul className="divide-y divide-slate-100">
+                {sections.map((s, i) => (
+                  <li key={i} className="flex items-start justify-between gap-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800">{s.name}{s.quantity > 1 ? ` × ${s.quantity}` : ""}</p>
+                      {s.description && <p className="mt-0.5 text-xs text-slate-500 whitespace-pre-wrap">{s.description}</p>}
+                    </div>
+                    <span className="shrink-0 text-sm font-medium text-slate-700">{money(s.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quote total</span>
+                <span className="text-sm font-bold text-slate-900">{money(quote.quote_total)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       {respondable && !mode && (
         <div className="mt-4 flex flex-wrap gap-2">
           <button onClick={() => setMode("approve")} disabled={busy}
