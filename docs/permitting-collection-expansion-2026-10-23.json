@@ -114,9 +114,45 @@
         "cycles": 150,
         "pages": 150,
         "errors": 0
+      },
+      {
+        "run": "run13",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run14",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run15",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run16",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run17",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
+      },
+      {
+        "run": "run18",
+        "cycles": 150,
+        "pages": 150,
+        "errors": 0
       }
     ],
-    "pages_fetched_total_bounded_passes": 1858,
+    "pages_fetched_total_bounded_passes": 2758,
     "provenance_violations": 0,
     "note": "Each fetched page also harvests new same-host links. Continuation runs 8-12 (Oct 23) ran at 0 errors - entity-read limits no longer triggered after frontend read-throttling shipped. OH pending is now net-declining."
   },
@@ -124,16 +160,16 @@
     "OH": {
       "frontier_profiles": 781,
       "no_frontier_remaining_failed": 62,
-      "pending_pages": 2774,
-      "profiles_with_pending": 151,
-      "review_gaps": 970
+      "pending_pages": 2407,
+      "profiles_with_pending": 126,
+      "review_gaps": 1154
     },
     "KY": {
       "frontier_profiles": 113,
       "no_frontier_remaining_failed": 101,
-      "pending_pages": 326,
-      "profiles_with_pending": 26,
-      "review_gaps": 104
+      "pending_pages": 229,
+      "profiles_with_pending": 18,
+      "review_gaps": 141
     }
   },
   "rate_limit_handling": "Serialized all seed/drain work after parallel runs triggered repeated 429 'entity read traffic volume' limits; paced calls and retry-tolerant batches; partially truncated batches left profiles eligible (never falsely marked complete).",
