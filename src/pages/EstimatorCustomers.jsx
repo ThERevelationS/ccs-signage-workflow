@@ -40,7 +40,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
       <div className="my-8 w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {!data ? (
           error ? <div className="py-8 text-center text-sm text-red-600">{error}</div>
-            : <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loadingâ€¦</div>
+            : <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
         ) : (
           <>
             <div className="flex items-start justify-between">
@@ -67,6 +67,26 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
               ))}
             </div>
 
+            {data.ar_aging && Number(s?.open_ar) > 0 && (
+              <div className="mt-3 rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">AR aging · as of {data.ar_aging.as_of}</h3>
+                <div className="mt-2 grid grid-cols-5 gap-2 text-center">
+                  {[
+                    ["Current", data.ar_aging.current, "text-gray-800"],
+                    ["1–30", data.ar_aging.d1_30, "text-amber-700"],
+                    ["31–60", data.ar_aging.d31_60, "text-orange-700"],
+                    ["61–90", data.ar_aging.d61_90, "text-red-600"],
+                    ["90+", data.ar_aging.d90_plus, "text-red-800"],
+                  ].map(([label, val, cls]) => (
+                    <div key={label}>
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</div>
+                      <div className={`text-sm font-bold ${cls}`}>{usd(val)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-gray-200 p-3">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Contacts</h3>
@@ -75,7 +95,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                   <div key={p.id} className="mt-1.5 text-sm">
                     <span className="font-medium text-gray-800">{p.display_name || [p.first_name, p.last_name].filter(Boolean).join(" ")}</span>
                     <span className="text-xs text-gray-400"> {p.position || p.authority_role || ""}</span>
-                    {(p.email || p.phone) && <div className="text-xs text-gray-500">{[p.email, p.phone].filter(Boolean).join(" Â· ")}</div>}
+                    {(p.email || p.phone) && <div className="text-xs text-gray-500">{[p.email, p.phone].filter(Boolean).join(" · ")}</div>}
                   </div>
                 ))}
               </div>
@@ -108,7 +128,12 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 {(data.invoices || []).map((i) => (
                   <div key={i.id} className="mt-1.5 flex items-center justify-between text-sm">
                     <span className="min-w-0 truncate text-gray-800"><FileText className="mr-1 inline h-3.5 w-3.5 text-gray-400" />{i.invoice_number || "Invoice"} <span className="text-xs text-gray-400">({i.status})</span></span>
-                    <span className="shrink-0 text-xs font-medium text-gray-600">{usd(i.balance_due)} due</span>
+                    <span className="shrink-0 text-xs font-medium text-gray-600">
+                      {usd(i.balance_due)} due
+                      {i.days_overdue > 0 && Number(i.balance_due) > 0 && (
+                        <span className="ml-1 font-semibold text-red-600">{i.days_overdue}d overdue</span>
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -117,7 +142,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 {(data.jobs || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
                 {(data.jobs || []).map((w) => (
                   <div key={w.id} className="mt-1.5 flex items-center justify-between text-sm">
-                    <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "â€”"})</span></span>
+                    <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "—"})</span></span>
                     <span className="shrink-0 text-xs font-medium text-gray-600">{w.estimate_amount ? usd(w.estimate_amount) : ""}</span>
                   </div>
                 ))}
