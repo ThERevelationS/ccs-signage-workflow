@@ -12,7 +12,6 @@ import {
   FileText,
   History,
   Home,
-  Loader2,
   LockKeyhole,
   Pause,
   RefreshCw,
