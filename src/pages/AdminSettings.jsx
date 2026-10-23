@@ -308,15 +308,18 @@ const ACTION_TYPES = [
 
 // Which advertised triggers actually fire today, and which actions can run
 // for them. Three execution paths exist with different capabilities:
-//   - NotificationService (in-browser): fires the EMAIL_ONLY set and only
-//     ever executes send_email actions.
-//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set and
-//     executes every action except create_rider / set_priority.
+//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set —
+//     client-emitted work-order events are routed there by
+//     NotificationService, and permit events arrive via processWorkflowTriggers
+//     and checkPermitFollowupReminders. Runs every action except
+//     create_rider / set_priority.
+//   - ORDER events also run through the engine but carry no Work Order, so
+//     only send_email can execute for them.
 //   - checkDeadlineReminders (daily job): fires the DEADLINE set and runs
 //     send_email, set_asap, add_task and add_note only.
 // Any trigger outside these sets cannot run yet — the editor marks it so
 // nobody builds a rule that silently does nothing.
-const EMAIL_ONLY_TRIGGER_SET = new Set([
+const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "work_order_created", "work_order_completed", "work_order_deleted",
   "rider_created",
   "stage_changed", "stage_entered", "stage_exited",
@@ -325,19 +328,19 @@ const EMAIL_ONLY_TRIGGER_SET = new Set([
   "image_uploaded",
   "asap_toggled_on", "asap_toggled_off",
   "assigned_to_changed",
-  "order_created", "order_ordered", "order_received",
-]);
-
-const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "permit_submitted", "permit_received",
   "permit_followup_due", "permit_followup_overdue",
+]);
+
+const ORDER_TRIGGER_SET = new Set([
+  "order_created", "order_ordered", "order_received",
 ]);
 
 const DEADLINE_TRIGGER_SET = new Set([
   "due_date_approaching", "due_date_passed",
 ]);
 
-const EMAIL_ONLY_SUPPORTED_ACTIONS = new Set(["send_email"]);
+const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
 
 const ENGINE_SUPPORTED_ACTIONS = new Set([
   "send_email", "change_stage", "set_asap", "assign_to",
@@ -349,8 +352,8 @@ const DEADLINE_SUPPORTED_ACTIONS = new Set([
 ]);
 
 const getTriggerSupportedActions = (triggerType) => {
-  if (EMAIL_ONLY_TRIGGER_SET.has(triggerType)) return EMAIL_ONLY_SUPPORTED_ACTIONS;
   if (WORKFLOW_ENGINE_TRIGGER_SET.has(triggerType)) return ENGINE_SUPPORTED_ACTIONS;
+  if (ORDER_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
