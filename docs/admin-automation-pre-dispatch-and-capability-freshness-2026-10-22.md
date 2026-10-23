@@ -53,6 +53,17 @@ expiry timer re-locks the page for the common case and only an invalid stored
 timestamp or an externally cleared storage can still surface the message —
 which is then genuinely actionable through the unlock gate.
 
+A full write-authorization audit (2026-10 follow-up) confirmed no remaining
+stale-credential dispatch path: capability functions read fresh at dispatch,
+session-token functions are verified server-side (UserManagement also fences
+in-flight calls against token changes via `activeSessionToken`), direct
+entity-SDK writes only reach admin-RLS entities (AuthorizedEmail,
+GlobalSettings, WorkOrder delete), and backend-only entities
+(EmailGroup/PTOPolicy/CalendarEvent/UserPTOBalance/AutomationRule) cannot be
+written by the client SDK at all. The audit invariant is now enforced by
+scripts/test-admin-write-authorization.mjs so a future panel cannot
+reintroduce an uncredentialed or ungated write without failing tests.
+
 Boundaries unchanged: operation locks remain mounted-session UI guards over the
 server conditional writes; they are not durable across reloads or independent
 browser sessions. The marker is only set inside automationRulePersistence
@@ -60,12 +71,15 @@ before the invoke call; component code checks the property defensively so
 fixture mocks remain compatible.
 
 Verification:
-- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 405/405
+- node --test scripts/test-admin-*.mjs (+ jurisdiction admin path): 409/409
   passed under node --test (the Chromium script is excluded; it runs
-  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs and
+  standalone). Includes scripts/test-admin-automation-pre-dispatch.mjs,
   scripts/test-admin-panel-capability-freshness.mjs (3 tests: no snapshot
   prop remains, every panel write handler resolves the stored capability at
-  dispatch time, helpers still reject empty credentials pre-dispatch).
+  dispatch time, helpers still reject empty credentials pre-dispatch), and
+  scripts/test-admin-write-authorization.mjs (4 tests: helper payloads carry
+  a verified credential, SDK-written entities are RLS-gated, the direct-write
+  allowlist is fixed, session-token fencing holds).
   (7 tests: marker coverage, post-dispatch isolation, fresh-capability
   dispatch, save/op release semantics, expired-capability re-lock before
   lock acquisition or dispatch, mounted expiry-timer re-lock).
