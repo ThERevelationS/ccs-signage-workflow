@@ -97,3 +97,25 @@ test("An expired capability re-locks Admin Settings before any lock acquisition 
   assert.ok(operation.indexOf("!writeCapability") < operation.indexOf("automationOperationRef.current = operation"));
   assert.match(pageSource, /Unlock Admin Settings/);
 });
+
+test("A mounted expiry timer re-locks the panel when the stored capability expires", () => {
+  const gateSource = readFileSync("src/components/auth/EmailGate.jsx", "utf8");
+  // The reader is a pure, non-mutating lookup of the stored expiry timestamp.
+  const reader = gateSource.slice(gateSource.indexOf("export function getStoredAdminSettingsCapabilityExpiry"),
+    gateSource.indexOf("export function hasStoredAdminSettingsAuthorization"));
+  assert.match(reader, /sessionStorage\.getItem\(ADMIN_CAPABILITY_KEY\)/);
+  assert.match(reader, /Date\.parse\(String\(sessionStorage\.getItem\(ADMIN_CAPABILITY_EXPIRES_KEY\)/);
+  assert.match(reader, /capability && Number\.isFinite\(expiresAt\)/);
+  assert.doesNotMatch(reader, /removeItem|setItem/, "the expiry reader must never mutate storage");
+  // The effect is gated on the unlocked state, reads the stored expiry, and
+  // re-locks with the actionable message at the moment of expiry.
+  assert.match(pageSource, /getStoredAdminSettingsCapabilityExpiry,[\s\S]*?from "@\/components\/auth\/EmailGate"/);
+  const effect = pageSource.slice(pageSource.indexOf("A capability that expires while the page sits open"),
+    pageSource.indexOf("const loadEmailGroups = async"));
+  assert.match(effect, /if \(!isUnlocked\) return;/);
+  assert.match(effect, /if \(expiresAt <= Date\.now\(\)\) \{ relock\(\); return; \}/);
+  assert.match(effect, /setTimeout\(relock, expiresAt - Date\.now\(\)\)/);
+  assert.match(effect, /setPasswordError\("Your Admin Settings authorization expired\. Sign in again to continue\."\);\s*setIsUnlocked\(false\);/);
+  assert.match(effect, /clearTimeout\(timer\)/);
+  assert.match(effect, /\}, \[isUnlocked\]\);/, "the timer must re-arm whenever the unlock state changes");
+});
