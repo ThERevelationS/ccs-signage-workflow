@@ -18,6 +18,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
 import { normalizePermitJurisdictionName } from "@/components/permitting/jurisdictionPermitBridge";
 import { useAuth } from "@/components/auth/EmailGate";
+import { usePolling } from "@/lib/usePolling";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
@@ -37,10 +38,10 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const [trustFilter, setTrustFilter] = useState("all");
   const [repositoryNotice, setRepositoryNotice] = useState(null);
 
+  usePolling(() => loadJurisdictions(), 300000, { runOnMount: false });
+
   useEffect(() => {
     loadJurisdictions();
-    const interval = setInterval(loadJurisdictions, 300000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
