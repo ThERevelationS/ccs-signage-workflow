@@ -822,6 +822,49 @@
       "type": "string",
       "format": "date",
       "description": "Date to revisit this project in SIPs - jobs with a future date are separated from the active list"
+    },
+    "mmm_last_discussed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last Monday Morning Meeting discussion mark. Rows move to the Discussed section for the current week (Mon-Sun) and return to the active list next Monday. Independent of sip_completed."
+    },
+    "mmm_defer_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Monday Morning Meeting snooze date - rows with a future date are parked in the Discussed & Scheduled section and return automatically when it passes"
+    },
+    "mmm_tasks": {
+      "type": "array",
+      "description": "Monday Morning Meeting task list - MMM-only items shown inline under the board row until completed. Separate from the shared notes task list.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
     }
   },
   "required": [
