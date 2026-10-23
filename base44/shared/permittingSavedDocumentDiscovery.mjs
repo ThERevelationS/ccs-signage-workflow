@@ -44,7 +44,7 @@ export async function discoverSelectedSavedDocument({entity,profile,selection,fe
  // Fresh pre-fetch read rejects edits after preflight. The original frontier is
  // never used as a fabricated authorization for this separate one-page action.
  validateSavedDiscoverySelection(await entity.get(profile.id),selection);
- const scan=await scanOfficialPermittingPages({seedUrl:doc.url,maxPages:1,maxDepth:2,
+ const scan=await scanOfficialPermittingPages({jurisdiction:profile,seedUrl:doc.url,maxPages:1,maxDepth:2,
   existingDocuments:profile.documents || [],fetchPage,onProgress});
  if(!scan.success)throw Object.assign(Error('Selected saved source could not be read; nothing was saved.'),{status:409});
  // Harvested links were observed, not fetched. Only the selected page was
