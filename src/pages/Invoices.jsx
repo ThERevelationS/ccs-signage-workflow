@@ -612,7 +612,7 @@ export default function Invoices() {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showFromEstimate, setShowFromEstimate] = useState(false);
-  const [openId, setOpenId] = useState("");
+  const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("invoice") || "");
   const [exporting, setExporting] = useState(false);
 
   const downloadCsv = (filename, text) => {
