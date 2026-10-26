@@ -34,8 +34,8 @@ check(source.includes('<AlertDialogAction onClick={confirmDelete} className="bg-
 check(source.includes("const saveInFlightRef = useRef(false);") &&
       source.includes("const copyInFlightRef = useRef(false);"),
   "Existing save and copy single-flight protections must remain separate");
-check(source.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
+check(source.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7') &&
       source.includes('aria-label="Horizontal Sales Pipeline column preview"'),
-  "Compact always-visible column checkboxes and horizontal preview must remain intact");
+  "Numbered draggable column editor and horizontal preview must remain intact");
 
 console.log(`Sales delete single-flight guard: ${checks}/${checks} PASS.`);
