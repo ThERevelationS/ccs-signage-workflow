@@ -109,6 +109,9 @@ test("live trigger sets match real emitters", () => {
     time_entry_notes_updated: 'TimeEntry',
     time_off_requested: 'TimeOffRequest',
     time_off_updated: 'TimeOffRequest',
+    time_off_approved: 'TimeOffRequest',
+    time_off_denied: 'TimeOffRequest',
+    time_off_cancelled: 'TimeOffRequest',
     job_allocation_added: 'TimeClockLaborSegment',
     pto_balance_low: 'UserPTOBalance',
   };
