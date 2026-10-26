@@ -420,5 +420,9 @@ const sched = readFileSync('src/pages/ProductionSchedule.jsx', 'utf8');
 assert.match(sched, /buildWorkOrderSegments/, 'production schedule must reuse timeline segments');
 assert.match(sched, /useAllWorkOrders/, 'production schedule must use the work order cache');
 assert.match(appShell, /ProductionSchedule/, 'production schedule route must be registered');
+assert.match(oppPage3, /snooze/, 'follow-ups must offer snooze presets');
+assert.match(invoicesPage, /overdueOnly/, 'invoices must offer an overdue-only filter');
+assert.match(dashboard, /Won vs lost/, 'dashboard must chart won/lost by month');
+assert.match(entry, /opportunity_id: clean\(r\?\.opportunity_id\)/, 'attention feed must link requests to their opportunity');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
