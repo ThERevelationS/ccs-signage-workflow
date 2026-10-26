@@ -261,7 +261,6 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
             <Switch
               checked={Boolean(value[key])}
               onCheckedChange={(checked) => patch({ [key]: checked })}
-              disabled={false}
             />
           </div>
         ))}
