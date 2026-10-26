@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -23,8 +24,11 @@ const STAGE_LABEL = {
 const CHART_COLORS = ["#8B5CF6","#3B82F6","#10B981","#F59E0B","#EF4444","#EC4899","#6366F1","#14B8A6"];
 
 export default function ReportingDashboard() {
+  const { sessionToken } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [financials, setFinancials] = useState(null);
+  const [pipeline, setPipeline] = useState(null);
   const [loading, setLoading] = useState(true);
   const [readError, setReadError] = useState("");
 
@@ -48,6 +52,16 @@ export default function ReportingDashboard() {
       ]);
       setWorkOrders(wos || []);
       setUsers(us || []);
+      // Financial layer — staff-only functions; failure is non-fatal so the
+      // operational charts still render if the session can't be resolved.
+      const [revRes, oppRes] = await Promise.all([
+        base44.functions.invoke("invoicingAction", { session_token: sessionToken, action: "revenue_summary", months: 12 }).catch(() => null),
+        base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "list_opportunities", include_closed: true }).catch(() => null),
+      ]);
+      const rev = revRes?.data || revRes;
+      if (rev?.success) setFinancials(rev);
+      const opp = oppRes?.data || oppRes;
+      if (opp?.success) setPipeline(opp.funnel || null);
     } catch (error) {
       console.error("Error loading reporting dashboard data:", error);
       setWorkOrders([]);
@@ -175,6 +189,76 @@ export default function ReportingDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Financials Row */}
+        {(financials || pipeline) && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {financials && (
+              <div className="clay-card p-5 lg:col-span-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-semibold text-gray-700">Revenue — Trailing 12 Months</h2>
+                  <div className="flex gap-4 text-xs">
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: "#8B5CF6" }} />Invoiced</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: "#10B981" }} />Collected</span>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={financials.months || []} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
+                    <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
+                    <Bar dataKey="invoiced" fill="#8B5CF6" radius={[4, 4, 0, 0]} name="Invoiced" />
+                    <Bar dataKey="collected" fill="#10B981" radius={[4, 4, 0, 0]} name="Collected" />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center border-t border-gray-100 pt-3">
+                  {[
+                    ["Invoiced (all)", financials.invoiced_total, "text-gray-800"],
+                    ["Collected (all)", financials.collected_total, "text-emerald-600"],
+                    ["Open AR", financials.open_ar, "text-violet-700"],
+                    [`Overdue AR (${financials.overdue_count || 0})`, financials.overdue_ar, "text-red-600"],
+                  ].map(([label, val, cls]) => (
+                    <div key={label}>
+                      <div className={`text-lg font-bold ${cls}`}>${Number(val || 0).toLocaleString()}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-gray-400">{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {pipeline && (
+              <div className="clay-card p-5">
+                <h2 className="text-base font-semibold text-gray-700 mb-4">Sales Pipeline</h2>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  {[
+                    ["Open pipeline", pipeline.open_pipeline_value, "text-violet-700", true],
+                    ["Won value", pipeline.won_value, "text-emerald-600", true],
+                    ["Won deals", pipeline.won_count, "text-gray-800", false],
+                    ["Win rate", pipeline.win_rate == null ? "—" : `${pipeline.win_rate}%`, "text-gray-800", false],
+                  ].map(([label, val, cls, isMoney]) => (
+                    <div key={label} className="rounded-lg border border-gray-100 p-2.5">
+                      <div className={`text-lg font-bold ${cls}`}>{isMoney ? `$${Number(val || 0).toLocaleString()}` : val}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-gray-400">{label}</div>
+                    </div>
+                  ))}
+                </div>
+                {Array.isArray(pipeline.lost_reasons) && pipeline.lost_reasons.length > 0 && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Top loss reasons</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {pipeline.lost_reasons.slice(0, 5).map((r) => (
+                        <span key={r.reason} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">
+                          {r.reason} <b>×{r.count}</b>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
