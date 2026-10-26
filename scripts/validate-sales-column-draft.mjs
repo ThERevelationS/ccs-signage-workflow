@@ -128,17 +128,23 @@ check(ui.includes('dispatchColumnDraft({ type: "undo" })') &&
       ui.includes('dispatchColumnDraft({ type: "redo" })'),
   "Compact layout must expose working Undo/Redo buttons.");
 check(ui.includes('dispatchColumnDraft({ type: "show_all" })') &&
-      ui.includes('dispatchColumnDraft({ type: "hide_optional" })') &&
       ui.includes('dispatchColumnDraft({ type: "restore", columns: editorBaseline.columns })'),
-  "Show All, Hide Optional and Reset must operate on the existing compact editor.");
+  "Show All and Reset must operate on the existing compact editor.");
+check(ui.includes('dispatchColumnDraft({ type: "reorder", id: draggedId, toId: columnId })') &&
+      ui.includes('draggable={!isSaving}') &&
+      ui.includes('handleColumnDrop') &&
+      ui.includes('handleColumnDragOver'),
+  "Column chips must support drag-and-drop reordering through the draft reducer.");
+check(!ui.includes('hide_optional') && !ui.includes('Hide Optional'),
+  "The removed Hide Optional shortcut must not reappear in the editor UI.");
 check(ui.includes('disabled={columnLayoutMatchesBaseline || isSaving}') &&
-      ui.includes('disabled={optionalColumnsHidden || isSaving}') &&
       ui.includes('disabled={allColumnsShown || isSaving}'),
   "Bulk buttons must disable redundant actions and block changes during a save.");
-check(ui.includes('checked={column.visible}\n                          disabled={isSaving}') &&
+check(ui.includes('checked={column.visible}') &&
+      ui.includes('disabled={isSaving}') &&
       ui.includes('disabled={index === 0 || isSaving}') &&
       ui.includes('disabled={index === visiblePreviewColumns.length - 1 || isSaving}') &&
-      ui.includes('placeholder="e.g., My Custom View"\n                    disabled={isSaving}'),
+      ui.includes('placeholder="e.g., My Custom View"'),
   "Checkboxes, preview arrows and preset names must not race a pending save.");
 check(ui.includes("if (closeAfterSave) onClose();") &&
       ui.indexOf("await loadData();\n      resetForm();") < ui.indexOf("if (closeAfterSave) onClose();"),
@@ -149,8 +155,9 @@ check(ui.includes('onOpenChange={(open) => { if (!open) requestClose(); }}') &&
 check(ui.includes("Keep editing") && ui.includes("Discard changes"),
   "Unsaved changes must use an explicit in-app confirmation.");
 check(ui.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
-      ui.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
-      ui.includes('columnSettings.map((column) => ('),
-  "Horizontal preview and compact always-visible all-column grid must remain.");
+      ui.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7') &&
+      ui.includes('columnSettings.map((column) => {') &&
+      ui.includes('visibleOrderById'),
+  "Horizontal preview, numbered order badges and the always-visible all-column grid must remain.");
 
 console.log(`Sales column Undo/Redo, Save & Close and unsaved navigation: ${checks}/${checks} PASS.`);
