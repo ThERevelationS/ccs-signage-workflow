@@ -145,7 +145,9 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
 
     // Use the full jurisdiction research agent (same prompt used for new jurisdiction creation)
     const includeParentCounty = jurisdiction.type !== 'county';
-    if (discoveryOnly && (!jurisdiction.permitting_url || jurisdiction._manual_documents)) {
+    let seedUrlValid = false;
+    try { const u = new URL(String(jurisdiction.permitting_url || '').trim()); seedUrlValid = u.protocol === 'http:' || u.protocol === 'https:'; } catch {}
+    if (discoveryOnly && (!seedUrlValid || jurisdiction._manual_documents)) {
       throw Object.assign(new Error('Discovery requires a saved official permitting URL and unprotected document collection.'), { status: 400 });
     }
     let researchData: any;
