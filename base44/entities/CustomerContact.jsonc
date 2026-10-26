@@ -98,9 +98,17 @@
     "customer_id"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    },
     "read": {},
-    "update": {},
+    "update": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    },
     "delete": {
       "user_condition": {
         "role": "admin"
